@@ -128,21 +128,21 @@ public class Token
         THROW       = 53,
         IN          = 54,
         INSTANCEOF  = 55,
-        GETTHIS     = 56,
-        NEWTEMP     = 57,
-        USETEMP     = 58,
-        GETBASE     = 59,
-        GETVAR      = 60,
-        SETVAR      = 61,
-        UNDEFINED   = 62,
-        NEWSCOPE    = 63,
-        ENUMINIT    = 64,
-        ENUMNEXT    = 65,
-        THISFN      = 66,
+        NEWTEMP     = 56,
+        USETEMP     = 57,
+        GETBASE     = 58,
+        GETVAR      = 59,
+        SETVAR      = 60,
+        UNDEFINED   = 61,
+        NEWSCOPE    = 62,
+        ENUMINIT    = 63,
+        ENUMNEXT    = 64,
+        THISFN      = 65,
 
-        LAST_BYTECODE_TOKEN = 66,
+        LAST_BYTECODE_TOKEN = 65,
         // End of interpreter bytecodes
 
+        GETTHIS     = 66,
         TRY         = 67,
         SEMI        = 68,  // semicolon
         LB          = 69,  // left and right brackets
@@ -269,13 +269,13 @@ public class Token
                 case THROW:           return "throw";
                 case IN:              return "in";
                 case INSTANCEOF:      return "instanceof";
-                case GETTHIS:         return "getthis";
                 case NEWTEMP:         return "newtemp";
                 case USETEMP:         return "usetemp";
                 case GETBASE:         return "getbase";
                 case GETVAR:          return "getvar";
                 case SETVAR:          return "setvar";
                 case UNDEFINED:       return "undefined";
+                case GETTHIS:         return "getthis";
                 case TRY:             return "try";
                 case NEWSCOPE:        return "newscope";
                 case ENUMINIT:        return "enuminit";
