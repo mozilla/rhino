@@ -373,6 +373,15 @@ public class Interpreter
                 }
                 break;
 
+            case Token.USE_STACK:
+                // Indicates that stack was modified externally,
+                // like placed catch object
+                stackDelta = 1;
+                itsStackDepth++;
+                if (itsStackDepth > itsData.itsMaxStack)
+                    itsData.itsMaxStack = itsStackDepth;
+                break;
+
             case Token.SWITCH : {
                 stackShouldBeZero = true;
                 Node.Jump switchNode = (Node.Jump)node;
@@ -468,21 +477,12 @@ public class Interpreter
             }
 
             case Token.NEWLOCAL :
-            case Token.NEWTEMP : {
-                // to support CATCH objects EMPTY is used to denote incoming
-                // exception object
-                if (child.getType() != Token.EMPTY) {
-                    iCodeTop = generateICode(child, iCodeTop);
-                } else {
-                    ++itsStackDepth;
-                    if (itsStackDepth > itsData.itsMaxStack)
-                        itsData.itsMaxStack = itsStackDepth;
-                }
+            case Token.NEWTEMP :
                 stackDelta = 1;
+                iCodeTop = generateICode(child, iCodeTop);
                 iCodeTop = addToken(Token.NEWTEMP, iCodeTop);
                 iCodeTop = addLocalRef(node, iCodeTop);
                 break;
-            }
 
             case Token.USELOCAL :
             case Token.USETEMP : {
@@ -646,13 +646,28 @@ public class Interpreter
                 }
                 break;
 
-            case Token.SETPROP : {
+            case Token.SETPROP :
+            case Token.SETPROP_OP : {
                 stackDelta = 1;
                 iCodeTop = generateICode(child, iCodeTop);
                 child = child.getNext();
-                iCodeTop = generateICode(child, iCodeTop);
                 int special = node.getIntProp(Node.SPECIAL_PROP_PROP, 0);
                 if (special != 0) {
+                    if (type == Token.SETPROP_OP) {
+                        iCodeTop = addIcode(Icode_DUP, iCodeTop);
+                        if (itsStackDepth > itsData.itsMaxStack)
+                            itsData.itsMaxStack = itsStackDepth;
+                        if (special == Node.SPECIAL_PROP_PROTO) {
+                            iCodeTop = addIcode(Icode_GETPROTO, iCodeTop);
+                        } else if (special == Node.SPECIAL_PROP_PARENT) {
+                            iCodeTop = addIcode(Icode_GETSCOPEPARENT, iCodeTop);
+                        } else {
+                            badTree(node);
+                        }
+                        // Compensate for the following USE_STACK
+                        itsStackDepth--;
+                    }
+                    iCodeTop = generateICode(child, iCodeTop);
                     if (special == Node.SPECIAL_PROP_PROTO) {
                         iCodeTop = addIcode(Icode_SETPROTO, iCodeTop);
                     } else if (special == Node.SPECIAL_PROP_PARENT) {
@@ -662,7 +677,19 @@ public class Interpreter
                     }
                     itsStackDepth--;
                 } else {
+                    iCodeTop = generateICode(child, iCodeTop);
                     child = child.getNext();
+                    if (type == Token.SETPROP_OP) {
+                        iCodeTop = addIcode(Icode_DUPSECOND, iCodeTop);
+                        iCodeTop = addIcode(Icode_DUPSECOND, iCodeTop);
+                        itsStackDepth += 2;
+                        if (itsStackDepth > itsData.itsMaxStack)
+                            itsData.itsMaxStack = itsStackDepth;
+                        iCodeTop = addToken(Token.GETPROP, iCodeTop);
+                        itsStackDepth--;
+                        // Compensate for the following USE_STACK
+                        itsStackDepth--;
+                    }
                     iCodeTop = generateICode(child, iCodeTop);
                     iCodeTop = addToken(Token.SETPROP, iCodeTop);
                     itsStackDepth -= 2;
@@ -671,11 +698,23 @@ public class Interpreter
             }
 
             case Token.SETELEM :
+            case Token.SETELEM_OP :
                 stackDelta = 1;
                 iCodeTop = generateICode(child, iCodeTop);
                 child = child.getNext();
                 iCodeTop = generateICode(child, iCodeTop);
                 child = child.getNext();
+                if (type == Token.SETELEM_OP) {
+                    iCodeTop = addIcode(Icode_DUPSECOND, iCodeTop);
+                    iCodeTop = addIcode(Icode_DUPSECOND, iCodeTop);
+                    itsStackDepth += 2;
+                    if (itsStackDepth > itsData.itsMaxStack)
+                        itsData.itsMaxStack = itsStackDepth;
+                    iCodeTop = addToken(Token.GETELEM, iCodeTop);
+                    itsStackDepth--;
+                    // Compensate for the following USE_STACK
+                    itsStackDepth--;
+                }
                 iCodeTop = generateICode(child, iCodeTop);
                 iCodeTop = addToken(Token.SETELEM, iCodeTop);
                 itsStackDepth -= 2;

@@ -463,7 +463,7 @@ public class IRFactory {
             pn.addChildToBack(catchTarget);
 
             // get the exception object and store it in a temp
-            Node exn = createNewLocal(new Node(Token.EMPTY));
+            Node exn = createNewLocal(new Node(Token.USE_STACK));
             pn.addChildToBack(new Node(Token.POP, exn));
 
             Node.Target endCatch = new Node.Target();
@@ -1055,42 +1055,15 @@ public class IRFactory {
             Node id = left.getLastChild();
 
             int type = nodeType == Token.GETPROP
-                       ? Token.SETPROP
-                       : Token.SETELEM;
+                       ? Token.SETPROP_OP
+                       : Token.SETELEM_OP;
 
-/*
-*    If the RHS expression could modify the LHS we have
-*    to construct a temporary to hold the LHS context
-*    prior to running the expression. Ditto, if the id
-*    expression has side-effects.
-*
-*    XXX If the hasSideEffects tests take too long, we
-*       could make this an optimizer-only transform
-*       and always do the temp assignment otherwise.
-*
-*/
-            Node tmp1, tmp2, opLeft;
-            if (obj.getType() != Token.NAME || id.hasChildren() ||
-                hasSideEffects(right) || hasSideEffects(id))
-            {
-                tmp1 = createNewTemp(obj);
-                Node useTmp1 = createUseTemp(tmp1);
-
-                tmp2 = createNewTemp(id);
-                Node useTmp2 = createUseTemp(tmp2);
-
-                opLeft = new Node(nodeType, useTmp1, useTmp2);
-            } else {
-                tmp1 = Node.newString(Token.NAME, obj.getString());
-                tmp2 = id.cloneNode();
-                opLeft = new Node(nodeType, obj, id);
-            }
-
-            if (tonumber)
+            Node opLeft = new Node(Token.USE_STACK);
+            if (tonumber) {
                 opLeft = new Node(Token.POS, opLeft);
-
+            }
             Node op = new Node(assignOp, opLeft, right);
-            return new Node(type, tmp1, tmp2, op);
+            return new Node(type, obj, id, op);
           }
 
           default:

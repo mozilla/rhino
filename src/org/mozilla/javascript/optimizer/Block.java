@@ -464,7 +464,8 @@ public class Block {
                 }
                 break;
 
-            case Token.SETPROP : {
+            case Token.SETPROP :
+            case Token.SETPROP_OP : {
                     Node baseChild = n.getFirstChild();
                     Node nameChild = baseChild.getNext();
                     Node rhs = nameChild.getNext();
@@ -525,7 +526,8 @@ public class Block {
                             theCSETable.clear();
                 }
                 break;
-            case Token.SETPROP : {
+            case Token.SETPROP :
+            case Token.SETPROP_OP : {
                     Node baseChild = n.getFirstChild();
                     Node nameChild = baseChild.getNext();
                     Node rhs = nameChild.getNext();
@@ -587,7 +589,8 @@ public class Block {
                     }
                 }
                 break;
-            case Token.SETELEM : {
+            case Token.SETELEM :
+            case Token.SETELEM_OP : {
                     Node lhsBase = n.getFirstChild();
                     Node lhsIndex = lhsBase.getNext();
                     Node rhs = lhsIndex.getNext();

@@ -1429,6 +1429,9 @@ class BodyCodegen
                 }
                 break;
 
+              case Token.USE_STACK:
+                break;
+
               case Token.FUNCTION:
                 if (fnCurrent != null || parent.getType() != Token.SCRIPT) {
                     int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
@@ -1811,16 +1814,48 @@ class BodyCodegen
                 break;
 
               case Token.SETPROP:
-                visitSetProp(node, child);
+              case Token.SETPROP_OP:
+                visitSetProp(type, node, child);
                 break;
 
               case Token.SETELEM:
-                while (child != null) {
-                    generateCodeFromNode(child, node);
-                    child = child.getNext();
+              case Token.SETELEM_OP: {
+                generateCodeFromNode(child, node);
+                child = child.getNext();
+                if (type == Token.SETELEM_OP) {
+                    cfw.add(ByteCode.DUP);
                 }
+                generateCodeFromNode(child, node);
+                child = child.getNext();
+                boolean indexIsNumber
+                    = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
+                if (type == Token.SETELEM_OP) {
+                    if (indexIsNumber) {
+                        // stack: ... object object number
+                        //        -> ... object number object number
+                        cfw.add(ByteCode.DUP2_X1);
+                        cfw.addALoad(variableObjectLocal);
+                        addOptRuntimeInvoke(
+                            "getElem",
+                            "(Ljava/lang/Object;D"
+                            +"Lorg/mozilla/javascript/Scriptable;"
+                            +")Ljava/lang/Object;");
+                    } else {
+                        // stack: ... object object indexObject
+                        //        -> ... object indexObject object indexObject
+                        cfw.add(ByteCode.DUP_X1);
+                        cfw.addALoad(variableObjectLocal);
+                        addScriptRuntimeInvoke(
+                            "getElem",
+                            "(Ljava/lang/Object;"
+                            +"Ljava/lang/Object;"
+                            +"Lorg/mozilla/javascript/Scriptable;"
+                            +")Ljava/lang/Object;");
+                    }
+                }
+                generateCodeFromNode(child, node);
                 cfw.addALoad(variableObjectLocal);
-                if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                if (indexIsNumber) {
                     addOptRuntimeInvoke(
                         "setElem",
                         "(Ljava/lang/Object;"
@@ -1839,6 +1874,7 @@ class BodyCodegen
                         +")Ljava/lang/Object;");
                 }
                 break;
+              }
 
               case Token.DELPROP:
                 cfw.addALoad(contextLocal);
@@ -3611,38 +3647,27 @@ class BodyCodegen
             return;
         }
         Node nameChild = child.getNext();
+        generateCodeFromNode(child, node);      // the object
+        generateCodeFromNode(nameChild, node);  // the name
         /*
             for 'this.foo' we call thisGet which can skip some
             casting overhead.
 
         */
-        generateCodeFromNode(child, node);      // the object
-        generateCodeFromNode(nameChild, node);  // the name
-        if (nameChild.getType() == Token.STRING) {
-            if ((child.getType() == Token.THIS)
-                || (child.getType() == Token.NEWTEMP
-                    && child.getFirstChild().getType() == Token.THIS))
-            {
-                cfw.addALoad(variableObjectLocal);
-                addOptRuntimeInvoke(
-                    "thisGet",
-                    "(Lorg/mozilla/javascript/Scriptable;"
-                    +"Ljava/lang/String;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;");
-            }
-            else {
-                cfw.addALoad(variableObjectLocal);
-                addScriptRuntimeInvoke(
-                    "getProp",
-                    "(Ljava/lang/Object;"
-                    +"Ljava/lang/String;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;");
-            }
-        }
-        else {
-            cfw.addALoad(variableObjectLocal);
+        cfw.addALoad(variableObjectLocal);
+        int childType = child.getType();
+        if ((childType == Token.THIS
+            || (childType == Token.NEWTEMP
+                && child.getFirstChild().getType() == Token.THIS))
+            && nameChild.getType() == Token.STRING)
+        {
+            addOptRuntimeInvoke(
+                "thisGet",
+                "(Lorg/mozilla/javascript/Scriptable;"
+                +"Ljava/lang/String;"
+                +"Lorg/mozilla/javascript/Scriptable;"
+                +")Ljava/lang/Object;");
+        } else {
             addScriptRuntimeInvoke(
                 "getProp",
                 "(Ljava/lang/Object;"
@@ -3652,14 +3677,31 @@ class BodyCodegen
         }
     }
 
-    private void visitSetProp(Node node, Node child)
+    private void visitSetProp(int type, Node node, Node child)
     {
+        Node objectChild = child;
+        generateCodeFromNode(child, node);
+        child = child.getNext();
         int special = node.getIntProp(Node.SPECIAL_PROP_PROP, 0);
         if (special != 0) {
-            while (child != null) {
-                generateCodeFromNode(child, node);
-                child = child.getNext();
+            if (type == Token.SETPROP_OP) {
+                cfw.add(ByteCode.DUP);
+                String runtimeMethod = null;
+                if (special == Node.SPECIAL_PROP_PROTO) {
+                    runtimeMethod = "getProto";
+                } else if (special == Node.SPECIAL_PROP_PARENT) {
+                    runtimeMethod = "getParent";
+                } else {
+                    Codegen.badTree();
+                }
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke(
+                    runtimeMethod,
+                    "(Ljava/lang/Object;"
+                    +"Lorg/mozilla/javascript/Scriptable;"
+                    +")Lorg/mozilla/javascript/Scriptable;");
             }
+            generateCodeFromNode(child, node);
             cfw.addALoad(variableObjectLocal);
             String runtimeMethod = null;
             if (special == Node.SPECIAL_PROP_PROTO) {
@@ -3677,10 +3719,38 @@ class BodyCodegen
                 +")Ljava/lang/Object;");
             return;
         }
-        while (child != null) {
-            generateCodeFromNode(child, node);
-            child = child.getNext();
+
+        if (type == Token.SETPROP_OP) {
+            cfw.add(ByteCode.DUP);
         }
+        Node nameChild = child;
+        generateCodeFromNode(child, node);
+        child = child.getNext();
+        if (type == Token.SETPROP_OP) {
+            // stack: ... object object name -> ... object name object name
+            cfw.add(ByteCode.DUP_X1);
+            cfw.addALoad(variableObjectLocal);
+            //for 'this.foo += ...' we call thisGet which can skip some
+            //casting overhead.
+            if (objectChild.getType() == Token.THIS
+                && nameChild.getType() == Token.STRING)
+            {
+                addOptRuntimeInvoke(
+                    "thisGet",
+                    "(Lorg/mozilla/javascript/Scriptable;"
+                    +"Ljava/lang/String;"
+                    +"Lorg/mozilla/javascript/Scriptable;"
+                    +")Ljava/lang/Object;");
+            } else {
+                addScriptRuntimeInvoke(
+                    "getProp",
+                    "(Ljava/lang/Object;"
+                    +"Ljava/lang/String;"
+                    +"Lorg/mozilla/javascript/Scriptable;"
+                    +")Ljava/lang/Object;");
+            }
+        }
+        generateCodeFromNode(child, node);
         cfw.addALoad(variableObjectLocal);
         addScriptRuntimeInvoke(
             "setProp",
