@@ -44,8 +44,8 @@ package org.mozilla.javascript;
  * @author Mike McCabe
  */
 
-public class Node implements Cloneable {
-
+public class Node
+{
     private static class NumberNode extends Node
     {
         NumberNode(double number)
@@ -539,20 +539,6 @@ public class Node implements Cloneable {
     public final void setString(String s) {
         if (s == null) Kit.codeBug();
         ((StringNode)this).str = s;
-    }
-
-    public Node cloneNode() {
-        Node result;
-        try {
-            result = (Node) super.clone();
-            result.next = null;
-            result.first = null;
-            result.last = null;
-        }
-        catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e.getMessage());
-        }
-        return result;
     }
 
     public String toString() {

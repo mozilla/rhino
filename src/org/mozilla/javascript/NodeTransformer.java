@@ -443,13 +443,6 @@ public class NodeTransformer {
          *      Call(tmp=a, Parent(tmp), c, d)
          */
         Node left = node.getFirstChild();
-        // count the arguments
-        int argCount = 0;
-        Node arg = left.getNext();
-        while (arg != null) {
-            arg = arg.getNext();
-            argCount++;
-        }
         boolean addGetThis = false;
         if (left.getType() == Token.NAME) {
             String name = left.getString();
@@ -464,8 +457,7 @@ public class NodeTransformer {
 
                 node.removeChild(left);
                 left.setType(Token.GETBASE);
-                Node str = left.cloneNode();
-                str.setType(Token.STRING);
+                Node str = Node.newString(left.getString());
                 Node getProp = new Node(Token.GETPROP, left, str);
                 node.addChildToFront(getProp);
                 left = getProp;
