@@ -152,12 +152,6 @@ public class NativeJavaObject implements Scriptable, Wrapper {
     {
         if (obj == null)
             return obj;
-        Context cx = Context.getCurrentContext();
-        if (cx != null && cx.wrapHandler != null) {
-            Object result = cx.wrapHandler.wrap(scope, obj, staticType);
-            if (result != null)
-                return result;
-        }
         Class cls = obj.getClass();
         if (staticType != null && staticType.isPrimitive()) {
             if (staticType == Void.TYPE)
@@ -172,19 +166,17 @@ public class NativeJavaObject implements Scriptable, Wrapper {
             return obj;
         if (Context.useJSObject && jsObjectClass != null && 
             staticType != jsObjectClass && jsObjectClass.isInstance(obj)) 
-        {
-            try {
-                return jsObjectGetScriptable.invoke(obj, ScriptRuntime.emptyArgs);
+            {
+                try {
+                    return jsObjectGetScriptable.invoke(obj, ScriptRuntime.emptyArgs);
+                }
+                catch (InvocationTargetException e) {
+                    // Just abandon conversion from JSObject
+                }
+                catch (IllegalAccessException e) {
+                    // Just abandon conversion from JSObject
+                }
             }
-            catch (InvocationTargetException e) {
-                // Just abandon conversion from JSObject
-            }
-            catch (IllegalAccessException e) {
-                // Just abandon conversion from JSObject
-            }
-        }
-        if (cls == ScriptRuntime.ClassClass)
-            return NativeJavaClass.wrap(scope, (Class) obj);
         return new NativeJavaObject(scope, obj, staticType);
     }
 
@@ -885,8 +877,6 @@ public class NativeJavaObject implements Scriptable, Wrapper {
     }
 
     public static void initJSObject() {
-        if (!Context.useJSObject)
-            return;
         // if netscape.javascript.JSObject is in the CLASSPATH, enable JSObject
         // compatability wrappers
         jsObjectClass = null;
