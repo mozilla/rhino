@@ -165,24 +165,11 @@ public class Main {
                 processSource(cx, args[i]);
                 continue;
             }
-            if (false && arg.startsWith("-debug")) {
-
-                int level = 9;
-                if (i+1 < args.length) {
-                    double d = cx.toNumber(args[i+1]);
-                    if (d == d) {
-                        level = (int)d;
-                        i++;
-                    }
-                }
-                if (arg.equals("-debug"))
-                    global.showDebuggerUI = true;
-                else if (arg.equals("-debugQ"))
-                    global.showDebuggerUI = false;
-                else
-                    usage(arg);
-
-                global.debug = true;
+            if (arg.equals("-debug")) {
+                // XXX check for bad combinations with -opt
+                cx.setOptimizationLevel(-1);
+                cx.setGeneratingDebug(true);
+                invokeDebugger(cx, global);
                 continue;
             }
             usage(arg);
@@ -236,7 +223,12 @@ public class Main {
                         break;
                     }
                     if (newline.equals("#")) {
-                        invokeDebugger(cx, global);
+                        if (cx.getDebugger() == null) {
+                            getErr().println(
+                                "Can't invoke debugger: -debug not specified.");
+                        } else {
+                            invokeDebugger(cx, global);
+                        }
                         break;
                     }
                     source = source + newline + "\n";

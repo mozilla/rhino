@@ -165,8 +165,10 @@ public class Interpreter extends LabelTable {
             regExpLiterals = generateRegExpLiterals(cx, scope, regexps);
 
         VariableTable varTable = theFunction.getVariableTable();
+        boolean needsActivation = theFunction.requiresActivation() ||
+                                  cx.isGeneratingDebug();
         generateICodeFromTree(theFunction.getLastChild(), 
-                               varTable, theFunction.requiresActivation(),
+                               varTable, needsActivation,
                                securityDomain);
             
         itsData.itsName = theFunction.getFunctionName();
@@ -1373,8 +1375,8 @@ public class Interpreter extends LabelTable {
         Scriptable[] scopeStack = null;
         int tryStackTop = 0;
         
-        // XXX only do this if in some debug mode
-        cx.pushFrame(new InterpreterFrame(scope, theData));
+        if (cx.debugger != null)
+            cx.pushFrame(new InterpreterFrame(scope, theData));
             
         if (theData.itsMaxTryDepth > 0) {
             catchStack = new int[theData.itsMaxTryDepth];
@@ -1868,15 +1870,14 @@ public class Interpreter extends LabelTable {
                         cx.interpreterSourceFile = theData.itsSourceFile;
                         break;
                     case TokenStream.LINE :    
+                    case TokenStream.BREAKPOINT :
                         i = (iCode[pc + 1] << 8) | (iCode[pc + 2] & 0xFF);                    
                         cx.interpreterLine = i;
-                        if (!cx.inLineStepMode) {
-                            pc += 2;
-                            break;
+                        if ((iCode[pc] & 0xff) == TokenStream.BREAKPOINT ||
+                            cx.inLineStepMode) 
+                        {
+                            cx.getDebugger().handleBreakpointHit(cx);
                         }
-                        // else fall through to breakpoint
-                    case TokenStream.BREAKPOINT :
-                        cx.getDebugger().handleBreakpointHit(cx);
                         pc += 2;
                         break;
                     default :
@@ -1947,6 +1948,8 @@ public class Interpreter extends LabelTable {
             }
         }
         cx.interpreterSecurityDomain = savedSecurityDomain;
+        if (cx.debugger != null)
+            cx.popFrame();  /// XXX need to do this for exceptions as well
         return result;    
     }
     

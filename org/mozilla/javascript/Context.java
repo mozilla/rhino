@@ -96,7 +96,6 @@ public final class Context {
      */
     public Context() {
         setLanguageVersion(VERSION_DEFAULT);
-        this.generatingDebug = true;
         optimizationLevel = codegenClass != null ? 0 : -1;
     }
     
@@ -1804,7 +1803,7 @@ public final class Context {
     private boolean compileFunctionsWithDynamicScopeFlag;
     private int optimizationLevel;
     WrapHandler wrapHandler;
-    private Debugger debugger;
+    Debugger debugger;
     boolean inLineStepMode;
     private int enterCount;
     private ListenerCollection listeners;
