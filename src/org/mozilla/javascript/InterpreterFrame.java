@@ -59,7 +59,9 @@ class InterpreterFrame implements Frame {
     }
     
     public DebuggableScript getScript() {
-        return null; // XXX
+        if (data.obj instanceof DebuggableScript)
+            return (DebuggableScript) data.obj;
+        return null;
     }
     
     private Scriptable scope;

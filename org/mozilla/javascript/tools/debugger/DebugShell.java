@@ -52,8 +52,9 @@ public class DebugShell implements Debugger {
 
     public void handleBreakpointHit(Context cx) {
         Frame frame = cx.getFrame(0);
+        int line = frame.getLineNumber();
         Main.getOut().println("Hit breakpoint at \"" + frame.getSourceName() +
-                              "\", line " + frame.getLineNumber());
+                              "\", line " + line);
         enterShell(cx, frame.getVariableObject());
     }
     
@@ -90,15 +91,7 @@ public class DebugShell implements Debugger {
                     Main.getErr().println("function " + args + " is not debuggable");
                     continue;
                 }
-                Enumeration e = ((DebuggableScript)o).getLineNumbers();
-                Object n;
-                int min = Integer.MAX_VALUE;
-                while (e.hasMoreElements()) {
-                    n = e.nextElement();
-                    int i = ((Integer) n).intValue();
-                    if (i < min)
-                        min = i;
-                }
+                int min = getMinLineNumber((DebuggableScript) o);
                 if (((DebuggableScript)o).placeBreakpoint(min))
                     Main.getErr().println("Breakpoint placed at line " + min); /// xx source
                 else
@@ -115,5 +108,17 @@ public class DebugShell implements Debugger {
                 break;
             }
         }
+    }
+    
+    int getMinLineNumber(DebuggableScript ds) {
+        Enumeration e = ds.getLineNumbers();
+        int min = Integer.MAX_VALUE;
+        while (e.hasMoreElements()) {
+            Object n = e.nextElement();
+            int i = ((Integer) n).intValue();
+            if (i < min)
+                min = i;
+        }
+        return min;
     }
 }

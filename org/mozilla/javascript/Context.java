@@ -1478,6 +1478,10 @@ public final class Context {
         return (Frame) frameStack.elementAt(frameStack.size() - frameNumber - 1);
     }
     
+    public int getFrameCount() {
+        return frameStack.size();
+    }
+    
     void pushFrame(Frame frame) {
         if (frameStack == null)
             frameStack = new java.util.Stack();

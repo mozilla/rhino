@@ -60,10 +60,11 @@ class InterpretedFunction extends NativeFunction implements DebuggableScript {
         nestedFunctions = itsData.itsNestedFunctions;
         if (cx != null)
             version = (short)cx.getLanguageVersion();
+        itsData.obj = this;
     }
     
     InterpretedFunction(InterpretedFunction theOther,
-                                Scriptable theScope, Context cx)
+                        Scriptable theScope, Context cx)
     {
         itsData = theOther.itsData;
         itsClosure = theScope;
