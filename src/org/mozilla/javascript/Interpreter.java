@@ -369,6 +369,21 @@ public class Interpreter
                 }
                 break;
 
+            case Token.LOCAL_BLOCK :
+                stackShouldBeZero = true;
+                node.putIntProp(Node.LOCAL_PROP, itsLocalTop);
+                ++itsLocalTop;
+                if (itsLocalTop > itsData.itsMaxLocals) {
+                    itsData.itsMaxLocals = itsLocalTop;
+                }
+                iCodeTop = updateLineNumber(node, iCodeTop);
+                while (child != null) {
+                    iCodeTop = generateICode(child, iCodeTop);
+                    child = child.getNext();
+                }
+                --itsLocalTop;
+                break;
+
             case Token.COMMA :
                 stackDelta = 1;
                 iCodeTop = generateICode(child, iCodeTop);
@@ -500,18 +515,10 @@ public class Interpreter
                 break;
             }
 
-            case Token.NEWLOCAL :
-                stackDelta = 1;
-                iCodeTop = generateICode(child, iCodeTop);
-                iCodeTop = addToken(Token.NEWLOCAL, iCodeTop);
-                iCodeTop = addLocalRef(node, iCodeTop);
-                break;
-
             case Token.USELOCAL : {
                 stackDelta = 1;
-                Node temp = (Node) node.getProp(Node.LOCAL_PROP);
                 iCodeTop = addToken(Token.USELOCAL, iCodeTop);
-                iCodeTop = addLocalRef(temp, iCodeTop);
+                iCodeTop = addLocalBlockRef(node, iCodeTop);
                 itsStackDepth++;
                 if (itsStackDepth > itsData.itsMaxStack)
                     itsData.itsMaxStack = itsStackDepth;
@@ -544,8 +551,8 @@ public class Interpreter
                 if (itsStackDepth > itsData.itsMaxStack)
                     itsData.itsMaxStack = itsStackDepth;
 
-                int finallyRegister = allocateLocal();
-                iCodeTop = addToken(Token.NEWLOCAL, iCodeTop);
+                int finallyRegister = getLocalBlockRef(node);
+                iCodeTop = addToken(Token.SAVELOCAL, iCodeTop);
                 iCodeTop = addByte(finallyRegister, iCodeTop);
                 iCodeTop = addToken(Token.POP, iCodeTop);
                 itsStackDepth--;
@@ -556,7 +563,6 @@ public class Interpreter
                 }
                 iCodeTop = addIcode(Icode_RETSUB, iCodeTop);
                 iCodeTop = addByte(finallyRegister, iCodeTop);
-                releaseLocal(finallyRegister);
                 break;
             }
 
@@ -911,6 +917,7 @@ public class Interpreter
             case Token.TRY : {
                 stackShouldBeZero = true;
                 Node.Jump tryNode = (Node.Jump)node;
+                int exceptionObjectLocal = getLocalBlockRef(tryNode);
                 Node catchTarget = tryNode.target;
                 Node finallyTarget = tryNode.getFinally();
 
@@ -956,7 +963,7 @@ public class Interpreter
                 // It does not hold if instruction observer throws during
                 // goto. Currently it may lead to double execution of finally.
                 addExceptionHandler(tryStart, tryEnd, catchStart, finallyStart,
-                                    itsWithDepth);
+                                    itsWithDepth, exceptionObjectLocal);
                 break;
             }
 
@@ -1042,7 +1049,7 @@ public class Interpreter
                 stackShouldBeZero = true;
                 iCodeTop = generateICode(child, iCodeTop);
                 iCodeTop = addToken(Token.ENUM_INIT, iCodeTop);
-                iCodeTop = addLocalRef(node, iCodeTop);
+                iCodeTop = addLocalBlockRef(node, iCodeTop);
                 itsStackDepth--;
                 break;
 
@@ -1050,18 +1057,12 @@ public class Interpreter
             case Token.ENUM_ID : {
                 stackDelta = 1;
                 iCodeTop = addToken(type, iCodeTop);
-                Node init = (Node)node.getProp(Node.ENUM_PROP);
-                iCodeTop = addLocalRef(init, iCodeTop);
+                iCodeTop = addLocalBlockRef(node, iCodeTop);
                 itsStackDepth++;
                 if (itsStackDepth > itsData.itsMaxStack)
                     itsData.itsMaxStack = itsStackDepth;
                 break;
             }
-
-            case Token.ENUMDONE :
-                stackShouldBeZero = true;
-                // could release the local here??
-                break;
 
             case Token.REGEXP : {
                 stackDelta = 1;
@@ -1124,24 +1125,17 @@ public class Interpreter
         return iCodeTop;
     }
 
-    private int addLocalRef(Node node, int iCodeTop)
+    private int getLocalBlockRef(Node node)
     {
-        int theLocalSlot = node.getIntProp(Node.LOCAL_PROP, -1);
-        if (theLocalSlot == -1) {
-            theLocalSlot = allocateLocal();
-            node.putIntProp(Node.LOCAL_PROP, theLocalSlot);
-        }
-        iCodeTop = addByte(theLocalSlot, iCodeTop);
+        Node localBlock = (Node)node.getProp(Node.LOCAL_BLOCK_PROP);
+        return localBlock.getExistingIntProp(Node.LOCAL_PROP);
+    }
+
+    private int addLocalBlockRef(Node node, int iCodeTop)
+    {
+        int localSlot = getLocalBlockRef(node);
+        iCodeTop = addByte(localSlot, iCodeTop);
         return iCodeTop;
-    }
-
-    private int allocateLocal()
-    {
-         return itsData.itsMaxLocals++;
-    }
-
-    private void releaseLocal(int local)
-    {
     }
 
     private int getTargetLabel(Node.Target target)
@@ -1301,7 +1295,7 @@ public class Interpreter
 
     private void addExceptionHandler(int icodeStart, int icodeEnd,
                                      int catchStart, int finallyStart,
-                                     int withDepth)
+                                     int withDepth, int exceptionObjectLocal)
     {
         int top = itsExceptionTableTop;
         int[] table = itsData.itsExceptionTable;
@@ -1319,6 +1313,7 @@ public class Interpreter
         table[top + EXCEPTION_CATCH_SLOT]      = catchStart;
         table[top + EXCEPTION_FINALLY_SLOT]    = finallyStart;
         table[top + EXCEPTION_WITH_DEPTH_SLOT] = withDepth;
+        table[top + EXCEPTION_LOCAL_SLOT]      = exceptionObjectLocal;
 
         itsExceptionTableTop = top + EXCEPTION_SLOT_SIZE;
     }
@@ -1462,7 +1457,7 @@ public class Interpreter
                     case Icode_VARDEC :
                     case Token.GETVAR :
                     case Token.SETVAR :
-                    case Token.NEWLOCAL :
+                    case Token.SAVELOCAL :
                     case Token.USELOCAL : {
                         int slot = (iCode[pc] & 0xFF);
                         out.println(tname + " " + slot);
@@ -1558,15 +1553,18 @@ public class Interpreter
                 for (int i = 0; i != table.length;
                      i += EXCEPTION_SLOT_SIZE)
                 {
-                    int tryStart     = table[i + EXCEPTION_TRY_START_SLOT];
-                    int tryEnd       = table[i + EXCEPTION_TRY_END_SLOT];
-                    int catchStart   = table[i + EXCEPTION_CATCH_SLOT];
-                    int finallyStart = table[i + EXCEPTION_FINALLY_SLOT];
-                    int withDepth    = table[i + EXCEPTION_WITH_DEPTH_SLOT];
+                    int tryStart       = table[i + EXCEPTION_TRY_START_SLOT];
+                    int tryEnd         = table[i + EXCEPTION_TRY_END_SLOT];
+                    int catchStart     = table[i + EXCEPTION_CATCH_SLOT];
+                    int finallyStart   = table[i + EXCEPTION_FINALLY_SLOT];
+                    int withDepth      = table[i + EXCEPTION_WITH_DEPTH_SLOT];
+                    int exceptionLocal = table[i + EXCEPTION_LOCAL_SLOT];
 
-                    out.println(" "+tryStart+"\t "+tryEnd+"\t "
-                                +catchStart+"\t "+finallyStart
-                                +"\t "+withDepth);
+                    out.println(" tryStart="+tryStart+" tryEnd="+tryEnd
+                                +" catchStart="+catchStart
+                                +" finallyStart="+finallyStart
+                                +" withDepth="+withDepth
+                                +" exceptionLocal="+exceptionLocal);
                 }
             }
             out.flush();
@@ -1657,7 +1655,7 @@ public class Interpreter
             case Icode_VARDEC :
             case Token.GETVAR :
             case Token.SETVAR :
-            case Token.NEWLOCAL :
+            case Token.SAVELOCAL :
             case Token.USELOCAL :
                 // slot index
                 return 1 + 1;
@@ -2001,12 +1999,14 @@ public class Interpreter
             --withDepth;
         }
 
-        // make stack to contain single exception object
-        stackTop = STACK_SHFT;
         if (doCatch) {
-            stack[stackTop] = ScriptRuntime.getCatchObject(cx, scope,
-                                                           javaException);
+            stackTop = STACK_SHFT - 1;
+            int exLocal = idata.itsExceptionTable[
+                              handlerOffset + EXCEPTION_LOCAL_SLOT];
+            stack[LOCAL_SHFT + exLocal] = ScriptRuntime.getCatchObject(
+                                              cx, scope, javaException);
         } else {
+            stackTop = STACK_SHFT;
             // Call finally handler with javaException on stack top to
             // distinguish from normal invocation through GOSUB
             // which would contain DBL_MRK on the stack
@@ -2488,7 +2488,7 @@ public class Interpreter
         stack[stackTop] = ScriptRuntime.postDecrementElem(lhs, rhs, scope);
         break;
     }
-    case Token.NEWLOCAL : {
+    case Token.SAVELOCAL : {
         int slot = (iCode[++pc] & 0xFF);
         stack[LOCAL_SHFT + slot] = stack[stackTop];
         sDbl[LOCAL_SHFT + slot] = sDbl[stackTop];
@@ -3235,16 +3235,17 @@ public class Interpreter
     private int itsDoubleTableTop;
     private ObjToIntMap itsStrings = new ObjToIntMap(20);
     private String lastAddString;
+    private int itsLocalTop;
 
     private int itsExceptionTableTop;
-
     // 5 = space for try start/end, catch begin, finally begin and with depth
-    private static final int EXCEPTION_SLOT_SIZE       = 5;
+    private static final int EXCEPTION_SLOT_SIZE       = 6;
     private static final int EXCEPTION_TRY_START_SLOT  = 0;
     private static final int EXCEPTION_TRY_END_SLOT    = 1;
     private static final int EXCEPTION_CATCH_SLOT      = 2;
     private static final int EXCEPTION_FINALLY_SLOT    = 3;
     private static final int EXCEPTION_WITH_DEPTH_SLOT = 4;
+    private static final int EXCEPTION_LOCAL_SLOT      = 5;
 
     private static final Object DBL_MRK = new Object();
 }

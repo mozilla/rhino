@@ -336,26 +336,27 @@ public class IRFactory {
             return objNode;
         }
 
+        Node localBlock = new Node(Token.LOCAL_BLOCK);
+
         Node init = new Node(Token.ENUM_INIT, objNode);
+        init.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
         Node cond = new Node(Token.ENUM_NEXT);
-        cond.putProp(Node.ENUM_PROP, init);
+        cond.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
         Node id = new Node(Token.ENUM_ID);
-        id.putProp(Node.ENUM_PROP, init);
+        id.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
+
         Node newBody = new Node(Token.BLOCK);
         Node assign = (Node) createAssignment(lvalue, id);
         newBody.addChildToBack(new Node(Token.POP, assign));
         newBody.addChildToBack((Node) body);
-        Node result = (Node) createWhile(cond, newBody, lineno);
 
-        result.addChildToFront(init);
+        Node loop = (Node) createWhile(cond, newBody, lineno);
+        loop.addChildToFront(init);
         if (type == Token.VAR)
-            result.addChildToFront(lhsNode);
+            loop.addChildToFront(lhsNode);
+        localBlock.addChildToBack(loop);
 
-        Node done = new Node(Token.ENUMDONE);
-        done.putProp(Node.ENUM_PROP, init);
-        result.addChildToBack(done);
-
-        return result;
+        return localBlock;
     }
 
     /**
@@ -401,7 +402,10 @@ public class IRFactory {
             return trynode;
         }
 
+
+        Node localBlock  = new Node(Token.LOCAL_BLOCK);
         Node.Jump pn = new Node.Jump(Token.TRY, trynode, lineno);
+        pn.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
 
         Node.Target finallyTarget = null;
         if (hasFinally) {
@@ -456,10 +460,6 @@ public class IRFactory {
             // mark it
             pn.addChildToBack(catchTarget);
 
-            // get the exception object and store it in a temp
-            Node exn = createNewLocal(new Node(Token.USE_STACK));
-            pn.addChildToBack(new Node(Token.POP, exn));
-
             Node.Target endCatch = new Node.Target();
 
             // add [jsr finally?] goto end to each catch block
@@ -495,7 +495,7 @@ public class IRFactory {
                 //      runtime overhead.
                 Node catchScope = Node.newString(Token.CATCH_SCOPE,
                                                  name.getString());
-                catchScope.addChildToBack(createUseLocal(exn));
+                catchScope.addChildToBack(createUseLocal(localBlock));
                 Node withStmt = (Node) createWith(catchScope, condStmt,
                                                   catchLineNo);
                 pn.addChildToBack(withStmt);
@@ -505,7 +505,8 @@ public class IRFactory {
             }
             if (!hasDefault) {
                 // Generate code to rethrow if no catch clause was executed
-                Node rethrow = new Node(Token.THROW, createUseLocal(exn));
+                Node rethrow = new Node(Token.THROW,
+                                        createUseLocal(localBlock));
                 pn.addChildToBack(rethrow);
             }
 
@@ -523,10 +524,13 @@ public class IRFactory {
 
         if (hasFinally) {
             pn.addChildToBack(finallyTarget);
-            pn.addChildToBack(new Node(Token.FINALLY, finallyNode));
+            Node fBlock = new Node(Token.FINALLY, finallyNode);
+            fBlock.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
+            pn.addChildToBack(fBlock);
         }
         pn.addChildToBack(endTarget);
-        return pn;
+        localBlock.addChildToBack(pn);
+        return localBlock;
     }
 
     /**
@@ -1066,14 +1070,10 @@ public class IRFactory {
         }
     }
 
-    public Node createNewLocal(Node n) {
-        return new Node(Token.NEWLOCAL, n);
-    }
-
-    public Node createUseLocal(Node newLocal) {
-        if (Token.NEWLOCAL != newLocal.getType()) Kit.codeBug();
+    public Node createUseLocal(Node localBlock) {
+        if (Token.LOCAL_BLOCK != localBlock.getType()) Kit.codeBug();
         Node result = new Node(Token.USELOCAL);
-        result.putProp(Node.LOCAL_PROP, newLocal);
+        result.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
         return result;
     }
 

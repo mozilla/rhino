@@ -128,7 +128,7 @@ public class Token
         THROW       = 53,
         IN          = 54,
         INSTANCEOF  = 55,
-        NEWLOCAL    = 56,
+        SAVELOCAL   = 56,
         USELOCAL    = 57,
         GETBASE     = 58,
         GETVAR      = 59,
@@ -194,18 +194,18 @@ public class Token
         LABEL       = 109, // label
         TARGET      = 110,
         LOOP        = 111,
-        ENUMDONE    = 112,
-        EXPRSTMT    = 113,
-        PARENT      = 114,
-        JSR         = 115,
-        NEWTEMP     = 116,
-        USETEMP     = 117,
-        SCRIPT      = 118,   // top-level node for entire script
-        TYPEOFNAME  = 119,  // for typeof(simple-name)
-        USE_STACK   = 120,
-        SETPROP_OP  = 121, // x.y op= something
-        SETELEM_OP  = 122, // x[y] op= something
-        INIT_LIST   = 123,
+        EXPRSTMT    = 112,
+        PARENT      = 113,
+        JSR         = 114,
+        NEWTEMP     = 115,
+        USETEMP     = 116,
+        SCRIPT      = 117,   // top-level node for entire script
+        TYPEOFNAME  = 118,  // for typeof(simple-name)
+        USE_STACK   = 119,
+        SETPROP_OP  = 120, // x.y op= something
+        SETELEM_OP  = 121, // x[y] op= something
+        INIT_LIST   = 122,
+        LOCAL_BLOCK = 123,
 
         LAST_TOKEN  = 123;
 
@@ -270,7 +270,7 @@ public class Token
                 case THROW:           return "throw";
                 case IN:              return "in";
                 case INSTANCEOF:      return "instanceof";
-                case NEWLOCAL:        return "newlocal";
+                case SAVELOCAL:       return "savelocal";
                 case USELOCAL:        return "uselocal";
                 case GETBASE:         return "getbase";
                 case GETVAR:          return "getvar";
@@ -325,7 +325,6 @@ public class Token
                 case LABEL:           return "label";
                 case TARGET:          return "target";
                 case LOOP:            return "loop";
-                case ENUMDONE:        return "enumdone";
                 case EXPRSTMT:        return "exprstmt";
                 case PARENT:          return "parent";
                 case JSR:             return "jsr";
@@ -337,6 +336,7 @@ public class Token
                 case SETPROP_OP:      return "setprop_op";
                 case SETELEM_OP:      return "setelem_op";
                 case INIT_LIST:       return "init_list";
+                case LOCAL_BLOCK:     return "local_block";
             }
             return "<unknown="+token+">";
         }

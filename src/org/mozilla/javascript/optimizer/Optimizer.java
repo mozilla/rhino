@@ -707,6 +707,7 @@ class Optimizer
             Node node = iter.getCurrent();
             int type = node.getType();
             if (type == Token.BLOCK
+                || type == Token.LOCAL_BLOCK
                 || type == Token.LOOP
                 || type == Token.FUNCTION)
             {

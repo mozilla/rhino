@@ -1193,16 +1193,6 @@ class BodyCodegen
         argsLocal = reserveWordLocal(directParameterCount <= 0
                                      ? 4 : (3 * directParameterCount) + 4);
 
-        // These locals are to be pre-allocated since they need function scope.
-        // They are primarily used by the exception handling mechanism
-        int localCount = scriptOrFn.getLocalCount();
-        if (localCount != 0) {
-            itsLocalAllocationBase = (short)(argsLocal + 1);
-            for (int i = 0; i < localCount; i++) {
-                reserveWordLocal(itsLocalAllocationBase + i);
-            }
-        }
-
         if (fnCurrent == null) {
             // See comments in visitRegexp
             if (scriptOrFn.getRegexpCount() != 0) {
@@ -1429,6 +1419,19 @@ class BodyCodegen
                 }
                 break;
 
+              case Token.LOCAL_BLOCK: {
+                visitStatement(node);
+                int local = getNewWordLocal();
+                node.putIntProp(Node.LOCAL_PROP, local);
+                while (child != null) {
+                    generateCodeFromNode(child, node);
+                    child = child.getNext();
+                }
+                releaseWordLocal((short)local);
+                node.removeProp(Node.LOCAL_PROP);
+                break;
+              }
+
               case Token.USE_STACK:
                 break;
 
@@ -1548,16 +1551,14 @@ class BodyCodegen
                                        "(Ljava/lang/Object;"
                                        +"Lorg/mozilla/javascript/Scriptable;"
                                        +")Ljava/lang/Object;");
-                short x = getNewWordLocal();
-                cfw.addAStore(x);
-                node.putIntProp(Node.LOCAL_PROP, x);
+                int local = getLocalBlockRegister(node);
+                cfw.addAStore(local);
                 break;
               }
 
               case Token.ENUM_NEXT:
               case Token.ENUM_ID: {
-                Node init = (Node) node.getProp(Node.ENUM_PROP);
-                int local = init.getExistingIntProp(Node.LOCAL_PROP);
+                int local = getLocalBlockRegister(node);
                 cfw.addALoad(local);
                 if (type == Token.ENUM_NEXT) {
                     addScriptRuntimeInvoke(
@@ -1566,13 +1567,6 @@ class BodyCodegen
                     addScriptRuntimeInvoke(
                         "enumId", "(Ljava/lang/Object;)Ljava/lang/String;");
                 }
-                break;
-              }
-
-              case Token.ENUMDONE: {
-                Node init = (Node) node.getProp(Node.ENUM_PROP);
-                int local = init.getExistingIntProp(Node.LOCAL_PROP);
-                releaseWordLocal((short)local);
                 break;
               }
 
@@ -1953,12 +1947,8 @@ class BodyCodegen
                 visitUseTemp(node, child);
                 break;
 
-              case Token.NEWLOCAL:
-                visitNewLocal(node, child);
-                break;
-
               case Token.USELOCAL:
-                visitUseLocal(node, child);
+                cfw.addALoad(getLocalBlockRegister(node));
                 break;
 
               default:
@@ -2594,7 +2584,7 @@ class BodyCodegen
         int realEnd = cfw.acquireLabel();
         cfw.add(ByteCode.GOTO, realEnd);
 
-
+        int exceptionLocal = getLocalBlockRegister(node);
         // javascript handler; unwrap exception and GOTO to javascript
         // catch area.
         if (catchTarget != null) {
@@ -2602,20 +2592,20 @@ class BodyCodegen
             int catchLabel = catchTarget.labelId;
 
             generateCatchBlock(JAVASCRIPT_EXCEPTION, savedVariableObject,
-                               catchLabel, startLabel);
+                               catchLabel, startLabel, exceptionLocal);
             /*
              * catch WrappedExceptions, see if they are wrapped
              * JavaScriptExceptions. Otherwise, rethrow.
              */
             generateCatchBlock(EVALUATOR_EXCEPTION, savedVariableObject,
-                               catchLabel, startLabel);
+                               catchLabel, startLabel, exceptionLocal);
 
             /*
                 we also need to catch EcmaErrors and feed the
                 associated error object to the handler
             */
             generateCatchBlock(ECMAERROR_EXCEPTION, savedVariableObject,
-                               catchLabel, startLabel);
+                               catchLabel, startLabel, exceptionLocal);
         }
 
         // finally handler; catch all exceptions, store to a local; JSR to
@@ -2623,25 +2613,23 @@ class BodyCodegen
         if (finallyTarget != null) {
             int finallyHandler = cfw.acquireLabel();
             cfw.markHandler(finallyHandler);
+            cfw.addAStore(exceptionLocal);
 
             // reset the variable object local
             cfw.addALoad(savedVariableObject);
             cfw.addAStore(variableObjectLocal);
-
-            short exnLocal = itsLocalAllocationBase++;
-            cfw.addAStore(exnLocal);
 
             // get the label to JSR to
             int finallyLabel = finallyTarget.labelId;
             cfw.add(ByteCode.JSR, finallyLabel);
 
             // rethrow
-            cfw.addALoad(exnLocal);
+            cfw.addALoad(exceptionLocal);
             cfw.add(ByteCode.ATHROW);
 
             // mark the handler
             cfw.addExceptionHandler(startLabel, finallyLabel,
-                                          finallyHandler, null); // catch any
+                                    finallyHandler, null); // catch any
         }
         releaseWordLocal(savedVariableObject);
         cfw.markLabel(realEnd);
@@ -2653,13 +2641,14 @@ class BodyCodegen
 
     private void generateCatchBlock(int exceptionType,
                                     short savedVariableObject,
-                                    int catchLabel,
-                                    int startLabel)
+                                    int catchLabel, int startLabel,
+                                    int exceptionLocal)
     {
         int handler = cfw.acquireLabel();
         cfw.markHandler(handler);
 
         // MS JVM gets cranky if the exception object is left on the stack
+        // XXX: is it possible to use on MS JVM exceptionLocal to store it?
         short exceptionObject = getNewWordLocal();
         cfw.addAStore(exceptionObject);
 
@@ -2680,6 +2669,7 @@ class BodyCodegen
             +"Ljava/lang/Throwable;"
             +")Ljava/lang/Object;");
 
+        cfw.addAStore(exceptionLocal);
         String exceptionName;
 
         if (exceptionType == JAVASCRIPT_EXCEPTION) {
@@ -3772,73 +3762,36 @@ class BodyCodegen
             +")Lorg/mozilla/javascript/Scriptable;");
     }
 
-    private short getLocalFromNode(Node node)
+    private int getLocalBlockRegister(Node node)
     {
-        int local = node.getIntProp(Node.LOCAL_PROP, -1);
-        if (local == -1) {
-            // for NEWLOCAL & USELOCAL, use the next pre-allocated
-            // register, otherwise for NEWTEMP & USETEMP, get the
-            // next available from the pool
-            local = ((node.getType() == Token.NEWLOCAL)
-                                || (node.getType() == Token.USELOCAL)) ?
-                            itsLocalAllocationBase++ : getNewWordLocal();
-
-            node.putIntProp(Node.LOCAL_PROP, local);
-        }
-        return (short)local;
+        Node localBlock = (Node)node.getProp(Node.LOCAL_BLOCK_PROP);
+        int localSlot = localBlock.getExistingIntProp(Node.LOCAL_PROP);
+        return localSlot;
     }
 
     private void visitNewTemp(Node node, Node child)
     {
-        while (child != null) {
-            generateCodeFromNode(child, node);
-            child = child.getNext();
-        }
-        short local = getLocalFromNode(node);
+        generateCodeFromNode(child, node);
+        int local = getNewWordLocal();
+        node.putIntProp(Node.LOCAL_PROP, local);
         cfw.add(ByteCode.DUP);
         cfw.addAStore(local);
         if (node.getIntProp(Node.USES_PROP, 0) == 0)
-            releaseWordLocal(local);
+            releaseWordLocal((short)local);
     }
 
     private void visitUseTemp(Node node, Node child)
     {
-        while (child != null) {
-            generateCodeFromNode(child, node);
-            child = child.getNext();
-        }
         Node temp = (Node) node.getProp(Node.TEMP_PROP);
-        short local = getLocalFromNode(temp);
+        int local = temp.getExistingIntProp(Node.LOCAL_PROP);
         cfw.addALoad(local);
         int n = temp.getIntProp(Node.USES_PROP, 0);
         if (n <= 1) {
-            releaseWordLocal(local);
+            releaseWordLocal((short)local);
         }
         if (n != 0 && n != Integer.MAX_VALUE) {
             temp.putIntProp(Node.USES_PROP, n - 1);
         }
-    }
-
-    private void visitNewLocal(Node node, Node child)
-    {
-        while (child != null) {
-            generateCodeFromNode(child, node);
-            child = child.getNext();
-        }
-        short local = getLocalFromNode(node);
-        cfw.add(ByteCode.DUP);
-        cfw.addAStore(local);
-    }
-
-    private void visitUseLocal(Node node, Node child)
-    {
-        while (child != null) {
-            generateCodeFromNode(child, node);
-            child = child.getNext();
-        }
-        Node temp = (Node) node.getProp(Node.LOCAL_PROP);
-        short local = getLocalFromNode(temp);
-        cfw.addALoad(local);
     }
 
     private void addScriptRuntimeInvoke(String methodName,
@@ -3952,7 +3905,6 @@ class BodyCodegen
     private boolean hasVarsInRegs;
     private boolean inDirectCallFunction;
     private boolean itsForcedObjectParameters;
-    private short itsLocalAllocationBase;
     private int epilogueLabel;
 
     // special known locals. If you add a new local here, be sure
