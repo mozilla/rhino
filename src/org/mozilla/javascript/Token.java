@@ -128,8 +128,8 @@ public class Token
         THROW       = 53,
         IN          = 54,
         INSTANCEOF  = 55,
-        SAVELOCAL   = 56,
-        USELOCAL    = 57,
+        LOCAL_SAVE  = 56,
+        LOCAL_LOAD  = 57,
         GETBASE     = 58,
         GETVAR      = 59,
         SETVAR      = 60,
@@ -270,8 +270,8 @@ public class Token
                 case THROW:           return "throw";
                 case IN:              return "in";
                 case INSTANCEOF:      return "instanceof";
-                case SAVELOCAL:       return "savelocal";
-                case USELOCAL:        return "uselocal";
+                case LOCAL_SAVE:      return "local_save";
+                case LOCAL_LOAD:      return "local_load";
                 case GETBASE:         return "getbase";
                 case GETVAR:          return "getvar";
                 case SETVAR:          return "setvar";

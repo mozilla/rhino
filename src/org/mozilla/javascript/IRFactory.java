@@ -1072,7 +1072,7 @@ public class IRFactory {
 
     public Node createUseLocal(Node localBlock) {
         if (Token.LOCAL_BLOCK != localBlock.getType()) Kit.codeBug();
-        Node result = new Node(Token.USELOCAL);
+        Node result = new Node(Token.LOCAL_LOAD);
         result.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
         return result;
     }

@@ -114,19 +114,19 @@ public class NodeTransformer {
                        (next.getType() == Token.LABEL ||
                         next.getType() == Token.TARGET))
                     next = next.getNext();
-				if (next == null)
+                if (next == null)
                     break;
                 parent.addChildAfter(breakTarget, next);
                 labelNode.target = breakTarget;
                 if (next.getType() == Token.LOOP) {
                     labelNode.setContinue(((Node.Jump)next).getContinue());
                 } else if (next.getType() == Token.LOCAL_BLOCK) {
-					// check for "for (in)" loop that is wrapped in local_block
-					Node child = next.getFirstChild();
-					if (child != null && child.getType() == Token.LOOP) {
-                    	labelNode.setContinue(((Node.Jump)child).getContinue());
-					}
-				}
+                    // check for "for (in)" loop that is wrapped in local_block
+                    Node child = next.getFirstChild();
+                    if (child != null && child.getType() == Token.LOOP) {
+                        labelNode.setContinue(((Node.Jump)child).getContinue());
+                    }
+                }
 
                 loops.push(node);
                 loopEnds.push(breakTarget);

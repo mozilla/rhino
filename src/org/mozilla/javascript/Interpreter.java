@@ -177,6 +177,10 @@ public class Interpreter
         itsData.itsFunctionType = theFunction.getFunctionType();
         itsData.itsNeedsActivation = theFunction.requiresActivation();
         itsData.itsName = theFunction.getFunctionName();
+        if ((theFunction.getParamAndVarCount() & ~0xFF) != 0) {
+            // Can not optimize vars as their index should fit 1 byte
+            itsData.itsNeedsActivation = true;
+        }
         if (!theFunction.getIgnoreDynamicScope()) {
             if (cx.hasCompileFunctionsWithDynamicScope()) {
                 itsData.useDynamicScope = true;
@@ -371,6 +375,10 @@ public class Interpreter
 
             case Token.LOCAL_BLOCK :
                 stackShouldBeZero = true;
+                if ((itsLocalTop & ~0xFF) != 0) {
+                    throw Context.reportRuntimeError(
+                        "Program too complex (out of locals)");
+                }
                 node.putIntProp(Node.LOCAL_PROP, itsLocalTop);
                 ++itsLocalTop;
                 if (itsLocalTop > itsData.itsMaxLocals) {
@@ -383,6 +391,16 @@ public class Interpreter
                 }
                 --itsLocalTop;
                 break;
+
+            case Token.LOCAL_LOAD : {
+                stackDelta = 1;
+                iCodeTop = addToken(Token.LOCAL_LOAD, iCodeTop);
+                iCodeTop = addLocalBlockRef(node, iCodeTop);
+                itsStackDepth++;
+                if (itsStackDepth > itsData.itsMaxStack)
+                    itsData.itsMaxStack = itsStackDepth;
+                break;
+            }
 
             case Token.COMMA :
                 stackDelta = 1;
@@ -515,16 +533,6 @@ public class Interpreter
                 break;
             }
 
-            case Token.USELOCAL : {
-                stackDelta = 1;
-                iCodeTop = addToken(Token.USELOCAL, iCodeTop);
-                iCodeTop = addLocalBlockRef(node, iCodeTop);
-                itsStackDepth++;
-                if (itsStackDepth > itsData.itsMaxStack)
-                    itsData.itsMaxStack = itsStackDepth;
-                break;
-            }
-
             case Token.IFEQ :
             case Token.IFNE :
                 iCodeTop = generateICode(child, iCodeTop);
@@ -552,9 +560,8 @@ public class Interpreter
                     itsData.itsMaxStack = itsStackDepth;
 
                 int finallyRegister = getLocalBlockRef(node);
-                iCodeTop = addToken(Token.SAVELOCAL, iCodeTop);
+                iCodeTop = addToken(Token.LOCAL_SAVE, iCodeTop);
                 iCodeTop = addByte(finallyRegister, iCodeTop);
-                iCodeTop = addToken(Token.POP, iCodeTop);
                 itsStackDepth--;
                 while (child != null) {
                     iCodeTop = generateICode(child, iCodeTop);
@@ -1199,13 +1206,13 @@ public class Interpreter
         itsData.itsICode[pos + 1] = (byte)offset;
     }
 
-    private int addByte(int b, int iCodeTop)
+    private int addByte(int value, int iCodeTop)
     {
         byte[] array = itsData.itsICode;
         if (iCodeTop == array.length) {
             array = increaseICodeCapasity(iCodeTop, 1);
         }
-        array[iCodeTop++] = (byte)b;
+        array[iCodeTop++] = (byte)value;
         return iCodeTop;
     }
 
@@ -1457,8 +1464,8 @@ public class Interpreter
                     case Icode_VARDEC :
                     case Token.GETVAR :
                     case Token.SETVAR :
-                    case Token.SAVELOCAL :
-                    case Token.USELOCAL : {
+                    case Token.LOCAL_SAVE :
+                    case Token.LOCAL_LOAD : {
                         int slot = (iCode[pc] & 0xFF);
                         out.println(tname + " " + slot);
                         pc++;
@@ -1655,8 +1662,8 @@ public class Interpreter
             case Icode_VARDEC :
             case Token.GETVAR :
             case Token.SETVAR :
-            case Token.SAVELOCAL :
-            case Token.USELOCAL :
+            case Token.LOCAL_SAVE :
+            case Token.LOCAL_LOAD :
                 // slot index
                 return 1 + 1;
 
@@ -2488,13 +2495,14 @@ public class Interpreter
         stack[stackTop] = ScriptRuntime.postDecrementElem(lhs, rhs, scope);
         break;
     }
-    case Token.SAVELOCAL : {
+    case Token.LOCAL_SAVE : {
         int slot = (iCode[++pc] & 0xFF);
         stack[LOCAL_SHFT + slot] = stack[stackTop];
         sDbl[LOCAL_SHFT + slot] = sDbl[stackTop];
+        --stackTop;
         break;
     }
-    case Token.USELOCAL : {
+    case Token.LOCAL_LOAD : {
         int slot = (iCode[++pc] & 0xFF);
         ++stackTop;
         stack[stackTop] = stack[LOCAL_SHFT + slot];

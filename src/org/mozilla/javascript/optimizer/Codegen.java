@@ -1947,7 +1947,7 @@ class BodyCodegen
                 visitUseTemp(node, child);
                 break;
 
-              case Token.USELOCAL:
+              case Token.LOCAL_LOAD:
                 cfw.addALoad(getLocalBlockRegister(node));
                 break;
 
