@@ -134,7 +134,7 @@ public class Token
         GETVAR      = 59,
         SETVAR      = 60,
         UNDEFINED   = 61,
-        NEWSCOPE    = 62,
+        CATCH_SCOPE = 62,
         ENUM_INIT   = 63,
         ENUM_NEXT   = 64,
         ENUM_ID     = 65,
@@ -278,7 +278,7 @@ public class Token
                 case UNDEFINED:       return "undefined";
                 case GETTHIS:         return "getthis";
                 case TRY:             return "try";
-                case NEWSCOPE:        return "newscope";
+                case CATCH_SCOPE:     return "catch_scope";
                 case ENUM_INIT:       return "enum_init";
                 case ENUM_NEXT:       return "enum_next";
                 case ENUM_ID:         return "enum_id";

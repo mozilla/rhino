@@ -896,12 +896,11 @@ public class Interpreter
                 itsStackDepth--;
                 break;
 
-            case Token.NEWSCOPE :
+            case Token.CATCH_SCOPE :
                 stackDelta = 1;
-                iCodeTop = addToken(Token.NEWSCOPE, iCodeTop);
-                itsStackDepth++;
-                if (itsStackDepth > itsData.itsMaxStack)
-                    itsData.itsMaxStack = itsStackDepth;
+                iCodeTop = generateICode(child, iCodeTop);
+                iCodeTop = addToken(Token.CATCH_SCOPE, iCodeTop);
+                iCodeTop = addString(node.getString(), iCodeTop);
                 break;
 
             case Token.LEAVEWITH :
@@ -1527,6 +1526,7 @@ public class Interpreter
                         pc += 2;
                         break;
                     }
+                    case Token.CATCH_SCOPE :
                     case Icode_TYPEOFNAME :
                     case Icode_NAME_AND_THIS :
                     case Token.GETBASE :
@@ -1583,7 +1583,6 @@ public class Interpreter
             case Icode_SETPARENT :
             case Token.DELPROP :
             case Token.TYPEOF :
-            case Token.NEWSCOPE :
             case Token.ENTERWITH :
             case Token.LEAVEWITH :
             case Token.RETURN :
@@ -1696,6 +1695,7 @@ public class Interpreter
                 // index of double number
                 return 1 + 2;
 
+            case Token.CATCH_SCOPE :
             case Icode_TYPEOFNAME :
             case Icode_NAME_AND_THIS :
             case Token.GETBASE :
@@ -2783,9 +2783,12 @@ public class Interpreter
         scope = ScriptRuntime.leaveWith(scope);
         --withDepth;
         break;
-    case Token.NEWSCOPE :
-        stack[++stackTop] = ScriptRuntime.newScope();
+    case Token.CATCH_SCOPE : {
+        String name = strings[getIndex(iCode, pc + 1)];
+        stack[stackTop] = ScriptRuntime.newCatchScope(name, stack[stackTop]);
+        pc += 2;
         break;
+    }
     case Token.ENUM_INIT : {
         int slot = (iCode[++pc] & 0xFF);
         Object lhs = stack[stackTop];

@@ -2166,8 +2166,12 @@ public class ScriptRuntime {
         }
     }
 
-    public static Scriptable newScope() {
-        return new NativeObject();
+    public static Scriptable newCatchScope(String exceptionName,
+                                           Object exceptionObject)
+    {
+        Scriptable scope = new NativeObject();
+        ScriptableObject.putProperty(scope, exceptionName, exceptionObject);
+        return scope;
     }
 
     public static Scriptable enterWith(Object value, Scriptable scope) {

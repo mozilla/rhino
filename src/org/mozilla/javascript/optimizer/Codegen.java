@@ -1525,9 +1525,12 @@ class BodyCodegen
                 }
                 break;
 
-              case Token.NEWSCOPE:
-                addScriptRuntimeInvoke("newScope",
-                                       "()Lorg/mozilla/javascript/Scriptable;");
+              case Token.CATCH_SCOPE:
+                cfw.addPush(node.getString());
+                generateCodeFromNode(child, node);
+                addScriptRuntimeInvoke("newCatchScope",
+                                       "(Ljava/lang/String;Ljava/lang/Object;"
+                                       +")Lorg/mozilla/javascript/Scriptable;");
                 break;
 
               case Token.ENTERWITH:
@@ -2690,7 +2693,7 @@ class BodyCodegen
 
         // mark the handler
         cfw.addExceptionHandler(startLabel, catchLabel, handler,
-                                      exceptionName);
+                                exceptionName);
 
         cfw.add(ByteCode.GOTO, catchLabel);
     }

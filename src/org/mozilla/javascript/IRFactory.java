@@ -128,7 +128,7 @@ public class IRFactory {
                               int lineno)
     {
         if (catchCond == null) {
-            catchCond = new Node(Token.TRUE);
+            catchCond = new Node(Token.EMPTY);
         }
         return new Node(Token.CATCH, (Node)createName(varName),
                                (Node)catchCond, (Node)stmts, lineno);
@@ -427,7 +427,7 @@ public class IRFactory {
 
                 try {
                         throw 3;
-                } catch (e: e instanceof Object) {
+                } catch (e if e instanceof Object) {
                         print("object");
                 } catch (e2) {
                         print(e2);
@@ -438,16 +438,12 @@ public class IRFactory {
                 try {
                         throw 3;
                 } catch (x) {
-                        o = newScope();
-                        o.e = x;
-                        with (o) {
+                        with (newCatchScope(e, x)) {
                                 if (e instanceof Object) {
                                         print("object");
                                 }
                         }
-                        o2 = newScope();
-                        o2.e2 = x;
-                        with (o2) {
+                        with (newCatchScope(e2, x)) {
                                 if (true) {
                                         print(e2);
                                 }
@@ -469,8 +465,8 @@ public class IRFactory {
             // add [jsr finally?] goto end to each catch block
             // expects catchNode children to be (cond block) pairs.
             Node cb = catchNodes.getFirstChild();
+            boolean hasDefault = false;
             while (cb != null) {
-                Node catchStmt = new Node(Token.BLOCK);
                 int catchLineNo = cb.getLineno();
 
                 Node name = cb.getFirstChild();
@@ -480,36 +476,38 @@ public class IRFactory {
                 cb.removeChild(cond);
                 cb.removeChild(catchBlock);
 
-                Node newScope = createNewLocal(new Node(Token.NEWSCOPE));
-                Node initScope = new Node(Token.SETPROP, newScope,
-                                          Node.newString(name.getString()),
-                                          createUseLocal(exn));
-                catchStmt.addChildToBack(new Node(Token.POP, initScope));
-
                 catchBlock.addChildToBack(new Node(Token.LEAVEWITH));
                 Node.Jump GOTOToEndCatch = new Node.Jump(Token.GOTO);
                 GOTOToEndCatch.target = endCatch;
                 catchBlock.addChildToBack(GOTOToEndCatch);
-
-                Node ifStmt = (Node) createIf(cond, catchBlock, null, catchLineNo);
+                Node condStmt;
+                if (cond.getType() == Token.EMPTY) {
+                    condStmt = catchBlock;
+                    hasDefault = true;
+                } else {
+                    condStmt = (Node) createIf(cond, catchBlock, null,
+                                               catchLineNo);
+                }
                 // Try..catch produces "with" code in order to limit
                 // the scope of the exception object.
                 // OPT: We should be able to figure out the correct
                 //      scoping at compile-time and avoid the
                 //      runtime overhead.
-                Node withStmt = (Node) createWith(createUseLocal(newScope),
-                                                  ifStmt, catchLineNo);
-                catchStmt.addChildToBack(withStmt);
-
-                pn.addChildToBack(catchStmt);
+                Node catchScope = Node.newString(Token.CATCH_SCOPE,
+                                                 name.getString());
+                catchScope.addChildToBack(createUseLocal(exn));
+                Node withStmt = (Node) createWith(catchScope, condStmt,
+                                                  catchLineNo);
+                pn.addChildToBack(withStmt);
 
                 // move to next cb
                 cb = cb.getNext();
             }
-
-            // Generate code to rethrow if no catch clause was executed
-            Node rethrow = new Node(Token.THROW, createUseLocal(exn));
-            pn.addChildToBack(rethrow);
+            if (!hasDefault) {
+                // Generate code to rethrow if no catch clause was executed
+                Node rethrow = new Node(Token.THROW, createUseLocal(exn));
+                pn.addChildToBack(rethrow);
+            }
 
             pn.addChildToBack(endCatch);
             // add a JSR finally if needed
