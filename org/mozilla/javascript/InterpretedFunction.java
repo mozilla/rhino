@@ -92,7 +92,7 @@ class InterpretedFunction extends NativeFunction implements DebuggableScript {
     }
     
     public String getSourceName() {
-        return itsData.itsSource;
+        return itsData.itsSourceFile;
     }
     
     public Enumeration getLineNumbers() { 

@@ -130,7 +130,10 @@ public class Interpreter extends LabelTable {
         itsData.itsRegExpLiterals = regExpLiterals;
         if (printICode) dumpICode(itsData);
                                                                
-        return new InterpretedScript(itsData, cx);
+        InterpretedScript result = new InterpretedScript(itsData, cx);
+        if (cx.debugger != null)
+            cx.debugger.handleCompilationDone(cx, result, null);
+        return result;
     }
     
     private void generateNestedFunctions(Scriptable scope,
@@ -172,12 +175,17 @@ public class Interpreter extends LabelTable {
                                securityDomain);
             
         itsData.itsName = theFunction.getFunctionName();
+        itsData.itsSourceFile = (String) theFunction.getProp(
+                                    Node.SOURCENAME_PROP);
         itsData.itsSource = (String)theFunction.getProp(Node.SOURCE_PROP);
         itsData.itsNestedFunctions = itsNestedFunctions;
         itsData.itsRegExpLiterals = regExpLiterals;
         if (printICode) dumpICode(itsData);            
             
-        return new InterpretedFunction(itsData, cx);
+        InterpretedFunction result = new InterpretedFunction(itsData, cx);
+        if (cx.debugger != null)
+            cx.debugger.handleCompilationDone(cx, result, null);
+        return result;
     }
     
     boolean itsInFunctionFlag;
@@ -206,7 +214,7 @@ public class Interpreter extends LabelTable {
             }
             if (itsData.itsLineNumberTable != null) {
                 itsData.itsLineNumberTable.put(new Integer(lineNumber), 
-                                           new Integer(iCodeTop));
+                                               new Integer(iCodeTop));
             }
             iCodeTop = addByte((byte) TokenStream.LINE, iCodeTop);
             iCodeTop = addByte((byte)(lineNumber >> 8), iCodeTop);

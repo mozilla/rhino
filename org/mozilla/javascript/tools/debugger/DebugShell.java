@@ -49,6 +49,29 @@ public class DebugShell implements Debugger {
     public DebugShell(Context cx) {
         cx.setDebugger(this);
     }
+    
+    public class SourceEntry {
+        SourceEntry(String source, DebuggableScript fnOrScript) {
+            this.source = source;
+            this.fnOrScript = fnOrScript;
+        }
+        String source;
+        DebuggableScript fnOrScript;
+    };
+    
+    public void handleCompilationDone(Context cx, DebuggableScript fnOrScript, 
+                                      String source)
+    {
+        String sourceName = fnOrScript.getSourceName();
+        if (sourceName != null) {
+            Vector v = (Vector) sourceNames.get(sourceName);
+            if (v == null) {
+                v = new Vector();
+                sourceNames.put(sourceName, v);
+            }
+            v.addElement(new SourceEntry(source, fnOrScript));
+        }
+    }
 
     public void handleBreakpointHit(Context cx) {
         if (stopAtFrameDepth != -1) {
@@ -100,20 +123,7 @@ public class DebugShell implements Debugger {
                 args = line.substring(space+1);
             }
             if (command.equals("b")) {
-                Object o = scope.get(args, scope);  // XXX: b obj.f
-                if (o == Scriptable.NOT_FOUND) {
-                    Main.getErr().println("function " + args + " was not found");
-                    continue;
-                }
-                if (!(o instanceof DebuggableScript)) {
-                    Main.getErr().println("function " + args + " is not debuggable");
-                    continue;
-                }
-                int min = getMinLineNumber((DebuggableScript) o);
-                if (((DebuggableScript)o).placeBreakpoint(min))
-                    Main.getErr().println("Breakpoint placed at line " + min); /// xx source
-                else
-                    Main.getErr().println("Cannot place breakpoint for " + args);
+                breakpointCommand(scope, args);
             } else if (command.equals("c")) {
                 return;
             } else if (command.equals("p")) {
@@ -166,6 +176,57 @@ public class DebugShell implements Debugger {
                             f.getLineNumber() + ")");
     }
     
+    void breakpointCommand(Scriptable scope, String args) {
+        // First look for args that are of form "sourceName:lineNo"
+        int colon = args.indexOf(":");
+        if (colon != -1) {
+            String sourceName = args.substring(0, colon);
+            Vector v = (Vector) sourceNames.get(sourceName);
+            if (v == null) {
+                Main.getErr().println("Can't find source named \"" + 
+                                      sourceName + "\".");
+                return;
+            }
+            String lineString = args.substring(colon+1);
+            int lineNumber;
+            try {
+                lineNumber = Integer.parseInt(lineString);
+            } catch (NumberFormatException e) {
+                Main.getErr().println("Expected a line number "+
+                                      "following ':', had " + 
+                                      lineString + " instead.");
+                return;
+            }
+            int i=0;
+            for (; i < v.size(); i++) {
+                SourceEntry se = (SourceEntry) v.elementAt(i);
+                if (se.fnOrScript.placeBreakpoint(lineNumber))
+                    break;
+            }
+            if (i == v.size()) {
+                Main.getErr().println("Can't place breakpoint at line " +
+                                      lineNumber + ".");
+            }
+            return;
+        }                    
+                
+        // Now look for a function name
+        Object o = scope.get(args, scope);  // XXX: b obj.f
+        if (o == Scriptable.NOT_FOUND) {
+            Main.getErr().println("function " + args + " was not found");
+            return;
+        }
+        if (!(o instanceof DebuggableScript)) {
+            Main.getErr().println("function " + args + " is not debuggable");
+            return;
+        }
+        int min = getMinLineNumber((DebuggableScript) o);
+        if (((DebuggableScript)o).placeBreakpoint(min))
+            Main.getErr().println("Breakpoint placed at line " + min); /// xx source
+        else
+            Main.getErr().println("Cannot place breakpoint for " + args);
+    }
+    
     int getMinLineNumber(DebuggableScript ds) {
         Enumeration e = ds.getLineNumbers();
         int min = Integer.MAX_VALUE;
@@ -180,4 +241,5 @@ public class DebugShell implements Debugger {
     
     private int stopAtFrameDepth = -1;
     private String lastCommand = null;
+    private Hashtable sourceNames = new Hashtable();
 }

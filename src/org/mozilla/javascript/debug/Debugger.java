@@ -41,10 +41,8 @@ import org.mozilla.javascript.Context;
 
 public interface Debugger {
     
-    /* LATER
     void handleCompilationDone(Context cx, DebuggableScript fnOrScript, 
                                String source);
-    */
 
     void handleBreakpointHit(Context cx);
     

@@ -68,7 +68,8 @@ class InterpreterData {
     
     public boolean placeBreakpoint(int line) { // XXX throw exn?
         int offset = getOffset(line);
-        if (offset != -1 && itsICode[offset] == TokenStream.LINE)
+        if (offset != -1 && (itsICode[offset] == TokenStream.LINE ||
+                             itsICode[offset] == TokenStream.BREAKPOINT))
         {
             itsICode[offset] = (byte) TokenStream.BREAKPOINT;
             return true;

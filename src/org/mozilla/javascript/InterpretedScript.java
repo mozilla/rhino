@@ -76,7 +76,7 @@ public class InterpretedScript extends NativeScript implements DebuggableScript 
     }
     
     public String getSourceName() {
-        return itsData.itsSource;
+        return itsData.itsSourceFile;
     }
     
     public Enumeration getLineNumbers() {
