@@ -336,15 +336,13 @@ public class IRFactory {
             return objNode;
         }
 
-        Node init = new Node(Token.ENUMINIT, objNode);
-        Node next = new Node(Token.ENUMNEXT);
-        next.putProp(Node.ENUM_PROP, init);
-        Node temp = createNewTemp(next);
-        Node cond = new Node(Token.NE);
-        cond.addChildToBack(temp);
-        cond.addChildToBack(new Node(Token.NULL));
+        Node init = new Node(Token.ENUM_INIT, objNode);
+        Node cond = new Node(Token.ENUM_NEXT);
+        cond.putProp(Node.ENUM_PROP, init);
+        Node id = new Node(Token.ENUM_ID);
+        id.putProp(Node.ENUM_PROP, init);
         Node newBody = new Node(Token.BLOCK);
-        Node assign = (Node) createAssignment(lvalue, createUseTemp(temp));
+        Node assign = (Node) createAssignment(lvalue, id);
         newBody.addChildToBack(new Node(Token.POP, assign));
         newBody.addChildToBack((Node) body);
         Node result = (Node) createWhile(cond, newBody, lineno);
@@ -1067,37 +1065,6 @@ public class IRFactory {
             //  exception. Should we compile an exception into the code?
             ts.reportCurrentLineError("msg.bad.lhs.assign", null);
             return left;
-        }
-    }
-
-    public Node createNewTemp(Node n) {
-        int type = n.getType();
-        if (type == Token.STRING || type == Token.NUMBER) {
-            // Optimization: clone these values rather than storing
-            // and loading from a temp
-            return n;
-        }
-        return new Node(Token.NEWTEMP, n);
-    }
-
-    public Node createUseTemp(Node newTemp)
-    {
-        switch (newTemp.getType()) {
-          case Token.NEWTEMP: {
-            Node result = new Node(Token.USETEMP);
-            result.putProp(Node.TEMP_PROP, newTemp);
-            int n = newTemp.getIntProp(Node.USES_PROP, 0);
-            if (n != Integer.MAX_VALUE) {
-                newTemp.putIntProp(Node.USES_PROP, n + 1);
-            }
-            return result;
-          }
-          case Token.STRING:
-            return Node.newString(newTemp.getString());
-          case Token.NUMBER:
-            return Node.newNumber(newTemp.getDouble());
-          default:
-            throw Kit.codeBug();
         }
     }
 

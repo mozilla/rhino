@@ -123,8 +123,8 @@ class OptTransformer extends NodeTransformer {
             left.getType() != Token.GETELEM)
         {
             node.removeChild(left);
-            Node tmp = irFactory.createNewTemp(left);
-            Node use = irFactory.createUseTemp(tmp);
+            Node tmp = createNewTemp(left);
+            Node use = createUseTemp(tmp);
             use.putProp(Node.TEMP_PROP, tmp);
             Node parent = new Node(Token.PARENT, use);
             node.addChildToFront(parent);
@@ -133,9 +133,9 @@ class OptTransformer extends NodeTransformer {
         }
         Node leftLeft = left.getFirstChild();
         left.removeChild(leftLeft);
-        Node tmp = irFactory.createNewTemp(leftLeft);
+        Node tmp = createNewTemp(leftLeft);
         left.addChildToFront(tmp);
-        Node use = irFactory.createUseTemp(tmp);
+        Node use = createUseTemp(tmp);
         use.putProp(Node.TEMP_PROP, tmp);
         if (addGetThis)
             use = new Node(Token.GETTHIS, use);
@@ -198,6 +198,37 @@ class OptTransformer extends NodeTransformer {
                     }
                 }
             }
+        }
+    }
+
+    private Node createNewTemp(Node n) {
+        int type = n.getType();
+        if (type == Token.STRING || type == Token.NUMBER) {
+            // Optimization: clone these values rather than storing
+            // and loading from a temp
+            return n;
+        }
+        return new Node(Token.NEWTEMP, n);
+    }
+
+    private Node createUseTemp(Node newTemp)
+    {
+        switch (newTemp.getType()) {
+          case Token.NEWTEMP: {
+            Node result = new Node(Token.USETEMP);
+            result.putProp(Node.TEMP_PROP, newTemp);
+            int n = newTemp.getIntProp(Node.USES_PROP, 0);
+            if (n != Integer.MAX_VALUE) {
+                newTemp.putIntProp(Node.USES_PROP, n + 1);
+            }
+            return result;
+          }
+          case Token.STRING:
+            return Node.newString(newTemp.getString());
+          case Token.NUMBER:
+            return Node.newNumber(newTemp.getDouble());
+          default:
+            throw Kit.codeBug();
         }
     }
 

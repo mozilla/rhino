@@ -1538,17 +1538,40 @@ class BodyCodegen
                 visitLeaveWith(node, child);
                 break;
 
-              case Token.ENUMINIT:
-                visitEnumInit(node, child);
+              case Token.ENUM_INIT: {
+                generateCodeFromNode(child, node);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke("enumInit",
+                                       "(Ljava/lang/Object;"
+                                       +"Lorg/mozilla/javascript/Scriptable;"
+                                       +")Ljava/lang/Object;");
+                short x = getNewWordLocal();
+                cfw.addAStore(x);
+                node.putIntProp(Node.LOCAL_PROP, x);
                 break;
+              }
 
-              case Token.ENUMNEXT:
-                visitEnumNext(node, child);
+              case Token.ENUM_NEXT:
+              case Token.ENUM_ID: {
+                Node init = (Node) node.getProp(Node.ENUM_PROP);
+                int local = init.getExistingIntProp(Node.LOCAL_PROP);
+                cfw.addALoad(local);
+                if (type == Token.ENUM_NEXT) {
+                    addScriptRuntimeInvoke(
+                        "enumNext", "(Ljava/lang/Object;)Ljava/lang/Boolean;");
+                } else {
+                    addScriptRuntimeInvoke(
+                        "enumId", "(Ljava/lang/Object;)Ljava/lang/String;");
+                }
                 break;
+              }
 
-              case Token.ENUMDONE:
-                visitEnumDone(node, child);
+              case Token.ENUMDONE: {
+                Node init = (Node) node.getProp(Node.ENUM_PROP);
+                int local = init.getExistingIntProp(Node.LOCAL_PROP);
+                releaseWordLocal((short)local);
                 break;
+              }
 
               case Token.POP:
                 visitStatement(node);
@@ -2120,46 +2143,6 @@ class BodyCodegen
         }
         cfw.add(ByteCode.RET, finallyRegister);
         releaseWordLocal((short)finallyRegister);
-    }
-
-    private void visitEnumInit(Node node, Node child)
-    {
-        while (child != null) {
-            generateCodeFromNode(child, node);
-            child = child.getNext();
-        }
-        cfw.addALoad(variableObjectLocal);
-        addScriptRuntimeInvoke("initEnum",
-                               "(Ljava/lang/Object;"
-                               +"Lorg/mozilla/javascript/Scriptable;"
-                               +")Ljava/lang/Object;");
-        short x = getNewWordLocal();
-        cfw.addAStore(x);
-        node.putIntProp(Node.LOCAL_PROP, x);
-    }
-
-    private void visitEnumNext(Node node, Node child)
-    {
-        while (child != null) {
-            generateCodeFromNode(child, node);
-            child = child.getNext();
-        }
-        Node init = (Node) node.getProp(Node.ENUM_PROP);
-        int local = init.getExistingIntProp(Node.LOCAL_PROP);
-        cfw.addALoad(local);
-        addScriptRuntimeInvoke("nextEnum",
-                               "(Ljava/lang/Object;)Ljava/lang/Object;");
-    }
-
-    private void visitEnumDone(Node node, Node child)
-    {
-        while (child != null) {
-            generateCodeFromNode(child, node);
-            child = child.getNext();
-        }
-        Node init = (Node) node.getProp(Node.ENUM_PROP);
-        int local = init.getExistingIntProp(Node.LOCAL_PROP);
-        releaseWordLocal((short)local);
     }
 
     private void visitEnterWith(Node node, Node child)

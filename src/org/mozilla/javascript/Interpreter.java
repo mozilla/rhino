@@ -501,20 +501,16 @@ public class Interpreter
             }
 
             case Token.NEWLOCAL :
-            case Token.NEWTEMP :
                 stackDelta = 1;
                 iCodeTop = generateICode(child, iCodeTop);
-                iCodeTop = addToken(Token.NEWTEMP, iCodeTop);
+                iCodeTop = addToken(Token.NEWLOCAL, iCodeTop);
                 iCodeTop = addLocalRef(node, iCodeTop);
                 break;
 
-            case Token.USELOCAL :
-            case Token.USETEMP : {
+            case Token.USELOCAL : {
                 stackDelta = 1;
-                int prop = (type == Token.USELOCAL)
-                           ? Node.LOCAL_PROP : Node.TEMP_PROP;
-                Node temp = (Node) node.getProp(prop);
-                iCodeTop = addToken(Token.USETEMP, iCodeTop);
+                Node temp = (Node) node.getProp(Node.LOCAL_PROP);
+                iCodeTop = addToken(Token.USELOCAL, iCodeTop);
                 iCodeTop = addLocalRef(temp, iCodeTop);
                 itsStackDepth++;
                 if (itsStackDepth > itsData.itsMaxStack)
@@ -549,7 +545,7 @@ public class Interpreter
                     itsData.itsMaxStack = itsStackDepth;
 
                 int finallyRegister = allocateLocal();
-                iCodeTop = addToken(Token.NEWTEMP, iCodeTop);
+                iCodeTop = addToken(Token.NEWLOCAL, iCodeTop);
                 iCodeTop = addByte(finallyRegister, iCodeTop);
                 iCodeTop = addToken(Token.POP, iCodeTop);
                 itsStackDepth--;
@@ -1043,17 +1039,18 @@ public class Interpreter
                     itsData.itsMaxStack = itsStackDepth;
                 break;
 
-            case Token.ENUMINIT :
+            case Token.ENUM_INIT :
                 stackShouldBeZero = true;
                 iCodeTop = generateICode(child, iCodeTop);
-                iCodeTop = addToken(Token.ENUMINIT, iCodeTop);
+                iCodeTop = addToken(Token.ENUM_INIT, iCodeTop);
                 iCodeTop = addLocalRef(node, iCodeTop);
                 itsStackDepth--;
                 break;
 
-            case Token.ENUMNEXT : {
+            case Token.ENUM_NEXT :
+            case Token.ENUM_ID : {
                 stackDelta = 1;
-                iCodeTop = addToken(Token.ENUMNEXT, iCodeTop);
+                iCodeTop = addToken(type, iCodeTop);
                 Node init = (Node)node.getProp(Node.ENUM_PROP);
                 iCodeTop = addLocalRef(init, iCodeTop);
                 itsStackDepth++;
@@ -1437,7 +1434,7 @@ public class Interpreter
             for (int pc = 0; pc < iCodeLength; ) {
                 out.flush();
                 out.print(" [" + pc + "] ");
-                int token = iCode[pc] & 0xff;
+                int token = iCode[pc] & 0xFF;
                 String tname = icodeToName(token);
                 int old_pc = pc;
                 ++pc;
@@ -1459,14 +1456,15 @@ public class Interpreter
                         break;
                     }
                     case Icode_RETSUB :
-                    case Token.ENUMINIT :
-                    case Token.ENUMNEXT :
+                    case Token.ENUM_INIT :
+                    case Token.ENUM_NEXT :
+                    case Token.ENUM_ID :
                     case Icode_VARINC :
                     case Icode_VARDEC :
                     case Token.GETVAR :
                     case Token.SETVAR :
-                    case Token.NEWTEMP :
-                    case Token.USETEMP : {
+                    case Token.NEWLOCAL :
+                    case Token.USELOCAL : {
                         int slot = (iCode[pc] & 0xFF);
                         out.println(tname + " " + slot);
                         pc++;
@@ -1653,14 +1651,15 @@ public class Interpreter
                 return 1 + 2;
 
             case Icode_RETSUB :
-            case Token.ENUMINIT :
-            case Token.ENUMNEXT :
+            case Token.ENUM_INIT :
+            case Token.ENUM_NEXT :
+            case Token.ENUM_ID :
             case Icode_VARINC :
             case Icode_VARDEC :
             case Token.GETVAR :
             case Token.SETVAR :
-            case Token.NEWTEMP :
-            case Token.USETEMP :
+            case Token.NEWLOCAL :
+            case Token.USELOCAL :
                 // slot index
                 return 1 + 1;
 
@@ -1726,7 +1725,7 @@ public class Interpreter
         int iCodeLength = data.itsICodeTop;
         byte[] iCode = data.itsICode;
         for (int pc = 0; pc != iCodeLength;) {
-            int icodeToken = iCode[pc] & 0xff;
+            int icodeToken = iCode[pc] & 0xFF;
             int icodeLength = icodeTokenLength(icodeToken);
             if (icodeToken == Icode_LINE) {
                 if (icodeLength != 3) Kit.codeBug();
@@ -1929,7 +1928,7 @@ public class Interpreter
 
         Loop: for (;;) {
             try {
-                switch (iCode[pc] & 0xff) {
+                switch (iCode[pc] & 0xFF) {
     // Back indent to ease imlementation reading
 
     case Icode_CATCH: {
@@ -2489,13 +2488,13 @@ public class Interpreter
         stack[stackTop] = ScriptRuntime.postDecrementElem(lhs, rhs, scope);
         break;
     }
-    case Token.NEWTEMP : {
+    case Token.NEWLOCAL : {
         int slot = (iCode[++pc] & 0xFF);
         stack[LOCAL_SHFT + slot] = stack[stackTop];
         sDbl[LOCAL_SHFT + slot] = sDbl[stackTop];
         break;
     }
-    case Token.USETEMP : {
+    case Token.USELOCAL : {
         int slot = (iCode[++pc] & 0xFF);
         ++stackTop;
         stack[stackTop] = stack[LOCAL_SHFT + slot];
@@ -2787,19 +2786,22 @@ public class Interpreter
     case Token.NEWSCOPE :
         stack[++stackTop] = ScriptRuntime.newScope();
         break;
-    case Token.ENUMINIT : {
+    case Token.ENUM_INIT : {
         int slot = (iCode[++pc] & 0xFF);
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = doubleWrap(sDbl[stackTop]);
         --stackTop;
-        stack[LOCAL_SHFT + slot] = ScriptRuntime.initEnum(lhs, scope);
+        stack[LOCAL_SHFT + slot] = ScriptRuntime.enumInit(lhs, scope);
         break;
     }
-    case Token.ENUMNEXT : {
+    case Token.ENUM_NEXT :
+    case Token.ENUM_ID : {
         int slot = (iCode[++pc] & 0xFF);
         Object val = stack[LOCAL_SHFT + slot];
         ++stackTop;
-        stack[stackTop] = ScriptRuntime.nextEnum(val);
+        stack[stackTop] = ((iCode[pc - 1] & 0xFF) == Token.ENUM_NEXT)
+                          ? (Object)ScriptRuntime.enumNext(val)
+                          : (Object)ScriptRuntime.enumId(val);
         break;
     }
     case Icode_GETPROTO : {
@@ -2876,7 +2878,7 @@ public class Interpreter
     default : {
         dumpICode(idata);
         throw new RuntimeException
-            ("Unknown icode : "+(iCode[pc] & 0xff)+" @ pc : "+pc);
+            ("Unknown icode : "+(iCode[pc] & 0xFF)+" @ pc : "+pc);
     }
     // end of interpreter switch
                 }

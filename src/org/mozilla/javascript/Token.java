@@ -128,85 +128,86 @@ public class Token
         THROW       = 53,
         IN          = 54,
         INSTANCEOF  = 55,
-        NEWTEMP     = 56,
-        USETEMP     = 57,
+        NEWLOCAL    = 56,
+        USELOCAL    = 57,
         GETBASE     = 58,
         GETVAR      = 59,
         SETVAR      = 60,
         UNDEFINED   = 61,
         NEWSCOPE    = 62,
-        ENUMINIT    = 63,
-        ENUMNEXT    = 64,
-        THISFN      = 65,
+        ENUM_INIT   = 63,
+        ENUM_NEXT   = 64,
+        ENUM_ID     = 65,
+        THISFN      = 66,
 
-        LAST_BYTECODE_TOKEN = 65,
+        LAST_BYTECODE_TOKEN = 66,
         // End of interpreter bytecodes
 
-        GETTHIS     = 66,
-        TRY         = 67,
-        SEMI        = 68,  // semicolon
-        LB          = 69,  // left and right brackets
-        RB          = 70,
-        LC          = 71,  // left and right curlies (braces)
-        RC          = 72,
-        LP          = 73,  // left and right parentheses
-        RP          = 74,
-        COMMA       = 75,  // comma operator
-        ASSIGN      = 76, // simple assignment  (=)
-        ASSIGNOP    = 77, // assignment with operation (+= -= etc.)
-        HOOK        = 78, // conditional (?:)
-        COLON       = 79,
-        OR          = 80, // logical or (||)
-        AND         = 81, // logical and (&&)
-        INC         = 82, // increment/decrement (++ --)
-        DEC         = 83,
-        DOT         = 84, // member operator (.)
-        FUNCTION    = 85, // function keyword
-        EXPORT      = 86, // export keyword
-        IMPORT      = 87, // import keyword
-        IF          = 88, // if keyword
-        ELSE        = 89, // else keyword
-        SWITCH      = 90, // switch keyword
-        CASE        = 91, // case keyword
-        DEFAULT     = 92, // default keyword
-        WHILE       = 93, // while keyword
-        DO          = 94, // do keyword
-        FOR         = 95, // for keyword
-        BREAK       = 96, // break keyword
-        CONTINUE    = 97, // continue keyword
-        VAR         = 98, // var keyword
-        WITH        = 99, // with keyword
-        CATCH       = 100, // catch keyword
-        FINALLY     = 101, // finally keyword
-        VOID        = 102, // void keyword
-        RESERVED    = 103, // reserved keywords
+        GETTHIS     = 67,
+        TRY         = 68,
+        SEMI        = 69,  // semicolon
+        LB          = 70,  // left and right brackets
+        RB          = 71,
+        LC          = 72,  // left and right curlies (braces)
+        RC          = 73,
+        LP          = 74,  // left and right parentheses
+        RP          = 75,
+        COMMA       = 76,  // comma operator
+        ASSIGN      = 77, // simple assignment  (=)
+        ASSIGNOP    = 78, // assignment with operation (+= -= etc.)
+        HOOK        = 79, // conditional (?:)
+        COLON       = 80,
+        OR          = 81, // logical or (||)
+        AND         = 82, // logical and (&&)
+        INC         = 83, // increment/decrement (++ --)
+        DEC         = 84,
+        DOT         = 85, // member operator (.)
+        FUNCTION    = 86, // function keyword
+        EXPORT      = 87, // export keyword
+        IMPORT      = 88, // import keyword
+        IF          = 89, // if keyword
+        ELSE        = 90, // else keyword
+        SWITCH      = 91, // switch keyword
+        CASE        = 92, // case keyword
+        DEFAULT     = 93, // default keyword
+        WHILE       = 94, // while keyword
+        DO          = 95, // do keyword
+        FOR         = 96, // for keyword
+        BREAK       = 97, // break keyword
+        CONTINUE    = 98, // continue keyword
+        VAR         = 99, // var keyword
+        WITH        = 100, // with keyword
+        CATCH       = 101, // catch keyword
+        FINALLY     = 102, // finally keyword
+        VOID        = 103, // void keyword
+        RESERVED    = 104, // reserved keywords
 
-        EMPTY       = 104,
+        EMPTY       = 105,
 
         /* types used for the parse tree - these never get returned
          * by the scanner.
          */
 
-        BLOCK       = 105, // statement block
-        ARRAYLIT    = 106, // array literal
-        OBJLIT      = 107, // object literal
-        LABEL       = 108, // label
-        TARGET      = 109,
-        LOOP        = 110,
-        ENUMDONE    = 111,
-        EXPRSTMT    = 112,
-        PARENT      = 113,
-        JSR         = 114,
-        NEWLOCAL    = 115,
-        USELOCAL    = 116,
-        SCRIPT      = 117,   // top-level node for entire script
-        TYPEOFNAME  = 118,  // for typeof(simple-name)
-        USE_STACK   = 119,
-        SETPROP_OP  = 120, // x.y op= something
-        SETELEM_OP  = 121, // x[y] op= something
-        INIT_LIST   = 122,
+        BLOCK       = 106, // statement block
+        ARRAYLIT    = 107, // array literal
+        OBJLIT      = 108, // object literal
+        LABEL       = 109, // label
+        TARGET      = 110,
+        LOOP        = 111,
+        ENUMDONE    = 112,
+        EXPRSTMT    = 113,
+        PARENT      = 114,
+        JSR         = 115,
+        NEWTEMP     = 116,
+        USETEMP     = 117,
+        SCRIPT      = 118,   // top-level node for entire script
+        TYPEOFNAME  = 119,  // for typeof(simple-name)
+        USE_STACK   = 120,
+        SETPROP_OP  = 121, // x.y op= something
+        SETELEM_OP  = 122, // x[y] op= something
+        INIT_LIST   = 123,
 
-        LAST_TOKEN  = 122;
+        LAST_TOKEN  = 123;
 
     public static String name(int token)
     {
@@ -269,8 +270,8 @@ public class Token
                 case THROW:           return "throw";
                 case IN:              return "in";
                 case INSTANCEOF:      return "instanceof";
-                case NEWTEMP:         return "newtemp";
-                case USETEMP:         return "usetemp";
+                case NEWLOCAL:        return "newlocal";
+                case USELOCAL:        return "uselocal";
                 case GETBASE:         return "getbase";
                 case GETVAR:          return "getvar";
                 case SETVAR:          return "setvar";
@@ -278,8 +279,9 @@ public class Token
                 case GETTHIS:         return "getthis";
                 case TRY:             return "try";
                 case NEWSCOPE:        return "newscope";
-                case ENUMINIT:        return "enuminit";
-                case ENUMNEXT:        return "enumnext";
+                case ENUM_INIT:       return "enum_init";
+                case ENUM_NEXT:       return "enum_next";
+                case ENUM_ID:         return "enum_id";
                 case THISFN:          return "thisfn";
                 case SEMI:            return "semi";
                 case LB:              return "lb";
@@ -327,8 +329,8 @@ public class Token
                 case EXPRSTMT:        return "exprstmt";
                 case PARENT:          return "parent";
                 case JSR:             return "jsr";
-                case NEWLOCAL:        return "newlocal";
-                case USELOCAL:        return "uselocal";
+                case NEWTEMP:         return "newtemp";
+                case USETEMP:         return "usetemp";
                 case SCRIPT:          return "script";
                 case TYPEOFNAME:      return "typeofname";
                 case USE_STACK:       return "use_stack";
