@@ -194,7 +194,7 @@ public class IRFactory {
     }
 
     public FunctionNode createFunction(String name) {
-        return compiler.createFunctionNode(this, name);
+        return compiler.createFunctionNode(name);
     }
 
     public Object initFunction(FunctionNode fnNode, int functionIndex,

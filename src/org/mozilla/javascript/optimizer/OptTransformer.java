@@ -48,16 +48,16 @@ import java.util.Hashtable;
 
 class OptTransformer extends NodeTransformer {
 
-    OptTransformer(IRFactory irFactory, Hashtable possibleDirectCalls,
+    OptTransformer(TokenStream ts, Hashtable possibleDirectCalls,
                    ObjArray directCallTargets)
     {
-        super(irFactory);
+        super(ts);
         this.possibleDirectCalls = possibleDirectCalls;
         this.directCallTargets = directCallTargets;
     }
 
     protected NodeTransformer newInstance() {
-        return new OptTransformer(irFactory, possibleDirectCalls,
+        return new OptTransformer(ts, possibleDirectCalls,
                                   directCallTargets);
     }
 
@@ -201,7 +201,7 @@ class OptTransformer extends NodeTransformer {
         }
     }
 
-    private Node createNewTemp(Node n) {
+    static Node createNewTemp(Node n) {
         int type = n.getType();
         if (type == Token.STRING || type == Token.NUMBER) {
             // Optimization: clone these values rather than storing
@@ -211,7 +211,7 @@ class OptTransformer extends NodeTransformer {
         return new Node(Token.NEWTEMP, n);
     }
 
-    private Node createUseTemp(Node newTemp)
+    static Node createUseTemp(Node newTemp)
     {
         switch (newTemp.getType()) {
           case Token.NEWTEMP: {

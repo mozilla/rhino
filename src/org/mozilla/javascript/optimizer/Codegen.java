@@ -70,12 +70,12 @@ public class Codegen extends Interpreter {
         return new IRFactory(this, ts);
     }
 
-    public FunctionNode createFunctionNode(IRFactory irFactory, String name)
+    public FunctionNode createFunctionNode(String name)
     {
         return new OptFunctionNode(name);
     }
 
-    public ScriptOrFnNode transform(Context cx, IRFactory irFactory,
+    public ScriptOrFnNode transform(Context cx, TokenStream ts,
                                     ScriptOrFnNode tree)
     {
         int optLevel = cx.getOptimizationLevel();
@@ -110,12 +110,12 @@ public class Codegen extends Interpreter {
             directCallTargets = new ObjArray();
         }
 
-        OptTransformer ot = new OptTransformer(irFactory, possibleDirectCalls,
+        OptTransformer ot = new OptTransformer(ts, possibleDirectCalls,
                                                directCallTargets);
         ot.transform(tree);
 
         if (optLevel > 0) {
-            (new Optimizer(irFactory)).optimize(tree, optLevel);
+            (new Optimizer()).optimize(tree, optLevel);
         }
 
         return tree;

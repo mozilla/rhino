@@ -59,10 +59,6 @@ class Optimizer
 
     // It is assumed that (NumberType | AnyType) == AnyType
 
-    Optimizer(IRFactory irFactory) {
-        this.irFactory = irFactory;
-    }
-
     void optimize(ScriptOrFnNode scriptOrFn, int optLevel)
     {
         itsOptLevel = optLevel;
@@ -81,7 +77,7 @@ class Optimizer
         inDirectCallFunction = theFunction.isTargetOfDirectCall();
 
         Node[] theStatementNodes = buildStatementList(theFunction);
-        Block[] theBlocks = Block.buildBlocks(irFactory, theStatementNodes);
+        Block[] theBlocks = Block.buildBlocks(theStatementNodes);
         PrintWriter pw = null;
         try {
             if (DEBUG_OPTIMIZER) {
@@ -729,7 +725,6 @@ class Optimizer
     private static final boolean DEBUG_OPTIMIZER = false;
     private static int debug_blockCount;
 
-    private IRFactory irFactory;
     private int itsOptLevel;
     private boolean inDirectCallFunction;
     private boolean parameterUsedInNumberContext;

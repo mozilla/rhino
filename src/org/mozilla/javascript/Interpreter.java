@@ -116,15 +116,15 @@ public class Interpreter
         return new IRFactory(this, ts);
     }
 
-    public FunctionNode createFunctionNode(IRFactory irFactory, String name)
+    public FunctionNode createFunctionNode(String name)
     {
         return new FunctionNode(name);
     }
 
-    public ScriptOrFnNode transform(Context cx, IRFactory irFactory,
+    public ScriptOrFnNode transform(Context cx, TokenStream ts,
                                     ScriptOrFnNode tree)
     {
-        (new NodeTransformer(irFactory)).transform(tree);
+        (new NodeTransformer(ts)).transform(tree);
         return tree;
     }
 

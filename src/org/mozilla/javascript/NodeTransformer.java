@@ -46,8 +46,8 @@ package org.mozilla.javascript;
 
 public class NodeTransformer {
 
-    public NodeTransformer(IRFactory irFactory) {
-        this.irFactory = irFactory;
+    public NodeTransformer(TokenStream ts) {
+        this.ts = ts;
     }
 
     /**
@@ -55,10 +55,10 @@ public class NodeTransformer {
      * can override methods of the transformer.
      */
     protected NodeTransformer newInstance() {
-        return new NodeTransformer(irFactory);
+        return new NodeTransformer(ts);
     }
 
-    public void transform(ScriptOrFnNode tree)
+    public final void transform(ScriptOrFnNode tree)
     {
         loops = new ObjArray();
         loopEnds = new ObjArray();
@@ -347,13 +347,15 @@ public class NodeTransformer {
                     // Move cursor to next before createAssignment get chance
                     // to change n.next
                     Node n = cursor;
+                    if (n.getType() != Token.NAME) Kit.codeBug();
                     cursor = cursor.getNext();
                     if (!n.hasChildren())
                         continue;
                     Node init = n.getFirstChild();
                     n.removeChild(init);
-                    Node asn = (Node)irFactory.createAssignment(n, init);
-                    Node pop = new Node(Token.POP, asn, node.getLineno());
+                    n.setType(Token.BINDNAME);
+                    n = new Node(Token.SETNAME, n, init);
+                    Node pop = new Node(Token.POP, n, node.getLineno());
                     result.addChildToBack(pop);
                 }
                 iter.replaceCurrent(result);
@@ -478,13 +480,13 @@ public class NodeTransformer {
     {
         int lineno = stmt.getLineno();
         String sourceName = tree.getSourceName();
-        irFactory.ts.reportSyntaxError(true, messageId, messageArgs,
+        ts.reportSyntaxError(true, messageId, messageArgs,
                                        sourceName, lineno, null, 0);
     }
 
     private ObjArray loops;
     private ObjArray loopEnds;
     private boolean inFunction;
-    protected IRFactory irFactory;
+    protected TokenStream ts;
 }
 
