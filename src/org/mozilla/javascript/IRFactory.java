@@ -685,8 +685,16 @@ public class IRFactory {
         return result;
     }
 
-    public Object createTernary(Object cond, Object ifTrue, Object ifFalse) {
-        return createIf(cond, ifTrue, ifFalse, -1);
+    public Object createCondExpr(Object condObj, Object ifTrue, Object ifFalse)
+    {
+        Node cond = (Node)condObj;
+        int condStatus = isAlwaysDefinedBoolean(cond);
+        if (condStatus == ALWAYS_TRUE_BOOLEAN) {
+            return ifTrue;
+        } else if (condStatus == ALWAYS_FALSE_BOOLEAN) {
+            return ifFalse;
+        }
+        return new Node(Token.HOOK, cond, (Node)ifTrue, (Node)ifFalse);
     }
 
     /**

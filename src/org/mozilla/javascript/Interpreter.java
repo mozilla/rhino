@@ -523,35 +523,42 @@ public class Interpreter
                 break;
             }
 
-            case Token.AND : {
-                iCodeTop = generateICode(child, iCodeTop);
-                iCodeTop = addIcode(Icode_DUP, iCodeTop);
-                itsStackDepth++;
-                if (itsStackDepth > itsData.itsMaxStack)
-                    itsData.itsMaxStack = itsStackDepth;
-                int falseJumpStart = iCodeTop;
-                iCodeTop = addForwardGoto(Token.IFNE, iCodeTop);
-                iCodeTop = addToken(Token.POP, iCodeTop);
-                itsStackDepth--;
-                child = child.getNext();
-                iCodeTop = generateICode(child, iCodeTop);
-                resolveForwardGoto(falseJumpStart, iCodeTop);
-                break;
-            }
-
+            case Token.AND :
             case Token.OR : {
                 iCodeTop = generateICode(child, iCodeTop);
                 iCodeTop = addIcode(Icode_DUP, iCodeTop);
                 itsStackDepth++;
                 if (itsStackDepth > itsData.itsMaxStack)
                     itsData.itsMaxStack = itsStackDepth;
-                int trueJumpStart = iCodeTop;
-                iCodeTop = addForwardGoto(Token.IFEQ, iCodeTop);
+                int afterSecondJumpStart = iCodeTop;
+                int jump = (type == Token.AND) ? Token.IFNE : Token.IFEQ;
+                iCodeTop = addForwardGoto(jump, iCodeTop);
+                itsStackDepth--;
                 iCodeTop = addToken(Token.POP, iCodeTop);
                 itsStackDepth--;
                 child = child.getNext();
                 iCodeTop = generateICode(child, iCodeTop);
-                resolveForwardGoto(trueJumpStart, iCodeTop);
+                resolveForwardGoto(afterSecondJumpStart, iCodeTop);
+                break;
+            }
+
+            case Token.HOOK : {
+                Node ifThen = child.getNext();
+                Node ifElse = ifThen.getNext();
+                iCodeTop = generateICode(child, iCodeTop);
+                int elseJumpStart = iCodeTop;
+                iCodeTop = addForwardGoto(Token.IFNE, iCodeTop);
+                itsStackDepth--;
+                int savedStack = itsStackDepth;
+                iCodeTop = generateICode(ifThen, iCodeTop);
+                if (savedStack + 1 != itsStackDepth) Kit.codeBug();
+                int afterElseJumpStart = iCodeTop;
+                iCodeTop = addForwardGoto(Token.GOTO, iCodeTop);
+                resolveForwardGoto(elseJumpStart, iCodeTop);
+                itsStackDepth = savedStack;
+                iCodeTop = generateICode(ifElse, iCodeTop);
+                if (savedStack + 1 != itsStackDepth) Kit.codeBug();
+                resolveForwardGoto(afterElseJumpStart, iCodeTop);
                 break;
             }
 
@@ -633,6 +640,7 @@ public class Interpreter
                     } else {
                         badTree(node);
                     }
+                    itsStackDepth--;
                 } else {
                     child = child.getNext();
                     iCodeTop = generateICode(child, iCodeTop);

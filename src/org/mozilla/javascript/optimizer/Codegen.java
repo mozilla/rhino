@@ -1650,6 +1650,24 @@ class BodyCodegen
                 }
                 break;
 
+              case Token.HOOK : {
+                    Node ifThen = child.getNext();
+                    Node ifElse = ifThen.getNext();
+                    generateCodeFromNode(child, node);
+                    addScriptRuntimeInvoke("toBoolean",
+                                           "(Ljava/lang/Object;)Z");
+                    int elseTarget = cfw.acquireLabel();
+                    cfw.add(ByteCode.IFEQ, elseTarget);
+                    short stack = cfw.getStackTop();
+                    generateCodeFromNode(ifThen, node);
+                    int afterHook = cfw.acquireLabel();
+                    cfw.add(ByteCode.GOTO, afterHook);
+                    cfw.markLabel(elseTarget, stack);
+                    generateCodeFromNode(ifElse, node);
+                    cfw.markLabel(afterHook);
+                }
+                break;
+
               case Token.ADD: {
                     generateCodeFromNode(child, node);
                     generateCodeFromNode(child.getNext(), node);
