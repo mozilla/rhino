@@ -1843,8 +1843,10 @@ public final class Context {
             requireSecurityDomain = s.equals("true");
         } catch (java.util.MissingResourceException mre) {
             requireSecurityDomain = true;
+            /*
             throw new SecurityException("Resource \"" + securityResourceName +
                                         "\" not found.");
+            */
         }
     }      
     
