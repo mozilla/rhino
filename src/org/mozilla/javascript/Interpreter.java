@@ -367,9 +367,23 @@ public class Interpreter
                 stackDelta = 1;
                 iCodeTop = generateICode(child, iCodeTop);
                 while (null != (child = child.getNext())) {
+                    if (1 != itsStackDepth - savedStackDepth) Kit.codeBug();
                     iCodeTop = addToken(Token.POP, iCodeTop);
                     itsStackDepth--;
                     iCodeTop = generateICode(child, iCodeTop);
+                }
+                break;
+
+            case Token.INIT_LIST :
+                stackDelta = 1;
+                iCodeTop = generateICode(child, iCodeTop);
+                while (null != (child = child.getNext())) {
+                    if (1 != itsStackDepth - savedStackDepth) Kit.codeBug();
+                    iCodeTop = addIcode(Icode_DUP, iCodeTop);
+                    // No stack adjusting: USE_STACK in subtree will do it
+                    iCodeTop = generateICode(child, iCodeTop);
+                    iCodeTop = addToken(Token.POP, iCodeTop);
+                    itsStackDepth--;
                 }
                 break;
 

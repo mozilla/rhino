@@ -582,7 +582,8 @@ class Optimizer
                         }
                     }
                 }
-            case Token.SETELEM : {
+            case Token.SETELEM :
+            case Token.SETELEM_OP : {
                     Node arrayBase = n.getFirstChild();
                     Node arrayIndex = arrayBase.getNext();
                     Node rValue = arrayIndex.getNext();

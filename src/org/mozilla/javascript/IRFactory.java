@@ -558,11 +558,10 @@ public class IRFactory {
     public Object createArrayLiteral(Object obj) {
         Node array;
         array = new Node(Token.NEW, Node.newString(Token.NAME, "Array"));
-        Node temp = createNewTemp(array);
+        Node list = new Node(Token.INIT_LIST, array);
 
         Node elem = null;
         int i = 0;
-        Node comma = new Node(Token.COMMA, temp);
         for (Node cursor = ((Node) obj).getFirstChild(); cursor != null;) {
             // Move cursor to cursor.next before elem.next can be
             // altered in new Node constructor
@@ -572,10 +571,10 @@ public class IRFactory {
                 i++;
                 continue;
             }
-            Node addelem = new Node(Token.SETELEM, createUseTemp(temp),
+            Node addelem = new Node(Token.SETELEM, new Node(Token.USE_STACK),
                                     Node.newNumber(i), elem);
             i++;
-            comma.addChildToBack(addelem);
+            list.addChildToBack(addelem);
         }
 
         /*
@@ -595,16 +594,15 @@ public class IRFactory {
              * never set anything at all. */
             if (elem != null && elem.getType() == Token.UNDEFINED) {
                 Node setlength = new Node(Token.SETPROP,
-                                          createUseTemp(temp),
+                                          new Node(Token.USE_STACK),
                                           Node.newString("length"),
                                           Node.newNumber(i));
-                comma.addChildToBack(setlength);
+                list.addChildToBack(setlength);
             }
         } else {
             array.addChildToBack(Node.newNumber(i));
         }
-        comma.addChildToBack(createUseTemp(temp));
-        return comma;
+        return list;
     }
 
     /**
@@ -614,11 +612,10 @@ public class IRFactory {
      * stages don't need to know about object literals.
      */
     public Object createObjectLiteral(Object obj) {
-        Node result = new Node(Token.NEW, Node.newString(Token.NAME,
-                                                         "Object"));
-        Node temp = createNewTemp(result);
+        Node result = new Node(Token.NEW,
+                               Node.newString(Token.NAME, "Object"));
+        Node list = new Node(Token.INIT_LIST, result);
 
-        Node comma = new Node(Token.COMMA, temp);
         for (Node cursor = ((Node) obj).getFirstChild(); cursor != null;) {
             Node n = cursor;
             cursor = cursor.getNext();
@@ -628,11 +625,10 @@ public class IRFactory {
             // Move cursor before next.next can be altered in new Node
             Node next = cursor;
             cursor = cursor.getNext();
-            Node addelem = new Node(op, createUseTemp(temp), n, next);
-            comma.addChildToBack(addelem);
+            Node addelem = new Node(op, new Node(Token.USE_STACK), n, next);
+            list.addChildToBack(addelem);
         }
-        comma.addChildToBack(createUseTemp(temp));
-        return comma;
+        return list;
     }
 
     /**

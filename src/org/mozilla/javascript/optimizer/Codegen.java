@@ -1516,6 +1516,15 @@ class BodyCodegen
                 break;
               }
 
+              case Token.INIT_LIST:
+                generateCodeFromNode(child, node);
+                while (null != (child = child.getNext())) {
+                    cfw.add(ByteCode.DUP);
+                    generateCodeFromNode(child, node);
+                    cfw.add(ByteCode.POP);
+                }
+                break;
+
               case Token.NEWSCOPE:
                 addScriptRuntimeInvoke("newScope",
                                        "()Lorg/mozilla/javascript/Scriptable;");

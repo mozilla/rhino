@@ -201,11 +201,12 @@ public class Token
         USELOCAL    = 116,
         SCRIPT      = 117,   // top-level node for entire script
         TYPEOFNAME  = 118,  // for typeof(simple-name)
-        USE_STACK    = 119,
-        SETPROP_OP   = 120,
-        SETELEM_OP   = 121,
+        USE_STACK   = 119,
+        SETPROP_OP  = 120, // x.y op= something
+        SETELEM_OP  = 121, // x[y] op= something
+        INIT_LIST   = 122,
 
-        LAST_TOKEN  = 121;
+        LAST_TOKEN  = 122;
 
     public static String name(int token)
     {
@@ -333,6 +334,7 @@ public class Token
                 case USE_STACK:       return "use_stack";
                 case SETPROP_OP:      return "setprop_op";
                 case SETELEM_OP:      return "setelem_op";
+                case INIT_LIST:       return "init_list";
             }
             return "<unknown="+token+">";
         }
