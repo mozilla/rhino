@@ -74,12 +74,12 @@ public class NodeTransformer {
                                             final Node parent)
     {
         Node node = null;
+      siblingLoop:
         for (;;) {
             Node previous = null;
             if (node == null) {
                 node = parent.getFirstChild();
             } else {
-                transformCompilationUnit_r(tree, node);
                 previous = node;
                 node = node.getNext();
             }
@@ -228,20 +228,36 @@ public class NodeTransformer {
                  */
                 if (!hasFinally)
                     break;     // skip the whole mess.
-
+                Node child = node.getFirstChild();
+                boolean inserted = false;
                 for (int i=loops.size()-1; i >= 0; i--) {
                     Node n = (Node) loops.get(i);
                     int elemtype = n.getType();
-                    if (elemtype == Token.TRY) {
-                        Node.Jump jsrnode = new Node.Jump(Token.JSR);
-                        Node.Target jsrtarget = ((Node.Jump)n).getFinally();
-                        jsrnode.target = jsrtarget;
+                    if (elemtype == Token.TRY || elemtype == Token.WITH) {
+                        if (!inserted) {
+                            inserted = true;
+                            if (child != null) {
+                                node.setType(Token.POPV);
+                                // process children now as node will be
+                                // changed to point to inserted RETURN_POPV
+                                transformCompilationUnit_r(tree, node);
+                                Node retPopv = new Node(Token.RETURN_POPV);
+                                parent.addChildAfter(retPopv, node);
+                                previous = node;
+                                node = retPopv;
+                            }
+                        }
+                        Node unwind;
+                        if (elemtype == Token.TRY) {
+                            Node.Jump jsrnode = new Node.Jump(Token.JSR);
+                            Node.Target jsrtarget = ((Node.Jump)n).getFinally();
+                            jsrnode.target = jsrtarget;
+                            unwind = jsrnode;
+                        } else {
+                            unwind = new Node(Token.LEAVEWITH);
+                        }
                         previous = addBeforeCurrent(parent, previous, node,
-                                                    jsrnode);
-                    } else if (elemtype == Token.WITH) {
-                        Node leave = new Node(Token.LEAVEWITH);
-                        previous = addBeforeCurrent(parent, previous, node,
-                                                    leave);
+                                                    unwind);
                     }
                 }
                 break;
@@ -432,6 +448,8 @@ public class NodeTransformer {
                 break;
               }
             }
+
+            transformCompilationUnit_r(tree, node);
         }
     }
 

@@ -139,204 +139,206 @@ public class Token
         ENUM_NEXT   = 64,
         ENUM_ID     = 65,
         THISFN      = 66,
+        RETURN_POPV = 67, // to return result stored as popv in functions
 
-        LAST_BYTECODE_TOKEN = 66,
+        LAST_BYTECODE_TOKEN = 67,
         // End of interpreter bytecodes
 
-        GETTHIS     = 67,
-        TRY         = 68,
-        SEMI        = 69,  // semicolon
-        LB          = 70,  // left and right brackets
-        RB          = 71,
-        LC          = 72,  // left and right curlies (braces)
-        RC          = 73,
-        LP          = 74,  // left and right parentheses
-        RP          = 75,
-        COMMA       = 76,  // comma operator
-        ASSIGN      = 77, // simple assignment  (=)
-        ASSIGNOP    = 78, // assignment with operation (+= -= etc.)
-        HOOK        = 79, // conditional (?:)
-        COLON       = 80,
-        OR          = 81, // logical or (||)
-        AND         = 82, // logical and (&&)
-        INC         = 83, // increment/decrement (++ --)
-        DEC         = 84,
-        DOT         = 85, // member operator (.)
-        FUNCTION    = 86, // function keyword
-        EXPORT      = 87, // export keyword
-        IMPORT      = 88, // import keyword
-        IF          = 89, // if keyword
-        ELSE        = 90, // else keyword
-        SWITCH      = 91, // switch keyword
-        CASE        = 92, // case keyword
-        DEFAULT     = 93, // default keyword
-        WHILE       = 94, // while keyword
-        DO          = 95, // do keyword
-        FOR         = 96, // for keyword
-        BREAK       = 97, // break keyword
-        CONTINUE    = 98, // continue keyword
-        VAR         = 99, // var keyword
-        WITH        = 100, // with keyword
-        CATCH       = 101, // catch keyword
-        FINALLY     = 102, // finally keyword
-        VOID        = 103, // void keyword
-        RESERVED    = 104, // reserved keywords
+        GETTHIS     = 68,
+        TRY         = 69,
+        SEMI        = 70,  // semicolon
+        LB          = 71,  // left and right brackets
+        RB          = 72,
+        LC          = 73,  // left and right curlies (braces)
+        RC          = 74,
+        LP          = 75,  // left and right parentheses
+        RP          = 76,
+        COMMA       = 77,  // comma operator
+        ASSIGN      = 78, // simple assignment  (=)
+        ASSIGNOP    = 79, // assignment with operation (+= -= etc.)
+        HOOK        = 80, // conditional (?:)
+        COLON       = 81,
+        OR          = 82, // logical or (||)
+        AND         = 83, // logical and (&&)
+        INC         = 84, // increment/decrement (++ --)
+        DEC         = 85,
+        DOT         = 86, // member operator (.)
+        FUNCTION    = 87, // function keyword
+        EXPORT      = 88, // export keyword
+        IMPORT      = 89, // import keyword
+        IF          = 90, // if keyword
+        ELSE        = 91, // else keyword
+        SWITCH      = 92, // switch keyword
+        CASE        = 93, // case keyword
+        DEFAULT     = 94, // default keyword
+        WHILE       = 95, // while keyword
+        DO          = 96, // do keyword
+        FOR         = 97, // for keyword
+        BREAK       = 98, // break keyword
+        CONTINUE    = 99, // continue keyword
+        VAR         = 100, // var keyword
+        WITH        = 101, // with keyword
+        CATCH       = 102, // catch keyword
+        FINALLY     = 103, // finally keyword
+        VOID        = 104, // void keyword
+        RESERVED    = 105, // reserved keywords
 
-        EMPTY       = 105,
+        EMPTY       = 106,
 
         /* types used for the parse tree - these never get returned
          * by the scanner.
          */
 
-        BLOCK       = 106, // statement block
-        ARRAYLIT    = 107, // array literal
-        OBJLIT      = 108, // object literal
-        LABEL       = 109, // label
-        TARGET      = 110,
-        LOOP        = 111,
-        EXPRSTMT    = 112,
-        PARENT      = 113,
-        JSR         = 114,
-        NEWTEMP     = 115,
-        USETEMP     = 116,
-        SCRIPT      = 117,   // top-level node for entire script
-        TYPEOFNAME  = 118,  // for typeof(simple-name)
-        USE_STACK   = 119,
-        SETPROP_OP  = 120, // x.y op= something
-        SETELEM_OP  = 121, // x[y] op= something
-        INIT_LIST   = 122,
-        LOCAL_BLOCK = 123,
+        BLOCK       = 107, // statement block
+        ARRAYLIT    = 108, // array literal
+        OBJLIT      = 109, // object literal
+        LABEL       = 110, // label
+        TARGET      = 111,
+        LOOP        = 112,
+        EXPRSTMT    = 113,
+        PARENT      = 114,
+        JSR         = 115,
+        NEWTEMP     = 116,
+        USETEMP     = 117,
+        SCRIPT      = 118,   // top-level node for entire script
+        TYPEOFNAME  = 119,  // for typeof(simple-name)
+        USE_STACK   = 120,
+        SETPROP_OP  = 121, // x.y op= something
+        SETELEM_OP  = 122, // x[y] op= something
+        INIT_LIST   = 123,
+        LOCAL_BLOCK = 124,
 
-        LAST_TOKEN  = 123;
+        LAST_TOKEN  = 124;
 
     public static String name(int token)
     {
         if (printNames) {
             switch (token) {
-                case ERROR:           return "error";
-                case EOF:             return "eof";
-                case EOL:             return "eol";
-                case POPV:            return "popv";
-                case ENTERWITH:       return "enterwith";
-                case LEAVEWITH:       return "leavewith";
-                case RETURN:          return "return";
-                case GOTO:            return "goto";
-                case IFEQ:            return "ifeq";
-                case IFNE:            return "ifne";
-                case SETNAME:         return "setname";
-                case BITOR:           return "bitor";
-                case BITXOR:          return "bitxor";
-                case BITAND:          return "bitand";
-                case EQ:              return "eq";
-                case NE:              return "ne";
-                case LT:              return "lt";
-                case LE:              return "le";
-                case GT:              return "gt";
-                case GE:              return "ge";
-                case LSH:             return "lsh";
-                case RSH:             return "rsh";
-                case URSH:            return "ursh";
-                case ADD:             return "add";
-                case SUB:             return "sub";
-                case MUL:             return "mul";
-                case DIV:             return "div";
-                case MOD:             return "mod";
-                case NOT:             return "not";
-                case BITNOT:          return "bitnot";
-                case POS:             return "pos";
-                case NEG:             return "neg";
-                case NEW:             return "new";
-                case DELPROP:         return "delprop";
-                case TYPEOF:          return "typeof";
-                case GETPROP:         return "getprop";
-                case SETPROP:         return "setprop";
-                case GETELEM:         return "getelem";
-                case SETELEM:         return "setelem";
-                case CALL:            return "call";
-                case NAME:            return "name";
-                case NUMBER:          return "number";
-                case STRING:          return "string";
-                case ZERO:            return "zero";
-                case ONE:             return "one";
-                case NULL:            return "null";
-                case THIS:            return "this";
-                case FALSE:           return "false";
-                case TRUE:            return "true";
-                case SHEQ:            return "sheq";
-                case SHNE:            return "shne";
-                case REGEXP:          return "object";
-                case POP:             return "pop";
-                case BINDNAME:        return "bindname";
-                case THROW:           return "throw";
-                case IN:              return "in";
-                case INSTANCEOF:      return "instanceof";
-                case LOCAL_SAVE:      return "local_save";
-                case LOCAL_LOAD:      return "local_load";
-                case GETBASE:         return "getbase";
-                case GETVAR:          return "getvar";
-                case SETVAR:          return "setvar";
-                case UNDEFINED:       return "undefined";
-                case GETTHIS:         return "getthis";
-                case TRY:             return "try";
-                case CATCH_SCOPE:     return "catch_scope";
-                case ENUM_INIT:       return "enum_init";
-                case ENUM_NEXT:       return "enum_next";
-                case ENUM_ID:         return "enum_id";
-                case THISFN:          return "thisfn";
-                case SEMI:            return "semi";
-                case LB:              return "lb";
-                case RB:              return "rb";
-                case LC:              return "lc";
-                case RC:              return "rc";
-                case LP:              return "lp";
-                case RP:              return "rp";
-                case COMMA:           return "comma";
-                case ASSIGN:          return "assign";
-                case ASSIGNOP:        return "assignop";
-                case HOOK:            return "hook";
-                case COLON:           return "colon";
-                case OR:              return "or";
-                case AND:             return "and";
-                case INC:             return "inc";
-                case DEC:             return "dec";
-                case DOT:             return "dot";
-                case FUNCTION:        return "function";
-                case EXPORT:          return "export";
-                case IMPORT:          return "import";
-                case IF:              return "if";
-                case ELSE:            return "else";
-                case SWITCH:          return "switch";
-                case CASE:            return "case";
-                case DEFAULT:         return "default";
-                case WHILE:           return "while";
-                case DO:              return "do";
-                case FOR:             return "for";
-                case BREAK:           return "break";
-                case CONTINUE:        return "continue";
-                case VAR:             return "var";
-                case WITH:            return "with";
-                case CATCH:           return "catch";
-                case FINALLY:         return "finally";
-                case RESERVED:        return "reserved";
-                case EMPTY:           return "empty";
-                case BLOCK:           return "block";
-                case ARRAYLIT:        return "arraylit";
-                case OBJLIT:          return "objlit";
-                case LABEL:           return "label";
-                case TARGET:          return "target";
-                case LOOP:            return "loop";
-                case EXPRSTMT:        return "exprstmt";
-                case PARENT:          return "parent";
-                case JSR:             return "jsr";
-                case NEWTEMP:         return "newtemp";
-                case USETEMP:         return "usetemp";
-                case SCRIPT:          return "script";
-                case TYPEOFNAME:      return "typeofname";
-                case USE_STACK:       return "use_stack";
-                case SETPROP_OP:      return "setprop_op";
-                case SETELEM_OP:      return "setelem_op";
-                case INIT_LIST:       return "init_list";
-                case LOCAL_BLOCK:     return "local_block";
+                case ERROR:           return "ERROR";
+                case EOF:             return "EOF";
+                case EOL:             return "EOL";
+                case POPV:            return "POPV";
+                case ENTERWITH:       return "ENTERWITH";
+                case LEAVEWITH:       return "LEAVEWITH";
+                case RETURN:          return "RETURN";
+                case GOTO:            return "GOTO";
+                case IFEQ:            return "IFEQ";
+                case IFNE:            return "IFNE";
+                case SETNAME:         return "SETNAME";
+                case BITOR:           return "BITOR";
+                case BITXOR:          return "BITXOR";
+                case BITAND:          return "BITAND";
+                case EQ:              return "EQ";
+                case NE:              return "NE";
+                case LT:              return "LT";
+                case LE:              return "LE";
+                case GT:              return "GT";
+                case GE:              return "GE";
+                case LSH:             return "LSH";
+                case RSH:             return "RSH";
+                case URSH:            return "URSH";
+                case ADD:             return "ADD";
+                case SUB:             return "SUB";
+                case MUL:             return "MUL";
+                case DIV:             return "DIV";
+                case MOD:             return "MOD";
+                case NOT:             return "NOT";
+                case BITNOT:          return "BITNOT";
+                case POS:             return "POS";
+                case NEG:             return "NEG";
+                case NEW:             return "NEW";
+                case DELPROP:         return "DELPROP";
+                case TYPEOF:          return "TYPEOF";
+                case GETPROP:         return "GETPROP";
+                case SETPROP:         return "SETPROP";
+                case GETELEM:         return "GETELEM";
+                case SETELEM:         return "SETELEM";
+                case CALL:            return "CALL";
+                case NAME:            return "NAME";
+                case NUMBER:          return "NUMBER";
+                case STRING:          return "STRING";
+                case ZERO:            return "ZERO";
+                case ONE:             return "ONE";
+                case NULL:            return "NULL";
+                case THIS:            return "THIS";
+                case FALSE:           return "FALSE";
+                case TRUE:            return "TRUE";
+                case SHEQ:            return "SHEQ";
+                case SHNE:            return "SHNE";
+                case REGEXP:          return "OBJECT";
+                case POP:             return "POP";
+                case BINDNAME:        return "BINDNAME";
+                case THROW:           return "THROW";
+                case IN:              return "IN";
+                case INSTANCEOF:      return "INSTANCEOF";
+                case LOCAL_SAVE:      return "LOCAL_SAVE";
+                case LOCAL_LOAD:      return "LOCAL_LOAD";
+                case GETBASE:         return "GETBASE";
+                case GETVAR:          return "GETVAR";
+                case SETVAR:          return "SETVAR";
+                case UNDEFINED:       return "UNDEFINED";
+                case GETTHIS:         return "GETTHIS";
+                case TRY:             return "TRY";
+                case CATCH_SCOPE:     return "CATCH_SCOPE";
+                case ENUM_INIT:       return "ENUM_INIT";
+                case ENUM_NEXT:       return "ENUM_NEXT";
+                case ENUM_ID:         return "ENUM_ID";
+                case THISFN:          return "THISFN";
+                case RETURN_POPV:     return "RETURN_POPV";
+                case SEMI:            return "SEMI";
+                case LB:              return "LB";
+                case RB:              return "RB";
+                case LC:              return "LC";
+                case RC:              return "RC";
+                case LP:              return "LP";
+                case RP:              return "RP";
+                case COMMA:           return "COMMA";
+                case ASSIGN:          return "ASSIGN";
+                case ASSIGNOP:        return "ASSIGNOP";
+                case HOOK:            return "HOOK";
+                case COLON:           return "COLON";
+                case OR:              return "OR";
+                case AND:             return "AND";
+                case INC:             return "INC";
+                case DEC:             return "DEC";
+                case DOT:             return "DOT";
+                case FUNCTION:        return "FUNCTION";
+                case EXPORT:          return "EXPORT";
+                case IMPORT:          return "IMPORT";
+                case IF:              return "IF";
+                case ELSE:            return "ELSE";
+                case SWITCH:          return "SWITCH";
+                case CASE:            return "CASE";
+                case DEFAULT:         return "DEFAULT";
+                case WHILE:           return "WHILE";
+                case DO:              return "DO";
+                case FOR:             return "FOR";
+                case BREAK:           return "BREAK";
+                case CONTINUE:        return "CONTINUE";
+                case VAR:             return "VAR";
+                case WITH:            return "WITH";
+                case CATCH:           return "CATCH";
+                case FINALLY:         return "FINALLY";
+                case RESERVED:        return "RESERVED";
+                case EMPTY:           return "EMPTY";
+                case BLOCK:           return "BLOCK";
+                case ARRAYLIT:        return "ARRAYLIT";
+                case OBJLIT:          return "OBJLIT";
+                case LABEL:           return "LABEL";
+                case TARGET:          return "TARGET";
+                case LOOP:            return "LOOP";
+                case EXPRSTMT:        return "EXPRSTMT";
+                case PARENT:          return "PARENT";
+                case JSR:             return "JSR";
+                case NEWTEMP:         return "NEWTEMP";
+                case USETEMP:         return "USETEMP";
+                case SCRIPT:          return "SCRIPT";
+                case TYPEOFNAME:      return "TYPEOFNAME";
+                case USE_STACK:       return "USE_STACK";
+                case SETPROP_OP:      return "SETPROP_OP";
+                case SETELEM_OP:      return "SETELEM_OP";
+                case INIT_LIST:       return "INIT_LIST";
+                case LOCAL_BLOCK:     return "LOCAL_BLOCK";
             }
             return "<unknown="+token+">";
         }

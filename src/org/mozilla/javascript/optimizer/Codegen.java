@@ -1125,7 +1125,7 @@ class BodyCodegen
         localsMax = (short) 4;  // number of parms + "this"
         firstFreeLocal = 4;
 
-        scriptResultLocal = -1;
+        popvLocal = -1;
         argsLocal = -1;
         itsZeroArgArray = -1;
         itsOneArgArray = -1;
@@ -1345,9 +1345,9 @@ class BodyCodegen
 
         if (fnCurrent == null) {
             // OPT: use dataflow to prove that this assignment is dead
-            scriptResultLocal = getNewWordLocal();
+            popvLocal = getNewWordLocal();
             Codegen.pushUndefined(cfw);
-            cfw.addAStore(scriptResultLocal);
+            cfw.addAStore(popvLocal);
 
             int linenum = scriptOrFn.getEndLineno();
             if (linenum != -1)
@@ -1381,7 +1381,7 @@ class BodyCodegen
             addScriptRuntimeInvoke("popActivation",
                                    "(Lorg/mozilla/javascript/Context;)V");
             if (fnCurrent == null) {
-                cfw.addALoad(scriptResultLocal);
+                cfw.addALoad(popvLocal);
             }
         }
         cfw.add(ByteCode.ARETURN);
@@ -1499,8 +1499,25 @@ class BodyCodegen
                 visitThrow(node, child);
                 break;
 
+              case Token.RETURN_POPV:
+                if (fnCurrent == null) Codegen.badTree();
+                // fallthrough
               case Token.RETURN:
-                visitReturn(node, child);
+                visitStatement(node);
+                if (child != null) {
+                    do {
+                        generateCodeFromNode(child, node);
+                        child = child.getNext();
+                    } while (child != null);
+                } else if (fnCurrent != null && type == Token.RETURN) {
+                    Codegen.pushUndefined(cfw);
+                } else {
+                    if (popvLocal < 0) Codegen.badTree();
+                    cfw.addALoad(popvLocal);
+                }
+                if (epilogueLabel == -1)
+                    epilogueLabel = cfw.acquireLabel();
+                cfw.add(ByteCode.GOTO, epilogueLabel);
                 break;
 
               case Token.SWITCH:
@@ -1591,11 +1608,11 @@ class BodyCodegen
 
               case Token.POPV:
                 visitStatement(node);
-                while (child != null) {
-                    generateCodeFromNode(child, node);
-                    child = child.getNext();
+                generateCodeFromNode(child, node);
+                if (popvLocal < 0) {
+                    popvLocal = getNewWordLocal();
                 }
-                cfw.addAStore(scriptResultLocal);
+                cfw.addAStore(popvLocal);
                 break;
 
               case Token.TARGET:
@@ -2708,25 +2725,6 @@ class BodyCodegen
                       "(Ljava/lang/Object;Ljava/lang/String;I)V");
 
         cfw.add(ByteCode.ATHROW);
-    }
-
-    private void visitReturn(Node node, Node child)
-    {
-        visitStatement(node);
-        if (child != null) {
-            do {
-                generateCodeFromNode(child, node);
-                child = child.getNext();
-            } while (child != null);
-        } else if (fnCurrent != null) {
-            Codegen.pushUndefined(cfw);
-        } else {
-            cfw.addALoad(scriptResultLocal);
-        }
-
-        if (epilogueLabel == -1)
-            epilogueLabel = cfw.acquireLabel();
-        cfw.add(ByteCode.GOTO, epilogueLabel);
     }
 
     private void visitSwitch(Node.Jump node, Node child)
@@ -3910,7 +3908,7 @@ class BodyCodegen
     // special known locals. If you add a new local here, be sure
     // to initialize it to -1 in initBodyGeneration
     private short variableObjectLocal;
-    private short scriptResultLocal;
+    private short popvLocal;
     private short contextLocal;
     private short argsLocal;
     private short thisObjLocal;

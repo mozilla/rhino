@@ -108,7 +108,7 @@ public class Interpreter
         Icode_INTNUMBER                 = BASE_ICODE + 29,
 
     // Last icode
-        Icode_END                       = BASE_ICODE + 30;
+        END_ICODE                       = BASE_ICODE + 30;
 
 
     public IRFactory createIRFactory(Context cx, TokenStream ts)
@@ -199,9 +199,9 @@ public class Interpreter
         int theICodeTop = 0;
         theICodeTop = generateICode(tree, theICodeTop);
         itsLabels.fixLabelGotos(itsData.itsICode);
-        // add Icode_END only to scripts as function always ends with RETURN
+        // add RETURN_POPV only to scripts as function always ends with RETURN
         if (itsData.itsFunctionType == 0) {
-            theICodeTop = addIcode(Icode_END, theICodeTop);
+            theICodeTop = addToken(Token.RETURN_POPV, theICodeTop);
         }
         // Add special CATCH to simplify Interpreter.interpret logic
         // and workaround lack of goto in Java
@@ -995,6 +995,12 @@ public class Interpreter
                 }
                 break;
 
+            case Token.RETURN_POPV :
+                stackShouldBeZero = true;
+                iCodeTop = updateLineNumber(node, iCodeTop);
+                iCodeTop = addToken(Token.RETURN_POPV, iCodeTop);
+                break;
+
             case Token.GETVAR : {
                 stackDelta = 1;
                 String name = node.getString();
@@ -1228,7 +1234,7 @@ public class Interpreter
 
     private int addIcode(int icode, int iCodeTop)
     {
-        if (!(BASE_ICODE < icode && icode <= Icode_END)) Kit.codeBug();
+        if (!(BASE_ICODE < icode && icode < END_ICODE)) Kit.codeBug();
         return addByte(icode, iCodeTop);
     }
 
@@ -1384,36 +1390,35 @@ public class Interpreter
                 return Token.name(icode);
             } else {
                 switch (icode) {
-                    case Icode_DUP:              return "dup";
-                    case Icode_DUPSECOND:        return "dupsecond";
-                    case Icode_SWAP:             return "swap";
-                    case Icode_IFEQ_POP:         return "ifeq_pop";
-                    case Icode_NAMEINC:          return "nameinc";
-                    case Icode_PROPINC:          return "propinc";
-                    case Icode_ELEMINC:          return "eleminc";
-                    case Icode_VARINC:           return "varinc";
-                    case Icode_NAMEDEC:          return "namedec";
-                    case Icode_PROPDEC:          return "propdec";
-                    case Icode_ELEMDEC:          return "elemdec";
-                    case Icode_VARDEC:           return "vardec";
-                    case Icode_SCOPE:            return "scope";
-                    case Icode_TYPEOFNAME:       return "typeofname";
-                    case Icode_NAME_AND_THIS:    return "name_and_this";
-                    case Icode_GETPROTO:         return "getproto";
-                    case Icode_PUSH_PARENT:      return "push_parent";
-                    case Icode_GETSCOPEPARENT:   return "getscopeparent";
-                    case Icode_SETPROTO:         return "setproto";
-                    case Icode_SETPARENT:        return "setparent";
-                    case Icode_CLOSURE:          return "closure";
-                    case Icode_CALLSPECIAL:      return "callspecial";
-                    case Icode_RETUNDEF:         return "retundef";
-                    case Icode_CATCH:            return "catch";
-                    case Icode_GOSUB:            return "gosub";
-                    case Icode_RETSUB:           return "retsub";
-                    case Icode_LINE:             return "line";
-                    case Icode_SHORTNUMBER:      return "shortnumber";
-                    case Icode_INTNUMBER:        return "intnumber";
-                    case Icode_END:              return "end";
+                    case Icode_DUP:              return "DUP";
+                    case Icode_DUPSECOND:        return "DUPSECOND";
+                    case Icode_SWAP:             return "SWAP";
+                    case Icode_IFEQ_POP:         return "IFEQ_POP";
+                    case Icode_NAMEINC:          return "NAMEINC";
+                    case Icode_PROPINC:          return "PROPINC";
+                    case Icode_ELEMINC:          return "ELEMINC";
+                    case Icode_VARINC:           return "VARINC";
+                    case Icode_NAMEDEC:          return "NAMEDEC";
+                    case Icode_PROPDEC:          return "PROPDEC";
+                    case Icode_ELEMDEC:          return "ELEMDEC";
+                    case Icode_VARDEC:           return "VARDEC";
+                    case Icode_SCOPE:            return "SCOPE";
+                    case Icode_TYPEOFNAME:       return "TYPEOFNAME";
+                    case Icode_NAME_AND_THIS:    return "NAME_AND_THIS";
+                    case Icode_GETPROTO:         return "GETPROTO";
+                    case Icode_PUSH_PARENT:      return "PUSH_PARENT";
+                    case Icode_GETSCOPEPARENT:   return "GETSCOPEPARENT";
+                    case Icode_SETPROTO:         return "SETPROTO";
+                    case Icode_SETPARENT:        return "SETPARENT";
+                    case Icode_CLOSURE:          return "CLOSURE";
+                    case Icode_CALLSPECIAL:      return "CALLSPECIAL";
+                    case Icode_RETUNDEF:         return "RETUNDEF";
+                    case Icode_CATCH:            return "CATCH";
+                    case Icode_GOSUB:            return "GOSUB";
+                    case Icode_RETSUB:           return "RETSUB";
+                    case Icode_LINE:             return "LINE";
+                    case Icode_SHORTNUMBER:      return "SHORTNUMBER";
+                    case Icode_INTNUMBER:        return "INTNUMBER";
                 }
             }
             return "<UNKNOWN ICODE: "+icode+">";
@@ -1591,6 +1596,7 @@ public class Interpreter
             case Token.ENTERWITH :
             case Token.LEAVEWITH :
             case Token.RETURN :
+            case Token.RETURN_POPV :
             case Token.SETELEM :
             case Token.GETELEM :
             case Token.SETPROP :
@@ -1639,7 +1645,6 @@ public class Interpreter
             case Token.UNDEFINED :
             case Icode_CATCH:
             case Icode_RETUNDEF:
-            case Icode_END:
                 return 1;
 
             case Token.THROW :
@@ -2290,10 +2295,10 @@ public class Interpreter
         if (result == DBL_MRK) result = doubleWrap(sDbl[stackTop]);
         --stackTop;
         break Loop;
+    case Token.RETURN_POPV :
+        break Loop;
     case Icode_RETUNDEF :
         result = undefined;
-        break Loop;
-    case Icode_END:
         break Loop;
     case Token.BITNOT : {
         int rIntValue = stack_int32(stack, sDbl, stackTop);
