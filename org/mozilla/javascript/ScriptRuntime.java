@@ -1851,8 +1851,8 @@ public class ScriptRuntime {
         catch (JavaScriptException e) {
             throw WrappedException.wrapException(e);
         }
-        for (int i=1; i < args.length; i++) {
-            argsObj.put(i-1, argsObj, args[i]);
+        for (int i=0; i < args.length; i++) {
+            argsObj.put(i, argsObj, args[i]);
         }
         global.put("arguments", global, argsObj);
 
