@@ -58,7 +58,7 @@ public class InvokerImpl extends Invoker {
         synchronized (this) {
             if (invokersCache == null) {
                 invokersCache = new Hashtable();
-                ClassLoader parentLoader = cx.getClass().getClassLoader();
+                ClassLoader parentLoader = cx.getApplicationClassLoader();
                 classLoader = cx.createClassLoader(parentLoader);
             } else {
                 result = (Invoker)invokersCache.get(method);

@@ -166,12 +166,16 @@ public class NativeJavaPackage extends ScriptableObject {
     }
 
     public NativeJavaPackage(String packageName) {
-        this.packageName = packageName;
+        this(packageName, null);
     }
 
     public NativeJavaPackage(String packageName, ClassLoader classLoader) {
         this.packageName = packageName;
-        this.classLoader = classLoader;
+        if (classLoader != null) {
+            this.classLoader = classLoader;
+        } else {
+            this.classLoader = Context.getContext().getApplicationClassLoader();
+        }
     }
 
     public String getClassName() {

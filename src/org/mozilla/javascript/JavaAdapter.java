@@ -129,10 +129,9 @@ public class JavaAdapter extends ScriptableObject {
             synchronized (generatedClasses) {
                 adapterName = "adapter" + serial++;
             }
-            byte[] code = createAdapterCode(cx, obj, adapterName,
-                                            superClass, interfaces, null);
-
-            adapterClass = loadAdapterClass(cx, adapterName, code);
+            adapterClass = createAdapterClass(cx, obj, adapterName,
+                                              superClass, interfaces,
+                                              null, null);
             generatedClasses.put(sig, adapterClass);
         }
 
@@ -158,9 +157,9 @@ public class JavaAdapter extends ScriptableObject {
             }
             Context cx = Context.enter();
             try {
-                byte[] code = createAdapterCode(cx, obj, adapterName,
-                                                superClass, interfaces, null);
-                adapterClass = loadAdapterClass(cx, adapterName, code);
+                adapterClass = createAdapterClass(cx, obj,
+                                                  adapterName, superClass,
+                                                  interfaces, null, null);
                 generatedClasses.put(sig, adapterClass);
             } finally {
                 Context.exit();
@@ -181,10 +180,12 @@ public class JavaAdapter extends ScriptableObject {
         throw new ClassNotFoundException("adapter");
     }
 
-    public static byte[]
-    createAdapterCode(Context cx, Scriptable jsObj, String adapterName,
-                       Class superClass, Class[] interfaces,
-                       String scriptClassName)
+    public static Class createAdapterClass(Context cx, Scriptable jsObj,
+                                           String adapterName, Class superClass,
+                                           Class[] interfaces,
+                                           String scriptClassName,
+                                           ClassNameHelper nameHelper)
+        throws ClassNotFoundException
     {
         ClassFileWriter cfw = new ClassFileWriter(adapterName,
                                                   superClass.getName(),
@@ -305,7 +306,8 @@ public class JavaAdapter extends ScriptableObject {
                                 ScriptableObject.getProperty(p, "length"));
                 } else if (f instanceof FunctionNode) {
                     // This is used only by optimizer/Codegen
-                    length = ((FunctionNode)f).getParamCount();
+                    length = ((FunctionNode) f).getVariableTable()
+                                .getParameterCount();
                 } else {
                     continue;
                 }
@@ -315,13 +317,21 @@ public class JavaAdapter extends ScriptableObject {
                 generateMethod(cfw, adapterName, id, parms, Object.class);
             }
         }
-        return cfw.toByteArray();
-    }
+        byte[] bytes = cfw.toByteArray();
 
-    private static Class
-    loadAdapterClass(Context cx, String className, byte[] classBytes)
-    {
-        ClassLoader parentLoader = cx.getClass().getClassLoader();
+        if (nameHelper != null) {
+            try {
+                if (!nameHelper.getClassRepository().storeClass(adapterName,
+                                                                bytes, true))
+                {
+                    return null;
+                }
+            } catch(IOException iox) {
+                throw WrappedException.wrapException(iox);
+            }
+        }
+
+        ClassLoader parentLoader = cx.getApplicationClassLoader();
         GeneratedClassLoader loader;
         SecurityController sc = cx.getSecurityController();
         if (sc == null) {
@@ -330,7 +340,7 @@ public class JavaAdapter extends ScriptableObject {
             Object securityDomain = sc.getDynamicSecurityDomain(null);
             loader = sc.createClassLoader(parentLoader, securityDomain);
         }
-        Class result = loader.defineClass(className, classBytes);
+        Class result = loader.defineClass(adapterName, bytes);
         loader.linkClass(result);
         return result;
     }

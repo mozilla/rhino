@@ -151,18 +151,16 @@ public class ScriptRuntime {
         return (index < args.length) ? toNumber(args[index]) : NaN;
     }
 
-    // Can not use Double.NaN defined as 0.0d / 0.0 as under the Microsoft VM,
-    // versions 2.01 and 3.0P1, that causes some uses (returns at least) of
-    // Double.NaN to be converted to 1.0.
+    // This definition of NaN is identical to that in java.lang.Double
+    // except that it is not final. This is a workaround for a bug in
+    // the Microsoft VM, versions 2.01 and 3.0P1, that causes some uses
+    // (returns at least) of Double.NaN to be converted to 1.0.
     // So we use ScriptRuntime.NaN instead of Double.NaN.
-    public static final double
-        NaN = Double.longBitsToDouble(0x7ff8000000000000L);
+    public static double NaN = 0.0d / 0.0;
+    public static Double NaNobj = new Double(0.0d / 0.0);
 
     // A similar problem exists for negative zero.
-    public static final double
-        negativeZero = Double.longBitsToDouble(0x8000000000000000L);
-
-    public static final Double NaNobj = new Double(NaN);
+    public static double negativeZero = -0.0;
 
     /*
      * Helper function for toNumber, parseInt, and TokenStream.getToken.
@@ -702,14 +700,19 @@ public class ScriptRuntime {
     }
 
     public static Object getProp(Object obj, String id, Scriptable scope) {
-        if (obj == null || obj == Undefined.instance) {
-            throw NativeGlobal.undefReadError(obj, id, scope);
-        }
         Scriptable start;
         if (obj instanceof Scriptable) {
             start = (Scriptable) obj;
         } else {
             start = toObject(scope, obj);
+        }
+        if (start == null || start == Undefined.instance) {
+            String msg = start == null ? "msg.null.to.object"
+                                       : "msg.undefined";
+            throw NativeGlobal.constructError(
+                        Context.getContext(), "ConversionError",
+                        ScriptRuntime.getMessage0(msg),
+                        scope);
         }
         Object result = ScriptableObject.getProperty(start, id);
         if (result != Scriptable.NOT_FOUND)
@@ -827,14 +830,14 @@ public class ScriptRuntime {
     public static Object setProp(Object obj, String id, Object value,
                                  Scriptable scope)
     {
-        if (obj == null || obj == Undefined.instance) {
-            throw NativeGlobal.undefWriteError(obj, id, value, scope);
-        }
         Scriptable start;
-        if (obj instanceof Scriptable) {
-            start = (Scriptable)obj;
-        } else {
+        try {
+            start = (Scriptable) obj;
+        } catch(ClassCastException e) {
             start = toObject(scope, obj);
+        }
+        if (start == null) {
+            throw NativeGlobal.typeError0("msg.null.to.object", scope);
         }
         ScriptableObject.putProperty(start, id, value);
         return value;
@@ -943,10 +946,6 @@ public class ScriptRuntime {
                 index = 0;
             }
         }
-        if (obj == null || obj == Undefined.instance) {
-            String property = (s != null) ? s : Integer.toString(index);
-            throw NativeGlobal.undefReadError(obj, property, scope);
-        }
         Scriptable start;
         try {
             start = (Scriptable)obj;
@@ -1006,14 +1005,11 @@ public class ScriptRuntime {
                 index = 0;
             }
         }
-        if (obj == null || obj == Undefined.instance) {
-            String property = (s != null) ? s : Integer.toString(index);
-            throw NativeGlobal.undefWriteError(obj, property, value, scope);
-        }
+
         Scriptable start;
-        if (obj instanceof Scriptable) {
+        try {
             start = (Scriptable) obj;
-        } else {
+        } catch (ClassCastException e) {
             start = toObject(scope, obj);
         }
         if (s != null) {
@@ -2005,11 +2001,27 @@ public class ScriptRuntime {
         cx.currentActivation = activation;
     }
 
-    private static Class getClassOrNull(String className) {
+    static Class getClassOrNull(String className) {
         try {
             return Class.forName(className);
         } catch  (ClassNotFoundException ex) {
         } catch  (SecurityException ex) {
+        } catch (IllegalArgumentException e) {
+            // Can be thrown if name has characters that a class name
+            // can not contain
+        }
+        return null;
+    }
+
+    static Class getClassOrNull(ClassLoader loader, String className)
+    {
+        try {
+            return loader.loadClass(className);
+        } catch (ClassNotFoundException ex) {
+        } catch (SecurityException ex) {
+        } catch (IllegalArgumentException e) {
+            // Can be thrown if name has characters that a class name
+            // can not contain
         }
         return null;
     }
