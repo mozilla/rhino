@@ -2734,6 +2734,7 @@ class BodyCodegen
             thisCase.replaceChild(first, target);
             generateGOTO(Token.IFEQ, target);
         }
+        releaseWordLocal(selector);
 
         Node defaultNode = (Node) node.getProp(Node.DEFAULT_PROP);
         if (defaultNode != null) {
