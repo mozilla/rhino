@@ -50,29 +50,50 @@ public class JavaAdapter extends ScriptableObject {
             }
             intfs[interfaceCount++] = c;
         }
-        
         StringBuffer sb = new StringBuffer("adapter");
         sb.append(serial++);
-        String genName = sb.toString();
-        ClassFileWriter cfw = new ClassFileWriter(genName, 
+        Class[] interfaces = new Class[interfaceCount];
+        System.arraycopy(intfs, 0, interfaces, 0, interfaceCount);
+        Scriptable obj = (Scriptable) args[args.length - 1];
+        Class adapterClass = createAdapterClass(cx, obj, sb.toString(), 
+                                                superClass, interfaces, 
+                                                null, null);
+        Class[] ctorParms = { FlattenedObject.class };
+        Object[] ctorArgs = { new FlattenedObject(obj) };
+        Object v = adapterClass.getConstructor(ctorParms).newInstance(ctorArgs);
+        return cx.toObject(v, ScriptableObject.getTopLevelScope(ctorObj));                           
+    }
+    
+    public static Class createAdapterClass(Context cx, Scriptable jsObj,
+                                           String name, Class superClass, 
+                                           Class[] interfaces, 
+                                           String scriptClassName,
+                                           ClassNameHelper nameHelper)
+        throws ClassNotFoundException
+    {
+        ClassFileWriter cfw = new ClassFileWriter(name, 
                                                   superClass.getName(), 
                                                   "<adapter>");
         cfw.addField("o", "Lorg/mozilla/javascript/FlattenedObject;",
                      ClassFileWriter.ACC_PRIVATE);
         cfw.addField("self", "Lorg/mozilla/javascript/Scriptable;",
-                     (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
-        for (int i = 0; i < interfaceCount; i++) {
-            if (intfs[i] != null)
-                cfw.addInterface(intfs[i].getName());
+                     (short) (ClassFileWriter.ACC_PUBLIC | 
+                              ClassFileWriter.ACC_FINAL));
+        int interfacesCount = interfaces == null ? 0 : interfaces.length;
+        for (int i=0; i < interfacesCount; i++) {
+            if (interfaces[i] != null)
+                cfw.addInterface(interfaces[i].getName());
         }
         
-        generateCtor(cfw, genName, superClass);
+        generateCtor(cfw, name, superClass);
+        if (scriptClassName != null)
+            generateEmptyCtor(cfw, name, superClass, scriptClassName);
         
         Hashtable generatedOverrides = new Hashtable();
         
         // if abstract class was specified, then generate appropriate overrides.
-        for (int i = 0; i < interfaceCount; i++) {
-            Method[] methods = intfs[i].getMethods();
+        for (int i = 0; i < interfacesCount; i++) {
+            Method[] methods = interfaces[i].getMethods();
             for (int j = 0; j < methods.length; j++) {
             	Method method = methods[j];
                 int mods = method.getModifiers();
@@ -82,18 +103,19 @@ public class JavaAdapter extends ScriptableObject {
                 // method/signature.
             	String methodKey = getMethodSignature(method);
             	if (! generatedOverrides.containsKey(methodKey)) {
-                	generateOverride(cfw, genName, method);
+                	generateOverride(cfw, name, method);
                 	generatedOverrides.put(methodKey, methodKey);
                 }
             }
         }
 
-        // Now, go through the superclasses methods, checking for abstract methods
-        // or additional methods to override.
-        FlattenedObject obj = new FlattenedObject(
-                                (Scriptable) args[args.length - 1]);
+        // Now, go through the superclasses methods, checking for abstract 
+        // methods or additional methods to override.
+        FlattenedObject obj = jsObj != null 
+                              ? new FlattenedObject(jsObj) 
+                              : null;
 
-		// generate any additional overrides that the object might contain.
+        // generate any additional overrides that the object might contain.
         Method[] methods = superClass.getMethods();
         for (int j = 0; j < methods.length; j++) {
             Method method = methods[j];
@@ -103,12 +125,14 @@ public class JavaAdapter extends ScriptableObject {
             // if a method is marked abstract, must implement it or the 
             // resulting class won't be instantiable. otherwise, if the object 
             // has a property of the same name, then an override is intended.
-            if (Modifier.isAbstract(mods) || obj.hasProperty(method.getName())) {
+            if (Modifier.isAbstract(mods) || 
+                (obj != null && obj.hasProperty(method.getName())))
+            {
                 // make sure to generate only one instance of a particular 
                 // method/signature.
                 String methodKey = getMethodSignature(method);
                 if (! generatedOverrides.containsKey(methodKey)) {
-                    generateOverride(cfw, genName, method);
+                    generateOverride(cfw, name, method);
                     generatedOverrides.put(methodKey, method);
                 }
             }
@@ -126,21 +150,34 @@ public class JavaAdapter extends ScriptableObject {
             throw new RuntimeException("unexpected IOException");
         }
         byte[] bytes = out.toByteArray();
+        
+        if (nameHelper != null && nameHelper.getGeneratingDirectory() != null) 
+        {
+            try {
+                int lastDot = name.lastIndexOf('.');
+                if (lastDot != -1)
+                    name = name.substring(lastDot+1);
+                String filename = nameHelper.getTargetClassFileName(name);
+                FileOutputStream file = new FileOutputStream(filename);
+                file.write(bytes);
+                file.close();
+            }
+            catch (IOException iox) {
+                throw WrappedException.wrapException(iox);
+            }
+            return null;
+        }
+            
         SecuritySupport ss = cx.getSecuritySupport();
-        Class c;
         if (ss != null)  {
             Object securityDomain = cx.getSecurityDomainForStackDepth(-1);
-            c = ss.defineClass(genName, bytes, securityDomain);
+            return ss.defineClass(name, bytes, securityDomain);
         } else {
             if (classLoader == null)
                 classLoader = new MyClassLoader();
-            classLoader.defineClass(genName, bytes);
-            c = classLoader.loadClass(genName, true);
+            classLoader.defineClass(name, bytes);
+            return classLoader.loadClass(name, true);
         }
-        Class[] ctorParms = { FlattenedObject.class };
-        Object[] ctorArgs = { obj };
-        Object v = c.getConstructor(ctorParms).newInstance(ctorArgs);
-        return cx.toObject(v, ScriptableObject.getTopLevelScope(ctorObj));                           
     }
 
     /**
@@ -152,20 +189,28 @@ public class JavaAdapter extends ScriptableObject {
     {
         Context cx = Context.enter();
         try {
-            return (object.hasProperty(methodId) 
-                    ? object.callMethod(methodId, args) 
-                    : Context.getUndefinedValue());
+            if (object.hasProperty(methodId))
+                return object.callMethod(methodId, args);
+        } catch (PropertyException ex) {
+            // shouldn't occur
+        } catch (NotAFunctionException ex) {
+              // TODO: could occur
+        } catch (JavaScriptException ex) {
+              // TODO: could occur
+            /*
         } catch (Exception ex) {
             // TODO: wouldn't it be better to let the exception propagate
             // up so that it could be dealt with by the calling code?
             ex.printStackTrace(System.err);
             throw new Error(ex.getMessage());
+            */
         } finally {	
             Context.exit();
         }
+        return Context.getUndefinedValue();
     }
     
-    private static void generateCtor(ClassFileWriter cfw, String genName, 
+    private static void generateCtor(ClassFileWriter cfw, String name, 
                                      Class superClass) 
     {
         cfw.startMethod("<init>", 
@@ -178,13 +223,24 @@ public class JavaAdapter extends ScriptableObject {
                 superClass.getName().replace('.', '/'), 
                 "<init>", "()", "V");
         
+        // Set the prototype of the js object to be a LiveConnect 
+        // wapper of the generated class's object
+        cfw.add(ByteCode.ALOAD_1);  // first arg
+        cfw.add(ByteCode.ALOAD_0);  // this
+        cfw.add(ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/ScriptRuntime",
+                "setAdapterProto",
+                "(Lorg/mozilla/javascript/Scriptable;" +
+                 "Ljava/lang/Object;)",
+                "V");
+        
         // Save parameter in instance variable
         cfw.add(ByteCode.ALOAD_0);  // this
         cfw.add(ByteCode.ALOAD_1);  // first arg
-        cfw.add(ByteCode.PUTFIELD, genName, "o", 
+        cfw.add(ByteCode.PUTFIELD, name, "o", 
                 "Lorg/mozilla/javascript/FlattenedObject;");
 
-        // Store Scriptable object in "self" a public instance variable, 
+        // Store Scriptable object in "self", a public instance variable, 
         //  so scripts can read it.
         cfw.add(ByteCode.ALOAD_0);  // this
         cfw.add(ByteCode.ALOAD_1);  // first arg
@@ -192,13 +248,74 @@ public class JavaAdapter extends ScriptableObject {
                 "org/mozilla/javascript/FlattenedObject",
                 "getObject", "()",
                 "Lorg/mozilla/javascript/Scriptable;");
-        cfw.add(ByteCode.PUTFIELD, genName, "self",
+        cfw.add(ByteCode.PUTFIELD, name, "self",
                 "Lorg/mozilla/javascript/Scriptable;");		
         
         cfw.add(ByteCode.RETURN);
         cfw.stopMethod((short)20, null); // TODO: magic number "20"
     }
-    
+
+    private static void generateEmptyCtor(ClassFileWriter cfw, String name, 
+                                          Class superClass, 
+                                          String scriptClassName) 
+    {
+        cfw.startMethod("<init>", "()V", ClassFileWriter.ACC_PUBLIC);
+        
+        // Invoke base class constructor
+        cfw.add(ByteCode.ALOAD_0);  // this
+        cfw.add(ByteCode.INVOKESPECIAL,
+                superClass.getName().replace('.', '/'), 
+                "<init>", "()", "V");
+        
+        // Load script class
+        cfw.add(ByteCode.NEW, scriptClassName);
+        cfw.add(ByteCode.DUP);
+        cfw.add(ByteCode.INVOKESPECIAL, scriptClassName, "<init>", "()", "V");
+        
+        // Run script and save resulting scope
+        cfw.add(ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/ScriptRuntime",
+                "runScript",
+                "(Lorg/mozilla/javascript/Script;)",
+                "Lorg/mozilla/javascript/FlattenedObject;");
+        cfw.add(ByteCode.ASTORE_1);
+                
+        // Save the FlattenedObject in instance variable
+        cfw.add(ByteCode.ALOAD_0);  // this
+        cfw.add(ByteCode.ALOAD_1);  // the FlattenedObject
+        cfw.add(ByteCode.PUTFIELD, name, "o", 
+                "Lorg/mozilla/javascript/FlattenedObject;");
+
+        // Store Scriptable object in "self", a public instance variable, 
+        //  so scripts can read it.
+        cfw.add(ByteCode.ALOAD_0);  // this
+        cfw.add(ByteCode.ALOAD_1);  // the FlattenedObject
+        cfw.add(ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/FlattenedObject",
+                "getObject", "()",
+                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.PUTFIELD, name, "self",
+                "Lorg/mozilla/javascript/Scriptable;");		
+        
+        // Set the prototype of the js object to be a LiveConnect 
+        // wapper of the generated class's object
+        cfw.add(ByteCode.ALOAD_1);  // the FlattenedObject
+        cfw.add(ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/FlattenedObject",
+                "getObject", "()",
+                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.ALOAD_0);  // this
+        cfw.add(ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/ScriptRuntime",
+                "setAdapterProto",
+                "(Lorg/mozilla/javascript/Scriptable;" +
+                 "Ljava/lang/Object;)",
+                "V");
+
+        cfw.add(ByteCode.RETURN);
+        cfw.stopMethod((short)20, null); // TODO: magic number "20"
+    }
+
     /**
      * Generates code to create a java.lang.Boolean, java.lang.Character or a 
      * java.lang.Double to wrap the specified primitive parameter. Leaves the 

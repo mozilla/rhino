@@ -1278,6 +1278,23 @@ public final class Context {
     public boolean isInterpreterClass(Class cl) {
         return cl == Interpreter.class;
     }
+    
+    /**
+     * TODO: doc this and below
+     */
+    public void setTargetExtends(Class extendsClass)
+    {
+        if (nameHelper != null) {
+            nameHelper.setTargetExtends(extendsClass);
+        }
+    }
+        
+    public void setTargetImplements(Class[] implementsClasses)
+    {
+        if (nameHelper != null) {
+            nameHelper.setTargetImplements(implementsClasses);
+        }
+    }
         
     /**** debugger oriented portion of API ****/
 
