@@ -43,21 +43,21 @@ package org.mozilla.javascript;
  * @see Node
  * @author Igor Bukanov
  */
-public final class PreorderNodeIterator {
+final class PreorderNodeIterator {
 
-    public PreorderNodeIterator() { }
+    PreorderNodeIterator() { }
 
-    public Node getCurrent() {
+    Node getCurrent() {
         return current;
     }
 
-    public Node getCurrentParent() {
+    Node getCurrentParent() {
         // Should not be used when stackTop == 0,
         // i.e. with start or its siblings
         return stack[stackTop - 1];
     }
 
-    public void start(Node tree) {
+    void start(Node tree) {
         current = tree;
         cachedPrev = null;
         while (stackTop != 0) {
@@ -66,38 +66,34 @@ public final class PreorderNodeIterator {
         }
     }
 
-    public boolean done() {
+    boolean done() {
         return current == null;
     }
 
-    public void next() {
+    void next() {
         Node first = current.getFirstChild();
         if (first != null) {
             stackPush(current);
             cachedPrev = null;
             current = first;
         } else {
-            nextSkipSubtree();
-        }
-    }
-
-    public void nextSkipSubtree() {
-        for (;;) {
-            cachedPrev = current;
-            current = current.next;
-            if (current != null) { break; }
-            if (stackTop == 0) {
-                // Iteration end: clear cachedPrev that currently
-                // points to the last sibling of start
-                cachedPrev = null; break;
+            for (;;) {
+                cachedPrev = current;
+                current = current.next;
+                if (current != null) { break; }
+                if (stackTop == 0) {
+                    // Iteration end: clear cachedPrev that currently
+                    // points to the last sibling of start
+                    cachedPrev = null; break;
+                }
+                --stackTop;
+                current = stack[stackTop];
+                stack[stackTop] = null;
             }
-            --stackTop;
-            current = stack[stackTop];
-            stack[stackTop] = null;
         }
     }
 
-    public void replaceCurrent(Node newNode) {
+    void replaceCurrent(Node newNode) {
         // Should not be used when stackTop == 0,
         // i.e. with start or its siblings
         Node parent = stack[stackTop - 1];
@@ -112,7 +108,7 @@ public final class PreorderNodeIterator {
         current = newNode;
     }
 
-    public void addBeforeCurrent(Node newNode) {
+    void addBeforeCurrent(Node newNode) {
         // Should not be used when stackTop == 0,
         // i.e. with start or its siblings
         Node parent = stack[stackTop - 1];

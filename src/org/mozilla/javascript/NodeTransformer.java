@@ -20,6 +20,7 @@
  *
  * Contributor(s):
  * Norris Boyd
+ * Igor Bukanov
  * Roger Lawrence
  * Mike McCabe
  *
@@ -50,19 +51,11 @@ public class NodeTransformer {
         this.ts = ts;
     }
 
-    /**
-     * Return new instance of this class. So that derived classes
-     * can override methods of the transformer.
-     */
-    protected NodeTransformer newInstance() {
-        return new NodeTransformer(ts);
-    }
-
     public final void transform(ScriptOrFnNode tree)
     {
         loops = new ObjArray();
         loopEnds = new ObjArray();
-        inFunction = tree.getType() == Token.FUNCTION;
+        boolean inFunction = tree.getType() == Token.FUNCTION;
 
         // to save against upchecks if no finally blocks are used.
         boolean hasFinally = false;
@@ -74,15 +67,6 @@ public class NodeTransformer {
 
           typeswitch:
             switch (type) {
-
-              case Token.FUNCTION:
-                if (node != tree) {
-                    int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
-                    FunctionNode fnNode = tree.getFunctionNode(fnIndex);
-                    NodeTransformer inner = newInstance();
-                    inner.transform(fnNode);
-                }
-                break;
 
               case Token.LABEL:
               {
@@ -423,11 +407,11 @@ public class NodeTransformer {
               }
             }
         }
-    }
 
-    protected final boolean isInFunction()
-    {
-        return inFunction;
+        for (int i = 0; i != tree.getFunctionCount(); ++i) {
+            FunctionNode fn = tree.getFunctionNode(i);
+            transform(fn);
+        }
     }
 
     protected void visitNew(Node node, ScriptOrFnNode tree) {
@@ -449,7 +433,8 @@ public class NodeTransformer {
      * Return true if the node is a call to a function that requires
      * access to the enclosing activation object.
      */
-    private int getSpecialCallType(Node tree, Node node) {
+    private static int getSpecialCallType(Node tree, Node node)
+    {
         Node left = node.getFirstChild();
         int type = Node.NON_SPECIALCALL;
         if (left.getType() == Token.NAME) {
@@ -469,7 +454,7 @@ public class NodeTransformer {
         }
         if (type != Node.NON_SPECIALCALL) {
             // Calls to these functions require activation objects.
-            if (inFunction)
+            if (tree.getType() == Token.FUNCTION)
                 ((FunctionNode) tree).setRequiresActivation(true);
         }
         return type;
@@ -487,7 +472,6 @@ public class NodeTransformer {
 
     private ObjArray loops;
     private ObjArray loopEnds;
-    private boolean inFunction;
-    protected TokenStream ts;
+    private TokenStream ts;
 }
 

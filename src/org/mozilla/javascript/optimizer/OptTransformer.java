@@ -56,11 +56,6 @@ class OptTransformer extends NodeTransformer {
         this.directCallTargets = directCallTargets;
     }
 
-    protected NodeTransformer newInstance() {
-        return new OptTransformer(ts, possibleDirectCalls,
-                                  directCallTargets);
-    }
-
     protected void visitNew(Node node, ScriptOrFnNode tree) {
         detectDirectCall(node, tree);
         super.visitNew(node, tree);
@@ -89,7 +84,7 @@ class OptTransformer extends NodeTransformer {
         boolean addGetThis = false;
         if (left.getType() == Token.NAME) {
             String name = left.getString();
-            boolean inFunction = isInFunction();
+            boolean inFunction = (tree.getType() == Token.FUNCTION);
             if (inFunction && tree.hasParamOrVar(name)
                 && !inWithStatement())
             {

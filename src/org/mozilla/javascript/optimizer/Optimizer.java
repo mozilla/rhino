@@ -76,7 +76,11 @@ class Optimizer
 
         inDirectCallFunction = theFunction.isTargetOfDirectCall();
 
-        Node[] theStatementNodes = buildStatementList(theFunction);
+        ObjArray statementsArray = new ObjArray();
+        buildStatementList_r(theFunction, statementsArray);
+        Node[] theStatementNodes = new Node[statementsArray.size()];
+        statementsArray.toArray(theStatementNodes);
+
         Block[] theBlocks = Block.buildBlocks(theStatementNodes);
         PrintWriter pw = null;
         try {
@@ -697,31 +701,24 @@ class Optimizer
             }
         }
     }
-
-    private static Node[] buildStatementList(FunctionNode theFunction)
+    private static void buildStatementList_r(Node node, ObjArray statements)
     {
-        ObjArray statements = new ObjArray();
-
-        PreorderNodeIterator iter = new PreorderNodeIterator();
-        for (iter.start(theFunction); !iter.done(); ) {
-            Node node = iter.getCurrent();
-            int type = node.getType();
-            if (type == Token.BLOCK
-                || type == Token.LOCAL_BLOCK
-                || type == Token.LOOP
-                || type == Token.FUNCTION)
-            {
-                iter.next();
-            } else {
-                statements.add(node);
-                iter.nextSkipSubtree();
+        int type = node.getType();
+        if (type == Token.BLOCK
+            || type == Token.LOCAL_BLOCK
+            || type == Token.LOOP
+            || type == Token.FUNCTION)
+        {
+            Node child = node.getFirstChild();
+            while (child != null) {
+                buildStatementList_r(child, statements);
+                child = child.getNext();
             }
+        } else {
+            statements.add(node);
         }
-
-        Node[] result = new Node[statements.size()];
-        statements.toArray(result);
-        return result;
     }
+
 
     private static final boolean DEBUG_OPTIMIZER = false;
     private static int debug_blockCount;
