@@ -134,5 +134,4 @@ class InterpreterData {
     Scriptable itsScope;
     Scriptable itsThisObj;
     Object[] itsInArgs;
-    Scriptable obj;
 }

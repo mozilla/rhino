@@ -51,10 +51,23 @@ public class DebugShell implements Debugger {
     }
 
     public void handleBreakpointHit(Context cx) {
-        Frame frame = cx.getFrame(0);
-        int line = frame.getLineNumber();
-        Main.getOut().println("Hit breakpoint at \"" + frame.getSourceName() +
-                              "\", line " + line);
+        if (stopAtFrameDepth != -1) {
+            if (cx.getFrameCount() > stopAtFrameDepth)
+                return;
+        }
+        stopAtFrameDepth = -1;
+        Main.getErr().print("Hit breakpoint at ");
+        Frame frame = cx.getFrame(0);  
+        printFrame(frame);
+        Main.getErr().println();
+        enterShell(cx, frame.getVariableObject());
+    }
+    
+    public void handleExceptionThrown(Context cx, Object e) {
+        Main.getErr().print("Encountered exception " + e + " in ");
+        Frame frame = cx.getFrame(0);  
+        printFrame(frame);
+        Main.getErr().println();
         enterShell(cx, frame.getVariableObject());
     }
     
@@ -72,8 +85,13 @@ public class DebugShell implements Debugger {
                 Main.getErr().println(ioe.toString());
                 break;
             }
-            if (line == null || line.length() == 0 || line.equals("#"))
-                return;
+            if (line == null || line.length() == 0 || line.equals("#")) {
+                if (lastCommand != null)
+                    line = lastCommand;
+                else
+                    continue;
+            }
+            lastCommand = line;
             String command = line;
             String args = null;
             int space = line.indexOf(" ");
@@ -96,18 +114,56 @@ public class DebugShell implements Debugger {
                     Main.getErr().println("Breakpoint placed at line " + min); /// xx source
                 else
                     Main.getErr().println("Cannot place breakpoint for " + args);
-            }
-            if (command.equals("p")) {
+            } else if (command.equals("c")) {
+                return;
+            } else if (command.equals("p")) {
                 Reader reader = new StringReader(args);
                 Object result = Main.evaluateReader(cx, scope, reader, 
                                                     "<p command>", 1);
                 Main.getErr().println(cx.toString(result));
-            }
-            if (command.equals("s")) {
+            } else if (command.equals("s")) {
                 cx.setBreakNextLine(true);
                 break;
+            } else if (command.equals("n")) {
+                cx.setBreakNextLine(true);
+                stopAtFrameDepth = cx.getFrameCount();
+                break;
+            } else if (command.equals("finish")) {
+                cx.setBreakNextLine(true);
+                stopAtFrameDepth = cx.getFrameCount() - 1;
+                break;
+            } else if (command.equals("where")) {
+                for (int i=0; i < cx.getFrameCount(); i++) {
+                    Frame f = cx.getFrame(i);
+                    printFrame(f);
+                    Main.getErr().println();
+                }
+            } else {
+                Main.getErr().println("command \"" + command + "\" not recognized.");
+                lastCommand = null;
             }
         }
+    }
+    
+    void printFrame(Frame f) {
+        DebuggableScript ds = f.getScript();
+        if (ds != null) {
+            Scriptable obj = ds.getScriptable();
+            if (obj instanceof Script) {
+                Main.getErr().print("script");
+            } else {
+                Main.getErr().print("function ");
+                Object v = ScriptableObject.getProperty(obj, "name");
+                if (v instanceof String)
+                    Main.getErr().print((String) v);
+            }
+        }
+                    
+        String sourceName = f.getSourceName();
+        if (sourceName == null)
+            sourceName = "<stdin>";
+        Main.getErr().print(" (\"" + sourceName + "\"; line " + 
+                            f.getLineNumber() + ")");
     }
     
     int getMinLineNumber(DebuggableScript ds) {
@@ -121,4 +177,7 @@ public class DebugShell implements Debugger {
         }
         return min;
     }
+    
+    private int stopAtFrameDepth = -1;
+    private String lastCommand = null;
 }

@@ -60,7 +60,6 @@ class InterpretedFunction extends NativeFunction implements DebuggableScript {
         nestedFunctions = itsData.itsNestedFunctions;
         if (cx != null)
             version = (short)cx.getLanguageVersion();
-        itsData.obj = this;
     }
     
     InterpretedFunction(InterpretedFunction theOther,
@@ -85,7 +84,11 @@ class InterpretedFunction extends NativeFunction implements DebuggableScript {
         itsData.itsScope = scope;
         itsData.itsThisObj = thisObj;
         itsData.itsInArgs = args;
-        return Interpreter.interpret(itsData);
+        return Interpreter.interpret(itsData, this);
+    }
+    
+    public Scriptable getScriptable() {
+        return this;
     }
     
     public String getSourceName() {

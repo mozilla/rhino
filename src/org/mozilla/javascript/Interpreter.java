@@ -1319,7 +1319,7 @@ public class Interpreter extends LabelTable {
         }
     }
     
-    public static Object interpret(InterpreterData theData)
+    public static Object interpret(InterpreterData theData, Scriptable fnOrScript)
         throws JavaScriptException
     {
         Object lhs;
@@ -1374,9 +1374,12 @@ public class Interpreter extends LabelTable {
         int[] finallyStack = null;
         Scriptable[] scopeStack = null;
         int tryStackTop = 0;
+        InterpreterFrame frame = null;
         
-        if (cx.debugger != null)
-            cx.pushFrame(new InterpreterFrame(scope, theData));
+        if (cx.debugger != null) {
+            frame = new InterpreterFrame(scope, theData, fnOrScript);
+            cx.pushFrame(frame);
+        }
             
         if (theData.itsMaxTryDepth > 0) {
             catchStack = new int[theData.itsMaxTryDepth];
@@ -1873,6 +1876,7 @@ public class Interpreter extends LabelTable {
                     case TokenStream.BREAKPOINT :
                         i = (iCode[pc + 1] << 8) | (iCode[pc + 2] & 0xFF);                    
                         cx.interpreterLine = i;
+                        frame.setLineNumber(i);
                         if ((iCode[pc] & 0xff) == TokenStream.BREAKPOINT ||
                             cx.inLineStepMode) 
                         {
@@ -1888,6 +1892,8 @@ public class Interpreter extends LabelTable {
                 pc++;
             }
             catch (EcmaError ee) {
+                if (cx.debugger != null)
+                    cx.debugger.handleExceptionThrown(cx, ee.getErrorObject());
                 // an offical ECMA error object, 
                 // handle as if it were a JavaScriptException
                 stackTop = 0;
@@ -1897,20 +1903,27 @@ public class Interpreter extends LabelTable {
                     scope = scopeStack[tryStackTop];
                     if (pc == 0) {
                         pc = finallyStack[tryStackTop];
-                        if (pc == 0) 
+                        if (pc == 0) {
+                            if (frame != null)
+                                cx.popFrame();
                             throw ee;
-                        stack[0] = ee.getErrorObject();
+                        }
                     }
-                    else
-                        stack[0] = ee.getErrorObject();
-                }
-                else
+                    stack[0] = ee.getErrorObject();
+                } else {
+                    if (frame != null)
+                        cx.popFrame();
                     throw ee;
+                }
                 // We caught an exception; restore this function's 
                 // security domain.
                 cx.interpreterSecurityDomain = theData.securityDomain;
             }
             catch (JavaScriptException jsx) {
+                if (cx.debugger != null) {
+                    cx.debugger.handleExceptionThrown(cx, 
+                        ScriptRuntime.unwrapJavaScriptException(jsx));
+                }
                 stackTop = 0;
                 cx.interpreterSecurityDomain = null;
                 if (tryStackTop > 0) {
@@ -1918,38 +1931,51 @@ public class Interpreter extends LabelTable {
                     scope = scopeStack[tryStackTop];
                     if (pc == 0) {
                         pc = finallyStack[tryStackTop];
-                        if (pc == 0) 
+                        if (pc == 0) {
+                            if (frame != null)
+                                cx.popFrame();
                             throw jsx;
+                        }
                         stack[0] = jsx;
-                    }
-                    else
+                    } else {
                         stack[0] = ScriptRuntime.unwrapJavaScriptException(jsx);
-                }
-                else
+                    }
+                } else {
+                    if (frame != null)
+                        cx.popFrame();
                     throw jsx;
+                }
                 // We caught an exception; restore this function's 
                 // security domain.
                 cx.interpreterSecurityDomain = theData.securityDomain;
             }
             catch (RuntimeException jx) {
+                if (cx.debugger != null)
+                    cx.debugger.handleExceptionThrown(cx, jx);
                 cx.interpreterSecurityDomain = null;
                 if (tryStackTop > 0) {
                     stackTop = 0;
                     stack[0] = jx;
                     pc = finallyStack[--tryStackTop];
                     scope = scopeStack[tryStackTop];
-                    if (pc == 0) throw jx;
-                }
-                else
+                    if (pc == 0) {
+                        if (frame != null)
+                            cx.popFrame();
+                        throw jx;
+                    }
+                } else {
+                    if (frame != null)
+                        cx.popFrame();
                     throw jx;
+                }
                 // We caught an exception; restore this function's 
                 // security domain.
                 cx.interpreterSecurityDomain = theData.securityDomain;
             }
         }
         cx.interpreterSecurityDomain = savedSecurityDomain;
-        if (cx.debugger != null)
-            cx.popFrame();  /// XXX need to do this for exceptions as well
+        if (frame != null)
+            cx.popFrame();
         return result;    
     }
     

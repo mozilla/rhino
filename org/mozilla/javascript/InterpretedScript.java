@@ -68,7 +68,11 @@ public class InterpretedScript extends NativeScript implements DebuggableScript 
         itsData.itsScope = scope;
         itsData.itsThisObj = thisObj;
         itsData.itsInArgs = args;
-        return Interpreter.interpret(itsData);    
+        return Interpreter.interpret(itsData, this);    
+    }
+    
+    public Scriptable getScriptable() {
+        return this;
     }
     
     public String getSourceName() {
