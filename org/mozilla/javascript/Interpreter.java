@@ -41,6 +41,8 @@ import java.io.*;
 import java.util.Vector;
 import java.util.Enumeration;
 
+import org.mozilla.javascript.debug.*;
+
 public class Interpreter extends LabelTable {
     
     public static final boolean printICode = false;
@@ -195,9 +197,19 @@ public class Interpreter extends LabelTable {
         short lineNumber = ((Number) datum).shortValue(); 
         if (lineNumber != itsLineNumber) {
             itsLineNumber = lineNumber;
+            if (itsData.itsLineNumberTable == null && 
+                Context.getCurrentContext().isGeneratingDebug())
+            {
+                itsData.itsLineNumberTable = new java.util.Hashtable();
+            }
+            if (itsData.itsLineNumberTable != null) {
+                itsData.itsLineNumberTable.put(new Integer(lineNumber), 
+                                           new Integer(iCodeTop));
+            }
             iCodeTop = addByte((byte) TokenStream.LINE, iCodeTop);
             iCodeTop = addByte((byte)(lineNumber >> 8), iCodeTop);
-            iCodeTop = addByte((byte)(lineNumber & 0xff), iCodeTop);                    
+            iCodeTop = addByte((byte)(lineNumber & 0xff), iCodeTop);
+            
         }
         
         return iCodeTop;
@@ -1305,9 +1317,7 @@ public class Interpreter extends LabelTable {
         }
     }
     
-    public static Object interpret(Context cx, Scriptable scope, 
-                                   Scriptable thisObj, Object[] args, 
-                                   InterpreterData theData)
+    public static Object interpret(InterpreterData theData)
         throws JavaScriptException
     {
         Object lhs;
@@ -1327,15 +1337,18 @@ public class Interpreter extends LabelTable {
         if (i > 0) {
             vars = new Object[i];
             for (i = 0; i < theData.itsVariableTable.getParameterCount(); i++) {
-                if (i >= args.length)
+                if (i >= theData.itsInArgs.length)
                     vars[i] = undefined;
                 else                
-                    vars[i] = args[i];    
+                    vars[i] = theData.itsInArgs[i];    
             }
             for ( ; i < vars.length; i++)
                 vars[i] = undefined;
         }
         
+        Context cx = theData.itsCX;
+        Scriptable scope = theData.itsScope;
+
         if (theData.itsNestedFunctions != null) {
             for (i = 0; i < theData.itsNestedFunctions.length; i++)
                 createFunctionObject(theData.itsNestedFunctions[i], scope);
@@ -1360,6 +1373,9 @@ public class Interpreter extends LabelTable {
         Scriptable[] scopeStack = null;
         int tryStackTop = 0;
         
+        // XXX only do this if in some debug mode
+        cx.pushFrame(new InterpreterFrame(scope, theData));
+            
         if (theData.itsMaxTryDepth > 0) {
             catchStack = new int[theData.itsMaxTryDepth];
             finallyStack = new int[theData.itsMaxTryDepth];
@@ -1374,6 +1390,8 @@ public class Interpreter extends LabelTable {
         Object savedSecurityDomain = cx.interpreterSecurityDomain;
         cx.interpreterSecurityDomain = theData.securityDomain;
         Object result = undefined;
+        
+        Scriptable theThisObj = theData.itsThisObj;            
         
         while (pc < iCodeLength) {
             try {
@@ -1658,7 +1676,7 @@ public class Interpreter extends LabelTable {
                         lhs = stack[stackTop];
                         stack[stackTop] = ScriptRuntime.callSpecial(
                                             cx, lhs, rhs, outArgs, 
-                                            thisObj, scope, name, i);
+                                            theThisObj, scope, name, i);
                         pc += 6;
                         break;
                     case TokenStream.CALL :
@@ -1763,7 +1781,7 @@ public class Interpreter extends LabelTable {
                         stack[++stackTop] = null;
                         break;
                     case TokenStream.THIS :
-                        stack[++stackTop] = thisObj;
+                        stack[++stackTop] = theThisObj;
                         break;
                     case TokenStream.FALSE :
                         stack[++stackTop] = Boolean.FALSE;
@@ -1846,13 +1864,20 @@ public class Interpreter extends LabelTable {
                         stack[++stackTop] = theData.itsRegExpLiterals[i];
                         pc += 2;
                         break;
+                    case TokenStream.SOURCEFILE :    
+                        cx.interpreterSourceFile = theData.itsSourceFile;
+                        break;
                     case TokenStream.LINE :    
                         i = (iCode[pc + 1] << 8) | (iCode[pc + 2] & 0xFF);                    
                         cx.interpreterLine = i;
+                        if (!cx.inLineStepMode) {
+                            pc += 2;
+                            break;
+                        }
+                        // else fall through to breakpoint
+                    case TokenStream.BREAKPOINT :
+                        cx.getDebugger().handleBreakpointHit(cx);
                         pc += 2;
-                        break;
-                    case TokenStream.SOURCEFILE :    
-                        cx.interpreterSourceFile = theData.itsSourceFile;
                         break;
                     default :
                         dumpICode(theData);
@@ -1926,4 +1951,6 @@ public class Interpreter extends LabelTable {
     }
     
     private int version;
+    private boolean inLineStepMode;
+    private Debugger debugger;
 }
