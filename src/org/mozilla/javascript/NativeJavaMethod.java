@@ -320,20 +320,6 @@ public class NativeJavaMethod extends NativeFunction implements Function {
         if (methodsOrCtors.length == 0)
             return null;
         boolean hasMethods = methodsOrCtors[0] instanceof Method;
-        // Wrapper support
-        for (int i=0; i < args.length; i++) {
-            Object arg = args[i];
-            if (arg instanceof Wrapper) {
-                arg = ((Wrapper)arg).unwrap();
-                if (!(arg instanceof Number)) {
-                    // Since numbers are internally represented as
-                    // java.lang.Double, etc. then java.lang.Doubles are
-                    // distinquished by being wrapped. Thus don't unwrap
-                    // here or we'll get overloading wrong.
-                    args[i] = arg;
-                }
-            }
-        }
 
         Member  bestFit = null;
         Class[] bestFitTypes = null;
