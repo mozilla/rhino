@@ -326,6 +326,7 @@ public class Token
                 case NEWLOCAL:        return "newlocal";
                 case USELOCAL:        return "uselocal";
                 case SCRIPT:          return "script";
+                case TYPEOFNAME:      return "typeofname";
             }
             return "<unknown="+token+">";
         }
