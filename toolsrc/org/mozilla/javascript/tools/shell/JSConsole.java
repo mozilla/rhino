@@ -155,13 +155,10 @@ public class JSConsole extends JFrame implements ActionListener {
             });
         pack();
         setVisible(true);
-        // System.setIn(consoleTextArea.getIn());
-        // System.setOut(consoleTextArea.getOut());
-        // System.setErr(consoleTextArea.getErr());
-        Main.setIn(consoleTextArea.getIn());
-        Main.setOut(consoleTextArea.getOut());
-        Main.setErr(consoleTextArea.getErr());
-        Main.main(args);
+        System.setIn(consoleTextArea.getIn());
+        System.setOut(consoleTextArea.getOut());
+        System.setErr(consoleTextArea.getErr());
+        Main.exec(args);
     }
 
     public void actionPerformed(ActionEvent e) {
