@@ -1080,7 +1080,7 @@ public class Interpreter
                 break;
         }
         if (stackDelta != itsStackDepth - savedStackDepth) {
-            System.out.println("Bad stack delta: type="+Token.name(type)+" expected="+stackDelta+" real="+ (itsStackDepth - savedStackDepth));
+            //System.out.println("Bad stack delta: type="+Token.name(type)+" expected="+stackDelta+" real="+ (itsStackDepth - savedStackDepth));
             Kit.codeBug();
         }
         if (stackShouldBeZero && !(stackDelta == 0 && itsStackDepth == 0)) {
