@@ -762,32 +762,48 @@ public class IRFactory {
         Node childNode = (Node)child;
         int childType = childNode.getType();
 
-        if (post && !hasSideEffects(childNode)
-            && (childType == Token.NAME
-                || childType == Token.GETPROP
-                || childType == Token.GETELEM))
-        {
-            // if it's not a LHS type, createAssignment (below) will throw
-            // an exception.
-            return new Node(nodeType, childNode);
+        if (childType == Token.NAME) {
+            if (post) {
+                return new Node(nodeType, childNode);
+            }
+
+            /*
+             * Transform INC/DEC ops to +=1, -=1,
+             * expecting later optimization of all +/-=1 cases to INC, DEC.
+             */
+            Node rhs = (Node) createNumber(1.0);
+
+            String s = childNode.getString();
+            Node opLeft = Node.newString(Token.NAME, s);
+            opLeft = new Node(Token.POS, opLeft);
+
+            int opType = (nodeType == Token.INC) ? Token.ADD : Token.SUB;
+            Node op = new Node(opType, opLeft, rhs);
+            Node lvalueLeft = Node.newString(Token.BINDNAME, s);
+            return new Node(Token.SETNAME, lvalueLeft, op);
+
+        } else if (childType == Token.GETPROP || childType == Token.GETELEM) {
+            if (post) {
+                return new Node(nodeType, childNode);
+            }
+
+            /*
+             * Transform INC/DEC ops to +=1, -=1,
+             * expecting later optimization of all +/-=1 cases to INC, DEC.
+             */
+            Node rhs = (Node) createNumber(1.0);
+
+            return createAssignmentOp(nodeType == Token.INC
+                                        ? Token.ADD
+                                        : Token.SUB,
+                                      childNode,
+                                      rhs,
+                                      true);
         }
-
-        /*
-         * Transform INC/DEC ops to +=1, -=1,
-         * expecting later optimization of all +/-=1 cases to INC, DEC.
-         */
-        // we have to use Double for now, because
-        // 0.0 and 1.0 are stored as dconst_[01],
-        // and using a Float creates a stack mismatch.
-        Node rhs = (Node) createNumber(1.0);
-
-        return createAssignmentOp(nodeType == Token.INC
-                                    ? Token.ADD
-                                    : Token.SUB,
-                                  childNode,
-                                  rhs,
-                                  true,
-                                  post);
+        // TODO: This should be a ReferenceError--but that's a runtime
+        //  exception. Should we compile an exception into the code?
+        ts.reportCurrentLineError("msg.bad.lhs.assign", null);
+        return child;
     }
 
     /**
@@ -1005,12 +1021,11 @@ public class IRFactory {
 
     public Object createAssignmentOp(int assignOp, Object left, Object right)
     {
-        return createAssignmentOp(assignOp, (Node) left, (Node) right,
-                                  false, false);
+        return createAssignmentOp(assignOp, (Node)left, (Node)right, false);
     }
 
     private Node createAssignmentOp(int assignOp, Node left, Node right,
-                                    boolean tonumber, boolean postfix)
+                                    boolean tonumber)
     {
         int nodeType = left.getType();
         switch (nodeType) {
@@ -1021,18 +1036,9 @@ public class IRFactory {
             if (tonumber)
                 opLeft = new Node(Token.POS, opLeft);
 
-            if (!postfix) {
-                Node op = new Node(assignOp, opLeft, right);
-                Node lvalueLeft = Node.newString(Token.BINDNAME, s);
-                return new Node(Token.SETNAME, lvalueLeft, op);
-            } else {
-                opLeft = createNewTemp(opLeft);
-                Node op = new Node(assignOp, opLeft, right);
-                Node lvalueLeft = Node.newString(Token.BINDNAME, s);
-                Node result = new Node(Token.SETNAME, lvalueLeft, op);
-                result = new Node(Token.COMMA, result, createUseTemp(opLeft));
-                return result;
-            }
+            Node op = new Node(assignOp, opLeft, right);
+            Node lvalueLeft = Node.newString(Token.BINDNAME, s);
+            return new Node(Token.SETNAME, lvalueLeft, op);
           }
 
           case Token.GETPROP:
@@ -1075,16 +1081,8 @@ public class IRFactory {
             if (tonumber)
                 opLeft = new Node(Token.POS, opLeft);
 
-            if (!postfix) {
-                Node op = new Node(assignOp, opLeft, right);
-                return new Node(type, tmp1, tmp2, op);
-            } else {
-                opLeft = createNewTemp(opLeft);
-                Node op = new Node(assignOp, opLeft, right);
-                Node result = new Node(type, tmp1, tmp2, op);
-                result = new Node(Token.COMMA, result, createUseTemp(opLeft));
-                return result;
-            }
+            Node op = new Node(assignOp, opLeft, right);
+            return new Node(type, tmp1, tmp2, op);
           }
 
           default:
