@@ -223,9 +223,14 @@ public class JavaAdapter extends ScriptableObject {
                 superClass.getName().replace('.', '/'), 
                 "<init>", "()", "V");
         
+        /*
         // Set the prototype of the js object to be a LiveConnect 
         // wapper of the generated class's object
         cfw.add(ByteCode.ALOAD_1);  // first arg
+        cfw.add(ByteCode.INVOKEVIRTUAL,
+                "org/mozilla/javascript/FlattenedObject",
+                "getObject", "()",
+                "Lorg/mozilla/javascript/Scriptable;");
         cfw.add(ByteCode.ALOAD_0);  // this
         cfw.add(ByteCode.INVOKESTATIC,
                 "org/mozilla/javascript/ScriptRuntime",
@@ -233,6 +238,7 @@ public class JavaAdapter extends ScriptableObject {
                 "(Lorg/mozilla/javascript/Scriptable;" +
                  "Ljava/lang/Object;)",
                 "V");
+         */
         
         // Save parameter in instance variable
         cfw.add(ByteCode.ALOAD_0);  // this
