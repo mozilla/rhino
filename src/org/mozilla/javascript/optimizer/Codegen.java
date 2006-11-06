@@ -1,40 +1,44 @@
-/*
- * The contents of this file are subject to the Netscape Public
- * License Version 1.1 (the "License"); you may not use this file
- * except in compliance with the License. You may obtain a copy of
- * the License at http://www.mozilla.org/NPL/
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
- * Software distributed under the License is distributed on an "AS
- * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- * implied. See the License for the specific language governing
- * rights and limitations under the License.
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
  *
  * The Original Code is Rhino code, released
  * May 6, 1999.
  *
- * The Initial Developer of the Original Code is Netscape
- * Communications Corporation.  Portions created by Netscape are
- * Copyright (C) 1997-2000 Netscape Communications Corporation. All
- * Rights Reserved.
+ * The Initial Developer of the Original Code is
+ * Netscape Communications Corporation.
+ * Portions created by the Initial Developer are Copyright (C) 1997-2000
+ * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Norris Boyd
- * Kemal Bayram
- * Igor Bukanov
- * Roger Lawrence
- * Andi Vajda
+ *   Norris Boyd
+ *   Kemal Bayram
+ *   Igor Bukanov
+ *   Roger Lawrence
+ *   Andi Vajda
  *
- * Alternatively, the contents of this file may be used under the
- * terms of the GNU Public License (the "GPL"), in which case the
- * provisions of the GPL are applicable instead of those above.
- * If you wish to allow use of your version of this file only
- * under the terms of the GPL and not to allow others to use your
- * version of this file under the NPL, indicate your decision by
- * deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL.  If you do not delete
- * the provisions above, a recipient may use your version of this
- * file under either the NPL or the GPL.
- */
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the MPL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the MPL, the GPL or the LGPL.
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 
 package org.mozilla.javascript.optimizer;
@@ -198,7 +202,7 @@ public class Codegen extends Interpreter
         ot.transform(tree);
 
         if (optLevel > 0) {
-            (new Optimizer()).optimize(tree);
+            (new Optimizer()).optimize(tree, optLevel);
         }
     }
 
@@ -261,10 +265,11 @@ public class Codegen extends Interpreter
         }
 
         if (hasScript) {
+            ScriptOrFnNode script = scriptOrFnNodes[0];
             cfw.addInterface("org/mozilla/javascript/Script");
-            generateScriptCtor(cfw);
+            generateScriptCtor(cfw, script);
             generateMain(cfw);
-            generateExecute(cfw);
+            generateExecute(cfw, script);
         }
 
         generateCallMethod(cfw);
@@ -503,7 +508,7 @@ public class Codegen extends Interpreter
         cfw.stopMethod((short)1);
     }
 
-    private void generateExecute(ClassFileWriter cfw)
+    private void generateExecute(ClassFileWriter cfw, ScriptOrFnNode script)
     {
         cfw.startMethod("exec",
                         "(Lorg/mozilla/javascript/Context;"
@@ -534,7 +539,8 @@ public class Codegen extends Interpreter
         cfw.stopMethod((short)3);
     }
 
-    private void generateScriptCtor(ClassFileWriter cfw)
+    private void generateScriptCtor(ClassFileWriter cfw,
+                                    ScriptOrFnNode script)
     {
         cfw.startMethod("<init>", "()V", ClassFileWriter.ACC_PUBLIC);
 
@@ -1033,6 +1039,7 @@ public class Codegen extends Interpreter
 
     private static String getStaticConstantWrapperType(double num)
     {
+        String constantType;
         int inum = (int)num;
         if (inum == num) {
             return "Ljava/lang/Integer;";
@@ -1148,6 +1155,9 @@ public class Codegen extends Interpreter
     String mainClassName;
     String mainClassSignature;
 
+    boolean itsUseDynamicScope;
+    int languageVersion;
+
     private double[] itsConstantList;
     private int itsConstantListSize;
 }
@@ -1172,7 +1182,7 @@ class BodyCodegen
         } else {
             treeTop = scriptOrFn;
         }
-        generateStatement(treeTop);
+        generateStatement(treeTop, null);
 
         generateEpilogue();
 
@@ -1485,7 +1495,7 @@ class BodyCodegen
                                "(Lorg/mozilla/javascript/Context;)V");
     }
 
-    private void generateStatement(Node node)
+    private void generateStatement(Node node, Node parent)
     {
         // System.out.println("gen code for " + node.toString());
 
@@ -1501,7 +1511,7 @@ class BodyCodegen
               case Token.EMPTY:
                 // no-ops.
                 while (child != null) {
-                    generateStatement(child);
+                    generateStatement(child, node);
                     child = child.getNext();
                 }
                 break;
@@ -1510,7 +1520,7 @@ class BodyCodegen
                 int local = getNewWordLocal();
                 node.putIntProp(Node.LOCAL_PROP, local);
                 while (child != null) {
-                    generateStatement(child);
+                    generateStatement(child, node);
                     child = child.getNext();
                 }
                 releaseWordLocal((short)local);
@@ -1687,7 +1697,7 @@ class BodyCodegen
                     int finallyRegister = getNewWordLocal();
                     cfw.addAStore(finallyRegister);
                     while (child != null) {
-                        generateStatement(child);
+                        generateStatement(child, node);
                         child = child.getNext();
                     }
                     cfw.add(ByteCode.RET, finallyRegister);
@@ -1915,7 +1925,7 @@ class BodyCodegen
 
               case Token.INC:
               case Token.DEC:
-                visitIncDec(node);
+                visitIncDec(node, false);
                 break;
 
               case Token.OR:
@@ -2975,7 +2985,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         cfw.markLabel(startLabel, (short)1);
 
         while (child != null) {
-            generateStatement(child);
+            generateStatement(child, node);
             child = child.getNext();
         }
 
@@ -3037,9 +3047,9 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         cfw.markLabel(realEnd);
     }
 
-    private static final int JAVASCRIPT_EXCEPTION  = 0;
-    private static final int EVALUATOR_EXCEPTION   = 1;
-    private static final int ECMAERROR_EXCEPTION   = 2;
+    private final int JAVASCRIPT_EXCEPTION  = 0;
+    private final int EVALUATOR_EXCEPTION   = 1;
+    private final int ECMAERROR_EXCEPTION   = 2;
 
     private void generateCatchBlock(int exceptionType,
                                     short savedVariableObject,
@@ -3143,7 +3153,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                                +")Ljava/lang/String;");
     }
 
-    private void visitIncDec(Node node)
+    private void visitIncDec(Node node, boolean isInc)
     {
         int incrDecrMask = node.getExistingIntProp(Node.INCRDECR_PROP);
         Node child = node.getFirstChild();
@@ -3991,6 +4001,14 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         }
         throw Context.reportRuntimeError("Program too complex " +
                                          "(out of locals)");
+    }
+
+    private void releaseWordpairLocal(short local)
+    {
+        if (local < firstFreeLocal)
+            firstFreeLocal = local;
+        locals[local] = false;
+        locals[local + 1] = false;
     }
 
     private void releaseWordLocal(short local)
