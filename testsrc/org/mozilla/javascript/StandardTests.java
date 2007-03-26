@@ -68,21 +68,21 @@ public class StandardTests extends TestSuite
     public static TestSuite suite() throws Exception
     {
         TestSuite suite = new TestSuite("Standard JavaScript tests");
-		
-		File testDir = null;
-		if (System.getProperty("mozilla.js.tests") != null) {
-			testDir = new File(System.getProperty("mozilla.js.tests"));
-		} else {		
-			URL url = StandardTests.class.getResource(".");
-			String path = url.getFile();
-			int jsIndex = path.lastIndexOf("/js");
-			if(jsIndex == -1)
-			{
-				throw new IllegalStateException("You aren't running the tests from within the standard mozilla/js directory structure");
-			}
-			path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
-			testDir = new File(path, "tests");
-		}
+
+        File testDir = null;
+        if (System.getProperty("mozilla.js.tests") != null) {
+            testDir = new File(System.getProperty("mozilla.js.tests"));
+        } else {
+            URL url = StandardTests.class.getResource(".");
+            String path = url.getFile();
+            int jsIndex = path.lastIndexOf("/js");
+            if(jsIndex == -1)
+            {
+                throw new IllegalStateException("You aren't running the tests from within the standard mozilla/js directory structure");
+            }
+            path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
+            testDir = new File(path, "tests");
+        }
         if(!testDir.isDirectory())
         {
             throw new FileNotFoundException(testDir + " is not a directory");
@@ -105,7 +105,7 @@ public class StandardTests extends TestSuite
         }
         return suite;
     }
-    
+
     private static void addSuites(TestSuite topLevel, File testDir, Properties excludes, int optimizationLevel)
     {
         File[] subdirs = testDir.listFiles(ShellTest.DIRECTORY_FILTER);
@@ -119,7 +119,7 @@ public class StandardTests extends TestSuite
             topLevel.addTest(testSuite);
         }
     }
-    
+
     private static void addCategories(TestSuite suite, File suiteDir, String prefix, Properties excludes, int optimizationLevel)
     {
         File[] subdirs = suiteDir.listFiles(ShellTest.DIRECTORY_FILTER);
@@ -133,7 +133,7 @@ public class StandardTests extends TestSuite
             suite.addTest(testCategory);
         }
     }
-    
+
     private static void addTests(TestSuite suite, File suiteDir, String prefix, Properties excludes, int optimizationLevel)
     {
         File[] jsFiles = suiteDir.listFiles(ShellTest.TEST_FILTER);
@@ -149,64 +149,64 @@ public class StandardTests extends TestSuite
             suite.addTest(new JsTestCase(jsFile, optimizationLevel));
         }
     }
-	
-	private static class JunitStatus extends ShellTest.Status {
-		final void running(File jsFile) {
-			//	do nothing
-		}
-		
-		final void failed(String s) {
-			Assert.fail(s);
-		}
-		
-		final void exitCodesWere(int expected, int actual) {
-			Assert.assertEquals("Unexpected exit code", expected, actual);
-		}
-		
-		final void outputWas(String s) {
-			System.out.print(s);
-		}
-		
-		final void threw(Throwable t) {
-			Assert.fail(ShellTest.getStackTrace(t));
-		}
-		
-		final void timedOut() {
-			failed("Timed out.");
-		}
-	}
-	
+
+    private static class JunitStatus extends ShellTest.Status {
+        final void running(File jsFile) {
+            //    do nothing
+        }
+
+        final void failed(String s) {
+            Assert.fail(s);
+        }
+
+        final void exitCodesWere(int expected, int actual) {
+            Assert.assertEquals("Unexpected exit code", expected, actual);
+        }
+
+        final void outputWas(String s) {
+            System.out.print(s);
+        }
+
+        final void threw(Throwable t) {
+            Assert.fail(ShellTest.getStackTrace(t));
+        }
+
+        final void timedOut() {
+            failed("Timed out.");
+        }
+    }
+
     private static final class JsTestCase extends TestCase
     {
         private final File jsFile;
         private final int optimizationLevel;
-        
+
         JsTestCase(File jsFile, int optimizationLevel)
         {
             super(jsFile.getName() + (optimizationLevel == 1 ? "-compiled" : "-interpreted"));
             this.jsFile = jsFile;
             this.optimizationLevel = optimizationLevel;
         }
-        
+
         public int countTestCases()
         {
             return 1;
         }
 
-		private static class ShellTestParameters extends ShellTest.Parameters {
-			int getTimeoutMilliseconds() {
-				if (System.getProperty("mozilla.js.tests.timeout") != null) {
-					return Integer.parseInt(System.getProperty("mozilla.js.tests.timeout"));
-				}
-				return 60000;
-			}
-		}
-	
+        private static class ShellTestParameters extends ShellTest.Parameters {
+            int getTimeoutMilliseconds() {
+                if (System.getProperty("mozilla.js.tests.timeout") != null) {
+                    return Integer.parseInt(System.getProperty("mozilla.js.tests.timeout"));
+                }
+                return 60000;
+            }
+        }
+
         public void runBare() throws Exception
         {
-			final ShellContextFactory shellContextFactory = new ShellContextFactory();
-			shellContextFactory.setOptimizationLevel(optimizationLevel);
-			ShellTest.run(shellContextFactory, jsFile, new ShellTestParameters(), new JunitStatus());
+            final ShellContextFactory shellContextFactory = new ShellContextFactory();
+            shellContextFactory.setOptimizationLevel(optimizationLevel);
+            ShellTest.run(shellContextFactory, jsFile, new ShellTestParameters(), new JunitStatus());
         }
     }
 }
