@@ -3157,7 +3157,8 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
                 int varIndex = fnCurrent.getVarIndex(child);
                 short reg = varRegisters[varIndex];
-                cfw.addDLoad(reg);
+                int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
+                cfw.addDLoad(reg + offset);
                 if (post) {
                     cfw.add(ByteCode.DUP2);
                 }
@@ -3170,7 +3171,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 if (!post) {
                     cfw.add(ByteCode.DUP2);
                 }
-                cfw.addDStore(reg);
+                cfw.addDStore(reg + offset);
             } else {
                 boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
                 int varIndex = fnCurrent.getVarIndex(child);
@@ -3224,12 +3225,21 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             generateExpression(elemChild.getNext(), node);
             cfw.addALoad(contextLocal);
             cfw.addPush(incrDecrMask);
-            addScriptRuntimeInvoke("elemIncrDecr",
-                                   "(Ljava/lang/Object;"
-                                   +"Ljava/lang/Object;"
-                                   +"Lorg/mozilla/javascript/Context;"
-                                   +"I"
-                                   +")Ljava/lang/Object;");
+            if (elemChild.getNext().getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+              addOptRuntimeInvoke("elemIncrDecr",
+                  "(Ljava/lang/Object;"
+                  +"D"
+                  +"Lorg/mozilla/javascript/Context;"
+                  +"I"
+                  +")Ljava/lang/Object;");
+            } else {
+              addScriptRuntimeInvoke("elemIncrDecr",
+                  "(Ljava/lang/Object;"
+                  +"Ljava/lang/Object;"
+                  +"Lorg/mozilla/javascript/Context;"
+                  +"I"
+                  +")Ljava/lang/Object;");
+            }
             break;
           }
           case Token.GET_REF: {

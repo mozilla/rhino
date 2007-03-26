@@ -137,6 +137,13 @@ public final class OptRuntime extends ScriptRuntime
         return toString(val1).concat((String)val2);
     }
 
+    public static Object elemIncrDecr(Object obj, double index,
+                                      Context cx, int incrDecrMask)
+    {
+        return ScriptRuntime.elemIncrDecr(obj, new Double(index), cx,
+                                          incrDecrMask);
+    }
+
     public static Object[] padStart(Object[] currentArgs, int count) {
         Object[] result = new Object[currentArgs.length + count];
         System.arraycopy(currentArgs, 0, result, count, currentArgs.length);
