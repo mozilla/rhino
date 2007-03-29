@@ -365,7 +365,11 @@ public class Main
                                                      lineno, null);
                 if (script != null) {
                     Object result = evaluateScript(script, cx, global);
-                    if (result != Context.getUndefinedValue()) {
+                    // Avoid printing out undefined or function definitions.
+                    if (result != Context.getUndefinedValue() &&
+                        !(result instanceof Function &&
+                          source.trim().startsWith("function")))
+                    {
                         try {
                             ps.println(Context.toString(result));
                         } catch (RhinoException rex) {

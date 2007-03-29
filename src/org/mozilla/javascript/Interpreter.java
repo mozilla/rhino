@@ -637,17 +637,28 @@ public class Interpreter
                 int fnType = scriptOrFn.getFunctionNode(fnIndex).
                                  getFunctionType();
                 // Only function expressions or function expression
-                // statements needs closure code creating new function
+                // statements need closure code creating new function
                 // object on stack as function statements are initialized
-                // at script/function start
-                // In addition function expression can not present here
-                // at statement level, they must only present as expressions.
+                // at script/function start.
+                // In addition, function expressions can not be present here
+                // at statement level, they must only be present as expressions.
                 if (fnType == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
                     addIndexOp(Icode_CLOSURE_STMT, fnIndex);
                 } else {
                     if (fnType != FunctionNode.FUNCTION_STATEMENT) {
                         throw Kit.codeBug();
                     }
+                }
+                // For function statements or function expression statements
+                // in scripts, we need to ensure that the result of the script 
+                // is the function if it is the last statement in the script.
+                // For example, eval("function () {}") should return a 
+                // function, not undefined.
+                if (!itsInFunctionFlag) {
+                  addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
+                  stackChange(1);
+                  addIcode(Icode_POP_RESULT);
+                  stackChange(-1);
                 }
             }
             break;
