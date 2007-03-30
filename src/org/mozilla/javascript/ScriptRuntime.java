@@ -26,6 +26,7 @@
  *   Norris Boyd
  *   Igor Bukanov
  *   Ethan Hugg
+ *   Bob Jervis
  *   Roger Lawrence
  *   Terry Lucas
  *   Frank Mitchell
@@ -70,6 +71,35 @@ public class ScriptRuntime {
     protected ScriptRuntime() {
     }
 
+    private static class NoSuchMethodShim implements Callable {
+        String methodName;
+        Callable noSuchMethodMethod;
+
+        NoSuchMethodShim(Callable noSuchMethodMethod, String methodName)
+        {
+            this.noSuchMethodMethod = noSuchMethodMethod;
+            this.methodName = methodName;
+        }
+        /**
+         * Perform the call.
+         *
+         * @param cx the current Context for this thread
+         * @param scope the scope to use to resolve properties.
+         * @param thisObj the JavaScript <code>this</code> object
+         * @param args the array of arguments
+         * @return the result of the call
+         */
+        public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+                           Object[] args)
+        {
+            Object[] nestedArgs = new Object[2];
+
+            nestedArgs[0] = methodName;
+            nestedArgs[1] = newArrayLiteral(args, null, cx, scope);
+            return noSuchMethodMethod.call(cx, scope, thisObj, nestedArgs);
+        }
+
+    }
     /*
      * There's such a huge space (and some time) waste for the Foo.class
      * syntax: the compiler sticks in a test of a static field in the
@@ -1990,7 +2020,11 @@ public class ScriptRuntime {
         }
 
         if (!(value instanceof Callable)) {
-            throw notFunctionError(value, property);
+            Object noSuchMethod = ScriptableObject.getProperty(thisObj, "__noSuchMethod__");
+            if (noSuchMethod instanceof Callable)
+                value = new NoSuchMethodShim((Callable)noSuchMethod, property);
+            else
+                throw notFunctionError(value, property);
         }
 
         storeScriptable(cx, thisObj);
