@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Norris Boyd
  *   Igor Bukanov
+ *   Bob Jervis
  *   Roger Lawrence
  *   Steve Weiss
  *
@@ -488,6 +489,37 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             gslot.getter = getterOrSeter;
         }
         gslot.value = Undefined.instance;
+    }
+    
+    /**
+     * Get the getter or setter for a given property. Used by __lookupGetter__
+     * and __lookupSetter__.
+     * 
+     * @param name Name of the object. If nonnull, index must be 0.
+     * @param index Index of the object. If nonzero, name must be null.
+     * @param isSetter If true, return the setter, otherwise return the getter.
+     * @exception IllegalArgumentException if both name and index are nonnull
+     *            and nonzero respectively.
+     * @return Null if the property does not exist. Otherwise returns either 
+     *         the getter or the setter for the property, depending on 
+     *         the value of isSetter (may be undefined if unset).
+     */
+    public Object getGetterOrSetter(String name, int index, boolean isSetter)
+    {
+        if (name != null && index != 0)
+            throw new IllegalArgumentException(name);
+        Slot slot = getSlot(name, index, SLOT_QUERY);
+        if (slot == null)
+            return null;
+        if (slot instanceof GetterSlot) {
+            GetterSlot gslot = (GetterSlot)slot;
+            if (isSetter) {
+                return gslot.setter;
+            } else {
+                return gslot.getter;
+            }
+        } else
+            return Undefined.instance;
     }
 
     void addLazilyInitializedValue(String name, int index,
