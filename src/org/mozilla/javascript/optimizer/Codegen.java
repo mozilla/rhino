@@ -23,6 +23,7 @@
  *   Norris Boyd
  *   Kemal Bayram
  *   Igor Bukanov
+ *   Bob Jervis
  *   Roger Lawrence
  *   Andi Vajda
  *   Hannes Wallnoefer
@@ -2500,12 +2501,37 @@ class BodyCodegen
         }
         // load array with property values
         addNewObjectArray(count);
+        Node child2 = child;
         for (int i = 0; i != count; ++i) {
             cfw.add(ByteCode.DUP);
             cfw.addPush(i);
-            generateExpression(child, node);
+            int childType = child.getType();
+            if (childType == Token.GET) {
+                generateExpression(child.getFirstChild(), node);
+            } else if (childType == Token.SET) {
+                generateExpression(child.getFirstChild(), node);
+            } else {
+                generateExpression(child, node);
+            }
             cfw.add(ByteCode.AASTORE);
             child = child.getNext();
+        }
+        // load array with getterSetter values
+        cfw.addPush(count);
+        cfw.add(ByteCode.NEWARRAY, ByteCode.T_INT);
+        for (int i = 0; i != count; ++i) {
+            cfw.add(ByteCode.DUP);
+            cfw.addPush(i);
+            int childType = child2.getType();
+            if (childType == Token.GET) {
+                cfw.add(ByteCode.ICONST_M1);
+            } else if (childType == Token.SET) {
+                cfw.add(ByteCode.ICONST_1);
+            } else {
+                cfw.add(ByteCode.ICONST_0);
+            }
+            cfw.add(ByteCode.IASTORE);
+            child2 = child2.getNext();
         }
 
         cfw.addALoad(contextLocal);
@@ -2513,6 +2539,7 @@ class BodyCodegen
         addScriptRuntimeInvoke("newObjectLiteral",
              "([Ljava/lang/Object;"
              +"[Ljava/lang/Object;"
+             +"[I"
              +"Lorg/mozilla/javascript/Context;"
              +"Lorg/mozilla/javascript/Scriptable;"
              +")Lorg/mozilla/javascript/Scriptable;");

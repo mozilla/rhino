@@ -3136,16 +3136,51 @@ public class ScriptRuntime {
         return arrayObj;
     }
 
+  /**
+   * This method is here for backward compat with existing compiled code.  It
+   * is called when an object literal is compiled.  The next instance will be
+   * the version called from new code.
+   * @deprecated This method only present for compatibility.
+   */
     public static Scriptable newObjectLiteral(Object[] propertyIds,
                                               Object[] propertyValues,
+                                              Context cx, Scriptable scope)
+    {
+        // This will initialize to all zeros, exactly what we need for old-style
+        // getterSetters values (no getters or setters in the list)
+        int [] getterSetters = new int[propertyIds.length];
+        return newObjectLiteral(propertyIds, propertyValues, getterSetters,
+                cx, scope);
+    }
+
+    public static Scriptable newObjectLiteral(Object[] propertyIds,
+                                              Object[] propertyValues,
+                                              int [] getterSetters,
                                               Context cx, Scriptable scope)
     {
         Scriptable object = cx.newObject(scope);
         for (int i = 0, end = propertyIds.length; i != end; ++i) {
             Object id = propertyIds[i];
+            int getterSetter = getterSetters[i];
             Object value = propertyValues[i];
             if (id instanceof String) {
-                ScriptableObject.putProperty(object, (String)id, value);
+                if (getterSetter == 0)
+                    ScriptableObject.putProperty(object, (String)id, value);
+                else {
+                    Callable fun;
+                    String definer;
+                    if (getterSetter < 0)   // < 0 means get foo() ...
+                        definer = "__defineGetter__";
+                    else
+                        definer = "__defineSetter__";
+                    fun = getPropFunctionAndThis(object, definer, cx);
+                    // Must consume the last scriptable object in cx
+                    lastStoredScriptable(cx);
+                    Object[] outArgs = new Object[2];
+                    outArgs[0] = id;
+                    outArgs[1] = value;
+                    fun.call(cx, scope, object, outArgs);
+                }              
             } else {
                 int index = ((Integer)id).intValue();
                 ScriptableObject.putProperty(object, index, value);

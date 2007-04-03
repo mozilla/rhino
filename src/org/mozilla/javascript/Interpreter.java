@@ -26,6 +26,7 @@
  *   Norris Boyd
  *   Igor Bukanov
  *   Ethan Hugg
+ *   Bob Jervis
  *   Terry Lucas
  *   Roger Lawrence
  *   Milen Nankov
@@ -162,8 +163,12 @@ public class Interpreter
        // Clear local to allow GC its context
        Icode_LOCAL_CLEAR                = -56,
 
-    // Last icode
-        MIN_ICODE                       = -56;
+       // Literal get/set
+       Icode_LITERAL_GETTER             = -57,
+       Icode_LITERAL_SETTER             = -58,
+
+       // Last icode
+        MIN_ICODE                       = -58;
 
     // data for parsing
 
@@ -412,6 +417,8 @@ public class Interpreter
           case Icode_LEAVEDQ:          return "LEAVEDQ";
           case Icode_TAIL_CALL:        return "TAIL_CALL";
           case Icode_LOCAL_CLEAR:      return "LOCAL_CLEAR";
+          case Icode_LITERAL_GETTER:   return "LITERAL_GETTER";
+          case Icode_LITERAL_SETTER:   return "LITERAL_SETTER";
         }
 
         // icode without name
@@ -1398,10 +1405,19 @@ public class Interpreter
             throw badTree(node);
         }
         addIndexOp(Icode_LITERAL_NEW, count);
-        stackChange(1);
+        stackChange(2);
         while (child != null) {
-            visitExpression(child, 0);
-            addIcode(Icode_LITERAL_SET);
+            int childType = child.getType();
+            if (childType == Token.GET) {
+                visitExpression(child.getFirstChild(), 0);
+                addIcode(Icode_LITERAL_GETTER);
+            } else if (childType == Token.SET) {
+                visitExpression(child.getFirstChild(), 0);
+                addIcode(Icode_LITERAL_SETTER);
+            } else {
+                visitExpression(child, 0);
+                addIcode(Icode_LITERAL_SET);
+            }
             stackChange(-1);
             child = child.getNext();
         }
@@ -1419,6 +1435,7 @@ public class Interpreter
             itsLiteralIds.add(propertyIds);
             addIndexOp(Token.OBJECTLIT, index);
         }
+        stackChange(-1);
     }
 
     private int getLocalBlockRef(Node node)
@@ -3384,6 +3401,8 @@ switch (op) {
     case Icode_LITERAL_NEW :
         // indexReg: number of values in the literal
         ++stackTop;
+        stack[stackTop] = new int[indexReg];
+        ++stackTop;
         stack[stackTop] = new Object[indexReg];
         sDbl[stackTop] = 0;
         continue Loop;
@@ -3396,14 +3415,35 @@ switch (op) {
         sDbl[stackTop] = i + 1;
         continue Loop;
     }
+    case Icode_LITERAL_GETTER : {
+        Object value = stack[stackTop];
+        --stackTop;
+        int i = (int)sDbl[stackTop];
+        ((Object[])stack[stackTop])[i] = value;
+        ((int[])stack[stackTop - 1])[i] = -1;
+        sDbl[stackTop] = i + 1;
+        continue Loop;
+    }
+    case Icode_LITERAL_SETTER : {
+        Object value = stack[stackTop];
+        --stackTop;
+        int i = (int)sDbl[stackTop];
+        ((Object[])stack[stackTop])[i] = value;
+        ((int[])stack[stackTop - 1])[i] = +1;
+        sDbl[stackTop] = i + 1;
+        continue Loop;
+    }
     case Token.ARRAYLIT :
     case Icode_SPARE_ARRAYLIT :
     case Token.OBJECTLIT : {
         Object[] data = (Object[])stack[stackTop];
+        --stackTop;
+        int[] getterSetters = (int[])stack[stackTop];
         Object val;
         if (op == Token.OBJECTLIT) {
             Object[] ids = (Object[])frame.idata.literalIds[indexReg];
-            val = ScriptRuntime.newObjectLiteral(ids, data, cx, frame.scope);
+            val = ScriptRuntime.newObjectLiteral(ids, data, getterSetters, cx,
+                    frame.scope);
         } else {
             int[] skipIndexces = null;
             if (op == Icode_SPARE_ARRAYLIT) {

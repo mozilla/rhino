@@ -26,6 +26,7 @@
  *   Igor Bukanov
  *   Yuh-Ruey Chen
  *   Ethan Hugg
+ *   Bob Jervis
  *   Terry Lucas
  *   Mike McCabe
  *   Milen Nankov
@@ -1891,11 +1892,35 @@ public class Parser
                         // but tell the decompiler the proper type
                         String s = ts.getString();
                         if (tt == Token.NAME) {
+                            if (s.equals("get") &&
+                                peekToken() == Token.NAME) {
+                                decompiler.addToken(Token.GET);
+                                consumeToken();
+                                s = ts.getString();
+                                decompiler.addName(s);
+                                property = ScriptRuntime.getIndexObject(s);
+                                if (!getterSetterProperty(elems, property,
+                                                          true))
+                                    break commaloop;
+                                break;
+                            } else if (s.equals("set") &&
+                                       peekToken() == Token.NAME) {
+                                decompiler.addToken(Token.SET);
+                                consumeToken();
+                                s = ts.getString();
+                                decompiler.addName(s);
+                                property = ScriptRuntime.getIndexObject(s);
+                                if (!getterSetterProperty(elems, property,
+                                                          false))
+                                    break commaloop;
+                                break;
+                            }
                             decompiler.addName(s);
                         } else {
                             decompiler.addString(s);
                         }
                         property = ScriptRuntime.getIndexObject(s);
+                        plainProperty(elems, property);
                         break;
 
                       case Token.NUMBER:
@@ -1903,6 +1928,7 @@ public class Parser
                         double n = ts.getNumber();
                         decompiler.addNumber(n);
                         property = ScriptRuntime.getIndexObject(n);
+                        plainProperty(elems, property);
                         break;
 
                       case Token.RC:
@@ -1912,13 +1938,6 @@ public class Parser
                         reportError("msg.bad.prop");
                         break commaloop;
                     }
-                    mustMatchToken(Token.COLON, "msg.no.colon.prop");
-
-                    // OBJLIT is used as ':' in object literal for
-                    // decompilation to solve spacing ambiguity.
-                    decompiler.addToken(Token.OBJECTLIT);
-                    elems.add(property);
-                    elems.add(assignExpr(false));
                 } while (matchToken(Token.COMMA));
 
                 mustMatchToken(Token.RC, "msg.no.brace.prop");
@@ -2016,5 +2035,37 @@ public class Parser
         return null;    // should never reach here
     }
 
+    private void plainProperty(ObjArray elems, Object property)
+            throws IOException {
+        mustMatchToken(Token.COLON, "msg.no.colon.prop");
+
+        // OBJLIT is used as ':' in object literal for
+        // decompilation to solve spacing ambiguity.
+        decompiler.addToken(Token.OBJECTLIT);
+        elems.add(property);
+        elems.add(assignExpr(false));
+    }
+
+    private boolean getterSetterProperty(ObjArray elems, Object property,
+                                         boolean isGetter) throws IOException {
+        Node f = function(FunctionNode.FUNCTION_EXPRESSION);
+        if (f.getType() != Token.FUNCTION) {
+            reportError("msg.bad.prop");
+            return false;
+        }
+        int fnIndex = f.getExistingIntProp(Node.FUNCTION_PROP);
+        FunctionNode fn = currentScriptOrFn.getFunctionNode(fnIndex);
+        if (fn.getFunctionName().length() != 0) {
+            reportError("msg.bad.prop");
+            return false;
+        }
+        elems.add(property);
+        if (isGetter) {
+            elems.add(nf.createUnary(Token.GET, f));
+        } else {
+            elems.add(nf.createUnary(Token.SET, f));
+        }
+        return true;
+    }
 }
 

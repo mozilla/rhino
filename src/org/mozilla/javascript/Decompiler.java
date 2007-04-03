@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Mike Ang
  *   Igor Bukanov
+ *   Bob Jervis
  *   Mike McCabe
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -353,6 +354,15 @@ public class Decompiler
 
         while (i < length) {
             switch(source.charAt(i)) {
+            case Token.GET:
+            case Token.SET:
+                result.append(source.charAt(i) == Token.GET ? "get " : "set ");
+                ++i;
+                i = printSourceString(source, i + 1, false, result);
+                // Now increment one more to get past the FUNCTION token
+                ++i;
+                break;
+
             case Token.NAME:
             case Token.REGEXP:  // re-wrapped in '/'s in parser...
                 i = printSourceString(source, i + 1, false, result);
