@@ -23,6 +23,7 @@
  *
  * Contributor(s):
  *   Norris Boyd
+ *   Bob Jervis
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -73,7 +74,7 @@ public final class NativeCall extends IdScriptableObject
         int paramAndVarCount = function.getParamAndVarCount();
         int paramCount = function.getParamCount();
         if (paramAndVarCount != 0) {
-            for (int i = 0; i != paramCount; ++i) {
+            for (int i = 0; i < paramCount; ++i) {
                 String name = function.getParamOrVarName(i);
                 Object val = i < args.length ? args[i]
                                              : Undefined.instance;
@@ -88,10 +89,13 @@ public final class NativeCall extends IdScriptableObject
         }
 
         if (paramAndVarCount != 0) {
-            for (int i = paramCount; i != paramAndVarCount; ++i) {
+            for (int i = paramCount; i < paramAndVarCount; ++i) {
                 String name = function.getParamOrVarName(i);
                 if (!super.has(name, this)) {
-                    defineProperty(name, Undefined.instance, PERMANENT);
+                    if (function.getParamOrVarConst(i))
+                        defineProperty(name, Undefined.instance, CONST);
+                    else
+                        defineProperty(name, Undefined.instance, PERMANENT);
                 }
             }
         }

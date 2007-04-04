@@ -23,6 +23,7 @@
  *
  * Contributor(s):
  *   Igor Bukanov
+ *   Bob Jervis
  *   Roger Lawrence
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -147,8 +148,8 @@ final class InterpretedFunction extends NativeFunction implements Script
      * Calls the function.
      * @param cx the current context 
      * @param scope the scope used for the call
-     * @param the value of "this"
-     * @param function arguments. Must not be null. You can use 
+     * @param thisObj the value of "this"
+     * @param args function arguments. Must not be null. You can use 
      * {@link ScriptRuntime#emptyArgs} to pass empty arguments.
      * @return the result of the function call.
      */
@@ -206,5 +207,9 @@ final class InterpretedFunction extends NativeFunction implements Script
         return idata.argNames[index];
     }
 
+    protected boolean getParamOrVarConst(int index)
+    {
+        return idata.argIsConst[index];
+    }
 }
 

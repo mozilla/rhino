@@ -167,8 +167,13 @@ public class Interpreter
        Icode_LITERAL_GETTER             = -57,
        Icode_LITERAL_SETTER             = -58,
 
+       // const
+       Icode_SETCONST                   = -59,
+       Icode_SETCONSTVAR                = -60,
+       Icode_SETCONSTVAR1               = -61,
+
        // Last icode
-        MIN_ICODE                       = -58;
+        MIN_ICODE                       = -61;
 
     // data for parsing
 
@@ -231,6 +236,7 @@ public class Interpreter
 // sDbl[i]: if stack[i] is UniqueTag.DOUBLE_MARK, sDbl[i] holds the number value
 
         Object[] stack;
+        int[] stackAttributes;
         double[] sDbl;
         CallFrame varSource; // defaults to this unless continuation frame
         int localShift;
@@ -269,6 +275,7 @@ public class Interpreter
             // from this frame to share variables.
 
             copy.stack = (Object[])stack.clone();
+            copy.stackAttributes = (int[])stackAttributes.clone();
             copy.sDbl = (double[])sDbl.clone();
 
             copy.frozen = false;
@@ -419,6 +426,9 @@ public class Interpreter
           case Icode_LOCAL_CLEAR:      return "LOCAL_CLEAR";
           case Icode_LITERAL_GETTER:   return "LITERAL_GETTER";
           case Icode_LITERAL_SETTER:   return "LITERAL_SETTER";
+          case Icode_SETCONST:         return "SETCONST";
+          case Icode_SETCONSTVAR:      return "SETCONSTVAR";
+          case Icode_SETCONSTVAR1:     return "SETCONSTVAR1";
         }
 
         // icode without name
@@ -568,6 +578,7 @@ public class Interpreter
                                    + itsData.itsMaxStack;
 
         itsData.argNames = scriptOrFn.getParamAndVarNames();
+        itsData.argIsConst = scriptOrFn.getParamAndVarConst();
         itsData.argCount = scriptOrFn.getParamCount();
 
         itsData.encodedSourceStart = scriptOrFn.getEncodedSourceStart();
@@ -657,9 +668,9 @@ public class Interpreter
                     }
                 }
                 // For function statements or function expression statements
-                // in scripts, we need to ensure that the result of the script 
+                // in scripts, we need to ensure that the result of the script
                 // is the function if it is the last statement in the script.
-                // For example, eval("function () {}") should return a 
+                // For example, eval("function () {}") should return a
                 // function, not undefined.
                 if (!itsInFunctionFlag) {
                   addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
@@ -1137,6 +1148,17 @@ public class Interpreter
             }
             break;
 
+          case Token.SETCONST:
+            {
+                String name = child.getString();
+                visitExpression(child, 0);
+                child = child.getNext();
+                visitExpression(child, 0);
+                addStringOp(Icode_SETCONST, name);
+                stackChange(-1);
+            }
+            break;
+
           case Token.TYPEOFNAME:
             {
                 String name = node.getString();
@@ -1217,6 +1239,17 @@ public class Interpreter
                 addVarOp(Token.SETVAR, index);
             }
             break;
+
+            case Token.SETCONSTVAR:
+              {
+                  if (itsData.itsNeedsActivation) Kit.codeBug();
+                  String name = child.getString();
+                  child = child.getNext();
+                  visitExpression(child, 0);
+                  int index = scriptOrFn.getParamOrVarIndex(name);
+                  addVarOp(Token.SETCONSTVAR, index);
+              }
+              break;
 
           case Token.NULL:
           case Token.THIS:
@@ -1635,6 +1668,14 @@ public class Interpreter
     private void addVarOp(int op, int varIndex)
     {
         switch (op) {
+          case Token.SETCONSTVAR:
+            if (varIndex < 128) {
+                addIcode(Icode_SETCONSTVAR1);
+                addUint8(varIndex);
+                return;
+            }
+            addIndexOp(Icode_SETCONSTVAR, varIndex);
+            return;
           case Token.GETVAR:
           case Token.SETVAR:
             if (varIndex < 128) {
@@ -1985,6 +2026,7 @@ public class Interpreter
               }
               case Icode_GETVAR1:
               case Icode_SETVAR1:
+              case Icode_SETCONSTVAR1:
                 indexReg = iCode[pc];
                 out.println(tname+" "+indexReg);
                 ++pc;
@@ -2084,6 +2126,7 @@ public class Interpreter
 
             case Icode_GETVAR1:
             case Icode_SETVAR1:
+            case Icode_SETCONSTVAR1:
                 // byte var index
                 return 1 + 1;
 
@@ -2459,6 +2502,7 @@ public class Interpreter
                 double[] sDbl = frame.sDbl;
                 Object[] vars = frame.varSource.stack;
                 double[] varDbls = frame.varSource.sDbl;
+                int[] varAttributes = frame.varSource.stackAttributes;
                 byte[] iCode = frame.idata.itsICode;
                 String[] strings = frame.idata.itsStringTable;
 
@@ -2830,6 +2874,14 @@ switch (op) {
                                                 frame.scope, stringReg);
         continue Loop;
     }
+    case Icode_SETCONST: {
+        Object rhs = stack[stackTop];
+        if (rhs == DBL_MRK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        --stackTop;
+        Scriptable lhs = (Scriptable)stack[stackTop];
+        stack[stackTop] = ScriptRuntime.setConst(lhs, rhs, cx, stringReg);
+        continue Loop;
+    }
     case Token.DELPROP : {
         Object rhs = stack[stackTop];
         if (rhs == DBL_MRK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
@@ -3198,13 +3250,42 @@ switch (op) {
                                                        cx, iCode[frame.pc]);
         ++frame.pc;
         continue Loop;
+    case Icode_SETCONSTVAR1:
+        indexReg = iCode[frame.pc++];
+        // fallthrough
+    case Token.SETCONSTVAR :
+        if (!frame.useActivation) {
+            if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
+                throw Context.reportRuntimeError1("msg.var.redecl",
+                                                  frame.idata.argNames[indexReg]);
+            }
+            if ((varAttributes[indexReg] & ScriptableObject.UNINITIALIZED_CONST)
+                != 0)
+            {
+                vars[indexReg] = stack[stackTop];
+                varAttributes[indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
+                varDbls[indexReg] = sDbl[stackTop];
+            }
+        } else {
+            Object val = stack[stackTop];
+            if (val == DBL_MRK) val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+            stringReg = frame.idata.argNames[indexReg];
+            if (frame.scope instanceof ConstProperties) {
+                ConstProperties cp = (ConstProperties)frame.scope;
+                cp.putConst(stringReg, frame.scope, val);
+            } else
+                throw Kit.codeBug();
+        }
+        continue Loop;
     case Icode_SETVAR1:
         indexReg = iCode[frame.pc++];
         // fallthrough
     case Token.SETVAR :
         if (!frame.useActivation) {
-            vars[indexReg] = stack[stackTop];
-            varDbls[indexReg] = sDbl[stackTop];
+            if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
+                vars[indexReg] = stack[stackTop];
+                varDbls[indexReg] = sDbl[stackTop];
+            }
         } else {
             Object val = stack[stackTop];
             if (val == DBL_MRK) val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
@@ -3822,19 +3903,27 @@ switch (op) {
             Kit.codeBug();
 
         Object[] stack;
+        int[] stackAttributes;
         double[] sDbl;
         boolean stackReuse;
         if (frame.stack != null && maxFrameArray <= frame.stack.length) {
             // Reuse stacks from old frame
             stackReuse = true;
             stack = frame.stack;
+            stackAttributes = frame.stackAttributes;
             sDbl = frame.sDbl;
         } else {
             stackReuse = false;
             stack = new Object[maxFrameArray];
+            stackAttributes = new int[maxFrameArray];
             sDbl = new double[maxFrameArray];
         }
 
+        int varCount = idata.getParamAndVarCount();
+        for (int i = 0; i < varCount; i++) {
+            if (idata.getParamOrVarConst(i))
+                stackAttributes[i] = ScriptableObject.CONST;
+        }
         int definedArgs = idata.argCount;
         if (definedArgs > argCount) { definedArgs = argCount; }
 
@@ -3853,6 +3942,7 @@ switch (op) {
         frame.idata = idata;
 
         frame.stack = stack;
+        frame.stackAttributes = stackAttributes;
         frame.sDbl = sDbl;
         frame.varSource = frame;
         frame.localShift = idata.itsMaxVars;
@@ -4015,6 +4105,7 @@ switch (op) {
             for (int i = x.savedStackTop + 1; i != x.stack.length; ++i) {
                 // Allow to GC unused stack space
                 x.stack[i] = null;
+                x.stackAttributes[i] = ScriptableObject.EMPTY;
             }
             if (x.savedCallOp == Token.CALL) {
                 // the call will always overwrite the stack top with the result

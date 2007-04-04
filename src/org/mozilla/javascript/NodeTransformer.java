@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Norris Boyd
  *   Igor Bukanov
+ *   Bob Jervis
  *   Roger Lawrence
  *   Mike McCabe
  *
@@ -236,6 +237,7 @@ public class NodeTransformer
                 visitNew(node, tree);
                 break;
 
+              case Token.CONST:
               case Token.VAR:
               {
                 Node result = new Node(Token.BLOCK);
@@ -250,7 +252,10 @@ public class NodeTransformer
                     Node init = n.getFirstChild();
                     n.removeChild(init);
                     n.setType(Token.BINDNAME);
-                    n = new Node(Token.SETNAME, n, init);
+                    n = new Node(type == Token.VAR ?
+                                     Token.SETNAME :
+                                     Token.SETCONST,
+                                 n, init);
                     Node pop = new Node(Token.EXPR_VOID, n, node.getLineno());
                     result.addChildToBack(pop);
                 }
@@ -260,6 +265,7 @@ public class NodeTransformer
 
               case Token.NAME:
               case Token.SETNAME:
+              case Token.SETCONST:
               case Token.DELPROP:
               {
                 // Turn name to var for faster access if possible
@@ -286,6 +292,9 @@ public class NodeTransformer
                         node.setType(Token.GETVAR);
                     } else if (type == Token.SETNAME) {
                         node.setType(Token.SETVAR);
+                        nameSource.setType(Token.STRING);
+                    } else if (type == Token.SETCONST) {
+                        node.setType(Token.SETCONSTVAR);
                         nameSource.setType(Token.STRING);
                     } else if (type == Token.DELPROP) {
                         // Local variables are by definition permanent

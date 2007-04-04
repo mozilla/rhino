@@ -1789,6 +1789,18 @@ public class ScriptRuntime {
         return value;
     }
 
+    public static Object setConst(Scriptable bound, Object value,
+                                 Context cx, String id)
+    {
+        if (bound instanceof XMLObject) {
+            XMLObject xmlObject = (XMLObject)bound;
+            xmlObject.ecmaPut(cx, id, value);
+        } else {
+            ScriptableObject.putConstProperty(bound, id, value);
+        }
+        return value;
+    }
+
     /**
      * This is the enumeration needed by the for..in statement.
      *
@@ -2862,17 +2874,23 @@ public class ScriptRuntime {
 
             for (int i = varCount; i-- != 0;) {
                 String name = funObj.getParamOrVarName(i);
+                boolean isConst = funObj.getParamOrVarConst(i);
                 // Don't overwrite existing def if already defined in object
                 // or prototypes of object.
                 if (!ScriptableObject.hasProperty(scope, name)) {
                     if (!evalScript) {
                         // Global var definitions are supposed to be DONTDELETE
-                        ScriptableObject.defineProperty(
-                            varScope, name, Undefined.instance,
-                            ScriptableObject.PERMANENT);
+                        if (isConst)
+                            ScriptableObject.defineConstProperty(varScope, name);
+                        else
+                            ScriptableObject.defineProperty(
+                                varScope, name, Undefined.instance,
+                                ScriptableObject.PERMANENT);
                     } else {
                         varScope.put(name, varScope, Undefined.instance);
                     }
+                } else {
+                    ScriptableObject.redefineProperty(scope, name, isConst);
                 }
             }
         }

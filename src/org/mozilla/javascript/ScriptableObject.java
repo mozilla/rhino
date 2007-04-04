@@ -64,7 +64,8 @@ import org.mozilla.javascript.debug.DebuggableObject;
  */
 
 public abstract class ScriptableObject implements Scriptable, Serializable,
-                                                  DebuggableObject
+                                                  DebuggableObject,
+                                                  ConstProperties
 {
 
     /**
@@ -107,6 +108,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     public static final int PERMANENT = 0x04;
 
     /**
+     * Property attribute indicating that this is a const property that has not
+     * been assigned yet.  The first 'const' assignment to the property will
+     * clear this bit.
+     */
+    public static final int UNINITIALIZED_CONST = 0x08;
+
+    public static final int CONST = PERMANENT|READONLY|UNINITIALIZED_CONST;
+    /**
      * The prototype of this object.
      */
     private Scriptable prototypeObject;
@@ -138,6 +147,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private static final int SLOT_MODIFY = 2;
     private static final int SLOT_REMOVE = 3;
     private static final int SLOT_MODIFY_GETTER_SETTER = 4;
+    private static final int SLOT_MODIFY_CONST = 5;
 
     private static class Slot implements Serializable
     {
@@ -202,7 +212,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     static void checkValidAttributes(int attributes)
     {
-        final int mask = READONLY | DONTENUM | PERMANENT;
+        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST;
         if ((attributes & ~mask) != 0) {
             throw new IllegalArgumentException(String.valueOf(attributes));
         }
@@ -298,7 +308,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void put(String name, Scriptable start, Object value)
     {
-        if (putImpl(name, 0, start, value))
+        if (putImpl(name, 0, start, value, EMPTY))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -314,7 +324,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void put(int index, Scriptable start, Object value)
     {
-        if (putImpl(null, index, start, value))
+        if (putImpl(null, index, start, value, EMPTY))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -349,6 +359,58 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         accessSlot(null, index, SLOT_REMOVE);
     }
 
+    /**
+     * Sets the value of the named const property, creating it if need be.
+     *
+     * If the property was created using defineProperty, the
+     * appropriate setter method is called. <p>
+     *
+     * If the property's attributes include READONLY, no action is
+     * taken.
+     * This method will actually set the property in the start
+     * object.
+     *
+     * @param name the name of the property
+     * @param start the object whose property is being set
+     * @param value value to set the property to
+     */
+    public void putConst(String name, Scriptable start, Object value)
+    {
+        if (putImpl(name, 0, start, value, READONLY))
+            return;
+
+        if (start == this) throw Kit.codeBug();
+        if (start instanceof ConstProperties)
+            ((ConstProperties)start).putConst(name, start, value);
+        else
+            start.put(name, start, value);
+    }
+
+    public void defineConst(String name, Scriptable start)
+    {
+        if (putImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST))
+            return;
+
+        if (start == this) throw Kit.codeBug();
+        if (start instanceof ConstProperties)
+            ((ConstProperties)start).defineConst(name, start);
+    }
+    /**
+     * Returns true if the named property is defined as a const on this object.
+     * @param name
+     * @return true if the named property is defined as a const, false
+     * otherwise.
+     */
+    public boolean isConst(String name)
+    {
+        Slot slot = getSlot(name, 0, SLOT_QUERY);
+        if (slot == null) {
+            return false;
+        }
+        return (slot.getAttributes() & (PERMANENT|READONLY)) ==
+                                       (PERMANENT|READONLY);
+
+    }
     /**
      * @deprecated Use {@link #getAttributes(String name)}. The engine always
      * ignored the start argument.
@@ -1137,6 +1199,22 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
+     * Utility method to add properties to arbitrary Scriptable object.
+     * If destination is instance of ScriptableObject, calls
+     * defineProperty there, otherwise calls put in destination
+     * ignoring attributes
+     */
+    public static void defineConstProperty(Scriptable destination,
+                                           String propertyName)
+    {
+        if (destination instanceof ConstProperties) {
+            ConstProperties cp = (ConstProperties)destination;
+            cp.defineConst(propertyName, destination);
+        } else
+            defineProperty(destination, propertyName, Undefined.instance, CONST);
+    }
+
+    /**
      * Define a JavaScript property with getter and setter side effects.
      *
      * If the setter is not found, the attribute READONLY is added to
@@ -1517,6 +1595,30 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
+     * If hasProperty(obj, name) would return true, then if the property that
+     * was found is compatible with the new property, this method just returns.
+     * If the property is not compatible, then an exception is thrown.
+     *
+     * A property redefinition is incompatible if the first definition was a
+     * const declaration or if this one is.  They are compatible only if neither
+     * was const.
+     */
+    public static void redefineProperty(Scriptable obj, String name,
+                                        boolean isConst)
+    {
+        Scriptable base = getBase(obj, name);
+        if (base == null)
+            return;
+        if (base instanceof ConstProperties) {
+            ConstProperties cp = (ConstProperties)base;
+
+            if (cp.isConst(name))
+                throw Context.reportRuntimeError1("msg.const.redecl", name);
+        }
+        if (isConst)
+            throw Context.reportRuntimeError1("msg.var.redecl", name);
+    }
+    /**
      * Returns whether an indexed property is defined in an object or any object
      * in its prototype chain.
      * <p>
@@ -1537,11 +1639,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * <p>
      * Searches for the named property in the prototype chain. If it is found,
      * the value of the property in <code>obj</code> is changed through a call
-     * to {@link Scriptable#put(String, Scriptable, Object)} on the prototype
-     * passing <code>obj</code> as the <code>start</code> argument. This allows
-     * the prototype to veto the property setting in case the prototype defines
-     * the property with [[ReadOnly]] attribute. If the property is not found, 
-     * it is added in <code>obj</code>.
+     * to {@link Scriptable#put(String, Scriptable, Object)} on the
+     * prototype passing <code>obj</code> as the <code>start</code> argument.
+     * This allows the prototype to veto the property setting in case the
+     * prototype defines the property with [[ReadOnly]] attribute. If the
+     * property is not found, it is added in <code>obj</code>.
      * @param obj a JavaScript object
      * @param name a property name
      * @param value any JavaScript value accepted by Scriptable.put
@@ -1553,6 +1655,30 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (base == null)
             base = obj;
         base.put(name, obj, value);
+    }
+
+    /**
+     * Puts a named property in an object or in an object in its prototype chain.
+     * <p>
+     * Searches for the named property in the prototype chain. If it is found,
+     * the value of the property in <code>obj</code> is changed through a call
+     * to {@link Scriptable#put(String, Scriptable, Object)} on the
+     * prototype passing <code>obj</code> as the <code>start</code> argument.
+     * This allows the prototype to veto the property setting in case the
+     * prototype defines the property with [[ReadOnly]] attribute. If the
+     * property is not found, it is added in <code>obj</code>.
+     * @param obj a JavaScript object
+     * @param name a property name
+     * @param value any JavaScript value accepted by Scriptable.put
+     * @since 1.5R2
+     */
+    public static void putConstProperty(Scriptable obj, String name, Object value)
+    {
+        Scriptable base = getBase(obj, name);
+        if (base == null)
+            base = obj;
+        if (base instanceof ConstProperties)
+            ((ConstProperties)base).putConst(name, obj, value);
     }
 
     /**
@@ -1842,8 +1968,19 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return value;
     }
 
+    /**
+     *
+     * @param name
+     * @param index
+     * @param start
+     * @param value
+     * @param constFlag EMPTY means normal put.  UNINITIALIZED_CONST means
+     * defineConstProperty.  READONLY means const initialization expression.
+     * @return false if this != start and no slot was found.  true if this == start
+     * or this != start and a READONLY slot was found.
+     */
     private boolean putImpl(String name, int index, Scriptable start,
-                            Object value)
+                            Object value, int constFlag)
     {
         Slot slot;
         if (this != start) {
@@ -1853,6 +1990,20 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
         } else {
             checkNotSealed(name, index);
+            // either const hoisted declaration or initialization
+            if (constFlag != EMPTY) {
+                slot = getSlot(name, index, SLOT_MODIFY_CONST);
+                int attr = slot.getAttributes();
+                if ((attr & READONLY) == 0)
+                    throw Context.reportRuntimeError1("msg.var.redecl", name);
+                if ((attr & UNINITIALIZED_CONST) != 0) {
+                    slot.value = value;
+                    // clear the bit on const initialization
+                    if (constFlag != UNINITIALIZED_CONST)
+                        slot.setAttributes(attr & ~UNINITIALIZED_CONST);
+                }
+                return true;
+            }
             slot = getSlot(name, index, SLOT_MODIFY);
         }
         if ((slot.getAttributes() & READONLY) != 0)
@@ -1952,7 +2103,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     {
         int indexOrHash = (name != null ? name.hashCode() : index);
 
-        if (accessType == SLOT_QUERY || accessType == SLOT_MODIFY ||
+        if (accessType == SLOT_QUERY ||
+            accessType == SLOT_MODIFY ||
+            accessType == SLOT_MODIFY_CONST ||
             accessType == SLOT_MODIFY_GETTER_SETTER)
         {
             // Check the hashtable without using synchronization
@@ -2003,6 +2156,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 } else if (accessType == SLOT_MODIFY_GETTER_SETTER) {
                     if (slot instanceof GetterSlot)
                         return slot;
+                } else if (accessType == SLOT_MODIFY_CONST) {
+                    if (slot != null)
+                        return slot;
                 } else {
                     Kit.codeBug();
                 }
@@ -2051,7 +2207,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
                     if (slot != null) {
                         // Another thread just added a slot with same
-                        // name/index before this one enetered synchronized
+                        // name/index before this one entered synchronized
                         // block. This is a race in application code and
                         // probably indicates bug there. But for the hashtable
                         // implementation it is harmless with the only
@@ -2070,6 +2226,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                                 lastAccess = REMOVED;
                             }
                             slot = newSlot;
+                        } else if (accessType == SLOT_MODIFY_CONST) {
+                            return null;
                         }
                         return slot;
                     }
@@ -2087,6 +2245,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 Slot newSlot = (accessType == SLOT_MODIFY_GETTER_SETTER
                                 ? new GetterSlot(name, indexOrHash, 0)
                                 : new Slot(name, indexOrHash, 0));
+                if (accessType == SLOT_MODIFY_CONST)
+                    newSlot.setAttributes(CONST);
                 ++count;
                 slotsLocalRef[insertPos] = newSlot;
                 return newSlot;

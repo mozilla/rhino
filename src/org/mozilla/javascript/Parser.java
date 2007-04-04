@@ -128,6 +128,14 @@ public class Parser
                             ts.getLine(), ts.getOffset());
     }
 
+    void addError(String messageId, String messageArg)
+    {
+        ++syntaxErrorCount;
+        String message = ScriptRuntime.getMessage1(messageId, messageArg);
+        errorReporter.error(message, sourceURI, ts.getLineno(),
+                            ts.getLine(), ts.getOffset());
+    }
+
     RuntimeException reportError(String messageId)
     {
         addError(messageId);
@@ -815,7 +823,7 @@ public class Parser
                     if (tt == Token.VAR) {
                         // set init to a var list or initial
                         consumeToken();    // consume the 'var' token
-                        init = variables(true);
+                        init = variables(Token.FOR);
                     }
                     else {
                         init = expr(true);
@@ -1017,9 +1025,10 @@ public class Parser
             return pn;
           }
 
+          case Token.CONST:
           case Token.VAR: {
             consumeToken();
-            pn = variables(false);
+            pn = variables(tt);
             break;
           }
 
@@ -1181,13 +1190,28 @@ public class Parser
         return pn;
     }
 
-    private Node variables(boolean inForInit)
+    /**
+     * Parse a 'var' or 'const' statement, or a 'var' init list in a for
+     * statement.
+     * @param context A token value: either VAR, CONST or FOR depending on
+     * context.
+     * @return The parsed statement
+     * @throws IOException
+     * @throws ParserException
+     */
+    private Node variables(int context)
         throws IOException, ParserException
     {
-        Node pn = nf.createVariables(ts.getLineno());
+        Node pn;
         boolean first = true;
 
-        decompiler.addToken(Token.VAR);
+        if (context == Token.CONST){
+            pn = nf.createVariables(Token.CONST, ts.getLineno());
+            decompiler.addToken(Token.CONST);
+        } else {
+            pn = nf.createVariables(Token.VAR, ts.getLineno());
+            decompiler.addToken(Token.VAR);
+        }
 
         for (;;) {
             Node name;
@@ -1200,7 +1224,19 @@ public class Parser
             first = false;
 
             decompiler.addName(s);
-            currentScriptOrFn.addVar(s);
+            if (context == Token.CONST) {
+                if (!currentScriptOrFn.addConst(s)) {
+                    // We know it's already defined, since addVar passes if 
+                    // it's a var.
+                    if (currentScriptOrFn.addVar(s))
+                        addError("msg.var.redecl", s);
+                    else
+                        addError("msg.const.redecl", s);
+                }
+            } else {
+                if (!currentScriptOrFn.addVar(s))
+                    addError("msg.const.redecl", s);
+            }
             name = nf.createName(s);
 
             // omitted check for argument hiding
@@ -1208,7 +1244,7 @@ public class Parser
             if (matchToken(Token.ASSIGN)) {
                 decompiler.addToken(Token.ASSIGN);
 
-                init = assignExpr(inForInit);
+                init = assignExpr(context == Token.FOR);
                 nf.addChildToBack(name, init);
             }
             nf.addChildToBack(pn, name);

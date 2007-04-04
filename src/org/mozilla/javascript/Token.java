@@ -247,7 +247,10 @@ public class Token
 
         GET            = 147,  // JS 1.5 get pseudo keyword
         SET            = 148,  // JS 1.5 set pseudo keyword
-        LAST_TOKEN     = 148;
+        CONST          = 149,
+        SETCONST       = 150,
+        SETCONSTVAR    = 151,
+        LAST_TOKEN     = 152;
 
     public static String name(int token)
     {
@@ -404,6 +407,8 @@ public class Token
           case TO_DOUBLE:       return "TO_DOUBLE";
           case GET:             return "GET";
           case SET:             return "SET";
+          case CONST:           return "CONST";
+          case SETCONST:        return "SETCONST";
         }
 
         // Token without name

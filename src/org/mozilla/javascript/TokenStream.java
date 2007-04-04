@@ -26,6 +26,7 @@
  *   Mike McCabe
  *   Igor Bukanov
  *   Ethan Hugg
+ *   Bob Jervis
  *   Terry Lucas
  *   Milen Nankov
  *
@@ -151,7 +152,7 @@ class TokenStream
             Id_catch         = Token.CATCH,
             Id_char          = Token.RESERVED,
             Id_class         = Token.RESERVED,
-            Id_const         = Token.RESERVED,
+            Id_const         = Token.CONST,
             Id_debugger      = Token.RESERVED,
             Id_double        = Token.RESERVED,
             Id_enum          = Token.RESERVED,

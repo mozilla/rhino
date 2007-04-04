@@ -25,6 +25,7 @@
  *   Norris Boyd
  *   Igor Bukanov
  *   Ethan Hugg
+ *   Bob Jervis
  *   Terry Lucas
  *   Milen Nankov
  *
@@ -177,9 +178,9 @@ final class IRFactory
         switchBlock.addChildToBack(switchBreakTarget);
     }
 
-    Node createVariables(int lineno)
+    Node createVariables(int token, int lineno)
     {
-        return new Node(Token.VAR, lineno);
+        return new Node(token, lineno);
     }
 
     Node createExprStatement(Node expr, int lineno)
@@ -379,7 +380,8 @@ final class IRFactory
                 // See ECMA Ch. 13.  We add code to the beginning of the
                 // function to initialize a local variable of the
                 // function's name to the function value.
-                fnNode.addVar(name);
+                if (!fnNode.addVar(name))
+                    parser.addError("msg.const.redecl", name);
                 Node setFn = new Node(Token.EXPR_VOID,
                                  new Node(Token.SETNAME,
                                      Node.newString(Token.BINDNAME, name),

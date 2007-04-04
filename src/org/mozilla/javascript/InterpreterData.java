@@ -23,6 +23,7 @@
  *
  * Contributor(s):
  *   Norris Boyd
+ *   Bob Jervis
  *   Roger Lawrence
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -98,6 +99,7 @@ final class InterpreterData implements Serializable, DebuggableScript
 
     // see comments in NativeFuncion for definition of argNames and argCount
     String[] argNames;
+    boolean[] argIsConst;
     int argCount;
 
     int itsMaxCalleeArgs;
@@ -150,6 +152,11 @@ final class InterpreterData implements Serializable, DebuggableScript
     public String getParamOrVarName(int index)
     {
         return argNames[index];
+    }
+
+    public boolean getParamOrVarConst(int index)
+    {
+        return argIsConst[index];
     }
 
     public String getSourceName()

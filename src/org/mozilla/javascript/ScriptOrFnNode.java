@@ -23,6 +23,7 @@
  *
  * Contributor(s):
  *   Igor Bukanov
+ *   Bob Jervis
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -142,24 +143,53 @@ public class ScriptOrFnNode extends Node {
         return array;
     }
 
+    public final boolean[] getParamAndVarConst() {
+        int N = itsVariables.size();
+        boolean[] array = new boolean[N];
+        for (int i = 0; i < N; i++)
+            if (itsConst.get(i) != null)
+                array[i] = true;
+        return array;
+    }
+
     public final void addParam(String name) {
         // Check addparam is not called after addLocal
         if (varStart != itsVariables.size()) Kit.codeBug();
         // Allow non-unique parameter names: use the last occurrence
         int index = varStart++;
         itsVariables.add(name);
+        itsConst.add(null);
         itsVariableNames.put(name, index);
     }
 
-    public final void addVar(String name) {
+    public final boolean addVar(String name) {
         int vIndex = itsVariableNames.get(name, -1);
         if (vIndex != -1) {
             // There's already a variable or parameter with this name.
-            return;
+            Object v = itsConst.get(vIndex);
+            if (v == null)
+                return true;
+            else
+                return false;
         }
         int index = itsVariables.size();
         itsVariables.add(name);
+        itsConst.add(null);
         itsVariableNames.put(name, index);
+        return true;
+    }
+
+    public final boolean addConst(String name) {
+        int vIndex = itsVariableNames.get(name, -1);
+        if (vIndex != -1) {
+            // There's already a variable or parameter with this name.
+            return false;
+        }
+        int index = itsVariables.size();
+        itsVariables.add(name);
+        itsConst.add(name);
+        itsVariableNames.put(name, index);
+        return true;
     }
 
     public final void removeParamOrVar(String name) {
@@ -202,6 +232,7 @@ public class ScriptOrFnNode extends Node {
 
     // a list of the formal parameters and local variables
     private ObjArray itsVariables = new ObjArray();
+    private ObjArray itsConst = new ObjArray();
 
     // mapping from name to index in list
     private ObjToIntMap itsVariableNames = new ObjToIntMap(11);

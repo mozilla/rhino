@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Norris Boyd
  *   Igor Bukanov
+ *   Bob Jervis
  *   Roger Lawrence
  *   Mike McCabe
  *
@@ -134,5 +135,13 @@ public abstract class NativeFunction extends BaseFunction
      * corresponding parameter. Otherwise returm the name of variable.
      */
     protected abstract String getParamOrVarName(int index);
+
+    /**
+     * Get parameter or variable const-ness.
+     * If <tt>index < {@link #getParamCount()}</tt>, then return the const-ness
+     * of the corresponding parameter. Otherwise returm whether the variable is
+     * const.
+     */
+    protected abstract boolean getParamOrVarConst(int index);
 }
 

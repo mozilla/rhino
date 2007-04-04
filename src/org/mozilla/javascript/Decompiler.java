@@ -744,6 +744,10 @@ public class Decompiler
                 result.append("void ");
                 break;
 
+            case Token.CONST:
+                result.append("const ");
+                break;
+            
             case Token.NOT:
                 result.append('!');
                 break;
@@ -806,7 +810,8 @@ public class Decompiler
 
             default:
                 // If we don't know how to decompile it, raise an exception.
-                throw new RuntimeException();
+                throw new RuntimeException("Token: " +
+                                               Token.name(source.charAt(i)));
             }
             ++i;
         }

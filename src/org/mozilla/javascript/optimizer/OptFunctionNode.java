@@ -21,6 +21,7 @@
  *
  * Contributor(s):
  *   Norris Boyd
+ *   Bob Jervis
  *   Roger Lawrence
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -126,7 +127,8 @@ final class OptFunctionNode
             int type = n.getType();
             if (type == Token.GETVAR) {
                 name = n.getString();
-            } else if (type == Token.SETVAR) {
+            } else if (type == Token.SETVAR ||
+                       type == Token.SETCONSTVAR) {
                 name = n.getFirstChild().getString();
             } else {
                 throw Kit.codeBug();
