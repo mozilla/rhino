@@ -1157,7 +1157,9 @@ class DToA {
 //      while(*--s == '0') ;
 //      s++;
         int bl = buf.length();
-        while(bl-->0 && buf.charAt(bl) == '0');
+        while(bl-->0 && buf.charAt(bl) == '0') {
+          // empty
+        }
         buf.setLength(bl + 1);
     }
 

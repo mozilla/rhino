@@ -1424,8 +1424,9 @@ todo need to handle namespace prefix not found in XML look for namespace type in
     protected void changeNS (String oldURI, String newURI)
     {
         XmlCursor curs = newCursor();
-        while (curs.toParent())
-            /* Goto the top of the document */;
+        while (curs.toParent()) {
+          /* Goto the top of the document */
+        }
 
         TokenType tt = curs.currentTokenType();
         if (tt.isStartdoc())
