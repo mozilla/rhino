@@ -210,7 +210,7 @@ public class Global extends ImporterTopLevel
     public static double version(Context cx, Scriptable thisObj,
                                  Object[] args, Function funObj)
     {
-        double result = (double) cx.getLanguageVersion();
+        double result = cx.getLanguageVersion();
         if (args.length > 0) {
             double d = Context.toNumber(args[0]);
             cx.setLanguageVersion((int) d);
@@ -243,9 +243,7 @@ public class Global extends ImporterTopLevel
      *            the named class
      * @exception InvocationTargetException if an exception is thrown
      *            during execution of methods of the named class
-     * @exception ClassDefinitionException if the format of the
-     *            class causes this exception in ScriptableObject.defineClass
-     * @see org.mozilla.javascript.ScriptableObject#defineClass
+     * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable,Class)
      */
     public static void defineClass(Context cx, Scriptable thisObj,
                                    Object[] args, Function funObj)
@@ -269,14 +267,10 @@ public class Global extends ImporterTopLevel
      *            to the class
      * @exception InstantiationException if unable to instantiate
      *            the named class
-     * @exception InvocationTargetException if an exception is thrown
-     *            during execution of methods of the named class
-     * @see org.mozilla.javascript.ScriptableObject#defineClass
      */
     public static void loadClass(Context cx, Scriptable thisObj,
                                  Object[] args, Function funObj)
-        throws IllegalAccessException, InstantiationException,
-               InvocationTargetException
+        throws IllegalAccessException, InstantiationException
     {
         Class clazz = getClass(args);
         if (!Script.class.isAssignableFrom(clazz)) {
@@ -286,10 +280,7 @@ public class Global extends ImporterTopLevel
         script.exec(cx, thisObj);
     }
 
-    private static Class getClass(Object[] args)
-        throws IllegalAccessException, InstantiationException,
-               InvocationTargetException
-    {
+    private static Class getClass(Object[] args) {
         if (args.length == 0) {
             throw reportRuntimeError("msg.expected.string.arg");
         }
