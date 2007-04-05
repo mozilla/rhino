@@ -66,15 +66,8 @@ public abstract class SecureCaller
             Scriptable scope, Scriptable thisObj, Object[] args);
     
     /**
-     * Render the specified template element with the specified environment,
-     * using a protection domain belonging to the specified code source. 
-     * @param codeSource the code source defining the protection domain
-     * @param env the processing environment
-     * @param t the processed template element
-     * @throws TemplateException if environment's processing of the template
-     * element throws the exception
-     * @throws IOException if environment's processing of the template
-     * element throws the exception
+     * Call the specified callable using a protection domain belonging to the 
+     * specified code source. 
      */
     static Object callSecurely(final CodeSource codeSource, Callable callable, 
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
