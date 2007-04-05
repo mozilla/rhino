@@ -40,13 +40,6 @@
 
 package org.mozilla.javascript;
 
-/**
- * Created by IntelliJ IDEA.
- * User: bjervis
- * Date: Feb 14, 2007
- * Time: 11:04:59 AM
- * To change this template use File | Settings | File Templates.
- */
 public interface ConstProperties {
     /**
      * Sets a named const property in this object.
