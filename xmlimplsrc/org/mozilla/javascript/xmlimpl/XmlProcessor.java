@@ -153,7 +153,14 @@ class XmlProcessor {
 	private void addTextNodesToRemoveAndTrim(java.util.Vector toRemove, Node node) {
 		if (node instanceof Text) {
 			Text text = (Text)node;
-			text.setData(text.getData().trim());
+			boolean BUG_369394_IS_VALID = false;
+			if (!BUG_369394_IS_VALID) {
+				text.setData(text.getData().trim());
+			} else {
+				if (text.getData().trim().length() == 0) {
+					text.setData("");
+				}
+			}
 			if (text.getData().length() == 0) {
 				toRemove.add(node);
 			}
