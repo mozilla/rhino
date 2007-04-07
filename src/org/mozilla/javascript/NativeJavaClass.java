@@ -64,6 +64,9 @@ import java.util.Hashtable;
 public class NativeJavaClass extends NativeJavaObject implements Function
 {
     static final long serialVersionUID = -6460763940409461664L;
+    
+    // Special property for getting the underlying Java class object.
+    static final String javaClassPropertyName = "__javaClass__";
 
     public NativeJavaClass() {
     }
@@ -86,7 +89,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     }
 
     public boolean has(String name, Scriptable start) {
-        return members.has(name, true);
+        return members.has(name, true) || javaClassPropertyName.equals(name);
     }
 
     public Object get(String name, Scriptable start) {
@@ -94,34 +97,37 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         // for our prototype to create an object of the correct type.
         // We don't really care what the object is, since we're returning
         // one constructed out of whole cloth, so we return null.
-
         if (name.equals("prototype"))
             return null;
 
-        Object result = Scriptable.NOT_FOUND;
-
-        if (staticFieldAndMethods != null) {
-            result = staticFieldAndMethods.get(name);
+         if (staticFieldAndMethods != null) {
+            Object result = staticFieldAndMethods.get(name);
             if (result != null)
                 return result;
         }
 
         if (members.has(name, true)) {
-            result = members.get(this, name, javaObject, true);
-        } else {
-            // experimental:  look for nested classes by appending $name to
-            // current class' name.
-            Class nestedClass = findNestedClass(getClassObject(), name);
-            if (nestedClass == null) {
-                throw members.reportMemberNotFound(name);
-            }
+            return members.get(this, name, javaObject, true);
+        }
+        
+        if (javaClassPropertyName.equals(name)) {
+            Context cx = Context.getContext();
+            Scriptable scope = ScriptableObject.getTopLevelScope(start);
+            return cx.getWrapFactory().wrap(cx, scope, javaObject, 
+                                            ScriptRuntime.ClassClass);
+        }
+        
+        // experimental:  look for nested classes by appending $name to
+        // current class' name.
+        Class nestedClass = findNestedClass(getClassObject(), name);
+        if (nestedClass != null) {
             NativeJavaClass nestedValue = new NativeJavaClass
                 (ScriptableObject.getTopLevelScope(this), nestedClass);
             nestedValue.setParentScope(this);
-            result = nestedValue;
+            return nestedValue;
         }
-
-        return result;
+        
+        throw members.reportMemberNotFound(name);
     }
 
     public void put(String name, Scriptable start, Object value) {
