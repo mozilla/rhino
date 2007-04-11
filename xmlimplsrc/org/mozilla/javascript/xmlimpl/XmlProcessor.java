@@ -262,7 +262,8 @@ class XmlProcessor {
 		try {
 			javax.xml.transform.Transformer transformer = xform.newTransformer();
 			transformer.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
-			transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "no");			
+			transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "no");
+			transformer.setOutputProperty(javax.xml.transform.OutputKeys.METHOD, "xml");
 			transformer.transform(source, result);
 		} catch (javax.xml.transform.TransformerConfigurationException ex) {
 			//	TODO	How to handle these runtime errors?
