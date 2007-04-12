@@ -128,7 +128,7 @@ public class Context
     public static final int VERSION_1_5 =      150;
 
     /**
-     * JavaScript 1.5
+     * JavaScript 1.6
      */
     public static final int VERSION_1_6 =      160;
 
