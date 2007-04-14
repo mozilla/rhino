@@ -41,10 +41,11 @@
 package org.mozilla.javascript;
 
 /**
- * Factory class that Rhino runtime use to create new {@link Context}
- * instances or to notify about Context execution.
+ * Factory class that Rhino runtime uses to create new {@link Context}
+ * instances.  A <code>ContextFactory</code> can also notify listeners
+ * about context creation and release.
  * <p>
- * When Rhino runtime needs to create new {@link Context} instance during
+ * When the Rhino runtime needs to create new {@link Context} instance during
  * execution of {@link Context#enter()} or {@link Context}, it will call
  * {@link #makeContext()} of the current global ContextFactory.
  * See {@link #getGlobal()} and {@link #initGlobal(ContextFactory)}.
