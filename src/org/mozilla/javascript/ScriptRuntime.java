@@ -203,7 +203,7 @@ public class ScriptRuntime {
         NativeCall.init(scope, sealed);
         NativeScript.init(scope, sealed);
 
-        boolean withXml = cx.hasFeature(Context.FEATURE_E4X);
+        boolean withXml = cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
 
         for (int i = 0; i != lazilyNames.length; i += 2) {
             String topProperty = lazilyNames[i];
