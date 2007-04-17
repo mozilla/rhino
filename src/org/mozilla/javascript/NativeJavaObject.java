@@ -595,18 +595,18 @@ WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class)}
             break;
 
         case JSTYPE_JAVA_OBJECT:
-        case JSTYPE_JAVA_ARRAY:
+        case JSTYPE_JAVA_ARRAY:              
+            if (value instanceof Wrapper) {
+              value = ((Wrapper)value).unwrap();
+            }
             if (type.isPrimitive()) {
                 if (type == Boolean.TYPE) {
                     reportConversionError(value, type);
                 }
                 return coerceToNumber(type, value);
             }
-            else {
-                if (value instanceof Wrapper) {
-                    value = ((Wrapper)value).unwrap();
-                }
-                if (type == ScriptRuntime.StringClass) {
+            else { 
+              if (type == ScriptRuntime.StringClass) {
                     return value.toString();
                 }
                 else {
