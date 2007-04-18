@@ -45,6 +45,7 @@ public class ShellContextFactory extends ContextFactory
     private boolean strictMode;
     private int languageVersion;
     private int optimizationLevel;
+    private boolean generatingDebug;
     private ErrorReporter errorReporter;
 
     protected boolean hasFeature(Context cx, int featureIndex)
@@ -64,6 +65,7 @@ public class ShellContextFactory extends ContextFactory
         if (errorReporter != null) {
             cx.setErrorReporter(errorReporter);
         }
+        cx.setGeneratingDebug(generatingDebug);
         super.onContextCreated(cx);
     }
 
@@ -93,4 +95,8 @@ public class ShellContextFactory extends ContextFactory
         this.errorReporter = errorReporter;
     }
 
+    public void setGeneratingDebug(boolean generatingDebug) 
+    {
+      this.generatingDebug = generatingDebug;
+    }
 }

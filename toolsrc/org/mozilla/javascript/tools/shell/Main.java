@@ -280,6 +280,10 @@ public class Main
                 global.setSealedStdLib(true);
                 continue;
             }
+            if (arg.equals("-debug")) {
+                shellContextFactory.setGeneratingDebug(true);
+                continue;
+            }
             usageError = arg;
             break goodUsage;
         }
