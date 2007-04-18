@@ -56,13 +56,13 @@ public interface DebuggableScript
 
     /**
      * Get name of the function described by this script.
-     * Return null or an empty string if this script is not function.
+     * Return null or an empty string if this script is not a function.
      */
     public String getFunctionName();
 
     /**
-     * Get number of declared parameters in function.
-     * Return 0 if this script is not function.
+     * Get number of declared parameters in the function.
+     * Return 0 if this script is not a function.
      *
      * @see #getParamAndVarCount()
      * @see #getParamOrVarName(int index)
@@ -71,7 +71,7 @@ public interface DebuggableScript
 
     /**
      * Get number of declared parameters and local variables.
-     * Return number of declared global variables if this script is not
+     * Return number of declared global variables if this script is not a
      * function.
      *
      * @see #getParamCount()
