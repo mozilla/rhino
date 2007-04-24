@@ -155,7 +155,8 @@
 		<get src="${xmlbeans.url}" dest="${xmlbeans.zip}" ignoreerrors="true" />
 	</target>
 
-	<target name="xmlbeans-unzip" depends="xmlbeans-get" unless="xmlbeans-present?">
+	<target name="xmlbeans-unzip" unless="xmlbeans-present?">
+		<antcall target="xmlbeans-get" />
 		<unzip src="${xmlbeans.zip}" dest="${xmlbeans.tmp}" />
 		<copy tofile="${xbean.jar}" file="${xmlbeans.tmp}/xmlbeans-2.2.0/lib/xbean.jar" />
 		<copy tofile="${jsr173.jar}" file="${xmlbeans.tmp}/xmlbeans-2.2.0/lib/jsr173_1.0_api.jar" />
