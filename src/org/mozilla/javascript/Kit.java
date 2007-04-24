@@ -287,7 +287,7 @@ public class Kit
      * If <i>bag</i> does not contain <i>listener</i>, the function returns
      * <i>bag</i>.
      * <p>
-     * For usage example, see {@link addListener(Object bag, Object listener)}.
+     * For usage example, see {@link #addListener(Object bag, Object listener)}.
      *
      * @param listener Listener to remove from <i>bag</i>
      * @param bag Current collection of listeners.
@@ -336,7 +336,7 @@ public class Kit
      * Get listener at <i>index</i> position in <i>bag</i> or null if
      * <i>index</i> equals to number of listeners in <i>bag</i>.
      * <p>
-     * For usage example, see {@link addListener(Object bag, Object listener)}.
+     * For usage example, see {@link #addListener(Object bag, Object listener)}.
      *
      * @param bag Current collection of listeners.
      * @param index Index of the listener to access.
