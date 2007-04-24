@@ -46,7 +46,6 @@ import org.mozilla.javascript.*;
 /**
  *  This Interface describes what all XML objects (XML, XMLList) should have in common.
  *
- * @see XML
  */
 public abstract class XMLObject extends IdScriptableObject
 {

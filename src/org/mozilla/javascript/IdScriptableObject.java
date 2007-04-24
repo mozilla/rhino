@@ -688,7 +688,7 @@ public abstract class IdScriptableObject extends ScriptableObject
      * </pre>
      * Note that although such function can be implemented universally via
      * java.lang.Class.isInstance(), it would be much more slower.
-     * @param readOnly specify if the function f does not change state of
+     * @param f function that is attempting to convert 'this'
      * object.
      * @return Scriptable object suitable for a check by the instanceof
      * operator.
