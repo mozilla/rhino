@@ -67,7 +67,7 @@ public class RunScript {
             Object result = cx.evaluateString(scope, s, "<cmd>", 1, null);
 
             // Convert the result to a string and print it.
-            System.err.println(cx.toString(result));
+            System.err.println(Context.toString(result));
 
         } finally {
             // Exit from the context.

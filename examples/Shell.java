@@ -111,7 +111,7 @@ public class Shell extends ScriptableObject
             if (arg.equals("-version")) {
                 if (++i == args.length)
                     usage(arg);
-                double d = cx.toNumber(args[i]);
+                double d = Context.toNumber(args[i]);
                 if (d != d)
                     usage(arg);
                 cx.setLanguageVersion((int) d);
@@ -202,7 +202,7 @@ public class Shell extends ScriptableObject
     {
         double result = (double) cx.getLanguageVersion();
         if (args.length > 0) {
-            double d = cx.toNumber(args[0]);
+            double d = Context.toNumber(args[0]);
             cx.setLanguageVersion((int) d);
         }
         return result;
@@ -219,7 +219,7 @@ public class Shell extends ScriptableObject
     {
         Shell shell = (Shell)getTopLevelScope(thisObj);
         for (int i = 0; i < args.length; i++) {
-            shell.processSource(cx, cx.toString(args[i]));
+            shell.processSource(cx, Context.toString(args[i]));
         }
     }
 
@@ -267,8 +267,8 @@ public class Shell extends ScriptableObject
                     Object result = cx.evaluateString(this, source,
                                                       sourceName, startline,
                                                       null);
-                    if (result != cx.getUndefinedValue()) {
-                        System.err.println(cx.toString(result));
+                    if (result != Context.getUndefinedValue()) {
+                        System.err.println(Context.toString(result));
                     }
                 }
                 catch (WrappedException we) {

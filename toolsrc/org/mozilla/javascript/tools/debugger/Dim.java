@@ -435,7 +435,6 @@ public class Dim {
                 }
                 String replace = null;
                 int i = searchStart + 1;
-                boolean hasDigits = false;
                 while (i != urlLength) {
                     int c = url.charAt(i);
                     if (!('0' <= c && c <= '9')) {
@@ -728,8 +727,6 @@ public class Dim {
     private void interrupted(Context cx, final StackFrame frame,
                                Throwable scriptException) {
         ContextData contextData = frame.contextData();
-        int line = frame.getLineNumber();
-        String url = frame.getUrl();
         boolean eventThreadFlag = callback.isGuiEventThread();
         contextData.eventThreadFlag = eventThreadFlag;
 
@@ -1367,11 +1364,6 @@ interruptedCheck:
         private String url;
 
         /**
-         * The line at which the script starts.
-         */
-        private int minLine;
-
-        /**
          * Array indicating which lines can have breakpoints set.
          */
         private boolean[] breakableLines;
@@ -1434,7 +1426,6 @@ interruptedCheck:
 
             if (minAll > maxAll) {
                 // No line information
-                this.minLine = -1;
                 this.breakableLines = EMPTY_BOOLEAN_ARRAY;
                 this.breakpoints = EMPTY_BOOLEAN_ARRAY;
             } else {
@@ -1442,7 +1433,6 @@ interruptedCheck:
                     // Line numbers can not be negative
                     throw new IllegalStateException(String.valueOf(minAll));
                 }
-                this.minLine = minAll;
                 int linesTop = maxAll + 1;
                 this.breakableLines = new boolean[linesTop];
                 this.breakpoints = new boolean[linesTop];

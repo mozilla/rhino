@@ -46,8 +46,6 @@ import org.mozilla.javascript.tools.ToolErrorReporter;
 
 public class Main {
 
-    private static final String PROGRAM_NAME = "Main";
-
     private static final String SWITCH_TAG_STR = "string_id_map";
     private static final String GENERATED_TAG_STR = "generated";
     private static final String STRING_TAG_STR = "string";
@@ -131,14 +129,14 @@ public class Main {
         int time_stamp_begin = -1, time_stamp_end = -1;
 
         body.startLineLoop();
-        L:while (body.nextLine()) {
+        while (body.nextLine()) {
             int begin = body.getLineBegin();
             int end = body.getLineEnd();
 
             int tag_id = extract_line_tag_id(buffer, begin, end);
             boolean bad_tag = false;
             switch (cur_state) {
-                case 0:
+                case NORMAL_LINE:
                     if (tag_id == SWITCH_TAG) {
                         cur_state = SWITCH_TAG;
                         all_pairs.removeAllElements();
@@ -216,7 +214,6 @@ public class Main {
     private String get_time_stamp() {
         SimpleDateFormat f = new SimpleDateFormat
             (" 'Last update:' yyyy-MM-dd HH:mm:ss z");
-        String dateString = f.format(new Date());
         return f.format(new Date());
     }
 
@@ -611,8 +608,5 @@ public class Main {
         }
         return destination;
     }
-
-
-
 }
 

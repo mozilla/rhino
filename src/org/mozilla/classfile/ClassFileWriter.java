@@ -285,8 +285,6 @@ public class ClassFileWriter {
      *
      * @param maxLocals the maximum number of local variable slots
      *        (a.k.a. Java registers) used by the method
-     * @param vars the array of the variables for the method,
-     *        or null if none
      */
     public void stopMethod(short maxLocals) {
         if (itsCurrentMethod == null)

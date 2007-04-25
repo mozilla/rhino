@@ -340,7 +340,6 @@ public class Main
             int lineno = 1;
             boolean hitEOF = false;
             while (!hitEOF) {
-                int startline = lineno;
                 if (filename == null)
                     ps.print("js> ");
                 ps.flush();

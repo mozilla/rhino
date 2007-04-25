@@ -110,11 +110,6 @@ public class SwingGui extends JFrame implements GuiCallback {
     private JSInternalConsole console;
 
     /**
-     * The script evaluation internal frame.
-     */
-    private EvalWindow evalWindow;
-
-    /**
      * The {@link JSplitPane} that separates {@link #desk} from {@link context}.
      */
     private JSplitPane split1;
@@ -227,7 +222,6 @@ public class SwingGui extends JFrame implements GuiCallback {
                               "Step Out (F8)"};
         int count = 0;
         button = breakButton = new JButton("Break");
-        JButton focusButton = button;
         button.setToolTipText("Break");
         button.setActionCommand("Break");
         button.addActionListener(menubar);
@@ -963,7 +957,6 @@ class MessageDialogWrapper {
                 char c = msg.charAt(i);
                 buf.append(c);
                 if (Character.isWhitespace(c)) {
-                    int remainder = len - i;
                     int k;
                     for (k = i + 1; k < len; k++) {
                         if (Character.isWhitespace(msg.charAt(k))) {
@@ -1353,11 +1346,6 @@ class FilePopupMenu extends JPopupMenu {
     private static final long serialVersionUID = 3589525009546013565L;
 
     /**
-     * The {@link FileTextArea} this popup menu is attached to.
-     */
-    private FileTextArea w;
-
-    /**
      * The popup x position.
      */
     int x;
@@ -1371,7 +1359,6 @@ class FilePopupMenu extends JPopupMenu {
      * Creates a new FilePopupMenu.
      */
     public FilePopupMenu(FileTextArea w) {
-        this.w = w;
         JMenuItem item;
         add(item = new JMenuItem("Set Breakpoint"));
         item.addActionListener(w);
@@ -1703,14 +1690,6 @@ class MoreWindows extends JDialog implements ActionListener {
         return value;
     }
 
-    /**
-     * Sets the selected value.
-     */
-    private void setValue(String newValue) {
-        value = newValue;
-        list.setSelectedValue(value, true);
-    }
-
     // ActionListener
 
     /**
@@ -1769,11 +1748,6 @@ class FindFunction extends JDialog implements ActionListener {
      * The "Select" button.
      */
     private JButton setButton;
-
-    /**
-     * The "Refresh" button.
-     */
-    private JButton refreshButton;
 
     /**
      * The "Cancel" button.
@@ -1859,14 +1833,6 @@ class FindFunction extends JDialog implements ActionListener {
         setLocationRelativeTo(comp);
         setVisible(true);
         return value;
-    }
-
-    /**
-     * Sets the last function selected.
-     */
-    private void setValue(String newValue) {
-        value = newValue;
-        list.setSelectedValue(value, true);
     }
 
     // ActionListener
@@ -1973,7 +1939,6 @@ class FileHeader extends JPanel implements MouseListener {
         Rectangle clip = g.getClipBounds();
         g.setColor(getBackground());
         g.fillRect(clip.x, clip.y, clip.width, clip.height);
-        int left = getX();
         int ascent = metrics.getMaxAscent();
         int h = metrics.getHeight();
         int lineCount = textArea.getLineCount() + 1;
@@ -1981,7 +1946,6 @@ class FileHeader extends JPanel implements MouseListener {
         if (dummy.length() < 2) {
             dummy = "99";
         }
-        int maxWidth = metrics.stringWidth(dummy);
         int startLine = clip.y / h;
         int endLine = (clip.y + clip.height) / h + 1;
         int width = getWidth();
@@ -1995,7 +1959,6 @@ class FileHeader extends JPanel implements MouseListener {
             }
             boolean isBreakPoint = fileWindow.isBreakPoint(i + 1);
             text = Integer.toString(i + 1) + " ";
-            int w = metrics.stringWidth(text);
             int y = i * h;
             g.setColor(Color.blue);
             g.drawString(text, 0, y + ascent);
@@ -2066,7 +2029,6 @@ class FileHeader extends JPanel implements MouseListener {
     public void mouseReleased(MouseEvent e) {
         if (e.getComponent() == this
                 && (e.getModifiers() & MouseEvent.BUTTON1_MASK) != 0) {
-            int x = e.getX();
             int y = e.getY();
             Font font = fileWindow.textArea.getFont();
             FontMetrics metrics = getFontMetrics(font);
@@ -2120,11 +2082,6 @@ class FileWindow extends JInternalFrame implements ActionListener {
      * The current offset position.
      */
     int currentPos;
-
-    /**
-     * The status bar.
-     */
-    private JLabel statusBar;
 
     /**
      * Loads the file.
@@ -2988,7 +2945,6 @@ class ContextWindow extends JPanel implements ActionListener {
         final JPanel finalThis = this;
 
         ComponentListener clistener = new ComponentListener() {
-                boolean t1Docked = true;
                 boolean t2Docked = true;
                 void check(Component comp) {
                     Component thisParent = finalThis.getParent();
@@ -3057,7 +3013,6 @@ class ContextWindow extends JPanel implements ActionListener {
                         // no change
                         return;
                     }
-                    t1Docked = leftDocked;
                     t2Docked = rightDocked;
                     JSplitPane split = (JSplitPane)thisParent;
                     if (leftDocked) {

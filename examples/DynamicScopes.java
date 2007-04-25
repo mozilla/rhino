@@ -107,7 +107,7 @@ public class DynamicScopes {
             useDynamicScope = true;
             runScripts(cx, script);
         } finally {
-            cx.exit();
+            Context.exit();
         }
     }
 

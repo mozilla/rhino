@@ -59,7 +59,7 @@ public class RunScript2 {
                 s += args[i];
             }
             Object result = cx.evaluateString(scope, s, "<cmd>", 1, null);
-            System.err.println(cx.toString(result));
+            System.err.println(Context.toString(result));
         } finally {
             Context.exit();
         }

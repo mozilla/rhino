@@ -125,7 +125,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     private Scriptable parentScopeObject;
 
-    private static final Object HAS_STATIC_ACCESSORS = Void.TYPE;
     private static final Slot REMOVED = new Slot(null, 0, READONLY);
 
     static {
@@ -2312,7 +2311,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     {
         if (count == 0) throw Kit.codeBug();
 
-        int tableSize = newSlots.length;
         int i = slots.length;
         for (;;) {
             --i;
