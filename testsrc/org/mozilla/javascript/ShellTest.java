@@ -104,31 +104,37 @@ class ShellTest {
         abstract void exitCodesWere(int expected, int actual);
         abstract void outputWas(String s);
 
-        static Status compose(final Status one, final Status two) {
+        static Status compose(final Status[] array) {
             return new Status() {
                 void running(File file) {
-                    one.running(file);
-                    two.running(file);
+					for (int i=0; i<array.length; i++) {
+						array[i].running(file);
+					}
                 }
                 void threw(Throwable t) {
-                    one.threw(t);
-                    two.threw(t);
-                }
+					for (int i=0; i<array.length; i++) {
+						array[i].threw(t);
+					}
+				}
                 void failed(String s) {
-                    one.failed(s);
-                    two.failed(s);
+					for (int i=0; i<array.length; i++) {
+						array[i].failed(s);
+					}
                 }
                 void exitCodesWere(int expected, int actual) {
-                    one.exitCodesWere(expected, actual);
-                    two.exitCodesWere(expected, actual);
+					for (int i=0; i<array.length; i++) {
+						array[i].exitCodesWere(expected, actual);
+					}
                 }
                 void outputWas(String s) {
-                    one.outputWas(s);
-                    two.outputWas(s);
+					for (int i=0; i<array.length; i++) {
+						array[i].outputWas(s);
+					}
                 }
                 void timedOut() {
-                    one.timedOut();
-                    two.timedOut();
+					for (int i=0; i<array.length; i++) {
+						array[i].timedOut();
+					}
                 }
             };
         }

@@ -354,6 +354,63 @@ public class JsDriver {
             }
         }
     }
+	
+	private static class XmlStatus extends ShellTest.Status {
+		private String path;
+		
+		private Element target;
+		private Date start;
+		
+		XmlStatus(String path, Element root) {
+			this.path = path;
+			this.target = root.getOwnerDocument().createElement("test");
+			root.appendChild(target);
+		}
+		
+		void running(File file) {
+			this.start = new Date();
+		}
+		
+		private Element createElement(Element parent, String name) {
+			Element rv = parent.getOwnerDocument().createElement(name);
+			parent.appendChild(rv);
+			return rv;
+		}
+		
+		private void finish() {
+			Date end = new Date();
+			long elapsed = end.getTime() - start.getTime();
+			this.target.setAttribute("elapsed", String.valueOf(elapsed));
+		}
+		
+		void exitCodesWere(int expected, int actual) {
+			finish();
+			Element exit = createElement(target, "exit");
+			exit.setAttribute("expected", String.valueOf(expected));
+			exit.setAttribute("actual", String.valueOf(actual));
+		}
+		
+		void timedOut() {
+			finish();
+			createElement(target, "timedOut");
+		}
+		
+		void failed(String s) {
+			finish();
+			Element failed = createElement(target, "failed");
+			failed.setTextContent(s);
+		}
+		
+		void outputWas(String message) {
+			finish();
+			Element output = createElement(target, "output");
+			output.setTextContent(message);
+		}
+		
+		void threw(Throwable t) {
+			finish();
+		}
+	}
 
     private static class Results {
         private ShellContextFactory factory;
@@ -363,9 +420,25 @@ public class JsDriver {
 
         private Document html;
         private Element failureHtml;
+		
+		private Document xml;
 
+		private Date start;
         private int tests;
         private int failures;
+
+        Results(ShellContextFactory factory, Arguments arguments, boolean trace) {
+            this.factory = factory;
+            this.arguments = arguments;
+			
+			File output = arguments.getOutputFile();
+			if (output == null) {
+				output = new File("rhino-test-results." + new java.text.SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + ".html");
+			}
+			this.output = output;
+
+            this.trace = trace;
+        }
 
         private Document parse(InputStream in) {
             try {
@@ -382,12 +455,31 @@ public class JsDriver {
             return parse(getClass().getResourceAsStream("results.html"));
         }
 
-        Results(ShellContextFactory factory, Arguments arguments, File output, boolean trace) {
-            this.factory = factory;
-            this.arguments = arguments;
-            this.output = output;
-            this.trace = trace;
-
+        private void write(Document template, boolean xml) {
+            try {
+				File output = this.output;
+				javax.xml.transform.TransformerFactory factory = javax.xml.transform.TransformerFactory.newInstance();
+				javax.xml.transform.Transformer xform = factory.newTransformer();
+				if (xml) {
+					xform.setOutputProperty(javax.xml.transform.OutputKeys.METHOD, "xml");
+					xform.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+					output = new File(output.getCanonicalPath() + ".xml");
+				}
+                javax.xml.transform.TransformerFactory.newInstance().newTransformer().transform(
+                    new javax.xml.transform.dom.DOMSource(template),
+                    new javax.xml.transform.stream.StreamResult( new FileOutputStream(output) )
+                );
+            } catch (IOException e) {
+                arguments.getConsole().println("Could not write results file to " + output + ": ");
+                e.printStackTrace(System.err);
+            } catch (javax.xml.transform.TransformerConfigurationException e) {
+                throw new RuntimeException("Parser failure", e);
+            } catch (javax.xml.transform.TransformerException e) {
+                throw new RuntimeException("Parser failure", e);
+            }
+        }
+		
+		void start() {
             this.html = getTemplate();
             this.failureHtml = getElementById(html.getDocumentElement(), "failureDetails.prototype");
             if (this.failureHtml == null) {
@@ -402,28 +494,28 @@ public class JsDriver {
                 throw new RuntimeException("No");
             }
             this.failureHtml.getParentNode().removeChild(this.failureHtml);
-        }
+			
+			try {
+				this.xml = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+					.getDOMImplementation().createDocument(null, "results", null)
+				;
+				xml.getDocumentElement().setAttribute("timestamp", String.valueOf(new Date().getTime()));
+				xml.getDocumentElement().setAttribute("optimization", String.valueOf(arguments.getOptimizationLevel()));
+				xml.getDocumentElement().setAttribute("timeout", String.valueOf(arguments.getTimeout()));
+			} catch (javax.xml.parsers.ParserConfigurationException e) {
+				throw new RuntimeException(e);
+			}
+			
+			this.start = new Date();
+		}
 
-        private void write(Document template) {
-            try {
-                javax.xml.transform.TransformerFactory.newInstance().newTransformer().transform(
-                    new javax.xml.transform.dom.DOMSource(template),
-                    new javax.xml.transform.stream.StreamResult( new FileOutputStream(output) )
-                );
-            } catch (IOException e) {
-                arguments.getConsole().println("Could not write results file to " + output + ": ");
-                e.printStackTrace(System.err);
-            } catch (javax.xml.transform.TransformerConfigurationException e) {
-                throw new RuntimeException("Parser failure", e);
-            } catch (javax.xml.transform.TransformerException e) {
-                throw new RuntimeException("Parser failure", e);
-            }
-        }
-
-        void run(String path, File test, ShellTest.Parameters parameters) {
+        void run(Tests.Script script, ShellTest.Parameters parameters) {
+			String path = script.getPath();
+			File test = script.getFile();
             ConsoleStatus cStatus = new ConsoleStatus(arguments.getConsole(), trace);
             HtmlStatus hStatus = new HtmlStatus(arguments.getLxrUrl(), arguments.getBugUrl(), path, html, (Element)failureHtml.cloneNode(true));
-            ShellTest.Status status = ShellTest.Status.compose(cStatus, hStatus);
+			XmlStatus xStatus = new XmlStatus(path, this.xml.getDocumentElement());
+            ShellTest.Status status = ShellTest.Status.compose(new ShellTest.Status[] { cStatus, hStatus, xStatus });
             try {
                 ShellTest.run(factory, test, parameters, status);
             } catch (Exception e) {
@@ -435,12 +527,13 @@ public class JsDriver {
             }
             hStatus.finish();
         }
-
+		
         private void set(Document document, String id, String value) {
             getElementById(document.getDocumentElement(), id).setTextContent(value);
         }
 
-        void finish(Date start, Date end) {
+        void finish() {
+			Date end = new Date();
             long elapsedMs = end.getTime() - start.getTime();
             set(html, "results.testlist", join(arguments.getTestList()));
             set(html, "results.skiplist", join(arguments.getSkipList()));
@@ -457,7 +550,8 @@ public class JsDriver {
             String elapsed = "" + elapsedMinutes + " minutes, " + elapsedSeconds + " seconds";
             set(html, "results.elapsed", elapsed);
             set(html, "results.time", new java.text.SimpleDateFormat("MMMM d yyyy h:mm:ss aa").format(new java.util.Date()));
-            write(html);
+            write(html, false);
+			write(xml, true);
         }
     }
 
@@ -494,18 +588,13 @@ public class JsDriver {
         Tests.Script[] all = tests.getFiles();
         arguments.getConsole().println("Running " + all.length + " tests.");
 
-        File output = new File("rhino-test-results." + new java.text.SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + ".html");
-        if (arguments.getOutputFile() != null) {
-            output = arguments.getOutputFile();
-        }
-
-        Results results = new Results(factory, arguments, output, arguments.trace());
-        Date start = new Date();
+        Results results = new Results(factory, arguments, arguments.trace());
+		
+		results.start();
         for (int i=0; i<all.length; i++) {
-            results.run(all[i].getPath(), all[i].getFile(), new ShellTestParameters(arguments.getTimeout()));
+            results.run(all[i], new ShellTestParameters(arguments.getTimeout()));
         }
-        Date end = new Date();
-        results.finish(start, end);
+		results.finish();
     }
 
     public static void main(Arguments arguments) throws Throwable {
