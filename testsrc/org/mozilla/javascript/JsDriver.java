@@ -414,6 +414,8 @@ public class JsDriver {
 		
 		void threw(Throwable t) {
 			finish();
+			Element threw = createElement(target, "threw");
+			setTextContent(threw, ShellTest.getStackTrace(t));
 		}
 	}
 
@@ -470,7 +472,7 @@ public class JsDriver {
 					xform.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
 					output = new File(output.getCanonicalPath() + ".xml");
 				}
-                javax.xml.transform.TransformerFactory.newInstance().newTransformer().transform(
+                xform.transform(
                     new javax.xml.transform.dom.DOMSource(template),
                     new javax.xml.transform.stream.StreamResult( new FileOutputStream(output) )
                 );
