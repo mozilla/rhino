@@ -278,7 +278,7 @@ class XmlProcessor {
 	String escapeAttributeValue(Object value) {
 		String text = ScriptRuntime.toString(value);
 		
-		if (text.length() == 0) return "\"\"";
+		if (text.length() == 0) return "";
 		
 		Document dom = newDocument();
 		Element e = dom.createElement("a");
