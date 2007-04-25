@@ -233,6 +233,23 @@ public class JsDriver {
         return null;
     }
 
+	private static String newlineLineEndings(String s) {
+		StringBuffer rv = new StringBuffer();
+		for (int i=0; i<s.length(); i++) {
+			if (s.charAt(i) == '\r') {
+				if (i+1<s.length() && s.charAt(i+1) == '\n') {
+					//    just skip \r
+				} else {
+					//    Macintosh, substitute \n
+					rv.append('\n');
+				}
+			} else {
+				rv.append(s.charAt(i));
+			}
+		}
+		return rv.toString();
+	}
+
     private static class HtmlStatus extends ShellTest.Status {
         private String testPath;
         private String bugUrl;
@@ -267,23 +284,6 @@ public class JsDriver {
                 failed = true;
                 setContent(failureHtml, "failureDetails.reason", "expected exit code " + expected + " but got " + actual);
             }
-        }
-
-        private String newlineLineEndings(String s) {
-            StringBuffer rv = new StringBuffer();
-            for (int i=0; i<s.length(); i++) {
-                if (s.charAt(i) == '\r') {
-                    if (i+1<s.length() && s.charAt(i+1) == '\n') {
-                        //    just skip \r
-                    } else {
-                        //    Macintosh, substitute \n
-                        rv.append('\n');
-                    }
-                } else {
-                    rv.append(s.charAt(i));
-                }
-            }
-            return rv.toString();
         }
 
         void threw(Throwable e) {
@@ -364,6 +364,7 @@ public class JsDriver {
 		XmlStatus(String path, Element root) {
 			this.path = path;
 			this.target = root.getOwnerDocument().createElement("test");
+			this.target.setAttribute("path", path);
 			root.appendChild(target);
 		}
 		
@@ -383,6 +384,10 @@ public class JsDriver {
 			this.target.setAttribute("elapsed", String.valueOf(elapsed));
 		}
 		
+		private void setTextContent(Element e, String content) {
+			e.setTextContent( newlineLineEndings(content) );
+		}
+		
 		void exitCodesWere(int expected, int actual) {
 			finish();
 			Element exit = createElement(target, "exit");
@@ -398,13 +403,13 @@ public class JsDriver {
 		void failed(String s) {
 			finish();
 			Element failed = createElement(target, "failed");
-			failed.setTextContent(s);
+			setTextContent(failed, s);
 		}
 		
 		void outputWas(String message) {
 			finish();
 			Element output = createElement(target, "output");
-			output.setTextContent(message);
+			setTextContent(output, message);
 		}
 		
 		void threw(Throwable t) {
