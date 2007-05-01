@@ -73,17 +73,18 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *
      * Used by getAttributes() and setAttributes().
      *
-     * @see org.mozilla.javascript.ScriptableObject#getAttributes
-     * @see org.mozilla.javascript.ScriptableObject#setAttributes
+     * @see org.mozilla.javascript.ScriptableObject#getAttributes(String)
+     * @see org.mozilla.javascript.ScriptableObject#setAttributes(String, int)
      */
     public static final int EMPTY =     0x00;
 
     /**
      * Property attribute indicating assignment to this property is ignored.
      *
-     * @see org.mozilla.javascript.ScriptableObject#put
-     * @see org.mozilla.javascript.ScriptableObject#getAttributes
-     * @see org.mozilla.javascript.ScriptableObject#setAttributes
+     * @see org.mozilla.javascript.ScriptableObject
+     *      #put(String, Scriptable, Object)
+     * @see org.mozilla.javascript.ScriptableObject#getAttributes(String)
+     * @see org.mozilla.javascript.ScriptableObject#setAttributes(String, int)
      */
     public static final int READONLY =  0x01;
 
@@ -92,18 +93,18 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *
      * Only enumerated properties will be returned by getIds().
      *
-     * @see org.mozilla.javascript.ScriptableObject#getIds
-     * @see org.mozilla.javascript.ScriptableObject#getAttributes
-     * @see org.mozilla.javascript.ScriptableObject#setAttributes
+     * @see org.mozilla.javascript.ScriptableObject#getIds()
+     * @see org.mozilla.javascript.ScriptableObject#getAttributes(String)
+     * @see org.mozilla.javascript.ScriptableObject#setAttributes(String, int)
      */
     public static final int DONTENUM =  0x02;
 
     /**
      * Property attribute indicating property cannot be deleted.
      *
-     * @see org.mozilla.javascript.ScriptableObject#delete
-     * @see org.mozilla.javascript.ScriptableObject#getAttributes
-     * @see org.mozilla.javascript.ScriptableObject#setAttributes
+     * @see org.mozilla.javascript.ScriptableObject#delete(String)
+     * @see org.mozilla.javascript.ScriptableObject#getAttributes(String)
+     * @see org.mozilla.javascript.ScriptableObject#setAttributes(String, int)
      */
     public static final int PERMANENT = 0x04;
 
@@ -457,7 +458,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param name the identifier for the property
      * @return the bitset of attributes
      * @exception EvaluatorException if the named property is not found
-     * @see org.mozilla.javascript.ScriptableObject#has
+     * @see org.mozilla.javascript.ScriptableObject#has(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#READONLY
      * @see org.mozilla.javascript.ScriptableObject#DONTENUM
      * @see org.mozilla.javascript.ScriptableObject#PERMANENT
@@ -475,7 +476,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @exception EvaluatorException if the named property is not found
      *            is not found
      * @return the bitset of attributes
-     * @see org.mozilla.javascript.ScriptableObject#has
+     * @see org.mozilla.javascript.ScriptableObject#has(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#READONLY
      * @see org.mozilla.javascript.ScriptableObject#DONTENUM
      * @see org.mozilla.javascript.ScriptableObject#PERMANENT
@@ -501,7 +502,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param name the name of the property
      * @param attributes the bitset of attributes
      * @exception EvaluatorException if the named property is not found
-     * @see org.mozilla.javascript.Scriptable#has
+     * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#READONLY
      * @see org.mozilla.javascript.ScriptableObject#DONTENUM
      * @see org.mozilla.javascript.ScriptableObject#PERMANENT
@@ -519,7 +520,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param index the numeric index for the property
      * @param attributes the bitset of attributes
      * @exception EvaluatorException if the named property is not found
-     * @see org.mozilla.javascript.Scriptable#has
+     * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#READONLY
      * @see org.mozilla.javascript.ScriptableObject#DONTENUM
      * @see org.mozilla.javascript.ScriptableObject#PERMANENT
@@ -883,7 +884,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @see org.mozilla.javascript.Function
      * @see org.mozilla.javascript.FunctionObject
      * @see org.mozilla.javascript.ScriptableObject#READONLY
-     * @see org.mozilla.javascript.ScriptableObject#defineProperty
+     * @see org.mozilla.javascript.ScriptableObject
+     *      #defineProperty(String, Class, int)
      */
     public static void defineClass(Scriptable scope, Class clazz)
         throws IllegalAccessException, InstantiationException,
@@ -1169,7 +1171,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param propertyName the name of the property to define.
      * @param value the initial value of the property
      * @param attributes the attributes of the JavaScript property
-     * @see org.mozilla.javascript.Scriptable#put
+     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
     public void defineProperty(String propertyName, Object value,
                                int attributes)
@@ -1229,7 +1231,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *                    and "setFoo" methods.
      * @param clazz the Java class to search for the getter and setter
      * @param attributes the attributes of the JavaScript property
-     * @see org.mozilla.javascript.Scriptable#put
+     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
     public void defineProperty(String propertyName, Class clazz,
                                int attributes)
