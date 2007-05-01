@@ -380,7 +380,7 @@ final class IRFactory
                 // See ECMA Ch. 13.  We add code to the beginning of the
                 // function to initialize a local variable of the
                 // function's name to the function value.
-                if (!fnNode.addVar(name))
+                if (fnNode.addVar(name) == ScriptOrFnNode.DUPLICATE_CONST)
                     parser.addError("msg.const.redecl", name);
                 Node setFn = new Node(Token.EXPR_VOID,
                                  new Node(Token.SETNAME,

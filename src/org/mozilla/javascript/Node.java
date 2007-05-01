@@ -579,6 +579,92 @@ public class Node
         putIntProp(LABEL_ID_PROP, labelId);
     }
 
+    public boolean hasSideEffects()
+    {
+        switch (type) {
+          case Token.EXPR_VOID:
+          case Token.EXPR_RESULT:
+          case Token.COMMA:
+            if (last != null)
+                return last.hasSideEffects();
+            else
+                return true;
+
+          case Token.HOOK:
+            if (first == null ||
+                first.next == null ||
+                first.next.next == null)
+                Kit.codeBug();
+            return first.next.hasSideEffects() &&
+                   first.next.next.hasSideEffects();
+
+          case Token.ERROR:         // Avoid cascaded error messages
+          case Token.ASSIGN:
+          case Token.ASSIGN_ADD:
+          case Token.ASSIGN_SUB:
+          case Token.ASSIGN_MUL:
+          case Token.ASSIGN_DIV:
+          case Token.ASSIGN_MOD:
+          case Token.ASSIGN_BITOR:
+          case Token.ASSIGN_BITXOR:
+          case Token.ASSIGN_BITAND:
+          case Token.ASSIGN_LSH:
+          case Token.ASSIGN_RSH:
+          case Token.ASSIGN_URSH:
+          case Token.ENTERWITH:
+          case Token.LEAVEWITH:
+          case Token.RETURN:
+          case Token.GOTO:
+          case Token.IFEQ:
+          case Token.IFNE:
+          case Token.NEW:
+          case Token.DELPROP:
+          case Token.SETNAME:
+          case Token.SETPROP:
+          case Token.SETELEM:
+          case Token.CALL:
+          case Token.THROW:
+          case Token.RETHROW:
+          case Token.SETVAR:
+          case Token.CATCH_SCOPE:
+          case Token.RETURN_RESULT:
+          case Token.SET_REF:
+          case Token.DEL_REF:
+          case Token.REF_CALL:
+          case Token.TRY:
+          case Token.SEMI:
+          case Token.INC:
+          case Token.DEC:
+          case Token.EXPORT:
+          case Token.IMPORT:
+          case Token.IF:
+          case Token.ELSE:
+          case Token.SWITCH:
+          case Token.WHILE:
+          case Token.DO:
+          case Token.FOR:
+          case Token.BREAK:
+          case Token.CONTINUE:
+          case Token.VAR:
+          case Token.WITH:
+          case Token.CATCH:
+          case Token.FINALLY:
+          case Token.BLOCK:
+          case Token.LABEL:
+          case Token.TARGET:
+          case Token.LOOP:
+          case Token.JSR:
+          case Token.SETPROP_OP:
+          case Token.SETELEM_OP:
+          case Token.LOCAL_BLOCK:
+          case Token.SET_REF_OP:
+            return true;
+
+          default:
+            return false;
+        }
+    }
+
     public String toString()
     {
         if (Token.printTrees) {

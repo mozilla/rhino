@@ -249,6 +249,10 @@ public class Main
                 shellContextFactory.setStrictMode(true);
                 continue;
             }
+            if (arg.equals("-fatal-warnings")) {
+                shellContextFactory.setWarningAsError(true);
+                continue;
+            }
             if (arg.equals("-e")) {
                 processStdin = false;
                 if (++i == args.length) {

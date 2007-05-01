@@ -94,6 +94,7 @@ public class Parser
     private Hashtable labelSet; // map of label names into nodes
     private ObjArray loopSet;
     private ObjArray loopAndSwitchSet;
+    private boolean hasReturnValue;
 // end of per function variables
 
     // Exception to unwind
@@ -113,11 +114,22 @@ public class Parser
         return new Decompiler();
     }
 
+    void addStrictWarning(String messageId, String messageArg)
+    {
+        if (compilerEnv.isStrictMode())
+            addWarning(messageId, messageArg);
+    }
+
     void addWarning(String messageId, String messageArg)
     {
         String message = ScriptRuntime.getMessage1(messageId, messageArg);
-        errorReporter.warning(message, sourceURI, ts.getLineno(),
-                              ts.getLine(), ts.getOffset());
+        if (compilerEnv.reportWarningAsError()) {
+            ++syntaxErrorCount;
+            errorReporter.error(message, sourceURI, ts.getLineno(),
+                                ts.getLine(), ts.getOffset());
+        } else
+            errorReporter.warning(message, sourceURI, ts.getLineno(),
+                                  ts.getLine(), ts.getOffset());
     }
 
     void addError(String messageId)
@@ -503,6 +515,7 @@ public class Parser
         loopSet = null;
         ObjArray savedLoopAndSwitchSet = loopAndSwitchSet;
         loopAndSwitchSet = null;
+        boolean savedHasReturnValue = hasReturnValue;
 
         Node body;
         try {
@@ -551,6 +564,7 @@ public class Parser
             }
         }
         finally {
+            hasReturnValue = savedHasReturnValue;
             loopAndSwitchSet = savedLoopAndSwitchSet;
             loopSet = savedLoopSet;
             labelSet = savedLabelSet;
@@ -562,6 +576,12 @@ public class Parser
         fnNode.setSourceName(sourceURI);
         fnNode.setBaseLineno(baseLineno);
         fnNode.setEndLineno(ts.getLineno());
+
+        if (name != null) {
+          int index = currentScriptOrFn.getParamOrVarIndex(name);
+          if (index >= 0 && index < currentScriptOrFn.getParamCount())
+            addStrictWarning("msg.var.hides.arg", name);
+        }
 
         Node pn = nf.initFunction(fnNode, functionIndex, body, syntheticType);
         if (memberExprNode != null) {
@@ -597,6 +617,8 @@ public class Parser
         mustMatchToken(Token.RP, "msg.no.paren.after.cond");
         decompiler.addToken(Token.RP);
 
+        if (pn.getType() == Token.ASSIGN)
+            addStrictWarning("msg.equal.as.assign", "");
         // there's a check here in jsparse.c that corrects = to ==
 
         return pn;
@@ -630,6 +652,8 @@ public class Parser
         try {
             Node pn = statementHelper(null);
             if (pn != null) {
+                if (!pn.hasSideEffects())
+                    addStrictWarning("msg.no.side.effects", "");
                 return pn;
             }
         } catch (ParserException e) { }
@@ -1053,6 +1077,7 @@ public class Parser
                 break;
               default:
                 retExpr = expr(false);
+                hasReturnValue = true;
             }
             pn = nf.createReturn(retExpr, lineno);
             break;
@@ -1224,18 +1249,25 @@ public class Parser
             first = false;
 
             decompiler.addName(s);
+
             if (context == Token.CONST) {
                 if (!currentScriptOrFn.addConst(s)) {
-                    // We know it's already defined, since addVar passes if 
-                    // it's a var.
-                    if (currentScriptOrFn.addVar(s))
+                    // We know it's already defined, since addConst passes if
+                    // it's not defined at all.  The addVar call just confirms
+                    // what it is.
+                    if (currentScriptOrFn.addVar(s) != ScriptOrFnNode.DUPLICATE_CONST)
                         addError("msg.var.redecl", s);
                     else
                         addError("msg.const.redecl", s);
                 }
             } else {
-                if (!currentScriptOrFn.addVar(s))
+                int dupState = currentScriptOrFn.addVar(s);
+                if (dupState == ScriptOrFnNode.DUPLICATE_CONST)
                     addError("msg.const.redecl", s);
+                else if (dupState == ScriptOrFnNode.DUPLICATE_PARAMETER)
+                    addStrictWarning("msg.var.hides.arg", s);
+                else if (dupState == ScriptOrFnNode.DUPLICATE_VAR)
+                    addStrictWarning("msg.var.redecl", s);
             }
             name = nf.createName(s);
 
@@ -1260,6 +1292,8 @@ public class Parser
         Node pn = assignExpr(inForInit);
         while (matchToken(Token.COMMA)) {
             decompiler.addToken(Token.COMMA);
+            if (!pn.hasSideEffects())
+                addStrictWarning("msg.no.side.effects", "");
             pn = nf.createBinary(Token.COMMA, pn, assignExpr(inForInit));
         }
         return pn;
@@ -1294,6 +1328,8 @@ public class Parser
             mustMatchToken(Token.COLON, "msg.no.colon.cond");
             decompiler.addToken(Token.COLON);
             ifFalse = assignExpr(inForInit);
+            if (pn.getType() == Token.ASSIGN)
+                addStrictWarning("msg.equal.as.assign", "");
             return nf.createCondExpr(pn, ifTrue, ifFalse);
         }
 

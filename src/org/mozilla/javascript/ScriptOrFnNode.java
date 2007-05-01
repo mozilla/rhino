@@ -155,28 +155,46 @@ public class ScriptOrFnNode extends Node {
     public final void addParam(String name) {
         // Check addparam is not called after addLocal
         if (varStart != itsVariables.size()) Kit.codeBug();
-        // Allow non-unique parameter names: use the last occurrence
+        // Allow non-unique parameter names: use the last occurrence (parser
+        // will warn about dups)
         int index = varStart++;
         itsVariables.add(name);
         itsConst.add(null);
         itsVariableNames.put(name, index);
     }
 
-    public final boolean addVar(String name) {
+    public static final int NO_DUPLICATE = 1;
+    public static final int DUPLICATE_VAR = 0;
+    public static final int DUPLICATE_PARAMETER = -1;
+    public static final int DUPLICATE_CONST = -2;
+
+    /**
+     * This function adds a variable to the set of var declarations for a
+     * function (or script).  This returns an indicator of a duplicate that
+     * overrides a formal parameter (false if this dups a parameter).
+     * @param name variable name
+     * @return 1 if the name is not any form of duplicate, 0 if it duplicates a
+     * non-parameter, -1 if it duplicates a parameter and -2 if it duplicates a
+     * const.
+     */
+    public final int addVar(String name) {
         int vIndex = itsVariableNames.get(name, -1);
         if (vIndex != -1) {
             // There's already a variable or parameter with this name.
-            Object v = itsConst.get(vIndex);
-            if (v == null)
-                return true;
-            else
-                return false;
+            if (vIndex >= varStart) {
+                Object v = itsConst.get(vIndex);
+                if (v != null)
+                    return DUPLICATE_CONST;
+                else
+                    return DUPLICATE_VAR;
+            } else
+                return DUPLICATE_PARAMETER;
         }
         int index = itsVariables.size();
         itsVariables.add(name);
         itsConst.add(null);
         itsVariableNames.put(name, index);
-        return true;
+        return NO_DUPLICATE;
     }
 
     public final boolean addConst(String name) {

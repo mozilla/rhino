@@ -22,6 +22,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ *    Bob Jervis
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -269,6 +270,22 @@ public class Context
      * @since 1.6 Release 6
      */
     public static final int FEATURE_LOCATION_INFORMATION_IN_ERROR = 10;
+
+    /**
+     * Controls whether JS 1.5 'strict mode' is enabled.
+     * When the feature is on, Rhino reports more than a dozen different
+     * warnings.  When the feature is off, these warnings are not generated.
+     * <p>
+     * By default {@link #hasFeature(int)} returns false.
+     * @since 1.6 Release 6
+     */
+    public static final int FEATURE_STRICT_MODE = 11;
+
+    /**
+     * Controls whether a warning should be treated as an error.
+     * @since 1.6 Release 6
+     */
+    public static final int FEATURE_WARNING_AS_ERROR = 12;
 
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
@@ -920,8 +937,11 @@ public class Context
                                      int lineOffset)
     {
         Context cx = Context.getContext();
-        cx.getErrorReporter().warning(message, sourceName, lineno,
-                                      lineSource, lineOffset);
+        if (cx.hasFeature(FEATURE_WARNING_AS_ERROR))
+            reportError(message, sourceName, lineno, lineSource, lineOffset);
+        else
+            cx.getErrorReporter().warning(message, sourceName, lineno,
+                                          lineSource, lineOffset);
     }
 
     /**
@@ -2113,6 +2133,8 @@ public class Context
      * @see #FEATURE_STRICT_VARS
      * @see #FEATURE_STRICT_EVAL
      * @see #FEATURE_LOCATION_INFORMATION_IN_ERROR
+     * @see #FEATURE_STRICT_MODE
+     * @see #FEATURE_WARNING_AS_ERROR
      */
     public boolean hasFeature(int featureIndex)
     {

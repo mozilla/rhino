@@ -1368,6 +1368,10 @@ public class ScriptRuntime {
 
         Object result = ScriptableObject.getProperty(obj, property);
         if (result == Scriptable.NOT_FOUND) {
+            if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
+                Context.reportWarning(ScriptRuntime.getMessage1(
+                		"msg.ref.undefined.prop", property));
+            }
             result = Undefined.instance;
         }
 

@@ -23,6 +23,7 @@
  *
  * Contributor(s):
  *   Igor Bukanov, igor@fastmail.fm
+ *   Bob Jervis
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -53,6 +54,8 @@ public class CompilerEnvirons
         xmlAvailable = true;
         optimizationLevel = 0;
         generatingSource = true;
+        strictMode = false;
+        warningAsError = false;
     }
 
     public void initFromContext(Context cx)
@@ -66,6 +69,9 @@ public class CompilerEnvirons
             = cx.hasFeature(Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER);
         allowMemberExprAsFunctionName
             = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
+        strictMode
+            = cx.hasFeature(Context.FEATURE_STRICT_MODE);
+        warningAsError = cx.hasFeature(Context.FEATURE_WARNING_AS_ERROR);
         xmlAvailable
             = cx.hasFeature(Context.FEATURE_E4X);
 
@@ -158,6 +164,15 @@ public class CompilerEnvirons
         return generatingSource;
     }
 
+    public final boolean isStrictMode()
+    {
+        return strictMode;
+    }
+
+    public final boolean reportWarningAsError()
+    {
+        return warningAsError;
+    }
     /**
      * Specify whether or not source information should be generated.
      * <p>
@@ -182,6 +197,8 @@ public class CompilerEnvirons
     private boolean xmlAvailable;
     private int optimizationLevel;
     private boolean generatingSource;
+    private boolean strictMode;
+    private boolean warningAsError;
     Hashtable activationNames;
 }
 

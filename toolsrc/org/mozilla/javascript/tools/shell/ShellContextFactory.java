@@ -23,6 +23,7 @@
  *
  * Contributor(s):
  *   Igor Bukanov
+ *   Bob Jervis
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -43,6 +44,7 @@ import org.mozilla.javascript.*;
 public class ShellContextFactory extends ContextFactory
 {
     private boolean strictMode;
+    private boolean warningAsError;
     private int languageVersion;
     private int optimizationLevel;
     private boolean generatingDebug;
@@ -53,7 +55,11 @@ public class ShellContextFactory extends ContextFactory
         switch (featureIndex) {
           case Context.FEATURE_STRICT_VARS:
           case Context.FEATURE_STRICT_EVAL:
+          case Context.FEATURE_STRICT_MODE:
             return strictMode;
+
+          case Context.FEATURE_WARNING_AS_ERROR:
+            return warningAsError;
         }
         return super.hasFeature(cx, featureIndex);
     }
@@ -73,6 +79,12 @@ public class ShellContextFactory extends ContextFactory
     {
         checkNotSealed();
         this.strictMode = flag;
+    }
+
+    public void setWarningAsError(boolean flag)
+    {
+        checkNotSealed();
+        this.warningAsError = flag;
     }
 
     public void setLanguageVersion(int version)
@@ -95,8 +107,8 @@ public class ShellContextFactory extends ContextFactory
         this.errorReporter = errorReporter;
     }
 
-    public void setGeneratingDebug(boolean generatingDebug) 
+    public void setGeneratingDebug(boolean generatingDebug)
     {
-      this.generatingDebug = generatingDebug;
+        this.generatingDebug = generatingDebug;
     }
 }

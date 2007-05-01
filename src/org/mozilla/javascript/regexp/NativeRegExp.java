@@ -146,7 +146,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
 
         NativeRegExp proto = new NativeRegExp();
-        proto.re = (RECompiled)compileRE("", null, false);
+        proto.re = (RECompiled)compileRE(cx, "", null, false);
         proto.activatePrototypeMap(MAX_PROTOTYPE_ID);
         proto.setParentScope(scope);
         proto.setPrototype(getObjectPrototype(scope));
@@ -207,7 +207,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;
-        this.re = (RECompiled)compileRE(s, global, false);
+        this.re = (RECompiled)compileRE(cx, s, global, false);
         this.lastIndex = 0;
         return this;
     }
@@ -270,7 +270,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         return rval;
     }
 
-    static Object compileRE(String str, String global, boolean flat)
+    static Object compileRE(Context cx, String str, String global, boolean flat)
     {
         RECompiled regexp = new RECompiled();
         regexp.source = str.toCharArray();
@@ -293,7 +293,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         }
         regexp.flags = flags;
 
-        CompilerState state = new CompilerState(regexp.source, length, flags);
+        CompilerState state = new CompilerState(cx, regexp.source, length, flags);
         if (flat && length > 0) {
 if (debug) {
 System.out.println("flat = \"" + str + "\"");
@@ -791,6 +791,7 @@ if (regexp.anchorCh >= 0) {
  * (see http://bugzilla.mozilla.org/show_bug.cgi?id=141078)
  *
  */
+                    reportWarning(state.cx, "msg.bad.backref", "");
                     /* octal escape */
                     num = 0;
                     while (state.cp < state.cpend) {
@@ -820,8 +821,10 @@ if (regexp.anchorCh >= 0) {
                     termStart = state.cp - 1;
                     num = getDecimalValue(c, state, 0xFFFF,
                                           "msg.overlarge.backref");
+                    if (num > state.parenCount)
+                        reportWarning(state.cx, "msg.bad.backref", "");
                     /*
-                     * n > 9 and > count of parentheses,
+                     * n > 9 or > count of parentheses,
                      * then treat as octal instead.
                      */
                     if ((num > 9) && (num > state.parenCount)) {
@@ -2383,6 +2386,14 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
         return re.flags;
     }
 
+    private static void reportWarning(Context cx, String messageId, String arg)
+    {
+        if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
+            String msg = ScriptRuntime.getMessage1(messageId, arg);
+            Context.reportWarning(msg);
+        }
+    }
+
     private static void reportError(String messageId, String arg)
     {
         String msg = ScriptRuntime.getMessage1(messageId, arg);
@@ -2626,8 +2637,9 @@ class RENode {
 
 class CompilerState {
 
-    CompilerState(char[] source, int length, int flags)
+    CompilerState(Context cx, char[] source, int length, int flags)
     {
+        this.cx = cx;
         this.cpbegin = source;
         this.cp = 0;
         this.cpend = length;
