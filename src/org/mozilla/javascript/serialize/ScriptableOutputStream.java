@@ -192,7 +192,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         String getName() { return name; }
 
         private String name;
-    };
+    }
 
     protected Object replaceObject(Object obj)
         throws IOException
