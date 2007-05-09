@@ -184,7 +184,7 @@ final class Arguments extends IdScriptableObject
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2002-04-09 20:46:33 CEST
+// #generated# Last update: 2007-05-09 08:15:04 EDT
         L0: { id = 0; String X = null; int c;
             if (s.length()==6) {
                 c=s.charAt(5);
@@ -193,6 +193,7 @@ final class Arguments extends IdScriptableObject
                 else if (c=='r') { X="caller";id=Id_caller; }
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
 

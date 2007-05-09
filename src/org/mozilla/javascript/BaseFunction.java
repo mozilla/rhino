@@ -116,7 +116,7 @@ public class BaseFunction extends IdScriptableObject implements Function
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2001-05-20 00:12:12 GMT+02:00
+// #generated# Last update: 2007-05-09 08:15:15 EDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 4: X="name";id=Id_name; break L;
@@ -128,6 +128,7 @@ public class BaseFunction extends IdScriptableObject implements Function
                 break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
 // #/string_id_map#
@@ -495,7 +496,7 @@ public class BaseFunction extends IdScriptableObject implements Function
     {
         int id;
 // #string_id_map#
-// #generated# Last update: 2004-03-17 13:23:22 CET
+// #generated# Last update: 2007-05-09 08:15:15 EDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 4: X="call";id=Id_call; break L;
@@ -507,6 +508,7 @@ public class BaseFunction extends IdScriptableObject implements Function
             case 11: X="constructor";id=Id_constructor; break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;

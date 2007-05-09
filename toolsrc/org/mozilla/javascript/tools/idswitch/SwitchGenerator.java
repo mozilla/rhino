@@ -114,6 +114,11 @@ public class SwitchGenerator {
         P.p(v_guess); P.p("!="); P.p(v_s);
         P.p(" && !"); P.p(v_guess); P.p(".equals("); P.p(v_s); P.p(")) ");
         P.p(v_id); P.p(" = "); P.p(default_value); P.p(";"); P.nl();
+        
+        // Add break at end of block to suppress warning for unused label
+        P.indent(indent_level + 1);
+        P.p("break "); P.p(v_switch_label); P.p(";"); P.nl();
+        
         P.line(indent_level, "}");
     }
 

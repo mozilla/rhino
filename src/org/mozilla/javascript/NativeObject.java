@@ -260,7 +260,7 @@ public class NativeObject extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2007-02-13 14:09:43 PST
+// #generated# Last update: 2007-05-09 08:15:55 EDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 7: X="valueOf";id=Id_valueOf; break L;
@@ -289,6 +289,7 @@ public class NativeObject extends IdScriptableObject
             case 20: X="propertyIsEnumerable";id=Id_propertyIsEnumerable; break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;

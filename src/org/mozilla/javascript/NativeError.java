@@ -200,7 +200,7 @@ final class NativeError extends IdScriptableObject
     {
         int id;
 // #string_id_map#
-// #generated# Last update: 2004-03-17 13:35:15 CET
+// #generated# Last update: 2007-05-09 08:15:45 EDT
         L0: { id = 0; String X = null; int c;
             int s_length = s.length();
             if (s_length==8) {
@@ -210,6 +210,7 @@ final class NativeError extends IdScriptableObject
             }
             else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;

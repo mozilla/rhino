@@ -781,7 +781,7 @@ final class NativeString extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2006-12-16 16:22:36 CET
+// #generated# Last update: 2007-05-01 22:11:49 EDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(2);
@@ -840,6 +840,7 @@ final class NativeString extends IdScriptableObject
                 break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;

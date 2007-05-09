@@ -202,7 +202,7 @@ final class NativeNumber extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2004-03-17 13:41:35 CET
+// #generated# Last update: 2007-05-09 08:15:50 EDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 7: c=s.charAt(0);
@@ -221,6 +221,7 @@ final class NativeNumber extends IdScriptableObject
             case 14: X="toLocaleString";id=Id_toLocaleString; break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;

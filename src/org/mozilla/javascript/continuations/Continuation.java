@@ -118,10 +118,11 @@ public final class Continuation extends IdScriptableObject implements Function
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2004-09-08 12:02:41 CEST
+// #generated# Last update: 2007-05-09 08:16:40 EDT
         L0: { id = 0; String X = null;
             if (s.length()==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;

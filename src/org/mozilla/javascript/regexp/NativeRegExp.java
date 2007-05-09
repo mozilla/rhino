@@ -2419,7 +2419,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2001-05-24 12:01:22 GMT+02:00
+// #generated# Last update: 2007-05-09 08:16:24 EDT
         L0: { id = 0; String X = null; int c;
             int s_length = s.length();
             if (s_length==6) {
@@ -2434,6 +2434,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
             }
             else if (s_length==10) { X="ignoreCase";id=Id_ignoreCase; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
 // #/string_id_map#
@@ -2551,7 +2552,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2004-03-17 13:54:21 CET
+// #generated# Last update: 2007-05-09 08:16:24 EDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 4: c=s.charAt(0);
@@ -2566,6 +2567,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
                 break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;

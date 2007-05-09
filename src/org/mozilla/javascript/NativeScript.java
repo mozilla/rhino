@@ -192,7 +192,7 @@ class NativeScript extends BaseFunction
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2001-05-23 13:25:01 GMT+02:00
+// #generated# Last update: 2007-05-09 08:16:01 EDT
         L0: { id = 0; String X = null;
             L: switch (s.length()) {
             case 4: X="exec";id=Id_exec; break L;
@@ -201,6 +201,7 @@ class NativeScript extends BaseFunction
             case 11: X="constructor";id=Id_constructor; break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;
