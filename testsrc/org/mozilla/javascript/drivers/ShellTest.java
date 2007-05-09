@@ -34,8 +34,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.drivers;
 
+import org.mozilla.javascript.*;
 import java.io.*;
 import java.util.*;
 

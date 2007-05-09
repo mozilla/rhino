@@ -21,6 +21,7 @@
  *
  * Contributor(s):
  *   David P. Caldwell <inonit@inonit.com>
+ *   Norris Boyd <norrisboyd@gmail.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -34,10 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.drivers;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 
 import org.w3c.dom.*;
@@ -64,21 +64,31 @@ public class JsDriver {
         private String[] list;
         private String[] skip;
 
-        Tests(File testDirectory, String[] list, String[] skip, boolean skipRhinoN) {
+        Tests(File testDirectory, String[] list, String[] skip) {
             this.testDirectory = testDirectory;
-            this.list = list;
-            ArrayList skips = new ArrayList();
-            skips.addAll(Arrays.asList(skip));
-            if (skipRhinoN) {
-                try {
-                    Properties rhinoN = new Properties();
-                    rhinoN.load( new FileInputStream( new File(testDirectory, "rhino-n.tests") ) );
-                    skips.addAll( rhinoN.keySet() );
-                } catch (IOException e) {
-                    throw new RuntimeException("Could not read rhino-n.tests", e);
-                }
-            }
-            this.skip = (String[])skips.toArray(new String[0]);
+            this.list = getTestList(list);
+            this.skip = getTestList(skip);
+        }
+        
+        private String[] getTestList(String[] tests) {
+          ArrayList list = new ArrayList();
+          for (int i=0; i < tests.length; i++) {
+            if (tests[i].startsWith("@"))
+              addTestsFromFile(tests[i].substring(1), list);
+            else
+              list.add(tests[i]);
+          }
+          return (String[])list.toArray(new String[0]);
+        }
+        
+        private void addTestsFromFile(String filename, ArrayList list) {
+            try {
+                Properties props = new Properties();
+                props.load(new FileInputStream(new File(filename)));
+                list.addAll(props.keySet());
+            } catch (IOException e) {
+                throw new RuntimeException("Could not read file '" + filename + "'", e);
+            }        	
         }
 
         private boolean matches(String[] patterns, String path) {
@@ -356,13 +366,10 @@ public class JsDriver {
     }
 	
 	private static class XmlStatus extends ShellTest.Status {
-		private String path;
-		
 		private Element target;
 		private Date start;
 		
 		XmlStatus(String path, Element root) {
-			this.path = path;
 			this.target = root.getOwnerDocument().createElement("test");
 			this.target.setAttribute("path", path);
 			root.appendChild(target);
@@ -508,7 +515,8 @@ public class JsDriver {
 				;
 				xml.getDocumentElement().setAttribute("timestamp", String.valueOf(new Date().getTime()));
 				xml.getDocumentElement().setAttribute("optimization", String.valueOf(arguments.getOptimizationLevel()));
-				xml.getDocumentElement().setAttribute("timeout", String.valueOf(arguments.getTimeout()));
+                xml.getDocumentElement().setAttribute("strict", String.valueOf(arguments.isStrict()));
+                xml.getDocumentElement().setAttribute("timeout", String.valueOf(arguments.getTimeout()));
 			} catch (javax.xml.parsers.ParserConfigurationException e) {
 				throw new RuntimeException(e);
 			}
@@ -583,6 +591,7 @@ public class JsDriver {
 
         ShellContextFactory factory = new ShellContextFactory();
         factory.setOptimizationLevel(arguments.getOptimizationLevel());
+        factory.setStrictMode(arguments.isStrict());
 
         File path = arguments.getTestsPath();
         if (path == null) {
@@ -591,7 +600,7 @@ public class JsDriver {
         if (!path.exists()) {
             throw new RuntimeException("JavaScript tests not found at " + path.getCanonicalPath());
         }
-        Tests tests = new Tests(path, arguments.getTestList(), arguments.getSkipList(), !arguments.ignoreRhinoSkipList());
+        Tests tests = new Tests(path, arguments.getTestList(), arguments.getSkipList());
         Tests.Script[] all = tests.getFiles();
         arguments.getConsole().println("Running " + all.length + " tests.");
 
@@ -609,78 +618,12 @@ public class JsDriver {
         driver.run(arguments);
     }
 
-    public static abstract class Arguments {
-        //    List of jsDriver.pl arguments
-
-        //    -b URL, --bugurl=URL
-        public abstract String getBugUrl();
-
-        //    -c PATH, --classpath=PATH
-        //    Does not apply; we will use the VM's classpath
-
-        //    -e TYPE ..., --engine=TYPE ...
-        //    Does not apply; was used to select between SpiderMonkey and Rhino
-
-        //    Not in jsDriver.pl
-        public abstract int getOptimizationLevel();
-
-        //    -f FILE, --file=FILE
-        public abstract File getOutputFile();
-
-        //    -h, --help
-        public abstract boolean help();
-
-        //    -j PATH, --javapath=PATH
-        //    Does not apply; we will use this JVM
-
-        //    -k, --confail
-        //    TODO    Currently this is ignored; not clear precisely what it means (perhaps we should not be logging ordinary
-        //            pass/fail to the console currently?)
-        public abstract boolean logFailuresToConsole();
-
-        //    -l FILE ..., --list=FILE ...
-        public abstract String[] getTestList();
-
-        //    -L FILE ..., --neglist=FILE ...
-        public abstract String[] getSkipList();
-
-        //    -p PATH, --testpath=PATH
-        public abstract File getTestsPath();
-
-        //    -s PATH, --shellpath=PATH
-        //    Does not apply; we will use the Rhino shell with any classes given on the classpath
-
-        //    -t, --trace
-        public abstract boolean trace();
-
-        //    -u URL, --lxrurl=URL
-        public abstract String getLxrUrl();
-
-        //
-        //    New arguments
-        //
-
-        //    --ignore-rhino-n
-        //    If set, do not skip tests contained in the rhino-n file
-        public abstract boolean ignoreRhinoSkipList();
-
-        //    --timeout
-        //    Milliseconds to wait for each test
-        public abstract int getTimeout();
-
-        public static abstract class Console {
-            public abstract void print(String message);
-            public abstract void println(String message);
-        }
-
-        public abstract Console getConsole();
-    }
-
-    private static class CommandLineArguments extends Arguments {
+    private static class Arguments {
         private ArrayList options = new ArrayList();
 
         private Option bugUrl = new Option("b", "bugurl", false, false, "http://bugzilla.mozilla.org/show_bug.cgi?id=");
         private Option optimizationLevel = new Option("o", "optimization", false, false, "-1");
+        private Option strict = new Option(null, "strict", false, true, null);        
         private Option outputFile = new Option("f", "file", false, false, null);
         private Option help = new Option("h", "help", false, true, null);
         private Option logFailuresToConsole = new Option("k", "confail", false, true, null);
@@ -689,24 +632,19 @@ public class JsDriver {
         private Option testsPath = new Option("p", "testpath", false, false, null);
         private Option trace = new Option("t", "trace", false, true, null);
         private Option lxrUrl = new Option("u", "lxrurl", false, false, "http://lxr.mozilla.org/mozilla/source/js/tests/");
-
-        private Option ignoreRhinoN = new Option(null, "ignore-rhino-n", false, true, null);
         private Option timeout = new Option(null, "timeout", false, false, "60000");
-
-        private Option classpath = new Option("c", "classpath", false, false, null).ignored();
-        private Option engine = new Option("e", "engine", false, false, null).ignored();
-        private Option javapath = new Option("j", "javapath", false, false, null).ignored();
-        private Option shellpath = new Option("s", "shellpath", false, false, null).ignored();
-
-        private Console console = new Console() {
-            public void print(String s) {
-                System.out.print(s);
-            }
-
-            public void println(String s) {
-                System.out.println(s);
-            }
-        };
+       
+        private String[] remainingArguments;
+        
+        public static class Console {
+          public void print(String message) {
+            System.out.print(message);
+          }
+          public void println(String message) {
+            System.out.println(message);
+          }
+        }
+        private Console console = new Console();
 
         private class Option {
             private String letterOption;
@@ -764,9 +702,9 @@ public class JsDriver {
                     if (flag) {
                         values.add(0, (String)null );
                     } else if (array) {
-                        while( arguments.size() > 0 && !( (String)arguments.get(0) ).startsWith("-") ) {
-                            values.add( (String)arguments.remove(0) );
-                        }
+                      String[] a = ((String) arguments.remove(0)).split(",");
+                      for (int i=0; i < a.length; i++)
+                        values.add(a[i]);
                     } else {
                         values.set(0, arguments.remove(0));
                     }
@@ -777,56 +715,91 @@ public class JsDriver {
             }
         }
 
+        //    -b URL, --bugurl=URL
         public String getBugUrl() {
             return bugUrl.getValue();
-        }
+        }       
+        
+        //    -c PATH, --classpath=PATH
+        //    Does not apply; we will use the VM's classpath
 
+        //    -e TYPE ..., --engine=TYPE ...
+        //    Does not apply; was used to select between SpiderMonkey and Rhino
+
+        //    Not in jsDriver.pl
         public int getOptimizationLevel() {
             return optimizationLevel.getInt();
         }
+        
+        //    --strict
+        public boolean isStrict() {
+          return strict.getSwitch();
+        }
 
+        //    -f FILE, --file=FILE
         public File getOutputFile() {
             return outputFile.getFile();
         }
-
+        
+        //    -h, --help
         public boolean help() {
             return help.getSwitch();
         }
 
+        //    -j PATH, --javapath=PATH
+        //    Does not apply; we will use this JVM
+
+        //    -k, --confail
+        //    TODO    Currently this is ignored; not clear precisely what it means (perhaps we should not be logging ordinary
+        //            pass/fail to the console currently?)
         public boolean logFailuresToConsole() {
             return logFailuresToConsole.getSwitch();
         }
 
+        //    -l FILE,... or --list=FILE,...
         public String[] getTestList() {
             return testList.getValues();
         }
 
+        //    -L FILE,... or --neglist=FILE,...
         public String[] getSkipList() {
             return skipList.getValues();
         }
 
+        //    -p PATH, --testpath=PATH
         public File getTestsPath() {
             return testsPath.getFile();
         }
 
+        //    -s PATH, --shellpath=PATH
+        //    Does not apply; we will use the Rhino shell with any classes given on the classpath
+
+        //    -t, --trace
         public boolean trace() {
             return trace.getSwitch();
         }
 
+        //    -u URL, --lxrurl=URL
         public String getLxrUrl() {
             return lxrUrl.getValue();
         }
 
-        public boolean ignoreRhinoSkipList() {
-            return ignoreRhinoN.getSwitch();
-        }
+        //
+        //    New arguments
+        //
 
+        //    --timeout
+        //    Milliseconds to wait for each test
         public int getTimeout() {
             return timeout.getInt();
         }
 
         public Console getConsole() {
             return console;
+        }
+        
+        public String[] getRemainingArguments() {
+        	return remainingArguments;
         }
 
         void process(List arguments) {
@@ -853,8 +826,10 @@ public class JsDriver {
                         ((Option)options.get(i)).process(arguments);
                     }
                 }
+                
                 if (arguments.size() == lengthBefore) {
-                    System.err.println("WARNING: Ignoring unrecognized option: " + arguments.remove(0));
+                	remainingArguments = (String[])arguments.toArray(new String[0]);
+                	break;
                 }
             }
         }
@@ -863,7 +838,7 @@ public class JsDriver {
     public static void main(String[] args) throws Throwable {
         ArrayList arguments = new ArrayList();
         arguments.addAll(Arrays.asList(args));
-        CommandLineArguments clArguments = new CommandLineArguments();
+        Arguments clArguments = new Arguments();
         clArguments.process(arguments);
         main(clArguments);
     }

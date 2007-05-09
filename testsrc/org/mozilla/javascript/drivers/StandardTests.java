@@ -34,7 +34,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.drivers;
 
 import java.io.File;
 import java.io.FileInputStream;

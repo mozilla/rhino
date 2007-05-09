@@ -37,7 +37,7 @@
 				<pathelement path="${classes}" />
 				<pathelement path="${test-classes}" />
 			</classpath>
-			<include name="org/mozilla/javascript/StandardTests.java" />
+                        <include name="org/mozilla/javascript/drivers/StandardTests.java" />
 		</javac>
 	</target>
 	
@@ -58,10 +58,10 @@
 				<pathelement path="${classes}" />
 			</classpath>
 			<sourcepath path="testsrc" />
-			<include name="org/mozilla/javascript/JsDriver.java" />
+                        <include name="org/mozilla/javascript/drivers/JsDriver.java" />
 		</javac>
-		<copy todir="${test.classes}/org/mozilla/javascript">
-			<fileset dir="testsrc/org/mozilla/javascript">
+                <copy todir="${test.classes}/org/mozilla/javascript/drivers">
+                  <fileset dir="testsrc/org/mozilla/javascript/drivers">
 				<include name="*.html"/>
 			</fileset>
 		</copy>
@@ -82,7 +82,7 @@
 				<pathelement path="${classes}" />
 				<pathelement path="${test.classes}" />
 			</classpath>
-			<test name="org.mozilla.javascript.StandardTests" />
+			<test name="org.mozilla.javascript.drivers.StandardTests" />
 			<formatter type="plain" usefile="false" />
 		</junit>
 	</target>
@@ -94,7 +94,7 @@
 		<mkdir dir="${test.output}" />
 		<java
 			fork="true"
-			classname="org.mozilla.javascript.JsDriver"
+			classname="org.mozilla.javascript.drivers.JsDriver"
 			maxmemory="${test.vm.mx}"
 		>
 			<classpath>
