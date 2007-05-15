@@ -279,6 +279,12 @@ public class ContextFactory
             
           case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
             return false;
+            
+          case Context.FEATURE_STRICT_MODE:
+            return false;
+          
+          case Context.FEATURE_WARNING_AS_ERROR:
+            return false;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));
