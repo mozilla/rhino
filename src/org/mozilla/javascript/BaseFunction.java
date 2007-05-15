@@ -143,8 +143,8 @@ public class BaseFunction extends IdScriptableObject implements Function
             attr = DONTENUM | READONLY | PERMANENT;
             break;
           case Id_prototype:
-            attr = (isPrototypePropertyImmune)
-                   ? (DONTENUM | READONLY | PERMANENT) : (DONTENUM | PERMANENT);
+            attr = (isPrototypePropertyImmune) ? (READONLY | PERMANENT) 
+                                               : PERMANENT;
             break;
           case Id_arguments:
             attr = DONTENUM | PERMANENT;
