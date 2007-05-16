@@ -56,7 +56,8 @@ public class BaseFunction extends IdScriptableObject implements Function
     static void init(Scriptable scope, boolean sealed)
     {
         BaseFunction obj = new BaseFunction();
-        obj.isPrototypePropertyImmune = true;
+        // Function.prototype attributes: see ECMA 15.3.3.1 
+        obj.prototypePropertyAttributes = DONTENUM | READONLY | PERMANENT;
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
@@ -143,8 +144,7 @@ public class BaseFunction extends IdScriptableObject implements Function
             attr = DONTENUM | READONLY | PERMANENT;
             break;
           case Id_prototype:
-            attr = (isPrototypePropertyImmune) ? (READONLY | PERMANENT) 
-                                               : PERMANENT;
+            attr = prototypePropertyAttributes;
             break;
           case Id_arguments:
             attr = DONTENUM | PERMANENT;
@@ -181,7 +181,7 @@ public class BaseFunction extends IdScriptableObject implements Function
     protected void setInstanceIdValue(int id, Object value)
     {
         if (id == Id_prototype) {
-            if (!isPrototypePropertyImmune) {
+            if ((prototypePropertyAttributes & READONLY) == 0) {
                 prototypeProperty = (value != null)
                                     ? value : UniqueTag.NULL_VALUE;
             }
@@ -276,11 +276,11 @@ public class BaseFunction extends IdScriptableObject implements Function
      */
     public void setImmunePrototypeProperty(Object value)
     {
-        if (isPrototypePropertyImmune) {
+        if ((prototypePropertyAttributes & READONLY) != 0) {
             throw new IllegalStateException();
         }
         prototypeProperty = (value != null) ? value : UniqueTag.NULL_VALUE;
-        isPrototypePropertyImmune = true;
+        prototypePropertyAttributes = DONTENUM | PERMANENT | READONLY;
     }
 
     protected Scriptable getClassPrototype()
@@ -526,6 +526,7 @@ public class BaseFunction extends IdScriptableObject implements Function
 // #/string_id_map#
 
     private Object prototypeProperty;
-    private boolean isPrototypePropertyImmune;
+    // For function object instances, attribute is PERMANENT; see ECMA 15.3.5.2
+    private int prototypePropertyAttributes = PERMANENT;
 }
 
