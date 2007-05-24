@@ -634,8 +634,6 @@ public class JsDriver {
         private Option lxrUrl = new Option("u", "lxrurl", false, false, "http://lxr.mozilla.org/mozilla/source/js/tests/");
         private Option timeout = new Option(null, "timeout", false, false, "60000");
        
-        private String[] remainingArguments;
-        
         public static class Console {
           public void print(String message) {
             System.out.print(message);
@@ -702,9 +700,9 @@ public class JsDriver {
                     if (flag) {
                         values.add(0, (String)null );
                     } else if (array) {
-                      String[] a = ((String) arguments.remove(0)).split(",");
-                      for (int i=0; i < a.length; i++)
-                        values.add(a[i]);
+                        while( arguments.size() > 0 && !( (String)arguments.get(0) ).startsWith("-") ) {
+                            values.add( (String)arguments.remove(0) );
+                        }
                     } else {
                         values.set(0, arguments.remove(0));
                     }
@@ -798,10 +796,6 @@ public class JsDriver {
             return console;
         }
         
-        public String[] getRemainingArguments() {
-        	return remainingArguments;
-        }
-
         void process(List arguments) {
             while(arguments.size() > 0) {
                 String option = (String)arguments.get(0);
@@ -828,8 +822,7 @@ public class JsDriver {
                 }
                 
                 if (arguments.size() == lengthBefore) {
-                	remainingArguments = (String[])arguments.toArray(new String[0]);
-                	break;
+					System.err.println("WARNING: ignoring unrecognized option " + arguments.remove(0));
                 }
             }
         }
