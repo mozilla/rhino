@@ -53,7 +53,7 @@ class ShellTest {
     static final FileFilter TEST_FILTER = new FileFilter() {
         public boolean accept(File pathname)
         {
-            return pathname.getName().endsWith(".js") && !pathname.getName().equals("shell.js") && !pathname.getName().equals("browser.js");
+            return pathname.getName().endsWith(".js") && !pathname.getName().equals("shell.js") && !pathname.getName().equals("browser.js") && !pathname.getName().equals("template.js");
         }
     };
 
@@ -271,6 +271,7 @@ class ShellTest {
                             cx.setErrorReporter( testState.errors );
                             global.init(cx);
                             try {
+                                runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile().getParentFile(), "shell.js"));
                                 runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile(), "shell.js"));
                                 runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
                                 runFileIfExists(cx, global, jsFile);
