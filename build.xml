@@ -227,14 +227,14 @@
 	may be more useful running this Ant target, as running from the command line allows configuration options, 
 	such as running with a non-default optimization level, or running only a subset of the tests.
   -->
-  <target name="jsdriver-all" depends="compile">
+  <target name="jsdriver-run" depends="compile">
 	  <ant antfile="testsrc/build.xml" target="jsdriver" />
   </target>
   
   <!--
-	Target just for development of the test code.
+	Compile the JsDriver test driver.
   -->
-  <target name="_test-recompile" depends="compile">
+  <target name="jsdriver" depends="compile">
 	  <ant antfile="testsrc/build.xml" target="clean" />
 	  <ant antfile="testsrc/build.xml" target="compile" />
   </target>
