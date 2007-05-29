@@ -765,8 +765,7 @@ WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class)}
         if (type == ScriptRuntime.LongClass || type == Long.TYPE) {
             if (valueClass == ScriptRuntime.LongClass) {
                 return value;
-            }
-            else {
+            } else {
                 /* Long values cannot be expressed exactly in doubles.
                  * We thus use the largest and smallest double value that
                  * has a value expressible as a long value. We build these
@@ -831,7 +830,8 @@ WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class)}
         else {
             Method meth;
             try {
-                meth = value.getClass().getMethod("doubleValue", null);
+                meth = value.getClass().getMethod("doubleValue", 
+                		                          (Class [])null);
             }
             catch (NoSuchMethodException e) {
                 meth = null;
@@ -841,7 +841,8 @@ WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class)}
             }
             if (meth != null) {
                 try {
-                    return ((Number)meth.invoke(value, null)).doubleValue();
+                    return ((Number)meth.invoke(value, 
+                    		                    (Object [])null)).doubleValue();
                 }
                 catch (IllegalAccessException e) {
                     // XXX: ignore, or error message?
