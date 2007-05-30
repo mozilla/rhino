@@ -39,26 +39,44 @@ Build file for Rhino using Ant (see http://jakarta.apache.org/ant/index.html)
 Requires Ant version 1.2
 -->
 <project name="src" default="compile" basedir="..">
- 
+
   <property file="build.properties"/>
 
-  <target name="compile">
+  <available property="jdk15"
+            classname="java.lang.reflect.ParameterizedType" />
+
+  <target name="compile" depends="compile-most,compile-jdk15">
+  </target>
+
+  <target name="compile-most">
     <javac srcdir="src"
            destdir="${classes}"
            includes="org/**/*.java"
            deprecation="on"
            debug="${debug}"
-	   target="${target-jvm}"
-	   source="${source-level}"
-	   >
+       target="${target-jvm}"
+       source="${source-level}"
+       >
     </javac>
     <copy todir="${classes}">
       <fileset dir="src" includes="org/**/*.properties" />
       <filterset>
-	  <filter token="IMPLEMENTATION.VERSION" 
-	          value="${implementation.version}"/>
-      </filterset>      
+      <filter token="IMPLEMENTATION.VERSION"
+              value="${implementation.version}"/>
+      </filterset>
     </copy>
+  </target>
+
+  <target name="compile-jdk15" if="jdk15">
+    <javac srcdir="src"
+           destdir="${classes}"
+           includes="org/**/jdk15/*.java"
+           deprecation="on"
+           debug="${debug}"
+       target="${target-jvm}"
+       source="${source-level}"
+       >
+    </javac>
   </target>
 
   <target name="copy-source">

@@ -35,10 +35,10 @@
 
 
 <!--
-	Build file for Rhino using Ant (see http://jakarta.apache.org/ant/index.html)
-	Requires Ant version 1.2 or later
-	
-	Compilation currently requires JDK 1.4 or later
+    Build file for Rhino using Ant (see http://jakarta.apache.org/ant/index.html)
+    Requires Ant version 1.2 or later
+
+    Compilation currently requires JDK 1.4 or later
 -->
 
 <project name="Rhino" default="help" basedir=".">
@@ -206,39 +206,40 @@
     <delete quiet="true" file="${dist.file}"/>
     <delete quiet="true" file="${dist.source-only-zip}"/>
   </target>
-  
+
   <!--
-	The next two targets run the JavaScript Test Library tests.  Note that these tests are quite extensive and take a long time
-	to run.  They are not documented in the 'help' target for now.
+    The next two targets run the JavaScript Test Library tests.  Note that these tests are quite extensive and take a long time
+    to run.  They are not documented in the 'help' target for now.
   -->
-  
+
   <!--
-	Run the tests using JUnit.  Beware that if you are using Ant from the command-line, there are some difficulties you may
-	encounter setting this up correctly; see http://ant.apache.org/faq.html#delegating-classloader
-	
-	IDEs that use Ant as the build system probably handle this fine.
+    Run the tests using JUnit.  Beware that if you are using Ant from the command-line, there are some difficulties you may
+    encounter setting this up correctly; see http://ant.apache.org/faq.html#delegating-classloader
+
+    IDEs that use Ant as the build system probably handle this fine.
   -->
   <target name="junit-all" depends="compile">
     <ant antfile="testsrc/build.xml" target="junit"/>
   </target>
-  
+
   <!--
-	Run the tests using the Java port of jsdriver.pl.  Note that running this port from the command-line
-	may be more useful running this Ant target, as running from the command line allows configuration options, 
-	such as running with a non-default optimization level, or running only a subset of the tests.
+  Run the tests using the Java port of jsdriver.pl.  Note that running this port
+  from the command-line may be more useful running this Ant target, as running
+  from the command line allows configuration options, such as running with a
+  non-default optimization level, or running only a subset of the tests.
   -->
   <target name="jsdriver-run" depends="compile">
-	  <ant antfile="testsrc/build.xml" target="jsdriver" />
+      <ant antfile="testsrc/build.xml" target="jsdriver" />
   </target>
-  
+
   <!--
-	Compile the JsDriver test driver.
+    Compile the JsDriver test driver.
   -->
   <target name="jsdriver" depends="compile">
-	  <ant antfile="testsrc/build.xml" target="clean" />
-	  <ant antfile="testsrc/build.xml" target="compile" />
+      <ant antfile="testsrc/build.xml" target="clean" />
+      <ant antfile="testsrc/build.xml" target="compile" />
   </target>
-  
+
   <target name="help" depends="properties">
 <echo>The following targets are available with this build file:
 
