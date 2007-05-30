@@ -2130,7 +2130,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                             break;
                         if (name != null && indexOrHash == slot.indexOrHash) {
                             if (name.equals(sname)) {
-                                // This will eleminate String.equals when
+                                // This will avoid calling String.equals when
                                 // slot is accessed with same string object
                                 // next time.
                                 slot.name = name;
