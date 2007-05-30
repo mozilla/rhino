@@ -43,7 +43,7 @@ Requires Ant version 1.2
   <property file="build.properties"/>
 
   <available property="jdk15"
-            classname="java.lang.reflect.ParameterizedType" />
+             classname="java.lang.reflect.ParameterizedType" />
 
   <target name="compile" depends="compile-most,compile-jdk15">
   </target>
@@ -52,6 +52,7 @@ Requires Ant version 1.2
     <javac srcdir="src"
            destdir="${classes}"
            includes="org/**/*.java"
+           excludes="org/**/jdk15/*.java"
            deprecation="on"
            debug="${debug}"
        target="${target-jvm}"
