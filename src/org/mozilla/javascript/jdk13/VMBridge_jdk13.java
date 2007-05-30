@@ -42,6 +42,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Member;
 import java.lang.reflect.Proxy;
 
 import org.mozilla.javascript.*;
@@ -148,5 +149,9 @@ public class VMBridge_jdk13 extends VMBridge
             throw Kit.initCause(new IllegalStateException(), ex);
         }
         return proxy;
+    }
+    
+    protected boolean isVarArgs(Member member) {
+      return false;
     }
 }

@@ -35,50 +35,20 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.javascript.jdk11;
+package org.mozilla.javascript.jdk15;
 
 import java.lang.reflect.Member;
-import java.util.Hashtable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 
-import org.mozilla.javascript.*;
-
-public class VMBridge_jdk11 extends VMBridge
+public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
 {
-    private Hashtable threadsWithContext = new Hashtable();
-
-    protected Object getThreadContextHelper()
-    {
-        return Thread.currentThread();
-    }
-
-    protected Context getContext(Object contextHelper)
-    {
-        Thread t = (Thread)contextHelper;
-        return (Context)threadsWithContext.get(t);
-    }
-
-    protected void setContext(Object contextHelper, Context cx)
-    {
-        Thread t = (Thread)contextHelper;
-        if (cx == null) {
-            // Allow to garbage collect thread reference
-            threadsWithContext.remove(t);
-        } else {
-            threadsWithContext.put(t, cx);
-        }
-    }
-
-    protected ClassLoader getCurrentThreadClassLoader()
-    {
-        return null;
-    }
-
-    protected boolean tryToMakeAccessible(Object accessibleObject)
-    {
-        return false;
-    }
-    
-    protected boolean isVarArgs(Member member) {
-      return false;
+    public boolean isVarArgs(Member member) {
+        if (member instanceof Method)
+            return ((Method) member).isVarArgs();
+        else if (member instanceof Constructor)
+            return ((Constructor) member).isVarArgs();
+        else 
+            return false;
     }
 }

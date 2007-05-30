@@ -27,6 +27,7 @@
  *   Mike Shaver
  *   Kurt Westerfeld
  *   Kemal Bayram
+ *   Ulrike Mueller <umueller@demandware.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -219,18 +220,55 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     {
         Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
         Class[] argTypes = ctor.argTypes;
-
-        Object[] origArgs = args;
-        for (int i = 0; i < args.length; i++) {
-            Object arg = args[i];
-            Object x = Context.jsToJava(arg, argTypes[i]);
-            if (x != arg) {
-                if (args == origArgs) {
-                    args = (Object[])origArgs.clone();
+      
+        if (ctor.vararg) {
+            // marshall the explicit parameter
+            Object[] newArgs = new Object[argTypes.length];
+            for (int i = 0; i < argTypes.length-1; i++) {
+                newArgs[i] = Context.jsToJava(args[i], argTypes[i]);
+            }
+            
+            Object varArgs;
+            
+            // Handle special situation where a single variable parameter
+            // is given and it is an ECMA array.
+            if (args.length == argTypes.length &&
+                args[args.length-1] instanceof NativeArray)
+            {
+                // convert the ECMA array into a native array
+                varArgs = Context.jsToJava(args[args.length-1], 
+                                           argTypes[argTypes.length - 1]);
+            } else {            
+                // marshall the variable parameter
+                Class componentType = argTypes[argTypes.length - 1].
+                                        getComponentType();
+                varArgs = Array.newInstance(componentType, 
+                                            args.length - argTypes.length + 1);            
+                for (int i=0; i < Array.getLength(varArgs); i++) {
+                    Object value = Context.jsToJava(args[argTypes.length-1 + i],
+                                                    componentType);
+                    Array.set(varArgs, i, value);
                 }
-                args[i] = x;
+            }
+            
+            // add varargs
+            newArgs[argTypes.length-1] = varArgs;
+            // replace the original args with the new one
+            args = newArgs;
+        } else {
+            Object[] origArgs = args;
+            for (int i = 0; i < args.length; i++) {
+                Object arg = args[i];
+                Object x = Context.jsToJava(arg, argTypes[i]);
+                if (x != arg) {
+                    if (args == origArgs) {
+                        args = (Object[])origArgs.clone();
+                    }
+                    args[i] = x;
+                }
             }
         }
+        
         Object instance = ctor.newInstance(args);
         // we need to force this to be wrapped, because construct _has_
         // to return a scriptable

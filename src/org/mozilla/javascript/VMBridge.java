@@ -39,6 +39,9 @@
 
 package org.mozilla.javascript;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Member;
+
 public abstract class VMBridge
 {
 
@@ -46,15 +49,14 @@ public abstract class VMBridge
 
     private static VMBridge makeInstance()
     {
-        for (int i = 0; i != 3; ++i) {
-            String className;
-            if (i == 0) {
-                className = "org.mozilla.javascript.VMBridge_custom";
-            } else if (i == 1) {
-                className = "org.mozilla.javascript.jdk13.VMBridge_jdk13";
-            } else {
-                className = "org.mozilla.javascript.jdk11.VMBridge_jdk11";
-            }
+        String[] classNames = {
+            "org.mozilla.javascript.VMBridge_custom",
+            "org.mozilla.javascript.jdk15.VMBridge_jdk15",
+            "org.mozilla.javascript.jdk13.VMBridge_jdk13",
+            "org.mozilla.javascript.jdk11.VMBridge_jdk11",
+        };
+        for (int i = 0; i != classNames.length; ++i) {
+            String className = classNames[i];
             Class cl = Kit.classOrNull(className);
             if (cl != null) {
                 VMBridge bridge = (VMBridge)Kit.newInstanceOrNull(cl);
@@ -154,4 +156,11 @@ public abstract class VMBridge
             "VMBridge.newInterfaceProxy is not supported");
     }
 
+    /**
+     * Returns whether or not a given member (method or constructor)
+     * has variable arguments.
+     * Variable argument methods have only been supported in Java since
+     * JDK 1.5.
+     */
+    protected abstract boolean isVarArgs(Member member);
 }

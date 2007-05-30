@@ -24,6 +24,8 @@
  * Contributor(s):
  *   Igor Bukanov
  *   Felix Meschberger
+ *   Norris Boyd
+ *   Ulrike Mueller <umueller@demandware.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -56,7 +58,9 @@ final class MemberBox implements Serializable
 
     private transient Member memberObject;
     transient Class[] argTypes;
-    Object delegateTo;
+    transient Object delegateTo;
+    transient boolean vararg;
+
 
     MemberBox(Method method)
     {
@@ -72,12 +76,14 @@ final class MemberBox implements Serializable
     {
         this.memberObject = method;
         this.argTypes = method.getParameterTypes();
+        this.vararg = VMBridge.instance.isVarArgs(method);
     }
 
     private void init(Constructor constructor)
     {
         this.memberObject = constructor;
         this.argTypes = constructor.getParameterTypes();
+        this.vararg = VMBridge.instance.isVarArgs(constructor);
     }
 
     Method method()
