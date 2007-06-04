@@ -571,7 +571,7 @@ public class Global extends ImporterTopLevel
     }
 
     /**
-     * The readFile reads the given file context and convert it to a string
+     * The readFile reads the given file content and convert it to a string
      * using the specified character coding or default character coding if
      * explicit coding argument is not given.
      * <p>

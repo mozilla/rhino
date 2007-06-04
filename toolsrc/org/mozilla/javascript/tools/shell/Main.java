@@ -289,12 +289,21 @@ public class Main
                 shellContextFactory.setGeneratingDebug(true);
                 continue;
             }
+            if (arg.equals("-?") ||
+                arg.equals("-help")) {
+                // print usage message
+                global.getOut().println(
+                    ToolErrorReporter.getMessage("msg.shell.usage", Main.class.getName()));
+                System.exit(1);
+            }
             usageError = arg;
             break goodUsage;
         }
-        // print usage message
+        // print error and usage message
         global.getOut().println(
-            ToolErrorReporter.getMessage("msg.shell.usage", usageError));
+            ToolErrorReporter.getMessage("msg.shell.invalid", usageError));
+        global.getOut().println(
+            ToolErrorReporter.getMessage("msg.shell.usage", Main.class.getName()));
         System.exit(1);
         return null;
     }
