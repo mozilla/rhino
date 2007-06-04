@@ -95,6 +95,7 @@ public class Parser
     private ObjArray loopSet;
     private ObjArray loopAndSwitchSet;
     private boolean hasReturnValue;
+    private int functionEndFlags;
 // end of per function variables
 
     // Exception to unwind
@@ -516,6 +517,7 @@ public class Parser
         ObjArray savedLoopAndSwitchSet = loopAndSwitchSet;
         loopAndSwitchSet = null;
         boolean savedHasReturnValue = hasReturnValue;
+        int savedFunctionEndFlags = functionEndFlags;
 
         Node body;
         try {
@@ -544,6 +546,13 @@ public class Parser
             body = parseFunctionBody();
             mustMatchToken(Token.RC, "msg.no.brace.after.body");
 
+            if (compilerEnv.isStrictMode() && !body.hasConsistentReturnUsage())
+            {
+              String msg = name.length() > 0 ? "msg.no.return.value"
+                                             : "msg.anon.no.return.value";
+              addStrictWarning(msg, name);
+            }
+
             decompiler.addToken(Token.RC);
             functionSourceEnd = decompiler.markFunctionEnd(functionSourceStart);
             if (functionType != FunctionNode.FUNCTION_EXPRESSION) {
@@ -565,6 +574,7 @@ public class Parser
         }
         finally {
             hasReturnValue = savedHasReturnValue;
+            functionEndFlags = savedFunctionEndFlags;
             loopAndSwitchSet = savedLoopAndSwitchSet;
             loopSet = savedLoopSet;
             labelSet = savedLabelSet;
@@ -610,17 +620,20 @@ public class Parser
     private Node condition()
         throws IOException, ParserException
     {
-        Node pn;
         mustMatchToken(Token.LP, "msg.no.paren.cond");
         decompiler.addToken(Token.LP);
-        pn = expr(false);
+        Node pn = expr(false);
         mustMatchToken(Token.RP, "msg.no.paren.after.cond");
         decompiler.addToken(Token.RP);
 
-        if (pn.getType() == Token.ASSIGN)
+        // Report strict warning on code like "if (a = 7) ...". Suppress the
+        // warning if the condition is parenthesized, like "if ((a = 7)) ...".
+        if (pn.getProp(Node.PARENTHESIZED_PROP) == null &&
+            (pn.getType() == Token.SETNAME || pn.getType() == Token.SETPROP ||
+             pn.getType() == Token.SETELEM))
+        {
             addStrictWarning("msg.equal.as.assign", "");
-        // there's a check here in jsparse.c that corrects = to ==
-
+        }
         return pn;
     }
 
@@ -1080,6 +1093,20 @@ public class Parser
                 hasReturnValue = true;
             }
             pn = nf.createReturn(retExpr, lineno);
+
+            // see if we need a strict mode warning
+            if (retExpr == null) {
+                if (functionEndFlags == Node.END_RETURNS_VALUE)
+                    addStrictWarning("msg.return.inconsistent", "");
+
+                functionEndFlags |= Node.END_RETURNS;
+            } else {
+                if (functionEndFlags == Node.END_RETURNS)
+                    addStrictWarning("msg.return.inconsistent", "");
+
+                functionEndFlags |= Node.END_RETURNS_VALUE;
+            }
+
             break;
           }
 
@@ -1317,19 +1344,14 @@ public class Parser
     private Node condExpr(boolean inForInit)
         throws IOException, ParserException
     {
-        Node ifTrue;
-        Node ifFalse;
-
         Node pn = orExpr(inForInit);
 
         if (matchToken(Token.HOOK)) {
             decompiler.addToken(Token.HOOK);
-            ifTrue = assignExpr(false);
+            Node ifTrue = assignExpr(false);
             mustMatchToken(Token.COLON, "msg.no.colon.cond");
             decompiler.addToken(Token.COLON);
-            ifFalse = assignExpr(inForInit);
-            if (pn.getType() == Token.ASSIGN)
-                addStrictWarning("msg.equal.as.assign", "");
+            Node ifFalse = assignExpr(inForInit);
             return nf.createCondExpr(pn, ifTrue, ifFalse);
         }
 
@@ -2027,6 +2049,7 @@ public class Parser
              * think) in the C IR as 'function call.'  */
             decompiler.addToken(Token.LP);
             pn = expr(false);
+            pn.putProp(Node.PARENTHESIZED_PROP, Boolean.TRUE);
             decompiler.addToken(Token.RP);
             mustMatchToken(Token.RP, "msg.no.paren");
             return pn;
@@ -2140,4 +2163,3 @@ public class Parser
         return true;
     }
 }
-

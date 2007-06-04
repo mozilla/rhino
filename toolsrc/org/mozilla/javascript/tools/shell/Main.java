@@ -247,6 +247,7 @@ public class Main
             }
             if (arg.equals("-strict")) {
                 shellContextFactory.setStrictMode(true);
+                errorReporter.setIsReportingWarnings(true);
                 continue;
             }
             if (arg.equals("-fatal-warnings")) {

@@ -1781,7 +1781,8 @@ public class ScriptRuntime {
             // been defined, creates a new property in the
             // top scope unless strict mode is specified.
             if (cx.hasFeature(Context.FEATURE_STRICT_VARS)) {
-                throw Context.reportRuntimeError1("msg.assn.create.strict", id);
+                Context.reportWarning(
+                    ScriptRuntime.getMessage1("msg.assn.create.strict", id));
             }
             // Find the top scope by walking up the scope chain.
             bound = ScriptableObject.getTopLevelScope(scope);
