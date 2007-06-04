@@ -820,18 +820,24 @@ public class ScriptRuntime {
             if (!iterating) {
                 cx.iterating.intern(thisObj); // stop recursion.
                 Object[] ids = thisObj.getIds();
-                for(int i=0; i < ids.length; i++) {
-                    if (i > 0)
-                        result.append(", ");
+                for (int i=0; i < ids.length; i++) {
                     Object id = ids[i];
                     Object value;
                     if (id instanceof Integer) {
                         int intId = ((Integer)id).intValue();
                         value = thisObj.get(intId, thisObj);
+                        if (value == Scriptable.NOT_FOUND)
+                            continue;   // a property has been removed
+                        if (i > 0)
+                            result.append(", ");
                         result.append(intId);
                     } else {
                         String strId = (String)id;
                         value = thisObj.get(strId, thisObj);
+                        if (value == Scriptable.NOT_FOUND)
+                            continue;   // a property has been removed
+                        if (i > 0)
+                            result.append(", ");
                         if (ScriptRuntime.isValidIdentifierName(strId)) {
                             result.append(strId);
                         } else {
