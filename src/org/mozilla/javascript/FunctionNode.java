@@ -57,6 +57,10 @@ public class FunctionNode extends ScriptOrFnNode {
     public boolean getIgnoreDynamicScope() {
         return itsIgnoreDynamicScope;
     }
+    
+    public boolean isGenerator() {
+      return itsIsGenerator;
+    }
 
     /**
      * There are three types of functions that can be defined. The first
@@ -82,7 +86,8 @@ public class FunctionNode extends ScriptOrFnNode {
     }
 
     String functionName;
-    boolean itsNeedsActivation;
     int itsFunctionType;
+    boolean itsNeedsActivation;
     boolean itsIgnoreDynamicScope;
+    boolean itsIsGenerator;
 }

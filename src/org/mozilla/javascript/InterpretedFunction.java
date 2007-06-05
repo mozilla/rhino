@@ -187,6 +187,12 @@ final class InterpretedFunction extends NativeFunction implements Script
         return idata;
     }
 
+    Object resumeGenerator(Context cx, Scriptable scope, int operation,
+                           Object state, Object value)
+    {
+        return Interpreter.resumeGenerator(cx, scope, operation, state, value);
+    }
+
     protected int getLanguageVersion()
     {
         return idata.languageVersion;

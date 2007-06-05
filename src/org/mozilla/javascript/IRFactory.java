@@ -950,6 +950,19 @@ final class IRFactory
         return new Node(nodeType, child);
     }
 
+    Node createYield(Node child, int lineno)
+    {
+      if (!parser.insideFunction()) {
+        parser.reportError("msg.bad.yield");
+      }
+      setRequiresActivation();
+      setIsGenerator();
+      if (child != null)
+        return new Node(Token.YIELD, child, lineno);
+      else
+        return new Node(Token.YIELD, lineno);
+    }
+
     Node createCallOrNew(int nodeType, Node child)
     {
         int type = Node.NON_SPECIALCALL;
@@ -1414,6 +1427,13 @@ final class IRFactory
     {
         if (parser.insideFunction()) {
             ((FunctionNode)parser.currentScriptOrFn).itsNeedsActivation = true;
+        }
+    }
+
+    private void setIsGenerator()
+    {
+        if (parser.insideFunction()) {
+            ((FunctionNode)parser.currentScriptOrFn).itsIsGenerator = true;
         }
     }
 

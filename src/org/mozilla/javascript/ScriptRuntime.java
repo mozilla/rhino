@@ -202,6 +202,10 @@ public class ScriptRuntime {
         NativeWith.init(scope, sealed);
         NativeCall.init(scope, sealed);
         NativeScript.init(scope, sealed);
+        
+        // TODO(js1.7gen): jsshell marks generators as JSCLASS_IS_ANONYMOUS, 
+        // meaning that "Generator" is not defined in the global scope
+        NativeGenerator.init(scope, sealed);
 
         boolean withXml = cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
 

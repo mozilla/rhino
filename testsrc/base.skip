@@ -167,8 +167,29 @@ js1_7/geniter/regress-347739.js
 js1_7/geniter/regress-349012-01.js
 js1_7/geniter/regress-349331.js
 
+# Generator functionality not yet implemented:
+# "Iterator" constructor
+js1_7/geniter/builtin-Iterator-function.js
+# array comprehensions
+js1_7/geniter/regress-345736.js
+# let statements
+js1_7/geniter/regress-347593.js
+# yield and xml-filtering predicate
+js1_7/geniter/regress-352605.js
+# destructuring assignment
+js1_7/geniter/regress-366941.js
+# for (i in <generator>)
+js1_7/geniter/regress-350621.js
+
 # JS 1.7 not yet implemented
-js1_7
+js1_7/block
+js1_7/decompilation
+js1_7/expressions
+js1_7/extensions
+js1_7/iterable
+js1_7/lexical
+js1_7/regexp
+js1_7/regress
 
 # JS 1.8 not yet implemented
 js1_8

@@ -135,6 +135,19 @@ public class NodeTransformer
 
               case Token.RETURN:
               {
+                boolean isGenerator = tree.getType() == Token.FUNCTION
+                    && ((FunctionNode)tree).isGenerator();
+                if (isGenerator) {
+                  node.putIntProp(Node.GENERATOR_END_PROP, 1);
+                  /*
+                  // Replace returns inside generators with throw STOP_ITERATION
+                  node = replaceCurrent(parent, previous, node, 
+                      new Node(Token.THROW, 
+                               Node.newString(Token.NAME, 
+                                              NativeGenerator.STOP_ITERATION),
+                                              node.getLineno()));
+                                              */
+                }
                 /* If we didn't support try/finally, it wouldn't be
                  * necessary to put LEAVEWITH nodes here... but as
                  * we do need a series of JSR FINALLY nodes before
@@ -169,7 +182,7 @@ public class NodeTransformer
                     Node returnNode = node;
                     Node returnExpr = returnNode.getFirstChild();
                     node = replaceCurrent(parent, previous, node, unwindBlock);
-                    if (returnExpr == null) {
+                    if (returnExpr == null || isGenerator) {
                         unwindBlock.addChildToBack(returnNode);
                     } else {
                         Node store = new Node(Token.EXPR_RESULT, returnExpr);

@@ -116,6 +116,16 @@ public abstract class NativeFunction extends BaseFunction
         return null;
     }
 
+    /*
+     * Resumes execution of a JS 1.7 generator.
+     */
+    /*abstract*/ Object resumeGenerator(Context cx, Scriptable scope, 
+            int operation, Object state, Object value)
+    {
+        // TODO(js1.7gen): make abstract once bytecode generation is done
+        throw new EvaluatorException("Not yet implemented");
+    }
+
     protected abstract int getLanguageVersion();
 
     /**

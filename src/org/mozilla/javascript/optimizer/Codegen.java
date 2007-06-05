@@ -372,6 +372,10 @@ public class Codegen extends Interpreter
         cfw.stopMethod((short)(firstLocal + 1));
     }
 
+    // TODO(js1.7gen): make name a parameter, generalize to
+    // work for "call" and for "resumeGenerator".
+    // The "call" method should call "resumeGenerator" with a "start" operation
+    // (need to add "args" parameter to "resumeGenerator").
     private void generateCallMethod(ClassFileWriter cfw)
     {
         cfw.startMethod("call",
@@ -1271,6 +1275,14 @@ class BodyCodegen
      */
     private void generatePrologue()
     {
+        /*
+         * TODO(js1.7gen):
+         * For resumeGenerator, generate prologue that looks at the value
+         * of the operation argument, does some setup, and jumps to the
+         * appropriate resumption point.
+         * Can assume inDirectCallFunction = false and hasVarsInRegs = false
+         * for generators.
+         */
         if (inDirectCallFunction) {
             int directParameterCount = scriptOrFn.getParamCount();
             // 0 is reserved for function Object 'this'
@@ -2353,6 +2365,60 @@ class BodyCodegen
                                        "(Ljava/lang/Object;"
                                        +"Lorg/mozilla/javascript/Context;"
                                        +")Ljava/lang/Object;");
+                break;
+
+              case Token.YIELD:
+              /*
+               * TODO(js1.7gen): Generate code to save the execution state
+               * of the JVM. This may not be too bad: since generators
+               * require an activation, all variables are in the activation
+               * object. Look through the prologue code at the java
+               * registers that are initialized. Look to see if any of those
+               * values are altered during execution; if not, you can
+               * just rely on shared prologue code for the generator.
+               * Hardest part will be the stack. You'll need to create a
+               * compile-time data structure that tracks the type of every
+               * element on the stack. Then when you generate code for the
+               * yield, you'll generate code to take the contents of the
+               * stack and save it to an in-memory object (Object[] or pair
+               * of Object[] double[], I'm not sure which). You'll also
+               * need the inverse operation of taking an object like that
+               * and pushing all its saved values onto the stack. It may
+               * make sense to alter ClassFileWriter to maintain stack
+               * information, or maintain a parallel data structure in
+               * Codegen.
+               *
+               * Each yield point will need to have a unique integer number
+               * determined at compile time. When a program encounters a
+               * yield, the yield number will be saved in the state object.
+               * The "resumeGenerator" prologue code will need to have a
+               * code to take the integer and then jump to the appropriate
+               * yield. You'll need to run the validator with yields in
+               * various points in control flow to make sure that the
+               * validator doesn't object to these jumps into the middle of
+               * various control structures. I think it should be okay since
+               * the register save code will ensure that you never jump
+               * into a place with different stack height or uninitialized
+               * variables.
+               *
+               * The biggest unknown area for me is exception handling.
+               * There are cases of yields in finally clauses that suspend
+               * a function with an in-flight exception. It may have to be
+               * that Rhino doesn't generate any finally clauses but instead
+               * catches all exceptions, processes finally clauses (including
+               * yields) and rethrows. Then in-flight exceptions will just
+               * be variables that can be captured. The other question is
+               * whether the validator will object to jumps in and out of
+               * try and catch blocks.
+               *
+               * Probably don't need analog to Icode_GENERATOR: all setup
+               * code can be handled in "resumeGenerator" prologue.
+               *
+               * Probably do need analog to Icode_GENERATOR_END. Perhaps
+               * during code generation for returns, can check to see if
+               * in generator and if so generate code for the analog
+               * to Icode_GENERATOR_END.
+               */
                 break;
 
               default:

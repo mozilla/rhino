@@ -1069,44 +1069,9 @@ public class Parser
             break;
           }
 
-          case Token.RETURN: {
-            if (!insideFunction()) {
-                reportError("msg.bad.return");
-            }
-            consumeToken();
-            decompiler.addToken(Token.RETURN);
-            int lineno = ts.getLineno();
-
-            Node retExpr;
-            /* This is ugly, but we don't want to require a semicolon. */
-            tt = peekTokenOrEOL();
-            switch (tt) {
-              case Token.SEMI:
-              case Token.RC:
-              case Token.EOF:
-              case Token.EOL:
-              case Token.ERROR:
-                retExpr = null;
-                break;
-              default:
-                retExpr = expr(false);
-                hasReturnValue = true;
-            }
-            pn = nf.createReturn(retExpr, lineno);
-
-            // see if we need a strict mode warning
-            if (retExpr == null) {
-                if (functionEndFlags == Node.END_RETURNS_VALUE)
-                    addStrictWarning("msg.return.inconsistent", "");
-
-                functionEndFlags |= Node.END_RETURNS;
-            } else {
-                if (functionEndFlags == Node.END_RETURNS)
-                    addStrictWarning("msg.return.inconsistent", "");
-
-                functionEndFlags |= Node.END_RETURNS_VALUE;
-            }
-
+          case Token.RETURN: 
+          case Token.YIELD: {
+            pn = returnOrYield(tt, false);
             break;
           }
 
@@ -1241,6 +1206,58 @@ public class Parser
 
         return pn;
     }
+    
+    private Node returnOrYield(int tt, boolean exprContext)
+        throws IOException, ParserException
+    {
+        if (!insideFunction()) {
+            reportError(tt == Token.RETURN ? "msg.bad.return"
+                                           : "msg.bad.yield");
+        }
+        consumeToken();
+        decompiler.addToken(tt);
+        int lineno = ts.getLineno();
+
+        Node e;
+        /* This is ugly, but we don't want to require a semicolon. */
+        switch (peekTokenOrEOL()) {
+          case Token.SEMI:
+          case Token.RC:
+          case Token.EOF:
+          case Token.EOL:
+          case Token.ERROR:
+          case Token.RB:
+          case Token.RP:
+          case Token.YIELD:
+            e = null;
+            break;
+          default:
+            e = expr(false);
+            break;
+        }
+        if (tt == Token.RETURN) {
+          // see if we need a strict mode warning
+          // TODO(js1.7gen): check for mixture of yield and value returns
+          if (e == null) {
+              if (functionEndFlags == Node.END_RETURNS_VALUE)
+                  addStrictWarning("msg.return.inconsistent", "");
+
+              functionEndFlags |= Node.END_RETURNS;
+          } else {
+              hasReturnValue = true;
+              if (functionEndFlags == Node.END_RETURNS)
+                  addStrictWarning("msg.return.inconsistent", "");
+
+              functionEndFlags |= Node.END_RETURNS_VALUE;
+          }
+          return nf.createReturn(e, lineno);
+        } else {
+          Node n = nf.createYield(e, lineno);
+          if (exprContext)
+              return n;
+          return new Node(Token.EXPR_VOID, n, lineno);
+        }
+    }
 
     /**
      * Parse a 'var' or 'const' statement, or a 'var' init list in a for
@@ -1321,6 +1338,9 @@ public class Parser
             decompiler.addToken(Token.COMMA);
             if (!pn.hasSideEffects())
                 addStrictWarning("msg.no.side.effects", "");
+            if (peekToken() == Token.YIELD) {
+              reportError("msg.yield.parenthesized");
+            }
             pn = nf.createBinary(Token.COMMA, pn, assignExpr(inForInit));
         }
         return pn;
@@ -1329,9 +1349,14 @@ public class Parser
     private Node assignExpr(boolean inForInit)
         throws IOException, ParserException
     {
+        int tt = peekToken();
+        if (tt == Token.YIELD) {
+            consumeToken();
+            return returnOrYield(tt, true);
+        }
         Node pn = condExpr(inForInit);
 
-        int tt = peekToken();
+        tt = peekToken();
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
             consumeToken();
             decompiler.addToken(tt);
@@ -1687,6 +1712,9 @@ public class Parser
                 if (!first)
                     decompiler.addToken(Token.COMMA);
                 first = false;
+                if (peekToken() == Token.YIELD) {
+                    reportError("msg.yield.parenthesized");
+                }
                 nf.addChildToBack(listNode, assignExpr(false));
             } while (matchToken(Token.COMMA));
 
@@ -1769,6 +1797,13 @@ public class Parser
 
                     tt = nextToken();
                     switch (tt) {
+                    
+                      // needed for generator.throw();
+                      case Token.THROW:
+                        decompiler.addName("throw");
+                        pn = propertyName(pn, "throw", memberTypeFlags);
+                        break;
+
                       // handles: name, ns::name, ns::*, ns::[expr]
                       case Token.NAME:
                         s = ts.getString();

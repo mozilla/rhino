@@ -133,6 +133,7 @@ class TokenStream
             Id_function      = Token.FUNCTION,
             Id_if            = Token.IF,
             Id_in            = Token.IN,
+            Id_let           = Token.LET,
             Id_new           = Token.NEW,
             Id_null          = Token.NULL,
             Id_return        = Token.RETURN,
@@ -144,6 +145,7 @@ class TokenStream
             Id_void          = Token.VOID,
             Id_while         = Token.WHILE,
             Id_with          = Token.WITH,
+            Id_yield         = Token.YIELD,
 
             // the following are #ifdef RESERVE_JAVA_KEYWORDS in jsscan.c
             Id_abstract      = Token.RESERVED,
@@ -184,7 +186,7 @@ class TokenStream
 
         int id;
         String s = name;
-// #generated# Last update: 2001-06-01 17:45:01 CEST
+// #generated# Last update: 2007-04-18 13:53:30 PDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 2: c=s.charAt(1);
@@ -195,6 +197,7 @@ class TokenStream
             case 3: switch (s.charAt(0)) {
                 case 'f': if (s.charAt(2)=='r' && s.charAt(1)=='o') {id=Id_for; break L0;} break L;
                 case 'i': if (s.charAt(2)=='t' && s.charAt(1)=='n') {id=Id_int; break L0;} break L;
+                case 'l': if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_let; break L0;} break L;
                 case 'n': if (s.charAt(2)=='w' && s.charAt(1)=='e') {id=Id_new; break L0;} break L;
                 case 't': if (s.charAt(2)=='y' && s.charAt(1)=='r') {id=Id_try; break L0;} break L;
                 case 'v': if (s.charAt(2)=='r' && s.charAt(1)=='a') {id=Id_var; break L0;} break L;
@@ -221,7 +224,10 @@ class TokenStream
                 } break L;
             case 5: switch (s.charAt(2)) {
                 case 'a': X="class";id=Id_class; break L;
-                case 'e': X="break";id=Id_break; break L;
+                case 'e': c=s.charAt(0);
+                    if (c=='b') { X="break";id=Id_break; }
+                    else if (c=='y') { X="yield";id=Id_yield; }
+                    break L;
                 case 'i': X="while";id=Id_while; break L;
                 case 'l': X="false";id=Id_false; break L;
                 case 'n': c=s.charAt(0);
@@ -394,6 +400,13 @@ class TokenStream
                     // Return the corresponding token if it's a keyword
                     int result = stringToKeyword(str);
                     if (result != Token.EOF) {
+                        if ((result == Token.LET || result == Token.YIELD) && 
+                            parser.compilerEnv.getLanguageVersion() 
+                               < Context.VERSION_1_7)
+                        {
+                            // LET and YIELD are tokens only in 1.7 and later
+                            result = Token.NAME;
+                        }
                         if (result != Token.RESERVED) {
                             return result;
                         } else if (!parser.compilerEnv.

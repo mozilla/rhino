@@ -160,20 +160,24 @@ public class Interpreter
 
        Icode_TAIL_CALL                  = -55,
 
-       // Clear local to allow GC its context
+    // Clear local to allow GC its context
        Icode_LOCAL_CLEAR                = -56,
 
-       // Literal get/set
+    // Literal get/set
        Icode_LITERAL_GETTER             = -57,
        Icode_LITERAL_SETTER             = -58,
 
-       // const
+    // const
        Icode_SETCONST                   = -59,
        Icode_SETCONSTVAR                = -60,
        Icode_SETCONSTVAR1               = -61,
 
+    // Generator opcodes (along with Token.YIELD)
+       Icode_GENERATOR                  = -62,
+       Icode_GENERATOR_END              = -63,
+
        // Last icode
-        MIN_ICODE                       = -61;
+        MIN_ICODE                       = -63;
 
     // data for parsing
 
@@ -335,7 +339,18 @@ public class Interpreter
                     Kit.codeBug();
             }
         }
+    }
 
+    private static CallFrame captureFrameForGenerator(CallFrame frame) {
+      frame.frozen = true;
+      CallFrame result = frame.cloneFrozen();
+      frame.frozen = false;
+
+      // now isolate this frame from its previous context
+      result.parentFrame = null;
+      result.frameIndex = 0;
+
+      return result;
     }
 
     static {
@@ -429,6 +444,8 @@ public class Interpreter
           case Icode_SETCONST:         return "SETCONST";
           case Icode_SETCONSTVAR:      return "SETCONSTVAR";
           case Icode_SETCONSTVAR1:     return "SETCONSTVAR1";
+          case Icode_GENERATOR:        return "GENERATOR";
+          case Icode_GENERATOR_END:    return "GENERATOR_END";
         }
 
         // icode without name
@@ -516,6 +533,10 @@ public class Interpreter
             if (compilerEnv.isUseDynamicScope()) {
                 itsData.useDynamicScope = true;
             }
+        }
+        if (theFunction.isGenerator()) {
+          addIcode(Icode_GENERATOR);
+          addUint16(theFunction.getBaseLineno() & 0xFFFF);
         }
 
         generateICodeFromTree(theFunction.getLastChild());
@@ -863,7 +884,11 @@ public class Interpreter
 
           case Token.RETURN:
             updateLineNumber(node);
-            if (child != null) {
+            if (node.getIntProp(Node.GENERATOR_END_PROP, 0) != 0) {
+                // We're in a generator, so change RETURN to GENERATOR_END
+                addIcode(Icode_GENERATOR_END);
+                addUint16(itsLineNumber & 0xFFFF);
+            } else if (child != null) {
                 visitExpression(child, ECF_TAIL);
                 addToken(Token.RETURN);
                 stackChange(-1);
@@ -882,6 +907,9 @@ public class Interpreter
             visitExpression(child, 0);
             addIndexOp(type, getLocalBlockRef(node));
             stackChange(-1);
+            break;
+
+          case Icode_GENERATOR:
             break;
 
           default:
@@ -1322,6 +1350,17 @@ public class Interpreter
             addToken(type);
             break;
 
+          case Token.YIELD:
+            if (child != null) {
+                visitExpression(child, 0);
+            } else {
+                addIcode(Icode_UNDEF);
+                stackChange(1);
+            }
+            addToken(Token.YIELD);
+            addUint16(node.getLineno() & 0xFFFF);
+            break;
+
           default:
             throw badTree(node);
         }
@@ -1605,7 +1644,7 @@ public class Interpreter
         byte[] array = itsData.itsICode;
         int top = itsICodeTop;
         if (top == array.length) {
-            array = increaseICodeCapasity(1);
+            array = increaseICodeCapacity(1);
         }
         array[top] = (byte)value;
         itsICodeTop = top + 1;
@@ -1617,7 +1656,7 @@ public class Interpreter
         byte[] array = itsData.itsICode;
         int top = itsICodeTop;
         if (top + 2 > array.length) {
-            array = increaseICodeCapasity(2);
+            array = increaseICodeCapacity(2);
         }
         array[top] = (byte)(value >>> 8);
         array[top + 1] = (byte)value;
@@ -1629,7 +1668,7 @@ public class Interpreter
         byte[] array = itsData.itsICode;
         int top = itsICodeTop;
         if (top + 4 > array.length) {
-            array = increaseICodeCapasity(4);
+            array = increaseICodeCapacity(4);
         }
         array[top] = (byte)(i >>> 24);
         array[top + 1] = (byte)(i >>> 16);
@@ -1658,7 +1697,7 @@ public class Interpreter
         byte[] array = itsData.itsICode;
         int top = itsICodeTop;
         if (top + 3 > array.length) {
-            array = increaseICodeCapasity(3);
+            array = increaseICodeCapacity(3);
         }
         array[top] = (byte)gotoOp;
         // Offset would written later
@@ -1774,7 +1813,7 @@ public class Interpreter
         itsExceptionTableTop = top + EXCEPTION_SLOT_SIZE;
     }
 
-    private byte[] increaseICodeCapasity(int extraSize)
+    private byte[] increaseICodeCapacity(int extraSize)
     {
         int capacity = itsData.itsICode.length;
         int top = itsICodeTop;
@@ -1958,7 +1997,11 @@ public class Interpreter
               case Token.NEW :
                 out.println(tname+' '+indexReg);
                 break;
-              case Token.THROW : {
+              case Token.THROW :
+              case Token.YIELD :
+              case Icode_GENERATOR :
+              case Icode_GENERATOR_END :
+              {
                 int line = getIndex(iCode, pc);
                 out.println(tname + " : " + line);
                 pc += 2;
@@ -2006,6 +2049,24 @@ public class Interpreter
                 pc += 4;
                 break;
               }
+              case Icode_REG_IND_C0:
+                  indexReg = 0;
+                  break;
+              case Icode_REG_IND_C1:
+                  indexReg = 1;
+                  break;
+              case Icode_REG_IND_C2:
+                  indexReg = 2;
+                  break;
+              case Icode_REG_IND_C3:
+                  indexReg = 3;
+                  break;
+              case Icode_REG_IND_C4:
+                  indexReg = 4;
+                  break;
+              case Icode_REG_IND_C5:
+                  indexReg = 5;
+                  break;
               case Icode_REG_IND1: {
                 indexReg = 0xFF & iCode[pc];
                 out.println(tname+" "+indexReg);
@@ -2062,6 +2123,9 @@ public class Interpreter
     {
         switch (bytecode) {
             case Token.THROW :
+            case Token.YIELD:
+            case Icode_GENERATOR:
+            case Icode_GENERATOR_END:
                 // source line
                 return 1 + 2;
 
@@ -2326,6 +2390,40 @@ public class Interpreter
         return interpretLoop(cx, frame, null);
     }
 
+    static class GeneratorState {
+        GeneratorState(int operation, Object value) {
+            this.operation = operation;
+            this.value = value;
+        }
+        int operation;
+        Object value;
+        RuntimeException returnedException;
+    }
+
+    public static Object resumeGenerator(Context cx,
+                                         Scriptable scope,
+                                         int operation,
+                                         Object savedState,
+                                         Object value)
+    {
+      CallFrame frame = (CallFrame) savedState;
+      GeneratorState generatorState = new GeneratorState(operation, value);
+      if (operation == NativeGenerator.GENERATOR_CLOSE) {
+          try {
+              return interpretLoop(cx, frame, generatorState);
+          } catch (RuntimeException e) {
+              // Only propagate exceptions other than closingException
+              if (e != value)
+                  throw e;
+          }
+          return Undefined.instance;
+      }
+      Object result = interpretLoop(cx, frame, generatorState);
+      if (generatorState.returnedException != null)
+          throw generatorState.returnedException;
+      return result;
+    }
+
     public static Object restartContinuation(Continuation c, Context cx,
                                              Scriptable scope, Object[] args)
     {
@@ -2388,9 +2486,15 @@ public class Interpreter
         // catch bugs with using indeReg to access array eleemnts before
         // initializing indexReg.
 
+        GeneratorState generatorState = null;
         if (throwable != null) {
-            // Assert assumptions
-            if (!(throwable instanceof ContinuationJump)) {
+            if (throwable instanceof GeneratorState) {
+              generatorState = (GeneratorState) throwable;
+
+              // reestablish this call frame
+              enterFrame(cx, frame, ScriptRuntime.emptyArgs, true);
+              throwable = null;
+            } else if (!(throwable instanceof ContinuationJump)) {
                 // It should be continuation
                 Kit.codeBug();
             }
@@ -2493,7 +2597,7 @@ public class Interpreter
                     }
 
                 } else {
-                    if (frame.frozen) Kit.codeBug();
+                    if (generatorState == null && frame.frozen) Kit.codeBug();
                 }
 
                 // Use local variables for constant values in frame
@@ -2508,7 +2612,7 @@ public class Interpreter
 
                 // Use local for stackTop as well. Since execption handlers
                 // can only exist at statement level where stack is empty,
-                // it is necessary to save/restore stackTop only accross
+                // it is necessary to save/restore stackTop only across
                 // function calls and normal returns.
                 int stackTop = frame.savedStackTop;
 
@@ -2523,8 +2627,76 @@ public class Interpreter
                     int op = iCode[frame.pc++];
                     jumplessRun: {
 
-    // Back indent to ease imlementation reading
+    // Back indent to ease implementation reading
 switch (op) {
+    case Icode_GENERATOR: {
+        if (!frame.frozen) {
+          // First time encountering this opcode: create new generator
+          // object and return
+          frame.pc--; // we want to come back here when we resume
+          CallFrame generatorFrame = captureFrameForGenerator(frame);
+          generatorFrame.frozen = true;
+          NativeGenerator generator
+              = new NativeGenerator(generatorFrame.fnOrScript, generatorFrame);
+          ScriptRuntime.setObjectProtoAndParent(generator,
+              ScriptRuntime.getTopCallScope(cx));
+          frame.result = generator;
+          break Loop;
+        } else {
+          // We are now resuming execution. Fall through to YIELD case.
+        }
+    }
+    // fall through...
+    case Token.YIELD: {
+      if (!frame.frozen) {
+        if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
+            // Error: no yields when generator is closing
+            throw ScriptRuntime.typeError0("msg.yield.closing");
+        }
+        // return to our caller (which should be a method of NativeGenerator)
+        frame.frozen = true;
+        frame.result = stack[stackTop];
+        frame.resultDbl = sDbl[stackTop];
+        frame.savedStackTop = stackTop;
+        frame.pc--; // we want to come back here when we resume
+        ScriptRuntime.exitActivationFunction(cx);
+        return (frame.result != DBL_MRK)
+            ? frame.result
+            : ScriptRuntime.wrapNumber(frame.resultDbl);
+      } else {
+        // we are resuming execution
+        frame.frozen = false;
+        int sourceLine = getIndex(iCode, frame.pc);
+        frame.pc += 2; // skip line number data
+        if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
+            // processing a call to <generator>.throw(exception): must
+            // act as if exception was thrown from resumption point
+            throwable = new JavaScriptException(generatorState.value,
+                                                frame.idata.itsSourceFile,
+                                                sourceLine);
+            break withoutExceptions;
+        }
+        if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
+            throwable = generatorState.value;
+            break withoutExceptions;
+        }
+        if (generatorState.operation != NativeGenerator.GENERATOR_SEND)
+            throw Kit.codeBug();
+        if (op == Token.YIELD)
+            stack[stackTop] = generatorState.value;
+        continue Loop;
+      }
+    }
+    case Icode_GENERATOR_END: {
+      // throw StopIteration
+      frame.frozen = true;
+      Scriptable top = ScriptableObject.getTopLevelScope(frame.scope);
+      Object e = top.get(NativeGenerator.STOP_ITERATION, frame.scope);
+      int sourceLine = getIndex(iCode, frame.pc);
+      generatorState.returnedException =
+          new JavaScriptException(e, frame.idata.itsSourceFile, sourceLine);
+      break Loop;
+    }
     case Token.THROW: {
         Object value = stack[stackTop];
         if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
@@ -3124,7 +3296,8 @@ switch (op) {
                     // optimization will create a "hole" in the context stack. 
                     // The correct thing to do may be to disable tail call 
                     // optimization if the code is being debugged.
-                    exitFrame(cx, frame, null);                }
+                    exitFrame(cx, frame, null);
+                }
                 initFrame(cx, calleeScope, funThisObj, stack, sDbl,
                           stackTop + 2, indexReg, ifun, callParentFrame,
                           calleeFrame);
@@ -3704,7 +3877,12 @@ switch (op) {
             int exState;
             ContinuationJump cjump = null;
 
-            if (throwable instanceof JavaScriptException) {
+            if (generatorState != null &&
+                generatorState.operation == NativeGenerator.GENERATOR_CLOSE &&
+                throwable == generatorState.value)
+            {
+                exState = EX_FINALLY_STATE;            	
+            } else if (throwable instanceof JavaScriptException) {
                 exState = EX_CATCH_STATE;
             } else if (throwable instanceof EcmaError) {
                 // an offical ECMA error object,
@@ -3762,7 +3940,7 @@ switch (op) {
                         continue StateLoop;
                     }
                 }
-                // No allowed execption handlers in this frame, unwind
+                // No allowed exception handlers in this frame, unwind
                 // to parent and try to look there
 
                 exitFrame(cx, frame, throwable);
@@ -3988,7 +4166,8 @@ switch (op) {
         return frame.debuggerFrame != null || frame.idata.itsNeedsActivation;
     }
 
-    private static void enterFrame(Context cx, CallFrame frame, Object[] args, boolean continuationRestart)
+    private static void enterFrame(Context cx, CallFrame frame, Object[] args, 
+                                   boolean continuationRestart)
     {
         boolean usesActivation = frame.idata.itsNeedsActivation; 
         boolean isDebugged = frame.debuggerFrame != null;
@@ -3996,7 +4175,7 @@ switch (op) {
             Scriptable scope = frame.scope;
             if(scope == null) {
                 Kit.codeBug();
-            } else if(continuationRestart) {
+            } else if (continuationRestart) {
                 // Walk the parent chain of frame.scope until a NativeCall is 
                 // found. Normally, frame.scope is a NativeCall when called 
                 // from initFrame() for a debugged or activatable function. 
@@ -4010,7 +4189,9 @@ switch (op) {
                         break;
                     } else {
                         scope = scope.getParentScope();
-                        if(scope == null || (frame.parentFrame != null && frame.parentFrame.scope == scope)) {
+                        if (scope == null || (frame.parentFrame != null && 
+                                              frame.parentFrame.scope == scope))
+                        {
                             // If we get here, we didn't find a NativeCall in 
                             // the call chain before reaching parent frame's 
                             // scope. This should not be possible.
