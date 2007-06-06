@@ -280,6 +280,7 @@ public class Context
      * Controls whether JS 1.5 'strict mode' is enabled.
      * When the feature is on, Rhino reports more than a dozen different
      * warnings.  When the feature is off, these warnings are not generated.
+     * FEATURE_STRICT_MODE implies FEATURE_STRICT_VARS and FEATURE_STRICT_EVAL.
      * <p>
      * By default {@link #hasFeature(int)} returns false.
      * @since 1.6 Release 6

@@ -1790,7 +1790,9 @@ public class ScriptRuntime {
             // "newname = 7;", where 'newname' has not yet
             // been defined, creates a new property in the
             // top scope unless strict mode is specified.
-            if (cx.hasFeature(Context.FEATURE_STRICT_VARS)) {
+            if (cx.hasFeature(Context.FEATURE_STRICT_MODE) ||
+                cx.hasFeature(Context.FEATURE_STRICT_VARS))
+            {
                 Context.reportWarning(
                     ScriptRuntime.getMessage1("msg.assn.create.strict", id));
             }
@@ -2248,7 +2250,9 @@ public class ScriptRuntime {
             return Undefined.instance;
         Object x = args[0];
         if (!(x instanceof String)) {
-            if (cx.hasFeature(Context.FEATURE_STRICT_EVAL)) {
+            if (cx.hasFeature(Context.FEATURE_STRICT_MODE) ||
+                cx.hasFeature(Context.FEATURE_STRICT_EVAL))
+            {
                 throw Context.reportRuntimeError0("msg.eval.nonstring.strict");
             }
             String message = ScriptRuntime.getMessage0("msg.eval.nonstring");
