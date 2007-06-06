@@ -95,7 +95,7 @@ public class Parser
     private ObjArray loopSet;
     private ObjArray loopAndSwitchSet;
     private boolean hasReturnValue;
-    private int functionEndFlags;
+    private int endFlags;
 // end of per function variables
 
     // Exception to unwind
@@ -517,7 +517,7 @@ public class Parser
         ObjArray savedLoopAndSwitchSet = loopAndSwitchSet;
         loopAndSwitchSet = null;
         boolean savedHasReturnValue = hasReturnValue;
-        int savedFunctionEndFlags = functionEndFlags;
+        int savedFunctionEndFlags = endFlags;
 
         Node body;
         try {
@@ -574,7 +574,7 @@ public class Parser
         }
         finally {
             hasReturnValue = savedHasReturnValue;
-            functionEndFlags = savedFunctionEndFlags;
+            endFlags = savedFunctionEndFlags;
             loopAndSwitchSet = savedLoopAndSwitchSet;
             loopSet = savedLoopSet;
             labelSet = savedLabelSet;
@@ -1206,6 +1206,19 @@ public class Parser
 
         return pn;
     }
+
+    /**
+     * Returns whether or not the bits in the mask have changed to all set.
+     * @param before bits before change
+     * @param after bits after change
+     * @param mask mask for bits
+     * @return true if all the bits in the mask are set in "after" but not 
+     *              "before"
+     */
+    private static final boolean nowAllSet(int before, int after, int mask)
+    {
+        return ((before & mask) != mask) && ((after & mask) == mask);
+    }
     
     private Node returnOrYield(int tt, boolean exprContext)
         throws IOException, ParserException
@@ -1235,28 +1248,44 @@ public class Parser
             e = expr(false);
             break;
         }
+
+        int before = endFlags;
+        Node ret;
+
         if (tt == Token.RETURN) {
-          // see if we need a strict mode warning
-          // TODO(js1.7gen): check for mixture of yield and value returns
-          if (e == null) {
-              if (functionEndFlags == Node.END_RETURNS_VALUE)
-                  addStrictWarning("msg.return.inconsistent", "");
-
-              functionEndFlags |= Node.END_RETURNS;
-          } else {
-              hasReturnValue = true;
-              if (functionEndFlags == Node.END_RETURNS)
-                  addStrictWarning("msg.return.inconsistent", "");
-
-              functionEndFlags |= Node.END_RETURNS_VALUE;
-          }
-          return nf.createReturn(e, lineno);
+            if (e == null ) {
+                endFlags |= Node.END_RETURNS;
+            } else {
+                endFlags |= Node.END_RETURNS_VALUE;
+                hasReturnValue = true;
+            }
+            ret = nf.createReturn(e, lineno);
+            
+            // see if we need a strict mode warning
+            if (nowAllSet(before, endFlags, 
+                          Node.END_RETURNS|Node.END_RETURNS_VALUE))
+            {
+                addStrictWarning("msg.return.inconsistent", "");
+            }
         } else {
-          Node n = nf.createYield(e, lineno);
-          if (exprContext)
-              return n;
-          return new Node(Token.EXPR_VOID, n, lineno);
+            endFlags |= Node.END_YIELDS;
+            ret = nf.createYield(e, lineno);
+            if (!exprContext)
+                ret = new Node(Token.EXPR_VOID, ret, lineno);
         }
+
+        // see if we are mixing yields and value returns.
+        if (nowAllSet(before, endFlags, 
+                      Node.END_YIELDS|Node.END_RETURNS_VALUE))
+        {
+            String name = ((FunctionNode)currentScriptOrFn).getFunctionName();
+            if (name.length() == 0)
+                addError("msg.anon.generator.returns", "");
+            else
+                addError("msg.generator.returns", name);
+        }
+
+        return ret;
     }
 
     /**

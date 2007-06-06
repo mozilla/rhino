@@ -643,6 +643,7 @@ public class Node
     static final int END_DROPS_OFF = 1;
     static final int END_RETURNS = 2;
     static final int END_RETURNS_VALUE = 4;
+    static final int END_YIELDS = 8;
 
     /**
      * Checks that every return usage in a function body is consistent with the
@@ -653,7 +654,7 @@ public class Node
     {
         int n = endCheck();
         return (n & END_RETURNS_VALUE) == 0 ||
-               (n & (END_DROPS_OFF|END_RETURNS)) == 0;
+               (n & (END_DROPS_OFF|END_RETURNS|END_YIELDS)) == 0;
     }
 
     /**
@@ -867,6 +868,14 @@ public class Node
         {
             case Token.BREAK:
                 return endCheckBreak();
+
+            case Token.EXPR_VOID:
+                if (this.first != null)
+                    return first.endCheck();
+                return END_DROPS_OFF;
+
+            case Token.YIELD:
+                return END_YIELDS;
 
             case Token.CONTINUE:
             case Token.THROW:
