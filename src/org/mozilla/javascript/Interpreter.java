@@ -48,6 +48,8 @@ package org.mozilla.javascript;
 
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.mozilla.javascript.continuations.Continuation;
 import org.mozilla.javascript.debug.DebugFrame;
@@ -2348,6 +2350,48 @@ public class Interpreter
         return sb.toString();
     }
 
+    static List getScriptStack(RhinoException ex)
+    {
+        if (ex.interpreterStackInfo == null) {
+            return null;
+        }
+        
+        List list = new ArrayList();
+        String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
+
+        CallFrame[] array = (CallFrame[])ex.interpreterStackInfo;
+        int[] linePC = ex.interpreterLineData;
+        int arrayIndex = array.length;
+        int linePCIndex = linePC.length;
+        while (arrayIndex != 0) {
+            --arrayIndex;
+            StringBuffer sb = new StringBuffer();
+            CallFrame frame = array[arrayIndex];
+            while (frame != null) {
+                if (linePCIndex == 0) Kit.codeBug();
+                --linePCIndex;
+                InterpreterData idata = frame.idata;
+                sb.append("\tat ");
+                sb.append(idata.itsSourceFile);
+                int pc = linePC[linePCIndex];
+                if (pc >= 0) {
+                    // Include line info only if available
+                    sb.append(':');
+                    sb.append(getIndex(idata.itsICode, pc));
+                }
+                if (idata.itsName != null && idata.itsName.length() != 0) {
+                    sb.append(" (");
+                    sb.append(idata.itsName);
+                    sb.append(')');
+                }
+                sb.append(lineSeparator);
+                frame = frame.parentFrame;
+            }
+            list.add(sb.toString());
+        }
+        return list;
+    }
+        
     static String getEncodedSource(InterpreterData idata)
     {
         if (idata.encodedSource == null) {
