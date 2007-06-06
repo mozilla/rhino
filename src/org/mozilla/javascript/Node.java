@@ -1003,6 +1003,7 @@ public class Node
           case Token.SETELEM_OP:
           case Token.LOCAL_BLOCK:
           case Token.SET_REF_OP:
+          case Token.YIELD:
             return true;
 
           default:
