@@ -2024,7 +2024,6 @@ public class Interpreter
               case Token.NUMBER : {
                 double value = idata.itsDoubleTable[indexReg];
                 out.println(tname + " " + value);
-                pc += 2;
                 break;
               }
               case Icode_LINE : {
@@ -2053,21 +2052,27 @@ public class Interpreter
               }
               case Icode_REG_IND_C0:
                   indexReg = 0;
+                  out.println(tname);
                   break;
               case Icode_REG_IND_C1:
                   indexReg = 1;
+                  out.println(tname);
                   break;
               case Icode_REG_IND_C2:
                   indexReg = 2;
+                  out.println(tname);
                   break;
               case Icode_REG_IND_C3:
                   indexReg = 3;
+                  out.println(tname);
                   break;
               case Icode_REG_IND_C4:
                   indexReg = 4;
+                  out.println(tname);
                   break;
               case Icode_REG_IND_C5:
                   indexReg = 5;
+                  out.println(tname);
                   break;
               case Icode_REG_IND1: {
                 indexReg = 0xFF & iCode[pc];
