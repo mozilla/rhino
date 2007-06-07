@@ -158,6 +158,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         private volatile short attributes;
         transient volatile byte wasDeleted;
         volatile Object value;
+        transient volatile Slot next;
 
         Slot(String name, int indexOrHash, int attributes)
         {
@@ -2117,15 +2118,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     return null;
             } else {
                 int tableSize = slotsLocalRef.length;
-                int start = getSearchStartIndex(tableSize, indexOrHash);
-                Slot slot;
-                for (int i = start;;) {
-                    slot = slotsLocalRef[i];
-                    if (slot == null)
-                        break;
+                int slotIndex = getSlotIndex(tableSize, indexOrHash);
+                Slot slot = slotsLocalRef[slotIndex];
+                while (slot != null) {
                     String sname = slot.name;
                     if (sname != null) {
-                        // Name slot which can not be REMOVED
                         if (sname == name)
                             break;
                         if (name != null && indexOrHash == slot.indexOrHash) {
@@ -2139,15 +2136,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         }
                     } else if (name == null &&
                                indexOrHash == slot.indexOrHash) {
-                        // Match for index slot which can coincide with REMOVED
-                        if (slot != REMOVED)
-                            break;
+                        break;
                     }
-                    if (++i == tableSize)
-                        i = 0;
-                    // slotsLocalRef should never be full or bug in grow code
-                    if (i == start)
-                        throw Kit.codeBug();
+                    slot = slot.next;
                 }
                 if (accessType == SLOT_QUERY) {
                     return slot;
@@ -2160,8 +2151,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 } else if (accessType == SLOT_MODIFY_CONST) {
                     if (slot != null)
                         return slot;
-                } else {
-                    Kit.codeBug();
                 }
             }
 
@@ -2176,34 +2165,21 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     // Always throw away old slots if any on empty insert
                     slotsLocalRef = new Slot[5];
                     slots = slotsLocalRef;
-                    insertPos = getKnownAbsentPos(slotsLocalRef, indexOrHash);
+                    insertPos = getSlotIndex(slotsLocalRef.length, indexOrHash);
                 } else {
                     int tableSize = slotsLocalRef.length;
-                    int start = getSearchStartIndex(tableSize, indexOrHash);
-                    int firstDeleted = -1;
-                    Slot slot;
-                    for (int i = start;;) {
-                        slot = slotsLocalRef[i];
-                        if (slot == null) {
-                            insertPos = (firstDeleted < 0 ? i : firstDeleted);
-                            break;
-                        }
-                        if (slot == REMOVED) {
-                            if (firstDeleted < 0)
-                                firstDeleted = i;
-                        }
+                    insertPos = getSlotIndex(tableSize, indexOrHash);
+                    Slot prev = slotsLocalRef[insertPos];
+                    Slot slot = prev;
+                    while (slot != null) {
                         if (slot.indexOrHash == indexOrHash &&
                             (slot.name == name ||
                              (name != null && name.equals(slot.name))))
                         {
-                            insertPos = i;
                             break;
                         }
-                        if (++i == tableSize)
-                            i = 0;
-                        // slots should never be full or bug in grow code
-                        if (i == start)
-                            throw Kit.codeBug();
+                        prev = slot;
+                        slot = slot.next;
                     }
 
                     if (slot != null) {
@@ -2217,11 +2193,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         if (accessType == SLOT_MODIFY_GETTER_SETTER &&
                             !(slot instanceof GetterSlot))
                         {
-                            GetterSlot newSlot;
-                            newSlot = new GetterSlot(name, indexOrHash,
-                                                     slot.getAttributes());
+                            GetterSlot newSlot = new GetterSlot(name, indexOrHash,
+                                    slot.getAttributes());
                             newSlot.value = slot.value;
-                            slotsLocalRef[insertPos] = newSlot;
+                            newSlot.next = slot.next;
+                            if (prev == slot) {
+                                slotsLocalRef[insertPos] = newSlot;
+                            } else {
+                                prev.next = newSlot;
+                            }
                             slot.wasDeleted = (byte)1;
                             if (slot == lastAccess) {
                                 lastAccess = REMOVED;
@@ -2238,8 +2218,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         slotsLocalRef = new Slot[slotsLocalRef.length * 2 + 1];
                         copyTable(slots, slotsLocalRef, count);
                         slots = slotsLocalRef;
-                        insertPos = getKnownAbsentPos(slotsLocalRef,
-                                                      indexOrHash);
+                        insertPos = getSlotIndex(slotsLocalRef.length,
+                                indexOrHash);
                     }
                 }
 
@@ -2249,7 +2229,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 if (accessType == SLOT_MODIFY_CONST)
                     newSlot.setAttributes(CONST);
                 ++count;
-                slotsLocalRef[insertPos] = newSlot;
+                addKnownAbsentSlot(slotsLocalRef, newSlot, insertPos);
                 return newSlot;
             }
 
@@ -2258,33 +2238,25 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 Slot[] slotsLocalRef = slots;
                 if (count != 0) {
                     int tableSize = slots.length;
-                    int start = getSearchStartIndex(tableSize, indexOrHash);
-                    Slot slot;
-                    int i = start;
-                    for (;;) {
-                        slot = slotsLocalRef[i];
-                        if (slot == null)
-                            return null;
-                        if (slot != REMOVED &&
-                            slot.indexOrHash == indexOrHash &&
+                    int slotIndex = getSlotIndex(tableSize, indexOrHash);
+                    Slot prev = slotsLocalRef[slotIndex];
+                    Slot slot = prev;
+                    while (slot != null) {
+                        if (slot.indexOrHash == indexOrHash &&
                             (slot.name == name ||
                              (name != null && name.equals(slot.name))))
                         {
                             break;
                         }
-                        if (++i == tableSize)
-                            i = 0;
-                        // slots should never be full or bug in grow code
-                        if (i == start)
-                            throw Kit.codeBug();
+                        prev = slot;
+                        slot = slot.next;
                     }
-                    if ((slot.getAttributes() & PERMANENT) == 0) {
+                    if (slot != null && (slot.getAttributes() & PERMANENT) == 0) {
                         count--;
-                        if (count != 0) {
-                            slotsLocalRef[i] = REMOVED;
+                        if (prev == slot) {
+                            slotsLocalRef[slotIndex] = slot.next;
                         } else {
-                            // With no slots mark with null.
-                            slotsLocalRef[i] = null;
+                            prev.next = slot.next;
                         }
                         // Mark the slot as removed to handle a case when
                         // another thread manages to put just removed slot
@@ -2303,7 +2275,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
     }
 
-    private static int getSearchStartIndex(int tableSize, int indexOrHash)
+    private static int getSlotIndex(int tableSize, int indexOrHash)
     {
         return (indexOrHash & 0x7fffffff) % tableSize;
     }
@@ -2313,15 +2285,19 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     {
         if (count == 0) throw Kit.codeBug();
 
+        int tableSize = newSlots.length;
         int i = slots.length;
         for (;;) {
             --i;
             Slot slot = slots[i];
-            if (slot != null && slot != REMOVED) {
-                int insertPos = getKnownAbsentPos(newSlots, slot.indexOrHash);
-                newSlots[insertPos] = slot;
+            while (slot != null) {
+                int insertPos = getSlotIndex(tableSize, slot.indexOrHash);
+                Slot next = slot.next;
+                addKnownAbsentSlot(newSlots, slot, insertPos);
+                slot.next = null;
+                slot = next;
                 if (--count == 0)
-                    break;
+                    return;
             }
         }
     }
@@ -2329,17 +2305,19 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     /**
      * Add slot with keys that are known to absent from the table.
      * This is an optimization to use when inserting into empty table,
-     * after table growth or during desirialization.
+     * after table growth or during deserialization.
      */
-    private static int getKnownAbsentPos(Slot[] slots, int indexOrHash)
+    private static void addKnownAbsentSlot(Slot[] slots, Slot slot, int insertPos)
     {
-        int tableSize = slots.length;
-        int i = getSearchStartIndex(tableSize, indexOrHash);
-        while (slots[i] != null) {
-            if (++i == tableSize)
-                i = 0;
+        if (slots[insertPos] == null) {
+            slots[insertPos] = slot;
+        } else {
+            Slot prev = slots[insertPos];
+            while (prev.next != null) {
+                prev = prev.next;
+            }
+            prev.next = slot;
         }
-        return i;
     }
 
     Object[] getIds(boolean getAll) {
@@ -2350,13 +2328,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         int c = 0;
         for (int i=0; i < s.length; i++) {
             Slot slot = s[i];
-            if (slot == null || slot == REMOVED)
-                continue;
-            if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
-                if (c == 0)
-                    a = new Object[s.length - i];
-                a[c++] = (slot.name != null ? (Object) slot.name
-                          : new Integer(slot.indexOrHash));
+            while (slot != null) {
+                if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
+                    if (c == 0)
+                        a = new Object[s.length];
+                    a[c++] = (slot.name != null ? (Object) slot.name
+                              : new Integer(slot.indexOrHash));
+                }
+                slot = slot.next;
             }
         }
         if (c == a.length)
@@ -2379,12 +2358,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             out.writeInt(0);
         } else {
             out.writeInt(slots.length);
-            for (int i = 0; ; ++i) {
+            for (int i = 0; i < slots.length; ++i) {
                 Slot slot = slots[i];
-                if (slot != null && slot != REMOVED) {
+                while (slot != null) {
                     out.writeObject(slot);
+                    slot = slot.next;
                     if (--objectsCount == 0)
-                        break;
+                        return;
                 }
             }
         }
@@ -2406,7 +2386,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
             for (int i = 0; i != objectsCount; ++i) {
                 Slot slot = (Slot)in.readObject();
-                slots[getKnownAbsentPos(slots, slot.indexOrHash)] = slot;
+                int slotIndex = getSlotIndex(tableSize, slot.indexOrHash);
+                addKnownAbsentSlot(slots, slot, slotIndex);
             }
         }
     }
