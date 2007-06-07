@@ -142,7 +142,7 @@ public final class JavaAdapter implements IdFunctionCall
                                                   Object adapter)
     {
         Scriptable scope = ScriptableObject.getTopLevelScope(obj);
-        NativeJavaObject res = new NativeJavaObject(scope, adapter, null);
+        NativeJavaObject res = new NativeJavaObject(scope, adapter, null, true);
         res.setPrototype(obj);
         return res;
     }
@@ -394,12 +394,10 @@ public final class JavaAdapter implements IdFunctionCall
         // methods or additional methods to override.
 
         // generate any additional overrides that the object might contain.
-        Method[] methods = superClass.getMethods();
+        Method[] methods = getOverridableMethods(superClass);
         for (int j = 0; j < methods.length; j++) {
             Method method = methods[j];
             int mods = method.getModifiers();
-            if (Modifier.isStatic(mods) || Modifier.isFinal(mods))
-                continue;
             // if a method is marked abstract, must implement it or the
             // resulting class won't be instantiable. otherwise, if the object
             // has a property of the same name, then an override is intended.
@@ -442,6 +440,23 @@ public final class JavaAdapter implements IdFunctionCall
                            ScriptRuntime.ObjectClass);
         }
         return cfw.toByteArray();
+    }
+
+    static Method[] getOverridableMethods(Class c)
+    {
+        ArrayList list = new ArrayList();
+        while (c != null) {
+            Method[] methods = c.getDeclaredMethods();
+            for (int i = 0; i < methods.length; i++) {
+                int mods = methods[i].getModifiers();
+                if (Modifier.isStatic(mods) || Modifier.isFinal(mods))
+                    continue;
+                if (Modifier.isPublic(mods) || Modifier.isProtected(mods))
+                    list.add(methods[i]);
+            }
+            c = c.getSuperclass();
+        }
+        return (Method[]) list.toArray(new Method[list.size()]);
     }
 
     static Class loadAdapterClass(String className, byte[] classBytes)
@@ -839,7 +854,7 @@ public final class JavaAdapter implements IdFunctionCall
         cfw.startMethod(methodName, methodSignature,
                         ClassFileWriter.ACC_PUBLIC);
 
-        // Prepare stack to call calMethod
+        // Prepare stack to call method
 
         // push factory
         cfw.add(ByteCode.ALOAD_0);

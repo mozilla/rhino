@@ -58,13 +58,17 @@ import java.util.Map;
  */
 class JavaMembers
 {
-
     JavaMembers(Scriptable scope, Class cl)
+    {
+        this(scope, cl, false);
+    }
+    
+    JavaMembers(Scriptable scope, Class cl, boolean includeProtected)
     {
         this.members = new Hashtable(23);
         this.staticMembers = new Hashtable(7);
         this.cl = cl;
-        reflect(scope);
+        reflect(scope, includeProtected);
     }
 
     boolean has(String name, boolean isStatic)
@@ -318,30 +322,46 @@ class JavaMembers
      * interfaces (if they exist). Basically upcasts every method to the 
      * nearest accessible method.
      */
-    private static Method[] discoverAccessibleMethods(Class clazz)
+    private static Method[] discoverAccessibleMethods(Class clazz, 
+                                                      boolean includeProtected)
     {
         Map map = new HashMap();
-        discoverAccessibleMethods(clazz, map);
-       return (Method[])map.values().toArray(new Method[map.size()]);
+        discoverAccessibleMethods(clazz, map, includeProtected);
+        return (Method[])map.values().toArray(new Method[map.size()]);
     }
     
-    private static void discoverAccessibleMethods(Class clazz, Map map)
+    private static void discoverAccessibleMethods(Class clazz, Map map,
+                                                  boolean includeProtected)
     {
-        if(Modifier.isPublic(clazz.getModifiers()))
-        {
-            try
-            {
-                Method[] methods = clazz.getMethods();
-                for(int i = 0; i < methods.length; i++)
-                {
+        if (Modifier.isPublic(clazz.getModifiers())) {
+            try {
+              if (includeProtected) {
+                while (clazz != null) {
+                  Method[] methods = clazz.getDeclaredMethods();
+                  for (int i = 0; i < methods.length; i++)
+                  {
                     Method method = methods[i];
-                    MethodSignature sig = new MethodSignature(method);
-                    map.put(sig, method);
+                    int mods = method.getModifiers();
+                    if (Modifier.isPublic(mods) || 
+                        Modifier.isProtected(mods)) 
+                    {
+                      MethodSignature sig = new MethodSignature(method);
+                      map.put(sig, method);
+                    }
+                  }
+                  clazz = clazz.getSuperclass();
                 }
-                return;
-            }
-            catch(SecurityException e)
-            {
+            } else {
+                Method[] methods = clazz.getMethods();
+                for (int i = 0; i < methods.length; i++)
+                {
+                  Method method = methods[i];
+                  MethodSignature sig = new MethodSignature(method);
+                  map.put(sig, method);
+                }
+              }
+              return;
+            } catch (SecurityException e) {
                 Context.reportWarning(
                         "Could not discover accessible methods of class " + 
                         clazz.getName() + " due to lack of privileges, " + 
@@ -352,14 +372,12 @@ class JavaMembers
         }
 
         Class[] interfaces = clazz.getInterfaces();
-        for(int i = 0; i < interfaces.length; i++)
-        {
-            discoverAccessibleMethods(interfaces[i], map);
+        for (int i = 0; i < interfaces.length; i++) {
+            discoverAccessibleMethods(interfaces[i], map, includeProtected);
         }
         Class superclass = clazz.getSuperclass();
-        if(superclass != null)
-        {
-            discoverAccessibleMethods(superclass, map);
+        if (superclass != null) {
+            discoverAccessibleMethods(superclass, map, includeProtected);
         }
     }
 
@@ -395,19 +413,16 @@ class JavaMembers
         }
     }
     
-    private void reflect(Scriptable scope)
+    private void reflect(Scriptable scope, boolean includeProtected)
     {
         // We reflect methods first, because we want overloaded field/method
         // names to be allocated to the NativeJavaMethod before the field
         // gets in the way.
 
-        Method[] methods = discoverAccessibleMethods(cl);
+        Method[] methods = discoverAccessibleMethods(cl, includeProtected);
         for (int i = 0; i < methods.length; i++) {
             Method method = methods[i];
             int mods = method.getModifiers();
-            if (!Modifier.isPublic(mods)) {
-                continue;
-            }
             boolean isStatic = Modifier.isStatic(mods);
             Hashtable ht = isStatic ? staticMembers : members;
             String name = method.getName();
@@ -722,7 +737,7 @@ class JavaMembers
     }
 
     static JavaMembers lookupClass(Scriptable scope, Class dynamicType,
-                                   Class staticType)
+                                   Class staticType, boolean includeProtected)
     {
         JavaMembers members;
         ClassCache cache = ClassCache.get(scope);
@@ -735,7 +750,7 @@ class JavaMembers
                 return members;
             }
             try {
-                members = new JavaMembers(cache.scope, cl);
+                members = new JavaMembers(cache.scope, cl, includeProtected);
                 break;
             } catch (SecurityException e) {
                 // Reflection may fail for objects that are in a restricted
