@@ -84,7 +84,7 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
                 state = STATE_INITIALIZING;
                 // Set value now to have something to set in finaly block if
                 // buildValue throws.
-                Object value = Undefined.instance;
+                Object value = Scriptable.NOT_FOUND;
                 try {
                     value = buildValue();
                 } finally {
@@ -127,7 +127,7 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
             } catch (SecurityException ex) {
             }
         }
-        return Undefined.instance;
+        return Scriptable.NOT_FOUND;
     }
 
 }
