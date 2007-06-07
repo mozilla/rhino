@@ -67,9 +67,16 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     public NativeJavaObject(Scriptable scope, Object javaObject,
                             Class staticType)
     {
+        this(scope, javaObject, staticType, false);
+    }
+
+    public NativeJavaObject(Scriptable scope, Object javaObject,
+                            Class staticType, boolean isAdapter)
+    {
         this.parent = scope;
         this.javaObject = javaObject;
         this.staticType = staticType;
+        this.isAdapter = isAdapter;
         initMembers();
     }
 
@@ -80,7 +87,8 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         } else {
             dynamicType = staticType;
         }
-        members = JavaMembers.lookupClass(parent, dynamicType, staticType);
+        members = JavaMembers.lookupClass(parent, dynamicType, staticType, 
+                                          isAdapter);
         fieldAndMethods
             = members.getFieldAndMethodsObjects(this, javaObject, false);
     }
@@ -896,25 +904,18 @@ WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class)}
     {
         out.defaultWriteObject();
 
-        if (javaObject != null) {
-            Class joClass = javaObject.getClass();
-            if (joClass.getName().startsWith("adapter")) {
-                out.writeBoolean(true);
-                if (adapter_writeAdapterObject == null) {
-                    throw new IOException();
-                }
-                Object[] args = { javaObject, out };
-                try {
-                    adapter_writeAdapterObject.invoke(null, args);
-                } catch (Exception ex) {
-                    throw new IOException();
-                }
-            } else {
-                out.writeBoolean(false);
-                out.writeObject(javaObject);
+        out.writeBoolean(isAdapter);
+        if (isAdapter) {
+            if (adapter_writeAdapterObject == null) {
+                throw new IOException();
+            }
+            Object[] args = { javaObject, out };
+            try {
+                adapter_writeAdapterObject.invoke(null, args);
+            } catch (Exception ex) {
+                throw new IOException();
             }
         } else {
-            out.writeBoolean(false);
             out.writeObject(javaObject);
         }
 
@@ -930,7 +931,8 @@ WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class)}
     {
         in.defaultReadObject();
 
-        if (in.readBoolean()) {
+        isAdapter = in.readBoolean();
+        if (isAdapter) {
             if (adapter_readAdapterObject == null)
                 throw new ClassNotFoundException();
             Object[] args = { this, in };
@@ -968,6 +970,7 @@ WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class)}
     protected transient Class staticType;
     protected transient JavaMembers members;
     private transient Hashtable fieldAndMethods;
+    private transient boolean isAdapter;
 
     private static final Object COERCED_INTERFACE_KEY = new Object();
     private static Method adapter_writeAdapterObject;
