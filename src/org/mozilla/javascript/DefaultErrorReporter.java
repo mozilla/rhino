@@ -75,8 +75,19 @@ class DefaultErrorReporter implements ErrorReporter
                       String lineText, int lineOffset)
     {
         if (forEval) {
-            throw ScriptRuntime.constructError(
-                "SyntaxError", message, sourceURI, line, lineText, lineOffset);
+            // Assume error message strings that start with "TypeError: "
+            // should become TypeError exceptions. A bit of a hack, but we
+            // don't want to change the ErrorReporter interface.
+            String error = "SyntaxError";
+            final String TYPE_ERROR_NAME = "TypeError";
+            final String DELIMETER = ": ";
+            final String prefix = TYPE_ERROR_NAME + DELIMETER;
+            if (message.startsWith(prefix)) {
+                error = TYPE_ERROR_NAME;
+                message = message.substring(prefix.length());
+            }
+            throw ScriptRuntime.constructError(error, message, sourceURI, 
+                                               line, lineText, lineOffset);
         }
         if (chainedReporter != null) {
             chainedReporter.error(
