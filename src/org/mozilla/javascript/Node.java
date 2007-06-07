@@ -991,6 +991,7 @@ public class Node
           case Token.BREAK:
           case Token.CONTINUE:
           case Token.VAR:
+          case Token.CONST:
           case Token.WITH:
           case Token.CATCH:
           case Token.FINALLY:
