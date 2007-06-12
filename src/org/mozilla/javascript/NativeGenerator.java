@@ -13,14 +13,6 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-1999
- * the Initial Developer. All Rights Reserved.
- *
  * Contributor(s):
  *   Norris Boyd
  *
@@ -50,14 +42,6 @@ public final class NativeGenerator extends IdScriptableObject {
     static void init(Scriptable scope, boolean sealed) {
         // Generator
         new NativeGenerator().exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
-
-        // StopIteration
-        NativeObject obj = new StopIteration();
-        obj.setPrototype(getObjectPrototype(scope));
-        obj.setParentScope(scope);
-        if (sealed) { obj.sealObject(); }
-        ScriptableObject.defineProperty(scope, STOP_ITERATION, obj,
-                                        ScriptableObject.DONTENUM);
     }
     
     /**
@@ -68,12 +52,6 @@ public final class NativeGenerator extends IdScriptableObject {
     NativeGenerator(NativeFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
-    }
-    
-    public static final String STOP_ITERATION = "StopIteration";
-    
-    static class StopIteration extends NativeObject {
-        public String getClassName() { return STOP_ITERATION; }
     }
     
     public static final int GENERATOR_SEND  = 0,
@@ -93,6 +71,7 @@ public final class NativeGenerator extends IdScriptableObject {
           case Id_next:           arity=1; s="next";           break;
           case Id_send:           arity=0; s="send";           break;
           case Id_throw:          arity=0; s="throw";          break;
+          case Id___iterator__:   arity=1; s="__iterator__";   break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(GENERATOR_TAG, id, s, arity);
@@ -140,6 +119,9 @@ public final class NativeGenerator extends IdScriptableObject {
             return generator.resume(cx, scope, GENERATOR_THROW,
             		args.length > 0 ? args[0] : Undefined.instance);
 
+          case Id___iterator__:
+            return thisObj;
+
           default: 
         	throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -149,12 +131,15 @@ public final class NativeGenerator extends IdScriptableObject {
     		              Object value)
     {
         if (savedState == null) {
-        	if (operation == GENERATOR_CLOSE)
-        		return Undefined.instance;
-        	Object thrown = operation == GENERATOR_THROW
-                ? value
-                : ScriptableObject.getTopLevelScope(scope).get(STOP_ITERATION, 
-                        scope);
+            if (operation == GENERATOR_CLOSE)
+                return Undefined.instance;
+            Object thrown;
+            if (operation == GENERATOR_THROW) {
+                thrown = value;
+            } else {
+                Scriptable top = ScriptableObject.getTopLevelScope(scope);
+                thrown = top.get(NativeIterator.STOP_ITERATION, scope);
+            }
             throw new JavaScriptException(thrown, lineSource, lineNumber);
         }
         try {
@@ -186,20 +171,20 @@ public final class NativeGenerator extends IdScriptableObject {
 
     protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2007-05-09 08:23:27 EDT
+// #generated# Last update: 2007-06-11 14:21:03 EDT
         L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==4) {
-                c=s.charAt(0);
+            L: switch (s.length()) {
+            case 4: c=s.charAt(0);
                 if (c=='n') { X="next";id=Id_next; }
                 else if (c=='s') { X="send";id=Id_send; }
-            }
-            else if (s_length==5) {
-                c=s.charAt(0);
+                break L;
+            case 5: c=s.charAt(0);
                 if (c=='c') { X="close";id=Id_close; }
                 else if (c=='t') { X="throw";id=Id_throw; }
+                break L;
+            case 11: X="constructor";id=Id_constructor; break L;
+            case 12: X="__iterator__";id=Id___iterator__; break L;
             }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
         }
@@ -213,7 +198,8 @@ public final class NativeGenerator extends IdScriptableObject {
         Id_next                  = 3,
         Id_send                  = 4,
         Id_throw                 = 5,
-        MAX_PROTOTYPE_ID         = 5;
+        Id___iterator__          = 6,
+        MAX_PROTOTYPE_ID         = 6;
 
 // #/string_id_map#
 

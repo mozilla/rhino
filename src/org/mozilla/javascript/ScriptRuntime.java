@@ -203,9 +203,11 @@ public class ScriptRuntime {
         NativeCall.init(scope, sealed);
         NativeScript.init(scope, sealed);
         
+        NativeIterator.init(scope, sealed);
         // TODO(js1.7gen): jsshell marks generators as JSCLASS_IS_ANONYMOUS, 
         // meaning that "Generator" is not defined in the global scope
         NativeGenerator.init(scope, sealed);
+
 
         boolean withXml = cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
 
@@ -233,7 +235,7 @@ public class ScriptRuntime {
         return libScope;
     }
 
-    // It is public so NativeRegExp can access it .
+    // It is public so NativeRegExp can access it.
     public static boolean isJSLineTerminator(int c)
     {
         // Optimization for faster check for eol character:
@@ -1380,7 +1382,7 @@ public class ScriptRuntime {
         if (result == Scriptable.NOT_FOUND) {
             if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
                 Context.reportWarning(ScriptRuntime.getMessage1(
-                		"msg.ref.undefined.prop", property));
+                    "msg.ref.undefined.prop", property));
             }
             result = Undefined.instance;
         }
@@ -1839,34 +1841,88 @@ public class ScriptRuntime {
         Object[] ids;
         int index;
         ObjToIntMap used;
-        String currentId;
+        Object currentId;
         boolean enumValues;
+        
+        // if true, integer ids will be returned as numbers rather than strings
+        boolean enumNumbers; 
+        
+        Scriptable iterator;
+    }
+    
+    public static Scriptable toIterator(Context cx, Scriptable scope, 
+                                        Scriptable obj, boolean keyOnly)
+    {
+      if (ScriptableObject.hasProperty(obj, 
+          NativeIterator.ITERATOR_PROPERTY_NAME))
+      {
+        Object v = ScriptableObject.getProperty(obj, 
+            NativeIterator.ITERATOR_PROPERTY_NAME);
+        if (!(v instanceof Callable)) {
+           throw typeError0("msg.invalid.iterator");
+        }
+        Callable f = (Callable) v;
+        Object[] args = emptyArgs;
+        if (keyOnly) {
+          args = new Object[] { Boolean.TRUE };
+        }
+        v = f.call(cx, scope, obj, args);
+        if (!(v instanceof Scriptable)) {
+            throw typeError("msg.iterator.primitive");
+        }
+        return (Scriptable) v;
+      }
+      return null;
     }
 
     public static Object enumInit(Object value, Context cx, boolean enumValues)
     {
         IdEnumeration x = new IdEnumeration();
         x.obj = toObjectOrNull(cx, value);
-        if (x.obj != null) {
+        if (x.obj == null) {
             // null or undefined do not cause errors but rather lead to empty
             // "for in" loop
-            x.enumValues = enumValues;
-            // enumInit should read all initial ids before returning
-            // or "for (a.i in a)" would wrongly enumerate i in a as well
-            enumChangeObject(x);
+            return x;
         }
+        x.enumValues = enumValues;
+        x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj, false);
+
+        // enumInit should read all initial ids before returning
+        // or "for (a.i in a)" would wrongly enumerate i in a as well
+        enumChangeObject(x);
+        
         return x;
+    }
+    
+    public static void setEnumNumbers(Object enumObj, boolean enumNumbers) {
+      ((IdEnumeration)enumObj).enumNumbers = enumNumbers;
     }
 
     public static Boolean enumNext(Object enumObj)
     {
-        // OPT this could be more efficient
-        boolean result;
         IdEnumeration x = (IdEnumeration)enumObj;
+        if (x.iterator != null) {
+            Object v = ScriptableObject.getProperty(x.iterator, "next");
+            if (!(v instanceof Callable))
+                return Boolean.FALSE;
+            Callable f = (Callable) v;
+            Context cx = Context.enter();
+            try {
+                x.currentId = f.call(cx, x.iterator.getParentScope(), 
+                                     x.iterator, emptyArgs);
+                return Boolean.TRUE;
+            } catch (JavaScriptException e) {
+                if (e.getValue() instanceof NativeIterator.StopIteration) {
+                  return Boolean.FALSE;
+                }
+                throw e;
+            } finally {
+                Context.exit();
+            }
+        }
         for (;;) {
             if (x.obj == null) {
-                result = false;
-                break;
+                return Boolean.FALSE;
             }
             if (x.index == x.ids.length) {
                 x.obj = x.obj.getPrototype();
@@ -1886,21 +1942,27 @@ public class ScriptRuntime {
                 int intId = ((Number)id).intValue();
                 if (!x.obj.has(intId, x.obj))
                     continue;   // must have been deleted
-                x.currentId = String.valueOf(intId);
+                x.currentId = x.enumNumbers ? (Object) (new Integer(intId))
+                                            : String.valueOf(intId);
             }
-            result = true;
-            break;
+            return Boolean.TRUE;
         }
-        return wrapBoolean(result);
     }
 
     public static Object enumId(Object enumObj, Context cx)
     {
         IdEnumeration x = (IdEnumeration)enumObj;
-        if (!x.enumValues) return x.currentId;
-
+        if (!x.enumValues)
+            return x.currentId;
+        else
+            return enumValue(enumObj, cx);
+    }
+    
+    public static Object enumValue(Object enumObj, Context cx) {
+        IdEnumeration x = (IdEnumeration)enumObj;
+  
         Object result;
-
+  
         String s = toStringIdOrIndex(cx, x.currentId);
         if (s == null) {
             int index = lastIndexResult(cx);
@@ -1908,7 +1970,7 @@ public class ScriptRuntime {
         } else {
             result = x.obj.get(s, x.obj);
         }
-
+  
         return result;
     }
 
@@ -3603,4 +3665,3 @@ public class ScriptRuntime {
     public static final String[] emptyStrings = new String[0];
 
 }
-

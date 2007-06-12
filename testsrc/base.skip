@@ -159,7 +159,7 @@ js1_5/extensions/regress-50447-1.js
 # Invalid bug
 e4x/Regress/regress-278112.js
 
-# Invalid test? Cannot convert NaN to java.lang.Long 
+# Invalid test? Cannot convert NaN to java.lang.Long
 lc3/template.js
 
 # Depends on generators being closed due to a call to gc(): not relevant to Rhino
@@ -168,8 +168,6 @@ js1_7/geniter/regress-349012-01.js
 js1_7/geniter/regress-349331.js
 
 # Generator functionality not yet implemented:
-# "Iterator" constructor
-js1_7/geniter/builtin-Iterator-function.js
 # array comprehensions
 js1_7/geniter/regress-345736.js
 # let statements
@@ -178,8 +176,6 @@ js1_7/geniter/regress-347593.js
 js1_7/geniter/regress-352605.js
 # destructuring assignment
 js1_7/geniter/regress-366941.js
-# for (i in <generator>)
-js1_7/geniter/regress-350621.js
 
 # JS 1.7 not yet implemented
 js1_7/block
