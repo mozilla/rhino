@@ -665,7 +665,7 @@ public class Parser
         try {
             Node pn = statementHelper(null);
             if (pn != null) {
-                if (!pn.hasSideEffects())
+                if (compilerEnv.isStrictMode() && !pn.hasSideEffects())
                     addStrictWarning("msg.no.side.effects", "");
                 return pn;
             }
@@ -1365,7 +1365,7 @@ public class Parser
         Node pn = assignExpr(inForInit);
         while (matchToken(Token.COMMA)) {
             decompiler.addToken(Token.COMMA);
-            if (!pn.hasSideEffects())
+            if (compilerEnv.isStrictMode() && !pn.hasSideEffects())
                 addStrictWarning("msg.no.side.effects", "");
             if (peekToken() == Token.YIELD) {
               reportError("msg.yield.parenthesized");
