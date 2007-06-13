@@ -67,7 +67,7 @@ public final class JavaAdapter implements IdFunctionCall
         {
             this.superClass = superClass;
             this.interfaces = interfaces;
-            this.names = names;;
+            this.names = names;
         }
 
         public boolean equals(Object obj)
