@@ -928,7 +928,6 @@ public class Node
     {
         switch (type) {
           case Token.EXPR_VOID:
-          case Token.EXPR_RESULT:
           case Token.COMMA:
             if (last != null)
                 return last.hasSideEffects();
@@ -944,6 +943,7 @@ public class Node
                    first.next.next.hasSideEffects();
 
           case Token.ERROR:         // Avoid cascaded error messages
+          case Token.EXPR_RESULT:
           case Token.ASSIGN:
           case Token.ASSIGN_ADD:
           case Token.ASSIGN_SUB:
