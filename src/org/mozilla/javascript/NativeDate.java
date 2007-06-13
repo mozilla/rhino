@@ -1052,7 +1052,9 @@ final class NativeDate extends IdScriptableObject
              }
             result.append(" (");
             java.util.Date date = new Date((long) t);
-            result.append(timeZoneFormatter.format(date));
+            synchronized (timeZoneFormatter) {
+                result.append(timeZoneFormatter.format(date));
+            }
             result.append(')');
         }
         return result.toString();
@@ -1126,7 +1128,9 @@ final class NativeDate extends IdScriptableObject
           default: formatter = null; // unreachable
         }
 
-        return formatter.format(new Date((long) t));
+        synchronized (formatter) {
+            return formatter.format(new Date((long) t));
+        }
     }
 
     private static String js_toUTCString(double date)
