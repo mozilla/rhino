@@ -2136,10 +2136,11 @@ public class ScriptRuntime {
         }
 
         Callable f = (Callable)value;
-        Scriptable thisObj;
+        Scriptable thisObj = null;
         if (f instanceof Scriptable) {
             thisObj = ((Scriptable)f).getParentScope();
-        } else {
+        }
+        if (thisObj == null) {
             if (cx.topCallScope == null) throw new IllegalStateException();
             thisObj = cx.topCallScope;
         }
