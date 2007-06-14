@@ -155,20 +155,11 @@
   <target name="copy-all" depends="copy-source,copy-examples,copy-misc">
   </target>
 
-  <target name="copy-docs" depends="init">
-    <echo message="copy from docs"/>
-    <mkdir dir="${dist.dir}/docs"/>
-    <copy todir="${dist.dir}/docs">
-      <fileset dir="docs" includes="**/*.html,**/*.jpg,**/*.gif,**/*.js" />
-    </copy>
-  </target>
-
-  <target name="javadoc" depends="copy-docs">
-    <mkdir dir="${dist.dir}/docs/apidocs"/>
+  <target name="javadoc" depends="init">
+    <mkdir dir="${dist.dir}/javadoc"/>
     <javadoc sourcefiles="${apiClasses}"
              sourcepath="src"
-             destdir="${dist.dir}/docs/apidocs"
-             overview="${dist.dir}/docs/api.html"
+             destdir="${dist.dir}/javadoc"
              version="true"
              author="true"
              windowtitle="${Name}" />
@@ -181,7 +172,7 @@
     </zip>
   </target>
 
-  <target name="source-zip" depends="copy-source,copy-examples,copy-docs">
+  <target name="source-zip" depends="copy-source,copy-examples,javadoc">
     <delete file="${dist.source-only-zip}" />
     <zip destfile="${dist.source-only-zip}">
       <zipfileset prefix="${dist.name}" dir="${dist.dir}">
@@ -189,8 +180,6 @@
         <include name="build.xml"/>
         <include name="*.properties"/>
         <include name="examples/**"/>
-        <include name="docs/**"/>
-        <exclude name="docs/apidocs/**"/>
       </zipfileset>
     </zip>
   </target>
@@ -266,7 +255,7 @@
              from the doc directory for details.
 
  javadoc     generate Rhino API documentation
-             in ${dist.dir}/docs/apidocs
+             in ${dist.dir}/javadoc
 
  source-zip  create ${dist.source-only-zip} with all Rhino
              source files necessary to recreate ${dist.file}
