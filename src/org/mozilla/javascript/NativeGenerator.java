@@ -39,9 +39,21 @@ package org.mozilla.javascript;
 public final class NativeGenerator extends IdScriptableObject {
     private static final Object GENERATOR_TAG = new Object();
     
-    static void init(Scriptable scope, boolean sealed) {
+    static NativeGenerator init(Scriptable scope, boolean sealed) {
         // Generator
-        new NativeGenerator().exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        // Can't use "NativeGenerator().exportAsJSClass" since we don't want
+        // to define "Generator" as a constructor in the top-level scope.
+      
+        NativeGenerator prototype = new NativeGenerator();
+        if (scope != null) {
+            prototype.setParentScope(scope);
+            prototype.setPrototype(getObjectPrototype(scope));
+        }
+        prototype.activatePrototypeMap(MAX_PROTOTYPE_ID);
+        if (sealed) {
+            prototype.sealObject();
+        }
+        return prototype;
     }
     
     /**
@@ -49,9 +61,25 @@ public final class NativeGenerator extends IdScriptableObject {
      */
     private NativeGenerator() { }
     
-    NativeGenerator(NativeFunction function, Object savedState) {
+    NativeGenerator(Scriptable scope, NativeFunction function, 
+                    Object savedState)
+    {
         this.function = function;
         this.savedState = savedState;
+        
+        // Set parent and prototype properties. Since we don't have a 
+        // "Generator" constructor in the top scope, we stash the 
+        // prototype in a convenient place--the StopIteration object.
+        // We do this through a Java API so it is invisible to JavaScript.
+        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        this.setParentScope(top);
+        Object obj = top.get(NativeIterator.STOP_ITERATION, scope);
+        if (!(obj instanceof NativeIterator.StopIteration)) {
+            throw ScriptRuntime.typeError0("msg.StopIteration.invalid") ;
+        }
+        NativeIterator.StopIteration stopIteration = 
+          (NativeIterator.StopIteration) obj;
+        this.setPrototype(stopIteration.getGeneratorPrototype());
     }
     
     public static final int GENERATOR_SEND  = 0,
@@ -66,7 +94,6 @@ public final class NativeGenerator extends IdScriptableObject {
         String s;
         int arity;
         switch (id) {
-          case Id_constructor:    arity=1; s="constructor";    break;
           case Id_close:          arity=1; s="close";          break;
           case Id_next:           arity=1; s="next";           break;
           case Id_send:           arity=0; s="send";           break;
@@ -91,11 +118,6 @@ public final class NativeGenerator extends IdScriptableObject {
         NativeGenerator generator = (NativeGenerator) thisObj;
         
         switch (id) {
-        
-          case Id_constructor:
-            // TODO(js1.7gen): Shouldn't have a constructor. Currently need 
-            // one to get Generator.prototype
-            return null;
             
           case Id_close:
             // need to run any pending finally clauses
@@ -171,20 +193,20 @@ public final class NativeGenerator extends IdScriptableObject {
 
     protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2007-06-11 14:21:03 EDT
+// #generated# Last update: 2007-06-14 13:13:03 EDT
         L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 4: c=s.charAt(0);
+            int s_length = s.length();
+            if (s_length==4) {
+                c=s.charAt(0);
                 if (c=='n') { X="next";id=Id_next; }
                 else if (c=='s') { X="send";id=Id_send; }
-                break L;
-            case 5: c=s.charAt(0);
+            }
+            else if (s_length==5) {
+                c=s.charAt(0);
                 if (c=='c') { X="close";id=Id_close; }
                 else if (c=='t') { X="throw";id=Id_throw; }
-                break L;
-            case 11: X="constructor";id=Id_constructor; break L;
-            case 12: X="__iterator__";id=Id___iterator__; break L;
             }
+            else if (s_length==12) { X="__iterator__";id=Id___iterator__; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
         }
@@ -193,13 +215,12 @@ public final class NativeGenerator extends IdScriptableObject {
     }
 
     private static final int
-        Id_constructor           = 1,
-        Id_close                 = 2,
-        Id_next                  = 3,
-        Id_send                  = 4,
-        Id_throw                 = 5,
-        Id___iterator__          = 6,
-        MAX_PROTOTYPE_ID         = 6;
+        Id_close                 = 1,
+        Id_next                  = 2,
+        Id_send                  = 3,
+        Id_throw                 = 4,
+        Id___iterator__          = 5,
+        MAX_PROTOTYPE_ID         = 5;
 
 // #/string_id_map#
 

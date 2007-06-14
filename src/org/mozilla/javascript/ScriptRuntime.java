@@ -203,13 +203,10 @@ public class ScriptRuntime {
         NativeCall.init(scope, sealed);
         NativeScript.init(scope, sealed);
         
-        NativeIterator.init(scope, sealed);
-        // TODO(js1.7gen): jsshell marks generators as JSCLASS_IS_ANONYMOUS, 
-        // meaning that "Generator" is not defined in the global scope
-        NativeGenerator.init(scope, sealed);
+        NativeIterator.init(scope, sealed); // Also initializes NativeGenerator
 
-
-        boolean withXml = cx.hasFeature(Context.FEATURE_E4X) && cx.getE4xImplementationFactory() != null;
+        boolean withXml = cx.hasFeature(Context.FEATURE_E4X) && 
+                          cx.getE4xImplementationFactory() != null;
 
         for (int i = 0; i != lazilyNames.length; i += 2) {
             String topProperty = lazilyNames[i];
@@ -217,7 +214,8 @@ public class ScriptRuntime {
             if (!withXml && className.equals("(xml)")) {
                 continue;
             } else if (withXml && className.equals("(xml)")) {
-				className = cx.getE4xImplementationFactory().getImplementationClassName();
+				className = cx.getE4xImplementationFactory().
+                               getImplementationClassName();
 			}
             new LazilyLoadedCtor(scope, topProperty, className, sealed);
         }

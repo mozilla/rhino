@@ -2685,10 +2685,8 @@ switch (op) {
           frame.pc--; // we want to come back here when we resume
           CallFrame generatorFrame = captureFrameForGenerator(frame);
           generatorFrame.frozen = true;
-          NativeGenerator generator
-              = new NativeGenerator(generatorFrame.fnOrScript, generatorFrame);
-          ScriptRuntime.setObjectProtoAndParent(generator,
-              ScriptRuntime.getTopCallScope(cx));
+          NativeGenerator generator = new NativeGenerator(frame.scope, 
+              generatorFrame.fnOrScript, generatorFrame);
           frame.result = generator;
           break Loop;
         } else {
