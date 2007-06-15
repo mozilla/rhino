@@ -1851,26 +1851,26 @@ public class ScriptRuntime {
     public static Scriptable toIterator(Context cx, Scriptable scope, 
                                         Scriptable obj, boolean keyOnly)
     {
-      if (ScriptableObject.hasProperty(obj, 
-          NativeIterator.ITERATOR_PROPERTY_NAME))
-      {
-        Object v = ScriptableObject.getProperty(obj, 
-            NativeIterator.ITERATOR_PROPERTY_NAME);
-        if (!(v instanceof Callable)) {
-           throw typeError0("msg.invalid.iterator");
+        if (ScriptableObject.hasProperty(obj, 
+            NativeIterator.ITERATOR_PROPERTY_NAME))
+        {
+            Object v = ScriptableObject.getProperty(obj, 
+                NativeIterator.ITERATOR_PROPERTY_NAME);
+            if (!(v instanceof Callable)) {
+               throw typeError0("msg.invalid.iterator");
+            }
+            Callable f = (Callable) v;
+            Object[] args = emptyArgs;
+            if (keyOnly) {
+                args = new Object[] { Boolean.TRUE };
+            }
+            v = f.call(cx, scope, obj, args);
+            if (!(v instanceof Scriptable)) {
+                throw typeError("msg.iterator.primitive");
+            }
+            return (Scriptable) v;
         }
-        Callable f = (Callable) v;
-        Object[] args = emptyArgs;
-        if (keyOnly) {
-          args = new Object[] { Boolean.TRUE };
-        }
-        v = f.call(cx, scope, obj, args);
-        if (!(v instanceof Scriptable)) {
-            throw typeError("msg.iterator.primitive");
-        }
-        return (Scriptable) v;
-      }
-      return null;
+        return null;
     }
 
     public static Object enumInit(Object value, Context cx, boolean enumValues)
@@ -1883,7 +1883,7 @@ public class ScriptRuntime {
             return x;
         }
         x.enumValues = enumValues;
-        x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj, false);
+        x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj, true);
 
         // enumInit should read all initial ids before returning
         // or "for (a.i in a)" would wrongly enumerate i in a as well
@@ -1893,7 +1893,7 @@ public class ScriptRuntime {
     }
     
     public static void setEnumNumbers(Object enumObj, boolean enumNumbers) {
-      ((IdEnumeration)enumObj).enumNumbers = enumNumbers;
+        ((IdEnumeration)enumObj).enumNumbers = enumNumbers;
     }
 
     public static Boolean enumNext(Object enumObj)
