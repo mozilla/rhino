@@ -576,11 +576,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             return null;
         if (slot instanceof GetterSlot) {
             GetterSlot gslot = (GetterSlot)slot;
-            if (isSetter) {
-                return gslot.setter;
-            } else {
-                return gslot.getter;
-            }
+            Object result = isSetter ? gslot.setter : gslot.getter;
+            return result != null ? result : Undefined.instance;
         } else
             return Undefined.instance;
     }
