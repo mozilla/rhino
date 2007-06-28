@@ -231,9 +231,11 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             Object varArgs;
             
             // Handle special situation where a single variable parameter
-            // is given and it is an ECMA array.
+            // is given and it is a Java or ECMA array.
             if (args.length == argTypes.length &&
-                args[args.length-1] instanceof NativeArray)
+                (args[args.length-1] == null ||
+                 args[args.length-1] instanceof NativeArray ||
+                 args[args.length-1] instanceof NativeJavaArray))
             {
                 // convert the ECMA array into a native array
                 varArgs = Context.jsToJava(args[args.length-1], 
