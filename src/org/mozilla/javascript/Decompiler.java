@@ -590,6 +590,10 @@ public class Decompiler
                 result.append("var ");
                 break;
 
+            case Token.LET:
+              result.append("let ");
+              break;
+
             case Token.SEMI:
                 result.append(';');
                 if (Token.EOL != getNext(source, length, i)) {

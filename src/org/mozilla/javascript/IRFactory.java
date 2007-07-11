@@ -356,32 +356,16 @@ final class IRFactory
         if (functionCount != 0) {
             // Functions containing other functions require activation objects
             fnNode.itsNeedsActivation = true;
-            for (int i = 0; i != functionCount; ++i) {
-                FunctionNode fn = fnNode.getFunctionNode(i);
-                // nested function expression statements overrides var
-                if (fn.getFunctionType()
-                        == FunctionNode.FUNCTION_EXPRESSION_STATEMENT)
-                {
-                    String name = fn.getFunctionName();
-                    if (name != null && name.length() != 0) {
-                        fnNode.removeParamOrVar(name);
-                    }
-                }
-            }
         }
 
         if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
             String name = fnNode.getFunctionName();
-            if (name != null && name.length() != 0
-                && !fnNode.hasParamOrVar(name))
-            {
+            if (name != null && name.length() != 0) {
                 // A function expression needs to have its name as a
                 // variable (if it isn't already allocated as a variable).
                 // See ECMA Ch. 13.  We add code to the beginning of the
                 // function to initialize a local variable of the
                 // function's name to the function value.
-                if (fnNode.addVar(name) == ScriptOrFnNode.DUPLICATE_CONST)
-                    parser.addError("msg.const.redecl", name);
                 Node setFn = new Node(Token.EXPR_VOID,
                                  new Node(Token.SETNAME,
                                      Node.newString(Token.BINDNAME, name),
@@ -413,13 +397,25 @@ final class IRFactory
     }
 
     /**
+     * Create a node that can be used to hold lexically scoped variable
+     * definitions (via let declarations).
+     * 
+     * @param token the token of the node to create
+     * @param lineno line number of source
+     * @return the created node
+     */
+    Node createScopeNode(int token, int lineno) {
+        return new Node.Scope(token, lineno);
+    }
+
+    /**
      * Create loop node. The parser will later call
      * createWhile|createDoWhile|createFor|createForIn
      * to finish loop generation.
      */
     Node createLoopNode(Node loopLabel, int lineno)
     {
-        Node.Jump result = new Node.Jump(Token.LOOP, lineno);
+        Node.Jump result = new Node.Scope(Token.LOOP, lineno);
         if (loopLabel != null) {
             ((Node.Jump)loopLabel).setLoop(result);
         }
@@ -483,8 +479,9 @@ final class IRFactory
             loop.addChildToFront(makeJump(Token.GOTO, condTarget));
 
             if (loopType == LOOP_FOR) {
-                if (init.getType() != Token.EMPTY) {
-                    if (init.getType() != Token.VAR) {
+                int initType = init.getType();
+                if (initType != Token.EMPTY) {
+                    if (initType != Token.VAR && initType != Token.LET) {
                         init = new Node(Token.EXPR_VOID, init);
                     }
                     loop.addChildToFront(init);
@@ -514,7 +511,7 @@ final class IRFactory
         int type = lhs.getType();
 
         Node lvalue;
-        if (type == Token.VAR) {
+        if (type == Token.VAR || type == Token.LET) {
             /*
              * check that there was only one variable given.
              * we can't do this in the parser, because then the
@@ -552,7 +549,7 @@ final class IRFactory
 
         loop = createWhile(loop, cond, newBody);
         loop.addChildToFront(init);
-        if (type == Token.VAR)
+        if (type == Token.VAR || type == Token.LET)
             loop.addChildToFront(lhs);
         localBlock.addChildToBack(loop);
 
@@ -1290,11 +1287,8 @@ final class IRFactory
         int nodeType = left.getType();
         switch (nodeType) {
           case Token.NAME: {
-            String s = left.getString();
-
-            Node opLeft = Node.newString(Token.NAME, s);
-            Node op = new Node(assignOp, opLeft, right);
-            Node lvalueLeft = Node.newString(Token.BINDNAME, s);
+            Node op = new Node(assignOp, left, right);
+            Node lvalueLeft = Node.newString(Token.BINDNAME, left.getString());
             return new Node(Token.SETNAME, lvalueLeft, op);
           }
           case Token.GETPROP:
@@ -1374,30 +1368,6 @@ final class IRFactory
         }
         return 0;
     }
-
-// Commented-out: no longer used    
-//     private static boolean hasSideEffects(Node exprTree)
-//     {
-//         switch (exprTree.getType()) {
-//           case Token.INC:
-//           case Token.DEC:
-//           case Token.SETPROP:
-//           case Token.SETELEM:
-//           case Token.SETNAME:
-//           case Token.CALL:
-//           case Token.NEW:
-//             return true;
-//           default:
-//             Node child = exprTree.getFirstChild();
-//             while (child != null) {
-//                 if (hasSideEffects(child))
-//                     return true;
-//                 child = child.getNext();
-//             }
-//             break;
-//         }
-//         return false;
-//     }
     
     private void checkActivationName(String name, int token)
     {

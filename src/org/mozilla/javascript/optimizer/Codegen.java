@@ -1402,7 +1402,7 @@ class BodyCodegen
                     varRegisters[i] = reg;
                 }
 
-                // Add debug table enry if we're generating debug info
+                // Add debug table entry if we're generating debug info
                 if (compilerEnv.isGenerateDebugInfo()) {
                     String name = fnCurrent.fnode.getParamOrVarName(i);
                     String type = fnCurrent.isNumberVar(i)
@@ -2419,8 +2419,26 @@ class BodyCodegen
                * in generator and if so generate code for the analog
                * to Icode_GENERATOR_END.
                */
-                break;
+                throw Kit.codeBug();
 
+              case Token.WITHEXPR: {
+                Node enterWith = child;
+                Node with = enterWith.getNext();
+                Node leaveWith = with.getNext();
+                generateStatement(enterWith);
+                generateExpression(with.getFirstChild(), with);
+                generateStatement(leaveWith);
+                break;
+              }
+              
+              case Token.ARRAYCOMP: {
+                Node initStmt = child;
+                Node expr = child.getNext();
+                generateStatement(initStmt);
+                generateExpression(expr, node);
+                break;
+              }
+              
               default:
                 throw new RuntimeException("Unexpected node type "+type);
         }
@@ -3260,9 +3278,8 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
     private void visitTypeofname(Node node)
     {
-        String name = node.getString();
         if (hasVarsInRegs) {
-            int varIndex = fnCurrent.fnode.getParamOrVarIndex(name);
+            int varIndex = fnCurrent.fnode.getIndexForNameNode(node);
             if (varIndex >= 0) {
                 if (fnCurrent.isNumberVar(varIndex)) {
                     cfw.addPush("number");
@@ -3293,7 +3310,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             }
         }
         cfw.addALoad(variableObjectLocal);
-        cfw.addPush(name);
+        cfw.addPush(node.getString());
         addScriptRuntimeInvoke("typeofName",
                                "(Lorg/mozilla/javascript/Scriptable;"
                                +"Ljava/lang/String;"

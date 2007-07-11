@@ -550,7 +550,7 @@ public class Interpreter
 
         generateRegExpLiterals();
 
-        visitStatement(tree);
+        visitStatement(tree, 0);
         fixLabelGotos();
         // add RETURN_RESULT only to scripts as function always ends with RETURN
         if (itsData.itsFunctionType == 0) {
@@ -666,7 +666,7 @@ public class Interpreter
         throw new RuntimeException(node.toString());
     }
 
-    private void visitStatement(Node node)
+    private void visitStatement(Node node, int initialStackDepth)
     {
         int type = node.getType();
         Node child = node.getFirstChild();
@@ -712,7 +712,7 @@ public class Interpreter
           case Token.WITH:
             updateLineNumber(node);
             while (child != null) {
-                visitStatement(child);
+                visitStatement(child, initialStackDepth);
                 child = child.getNext();
             }
             break;
@@ -733,7 +733,7 @@ public class Interpreter
                 node.putIntProp(Node.LOCAL_PROP, local);
                 updateLineNumber(node);
                 while (child != null) {
-                    visitStatement(child);
+                    visitStatement(child, initialStackDepth);
                     child = child.getNext();
                 }
                 addIndexOp(Icode_LOCAL_CLEAR, local);
@@ -805,7 +805,7 @@ public class Interpreter
                 addIndexOp(Icode_STARTSUB, finallyRegister);
                 stackChange(-1);
                 while (child != null) {
-                    visitStatement(child);
+                    visitStatement(child, initialStackDepth);
                     child = child.getNext();
                 }
                 addIndexOp(Icode_RETSUB, finallyRegister);
@@ -830,7 +830,7 @@ public class Interpreter
 
                 int tryStart = itsICodeTop;
                 while (child != null) {
-                    visitStatement(child);
+                    visitStatement(child, initialStackDepth);
                     child = child.getNext();
                 }
 
@@ -918,7 +918,7 @@ public class Interpreter
             throw badTree(node);
         }
 
-        if (itsStackDepth != 0) {
+        if (itsStackDepth != initialStackDepth) {
             throw Kit.codeBug();
         }
     }
@@ -1191,14 +1191,13 @@ public class Interpreter
 
           case Token.TYPEOFNAME:
             {
-                String name = node.getString();
                 int index = -1;
                 // use typeofname if an activation frame exists
                 // since the vars all exist there instead of in jregs
                 if (itsInFunctionFlag && !itsData.itsNeedsActivation)
-                    index = scriptOrFn.getParamOrVarIndex(name);
+                    index = scriptOrFn.getIndexForNameNode(node);
                 if (index == -1) {
-                    addStringOp(Icode_TYPEOFNAME, name);
+                    addStringOp(Icode_TYPEOFNAME, node.getString());
                     stackChange(1);
                 } else {
                     addVarOp(Token.GETVAR, index);
@@ -1252,8 +1251,7 @@ public class Interpreter
           case Token.GETVAR:
             {
                 if (itsData.itsNeedsActivation) Kit.codeBug();
-                String name = node.getString();
-                int index = scriptOrFn.getParamOrVarIndex(name);
+                int index = scriptOrFn.getIndexForNameNode(node);
                 addVarOp(Token.GETVAR, index);
                 stackChange(1);
             }
@@ -1262,10 +1260,9 @@ public class Interpreter
           case Token.SETVAR:
             {
                 if (itsData.itsNeedsActivation) Kit.codeBug();
-                String name = child.getString();
+                int index = scriptOrFn.getIndexForNameNode(child);
                 child = child.getNext();
                 visitExpression(child, 0);
-                int index = scriptOrFn.getParamOrVarIndex(name);
                 addVarOp(Token.SETVAR, index);
             }
             break;
@@ -1273,10 +1270,9 @@ public class Interpreter
             case Token.SETCONSTVAR:
               {
                   if (itsData.itsNeedsActivation) Kit.codeBug();
-                  String name = child.getString();
+                  int index = scriptOrFn.getIndexForNameNode(child);
                   child = child.getNext();
                   visitExpression(child, 0);
-                  int index = scriptOrFn.getParamOrVarIndex(name);
                   addVarOp(Token.SETCONSTVAR, index);
               }
               break;
@@ -1307,6 +1303,10 @@ public class Interpreter
           case Token.ARRAYLIT:
           case Token.OBJECTLIT:
             visitLiteral(node, child);
+            break;
+
+          case Token.ARRAYCOMP:
+            visitArrayComprehension(node, child, child.getNext());
             break;
 
           case Token.REF_SPECIAL:
@@ -1363,6 +1363,17 @@ public class Interpreter
             addUint16(node.getLineno() & 0xFFFF);
             break;
 
+          case Token.WITHEXPR: {
+            Node enterWith = node.getFirstChild();
+            Node with = enterWith.getNext();
+            visitExpression(enterWith.getFirstChild(), 0);
+            addToken(Token.ENTERWITH);
+            stackChange(-1);
+            visitExpression(with.getFirstChild(), 0);
+            addToken(Token.LEAVEWITH);
+            break;
+          }
+
           default:
             throw badTree(node);
         }
@@ -1417,8 +1428,7 @@ public class Interpreter
         switch (childType) {
           case Token.GETVAR : {
             if (itsData.itsNeedsActivation) Kit.codeBug();
-            String name = child.getString();
-            int i = scriptOrFn.getParamOrVarIndex(name);
+            int i = scriptOrFn.getIndexForNameNode(child);
             addVarOp(Icode_VAR_INC_DEC, i);
             addUint8(incrDecrMask);
             stackChange(1);
@@ -1510,6 +1520,17 @@ public class Interpreter
             addIndexOp(Token.OBJECTLIT, index);
         }
         stackChange(-1);
+    }
+    
+    private void visitArrayComprehension(Node node, Node initStmt, Node expr)
+    {
+        // A bit of a hack: array comprehensions are implemented using
+        // statement nodes for the iteration, yet they appear in an
+        // expression context. So we pass the current stack depth to
+        // visitStatement so it can check that the depth is not altered
+        // by statements.
+        visitStatement(initStmt, itsStackDepth);
+        visitExpression(expr, 0);
     }
 
     private int getLocalBlockRef(Node node)

@@ -167,18 +167,14 @@ js1_7/geniter/regress-347739.js
 js1_7/geniter/regress-349012-01.js
 js1_7/geniter/regress-349331.js
 
-# Generator functionality not yet implemented:
-# array comprehensions
-js1_7/geniter/regress-345736.js
-# let statements
-js1_7/geniter/regress-347593.js
-# yield and xml-filtering predicate
-js1_7/geniter/regress-352605.js
-# destructuring assignment
-js1_7/geniter/regress-366941.js
+# unimplemented "options" shell function
+js1_7/block/regress-347559.js
+
+# decompilation
+js1_7/block/regress-344601.js
+js1_7/block/regress-351794.js
 
 # JS 1.7 not yet implemented
-js1_7/block
 js1_7/decompilation
 js1_7/expressions
 js1_7/extensions
@@ -186,6 +182,13 @@ js1_7/iterable
 js1_7/lexical
 js1_7/regexp
 js1_7/regress
+# yield and xml-filtering predicate
+js1_7/geniter/regress-352605.js
+# destructuring assignment
+js1_7/geniter/regress-345736.js
+js1_7/geniter/regress-347593.js
+js1_7/geniter/regress-366941.js
+js1_7/block/regress-358508.js
 
 # JS 1.8 not yet implemented
 js1_8

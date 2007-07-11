@@ -136,7 +136,7 @@ public class Token
         ENUM_NEXT      = 59,
         ENUM_ID        = 60,
         THISFN         = 61,
-        RETURN_RESULT  = 62, // to return prevoisly stored return result
+        RETURN_RESULT  = 62, // to return previously stored return result
         ARRAYLIT       = 63, // array literal
         OBJECTLIT      = 64, // object literal
         GET_REF        = 65, // *reference
@@ -252,7 +252,10 @@ public class Token
         CONST          = 151,
         SETCONST       = 152,
         SETCONSTVAR    = 153,
-        LAST_TOKEN     = 154;
+        ARRAYCOMP      = 154,  // array comprehension
+        LETEXPR        = 155,
+        WITHEXPR       = 156,
+        LAST_TOKEN     = 156;
 
     public static String name(int token)
     {
@@ -383,6 +386,7 @@ public class Token
           case WITH:            return "WITH";
           case CATCH:           return "CATCH";
           case FINALLY:         return "FINALLY";
+          case VOID:            return "VOID";
           case RESERVED:        return "RESERVED";
           case EMPTY:           return "EMPTY";
           case BLOCK:           return "BLOCK";
@@ -413,6 +417,9 @@ public class Token
           case YIELD:           return "YIELD";
           case CONST:           return "CONST";
           case SETCONST:        return "SETCONST";
+          case ARRAYCOMP:       return "ARRAYCOMP";
+          case WITHEXPR:        return "WITHEXPR";
+          case LETEXPR:         return "LETEXPR";
         }
 
         // Token without name

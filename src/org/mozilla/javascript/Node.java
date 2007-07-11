@@ -41,6 +41,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.LinkedHashMap;
+import java.util.Iterator;
+
 /**
  * This class implements the root of the intermediate representation.
  *
@@ -125,6 +128,7 @@ public class Node
         }
 
         String str;
+        Node.Scope scope;
     }
 
     public static class Jump extends Node
@@ -222,6 +226,74 @@ public class Node
         public Node target;
         private Node target2;
         private Jump jumpNode;
+    }
+    
+    static class Symbol {
+        Symbol(int declType, String name) {
+            this.declType = declType;
+            this.name = name;
+            this.index = -1;
+        }
+        /**
+         * One of Token.FUNCTION, Token.LP (for parameters), Token.VAR, 
+         * Token.LET, or Token.CONST
+         */
+        int declType;
+        int index;
+        String name;
+        Node.Scope containingTable;
+    }
+    
+    static class Scope extends Jump {
+        public Scope(int nodeType) {
+            super(nodeType);
+        }
+        
+        public Scope(int nodeType, int lineno) {
+            super(nodeType, lineno);
+        }
+        
+        public Scope(int nodeType, Node n, int lineno) {
+            super(nodeType, n, lineno);
+        }
+        
+        public void setParent(Scope parent) {
+            this.parent = parent;
+            this.top = parent == null ? (ScriptOrFnNode)this : parent.top;
+        }
+        
+        public Scope getParent() {
+            return parent;
+        }
+  
+        public Scope getDefiningScope(String name) {
+            for (Scope sn=this; sn != null; sn = sn.parent) {
+                if (sn.symbolTable == null)
+                    continue;
+                if (sn.symbolTable.containsKey(name))
+                    return sn;
+            }
+            return null;
+        }
+        
+        public Symbol getSymbol(String name) {
+            return (Symbol) (symbolTable == null ? null 
+                                                 : symbolTable.get(name));
+        }
+        
+        public void putSymbol(String name, Symbol symbol) {
+            if (symbolTable == null) {
+                symbolTable = new LinkedHashMap(5);
+            }
+            symbolTable.put(name, symbol);
+            symbol.containingTable = this;
+            top.addSymbol(symbol);
+        }
+  
+        // Use LinkedHashMap so that the iteration order is the insertion order
+        protected LinkedHashMap symbolTable;
+        private Scope parent;
+        private ScriptOrFnNode top;
     }
 
     private static class PropListItem
@@ -568,6 +640,20 @@ public class Node
         if (s == null) Kit.codeBug();
         ((StringNode)this).str = s;
     }
+    
+    /** Can only be called when node has String context. */
+    public final Scope getScope() {
+        return ((StringNode)this).scope;
+    }
+
+    /** Can only be called when node has String context. */
+    public final void setScope(Scope s) {
+        if (s == null) Kit.codeBug();
+        if (!(this instanceof StringNode)) {
+            throw Kit.codeBug();
+        }
+        ((StringNode)this).scope = s;
+    }
 
     public static Node newTarget()
     {
@@ -784,8 +870,9 @@ public class Node
         // satisfy.
         // The target of the predicate is the loop-body for all 4 kinds of
         // loops.
-        for (n = first; n.next != last; n = n.next)
-            /* skip */;
+        for (n = first; n.next != last; n = n.next) {
+            /* skip */
+        }
         if (n.type != Token.IFEQ)
             return END_DROPS_OFF;
 
@@ -992,7 +1079,10 @@ public class Node
           case Token.CONTINUE:
           case Token.VAR:
           case Token.CONST:
+          case Token.LET:
+          case Token.LETEXPR:
           case Token.WITH:
+          case Token.WITHEXPR:
           case Token.CATCH:
           case Token.FINALLY:
           case Token.BLOCK:
@@ -1029,23 +1119,43 @@ public class Node
             if (this instanceof StringNode) {
                 sb.append(' ');
                 sb.append(getString());
-            } else if (this instanceof ScriptOrFnNode) {
-                ScriptOrFnNode sof = (ScriptOrFnNode)this;
-                if (this instanceof FunctionNode) {
-                    FunctionNode fn = (FunctionNode)this;
-                    sb.append(' ');
-                    sb.append(fn.getFunctionName());
+                Scope scope = getScope();
+                if (scope != null) {
+                    sb.append("[scope: ");
+                    appendPrintId(scope, printIds, sb);
+                    sb.append("]");
                 }
-                sb.append(" [source name: ");
-                sb.append(sof.getSourceName());
-                sb.append("] [encoded source length: ");
-                sb.append(sof.getEncodedSourceEnd()
-                          - sof.getEncodedSourceStart());
-                sb.append("] [base line: ");
-                sb.append(sof.getBaseLineno());
-                sb.append("] [end line: ");
-                sb.append(sof.getEndLineno());
-                sb.append(']');
+            } else if (this instanceof Node.Scope) {
+                if (this instanceof ScriptOrFnNode) {
+                    ScriptOrFnNode sof = (ScriptOrFnNode)this;
+                    if (this instanceof FunctionNode) {
+                        FunctionNode fn = (FunctionNode)this;
+                        sb.append(' ');
+                        sb.append(fn.getFunctionName());
+                    }
+                    sb.append(" [source name: ");
+                    sb.append(sof.getSourceName());
+                    sb.append("] [encoded source length: ");
+                    sb.append(sof.getEncodedSourceEnd()
+                              - sof.getEncodedSourceStart());
+                    sb.append("] [base line: ");
+                    sb.append(sof.getBaseLineno());
+                    sb.append("] [end line: ");
+                    sb.append(sof.getEndLineno());
+                    sb.append(']');
+                }
+                if (((Node.Scope)this).symbolTable != null) {
+                    sb.append(" [scope ");
+                    appendPrintId(this, printIds, sb);
+                    sb.append(": ");
+                    Iterator iter = ((Node.Scope) this).symbolTable.keySet()
+                        .iterator();
+                    while (iter.hasNext()) {
+                        sb.append(iter.next());
+                        sb.append(" ");
+                    }
+                    sb.append("]");
+                }
             } else if (this instanceof Jump) {
                 Jump jump = (Jump)this;
                 if (type == Token.BREAK || type == Token.CONTINUE) {

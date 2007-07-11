@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Igor Bukanov
  *   Bob Jervis
+ *   Norris Boyd
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -39,10 +40,15 @@
 
 package org.mozilla.javascript;
 
-public class ScriptOrFnNode extends Node {
+import java.util.ArrayList;
+import java.util.Map;
+
+public class ScriptOrFnNode extends Node.Scope {
 
     public ScriptOrFnNode(int nodeType) {
         super(nodeType);
+        symbols = new ArrayList(4);
+        setParent(null);
     }
 
     public final String getSourceName() { return sourceName; }
@@ -113,115 +119,79 @@ public class ScriptOrFnNode extends Node {
         return regexps.size() / 2 - 1;
     }
 
-    public final boolean hasParamOrVar(String name) {
-        return itsVariableNames.has(name);
-    }
-
-    public final int getParamOrVarIndex(String name) {
-        return itsVariableNames.get(name, -1);
+    public int getIndexForNameNode(Node nameNode) {
+        if (variableNames == null) throw Kit.codeBug();
+        Node.Scope node = nameNode.getScope();
+        Symbol symbol = node == null ? null 
+                                     : node.getSymbol(nameNode.getString());
+        if (symbol == null)
+            return -1;
+        return symbol.index;
     }
 
     public final String getParamOrVarName(int index) {
-        return (String)itsVariables.get(index);
+        if (variableNames == null) throw Kit.codeBug();
+        return variableNames[index];
     }
 
     public final int getParamCount() {
-        return varStart;
+        return paramCount;
     }
 
     public final int getParamAndVarCount() {
-        return itsVariables.size();
+        if (variableNames == null) throw Kit.codeBug();
+        return symbols.size();
     }
 
     public final String[] getParamAndVarNames() {
-        int N = itsVariables.size();
-        if (N == 0) {
-            return ScriptRuntime.emptyStrings;
-        }
-        String[] array = new String[N];
-        itsVariables.toArray(array);
-        return array;
+        if (variableNames == null) throw Kit.codeBug();
+        return variableNames;
     }
 
     public final boolean[] getParamAndVarConst() {
-        int N = itsVariables.size();
-        boolean[] array = new boolean[N];
-        for (int i = 0; i < N; i++)
-            if (itsConst.get(i) != null)
-                array[i] = true;
-        return array;
+        if (variableNames == null) throw Kit.codeBug();
+        return isConsts;
     }
 
-    public final void addParam(String name) {
-        // Check addparam is not called after addLocal
-        if (varStart != itsVariables.size()) Kit.codeBug();
-        // Allow non-unique parameter names: use the last occurrence (parser
-        // will warn about dups)
-        int index = varStart++;
-        itsVariables.add(name);
-        itsConst.add(null);
-        itsVariableNames.put(name, index);
+    void addSymbol(Symbol symbol) {
+        if (variableNames != null) throw Kit.codeBug();
+        if (symbol.declType == Token.LP) {
+            paramCount++;
+        }
+        symbols.add(symbol);
     }
-
-    public static final int NO_DUPLICATE = 1;
-    public static final int DUPLICATE_VAR = 0;
-    public static final int DUPLICATE_PARAMETER = -1;
-    public static final int DUPLICATE_CONST = -2;
 
     /**
-     * This function adds a variable to the set of var declarations for a
-     * function (or script).  This returns an indicator of a duplicate that
-     * overrides a formal parameter (false if this dups a parameter).
-     * @param name variable name
-     * @return 1 if the name is not any form of duplicate, 0 if it duplicates a
-     * non-parameter, -1 if it duplicates a parameter and -2 if it duplicates a
-     * const.
+     * Assign every symbol a unique integer index. Generate arrays of variable 
+     * names and constness that can be indexed by those indices.
+     * 
+     * @param flattenAllTables if true, flatten all symbol tables, included
+     * nested block scope symbol tables. If false, just flatten the script's
+     * or function's symbol table.
      */
-    public final int addVar(String name) {
-        int vIndex = itsVariableNames.get(name, -1);
-        if (vIndex != -1) {
-            // There's already a variable or parameter with this name.
-            if (vIndex >= varStart) {
-                Object v = itsConst.get(vIndex);
-                if (v != null)
-                    return DUPLICATE_CONST;
-                else
-                    return DUPLICATE_VAR;
-            } else
-                return DUPLICATE_PARAMETER;
-        }
-        int index = itsVariables.size();
-        itsVariables.add(name);
-        itsConst.add(null);
-        itsVariableNames.put(name, index);
-        return NO_DUPLICATE;
-    }
-
-    public final boolean addConst(String name) {
-        int vIndex = itsVariableNames.get(name, -1);
-        if (vIndex != -1) {
-            // There's already a variable or parameter with this name.
-            return false;
-        }
-        int index = itsVariables.size();
-        itsVariables.add(name);
-        itsConst.add(name);
-        itsVariableNames.put(name, index);
-        return true;
-    }
-
-    public final void removeParamOrVar(String name) {
-        int i = itsVariableNames.get(name, -1);
-        if (i != -1) {
-            itsVariables.remove(i);
-            itsVariableNames.remove(name);
-            ObjToIntMap.Iterator iter = itsVariableNames.newIterator();
-            for (iter.start(); !iter.done(); iter.next()) {
-                int v = iter.getValue();
-                if (v > i) {
-                    iter.setValue(v - 1);
+    void flattenSymbolTable(boolean flattenAllTables) {
+        if (!flattenAllTables) {
+            ArrayList newSymbols = new ArrayList();
+            if (this.symbolTable != null) {
+                // Just replace "symbols" with the symbols in this object's
+                // symbol table. Can't just work from symbolTable map since
+                // we need to retain duplicate parameters.
+                for (int i=0; i < symbols.size(); i++) {
+                    Symbol symbol = (Symbol) symbols.get(i);
+                    if (symbol.containingTable == this) {
+                        newSymbols.add(symbol);
+                    }
                 }
             }
+            symbols = newSymbols;
+        }
+        variableNames = new String[symbols.size()];
+        isConsts = new boolean[symbols.size()];
+        for (int i=0; i < symbols.size(); i++) {
+            Symbol symbol = (Symbol) symbols.get(i);
+            variableNames[i] = symbol.name;
+            isConsts[i] = symbol.declType == Token.CONST;
+            symbol.index = i;
         }
     }
 
@@ -245,17 +215,12 @@ public class ScriptOrFnNode extends Node {
     private int endLineno = -1;
 
     private ObjArray functions;
-
     private ObjArray regexps;
-
-    // a list of the formal parameters and local variables
-    private ObjArray itsVariables = new ObjArray();
-    private ObjArray itsConst = new ObjArray();
-
-    // mapping from name to index in list
-    private ObjToIntMap itsVariableNames = new ObjToIntMap(11);
-
-    private int varStart;               // index in list of first variable
+    
+    private ArrayList symbols;
+    private int paramCount = 0;
+    private String[] variableNames;
+    private boolean[] isConsts;
 
     private Object compilerData;
 }

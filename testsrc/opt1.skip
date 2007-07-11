@@ -2,6 +2,12 @@
 # These tests are skipped by Rhino either because a bug with a regression
 # test has yet to be fixed, or because the test is not applicable to Rhino.
 
+# generators/iterators not yet implementated for Java bytecodes
+js1_7/GC/regress-341675.js
+js1_7/geniter
+js1_7/block/regress-343765.js
+js1_7/block/regress-350793-01.js
+
 # program too large/complex
 ecma_3/Statements/regress-302439.js
 ecma_3/Statements/regress-324650.js

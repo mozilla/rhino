@@ -1885,9 +1885,11 @@ public class ScriptRuntime {
         x.enumValues = enumValues;
         x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj, true);
 
-        // enumInit should read all initial ids before returning
-        // or "for (a.i in a)" would wrongly enumerate i in a as well
-        enumChangeObject(x);
+        if (x.iterator == null) {
+            // enumInit should read all initial ids before returning
+            // or "for (a.i in a)" would wrongly enumerate i in a as well
+            enumChangeObject(x);
+        }
         
         return x;
     }
