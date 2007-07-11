@@ -169,6 +169,7 @@ js1_7/geniter/regress-349331.js
 
 # unimplemented "options" shell function
 js1_7/block/regress-347559.js
+js1_5/Regress/regress-383674.js
 
 # decompilation
 js1_7/block/regress-344601.js
@@ -201,6 +202,7 @@ ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
 ecma/Date/15.9.5.8.js
+js1_5/Regress/regress-366122.js
 
 # "options" built-in function
 ecma_2/Exceptions/lexical-011.js
@@ -556,3 +558,14 @@ ecma_3/RegExp/regress-375715-01-n.js
 js1_5/extensions/regress-380581.js
 js1_5/extensions/regress-381205.js
 js1_5/extensions/regress-381211.js
+e4x/Regress/regress-383255.js
+ecma_3/RegExp/regress-375711.js
+ecma_3/RegExp/regress-375715-04.js
+js1_5/Regress/regress-367561-03.js
+js1_5/extensions/regress-355655.js
+js1_5/extensions/regress-367630.js
+js1_5/extensions/regress-375801.js
+js1_5/extensions/regress-380831.js
+js1_5/extensions/regress-382509.js
+js1_5/extensions/regress-383965.js
+js1_6/Regress/regress-382509.js
