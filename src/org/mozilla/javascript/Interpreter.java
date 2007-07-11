@@ -675,10 +675,10 @@ public class Interpreter
                 // For example, eval("function () {}") should return a
                 // function, not undefined.
                 if (!itsInFunctionFlag) {
-                  addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
-                  stackChange(1);
-                  addIcode(Icode_POP_RESULT);
-                  stackChange(-1);
+                    addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
+                    stackChange(1);
+                    addIcode(Icode_POP_RESULT);
+                    stackChange(-1);
                 }
             }
             break;
@@ -1242,16 +1242,17 @@ public class Interpreter
             }
             break;
 
-            case Token.SETCONSTVAR:
-              {
-                  if (itsData.itsNeedsActivation) Kit.codeBug();
-                  String name = child.getString();
-                  child = child.getNext();
-                  visitExpression(child, 0);
-                  int index = scriptOrFn.getParamOrVarIndex(name);
-                  addVarOp(Token.SETCONSTVAR, index);
-              }
-              break;
+          case Token.SETCONSTVAR:
+            {
+                if (itsData.itsNeedsActivation) Kit.codeBug();
+                String name = child.getString();
+                child = child.getNext();
+                visitExpression(child, 0);
+                int index = scriptOrFn.getParamOrVarIndex(name);
+                addVarOp(Token.SETCONSTVAR, index);
+            }
+            break;
+
 
           case Token.NULL:
           case Token.THIS:
