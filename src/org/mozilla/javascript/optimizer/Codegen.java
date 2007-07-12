@@ -708,11 +708,11 @@ public class Codegen extends Interpreter
                 cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;",
                                 ClassFileWriter.ACC_PUBLIC);
                 break;
-                case Do_getParamOrVarConst:
-                  metodLocals = 1 + 1 + 1; // this + paramOrVarName
-                  cfw.startMethod("getParamOrVarConst", "(I)Z",
-                                  ClassFileWriter.ACC_PUBLIC);
-                  break;
+              case Do_getParamOrVarConst:
+                metodLocals = 1 + 1 + 1; // this + paramOrVarName
+                cfw.startMethod("getParamOrVarConst", "(I)Z",
+                                ClassFileWriter.ACC_PUBLIC);
+                break;
               case Do_getEncodedSource:
                 metodLocals = 1; // Only this
                 cfw.startMethod("getEncodedSource", "()Ljava/lang/String;",
@@ -4242,7 +4242,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             if (isConst)
                 locals[result + 1] = true;
             if (result == firstFreeLocal) {
-                for (int i = firstFreeLocal + 2; i < MAX_LOCALS; i++) {
+                for (int i = firstFreeLocal + 1; i < MAX_LOCALS; i++) {
                     if (!locals[i]) {
                         firstFreeLocal = (short) i;
                         if (localsMax < firstFreeLocal)
