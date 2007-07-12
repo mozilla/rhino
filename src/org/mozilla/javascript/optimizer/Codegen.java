@@ -1764,6 +1764,9 @@ class BodyCodegen
                 }
                 break;
 
+              case Token.DEBUGGER:
+                break;
+
               default:
                 throw Codegen.badTree();
         }

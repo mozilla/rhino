@@ -269,6 +269,14 @@ final class IRFactory
     }
 
     /**
+     * Debugger
+     */
+    Node createDebugger(int lineno)
+    {
+        return new Node(Token.DEBUGGER,  lineno);
+    }
+  
+    /**
      * Label
      */
     Node createLabel(int lineno)

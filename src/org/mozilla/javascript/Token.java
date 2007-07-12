@@ -255,7 +255,8 @@ public class Token
         ARRAYCOMP      = 154,  // array comprehension
         LETEXPR        = 155,
         WITHEXPR       = 156,
-        LAST_TOKEN     = 156;
+        DEBUGGER       = 157,
+        LAST_TOKEN     = 157;
 
     public static String name(int token)
     {
@@ -420,6 +421,7 @@ public class Token
           case ARRAYCOMP:       return "ARRAYCOMP";
           case WITHEXPR:        return "WITHEXPR";
           case LETEXPR:         return "LETEXPR";
+          case DEBUGGER:        return "DEBUGGER";
         }
 
         // Token without name

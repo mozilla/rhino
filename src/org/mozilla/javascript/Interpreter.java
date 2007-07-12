@@ -178,8 +178,10 @@ public class Interpreter
        Icode_GENERATOR                  = -62,
        Icode_GENERATOR_END              = -63,
 
+       Icode_DEBUGGER                   = -64,
+
        // Last icode
-        MIN_ICODE                       = -63;
+        MIN_ICODE                       = -64;
 
     // data for parsing
 
@@ -448,6 +450,7 @@ public class Interpreter
           case Icode_SETCONSTVAR1:     return "SETCONSTVAR1";
           case Icode_GENERATOR:        return "GENERATOR";
           case Icode_GENERATOR_END:    return "GENERATOR_END";
+          case Icode_DEBUGGER:         return "DEBUGGER";
         }
 
         // icode without name
@@ -739,6 +742,10 @@ public class Interpreter
                 addIndexOp(Icode_LOCAL_CLEAR, local);
                 releaseLocal(local);
             }
+            break;
+
+          case Token.DEBUGGER:
+            addIcode(Icode_DEBUGGER);
             break;
 
           case Token.SWITCH:
@@ -3817,6 +3824,11 @@ switch (op) {
         }
         continue Loop;
     }
+    case Icode_DEBUGGER:
+        if (frame.debuggerFrame != null) {
+            frame.debuggerFrame.onDebuggerStatement(cx);
+        }
+        break Loop;
     case Icode_LINE :
         frame.pcSourceLineStart = frame.pc;
         if (frame.debuggerFrame != null) {

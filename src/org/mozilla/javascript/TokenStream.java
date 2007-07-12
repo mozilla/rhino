@@ -155,7 +155,7 @@ class TokenStream
             Id_char          = Token.RESERVED,
             Id_class         = Token.RESERVED,
             Id_const         = Token.CONST,
-            Id_debugger      = Token.RESERVED,
+            Id_debugger      = Token.DEBUGGER,
             Id_double        = Token.RESERVED,
             Id_enum          = Token.RESERVED,
             Id_extends       = Token.RESERVED,

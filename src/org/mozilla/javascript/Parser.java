@@ -1111,6 +1111,12 @@ public class Parser
             break;
           }
 
+          case Token.DEBUGGER:
+            consumeToken();
+            decompiler.addToken(Token.DEBUGGER);
+            pn = nf.createDebugger(ts.getLineno());
+            break;
+
           case Token.LC:
             consumeToken();
             if (statementLabel != null) {

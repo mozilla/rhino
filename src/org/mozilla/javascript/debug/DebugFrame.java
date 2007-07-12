@@ -83,4 +83,9 @@ Called when the function or script for this frame is about to return.
 */
     public void onExit(Context cx, boolean byThrow, Object resultOrException);
 
+/**
+Called when the function or script executes a 'debugger' statement.
+@param cx current Context for this thread
+*/
+    public void onDebuggerStatement(Context cx);
 }

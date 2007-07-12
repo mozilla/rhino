@@ -1247,6 +1247,13 @@ interruptedCheck:
         }
 
         /**
+         * Called when a 'debugger' statement is executed.
+         */
+        public void onDebuggerStatement(Context cx) {
+            dim.handleBreakpointHit(this, cx);
+        }
+
+        /**
          * Returns the SourceInfo object for the function.
          */
         public SourceInfo sourceInfo() {
