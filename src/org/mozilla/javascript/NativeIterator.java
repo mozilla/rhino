@@ -156,8 +156,8 @@ public final class NativeIterator extends IdScriptableObject {
         Object objectIterator = ScriptRuntime.enumInit(obj, cx, false);
         ScriptRuntime.setEnumNumbers(objectIterator, true);
         NativeIterator result = new NativeIterator(objectIterator, keyOnly);
-        result.setPrototype(result.getClassPrototype(scope, 
-                                                     result.getClassName()));
+        result.setPrototype(NativeIterator.getClassPrototype(scope, 
+                                result.getClassName()));
         result.setParentScope(scope);
         return result;
     }
