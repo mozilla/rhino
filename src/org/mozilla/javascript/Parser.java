@@ -556,17 +556,6 @@ public class Parser
             decompiler.addToken(Token.RC);
             functionSourceEnd = decompiler.markFunctionEnd(functionSourceStart);
             if (functionType != FunctionNode.FUNCTION_EXPRESSION) {
-                 if (compilerEnv.getLanguageVersion() >= Context.VERSION_1_2) {
-                    // function f() {} function g() {} is not allowed in 1.2
-                    // or later but for compatibility with old scripts
-                    // the check is done only if language is
-                    // explicitly set.
-                    //  XXX warning needed if version == VERSION_DEFAULT ?
-                    int tt = peekTokenOrEOL();
-                    if (tt == Token.FUNCTION) {
-                         reportError("msg.no.semi.stmt");
-                    }
-                 }
                 // Add EOL only if function is not part of expression
                 // since it gets SEMI + EOL from Statement in that case
                 decompiler.addToken(Token.EOL);
