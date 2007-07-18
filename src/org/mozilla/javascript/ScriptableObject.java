@@ -1901,7 +1901,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * Value can only be associated with the given object and key only once.
      * The method ignores any subsequent attempts to change the already
      * associated value.
-     * <p> The associated values are not serilized.
+     * <p> The associated values are not serialized.
      * @param key key object to select particular value.
      * @param value the value to associate
      * @return the passed value if the method is called first time for the
