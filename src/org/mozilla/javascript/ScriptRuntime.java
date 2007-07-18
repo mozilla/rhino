@@ -3032,11 +3032,18 @@ public class ScriptRuntime {
             obj = errorObject;
         }
 
-
         NativeObject catchScopeObject = new NativeObject();
         // See ECMA 12.4
         catchScopeObject.defineProperty(
             exceptionName, obj, ScriptableObject.PERMANENT);
+
+        // Add special Rhino object __exception__ defined in the catch
+        // scope that can be used to retrieve the Java exception associated
+        // with the JavaScript exception (to get stack trace info, etc.)
+        catchScopeObject.defineProperty(
+            "__exception__", Context.javaToJS(t, catchScopeObject),
+            ScriptableObject.PERMANENT|ScriptableObject.DONTENUM);
+
         if (cacheObj) {
             catchScopeObject.associateValue(t, obj);
         }
@@ -3600,4 +3607,3 @@ public class ScriptRuntime {
     public static final String[] emptyStrings = new String[0];
 
 }
-
