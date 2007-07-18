@@ -39,7 +39,7 @@ package org.mozilla.javascript;
 public final class NativeGenerator extends IdScriptableObject {
     private static final Object GENERATOR_TAG = new Object();
     
-    static NativeGenerator init(Scriptable scope, boolean sealed) {
+    static NativeGenerator init(ScriptableObject scope, boolean sealed) {
         // Generator
         // Can't use "NativeGenerator().exportAsJSClass" since we don't want
         // to define "Generator" as a constructor in the top-level scope.
@@ -53,6 +53,13 @@ public final class NativeGenerator extends IdScriptableObject {
         if (sealed) {
             prototype.sealObject();
         }
+        
+        // Need to access Generator prototype when constructing
+        // Generator instances, but don't have a generator constructor
+        // to use to find the prototype. Use the "associateValue" 
+        // approach instead.
+        scope.associateValue(GENERATOR_TAG, prototype);
+        
         return prototype;
     }
     
@@ -69,17 +76,12 @@ public final class NativeGenerator extends IdScriptableObject {
         
         // Set parent and prototype properties. Since we don't have a 
         // "Generator" constructor in the top scope, we stash the 
-        // prototype in a convenient place--the StopIteration object.
-        // We do this through a Java API so it is invisible to JavaScript.
+        // prototype in the top scope's associated value.
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
-        Object obj = top.get(NativeIterator.STOP_ITERATION, scope);
-        if (!(obj instanceof NativeIterator.StopIteration)) {
-            throw ScriptRuntime.typeError0("msg.StopIteration.invalid") ;
-        }
-        NativeIterator.StopIteration stopIteration = 
-          (NativeIterator.StopIteration) obj;
-        this.setPrototype(stopIteration.getGeneratorPrototype());
+        NativeGenerator prototype = (NativeGenerator)
+            ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);
+        this.setPrototype(prototype);
     }
     
     public static final int GENERATOR_SEND  = 0,

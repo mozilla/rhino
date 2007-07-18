@@ -39,7 +39,7 @@ package org.mozilla.javascript;
 public final class NativeIterator extends IdScriptableObject {
     private static final Object ITERATOR_TAG = new Object();
     
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(ScriptableObject scope, boolean sealed) {
         // Iterator
         NativeIterator iterator = new NativeIterator();
         iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
@@ -48,7 +48,7 @@ public final class NativeIterator extends IdScriptableObject {
         NativeGenerator prototype = NativeGenerator.init(scope, sealed);
 
         // StopIteration
-        NativeObject obj = new StopIteration(prototype);
+        NativeObject obj = new StopIteration();
         obj.setPrototype(getObjectPrototype(scope));
         obj.setParentScope(scope);
         if (sealed) { obj.sealObject(); }
@@ -71,17 +71,7 @@ public final class NativeIterator extends IdScriptableObject {
     public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
     
     static class StopIteration extends NativeObject {
-        // In addition to being the top-level StopIteration object, this
-        // object is a convenient place to stash the Generator prototype
-        // since there is no Generator class
-        public StopIteration(NativeGenerator generatorPrototype) {
-            this.generatorPrototype = generatorPrototype; 
-        }
         public String getClassName() { return STOP_ITERATION; }
-        public NativeGenerator getGeneratorPrototype() {
-            return generatorPrototype;
-        }
-        private NativeGenerator generatorPrototype;
     }
 
     public String getClassName() {
