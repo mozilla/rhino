@@ -562,7 +562,7 @@ public class Interpreter
 
         if (itsData.itsICode.length != itsICodeTop) {
             // Make itsData.itsICode length exactly itsICodeTop to save memory
-            // and catch bugs with jumps beyound icode as early as possible
+            // and catch bugs with jumps beyond icode as early as possible
             byte[] tmp = new byte[itsICodeTop];
             System.arraycopy(itsData.itsICode, 0, tmp, 0, itsICodeTop);
             itsData.itsICode = tmp;
@@ -2588,7 +2588,7 @@ public class Interpreter
                     // the index of handler
 
                     if (indexReg >= 0) {
-                        // Normal excepton handler, transfer
+                        // Normal exception handler, transfer
                         // control appropriately
 
                         if (frame.frozen) {
@@ -2618,7 +2618,7 @@ public class Interpreter
                         // Continuation restoration
                         ContinuationJump cjump = (ContinuationJump)throwable;
 
-                        // Clear throwable to indicate that execptions are OK
+                        // Clear throwable to indicate that exceptions are OK
                         throwable = null;
 
                         if (cjump.branchFrame != frame) Kit.codeBug();
