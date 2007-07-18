@@ -83,6 +83,7 @@
   <target name="copy-source" depends="init">
     <ant antfile="src/build.xml" target="copy-source"/>
     <ant antfile="toolsrc/build.xml" target="copy-source"/>
+    <ant antfile="testsrc/build.xml" target="copy-source"/>
     <antcall target="xmlimplsrc-copy-source" />
     <ant antfile="deprecatedsrc/build.xml" target="copy-source"/>
     <copy todir="${dist.dir}" file="build.xml"/>

@@ -53,9 +53,9 @@ Requires Ant version 1.2
            includes="org/**/*.java"
            deprecation="on"
            debug="${debug}"
-	   target="${target-jvm}"
- 	   source="${source-level}"
-	   >
+           target="${target-jvm}"
+           source="${source-level}"
+    >
     </javac>
     <copy todir="${classes}">
       <fileset dir="toolsrc" includes="org/**/*.properties" />
