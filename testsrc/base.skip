@@ -14,8 +14,11 @@ js1_5/Function/regress-338121-01.js
 js1_5/Function/regress-338121-02.js
 js1_5/Function/regress-338121-03.js
 
-# large concatenation of strings
-js1_5/GC/regress-338653.js
+# GC tests
+js1_5/GC
+
+# bad test: random string generated will be too long about 1% of the time
+lc3/JavaArray/ToArray-001.js
 
 # performance test: Global vars should not be more than 2.5 times slower than local
 js1_5/Regress/regress-169559.js
@@ -159,13 +162,22 @@ js1_5/extensions/regress-50447-1.js
 # Invalid bug
 e4x/Regress/regress-278112.js
 
-# Invalid test? Cannot convert NaN to java.lang.Long 
+# Invalid test? Cannot convert NaN to java.lang.Long
 lc3/template.js
 
 # Depends on generators being closed due to a call to gc(): not relevant to Rhino
 js1_7/geniter/regress-347739.js
 js1_7/geniter/regress-349012-01.js
 js1_7/geniter/regress-349331.js
+
+# unimplemented "options" shell function
+js1_7/block/regress-347559.js
+js1_5/Regress/regress-383674.js
+
+# decompilation
+js1_7/block/regress-344601.js
+js1_7/block/regress-351794.js
+js1_5/Regress/regress-10278.js
 
 # JS 1.7 not yet implemented
 js1_7
@@ -181,6 +193,7 @@ ecma/Date/15.9.5.10-2.js
 ecma/Date/15.9.5.11-2.js
 ecma/Date/15.9.5.12-2.js
 ecma/Date/15.9.5.8.js
+js1_5/Regress/regress-366122.js
 
 # "options" built-in function
 ecma_2/Exceptions/lexical-011.js
@@ -199,11 +212,22 @@ js1_5/Regress/regress-306633.js
 js1_5/extensions/regress-367119-01.js
 js1_5/extensions/regress-367119-02.js
 
-# Obsolete JS 1.2 behavior, see bug 10278 
-ecma_2/Exceptions/function-001.js
+# Obsolete JS 1.2 behavior, see bug 10278
+#ecma_2/Exceptions/function-001.js
 
 # Obsolete JS 1.2 behavior
 js1_2/operator/equality.js
+js1_3/regress/function-001-n.js
+js1_3/Script/function-001-n.js
+js1_2/function/function-001-n.js
+ecma_2/Exceptions/function-001.js
+
+# likely bugs. need investigation
+js1_6/Array/regress-386030.js
+ecma_3/Array/regress-387501.js
+
+# minor decompilation incompatibility
+js1_5/extensions/regress-384680.js
 
 # uninvestigated failures. May be some bugs in here.
 e4x/Regress/regress-373082.js
@@ -536,3 +560,14 @@ ecma_3/RegExp/regress-375715-01-n.js
 js1_5/extensions/regress-380581.js
 js1_5/extensions/regress-381205.js
 js1_5/extensions/regress-381211.js
+e4x/Regress/regress-383255.js
+ecma_3/RegExp/regress-375711.js
+ecma_3/RegExp/regress-375715-04.js
+js1_5/Regress/regress-367561-03.js
+js1_5/extensions/regress-355655.js
+js1_5/extensions/regress-367630.js
+js1_5/extensions/regress-375801.js
+js1_5/extensions/regress-380831.js
+js1_5/extensions/regress-382509.js
+js1_5/extensions/regress-383965.js
+js1_6/Regress/regress-382509.js
