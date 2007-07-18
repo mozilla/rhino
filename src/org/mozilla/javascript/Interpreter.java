@@ -3633,7 +3633,7 @@ switch (op) {
     case Token.ESCXMLATTR : {
         Object value = stack[stackTop];
         if (value != DBL_MRK) {
-            stack[stackTop] = "\"" + ScriptRuntime.escapeAttributeValue(value, cx) + "\"";
+            stack[stackTop] = ScriptRuntime.escapeAttributeValue(value, cx);
         }
         continue Loop;
     }

@@ -1649,13 +1649,18 @@ public class Parser
                 } else {
                     pn = nf.createBinary(Token.ADD, pn, nf.createString(xml));
                 }
-                int nodeType;
                 if (ts.isXMLAttribute()) {
-                    nodeType = Token.ESCXMLATTR;
+                    /* Need to put the result in double quotes */
+                    expr = nf.createUnary(Token.ESCXMLATTR, expr);
+                    Node prepend = nf.createBinary(Token.ADD,
+                                                   nf.createString("\""),
+                                                   expr);
+                    expr = nf.createBinary(Token.ADD,
+                                           prepend,
+                                           nf.createString("\""));
                 } else {
-                    nodeType = Token.ESCXMLTEXT;
+                    expr = nf.createUnary(Token.ESCXMLTEXT, expr);
                 }
-                expr = nf.createUnary(nodeType, expr);
                 pn = nf.createBinary(Token.ADD, pn, expr);
                 break;
             case Token.XMLEND:
