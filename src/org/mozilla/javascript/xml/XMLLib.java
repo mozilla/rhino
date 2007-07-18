@@ -69,7 +69,7 @@ public abstract class XMLLib
     {
         ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
-            // If librray is not yet initialized, return null
+            // If library is not yet initialized, return null
             return null;
         }
 
