@@ -128,7 +128,7 @@ public class Shell extends ScriptableObject
     private static void usage(String s) {
         p("Didn't understand \"" + s + "\".");
         p("Valid arguments are:");
-        p("-version 100|110|120|130|140|150");
+        p("-version 100|110|120|130|140|150|160");
         System.exit(1);
     }
 
