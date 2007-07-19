@@ -20,6 +20,9 @@ js1_5/GC
 # bad test: random string generated will be too long about 1% of the time
 lc3/JavaArray/ToArray-001.js
 
+# test depends on E4X, but test framework calls version(150)
+js1_5/Regress/regress-309242.js
+
 # performance test: Global vars should not be more than 2.5 times slower than local
 js1_5/Regress/regress-169559.js
 
