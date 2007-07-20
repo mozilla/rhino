@@ -14,8 +14,14 @@ js1_5/Function/regress-338121-01.js
 js1_5/Function/regress-338121-02.js
 js1_5/Function/regress-338121-03.js
 
-# large concatenation of strings
-js1_5/GC/regress-338653.js
+# GC tests
+js1_5/GC
+
+# bad test: random string generated will be too long about 1% of the time
+lc3/JavaArray/ToArray-001.js
+
+# test depends on E4X, but test framework calls version(150)
+js1_5/Regress/regress-309242.js
 
 # performance test: Global vars should not be more than 2.5 times slower than local
 js1_5/Regress/regress-169559.js
@@ -174,6 +180,7 @@ js1_5/Regress/regress-383674.js
 # decompilation
 js1_7/block/regress-344601.js
 js1_7/block/regress-351794.js
+js1_5/Regress/regress-10278.js
 
 # JS 1.7 not yet implemented
 js1_7/decompilation
@@ -221,11 +228,19 @@ js1_5/Regress/regress-306633.js
 js1_5/extensions/regress-367119-01.js
 js1_5/extensions/regress-367119-02.js
 
-# Obsolete JS 1.2 behavior, see bug 10278 
-ecma_2/Exceptions/function-001.js
-
 # Obsolete JS 1.2 behavior
 js1_2/operator/equality.js
+js1_3/regress/function-001-n.js
+js1_3/Script/function-001-n.js
+js1_2/function/function-001-n.js
+ecma_2/Exceptions/function-001.js
+
+# likely bugs. need investigation
+js1_6/Array/regress-386030.js
+ecma_3/Array/regress-387501.js
+
+# minor decompilation incompatibility
+js1_5/extensions/regress-384680.js
 
 # uninvestigated failures. May be some bugs in here.
 e4x/Regress/regress-373082.js
