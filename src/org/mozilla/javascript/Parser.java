@@ -589,17 +589,6 @@ public class Parser
             decompiler.addToken(Token.RC);
             functionSourceEnd = decompiler.markFunctionEnd(functionSourceStart);
             if (functionType != FunctionNode.FUNCTION_EXPRESSION) {
-                 if (compilerEnv.getLanguageVersion() >= Context.VERSION_1_2) {
-                    // function f() {} function g() {} is not allowed in 1.2
-                    // or later but for compatibility with old scripts
-                    // the check is done only if language is
-                    // explicitly set.
-                    //  XXX warning needed if version == VERSION_DEFAULT ?
-                    int tt = peekTokenOrEOL();
-                    if (tt == Token.FUNCTION) {
-                         reportError("msg.no.semi.stmt");
-                    }
-                 }
                 // Add EOL only if function is not part of expression
                 // since it gets SEMI + EOL from Statement in that case
                 decompiler.addToken(Token.EOL);
@@ -1827,13 +1816,18 @@ public class Parser
                 } else {
                     pn = nf.createBinary(Token.ADD, pn, nf.createString(xml));
                 }
-                int nodeType;
                 if (ts.isXMLAttribute()) {
-                    nodeType = Token.ESCXMLATTR;
+                    /* Need to put the result in double quotes */
+                    expr = nf.createUnary(Token.ESCXMLATTR, expr);
+                    Node prepend = nf.createBinary(Token.ADD,
+                                                   nf.createString("\""),
+                                                   expr);
+                    expr = nf.createBinary(Token.ADD,
+                                           prepend,
+                                           nf.createString("\""));
                 } else {
-                    nodeType = Token.ESCXMLTEXT;
+                    expr = nf.createUnary(Token.ESCXMLTEXT, expr);
                 }
-                expr = nf.createUnary(nodeType, expr);
                 pn = nf.createBinary(Token.ADD, pn, expr);
                 break;
             case Token.XMLEND:
