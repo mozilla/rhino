@@ -60,9 +60,9 @@
       <sourcepath path="testsrc" />
         <include name="org/mozilla/javascript/drivers/JsDriver.java" />
     </javac>
-        <copy todir="${test.classes}/org/mozilla/javascript/drivers">
-          <fileset dir="testsrc/org/mozilla/javascript/drivers">
-        <include name="*.html"/>
+    <copy todir="${test.classes}">
+      <fileset dir="testsrc">
+        <exclude name="**/*.java build.xml"/>
       </fileset>
     </copy>
     <antcall target="junit-compile" />
@@ -72,19 +72,78 @@
     <delete dir="${test.classes}" />
   </target>
 
-  <target name="junit" depends="compile">
+  <target name="checkemma">
+    <available file="lib/emma.jar" property="emma.available"></available>
+    <property name="coverage.dir" location="${build.dir}/coverage"/>
+    <property name="coverage.classes.dir" location="${build.dir}/coverage/classes"/>
+    <mkdir dir="${coverage.classes.dir}"/>
+  </target>
+	
+  <target name="coverage-instrument" if="emma.available" depends="checkemma">
+    <path id="emma.lib">
+      <pathelement location="lib/emma.jar" />
+      <pathelement location="lib/emma_ant.jar" />
+    </path>
+    <taskdef resource="emma_ant.properties" classpathref="emma.lib" />
+    <property name="coverage.instrumentationfile" location="${coverage.dir}/instrumentation"/>
+    <emma enabled="true">
+      <instr 
+        instrpath="${classes}" outdir="${coverage.classes.dir}" 
+        outfile="${coverage.instrumentationfile}" mode="copy"/>
+    </emma>
+    <copy todir="${coverage.classes.dir}">
+      <fileset dir="src" excludes="**/*.java"/>
+    </copy>
+    <copy todir="${coverage.classes.dir}">
+      <fileset dir="${classes}"/>
+    </copy>
+    <property name="coverage.outfile" location="${coverage.dir}/coverage"/>
+  </target>
+	
+  <target name="no-coverage-instrument" unless="emma.available" depends="checkemma">
+    <copy todir="${coverage.classes.dir}">
+      <fileset dir="${classes}"/>
+    </copy>
+  </target>
+
+  <target name="junit" depends="compile,coverage-instrument,no-coverage-instrument">
     <junit printsummary="on" fork="true" forkmode="once" maxmemory="${test.vm.mx}" showoutput="true">
       <sysproperty key="mozilla.js.tests" value="${test.library.dir}" />
       <sysproperty key="mozilla.js.tests.timeout" value="${test.timeout}" />
+      <sysproperty key="emma.coverage.out.file" value="${coverage.outfile}"/>
       <classpath>
         <pathelement location="${xbean.jar}"/>
         <pathelement location="${jsr173.jar}"/>
+      	<pathelement path="${coverage.classes.dir}" />
         <pathelement path="${classes}" />
         <pathelement path="${test.classes}" />
+     	<pathelement path="lib/emma.jar"/>
       </classpath>
-      <test name="org.mozilla.javascript.drivers.StandardTests" />
+      <test name="org.mozilla.javascript.drivers.StandardTests" todir="build/test"/>
       <formatter type="plain" usefile="false" />
+      <formatter type="xml"/>
     </junit>
+  </target>
+
+  <target name="junit-coveragereport" depends="junit" if="emma.available">
+    <property name="coverage.report.dir" location="${build.dir}/coverage/report"/>
+    <mkdir dir="${coverage.report.dir}"/>
+    <delete dir="${coverage.report.dir}"/>
+    <mkdir dir="${coverage.report.dir}"/>
+    <emma enabled="true">
+      <report>
+        <fileset dir="${basedir}">
+          <include name="build/coverage/instrumentation"/>
+          <include name="build/coverage/coverage"/>
+        </fileset>
+        <sourcepath>
+          <dirset dir="${basedir}">
+            <include name="src"/>
+          </dirset>
+        </sourcepath>
+        <html outfile="${coverage.report.dir}/index.html"/>
+      </report>
+    </emma>
   </target>
 
   <target name="jsdriver" depends="compile">

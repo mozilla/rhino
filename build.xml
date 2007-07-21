@@ -212,6 +212,9 @@
     <ant antfile="testsrc/build.xml" target="junit"/>
   </target>
 
+  <target name="junit-all-coveragereport" depends="compile">
+    <ant antfile="testsrc/build.xml" target="junit-coveragereport"/>
+  </target>
   <!--
   Run the tests using the Java port of jsdriver.pl.  Note that running this port
   from the command-line may be more useful running this Ant target, as running
