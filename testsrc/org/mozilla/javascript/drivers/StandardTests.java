@@ -39,6 +39,7 @@ package org.mozilla.javascript.drivers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
@@ -80,7 +81,22 @@ public class StandardTests extends TestSuite
             throw new FileNotFoundException(testDir + " is not a directory");
         }
         Properties excludes = new Properties();
-        InputStream in = new FileInputStream(new File(testDir, "rhino-n.tests"));
+        loadExcludes(excludes, "/base.skip");
+        Properties opt1Excludes = new Properties(excludes);
+        loadExcludes(excludes, "/opt1.skip");
+
+        for(int i = -1; i < 2; ++i)
+        {
+            TestSuite optimizationLevelSuite = new TestSuite("Optimization level " + i);
+            addSuites(optimizationLevelSuite, testDir, i == -1 ? excludes : opt1Excludes, i);
+            suite.addTest(optimizationLevelSuite);
+        }
+        return suite;
+    }
+
+    private static void loadExcludes(Properties excludes, String excludeFileName) throws IOException
+    {
+        InputStream in = StandardTests.class.getResourceAsStream(excludeFileName);
         try
         {
             excludes.load(in);
@@ -89,13 +105,6 @@ public class StandardTests extends TestSuite
         {
             in.close();
         }
-        for(int i = -1; i < 2; ++i)
-        {
-            TestSuite optimizationLevelSuite = new TestSuite("Optimization level " + i);
-            addSuites(optimizationLevelSuite, testDir, excludes, i);
-            suite.addTest(optimizationLevelSuite);
-        }
-        return suite;
     }
 
     private static void addSuites(TestSuite topLevel, File testDir, Properties excludes, int optimizationLevel)
