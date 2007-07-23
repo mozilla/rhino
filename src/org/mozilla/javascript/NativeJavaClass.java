@@ -65,9 +65,9 @@ import java.util.Hashtable;
 public class NativeJavaClass extends NativeJavaObject implements Function
 {
     static final long serialVersionUID = -6460763940409461664L;
-    
+
     // Special property for getting the underlying Java class object.
-    static final String javaClassPropertyName = "__javaClass__";
+    static final String javaClassPropertyName = "__javaObject__";
 
     public NativeJavaClass() {
     }
