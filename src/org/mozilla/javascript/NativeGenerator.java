@@ -38,7 +38,7 @@ package org.mozilla.javascript;
  */
 public final class NativeGenerator extends IdScriptableObject {
     private static final Object GENERATOR_TAG = new Object();
-    
+
     static NativeGenerator init(ScriptableObject scope, boolean sealed) {
         // Generator
         // Can't use "NativeGenerator().exportAsJSClass" since we don't want
@@ -67,15 +67,14 @@ public final class NativeGenerator extends IdScriptableObject {
      * Only for constructing the prototype object.
      */
     private NativeGenerator() { }
-    
-    NativeGenerator(Scriptable scope, NativeFunction function, 
+
+    public NativeGenerator(Scriptable scope, NativeFunction function,
                     Object savedState)
     {
         this.function = function;
         this.savedState = savedState;
-        
-        // Set parent and prototype properties. Since we don't have a 
-        // "Generator" constructor in the top scope, we stash the 
+        // Set parent and prototype properties. Since we don't have a
+        // "Generator" constructor in the top scope, we stash the
         // prototype in the top scope's associated value.
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
@@ -83,7 +82,7 @@ public final class NativeGenerator extends IdScriptableObject {
             ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);
         this.setPrototype(prototype);
     }
-    
+
     public static final int GENERATOR_SEND  = 0,
                             GENERATOR_THROW = 1,
                             GENERATOR_CLOSE = 2;
@@ -124,7 +123,7 @@ public final class NativeGenerator extends IdScriptableObject {
           case Id_close:
             // need to run any pending finally clauses
 	        return generator.resume(cx, scope, GENERATOR_CLOSE,
-	          		                new RuntimeException());
+	          		                new GeneratorClosedException());
 
           case Id_next: 
             // arguments to next() are ignored
@@ -169,15 +168,20 @@ public final class NativeGenerator extends IdScriptableObject {
         try {
             synchronized (this) {
               // generator execution is necessarily single-threaded and
-              // non-reentrant. 
+              // non-reentrant.
               // See https://bugzilla.mozilla.org/show_bug.cgi?id=349263
               if (locked)
                   throw ScriptRuntime.typeError0("msg.already.exec.gen");
               locked = true;
             }
-            return function.resumeGenerator(cx, scope, operation, savedState, 
+            return function.resumeGenerator(cx, scope, operation, savedState,
                                             value);
-    	} catch (RhinoException e) {
+    	} catch (GeneratorClosedException e) {
+            // On closing a generator in the compile path, the generator
+            // throws a special execption. This ensures execution of all pending
+            // finalisers and will not get caught by user code. 
+            return Undefined.instance;
+        } catch (RhinoException e) {
     		lineNumber = e.lineNumber();
     		lineSource = e.lineSource();
     		savedState = null;
@@ -225,12 +229,15 @@ public final class NativeGenerator extends IdScriptableObject {
         MAX_PROTOTYPE_ID         = 5;
 
 // #/string_id_map#
-
     private NativeFunction function;
     private Object savedState;
     private String lineSource;
     private int lineNumber;
     private boolean firstTime = true;
     private boolean locked;
+
+    public static class GeneratorClosedException extends RuntimeException {
+    }
 }
+
 

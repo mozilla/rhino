@@ -662,13 +662,13 @@ public class Node
 
     public final int labelId()
     {
-        if (type != Token.TARGET) Kit.codeBug();
+        if (type != Token.TARGET && type != Token.YIELD) Kit.codeBug();
         return getIntProp(LABEL_ID_PROP, -1);
     }
 
     public void labelId(int labelId)
     {
-        if (type != Token.TARGET) Kit.codeBug();
+        if (type != Token.TARGET  && type != Token.YIELD) Kit.codeBug();
         putIntProp(LABEL_ID_PROP, labelId);
     }
     

@@ -38,6 +38,8 @@
  * ***** END LICENSE BLOCK ***** */
 
 package org.mozilla.javascript;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class FunctionNode extends ScriptOrFnNode {
 
@@ -62,6 +64,26 @@ public class FunctionNode extends ScriptOrFnNode {
       return itsIsGenerator;
     }
 
+    public void addResumptionPoint(Node target) {
+        if (generatorResumePoints == null)
+            generatorResumePoints = new ArrayList();
+        generatorResumePoints.add(target);
+    }
+
+    public ArrayList getResumptionPoints() {
+        return generatorResumePoints;
+    }
+
+    public HashMap getLiveLocals() {
+        return liveLocals;
+    }
+
+    public void addLiveLocals(Node node, int[] locals) {
+        if (liveLocals == null)
+            liveLocals = new HashMap();
+        liveLocals.put(node, locals);
+    }
+
     /**
      * There are three types of functions that can be defined. The first
      * is a function statement. This is a function appearing as a top-level
@@ -75,7 +97,7 @@ public class FunctionNode extends ScriptOrFnNode {
      * top-level expression in an expression statement.
      *
      * The three types of functions have different treatment and must be
-     * distinquished.
+     * distinguished.
      */
     public static final int FUNCTION_STATEMENT            = 1;
     public static final int FUNCTION_EXPRESSION           = 2;
@@ -90,4 +112,6 @@ public class FunctionNode extends ScriptOrFnNode {
     boolean itsNeedsActivation;
     boolean itsIgnoreDynamicScope;
     boolean itsIsGenerator;
+    ArrayList generatorResumePoints;
+    HashMap liveLocals;
 }

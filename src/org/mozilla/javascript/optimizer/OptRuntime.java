@@ -255,4 +255,93 @@ public final class OptRuntime extends ScriptRuntime
         });
     }
 
+    public static void throwStopIteration(Object obj) {
+        Scriptable top =
+                ScriptableObject.getTopLevelScope((ScriptableObject)obj);
+        Object e = top.get(NativeIterator.STOP_ITERATION,
+                ((ScriptableObject)obj));
+        throw new JavaScriptException(e, "", 0);
+    }
+
+    public static Scriptable createNativeGenerator(NativeFunction funObj,
+                                                   Scriptable scope,
+                                                   int maxLocals,
+                                                   int maxStack)
+    {
+        return new NativeGenerator(scope, funObj,
+                new RuntimeGeneratorState(maxLocals, maxStack));
+    }
+
+    public static int GetGeneratorResumptionPoint(Object obj)
+    {
+        return ((RuntimeGeneratorState)obj).getGeneratorState();
+    }
+
+    public static void SetGeneratorResumptionPoint(Object obj, int rp)
+    {
+        ((RuntimeGeneratorState)obj).setGeneratorState(rp);
+    }
+
+    public static Object[] GetGeneratorStackState(Object obj)
+    {
+        return ((RuntimeGeneratorState)obj).getStackState();
+    }
+
+    public static Object[] GetGeneratorLocalsState(Object obj)
+    {
+        return ((RuntimeGeneratorState)obj).getLocalsState();
+    }
+
+    public static class RuntimeGeneratorState
+    {
+        public int resumptionPoint;
+        public Object[] stackState;
+        public Object[] localsState;
+        public boolean hasClosed;
+        private int maxLocals;
+        private int maxStack;
+
+        public RuntimeGeneratorState(int maxLocals, int maxStack) {
+            resumptionPoint = 0;
+            stackState = null;
+            localsState = null;
+            hasClosed = false;
+            this.maxLocals = maxLocals;
+            this.maxStack = maxStack;
+        }
+
+        public int getGeneratorState()
+        {
+            return resumptionPoint;
+        }
+
+        public void setGeneratorState(int rp)
+        {
+            resumptionPoint = rp;
+        }
+
+        public boolean getHasClosed()
+        {
+            return hasClosed;
+        }
+
+        public void setHasClosed(boolean flag)
+        {
+            hasClosed = flag;
+        }
+
+        public Object[] getStackState()
+        {
+            if (stackState == null)
+                stackState = new Object[maxStack];
+            return stackState;
+        }
+
+        public Object[] getLocalsState()
+        {
+            if (localsState == null)
+                localsState = new Object[maxLocals];
+            return localsState;
+        }
+    }
 }

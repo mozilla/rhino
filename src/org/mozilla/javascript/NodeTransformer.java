@@ -168,6 +168,10 @@ public class NodeTransformer
                 }
                 break;
 
+              case Token.YIELD:
+                ((FunctionNode)tree).addResumptionPoint(node);
+                break;
+
               case Token.RETURN:
               {
                 boolean isGenerator = tree.getType() == Token.FUNCTION

@@ -599,7 +599,17 @@ public class ClassFileWriter {
      * @param k the constant
      */
     public void addLoadConstant(int k) {
-        add(ByteCode.LDC, itsConstantPool.addConstant(k));
+        switch (k) {
+            case 0: add(ByteCode.ICONST_0); break;
+            case 1: add(ByteCode.ICONST_1); break;
+            case 2: add(ByteCode.ICONST_2); break;
+            case 3: add(ByteCode.ICONST_3); break;
+            case 4: add(ByteCode.ICONST_4); break;
+            case 5: add(ByteCode.ICONST_5); break;
+            default:
+                add(ByteCode.LDC, itsConstantPool.addConstant(k));
+                break;
+        }
     }
 
     /**
@@ -1267,6 +1277,10 @@ public class ClassFileWriter {
 
     public short getStackTop() {
         return itsStackTop;
+    }
+
+    public void setStackTop(short n) {
+        itsStackTop = n;
     }
 
     public void adjustStackTop(int delta) {

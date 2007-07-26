@@ -116,15 +116,20 @@ public abstract class NativeFunction extends BaseFunction
         return null;
     }
 
-    /*
-     * Resumes execution of a JS 1.7 generator.
+    /**
+     * Resume execution of a suspended generator
+     * @param cx The current context
+     * @param scope Scope for the parent generator function
+     * @param operation The remuptiuon operation (next, send, etc.. )
+     * @param state The generator state (has locals, stack etc)
+     * @param value The return value of yield (if required).
+     * @return The next yielded value (if any)
      */
-    /*abstract*/ Object resumeGenerator(Context cx, Scriptable scope, 
-            int operation, Object state, Object value)
-    {
-        // TODO(js1.7gen): make abstract once bytecode generation is done
-        throw new EvaluatorException("Not yet implemented");
+    public Object resumeGenerator(Context cx, Scriptable scope,
+                           int operation, Object state, Object value) {
+        throw new EvaluatorException("resumeGenerator() not implemented");
     }
+
 
     protected abstract int getLanguageVersion();
 
