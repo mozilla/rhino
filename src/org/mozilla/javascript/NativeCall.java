@@ -82,7 +82,7 @@ public final class NativeCall extends IdScriptableObject
             }
         }
 
-        // initialize "arguments" property but only if it was not overriden by
+        // initialize "arguments" property but only if it was not overridden by
         // the parameter with the same name
         if (!super.has("arguments", this)) {
             defineProperty("arguments", new Arguments(this), PERMANENT);
