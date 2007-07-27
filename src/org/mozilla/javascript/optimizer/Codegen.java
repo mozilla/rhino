@@ -1400,6 +1400,8 @@ class BodyCodegen
                 Codegen.DIRECT_CALL_PARENT_FIELD,
                 codegen.mainClassSignature);
 
+        generateNestedFunctionInits();
+        
         // create the NativeGenerator object that we return
         cfw.addALoad(variableObjectLocal);
         cfw.addLoadConstant(maxLocals);
@@ -1411,6 +1413,19 @@ class BodyCodegen
 
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short)(localsMax + 1));
+    }
+
+    private void generateNestedFunctionInits()
+    {
+        int functionCount = scriptOrFn.getFunctionCount();
+        for (int i = 0; i != functionCount; i++) {
+            OptFunctionNode ofn = OptFunctionNode.get(scriptOrFn, i);
+            if (ofn.fnode.getFunctionType()
+                    == FunctionNode.FUNCTION_STATEMENT)
+            {
+                visitFunction(ofn, FunctionNode.FUNCTION_STATEMENT);
+            }
+        }
     }
 
     private void initBodyGeneration()
@@ -1663,15 +1678,7 @@ class BodyCodegen
         epilogueLabel = cfw.acquireLabel();
         cfw.markLabel(enterAreaStartLabel);
 
-        int functionCount = scriptOrFn.getFunctionCount();
-        for (int i = 0; i != functionCount; i++) {
-            OptFunctionNode ofn = OptFunctionNode.get(scriptOrFn, i);
-            if (ofn.fnode.getFunctionType()
-                    == FunctionNode.FUNCTION_STATEMENT)
-            {
-                visitFunction(ofn, FunctionNode.FUNCTION_STATEMENT);
-            }
-        }
+        generateNestedFunctionInits();
 
         // default is to generate debug info
         if (compilerEnv.isGenerateDebugInfo()) {

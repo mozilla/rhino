@@ -2,9 +2,6 @@
 # These tests are skipped by Rhino either because a bug with a regression
 # test has yet to be fixed, or because the test is not applicable to Rhino.
 
-# last remaining bug from implementation of generators for codegen
-js1_7/geniter/regress-359062.js
-
 # program too large/complex
 ecma_3/Statements/regress-302439.js
 ecma_3/Statements/regress-324650.js
