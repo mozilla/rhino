@@ -43,18 +43,24 @@ import java.lang.reflect.Constructor;
 
 public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
 {
-    public VMBridge_jdk15() throws SecurityException, NoSuchMethodException {
-        // Just try and see if we can access isVarArgs() on this constructor;
-        // want to fail loading if the method doesn't exist so that we can
-        // load a bridge to an older JDK
-        VMBridge_jdk15.class.getConstructor(new Class[] {}).isVarArgs();
+    public VMBridge_jdk15() throws SecurityException, InstantiationException {
+        try {
+            // Just try and see if we can access the isVarArgs method.
+            // We want to fail loading if the method does not exist
+            // so that we can load a bridge to an older JDK instead.
+            Method.class.getMethod("isVarArgs", (Class[]) null);
+        } catch (NoSuchMethodException e) {
+            // Throw a fittitng exception that is handled by
+            // org.mozilla.javascript.Kit.newInstanceOrNull:
+            throw new InstantiationException(e.getMessage());
+        }
     }
     public boolean isVarArgs(Member member) {
         if (member instanceof Method)
             return ((Method) member).isVarArgs();
         else if (member instanceof Constructor)
             return ((Constructor) member).isVarArgs();
-        else 
+        else
             return false;
     }
 }
