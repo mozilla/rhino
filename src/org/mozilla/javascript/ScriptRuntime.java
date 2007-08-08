@@ -1840,7 +1840,8 @@ public class ScriptRuntime {
         int index;
         ObjToIntMap used;
         Object currentId;
-        boolean enumValues;
+        int enumType; /* one of ENUM_INIT_KEYS, ENUM_INIT_VALUES, 
+                         ENUM_INIT_ARRAY */
         
         // if true, integer ids will be returned as numbers rather than strings
         boolean enumNumbers; 
@@ -1873,7 +1874,18 @@ public class ScriptRuntime {
         return null;
     }
 
+    // for backwards compatibility with generated class files
     public static Object enumInit(Object value, Context cx, boolean enumValues)
+    {
+        return enumInit(value, cx, enumValues ? ENUMERATE_VALUES 
+                                              : ENUMERATE_KEYS);
+    }
+    
+    public static final int ENUMERATE_KEYS = 0;
+    public static final int ENUMERATE_VALUES = 1;
+    public static final int ENUMERATE_ARRAY = 2;
+    
+    public static Object enumInit(Object value, Context cx, int enumType)
     {
         IdEnumeration x = new IdEnumeration();
         x.obj = toObjectOrNull(cx, value);
@@ -1882,7 +1894,7 @@ public class ScriptRuntime {
             // "for in" loop
             return x;
         }
-        x.enumValues = enumValues;
+        x.enumType = enumType;
         x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj, true);
 
         if (x.iterator == null) {
@@ -1952,10 +1964,20 @@ public class ScriptRuntime {
     public static Object enumId(Object enumObj, Context cx)
     {
         IdEnumeration x = (IdEnumeration)enumObj;
-        if (!x.enumValues)
+        if (x.iterator != null) {
             return x.currentId;
-        else
+        }
+        switch (x.enumType) {
+          case ENUMERATE_KEYS:
+            return x.currentId;
+          case ENUMERATE_VALUES:
             return enumValue(enumObj, cx);
+          case ENUMERATE_ARRAY:
+            Object[] elements = { x.currentId, enumValue(enumObj, cx) };
+            return cx.newArray(x.obj.getParentScope(), elements);
+          default:
+            throw Kit.codeBug();
+        }
     }
     
     public static Object enumValue(Object enumObj, Context cx) {

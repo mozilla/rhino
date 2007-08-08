@@ -216,6 +216,15 @@ final class IRFactory
         checkActivationName(name, Token.NAME);
         return Node.newString(Token.NAME, name);
     }
+    
+    private Node createName(int type, String name, Node child)
+    {
+        Node result = createName(name);
+        result.setType(type);
+        if (child != null)
+            result.addChildToBack(child);
+        return result;
+    }
 
     /**
      * String (for literals)
@@ -508,6 +517,36 @@ final class IRFactory
 
         return loop;
     }
+    
+    /*
+     * Return true iff "n" is an array literal of length 2. This is
+     * surprisingly hard to determine due to the "skip_indexes" property.
+     */
+    private boolean isArrayLitOfLengthTwo(Node n) {
+        int[] skipIndexes = (int[])n.getProp(Node.SKIP_INDEXES_PROP);
+        if (n.getFirstChild() != null && n.getLastChild() != null &&
+            n.getFirstChild().getNext() == n.getLastChild() &&
+            skipIndexes == null)
+        {
+            // two elements in tree, no skipped indexes
+            return true;
+        }
+        if (n.getFirstChild() != null && n.getFirstChild() == n.getLastChild() &&
+            skipIndexes != null && skipIndexes.length == 1 &&
+            skipIndexes[0] < 2)
+        {
+            // one element in tree, one skipped index
+            return true;
+        }
+        if (n.getFirstChild() == null && 
+            skipIndexes != null && skipIndexes.length == 2 &&
+            skipIndexes[0] == 0 && skipIndexes[1] == 1)
+        {
+            // no elements in tree, two skipped indices
+            return true;
+        }
+        return false;   
+    }
 
     /**
      * For .. In
@@ -519,6 +558,7 @@ final class IRFactory
         int type = lhs.getType();
 
         Node lvalue;
+        boolean destructuring = false;
         if (type == Token.VAR || type == Token.LET) {
             /*
              * check that there was only one variable given.
@@ -531,6 +571,17 @@ final class IRFactory
                 parser.reportError("msg.mult.index");
             }
             lvalue = Node.newString(Token.NAME, lastChild.getString());
+        } else if (type == Token.ARRAYLIT || type == Token.OBJECTLIT) {
+            // destructuring assignment is only allowed in for each or
+            // with an array type of length 2 (to hold key and value)
+            if (!isForEach && (type == Token.OBJECTLIT ||
+                !isArrayLitOfLengthTwo(lhs)))
+            {
+              parser.reportError("msg.bad.for.in.lhs");
+              return obj;
+            }
+            lvalue = lhs;
+            destructuring = true;
         } else {
             lvalue = makeReference(lhs);
             if (lvalue == null) {
@@ -540,9 +591,9 @@ final class IRFactory
         }
 
         Node localBlock = new Node(Token.LOCAL_BLOCK);
-
-        int initType = (isForEach) ? Token.ENUM_INIT_VALUES
-                                   : Token.ENUM_INIT_KEYS;
+        int initType = (isForEach)     ? Token.ENUM_INIT_VALUES :
+                       (destructuring) ? Token.ENUM_INIT_ARRAY :
+                                         Token.ENUM_INIT_KEYS;
         Node init = new Node(initType, obj);
         init.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
         Node cond = new Node(Token.ENUM_NEXT);
@@ -551,7 +602,12 @@ final class IRFactory
         id.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
 
         Node newBody = new Node(Token.BLOCK);
-        Node assign = simpleAssignment(lvalue, id);
+        Node assign;
+        if (destructuring) {
+            assign = createAssignment(Token.ASSIGN, lvalue, id);
+        } else {
+            assign = simpleAssignment(lvalue, id);
+        }
         newBody.addChildToBack(new Node(Token.EXPR_VOID, assign));
         newBody.addChildToBack(body);
 
@@ -1268,11 +1324,21 @@ final class IRFactory
 
     Node createAssignment(int assignType, Node left, Node right)
     {
-        left = makeReference(left);
-        if (left == null) {
+        Node ref = makeReference(left);
+        if (ref == null) {
+            if (left.getType() == Token.ARRAYLIT || 
+                left.getType() == Token.OBJECTLIT)
+            {
+                if (assignType != Token.ASSIGN) {
+                    parser.reportError("msg.bad.destruct.op");
+                    return right;
+                }
+                return createDestructuringAssignment(left, right);
+            }
             parser.reportError("msg.bad.assign.left");
             return right;
         }
+        left = ref;
 
         int assignOp;
         switch (assignType) {
@@ -1313,7 +1379,7 @@ final class IRFactory
             return new Node(type, obj, id, op);
           }
           case Token.GET_REF: {
-            Node ref = left.getFirstChild();
+            ref = left.getFirstChild();
             checkMutableReference(ref);
             Node opLeft = new Node(Token.USE_STACK);
             Node op = new Node(assignOp, opLeft, right);
@@ -1322,6 +1388,107 @@ final class IRFactory
         }
 
         throw Kit.codeBug();
+    }
+    
+    /**
+     * Given a destructuring assignment with a left hand side parsed
+     * as an array or object literal and a right hand side expression,
+     * rewrite as a series of assignments to the variables defined in
+     * left from property accesses to the expression on the right.
+     * @param left array or object literal containing NAME nodes for
+     *        variables to assign
+     * @param right expression to assign from
+     * @return expression that performs a series of assignments to
+     *         the variables defined in left
+     */
+    Node createDestructuringAssignment(Node left, Node right)
+    {
+        String tempName = parser.currentScriptOrFn.getNextTempName();
+        Node result = destructuringAssignmentHelper(left, right, tempName);
+        Node comma = result.getLastChild();
+        comma.addChildToBack(createName(tempName));
+        return result;
+    }
+
+    private Node destructuringAssignmentHelper(Node left, Node right, 
+                                               String tempName)
+    {
+        Node result = createScopeNode(Token.LETEXPR,
+            parser.getCurrentLineNumber());
+        result.addChildToFront(new Node(Token.LET,
+            createName(Token.NAME, tempName, right)));
+        try {
+            parser.pushScope(result);
+            parser.defineSymbol(Token.LET, tempName);
+            Node comma = new Node(Token.COMMA);
+            result.addChildToBack(comma);
+            boolean empty = true;
+            int type = left.getType();
+            if (type == Token.ARRAYLIT) {
+                int index = 0;
+                int[] skipIndices = (int[])left.getProp(Node.SKIP_INDEXES_PROP);
+                int skip = 0;
+                for (Node n = left.getFirstChild(); n != null; n = n.getNext())
+                {
+                    if (skipIndices != null) {
+                        while (skip < skipIndices.length && 
+                               skipIndices[skip] == index) {
+                            skip++;
+                            index++;
+                        }
+                    }
+                    Node rightElem = new Node(Token.GETELEM,
+                        createName(tempName), 
+                        createNumber(index));
+                    if (n.getType() == Token.NAME) {
+                        comma.addChildToBack(new Node(Token.SETNAME, 
+                            createName(Token.BINDNAME, n.getString(), null),
+                            rightElem));
+                    } else {
+                        comma.addChildToBack(
+                            destructuringAssignmentHelper(n, rightElem,
+                                parser.currentScriptOrFn.getNextTempName()));
+                    }
+                    index++;
+                    empty = false;
+                }
+            } else if (type == Token.OBJECTLIT) {
+                int index = 0;
+                Object[] propertyIds = (Object[])
+                    left.getProp(Node.OBJECT_IDS_PROP);
+                for (Node n = left.getFirstChild(); n != null; n = n.getNext())
+                {
+                    Object id = propertyIds[index];
+                    Node rightElem = id instanceof String 
+                        ? new Node(Token.GETPROP,
+                            createName(tempName), 
+                            createString((String)id))
+                        : new Node(Token.GETELEM,
+                            createName(tempName), 
+                            createNumber(((Number)id).intValue()));
+                    if (n.getType() == Token.NAME) {
+                        comma.addChildToBack(new Node(Token.SETNAME, 
+                            createName(Token.BINDNAME, n.getString(), null),
+                            rightElem));
+                    } else {
+                        comma.addChildToBack(
+                            destructuringAssignmentHelper(n, rightElem,
+                                parser.currentScriptOrFn.getNextTempName()));
+                    }
+                    index++;
+                    empty = false;
+                }
+            } else {
+                parser.reportError("msg.bad.assign.left");
+            }
+            if (empty) {
+                // Don't want a COMMA node with no children. Just add a zero.
+                comma.addChildToBack(createNumber(0));
+            }
+            return result;
+        } finally {
+            parser.popScope();
+        }
     }
 
     Node createUseLocal(Node localBlock)

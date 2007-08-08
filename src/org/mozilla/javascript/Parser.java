@@ -99,6 +99,10 @@ public class Parser
     private boolean hasReturnValue;
     private int endFlags;
 // end of per function variables
+    
+    public int getCurrentLineNumber() {
+        return ts.getLineno();
+    }
 
     // Exception to unwind
     private static class ParserException extends RuntimeException
@@ -265,14 +269,14 @@ public class Parser
         return nestingOfFunction != 0;
     }
     
-    private void pushScope(Node node) {
+    void pushScope(Node node) {
         Node.Scope scopeNode = (Node.Scope) node;
         if (scopeNode.getParent() != null) throw Kit.codeBug();
         scopeNode.setParent(currentScope);
         currentScope = scopeNode;
     }
     
-    private void popScope() {
+    void popScope() {
         currentScope = currentScope.getParent();
     }
 
@@ -547,6 +551,7 @@ public class Parser
         boolean savedHasReturnValue = hasReturnValue;
         int savedFunctionEndFlags = endFlags;
 
+        Node destructuring = null;
         Node body;
         try {
             decompiler.addToken(Token.LP);
@@ -556,10 +561,26 @@ public class Parser
                     if (!first)
                         decompiler.addToken(Token.COMMA);
                     first = false;
-                    mustMatchToken(Token.NAME, "msg.no.parm");
-                    String s = ts.getString();
-                    defineSymbol(Token.LP, s);
-                    decompiler.addName(s);
+                    int tt = peekToken();
+                    if (tt == Token.LB || tt == Token.LC) {
+                        // Destructuring assignment for parameters: add a 
+                        // dummy parameter name, and add a statement to the
+                        // body to initialize variables from the destructuring
+                        // assignment
+                        if (destructuring == null) {
+                            destructuring = new Node(Token.COMMA);
+                        }
+                        String parmName = currentScriptOrFn.getNextTempName();
+                        defineSymbol(Token.LP, parmName);
+                        destructuring.addChildToBack(nf.createAssignment(
+                            Token.ASSIGN, primaryExpr(), 
+                            nf.createName(parmName)));
+                    } else {
+                        mustMatchToken(Token.NAME, "msg.no.parm");
+                        String s = ts.getString();
+                        defineSymbol(Token.LP, s);
+                        decompiler.addName(s);
+                    }
                 } while (matchToken(Token.COMMA));
 
                 mustMatchToken(Token.RP, "msg.no.paren.after.parms");
@@ -569,6 +590,10 @@ public class Parser
             mustMatchToken(Token.LC, "msg.no.brace.body");
             decompiler.addEOL(Token.LC);
             body = parseFunctionBody();
+            if (destructuring != null) {
+                body.addChildToFront(
+                    new Node(Token.EXPR_VOID, destructuring, ts.getLineno()));
+            }
             mustMatchToken(Token.RC, "msg.no.brace.after.body");
 
             if (compilerEnv.isStrictMode() && !body.hasConsistentReturnUsage())
@@ -844,10 +869,9 @@ public class Parser
 
             Node loop = enterLoop(statementLabel, true);
             try {
-
-                Node init;  // Node init is also foo in 'foo in Object'
-                Node cond;  // Node cond is also object in 'foo in Object'
-                Node incr = null; // to kill warning
+                Node init;  // Node init is also foo in 'foo in object'
+                Node cond;  // Node cond is also object in 'foo in object'
+                Node incr = null;
                 Node body;
 
                 // See if this is a for each () instead of just a for ()
@@ -1346,6 +1370,14 @@ public class Parser
         
         boolean first = true;
         for (;;) {
+            int tt = peekToken();
+            if (tt == Token.LB || tt == Token.LC) {
+                // Destructuring assignment, e.g., var [a,b] = ...
+                Node n = expr(inFor);
+                return inStatement && !inFor
+                    ? new Node(Token.EXPR_VOID, n, ts.getLineno())
+                    : n;
+            }
             mustMatchToken(Token.NAME, "msg.bad.var");
             String s = ts.getString();
 
@@ -2117,21 +2149,30 @@ public class Parser
         }
         mustMatchToken(Token.LP, "msg.no.paren.for");
         decompiler.addToken(Token.LP);
-        Node init = null;
+        String name;
         int tt = peekToken();
         if (tt == Token.LB || tt == Token.LC) {
-            // TODO: handle destructuring assignment
-            throw Kit.codeBug();
+            // handle destructuring assignment
+            name = currentScriptOrFn.getNextTempName();
+            defineSymbol(Token.LP, name);
+            expr = nf.createBinary(Token.COMMA,
+                nf.createAssignment(Token.ASSIGN, primaryExpr(), 
+                                    nf.createName(name)),
+                expr);
         } else if (tt == Token.NAME) {
             consumeToken();
-            decompiler.addName(ts.getString());
-            init = nf.createName(ts.getString());
-            // Define as a let since we want the scope of the variable to
-            // be restricted to the array comprehension
-            defineSymbol(Token.LET, ts.getString());
+            name = ts.getString();
+            decompiler.addName(name);
         } else {
             reportError("msg.bad.var");
+            return nf.createNumber(0);
         }
+
+        Node init = nf.createName(name);
+        // Define as a let since we want the scope of the variable to
+        // be restricted to the array comprehension
+        defineSymbol(Token.LET, name);
+        
         mustMatchToken(Token.IN, "msg.in.after.for.name");
         decompiler.addToken(Token.IN);
         Node iterator = expr(false);
@@ -2147,7 +2188,7 @@ public class Parser
                 nf.createPropertyGet(nf.createName(arrayName), null,
                                      "push", 0));
             call.addChildToBack(expr);
-            body = new Node(Token.EXPR_VOID, call, expr, ts.getLineno());
+            body = new Node(Token.EXPR_VOID, call, ts.getLineno());
             if (tt == Token.IF) {
                 consumeToken();
                 decompiler.addToken(Token.IF);
@@ -2160,7 +2201,7 @@ public class Parser
             }
         }
 
-        Node loop = enterLoop(null, false);
+        Node loop = enterLoop(null, true);
         try {
             return nf.createForIn(loop, init, iterator, body, isForEach);
         } finally {
@@ -2207,22 +2248,26 @@ public class Parser
                 {
                     Node scopeNode = nf.createScopeNode(Token.ARRAYCOMP, 
                                                         ts.getLineno());
+                    String tempName = currentScriptOrFn.getNextTempName();
                     pushScope(scopeNode);
-                    final String ARRAY_NAME = "$a";
-                    defineSymbol(Token.LET, ARRAY_NAME);
-                    Node expr = (Node) elems.get(0);
-                    Node block = nf.createBlock(ts.getLineno());
-                    Node init = new Node(Token.EXPR_VOID, 
-                        nf.createAssignment(Token.ASSIGN, 
-                            nf.createName(ARRAY_NAME),
-                            nf.createCallOrNew(Token.NEW,
-                                nf.createName("Array"))), ts.getLineno());
-                    block.addChildToBack(init);
-                    block.addChildToBack(arrayComprehension(ARRAY_NAME, expr));
-                    scopeNode.addChildToBack(block);
-                    scopeNode.addChildToBack(nf.createName(ARRAY_NAME));
-                    popScope();
-                    return scopeNode;
+                    try {
+                        defineSymbol(Token.LET, tempName);
+                        Node expr = (Node) elems.get(0);
+                        Node block = nf.createBlock(ts.getLineno());
+                        Node init = new Node(Token.EXPR_VOID, 
+                            nf.createAssignment(Token.ASSIGN, 
+                                nf.createName(tempName),
+                                nf.createCallOrNew(Token.NEW,
+                                    nf.createName("Array"))), ts.getLineno());
+                        block.addChildToBack(init);
+                        block.addChildToBack(arrayComprehension(tempName, 
+                            expr));
+                        scopeNode.addChildToBack(block);
+                        scopeNode.addChildToBack(nf.createName(tempName));
+                        return scopeNode;
+                    } finally {
+                        popScope();
+                    }
                 } else {
                     if (!after_lb_or_comma) {
                         reportError("msg.no.bracket.arg");

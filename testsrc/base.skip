@@ -34,6 +34,7 @@ js1_5/Regress/regress-240577.js
 
 # import, export not implemented
 js1_5/Regress/regress-249211.js
+js1_7/lexical/regress-346642-03.js
 
 # concatentated string too large
 js1_5/Regress/regress-280769-1.js
@@ -173,6 +174,9 @@ js1_7/geniter/regress-347739.js
 js1_7/geniter/regress-349012-01.js
 js1_7/geniter/regress-349331.js
 
+# function named "yield"
+js1_7/lexical/regress-351515.js
+
 # unimplemented "options" shell function
 js1_7/block/regress-347559.js
 js1_5/Regress/regress-383674.js
@@ -184,17 +188,10 @@ js1_5/Regress/regress-10278.js
 
 # JS 1.7 not yet implemented
 js1_7/decompilation
-js1_7/lexical
 # "y" flag for regexps
 js1_7/regexp
 # yield and xml-filtering predicate
 js1_7/geniter/regress-352605.js
-# destructuring assignment
-js1_7/geniter/regress-345736.js
-js1_7/geniter/regress-347593.js
-js1_7/geniter/regress-366941.js
-js1_7/block/regress-358508.js
-js1_7/expressions/regress-346203.js
 # js1_7 needs investigation
 js1_7/extensions/basic-for-each.js
 js1_7/extensions/destructuring-order.js
@@ -286,6 +283,7 @@ ecma_2/Exceptions/function-001.js
 # likely bugs. need investigation
 js1_6/Array/regress-386030.js
 ecma_3/Array/regress-387501.js
+js1_7/lexical/regress-336376-01.js
 
 # minor decompilation incompatibility
 js1_5/extensions/regress-384680.js

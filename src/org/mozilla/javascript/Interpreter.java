@@ -912,7 +912,8 @@ public class Interpreter
             break;
 
           case Token.ENUM_INIT_KEYS:
-          case Token.ENUM_INIT_VALUES :
+          case Token.ENUM_INIT_VALUES:
+          case Token.ENUM_INIT_ARRAY:
             visitExpression(child, 0);
             addIndexOp(type, getLocalBlockRef(node));
             stackChange(-1);
@@ -3640,13 +3641,18 @@ switch (op) {
         continue Loop;
     }
     case Token.ENUM_INIT_KEYS :
-    case Token.ENUM_INIT_VALUES : {
+    case Token.ENUM_INIT_VALUES :
+    case Token.ENUM_INIT_ARRAY : {
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         --stackTop;
         indexReg += frame.localShift;
-        stack[indexReg] = ScriptRuntime.enumInit(
-                              lhs, cx, (op == Token.ENUM_INIT_VALUES));
+        int enumType = op == Token.ENUM_INIT_KEYS 
+                         ? ScriptRuntime.ENUMERATE_KEYS :
+                       op == Token.ENUM_INIT_VALUES 
+                         ? ScriptRuntime.ENUMERATE_VALUES :
+                       ScriptRuntime.ENUMERATE_ARRAY;
+        stack[indexReg] = ScriptRuntime.enumInit(lhs, cx, enumType);
         continue Loop;
     }
     case Token.ENUM_NEXT :

@@ -2002,13 +2002,19 @@ class BodyCodegen
 
               case Token.ENUM_INIT_KEYS:
               case Token.ENUM_INIT_VALUES:
+              case Token.ENUM_INIT_ARRAY:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                cfw.addPush(type == Token.ENUM_INIT_VALUES);
+                int enumType = type == Token.ENUM_INIT_KEYS 
+                                   ? ScriptRuntime.ENUMERATE_KEYS :
+                               type == Token.ENUM_INIT_VALUES 
+                                   ? ScriptRuntime.ENUMERATE_VALUES :
+                               ScriptRuntime.ENUMERATE_ARRAY;
+                cfw.addPush(enumType);
                 addScriptRuntimeInvoke("enumInit",
                                        "(Ljava/lang/Object;"
                                        +"Lorg/mozilla/javascript/Context;"
-                                       +"Z"
+                                       +"I"
                                        +")Ljava/lang/Object;");
                 cfw.addAStore(getLocalBlockRegister(node));
                 break;

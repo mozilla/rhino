@@ -207,6 +207,11 @@ public class ScriptOrFnNode extends Node.Scope {
         if (compilerData != null) throw new IllegalStateException();
         compilerData = data;
     }
+    
+    public String getNextTempName()
+    {
+        return "$" + tempNumber++;
+    }
 
     private int encodedSourceStart;
     private int encodedSourceEnd;
@@ -223,4 +228,5 @@ public class ScriptOrFnNode extends Node.Scope {
     private boolean[] isConsts;
 
     private Object compilerData;
+    private int tempNumber = 0;
 }
