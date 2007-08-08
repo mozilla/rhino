@@ -490,6 +490,11 @@ class Block
           case Token.URSH:
           case Token.SUB :
               return Optimizer.NumberType;
+          
+          case Token.ARRAYLIT:
+          case Token.OBJECTLIT:
+              return Optimizer.AnyType; // XXX: actually, we know it's not
+                                        // number, but no type yet for that
 
           case Token.ADD : {
               // if the lhs & rhs are known to be numbers, we can be sure that's
@@ -497,7 +502,7 @@ class Block
               Node child = n.getFirstChild();
               int lType = findExpressionType(fn, child, varTypes);
               int rType = findExpressionType(fn, child.getNext(), varTypes);
-              return lType | rType;    // we're not distinguishng strings yet
+              return lType | rType;    // we're not distinguishing strings yet
           }
         }
 
