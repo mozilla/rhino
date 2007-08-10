@@ -1975,7 +1975,7 @@ public class Context
      * <p>
      * Note that the values are maintained with the Context, so
      * if the Context is disassociated from the thread the values
-     * cannot be retreived. Also, if private data is to be maintained
+     * cannot be retrieved. Also, if private data is to be maintained
      * in this manner the key should be a java.lang.Object
      * whose reference is not divulged to untrusted code.
      * @param key the key used to lookup the value
