@@ -131,12 +131,13 @@ public final class NativeGenerator extends IdScriptableObject {
             return generator.resume(cx, scope, GENERATOR_SEND,
             		                Undefined.instance);
 
-          case Id_send:
-            if (generator.firstTime) {
+          case Id_send: {
+            Object arg = args.length > 0 ? args[0] : Undefined.instance;
+            if (generator.firstTime && !arg.equals(Undefined.instance)) {
                 throw ScriptRuntime.typeError0("msg.send.newborn");
             }
-            return generator.resume(cx, scope, GENERATOR_SEND,
-            		args.length > 0 ? args[0] : Undefined.instance);
+            return generator.resume(cx, scope, GENERATOR_SEND, arg);
+          }
 
           case Id_throw:
             return generator.resume(cx, scope, GENERATOR_THROW,
