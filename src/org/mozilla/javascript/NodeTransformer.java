@@ -305,17 +305,23 @@ public class NodeTransformer
                     // Move cursor to next before createAssignment gets chance
                     // to change n.next
                     Node n = cursor;
-                    if (n.getType() != Token.NAME) Kit.codeBug();
                     cursor = cursor.getNext();
-                    if (!n.hasChildren())
-                        continue;
-                    Node init = n.getFirstChild();
-                    n.removeChild(init);
-                    n.setType(Token.BINDNAME);
-                    n = new Node(type == Token.CONST ?
-                                     Token.SETCONST :
-                                     Token.SETNAME,
-                                 n, init);
+                    if (n.getType() == Token.NAME) {
+                        if (!n.hasChildren())
+                            continue;
+                        Node init = n.getFirstChild();
+                        n.removeChild(init);
+                        n.setType(Token.BINDNAME);
+                        n = new Node(type == Token.CONST ?
+                                         Token.SETCONST :
+                                         Token.SETNAME,
+                                     n, init);
+                    } else {
+                        // May be a destructuring assignment already transformed
+                        // to a LETEXPR
+                        if (n.getType() != Token.LETEXPR)
+                            throw Kit.codeBug();
+                    }
                     Node pop = new Node(Token.EXPR_VOID, n, node.getLineno());
                     result.addChildToBack(pop);
                 }

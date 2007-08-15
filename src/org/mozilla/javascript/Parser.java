@@ -873,6 +873,7 @@ public class Parser
                 Node cond;  // Node cond is also object in 'foo in object'
                 Node incr = null;
                 Node body;
+                int declType = -1;
 
                 // See if this is a for each () instead of just a for ()
                 if (matchToken(Token.NAME)) {
@@ -895,6 +896,7 @@ public class Parser
                         consumeToken();    // consume the token
                         decompiler.addToken(tt);
                         init = variables(true, true, tt);
+                        declType = tt;
                     }
                     else {
                         init = expr(true);
@@ -933,7 +935,8 @@ public class Parser
                 if (incr == null) {
                     // cond could be null if 'in obj' got eaten
                     // by the init node.
-                    pn = nf.createForIn(loop, init, cond, body, isForEach);
+                    pn = nf.createForIn(declType, loop, init, cond, body,
+                                        isForEach);
                 } else {
                     pn = nf.createFor(loop, init, cond, incr, body);
                 }
@@ -1367,50 +1370,67 @@ public class Parser
     {
         Node result = nf.createVariables(inStatement ? declType : Token.COMMA,
                                          ts.getLineno());
-        
+        Node destructuringInit = null;
         boolean first = true;
         for (;;) {
+            Node destructuring = null;
+            String s = null;
             int tt = peekToken();
             if (tt == Token.LB || tt == Token.LC) {
                 // Destructuring assignment, e.g., var [a,b] = ...
-                Node n = expr(inFor);
-                return inStatement && !inFor
-                    ? new Node(Token.EXPR_VOID, n, ts.getLineno())
-                    : n;
+                destructuring = primaryExpr();
+            } else {
+                // Simple variable name
+                mustMatchToken(Token.NAME, "msg.bad.var");
+                s = ts.getString();
+    
+                if (!first)
+                    decompiler.addToken(Token.COMMA);
+                first = false;
+    
+                decompiler.addName(s);
+                defineSymbol(declType, s);
             }
-            mustMatchToken(Token.NAME, "msg.bad.var");
-            String s = ts.getString();
-
-            if (!first)
-                decompiler.addToken(Token.COMMA);
-            first = false;
-
-            decompiler.addName(s);
-            defineSymbol(declType, s);
-
+    
             Node init = null;
             if (matchToken(Token.ASSIGN)) {
                 decompiler.addToken(Token.ASSIGN);
                 init = assignExpr(inFor);
             }
-            
-            if (inStatement) {
-                Node name = nf.createName(s);
-                if (init != null)
-                    nf.addChildToBack(name, init);
-                nf.addChildToBack(result, name);
-            } else if (init != null) {
-                Node string = nf.createString(s);
-                string.setScope(currentScope);
-                nf.addChildToBack(result, 
-                    nf.createBinary(Token.SETVAR, string, init));
+    
+            if (destructuring != null) {
+                if (init == null) {
+                    if (!inFor)
+                        reportError("msg.destruct.assign.no.init");
+                    nf.addChildToBack(result, destructuring);
+                } else {
+                    if (destructuringInit == null) {
+                        destructuringInit = new Node(Token.COMMA);
+                    }
+                    nf.addChildToBack(result,
+                        nf.createDestructuringAssignment(declType,
+                            destructuring, init));
+                }
+            } else {
+                if (inStatement) {
+                    Node name = nf.createName(s);
+                    if (init != null)
+                        nf.addChildToBack(name, init);
+                    nf.addChildToBack(result, name);
+                } else if (init != null) {
+                    Node string = nf.createString(s);
+                    string.setScope(currentScope);
+                    nf.addChildToBack(result,
+                        nf.createBinary(Token.SETVAR, string, init));
+                }
             }
-            
+    
             if (!matchToken(Token.COMMA))
                 break;
         }
         return result;
     }
+
     
     private Node let(boolean isStatement)
         throws IOException, ParserException
@@ -2203,7 +2223,8 @@ public class Parser
 
         Node loop = enterLoop(null, true);
         try {
-            return nf.createForIn(loop, init, iterator, body, isForEach);
+            return nf.createForIn(Token.LET, loop, init, iterator, body,
+                                  isForEach);
         } finally {
             exitLoop(false);
         }
@@ -2225,6 +2246,7 @@ public class Parser
           case Token.LB: {
             ObjArray elems = new ObjArray();
             int skipCount = 0;
+            int destructuringLen = 0;
             decompiler.addToken(Token.LB);
             boolean after_lb_or_comma = true;
             for (;;) {
@@ -2242,6 +2264,13 @@ public class Parser
                 } else if (tt == Token.RB) {
                     consumeToken();
                     decompiler.addToken(Token.RB);
+                    // for ([a,] in obj) is legal, but for ([a] in obj) is 
+                    // not since we have both key and value supplied. The
+                    // trick is that [a,] and [a] are equivalent in other
+                    // array literal contexts. So we calculate a special
+                    // length value just for destructuring assignment.
+                    destructuringLen = elems.size() + 
+                                       (after_lb_or_comma ? 1 : 0);
                     break;
                 } else if (skipCount == 0 && elems.size() == 1 &&
                            tt == Token.FOR)
@@ -2276,7 +2305,7 @@ public class Parser
                     after_lb_or_comma = false;
                 }
             }
-            return nf.createArrayLiteral(elems, skipCount);
+            return nf.createArrayLiteral(elems, skipCount, destructuringLen);
           }
 
           case Token.LC: {

@@ -86,7 +86,8 @@ public class Node
         CONTROL_BLOCK_PROP = 18, // flags a control block that can drop off
         PARENTHESIZED_PROP = 19, // expression is parenthesized
         GENERATOR_END_PROP = 20,
-        LAST_PROP          = 20;
+        DESTRUCTURING_ARRAY_LENGTH = 21,
+        LAST_PROP          = 21;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -534,6 +535,8 @@ public class Node
                 case CONTROL_BLOCK_PROP: return "control_block_prop";
                 case PARENTHESIZED_PROP: return "parenthesized_prop";
                 case GENERATOR_END_PROP: return "generator_end";
+                case DESTRUCTURING_ARRAY_LENGTH:
+                                         return "destructuring_array_length";
 
                 default: Kit.codeBug();
             }
