@@ -71,7 +71,16 @@ public final class NativeIterator extends IdScriptableObject {
     public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
     
     static class StopIteration extends NativeObject {
-        public String getClassName() { return STOP_ITERATION; }
+        public String getClassName() {
+            return STOP_ITERATION;
+        }
+
+        /* StopIteration has custom instanceof behavior since it
+         * doesn't have a constructor.
+         */
+        public boolean hasInstance(Scriptable instance) {
+            return instance instanceof StopIteration;
+        }
     }
 
     public String getClassName() {
