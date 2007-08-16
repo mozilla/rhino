@@ -112,7 +112,9 @@
         <pathelement path="${test.classes}" />
      	<pathelement path="lib/emma.jar"/>
       </classpath>
-      <test name="org.mozilla.javascript.drivers.StandardTests" todir="build/test"/>
+      <batchtest todir="build/test">
+        <fileset dir="${test.classes}" includes="**/*Tests.class"/>
+      </batchtest>
       <formatter type="plain" usefile="false" />
       <formatter type="xml"/>
     </junit>
