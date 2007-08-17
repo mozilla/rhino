@@ -169,7 +169,7 @@ public abstract class RhinoException extends RuntimeException
     /**
      * Initialize the text of the source line containing the error.
      *
-     * @param lineSource the text of the source line reponsible for the error.
+     * @param lineSource the text of the source line responsible for the error.
      *                   It should not be <tt>null</tt>.
      *
      * @throws IllegalStateException if the method is called more then once.
