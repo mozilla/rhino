@@ -3416,7 +3416,6 @@ public class ScriptRuntime {
          * we need to format it anyway, to make double ''s collapse to
          * single 's.
          */
-        // TODO: MessageFormat is not available on pJava
         MessageFormat formatter = new MessageFormat(formatString);
         return formatter.format(arguments);
     }
@@ -3425,6 +3424,18 @@ public class ScriptRuntime {
     {
         int[] linep = new int[1];
         String filename = Context.getSourcePositionFromStack(linep);
+        return constructError(error, message, filename, linep[0], null, 0);
+    }
+    
+    public static EcmaError constructError(String error,
+                                           String message,
+                                           int lineNumberDelta)
+    {
+        int[] linep = new int[1];
+        String filename = Context.getSourcePositionFromStack(linep);
+        if (linep[0] != 0) {
+            linep[0] += lineNumberDelta;
+        }
         return constructError(error, message, filename, linep[0], null, 0);
     }
 

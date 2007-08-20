@@ -42,6 +42,8 @@ import org.mozilla.javascript.*;
 
 //	Disambiguate from org.mozilla.javascript.Node
 import org.w3c.dom.Node;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXParseException;
 
 class XmlProcessor {
 	private boolean ignoreComments;
@@ -52,6 +54,27 @@ class XmlProcessor {
 	
 	private javax.xml.parsers.DocumentBuilderFactory dom;
 	private javax.xml.transform.TransformerFactory xform;
+	
+  
+    private static class RhinoSAXErrorHandler implements ErrorHandler {
+  
+        private void throwError(SAXParseException e) {
+            throw ScriptRuntime.constructError("TypeError", e.getMessage(),
+                e.getLineNumber() - 1);
+        }
+    
+        public void error(SAXParseException e) {
+            throwError(e);
+        }
+    
+        public void fatalError(SAXParseException e) {
+            throwError(e);
+        }
+    
+        public void warning(SAXParseException e) {
+            Context.reportWarning(e.getMessage());
+        }
+    }
 	
 	XmlProcessor() {
 		setDefault();
@@ -172,26 +195,18 @@ class XmlProcessor {
 		}
 	}
 	
-	private void setElementDefaultNamespaces(Document document, String defaultNamespaceUri) {
-		NodeList elements = document.getElementsByTagName("*");
-		for (int i=0; i<elements.getLength(); i++) {
-			Element element = (Element)elements.item(i);
-			if (element.getPrefix() == null) {
-				if (element.lookupNamespaceURI(null) == null) {
-					element.getOwnerDocument().renameNode(element, defaultNamespaceUri, element.getTagName());
-				}
-			}
-		}
-	}
-	
 	final Node toXml(String defaultNamespaceUri, String xml) throws org.xml.sax.SAXException {
 		//	See ECMA357 10.3.1
 		javax.xml.parsers.DocumentBuilderFactory domFactory = newDomFactory();
 		domFactory.setNamespaceAware(true);
 		domFactory.setIgnoringComments(false);
 		try {
-			String syntheticXml = "<parent xmlns=\"" + defaultNamespaceUri + "\">" + xml + "</parent>";
-			Document document = domFactory.newDocumentBuilder().parse( new org.xml.sax.InputSource(new java.io.StringReader(syntheticXml)) );
+			String syntheticXml = "<parent xmlns=\"" + defaultNamespaceUri +
+			    "\">" + xml + "</parent>";
+			javax.xml.parsers.DocumentBuilder builder =
+			    domFactory.newDocumentBuilder();
+			builder.setErrorHandler(new RhinoSAXErrorHandler());
+			Document document = builder.parse( new org.xml.sax.InputSource(new java.io.StringReader(syntheticXml)) );
 			if (ignoreProcessingInstructions) {
 				java.util.Vector v = new java.util.Vector();
 				addProcessingInstructionsTo(v, document);
@@ -247,11 +262,6 @@ class XmlProcessor {
 			//	TODO	How to handle these runtime errors?
 			throw new RuntimeException(ex);
 		}
-	}
-	
-	private Text newEmptyText() {
-		Document dom = newDocument();
-		return dom.createTextNode("");
 	}
 	
 	//	TODO	Cannot remember what this is for, so whether it should use settings or not
