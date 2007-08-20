@@ -160,12 +160,13 @@ final class QName extends IdScriptableObject
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2004-07-18 12:32:51 CEST
+// #generated# Last update: 2007-08-20 08:21:41 EDT
         L0: { id = 0; String X = null;
             int s_length = s.length();
             if (s_length==3) { X="uri";id=Id_uri; }
             else if (s_length==9) { X="localName";id=Id_localName; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
 
@@ -211,7 +212,7 @@ final class QName extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2004-08-21 12:45:13 CEST
+// #generated# Last update: 2007-08-20 08:21:41 EDT
         L0: { id = 0; String X = null; int c;
             int s_length = s.length();
             if (s_length==8) {
@@ -221,6 +222,7 @@ final class QName extends IdScriptableObject
             }
             else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;
