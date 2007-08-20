@@ -41,7 +41,6 @@
 package org.mozilla.javascript;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 public class ScriptOrFnNode extends Node.Scope {
 
