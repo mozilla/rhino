@@ -31,6 +31,11 @@ js1_5/Regress/regress-234389.js
 
 # object watch not implemented
 js1_5/Regress/regress-240577.js
+js1_5/Function/regress-364023.js
+js1_5/Object/regress-362872-01.js
+js1_5/Object/regress-362872-02.js
+js1_5/Regress/regress-385393-06.js
+js1_5/extensions/regress-385393-09.js
 
 # import, export not implemented
 js1_5/Regress/regress-249211.js
@@ -630,3 +635,4 @@ js1_5/extensions/regress-380831.js
 js1_5/extensions/regress-382509.js
 js1_5/extensions/regress-383965.js
 js1_6/Regress/regress-382509.js
+js1_5/Function/regress-364023.js
