@@ -41,7 +41,7 @@ package org.mozilla.javascript.tools.debugger;
 import org.mozilla.javascript.Scriptable;
 
 /**
- * Interface to provide a scope object for script evalutaion to the debugger.
+ * Interface to provide a scope object for script evaluation to the debugger.
  */
 public interface ScopeProvider {
 
@@ -49,4 +49,4 @@ public interface ScopeProvider {
      * Returns the scope object to be used for script evaluation.
      */
     Scriptable getScope();
-};
+}
