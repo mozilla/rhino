@@ -113,7 +113,8 @@ public class NativeJavaArray extends NativeJavaObject
     public void put(String id, Scriptable start, Object value) {
         // Ignore assignments to "length"--it's readonly.
         if (!id.equals("length"))
-            super.put(id, start, value);
+            throw Context.reportRuntimeError1(
+                "msg.java.array.member.not.found", id);
     }
 
     public void put(int index, Scriptable start, Object value) {
@@ -164,5 +165,4 @@ public class NativeJavaArray extends NativeJavaObject
     Object array;
     int length;
     Class cls;
-    Scriptable prototype;
 }
