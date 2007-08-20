@@ -116,7 +116,7 @@ class XMLCtor extends IdFunctionObject
 
     protected int findInstanceIdInfo(String s) {
         int id;
-// #generated# Last update: 2004-07-19 13:03:52 CEST
+// #generated# Last update: 2007-08-20 09:01:10 EDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 12: X="prettyIndent";id=Id_prettyIndent; break L;
@@ -128,6 +128,7 @@ class XMLCtor extends IdFunctionObject
             case 28: X="ignoreProcessingInstructions";id=Id_ignoreProcessingInstructions; break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
 
@@ -209,13 +210,14 @@ class XMLCtor extends IdFunctionObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2004-07-19 13:03:52 CEST
+// #generated# Last update: 2007-08-20 09:01:10 EDT
         L0: { id = 0; String X = null;
             int s_length = s.length();
             if (s_length==8) { X="settings";id=Id_settings; }
             else if (s_length==11) { X="setSettings";id=Id_setSettings; }
             else if (s_length==15) { X="defaultSettings";id=Id_defaultSettings; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;

@@ -316,7 +316,7 @@ class XMLName extends Ref {
 				
 				if (xmlValue instanceof XMLList) {
 					for (int i = 0; i < xmlValue.length(); i++) {
-						XML xml = (XML)((XMLList) xmlValue).item(i);
+						XML xml = ((XMLList) xmlValue).item(i);
 						
 						if (xml.isAttribute()) {
 							((XMLList)xmlValue).replace(i, target.makeXmlFromString(xmlName, xml.toString()));
@@ -327,7 +327,7 @@ class XMLName extends Ref {
 				xmlValue = target.makeXmlFromString(xmlName, ScriptRuntime.toString(value));
 			}
 			
-			XMLList matches = (XMLList)target.getPropertyList(xmlName);
+			XMLList matches = target.getPropertyList(xmlName);
 			
 			if (matches.length() == 0) {
 				target.appendChild(xmlValue);
@@ -395,12 +395,6 @@ class XMLName extends Ref {
 		}
 		buff.append(':').append(localName());
 		return buff.toString();
-	}
-	
-	private boolean equals(String one, String two) {
-		if (one == null && two == null) return true;
-		if (one == null || two == null) return false;
-		return one.equals(two);
 	}
 	
 	final XmlNode.QName toQname() {

@@ -222,4 +222,4 @@ public class JSConsole extends JFrame implements ActionListener
 
     }
 
-};
+}

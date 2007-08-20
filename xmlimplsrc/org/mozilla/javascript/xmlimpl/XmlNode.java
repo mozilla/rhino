@@ -807,7 +807,7 @@ class XmlNode {
 			if (toAdd instanceof XMLList) {
 				XMLList xmlSrc = (XMLList)toAdd;
 				for (int i = 0; i < xmlSrc.length(); i++) {
-					this._add(((XML)xmlSrc.item(i)).getAnnotation());
+					this._add((xmlSrc.item(i)).getAnnotation());
 				}
 			} else if (toAdd instanceof XML) {
 				this._add(((XML)(toAdd)).getAnnotation());
@@ -819,7 +819,7 @@ class XmlNode {
 		int length() {
 			return v.size();
 		}
-	};
+	}
 	
 	static abstract class Filter {
 		static final Filter COMMENT = new Filter() {

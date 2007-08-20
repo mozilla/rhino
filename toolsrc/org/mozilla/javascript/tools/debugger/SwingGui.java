@@ -1716,8 +1716,8 @@ class MoreWindows extends JDialog implements ActionListener {
                 setButton.doClick();
             }
         }
-    };
-};
+    }
+}
 
 /**
  * Find function dialog.
@@ -1874,7 +1874,7 @@ class FindFunction extends JDialog implements ActionListener {
                 setButton.doClick();
             }
         }
-    };
+    }
 }
 
 /**
@@ -2041,7 +2041,7 @@ class FileHeader extends JPanel implements MouseListener {
             }
         }
     }
-};
+}
 
 /**
  * An internal frame for script files.
@@ -2251,7 +2251,7 @@ class FileWindow extends JInternalFrame implements ActionListener {
             // textArea.paste();
         }
     }
-};
+}
 
 /**
  * Table model class for watched expressions.

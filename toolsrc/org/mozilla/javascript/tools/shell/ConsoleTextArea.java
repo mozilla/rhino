@@ -56,7 +56,7 @@ class ConsoleWrite implements Runnable {
     public void run() {
         textArea.write(str);
     }
-};
+}
 
 class ConsoleWriter extends java.io.OutputStream {
 
@@ -99,7 +99,7 @@ class ConsoleWriter extends java.io.OutputStream {
         buffer.setLength(0);
         SwingUtilities.invokeLater(new ConsoleWrite(textArea, str));
     }
-};
+}
 
 public class ConsoleTextArea
     extends JTextArea implements KeyListener, DocumentListener
@@ -297,4 +297,4 @@ public class ConsoleTextArea
         return err;
     }
 
-};
+}

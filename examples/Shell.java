@@ -202,7 +202,7 @@ public class Shell extends ScriptableObject
     public static double version(Context cx, Scriptable thisObj,
                                  Object[] args, Function funObj)
     {
-        double result = (double) cx.getLanguageVersion();
+        double result = cx.getLanguageVersion();
         if (args.length > 0) {
             double d = Context.toNumber(args[0]);
             cx.setLanguageVersion((int) d);

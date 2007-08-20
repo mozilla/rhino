@@ -121,7 +121,7 @@ public class Main {
         }
     }
 
-    private void process_file() throws IOException {
+    private void process_file() {
         int cur_state = 0;
         char[] buffer = body.getBuffer();
 

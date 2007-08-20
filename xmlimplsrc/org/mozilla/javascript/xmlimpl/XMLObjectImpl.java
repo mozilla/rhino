@@ -193,7 +193,7 @@ abstract class XMLObjectImpl extends XMLObject {
 		return rv;		
 	}
 	
-	abstract XML XML();
+	abstract XML getXML();
 	
 	// Methods from section 12.4.4 in the spec
 	abstract XMLList child(int index);
@@ -424,63 +424,76 @@ abstract class XMLObjectImpl extends XMLObject {
 	
 	protected int findPrototypeId(String s) {
 		int id;
-// #generated# Last update: 2006-10-08 22:03:58 EDT
-		L0: { id = 0; String X = null; int c;
-		L: switch (s.length()) {
-			case 4: c=s.charAt(0);
-			if (c=='c') { X="copy";id=Id_copy; } else if (c=='n') { X="name";id=Id_name; } else if (c=='t') { X="text";id=Id_text; }
-			break L;
-			case 5: X="child";id=Id_child; break L;
-			case 6: c=s.charAt(0);
-			if (c=='l') { X="length";id=Id_length; } else if (c=='p') { X="parent";id=Id_parent; }
-			break L;
-			case 7: c=s.charAt(0);
-			if (c=='r') { X="replace";id=Id_replace; } else if (c=='s') { X="setName";id=Id_setName; } else if (c=='v') { X="valueOf";id=Id_valueOf; }
-			break L;
-			case 8: switch (s.charAt(2)) {
-				case 'S': X="toString";id=Id_toString; break L;
-				case 'd': X="nodeKind";id=Id_nodeKind; break L;
-				case 'e': X="elements";id=Id_elements; break L;
-				case 'i': X="children";id=Id_children; break L;
-				case 'm': X="comments";id=Id_comments; break L;
-				case 'n': X="contains";id=Id_contains; break L;
-			} break L;
-			case 9: switch (s.charAt(2)) {
-				case 'c': X="localName";id=Id_localName; break L;
-				case 'm': X="namespace";id=Id_namespace; break L;
-				case 'r': X="normalize";id=Id_normalize; break L;
-				case 't': X="attribute";id=Id_attribute; break L;
-			} break L;
-			case 10: c=s.charAt(0);
-			if (c=='a') { X="attributes";id=Id_attributes; } else if (c=='c') { X="childIndex";id=Id_childIndex; }
-			break L;
-			case 11: switch (s.charAt(0)) {
-				case 'a': X="appendChild";id=Id_appendChild; break L;
-				case 'c': X="constructor";id=Id_constructor; break L;
-				case 'd': X="descendants";id=Id_descendants; break L;
-				case 's': X="setChildren";id=Id_setChildren; break L;
-				case 't': X="toXMLString";id=Id_toXMLString; break L;
-			} break L;
-			case 12: c=s.charAt(0);
-			if (c=='a') { X="addNamespace";id=Id_addNamespace; } else if (c=='p') { X="prependChild";id=Id_prependChild; } else if (c=='s') {
-				c=s.charAt(3);
-				if (c=='L') { X="setLocalName";id=Id_setLocalName; } else if (c=='N') { X="setNamespace";id=Id_setNamespace; }
-			}
-			break L;
-			case 14: X="hasOwnProperty";id=Id_hasOwnProperty; break L;
-			case 15: X="removeNamespace";id=Id_removeNamespace; break L;
-			case 16: c=s.charAt(0);
-			if (c=='h') { X="hasSimpleContent";id=Id_hasSimpleContent; } else if (c=='i') { X="insertChildAfter";id=Id_insertChildAfter; }
-			break L;
-			case 17: c=s.charAt(3);
-			if (c=='C') { X="hasComplexContent";id=Id_hasComplexContent; } else if (c=='c') { X="inScopeNamespaces";id=Id_inScopeNamespaces; } else if (c=='e') { X="insertChildBefore";id=Id_insertChildBefore; }
-			break L;
-			case 20: X="propertyIsEnumerable";id=Id_propertyIsEnumerable; break L;
-			case 21: X="namespaceDeclarations";id=Id_namespaceDeclarations; break L;
-			case 22: X="processingInstructions";id=Id_processingInstructions; break L;
-		}
-		if (X!=null && X!=s && !X.equals(s)) id = 0;
-		}
+// #generated# Last update: 2007-08-20 09:04:06 EDT
+        L0: { id = 0; String X = null; int c;
+            L: switch (s.length()) {
+            case 4: c=s.charAt(0);
+                if (c=='c') { X="copy";id=Id_copy; }
+                else if (c=='n') { X="name";id=Id_name; }
+                else if (c=='t') { X="text";id=Id_text; }
+                break L;
+            case 5: X="child";id=Id_child; break L;
+            case 6: c=s.charAt(0);
+                if (c=='l') { X="length";id=Id_length; }
+                else if (c=='p') { X="parent";id=Id_parent; }
+                break L;
+            case 7: c=s.charAt(0);
+                if (c=='r') { X="replace";id=Id_replace; }
+                else if (c=='s') { X="setName";id=Id_setName; }
+                else if (c=='v') { X="valueOf";id=Id_valueOf; }
+                break L;
+            case 8: switch (s.charAt(2)) {
+                case 'S': X="toString";id=Id_toString; break L;
+                case 'd': X="nodeKind";id=Id_nodeKind; break L;
+                case 'e': X="elements";id=Id_elements; break L;
+                case 'i': X="children";id=Id_children; break L;
+                case 'm': X="comments";id=Id_comments; break L;
+                case 'n': X="contains";id=Id_contains; break L;
+                } break L;
+            case 9: switch (s.charAt(2)) {
+                case 'c': X="localName";id=Id_localName; break L;
+                case 'm': X="namespace";id=Id_namespace; break L;
+                case 'r': X="normalize";id=Id_normalize; break L;
+                case 't': X="attribute";id=Id_attribute; break L;
+                } break L;
+            case 10: c=s.charAt(0);
+                if (c=='a') { X="attributes";id=Id_attributes; }
+                else if (c=='c') { X="childIndex";id=Id_childIndex; }
+                break L;
+            case 11: switch (s.charAt(0)) {
+                case 'a': X="appendChild";id=Id_appendChild; break L;
+                case 'c': X="constructor";id=Id_constructor; break L;
+                case 'd': X="descendants";id=Id_descendants; break L;
+                case 's': X="setChildren";id=Id_setChildren; break L;
+                case 't': X="toXMLString";id=Id_toXMLString; break L;
+                } break L;
+            case 12: c=s.charAt(0);
+                if (c=='a') { X="addNamespace";id=Id_addNamespace; }
+                else if (c=='p') { X="prependChild";id=Id_prependChild; }
+                else if (c=='s') {
+                    c=s.charAt(3);
+                    if (c=='L') { X="setLocalName";id=Id_setLocalName; }
+                    else if (c=='N') { X="setNamespace";id=Id_setNamespace; }
+                }
+                break L;
+            case 14: X="hasOwnProperty";id=Id_hasOwnProperty; break L;
+            case 15: X="removeNamespace";id=Id_removeNamespace; break L;
+            case 16: c=s.charAt(0);
+                if (c=='h') { X="hasSimpleContent";id=Id_hasSimpleContent; }
+                else if (c=='i') { X="insertChildAfter";id=Id_insertChildAfter; }
+                break L;
+            case 17: c=s.charAt(3);
+                if (c=='C') { X="hasComplexContent";id=Id_hasComplexContent; }
+                else if (c=='c') { X="inScopeNamespaces";id=Id_inScopeNamespaces; }
+                else if (c=='e') { X="insertChildBefore";id=Id_insertChildBefore; }
+                break L;
+            case 20: X="propertyIsEnumerable";id=Id_propertyIsEnumerable; break L;
+            case 21: X="namespaceDeclarations";id=Id_namespaceDeclarations; break L;
+            case 22: X="processingInstructions";id=Id_processingInstructions; break L;
+            }
+            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
+        }
 // #/generated#
 		return id;
 	}
@@ -575,7 +588,7 @@ abstract class XMLObjectImpl extends XMLObject {
 			throw incompatibleCallError(f);
 		XMLObjectImpl realThis = (XMLObjectImpl)thisObj;
 		
-		XML xml = realThis.XML();
+		XML xml = realThis.getXML();
 		switch (id) {
 			case Id_appendChild: {
 				if (xml == null) xmlMethodNotFound(realThis, "appendChild");

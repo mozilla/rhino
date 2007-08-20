@@ -2588,7 +2588,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     private RECompiled re;
     double lastIndex;          /* index after last match, for //g iterator */
 
-};       // class NativeRegExp
+}       // class NativeRegExp
 
 class RECompiled implements Serializable
 {

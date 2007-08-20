@@ -418,8 +418,8 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
 		if (object instanceof XML) return (XML)object;
 		if (object instanceof XMLList) {
 			XMLList list = (XMLList)object;
-			if (list.XML() != null) {
-				return list.XML();
+			if (list.getXML() != null) {
+				return list.getXML();
 			} else {
 				throw ScriptRuntime.typeError("Cannot convert list of >1 element to XML");
 			}
@@ -476,7 +476,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
 			XML orgXML = newXMLFromJs(frag);
 			
 			// Now orphan the children and add them to our XMLList.
-			XMLList children = (XMLList)orgXML.children();
+			XMLList children = orgXML.children();
 			
 			for (int i = 0; i < children.getNodeList().length(); i++) {
 				// Copy here is so that they'll be orphaned (parent() will be undefined)

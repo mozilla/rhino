@@ -698,7 +698,7 @@ public class JsDriver {
                         values.add(0, (String)null );
                     } else if (array) {
                         while( arguments.size() > 0 && !( (String)arguments.get(0) ).startsWith("-") ) {
-                            values.add( (String)arguments.remove(0) );
+                            values.add(arguments.remove(0));
                         }
                     } else {
                         values.set(0, arguments.remove(0));

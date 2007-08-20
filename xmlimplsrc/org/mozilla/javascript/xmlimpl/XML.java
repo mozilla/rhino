@@ -41,11 +41,6 @@
 
 package org.mozilla.javascript.xmlimpl;
 
-import java.io.Serializable;
-import java.util.*;
-
-import org.w3c.dom.*;
-
 import org.mozilla.javascript.*;
 
 class XML extends XMLObjectImpl {
@@ -62,7 +57,7 @@ class XML extends XMLObjectImpl {
 		this.node.setXml(this);
 	}
 	
-	final XML XML() {
+	final XML getXML() {
 		return this;
 	}
 
@@ -77,30 +72,6 @@ class XML extends XMLObjectImpl {
 		}
 	}
 
-	private void ecmaPutAdd(XMLList insert, XML value) {
-		if (value.isAttribute()) {
-			value = toXML( XmlNode.createText(getProcessor(), value.node.getAttributeValue() ) );
-		}
-		insert.addToList( value );
-	}
-	
-	private void ecmaPut(XMLName name, XMLObjectImpl value) {
-		if (isText() || isComment() || isProcessingInstruction() || isAttribute()) return;
-		if (value instanceof XMLObjectImpl) {
-			value = value.copy();
-		}
-		XMLList insert = newXMLList();
-		if (value instanceof XML) {
-			ecmaPutAdd(insert, (XML)value);
-		} else {
-			XMLList list = (XMLList)value;
-			for (int i=0; i<list.length(); i++) {
-				ecmaPutAdd(insert, list.item(i));
-			}
-		}
-		this.setChildren( insert );
-	}
-
 	/** @deprecated I would love to encapsulate this somehow. */
 	XML makeXmlFromString(XMLName name, String value) {
 		try {
@@ -113,12 +84,6 @@ class XML extends XMLObjectImpl {
 	/** @deprecated Rename this, at the very least.  But it's not clear it's even necessary */
 	XmlNode getAnnotation() {
 		return node; 
-	}
-	
-	/** @deprecated */
-	private XmlNode.QName adapt(javax.xml.namespace.QName targetProperty) {
-		if (targetProperty == null) return null;
-		return XmlNode.QName.create(targetProperty.getNamespaceURI(), targetProperty.getLocalPart(), targetProperty.getPrefix());
 	}
 	
     //
@@ -269,7 +234,7 @@ class XML extends XMLObjectImpl {
 	//
 	
 	void removeChild(int index) {
-		this.node.removeChild((int)index);
+		this.node.removeChild(index);
 	}
 
 	void normalize() {
@@ -358,7 +323,7 @@ class XML extends XMLObjectImpl {
 	}
 
 	XML getXmlChild(int index) {
-		XmlNode child = this.node.getChild((int)index);
+		XmlNode child = this.node.getChild(index);
 		if (child.getXml() == null) {
 			child.setXml(newXML(child));
 		}
@@ -389,7 +354,7 @@ class XML extends XMLObjectImpl {
 			XMLList otherList = (XMLList) target;
 			
 			if (otherList.length() == 1) {
-				result = equivalentXml(otherList.XML());
+				result = equivalentXml(otherList.getXML());
 			}
 		} else if (hasSimpleContent()) {
 			String otherStr = ScriptRuntime.toString(target);
@@ -504,10 +469,10 @@ class XML extends XMLObjectImpl {
 	}
 
 	XML replace(int index, Object xml) {
-		XMLList xlChildToReplace = (XMLList)child(index);
+		XMLList xlChildToReplace = child(index);
 		if (xlChildToReplace.length() > 0) {
 			// One exists an that index
-			XML childToReplace = (XML)xlChildToReplace.item(0);
+			XML childToReplace = xlChildToReplace.item(0);
 			insertChildAfter(childToReplace, xml);
 			removeChild(index);
 		}
