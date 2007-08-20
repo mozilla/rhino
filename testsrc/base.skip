@@ -191,6 +191,9 @@ js1_7/block/regress-344601.js
 js1_7/block/regress-351794.js
 js1_5/Regress/regress-10278.js
 
+# bad test: may fail if time of day increments a second between calls to Date()
+ecma/Date/15.9.2.1.js
+
 # JS 1.7 not yet implemented
 js1_7/decompilation
 # "y" flag for regexps
