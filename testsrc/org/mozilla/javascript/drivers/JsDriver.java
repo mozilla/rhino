@@ -266,8 +266,6 @@ public class JsDriver {
         private String lxrUrl;
         private Document html;
         private Element failureHtml;
-
-        private File file;
         private boolean failed;
 
         private String output;
@@ -281,7 +279,6 @@ public class JsDriver {
         }
 
         void running(File file) {
-            this.file = file;
         }
 
         void failed(String s) {
