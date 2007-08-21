@@ -43,6 +43,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -71,6 +72,8 @@ class JavaMembers
             throw Context.reportRuntimeError1("msg.access.prohibited",
                                               cl.getName());
         }
+        this.includePrivate = cx.hasFeature(
+            Context.FEATURE_ACCESS_PRIVATE_MEMBERS);
         this.members = new Hashtable(23);
         this.staticMembers = new Hashtable(7);
         this.cl = cl;
@@ -329,28 +332,34 @@ class JavaMembers
      * nearest accessible method.
      */
     private static Method[] discoverAccessibleMethods(Class clazz, 
-                                                      boolean includeProtected)
+                                                      boolean includeProtected,
+                                                      boolean includePrivate)
     {
         Map map = new HashMap();
-        discoverAccessibleMethods(clazz, map, includeProtected);
+        discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
         return (Method[])map.values().toArray(new Method[map.size()]);
     }
     
     private static void discoverAccessibleMethods(Class clazz, Map map,
-                                                  boolean includeProtected)
+                                                  boolean includeProtected,
+                                                  boolean includePrivate)
     {
-        if (Modifier.isPublic(clazz.getModifiers())) {
+        if (Modifier.isPublic(clazz.getModifiers()) || includePrivate) {
             try {
-              if (includeProtected) {
+              if (includeProtected || includePrivate) {
                 while (clazz != null) {
                   Method[] methods = clazz.getDeclaredMethods();
                   for (int i = 0; i < methods.length; i++)
                   {
                     Method method = methods[i];
                     int mods = method.getModifiers();
+
                     if (Modifier.isPublic(mods) || 
-                        Modifier.isProtected(mods)) 
+                        Modifier.isProtected(mods) ||
+                        includePrivate)
                     {
+                      if (includePrivate)
+                        method.setAccessible(true);
                       MethodSignature sig = new MethodSignature(method);
                       map.put(sig, method);
                     }
@@ -379,11 +388,11 @@ class JavaMembers
 
         Class[] interfaces = clazz.getInterfaces();
         for (int i = 0; i < interfaces.length; i++) {
-            discoverAccessibleMethods(interfaces[i], map, includeProtected);
+            discoverAccessibleMethods(interfaces[i], map, includeProtected, includePrivate);
         }
         Class superclass = clazz.getSuperclass();
         if (superclass != null) {
-            discoverAccessibleMethods(superclass, map, includeProtected);
+            discoverAccessibleMethods(superclass, map, includeProtected, includePrivate);
         }
     }
 
@@ -425,7 +434,8 @@ class JavaMembers
         // names to be allocated to the NativeJavaMethod before the field
         // gets in the way.
 
-        Method[] methods = discoverAccessibleMethods(cl, includeProtected);
+        Method[] methods = discoverAccessibleMethods(cl, includeProtected,
+                                                     includePrivate);
         for (int i = 0; i < methods.length; i++) {
             Method method = methods[i];
             int mods = method.getModifiers();
@@ -483,11 +493,11 @@ class JavaMembers
         }
 
         // Reflect fields.
-        Field[] fields = cl.getFields();
+        Field[] fields = getAccessibleFields();
         for (int i = 0; i < fields.length; i++) {
             Field field = fields[i];
             int mods = field.getModifiers();
-            if (!Modifier.isPublic(mods)) {
+            if (!includePrivate && !Modifier.isPublic(mods)) {
                 continue;
             }
             boolean isStatic = Modifier.isStatic(mods);
@@ -627,14 +637,49 @@ class JavaMembers
         }
 
         // Reflect constructors
-        Constructor[] constructors = cl.getConstructors();
+        Constructor[] constructors = getAccessibleConstructors();
         ctors = new MemberBox[constructors.length];
         for (int i = 0; i != constructors.length; ++i) {
             ctors[i] = new MemberBox(constructors[i]);
         }
     }
 
-    private MemberBox findGetter(boolean isStatic, Hashtable ht, String prefix, String propertyName)
+    private Constructor[] getAccessibleConstructors() 
+    {
+      if (!includePrivate)
+        return cl.getConstructors();
+      
+      Constructor[] cons = cl.getDeclaredConstructors();
+      Constructor.setAccessible(cons, true);
+      
+      return cons;
+    }
+
+    private Field[] getAccessibleFields() 
+    {
+      if (!includePrivate)
+        return cl.getFields();
+
+      ArrayList fieldsList = new ArrayList();
+      Class currentClass = cl;
+      
+      while (currentClass != null) {
+        // get all declared fields in this class, make them accessible, and save
+        Field[] declared = currentClass.getDeclaredFields();
+        for (int i = 0; i < declared.length; i++) {
+          declared[i].setAccessible(true);
+          fieldsList.add(declared[i]);
+        }
+        // walk up superclass chain.  no need to deal specially with
+        // interfaces, since they can't have fields
+        currentClass = currentClass.getSuperclass();
+      }
+      
+      return (Field []) fieldsList.toArray(new Field[fieldsList.size()]);
+    }
+
+    private MemberBox findGetter(boolean isStatic, Hashtable ht, String prefix,
+                                 String propertyName)
     {
         String getterName = prefix.concat(propertyName);
         if (ht.containsKey(getterName)) {
@@ -796,6 +841,7 @@ class JavaMembers
     private Hashtable staticMembers;
     private Hashtable staticFieldAndMethods;
     MemberBox[] ctors;
+    private boolean includePrivate;
 }
 
 class BeanProperty

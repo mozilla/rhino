@@ -293,6 +293,13 @@ public class Context
      */
     public static final int FEATURE_WARNING_AS_ERROR = 12;
 
+    /**
+     * Controls whether private and protected members can be accessed
+     * @since 1.7 Release 1
+     */
+    public static final int FEATURE_ACCESS_PRIVATE_MEMBERS = 13;
+
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
@@ -2142,6 +2149,7 @@ public class Context
      * @see #FEATURE_LOCATION_INFORMATION_IN_ERROR
      * @see #FEATURE_STRICT_MODE
      * @see #FEATURE_WARNING_AS_ERROR
+     * @see #FEATURE_ACCESS_PRIVATE_MEMBERS
      */
     public boolean hasFeature(int featureIndex)
     {
