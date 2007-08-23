@@ -119,49 +119,49 @@ public class Delegator implements Function {
         return obj.getClassName();
     }
     /**
-     * @see org.mozilla.javascript.Scriptable#get
+     * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      */
     public Object get(String name, Scriptable start) {
         return obj.get(name,start);
     }
     /**
-     * @see org.mozilla.javascript.Scriptable#get
+     * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      */
     public Object get(int index, Scriptable start) {
         return obj.get(index,start);
         }
     /**
-     * @see org.mozilla.javascript.Scriptable#has
+     * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      */
     public boolean has(String name, Scriptable start) {
         return obj.has(name,start);
         }
     /**
-     * @see org.mozilla.javascript.Scriptable#has
+     * @see org.mozilla.javascript.Scriptable#has(int, Scriptable)
      */
     public boolean has(int index, Scriptable start) {
         return obj.has(index,start);
         }
     /**
-     * @see org.mozilla.javascript.Scriptable#put
+     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
     public void put(String name, Scriptable start, Object value) {
         obj.put(name,start,value);
     }
     /**
-     * @see org.mozilla.javascript.Scriptable#put
+     * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object)
      */
     public void put(int index, Scriptable start, Object value) {
         obj.put(index,start,value);
     }
     /**
-     * @see org.mozilla.javascript.Scriptable#delete
+     * @see org.mozilla.javascript.Scriptable#delete(String)
      */
     public void delete(String name) {
         obj.delete(name);
     }
     /**
-     * @see org.mozilla.javascript.Scriptable#delete
+     * @see org.mozilla.javascript.Scriptable#delete(int)
      */
     public void delete(int index) {
         obj.delete(index);

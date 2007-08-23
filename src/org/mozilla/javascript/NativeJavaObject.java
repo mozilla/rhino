@@ -176,7 +176,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
 
 /**
 @deprecated Use {@link Context#getWrapFactory()} together with calling {@link
-WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class)}
+WrapFactory#wrap(Context, Scriptable, Object, Class)}
 */
     public static Object wrap(Scriptable scope, Object obj, Class staticType) {
 

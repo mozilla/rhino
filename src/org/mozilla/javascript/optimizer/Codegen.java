@@ -4711,8 +4711,8 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     /**
      * Const locals use an extra slot to hold the has-been-assigned-once flag at
      * runtime.
-     * @param isConst
-     * @return
+     * @param isConst true iff the variable is const
+     * @return the register for the word pair (double/long)
      */
     private short getNewWordPairLocal(boolean isConst)
     {

@@ -291,7 +291,7 @@ public class Main implements ContextListener {
     }
 
     /**
-     * Helper method for {@link #mainEmbedded}.
+     * Helper method for {@link #mainEmbedded(String)}, etc.
      */
     private static void mainEmbeddedImpl(ContextFactory factory,
                                          Object scopeProvider,

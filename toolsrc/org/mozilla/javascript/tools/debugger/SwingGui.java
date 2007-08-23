@@ -110,7 +110,8 @@ public class SwingGui extends JFrame implements GuiCallback {
     private JSInternalConsole console;
 
     /**
-     * The {@link JSplitPane} that separates {@link #desk} from {@link context}.
+     * The {@link JSplitPane} that separates {@link #desk} from
+     * {@link org.mozilla.javascript.Context}.
      */
     private JSplitPane split1;
 

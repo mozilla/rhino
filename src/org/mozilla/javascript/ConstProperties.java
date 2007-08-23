@@ -83,10 +83,10 @@ public interface ConstProperties {
      * @param name the name of the property
      * @param start the object whose property is being set
      * @param value value to set the property to
-     * @see org.mozilla.javascript.Scriptable#has
-     * @see org.mozilla.javascript.Scriptable#get
-     * @see org.mozilla.javascript.ScriptableObject#putProperty
-     * @see org.mozilla.javascript.Context#toObject
+     * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
+     * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
+     * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
+     * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
     public void putConst(String name, Scriptable start, Object value);
 

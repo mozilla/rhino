@@ -195,7 +195,6 @@ public class ScriptableOutputStream extends ObjectOutputStream {
     }
 
     protected Object replaceObject(Object obj)
-        throws IOException
     {
         String name = (String) table.get(obj);
         if (name == null)

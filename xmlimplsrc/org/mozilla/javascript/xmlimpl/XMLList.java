@@ -545,9 +545,7 @@ class XMLList extends XMLObjectImpl implements Function {
 	
 	/**
 	 * If list is empty, return undefined, if elements have different parents return undefined,
-	 * If they all have the same parent, return that parent.
-	 *
-	 * @return
+	 * If they all have the same parent, return that parent
 	 */
 	Object parent() {
 		if (length() == 0) return Undefined.instance;
