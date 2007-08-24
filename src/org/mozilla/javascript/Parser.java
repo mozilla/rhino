@@ -2215,10 +2215,9 @@ public class Parser
                 int lineno = ts.getLineno();
                 Node cond = condition();
                 body = nf.createIf(cond, body, null, lineno);
-            } else {
-                mustMatchToken(Token.RB, "msg.no.bracket.arg");
-                decompiler.addToken(Token.RB);
             }
+            mustMatchToken(Token.RB, "msg.no.bracket.arg");
+            decompiler.addToken(Token.RB);
         }
 
         Node loop = enterLoop(null, true);
