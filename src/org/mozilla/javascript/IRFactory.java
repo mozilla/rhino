@@ -579,7 +579,7 @@ final class IRFactory
             assign = createDestructuringAssignment(declType, lvalue, id);
             int len = assign.getIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, 0);
             if (!isForEach && (destructuring == Token.OBJECTLIT ||
-                               destructuringLen!= 2))
+                               destructuringLen != 2))
             {
                 // destructuring assignment is only allowed in for..each or
                 // with an array type of length 2 (to hold key and value)
