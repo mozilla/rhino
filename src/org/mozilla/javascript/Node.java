@@ -1331,7 +1331,7 @@ public class Node
     Node next;             // next sibling
     private Node first;    // first element of a linked list of children
     private Node last;     // last element of a linked list of children
-    private int lineno = -1;    // encapsulated int data; depends on type
+    protected int lineno = -1;
 
     /**
      * Linked list of properties. Since vast majority of nodes would have

@@ -65,12 +65,12 @@ public class ScriptOrFnNode extends Node.Scope {
         this.encodedSourceEnd = end;
     }
 
-    public final int getBaseLineno() { return baseLineno; }
+    public final int getBaseLineno() { return this.lineno; }
 
     public final void setBaseLineno(int lineno) {
         // One time action
-        if (lineno < 0 || baseLineno >= 0) Kit.codeBug();
-        baseLineno = lineno;
+        if (lineno < 0 || this.lineno >= 0) Kit.codeBug();
+        this.lineno = lineno;
     }
 
     public final int getEndLineno() { return endLineno; }
@@ -215,7 +215,6 @@ public class ScriptOrFnNode extends Node.Scope {
     private int encodedSourceStart;
     private int encodedSourceEnd;
     private String sourceName;
-    private int baseLineno = -1;
     private int endLineno = -1;
 
     private ObjArray functions;
