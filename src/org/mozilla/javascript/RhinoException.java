@@ -99,7 +99,7 @@ public abstract class RhinoException extends RuntimeException
     /**
      * Initialize the uri of the script source containing the error.
      *
-     * @param sourceName the uri of the script source reponsible for the error.
+     * @param sourceName the uri of the script source responsible for the error.
      *                   It should not be <tt>null</tt>.
      *
      * @throws IllegalStateException if the method is called more then once.

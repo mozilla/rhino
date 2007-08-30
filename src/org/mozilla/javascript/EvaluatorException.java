@@ -74,7 +74,7 @@ public class EvaluatorException extends RhinoException
      * RuntimeException.
      *
      * @param detail the error message
-     * @param sourceName the name of the source reponsible for the error
+     * @param sourceName the name of the source responsible for the error
      * @param lineNumber the line number of the source
      * @param columnNumber the columnNumber of the source (may be zero if
      *                     unknown)
