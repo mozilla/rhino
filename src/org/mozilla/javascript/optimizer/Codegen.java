@@ -156,10 +156,26 @@ public class Codegen extends Interpreter
         initScriptOrFnNodesData(scriptOrFn);
 
         this.mainClassName = mainClassName;
-        mainClassSignature
+        this.mainClassSignature
             = ClassFileWriter.classNameToSignature(mainClassName);
 
-        return generateCode(encodedSource);
+        try {
+            return generateCode(encodedSource);
+        } catch (ClassFileWriter.ClassFileFormatException e) {
+            throw reportClassFileFormatException(scriptOrFn, e.getMessage());
+        }
+    }
+    
+    private RuntimeException reportClassFileFormatException(
+        ScriptOrFnNode scriptOrFn,
+        String message)
+    {
+        String msg = scriptOrFn instanceof FunctionNode
+        ? ScriptRuntime.getMessage2("msg.while.compiling.fn",
+            ((FunctionNode)scriptOrFn).getFunctionName(), message)
+        : ScriptRuntime.getMessage1("msg.while.compiling.script", message);
+        return Context.reportRuntimeError(msg, scriptOrFn.getSourceName(),
+            scriptOrFn.getLineno(), null, 0);
     }
 
     private void transform(ScriptOrFnNode tree)
@@ -288,7 +304,11 @@ public class Codegen extends Interpreter
             bodygen.scriptOrFn = n;
             bodygen.scriptOrFnIndex = i;
 
-            bodygen.generateBodyCode();
+            try {
+                bodygen.generateBodyCode();
+            } catch (ClassFileWriter.ClassFileFormatException e) {
+                throw reportClassFileFormatException(n, e.getMessage());
+            }
 
             if (n.getType() == Token.FUNCTION) {
                 OptFunctionNode ofn = OptFunctionNode.get(n);
@@ -384,7 +404,7 @@ public class Codegen extends Interpreter
     // How dispatch to Generators work:
     // Two methods are generated corresponding to a user written-generator.
     // One of these creates a generator object (NativeGenerator), which is
-    // returned to the user. The other method conatins all of the body code
+    // returned to the user. The other method contains all of the body code
     // of the generator.
     // When a user calls a generator, the call() method dispatches control to
     // to the method that creates the NativeGenerator object. Subsequently when
@@ -401,7 +421,7 @@ public class Codegen extends Interpreter
                 end++;
         }
 
-        // if there are no generators defined, we dont implement a
+        // if there are no generators defined, we don't implement a
         // resumeGenerator(). The base class provides a default implementation. 
         if (end == 0)
             return;
