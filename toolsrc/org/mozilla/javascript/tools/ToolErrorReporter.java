@@ -111,6 +111,8 @@ public class ToolErrorReporter implements ErrorReporter {
             msg = getMessage("msg.uncaughtJSException", ex.details());
         } else if (ex instanceof EcmaError) {
             msg = getMessage("msg.uncaughtEcmaError", ex.details());
+        } else if (ex instanceof EvaluatorException) {
+            msg = ex.details();
         } else {
             msg = ex.toString();
         }
@@ -138,7 +140,6 @@ public class ToolErrorReporter implements ErrorReporter {
                                            int line, String lineSource,
                                            int lineOffset)
     {
-        error(message, sourceName, line, lineSource, lineOffset);
         return new EvaluatorException(message, sourceName, line,
                                       lineSource, lineOffset);
     }
