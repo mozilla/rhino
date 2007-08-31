@@ -372,10 +372,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
 	}
 	
 	XML newXML(XmlNode node) {
-		XML rv = new XML();
-		rv.initialize(this, this.globalScope, this.xmlPrototype);
-		rv.initialize(node);
-		return rv;
+		return new XML(this, this.globalScope, this.xmlPrototype, node);
 	}
 	
 	/**
@@ -441,9 +438,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
 	}
 	
 	XMLList newXMLList() {
-		XMLList rv = new XMLList();
-		rv.initialize(this, this.globalScope, this.xmlListPrototype);
-		return rv;
+		return new XMLList(this, this.globalScope, this.xmlListPrototype);
 	}
 	
 	final XMLList newXMLListFrom(Object inputObject) {

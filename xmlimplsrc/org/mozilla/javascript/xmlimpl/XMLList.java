@@ -46,15 +46,14 @@ import org.mozilla.javascript.xml.*;
 
 class XMLList extends XMLObjectImpl implements Function {
 	static final long serialVersionUID = -4543618751670781135L;
-	
-	// Fields
+
 	private XmlNode.List _annos;
-	
 	private XMLObjectImpl targetObject = null;
 	private XmlNode.QName targetProperty = null;
 	
-	XMLList() {
-		_annos = new XmlNode.List();
+	XMLList(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+	    super(lib, scope, prototype);
+	    _annos = new XmlNode.List();
 	}
 	
 	/** @deprecated Will probably end up unnecessary as we move things around */

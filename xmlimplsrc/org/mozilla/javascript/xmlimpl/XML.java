@@ -42,17 +42,19 @@
 package org.mozilla.javascript.xmlimpl;
 
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.xml.XMLObject;
 
 class XML extends XMLObjectImpl {
 	static final long serialVersionUID = -630969919086449092L;
 	
     private XmlNode node;
 
-	XML() {
+	XML(XMLLibImpl lib, Scriptable scope, XMLObject prototype, XmlNode node) {
+	  super(lib, scope, prototype);
+	  initialize(node);
 	}
 
 	void initialize(XmlNode node) {
-		if (node == null) throw new RuntimeException("Unreachable code: assertion failed.");
 		this.node = node;
 		this.node.setXml(this);
 	}
@@ -680,12 +682,15 @@ class XML extends XMLObjectImpl {
 		}
 		if (this.hasSimpleContent()) {
 			StringBuffer rv = new StringBuffer();
-			for (int i=0; i<this.node.getChildCount(); i++) {
+			for (int i=0; i < this.node.getChildCount(); i++) {
 				XmlNode child = this.node.getChild(i);
-				if (!child.isProcessingInstructionType() && !child.isCommentType()) {
-					//	TODO	Probably inefficient; taking clean non-optimized solution for now
-					XML x = new XML();
-					x.initialize(child);
+				if (!child.isProcessingInstructionType() &&
+				    !child.isCommentType())
+				{
+					// TODO: Probably inefficient; taking clean non-optimized
+				    // solution for now
+					XML x = new XML(getLib(), getParentScope(),
+					                (XMLObject)getPrototype(), child);
 					rv.append(x.toString());
 				}
 			}

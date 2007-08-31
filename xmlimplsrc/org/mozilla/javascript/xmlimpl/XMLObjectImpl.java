@@ -46,21 +46,25 @@ import org.mozilla.javascript.*;
 import org.mozilla.javascript.xml.*;
 
 /**
- *  This abstract class describes what all XML objects (XML, XMLList) should have in common.
+ *  This abstract class describes what all XML objects (XML, XMLList) should
+ *  have in common.
  *
  * @see XML
  */
 abstract class XMLObjectImpl extends XMLObject {
 	private static final Object XMLOBJECT_TAG = new Object();
-	
 	private XMLLibImpl lib;
-	
 	private boolean prototypeFlag;
 	
-	protected XMLObjectImpl() {
+	protected XMLObjectImpl(XMLLibImpl lib, Scriptable scope,
+	                        XMLObject prototype)
+	{
+	    initialize(lib, scope, prototype);
 	}
 	
-	final void initialize(XMLLibImpl lib, Scriptable scope, XMLObject prototype) {
+	final void initialize(XMLLibImpl lib, Scriptable scope,
+	                      XMLObject prototype)
+	{
 		setParentScope(scope);
 		setPrototype(prototype);
 		prototypeFlag = (prototype == null);
@@ -69,6 +73,10 @@ abstract class XMLObjectImpl extends XMLObject {
 	
 	final boolean isPrototype() {
 		return prototypeFlag;
+	}
+	
+	XMLLibImpl getLib() {
+	    return lib;
 	}
 	
 	final XML newXML(XmlNode node) {
