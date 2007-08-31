@@ -104,8 +104,8 @@ public class ScriptRuntime {
      * There's such a huge space (and some time) waste for the Foo.class
      * syntax: the compiler sticks in a test of a static field in the
      * enclosing class for null and the code for creating the class value.
-     * It has to do this since the reference has to get pushed off til
-     * executiontime (i.e. can't force an early load), but for the
+     * It has to do this since the reference has to get pushed off until
+     * execution time (i.e. can't force an early load), but for the
      * 'standard' classes - especially those in java.lang, we can trust
      * that they won't cause problems by being loaded early.
      */
@@ -788,10 +788,14 @@ public class ScriptRuntime {
         }
         if (value instanceof Scriptable) {
             Scriptable obj = (Scriptable)value;
-            Object v = ScriptableObject.getProperty(obj, "toSource");
-            if (v instanceof Function) {
-                Function f = (Function)v;
-                return toString(f.call(cx, scope, obj, emptyArgs));
+            // Wrapped Java objects won't have "toSource" and will report
+            // errors for get()s of nonexistent name, so use has() first
+            if (ScriptableObject.hasProperty(obj, "toSource")) {
+                Object v = ScriptableObject.getProperty(obj, "toSource");
+                if (v instanceof Function) {
+                    Function f = (Function)v;
+                    return toString(f.call(cx, scope, obj, emptyArgs));
+                }
             }
             return toString(value);
         }
