@@ -47,14 +47,14 @@ class XMLCtor extends IdFunctionObject
 
     private static final Object XMLCTOR_TAG = new Object();
 
-	private XmlProcessor options;
+    private XmlProcessor options;
 //    private XMLLibImpl lib;
 
     XMLCtor(XML xml, Object tag, int id, int arity)
     {
         super(xml, tag, id, arity);
 //        this.lib = xml.lib;
-		this.options = xml.getProcessor();
+        this.options = xml.getProcessor();
         activatePrototypeMap(MAX_FUNCTION_ID);
     }
 
@@ -179,26 +179,26 @@ class XMLCtor extends IdFunctionObject
         return super.getInstanceIdValue(id);
     }
 
-	protected void setInstanceIdValue(int id, Object value) {
-		switch (id - super.getMaxInstanceId()) {
-			case Id_ignoreComments:
-				options.setIgnoreComments(ScriptRuntime.toBoolean(value));
-				return;
-			case Id_ignoreProcessingInstructions:
-				options.setIgnoreProcessingInstructions(ScriptRuntime.toBoolean(value));
-				return;
-			case Id_ignoreWhitespace:
-				options.setIgnoreWhitespace(ScriptRuntime.toBoolean(value));
-				return;
-			case Id_prettyIndent:
-				options.setPrettyIndent(ScriptRuntime.toInt32(value));
-				return;
-			case Id_prettyPrinting:
-				options.setPrettyPrinting(ScriptRuntime.toBoolean(value));
-				return;
-		}
-		super.setInstanceIdValue(id, value);
-	}
+    protected void setInstanceIdValue(int id, Object value) {
+        switch (id - super.getMaxInstanceId()) {
+            case Id_ignoreComments:
+                options.setIgnoreComments(ScriptRuntime.toBoolean(value));
+                return;
+            case Id_ignoreProcessingInstructions:
+                options.setIgnoreProcessingInstructions(ScriptRuntime.toBoolean(value));
+                return;
+            case Id_ignoreWhitespace:
+                options.setIgnoreWhitespace(ScriptRuntime.toBoolean(value));
+                return;
+            case Id_prettyIndent:
+                options.setPrettyIndent(ScriptRuntime.toInt32(value));
+                return;
+            case Id_prettyPrinting:
+                options.setPrettyPrinting(ScriptRuntime.toBoolean(value));
+                return;
+        }
+        super.setInstanceIdValue(id, value);
+    }
 
 // #string_id_map#
     private static final int
@@ -270,11 +270,11 @@ class XMLCtor extends IdFunctionObject
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
-	
-	/**
-		hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10.
-	 */
-	public boolean hasInstance(Scriptable instance) {
-		return (instance instanceof XML || instance instanceof XMLList);
-	}
+
+    /**
+        hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10.
+     */
+    public boolean hasInstance(Scriptable instance) {
+        return (instance instanceof XML || instance instanceof XMLList);
+    }
 }

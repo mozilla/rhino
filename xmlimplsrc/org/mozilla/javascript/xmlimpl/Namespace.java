@@ -52,67 +52,67 @@ class Namespace extends IdScriptableObject
 
     private static final Object NAMESPACE_TAG = new Object();
 
-	private Namespace prototype;
-	private XmlNode.Namespace ns;
+    private Namespace prototype;
+    private XmlNode.Namespace ns;
 
-	private Namespace() {
-	}
-	
-	static Namespace create(Scriptable scope, Namespace prototype, XmlNode.Namespace namespace) {
-		Namespace rv = new Namespace();
-		rv.setParentScope(scope);
-		rv.prototype = prototype;
-		rv.setPrototype(prototype);
-		rv.ns = namespace;
-		return rv;
-	}
-	
-	final XmlNode.Namespace getDelegate() {
-		return ns;
-	}
-	
-	public void exportAsJSClass(boolean sealed) {
-		exportAsJSClass(MAX_PROTOTYPE_ID, this.getParentScope(), sealed);
-	}
+    private Namespace() {
+    }
 
-	public String uri() {
-		return ns.getUri();
-	}
-	
-	public String prefix() {
-		return ns.getPrefix();
-	}
+    static Namespace create(Scriptable scope, Namespace prototype, XmlNode.Namespace namespace) {
+        Namespace rv = new Namespace();
+        rv.setParentScope(scope);
+        rv.prototype = prototype;
+        rv.setPrototype(prototype);
+        rv.ns = namespace;
+        return rv;
+    }
 
-	public String toString() {
-		return uri();
-	}
+    final XmlNode.Namespace getDelegate() {
+        return ns;
+    }
 
-	public String toLocaleString() {
-		return toString();
-	}
+    public void exportAsJSClass(boolean sealed) {
+        exportAsJSClass(MAX_PROTOTYPE_ID, this.getParentScope(), sealed);
+    }
 
-	private boolean equals(Namespace n) {
-		return uri().equals(n.uri());
-	}
+    public String uri() {
+        return ns.getUri();
+    }
 
-	public boolean equals(Object obj) {
-		if (!(obj instanceof Namespace)) return false;
-		return equals((Namespace)obj);
-	}
+    public String prefix() {
+        return ns.getPrefix();
+    }
 
-	protected Object equivalentValues(Object value) {
-		if (!(value instanceof Namespace)) return Scriptable.NOT_FOUND;
-		boolean result = equals((Namespace)value);
-		return result ? Boolean.TRUE : Boolean.FALSE;
-	}
+    public String toString() {
+        return uri();
+    }
 
-	public String getClassName() {
-		return "Namespace";
-	}
+    public String toLocaleString() {
+        return toString();
+    }
 
-	public Object getDefaultValue(Class hint) {
-		return uri();
-	}
+    private boolean equals(Namespace n) {
+        return uri().equals(n.uri());
+    }
+
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Namespace)) return false;
+        return equals((Namespace)obj);
+    }
+
+    protected Object equivalentValues(Object value) {
+        if (!(value instanceof Namespace)) return Scriptable.NOT_FOUND;
+        boolean result = equals((Namespace)value);
+        return result ? Boolean.TRUE : Boolean.FALSE;
+    }
+
+    public String getClassName() {
+        return "Namespace";
+    }
+
+    public Object getDefaultValue(Class hint) {
+        return uri();
+    }
 
 // #string_id_map#
     private static final int
@@ -235,24 +235,24 @@ class Namespace extends IdScriptableObject
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-	private Namespace realThis(Scriptable thisObj, IdFunctionObject f) {
-		if(!(thisObj instanceof Namespace))
-			throw incompatibleCallError(f);
-		return (Namespace)thisObj;
-	}
-	
-	Namespace newNamespace(String uri) {
-		Namespace prototype = (this.prototype == null) ? this : this.prototype;
-		return create( this.getParentScope(), prototype, XmlNode.Namespace.create(uri) );
-	}
-	
-	Namespace newNamespace(String prefix, String uri) {
-		if (prefix == null) return newNamespace(uri);
-		Namespace prototype = (this.prototype == null) ? this : this.prototype;
-		return create( this.getParentScope(), prototype, XmlNode.Namespace.create(prefix, uri) );		
-	}
-	
-	Namespace constructNamespace(Object uriValue) {
+    private Namespace realThis(Scriptable thisObj, IdFunctionObject f) {
+        if(!(thisObj instanceof Namespace))
+            throw incompatibleCallError(f);
+        return (Namespace)thisObj;
+    }
+
+    Namespace newNamespace(String uri) {
+        Namespace prototype = (this.prototype == null) ? this : this.prototype;
+        return create( this.getParentScope(), prototype, XmlNode.Namespace.create(uri) );
+    }
+
+    Namespace newNamespace(String prefix, String uri) {
+        if (prefix == null) return newNamespace(uri);
+        Namespace prototype = (this.prototype == null) ? this : this.prototype;
+        return create( this.getParentScope(), prototype, XmlNode.Namespace.create(prefix, uri) );
+    }
+
+    Namespace constructNamespace(Object uriValue) {
         String prefix;
         String uri;
 
@@ -264,7 +264,7 @@ class Namespace extends IdScriptableObject
             QName qname = (QName)uriValue;
             uri = qname.uri();
             if (uri != null) {
-				//	TODO	Is there a way to push this back into QName so that we can make prefix() private?
+                //    TODO    Is there a way to push this back into QName so that we can make prefix() private?
                 prefix = qname.prefix();
             } else {
                 uri = qname.toString();
@@ -275,55 +275,55 @@ class Namespace extends IdScriptableObject
             prefix = (uri.length() == 0) ? "" : null;
         }
 
-        return newNamespace(prefix, uri);		
-	}
+        return newNamespace(prefix, uri);
+    }
 
-	Namespace castToNamespace(Object namespaceObj) {
-		if (namespaceObj instanceof Namespace) {
-			return (Namespace)namespaceObj;
-		}
-		return constructNamespace(namespaceObj);
-	}
-	
-	private Namespace constructNamespace(Object prefixValue, Object uriValue) {
-		String prefix;
-		String uri;
-		
-		if (uriValue instanceof QName) {
-			QName qname = (QName)uriValue;
-			uri = qname.uri();
-			if (uri == null) {
-				uri = qname.toString();
-			}
-		} else {
-			uri = ScriptRuntime.toString(uriValue);
-		}
-		
-		if (uri.length() == 0) {
-			if (prefixValue == Undefined.instance) {
-				prefix = "";
-			} else {
-				prefix = ScriptRuntime.toString(prefixValue);
-				if (prefix.length() != 0) {
-					throw ScriptRuntime.typeError(
-						"Illegal prefix '"+prefix+"' for 'no namespace'.");
-				}
-			}
-		} else if (prefixValue == Undefined.instance) {
-			prefix = "";
-		} else if (!XMLName.accept(prefixValue)) {
-			prefix = "";
-		} else {
-			prefix = ScriptRuntime.toString(prefixValue);
-		}
-		
-		return newNamespace(prefix, uri);		
-	}
-	
-	private Namespace constructNamespace() {
-		return newNamespace("", "");
-	}
-	
+    Namespace castToNamespace(Object namespaceObj) {
+        if (namespaceObj instanceof Namespace) {
+            return (Namespace)namespaceObj;
+        }
+        return constructNamespace(namespaceObj);
+    }
+
+    private Namespace constructNamespace(Object prefixValue, Object uriValue) {
+        String prefix;
+        String uri;
+
+        if (uriValue instanceof QName) {
+            QName qname = (QName)uriValue;
+            uri = qname.uri();
+            if (uri == null) {
+                uri = qname.toString();
+            }
+        } else {
+            uri = ScriptRuntime.toString(uriValue);
+        }
+
+        if (uri.length() == 0) {
+            if (prefixValue == Undefined.instance) {
+                prefix = "";
+            } else {
+                prefix = ScriptRuntime.toString(prefixValue);
+                if (prefix.length() != 0) {
+                    throw ScriptRuntime.typeError(
+                        "Illegal prefix '"+prefix+"' for 'no namespace'.");
+                }
+            }
+        } else if (prefixValue == Undefined.instance) {
+            prefix = "";
+        } else if (!XMLName.accept(prefixValue)) {
+            prefix = "";
+        } else {
+            prefix = ScriptRuntime.toString(prefixValue);
+        }
+
+        return newNamespace(prefix, uri);
+    }
+
+    private Namespace constructNamespace() {
+        return newNamespace("", "");
+    }
+
     private Object jsConstructor(Context cx, boolean inNewExpr, Object[] args)
     {
         if (!inNewExpr && args.length == 1) {
@@ -363,5 +363,5 @@ class Namespace extends IdScriptableObject
             sb.append('\'');
         }
         sb.append(')');
-    }	
+    }
 }
