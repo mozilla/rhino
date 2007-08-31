@@ -1376,6 +1376,9 @@ public class ScriptRuntime {
                                        Context cx)
     {
         if (obj instanceof XMLObject) {
+            // TODO: Change XMLObject to just use Scriptable interface
+            // to avoid paying cost of instanceof check on *every property
+            // lookup* !
             XMLObject xmlObject = (XMLObject)obj;
             return xmlObject.ecmaGet(cx, property);
         }
@@ -1391,7 +1394,25 @@ public class ScriptRuntime {
 
         return result;
     }
-
+    
+    public static Object getObjectPropNoWarn(Object obj, String property,
+                                             Context cx)
+    {
+        Scriptable sobj = toObjectOrNull(cx, obj);
+        if (sobj == null) {
+            throw undefReadError(obj, property);
+        }
+        if (obj instanceof XMLObject) {
+            // TODO: fix as mentioned in note in method above
+            getObjectProp(sobj, property, cx);
+        }
+        Object result = ScriptableObject.getProperty(sobj, property);
+        if (result == Scriptable.NOT_FOUND) {
+          return Undefined.instance;
+        }
+        return result;
+    }
+    
     /*
      * A cheaper and less general version of the above for well-known argument
      * types.

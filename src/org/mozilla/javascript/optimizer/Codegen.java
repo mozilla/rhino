@@ -2521,6 +2521,7 @@ class BodyCodegen
               }
 
               case Token.GETPROP:
+              case Token.GETPROPNOWARN:
                 visitGetProp(node, child);
                 break;
 
@@ -3220,6 +3221,8 @@ class BodyCodegen
                             +"Lorg/mozilla/javascript/Context;"
                             +"Lorg/mozilla/javascript/Scriptable;"
                             +")Ljava/lang/Object;";
+            } else if (childType == Token.GETPROPNOWARN) {
+                throw Kit.codeBug();
             } else {
                 generateFunctionAndThisObj(child, node);
                 methodName = "call0";
@@ -3517,6 +3520,9 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         // Place on stack (function object, function this) pair
         int type = node.getType();
         switch (node.getType()) {
+          case Token.GETPROPNOWARN:
+            throw Kit.codeBug();
+
           case Token.GETPROP:
           case Token.GETELEM: {
             Node target = node.getFirstChild();
@@ -3903,6 +3909,8 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +"Lorg/mozilla/javascript/Context;"
                 +"I)Ljava/lang/Object;");
             break;
+          case Token.GETPROPNOWARN:
+            throw Kit.codeBug();
           case Token.GETPROP: {
             Node getPropChild = child.getFirstChild();
             generateExpression(getPropChild, node);
@@ -4457,6 +4465,16 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         generateExpression(child, node); // object
         Node nameChild = child.getNext();
         generateExpression(nameChild, node);  // the name
+        if (node.getType() == Token.GETPROPNOWARN) {
+            cfw.addALoad(contextLocal);
+            addScriptRuntimeInvoke(
+                "getObjectPropNoWarn",
+                "(Ljava/lang/Object;"
+                +"Ljava/lang/String;"
+                +"Lorg/mozilla/javascript/Context;"
+                +")Ljava/lang/Object;");
+            return;
+        }
         /*
             for 'this.foo' we call getObjectProp(Scriptable...) which can
             skip some casting overhead.

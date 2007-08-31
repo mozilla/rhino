@@ -101,6 +101,8 @@ class OptTransformer extends NodeTransformer {
                     targetName = left.getString();
                 } else if (left.getType() == Token.GETPROP) {
                     targetName = left.getFirstChild().getNext().getString();
+                } else if (left.getType() == Token.GETPROPNOWARN) {
+                    throw Kit.codeBug();
                 }
                 if (targetName != null) {
                     OptFunctionNode ofn;

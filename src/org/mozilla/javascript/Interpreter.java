@@ -1064,9 +1064,10 @@ public class Interpreter
             break;
 
           case Token.GETPROP:
+          case Token.GETPROPNOWARN:
             visitExpression(child, 0);
             child = child.getNext();
-            addStringOp(Token.GETPROP, child.getString());
+            addStringOp(type, child.getString());
             break;
 
           case Token.GETELEM:
@@ -3137,6 +3138,12 @@ switch (op) {
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         stack[stackTop] = ScriptRuntime.delete(lhs, rhs, cx);
+        continue Loop;
+    }
+    case Token.GETPROPNOWARN : {
+        Object lhs = stack[stackTop];
+        if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        stack[stackTop] = ScriptRuntime.getObjectPropNoWarn(lhs, stringReg, cx);
         continue Loop;
     }
     case Token.GETPROP : {

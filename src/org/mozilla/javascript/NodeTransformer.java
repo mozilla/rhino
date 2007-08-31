@@ -337,6 +337,35 @@ public class NodeTransformer
               }
               break;
 
+              case Token.TYPEOF:
+              case Token.IFNE: {
+                  /* We want to suppress warnings for undefined property o.p
+                   * for the following constructs: typeof o.p, if (o.p), 
+                   * if (!o.p), if (o.p == undefined), if (undefined == o.p)
+                   */
+            	  Node child = node.getFirstChild();
+            	  if (type == Token.IFNE) {
+                	  while (child.getType() == Token.NOT) {
+                	      child = child.getFirstChild();
+                	  }
+                	  if (child.getType() == Token.EQ ||
+                	      child.getType() == Token.NE)
+                	  {
+                	      Node first = child.getFirstChild();
+                	      Node last = child.getLastChild();
+                	      if (first.getType() == Token.NAME &&
+                	          first.getString().equals("undefined"))
+                	          child = last;
+                	      else if (last.getType() == Token.NAME &&
+                	               last.getString().equals("undefined"))
+                              child = first;
+                	  }
+            	  }
+            	  if (child.getType() == Token.GETPROP)
+            		  child.setType(Token.GETPROPNOWARN);
+            	  break;
+              }
+
               case Token.NAME:
               case Token.SETNAME:
               case Token.SETCONST:
