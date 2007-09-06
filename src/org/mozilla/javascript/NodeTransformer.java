@@ -81,7 +81,7 @@ public class NodeTransformer
         tree.flattenSymbolTable(!createScopeObjects);
         
         //uncomment to print tree before transformation
-        //System.out.println(tree.toStringTree(tree));
+        //if (Token.printTrees) System.out.println(tree.toStringTree(tree));
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects);
     }
 
