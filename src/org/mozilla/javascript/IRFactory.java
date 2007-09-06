@@ -462,8 +462,18 @@ final class IRFactory
      */
     Node createFor(Node loop, Node init, Node test, Node incr, Node body)
     {
-        return createLoop((Node.Jump)loop, LOOP_FOR, body, test,
-                          init, incr);
+        if (init.getType() == Token.LET) {
+            // rewrite "for (let i=s; i < N; i++)..." as 
+            // "let (i=s) { for (; i < N; i++)..." so that "s" is evaluated
+            // outside the scope of the for.
+            Node.Scope let = Node.Scope.splitScope((Node.Scope)loop);
+            let.setType(Token.LET);
+            let.addChildrenToBack(init);
+            let.addChildToBack(createLoop((Node.Jump)loop, LOOP_FOR, body, test,
+                new Node(Token.EMPTY), incr));
+            return let;
+        }
+        return createLoop((Node.Jump)loop, LOOP_FOR, body, test, init, incr);
     }
 
     private Node createLoop(Node.Jump loop, int loopType, Node body, Node cond,

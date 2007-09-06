@@ -258,6 +258,22 @@ public class Node
             super(nodeType, n, lineno);
         }
         
+        /*
+         * Creates a new scope node, moving symbol table information
+         * from "scope" to the new node, and making "scope" a nested
+         * scope contained by the new node.
+         * Useful for injecting a new scope in a scope chain.
+         */
+        public static Scope splitScope(Scope scope) {
+            Scope result = new Scope(scope.getType());
+            result.symbolTable = scope.symbolTable;
+            scope.symbolTable = null;
+            result.parent = scope.parent;
+            scope.parent = result;
+            result.top = scope.top;
+            return result;
+        }
+        
         public void setParent(Scope parent) {
             this.parent = parent;
             this.top = parent == null ? (ScriptOrFnNode)this : parent.top;
