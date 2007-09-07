@@ -121,7 +121,9 @@ package org.mozilla.javascript;
  *         }
  *     }
  *
- *     // Override {@link #doTopCall(Callable, Context, Scriptable scope, Scriptable thisObj, Object[] args)}
+ *     // Override {@link #doTopCall(Callable,
+                               Context, Scriptable,
+                               Scriptable, Object[])}
  *     protected Object doTopCall(Callable callable,
  *                                Context cx, Scriptable scope,
  *                                Scriptable thisObj, Object[] args)
@@ -276,65 +278,68 @@ public class ContextFactory
 
           case Context.FEATURE_STRICT_EVAL:
             return false;
-            
+
           case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
             return false;
-            
+
           case Context.FEATURE_STRICT_MODE:
             return false;
-          
+
           case Context.FEATURE_WARNING_AS_ERROR:
             return false;
-          
+
           case Context.FEATURE_ACCESS_PRIVATE_MEMBERS:
             return false;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));
     }
-	
-	private boolean isDom3Present() {
-		Class nodeClass = Kit.classOrNull("org.w3c.dom.Node");
-		if (nodeClass == null) return false;
-		//	Check to see whether DOM3 is present; use a new method defined in DOM3 that is vital to our implementation
-		try {
-			nodeClass.getMethod("getUserData", new Class[] { String.class });
-			return true;
-		} catch (NoSuchMethodException e) {
-			return false;
-		}
-	}
-	
-	/**
-		Provides a default {@link org.mozilla.javascript.xml.XMLLib.Factory XMLLib.Factory}
-		to be used by the <code>Context</code> instances produced by this factory.
-	 
-		See {@link Context#getE4xImplementationFactory} for details.
-	 */
-	protected org.mozilla.javascript.xml.XMLLib.Factory getE4xImplementationFactory() {
-		//	Must provide default implementation, rather than abstract method,
-		//	so that past implementors of ContextFactory do not fail at runtime
-		//	upon invocation of this method.
-		
-		//	Note that the default implementation "illegally" returns null if we
-		//	neither have XMLBeans nor a DOM3 implementation present.
-		//
-		//	TODO	More thinking about what to do in the failure scenario
-		
-		//	For now, if XMLBeans is in the classpath, it will be the default.
-		if (Kit.classOrNull("org.apache.xmlbeans.XmlCursor") != null) {
-			return org.mozilla.javascript.xml.XMLLib.Factory.create(
-				"org.mozilla.javascript.xml.impl.xmlbeans.XMLLibImpl"
-			);
-		} else if (isDom3Present()) {
-			return org.mozilla.javascript.xml.XMLLib.Factory.create(
-				"org.mozilla.javascript.xmlimpl.XMLLibImpl"
-			);
-		} else {
-			//	Uh-oh -- results if FEATURE_E4X is true are unknown.
-			return null;
-		}
-	}
+
+    private boolean isDom3Present() {
+        Class nodeClass = Kit.classOrNull("org.w3c.dom.Node");
+        if (nodeClass == null) return false;
+        // Check to see whether DOM3 is present; use a new method defined in
+        // DOM3 that is vital to our implementation
+        try {
+            nodeClass.getMethod("getUserData", new Class[] { String.class });
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Provides a default
+     * {@link org.mozilla.javascript.xml.XMLLib.Factory XMLLib.Factory}
+     * to be used by the <code>Context</code> instances produced by this
+     * factory. See {@link Context#getE4xImplementationFactory} for details.
+     * 
+     * May return null, in which case E4X functionality is not supported in
+     * Rhino.
+     * 
+     * The default implementation now prefers the DOM3 E4X implementation.
+     */
+    protected org.mozilla.javascript.xml.XMLLib.Factory
+        getE4xImplementationFactory()
+    {
+        // Must provide default implementation, rather than abstract method,
+        // so that past implementors of ContextFactory do not fail at runtime
+        // upon invocation of this method.
+        // Note that the default implementation returns null if we
+        // neither have XMLBeans nor a DOM3 implementation present.
+
+        if (isDom3Present()) {
+            return org.mozilla.javascript.xml.XMLLib.Factory.create(
+                "org.mozilla.javascript.xmlimpl.XMLLibImpl"
+            );
+        } else if (Kit.classOrNull("org.apache.xmlbeans.XmlCursor") != null) {
+            return org.mozilla.javascript.xml.XMLLib.Factory.create(
+                "org.mozilla.javascript.xml.impl.xmlbeans.XMLLibImpl"
+            );
+        } else {
+            return null;
+        }
+    }
 
 
     /**
@@ -505,10 +510,10 @@ public class ContextFactory
     {
         return Context.call(this, action);
     }
-    
+
     /**
      * Same as {@link Context#enter()} with the difference that if a new context
-     * needs to be created, then this context factory is used to create it 
+     * needs to be created, then this context factory is used to create it
      * instead of the global context factory.
      * @return a Context associated with the current thread
      */
@@ -516,10 +521,10 @@ public class ContextFactory
     {
         return enter(null);
     }
-    
+
     /**
-     * Same as {@link Context#enter(Context)} with the difference that if a new 
-     * context needs to be created, then this context factory is used to create 
+     * Same as {@link Context#enter(Context)} with the difference that if a new
+     * context needs to be created, then this context factory is used to create
      * it instead of the global context factory.
      * @return a Context associated with the current thread
      */
@@ -531,11 +536,10 @@ public class ContextFactory
     /**
      * Same as {@link Context#exit()}, although if you used {@link #enter()} or
      * {@link #enter(Context)} methods on this object, you should use this exit
-     * method instead of the static one in {@link Context}. 
+     * method instead of the static one in {@link Context}.
      */
     public final void exit()
     {
         Context.exit(this);
     }
 }
-
