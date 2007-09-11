@@ -52,9 +52,8 @@ import org.mozilla.javascript.tools.shell.Global;
 /**
  * Rhino script debugger main class.  This class links together a
  * debugger object ({@link Dim}) and a debugger GUI object ({@link SwingGui}).
- * {@link ContextListener} is only implemented for compatibility.
  */
-public class Main implements ContextListener {
+public class Main {
 
     /**
      * The debugger.
