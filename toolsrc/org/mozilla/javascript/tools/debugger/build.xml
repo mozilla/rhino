@@ -59,9 +59,20 @@
     <replace file="downloaded/AbstractCellEditor.java">
        <replacetoken>import java.awt.Component;</replacetoken>
        <replacevalue>
-         package org.mozilla.javascript.tools.debugger.downloaded;
-         import java.awt.Component;
+package org.mozilla.javascript.tools.debugger.downloaded;
        </replacevalue>
+    </replace>
+    <replace file="downloaded/AbstractCellEditor.java">
+       <replacetoken>import java.awt.event.*;</replacetoken>
+       <replacevalue></replacevalue>
+    </replace>
+    <replace file="downloaded/AbstractCellEditor.java">
+       <replacetoken>import java.awt.AWTEvent;</replacetoken>
+       <replacevalue></replacevalue>
+    </replace>
+    <replace file="downloaded/AbstractCellEditor.java">
+       <replacetoken>import java.io.Serializable;</replacetoken>
+       <replacevalue></replacevalue>
     </replace>
     <replace file="downloaded/JTreeTable.java">
        <replacetoken>import javax.swing.*;</replacetoken>
@@ -77,6 +88,10 @@
     <replace file="downloaded/JTreeTable.java">
        <replacetoken>ListSelectionModel getListSelectionModel</replacetoken>
        <replacevalue>public ListSelectionModel getListSelectionModel</replacevalue>
+    </replace>
+    <replace file="downloaded/JTreeTable.java">
+       <replacetoken>import java.awt.Rectangle;</replacetoken>
+       <replacevalue></replacevalue>
     </replace>
     <replace file="downloaded/TreeTableModel.java">
        <replacetoken>import javax.swing.tree.TreeModel;</replacetoken>
