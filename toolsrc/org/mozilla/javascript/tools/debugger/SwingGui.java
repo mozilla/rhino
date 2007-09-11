@@ -1191,7 +1191,7 @@ class EvalTextArea
     }
 
     /**
-     * Attempts to clean up the damange done by {@link #updateComponentTreeUI}.
+     * Attempts to clean up the damage done by {@link #updateUI()}.
      */
     public synchronized void postUpdateUI() {
         //requestFocus();
