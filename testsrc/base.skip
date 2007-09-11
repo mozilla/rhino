@@ -99,13 +99,6 @@ lc3/Exceptions/throw_js_types.js
 lc3/JavaClass/ToJSObject-001.js
 lc3/JSObject/ToJSObject-001.js
 
-# getter and setters are non-ECMA and not implemented in Rhino.
-js1_5/extensions/getset-001.js
-js1_5/GetSet/getset-002.js
-js1_5/extensions/getset-003.js
-#js1_5/extensions/getset-004.js
-#js1_5/extensions/getset-005.js
-
 #Rhino implements Date.toLocaleTimeString() differently than SpiderMonkey
 ecma_3/Date/15.9.5.7.js
 
@@ -191,8 +184,9 @@ js1_7/block/regress-344601.js
 js1_7/block/regress-351794.js
 js1_5/Regress/regress-10278.js
 
-# bad test: may fail if time of day increments a second between calls to Date()
+# bad test: will fail if time of day increments a second between calls to Date()
 ecma/Date/15.9.2.1.js
+ecma/Date/15.9.2.2-2.js
 
 # JS 1.7 not yet implemented
 js1_7/decompilation
