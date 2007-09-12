@@ -294,10 +294,16 @@ public class Context
     public static final int FEATURE_WARNING_AS_ERROR = 12;
 
     /**
-     * Controls whether private and protected members can be accessed
+     * Enables enhanced access to Java. 
+     * Specifically, controls whether private and protected members can be
+     * accessed, and whether scripts can catch all Java exceptions.
+     * <p>
+     * Note that this feature should only be enabled for trusted scripts.
+     * <p>
+     * By default {@link #hasFeature(int)} returns false.
      * @since 1.7 Release 1
      */
-    public static final int FEATURE_ACCESS_PRIVATE_MEMBERS = 13;
+    public static final int FEATURE_ENHANCED_JAVA_ACCESS = 13;
 
 
     public static final String languageVersionProperty = "language version";
@@ -1762,7 +1768,12 @@ public class Context
         }
         // special handling of Error so scripts would not catch them
         if (e instanceof Error) {
-            throw (Error)e;
+            Context cx = getContext();
+            if (cx == null ||
+                !cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS))
+            {
+                throw (Error)e;
+            }
         }
         if (e instanceof RhinoException) {
             throw (RhinoException)e;
@@ -2149,7 +2160,7 @@ public class Context
      * @see #FEATURE_LOCATION_INFORMATION_IN_ERROR
      * @see #FEATURE_STRICT_MODE
      * @see #FEATURE_WARNING_AS_ERROR
-     * @see #FEATURE_ACCESS_PRIVATE_MEMBERS
+     * @see #FEATURE_ENHANCED_JAVA_ACCESS
      */
     public boolean hasFeature(int featureIndex)
     {

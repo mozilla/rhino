@@ -73,7 +73,7 @@ class JavaMembers
                                               cl.getName());
         }
         this.includePrivate = cx.hasFeature(
-            Context.FEATURE_ACCESS_PRIVATE_MEMBERS);
+            Context.FEATURE_ENHANCED_JAVA_ACCESS);
         this.members = new Hashtable(23);
         this.staticMembers = new Hashtable(7);
         this.cl = cl;

@@ -38,7 +38,7 @@ package org.mozilla.javascript.tests;
 
 /**
  * A class with private/protected/package private members, to test the Rhino 
- * feature Context.FEATURE_ACCESS_PRIVATE_MEMBERS, that allows bypassing Java 
+ * feature Context.FEATURE_ENHANCED_JAVA_ACCESS, that allows bypassing Java 
  * member access restrictions.
  * @author Donna Malayeri
  */
@@ -73,5 +73,17 @@ public class PrivateAccessClass
   
   int packagePrivateMethod() { return 3; }
   private int privateMethod() { return 4; }
-  protected int protectedMethod() { return 5; } 
+  protected int protectedMethod() { return 5; }
+  
+  /* 
+   * Suppress warnings about unused private members.
+   */
+  public int referenceToPrivateMembers() {
+    PrivateAccessClass pac = new PrivateAccessClass();
+    PrivateAccessClass pac2 = new PrivateAccessClass(2);
+    PrivateNestedClass pnc = new PrivateNestedClass();
+    System.out.println(privateString);
+    return pnc.privateInt + staticPrivateInt + staticPrivateMethod() +
+           pac.privateMethod();
+  }
 }

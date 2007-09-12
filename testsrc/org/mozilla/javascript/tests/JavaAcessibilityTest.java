@@ -27,7 +27,7 @@ public class JavaAcessibilityTest extends TestCase {
   
   private ContextFactory contextFactory = new ShellContextFactory() {
     protected boolean hasFeature(Context cx, int featureIndex) {
-      if (featureIndex == Context.FEATURE_ACCESS_PRIVATE_MEMBERS)
+      if (featureIndex == Context.FEATURE_ENHANCED_JAVA_ACCESS)
             return true; 
       return super.hasFeature(cx, featureIndex);
     }
