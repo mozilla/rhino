@@ -321,7 +321,7 @@ abstract class XMLObjectImpl extends XMLObject {
         boolean descendants = (memberTypeFlags & Node.DESCENDANTS_FLAG) != 0;
         if (!attribute && !descendants) {
             // Code generation would use ecma(Get|Has|Delete|Set) for
-            // normal name idenrifiers so one ATTRIBUTE_FLAG
+            // normal name identifiers so one ATTRIBUTE_FLAG
             // or DESCENDANTS_FLAG has to be set
             throw Kit.codeBug();
         }
