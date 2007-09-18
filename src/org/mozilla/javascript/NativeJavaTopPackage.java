@@ -123,7 +123,11 @@ public class NativeJavaTopPackage
         // We want to get a real alias, and not a distinct JavaPackage
         // with the same packageName, so that we share classes and top
         // that are underneath.
-        NativeJavaPackage javaAlias = (NativeJavaPackage)top.get("java", top);
+        String[] topNames = { "java", "javax", "org", "com", "edu", "net" };
+        NativeJavaPackage[] topPackages = new NativeJavaPackage[topNames.length];
+        for (int i=0; i < topNames.length; i++) {
+            topPackages[i] = (NativeJavaPackage)top.get(topNames[i], top);
+        }
 
         // It's safe to downcast here since initStandardObjects takes
         // a ScriptableObject.
@@ -134,7 +138,10 @@ public class NativeJavaTopPackage
         }
         getClass.exportAsScopeProperty();
         global.defineProperty("Packages", top, ScriptableObject.DONTENUM);
-        global.defineProperty("java", javaAlias, ScriptableObject.DONTENUM);
+        for (int i=0; i < topNames.length; i++) {
+            global.defineProperty(topNames[i], topPackages[i],
+                                  ScriptableObject.DONTENUM);
+        }
     }
 
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
