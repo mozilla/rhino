@@ -82,7 +82,7 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
                     "Recursive initialization for "+propertyName);
             if (state == STATE_BEFORE_INIT) {
                 state = STATE_INITIALIZING;
-                // Set value now to have something to set in finaly block if
+                // Set value now to have something to set in finally block if
                 // buildValue throws.
                 Object value = Scriptable.NOT_FOUND;
                 try {
