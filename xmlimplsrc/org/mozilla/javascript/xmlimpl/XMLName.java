@@ -227,7 +227,6 @@ class XMLName extends Ref {
     }
 
     private void addDescendantAttributes(XMLList list, XML target) {
-        XMLName name = this;
         if (target.isElement()) {
             addMatchingAttributes(list, target);
             XML[] children = target.getChildren();

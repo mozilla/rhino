@@ -587,7 +587,6 @@ final class IRFactory
         Node assign;
         if (destructuring != -1) {
             assign = createDestructuringAssignment(declType, lvalue, id);
-            int len = assign.getIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, 0);
             if (!isForEach && (destructuring == Token.OBJECTLIT ||
                                destructuringLen != 2))
             {

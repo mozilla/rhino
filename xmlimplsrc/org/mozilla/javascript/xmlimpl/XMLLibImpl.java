@@ -325,7 +325,6 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
             }
         }
 
-        Namespace result;
         Object ns = ScriptRuntime.searchDefaultNamespace(cx);
         if (ns == null) {
             return namespacePrototype;
@@ -485,7 +484,6 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         // This is duplication of constructQName(cx, namespaceValue, nameValue)
         // but for XMLName
 
-        String uri;
         String localName;
 
         if (nameValue instanceof QName) {
@@ -515,7 +513,6 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     }
 
     XmlNode.QName toNodeQName(Context cx, String name, boolean attribute) {
-        String local = name;
         XmlNode.Namespace defaultNamespace = getDefaultNamespace(cx).getDelegate();
         if (name != null && name.equals("*")) {
             return XmlNode.QName.create(null, null);
