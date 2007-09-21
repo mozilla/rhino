@@ -116,11 +116,12 @@ public class NodeTransformer
                     // transform to let statement so we get a with statement
                     // created to contain scoped let variables
                     Node let = new Node(Token.LET);
+                    Node innerLet = new Node(Token.LET);
+                    let.addChildToBack(innerLet);
                     Iterator iter = newScope.symbolTable.keySet().iterator();
                     while (iter.hasNext()) {
                         String name = (String) iter.next();
-                        let.addChildToBack(new Node(Token.LET, 
-                            Node.newString(Token.NAME, name)));
+                        innerLet.addChildToBack(Node.newString(Token.NAME, name));
                     }
                     newScope.symbolTable = null; // so we don't transform again
                     Node oldNode = node;
