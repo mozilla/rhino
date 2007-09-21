@@ -41,6 +41,7 @@
 
 package org.mozilla.javascript;
 
+import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Iterator;
 
@@ -305,6 +306,10 @@ public class Node
             symbolTable.put(name, symbol);
             symbol.containingTable = this;
             top.addSymbol(symbol);
+        }
+        
+        public Map getSymbolTable() {
+            return symbolTable;
         }
   
         // Use LinkedHashMap so that the iteration order is the insertion order
