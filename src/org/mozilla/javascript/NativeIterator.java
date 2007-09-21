@@ -44,6 +44,9 @@ public final class NativeIterator extends IdScriptableObject {
         NativeIterator iterator = new NativeIterator();
         iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 
+        // Generator
+        NativeGenerator.init(scope, sealed);
+
         // StopIteration
         NativeObject obj = new StopIteration();
         obj.setPrototype(getObjectPrototype(scope));
