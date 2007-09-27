@@ -60,10 +60,10 @@ import org.mozilla.javascript.tools.ToolErrorReporter;
  */
 public class Main
 {
-    public static final ShellContextFactory
+    public static ShellContextFactory
         shellContextFactory = new ShellContextFactory();
 
-    static protected final Global global = new Global();
+    public static Global global = new Global();
     static protected ToolErrorReporter errorReporter;
     static protected int exitCode = 0;
     static private final int EXITCODE_RUNTIME_ERROR = 3;

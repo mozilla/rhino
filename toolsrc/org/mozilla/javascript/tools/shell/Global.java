@@ -77,6 +77,10 @@ public class Global extends ImporterTopLevel
         init(cx);
     }
 
+    public boolean isInitialized() {
+        return initialized;
+    }
+
     /**
      * Set the action to call from quit().
      */
