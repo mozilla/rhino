@@ -79,11 +79,11 @@ public class ClassCache
      */
     public static ClassCache get(Scriptable scope)
     {
-        ClassCache cache;
-        cache = (ClassCache)ScriptableObject.getTopScopeValue(scope, AKEY);
+        ClassCache cache = (ClassCache)
+                ScriptableObject.getTopScopeValue(scope, AKEY);
         if (cache == null) {
-            // XXX warn somehow about wrong cache usage ?
-            cache = new ClassCache();
+            throw new RuntimeException("Can't find top level scope for " +
+                    "ClassCache.get");
         }
         return cache;
     }

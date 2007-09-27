@@ -3159,7 +3159,7 @@ public class ScriptRuntime {
         // scope that can be used to retrieve the Java exception associated
         // with the JavaScript exception (to get stack trace info, etc.)
         catchScopeObject.defineProperty(
-            "__exception__", Context.javaToJS(t, catchScopeObject),
+            "__exception__", Context.javaToJS(t, scope),
             ScriptableObject.PERMANENT|ScriptableObject.DONTENUM);
 
         if (cacheObj) {

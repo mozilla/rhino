@@ -346,53 +346,52 @@ class JavaMembers
     {
         if (Modifier.isPublic(clazz.getModifiers()) || includePrivate) {
             try {
-              if (includeProtected || includePrivate) {
-                while (clazz != null) {
-                  Method[] methods = clazz.getDeclaredMethods();
-                  for (int i = 0; i < methods.length; i++)
-                  {
-                    Method method = methods[i];
-                    int mods = method.getModifiers();
+                if (includeProtected || includePrivate) {
+                    while (clazz != null) {
+                        Method[] methods = clazz.getDeclaredMethods();
+                        for (int i = 0; i < methods.length; i++) {
+                            Method method = methods[i];
+                            int mods = method.getModifiers();
 
-                    if (Modifier.isPublic(mods) || 
-                        Modifier.isProtected(mods) ||
-                        includePrivate)
-                    {
-                      if (includePrivate)
-                        method.setAccessible(true);
-                      MethodSignature sig = new MethodSignature(method);
-                      map.put(sig, method);
+                            if (Modifier.isPublic(mods) ||
+                                    Modifier.isProtected(mods) ||
+                                    includePrivate) {
+                                if (includePrivate)
+                                    method.setAccessible(true);
+                                MethodSignature sig = new MethodSignature(method);
+                                map.put(sig, method);
+                            }
+                        }
+                        clazz = clazz.getSuperclass();
                     }
-                  }
-                  clazz = clazz.getSuperclass();
+                } else {
+                    Method[] methods = clazz.getMethods();
+                    for (int i = 0; i < methods.length; i++) {
+                        Method method = methods[i];
+                        MethodSignature sig = new MethodSignature(method);
+                        map.put(sig, method);
+                    }
                 }
-            } else {
-                Method[] methods = clazz.getMethods();
-                for (int i = 0; i < methods.length; i++)
-                {
-                  Method method = methods[i];
-                  MethodSignature sig = new MethodSignature(method);
-                  map.put(sig, method);
-                }
-              }
-              return;
+                return;
             } catch (SecurityException e) {
                 Context.reportWarning(
-                        "Could not discover accessible methods of class " + 
-                        clazz.getName() + " due to lack of privileges, " + 
-                        "attemping superclasses/interfaces.");
-                // Fall through and attempt to discover superclass/interface 
+                        "Could not discover accessible methods of class " +
+                            clazz.getName() + " due to lack of privileges, " +
+                            "attemping superclasses/interfaces.");
+                // Fall through and attempt to discover superclass/interface
                 // methods
             }
         }
 
         Class[] interfaces = clazz.getInterfaces();
         for (int i = 0; i < interfaces.length; i++) {
-            discoverAccessibleMethods(interfaces[i], map, includeProtected, includePrivate);
+            discoverAccessibleMethods(interfaces[i], map, includeProtected,
+                    includePrivate);
         }
         Class superclass = clazz.getSuperclass();
         if (superclass != null) {
-            discoverAccessibleMethods(superclass, map, includeProtected, includePrivate);
+            discoverAccessibleMethods(superclass, map, includeProtected,
+                    includePrivate);
         }
     }
 
@@ -496,47 +495,55 @@ class JavaMembers
         Field[] fields = getAccessibleFields();
         for (int i = 0; i < fields.length; i++) {
             Field field = fields[i];
+            String name = field.getName();
             int mods = field.getModifiers();
             if (!includePrivate && !Modifier.isPublic(mods)) {
                 continue;
             }
-            boolean isStatic = Modifier.isStatic(mods);
-            Hashtable ht = isStatic ? staticMembers : members;
-            String name = field.getName();
-            Object member = ht.get(name);
-            if (member == null) {
-                ht.put(name, field);
-            } else if (member instanceof NativeJavaMethod) {
-                NativeJavaMethod method = (NativeJavaMethod) member;
-                FieldAndMethods fam
-                    = new FieldAndMethods(scope, method.methods, field);
-                Hashtable fmht = isStatic ? staticFieldAndMethods
-                                          : fieldAndMethods;
-                if (fmht == null) {
-                    fmht = new Hashtable(4);
-                    if (isStatic) {
-                        staticFieldAndMethods = fmht;
-                    } else {
-                        fieldAndMethods = fmht;
-                    }
-                }
-                fmht.put(name, fam);
-                ht.put(name, fam);
-            } else if (member instanceof Field) {
-                Field oldField = (Field) member;
-                // If this newly reflected field shadows an inherited field,
-                // then replace it. Otherwise, since access to the field
-                // would be ambiguous from Java, no field should be reflected.
-                // For now, the first field found wins, unless another field
-                // explicitly shadows it.
-                if (oldField.getDeclaringClass().
-                        isAssignableFrom(field.getDeclaringClass()))
-                {
+            try {
+                boolean isStatic = Modifier.isStatic(mods);
+                Hashtable ht = isStatic ? staticMembers : members;
+                Object member = ht.get(name);
+                if (member == null) {
                     ht.put(name, field);
+                } else if (member instanceof NativeJavaMethod) {
+                    NativeJavaMethod method = (NativeJavaMethod) member;
+                    FieldAndMethods fam
+                        = new FieldAndMethods(scope, method.methods, field);
+                    Hashtable fmht = isStatic ? staticFieldAndMethods
+                                              : fieldAndMethods;
+                    if (fmht == null) {
+                        fmht = new Hashtable(4);
+                        if (isStatic) {
+                            staticFieldAndMethods = fmht;
+                        } else {
+                            fieldAndMethods = fmht;
+                        }
+                    }
+                    fmht.put(name, fam);
+                    ht.put(name, fam);
+                } else if (member instanceof Field) {
+                    Field oldField = (Field) member;
+                    // If this newly reflected field shadows an inherited field,
+                    // then replace it. Otherwise, since access to the field
+                    // would be ambiguous from Java, no field should be
+                    // reflected.
+                    // For now, the first field found wins, unless another field
+                    // explicitly shadows it.
+                    if (oldField.getDeclaringClass().
+                            isAssignableFrom(field.getDeclaringClass()))
+                    {
+                        ht.put(name, field);
+                    }
+                } else {
+                    // "unknown member type"
+                    Kit.codeBug();
                 }
-            } else {
-                // "unknown member type"
-                Kit.codeBug();
+            } catch (SecurityException e) {
+                // skip this field
+                Context.reportWarning("Could not access field "
+                        + name + " of class " + cl.getName() +
+                        " due to lack of privileges.");
             }
         }
 
@@ -646,36 +653,48 @@ class JavaMembers
 
     private Constructor[] getAccessibleConstructors() 
     {
-      if (!includePrivate)
-        return cl.getConstructors();
-      
-      Constructor[] cons = cl.getDeclaredConstructors();
-      Constructor.setAccessible(cons, true);
-      
-      return cons;
+      if (includePrivate) {
+          try {
+              Constructor[] cons = cl.getDeclaredConstructors();
+              Constructor.setAccessible(cons, true);
+
+              return cons;
+          } catch (SecurityException e) {
+              // Fall through to !includePrivate case
+              Context.reportWarning("Could not access constructor " +
+                    " of class " + cl.getName() +
+                    " due to lack of privileges.");
+          }
+      }
+      return cl.getConstructors();
     }
 
-    private Field[] getAccessibleFields() 
-    {
-      if (!includePrivate)
-        return cl.getFields();
+    private Field[] getAccessibleFields() {
+        if (includePrivate) {
+            try {
+                ArrayList fieldsList = new ArrayList();
+                Class currentClass = cl;
 
-      ArrayList fieldsList = new ArrayList();
-      Class currentClass = cl;
-      
-      while (currentClass != null) {
-        // get all declared fields in this class, make them accessible, and save
-        Field[] declared = currentClass.getDeclaredFields();
-        for (int i = 0; i < declared.length; i++) {
-          declared[i].setAccessible(true);
-          fieldsList.add(declared[i]);
+                while (currentClass != null) {
+                    // get all declared fields in this class, make them
+                    // accessible, and save
+                    Field[] declared = currentClass.getDeclaredFields();
+                    for (int i = 0; i < declared.length; i++) {
+                        declared[i].setAccessible(true);
+                        fieldsList.add(declared[i]);
+                    }
+                    // walk up superclass chain.  no need to deal specially with
+                    // interfaces, since they can't have fields
+                    currentClass = currentClass.getSuperclass();
+                }
+
+                return (Field[]) fieldsList.toArray(
+                        new Field[fieldsList.size()]);
+            } catch (SecurityException e) {
+                // fall through to !includePrivate case
+            }
         }
-        // walk up superclass chain.  no need to deal specially with
-        // interfaces, since they can't have fields
-        currentClass = currentClass.getSuperclass();
-      }
-      
-      return (Field []) fieldsList.toArray(new Field[fieldsList.size()]);
+        return cl.getFields();
     }
 
     private MemberBox findGetter(boolean isStatic, Hashtable ht, String prefix,
