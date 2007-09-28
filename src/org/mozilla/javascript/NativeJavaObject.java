@@ -364,7 +364,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
             }
             else if (to.isPrimitive() && to != Boolean.TYPE) {
                 return (fromCode == JSTYPE_JAVA_ARRAY)
-                       ? CONVERSION_NONTRIVIAL : 2 + getSizeRank(to);
+                       ? CONVERSION_NONE : 2 + getSizeRank(to);
             }
             break;
 
