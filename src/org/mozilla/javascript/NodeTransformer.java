@@ -445,30 +445,34 @@ public class NodeTransformer
             ArrayList list = new ArrayList();
             Node objectLiteral = new Node(Token.OBJECTLIT);
             for (Node v=vars.getFirstChild(); v != null; v = v.getNext()) {
-                 if (v.getType() == Token.LETEXPR) {
-                     // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
-                     Node c = v.getFirstChild();
-                     if (c.getType() != Token.LET) throw Kit.codeBug();
-                     // Add initialization code to front of body
-                     body = new Node(Token.BLOCK,
-                         new Node(Token.EXPR_VOID, c.getNext()),
-                         body);
-                     // Update "list" and "objectLiteral" for the variables
-                     // defined in the destructuring assignment
-                     Set names = ((Node.Scope)scopeNode).getSymbolTable().keySet();
-                     list.addAll(names);
-                     for (int i=0; i < names.size(); i++)
-                         objectLiteral.addChildToBack(
-                             new Node(Token.VOID, Node.newNumber(0.0)));
-                     v = c.getFirstChild(); // should be a NAME, checked below
-                 }
-                 if (v.getType() != Token.NAME) throw Kit.codeBug();
-                 list.add(ScriptRuntime.getIndexObject(v.getString()));
-                 Node init = v.getFirstChild();
-                 if (init == null) {
-                     init = new Node(Token.VOID, Node.newNumber(0.0));
-                 }
-                 objectLiteral.addChildToBack(init);
+                if (v.getType() == Token.LETEXPR) {
+                    // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
+                    Node c = v.getFirstChild();
+                    if (c.getType() != Token.LET) throw Kit.codeBug();
+                    // Add initialization code to front of body
+                    if (isExpression) {
+                        body = new Node(Token.COMMA, c.getNext(), body);
+                    } else {
+                        body = new Node(Token.BLOCK,
+                            new Node(Token.EXPR_VOID, c.getNext()),
+                            body);
+                    }
+                    // Update "list" and "objectLiteral" for the variables
+                    // defined in the destructuring assignment
+                    Set names = ((Node.Scope)scopeNode).getSymbolTable().keySet();
+                    list.addAll(names);
+                    for (int i=0; i < names.size(); i++)
+                        objectLiteral.addChildToBack(
+                            new Node(Token.VOID, Node.newNumber(0.0)));
+                    v = c.getFirstChild(); // should be a NAME, checked below
+                }
+                if (v.getType() != Token.NAME) throw Kit.codeBug();
+                list.add(ScriptRuntime.getIndexObject(v.getString()));
+                Node init = v.getFirstChild();
+                if (init == null) {
+                    init = new Node(Token.VOID, Node.newNumber(0.0));
+                }
+                objectLiteral.addChildToBack(init);
              }
              objectLiteral.putProp(Node.OBJECT_IDS_PROP, list.toArray());
              newVars = new Node(Token.ENTERWITH, objectLiteral);
@@ -480,6 +484,22 @@ public class NodeTransformer
             result = replaceCurrent(parent, previous, scopeNode, result);
             newVars = new Node(Token.COMMA);
             for (Node v=vars.getFirstChild(); v != null; v = v.getNext()) {
+                if (v.getType() == Token.LETEXPR) {
+                    // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
+                    Node c = v.getFirstChild();
+                    if (c.getType() != Token.LET) throw Kit.codeBug();
+                    // Add initialization code to front of body
+                    if (isExpression) {
+                        body = new Node(Token.COMMA, c.getNext(), body);
+                    } else {
+                        body = new Node(Token.BLOCK,
+                            new Node(Token.EXPR_VOID, c.getNext()),
+                            body);
+                    }
+                    // We're removing the LETEXPR, so move the symbols
+                    Node.Scope.joinScopes((Node.Scope)v, (Node.Scope)scopeNode);
+                    v = c.getFirstChild(); // should be a NAME, checked below
+                }
                 if (v.getType() != Token.NAME) throw Kit.codeBug();
                 Node stringNode = Node.newString(v.getString());
                 stringNode.setScope((Node.Scope)scopeNode);

@@ -44,6 +44,7 @@ package org.mozilla.javascript;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Iterator;
+import java.util.Collections;
 
 /**
  * This class implements the root of the intermediate representation.
@@ -274,13 +275,22 @@ public class Node
             result.top = scope.top;
             return result;
         }
+
+        public static void joinScopes(Scope source, Scope dest) {
+            if (!Collections.disjoint(source.symbolTable.keySet(),
+                                      dest.symbolTable.keySet()))
+            {
+                throw Kit.codeBug();
+            }
+            dest.symbolTable.putAll(source.symbolTable);
+        }
         
         public void setParent(Scope parent) {
             this.parent = parent;
             this.top = parent == null ? (ScriptOrFnNode)this : parent.top;
         }
         
-        public Scope getParent() {
+        public Scope getParentScope() {
             return parent;
         }
   

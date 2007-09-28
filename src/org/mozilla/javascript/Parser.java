@@ -271,13 +271,13 @@ public class Parser
     
     void pushScope(Node node) {
         Node.Scope scopeNode = (Node.Scope) node;
-        if (scopeNode.getParent() != null) throw Kit.codeBug();
+        if (scopeNode.getParentScope() != null) throw Kit.codeBug();
         scopeNode.setParent(currentScope);
         currentScope = scopeNode;
     }
     
     void popScope() {
-        currentScope = currentScope.getParent();
+        currentScope = currentScope.getParentScope();
     }
 
     private Node enterLoop(Node loopLabel, boolean doPushScope)
