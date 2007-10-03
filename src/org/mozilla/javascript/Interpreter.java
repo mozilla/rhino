@@ -707,13 +707,14 @@ public class Interpreter
             }
             break;
 
-          case Token.SCRIPT:
           case Token.LABEL:
           case Token.LOOP:
           case Token.BLOCK:
           case Token.EMPTY:
           case Token.WITH:
             updateLineNumber(node);
+          case Token.SCRIPT:
+            // fall through
             while (child != null) {
                 visitStatement(child, initialStackDepth);
                 child = child.getNext();
@@ -3036,10 +3037,9 @@ switch (op) {
     case Token.BITXOR :
     case Token.LSH :
     case Token.RSH : {
+        int lIntValue = stack_int32(frame, stackTop-1);
         int rIntValue = stack_int32(frame, stackTop);
-        --stackTop;
-        int lIntValue = stack_int32(frame, stackTop);
-        stack[stackTop] = DBL_MRK;
+        stack[--stackTop] = DBL_MRK;
         switch (op) {
           case Token.BITAND:
             lIntValue &= rIntValue;
@@ -3061,10 +3061,9 @@ switch (op) {
         continue Loop;
     }
     case Token.URSH : {
+        double lDbl = stack_double(frame, stackTop-1);
         int rIntValue = stack_int32(frame, stackTop) & 0x1F;
-        --stackTop;
-        double lDbl = stack_double(frame, stackTop);
-        stack[stackTop] = DBL_MRK;
+        stack[--stackTop] = DBL_MRK;
         sDbl[stackTop] = ScriptRuntime.toUint32(lDbl) >>> rIntValue;
         continue Loop;
     }
