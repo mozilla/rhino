@@ -36,6 +36,7 @@ js1_5/Object/regress-362872-01.js
 js1_5/Object/regress-362872-02.js
 js1_5/Regress/regress-385393-06.js
 js1_5/extensions/regress-385393-09.js
+js1_7/GC/regress-381374.js
 
 # import, export not implemented
 js1_5/Regress/regress-249211.js
@@ -633,3 +634,11 @@ js1_5/extensions/regress-382509.js
 js1_5/extensions/regress-383965.js
 js1_6/Regress/regress-382509.js
 js1_5/Function/regress-364023.js
+e4x/Regress/regress-380833.js
+js1_5/extensions/regress-358594-01.js
+js1_5/extensions/regress-358594-02.js
+js1_5/extensions/regress-358594-03.js
+js1_5/extensions/regress-358594-04.js
+js1_5/extensions/regress-358594-05.js
+js1_5/extensions/regress-358594-06.js
+js1_7/extensions/regress-380933.js
