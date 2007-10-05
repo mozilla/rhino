@@ -56,6 +56,7 @@ public class CompilerEnvirons
         generatingSource = true;
         strictMode = false;
         warningAsError = false;
+        generateObserverCount = false;
     }
 
     public void initFromContext(Context cx)
@@ -79,6 +80,9 @@ public class CompilerEnvirons
 
         generatingSource = cx.isGeneratingSource();
         activationNames = cx.activationNames;
+        
+        // Observer code generation in compiled code :
+        generateObserverCount = cx.generateObserverCount;
     }
 
     public final ErrorReporter getErrorReporter()
@@ -173,6 +177,7 @@ public class CompilerEnvirons
     {
         return warningAsError;
     }
+
     /**
      * Specify whether or not source information should be generated.
      * <p>
@@ -187,6 +192,29 @@ public class CompilerEnvirons
         this.generatingSource = generatingSource;
     }
 
+    /**
+     * @return true iff code will be generated with callbacks to enable
+     * instruction thresholds
+     */
+    public boolean isGenerateObserverCount() {
+    	return generateObserverCount;
+    }
+
+   /**
+     * Turn on or off generation of code with callbacks to
+     * track the count of executed instructions.
+     * Currently only affects JVM byte code generation: this slows down the
+     * generated code, but code generated without the callbacks will not
+     * be counted toward instruction thresholds. Rhino's interpretive
+     * mode does instruction counting without inserting callbacks, so
+     * there is no requirement to compile code differently.
+     * @param generateObserverCount if true, generated code will contain
+     * calls to accumulate an estimate of the instructions executed.
+     */
+    public void setGenerateObserverCount(boolean generateObserverCount) {
+        this.generateObserverCount = generateObserverCount;
+    }
+
     private ErrorReporter errorReporter;
 
     private int languageVersion;
@@ -199,6 +227,7 @@ public class CompilerEnvirons
     private boolean generatingSource;
     private boolean strictMode;
     private boolean warningAsError;
+    private boolean generateObserverCount;
     Hashtable activationNames;
 }
 

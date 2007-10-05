@@ -166,6 +166,9 @@ public class Main {
                 targetName = name;
                 continue;
             }
+            if (arg.equals("-observe-instruction-count")) {
+                compilerEnv.setGenerateObserverCount(true);
+            }
             if (arg.equals("-package") && ++i < args.length) {
                 String pkg = args[i];
                 int end = pkg.length();

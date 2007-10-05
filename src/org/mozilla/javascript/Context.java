@@ -2184,7 +2184,7 @@ public class Context
 	}
 
     /**
-     * Get/Set threshold of executed instructions counter that triggers call to
+     * Get threshold of executed instructions counter that triggers call to
      * <code>observeInstructionCount()</code>.
      * When the threshold is zero, instruction counting is disabled,
      * otherwise each time the run-time executes at least the threshold value
@@ -2196,11 +2196,42 @@ public class Context
         return instructionThreshold;
     }
 
+    /**
+     * Set threshold of executed instructions counter that triggers call to
+     * <code>observeInstructionCount()</code>.
+     * When the threshold is zero, instruction counting is disabled,
+     * otherwise each time the run-time executes at least the threshold value
+     * of script instructions, <code>observeInstructionCount()</code> will
+     * be called.<p/>
+     * Note that the meaning of "instruction" is not guaranteed to be
+     * consistent between compiled and interpretive modes: executing a given
+     * script or function in the different modes will result in different
+     * instruction counts against the threshold.
+     * {@link #setGenerateObserverCount} is called with true if
+     * <code>threshold</code> is greater than zero, false otherwise.
+     * @param threshold The instruction threshold
+     */
     public final void setInstructionObserverThreshold(int threshold)
     {
         if (sealed) onSealedMutation();
         if (threshold < 0) throw new IllegalArgumentException();
         instructionThreshold = threshold;
+        setGenerateObserverCount(threshold > 0);
+    }
+
+    /**
+     * Turn on or off generation of code with callbacks to
+     * track the count of executed instructions.
+     * Currently only affects JVM byte code generation: this slows down the
+     * generated code, but code generated without the callbacks will not
+     * be counted toward instruction thresholds. Rhino's interpretive
+     * mode does instruction counting without inserting callbacks, so
+     * there is no requirement to compile code differently.
+     * @param generateObserverCount if true, generated code will contain
+     * calls to accumulate an estimate of the instructions executed.
+     */
+    public void setGenerateObserverCount(boolean generateObserverCount) {
+    	this.generateObserverCount = generateObserverCount;
     }
 
     /**
@@ -2601,4 +2632,7 @@ public class Context
 
     // It can be used to return the second Scriptable result from function
     Scriptable scratchScriptable;
+
+    // Generate an observer count on compiled code
+	public boolean generateObserverCount = false;
 }

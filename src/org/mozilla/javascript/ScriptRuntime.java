@@ -2988,6 +2988,16 @@ public class ScriptRuntime {
             }
         }
     }
+    
+    public static void addInstructionCount(Context cx, int instructionsToAdd)
+    {
+    	cx.instructionCount += instructionsToAdd;
+        if (cx.instructionCount > cx.instructionThreshold) 
+        {
+            cx.observeInstructionCount(cx.instructionCount);
+            cx.instructionCount = 0;
+        }
+    }
 
     public static void initScript(NativeFunction funObj, Scriptable thisObj,
                                   Context cx, Scriptable scope,

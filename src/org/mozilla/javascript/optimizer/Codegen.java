@@ -1577,6 +1577,9 @@ class BodyCodegen
             }
         }
 
+        if (compilerEnv.isGenerateObserverCount())
+            saveCurrentCodeOffset();
+
         if (hasVarsInRegs) {
             // No need to create activation. Pad arguments if need be.
             int parmCount = scriptOrFn.getParamCount();
@@ -1756,6 +1759,8 @@ class BodyCodegen
 
     private void generateEpilogue()
     {
+        if (compilerEnv.isGenerateObserverCount())
+            addInstructionCount();        
         if (isGenerator) {
             // generate locals initialization
             ArrayList nodes = ((FunctionNode)scriptOrFn).getResumptionPoints();
@@ -1964,10 +1969,14 @@ class BodyCodegen
 
               case Token.THROW:
                 generateExpression(child, node);
+                if (compilerEnv.isGenerateObserverCount())
+                    addInstructionCount();                   
                 generateThrowJavaScriptException();
                 break;
 
               case Token.RETHROW:
+                if (compilerEnv.isGenerateObserverCount())
+                    addInstructionCount();
                 cfw.addALoad(getLocalBlockRegister(node));
                 cfw.add(ByteCode.ATHROW);
                 break;
@@ -1984,7 +1993,8 @@ class BodyCodegen
                         cfw.addALoad(popvLocal);
                     }
                 }
-
+                if (compilerEnv.isGenerateObserverCount())
+                    addInstructionCount();
                 if (epilogueLabel == -1) {
                     if (!hasVarsInRegs) throw Codegen.badTree();
                     epilogueLabel = cfw.acquireLabel();
@@ -1993,6 +2003,8 @@ class BodyCodegen
                 break;
 
               case Token.SWITCH:
+                if (compilerEnv.isGenerateObserverCount())
+                    addInstructionCount();
                 visitSwitch((Node.Jump)node, child);
                 break;
 
@@ -2072,8 +2084,12 @@ class BodyCodegen
 
               case Token.TARGET:
                 {
+                    if (compilerEnv.isGenerateObserverCount())
+                        addInstructionCount();
                     int label = getTargetLabel(node);
                     cfw.markLabel(label);
+                    if (compilerEnv.isGenerateObserverCount())
+                        saveCurrentCodeOffset();
                 }
                 break;
 
@@ -2081,16 +2097,20 @@ class BodyCodegen
               case Token.GOTO:
               case Token.IFEQ:
               case Token.IFNE:
+                if (compilerEnv.isGenerateObserverCount())
+                    addInstructionCount(); 
                 visitGoto((Node.Jump)node, type, child);
                 break;
 
               case Token.FINALLY:
                 {
+                    if (compilerEnv.isGenerateObserverCount())
+                        saveCurrentCodeOffset();
                     // there is exactly one value on the stack when enterring
                     // finally blocks: the return address (or its int encoding)
                     cfw.setStackTop((short)1);
 
-                    //Save return address in a new local where
+                    // Save return address in a new local
                     int finallyRegister = getNewWordLocal();
                     if (isGenerator)
                         generateIntegerWrap();
@@ -3849,6 +3869,31 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                                +")Ljava/lang/String;");
     }
 
+    /**
+     * Save the current code offset. This saved code offset is used to
+     * compute instruction counts in subsequent calls to
+     * {@link #addInstructionCount}.
+     */
+    private void saveCurrentCodeOffset() {
+        savedCodeOffset = cfw.getCurrentCodeOffset();
+    }
+
+    /**
+     * Generate calls to ScriptRuntime.addInstructionCount to keep track of
+     * executed instructions and call <code>observeInstructionCount()</code>
+     * if a threshold is exceeded.
+     */
+    private void addInstructionCount() {
+        int count = cfw.getCurrentCodeOffset() - savedCodeOffset;
+        if (count == 0)
+            return;
+        cfw.addALoad(contextLocal);
+        cfw.addPush(count);
+        addScriptRuntimeInvoke("addInstructionCount",
+                "(Lorg/mozilla/javascript/Context;"
+                +"I)V");
+    }
+
     private void visitIncDec(Node node)
     {
         int incrDecrMask = node.getExistingIntProp(Node.INCRDECR_PROP);
@@ -4866,6 +4911,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     CompilerEnvirons compilerEnv;
     ScriptOrFnNode scriptOrFn;
     public int scriptOrFnIndex;
+    private int savedCodeOffset;
 
     private OptFunctionNode fnCurrent;
     private boolean isTopLevel;
