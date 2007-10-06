@@ -266,6 +266,7 @@ class ShellTest {
                     {
                         public Object run(Context cx)
                         {
+                            System.out.println("Running " + jsFile);
                             status.running(jsFile);
                             testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
                             cx.setErrorReporter( testState.errors );
@@ -298,7 +299,7 @@ class ShellTest {
                     }
                 }
             }
-        });
+        }, jsFile.getPath());
         t.start();
         t.join(parameters.getTimeoutMilliseconds());
         synchronized(testState)
