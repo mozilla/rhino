@@ -101,6 +101,7 @@
 	
   <target name="junit" depends="junit-compile,coverage-instrument">
     <junit printsummary="on" fork="true" forkmode="once" maxmemory="${test.vm.mx}" showoutput="true">
+      <sysproperty key="java.awt.headless" value="true" />
       <sysproperty key="mozilla.js.tests" value="${test.library.dir}" />
       <sysproperty key="mozilla.js.tests.timeout" value="${test.timeout}" />
       <sysproperty key="emma.coverage.out.file" value="${coverage.outfile}"/>
