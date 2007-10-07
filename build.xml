@@ -188,7 +188,7 @@
   <target name="clean" depends="properties">
     <delete quiet="true" file="${dist.dir}/${rhino.jar}"/>
     <delete quiet="true" file="${dist.dir}/${small-rhino.jar}"/>
-    <delete quiet="true" dir="${classes}"/>
+    <delete quiet="true" dir="${build.dir}"/>
   </target>
 
   <target name="deepclean" depends="properties">
@@ -209,12 +209,9 @@
     IDEs that use Ant as the build system probably handle this fine.
   -->
   <target name="junit-all" depends="compile">
-    <ant antfile="testsrc/build.xml" target="junit"/>
-  </target>
-
-  <target name="junit-all-coveragereport" depends="compile">
     <ant antfile="testsrc/build.xml" target="junit-coveragereport"/>
   </target>
+
   <!--
   Run the tests using the Java port of jsdriver.pl.  Note that running this port
   from the command-line may be more useful running this Ant target, as running
