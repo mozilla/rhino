@@ -40,6 +40,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.Arrays;
+
 /**
  * This class implements the Array native object.
  * @author Norris Boyd
@@ -53,12 +55,18 @@ public class NativeArray extends IdScriptableObject
      * Optimization possibilities and open issues:
      * - Long vs. double schizophrenia.  I suspect it might be better
      * to use double throughout.
-
-     * - Most array operations go through getElem or setElem (defined
-     * in this file) to handle the full 2^32 range; it might be faster
-     * to have versions of most of the loops in this file for the
-     * (infinitely more common) case of indices < 2^31.
-
+     *
+     * - Need to examine these methods to see if they'd benefit from an
+     * optimized code path using <code>dense</code>:
+     *      toStringHelper
+     *      js_join
+     *      js_reverse
+     *      js_sort
+     *      js_splice
+     *      js_concat
+     *      indexOfHelper
+     *      iterativeMethod
+     *
      * - Functions that need a new Array call "new Array" in the
      * current scope rather than using a hardwired constructor;
      * "Array" could be redefined.  It turns out that js calls the
@@ -71,36 +79,28 @@ public class NativeArray extends IdScriptableObject
 
     static void init(Scriptable scope, boolean sealed)
     {
-        NativeArray obj = new NativeArray();
+        NativeArray obj = new NativeArray(0);
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    /**
-     * Zero-parameter constructor: just used to create Array.prototype
-     */
-    private NativeArray()
+    public NativeArray(long lengthArg)
     {
-        dense = null;
-        this.length = 0;
-    }
-
-    public NativeArray(long length)
-    {
-        int intLength = (int) length;
-        if (intLength == length && intLength > 0) {
-            if (intLength > maximumDenseLength)
-                intLength = maximumDenseLength;
+        denseOnly = lengthArg <= MAXIMUM_INITIAL_CAPACITY;
+        if (denseOnly) {
+            int intLength = (int) length;
+            if (intLength < DEFAULT_INITIAL_CAPACITY)
+                intLength = DEFAULT_INITIAL_CAPACITY;
             dense = new Object[intLength];
-            for (int i=0; i < intLength; i++)
-                dense[i] = NOT_FOUND;
+            Arrays.fill(dense, Scriptable.NOT_FOUND);
         }
-        this.length = length;
+        length = lengthArg;
     }
 
     public NativeArray(Object[] array)
     {
+        denseOnly = true;
         dense = array;
-        this.length = array.length;
+        length = array.length;
     }
 
     public String getClassName()
@@ -251,14 +251,14 @@ public class NativeArray extends IdScriptableObject
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    public Object get(int index, Scriptable start)
+    public synchronized Object get(int index, Scriptable start)
     {
         if (dense != null && 0 <= index && index < dense.length)
             return dense[index];
         return super.get(index, start);
     }
 
-    public boolean has(int index, Scriptable start)
+    public synchronized boolean has(int index, Scriptable start)
     {
         if (dense != null && 0 <= index && index < dense.length)
             return dense[index] != NOT_FOUND;
@@ -283,7 +283,7 @@ public class NativeArray extends IdScriptableObject
         return -1;
     }
 
-    public void put(String id, Scriptable start, Object value)
+    public synchronized void put(String id, Scriptable start, Object value)
     {
         super.put(id, start, value);
         if (start == this) {
@@ -291,20 +291,47 @@ public class NativeArray extends IdScriptableObject
             long index = toArrayIndex(id);
             if (index >= length) {
                 length = index + 1;
+                denseOnly = false;
             }
         }
     }
 
-    public void put(int index, Scriptable start, Object value)
+    private synchronized boolean ensureCapacity(int capacity)
     {
-        if (start == this && !isSealed()
-            && dense != null && 0 <= index && index < dense.length)
-        {
-            // If start == this && sealed, super will throw exception
-            dense[index] = value;
-        } else {
-            super.put(index, start, value);
+        if (capacity > dense.length) {
+            if (capacity > MAX_PRE_GROW_SIZE) {
+                denseOnly = false;
+                return false;
+            }
+            capacity = Math.max(capacity, (int)(dense.length * GROW_FACTOR));
+            Object[] newDense = new Object[capacity];
+            System.arraycopy(dense, 0, newDense, 0, dense.length);
+            Arrays.fill(newDense, dense.length, newDense.length,
+                        Scriptable.NOT_FOUND);
+            dense = newDense;
         }
+        return true;
+    }
+
+    public synchronized void put(int index, Scriptable start, Object value)
+    {
+        if (start == this && !isSealed() && dense != null && 0 <= index) {
+            if (index < dense.length) {
+                dense[index] = value;
+                if (this.length <= index)
+                    this.length = (long)index + 1;                
+                return;
+            } else if (denseOnly && index < dense.length * GROW_FACTOR &&
+                       ensureCapacity(index+1))
+            {
+                dense[index] = value;
+                this.length = (long)index + 1;
+                return;
+            } else {
+                denseOnly = false;
+            }
+        }
+        super.put(index, start, value);
         if (start == this) {
             // only set the array length if given an array index (ECMA 15.4.0)
             if (this.length <= index) {
@@ -315,10 +342,9 @@ public class NativeArray extends IdScriptableObject
 
     }
 
-    public void delete(int index)
+    public synchronized void delete(int index)
     {
-        if (!isSealed()
-            && dense != null && 0 <= index && index < dense.length)
+        if (!isSealed() && dense != null && 0 <= index && index < dense.length)
         {
             dense[index] = NOT_FOUND;
         } else {
@@ -326,7 +352,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
-    public Object[] getIds()
+    public synchronized Object[] getIds()
     {
         Object[] superIds = super.getIds();
         if (dense == null) { return superIds; }
@@ -338,13 +364,11 @@ public class NativeArray extends IdScriptableObject
         if (N == 0) { return superIds; }
         int superLength = superIds.length;
         Object[] ids = new Object[N + superLength];
-        // Make a copy of dense to be immune to removing
-        // of array elems from other thread when calculating presentCount
-        System.arraycopy(dense, 0, ids, 0, N);
+
         int presentCount = 0;
         for (int i = 0; i != N; ++i) {
             // Replace existing elements by their indexes
-            if (ids[i] != NOT_FOUND) {
+            if (dense[i] != NOT_FOUND) {
                 ids[presentCount] = new Integer(i);
                 ++presentCount;
             }
@@ -376,7 +400,7 @@ public class NativeArray extends IdScriptableObject
                                         Object[] args)
     {
         if (args.length == 0)
-            return new NativeArray();
+            return new NativeArray(0);
 
         // Only use 1 arg as first element for version 1.2; for
         // any other version (including 1.3) follow ECMA and use it as
@@ -396,7 +420,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
-    public long getLength() {
+    public synchronized long getLength() {
         return length;
     }
 
@@ -405,7 +429,7 @@ public class NativeArray extends IdScriptableObject
         return getLength();
     }
 
-    private void setLength(Object val) {
+    private synchronized void setLength(Object val) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
          * 1. Call the [[CanPut]] method of A with name P.
@@ -418,6 +442,22 @@ public class NativeArray extends IdScriptableObject
         if (longVal != d)
             throw Context.reportRuntimeError0("msg.arraylength.bad");
 
+        if (denseOnly) {
+            if (longVal < length) {
+                // downcast okay because denseOnly
+                Arrays.fill(dense, (int) longVal, dense.length, NOT_FOUND);
+                length = longVal;
+                return;
+            } else if (longVal < MAX_PRE_GROW_SIZE &&
+                       longVal < (length * GROW_FACTOR) &&
+                       ensureCapacity((int)longVal))
+            {
+                length = longVal;
+                return;
+            } else {
+                denseOnly = false;
+            }
+        }
         if (longVal < length) {
             // remove all properties between longVal and length
             if (length - longVal > 0x1000) {
@@ -868,6 +908,19 @@ public class NativeArray extends IdScriptableObject
     private static Object js_push(Context cx, Scriptable thisObj,
                                   Object[] args)
     {
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly &&
+                na.ensureCapacity((int) na.length + args.length))
+            {
+                synchronized (na) {
+                    for (int i = 0; i < args.length; i++) {
+                        na.dense[(int)na.length++] = args[i];
+                    }
+                    return ScriptRuntime.wrapNumber(na.length);
+                }
+            }
+        }
         long length = getLengthProperty(cx, thisObj);
         for (int i = 0; i < args.length; i++) {
             setElem(cx, thisObj, length + i, args[i]);
@@ -894,6 +947,17 @@ public class NativeArray extends IdScriptableObject
                                  Object[] args)
     {
         Object result;
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly && na.length > 0) {
+                synchronized (na) {
+                    na.length--;
+                    result = na.dense[(int)na.length];
+                    na.dense[(int)na.length] = NOT_FOUND;
+                    return result;
+                }
+            }
+        }
         long length = getLengthProperty(cx, thisObj);
         if (length > 0) {
             length--;
@@ -916,6 +980,18 @@ public class NativeArray extends IdScriptableObject
     private static Object js_shift(Context cx, Scriptable thisObj,
                                    Object[] args)
     {
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly && na.length > 0) {
+                synchronized (na) {
+                    na.length--;
+                    Object result = na.dense[0];
+                    System.arraycopy(na.dense, 1, na.dense, 0, (int)na.length);
+                    na.dense[(int)na.length] = NOT_FOUND;
+                    return result;
+                }
+            }
+        }
         Object result;
         long length = getLengthProperty(cx, thisObj);
         if (length > 0) {
@@ -947,6 +1023,22 @@ public class NativeArray extends IdScriptableObject
     private static Object js_unshift(Context cx, Scriptable thisObj,
                                      Object[] args)
     {
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly &&
+                na.ensureCapacity((int)na.length + args.length))
+            {
+                synchronized (na) {
+                    System.arraycopy(na.dense, 0, na.dense, args.length,
+                                     (int) na.length);
+                    for (int i = 0; i < args.length; i++) {
+                        na.dense[i] = args[i];
+                    }
+                    na.length += args.length;
+                    return ScriptRuntime.wrapNumber(na.length);
+                }
+            }
+        }
         long length = getLengthProperty(cx, thisObj);
         int argc = args.length;
 
@@ -1328,7 +1420,36 @@ public class NativeArray extends IdScriptableObject
 
 // #/string_id_map#
 
+    /**
+     * Internal representation of the JavaScript array's length property.
+     */
     private long length;
+
+    /**
+     * Fast storage for dense arrays. Sparse arrays will use the superclass's
+     * hashtable storage scheme.
+     */
     private Object[] dense;
-    private static final int maximumDenseLength = 10000;
+
+    /**
+     * True if all numeric properties are stored in <code>dense</code>.
+     */
+    private boolean denseOnly;
+
+    /**
+     * The maximum size of <code>dense</code> that will be allocated initially.
+     */
+    private static final int MAXIMUM_INITIAL_CAPACITY = 1000;
+
+    /**
+     * The default capacity for <code>dense</code>.
+     */
+    private static final int DEFAULT_INITIAL_CAPACITY = 10;
+
+    /**
+     * The factor to grow <code>dense</code> by.
+     */
+    private static final double GROW_FACTOR = 1.5;
+    private static final int MAX_PRE_GROW_SIZE =
+            (int)((double)Integer.MAX_VALUE / GROW_FACTOR);
 }

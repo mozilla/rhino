@@ -3271,31 +3271,42 @@ public class ScriptRuntime {
     }
 
     public static Scriptable newArrayLiteral(Object[] objects,
-                                             int[] skipIndexces,
+                                             int[] skipIndices,
                                              Context cx, Scriptable scope)
     {
+        final int SKIP_DENSITY = 2;
         int count = objects.length;
         int skipCount = 0;
-        if (skipIndexces != null) {
-            skipCount = skipIndexces.length;
+        if (skipIndices != null) {
+            skipCount = skipIndices.length;
         }
         int length = count + skipCount;
-        Integer lengthObj = new Integer(length);
-        Scriptable arrayObj;
-        /*
-         * If the version is 120, then new Array(4) means create a new
-         * array with 4 as the first element.  In this case, we have to
-         * set length property manually.
-         */
-        if (cx.getLanguageVersion() == Context.VERSION_1_2) {
-            arrayObj = cx.newObject(scope, "Array", ScriptRuntime.emptyArgs);
-            ScriptableObject.putProperty(arrayObj, "length", lengthObj);
-        } else {
-            arrayObj = cx.newObject(scope, "Array", new Object[] { lengthObj });
+        if (length > 1 && skipCount * SKIP_DENSITY < length) {
+            // If not too sparse, create whole array for constructor
+            Object[] sparse;
+            if (skipCount == 0) {
+                sparse = objects;
+            } else {
+                sparse = new Object[length];
+                int skip = 0;
+                for (int i = 0, j = 0; i != length; ++i) {
+                    if (skip != skipCount && skipIndices[skip] == i) {
+                        sparse[i] = Scriptable.NOT_FOUND;
+                        ++skip;
+                        continue;
+                    }
+                    sparse[i] = objects[j];
+                    ++j;
+                }
+            }
+            return cx.newObject(scope, "Array", sparse);
         }
+        
+        Scriptable arrayObj = cx.newObject(scope, "Array",
+                                           ScriptRuntime.emptyArgs);
         int skip = 0;
         for (int i = 0, j = 0; i != length; ++i) {
-            if (skip != skipCount && skipIndexces[skip] == i) {
+            if (skip != skipCount && skipIndices[skip] == i) {
                 ++skip;
                 continue;
             }
