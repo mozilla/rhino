@@ -300,14 +300,15 @@ class ShellTest {
                 }
             }
         }, jsFile.getPath());
+        t.setDaemon(true);
         t.start();
         t.join(parameters.getTimeoutMilliseconds());
         synchronized(testState)
         {
             if(!testState.finished)
             {
-                status.timedOut();
                 t.stop();
+                status.timedOut();
             }
         }
         int expectedExitCode = 0;
