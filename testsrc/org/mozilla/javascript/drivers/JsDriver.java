@@ -44,6 +44,9 @@ import org.w3c.dom.*;
 
 import org.mozilla.javascript.tools.shell.*;
 
+/**
+ * @version $Id: JsDriver.java,v 1.5 2007/10/11 19:44:10 szegedia%freemail.hu Exp $
+ */
 public class JsDriver {
     private JsDriver() {
     }

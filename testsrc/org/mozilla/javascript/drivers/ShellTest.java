@@ -42,6 +42,9 @@ import java.util.*;
 
 import org.mozilla.javascript.tools.shell.*;
 
+/**
+ * @version $Id: ShellTest.java,v 1.5 2007/10/11 19:44:10 szegedia%freemail.hu Exp $
+ */
 class ShellTest {
     static final FileFilter DIRECTORY_FILTER = new FileFilter() {
         public boolean accept(File pathname)
