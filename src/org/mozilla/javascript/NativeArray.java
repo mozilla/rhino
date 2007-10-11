@@ -59,7 +59,6 @@ public class NativeArray extends IdScriptableObject
      * - Need to examine these methods to see if they'd benefit from an
      * optimized code path using <code>dense</code>:
      *      toStringHelper
-     *      js_join
      *      js_reverse
      *      js_sort
      *      js_splice
@@ -642,8 +641,6 @@ public class NativeArray extends IdScriptableObject
     private static String js_join(Context cx, Scriptable thisObj,
                                   Object[] args)
     {
-        String separator;
-
         long llength = getLengthProperty(cx, thisObj);
         int length = (int)llength;
         if (llength != length) {
@@ -651,10 +648,28 @@ public class NativeArray extends IdScriptableObject
                 "msg.arraylength.too.big", String.valueOf(llength));
         }
         // if no args, use "," as separator
-        if (args.length < 1 || args[0] == Undefined.instance) {
-            separator = ",";
-        } else {
-            separator = ScriptRuntime.toString(args[0]);
+        String separator = (args.length < 1 || args[0] == Undefined.instance)
+                           ? ","
+                           : ScriptRuntime.toString(args[0]);
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly) {
+                StringBuffer sb = new StringBuffer();
+                for (int i = 0; i < length; i++) {
+                    if (i != 0) {
+                        sb.append(separator);
+                    }
+                    if (i < na.dense.length) {
+                        Object temp = na.dense[i];
+                        if (temp != null && temp != Undefined.instance &&
+                            temp != Scriptable.NOT_FOUND)
+                        {
+                            sb.append(ScriptRuntime.toString(temp));
+                        }
+                    }
+                }
+                return sb.toString();
+            }
         }
         if (length == 0) {
             return "";
