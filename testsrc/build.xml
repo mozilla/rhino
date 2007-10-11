@@ -119,6 +119,11 @@
       <formatter type="plain" usefile="false" />
       <formatter type="xml"/>
     </junit>
+    <mkdir dir="build/test/report"/>
+    <junitreport todir="build/test/report">
+       <fileset dir="build/test" includes="*.xml"/>
+       <report todir="build/test/report"/>
+    </junitreport>
   </target>
 
   <target name="junit-coveragereport" depends="junit">
