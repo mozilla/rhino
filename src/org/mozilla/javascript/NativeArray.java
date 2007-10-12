@@ -60,8 +60,6 @@ public class NativeArray extends IdScriptableObject
      * optimized code path using <code>dense</code>:
      *      toStringHelper
      *      js_reverse
-     *      js_sort
-     *      js_splice
      *      js_concat
      *      indexOfHelper
      *      iterativeMethod
@@ -740,12 +738,19 @@ public class NativeArray extends IdScriptableObject
             compare = null;
             cmpBuf = null;
         }
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly) {
+                int ilength = (int) length;
+                heapsort(cx, scope, na.dense, ilength, compare, cmpBuf);
+                return thisObj;
+            }
+        }
 
         // Should we use the extended sort function, or the faster one?
         if (length >= Integer.MAX_VALUE) {
             heapsort_extended(cx, scope, thisObj, length, compare, cmpBuf);
-        }
-        else {
+        } else {
             int ilength = (int)length;
             // copy the JS array into a working array, so it can be
             // sorted cheaply.
@@ -1081,12 +1086,18 @@ public class NativeArray extends IdScriptableObject
     private static Object js_splice(Context cx, Scriptable scope,
                                     Scriptable thisObj, Object[] args)
     {
+    	NativeArray na = null;
+    	boolean denseMode = false;
+        if (thisObj instanceof NativeArray) {
+            na = (NativeArray) thisObj;
+            denseMode = na.denseOnly;
+        }
+
         /* create an empty Array to return. */
         scope = getTopLevelScope(scope);
-        Object result = ScriptRuntime.newObject(cx, scope, "Array", null);
         int argc = args.length;
         if (argc == 0)
-            return result;
+            return ScriptRuntime.newObject(cx, scope, "Array", null);
         long length = getLengthProperty(cx, thisObj);
 
         /* Convert the first argument into a starting index. */
@@ -1112,6 +1123,7 @@ public class NativeArray extends IdScriptableObject
         long end = begin + count;
 
         /* If there are elements to remove, put them into the return value. */
+        Object result;
         if (count != 0) {
             if (count == 1
                 && (cx.getLanguageVersion() == Context.VERSION_1_2))
@@ -1129,21 +1141,47 @@ public class NativeArray extends IdScriptableObject
                  */
                 result = getElem(cx, thisObj, begin);
             } else {
-                for (long last = begin; last != end; last++) {
-                    Scriptable resultArray = (Scriptable)result;
-                    Object temp = getElem(cx, thisObj, last);
-                    setElem(cx, resultArray, last - begin, temp);
-                }
+            	if (denseMode) {
+                    int intLen = (int) (end - begin);
+                    Object[] copy = new Object[intLen];
+                    System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
+                    result = cx.newArray(scope, copy);
+            	} else {
+            		Scriptable resultArray = ScriptRuntime.newObject(cx, scope,
+                        "Array", null);
+                    for (long last = begin; last != end; last++) {
+                        Object temp = getElem(cx, thisObj, last);
+                        setElem(cx, resultArray, last - begin, temp);
+                    }
+                    result = resultArray;
+            	}
             }
-        } else if (count == 0
-                   && cx.getLanguageVersion() == Context.VERSION_1_2)
-        {
-            /* Emulate C JS1.2; if no elements are removed, return undefined. */
-            result = Undefined.instance;
+        } else { // (count == 0)
+        	if (cx.getLanguageVersion() == Context.VERSION_1_2) {
+                /* Emulate C JS1.2; if no elements are removed, return undefined. */
+                result = Undefined.instance;
+            } else {
+            	result = ScriptRuntime.newObject(cx, scope, "Array", null);
+        	}
         }
 
         /* Find the direction (up or down) to copy and make way for argv. */
         long delta = argc - count;
+        if (denseMode && length + delta < Integer.MAX_VALUE &&
+            na.ensureCapacity((int) (length + delta)))
+        {
+            System.arraycopy(na.dense, (int) end, na.dense,
+                             (int) (begin + argc), (int) (length - end));
+            if (argc > 0) {
+                System.arraycopy(args, 2, na.dense, (int) begin, argc);
+            }
+            if (delta < 0) {
+                Arrays.fill(na.dense, (int) (length + delta), (int) length,
+                            NOT_FOUND);
+            }
+            na.length = length + delta;
+            return result;
+        }
 
         if (delta > 0) {
             for (long last = length - 1; last >= end; last--) {
