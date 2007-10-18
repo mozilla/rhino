@@ -69,7 +69,7 @@ public final class NativeGenerator extends IdScriptableObject {
     private NativeGenerator() { }
 
     public NativeGenerator(Scriptable scope, NativeFunction function,
-                    Object savedState)
+                           Object savedState)
     {
         this.function = function;
         this.savedState = savedState;
