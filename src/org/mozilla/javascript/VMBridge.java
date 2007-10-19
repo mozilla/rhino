@@ -163,4 +163,12 @@ public abstract class VMBridge
      * JDK 1.5.
      */
     protected abstract boolean isVarArgs(Member member);
+
+    /**
+     * return method corresponding to __iterator__ for treating a
+     * java.lang.Iterable as a JavaScript Iterator
+     */
+    public Method getIteratorMethod() {
+        return null;
+    }
 }

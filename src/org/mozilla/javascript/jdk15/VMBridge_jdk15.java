@@ -40,6 +40,8 @@ package org.mozilla.javascript.jdk15;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
+import java.util.Iterator;
+import org.mozilla.javascript.*;
 
 public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
 {
@@ -49,6 +51,7 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
         // load a bridge to an older JDK
         VMBridge_jdk15.class.getConstructor(new Class[] {}).isVarArgs();
     }
+
     public boolean isVarArgs(Member member) {
         if (member instanceof Method)
             return ((Method) member).isVarArgs();
@@ -57,4 +60,57 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
         else 
             return false;
     }
+
+    public Method getIteratorMethod() {
+        try {
+            Class[] sig = { Context.class, Scriptable.class,
+                            ScriptRuntime.emptyArgs.getClass(),
+                            Function.class };
+            return VMBridge_jdk15.class.getMethod("__iterator__", sig);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
+
+    public static Object __iterator__(Context cx, Scriptable thisObj,
+                                      Object[] args, Function funObj)
+    {
+        if (thisObj instanceof Wrapper) {
+            Object obj = ((Wrapper) thisObj).unwrap();
+            if (obj instanceof Iterable) {
+                Scriptable scope = ScriptableObject.getTopLevelScope(funObj);
+                return cx.getWrapFactory().wrap(cx, scope,
+                        new WrappedJavaIterator((Iterable) obj, scope),
+                        WrappedJavaIterator.class);
+            }
+        }
+        throw ScriptRuntime.typeError1("msg.incompat.call",
+                                       NativeIterator.ITERATOR_PROPERTY_NAME);
+    }
+
+    static public class WrappedJavaIterator
+    {
+        WrappedJavaIterator(Iterable iterable, Scriptable scope) {
+            this.iterator = iterable.iterator();
+            this.scope = scope;
+        }
+
+        public Object next() {
+            if (!iterator.hasNext()) {
+                // Out of values. Throw StopIteration.
+                Scriptable top = ScriptableObject.getTopLevelScope(scope);
+                Object e = top.get(NativeIterator.STOP_ITERATION, top);
+                throw new JavaScriptException(e, null, 0);
+            }
+            return iterator.next();
+        }
+
+        public Object __iterator__() {
+            return this;
+        }
+
+        private Iterator iterator;
+        private Scriptable scope;
+    }
+
 }

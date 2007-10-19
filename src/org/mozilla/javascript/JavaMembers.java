@@ -43,12 +43,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Enumeration;
-import java.util.Map;
+import java.util.*;
 
 /**
  *
@@ -86,9 +81,8 @@ class JavaMembers
         Object obj = ht.get(name);
         if (obj != null) {
             return true;
-        } else {
-            return null != findExplicitFunction(name, isStatic);
         }
+        return findExplicitFunction(name, isStatic) != null;
     }
 
     Object get(Scriptable scope, String name, Object javaObject,
@@ -643,6 +637,20 @@ class JavaMembers
             }
         }
 
+        // For objects that implement java.lang.Iterable, provide a
+        // __iterator__ property
+        if (iterableClass != null && iterableClass.isAssignableFrom(cl) &&
+            members.get(NativeIterator.ITERATOR_PROPERTY_NAME) == null &&
+            staticMembers.get(NativeIterator.ITERATOR_PROPERTY_NAME) == null)
+        {
+            Method m = VMBridge.instance.getIteratorMethod();
+            if (m != null) {
+                members.put(NativeIterator.ITERATOR_PROPERTY_NAME,
+                    new FunctionObject(NativeIterator.ITERATOR_PROPERTY_NAME,
+                    m, scope));
+            }
+        }
+
         // Reflect constructors
         Constructor[] constructors = getAccessibleConstructors();
         ctors = new MemberBox[constructors.length];
@@ -651,7 +659,7 @@ class JavaMembers
         }
     }
 
-    private Constructor[] getAccessibleConstructors() 
+    private Constructor[] getAccessibleConstructors()
     {
       if (includePrivate) {
           try {
@@ -861,6 +869,7 @@ class JavaMembers
     private Hashtable staticFieldAndMethods;
     MemberBox[] ctors;
     private boolean includePrivate;
+    private static Class iterableClass = Kit.classOrNull("java.lang.Iterable");
 }
 
 class BeanProperty
