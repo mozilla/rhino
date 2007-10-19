@@ -48,6 +48,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serializable;
 import java.lang.reflect.*;
 import java.text.MessageFormat;
 import java.util.Locale;
@@ -1863,8 +1864,9 @@ public class ScriptRuntime {
      * to see if a given property has already been enumerated.
      *
      */
-    private static class IdEnumeration
+    private static class IdEnumeration implements Serializable
     {
+        private static final long serialVersionUID = 1L;
         Scriptable obj;
         Object[] ids;
         int index;
