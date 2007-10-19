@@ -59,7 +59,6 @@ public class NativeArray extends IdScriptableObject
      * - Need to examine these methods to see if they'd benefit from an
      * optimized code path using <code>dense</code>:
      *      toStringHelper
-     *      js_reverse
      *      js_concat
      *      indexOfHelper
      *      iterativeMethod
@@ -703,6 +702,19 @@ public class NativeArray extends IdScriptableObject
     private static Scriptable js_reverse(Context cx, Scriptable thisObj,
                                          Object[] args)
     {
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly) {
+                synchronized (na) {
+                    for (int i=0, j=((int)na.length)-1; i < j; i++,j--) {
+                        Object temp = na.dense[i];
+                        na.dense[i] = na.dense[j];
+                        na.dense[j] = temp;
+                    }
+                }
+                return thisObj;
+            }
+        }
         long len = getLengthProperty(cx, thisObj);
 
         long half = len / 2;
