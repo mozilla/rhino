@@ -59,7 +59,6 @@ public class NativeArray extends IdScriptableObject
      * - Need to examine these methods to see if they'd benefit from an
      * optimized code path using <code>dense</code>:
      *      toStringHelper
-     *      js_concat
      *      indexOfHelper
      *      iterativeMethod
      *
@@ -1228,6 +1227,46 @@ public class NativeArray extends IdScriptableObject
         scope = getTopLevelScope(scope);
         Function ctor = ScriptRuntime.getExistingCtor(cx, scope, "Array");
         Scriptable result = ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
+        if (thisObj instanceof NativeArray && result instanceof NativeArray) {
+            NativeArray denseThis = (NativeArray) thisObj;
+            NativeArray denseResult = (NativeArray) result;
+            if (denseThis.denseOnly && denseResult.denseOnly) {
+                // First calculate length of resulting array
+                boolean canUseDense = true;
+                int length = (int) denseThis.length;
+                for (int i = 0; i < args.length && canUseDense; i++) {
+                    if (ScriptRuntime.instanceOf(args[i], ctor, cx)) {
+                        // only try to use dense approach for Array-like
+                        // objects that are actually NativeArrays
+                        canUseDense = args[i] instanceof NativeArray;
+                        length += ((NativeArray) args[i]).length;
+                    } else {
+                        length++;
+                    }
+                }
+                synchronized (denseThis) {
+                    if (canUseDense && denseResult.ensureCapacity(length)) {
+                        System.arraycopy(denseThis.dense, 0, denseResult.dense,
+                                         0, (int) denseThis.length);
+                        int cursor = (int) denseThis.length;
+                        for (int i = 0; i < args.length && canUseDense; i++) {
+                            if (args[i] instanceof NativeArray) {
+                                NativeArray arg = (NativeArray) args[i];
+                                System.arraycopy(arg.dense, 0,
+                                        denseResult.dense, cursor,
+                                        (int)arg.length);
+                                cursor += (int)arg.length;
+                            } else {
+                                denseResult.dense[cursor++] = args[i];
+                            }
+                        }
+                        denseResult.length = length;
+                        return result;
+                    }
+                }
+            }
+        }
+
         long length;
         long slot = 0;
 
