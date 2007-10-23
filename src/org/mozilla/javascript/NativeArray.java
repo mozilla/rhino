@@ -1370,7 +1370,11 @@ public class NativeArray extends IdScriptableObject
         Object[] innerArgs = new Object[3];
         long j=0;
         for (long i=0; i < length; i++) {
-            innerArgs[0] = getElem(cx, thisObj, i);
+            Object elem = getElem(cx, thisObj, i);
+            if(elem == Undefined.instance) {
+                continue;
+            }
+            innerArgs[0] = elem;
             innerArgs[1] = new Long(i);
             innerArgs[2] = thisObj;
             Object result = f.call(cx, parent, thisArg, innerArgs);
