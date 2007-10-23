@@ -2344,7 +2344,7 @@ public class Context
                                ErrorReporter compilationErrorReporter)
         throws IOException
     {
-        if (securityDomain != null && securityController == null) {
+        if (securityDomain != null && getSecurityController() == null) {
             throw new IllegalArgumentException(
                 "securityDomain should be null if setSecurityController() was never called");
         }
