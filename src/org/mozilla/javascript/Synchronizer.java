@@ -74,7 +74,7 @@ public class Synchronizer extends Delegator {
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
-        synchronized(thisObj) {
+        synchronized(thisObj instanceof Wrapper ? ((Wrapper)thisObj).unwrap() : thisObj) {
             return ((Function)obj).call(cx,scope,thisObj,args);
         }
     }
