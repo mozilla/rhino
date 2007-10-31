@@ -1395,10 +1395,10 @@ public class NativeArray extends IdScriptableObject
         Function f = (Function) callbackArg;
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
         Scriptable thisArg;
-        if(args.length < 2 || args[1] == null) {
+        if (args.length < 2 || args[1] == null || args[1] == Undefined.instance)
+        {
             thisArg = parent;
-        }
-        else {
+        } else {
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
         long length = getLengthProperty(cx, thisObj);
