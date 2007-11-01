@@ -59,7 +59,6 @@ public class NativeArray extends IdScriptableObject
      * - Need to examine these methods to see if they'd benefit from an
      * optimized code path using <code>dense</code>:
      *      toStringHelper
-     *      indexOfHelper
      *      iterativeMethod
      *
      * - Functions that need a new Array call "new Array" in the
@@ -1365,8 +1364,33 @@ public class NativeArray extends IdScriptableObject
             if (start < 0)
                 start = 0;
         }
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly) {
+                synchronized (na) {
+                    if (isLast) {
+                      for (int i=(int)start; i >= 0; i--) {
+                          if (na.dense[i] != Scriptable.NOT_FOUND &&
+                              ScriptRuntime.shallowEq(na.dense[i], compareTo))
+                          {
+                              return new Long(i);
+                          }
+                      }
+                    } else {
+                      for (int i=(int)start; i < length; i++) {
+                          if (na.dense[i] != Scriptable.NOT_FOUND &&
+                              ScriptRuntime.shallowEq(na.dense[i], compareTo))
+                          {
+                              return new Long(i);
+                          }
+                      }
+                    }
+                    return NEGATIVE_ONE;                    
+                }
+            }
+        }
         if (isLast) {
-          for (long i=start; i >= 0 ; i--) {
+          for (long i=start; i >= 0; i--) {
               if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
                   return new Long(i);
               }
@@ -1413,8 +1437,10 @@ public class NativeArray extends IdScriptableObject
         Object[] innerArgs = new Object[3];
         long j=0;
         for (long i=0; i < length; i++) {
-            Object elem = getElem(cx, thisObj, i);
-            if(elem == Undefined.instance) {
+            Object elem = (i > Integer.MAX_VALUE)
+                ? ScriptableObject.getProperty(thisObj, Long.toString(i))
+                : ScriptableObject.getProperty(thisObj, (int)i);
+            if (elem == Scriptable.NOT_FOUND) {
                 continue;
             }
             innerArgs[0] = elem;
