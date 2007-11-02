@@ -54,7 +54,7 @@ import java.util.ArrayList;
 import org.mozilla.javascript.continuations.Continuation;
 import org.mozilla.javascript.debug.DebugFrame;
 
-public class Interpreter
+public class Interpreter implements Evaluator
 {
 
 // Additional interpreter-specific codes
@@ -514,7 +514,12 @@ public class Interpreter
                                                 staticSecurityDomain);
     }
 
-    public Function createFunctionObject(Context cx, Scriptable scope, 
+    public void setEvalScriptFlag(Script script) {
+        ((InterpretedFunction)script).idata.evalScriptFlag = true;
+    }
+    
+
+    public Function createFunctionObject(Context cx, Scriptable scope,
             Object bytecode, Object staticSecurityDomain)
     {
         if(bytecode != itsData)
@@ -2260,7 +2265,7 @@ public class Interpreter
         return presentLines.getKeys();
     }
 
-    static void captureInterpreterStackInfo(RhinoException ex)
+    public void captureStackInfo(RhinoException ex)
     {
         Context cx = Context.getCurrentContext();
         if (cx == null || cx.lastInterpreterFrame == null) {
@@ -2315,7 +2320,7 @@ public class Interpreter
         ex.interpreterLineData = linePC;
     }
 
-    static String getSourcePositionFromStack(Context cx, int[] linep)
+    public String getSourcePositionFromStack(Context cx, int[] linep)
     {
         CallFrame frame = (CallFrame)cx.lastInterpreterFrame;
         InterpreterData idata = frame.idata;
@@ -2327,7 +2332,7 @@ public class Interpreter
         return idata.itsSourceFile;
     }
 
-    static String getPatchedStack(RhinoException ex,
+    public String getPatchedStack(RhinoException ex,
                                   String nativeStackTrace)
     {
         String tag = "org.mozilla.javascript.Interpreter.interpretLoop";
@@ -2386,14 +2391,15 @@ public class Interpreter
         return sb.toString();
     }
 
-    static List getScriptStack(RhinoException ex)
+    public List getScriptStack(RhinoException ex)
     {
         if (ex.interpreterStackInfo == null) {
             return null;
         }
         
         List list = new ArrayList();
-        String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
+        String lineSeparator =
+                SecurityUtilities.getSystemProperty("line.separator");
 
         CallFrame[] array = (CallFrame[])ex.interpreterStackInfo;
         int[] linePC = ex.interpreterLineData;

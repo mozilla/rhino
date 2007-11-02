@@ -56,8 +56,28 @@ import java.util.Hashtable;
  * @author Roger Lawrence
  */
 
-public class Codegen extends Interpreter
+public class Codegen implements Evaluator
 {
+    public void captureStackInfo(RhinoException ex) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public String getSourcePositionFromStack(Context cx, int[] linep) {
+        throw new UnsupportedOperationException();
+    }
+
+    public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
+        throw new UnsupportedOperationException();
+    }
+
+    public List getScriptStack(RhinoException ex) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setEvalScriptFlag(Script script) {
+        throw new UnsupportedOperationException();
+    }
+
     public Object compile(CompilerEnvirons compilerEnv,
                           ScriptOrFnNode tree,
                           String encodedSource,

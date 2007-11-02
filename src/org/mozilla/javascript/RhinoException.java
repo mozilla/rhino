@@ -46,6 +46,7 @@ import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * The class of exceptions thrown by the JavaScript engine.
@@ -54,13 +55,17 @@ public abstract class RhinoException extends RuntimeException
 {
     RhinoException()
     {
-        Interpreter.captureInterpreterStackInfo(this);
+        Evaluator e = Context.createInterpreter();
+        if (e != null)
+            e.captureStackInfo(this);
     }
 
     RhinoException(String details)
     {
         super(details);
-        Interpreter.captureInterpreterStackInfo(this);
+        Evaluator e = Context.createInterpreter();
+        if (e != null)
+            e.captureStackInfo(this);
     }
 
     public final String getMessage()
@@ -209,7 +214,10 @@ public abstract class RhinoException extends RuntimeException
         CharArrayWriter writer = new CharArrayWriter();
         super.printStackTrace(new PrintWriter(writer));
         String origStackTrace = writer.toString();
-        return Interpreter.getPatchedStack(this, origStackTrace);
+        Evaluator e = Context.createInterpreter();
+        if (e != null)
+            return e.getPatchedStack(this, origStackTrace);
+        return null;
     }
 
     /**
@@ -239,7 +247,12 @@ public abstract class RhinoException extends RuntimeException
      */
     public String getScriptStackTrace(FilenameFilter filter)
     {
-        List interpreterStack = Interpreter.getScriptStack(this);
+        List interpreterStack;
+        Evaluator interpreter = Context.createInterpreter();
+        if (interpreter != null)
+            interpreterStack = interpreter.getScriptStack(this);
+        else
+            interpreterStack = new ArrayList();
         int interpreterStackIndex = 0;
         StringBuffer buffer = new StringBuffer();
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");

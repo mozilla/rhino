@@ -56,7 +56,6 @@ import java.util.ResourceBundle;
 
 import org.mozilla.javascript.xml.XMLObject;
 import org.mozilla.javascript.xml.XMLLib;
-import org.mozilla.javascript.continuations.Continuation;
 
 /**
  * This is the class that implements the runtime.
@@ -150,7 +149,8 @@ public class ScriptRuntime {
         "getClass",      "org.mozilla.javascript.NativeJavaTopPackage",
         "JavaAdapter",   "org.mozilla.javascript.JavaAdapter",
         "JavaImporter",  "org.mozilla.javascript.ImporterTopLevel",
-		//	TODO	Grotesque hack using literal string (xml) just to minimize 
+        "Continuation",  "org.mozilla.javascript.continuations.Continuation",
+        //	TODO	Grotesque hack using literal string (xml) just to minimize
 		//			changes for now
         "XML",           "(xml)",
         "XMLList",       "(xml)",
@@ -225,8 +225,6 @@ public class ScriptRuntime {
 			}
             new LazilyLoadedCtor(scope, topProperty, className, sealed);
         }
-
-        Continuation.init(scope, sealed);
 
         return scope;
     }
@@ -2391,11 +2389,17 @@ public class ScriptRuntime {
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
 
+        Evaluator evaluator = Context.createInterpreter();
+        if (evaluator == null) {
+            throw new JavaScriptException("Interpreter not present",
+                    filename, lineNumber);            
+        }
+
         // Compile with explicit interpreter instance to force interpreter
         // mode.
-        Script script = cx.compileString((String)x, new Interpreter(),
+        Script script = cx.compileString((String)x, evaluator,
                                          reporter, sourceName, 1, null);
-        ((InterpretedFunction)script).idata.evalScriptFlag = true;
+        evaluator.setEvalScriptFlag(script);
         Callable c = (Callable)script;
         return c.call(cx, scope, (Scriptable)thisArg, ScriptRuntime.emptyArgs);
     }

@@ -1358,7 +1358,7 @@ public class Context
     }
 
     final Script compileString(String source,
-                               Interpreter compiler,
+                               Evaluator compiler,
                                ErrorReporter compilationErrorReporter,
                                String sourceName, int lineno,
                                Object securityDomain)
@@ -1399,7 +1399,7 @@ public class Context
     }
 
     final Function compileFunction(Scriptable scope, String source,
-                                   Interpreter compiler,
+                                   Evaluator compiler,
                                    ErrorReporter compilationErrorReporter,
                                    String sourceName, int lineno,
                                    Object securityDomain)
@@ -2340,7 +2340,7 @@ public class Context
                                Reader sourceReader, String sourceString,
                                String sourceName, int lineno,
                                Object securityDomain, boolean returnFunction,
-                               Interpreter compiler,
+                               Evaluator compiler,
                                ErrorReporter compilationErrorReporter)
         throws IOException
     {
@@ -2431,17 +2431,24 @@ public class Context
 
     private static Class codegenClass = Kit.classOrNull(
                              "org.mozilla.javascript.optimizer.Codegen");
+    private static Class interpreterClass = Kit.classOrNull(
+                             "org.mozilla.javascript.Interpreter");
 
-    private Interpreter createCompiler()
+    private Evaluator createCompiler()
     {
-        Interpreter result = null;
+        Evaluator result = null;
         if (optimizationLevel >= 0 && codegenClass != null) {
-            result = (Interpreter)Kit.newInstanceOrNull(codegenClass);
+            result = (Evaluator)Kit.newInstanceOrNull(codegenClass);
         }
         if (result == null) {
-            result = new Interpreter();
+            result = createInterpreter();
         }
         return result;
+    }
+
+    static Evaluator createInterpreter()
+    {
+        return (Evaluator)Kit.newInstanceOrNull(interpreterClass);
     }
 
     static String getSourcePositionFromStack(int[] linep)
@@ -2450,7 +2457,9 @@ public class Context
         if (cx == null)
             return null;
         if (cx.lastInterpreterFrame != null) {
-            return Interpreter.getSourcePositionFromStack(cx, linep);
+            Evaluator evaluator = createInterpreter();
+            if (evaluator != null)
+                return evaluator.getSourcePositionFromStack(cx, linep);
         }
         /**
          * A bit of a hack, but the only way to get filename and line

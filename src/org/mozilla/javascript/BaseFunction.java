@@ -486,9 +486,15 @@ public class BaseFunction extends IdScriptableObject implements Function
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
 
+        Evaluator evaluator = Context.createInterpreter();
+        if (evaluator == null) {
+            throw new JavaScriptException("Interpreter not present",
+                    filename, linep[0]);            
+        }
+
         // Compile with explicit interpreter instance to force interpreter
         // mode.
-        return cx.compileFunction(global, source, new Interpreter(), reporter,
+        return cx.compileFunction(global, source, evaluator, reporter,
                                   sourceURI, 1, null);
     }
 
