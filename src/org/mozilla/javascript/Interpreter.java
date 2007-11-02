@@ -2774,11 +2774,10 @@ switch (op) {
     case Icode_GENERATOR_END: {
       // throw StopIteration
       frame.frozen = true;
-      Scriptable top = ScriptableObject.getTopLevelScope(frame.scope);
-      Object e = top.get(NativeIterator.STOP_ITERATION, frame.scope);
       int sourceLine = getIndex(iCode, frame.pc);
-      generatorState.returnedException =
-          new JavaScriptException(e, frame.idata.itsSourceFile, sourceLine);
+      generatorState.returnedException = new JavaScriptException(
+          NativeIterator.getStopIterationObject(frame.scope),
+          frame.idata.itsSourceFile, sourceLine);
       break Loop;
     }
     case Token.THROW: {

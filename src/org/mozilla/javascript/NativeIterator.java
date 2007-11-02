@@ -54,6 +54,10 @@ public final class NativeIterator extends IdScriptableObject {
         if (sealed) { obj.sealObject(); }
         ScriptableObject.defineProperty(scope, STOP_ITERATION, obj,
                                         ScriptableObject.DONTENUM);
+        // Use "associateValue" so that generators can continue to
+        // throw StopIteration even if the property of the global
+        // scope is replaced or deleted.
+        scope.associateValue(ITERATOR_TAG, obj);
     }
     
     /**
@@ -66,8 +70,21 @@ public final class NativeIterator extends IdScriptableObject {
       this.objectIterator = objectIterator;
       this.keyOnly = keyOnly;
     }
+
+    /**
+     * Get the value of the "StopIteration" object. Note that this value
+     * is stored in the top-level scope using "associateValue" so the
+     * value can still be found even if a script overwrites or deletes
+     * the global "StopIteration" property.
+     * @param scope a scope whose parent chain reaches a top-level scope
+     * @return the StopIteration object
+     */
+    public static Object getStopIterationObject(Scriptable scope) {
+        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        return ScriptableObject.getTopScopeValue(top, ITERATOR_TAG);
+    }
     
-    public static final String STOP_ITERATION = "StopIteration";
+    private static final String STOP_ITERATION = "StopIteration";
     public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
     
     static class StopIteration extends NativeObject {
@@ -163,11 +180,10 @@ public final class NativeIterator extends IdScriptableObject {
     
     private Object next(Context cx, Scriptable scope) {
         Boolean b = ScriptRuntime.enumNext(this.objectIterator);
-        if (b.booleanValue() == false) {
+        if (!b.booleanValue()) {
             // Out of values. Throw StopIteration.
-            Scriptable top = ScriptableObject.getTopLevelScope(scope);
-            Object e = top.get(STOP_ITERATION, scope);
-            throw new JavaScriptException(e, null, 0);
+            throw new JavaScriptException(
+                NativeIterator.getStopIterationObject(scope), null, 0);
         }
         Object id = ScriptRuntime.enumId(this.objectIterator, cx);
         if (this.keyOnly) {

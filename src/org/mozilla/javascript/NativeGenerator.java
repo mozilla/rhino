@@ -58,7 +58,9 @@ public final class NativeGenerator extends IdScriptableObject {
         // Generator instances, but don't have a generator constructor
         // to use to find the prototype. Use the "associateValue" 
         // approach instead.
-        scope.associateValue(GENERATOR_TAG, prototype);
+        if (scope != null) {
+            scope.associateValue(GENERATOR_TAG, prototype);
+        }
         
         return prototype;
     }
@@ -161,8 +163,7 @@ public final class NativeGenerator extends IdScriptableObject {
             if (operation == GENERATOR_THROW) {
                 thrown = value;
             } else {
-                Scriptable top = ScriptableObject.getTopLevelScope(scope);
-                thrown = top.get(NativeIterator.STOP_ITERATION, scope);
+                thrown = NativeIterator.getStopIterationObject(scope);
             }
             throw new JavaScriptException(thrown, lineSource, lineNumber);
         }

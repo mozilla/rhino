@@ -98,9 +98,8 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
         public Object next() {
             if (!iterator.hasNext()) {
                 // Out of values. Throw StopIteration.
-                Scriptable top = ScriptableObject.getTopLevelScope(scope);
-                Object e = top.get(NativeIterator.STOP_ITERATION, top);
-                throw new JavaScriptException(e, null, 0);
+                throw new JavaScriptException(
+                    NativeIterator.getStopIterationObject(scope), null, 0);
             }
             return iterator.next();
         }

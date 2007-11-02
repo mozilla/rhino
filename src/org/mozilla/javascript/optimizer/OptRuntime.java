@@ -256,11 +256,8 @@ public final class OptRuntime extends ScriptRuntime
     }
 
     public static void throwStopIteration(Object obj) {
-        Scriptable top =
-                ScriptableObject.getTopLevelScope((ScriptableObject)obj);
-        Object e = top.get(NativeIterator.STOP_ITERATION,
-                ((ScriptableObject)obj));
-        throw new JavaScriptException(e, "", 0);
+        throw new JavaScriptException(
+            NativeIterator.getStopIterationObject((Scriptable)obj), "", 0);
     }
 
     public static Scriptable createNativeGenerator(NativeFunction funObj,
