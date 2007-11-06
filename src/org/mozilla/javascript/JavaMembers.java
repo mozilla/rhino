@@ -177,8 +177,11 @@ class JavaMembers
             try {
                 field.set(javaObject, javaValue);
             } catch (IllegalAccessException accessEx) {
-                throw new RuntimeException("unexpected IllegalAccessException "+
-                                           "accessing Java field");
+                if ((field.getModifiers() & Modifier.FINAL) != 0) {
+                    // treat Java final the same as JavaScript [[READONLY]]
+                    return;
+                }
+                throw Context.throwAsScriptRuntimeEx(accessEx);
             } catch (IllegalArgumentException argEx) {
                 throw Context.reportRuntimeError3(
                     "msg.java.internal.field.type",
