@@ -3987,13 +3987,21 @@ switch (op) {
             } else if (throwable instanceof EvaluatorException) {
                 exState = EX_CATCH_STATE;
             } else if (throwable instanceof RuntimeException) {
-                exState = EX_FINALLY_STATE;
+                exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
+                          ? EX_CATCH_STATE
+                          : EX_FINALLY_STATE;
             } else if (throwable instanceof Error) {
-                exState = EX_NO_JS_STATE;
-            } else {
+                exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
+                          ? EX_CATCH_STATE
+                          : EX_NO_JS_STATE;
+            } else if (throwable instanceof ContinuationJump) {
                 // It must be ContinuationJump
                 exState = EX_FINALLY_STATE;
                 cjump = (ContinuationJump)throwable;
+            } else {
+                exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
+                          ? EX_CATCH_STATE
+                          : EX_FINALLY_STATE;
             }
 
             if (instructionCounting) {

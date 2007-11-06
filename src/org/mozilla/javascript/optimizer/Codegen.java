@@ -3706,6 +3706,14 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             */
             generateCatchBlock(ECMAERROR_EXCEPTION, savedVariableObject,
                                catchLabel, startLabel, exceptionLocal);
+
+            Context cx = Context.getCurrentContext();
+            if (cx != null &&
+                cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS))
+            {
+                generateCatchBlock(THROWABLE_EXCEPTION, savedVariableObject,
+                                   catchLabel, startLabel, exceptionLocal);
+            }
         }
 
         // finally handler; catch all exceptions, store to a local; JSR to
@@ -3743,6 +3751,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private static final int JAVASCRIPT_EXCEPTION  = 0;
     private static final int EVALUATOR_EXCEPTION   = 1;
     private static final int ECMAERROR_EXCEPTION   = 2;
+    private static final int THROWABLE_EXCEPTION   = 3;
 
     private void generateCatchBlock(int exceptionType,
                                     short savedVariableObject,
@@ -3764,9 +3773,12 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             exceptionName = "org/mozilla/javascript/JavaScriptException";
         } else if (exceptionType == EVALUATOR_EXCEPTION) {
             exceptionName = "org/mozilla/javascript/EvaluatorException";
-        } else {
-            if (exceptionType != ECMAERROR_EXCEPTION) Kit.codeBug();
+        } else if (exceptionType == ECMAERROR_EXCEPTION) {
             exceptionName = "org/mozilla/javascript/EcmaError";
+        } else if (exceptionType == THROWABLE_EXCEPTION) {
+            exceptionName = "java/lang/Throwable";
+        } else {
+            throw Kit.codeBug();
         }
 
         // mark the handler

@@ -96,6 +96,11 @@ final class MemberBox implements Serializable
         return (Constructor)memberObject;
     }
 
+    Member member()
+    {
+        return memberObject;
+    }
+
     boolean isMethod()
     {
         return memberObject instanceof Method;

@@ -3130,6 +3130,12 @@ public class ScriptRuntime {
                 re = ee;
                 errorName = "InternalError";
                 errorMsg = ee.getMessage();
+            } else if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
+                // With FEATURE_ENHANCED_JAVA_ACCESS, scripts can catch
+                // all exception types
+                re = new WrappedException(t);
+                errorName = "JavaException";
+                errorMsg = t.toString();
             } else {
                 // Script can catch only instances of JavaScriptException,
                 // EcmaError and EvaluatorException
