@@ -348,45 +348,58 @@ public class NativeJavaMethod extends BaseFunction
                         bestFitIndex = extraBestFits[j];
                     }
                     MemberBox bestFit = methodsOrCtors[bestFitIndex];
-                    int preference = preferSignature(args, argTypes,
-                                                     member.vararg,
-                                                     bestFit.argTypes,
-                                                     bestFit.vararg );
-                    if (preference == PREFERENCE_AMBIGUOUS) {
-                        break;
-                    } else if (preference == PREFERENCE_FIRST_ARG) {
-                        ++betterCount;
-                    } else if (preference == PREFERENCE_SECOND_ARG) {
-                        ++worseCount;
+                    if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) &&
+                        (bestFit.member().getModifiers() & Modifier.PUBLIC) !=
+                            (member.member().getModifiers() & Modifier.PUBLIC))
+                    {
+                        // When FEATURE_ENHANCED_JAVA_ACCESS gives us access
+                        // to non-public members, continue to prefer public
+                        // methods in overloading
+                        if ((bestFit.member().getModifiers() & Modifier.PUBLIC) == 0)
+                            ++betterCount;
+                        else
+                            ++worseCount;
                     } else {
-                        if (preference != PREFERENCE_EQUAL) Kit.codeBug();
-                        // This should not happen in theory
-                        // but on some JVMs, Class.getMethods will return all
-                        // static methods of the class heirarchy, even if
-                        // a derived class's parameters match exactly.
-                        // We want to call the dervied class's method.
-                        if (bestFit.isStatic()
-                            && bestFit.getDeclaringClass().isAssignableFrom(
-                                   member.getDeclaringClass()))
-                        {
-                            // On some JVMs, Class.getMethods will return all
+                        int preference = preferSignature(args, argTypes,
+                                                         member.vararg,
+                                                         bestFit.argTypes,
+                                                         bestFit.vararg );
+                        if (preference == PREFERENCE_AMBIGUOUS) {
+                            break;
+                        } else if (preference == PREFERENCE_FIRST_ARG) {
+                            ++betterCount;
+                        } else if (preference == PREFERENCE_SECOND_ARG) {
+                            ++worseCount;
+                        } else {
+                            if (preference != PREFERENCE_EQUAL) Kit.codeBug();
+                            // This should not happen in theory
+                            // but on some JVMs, Class.getMethods will return all
                             // static methods of the class heirarchy, even if
                             // a derived class's parameters match exactly.
                             // We want to call the dervied class's method.
-                            if (debug) printDebug(
-                                "Substituting (overridden static)",
-                                member, args);
-                            if (j == -1) {
-                                firstBestFit = i;
+                            if (bestFit.isStatic()
+                                && bestFit.getDeclaringClass().isAssignableFrom(
+                                       member.getDeclaringClass()))
+                            {
+                                // On some JVMs, Class.getMethods will return all
+                                // static methods of the class heirarchy, even if
+                                // a derived class's parameters match exactly.
+                                // We want to call the dervied class's method.
+                                if (debug) printDebug(
+                                    "Substituting (overridden static)",
+                                    member, args);
+                                if (j == -1) {
+                                    firstBestFit = i;
+                                } else {
+                                    extraBestFits[j] = i;
+                                }
                             } else {
-                                extraBestFits[j] = i;
+                                if (debug) printDebug(
+                                    "Ignoring same signature member ",
+                                    member, args);
                             }
-                        } else {
-                            if (debug) printDebug(
-                                "Ignoring same signature member ",
-                                member, args);
+                            continue search;
                         }
-                        continue search;
                     }
                 }
                 if (betterCount == 1 + extraBestFitsCount) {
