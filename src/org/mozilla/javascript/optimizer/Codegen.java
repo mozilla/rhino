@@ -2469,12 +2469,24 @@ class BodyCodegen
                             "(Ljava/lang/Object;D)Ljava/lang/Object;");
                         break;
                       default:
-                        cfw.addALoad(contextLocal);
-                        addScriptRuntimeInvoke("add",
-                            "(Ljava/lang/Object;"
-                            +"Ljava/lang/Object;"
-                            +"Lorg/mozilla/javascript/Context;"
-                            +")Ljava/lang/Object;");
+                        if (child.getType() == Token.STRING) {
+                            addScriptRuntimeInvoke("add",
+                                "(Ljava/lang/String;"
+                                +"Ljava/lang/Object;"
+                                +")Ljava/lang/String;");
+                        } else if (child.getNext().getType() == Token.STRING) {
+                            addScriptRuntimeInvoke("add",
+                                "(Ljava/lang/Object;"
+                                +"Ljava/lang/String;"
+                                +")Ljava/lang/String;");
+                        } else {
+                            cfw.addALoad(contextLocal);
+                            addScriptRuntimeInvoke("add",
+                                "(Ljava/lang/Object;"
+                                +"Ljava/lang/Object;"
+                                +"Lorg/mozilla/javascript/Context;"
+                                +")Ljava/lang/Object;");
+                        }
                     }
                 }
                 break;

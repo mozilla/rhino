@@ -2484,6 +2484,14 @@ public class ScriptRuntime {
         return toString(val1).concat(toString(val2));
     }
 
+    public static String add(String val1, Object val2) {
+        return val1.concat(toString(val2));
+    }
+
+    public static String add(Object val1, String val2) {
+        return toString(val1).concat(val2);
+    }
+
     /**
      * @deprecated The method is only present for compatibility.
      */
