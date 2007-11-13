@@ -684,9 +684,13 @@ public class Global extends ImporterTopLevel
     }
 
     /**
+     * Runs the given process using Runtime.exec().
      * If any of in, out, err is null, the corresponding process stream will
      * be closed immediately, otherwise it will be closed as soon as
      * all data will be read from/written to process
+     *
+     * @return Exit value of process.
+     * @throws IOException If there was an error executing the process.
      */
     private static int runProcess(String[] cmd, String[] environment,
                                   InputStream in, OutputStream out,
@@ -699,98 +703,53 @@ public class Global extends ImporterTopLevel
         } else {
             p = Runtime.getRuntime().exec(cmd, environment);
         }
-        PipeThread inThread = null, errThread = null;
+
         try {
-            InputStream errProcess = null;
-            try {
-                if (err != null) {
-                    errProcess = p.getErrorStream();
-                } else {
-                    p.getErrorStream().close();
-                }
-                InputStream outProcess = null;
+            PipeThread inThread = null;
+            if (in != null) {
+                inThread = new PipeThread(false, in, p.getOutputStream());
+                inThread.start();
+            } else {
+                p.getOutputStream().close();
+            }
+
+            PipeThread outThread = null;
+            if (out != null) {
+                outThread = new PipeThread(true, p.getInputStream(), out);
+                outThread.start();
+            } else {
+                p.getInputStream().close();
+            }
+
+            PipeThread errThread = null;
+            if (err != null) {
+                errThread = new PipeThread(true, p.getErrorStream(), err);
+                errThread.start();
+            } else {
+                p.getErrorStream().close();
+            }
+
+            // wait for process completion
+            for (;;) {
                 try {
-                    if (out != null) {
-                        outProcess = p.getInputStream();
-                    } else {
-                        p.getInputStream().close();
+                    p.waitFor();
+                    if (outThread != null) {
+                        outThread.join();
                     }
-                    OutputStream inProcess = null;
-                    try {
-                        if (in != null) {
-                            inProcess = p.getOutputStream();
-                        } else {
-                            p.getOutputStream().close();
-                        }
-
-                        if (out != null) {
-                            // Read process output on this thread
-                            if (err != null) {
-                                errThread = new PipeThread(true, errProcess,
-                                                           err);
-                                errThread.start();
-                            }
-                            if (in != null) {
-                                inThread = new PipeThread(false, in,
-                                                          inProcess);
-                                inThread.start();
-                            }
-                            pipe(true, outProcess, out);
-                        } else if (in != null) {
-                            // No output, read process input on this thread
-                            if (err != null) {
-                                errThread = new PipeThread(true, errProcess,
-                                                           err);
-                                errThread.start();
-                            }
-                            pipe(false, in, inProcess);
-                            in.close();
-                        } else if (err != null) {
-                            // No output or input, read process err
-                            // on this thread
-                            pipe(true, errProcess, err);
-                            errProcess.close();
-                            errProcess = null;
-                        }
-
-                        // wait for process completion
-                        for (;;) {
-                            try { p.waitFor(); break; }
-                            catch (InterruptedException ex) { }
-                        }
-
-                        return p.exitValue();
-                    } finally {
-                        // pipe will close stream as well, but for reliability
-                        // duplicate it in any case
-                        if (inProcess != null) {
-                            inProcess.close();
-                        }
+                    if (inThread != null) {
+                        inThread.join();
                     }
-                } finally {
-                    if (outProcess != null) {
-                        outProcess.close();
+                    if (errThread != null) {
+                        errThread.join();
                     }
-                }
-            } finally {
-                if (errProcess != null) {
-                    errProcess.close();
+                    break;
+                } catch (InterruptedException ignore) {
                 }
             }
+
+            return p.exitValue();
         } finally {
             p.destroy();
-            if (inThread != null) {
-                for (;;) {
-                    try { inThread.join(); break; }
-                    catch (InterruptedException ex) { }
-                }
-            }
-            if (errThread != null) {
-                for (;;) {
-                    try { errThread.join(); break; }
-                    catch (InterruptedException ex) { }
-                }
-            }
         }
     }
 
