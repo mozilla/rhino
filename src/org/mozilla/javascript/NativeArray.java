@@ -1459,7 +1459,7 @@ public class NativeArray extends IdScriptableObject
               case Id_forEach:
                 break;
               case Id_map:
-                setElem(cx, array, j++, result);
+                setElem(cx, array, i, result);
                 break;
               case Id_some:
                 if (ScriptRuntime.toBoolean(result))
