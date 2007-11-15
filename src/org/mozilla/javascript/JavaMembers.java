@@ -664,7 +664,9 @@ class JavaMembers
 
     private Constructor[] getAccessibleConstructors()
     {
-      if (includePrivate) {
+      // The JVM currently doesn't allow changing access on java.lang.Class
+      // constructors, so don't try
+      if (includePrivate && cl != ScriptRuntime.ClassClass) {
           try {
               Constructor[] cons = cl.getDeclaredConstructors();
               Constructor.setAccessible(cons, true);
