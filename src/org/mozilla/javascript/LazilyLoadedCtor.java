@@ -109,7 +109,10 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
             try {
                 Object value = ScriptableObject.buildClassCtor(scope, cl,
                                                                sealed, false);
-                if (value == null) {
+                if (value != null) {
+                    return value;
+                }
+                else {
                     // cl has own static initializer which is expected
                     // to set the property on its own.
                     value = scope.get(propertyName, scope);
