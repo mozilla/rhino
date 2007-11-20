@@ -98,6 +98,12 @@ class XmlNode {
         return createImpl( processor.newDocument().createTextNode(value) );
     }
 
+    static XmlNode createElementFromNode(Node node) {
+        if (node instanceof Document)
+            node = ((Document) node).getDocumentElement();
+        return createImpl(node);
+    }
+
     static XmlNode createElement(XmlProcessor processor, String namespaceUri, String xml) throws org.xml.sax.SAXException {
         return createImpl( processor.toXml(namespaceUri, xml) );
     }

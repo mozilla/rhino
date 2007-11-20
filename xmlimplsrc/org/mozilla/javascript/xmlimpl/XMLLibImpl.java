@@ -422,6 +422,15 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         }
         //    TODO    Technically we should fail on anything except a String, Number or Boolean
         //            See ECMA357 10.3
+        // Extension: if object is a DOM node, use that to construct the XML
+        // object.
+        if (object instanceof Wrapper) {
+            object = ((Wrapper) object).unwrap();
+        }
+        if (object instanceof org.w3c.dom.Node) {
+            org.w3c.dom.Node node = (org.w3c.dom.Node) object;
+            return newXML(XmlNode.createElementFromNode(node));
+        }
         //    Instead we just blindly cast to a String and let them convert anything.
         String s = ScriptRuntime.toString(object);
         //    TODO    Could this get any uglier?
