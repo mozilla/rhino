@@ -104,16 +104,47 @@
   </target>
 
   <target name="jar" depends="compile-all">
-    <jar jarfile="${dist.dir}/${rhino.jar}"
+    <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
+    <jar jarfile="${jarfile}"
          basedir="${classes}"
          manifest="src/manifest"
      compress="${jar-compression}"
      />
   </target>
 
-  <target name="smalljar" depends="compile">
+  <target name="retrotranslator" depends="retrotranslator-check,retrotranslator-download">
+    <taskdef name="retrotranslator" classpath="build/download/Retrotranslator-1.2.3-bin/retrotranslator-transformer-1.2.3.jar"
+      classname="net.sf.retrotranslator.transformer.RetrotranslatorTask"/>
+  </target>
+	
+	
+  <target name="retrotranslator-check">
+    <condition property="retrotranslator.available">
+      <and>
+        <available file="build/download/Retrotranslator-1.2.3-bin/retrotranslator-transformer-1.2.3.jar"/>
+        <available file="build/download/Retrotranslator-1.2.3-bin/retrotranslator-runtime-1.2.3.jar"/>
+        <available file="build/download/Retrotranslator-1.2.3-bin/backport-util-concurrent-3.1.jar"/>
+      </and>
+    </condition>
+  </target>
+	
+  <target name="retrotranslator-download" unless="retrotranslator.available">
+    <mkdir dir="build/download"/>
+    <get src="http://downloads.sourceforge.net/retrotranslator/Retrotranslator-1.2.3-bin.zip" dest="build/download/Retrotranslator-1.2.3-bin.zip" usetimestamp="true"/>
+    <unzip src="build/download/Retrotranslator-1.2.3-bin.zip" dest="build/download"/>
+  </target>
+	
+  <target name="retrojar" depends="jar,retrotranslator">
+    <retrotranslator
+      srcjar="${jarfile}" 
+      destjar="${dist.dir}/${rhino-14.jar}" 
+      embed="org.mozilla.javascript"
+    />
+  </target>
 
-    <jar basedir="${classes}" destfile="${dist.dir}/${small-rhino.jar}"
+  <target name="smalljar" depends="compile">
+    <property name="smalljarfile" location="${dist.dir}/${small-rhino.jar}"/>
+    <jar basedir="${classes}" destfile="${smalljarfile}"
          compress="${jar-compression}">
       <include name="org/mozilla/javascript/*.class"/>
 
@@ -135,7 +166,15 @@
 
   </target>
 
-  <target name="copy-examples" depends="init">
+  <target name="retrosmalljar" depends="smalljar,retrotranslator">
+    <retrotranslator
+      srcjar="${smalljarfile}" 
+      destjar="${dist.dir}/${small-rhino-14.jar}" 
+      embed="org.mozilla.javascript"
+    />
+  </target>
+
+	<target name="copy-examples" depends="init">
     <mkdir dir="${dist.dir}/examples"/>
     <copy todir="${dist.dir}/examples">
       <fileset dir="examples" includes="**/*.java,**/*.js,**/*.html" />
