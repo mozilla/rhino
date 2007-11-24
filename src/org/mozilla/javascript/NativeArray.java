@@ -56,11 +56,6 @@ public class NativeArray extends IdScriptableObject
      * - Long vs. double schizophrenia.  I suspect it might be better
      * to use double throughout.
      *
-     * - Need to examine these methods to see if they'd benefit from an
-     * optimized code path using <code>dense</code>:
-     *      toStringHelper
-     *      iterativeMethod
-     *
      * - Functions that need a new Array call "new Array" in the
      * current scope rather than using a hardwired constructor;
      * "Array" could be redefined.  It turns out that js calls the
@@ -1426,17 +1421,10 @@ public class NativeArray extends IdScriptableObject
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
         long length = getLengthProperty(cx, thisObj);
-        Scriptable array = null;
-        if (id == Id_filter) {
-            array = ScriptRuntime.newObject(cx, scope, "Array", null);
-        } else if (id == Id_map) {
-            // allocate dense array for efficiency
-            Object[] ctorArgs = { new Long(length) };
-            array = ScriptRuntime.newObject(cx, scope, "Array", ctorArgs);
-        }
-        Object[] innerArgs = new Object[3];
+        Scriptable array = ScriptRuntime.newObject(cx, scope, "Array", null);
         long j=0;
         for (long i=0; i < length; i++) {
+            Object[] innerArgs = new Object[3];
             Object elem = (i > Integer.MAX_VALUE)
                 ? ScriptableObject.getProperty(thisObj, Long.toString(i))
                 : ScriptableObject.getProperty(thisObj, (int)i);
