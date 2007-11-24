@@ -1417,6 +1417,8 @@ final class IRFactory
         }
         Node comma = new Node(Token.COMMA);
         result.addChildToBack(comma);
+        final int setOp = variableType == Token.CONST ? Token.SETCONST
+        		                                      : Token.SETNAME;
         boolean empty = true;
         int type = left.getType();
         if (type == Token.ARRAYLIT) {
@@ -1439,7 +1441,7 @@ final class IRFactory
                     createNumber(index));
                 if (n.getType() == Token.NAME) {
                     String name = n.getString();
-                    comma.addChildToBack(new Node(Token.SETNAME, 
+                    comma.addChildToBack(new Node(setOp, 
                         createName(Token.BINDNAME, name, null),
                         rightElem));
                     if (variableType != -1) {
@@ -1471,7 +1473,7 @@ final class IRFactory
                         createNumber(((Number)id).intValue()));
                 if (n.getType() == Token.NAME) {
                     String name = n.getString();
-                    comma.addChildToBack(new Node(Token.SETNAME, 
+                    comma.addChildToBack(new Node(setOp, 
                         createName(Token.BINDNAME, name, null),
                         rightElem));
                     if (variableType != -1) {
