@@ -117,16 +117,17 @@ public abstract class NativeFunction extends BaseFunction
     }
 
     /**
-     * Resume execution of a suspended generator
+     * Resume execution of a suspended generator.
      * @param cx The current context
      * @param scope Scope for the parent generator function
-     * @param operation The remuptiuon operation (next, send, etc.. )
-     * @param state The generator state (has locals, stack etc)
+     * @param operation The resumption operation (next, send, etc.. )
+     * @param state The generator state (has locals, stack, etc.)
      * @param value The return value of yield (if required).
      * @return The next yielded value (if any)
      */
     public Object resumeGenerator(Context cx, Scriptable scope,
-                           int operation, Object state, Object value) {
+                                  int operation, Object state, Object value)
+    {
         throw new EvaluatorException("resumeGenerator() not implemented");
     }
 
