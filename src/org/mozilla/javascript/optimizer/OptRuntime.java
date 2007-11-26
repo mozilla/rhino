@@ -262,83 +262,50 @@ public final class OptRuntime extends ScriptRuntime
 
     public static Scriptable createNativeGenerator(NativeFunction funObj,
                                                    Scriptable scope,
+                                                   Scriptable thisObj,
                                                    int maxLocals,
                                                    int maxStack)
     {
         return new NativeGenerator(scope, funObj,
-                new RuntimeGeneratorState(maxLocals, maxStack));
+                new GeneratorState(thisObj, maxLocals, maxStack));
     }
 
-    public static int GetGeneratorResumptionPoint(Object obj)
-    {
-        return ((RuntimeGeneratorState)obj).getGeneratorState();
+    public static Object[] getGeneratorStackState(Object obj) {
+        GeneratorState rgs = (GeneratorState) obj;
+        if (rgs.stackState == null)
+            rgs.stackState = new Object[rgs.maxStack];
+        return rgs.stackState;
     }
 
-    public static void SetGeneratorResumptionPoint(Object obj, int rp)
-    {
-        ((RuntimeGeneratorState)obj).setGeneratorState(rp);
+    public static Object[] getGeneratorLocalsState(Object obj) {
+        GeneratorState rgs = (GeneratorState) obj;
+        if (rgs.localsState == null)
+            rgs.localsState = new Object[rgs.maxLocals];
+        return rgs.localsState;
     }
 
-    public static Object[] GetGeneratorStackState(Object obj)
-    {
-        return ((RuntimeGeneratorState)obj).getStackState();
-    }
+    public static class GeneratorState {
+        static final String CLASS_NAME =
+            "org/mozilla/javascript/optimizer/OptRuntime$GeneratorState";
 
-    public static Object[] GetGeneratorLocalsState(Object obj)
-    {
-        return ((RuntimeGeneratorState)obj).getLocalsState();
-    }
-
-    public static class RuntimeGeneratorState
-    {
         public int resumptionPoint;
-        public Object[] stackState;
-        public Object[] localsState;
-        public boolean hasClosed;
-        private int maxLocals;
-        private int maxStack;
+        static final String resumptionPoint_NAME = "resumptionPoint";
+        static final String resumptionPoint_TYPE = "I";
+        
+        public Scriptable thisObj;
+        static final String thisObj_NAME = "thisObj";
+        static final String thisObj_TYPE =
+            "Lorg/mozilla/javascript/Scriptable;";
 
-        public RuntimeGeneratorState(int maxLocals, int maxStack) {
-            resumptionPoint = 0;
-            stackState = null;
-            localsState = null;
-            hasClosed = false;
+        Object[] stackState;
+        Object[] localsState;
+        int maxLocals;
+        int maxStack;
+
+        GeneratorState(Scriptable thisObj, int maxLocals, int maxStack) {
+            this.thisObj = thisObj;
             this.maxLocals = maxLocals;
             this.maxStack = maxStack;
-        }
-
-        public int getGeneratorState()
-        {
-            return resumptionPoint;
-        }
-
-        public void setGeneratorState(int rp)
-        {
-            resumptionPoint = rp;
-        }
-
-        public boolean getHasClosed()
-        {
-            return hasClosed;
-        }
-
-        public void setHasClosed(boolean flag)
-        {
-            hasClosed = flag;
-        }
-
-        public Object[] getStackState()
-        {
-            if (stackState == null)
-                stackState = new Object[maxStack];
-            return stackState;
-        }
-
-        public Object[] getLocalsState()
-        {
-            if (localsState == null)
-                localsState = new Object[maxLocals];
-            return localsState;
         }
     }
 }

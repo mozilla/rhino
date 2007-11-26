@@ -421,29 +421,29 @@ public class Codegen implements Evaluator
                 ((FunctionNode)node).isGenerator();
     }
 
-    // How dispatch to Generators work:
-    // Two methods are generated corresponding to a user written-generator.
+    // How dispatch to generators works:
+    // Two methods are generated corresponding to a user-written generator.
     // One of these creates a generator object (NativeGenerator), which is
     // returned to the user. The other method contains all of the body code
     // of the generator.
     // When a user calls a generator, the call() method dispatches control to
     // to the method that creates the NativeGenerator object. Subsequently when
-    // the user invokes .next() .send() or any such method on the generator
+    // the user invokes .next(), .send() or any such method on the generator
     // object, the resumeGenerator() below dispatches the call to the
     // method corresponding to the generator body. As a matter of convention
     // the generator body is given the name of the generator activation function
     // appended by "_gen".
     private void generateResumeGenerator(ClassFileWriter cfw)
     {
-        int end = 0;
-        for (int i =0; i < scriptOrFnNodes.length; i++) {
+        boolean hasGenerators = false;
+        for (int i=0; i < scriptOrFnNodes.length; i++) {
             if (isGenerator(scriptOrFnNodes[i]))
-                end++;
+            	hasGenerators = true;
         }
 
         // if there are no generators defined, we don't implement a
         // resumeGenerator(). The base class provides a default implementation. 
-        if (end == 0)
+        if (!hasGenerators)
             return;
 
         cfw.startMethod("resumeGenerator",
@@ -807,35 +807,35 @@ public class Codegen implements Evaluator
             //   switch over function id to implement function-specific action
             //   epilogue
 
-            short metodLocals;
+            short methodLocals;
             switch (methodIndex) {
               case Do_getFunctionName:
-                metodLocals = 1; // Only this
+                methodLocals = 1; // Only this
                 cfw.startMethod("getFunctionName", "()Ljava/lang/String;",
                                 ClassFileWriter.ACC_PUBLIC);
                 break;
               case Do_getParamCount:
-                metodLocals = 1; // Only this
+                methodLocals = 1; // Only this
                 cfw.startMethod("getParamCount", "()I",
                                 ClassFileWriter.ACC_PUBLIC);
                 break;
               case Do_getParamAndVarCount:
-                metodLocals = 1; // Only this
+                methodLocals = 1; // Only this
                 cfw.startMethod("getParamAndVarCount", "()I",
                                 ClassFileWriter.ACC_PUBLIC);
                 break;
               case Do_getParamOrVarName:
-                metodLocals = 1 + 1; // this + paramOrVarIndex
+                methodLocals = 1 + 1; // this + paramOrVarIndex
                 cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;",
                                 ClassFileWriter.ACC_PUBLIC);
                 break;
               case Do_getParamOrVarConst:
-                metodLocals = 1 + 1 + 1; // this + paramOrVarName
+                methodLocals = 1 + 1 + 1; // this + paramOrVarName
                 cfw.startMethod("getParamOrVarConst", "(I)Z",
                                 ClassFileWriter.ACC_PUBLIC);
                 break;
               case Do_getEncodedSource:
-                metodLocals = 1; // Only this
+                methodLocals = 1; // Only this
                 cfw.startMethod("getEncodedSource", "()Ljava/lang/String;",
                                 ClassFileWriter.ACC_PUBLIC);
                 cfw.addPush(encodedSource);
@@ -987,7 +987,7 @@ public class Codegen implements Evaluator
                 }
             }
 
-            cfw.stopMethod(metodLocals);
+            cfw.stopMethod(methodLocals);
         }
     }
 
@@ -1401,7 +1401,6 @@ class BodyCodegen
             cfw.addAStore(variableObjectLocal);
         }
 
-
         // generators are forced to have an activation record
         cfw.addALoad(funObjLocal);
         cfw.addALoad(variableObjectLocal);
@@ -1413,7 +1412,6 @@ class BodyCodegen
                                +")Lorg/mozilla/javascript/Scriptable;");
         cfw.addAStore(variableObjectLocal);
 
-
         // create a function object
         cfw.add(ByteCode.NEW, codegen.mainClassName);
         // Call function constructor
@@ -1424,17 +1422,14 @@ class BodyCodegen
         cfw.addInvoke(ByteCode.INVOKESPECIAL, codegen.mainClassName,
                       "<init>", Codegen.FUNCTION_CONSTRUCTOR_SIGNATURE);
 
-        // Init mainScript field;
+        // Init mainScript field
         cfw.add(ByteCode.DUP);
-        if (isTopLevel) {
-            cfw.add(ByteCode.ALOAD_0);
-        } else {
-            cfw.add(ByteCode.ALOAD_0);
-            cfw.add(ByteCode.GETFIELD,
-                    codegen.mainClassName,
-                    Codegen.DIRECT_CALL_PARENT_FIELD,
-                    codegen.mainClassSignature);
-        }
+        if (isTopLevel) Kit.codeBug();  // Only functions can be generators
+        cfw.add(ByteCode.ALOAD_0);
+        cfw.add(ByteCode.GETFIELD,
+                codegen.mainClassName,
+                Codegen.DIRECT_CALL_PARENT_FIELD,
+                codegen.mainClassSignature);
         cfw.add(ByteCode.PUTFIELD,
                 codegen.mainClassName,
                 Codegen.DIRECT_CALL_PARENT_FIELD,
@@ -1444,11 +1439,13 @@ class BodyCodegen
         
         // create the NativeGenerator object that we return
         cfw.addALoad(variableObjectLocal);
+        cfw.addALoad(thisObjLocal);
         cfw.addLoadConstant(maxLocals);
         cfw.addLoadConstant(maxStack);
         addOptRuntimeInvoke("createNativeGenerator",
                                "(Lorg/mozilla/javascript/NativeFunction;"
-                               +"Lorg/mozilla/javascript/Scriptable;II"        
+                               +"Lorg/mozilla/javascript/Scriptable;"
+                               +"Lorg/mozilla/javascript/Scriptable;II"
                                +")Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.ARETURN);
@@ -1506,6 +1503,7 @@ class BodyCodegen
         scriptRegexpLocal = -1;
         epilogueLabel = -1;
         enterAreaStartLabel = -1;
+        generatorStateLocal = -1;
     }
 
     /**
@@ -1570,7 +1568,22 @@ class BodyCodegen
             operationLocal = firstFreeLocal++;
             localsMax = firstFreeLocal;
 
-
+            // Local 3 is a reference to a GeneratorState object. The rest
+            // of codegen expects local 3 to be a reference to the thisObj.
+            // So move the value in local 3 to generatorStateLocal, and load
+            // the saved thisObj from the GeneratorState object.
+            cfw.addALoad(thisObjLocal);
+            generatorStateLocal = firstFreeLocal++;
+            localsMax = firstFreeLocal;
+            cfw.add(ByteCode.CHECKCAST, OptRuntime.GeneratorState.CLASS_NAME);
+            cfw.add(ByteCode.DUP);
+            cfw.addAStore(generatorStateLocal);
+            cfw.add(ByteCode.GETFIELD,
+                    OptRuntime.GeneratorState.CLASS_NAME,
+                    OptRuntime.GeneratorState.thisObj_NAME,
+                    OptRuntime.GeneratorState.thisObj_TYPE);
+            cfw.addAStore(thisObjLocal);
+            
             if (epilogueLabel == -1) {
                 epilogueLabel = cfw.acquireLabel();
             }
@@ -1725,7 +1738,9 @@ class BodyCodegen
 
         // default is to generate debug info
         if (compilerEnv.isGenerateDebugInfo()) {
-            cfw.addVariableDescriptor(debugVariableName, "Lorg/mozilla/javascript/Scriptable;", cfw.getCurrentCodeOffset(), variableObjectLocal);
+            cfw.addVariableDescriptor(debugVariableName,
+                    "Lorg/mozilla/javascript/Scriptable;",
+                    cfw.getCurrentCodeOffset(), variableObjectLocal);
         }
 
         if (fnCurrent == null) {
@@ -1757,23 +1772,27 @@ class BodyCodegen
 
     private void generateGetGeneratorResumptionPoint()
     {
-        cfw.addALoad(thisObjLocal);
-        addOptRuntimeInvoke("GetGeneratorResumptionPoint",
-                    "(Ljava/lang/Object;)I");
+        cfw.addALoad(generatorStateLocal);
+        cfw.add(ByteCode.GETFIELD,
+                OptRuntime.GeneratorState.CLASS_NAME,
+                OptRuntime.GeneratorState.resumptionPoint_NAME,
+                OptRuntime.GeneratorState.resumptionPoint_TYPE);
     }
 
     private void generateSetGeneratorResumptionPoint(int nextState)
     {
-        cfw.addALoad(thisObjLocal);
+        cfw.addALoad(generatorStateLocal);
         cfw.addLoadConstant(nextState);
-        addOptRuntimeInvoke("SetGeneratorResumptionPoint",
-                          "(Ljava/lang/Object;I)V");
+        cfw.add(ByteCode.PUTFIELD,
+                OptRuntime.GeneratorState.CLASS_NAME,
+                OptRuntime.GeneratorState.resumptionPoint_NAME,
+                OptRuntime.GeneratorState.resumptionPoint_TYPE);
     }
 
     private void generateGetGeneratorStackState()
     {
-        cfw.addALoad(thisObjLocal);
-        addOptRuntimeInvoke("GetGeneratorStackState",
+        cfw.addALoad(generatorStateLocal);
+        addOptRuntimeInvoke("getGeneratorStackState",
                     "(Ljava/lang/Object;)[Ljava/lang/Object;");
     }
 
@@ -1783,9 +1802,9 @@ class BodyCodegen
             addInstructionCount();        
         if (isGenerator) {
             // generate locals initialization
-            ArrayList nodes = ((FunctionNode)scriptOrFn).getResumptionPoints();
             HashMap liveLocals = ((FunctionNode)scriptOrFn).getLiveLocals();
             if (liveLocals != null) {
+                ArrayList nodes = ((FunctionNode)scriptOrFn).getResumptionPoints();
                 for (int i = 0; i < nodes.size(); i++) {
                     Node node = (Node) nodes.get(i);
                     int[] live = (int [])liveLocals.get(node);
@@ -1887,8 +1906,8 @@ class BodyCodegen
     }
 
     private void generateGetGeneratorLocalsState() {
-        cfw.addALoad(thisObjLocal);
-        addOptRuntimeInvoke("GetGeneratorLocalsState",
+        cfw.addALoad(generatorStateLocal);
+        addOptRuntimeInvoke("getGeneratorLocalsState",
                                 "(Ljava/lang/Object;)[Ljava/lang/Object;");
     }
 
@@ -4929,13 +4948,13 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     // This is a valid call only for a local that is allocated by default.
     private void incReferenceWordLocal(short local)
     {
-        locals[local] ++;
+        locals[local]++;
     }
 
     // This is a valid call only for a local that is allocated by default.
     private void decReferenceWordLocal(short local)
     {
-        locals[local] --;
+        locals[local]--;
     }
 
     private void releaseWordLocal(short local)
@@ -4986,6 +5005,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private short itsZeroArgArray;
     private short itsOneArgArray;
     private short scriptRegexpLocal;
+    private short generatorStateLocal;
 
     private boolean isGenerator;
     private int generatorSwitch;
