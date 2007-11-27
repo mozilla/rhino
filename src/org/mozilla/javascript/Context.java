@@ -319,12 +319,18 @@ public class Context
      *
      * Note that the Context must be associated with a thread before
      * it can be used to execute a script.
-     *
-     * @see #enter()
-     * @see #call(ContextAction)
+     * @deprecated use {@link ContextFactory#enter()} or 
+     * {@link ContextFactory#call(ContextAction)} instead.
      */
     public Context()
     {
+        this(ContextFactory.getGlobal());
+    }
+    
+    Context(ContextFactory factory)
+    {
+        assert factory != null;
+        this.factory = factory;
         setLanguageVersion(VERSION_DEFAULT);
         optimizationLevel = codegenClass != null ? 0 : -1;
         maximumInterpreterStackDepth = Integer.MAX_VALUE;
@@ -339,8 +345,8 @@ public class Context
      * @return the Context associated with the current thread, or
      *         null if no context is associated with the current
      *         thread.
-     * @see org.mozilla.javascript.Context#enter()
-     * @see org.mozilla.javascript.Context#exit()
+     * @see ContextFactory#enterContext()
+     * @see ContextFactory#call(ContextAction)
      */
     public static Context getCurrentContext()
     {
@@ -349,43 +355,11 @@ public class Context
     }
 
     /**
-     * Get a context associated with the current thread, creating
-     * one if need be.
-     *
-     * The Context stores the execution state of the JavaScript
-     * engine, so it is required that the context be entered
-     * before execution may begin. Once a thread has entered
-     * a Context, then getCurrentContext() may be called to find
-     * the context that is associated with the current thread.
-     * <p>
-     * Calling <code>enter()</code> will
-     * return either the Context currently associated with the
-     * thread, or will create a new context and associate it
-     * with the current thread. Each call to <code>enter()</code>
-     * must have a matching call to <code>exit()</code>. For example,
-     * <pre>
-     *      Context cx = Context.enter();
-     *      try {
-     *          ...
-     *          cx.evaluateString(...);
-     *      } finally {
-     *          Context.exit();
-     *      }
-     * </pre>
-     * Instead of using <tt>enter()</tt>, <tt>exit()</tt> pair consider using
-     * {@link #call(ContextAction)} which guarantees proper
-     * association of Context instances with the current thread and is faster.
-     * With this method the above example becomes:
-     * <pre>
-     *      Context.call(new ContextAction() {
-     *          public Object run(Context cx) {
-     *              ...
-     *              cx.evaluateString(...);
-     *              return null;
-     *          }
-     *      });
-     * </pre>
-     *
+     * Same as calling {@link ContextFactory#enterContext()} on the global
+     * ContextFactory instance.
+     * @deprecated use {@link ContextFactory#enter()} or 
+     * {@link ContextFactory#call(ContextAction)} instead as this method relies
+     * on usage of a static singleton "global" ContextFactory.
      * @return a Context associated with the current thread
      * @see #getCurrentContext()
      * @see #exit()
@@ -406,9 +380,9 @@ public class Context
      * is not associated with any other thread.
      * @param cx a Context to associate with the thread if possible
      * @return a Context associated with the current thread
-     *
-     * @see #enter()
-     * @see #call(ContextAction)
+     * @deprecated use {@link ContextFactory#enterContext(Context)} instead as 
+     * this method relies on usage of a static singleton "global" ContextFactory.
+     * @see ContextFactory#enterContext(Context)
      * @see ContextFactory#call(ContextAction)
      */
     public static Context enter(Context cx)
@@ -421,40 +395,25 @@ public class Context
         Object helper = VMBridge.instance.getThreadContextHelper();
         Context old = VMBridge.instance.getContext(helper);
         if (old != null) {
-            if (cx != null && cx != old && cx.enterCount != 0) {
-                // The suplied context must be the context for
-                // the current thread if it is already entered
-                throw new IllegalArgumentException(
-                    "Cannot enter Context active on another thread");
-            }
-            if (old.factory != null) {
-                // Context with associated factory will be released
-                // automatically and does not need to change enterCount
-                return old;
-            }
-            if (old.sealed) onSealedMutation();
             cx = old;
         } else {
             if (cx == null) {
                 cx = factory.makeContext();
-            } else {
-                if (cx.sealed) onSealedMutation();
-            }
-            if (cx.enterCount != 0 || cx.factory != null) {
-                throw new IllegalStateException();
-            }
-
-            if (!cx.creationEventWasSent) {
-                cx.creationEventWasSent = true;
+                if (cx.enterCount != 0) {
+                    throw new IllegalStateException("factory.makeContext() returned Context instance already associated with some thread");
+                }
                 factory.onContextCreated(cx);
+                if (factory.isSealed() && !cx.isSealed()) {
+                    cx.seal(null);
+                }
+            } else {
+                if (cx.enterCount != 0) {
+                    throw new IllegalStateException("can not use Context instance already associated with some thread");
+                }
             }
-        }
-
-        if (old == null) {
             VMBridge.instance.setContext(helper, cx);
         }
         ++cx.enterCount;
-
         return cx;
      }
 
@@ -463,22 +422,13 @@ public class Context
      *
      * Calling <code>exit()</code> will remove the association between
      * the current thread and a Context if the prior call to
-     * <code>enter()</code> on this thread newly associated a Context
-     * with this thread.
-     * Once the current thread no longer has an associated Context,
-     * it cannot be used to execute JavaScript until it is again associated
-     * with a Context.
-     *
-     * @see org.mozilla.javascript.Context#enter()
-     * @see #call(ContextAction)
-     * @see ContextFactory#call(ContextAction)
+     * {@link ContextFactory#enterContext()} on this thread newly associated a 
+     * Context with this thread. Once the current thread no longer has an 
+     * associated Context, it cannot be used to execute JavaScript until it is 
+     * again associated with a Context.
+     * @see ContextFactory#enterContext()}
      */
     public static void exit()
-    {
-        exit(ContextFactory.getGlobal());
-    }
-    
-    static void exit(ContextFactory factory)
     {
         Object helper = VMBridge.instance.getThreadContextHelper();
         Context cx = VMBridge.instance.getContext(helper);
@@ -486,20 +436,12 @@ public class Context
             throw new IllegalStateException(
                 "Calling Context.exit without previous Context.enter");
         }
-        if (cx.factory != null) {
-            // Context with associated factory will be released
-            // automatically and does not need to change enterCount
-            return;
-        }
         if (cx.enterCount < 1) Kit.codeBug();
-        if (cx.sealed) onSealedMutation();
-        --cx.enterCount;
-        if (cx.enterCount == 0) {
+        if (--cx.enterCount == 0) {
             VMBridge.instance.setContext(helper, null);
-            factory.onContextReleased(cx);
+            cx.factory.onContextReleased(cx);
         }
     }
-
     
     /**
      * Call {@link ContextAction#run(Context cx)}
@@ -509,7 +451,9 @@ public class Context
      * construct new Context instance. The instance will be temporary
      * associated with the thread during call to
      * {@link ContextAction#run(Context)}.
-     *
+     * @deprecated use {@link ContextFactory#call(ContextAction)} instead as 
+     * this method relies on usage of a static singleton "global" 
+     * ContextFactory.
      * @return The result of {@link ContextAction#run(Context)}.
      */
     public static Object call(ContextAction action)
@@ -527,100 +471,35 @@ public class Context
      * new Context instance. The instance will be temporary associated
      * with the thread during call to {@link ContextAction#run(Context)}.
      * <p>
-     * It is allowed to use null for <tt>factory</tt> argument
-     * in which case the factory associated with the scope will be
-     * used to create new context instances.
-     *
+     * It is allowed but not advisable to use null for <tt>factory</tt> 
+     * argument in which case the global static singleton ContextFactory 
+     * instance will be used to create new context instances.
      * @see ContextFactory#call(ContextAction)
      */
-    public static Object call(ContextFactory factory, Callable callable,
-                              Scriptable scope, Scriptable thisObj,
-                              Object[] args)
+    public static Object call(ContextFactory factory, final Callable callable,
+                              final Scriptable scope, final Scriptable thisObj,
+                              final Object[] args)
     {
-        if (factory == null) {
+        if(factory == null) {
             factory = ContextFactory.getGlobal();
         }
-
-        Object helper = VMBridge.instance.getThreadContextHelper();
-        Context cx = VMBridge.instance.getContext(helper);
-        if (cx != null) {
-            Object result;
-            if (cx.factory != null) {
-                result = callable.call(cx, scope, thisObj, args);
-            } else {
-                // Context was associated with the thread via Context.enter,
-                // set factory to make Context.enter/exit to be no-op
-                // during call
-                cx.factory = factory;
-                try {
-                    result = callable.call(cx, scope, thisObj, args);
-                } finally {
-                    cx.factory = null;
-                }
+        return call(factory, new ContextAction() {
+            public Object run(Context cx) {
+                return callable.call(cx, scope, thisObj, args);
             }
-            return result;
-        }
-
-        cx = prepareNewContext(factory, helper);
-        try {
-            return callable.call(cx, scope, thisObj, args);
-        } finally {
-            releaseContext(helper, cx);
-        }
+        });
     }
-
+    
     /**
      * The method implements {@links ContextFactory#call(ContextAction)} logic.
      */
-    static Object call(ContextFactory factory, ContextAction action)
-    {
-        Object helper = VMBridge.instance.getThreadContextHelper();
-        Context cx = VMBridge.instance.getContext(helper);
-
-        if (cx != null) {
-            if (cx.factory != null) {
-                return action.run(cx);
-            } else {
-                cx.factory = factory;
-                try {
-                    return action.run(cx);
-                } finally {
-                    cx.factory = null;
-                }
-            }
-        }
-
-        cx = prepareNewContext(factory, helper);
+    static Object call(ContextFactory factory, ContextAction action) {
+        Context cx = enter(null, factory);
         try {
             return action.run(cx);
-        } finally {
-            releaseContext(helper, cx);
         }
-    }
-
-    private static Context prepareNewContext(ContextFactory factory,
-                                             Object contextHelper)
-    {
-        Context cx = factory.makeContext();
-        if (cx.factory != null || cx.enterCount != 0) {
-            throw new IllegalStateException("factory.makeContext() returned Context instance already associated with some thread");
-        }
-        cx.factory = factory;
-        factory.onContextCreated(cx);
-        if (factory.isSealed() && !cx.isSealed()) {
-            cx.seal(null);
-        }
-        VMBridge.instance.setContext(contextHelper, cx);
-        return cx;
-    }
-
-    private static void releaseContext(Object contextHelper, Context cx)
-    {
-        VMBridge.instance.setContext(contextHelper, null);
-        try {
-            cx.factory.onContextReleased(cx);
-        } finally {
-            cx.factory = null;
+        finally {
+            exit();
         }
     }
 
@@ -664,17 +543,11 @@ public class Context
     }
 
     /**
-     * Return {@link ContextFactory} instance used to create this Context
-     * or the result of {@link ContextFactory#getGlobal()} if no factory
-     * was used for Context creation.
+     * Return {@link ContextFactory} instance used to create this Context.
      */
     public final ContextFactory getFactory()
     {
-        ContextFactory result = factory;
-        if (result == null) {
-            result = ContextFactory.getGlobal();
-        }
-        return result;
+        return factory;
     }
 
     /**
@@ -2578,7 +2451,7 @@ public class Context
 
     private static String implementationVersion;
 
-    private ContextFactory factory;
+    private final ContextFactory factory;
     private boolean sealed;
     private Object sealKey;
 
@@ -2614,7 +2487,6 @@ public class Context
     private Object propertyListeners;
     private Hashtable hashtable;
     private ClassLoader applicationClassLoader;
-    private boolean creationEventWasSent;
 
     /**
      * This is the list of names of objects forcing the creation of

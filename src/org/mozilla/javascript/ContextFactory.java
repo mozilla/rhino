@@ -200,7 +200,7 @@ public class ContextFactory
      * @see #getGlobal()
      * @see #hasExplicitGlobal()
      */
-    public static void initGlobal(ContextFactory factory)
+    public synchronized static void initGlobal(ContextFactory factory)
     {
         if (factory == null) {
             throw new IllegalArgumentException();
@@ -223,7 +223,7 @@ public class ContextFactory
      */
     protected Context makeContext()
     {
-        return new Context();
+        return new Context(this);
     }
 
     /**
@@ -456,7 +456,7 @@ public class ContextFactory
     }
 
     /**
-     * The method is used only to imlement
+     * The method is used only to implement
      * Context.disableStaticContextListening()
      */
     final void disableContextListening()
@@ -512,34 +512,75 @@ public class ContextFactory
     }
 
     /**
-     * Same as {@link Context#enter()} with the difference that if a new context
-     * needs to be created, then this context factory is used to create it
-     * instead of the global context factory.
+     * Get a context associated with the current thread, creating one if need 
+     * be. The Context stores the execution state of the JavaScript engine, so 
+     * it is required that the context be entered before execution may begin. 
+     * Once a thread has entered a Context, then getCurrentContext() may be 
+     * called to find the context that is associated with the current thread.
+     * <p>
+     * Calling <code>enterContext()</code> will return either the Context 
+     * currently associated with the thread, or will create a new context and 
+     * associate it with the current thread. Each call to 
+     * <code>enterContext()</code> must have a matching call to 
+     * {@link Context#exit()}.
+     * <pre>
+     *      Context cx = contextFactory.enterContext();
+     *      try {
+     *          ...
+     *          cx.evaluateString(...);
+     *      } finally {
+     *          Context.exit();
+     *      }
+     * </pre>
+     * Instead of using <tt>enterContext()</tt>, <tt>exit()</tt> pair consider 
+     * using {@link #call(ContextAction)} which guarantees proper association 
+     * of Context instances with the current thread.
+     * With this method the above example becomes:
+     * <pre>
+     *      ContextFactory.call(new ContextAction() {
+     *          public Object run(Context cx) {
+     *              ...
+     *              cx.evaluateString(...);
+     *              return null;
+     *          }
+     *      });
+     * </pre>
+     * @return a Context associated with the current thread
+     * @see Context#getCurrentContext()
+     * @see Context#exit()
+     * @see #call(ContextAction)
+     */
+    public Context enterContext()
+    {
+        return enterContext(null);
+    }
+    
+    /**
+     * @deprecated use {@link #enterContext()} instead
      * @return a Context associated with the current thread
      */
     public final Context enter()
     {
-        return enter(null);
+        return enterContext(null);
     }
 
     /**
-     * Same as {@link Context#enter(Context)} with the difference that if a new
-     * context needs to be created, then this context factory is used to create
-     * it instead of the global context factory.
+     * Get a Context associated with the current thread, using the given 
+     * Context if need be.
+     * <p>
+     * The same as <code>enterContext()</code> except that <code>cx</code>
+     * is associated with the current thread and returned if the current thread
+     * has no associated context and <code>cx</code> is not associated with any
+     * other thread.
+     * @param cx a Context to associate with the thread if possible
      * @return a Context associated with the current thread
+     * @see #enterContext()
+     * @see #call(ContextAction)
+     * @throws IllegalStateException if <code>cx</code> is already associated
+     * with a different thread
      */
-    public final Context enter(Context cx)
+    public final Context enterContext(Context cx)
     {
         return Context.enter(cx, this);
-    }
-
-    /**
-     * Same as {@link Context#exit()}, although if you used {@link #enter()} or
-     * {@link #enter(Context)} methods on this object, you should use this exit
-     * method instead of the static one in {@link Context}.
-     */
-    public final void exit()
-    {
-        Context.exit(this);
     }
 }
