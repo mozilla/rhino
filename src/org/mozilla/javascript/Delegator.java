@@ -89,7 +89,7 @@ public class Delegator implements Function {
     protected Delegator newInstance()
     {
         try {
-            return (Delegator)this.getClass().newInstance();
+            return this.getClass().newInstance();
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }

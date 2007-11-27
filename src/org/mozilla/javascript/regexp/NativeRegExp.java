@@ -2166,7 +2166,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
                     // XXX: If backTrackData will no longer be used, then
                     // there is no need to clone backTrackData.parens
                     if (backTrackData.parens != null) {
-                        gData.parens = (long[])backTrackData.parens.clone();
+                        gData.parens = backTrackData.parens.clone();
                     }
 
                     gData.cp = backTrackData.cp;
@@ -2698,7 +2698,7 @@ class REBackTrackData {
         continuation_pc = pc;
         lastParen = gData.lastParen;
         if (gData.parens != null) {
-            parens = (long[])gData.parens.clone();
+            parens = gData.parens.clone();
         }
         cp = gData.cp;
         stateStackTop = gData.stateStackTop;

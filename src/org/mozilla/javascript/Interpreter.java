@@ -282,9 +282,9 @@ public class Interpreter implements Evaluator
             // clone stack but keep varSource to point to values
             // from this frame to share variables.
 
-            copy.stack = (Object[])stack.clone();
-            copy.stackAttributes = (int[])stackAttributes.clone();
-            copy.sDbl = (double[])sDbl.clone();
+            copy.stack = stack.clone();
+            copy.stackAttributes = stackAttributes.clone();
+            copy.sDbl = sDbl.clone();
 
             copy.frozen = false;
             return copy;

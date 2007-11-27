@@ -1576,6 +1576,5 @@ public class NativeArray extends IdScriptableObject
      * The factor to grow <code>dense</code> by.
      */
     private static final double GROW_FACTOR = 1.5;
-    private static final int MAX_PRE_GROW_SIZE =
-            (int)((double)Integer.MAX_VALUE / GROW_FACTOR);
+    private static final int MAX_PRE_GROW_SIZE = (int)(Integer.MAX_VALUE / GROW_FACTOR);
 }

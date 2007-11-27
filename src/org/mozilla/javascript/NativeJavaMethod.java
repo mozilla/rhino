@@ -209,7 +209,7 @@ public class NativeJavaMethod extends BaseFunction
                 Object coerced = Context.jsToJava(arg, argTypes[i]);
                 if (coerced != arg) {
                     if (origArgs == args) {
-                        args = (Object[])args.clone();
+                        args = args.clone();
                     }
                     args[i] = coerced;
                 }

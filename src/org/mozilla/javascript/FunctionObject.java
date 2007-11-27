@@ -453,7 +453,7 @@ public class FunctionObject extends BaseFunction
                     Object converted = convertArg(cx, scope, arg, typeTags[i]);
                     if (arg != converted) {
                         if (invokeArgs == args) {
-                            invokeArgs = (Object[])args.clone();
+                            invokeArgs = args.clone();
                         }
                         invokeArgs[i] = converted;
                     }
