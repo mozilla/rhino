@@ -426,7 +426,7 @@ public class Context
      * Context with this thread. Once the current thread no longer has an 
      * associated Context, it cannot be used to execute JavaScript until it is 
      * again associated with a Context.
-     * @see ContextFactory#enterContext()}
+     * @see ContextFactory#enterContext()
      */
     public static void exit()
     {
