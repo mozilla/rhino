@@ -3422,11 +3422,24 @@ switch (op) {
                 captureContinuation(cx, frame, stackTop);
                 continue Loop;
             }
+            // Bug 405654 -- make best effort to keep Function.apply and 
+            // Function.call within this interpreter loop invocation
+            if(BaseFunction.isApplyOrCall(ifun)) {
+                Callable applyCallable = ScriptRuntime.getCallable(funThisObj);
+                if(applyCallable instanceof InterpretedFunction) {
+                    InterpretedFunction iApplyCallable = (InterpretedFunction)applyCallable;
+                    if(frame.fnOrScript.securityDomain == iApplyCallable.securityDomain) {
+                        frame = initFrameForApplyOrCall(cx, frame, indexReg,
+                                stack, sDbl, stackTop, op, calleeScope, ifun,
+                                iApplyCallable);
+                        continue StateLoop;
+                    }
+                }
+            }
         }
 
-        Object[] outArgs = getArgsArray(stack, sDbl, stackTop + 2,
-                                        indexReg);
-        stack[stackTop] = fun.call(cx, calleeScope, funThisObj, outArgs);
+        stack[stackTop] = fun.call(cx, calleeScope, funThisObj, 
+                getArgsArray(stack, sDbl, stackTop + 2, indexReg));
 
         continue Loop;
     }
@@ -4106,6 +4119,46 @@ switch (op) {
         return (interpreterResult != DBL_MRK)
                ? interpreterResult
                : ScriptRuntime.wrapNumber(interpreterResultDbl);
+    }
+
+    private static CallFrame initFrameForApplyOrCall(Context cx, CallFrame frame,
+            int indexReg, Object[] stack, double[] sDbl, int stackTop, int op,
+            Scriptable calleeScope, IdFunctionObject ifun,
+            InterpretedFunction iApplyCallable)
+    {
+        Scriptable applyThis;
+        if (indexReg != 0) {
+            applyThis = ScriptRuntime.toObjectOrNull(cx, stack[stackTop + 2]);
+        }
+        else {
+            applyThis = null;
+        }
+        if (applyThis == null) {
+            // This covers the case of args[0] == (null|undefined) as well.
+            applyThis = ScriptRuntime.getTopCallScope(cx);
+        }
+        CallFrame calleeFrame = new CallFrame();
+        if(BaseFunction.isApply(ifun)) {
+            Object[] callArgs = indexReg < 2 ? ScriptRuntime.emptyArgs : 
+                ScriptRuntime.getApplyArguments(cx, stack[stackTop + 3]);
+            initFrame(cx, calleeScope, applyThis, callArgs, null, 0, 
+                    callArgs.length, iApplyCallable, frame, calleeFrame);
+        }
+        else {
+            // Shift args left
+            for(int i = 1; i < indexReg; ++i) {
+                stack[stackTop + 1 + i] = stack[stackTop + 2 + i];
+                sDbl[stackTop + 1 + i] = sDbl[stackTop + 2 + i];
+            }
+            int argCount = indexReg < 2 ? 0 : indexReg - 1;
+            initFrame(cx, calleeScope, applyThis, stack, sDbl, stackTop + 2, 
+                    argCount, iApplyCallable, frame, calleeFrame);
+        }
+        
+        frame.savedStackTop = stackTop;
+        frame.savedCallOp = op;
+        frame = calleeFrame;
+        return frame;
     }
 
     private static void initFrame(Context cx, Scriptable callerScope,

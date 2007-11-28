@@ -220,6 +220,21 @@ public class BaseFunction extends IdScriptableObject implements Function
         initPrototypeMethod(FUNCTION_TAG, id, s, arity);
     }
 
+    static boolean isApply(IdFunctionObject f) {
+        return f.hasTag(FUNCTION_TAG) && f.methodId() == Id_apply;
+    }
+    
+    static boolean isApplyOrCall(IdFunctionObject f) {
+        if(f.hasTag(FUNCTION_TAG)) {
+            switch(f.methodId()) {
+                case Id_apply:
+                case Id_call:
+                    return true;
+            }
+        }
+        return false;
+    }
+
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {

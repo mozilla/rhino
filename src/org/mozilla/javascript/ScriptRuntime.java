@@ -2302,16 +2302,7 @@ public class ScriptRuntime {
                                      Scriptable thisObj, Object[] args)
     {
         int L = args.length;
-        Callable function;
-        if (thisObj instanceof Callable) {
-            function = (Callable)thisObj;
-        } else {
-            Object value = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
-            if (!(value instanceof Callable)) {
-                throw ScriptRuntime.notFunctionError(value, thisObj);
-            }
-            function = (Callable)value;
-        }
+        Callable function = getCallable(thisObj);
 
         Scriptable callThis = null;
         if (L != 0) {
@@ -2325,20 +2316,8 @@ public class ScriptRuntime {
         Object[] callArgs;
         if (isApply) {
             // Follow Ecma 15.3.4.3
-            if (L <= 1) {
-                callArgs = ScriptRuntime.emptyArgs;
-            } else {
-                Object arg1 = args[1];
-                if (arg1 == null || arg1 == Undefined.instance) {
-                    callArgs = ScriptRuntime.emptyArgs;
-                } else if (arg1 instanceof NativeArray
-                           || arg1 instanceof Arguments)
-                {
-                    callArgs = cx.getElements((Scriptable) arg1);
-                } else {
-                    throw ScriptRuntime.typeError0("msg.arg.isnt.array");
-                }
-            }
+            callArgs = L <= 1 ? ScriptRuntime.emptyArgs : 
+                getApplyArguments(cx, args[1]);
         } else {
             // Follow Ecma 15.3.4.4
             if (L <= 1) {
@@ -2350,6 +2329,32 @@ public class ScriptRuntime {
         }
 
         return function.call(cx, scope, callThis, callArgs);
+    }
+
+    static Object[] getApplyArguments(Context cx, Object arg1)
+    {
+        if (arg1 == null || arg1 == Undefined.instance) {
+            return ScriptRuntime.emptyArgs;
+        } else if (arg1 instanceof NativeArray || arg1 instanceof Arguments) {
+            return cx.getElements((Scriptable) arg1);
+        } else {
+            throw ScriptRuntime.typeError0("msg.arg.isnt.array");
+        }
+    }
+
+    static Callable getCallable(Scriptable thisObj)
+    {
+        Callable function;
+        if (thisObj instanceof Callable) {
+            function = (Callable)thisObj;
+        } else {
+            Object value = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+            if (!(value instanceof Callable)) {
+                throw ScriptRuntime.notFunctionError(value, thisObj);
+            }
+            function = (Callable)value;
+        }
+        return function;
     }
 
     /**
