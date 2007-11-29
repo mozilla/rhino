@@ -565,6 +565,14 @@ public class ContextFactory
     }
 
     /**
+     * @deprecated Use {@link Context#exit()} instead.
+     */
+    public final void exit()
+    {
+        Context.exit();
+    }
+
+    /**
      * Get a Context associated with the current thread, using the given 
      * Context if need be.
      * <p>
