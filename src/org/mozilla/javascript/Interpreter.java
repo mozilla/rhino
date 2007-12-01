@@ -4137,6 +4137,14 @@ switch (op) {
             // This covers the case of args[0] == (null|undefined) as well.
             applyThis = ScriptRuntime.getTopCallScope(cx);
         }
+        if(op == Icode_TAIL_CALL) {
+            exitFrame(cx, frame, null);
+            frame = frame.parentFrame;
+        }
+        else {
+            frame.savedStackTop = stackTop;
+            frame.savedCallOp = op;
+        }
         CallFrame calleeFrame = new CallFrame();
         if(BaseFunction.isApply(ifun)) {
             Object[] callArgs = indexReg < 2 ? ScriptRuntime.emptyArgs : 
@@ -4155,8 +4163,6 @@ switch (op) {
                     argCount, iApplyCallable, frame, calleeFrame);
         }
         
-        frame.savedStackTop = stackTop;
-        frame.savedCallOp = op;
         frame = calleeFrame;
         return frame;
     }
