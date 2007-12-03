@@ -267,6 +267,7 @@ public class Interpreter implements Evaluator
 
         int savedStackTop;
         int savedCallOp;
+        Object throwable;
 
         CallFrame cloneFrozen()
         {
@@ -2593,95 +2594,13 @@ public class Interpreter implements Evaluator
             withoutExceptions: try {
 
                 if (throwable != null) {
-                    // Recovering from exception, indexReg contains
-                    // the index of handler
-
-                    if (indexReg >= 0) {
-                        // Normal exception handler, transfer
-                        // control appropriately
-
-                        if (frame.frozen) {
-                            // XXX Deal with exceptios!!!
-                            frame = frame.cloneFrozen();
-                        }
-
-                        int[] table = frame.idata.itsExceptionTable;
-
-                        frame.pc = table[indexReg + EXCEPTION_HANDLER_SLOT];
-                        if (instructionCounting) {
-                            frame.pcPrevBranch = frame.pc;
-                        }
-
-                        frame.savedStackTop = frame.emptyStackTop;
-                        int scopeLocal = frame.localShift
-                                         + table[indexReg
-                                                 + EXCEPTION_SCOPE_SLOT];
-                        int exLocal = frame.localShift
-                                         + table[indexReg
-                                                 + EXCEPTION_LOCAL_SLOT];
-                        frame.scope = (Scriptable)frame.stack[scopeLocal];
-                        frame.stack[exLocal] = throwable;
-
-                        throwable = null;
-                    } else {
-                        // Continuation restoration
-                        ContinuationJump cjump = (ContinuationJump)throwable;
-
-                        // Clear throwable to indicate that exceptions are OK
-                        throwable = null;
-
-                        if (cjump.branchFrame != frame) Kit.codeBug();
-
-                        // Check that we have at least one frozen frame
-                        // in the case of detached continuation restoration:
-                        // unwind code ensure that
-                        if (cjump.capturedFrame == null) Kit.codeBug();
-
-                        // Need to rewind branchFrame, capturedFrame
-                        // and all frames in between
-                        int rewindCount = cjump.capturedFrame.frameIndex + 1;
-                        if (cjump.branchFrame != null) {
-                            rewindCount -= cjump.branchFrame.frameIndex;
-                        }
-
-                        int enterCount = 0;
-                        CallFrame[] enterFrames = null;
-
-                        CallFrame x = cjump.capturedFrame;
-                        for (int i = 0; i != rewindCount; ++i) {
-                            if (!x.frozen) Kit.codeBug();
-                            if (isFrameEnterExitRequired(x)) {
-                                if (enterFrames == null) {
-                                    // Allocate enough space to store the rest
-                                    // of rewind frames in case all of them
-                                    // would require to enter
-                                    enterFrames = new CallFrame[rewindCount
-                                                                - i];
-                                }
-                                enterFrames[enterCount] = x;
-                                ++enterCount;
-                            }
-                            x = x.parentFrame;
-                        }
-
-                        while (enterCount != 0) {
-                            // execute enter: walk enterFrames in the reverse
-                            // order since they were stored starting from
-                            // the capturedFrame, not branchFrame
-                            --enterCount;
-                            x = enterFrames[enterCount];
-                            enterFrame(cx, x, ScriptRuntime.emptyArgs, true);
-                        }
-
-                        // Continuation jump is almost done: capturedFrame
-                        // points to the call to the function that captured
-                        // continuation, so clone capturedFrame and
-                        // emulate return that function with the suplied result
-                        frame = cjump.capturedFrame.cloneFrozen();
-                        setCallResult(frame, cjump.result, cjump.resultDbl);
-                        // restart the execution
-                    }
-
+                    // Need to return both 'frame' and 'throwable' from
+                    // 'processThrowable', so just added a 'throwable'
+                    // member in 'frame'.
+                    frame = processThrowable(cx, throwable, frame, indexReg,
+                                             instructionCounting);
+                    throwable = frame.throwable;
+                    frame.throwable = null;
                 } else {
                     if (generatorState == null && frame.frozen) Kit.codeBug();
                 }
@@ -2732,44 +2651,16 @@ switch (op) {
     }
     // fall through...
     case Token.YIELD: {
-      if (!frame.frozen) {
-        if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
-            // Error: no yields when generator is closing
-            throw ScriptRuntime.typeError0("msg.yield.closing");
+        if (!frame.frozen) {
+            return freezeGenerator(cx, frame, stackTop, generatorState);
+        } else {
+            Object obj = thawGenerator(frame, stackTop, generatorState, op);
+            if (obj != Scriptable.NOT_FOUND) {
+                throwable = obj;
+                break withoutExceptions;
+            }
+            continue Loop;
         }
-        // return to our caller (which should be a method of NativeGenerator)
-        frame.frozen = true;
-        frame.result = stack[stackTop];
-        frame.resultDbl = sDbl[stackTop];
-        frame.savedStackTop = stackTop;
-        frame.pc--; // we want to come back here when we resume
-        ScriptRuntime.exitActivationFunction(cx);
-        return (frame.result != DBL_MRK)
-            ? frame.result
-            : ScriptRuntime.wrapNumber(frame.resultDbl);
-      } else {
-        // we are resuming execution
-        frame.frozen = false;
-        int sourceLine = getIndex(iCode, frame.pc);
-        frame.pc += 2; // skip line number data
-        if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
-            // processing a call to <generator>.throw(exception): must
-            // act as if exception was thrown from resumption point
-            throwable = new JavaScriptException(generatorState.value,
-                                                frame.idata.itsSourceFile,
-                                                sourceLine);
-            break withoutExceptions;
-        }
-        if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
-            throwable = generatorState.value;
-            break withoutExceptions;
-        }
-        if (generatorState.operation != NativeGenerator.GENERATOR_SEND)
-            throw Kit.codeBug();
-        if (op == Token.YIELD)
-            stack[stackTop] = generatorState.value;
-        continue Loop;
-      }
     }
     case Icode_GENERATOR_END: {
       // throw StopIteration
@@ -4119,6 +4010,146 @@ switch (op) {
         return (interpreterResult != DBL_MRK)
                ? interpreterResult
                : ScriptRuntime.wrapNumber(interpreterResultDbl);
+    }
+
+    private static CallFrame processThrowable(Context cx, Object throwable,
+                                              CallFrame frame, int indexReg,
+                                              boolean instructionCounting)
+    {
+        // Recovering from exception, indexReg contains
+        // the index of handler
+
+        if (indexReg >= 0) {
+            // Normal exception handler, transfer
+            // control appropriately
+
+            if (frame.frozen) {
+                // XXX Deal with exceptios!!!
+                frame = frame.cloneFrozen();
+            }
+            
+            int[] table = frame.idata.itsExceptionTable;
+
+            frame.pc = table[indexReg + EXCEPTION_HANDLER_SLOT];
+            if (instructionCounting) {
+                frame.pcPrevBranch = frame.pc;
+            }
+
+            frame.savedStackTop = frame.emptyStackTop;
+            int scopeLocal = frame.localShift
+                             + table[indexReg
+                                     + EXCEPTION_SCOPE_SLOT];
+            int exLocal = frame.localShift
+                             + table[indexReg
+                                     + EXCEPTION_LOCAL_SLOT];
+            frame.scope = (Scriptable)frame.stack[scopeLocal];
+            frame.stack[exLocal] = throwable;
+
+            throwable = null;
+        } else {
+            // Continuation restoration
+            ContinuationJump cjump = (ContinuationJump)throwable;
+
+            // Clear throwable to indicate that exceptions are OK
+            throwable = null;
+
+            if (cjump.branchFrame != frame) Kit.codeBug();
+
+            // Check that we have at least one frozen frame
+            // in the case of detached continuation restoration:
+            // unwind code ensure that
+            if (cjump.capturedFrame == null) Kit.codeBug();
+
+            // Need to rewind branchFrame, capturedFrame
+            // and all frames in between
+            int rewindCount = cjump.capturedFrame.frameIndex + 1;
+            if (cjump.branchFrame != null) {
+                rewindCount -= cjump.branchFrame.frameIndex;
+            }
+
+            int enterCount = 0;
+            CallFrame[] enterFrames = null;
+
+            CallFrame x = cjump.capturedFrame;
+            for (int i = 0; i != rewindCount; ++i) {
+                if (!x.frozen) Kit.codeBug();
+                if (isFrameEnterExitRequired(x)) {
+                    if (enterFrames == null) {
+                        // Allocate enough space to store the rest
+                        // of rewind frames in case all of them
+                        // would require to enter
+                        enterFrames = new CallFrame[rewindCount
+                                                    - i];
+                    }
+                    enterFrames[enterCount] = x;
+                    ++enterCount;
+                }
+                x = x.parentFrame;
+            }
+
+            while (enterCount != 0) {
+                // execute enter: walk enterFrames in the reverse
+                // order since they were stored starting from
+                // the capturedFrame, not branchFrame
+                --enterCount;
+                x = enterFrames[enterCount];
+                enterFrame(cx, x, ScriptRuntime.emptyArgs, true);
+            }
+
+            // Continuation jump is almost done: capturedFrame
+            // points to the call to the function that captured
+            // continuation, so clone capturedFrame and
+            // emulate return that function with the suplied result
+            frame = cjump.capturedFrame.cloneFrozen();
+            setCallResult(frame, cjump.result, cjump.resultDbl);
+            // restart the execution
+        }
+        frame.throwable = throwable;
+        return frame;
+    }
+
+    private static Object freezeGenerator(Context cx, CallFrame frame,
+                                          int stackTop,
+                                          GeneratorState generatorState)
+    {
+          if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
+              // Error: no yields when generator is closing
+              throw ScriptRuntime.typeError0("msg.yield.closing");
+          }
+          // return to our caller (which should be a method of NativeGenerator)
+          frame.frozen = true;
+          frame.result = frame.stack[stackTop];
+          frame.resultDbl = frame.sDbl[stackTop];
+          frame.savedStackTop = stackTop;
+          frame.pc--; // we want to come back here when we resume
+          ScriptRuntime.exitActivationFunction(cx);
+          return (frame.result != UniqueTag.DOUBLE_MARK)
+              ? frame.result
+              : ScriptRuntime.wrapNumber(frame.resultDbl);
+    }
+
+    private static Object thawGenerator(CallFrame frame, int stackTop,
+                                        GeneratorState generatorState, int op)
+    {
+          // we are resuming execution
+          frame.frozen = false;
+          int sourceLine = getIndex(frame.idata.itsICode, frame.pc);
+          frame.pc += 2; // skip line number data
+          if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
+              // processing a call to <generator>.throw(exception): must
+              // act as if exception was thrown from resumption point
+              return new JavaScriptException(generatorState.value,
+                                                  frame.idata.itsSourceFile,
+                                                  sourceLine);
+          }
+          if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
+              return generatorState.value;
+          }
+          if (generatorState.operation != NativeGenerator.GENERATOR_SEND)
+              throw Kit.codeBug();
+          if (op == Token.YIELD)
+              frame.stack[stackTop] = generatorState.value;
+          return Scriptable.NOT_FOUND;
     }
 
     private static CallFrame initFrameForApplyOrCall(Context cx, CallFrame frame,
