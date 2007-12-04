@@ -6,6 +6,10 @@
 # should be investigated: OutOfMemoryError
 js1_5/Regress/regress-330352.js
 
+# should be investigated: semicolon insertion
+ecma_3/LexicalConventions/7.9.1.js
+ecma_3/extensions/7.9.1.js
+
 # performance regression test
 js1_5/Array/regress-99120-01.js
 
@@ -14,11 +18,20 @@ js1_5/Function/regress-338121-01.js
 js1_5/Function/regress-338121-02.js
 js1_5/Function/regress-338121-03.js
 
+# needs investigation: Date corner case
+ecma_3/Date/15.9.5.5-02.js
+
+# Infinite recursion
+e4x/Regress/regress-394941.js
+
 # GC tests
 js1_5/GC
 
 # bad test: random string generated will be too long about 1% of the time
 lc3/JavaArray/ToArray-001.js
+
+# would imply we would always need an activation for every non-leaf func
+js1_5/Regress/regress-383682.js
 
 # test depends on E4X, but test framework calls version(150)
 js1_5/Regress/regress-309242.js
