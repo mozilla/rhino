@@ -572,9 +572,9 @@ public class Parser
                         }
                         String parmName = currentScriptOrFn.getNextTempName();
                         defineSymbol(Token.LP, parmName);
-                        destructuring.addChildToBack(nf.createAssignment(
-                            Token.ASSIGN, primaryExpr(), 
-                            nf.createName(parmName)));
+                        destructuring.addChildToBack(
+                            nf.createDestructuringAssignment(Token.VAR,
+                                primaryExpr(), nf.createName(parmName)));
                     } else {
                         mustMatchToken(Token.NAME, "msg.no.parm");
                         String s = ts.getString();
