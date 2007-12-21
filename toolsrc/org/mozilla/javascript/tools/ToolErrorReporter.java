@@ -40,6 +40,7 @@
 package org.mozilla.javascript.tools;
 
 import org.mozilla.javascript.*;
+
 import java.text.MessageFormat;
 import java.io.*;
 import java.util.*;
@@ -173,7 +174,10 @@ public class ToolErrorReporter implements ErrorReporter {
             WrappedException we = (WrappedException)ex;
             we.printStackTrace(err);
         } else {
-            String msg = getExceptionMessage(ex);
+            String lineSeparator =
+                SecurityUtilities.getSystemProperty("line.separator");
+            String msg = getExceptionMessage(ex) + lineSeparator +
+                ex.getScriptStackTrace();
             reportErrorMessage(msg, ex.sourceName(), ex.lineNumber(),
                                ex.lineSource(), ex.columnNumber(), false);
         }
