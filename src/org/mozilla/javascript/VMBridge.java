@@ -41,6 +41,7 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Member;
+import java.util.Iterator;
 
 public abstract class VMBridge
 {
@@ -165,10 +166,18 @@ public abstract class VMBridge
     protected abstract boolean isVarArgs(Member member);
 
     /**
-     * return method corresponding to __iterator__ for treating a
-     * java.lang.Iterable as a JavaScript Iterator
+     * If "obj" is a java.util.Iterator or a java.lang.Iterable, return a
+     * wrapping as a JavaScript Iterator. Otherwise, return null.
+     * This method is in VMBridge since Iterable is a JDK 1.5 addition.
      */
-    public Method getIteratorMethod() {
+    public Iterator getJavaIterator(Context cx, Scriptable scope, Object obj) {
+        if (obj instanceof Wrapper) {
+            Object unwrapped = ((Wrapper) obj).unwrap();
+            Iterator iterator = null;
+            if (unwrapped instanceof Iterator)
+                iterator = (Iterator) unwrapped;
+            return iterator;
+        }
         return null;
     }
 }

@@ -30,6 +30,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.Iterator;
+
 /**
  * This class implements iterator objects. See 
  * http://developer.mozilla.org/en/docs/New_in_JavaScript_1.7#Iterators
@@ -161,10 +163,24 @@ public final class NativeIterator extends IdScriptableObject {
         boolean keyOnly = args.length > 1 && ScriptRuntime.toBoolean(args[1]);
         if (thisObj != null) {
             // Called as a function. Convert to iterator if possible.
-            Scriptable iterator = ScriptRuntime.toIterator(cx, scope, obj, 
-                                                           keyOnly);
+          
+            // For objects that implement java.lang.Iterable or
+            // java.util.Iterator, have JavaScript Iterator call the underlying
+            // iteration methods
+            Iterator iterator = 
+                VMBridge.instance.getJavaIterator(cx, scope, obj);
             if (iterator != null) {
-                return iterator;
+                scope = ScriptableObject.getTopLevelScope(scope);
+                return cx.getWrapFactory().wrap(cx, scope,
+                        new WrappedJavaIterator(iterator, scope),
+                        WrappedJavaIterator.class);
+            }
+            
+            // Otherwise, just call the runtime routine
+            Scriptable jsIterator = ScriptRuntime.toIterator(cx, scope, obj, 
+                                                             keyOnly);
+            if (jsIterator != null) {
+                return jsIterator;
             }
         }
         
@@ -192,6 +208,30 @@ public final class NativeIterator extends IdScriptableObject {
         Object value = ScriptRuntime.enumValue(this.objectIterator, cx);
         Object[] elements = { id, value };
         return cx.newArray(scope, elements);
+    }
+    
+    static public class WrappedJavaIterator
+    {
+        WrappedJavaIterator(Iterator iterator, Scriptable scope) {
+            this.iterator = iterator;
+            this.scope = scope;
+        }
+
+        public Object next() {
+            if (!iterator.hasNext()) {
+                // Out of values. Throw StopIteration.
+                throw new JavaScriptException(
+                    NativeIterator.getStopIterationObject(scope), null, 0);
+            }
+            return iterator.next();
+        }
+
+        public Object __iterator__(boolean b) {
+            return this;
+        }
+
+        private Iterator iterator;
+        private Scriptable scope;
     }
     
 // #string_id_map#

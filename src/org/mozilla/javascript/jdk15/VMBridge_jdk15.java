@@ -52,7 +52,7 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
             // so that we can load a bridge to an older JDK instead.
             Method.class.getMethod("isVarArgs", (Class[]) null);
         } catch (NoSuchMethodException e) {
-            // Throw a fittitng exception that is handled by
+            // Throw a fitting exception that is handled by
             // org.mozilla.javascript.Kit.newInstanceOrNull:
             throw new InstantiationException(e.getMessage());
         }
@@ -66,56 +66,22 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
         else 
             return false;
     }
-
-    public Method getIteratorMethod() {
-        try {
-            Class[] sig = { Context.class, Scriptable.class,
-                            ScriptRuntime.emptyArgs.getClass(),
-                            Function.class };
-            return VMBridge_jdk15.class.getMethod("__iterator__", sig);
-        } catch (NoSuchMethodException e) {
-            return null;
+    
+    /**
+     * If "obj" is a java.util.Iterator or a java.lang.Iterable, return a
+     * wrapping as a JavaScript Iterator. Otherwise, return null.
+     * This method is in VMBridge since Iterable is a JDK 1.5 addition.
+     */
+    public Iterator getJavaIterator(Context cx, Scriptable scope, Object obj) {
+        if (obj instanceof Wrapper) {
+            Object unwrapped = ((Wrapper) obj).unwrap();
+            Iterator iterator = null;
+            if (unwrapped instanceof Iterator)
+                iterator = (Iterator) unwrapped;
+            if (unwrapped instanceof Iterable)
+                iterator = ((Iterable)unwrapped).iterator();
+            return iterator;
         }
+        return null;
     }
-
-    public static Object __iterator__(Context cx, Scriptable thisObj,
-                                      Object[] args, Function funObj)
-    {
-        if (thisObj instanceof Wrapper) {
-            Object obj = ((Wrapper) thisObj).unwrap();
-            if (obj instanceof Iterable) {
-                Scriptable scope = ScriptableObject.getTopLevelScope(funObj);
-                return cx.getWrapFactory().wrap(cx, scope,
-                        new WrappedJavaIterator((Iterable) obj, scope),
-                        WrappedJavaIterator.class);
-            }
-        }
-        throw ScriptRuntime.typeError1("msg.incompat.call",
-                                       NativeIterator.ITERATOR_PROPERTY_NAME);
-    }
-
-    static public class WrappedJavaIterator
-    {
-        WrappedJavaIterator(Iterable iterable, Scriptable scope) {
-            this.iterator = iterable.iterator();
-            this.scope = scope;
-        }
-
-        public Object next() {
-            if (!iterator.hasNext()) {
-                // Out of values. Throw StopIteration.
-                throw new JavaScriptException(
-                    NativeIterator.getStopIterationObject(scope), null, 0);
-            }
-            return iterator.next();
-        }
-
-        public Object __iterator__() {
-            return this;
-        }
-
-        private Iterator iterator;
-        private Scriptable scope;
-    }
-
 }
