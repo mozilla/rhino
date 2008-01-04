@@ -68,9 +68,8 @@ public final class NativeIterator extends IdScriptableObject {
     private NativeIterator() {
     }
     
-    private NativeIterator(Object objectIterator, boolean keyOnly) {
+    private NativeIterator(Object objectIterator) {
       this.objectIterator = objectIterator;
-      this.keyOnly = keyOnly;
     }
 
     /**
@@ -185,9 +184,12 @@ public final class NativeIterator extends IdScriptableObject {
         }
         
         // Otherwise, just set up to iterate over the properties of the object.
-        Object objectIterator = ScriptRuntime.enumInit(obj, cx, false);
+        // Do not call __iterator__ method.
+        Object objectIterator = ScriptRuntime.enumInit(obj, cx,
+            keyOnly ? ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR
+                    : ScriptRuntime.ENUMERATE_ARRAY_NO_ITERATOR);
         ScriptRuntime.setEnumNumbers(objectIterator, true);
-        NativeIterator result = new NativeIterator(objectIterator, keyOnly);
+        NativeIterator result = new NativeIterator(objectIterator);
         result.setPrototype(NativeIterator.getClassPrototype(scope, 
                                 result.getClassName()));
         result.setParentScope(scope);
@@ -201,13 +203,7 @@ public final class NativeIterator extends IdScriptableObject {
             throw new JavaScriptException(
                 NativeIterator.getStopIterationObject(scope), null, 0);
         }
-        Object id = ScriptRuntime.enumId(this.objectIterator, cx);
-        if (this.keyOnly) {
-            return id;
-        }
-        Object value = ScriptRuntime.enumValue(this.objectIterator, cx);
-        Object[] elements = { id, value };
-        return cx.newArray(scope, elements);
+        return ScriptRuntime.enumId(this.objectIterator, cx);
     }
     
     static public class WrappedJavaIterator
@@ -260,6 +256,5 @@ public final class NativeIterator extends IdScriptableObject {
 // #/string_id_map#
 
     private Object objectIterator;
-    private boolean keyOnly;
 }
 

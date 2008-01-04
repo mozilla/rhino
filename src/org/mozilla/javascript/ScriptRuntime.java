@@ -1891,10 +1891,8 @@ public class ScriptRuntime {
                throw typeError0("msg.invalid.iterator");
             }
             Callable f = (Callable) v;
-            Object[] args = emptyArgs;
-            if (keyOnly) {
-                args = new Object[] { Boolean.TRUE };
-            }
+            Object[] args = new Object[] { keyOnly ? Boolean.TRUE
+                                                   : Boolean.FALSE };
             v = f.call(cx, scope, obj, args);
             if (!(v instanceof Scriptable)) {
                 throw typeError("msg.iterator.primitive");
@@ -1907,14 +1905,17 @@ public class ScriptRuntime {
     // for backwards compatibility with generated class files
     public static Object enumInit(Object value, Context cx, boolean enumValues)
     {
-        return enumInit(value, cx, enumValues ? ENUMERATE_VALUES 
+        return enumInit(value, cx, enumValues ? ENUMERATE_VALUES
                                               : ENUMERATE_KEYS);
     }
-    
+
     public static final int ENUMERATE_KEYS = 0;
     public static final int ENUMERATE_VALUES = 1;
     public static final int ENUMERATE_ARRAY = 2;
-    
+    public static final int ENUMERATE_KEYS_NO_ITERATOR = 3;
+    public static final int ENUMERATE_VALUES_NO_ITERATOR = 4;
+    public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
+
     public static Object enumInit(Object value, Context cx, int enumType)
     {
         IdEnumeration x = new IdEnumeration();
@@ -1925,8 +1926,13 @@ public class ScriptRuntime {
             return x;
         }
         x.enumType = enumType;
-        x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj, true);
-
+        x.iterator = null;
+        if (enumType != ENUMERATE_ARRAY_NO_ITERATOR &&
+            enumType != ENUMERATE_VALUES_NO_ITERATOR &&
+            enumType != ENUMERATE_ARRAY_NO_ITERATOR)
+        {
+            x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj, true);
+        }
         if (x.iterator == null) {
             // enumInit should read all initial ids before returning
             // or "for (a.i in a)" would wrongly enumerate i in a as well
@@ -1999,22 +2005,25 @@ public class ScriptRuntime {
         }
         switch (x.enumType) {
           case ENUMERATE_KEYS:
+          case ENUMERATE_KEYS_NO_ITERATOR:
             return x.currentId;
           case ENUMERATE_VALUES:
+          case ENUMERATE_VALUES_NO_ITERATOR:
             return enumValue(enumObj, cx);
           case ENUMERATE_ARRAY:
+          case ENUMERATE_ARRAY_NO_ITERATOR:
             Object[] elements = { x.currentId, enumValue(enumObj, cx) };
             return cx.newArray(x.obj.getParentScope(), elements);
           default:
             throw Kit.codeBug();
         }
     }
-    
+
     public static Object enumValue(Object enumObj, Context cx) {
         IdEnumeration x = (IdEnumeration)enumObj;
-  
+
         Object result;
-  
+
         String s = toStringIdOrIndex(cx, x.currentId);
         if (s == null) {
             int index = lastIndexResult(cx);
@@ -2022,7 +2031,7 @@ public class ScriptRuntime {
         } else {
             result = x.obj.get(s, x.obj);
         }
-  
+
         return result;
     }
 
