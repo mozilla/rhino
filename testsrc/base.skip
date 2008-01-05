@@ -2,6 +2,10 @@
 
 # These tests are skipped by Rhino either because a bug with a regression
 # test has yet to be fixed, or because the test is not applicable to Rhino.
+#
+
+# Needs investigation
+js1_7/regress/regress-406477.js
 
 # should be investigated: OutOfMemoryError
 js1_5/Regress/regress-330352.js
@@ -12,6 +16,7 @@ ecma_3/extensions/7.9.1.js
 
 # performance regression test
 js1_5/Array/regress-99120-01.js
+js1_5/extensions/regress-371636.js
 
 # large concatenation of strings
 js1_5/Function/regress-338121-01.js
@@ -662,3 +667,5 @@ js1_5/extensions/regress-358594-04.js
 js1_5/extensions/regress-358594-05.js
 js1_5/extensions/regress-358594-06.js
 js1_7/extensions/regress-380933.js
+ecma_3/extensions/regress-368516.js
+js1_5/extensions/regress-351463-01.js
