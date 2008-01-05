@@ -31,7 +31,7 @@
 package org.mozilla.javascript;
 
 /**
- * This class implements generator objects. See 
+ * This class implements generator objects. See
  * http://developer.mozilla.org/en/docs/New_in_JavaScript_1.7#Generators
  *
  * @author Norris Boyd
@@ -43,7 +43,7 @@ public final class NativeGenerator extends IdScriptableObject {
         // Generator
         // Can't use "NativeGenerator().exportAsJSClass" since we don't want
         // to define "Generator" as a constructor in the top-level scope.
-      
+
         NativeGenerator prototype = new NativeGenerator();
         if (scope != null) {
             prototype.setParentScope(scope);
@@ -53,18 +53,18 @@ public final class NativeGenerator extends IdScriptableObject {
         if (sealed) {
             prototype.sealObject();
         }
-        
+
         // Need to access Generator prototype when constructing
         // Generator instances, but don't have a generator constructor
-        // to use to find the prototype. Use the "associateValue" 
+        // to use to find the prototype. Use the "associateValue"
         // approach instead.
         if (scope != null) {
             scope.associateValue(GENERATOR_TAG, prototype);
         }
-        
+
         return prototype;
     }
-    
+
     /**
      * Only for constructing the prototype object.
      */
@@ -93,6 +93,44 @@ public final class NativeGenerator extends IdScriptableObject {
         return "Generator";
     }
 
+    /**
+     * Close the generator if it is still open.
+     */
+    public void finalize() throws Throwable {
+        if (savedState != null) {
+            // This is a little tricky since we are most likely running in
+            // a different thread. We need to get a Context to run this, and
+            // we must call "doTopCall" since this will likely be the outermost
+            // JavaScript frame on this thread.
+            Context cx = Context.getCurrentContext();
+            ContextFactory factory = cx != null ? cx.getFactory()
+                                                : ContextFactory.getGlobal();
+            Scriptable scope = ScriptableObject.getTopLevelScope(this);
+            factory.call(new CloseGeneratorAction(this));
+        }
+    }
+
+    private static class CloseGeneratorAction implements ContextAction {
+        private NativeGenerator generator;
+
+        CloseGeneratorAction(NativeGenerator generator) {
+            this.generator = generator;
+        }
+
+        public Object run(Context cx) {
+            Scriptable scope = ScriptableObject.getTopLevelScope(generator);
+            Callable closeGenerator = new Callable() {
+                public Object call(Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args) {
+                     return ((NativeGenerator)thisObj).resume(cx, scope,
+                             GENERATOR_CLOSE, new GeneratorClosedException());
+                }
+            };
+            return ScriptRuntime.doTopCall(closeGenerator, cx, scope,
+                                           generator, null);
+        }
+    }
+
     protected void initPrototypeId(int id) {
         String s;
         int arity;
@@ -117,21 +155,21 @@ public final class NativeGenerator extends IdScriptableObject {
 
         if (!(thisObj instanceof NativeGenerator))
             throw incompatibleCallError(f);
-        
+
         NativeGenerator generator = (NativeGenerator) thisObj;
-        
+
         switch (id) {
-            
+
           case Id_close:
             // need to run any pending finally clauses
-	        return generator.resume(cx, scope, GENERATOR_CLOSE,
-	          		                new GeneratorClosedException());
+            return generator.resume(cx, scope, GENERATOR_CLOSE,
+                                    new GeneratorClosedException());
 
-          case Id_next: 
+          case Id_next:
             // arguments to next() are ignored
             generator.firstTime = false;
             return generator.resume(cx, scope, GENERATOR_SEND,
-            		                Undefined.instance);
+                                    Undefined.instance);
 
           case Id_send: {
             Object arg = args.length > 0 ? args[0] : Undefined.instance;
@@ -143,18 +181,18 @@ public final class NativeGenerator extends IdScriptableObject {
 
           case Id_throw:
             return generator.resume(cx, scope, GENERATOR_THROW,
-            		args.length > 0 ? args[0] : Undefined.instance);
+                args.length > 0 ? args[0] : Undefined.instance);
 
           case Id___iterator__:
             return thisObj;
 
-          default: 
-        	throw new IllegalArgumentException(String.valueOf(id));
+          default:
+            throw new IllegalArgumentException(String.valueOf(id));
         }
     }
 
     private Object resume(Context cx, Scriptable scope, int operation,
-    		              Object value)
+                          Object value)
     {
         if (savedState == null) {
             if (operation == GENERATOR_CLOSE)
@@ -178,23 +216,23 @@ public final class NativeGenerator extends IdScriptableObject {
             }
             return function.resumeGenerator(cx, scope, operation, savedState,
                                             value);
-    	} catch (GeneratorClosedException e) {
+        } catch (GeneratorClosedException e) {
             // On closing a generator in the compile path, the generator
-            // throws a special execption. This ensures execution of all pending
-            // finalisers and will not get caught by user code. 
+            // throws a special exception. This ensures execution of all pending
+            // finalizers and will not get caught by user code.
             return Undefined.instance;
         } catch (RhinoException e) {
-    		lineNumber = e.lineNumber();
-    		lineSource = e.lineSource();
-    		savedState = null;
-    		throw e;
-    	} finally {
+            lineNumber = e.lineNumber();
+            lineSource = e.lineSource();
+            savedState = null;
+            throw e;
+        } finally {
             synchronized (this) {
               locked = false;
             }
-    		if (operation == GENERATOR_CLOSE)
-    			savedState = null;
-    	}
+            if (operation == GENERATOR_CLOSE)
+                savedState = null;
+        }
     }
 
 // #string_id_map#
@@ -241,5 +279,3 @@ public final class NativeGenerator extends IdScriptableObject {
     public static class GeneratorClosedException extends RuntimeException {
     }
 }
-
-
