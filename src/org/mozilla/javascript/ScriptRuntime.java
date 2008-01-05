@@ -1927,7 +1927,7 @@ public class ScriptRuntime {
         }
         x.enumType = enumType;
         x.iterator = null;
-        if (enumType != ENUMERATE_ARRAY_NO_ITERATOR &&
+        if (enumType != ENUMERATE_KEYS_NO_ITERATOR &&
             enumType != ENUMERATE_VALUES_NO_ITERATOR &&
             enumType != ENUMERATE_ARRAY_NO_ITERATOR)
         {
