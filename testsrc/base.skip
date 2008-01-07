@@ -6,6 +6,7 @@
 
 # Needs investigation
 js1_7/regress/regress-406477.js
+e4x/extensions/regress-410192.js
 
 # should be investigated: OutOfMemoryError
 js1_5/Regress/regress-330352.js
