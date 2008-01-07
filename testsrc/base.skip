@@ -193,7 +193,9 @@ e4x/Regress/regress-278112.js
 # Invalid test? Cannot convert NaN to java.lang.Long
 lc3/template.js
 
-# Depends on generators being closed due to a call to gc(): not relevant to Rhino
+# Depends on generators being closed due to a call to gc(). Java finalizers
+# are not run immediately in a call to gc(), but instead usuallly are run
+# later on a different thread.
 js1_7/geniter/regress-347739.js
 js1_7/geniter/regress-349012-01.js
 js1_7/geniter/regress-349331.js
