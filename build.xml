@@ -38,7 +38,8 @@
     Build file for Rhino using Ant (see http://jakarta.apache.org/ant/index.html)
     Requires Ant version 1.2 or later
 
-    Compilation currently requires JDK 1.4 or later
+    Compilation currently requires JDK 1.5 or later. Can cross-compile to
+    support JDK 1.4.
 -->
 
 <project name="Rhino" default="help" basedir=".">
@@ -116,8 +117,8 @@
     <taskdef name="retrotranslator" classpath="build/download/Retrotranslator-1.2.3-bin/retrotranslator-transformer-1.2.3.jar"
       classname="net.sf.retrotranslator.transformer.RetrotranslatorTask"/>
   </target>
-	
-	
+
+
   <target name="retrotranslator-check">
     <condition property="retrotranslator.available">
       <and>
@@ -127,17 +128,17 @@
       </and>
     </condition>
   </target>
-	
+
   <target name="retrotranslator-download" unless="retrotranslator.available">
     <mkdir dir="build/download"/>
     <get src="http://downloads.sourceforge.net/retrotranslator/Retrotranslator-1.2.3-bin.zip" dest="build/download/Retrotranslator-1.2.3-bin.zip" usetimestamp="true"/>
     <unzip src="build/download/Retrotranslator-1.2.3-bin.zip" dest="build/download"/>
   </target>
-	
+
   <target name="retrojar" depends="jar,retrotranslator">
     <retrotranslator
-      srcjar="${jarfile}" 
-      destjar="${dist.dir}/${rhino-14.jar}" 
+      srcjar="${jarfile}"
+      destjar="${dist.dir}/${rhino-14.jar}"
       embed="org.mozilla.javascript"
     />
   </target>
@@ -168,13 +169,13 @@
 
   <target name="retrosmalljar" depends="smalljar,retrotranslator">
     <retrotranslator
-      srcjar="${smalljarfile}" 
-      destjar="${dist.dir}/${small-rhino-14.jar}" 
+      srcjar="${smalljarfile}"
+      destjar="${dist.dir}/${small-rhino-14.jar}"
       embed="org.mozilla.javascript"
     />
   </target>
 
-	<target name="copy-examples" depends="init">
+  <target name="copy-examples" depends="init">
     <mkdir dir="${dist.dir}/examples"/>
     <copy todir="${dist.dir}/examples">
       <fileset dir="examples" includes="**/*.java,**/*.js,**/*.html" />
@@ -205,7 +206,7 @@
              windowtitle="${Name}" />
   </target>
 
-  <target name="dist" depends="deepclean,jar,copy-all,javadoc">
+  <target name="dist" depends="deepclean,jar,retrojar,copy-all,javadoc">
     <delete file="${dist.file}" />
     <zip destfile="${dist.file}">
       <fileset dir="${build.dir}" includes="${dist.name}/**"/>
@@ -275,7 +276,7 @@
  clean       remove all compiled classes and copied property files
 
  compile     compile classes and copy all property files
-             into ${classes} directory 
+             into ${classes} directory
              excluding deprecated code
 
  compile-all compile all classes and copy all property files
