@@ -1488,6 +1488,8 @@ final class IRFactory
                 index++;
                 empty = false;
             }
+        } else if (type == Token.GETPROP || type == Token.GETELEM) {
+            comma.addChildToBack(simpleAssignment(left, createName(tempName)));
         } else {
             parser.reportError("msg.bad.assign.left");
         }
