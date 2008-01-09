@@ -277,6 +277,8 @@ public class Node
         }
 
         public static void joinScopes(Scope source, Scope dest) {
+            source.ensureSymbolTable();
+            dest.ensureSymbolTable();
             if (!Collections.disjoint(source.symbolTable.keySet(),
                                       dest.symbolTable.keySet()))
             {
@@ -310,9 +312,7 @@ public class Node
         }
         
         public void putSymbol(String name, Symbol symbol) {
-            if (symbolTable == null) {
-                symbolTable = new LinkedHashMap(5);
-            }
+            ensureSymbolTable();
             symbolTable.put(name, symbol);
             symbol.containingTable = this;
             top.addSymbol(symbol);
@@ -320,6 +320,12 @@ public class Node
         
         public Map getSymbolTable() {
             return symbolTable;
+        }
+        
+        private void ensureSymbolTable() {
+            if (symbolTable == null) {
+                symbolTable = new LinkedHashMap(5);
+            }
         }
   
         // Use LinkedHashMap so that the iteration order is the insertion order
@@ -666,6 +672,7 @@ public class Node
 
     /** Can only be called when node has String context. */
     public final String getString() {
+        if (!(this instanceof StringNode)) Kit.codeBug();
         return ((StringNode)this).str;
     }
 

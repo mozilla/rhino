@@ -220,31 +220,22 @@ ecma/Date/15.9.2.2-2.js
 # JS 1.7 not yet implemented
 js1_7/decompilation
 # "y" flag for regexps
-js1_7/regexp
+js1_7/regexp/yflag.js
 # yield and xml-filtering predicate
 js1_7/geniter/regress-352605.js
 # js1_7 needs investigation
 js1_7/extensions/basic-for-each.js
-js1_7/extensions/destructuring-order.js
-js1_7/extensions/regress-346642-02.js
 js1_7/extensions/regress-346642-06.js
-js1_7/extensions/regress-351070-02.js
 js1_7/extensions/regress-351102-03.js
 js1_7/extensions/regress-351102-04.js
 js1_7/extensions/regress-351102-05.js
 js1_7/extensions/regress-351102-07.js
-js1_7/extensions/regress-352885-02.js
 js1_7/extensions/regress-353214-01.js
 js1_7/extensions/regress-353214-02.js
 js1_7/extensions/regress-353249.js
 js1_7/extensions/regress-353454.js
-js1_7/extensions/regress-354945-01.js
 js1_7/extensions/regress-354945-02.js
-js1_7/extensions/regress-355052-01.js
-js1_7/extensions/regress-355052-02.js
-js1_7/extensions/regress-355052-03.js
 js1_7/extensions/regress-355145.js
-js1_7/extensions/regress-355410.js
 js1_7/extensions/regress-367629.js
 js1_7/extensions/regress-368213.js
 js1_7/extensions/regress-368224.js
@@ -256,20 +247,11 @@ js1_7/iterable/regress-340526-02.js
 js1_7/regress/regress-350387.js
 js1_7/regress/regress-351503-01.js
 js1_7/regress/regress-351503-02.js
-js1_7/regress/regress-352797-02.js
 js1_7/regress/regress-352870-01.js
 js1_7/regress/regress-352870-02.js
-js1_7/regress/regress-352870-03.js
-js1_7/regress/regress-355023.js
-js1_7/regress/regress-355832-01.js
-js1_7/regress/regress-355832-02.js
-js1_7/regress/regress-361566.js
 js1_7/regress/regress-363040-01.js
 js1_7/regress/regress-363040-02.js
-js1_7/regress/regress-373827-01.js
-js1_7/regress/regress-373827-02.js
 js1_7/regress/regress-375695.js
-js1_7/regress/regress-379442.js
 js1_7/regress/regress-379483.js
 
 # JS 1.8 not yet implemented
@@ -654,7 +636,6 @@ e4x/Regress/regress-383255.js
 ecma_3/RegExp/regress-375711.js
 ecma_3/RegExp/regress-375715-04.js
 js1_5/Regress/regress-367561-03.js
-js1_5/extensions/regress-355655.js
 js1_5/extensions/regress-367630.js
 js1_5/extensions/regress-375801.js
 js1_5/extensions/regress-380831.js
@@ -672,3 +653,9 @@ js1_5/extensions/regress-358594-06.js
 js1_7/extensions/regress-380933.js
 ecma_3/extensions/regress-368516.js
 js1_5/extensions/regress-351463-01.js
+js1_5/extensions/regress-355655.js
+js1_7/block/regress-352422.js
+js1_7/block/regress-352786.js
+js1_7/block/regress-352907.js
+js1_7/block/regress-376410.js
+js1_7/block/regress-411279.js

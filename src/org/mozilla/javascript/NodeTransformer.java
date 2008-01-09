@@ -44,6 +44,7 @@ package org.mozilla.javascript;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Map;
 import java.util.ArrayList;
 
 /**
@@ -459,11 +460,14 @@ public class NodeTransformer
                     }
                     // Update "list" and "objectLiteral" for the variables
                     // defined in the destructuring assignment
-                    Set names = ((Node.Scope)scopeNode).getSymbolTable().keySet();
-                    list.addAll(names);
-                    for (int i=0; i < names.size(); i++)
-                        objectLiteral.addChildToBack(
-                            new Node(Token.VOID, Node.newNumber(0.0)));
+                    Map symbols = ((Node.Scope)scopeNode).getSymbolTable();
+                    if (symbols != null) {
+                            Set names = symbols.keySet();
+                            list.addAll(names);
+                            for (int i=0; i < names.size(); i++)
+                                objectLiteral.addChildToBack(
+                                    new Node(Token.VOID, Node.newNumber(0.0)));
+                    }
                     v = c.getFirstChild(); // should be a NAME, checked below
                 }
                 if (v.getType() != Token.NAME) throw Kit.codeBug();
