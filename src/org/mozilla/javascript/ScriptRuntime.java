@@ -1895,7 +1895,7 @@ public class ScriptRuntime {
                                                    : Boolean.FALSE };
             v = f.call(cx, scope, obj, args);
             if (!(v instanceof Scriptable)) {
-                throw typeError("msg.iterator.primitive");
+                throw typeError0("msg.iterator.primitive");
             }
             return (Scriptable) v;
         }
