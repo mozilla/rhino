@@ -540,14 +540,14 @@ final class IRFactory
         Node lvalue;
         int type = lhs.getType();
         if (type == Token.VAR || type == Token.LET) {
-            /*
-             * check that there was only one variable given.
-             * we can't do this in the parser, because then the
-             * parser would have to know something about the
-             * 'init' node of the for-in loop.
-             */
             Node lastChild = lhs.getLastChild();
             if (lhs.getFirstChild() != lastChild) {
+                /*
+                 * check that there was only one variable given.
+                 * we can't do this in the parser, because then the
+                 * parser would have to know something about the
+                 * 'init' node of the for-in loop.
+                 */
                 parser.reportError("msg.mult.index");
             }
             if (lastChild.getType() == Token.ARRAYLIT ||
@@ -557,13 +557,16 @@ final class IRFactory
                 lvalue = lastChild;
                 destructuringLen = lastChild.getIntProp(
                     Node.DESTRUCTURING_ARRAY_LENGTH, 0);
-            } else {
+            } else if (lastChild.getType() == Token.NAME) {
                 lvalue = Node.newString(Token.NAME, lastChild.getString());
+            } else {
+                parser.reportError("msg.bad.for.in.lhs");
+                return obj;
             }
         } else if (type == Token.ARRAYLIT || type == Token.OBJECTLIT) {
-          destructuring = type;
-          lvalue = lhs;
-          destructuringLen = lhs.getIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, 0);
+            destructuring = type;
+            lvalue = lhs;
+            destructuringLen = lhs.getIntProp(Node.DESTRUCTURING_ARRAY_LENGTH, 0);
         } else {
             lvalue = makeReference(lhs);
             if (lvalue == null) {

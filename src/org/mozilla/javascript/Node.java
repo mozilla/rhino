@@ -672,7 +672,6 @@ public class Node
 
     /** Can only be called when node has String context. */
     public final String getString() {
-        if (!(this instanceof StringNode)) Kit.codeBug();
         return ((StringNode)this).str;
     }
 
