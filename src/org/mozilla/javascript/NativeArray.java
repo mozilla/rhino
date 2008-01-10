@@ -135,6 +135,45 @@ public class NativeArray extends IdScriptableObject
         }
         super.setInstanceIdValue(id, value);
     }
+    
+    protected void fillConstructorProperties(IdFunctionObject ctor)
+    {
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_join,
+                "join", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reverse,
+                "reverse", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_sort,
+                "sort", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_push,
+                "push", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_pop,
+                "pop", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_shift,
+                "shift", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_unshift,
+                "unshift", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_splice,
+                "splice", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_concat,
+                "concat", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_slice,
+                "slice", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_indexOf,
+                "indexOf", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_lastIndexOf,
+                "lastIndexOf", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_every,
+                "every", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_filter,
+                "filter", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_forEach,
+                "forEach", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_map,
+                "map", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some,
+                "some", 2);
+        super.fillConstructorProperties(ctor);
+    }
 
     protected void initPrototypeId(int id)
     {
@@ -174,70 +213,96 @@ public class NativeArray extends IdScriptableObject
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
-        switch (id) {
-          case Id_constructor: {
-            boolean inNewExpr = (thisObj == null);
-            if (!inNewExpr) {
-                // IdFunctionObject.construct will set up parent, proto
-                return f.construct(cx, scope, args);
+      again:
+        for (;;) {
+            switch (id) {
+              case ConstructorId_join:
+              case ConstructorId_reverse:
+              case ConstructorId_sort:
+              case ConstructorId_push:
+              case ConstructorId_pop:
+              case ConstructorId_shift:
+              case ConstructorId_unshift:
+              case ConstructorId_splice:
+              case ConstructorId_concat:
+              case ConstructorId_slice:
+              case ConstructorId_indexOf:
+              case ConstructorId_lastIndexOf:
+              case ConstructorId_every:
+              case ConstructorId_filter:
+              case ConstructorId_forEach:
+              case ConstructorId_map:
+              case ConstructorId_some: 
+                thisObj = ScriptRuntime.toObject(scope,
+                        ScriptRuntime.toString(args[0]));
+                args = Arrays.copyOfRange(args, 1, args.length);
+                id = -id;
+                continue again;
+    
+              case Id_constructor: {
+                boolean inNewExpr = (thisObj == null);
+                if (!inNewExpr) {
+                    // IdFunctionObject.construct will set up parent, proto
+                    return f.construct(cx, scope, args);
+                }
+                return jsConstructor(cx, scope, args);
+              }
+    
+              case Id_toString:
+                return toStringHelper(cx, scope, thisObj,
+                    cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
+    
+              case Id_toLocaleString:
+                return toStringHelper(cx, scope, thisObj, false, true);
+    
+              case Id_toSource:
+                return toStringHelper(cx, scope, thisObj, true, false);
+    
+              case Id_join:
+                return js_join(cx, thisObj, args);
+    
+              case Id_reverse:
+                return js_reverse(cx, thisObj, args);
+    
+              case Id_sort:
+                return js_sort(cx, scope, thisObj, args);
+    
+              case Id_push:
+                return js_push(cx, thisObj, args);
+    
+              case Id_pop:
+                return js_pop(cx, thisObj, args);
+    
+              case Id_shift:
+                return js_shift(cx, thisObj, args);
+    
+              case Id_unshift:
+                return js_unshift(cx, thisObj, args);
+    
+              case Id_splice:
+                return js_splice(cx, scope, thisObj, args);
+    
+              case Id_concat:
+                return js_concat(cx, scope, thisObj, args);
+    
+              case Id_slice:
+                return js_slice(cx, thisObj, args);
+    
+              case Id_indexOf:
+                return indexOfHelper(cx, thisObj, args, false);
+    
+              case Id_lastIndexOf:
+                return indexOfHelper(cx, thisObj, args, true);
+    
+              case Id_every:
+              case Id_filter:
+              case Id_forEach:
+              case Id_map:
+              case Id_some:
+                return iterativeMethod(cx, id, scope, thisObj, args);
             }
-            return jsConstructor(cx, scope, args);
-          }
-
-          case Id_toString:
-            return toStringHelper(cx, scope, thisObj,
-                cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
-
-          case Id_toLocaleString:
-            return toStringHelper(cx, scope, thisObj, false, true);
-
-          case Id_toSource:
-            return toStringHelper(cx, scope, thisObj, true, false);
-
-          case Id_join:
-            return js_join(cx, thisObj, args);
-
-          case Id_reverse:
-            return js_reverse(cx, thisObj, args);
-
-          case Id_sort:
-            return js_sort(cx, scope, thisObj, args);
-
-          case Id_push:
-            return js_push(cx, thisObj, args);
-
-          case Id_pop:
-            return js_pop(cx, thisObj, args);
-
-          case Id_shift:
-            return js_shift(cx, thisObj, args);
-
-          case Id_unshift:
-            return js_unshift(cx, thisObj, args);
-
-          case Id_splice:
-            return js_splice(cx, scope, thisObj, args);
-
-          case Id_concat:
-            return js_concat(cx, scope, thisObj, args);
-
-          case Id_slice:
-            return js_slice(cx, thisObj, args);
-
-          case Id_indexOf:
-            return indexOfHelper(cx, thisObj, args, false);
-
-          case Id_lastIndexOf:
-            return indexOfHelper(cx, thisObj, args, true);
-
-          case Id_every:
-          case Id_filter:
-          case Id_forEach:
-          case Id_map:
-          case Id_some:
-            return iterativeMethod(cx, id, scope, thisObj, args);
+            throw new IllegalArgumentException(String.valueOf(id));
         }
-        throw new IllegalArgumentException(String.valueOf(id));
     }
 
     public synchronized Object get(int index, Scriptable start)
@@ -1545,6 +1610,25 @@ public class NativeArray extends IdScriptableObject
         MAX_PROTOTYPE_ID        = 21;
 
 // #/string_id_map#
+    
+    private static final int
+        ConstructorId_join                 = -Id_join,
+        ConstructorId_reverse              = -Id_reverse,
+        ConstructorId_sort                 = -Id_sort,
+        ConstructorId_push                 = -Id_push,
+        ConstructorId_pop                  = -Id_pop,
+        ConstructorId_shift                = -Id_shift,
+        ConstructorId_unshift              = -Id_unshift,
+        ConstructorId_splice               = -Id_splice,
+        ConstructorId_concat               = -Id_concat,
+        ConstructorId_slice                = -Id_slice,
+        ConstructorId_indexOf              = -Id_indexOf,
+        ConstructorId_lastIndexOf          = -Id_lastIndexOf,
+        ConstructorId_every                = -Id_every,
+        ConstructorId_filter               = -Id_filter,
+        ConstructorId_forEach              = -Id_forEach,
+        ConstructorId_map                  = -Id_map,
+        ConstructorId_some                 = -Id_some;
 
     /**
      * Internal representation of the JavaScript array's length property.

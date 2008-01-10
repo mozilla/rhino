@@ -41,6 +41,7 @@
 package org.mozilla.javascript;
 
 import java.text.Collator;
+import java.util.Arrays;
 
 /**
  * This class implements the String native object.
@@ -108,7 +109,43 @@ final class NativeString extends IdScriptableObject
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode,
-                              "fromCharCode", 1);
+                "fromCharCode", 1);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_charAt, "charAt", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_charCodeAt, "charCodeAt", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_indexOf, "indexOf", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_lastIndexOf, "lastIndexOf", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_split, "split", 3);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_substring, "substring", 3);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_toLowerCase, "toLowerCase", 1);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_toUpperCase, "toUpperCase", 1);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_substr, "substr", 3);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_concat, "concat", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_slice, "slice", 3);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_equalsIgnoreCase, "equalsIgnoreCase", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_match, "match", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_search, "search", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_replace, "replace", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_localeCompare, "localeCompare", 2);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1);
+        addIdFunctionProperty(ctor, STRING_TAG,
+                ConstructorId_fromCharCode, "fromCharCode", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -165,170 +202,200 @@ final class NativeString extends IdScriptableObject
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
-        switch (id) {
-          case ConstructorId_fromCharCode: {
-            int N = args.length;
-            if (N < 1)
-                return "";
-            StringBuffer sb = new StringBuffer(N);
-            for (int i = 0; i != N; ++i) {
-                sb.append(ScriptRuntime.toUint16(args[i]));
-            }
-            return sb.toString();
-          }
-
-          case Id_constructor: {
-            String s = (args.length >= 1)
-                ? ScriptRuntime.toString(args[0]) : "";
-            if (thisObj == null) {
-                // new String(val) creates a new String object.
-                return new NativeString(s);
-            }
-            // String(val) converts val to a string value.
-            return s;
-          }
-
-          case Id_toString:
-          case Id_valueOf:
-            // ECMA 15.5.4.2: 'the toString function is not generic.
-            return realThis(thisObj, f).string;
-
-          case Id_toSource: {
-            String s = realThis(thisObj, f).string;
-            return "(new String(\""+ScriptRuntime.escapeString(s)+"\"))";
-          }
-
-          case Id_charAt:
-          case Id_charCodeAt: {
-             // See ECMA 15.5.4.[4,5]
-            String target = ScriptRuntime.toString(thisObj);
-            double pos = ScriptRuntime.toInteger(args, 0);
-            if (pos < 0 || pos >= target.length()) {
-                if (id == Id_charAt) return "";
-                else return ScriptRuntime.NaNobj;
-            }
-            char c = target.charAt((int)pos);
-            if (id == Id_charAt) return String.valueOf(c);
-            else return ScriptRuntime.wrapInt(c);
-          }
-
-          case Id_indexOf:
-            return ScriptRuntime.wrapInt(js_indexOf(
-                ScriptRuntime.toString(thisObj), args));
-
-          case Id_lastIndexOf:
-            return ScriptRuntime.wrapInt(js_lastIndexOf(
-                ScriptRuntime.toString(thisObj), args));
-
-          case Id_split:
-            return js_split(cx, scope, ScriptRuntime.toString(thisObj), args);
-
-          case Id_substring:
-            return js_substring(cx, ScriptRuntime.toString(thisObj), args);
-
-          case Id_toLowerCase:
-            // See ECMA 15.5.4.11
-            return ScriptRuntime.toString(thisObj).toLowerCase();
-
-          case Id_toUpperCase:
-            // See ECMA 15.5.4.12
-            return ScriptRuntime.toString(thisObj).toUpperCase();
-
-          case Id_substr:
-            return js_substr(ScriptRuntime.toString(thisObj), args);
-
-          case Id_concat:
-            return js_concat(ScriptRuntime.toString(thisObj), args);
-
-          case Id_slice:
-            return js_slice(ScriptRuntime.toString(thisObj), args);
-
-          case Id_bold:
-            return tagify(thisObj, "b", null, null);
-
-          case Id_italics:
-            return tagify(thisObj, "i", null, null);
-
-          case Id_fixed:
-            return tagify(thisObj, "tt", null, null);
-
-          case Id_strike:
-            return tagify(thisObj, "strike", null, null);
-
-          case Id_small:
-            return tagify(thisObj, "small", null, null);
-
-          case Id_big:
-            return tagify(thisObj, "big", null, null);
-
-          case Id_blink:
-            return tagify(thisObj, "blink", null, null);
-
-          case Id_sup:
-            return tagify(thisObj, "sup", null, null);
-
-          case Id_sub:
-            return tagify(thisObj, "sub", null, null);
-
-          case Id_fontsize:
-            return tagify(thisObj, "font", "size", args);
-
-          case Id_fontcolor:
-            return tagify(thisObj, "font", "color", args);
-
-          case Id_link:
-            return tagify(thisObj, "a", "href", args);
-
-          case Id_anchor:
-            return tagify(thisObj, "a", "name", args);
-
-          case Id_equals:
-          case Id_equalsIgnoreCase: {
-            String s1 = ScriptRuntime.toString(thisObj);
-            String s2 = ScriptRuntime.toString(args, 0);
-            return ScriptRuntime.wrapBoolean(
-                (id == Id_equals) ? s1.equals(s2) : s1.equalsIgnoreCase(s2));
-          }
-
-          case Id_match:
-          case Id_search:
-          case Id_replace:
-            {
-                int actionType;
-                if (id == Id_match) {
-                    actionType = RegExpProxy.RA_MATCH;
-                } else if (id == Id_search) {
-                    actionType = RegExpProxy.RA_SEARCH;
-                } else {
-                    actionType = RegExpProxy.RA_REPLACE;
+      again:
+        for(;;) {
+            switch (id) {
+              case ConstructorId_charAt:
+              case ConstructorId_charCodeAt:
+              case ConstructorId_indexOf:
+              case ConstructorId_lastIndexOf:
+              case ConstructorId_split:
+              case ConstructorId_substring:
+              case ConstructorId_toLowerCase:
+              case ConstructorId_toUpperCase:
+              case ConstructorId_substr:
+              case ConstructorId_concat:
+              case ConstructorId_slice:
+              case ConstructorId_equalsIgnoreCase:
+              case ConstructorId_match:
+              case ConstructorId_search:
+              case ConstructorId_replace:
+              case ConstructorId_localeCompare:
+              case ConstructorId_toLocaleLowerCase:
+                thisObj = ScriptRuntime.toObject(scope,
+                        ScriptRuntime.toString(args[0]));
+                args = Arrays.copyOfRange(args, 1, args.length);
+                id = -id;
+                continue again;
+    
+              case ConstructorId_fromCharCode: {
+                int N = args.length;
+                if (N < 1)
+                    return "";
+                StringBuffer sb = new StringBuffer(N);
+                for (int i = 0; i != N; ++i) {
+                    sb.append(ScriptRuntime.toUint16(args[i]));
                 }
-                return ScriptRuntime.checkRegExpProxy(cx).
-                    action(cx, scope, thisObj, args, actionType);
+                return sb.toString();
+              }
+    
+              case Id_constructor: {
+                String s = (args.length >= 1)
+                    ? ScriptRuntime.toString(args[0]) : "";
+                if (thisObj == null) {
+                    // new String(val) creates a new String object.
+                    return new NativeString(s);
+                }
+                // String(val) converts val to a string value.
+                return s;
+              }
+    
+              case Id_toString:
+              case Id_valueOf:
+                // ECMA 15.5.4.2: 'the toString function is not generic.
+                return realThis(thisObj, f).string;
+    
+              case Id_toSource: {
+                String s = realThis(thisObj, f).string;
+                return "(new String(\""+ScriptRuntime.escapeString(s)+"\"))";
+              }
+    
+              case Id_charAt:
+              case Id_charCodeAt: {
+                 // See ECMA 15.5.4.[4,5]
+                String target = ScriptRuntime.toString(thisObj);
+                double pos = ScriptRuntime.toInteger(args, 0);
+                if (pos < 0 || pos >= target.length()) {
+                    if (id == Id_charAt) return "";
+                    else return ScriptRuntime.NaNobj;
+                }
+                char c = target.charAt((int)pos);
+                if (id == Id_charAt) return String.valueOf(c);
+                else return ScriptRuntime.wrapInt(c);
+              }
+    
+              case Id_indexOf:
+                return ScriptRuntime.wrapInt(js_indexOf(
+                    ScriptRuntime.toString(thisObj), args));
+    
+              case Id_lastIndexOf:
+                return ScriptRuntime.wrapInt(js_lastIndexOf(
+                    ScriptRuntime.toString(thisObj), args));
+    
+              case Id_split:
+                return js_split(cx, scope, ScriptRuntime.toString(thisObj),
+                        args);
+    
+              case Id_substring:
+                return js_substring(cx, ScriptRuntime.toString(thisObj), args);
+    
+              case Id_toLowerCase:
+                // See ECMA 15.5.4.11
+                return ScriptRuntime.toString(thisObj).toLowerCase();
+    
+              case Id_toUpperCase:
+                // See ECMA 15.5.4.12
+                return ScriptRuntime.toString(thisObj).toUpperCase();
+    
+              case Id_substr:
+                return js_substr(ScriptRuntime.toString(thisObj), args);
+    
+              case Id_concat:
+                return js_concat(ScriptRuntime.toString(thisObj), args);
+    
+              case Id_slice:
+                return js_slice(ScriptRuntime.toString(thisObj), args);
+    
+              case Id_bold:
+                return tagify(thisObj, "b", null, null);
+    
+              case Id_italics:
+                return tagify(thisObj, "i", null, null);
+    
+              case Id_fixed:
+                return tagify(thisObj, "tt", null, null);
+    
+              case Id_strike:
+                return tagify(thisObj, "strike", null, null);
+    
+              case Id_small:
+                return tagify(thisObj, "small", null, null);
+    
+              case Id_big:
+                return tagify(thisObj, "big", null, null);
+    
+              case Id_blink:
+                return tagify(thisObj, "blink", null, null);
+    
+              case Id_sup:
+                return tagify(thisObj, "sup", null, null);
+    
+              case Id_sub:
+                return tagify(thisObj, "sub", null, null);
+    
+              case Id_fontsize:
+                return tagify(thisObj, "font", "size", args);
+    
+              case Id_fontcolor:
+                return tagify(thisObj, "font", "color", args);
+    
+              case Id_link:
+                return tagify(thisObj, "a", "href", args);
+    
+              case Id_anchor:
+                return tagify(thisObj, "a", "name", args);
+    
+              case Id_equals:
+              case Id_equalsIgnoreCase: {
+                String s1 = ScriptRuntime.toString(thisObj);
+                String s2 = ScriptRuntime.toString(args, 0);
+                return ScriptRuntime.wrapBoolean(
+                    (id == Id_equals) ? s1.equals(s2) 
+                                      : s1.equalsIgnoreCase(s2));
+              }
+                  
+              case Id_match:
+              case Id_search:
+              case Id_replace:
+                {
+                    int actionType;
+                    if (id == Id_match) {
+                        actionType = RegExpProxy.RA_MATCH;
+                    } else if (id == Id_search) {
+                        actionType = RegExpProxy.RA_SEARCH;
+                    } else {
+                        actionType = RegExpProxy.RA_REPLACE;
+                    }
+                    return ScriptRuntime.checkRegExpProxy(cx).
+                        action(cx, scope, thisObj, args, actionType);
+                }
+                // ECMA-262 1 5.5.4.9
+              case Id_localeCompare:
+                {
+                    // For now, create and configure a collator instance. I can't
+                    // actually imagine that this'd be slower than caching them
+                    // a la ClassCache, so we aren't trying to outsmart ourselves
+                    // with a caching mechanism for now.
+                    Collator collator = Collator.getInstance(cx.getLocale());
+                    collator.setStrength(Collator.IDENTICAL);
+                    collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
+                    return ScriptRuntime.wrapNumber(collator.compare(
+                            ScriptRuntime.toString(thisObj), 
+                            ScriptRuntime.toString(args, 0)));
+                }
+              case Id_toLocaleLowerCase:
+                {
+                    return ScriptRuntime.toString(thisObj)
+                            .toLowerCase(cx.getLocale());
+                }
+              case Id_toLocaleUpperCase:
+                {
+                    return ScriptRuntime.toString(thisObj)
+                            .toUpperCase(cx.getLocale());
+                }
             }
-            // ECMA-262 1 5.5.4.9
-            case Id_localeCompare:
-            {
-                // For now, create and configure a collator instance. I can't
-                // actually imagine that this'd be slower than caching them
-                // a la ClassCache, so we aren't trying to outsmart ourselves
-                // with a caching mechanism for now.
-                Collator collator = Collator.getInstance(cx.getLocale());
-                collator.setStrength(Collator.IDENTICAL);
-                collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
-                return ScriptRuntime.wrapNumber(collator.compare(
-                        ScriptRuntime.toString(thisObj), 
-                        ScriptRuntime.toString(args, 0)));
-            }
-            case Id_toLocaleLowerCase:
-            {
-                return ScriptRuntime.toString(thisObj).toLowerCase(cx.getLocale());
-            }
-            case Id_toLocaleUpperCase:
-            {
-                return ScriptRuntime.toString(thisObj).toUpperCase(cx.getLocale());
-            }
+            throw new IllegalArgumentException(String.valueOf(id));
         }
-        throw new IllegalArgumentException(String.valueOf(id));
     }
 
     private static NativeString realThis(Scriptable thisObj, IdFunctionObject f)
@@ -888,6 +955,25 @@ final class NativeString extends IdScriptableObject
         MAX_PROTOTYPE_ID             = 36;
 
 // #/string_id_map#
+
+    private static final int 
+        ConstructorId_charAt         = -Id_charAt,
+        ConstructorId_charCodeAt     = -Id_charCodeAt,
+        ConstructorId_indexOf        = -Id_indexOf,
+        ConstructorId_lastIndexOf    = -Id_lastIndexOf,
+        ConstructorId_split          = -Id_split,
+        ConstructorId_substring      = -Id_substring,
+        ConstructorId_toLowerCase    = -Id_toLowerCase,
+        ConstructorId_toUpperCase    = -Id_toUpperCase,
+        ConstructorId_substr         = -Id_substr,
+        ConstructorId_concat         = -Id_concat,
+        ConstructorId_slice          = -Id_slice,
+        ConstructorId_equalsIgnoreCase = -Id_equalsIgnoreCase,
+        ConstructorId_match          = -Id_match,
+        ConstructorId_search         = -Id_search,
+        ConstructorId_replace        = -Id_replace,
+        ConstructorId_localeCompare  = -Id_localeCompare,
+        ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
 
     private String string;
 }
