@@ -38,6 +38,8 @@ package org.mozilla.javascript.xmlimpl;
 
 import org.w3c.dom.*;
 
+import javax.xml.parsers.DocumentBuilder;
+
 import org.mozilla.javascript.*;
 
 //    Disambiguate from org.mozilla.javascript.Node
@@ -54,6 +56,8 @@ class XmlProcessor {
 
     private javax.xml.parsers.DocumentBuilderFactory dom;
     private javax.xml.transform.TransformerFactory xform;
+    private DocumentBuilder documentBuilder;
+    private RhinoSAXErrorHandler errorHandler = new RhinoSAXErrorHandler();
 
 
     private static class RhinoSAXErrorHandler implements ErrorHandler {
@@ -79,6 +83,8 @@ class XmlProcessor {
     XmlProcessor() {
         setDefault();
         this.dom = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        this.dom.setNamespaceAware(true);
+        this.dom.setIgnoringComments(false);
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
     }
 
@@ -147,8 +153,30 @@ class XmlProcessor {
         return nl.toString();
     }
 
-    private javax.xml.parsers.DocumentBuilderFactory newDomFactory() {
+    private javax.xml.parsers.DocumentBuilderFactory getDomFactory() {
         return dom;
+    }
+    
+    private synchronized DocumentBuilder getDocumentBuilderFromPool()
+        throws javax.xml.parsers.ParserConfigurationException
+    {
+        DocumentBuilder result;
+        if (documentBuilder == null) {
+            javax.xml.parsers.DocumentBuilderFactory factory = getDomFactory();
+            result = factory.newDocumentBuilder();
+        } else {
+            result = documentBuilder;
+            documentBuilder = null;
+        }
+        result.setErrorHandler(errorHandler);
+        return result;
+    }
+        
+    private synchronized void returnDocumentBuilderToPool(DocumentBuilder db) {
+        if (documentBuilder == null) {
+            documentBuilder = db;
+            documentBuilder.reset();
+        }
     }
 
     private void addProcessingInstructionsTo(java.util.Vector v, Node node) {
@@ -197,15 +225,11 @@ class XmlProcessor {
 
     final Node toXml(String defaultNamespaceUri, String xml) throws org.xml.sax.SAXException {
         //    See ECMA357 10.3.1
-        javax.xml.parsers.DocumentBuilderFactory domFactory = newDomFactory();
-        domFactory.setNamespaceAware(true);
-        domFactory.setIgnoringComments(false);
+        DocumentBuilder builder = null;
         try {
             String syntheticXml = "<parent xmlns=\"" + defaultNamespaceUri +
                 "\">" + xml + "</parent>";
-            javax.xml.parsers.DocumentBuilder builder =
-                domFactory.newDocumentBuilder();
-            builder.setErrorHandler(new RhinoSAXErrorHandler());
+            builder = getDocumentBuilderFromPool(); 
             Document document = builder.parse( new org.xml.sax.InputSource(new java.io.StringReader(syntheticXml)) );
             if (ignoreProcessingInstructions) {
                 java.util.Vector v = new java.util.Vector();
@@ -251,16 +275,24 @@ class XmlProcessor {
             throw new RuntimeException("Unreachable.");
         } catch (javax.xml.parsers.ParserConfigurationException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (builder != null)
+                returnDocumentBuilderToPool(builder);
         }
     }
 
     Document newDocument() {
+        DocumentBuilder builder = null;
         try {
             //    TODO    Should this use XML settings?
-            return newDomFactory().newDocumentBuilder().newDocument();
+            builder = getDocumentBuilderFromPool();
+            return builder.newDocument();
         } catch (javax.xml.parsers.ParserConfigurationException ex) {
             //    TODO    How to handle these runtime errors?
             throw new RuntimeException(ex);
+        } finally {
+            if (builder != null)
+                returnDocumentBuilderToPool(builder);
         }
     }
 
