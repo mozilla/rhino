@@ -659,3 +659,6 @@ js1_7/block/regress-352786.js
 js1_7/block/regress-352907.js
 js1_7/block/regress-376410.js
 js1_7/block/regress-411279.js
+ecma_3/Number/15.7.4.2-01.js
+ecma_3/Number/15.7.4.3-01.js
+ecma_3/Number/15.7.4.7-2.js
