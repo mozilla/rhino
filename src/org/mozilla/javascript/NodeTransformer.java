@@ -42,7 +42,6 @@
 
 package org.mozilla.javascript;
 
-import java.util.Iterator;
 import java.util.Set;
 import java.util.Map;
 import java.util.ArrayList;
@@ -77,12 +76,12 @@ public class NodeTransformer
 
         // to save against upchecks if no finally blocks are used.
         hasFinally = false;
-        
+
         // Flatten all only if we are not using scope objects for block scope
         boolean createScopeObjects = tree.getType() != Token.FUNCTION ||
                                   ((FunctionNode)tree).requiresActivation();
         tree.flattenSymbolTable(!createScopeObjects);
-        
+
         //uncomment to print tree before transformation
         //if (Token.printTrees) System.out.println(tree.toStringTree(tree));
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects);
@@ -109,19 +108,19 @@ public class NodeTransformer
 
             int type = node.getType();
             if (createScopeObjects &&
-                (type == Token.BLOCK || type == Token.LOOP) &&
+                (type == Token.BLOCK || type == Token.LOOP ||
+                 type == Token.ARRAYCOMP) &&
                 (node instanceof Node.Scope))
             {
                 Node.Scope newScope = (Node.Scope) node;
                 if (newScope.symbolTable != null) {
                     // transform to let statement so we get a with statement
                     // created to contain scoped let variables
-                    Node let = new Node(Token.LET);
+                    Node let = new Node(type == Token.ARRAYCOMP ? Token.LETEXPR
+                                                                : Token.LET);
                     Node innerLet = new Node(Token.LET);
                     let.addChildToBack(innerLet);
-                    Iterator iter = newScope.symbolTable.keySet().iterator();
-                    while (iter.hasNext()) {
-                        String name = (String) iter.next();
+                    for (String name: newScope.symbolTable.keySet()) {
                         innerLet.addChildToBack(Node.newString(Token.NAME, name));
                     }
                     newScope.symbolTable = null; // so we don't transform again
@@ -443,7 +442,7 @@ public class NodeTransformer
         if (createWith) {
             result = new Node(isExpression ? Token.WITHEXPR : Token.BLOCK);
             result = replaceCurrent(parent, previous, scopeNode, result);
-            ArrayList list = new ArrayList();
+            ArrayList<Object> list = new ArrayList<Object>();
             Node objectLiteral = new Node(Token.OBJECTLIT);
             for (Node v=vars.getFirstChild(); v != null; v = v.getNext()) {
                 if (v.getType() == Token.LETEXPR) {
@@ -460,13 +459,13 @@ public class NodeTransformer
                     }
                     // Update "list" and "objectLiteral" for the variables
                     // defined in the destructuring assignment
-                    Map symbols = ((Node.Scope)scopeNode).getSymbolTable();
+                    Map<String,?> symbols = ((Node.Scope)scopeNode).getSymbolTable();
                     if (symbols != null) {
-                            Set names = symbols.keySet();
-                            list.addAll(names);
-                            for (int i=0; i < names.size(); i++)
-                                objectLiteral.addChildToBack(
-                                    new Node(Token.VOID, Node.newNumber(0.0)));
+                        Set<String> names = symbols.keySet();
+                        list.addAll(names);
+                        for (int i=0; i < names.size(); i++)
+                            objectLiteral.addChildToBack(
+                                new Node(Token.VOID, Node.newNumber(0.0)));
                     }
                     v = c.getFirstChild(); // should be a NAME, checked below
                 }
@@ -561,4 +560,3 @@ public class NodeTransformer
     private ObjArray loopEnds;
     private boolean hasFinally;
 }
-

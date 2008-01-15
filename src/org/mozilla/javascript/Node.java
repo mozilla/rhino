@@ -307,8 +307,7 @@ public class Node
         }
         
         public Symbol getSymbol(String name) {
-            return (Symbol) (symbolTable == null ? null 
-                                                 : symbolTable.get(name));
+            return symbolTable == null ? null : symbolTable.get(name);
         }
         
         public void putSymbol(String name, Symbol symbol) {
@@ -318,18 +317,18 @@ public class Node
             top.addSymbol(symbol);
         }
         
-        public Map getSymbolTable() {
+        public Map<String,Symbol> getSymbolTable() {
             return symbolTable;
         }
         
         private void ensureSymbolTable() {
             if (symbolTable == null) {
-                symbolTable = new LinkedHashMap(5);
+                symbolTable = new LinkedHashMap<String,Symbol>(5);
             }
         }
   
         // Use LinkedHashMap so that the iteration order is the insertion order
-        protected LinkedHashMap symbolTable;
+        protected LinkedHashMap<String,Symbol> symbolTable;
         private Scope parent;
         private ScriptOrFnNode top;
     }
