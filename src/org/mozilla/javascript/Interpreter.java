@@ -2558,7 +2558,7 @@ public class Interpreter implements Evaluator
         int indexReg = -1;
 
         if (cx.lastInterpreterFrame != null) {
-            // save the top frame from the previous interpreterLoop
+            // save the top frame from the previous interpretLoop
             // invocation on the stack
             if (cx.previousInterpreterInvocations == null) {
                 cx.previousInterpreterInvocations = new ObjArray();
@@ -4374,7 +4374,7 @@ switch (op) {
                 // Walk the parent chain of frame.scope until a NativeCall is 
                 // found. Normally, frame.scope is a NativeCall when called 
                 // from initFrame() for a debugged or activatable function. 
-                // However, when called from interpreterLoop() as part of 
+                // However, when called from interpretLoop() as part of
                 // restarting a continuation, it can also be a NativeWith if 
                 // the continuation was captured within a "with" or "catch" 
                 // block ("catch" implicitly uses NativeWith to create a scope 
