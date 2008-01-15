@@ -232,12 +232,16 @@ public class NativeArray extends IdScriptableObject
               case ConstructorId_filter:
               case ConstructorId_forEach:
               case ConstructorId_map:
-              case ConstructorId_some: 
+              case ConstructorId_some: {
                 thisObj = ScriptRuntime.toObject(scope,
                         ScriptRuntime.toString(args[0]));
-                args = Arrays.copyOfRange(args, 1, args.length);
+                Object[] newArgs = new Object[args.length-1];
+                for (int i=0; i < newArgs.length; i++)
+                    newArgs[i] = args[i+1];
+                args = newArgs;
                 id = -id;
                 continue again;
+              }
     
               case Id_constructor: {
                 boolean inNewExpr = (thisObj == null);
