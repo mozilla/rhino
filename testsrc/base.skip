@@ -15,6 +15,16 @@ js1_5/Regress/regress-330352.js
 ecma_3/LexicalConventions/7.9.1.js
 ecma_3/extensions/7.9.1.js
 
+# tests that do not work on non-English locales or for timezones outside the US
+ecma_3/Date/15.9.5.5.js
+js1_5/Regress/regress-58116.js
+
+# Fails on Macs?
+lc2/JavaToJS/char-002.js
+
+# Stress test; Reports of StackOverflowError (Mac only?)
+js1_5/Regress/regress-98901.js
+
 # performance regression test
 js1_5/Array/regress-99120-01.js
 js1_5/extensions/regress-371636.js
