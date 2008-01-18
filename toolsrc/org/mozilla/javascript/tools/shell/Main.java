@@ -352,35 +352,11 @@ public class Main
             BufferedReader in = new BufferedReader
                 (new InputStreamReader(global.getIn()));
             int lineno = 1;
-            String prompt1 = "js> ";
-            String prompt2 = "  > ";
             boolean hitEOF = false;
             while (!hitEOF) {
-                if (ScriptableObject.hasProperty(global, "prompts")) {
-                    Object prompts = ScriptableObject.getProperty(global,
-                                                                  "prompts");
-                    if (prompts instanceof Scriptable) {
-                        Scriptable s = (Scriptable) prompts;
-                        if (ScriptableObject.hasProperty(s, 0) &&
-                            ScriptableObject.hasProperty(s, 1))
-                        {
-                            Object elem0 = ScriptableObject.getProperty(s, 0);
-                            if (elem0 instanceof Function) {
-                                elem0 = ((Function) elem0).call(cx, global, s,
-                                        new Object[0]);
-                            }
-                            prompt1 = Context.toString(elem0);
-                            Object elem1 = ScriptableObject.getProperty(s, 1);
-                            if (elem1 instanceof Function) {
-                                elem1 = ((Function) elem1).call(cx, global, s,
-                                        new Object[0]);
-                            }
-                            prompt2 = Context.toString(elem1);
-                        }
-                    }
-                }
+            	String[] prompts = global.getPrompts(cx);
                 if (filename == null)
-                    ps.print(prompt1);
+                    ps.print(prompts[0]);
                 ps.flush();
                 String source = "";
 
@@ -402,7 +378,7 @@ public class Main
                     lineno++;
                     if (cx.stringIsCompilableUnit(source))
                         break;
-                    ps.print(prompt2);
+                    ps.print(prompts[1]);
                 }
                 Script script = loadScriptFromSource(cx, source, "<stdin>",
                                                      lineno, null);

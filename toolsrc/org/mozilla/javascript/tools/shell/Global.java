@@ -46,6 +46,8 @@ package org.mozilla.javascript.tools.shell;
 import java.io.*;
 import java.net.*;
 import java.lang.reflect.*;
+import java.util.List;
+import java.util.ArrayList;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 import org.mozilla.javascript.serialize.*;
@@ -67,6 +69,7 @@ public class Global extends ImporterTopLevel
     private boolean sealedStdLib = false;
     boolean initialized;
     private QuitAction quitAction;
+    private String[] prompts = { "js> ", "  > " };
 
     public Global()
     {
@@ -337,6 +340,33 @@ public class Global extends ImporterTopLevel
         in.close();
         return Context.toObject(deserialized, scope);
     }
+    
+    public String[] getPrompts(Context cx) {
+        if (ScriptableObject.hasProperty(this, "prompts")) {
+            Object promptsJS = ScriptableObject.getProperty(this,
+                                                            "prompts");
+            if (promptsJS instanceof Scriptable) {
+                Scriptable s = (Scriptable) promptsJS;
+                if (ScriptableObject.hasProperty(s, 0) &&
+                    ScriptableObject.hasProperty(s, 1))
+                {
+                    Object elem0 = ScriptableObject.getProperty(s, 0);
+                    if (elem0 instanceof Function) {
+                        elem0 = ((Function) elem0).call(cx, this, s,
+                                new Object[0]);
+                    }
+                    prompts[0] = Context.toString(elem0);
+                    Object elem1 = ScriptableObject.getProperty(s, 1);
+                    if (elem1 instanceof Function) {
+                        elem1 = ((Function) elem1).call(cx, this, s,
+                                new Object[0]);
+                    }
+                    prompts[1] = Context.toString(elem1);
+                }
+            }
+        }
+        return prompts;
+    }    
 
     /**
      * The spawn function runs a given function or script in a different
