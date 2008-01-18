@@ -147,13 +147,14 @@ js1_5/Regress/regress-68498-003.js
 
 #Rhino compiled mode is limited by Java classfile size limitations
 #js1_5/Regress/regress-80981.js
-#js1_5/Regress/regress-89443.js
 #js1_5/Regress/regress-90445.js
 #js1_5/Regress/regress-111557.js
 
 #Rhino relies on JVM to throw StackOverflow exception and does not
 #detect too deep recursion explicitly.
 js1_5/extensions/regress-192465.js
+js1_5/extensions/regress-226507.js
+js1_5/Regress/regress-89443.js
 
 # Skip these two; see http://bugzilla.mozilla.org/show_bug.cgi?id=81086, large
 # switch statement
