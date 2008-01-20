@@ -2155,7 +2155,7 @@ public class ScriptRuntime {
 
         Object value;
         for (;;) {
-            // Ignore XML lookup as requred by ECMA 357, 11.2.2.1
+            // Ignore XML lookup as required by ECMA 357, 11.2.2.1
             value = ScriptableObject.getProperty(thisObj, property);
             if (value != Scriptable.NOT_FOUND) {
                 break;
@@ -2176,7 +2176,7 @@ public class ScriptRuntime {
             if (noSuchMethod instanceof Callable)
                 value = new NoSuchMethodShim((Callable)noSuchMethod, property);
             else
-                throw notFunctionError(value, property);
+                throw notFunctionError(thisObj, value, property);
         }
 
         storeScriptable(cx, thisObj);
@@ -3605,19 +3605,31 @@ public class ScriptRuntime {
     public static RuntimeException notFunctionError(Object value,
                                                     Object messageHelper)
     {
-        // XXX Use value for better error reporting
+        // Use value for better error reporting
         String msg = (messageHelper == null)
                      ? "null" : messageHelper.toString();
         if (value == Scriptable.NOT_FOUND) {
             return typeError1("msg.function.not.found", msg);
         }
-        return typeError2("msg.isnt.function", msg,
-                value == null ? "null" : value.getClass().getName());
+        return typeError2("msg.isnt.function", msg, typeof(value));
+    }
+
+    public static RuntimeException notFunctionError(Object obj, Object value,
+            String propertyName)
+    {
+        // Use obj and value for better error reporting
+        String objString = toString(obj);
+        if (value == Scriptable.NOT_FOUND) {
+            return typeError2("msg.function.not.found.in", propertyName,
+                    objString);
+        }
+        return typeError3("msg.isnt.function.in", propertyName, objString,
+                          typeof(value));
     }
 
     private static RuntimeException notXmlError(Object value)
     {
-        throw typeError1("msg.isnt.xml.object", ScriptRuntime.toString(value));
+        throw typeError1("msg.isnt.xml.object", toString(value));
     }
 
     private static void warnAboutNonJSObject(Object nonJSObject)
