@@ -79,11 +79,6 @@ final class IRFactory
         return new Node(nodeType);
     }
 
-    Node createLeaf(int nodeType, int nodeOp)
-    {
-        return new Node(nodeType, nodeOp);
-    }
-
     /**
      * Statement leaf nodes.
      */
@@ -1603,4 +1598,3 @@ final class IRFactory
     private static final int ALWAYS_TRUE_BOOLEAN = 1;
     private static final int ALWAYS_FALSE_BOOLEAN = -1;
 }
-
