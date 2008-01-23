@@ -77,7 +77,7 @@ final class Arguments extends IdScriptableObject
 
     public String getClassName()
     {
-        return "Arguments";
+        return "Object";
     }
 
     public boolean has(int index, Scriptable start)
