@@ -285,6 +285,11 @@ public class ScriptRuntime {
                 return (d == d && d != 0.0);
             }
             if (val instanceof Scriptable) {
+                if (val instanceof ScriptableObject &&
+                    ((ScriptableObject) val).avoidObjectDectection())
+                {
+                    return false;
+                }
                 if (Context.getContext().isVersionECMA1()) {
                     // pure ECMA
                     return true;
@@ -2429,9 +2434,13 @@ public class ScriptRuntime {
             return "undefined";
         if (value instanceof Scriptable)
         {
+            if (value instanceof ScriptableObject &&
+                ((ScriptableObject)value).avoidObjectDectection())
+            {
+                return "undefined";
+            }
             if (value instanceof XMLObject)
                 return "xml";
-
             return (value instanceof Callable) ? "function" : "object";
         }
         if (value instanceof String)

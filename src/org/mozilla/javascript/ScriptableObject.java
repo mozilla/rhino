@@ -775,6 +775,21 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
         return ScriptRuntime.jsDelegatesTo(instance, this);
     }
+    
+    /**
+     * Emulate the SpiderMonkey (and Firefox) feature of allowing
+     * custom objects to avoid detection by normal "object detection"
+     * code patterns. This is used to implement document.all.
+     * See https://bugzilla.mozilla.org/show_bug.cgi?id=412247.
+     * This is an analog to JOF_DETECTING from SpiderMonkey; see
+     * https://bugzilla.mozilla.org/show_bug.cgi?id=248549.
+     * Other than this special case, embeddings should return false.
+     * @return true if this object should avoid object detection
+     * @since 1.7R1
+     */
+    public boolean avoidObjectDectection() {
+        return false;
+    }
 
     /**
      * Custom <tt>==</tt> operator.
