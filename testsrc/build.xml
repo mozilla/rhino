@@ -112,6 +112,7 @@
         <pathelement path="${classes}" />
         <pathelement path="${test.classes}" />
      	<pathelement path="lib/emma.jar"/>
+        <pathelement path="lib/junit.jar" />
       </classpath>
       <batchtest todir="build/test">
         <fileset dir="${test.classes}" includes="**/*Tests.class"/>
