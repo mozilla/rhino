@@ -787,7 +787,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @return true if this object should avoid object detection
      * @since 1.7R1
      */
-    public boolean avoidObjectDectection() {
+    public boolean avoidObjectDetection() {
         return false;
     }
 

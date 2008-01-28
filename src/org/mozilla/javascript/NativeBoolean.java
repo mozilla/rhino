@@ -98,7 +98,15 @@ final class NativeBoolean extends IdScriptableObject
         int id = f.methodId();
 
         if (id == Id_constructor) {
-            boolean b = ScriptRuntime.toBoolean(args, 0);
+            boolean b;
+            if (args.length == 0) {
+                b = false;
+            } else {
+                b = args[0] instanceof ScriptableObject &&
+                        ((ScriptableObject) args[0]).avoidObjectDetection()
+                    ? true
+                    : ScriptRuntime.toBoolean(args[0]);
+            }
             if (thisObj == null) {
                 // new Boolean(val) creates a new boolean object.
                 return new NativeBoolean(b);

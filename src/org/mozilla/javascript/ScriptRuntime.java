@@ -286,7 +286,7 @@ public class ScriptRuntime {
             }
             if (val instanceof Scriptable) {
                 if (val instanceof ScriptableObject &&
-                    ((ScriptableObject) val).avoidObjectDectection())
+                    ((ScriptableObject) val).avoidObjectDetection())
                 {
                     return false;
                 }
@@ -303,10 +303,6 @@ public class ScriptRuntime {
             warnAboutNonJSObject(val);
             return true;
         }
-    }
-
-    public static boolean toBoolean(Object[] args, int index) {
-        return (index < args.length) ? toBoolean(args[index]) : false;
     }
 
     /**
@@ -2435,7 +2431,7 @@ public class ScriptRuntime {
         if (value instanceof Scriptable)
         {
             if (value instanceof ScriptableObject &&
-                ((ScriptableObject)value).avoidObjectDectection())
+                ((ScriptableObject)value).avoidObjectDetection())
             {
                 return "undefined";
             }
