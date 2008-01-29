@@ -89,7 +89,8 @@ public class Node
         PARENTHESIZED_PROP = 19, // expression is parenthesized
         GENERATOR_END_PROP = 20,
         DESTRUCTURING_ARRAY_LENGTH = 21,
-        LAST_PROP          = 21;
+        DESTRUCTURING_NAMES= 22,
+        LAST_PROP          = 22;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -573,6 +574,7 @@ public class Node
                 case GENERATOR_END_PROP: return "generator_end";
                 case DESTRUCTURING_ARRAY_LENGTH:
                                          return "destructuring_array_length";
+                case DESTRUCTURING_NAMES:return "destructuring_names";
 
                 default: Kit.codeBug();
             }
@@ -1283,6 +1285,17 @@ public class Node
                         throw Kit.codeBug();
                     }
                     break;
+                  case OBJECT_IDS_PROP: {
+                    Object[] a = (Object[]) x.objectValue;
+                    value = "[";
+                    for (int i=0; i < a.length; i++) {
+                        value += a[i].toString();
+                        if (i+1 < a.length)
+                            value += ", ";
+                    }
+                    value += "]";
+                    break;
+                  }
                   default :
                     Object obj = x.objectValue;
                     if (obj != null) {

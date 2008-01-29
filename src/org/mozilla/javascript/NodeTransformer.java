@@ -45,6 +45,7 @@ package org.mozilla.javascript;
 import java.util.Set;
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class transforms a tree to a lower-level representation for codegen.
@@ -445,9 +446,12 @@ public class NodeTransformer
             ArrayList<Object> list = new ArrayList<Object>();
             Node objectLiteral = new Node(Token.OBJECTLIT);
             for (Node v=vars.getFirstChild(); v != null; v = v.getNext()) {
-                if (v.getType() == Token.LETEXPR) {
+                Node current = v;
+                if (current.getType() == Token.LETEXPR) {
                     // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
-                    Node c = v.getFirstChild();
+                    List<?> destructuringNames = (List<?>)
+                        current.getProp(Node.DESTRUCTURING_NAMES);
+                    Node c = current.getFirstChild();
                     if (c.getType() != Token.LET) throw Kit.codeBug();
                     // Add initialization code to front of body
                     if (isExpression) {
@@ -459,19 +463,18 @@ public class NodeTransformer
                     }
                     // Update "list" and "objectLiteral" for the variables
                     // defined in the destructuring assignment
-                    Map<String,?> symbols = ((Node.Scope)scopeNode).getSymbolTable();
-                    if (symbols != null) {
-                        Set<String> names = symbols.keySet();
-                        list.addAll(names);
-                        for (int i=0; i < names.size(); i++)
+                    if (destructuringNames != null) {
+                        list.addAll(destructuringNames);
+                        for (int i=0; i < destructuringNames.size(); i++) {
                             objectLiteral.addChildToBack(
                                 new Node(Token.VOID, Node.newNumber(0.0)));
+                        }
                     }
-                    v = c.getFirstChild(); // should be a NAME, checked below
+                    current = c.getFirstChild(); // should be a NAME, checked below
                 }
-                if (v.getType() != Token.NAME) throw Kit.codeBug();
-                list.add(ScriptRuntime.getIndexObject(v.getString()));
-                Node init = v.getFirstChild();
+                if (current.getType() != Token.NAME) throw Kit.codeBug();
+                list.add(ScriptRuntime.getIndexObject(current.getString()));
+                Node init = current.getFirstChild();
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 }

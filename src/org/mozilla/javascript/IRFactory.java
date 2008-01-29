@@ -43,6 +43,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * This class allows the creation of nodes, and follows the Factory pattern.
  *
@@ -1417,6 +1420,7 @@ final class IRFactory
         result.addChildToBack(comma);
         final int setOp = variableType == Token.CONST ? Token.SETCONST
         		                                      : Token.SETNAME;
+        List<String> destructuringNames = new ArrayList<String>();
         boolean empty = true;
         int type = left.getType();
         if (type == Token.ARRAYLIT) {
@@ -1444,6 +1448,7 @@ final class IRFactory
                         rightElem));
                     if (variableType != -1) {
                         parser.defineSymbol(variableType, name);
+                        destructuringNames.add(name);
                     }
                 } else {
                     comma.addChildToBack(
@@ -1476,6 +1481,7 @@ final class IRFactory
                         rightElem));
                     if (variableType != -1) {
                         parser.defineSymbol(variableType, name);
+                        destructuringNames.add(name);
                     }
                 } else {
                     comma.addChildToBack(
@@ -1495,6 +1501,7 @@ final class IRFactory
             // Don't want a COMMA node with no children. Just add a zero.
             comma.addChildToBack(createNumber(0));
         }
+        result.putProp(Node.DESTRUCTURING_NAMES, destructuringNames);
         return result;
     }
 
