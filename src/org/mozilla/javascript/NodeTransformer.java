@@ -42,8 +42,6 @@
 
 package org.mozilla.javascript;
 
-import java.util.Set;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -490,9 +488,10 @@ public class NodeTransformer
             result = replaceCurrent(parent, previous, scopeNode, result);
             newVars = new Node(Token.COMMA);
             for (Node v=vars.getFirstChild(); v != null; v = v.getNext()) {
-                if (v.getType() == Token.LETEXPR) {
+                Node current = v;
+                if (current.getType() == Token.LETEXPR) {
                     // destructuring in let expr, e.g. let ([x, y] = [3, 4]) {}
-                    Node c = v.getFirstChild();
+                    Node c = current.getFirstChild();
                     if (c.getType() != Token.LET) throw Kit.codeBug();
                     // Add initialization code to front of body
                     if (isExpression) {
@@ -503,13 +502,14 @@ public class NodeTransformer
                             body);
                     }
                     // We're removing the LETEXPR, so move the symbols
-                    Node.Scope.joinScopes((Node.Scope)v, (Node.Scope)scopeNode);
-                    v = c.getFirstChild(); // should be a NAME, checked below
+                    Node.Scope.joinScopes((Node.Scope)current,
+                                          (Node.Scope)scopeNode);
+                    current = c.getFirstChild(); // should be a NAME, checked below
                 }
-                if (v.getType() != Token.NAME) throw Kit.codeBug();
-                Node stringNode = Node.newString(v.getString());
+                if (current.getType() != Token.NAME) throw Kit.codeBug();
+                Node stringNode = Node.newString(current.getString());
                 stringNode.setScope((Node.Scope)scopeNode);
-                Node init = v.getFirstChild();
+                Node init = current.getFirstChild();
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
                 }
