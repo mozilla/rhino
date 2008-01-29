@@ -807,17 +807,18 @@ class JavaMembers
                                    Class staticType, boolean includeProtected)
     {
         JavaMembers members;
+        scope = ScriptableObject.getTopLevelScope(scope);
         ClassCache cache = ClassCache.get(scope);
-        Hashtable ct = cache.classTable;
+        Map<Class<?>,JavaMembers> ct = cache.getClassCacheMap();
 
         Class cl = dynamicType;
         for (;;) {
-            members = (JavaMembers)ct.get(cl);
+            members = ct.get(cl);
             if (members != null) {
                 return members;
             }
             try {
-                members = new JavaMembers(cache.scope, cl, includeProtected);
+                members = new JavaMembers(scope, cl, includeProtected);
                 break;
             } catch (SecurityException e) {
                 // Reflection may fail for objects that are in a restricted

@@ -302,12 +302,13 @@ public final class JavaAdapter implements IdFunctionCall
                                          Class[] interfaces, Scriptable obj)
     {
         ClassCache cache = ClassCache.get(scope);
-        Hashtable generated = cache.javaAdapterGeneratedClasses;
+        Map<JavaAdapterSignature,Class<?>> generated
+            = cache.getInterfaceAdapterCacheMap();
 
         ObjToIntMap names = getObjectFunctionNames(obj);
         JavaAdapterSignature sig;
         sig = new JavaAdapterSignature(superClass, interfaces, names);
-        Class adapterClass = (Class) generated.get(sig);
+        Class<?> adapterClass = generated.get(sig);
         if (adapterClass == null) {
             String adapterName = "adapter"
                                  + cache.newClassSerialNumber();
