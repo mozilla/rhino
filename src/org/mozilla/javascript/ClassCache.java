@@ -40,7 +40,7 @@
 package org.mozilla.javascript;
 
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.HashMap;
 
 /**
  * Cache of generated classes and data structures to access Java runtime
@@ -54,13 +54,13 @@ public class ClassCache
 {
     private static final Object AKEY = new Object();
     private volatile boolean cachingIsEnabled = true;
-    private WeakHashMap<Class<?>,JavaMembers> classTable
-        = new WeakHashMap<Class<?>,JavaMembers>();
-    private WeakHashMap<Class<?>,JavaMembers> javaAdapterGeneratedClasses
-        = new WeakHashMap<Class<?>,JavaMembers>();
-    private WeakHashMap<JavaAdapter.JavaAdapterSignature,Class<?>> classAdapterCache
-        = new WeakHashMap<JavaAdapter.JavaAdapterSignature,Class<?>>();
-    private WeakHashMap<Class<?>,Object> interfaceAdapterCache;
+    private HashMap<Class<?>,JavaMembers> classTable
+        = new HashMap<Class<?>,JavaMembers>();
+    private HashMap<Class<?>,JavaMembers> javaAdapterGeneratedClasses
+        = new HashMap<Class<?>,JavaMembers>();
+    private HashMap<JavaAdapter.JavaAdapterSignature,Class<?>> classAdapterCache
+        = new HashMap<JavaAdapter.JavaAdapterSignature,Class<?>>();
+    private HashMap<Class<?>,Object> interfaceAdapterCache;
     private int generatedClassSerial;
 
     /**
@@ -203,21 +203,16 @@ public class ClassCache
 
     Object getInterfaceAdapter(Class<?> cl)
     {
-        Object result;
-        WeakHashMap<Class<?>,Object> cache = interfaceAdapterCache;
-        if (cache == null) {
-            result = null;
-        } else {
-            result = cache.get(cl);
-        }
-        return result;
+        return interfaceAdapterCache == null 
+                    ? null 
+                    : interfaceAdapterCache.get(cl);
     }
 
     synchronized void cacheInterfaceAdapter(Class<?> cl, Object iadapter)
     {
         if (cachingIsEnabled) {
             if (interfaceAdapterCache == null) {
-                interfaceAdapterCache = new WeakHashMap<Class<?>,Object>();
+                interfaceAdapterCache = new HashMap<Class<?>,Object>();
             }
             interfaceAdapterCache.put(cl, iadapter);
         }
