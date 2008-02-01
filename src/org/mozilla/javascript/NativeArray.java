@@ -1420,13 +1420,57 @@ public class NativeArray extends IdScriptableObject
     {
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
         long length = getLengthProperty(cx, thisObj);
-        long start = args.length > 1 
-            ? ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]))
-            : (isLast ? length : 0);
-        if (start < 0) {
-            start += length;
-            if (start < 0)
+        long start;
+        if (isLast) {
+            // lastIndexOf
+            /*
+             * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:lastIndexOf:
+             * The index at which to start searching backwards. Defaults to the
+             * array's length, i.e. the whole array will be searched. If the
+             * index is greater than or equal to the length of the array, the
+             * whole array will be searched. If negative, it is taken as the
+             * offset from the end of the array. Note that even when the index
+             * is negative, the array is still searched from back to front. If
+             * the calculated index is less than 0, -1 is returned, i.e. the
+             * array will not be searched.
+             */
+            if (args.length < 2) {
+                // default
+                start = length-1;
+            } else {
+                start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
+                if (start > length-1)
+                    start = length-1;
+                else if (start < 0)
+                    start += length-1;
+                // Note that start may be negative, but that's okay
+                // as the result of -1 will fall out from the code below
+            }
+        } else {
+            // indexOf
+            /*
+             * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:indexOf:
+             * The index at which to begin the search. Defaults to 0, i.e. the
+             * whole array will be searched. If the index is greater than or
+             * equal to the length of the array, -1 is returned, i.e. the array
+             * will not be searched. If negative, it is taken as the offset from
+             * the end of the array. Note that even when the index is negative,
+             * the array is still searched from front to back. If the calculated
+             * index is less than 0, the whole array will be searched.
+             */
+            if (args.length < 2) {
+                // default
                 start = 0;
+            } else {
+                start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
+                if (start < 0) {
+                    start += length-1;
+                    if (start < 0)
+                        start = 0;
+                }
+                // Note that start may be > length-1, but that's okay
+                // as the result of -1 will fall out from the code below
+            }
         }
         if (thisObj instanceof NativeArray) {
             NativeArray na = (NativeArray) thisObj;
