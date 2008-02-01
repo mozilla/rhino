@@ -2178,8 +2178,15 @@ class FileWindow extends JInternalFrame implements ActionListener {
      * Updates the tool tip contents.
      */
     private void updateToolTip() {
-        // in case fileName is very long, try to set tool tip on frame
-        Component c = getComponent(1);
+        // Try to set tool tip on frame. On Mac OS X 10.5,
+        // the number of components is different, so try to be safe.
+        int n = getComponentCount() - 1;
+        if (n > 1) {
+            n = 1;
+        } else if (n < 0) {
+            return;
+        }
+        Component c = getComponent(n);
         // this will work at least for Metal L&F
         if (c != null && c instanceof JComponent) {
             ((JComponent)c).setToolTipText(getUrl());
@@ -2606,7 +2613,7 @@ class VariableModel implements TreeTableModel {
 
         Object value = getValue(node);
         Object[] ids = debugger.getObjectIds(value);
-        if (ids.length == 0) {
+        if (ids == null || ids.length == 0) {
             children = CHILDLESS;
         } else {
             Arrays.sort(ids, new Comparator() {
