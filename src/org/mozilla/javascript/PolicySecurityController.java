@@ -166,6 +166,7 @@ public class PolicySecurityController extends SecurityController
                             return c.newInstance();
                         }
                     });
+                    classLoaderMap.put(classLoader, new SoftReference(caller));
                 }
                 catch(PrivilegedActionException ex)
                 {
