@@ -233,8 +233,7 @@ public class NativeArray extends IdScriptableObject
               case ConstructorId_forEach:
               case ConstructorId_map:
               case ConstructorId_some: {
-                thisObj = ScriptRuntime.toObject(scope,
-                        ScriptRuntime.toString(args[0]));
+                thisObj = ScriptRuntime.toObject(scope, args[0]);
                 Object[] newArgs = new Object[args.length-1];
                 for (int i=0; i < newArgs.length; i++)
                     newArgs[i] = args[i+1];
