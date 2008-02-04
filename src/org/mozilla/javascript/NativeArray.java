@@ -1423,7 +1423,7 @@ public class NativeArray extends IdScriptableObject
         if (isLast) {
             // lastIndexOf
             /*
-             * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:lastIndexOf:
+             * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:lastIndexOf
              * The index at which to start searching backwards. Defaults to the
              * array's length, i.e. the whole array will be searched. If the
              * index is greater than or equal to the length of the array, the
@@ -1438,17 +1438,17 @@ public class NativeArray extends IdScriptableObject
                 start = length-1;
             } else {
                 start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
-                if (start > length-1)
+                if (start >= length)
                     start = length-1;
                 else if (start < 0)
-                    start += length-1;
+                    start += length;
                 // Note that start may be negative, but that's okay
                 // as the result of -1 will fall out from the code below
             }
         } else {
             // indexOf
             /*
-             * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:indexOf:
+             * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:indexOf
              * The index at which to begin the search. Defaults to 0, i.e. the
              * whole array will be searched. If the index is greater than or
              * equal to the length of the array, -1 is returned, i.e. the array
@@ -1463,7 +1463,7 @@ public class NativeArray extends IdScriptableObject
             } else {
                 start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
                 if (start < 0) {
-                    start += length-1;
+                    start += length;
                     if (start < 0)
                         start = 0;
                 }
