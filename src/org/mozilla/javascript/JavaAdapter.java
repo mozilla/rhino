@@ -446,19 +446,31 @@ public final class JavaAdapter implements IdFunctionCall
 
     static Method[] getOverridableMethods(Class c)
     {
-        ArrayList list = new ArrayList();
+        ArrayList<Method> list = new ArrayList<Method>();
+        HashSet<String> cantOverride = new HashSet<String>();
         while (c != null) {
             Method[] methods = c.getDeclaredMethods();
             for (int i = 0; i < methods.length; i++) {
-                int mods = methods[i].getModifiers();
-                if (Modifier.isStatic(mods) || Modifier.isFinal(mods))
+                String methodKey = methods[i].getName() + 
+                    getMethodSignature(methods[i],
+                            methods[i].getParameterTypes());
+                if (cantOverride.contains(methodKey))
                     continue;
+                int mods = methods[i].getModifiers();
+                if (Modifier.isStatic(mods))
+                    continue;
+                if (Modifier.isFinal(mods)) {
+                    // Make sure we don't add a final method to the list
+                    // of overridable methods.
+                    cantOverride.add(methodKey);
+                    continue;
+                }
                 if (Modifier.isPublic(mods) || Modifier.isProtected(mods))
                     list.add(methods[i]);
             }
             c = c.getSuperclass();
         }
-        return (Method[]) list.toArray(new Method[list.size()]);
+        return list.toArray(new Method[list.size()]);
     }
 
     static Class loadAdapterClass(String className, byte[] classBytes)
