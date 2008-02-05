@@ -120,7 +120,7 @@ public final class JavaAdapter implements IdFunctionCall
     {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_JavaAdapter) {
-                return js_createAdpter(cx, scope, args);
+                return js_createAdapter(cx, scope, args);
             }
         }
         throw f.unknown();
@@ -154,7 +154,7 @@ public final class JavaAdapter implements IdFunctionCall
         return self.get(adapter);
     }
 
-    static Object js_createAdpter(Context cx, Scriptable scope, Object[] args)
+    static Object js_createAdapter(Context cx, Scriptable scope, Object[] args)
     {
         int N = args.length;
         if (N == 0) {
@@ -415,13 +415,14 @@ public final class JavaAdapter implements IdFunctionCall
                                    argTypes, method.getReturnType());
                     generatedOverrides.put(methodKey, 0);
                     generatedMethods.put(methodName, 0);
-                }
-                // if a method was overridden, generate a "super$method"
-                // which lets the delegate call the superclass' version.
-                if (!isAbstractMethod) {
-                    generateSuper(cfw, adapterName, superName,
-                                  methodName, methodSignature,
-                                  argTypes, method.getReturnType());
+                    
+                    // if a method was overridden, generate a "super$method"
+                    // which lets the delegate call the superclass' version.
+                    if (!isAbstractMethod) {
+                        generateSuper(cfw, adapterName, superName,
+                                      methodName, methodSignature,
+                                      argTypes, method.getReturnType());
+                    }
                 }
             }
         }
@@ -682,7 +683,7 @@ public final class JavaAdapter implements IdFunctionCall
 
     /**
      * Generates code to wrap Java arguments into Object[].
-     * Non-primitive Java types are left as is pending convertion
+     * Non-primitive Java types are left as-is pending conversion
      * in the helper method. Leaves the array object on the top of the stack.
      */
     static void generatePushWrappedArgs(ClassFileWriter cfw,
@@ -703,7 +704,7 @@ public final class JavaAdapter implements IdFunctionCall
 
     /**
      * Generates code to wrap Java argument into Object.
-     * Non-primitive Java types are left unconverted pending convertion
+     * Non-primitive Java types are left unconverted pending conversion
      * in the helper method. Leaves the wrapper object on the top of the stack.
      */
     private static int generateWrapArg(ClassFileWriter cfw, int paramOffset,
