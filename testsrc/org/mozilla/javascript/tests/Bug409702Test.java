@@ -23,6 +23,7 @@ public class Bug409702Test extends TestCase {
 
         public static abstract class Subclass extends Test {
 
+            @Override
             public final void a() {
             }
         }
