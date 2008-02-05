@@ -310,6 +310,8 @@ public class NativeArray extends IdScriptableObject
 
     public synchronized Object get(int index, Scriptable start)
     {
+        if (isGetterOrSetter(null, index, false))
+            return super.get(index, start);
         if (dense != null && 0 <= index && index < dense.length)
             return dense[index];
         return super.get(index, start);
@@ -317,6 +319,8 @@ public class NativeArray extends IdScriptableObject
 
     public synchronized boolean has(int index, Scriptable start)
     {
+        if (isGetterOrSetter(null, index, false))
+            return super.has(index, start);
         if (dense != null && 0 <= index && index < dense.length)
             return dense[index] != NOT_FOUND;
         return super.has(index, start);
@@ -372,6 +376,8 @@ public class NativeArray extends IdScriptableObject
 
     public synchronized void put(int index, Scriptable start, Object value)
     {
+        if (isGetterOrSetter(null, index, true))
+            super.put(index, start, value);
         if (start == this && !isSealed() && dense != null && 0 <= index) {
             if (index < dense.length) {
                 dense[index] = value;
@@ -401,6 +407,8 @@ public class NativeArray extends IdScriptableObject
 
     public synchronized void delete(int index)
     {
+        if (isGetterOrSetter(null, index, true))
+            super.delete(index);
         if (!isSealed() && dense != null && 0 <= index && index < dense.length)
         {
             dense[index] = NOT_FOUND;
@@ -484,6 +492,21 @@ public class NativeArray extends IdScriptableObject
     /** @deprecated Use {@link #getLength()} instead. */
     public long jsGet_length() {
         return getLength();
+    }
+    
+    /**
+     * Change the value of the internal flag that determines whether all
+     * storage is handed by a dense backing array rather than an associative
+     * store.
+     * @param denseOnly new value for denseOnly flag
+     * @throws IllegalArgumentException if an attempt is made to enable
+     *   denseOnly after it was disabled; NativeArray code is not written
+     *   to handle switching back to a dense representation
+     */
+    void setDenseOnly(boolean denseOnly) {
+        if (denseOnly && !this.denseOnly)
+            throw new IllegalArgumentException();
+        this.denseOnly = denseOnly;
     }
 
     private synchronized void setLength(Object val) {
@@ -1630,7 +1653,7 @@ public class NativeArray extends IdScriptableObject
 // #/generated#
         return id;
     }
-
+    
     private static final int
         Id_constructor          = 1,
         Id_toString             = 2,
