@@ -582,6 +582,22 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             return Undefined.instance;
     }
 
+    /**
+     * Returns whether a property is a getter or a setter
+     * @param name property name
+     * @param index property index
+     * @param setter true to check for a setter, false for a getter
+     * @return whether the property is a getter or a setter
+     */
+    protected boolean isGetterOrSetter(String name, int index, boolean setter) {
+        Slot slot = getSlot(name, index, SLOT_QUERY);
+        if (slot instanceof GetterSlot) {
+            if (setter && ((GetterSlot)slot).setter != null) return true;
+            if (!setter && ((GetterSlot)slot).getter != null) return true;
+        }
+        return false;
+    }
+
     void addLazilyInitializedValue(String name, int index,
                                    LazilyLoadedCtor init, int attributes)
     {
@@ -1963,9 +1979,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 }
                 return nativeGetter.invoke(getterThis, args);
             } else {
-                Callable f = (Callable)getterObj;
+                Function f = (Function)getterObj;
                 Context cx = Context.getContext();
-                return f.call(cx, ScriptRuntime.getTopCallScope(cx), start,
+                return f.call(cx, f.getParentScope(), start,
                               ScriptRuntime.emptyArgs);
             }
         }
@@ -2046,8 +2062,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     }
                     nativeSetter.invoke(setterThis, args);
                 } else {
-                    Callable f = (Callable)setterObj;
-                    f.call(cx, ScriptRuntime.getTopCallScope(cx), start,
+                    Function f = (Function)setterObj;
+                    f.call(cx, f.getParentScope(), start,
                            new Object[] { value });
                 }
                 return true;

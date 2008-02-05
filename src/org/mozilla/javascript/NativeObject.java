@@ -215,6 +215,8 @@ public class NativeObject extends IdScriptableObject
                 Callable getterOrSetter = (Callable)args[1];
                 boolean isSetter = (id == Id___defineSetter__);
                 so.setGetterOrSetter(name, index, getterOrSetter, isSetter);
+                if (so instanceof NativeArray)
+                    ((NativeArray)so).setDenseOnly(false);
             }
             return Undefined.instance;
 
