@@ -61,18 +61,22 @@ class JavaMembers
 
     JavaMembers(Scriptable scope, Class cl, boolean includeProtected)
     {
-        Context cx = Context.getContext();
-        ClassShutter shutter = cx.getClassShutter();
-        if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
-            throw Context.reportRuntimeError1("msg.access.prohibited",
-                                              cl.getName());
+        try {
+            Context cx = ContextFactory.getGlobal().enterContext();
+            ClassShutter shutter = cx.getClassShutter();
+            if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
+                throw Context.reportRuntimeError1("msg.access.prohibited",
+                                                  cl.getName());
+            }
+            this.includePrivate = cx.hasFeature(
+                Context.FEATURE_ENHANCED_JAVA_ACCESS);
+            this.members = new Hashtable(23);
+            this.staticMembers = new Hashtable(7);
+            this.cl = cl;
+            reflect(scope, includeProtected);
+        } finally {
+            Context.exit();
         }
-        this.includePrivate = cx.hasFeature(
-            Context.FEATURE_ENHANCED_JAVA_ACCESS);
-        this.members = new Hashtable(23);
-        this.staticMembers = new Hashtable(7);
-        this.cl = cl;
-        reflect(scope, includeProtected);
     }
 
     boolean has(String name, boolean isStatic)
@@ -345,21 +349,37 @@ class JavaMembers
             try {
                 if (includeProtected || includePrivate) {
                     while (clazz != null) {
-                        Method[] methods = clazz.getDeclaredMethods();
-                        for (int i = 0; i < methods.length; i++) {
-                            Method method = methods[i];
-                            int mods = method.getModifiers();
-
-                            if (Modifier.isPublic(mods) ||
+                        try {
+                            Method[] methods = clazz.getDeclaredMethods();
+                            for (int i = 0; i < methods.length; i++) {
+                                Method method = methods[i];
+                                int mods = method.getModifiers();
+    
+                                if (Modifier.isPublic(mods) ||
                                     Modifier.isProtected(mods) ||
-                                    includePrivate) {
-                                if (includePrivate)
-                                    method.setAccessible(true);
-                                MethodSignature sig = new MethodSignature(method);
-                                map.put(sig, method);
+                                    includePrivate)
+                                {
+                                    if (includePrivate)
+                                        method.setAccessible(true);
+                                    map.put(new MethodSignature(method), method);
+                                }
                             }
+                            clazz = clazz.getSuperclass();
+                        } catch (SecurityException e) {
+                            // Some security settings (i.e., applets) disallow
+                            // access to Class.getDeclaredMethods. Fall back to
+                            // Class.getMethods.
+                            Method[] methods = clazz.getMethods();
+                            for (int i = 0; i < methods.length; i++) {
+                                Method method = methods[i];
+                                MethodSignature sig 
+                                    = new MethodSignature(method);
+                                if (map.get(sig) == null)
+                                    map.put(sig, method);
+                            }
+                            break; // getMethods gets superclass methods, no
+                                   // need to loop any more
                         }
-                        clazz = clazz.getSuperclass();
                     }
                 } else {
                     Method[] methods = clazz.getMethods();
