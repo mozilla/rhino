@@ -4,12 +4,22 @@
 # test has yet to be fixed, or because the test is not applicable to Rhino.
 #
 
+# timer resolution test
+js1_5/extensions/regress-363258.js
+
 # Needs investigation
 js1_7/regress/regress-406477.js
 e4x/extensions/regress-410192.js
 
 # should be investigated: OutOfMemoryError
 js1_5/Regress/regress-330352.js
+
+# test consumes much memory, will get OutOfMemoryError depending on JVM
+# settings
+js1_5/extensions/regress-367501-04.js
+
+# stress test that can potentially time out
+js1_5/Regress/regress-404755.js
 
 # should be investigated: semicolon insertion
 ecma_3/LexicalConventions/7.9.1.js
