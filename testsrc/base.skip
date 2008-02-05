@@ -4,6 +4,9 @@
 # test has yet to be fixed, or because the test is not applicable to Rhino.
 #
 
+# timer resolution test
+js1_5/extensions/regress-363258.js
+
 # Needs investigation
 js1_7/regress/regress-406477.js
 e4x/extensions/regress-410192.js
