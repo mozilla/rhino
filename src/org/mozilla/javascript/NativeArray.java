@@ -310,7 +310,7 @@ public class NativeArray extends IdScriptableObject
 
     public synchronized Object get(int index, Scriptable start)
     {
-        if (isGetterOrSetter(null, index, false))
+        if (!denseOnly && isGetterOrSetter(null, index, false))
             return super.get(index, start);
         if (dense != null && 0 <= index && index < dense.length)
             return dense[index];
@@ -319,7 +319,7 @@ public class NativeArray extends IdScriptableObject
 
     public synchronized boolean has(int index, Scriptable start)
     {
-        if (isGetterOrSetter(null, index, false))
+        if (!denseOnly && isGetterOrSetter(null, index, false))
             return super.has(index, start);
         if (dense != null && 0 <= index && index < dense.length)
             return dense[index] != NOT_FOUND;
@@ -376,7 +376,7 @@ public class NativeArray extends IdScriptableObject
 
     public synchronized void put(int index, Scriptable start, Object value)
     {
-        if (isGetterOrSetter(null, index, true))
+        if (!denseOnly && isGetterOrSetter(null, index, true))
             super.put(index, start, value);
         if (start == this && !isSealed() && dense != null && 0 <= index) {
             if (index < dense.length) {
@@ -402,12 +402,11 @@ public class NativeArray extends IdScriptableObject
                 this.length = (long)index + 1;
             }
         }
-
     }
 
     public synchronized void delete(int index)
     {
-        if (isGetterOrSetter(null, index, true))
+        if (!denseOnly && isGetterOrSetter(null, index, true))
             super.delete(index);
         if (!isSealed() && dense != null && 0 <= index && index < dense.length)
         {
