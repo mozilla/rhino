@@ -33,7 +33,7 @@ public class Bug409702Test extends TestCase {
       final int value = 12;
       String source = 
           "var instance = " +
-          "  new JavaAdapter(" + getClass().getName() + ".Test.Subclass," +
+          "  new JavaAdapter(" + Test.Subclass.class.getName() + "," +
           "{ b: function () { return " + value + "; } });" +
           "instance.b();";
 
