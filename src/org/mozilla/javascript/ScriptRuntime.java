@@ -199,6 +199,12 @@ public class ScriptRuntime {
         NativeGlobal.init(cx, scope, sealed);
 
         NativeArray.init(scope, sealed);
+        if (cx.getOptimizationLevel() > 0) {
+            // When optimizing, attempt to fulfill all requests for new Array(N)
+            // with a higher threshold before switching to a sparse 
+            // representation
+            NativeArray.setMaximumInitialCapacity(200000);            
+        }
         NativeString.init(scope, sealed);
         NativeBoolean.init(scope, sealed);
         NativeNumber.init(scope, sealed);

@@ -71,12 +71,20 @@ public class NativeArray extends IdScriptableObject
         NativeArray obj = new NativeArray(0);
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
+    
+    static int getMaximumInitialCapacity() {
+        return maximumInitialCapacity;
+    }
+
+    static void setMaximumInitialCapacity(int maximumInitialCapacity) {
+        NativeArray.maximumInitialCapacity = maximumInitialCapacity;
+    }
 
     public NativeArray(long lengthArg)
     {
-        denseOnly = lengthArg <= MAXIMUM_INITIAL_CAPACITY;
+        denseOnly = lengthArg <= maximumInitialCapacity;
         if (denseOnly) {
-            int intLength = (int) length;
+            int intLength = (int) lengthArg;
             if (intLength < DEFAULT_INITIAL_CAPACITY)
                 intLength = DEFAULT_INITIAL_CAPACITY;
             dense = new Object[intLength];
@@ -308,7 +316,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
-    public synchronized Object get(int index, Scriptable start)
+    public Object get(int index, Scriptable start)
     {
         if (!denseOnly && isGetterOrSetter(null, index, false))
             return super.get(index, start);
@@ -317,7 +325,7 @@ public class NativeArray extends IdScriptableObject
         return super.get(index, start);
     }
 
-    public synchronized boolean has(int index, Scriptable start)
+    public boolean has(int index, Scriptable start)
     {
         if (!denseOnly && isGetterOrSetter(null, index, false))
             return super.has(index, start);
@@ -344,7 +352,7 @@ public class NativeArray extends IdScriptableObject
         return -1;
     }
 
-    public synchronized void put(String id, Scriptable start, Object value)
+    public void put(String id, Scriptable start, Object value)
     {
         super.put(id, start, value);
         if (start == this) {
@@ -357,7 +365,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
-    private synchronized boolean ensureCapacity(int capacity)
+    private boolean ensureCapacity(int capacity)
     {
         if (capacity > dense.length) {
             if (capacity > MAX_PRE_GROW_SIZE) {
@@ -374,15 +382,15 @@ public class NativeArray extends IdScriptableObject
         return true;
     }
 
-    public synchronized void put(int index, Scriptable start, Object value)
+    public void put(int index, Scriptable start, Object value)
     {
-        if (!denseOnly && isGetterOrSetter(null, index, true))
-            super.put(index, start, value);
-        if (start == this && !isSealed() && dense != null && 0 <= index) {
+        if (start == this && !isSealed() && dense != null && 0 <= index &&
+            (denseOnly || !isGetterOrSetter(null, index, true)))
+        {
             if (index < dense.length) {
                 dense[index] = value;
                 if (this.length <= index)
-                    this.length = (long)index + 1;                
+                    this.length = (long)index + 1;
                 return;
             } else if (denseOnly && index < dense.length * GROW_FACTOR &&
                        ensureCapacity(index+1))
@@ -404,11 +412,10 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
-    public synchronized void delete(int index)
+    public void delete(int index)
     {
-        if (!denseOnly && isGetterOrSetter(null, index, true))
-            super.delete(index);
-        if (!isSealed() && dense != null && 0 <= index && index < dense.length)
+        if (dense != null && 0 <= index && index < dense.length &&
+            !isSealed() && (denseOnly || !isGetterOrSetter(null, index, true)))
         {
             dense[index] = NOT_FOUND;
         } else {
@@ -416,7 +423,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
-    public synchronized Object[] getIds()
+    public Object[] getIds()
     {
         Object[] superIds = super.getIds();
         if (dense == null) { return superIds; }
@@ -484,7 +491,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
-    public synchronized long getLength() {
+    public long getLength() {
         return length;
     }
 
@@ -508,7 +515,7 @@ public class NativeArray extends IdScriptableObject
         this.denseOnly = denseOnly;
     }
 
-    private synchronized void setLength(Object val) {
+    private void setLength(Object val) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
          * 1. Call the [[CanPut]] method of A with name P.
@@ -788,12 +795,10 @@ public class NativeArray extends IdScriptableObject
         if (thisObj instanceof NativeArray) {
             NativeArray na = (NativeArray) thisObj;
             if (na.denseOnly) {
-                synchronized (na) {
-                    for (int i=0, j=((int)na.length)-1; i < j; i++,j--) {
-                        Object temp = na.dense[i];
-                        na.dense[i] = na.dense[j];
-                        na.dense[j] = temp;
-                    }
+                for (int i=0, j=((int)na.length)-1; i < j; i++,j--) {
+                    Object temp = na.dense[i];
+                    na.dense[i] = na.dense[j];
+                    na.dense[j] = temp;
                 }
                 return thisObj;
             }
@@ -876,11 +881,12 @@ public class NativeArray extends IdScriptableObject
         }
 
         Object undef = Undefined.instance;
+        Object notfound = Scriptable.NOT_FOUND;
 
         // sort undefined to end
-        if (undef == y) {
+        if (y == undef || y == notfound) {
             return false; // x can not be bigger then undef
-        } else if (undef == x) {
+        } else if (x == undef || x == notfound) {
             return true; // y != undef here, so x > y
         }
 
@@ -901,7 +907,7 @@ public class NativeArray extends IdScriptableObject
             double d = ScriptRuntime.toNumber(ret);
 
             // XXX what to do when cmp function returns NaN?  ECMA states
-            // that it's then not a 'consistent compararison function'... but
+            // that it's then not a 'consistent comparison function'... but
             // then what do we do?  Back out and start over with the generic
             // cmp function when we see a NaN?  Throw an error?
 
@@ -1028,12 +1034,10 @@ public class NativeArray extends IdScriptableObject
             if (na.denseOnly &&
                 na.ensureCapacity((int) na.length + args.length))
             {
-                synchronized (na) {
-                    for (int i = 0; i < args.length; i++) {
-                        na.dense[(int)na.length++] = args[i];
-                    }
-                    return ScriptRuntime.wrapNumber(na.length);
+                for (int i = 0; i < args.length; i++) {
+                    na.dense[(int)na.length++] = args[i];
                 }
+                return ScriptRuntime.wrapNumber(na.length);
             }
         }
         long length = getLengthProperty(cx, thisObj);
@@ -1065,12 +1069,10 @@ public class NativeArray extends IdScriptableObject
         if (thisObj instanceof NativeArray) {
             NativeArray na = (NativeArray) thisObj;
             if (na.denseOnly && na.length > 0) {
-                synchronized (na) {
-                    na.length--;
-                    result = na.dense[(int)na.length];
-                    na.dense[(int)na.length] = NOT_FOUND;
-                    return result;
-                }
+                na.length--;
+                result = na.dense[(int)na.length];
+                na.dense[(int)na.length] = NOT_FOUND;
+                return result;
             }
         }
         long length = getLengthProperty(cx, thisObj);
@@ -1098,13 +1100,11 @@ public class NativeArray extends IdScriptableObject
         if (thisObj instanceof NativeArray) {
             NativeArray na = (NativeArray) thisObj;
             if (na.denseOnly && na.length > 0) {
-                synchronized (na) {
-                    na.length--;
-                    Object result = na.dense[0];
-                    System.arraycopy(na.dense, 1, na.dense, 0, (int)na.length);
-                    na.dense[(int)na.length] = NOT_FOUND;
-                    return result;
-                }
+                na.length--;
+                Object result = na.dense[0];
+                System.arraycopy(na.dense, 1, na.dense, 0, (int)na.length);
+                na.dense[(int)na.length] = NOT_FOUND;
+                return result;
             }
         }
         Object result;
@@ -1143,15 +1143,13 @@ public class NativeArray extends IdScriptableObject
             if (na.denseOnly &&
                 na.ensureCapacity((int)na.length + args.length))
             {
-                synchronized (na) {
-                    System.arraycopy(na.dense, 0, na.dense, args.length,
-                                     (int) na.length);
-                    for (int i = 0; i < args.length; i++) {
-                        na.dense[i] = args[i];
-                    }
-                    na.length += args.length;
-                    return ScriptRuntime.wrapNumber(na.length);
+                System.arraycopy(na.dense, 0, na.dense, args.length,
+                                 (int) na.length);
+                for (int i = 0; i < args.length; i++) {
+                    na.dense[i] = args[i];
                 }
+                na.length += args.length;
+                return ScriptRuntime.wrapNumber(na.length);
             }
         }
         long length = getLengthProperty(cx, thisObj);
@@ -1328,25 +1326,23 @@ public class NativeArray extends IdScriptableObject
                         length++;
                     }
                 }
-                synchronized (denseThis) {
-                    if (canUseDense && denseResult.ensureCapacity(length)) {
-                        System.arraycopy(denseThis.dense, 0, denseResult.dense,
-                                         0, (int) denseThis.length);
-                        int cursor = (int) denseThis.length;
-                        for (int i = 0; i < args.length && canUseDense; i++) {
-                            if (args[i] instanceof NativeArray) {
-                                NativeArray arg = (NativeArray) args[i];
-                                System.arraycopy(arg.dense, 0,
-                                        denseResult.dense, cursor,
-                                        (int)arg.length);
-                                cursor += (int)arg.length;
-                            } else {
-                                denseResult.dense[cursor++] = args[i];
-                            }
+                if (canUseDense && denseResult.ensureCapacity(length)) {
+                    System.arraycopy(denseThis.dense, 0, denseResult.dense,
+                                     0, (int) denseThis.length);
+                    int cursor = (int) denseThis.length;
+                    for (int i = 0; i < args.length && canUseDense; i++) {
+                        if (args[i] instanceof NativeArray) {
+                            NativeArray arg = (NativeArray) args[i];
+                            System.arraycopy(arg.dense, 0,
+                                    denseResult.dense, cursor,
+                                    (int)arg.length);
+                            cursor += (int)arg.length;
+                        } else {
+                            denseResult.dense[cursor++] = args[i];
                         }
-                        denseResult.length = length;
-                        return result;
                     }
+                    denseResult.length = length;
+                    return result;
                 }
             }
         }
@@ -1496,26 +1492,24 @@ public class NativeArray extends IdScriptableObject
         if (thisObj instanceof NativeArray) {
             NativeArray na = (NativeArray) thisObj;
             if (na.denseOnly) {
-                synchronized (na) {
-                    if (isLast) {
-                      for (int i=(int)start; i >= 0; i--) {
-                          if (na.dense[i] != Scriptable.NOT_FOUND &&
-                              ScriptRuntime.shallowEq(na.dense[i], compareTo))
-                          {
-                              return new Long(i);
-                          }
+                if (isLast) {
+                  for (int i=(int)start; i >= 0; i--) {
+                      if (na.dense[i] != Scriptable.NOT_FOUND &&
+                          ScriptRuntime.shallowEq(na.dense[i], compareTo))
+                      {
+                          return new Long(i);
                       }
-                    } else {
-                      for (int i=(int)start; i < length; i++) {
-                          if (na.dense[i] != Scriptable.NOT_FOUND &&
-                              ScriptRuntime.shallowEq(na.dense[i], compareTo))
-                          {
-                              return new Long(i);
-                          }
+                  }
+                } else {
+                  for (int i=(int)start; i < length; i++) {
+                      if (na.dense[i] != Scriptable.NOT_FOUND &&
+                          ScriptRuntime.shallowEq(na.dense[i], compareTo))
+                      {
+                          return new Long(i);
                       }
-                    }
-                    return NEGATIVE_ONE;                    
+                  }
                 }
+                return NEGATIVE_ONE;
             }
         }
         if (isLast) {
@@ -1718,7 +1712,7 @@ public class NativeArray extends IdScriptableObject
     /**
      * The maximum size of <code>dense</code> that will be allocated initially.
      */
-    private static final int MAXIMUM_INITIAL_CAPACITY = 1000;
+    private static int maximumInitialCapacity = 10000;
 
     /**
      * The default capacity for <code>dense</code>.
