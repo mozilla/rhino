@@ -46,8 +46,6 @@ package org.mozilla.javascript.tools.shell;
 import java.io.*;
 import java.net.*;
 import java.lang.reflect.*;
-import java.util.List;
-import java.util.ArrayList;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 import org.mozilla.javascript.serialize.*;
