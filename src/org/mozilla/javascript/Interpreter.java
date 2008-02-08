@@ -4380,9 +4380,7 @@ switch (op) {
                 // block ("catch" implicitly uses NativeWith to create a scope 
                 // to expose the exception variable).
                 for(;;) {
-                    if(scope instanceof NativeCall) {
-                        break;
-                    } else {
+                    if(scope instanceof NativeWith) {
                         scope = scope.getParentScope();
                         if (scope == null || (frame.parentFrame != null && 
                                               frame.parentFrame.scope == scope))
@@ -4393,6 +4391,9 @@ switch (op) {
                             Kit.codeBug();
                             break; // Never reached, but keeps the static analyzer happy about "scope" not being null 5 lines above.
                         }
+                    }
+                    else {
+                        break;
                     }
                 }
             }
