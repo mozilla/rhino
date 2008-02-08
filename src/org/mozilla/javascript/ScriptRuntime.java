@@ -201,7 +201,8 @@ public class ScriptRuntime {
         NativeArray.init(scope, sealed);
         if (cx.getOptimizationLevel() > 0) {
             // When optimizing, attempt to fulfill all requests for new Array(N)
-            // with dense backing array regardless of size of N
+            // with a higher threshold before switching to a sparse 
+            // representation
             NativeArray.setMaximumInitialCapacity(200000);            
         }
         NativeString.init(scope, sealed);
