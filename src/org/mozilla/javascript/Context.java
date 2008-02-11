@@ -2217,6 +2217,9 @@ public class Context
                                ErrorReporter compilationErrorReporter)
         throws IOException
     {
+        if(sourceName == null) {
+            sourceName = "unnamed script";
+        }
         if (securityDomain != null && getSecurityController() == null) {
             throw new IllegalArgumentException(
                 "securityDomain should be null if setSecurityController() was never called");
