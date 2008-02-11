@@ -87,6 +87,11 @@ js1_5/Expressions/regress-394673.js
 # import, export not implemented
 js1_5/Regress/regress-249211.js
 js1_7/lexical/regress-346642-03.js
+js1_5/Regress/regress-362583.js
+js1_5/extensions/regress-355622.js
+
+# sharp-variables not implemented
+js1_5/extensions/regress-379523.js
 
 # concatentated string too large
 js1_5/Regress/regress-280769-1.js
@@ -225,9 +230,12 @@ js1_7/geniter/regress-349331.js
 # function named "yield"
 js1_7/lexical/regress-351515.js
 
-# unimplemented "options" shell function
-js1_7/block/regress-347559.js
-js1_5/Regress/regress-383674.js
+# keywords used as identifiers
+js1_5/extensions/regress-381304.js
+
+# Needs investigation: syntax errors in setters
+js1_5/Regress/regress-361617.js
+js1_5/extensions/regress-356106.js
 
 # decompilation
 js1_7/block/regress-344601.js
@@ -301,6 +309,8 @@ js1_5/Regress/regress-253150.js
 js1_5/Regress/regress-306633.js
 js1_7/iterable/regress-355075-01.js
 js1_7/iterable/regress-355075-02.js
+js1_7/block/regress-347559.js
+js1_5/Regress/regress-383674.js
 
 # Function "exec" must be called directly, and not by way of a function of
 # another name.
