@@ -2729,7 +2729,14 @@ public class ScriptRuntime {
                     }
                 }
                 if (x instanceof Wrapper && y instanceof Wrapper) {
-                    return ((Wrapper)x).unwrap() == ((Wrapper)y).unwrap();
+                    // See bug 413838. Effectively an extension to ECMA for
+                    // the LiveConnect case.
+                    Object unwrappedX = ((Wrapper)x).unwrap();
+                    Object unwrappedY = ((Wrapper)y).unwrap();
+                    return unwrappedX == unwrappedY ||
+                           (isPrimitive(unwrappedX) &&
+                            isPrimitive(unwrappedY) &&
+                            eq(unwrappedX, unwrappedY));
                 }
                 return false;
             } else if (y instanceof Boolean) {
@@ -2752,6 +2759,11 @@ public class ScriptRuntime {
             warnAboutNonJSObject(x);
             return x == y;
         }
+    }
+    
+    private static boolean isPrimitive(Object obj) {
+        return (obj instanceof Number) || (obj instanceof String) ||
+               (obj instanceof Boolean);
     }
 
     static boolean eqNumber(double x, Object y)
