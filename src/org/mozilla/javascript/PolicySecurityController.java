@@ -70,6 +70,10 @@ public class PolicySecurityController extends SecurityController
     // cleanup of either CodeSource or ClassLoader objects.
     private static final Map callers = new WeakHashMap();
     
+    public Class getStaticSecurityDomainClassInternal() {
+        return CodeSource.class;
+    }
+
     private static class Loader extends SecureClassLoader
     implements GeneratedClassLoader
     {

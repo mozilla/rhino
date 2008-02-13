@@ -48,6 +48,10 @@ import org.mozilla.javascript.*;
 public class JavaPolicySecurity extends SecurityProxy
 {
 
+    public Class getStaticSecurityDomainClassInternal() {
+        return ProtectionDomain.class;
+    }
+
     private static class Loader extends ClassLoader
         implements GeneratedClassLoader
     {
