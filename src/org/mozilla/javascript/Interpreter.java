@@ -188,6 +188,7 @@ public class Interpreter implements Evaluator
     private CompilerEnvirons compilerEnv;
 
     private boolean itsInFunctionFlag;
+    private boolean itsInTryFlag;
 
     private InterpreterData itsData;
     private ScriptOrFnNode scriptOrFn;
@@ -843,10 +844,13 @@ public class Interpreter implements Evaluator
                 addIndexOp(Icode_SCOPE_SAVE, scopeLocal);
 
                 int tryStart = itsICodeTop;
+                boolean savedFlag = itsInTryFlag;
+                itsInTryFlag = true;
                 while (child != null) {
                     visitStatement(child, initialStackDepth);
                     child = child.getNext();
                 }
+                itsInTryFlag = savedFlag;
 
                 Node catchTarget = tryNode.target;
                 if (catchTarget != null) {
@@ -1009,10 +1013,13 @@ public class Interpreter implements Evaluator
                     addUint8(type == Token.NEW ? 1 : 0);
                     addUint16(itsLineNumber & 0xFFFF);
                 } else {
-                    if (type == Token.CALL) {
-                        if ((contextFlags & ECF_TAIL) != 0) {
-                            type = Icode_TAIL_CALL;
-                        }
+                    // Only use the tail call optimization if we're not in a try
+                    // or we're not generating debug info (since the
+                    // optimization will confuse the debugger)
+                    if (type == Token.CALL && (contextFlags & ECF_TAIL) != 0 &&
+                        !compilerEnv.isGenerateDebugInfo() && !itsInTryFlag)
+                    {
+                        type = Icode_TAIL_CALL;
                     }
                     addIndexOp(type, argCount);
                 }
@@ -3266,14 +3273,10 @@ switch (op) {
                     // can be cached for re-use which would also benefit
                     // non-tail calls but it is not clear that this caching
                     // would gain in performance due to potentially
-                    // bad iteraction with GC.
+                    // bad interaction with GC.
                     callParentFrame = frame.parentFrame;
                     // Release the current frame. See Bug #344501 to see why
                     // it is being done here.
-                    // TODO: If using the graphical debugger, tail call 
-                    // optimization will create a "hole" in the context stack. 
-                    // The correct thing to do may be to disable tail call 
-                    // optimization if the code is being debugged.
                     exitFrame(cx, frame, null);
                 }
                 initFrame(cx, calleeScope, funThisObj, stack, sDbl,
