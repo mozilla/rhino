@@ -48,6 +48,7 @@ package org.mozilla.javascript;
 import org.mozilla.classfile.*;
 import java.lang.reflect.*;
 import java.io.*;
+import java.security.*;
 import java.util.*;
 
 public final class JavaAdapter implements IdFunctionCall
@@ -475,8 +476,22 @@ public final class JavaAdapter implements IdFunctionCall
 
     static Class loadAdapterClass(String className, byte[] classBytes)
     {
-        GeneratedClassLoader loader
-            = SecurityController.createLoader(null, null);
+        Object staticDomain;
+        Class domainClass = SecurityController.getStaticSecurityDomainClass();
+        if(domainClass == CodeSource.class || domainClass == ProtectionDomain.class) {
+            ProtectionDomain protectionDomain = JavaAdapter.class.getProtectionDomain();
+            if(domainClass == CodeSource.class) {
+                staticDomain = protectionDomain == null ? null : protectionDomain.getCodeSource();
+            }
+            else {
+                staticDomain = protectionDomain;
+            }
+        }
+        else {
+            staticDomain = null;
+        }
+        GeneratedClassLoader loader = SecurityController.createLoader(null, 
+                staticDomain);
         Class result = loader.defineClass(className, classBytes);
         loader.linkClass(result);
         return result;
