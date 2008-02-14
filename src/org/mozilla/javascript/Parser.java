@@ -895,7 +895,7 @@ public class Parser
                         // set init to a var list or initial
                         consumeToken();    // consume the token
                         decompiler.addToken(tt);
-                        init = variables(true, true, tt);
+                        init = variables(true, tt);
                         declType = tt;
                     }
                     else {
@@ -1106,7 +1106,7 @@ public class Parser
           case Token.VAR: {
             consumeToken();
             decompiler.addToken(tt);
-            pn = variables(false, true, tt);
+            pn = variables(false, tt);
             break;
           }
           
@@ -1116,7 +1116,7 @@ public class Parser
             if (peekToken() == Token.LP) {
                 pn = let(true);
             } else {
-                pn = variables(false, true, tt);
+                pn = variables(false, tt);
             }
             return pn;
           }
@@ -1365,12 +1365,10 @@ public class Parser
      * @throws IOException
      * @throws ParserException
      */
-    private Node variables(boolean inFor, boolean inStatement, int declType)
+    private Node variables(boolean inFor, int declType)
         throws IOException, ParserException
     {
-        Node result = nf.createVariables(inStatement ? declType : Token.COMMA,
-                                         ts.getLineno());
-        Node destructuringInit = null;
+        Node result = nf.createVariables(declType, ts.getLineno());
         boolean first = true;
         for (;;) {
             Node destructuring = null;
@@ -1404,25 +1402,15 @@ public class Parser
                         reportError("msg.destruct.assign.no.init");
                     nf.addChildToBack(result, destructuring);
                 } else {
-                    if (destructuringInit == null) {
-                        destructuringInit = new Node(Token.COMMA);
-                    }
                     nf.addChildToBack(result,
                         nf.createDestructuringAssignment(declType,
                             destructuring, init));
                 }
             } else {
-                if (inStatement) {
-                    Node name = nf.createName(s);
-                    if (init != null)
-                        nf.addChildToBack(name, init);
-                    nf.addChildToBack(result, name);
-                } else if (init != null) {
-                    Node string = nf.createString(s);
-                    string.setScope(currentScope);
-                    nf.addChildToBack(result,
-                        nf.createBinary(Token.SETVAR, string, init));
-                }
+                Node name = nf.createName(s);
+                if (init != null)
+                    nf.addChildToBack(name, init);
+                nf.addChildToBack(result, name);
             }
     
             if (!matchToken(Token.COMMA))
@@ -1440,7 +1428,7 @@ public class Parser
         Node result = nf.createScopeNode(Token.LET, ts.getLineno());
         pushScope(result);
         try {
-              Node vars = variables(false, true, Token.LET);
+              Node vars = variables(false, Token.LET);
               nf.addChildToBack(result, vars);
               mustMatchToken(Token.RP, "msg.no.paren.let");
               decompiler.addToken(Token.RP);
