@@ -41,7 +41,6 @@
 package org.mozilla.javascript;
 
 import java.text.Collator;
-import java.util.Arrays;
 
 /**
  * This class implements the String native object.
