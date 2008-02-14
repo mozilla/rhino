@@ -1014,8 +1014,8 @@ public class Interpreter implements Evaluator
                     addUint16(itsLineNumber & 0xFFFF);
                 } else {
                     // Only use the tail call optimization if we're not in a try
-                    // or we're not generating debug info (since the optimization
-                    // will confuse the debugger
+                    // or we're not generating debug info (since the
+                    // optimization will confuse the debugger)
                     if (type == Token.CALL && (contextFlags & ECF_TAIL) != 0 &&
                         !compilerEnv.isGenerateDebugInfo() && !itsInTryFlag)
                     {
