@@ -148,6 +148,16 @@ public abstract class SecurityController
         return loader;
     }
 
+    public static Class getStaticSecurityDomainClass() {
+        SecurityController sc = Context.getContext().getSecurityController();
+        return sc == null ? null : sc.getStaticSecurityDomainClassInternal(); 
+    }
+    
+    public Class getStaticSecurityDomainClassInternal()
+    {
+        return null;
+    }
+
     /**
      * Get dynamic security domain that allows an action only if it is allowed
      * by the current Java stack and <i>securityDomain</i>. If
