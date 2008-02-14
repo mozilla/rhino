@@ -148,8 +148,8 @@ public class ClassCompiler
      * specified interfaces.
      *
      * @return array where elements with even indexes specifies class name
-     *         and the followinf odd index gives class file body as byte[]
-     *         array. The initial elemnt of the array always holds
+     *         and the following odd index gives class file body as byte[]
+     *         array. The initial element of the array always holds
      *         mainClassName and array[1] holds its byte code.
      */
     public Object[] compileToClassFiles(String source,
