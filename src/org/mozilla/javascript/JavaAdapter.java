@@ -392,7 +392,7 @@ public final class JavaAdapter implements IdFunctionCall
             }
         }
 
-        // Now, go through the superclasses methods, checking for abstract
+        // Now, go through the superclass's methods, checking for abstract
         // methods or additional methods to override.
 
         // generate any additional overrides that the object might contain.
@@ -448,26 +448,28 @@ public final class JavaAdapter implements IdFunctionCall
     static Method[] getOverridableMethods(Class c)
     {
         ArrayList<Method> list = new ArrayList<Method>();
-        HashSet<String> cantOverride = new HashSet<String>();
+        HashSet<String> skip = new HashSet<String>();
         while (c != null) {
             Method[] methods = c.getDeclaredMethods();
             for (int i = 0; i < methods.length; i++) {
                 String methodKey = methods[i].getName() + 
                     getMethodSignature(methods[i],
                             methods[i].getParameterTypes());
-                if (cantOverride.contains(methodKey))
-                    continue;
+                if (skip.contains(methodKey))
+                    continue; // skip this method
                 int mods = methods[i].getModifiers();
                 if (Modifier.isStatic(mods))
                     continue;
                 if (Modifier.isFinal(mods)) {
                     // Make sure we don't add a final method to the list
                     // of overridable methods.
-                    cantOverride.add(methodKey);
+                    skip.add(methodKey);
                     continue;
                 }
-                if (Modifier.isPublic(mods) || Modifier.isProtected(mods))
+                if (Modifier.isPublic(mods) || Modifier.isProtected(mods)) {
                     list.add(methods[i]);
+                    skip.add(methodKey);
+                }
             }
             c = c.getSuperclass();
         }
