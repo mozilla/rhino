@@ -4513,11 +4513,20 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 cfw.addAStore(reg);
             }
         } else {
+            boolean isNumberVar = fnCurrent.isNumberVar(varIndex);
             if (isNumber) {
-                cfw.addDStore(reg);
-                if (needValue) cfw.addDLoad(reg);
-            }
-            else {
+                if (isNumberVar) {
+                    cfw.addDStore(reg);
+                    if (needValue) cfw.addDLoad(reg);
+                } else {
+                    if (needValue) cfw.add(ByteCode.DUP2);
+                    // Cannot save number in variable since !isNumberVar,
+                    // so convert to object
+                    addDoubleWrap();
+                    cfw.addAStore(reg);
+                }
+            } else {
+                if (isNumberVar) Kit.codeBug();
                 cfw.addAStore(reg);
                 if (needValue) cfw.addALoad(reg);
             }
