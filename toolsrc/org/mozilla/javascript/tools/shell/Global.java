@@ -114,6 +114,7 @@ public class Global extends ImporterTopLevel
         String[] names = {
             "defineClass",
             "deserialize",
+            "doctest",
             "gc",
             "help",
             "load",
@@ -364,7 +365,100 @@ public class Global extends ImporterTopLevel
             }
         }
         return prompts;
-    }    
+    }
+    
+    /**
+     * Example: doctest("js> function f() {\n  >   return 3;\n  > }\njs> f();\n3\n"); returns true
+     */
+    public static Object doctest(Context cx, Scriptable thisObj,
+                                 Object[] args, Function funObj)
+    {
+    	if (args.length == 0) {
+    		return Boolean.FALSE;
+    	}
+    	String session = Context.toString(args[0]);
+        Global global = getInstance(funObj);
+        return new Integer(global.runDoctest(cx, session));
+    }
+    
+    public int runDoctest(Context cx, String session) {
+    	String[] lines = session.split("\n|\r");
+        String prompt0 = this.prompts[0].trim();
+        String prompt1 = this.prompts[1].trim();
+        int testCount = 0;
+        int i = 0;
+        while (i < lines.length && !lines[i].trim().startsWith(prompt0)) {
+            i++; // skip lines that don't look like shell sessions
+        }
+    	while (i < lines.length) {
+    		String inputString = lines[i].trim().substring(prompt0.length());
+            inputString += "\n";
+    		i++;
+    		while (i < lines.length && lines[i].trim().startsWith(prompt1)) {
+    			inputString += lines[i].trim().substring(prompt1.length());
+    			inputString += "\n";
+    			i++;
+    		}
+            String expectedString = "";
+            while (i < lines.length &&
+                   !lines[i].trim().startsWith(prompt0))
+            {
+                expectedString += lines[i] + "\n";
+                i++;
+            }
+    		PrintStream savedOut = this.getOut();
+    		PrintStream savedErr = this.getErr();
+    		ByteArrayOutputStream out = new ByteArrayOutputStream();
+    		ByteArrayOutputStream err = new ByteArrayOutputStream();
+    		this.setOut(new PrintStream(out));
+    		this.setErr(new PrintStream(err));
+    		String resultString = "";
+    		ErrorReporter savedErrorReporter = cx.getErrorReporter();
+    		cx.setErrorReporter(new ToolErrorReporter(false, this.getErr()));
+    		try {
+    		    testCount++;
+	    		Object result = cx.evaluateString(this, inputString,
+	    				            "doctest input", 1, null);
+	            if (result != Context.getUndefinedValue() &&
+	                    !(result instanceof Function &&
+	                      inputString.trim().startsWith("function")))
+	            {
+	            	resultString = Context.toString(result);
+	            }
+    		} catch (RhinoException e) {
+                ToolErrorReporter.reportException(cx.getErrorReporter(), e);
+    		} finally {
+    		    this.setOut(savedOut);
+    		    this.setErr(savedErr);
+        		cx.setErrorReporter(savedErrorReporter);
+    			resultString += err.toString() + out.toString();
+    		}
+    		if (!doctestOutputMatches(expectedString, resultString)) {
+                throw Context.reportRuntimeError("doctest failure running:\n" +
+                        inputString +
+                		"expected: " + expectedString +
+                		"actual: " + resultString);
+    		}
+    	}
+    	return testCount;
+    }
+    
+    /**
+     * Compare actual result of doctest to expected, modulo some
+     * acceptable differences. Currently just trims the strings
+     * before comparing, but should ignore differences in line numbers
+     * for error messages for example.
+     * 
+     * @param expected the expected string
+     * @param actual the actual string
+     * @return true iff actual matches expected modulo some acceptable
+     *      differences 
+     */
+    private boolean doctestOutputMatches(String expected, String actual) {
+        String expectedTrimmed = expected.trim();
+        String actualTrimmed = actual.trim().replace("\r\n", "\n");
+        return expectedTrimmed.equals(actualTrimmed);
+    }
 
     /**
      * The spawn function runs a given function or script in a different

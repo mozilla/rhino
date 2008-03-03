@@ -15,6 +15,7 @@ public class Bug419940Test extends TestCase {
         public abstract int doSomething();
     }
     public static class Foo extends BaseFoo {
+        @Override
         public int doSomething() {
            return value;
         }
