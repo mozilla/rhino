@@ -225,6 +225,10 @@
     </zip>
   </target>
 
+  <target name="compile-debugger">
+    <ant antfile="toolsrc/build.xml" target="compile-debugger"/>
+  </target>
+
   <target name="clean" depends="properties">
     <delete quiet="true" file="${dist.dir}/${rhino.jar}"/>
     <delete quiet="true" file="${dist.dir}/${small-rhino.jar}"/>
