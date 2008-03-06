@@ -13,12 +13,11 @@ import java.io.IOException;
  * @author Norris Boyd
  */
 public class DoctestsTest extends DoctestBase {
-    static final String baseDirectory = "testsrc" + File.separator +
-    "doctests";
+    static final String baseDirectory = "testsrc" + File.separator + "doctests";
 
     static final String doctestsExtension = ".doctest";
 
-    public void testDoctests() throws IOException {
+    public void runDoctests() throws IOException {
         File[] doctests = FileUtils.recursiveListFiles(new File(baseDirectory),
                 new FileFilter() {
                   public boolean accept(File f) {
@@ -26,5 +25,20 @@ public class DoctestsTest extends DoctestBase {
                   }
                 });
         runDoctests(doctests);
+    }
+    
+    public void testDoctestsInterpreted() throws IOException {
+        setOptimizationLevel(-1);
+        runDoctests();
+    }
+    
+    public void testDoctestsCompiled() throws IOException {
+        setOptimizationLevel(0);
+        runDoctests();
+    }
+    
+    public void testDoctestsOptimized() throws IOException {
+        setOptimizationLevel(9);
+        runDoctests();
     }
 }
