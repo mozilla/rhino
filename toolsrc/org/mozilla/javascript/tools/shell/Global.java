@@ -378,10 +378,10 @@ public class Global extends ImporterTopLevel
     	}
     	String session = Context.toString(args[0]);
         Global global = getInstance(funObj);
-        return new Integer(global.runDoctest(cx, session));
+        return new Integer(global.runDoctest(cx, global, session));
     }
     
-    public int runDoctest(Context cx, String session) {
+    public int runDoctest(Context cx, Scriptable scope, String session) {
     	String[] lines = session.split("\n|\r");
         String prompt0 = this.prompts[0].trim();
         String prompt1 = this.prompts[1].trim();
@@ -417,7 +417,7 @@ public class Global extends ImporterTopLevel
     		cx.setErrorReporter(new ToolErrorReporter(false, this.getErr()));
     		try {
     		    testCount++;
-	    		Object result = cx.evaluateString(this, inputString,
+	    		Object result = cx.evaluateString(scope, inputString,
 	    				            "doctest input", 1, null);
 	            if (result != Context.getUndefinedValue() &&
 	                    !(result instanceof Function &&
