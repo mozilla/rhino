@@ -378,10 +378,12 @@ public class Global extends ImporterTopLevel
     	}
     	String session = Context.toString(args[0]);
         Global global = getInstance(funObj);
-        return new Integer(global.runDoctest(cx, global, session));
+        return new Integer(global.runDoctest(cx, global, session, null, 0));
     }
     
-    public int runDoctest(Context cx, Scriptable scope, String session) {
+    public int runDoctest(Context cx, Scriptable scope, String session,
+                          String sourceName, int lineNumber)
+    {
     	String[] lines = session.split("\n|\r");
         String prompt0 = this.prompts[0].trim();
         String prompt1 = this.prompts[1].trim();
@@ -434,10 +436,15 @@ public class Global extends ImporterTopLevel
     			resultString += err.toString() + out.toString();
     		}
     		if (!doctestOutputMatches(expectedString, resultString)) {
-                throw Context.reportRuntimeError("doctest failure running:\n" +
-                        inputString +
-                		"expected: " + expectedString +
-                		"actual: " + resultString);
+    		    String message = "doctest failure running:\n" +
+                    inputString +
+                    "expected: " + expectedString +
+                    "actual: " + resultString + "\n";
+    		    if (sourceName != null)
+                    throw Context.reportRuntimeError(message, sourceName,
+                            lineNumber+i-1, null, 0);
+    		    else
+                    throw Context.reportRuntimeError(message);
     		}
     	}
     	return testCount;

@@ -28,12 +28,14 @@ public class DoctestBase extends TestCase {
         this.optimizationLevel = level;
     }
   
-    public void runDoctest(Context cx, Global global, String name, String source) {
+    public void runDoctest(Context cx, Global global, String name,
+                           String source)
+    {
         // create a lightweight top-level scope
         Scriptable scope = cx.newObject(global);
         scope.setPrototype(global);
         // global.runDoctest throws an exception on any failure
-        int testsPassed = global.runDoctest(cx, scope, source);
+        int testsPassed = global.runDoctest(cx, scope, source, name, 1);
         System.out.println(name + ": " + testsPassed + " passed.");
         assertTrue(testsPassed > 0);
     }
@@ -49,8 +51,7 @@ public class DoctestBase extends TestCase {
                                                // files
                 char[] buf = new char[length];
                 new FileReader(f).read(buf, 0, length);
-                String session = new String(buf);
-                runDoctest(cx, global, f.getName(), session);
+                runDoctest(cx, global, f.getName(), new String(buf));
             }
         } finally {
             Context.exit();
