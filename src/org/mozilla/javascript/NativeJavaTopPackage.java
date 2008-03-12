@@ -159,7 +159,7 @@ public class NativeJavaTopPackage
     {
         if (args.length > 0  && args[0] instanceof Wrapper) {
             Scriptable result = this;
-            Class cl = ((Wrapper) args[0]).unwrap().getClass();
+            Class<?> cl = ((Wrapper) args[0]).unwrap().getClass();
             // Evaluate the class name by getting successive properties of
             // the string to find the appropriate NativeJavaClass object
             String name = cl.getName();

@@ -1143,6 +1143,7 @@ public class Node
         }
     }
 
+    @Override
     public String toString()
     {
         if (Token.printTrees) {
@@ -1189,8 +1190,8 @@ public class Node
                     sb.append(" [scope ");
                     appendPrintId(this, printIds, sb);
                     sb.append(": ");
-                    Iterator iter = ((Node.Scope) this).symbolTable.keySet()
-                        .iterator();
+                    Iterator<String> iter =
+                        ((Node.Scope) this).symbolTable.keySet().iterator();
                     while (iter.hasNext()) {
                         sb.append(iter.next());
                         sb.append(" ");

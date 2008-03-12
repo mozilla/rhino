@@ -56,7 +56,7 @@ public class InterfaceAdapter
      * @return The glue object or null if <tt>cl</tt> is not interface or
      *         has methods with different signatures.
      */
-    static Object create(Context cx, Class cl, Callable function)
+    static Object create(Context cx, Class<?> cl, Callable function)
     {
         if (!cl.isInterface()) throw new IllegalArgumentException();
 
@@ -75,10 +75,10 @@ public class InterfaceAdapter
             }
             boolean canCallFunction = false;
           canCallFunctionChecks: {
-                Class[] argTypes = methods[0].getParameterTypes();
+                Class<?>[] argTypes = methods[0].getParameterTypes();
                 // check that the rest of methods has the same signature
                 for (int i = 1; i != methods.length; ++i) {
-                    Class[] types2 = methods[i].getParameterTypes();
+                    Class<?>[] types2 = methods[i].getParameterTypes();
                     if (types2.length != argTypes.length) {
                         break canCallFunctionChecks;
                     }
@@ -103,7 +103,7 @@ public class InterfaceAdapter
             adapter.proxyHelper, cf, adapter, function, topScope);
     }
 
-    private InterfaceAdapter(ContextFactory cf, Class cl)
+    private InterfaceAdapter(ContextFactory cf, Class<?> cl)
     {
         this.proxyHelper
             = VMBridge.instance.getInterfaceProxyHelper(
@@ -145,7 +145,7 @@ public class InterfaceAdapter
         }
 
         Object result = function.call(cx, topScope, thisObj, jsargs);
-        Class javaResultType = method.getReturnType();
+        Class<?> javaResultType = method.getReturnType();
         if (javaResultType == Void.TYPE) {
             result = null;
         } else {

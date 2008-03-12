@@ -84,6 +84,7 @@ public class EcmaError extends RhinoException
              sourceName, lineNumber, lineSource, columnNumber);
     }
 
+    @Override
     public String details()
     {
         return errorName+": "+errorMessage;
