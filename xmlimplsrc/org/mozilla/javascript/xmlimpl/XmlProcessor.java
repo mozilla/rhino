@@ -174,8 +174,13 @@ class XmlProcessor {
         
     private synchronized void returnDocumentBuilderToPool(DocumentBuilder db) {
         if (documentBuilder == null) {
-            documentBuilder = db;
-            documentBuilder.reset();
+            try {
+                db.reset();
+                documentBuilder = db;
+            } catch (UnsupportedOperationException e) {
+                // document builders that don't support reset() can't
+                // be pooled
+            }
         }
     }
 
