@@ -89,6 +89,7 @@ public final class NativeIterator extends IdScriptableObject {
     public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
     
     static class StopIteration extends NativeObject {
+        @Override
         public String getClassName() {
             return STOP_ITERATION;
         }
@@ -96,15 +97,18 @@ public final class NativeIterator extends IdScriptableObject {
         /* StopIteration has custom instanceof behavior since it
          * doesn't have a constructor.
          */
+        @Override
         public boolean hasInstance(Scriptable instance) {
             return instance instanceof StopIteration;
         }
     }
 
+    @Override
     public String getClassName() {
         return "Iterator";
     }
 
+    @Override
     protected void initPrototypeId(int id) {
         String s;
         int arity;
@@ -117,6 +121,7 @@ public final class NativeIterator extends IdScriptableObject {
         initPrototypeMethod(ITERATOR_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -148,7 +153,7 @@ public final class NativeIterator extends IdScriptableObject {
         }
     }
     
-    /* the javascript constructor */
+    /* The JavaScript constructor */
     private static Object jsConstructor(Context cx, Scriptable scope, 
                                         Scriptable thisObj, Object[] args)
     {
@@ -232,6 +237,7 @@ public final class NativeIterator extends IdScriptableObject {
     
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s) {
         int id;
 // #generated# Last update: 2007-06-11 09:43:19 EDT

@@ -316,7 +316,7 @@ public interface Scriptable {
      * @param hint the type hint
      * @return the default value
      */
-    public Object getDefaultValue(Class hint);
+    public Object getDefaultValue(Class<?> hint);
 
     /**
      * The instanceof operator.

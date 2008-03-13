@@ -58,16 +58,19 @@ public class NativeObject extends IdScriptableObject
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
+    @Override
     public String getClassName()
     {
         return "Object";
     }
 
+    @Override
     public String toString()
     {
         return ScriptRuntime.defaultObjectToString(this);
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -95,6 +98,7 @@ public class NativeObject extends IdScriptableObject
         initPrototypeMethod(OBJECT_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -259,6 +263,7 @@ public class NativeObject extends IdScriptableObject
 
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;

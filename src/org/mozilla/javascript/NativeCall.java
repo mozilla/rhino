@@ -101,16 +101,19 @@ public final class NativeCall extends IdScriptableObject
         }
     }
 
+    @Override
     public String getClassName()
     {
         return "Call";
     }
 
+    @Override
     protected int findPrototypeId(String s)
     {
         return s.equals("constructor") ? Id_constructor : 0;
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -123,6 +126,7 @@ public final class NativeCall extends IdScriptableObject
         initPrototypeMethod(CALL_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {

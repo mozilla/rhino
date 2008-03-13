@@ -349,6 +349,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         super.put(name, this, value);
     }
 
+    @Override
     public boolean has(String name, Scriptable start)
     {
         int info = findInstanceIdInfo(name);
@@ -369,6 +370,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         return super.has(name, start);
     }
 
+    @Override
     public Object get(String name, Scriptable start)
     {
         int info = findInstanceIdInfo(name);
@@ -385,6 +387,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         return super.get(name, start);
     }
 
+    @Override
     public void put(String name, Scriptable start, Object value)
     {
         int info = findInstanceIdInfo(name);
@@ -419,6 +422,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         super.put(name, start, value);
     }
 
+    @Override
     public void delete(String name)
     {
         int info = findInstanceIdInfo(name);
@@ -445,6 +449,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         super.delete(name);
     }
 
+    @Override
     public int getAttributes(String name)
     {
         int info = findInstanceIdInfo(name);
@@ -461,6 +466,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         return super.getAttributes(name);
     }
 
+    @Override
     public void setAttributes(String name, int attributes)
     {
         ScriptableObject.checkValidAttributes(attributes);
@@ -483,6 +489,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         super.setAttributes(name, attributes);
     }
 
+    @Override
     Object[] getIds(boolean getAll)
     {
         Object[] result = super.getIds(getAll);

@@ -62,6 +62,7 @@ public abstract class NativeFunction extends BaseFunction
      *
      * @param flags Flags specifying format of decompilation output
      */
+    @Override
     final String decompile(int indent, int flags)
     {
         String encodedSource = getEncodedSource();
@@ -74,6 +75,7 @@ public abstract class NativeFunction extends BaseFunction
         }
     }
 
+    @Override
     public int getLength()
     {
         int paramCount = getParamCount();
@@ -88,6 +90,7 @@ public abstract class NativeFunction extends BaseFunction
         return activation.originalArgs.length;
     }
 
+    @Override
     public int getArity()
     {
         return getParamCount();

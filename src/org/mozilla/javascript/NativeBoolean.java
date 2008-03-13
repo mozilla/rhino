@@ -62,12 +62,14 @@ final class NativeBoolean extends IdScriptableObject
         booleanValue = b;
     }
 
+    @Override
     public String getClassName()
     {
         return "Boolean";
     }
 
-    public Object getDefaultValue(Class typeHint) {
+    @Override
+    public Object getDefaultValue(Class<?> typeHint) {
         // This is actually non-ECMA, but will be proposed
         // as a change in round 2.
         if (typeHint == ScriptRuntime.BooleanClass)
@@ -75,6 +77,7 @@ final class NativeBoolean extends IdScriptableObject
         return super.getDefaultValue(typeHint);
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -89,6 +92,7 @@ final class NativeBoolean extends IdScriptableObject
         initPrototypeMethod(BOOLEAN_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -137,6 +141,7 @@ final class NativeBoolean extends IdScriptableObject
 
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;

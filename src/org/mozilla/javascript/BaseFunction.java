@@ -70,6 +70,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         super(scope, prototype);
     }
 
+    @Override
     public String getClassName() {
         return "Function";
     }
@@ -88,6 +89,7 @@ public class BaseFunction extends IdScriptableObject implements Function
      *              value's prototype chain
      *
      */
+    @Override
     public boolean hasInstance(Scriptable instance)
     {
         Object protoProp = ScriptableObject.getProperty(this, "prototype");
@@ -109,11 +111,13 @@ public class BaseFunction extends IdScriptableObject implements Function
 
         MAX_INSTANCE_ID = 5;
 
+    @Override
     protected int getMaxInstanceId()
     {
         return MAX_INSTANCE_ID;
     }
 
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         int id;
@@ -154,6 +158,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         return instanceIdInfo(attr, id);
     }
 
+    @Override
     protected String getInstanceIdName(int id)
     {
         switch (id) {
@@ -166,6 +171,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         return super.getInstanceIdName(id);
     }
 
+    @Override
     protected Object getInstanceIdValue(int id)
     {
         switch (id) {
@@ -178,6 +184,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         return super.getInstanceIdValue(id);
     }
 
+    @Override
     protected void setInstanceIdValue(int id, Object value)
     {
         if (id == Id_prototype) {
@@ -196,6 +203,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         super.setInstanceIdValue(id, value);
     }
 
+    @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
         // Fix up bootstrapping problem: getPrototype of the IdFunctionObject
@@ -205,6 +213,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         super.fillConstructorProperties(ctor);
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -235,6 +244,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         return false;
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -513,6 +523,7 @@ public class BaseFunction extends IdScriptableObject implements Function
                                   sourceURI, 1, null);
     }
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;

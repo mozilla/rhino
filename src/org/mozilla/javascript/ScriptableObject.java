@@ -688,12 +688,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *
      * See ECMA 8.6.2.6.
      */
-    public Object getDefaultValue(Class typeHint)
+    public Object getDefaultValue(Class<?> typeHint)
     {
         return getDefaultValue(this, typeHint);
     }
     
-    public static Object getDefaultValue(Scriptable object, Class typeHint)
+    public static Object getDefaultValue(Scriptable object, Class<?> typeHint)
     {
         Context cx = null;
         for (int i=0; i < 2; i++) {
@@ -916,7 +916,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @see org.mozilla.javascript.ScriptableObject
      *      #defineProperty(String, Class, int)
      */
-    public static void defineClass(Scriptable scope, Class clazz)
+    public static <T extends Scriptable> void defineClass(
+            Scriptable scope, Class<T> clazz)
         throws IllegalAccessException, InstantiationException,
                InvocationTargetException
     {
@@ -946,8 +947,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *            during execution of methods of the named class
      * @since 1.4R3
      */
-    public static void defineClass(Scriptable scope, Class clazz,
-                                   boolean sealed)
+    public static <T extends Scriptable> void defineClass(
+            Scriptable scope, Class<T> clazz, boolean sealed)
         throws IllegalAccessException, InstantiationException,
                InvocationTargetException
     {
@@ -981,8 +982,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *            during execution of methods of the named class
      * @since 1.6R2
      */
-    public static String defineClass(Scriptable scope, Class clazz,
-                                     boolean sealed, boolean mapInheritance)
+    public static <T extends Scriptable> String defineClass(
+            Scriptable scope, Class<T> clazz, boolean sealed,
+            boolean mapInheritance)
         throws IllegalAccessException, InstantiationException,
                InvocationTargetException
     {
@@ -995,9 +997,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return name;
     }
 
-    static BaseFunction buildClassCtor(Scriptable scope, Class clazz,
-                                       boolean sealed,
-                                       boolean mapInheritance)
+    static <T extends Scriptable> BaseFunction buildClassCtor(
+            Scriptable scope, Class<T> clazz,
+            boolean sealed,
+            boolean mapInheritance)
         throws IllegalAccessException, InstantiationException,
                InvocationTargetException
     {
@@ -1006,7 +1009,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             Method method = methods[i];
             if (!method.getName().equals("init"))
                 continue;
-            Class[] parmTypes = method.getParameterTypes();
+            Class<?>[] parmTypes = method.getParameterTypes();
             if (parmTypes.length == 3 &&
                 parmTypes[0] == ScriptRuntime.ContextClass &&
                 parmTypes[1] == ScriptRuntime.ScriptableClass &&
@@ -1032,8 +1035,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         // If we got here, there isn't an "init" method with the right
         // parameter types.
 
-        Constructor[] ctors = clazz.getConstructors();
-        Constructor protoCtor = null;
+        Constructor<?>[] ctors = clazz.getConstructors();
+        Constructor<?> protoCtor = null;
         for (int i=0; i < ctors.length; i++) {
             if (ctors[i].getParameterTypes().length == 0) {
                 protoCtor = ctors[i];
@@ -1052,10 +1055,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         // prototype-based inheritance if requested to do so.
         Scriptable superProto = null;
         if (mapInheritance) {
-            Class superClass = clazz.getSuperclass();
-            if (ScriptRuntime.ScriptableClass.isAssignableFrom(superClass)
-                    && !Modifier.isAbstract(superClass.getModifiers())) {
-                String name = ScriptableObject.defineClass(scope, superClass, sealed, mapInheritance);
+            Class<? super T> superClass = clazz.getSuperclass();
+            if (ScriptRuntime.ScriptableClass.isAssignableFrom(superClass) &&
+                !Modifier.isAbstract(superClass.getModifiers()))
+            {
+                Class<? extends Scriptable> superScriptable =
+                    extendsScriptable(superClass);
+                String name = ScriptableObject.defineClass(scope, 
+                        superScriptable, sealed, mapInheritance);
                 if (name != null) {
                     superProto = ScriptableObject.getClassPrototype(scope, name);
                 }
@@ -1106,7 +1113,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
             String name = methods[i].getName();
             if (name.equals("finishInit")) {
-                Class[] parmTypes = methods[i].getParameterTypes();
+                Class<?>[] parmTypes = methods[i].getParameterTypes();
                 if (parmTypes.length == 3 &&
                     parmTypes[0] == ScriptRuntime.ScriptableClass &&
                     parmTypes[1] == FunctionObject.class &&
@@ -1192,6 +1199,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return ctor;
     }
 
+    @SuppressWarnings({"unchecked"})
+    private static <T extends Scriptable> Class<T> extendsScriptable(Class<?> c)
+    {
+        if (ScriptRuntime.ScriptableClass.isAssignableFrom(c))
+            return (Class<T>) c;
+        return null;
+    }
+
     /**
      * Define a JavaScript property.
      *
@@ -1262,7 +1277,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param attributes the attributes of the JavaScript property
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
-    public void defineProperty(String propertyName, Class clazz,
+    public void defineProperty(String propertyName, Class<?> clazz,
                                int attributes)
     {
         int length = propertyName.length();
@@ -1346,7 +1361,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
 
             String errorId = null;
-            Class[] parmTypes = getter.getParameterTypes();
+            Class<?>[] parmTypes = getter.getParameterTypes();
             if (parmTypes.length == 0) {
                 if (delegatedForm) {
                     errorId = "msg.obj.getter.parms";
@@ -1389,7 +1404,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
 
             String errorId = null;
-            Class[] parmTypes = setter.getParameterTypes();
+            Class<?>[] parmTypes = setter.getParameterTypes();
             if (parmTypes.length == 1) {
                 if (delegatedForm) {
                     errorId = "msg.setter2.expected";
@@ -1432,7 +1447,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param attributes the attributes of the new properties
      * @see org.mozilla.javascript.FunctionObject
      */
-    public void defineFunctionProperties(String[] names, Class clazz,
+    public void defineFunctionProperties(String[] names, Class<?> clazz,
                                          int attributes)
     {
         Method[] methods = FunctionObject.getMethodList(clazz);
@@ -2044,10 +2059,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 Context cx = Context.getContext();
                 if (setterObj instanceof MemberBox) {
                     MemberBox nativeSetter = (MemberBox)setterObj;
-                    Class pTypes[] = nativeSetter.argTypes;
+                    Class<?> pTypes[] = nativeSetter.argTypes;
                     // XXX: cache tag since it is already calculated in
                     // defineProperty ?
-                    Class valueType = pTypes[pTypes.length - 1];
+                    Class<?> valueType = pTypes[pTypes.length - 1];
                     int tag = FunctionObject.getTypeTag(valueType);
                     Object actualArg = FunctionObject.convertArg(cx, start,
                                                                  value, tag);

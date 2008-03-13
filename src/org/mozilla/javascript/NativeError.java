@@ -98,16 +98,19 @@ final class NativeError extends IdScriptableObject
         return obj;
     }
 
+    @Override
     public String getClassName()
     {
         return "Error";
     }
 
+    @Override
     public String toString()
     {
         return js_toString(this);
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -121,6 +124,7 @@ final class NativeError extends IdScriptableObject
         initPrototypeMethod(ERROR_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -196,6 +200,7 @@ final class NativeError extends IdScriptableObject
         return ScriptRuntime.toString(value);
     }
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;

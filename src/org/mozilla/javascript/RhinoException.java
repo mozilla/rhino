@@ -68,6 +68,7 @@ public abstract class RhinoException extends RuntimeException
             e.captureStackInfo(this);
     }
 
+    @Override
     public final String getMessage()
     {
         String details = details();
@@ -278,6 +279,7 @@ public abstract class RhinoException extends RuntimeException
         return buffer.toString();
     }
 
+    @Override
     public void printStackTrace(PrintWriter s)
     {
         if (interpreterStackInfo == null) {
@@ -287,6 +289,7 @@ public abstract class RhinoException extends RuntimeException
         }
     }
 
+    @Override
     public void printStackTrace(PrintStream s)
     {
         if (interpreterStackInfo == null) {

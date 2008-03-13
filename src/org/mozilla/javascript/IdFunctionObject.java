@@ -109,6 +109,7 @@ public class IdFunctionObject extends BaseFunction
         addAsProperty(getParentScope());
     }
 
+    @Override
     public Scriptable getPrototype()
     {
         // Lazy initialization of prototype: for native functions this
@@ -121,12 +122,14 @@ public class IdFunctionObject extends BaseFunction
         return proto;
     }
 
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
         return idcall.execIdCall(this, cx, scope, thisObj, args);
     }
 
+    @Override
     public Scriptable createObject(Context cx, Scriptable scope)
     {
         if (useCallAsConstructor) {
@@ -139,6 +142,7 @@ public class IdFunctionObject extends BaseFunction
         throw ScriptRuntime.typeError1("msg.not.ctor", functionName);
     }
 
+    @Override
     String decompile(int indent, int flags)
     {
         StringBuffer sb = new StringBuffer();
@@ -161,13 +165,16 @@ public class IdFunctionObject extends BaseFunction
         return sb.toString();
     }
 
+    @Override
     public int getArity()
     {
         return arity;
     }
 
+    @Override
     public int getLength() { return getArity(); }
 
+    @Override
     public String getFunctionName()
     {
         return (functionName == null) ? "" : functionName;

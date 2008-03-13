@@ -89,6 +89,7 @@ public final class NativeGenerator extends IdScriptableObject {
                             GENERATOR_THROW = 1,
                             GENERATOR_CLOSE = 2;
 
+    @Override
     public String getClassName() {
         return "Generator";
     }
@@ -96,6 +97,7 @@ public final class NativeGenerator extends IdScriptableObject {
     /**
      * Close the generator if it is still open.
      */
+    @Override
     public void finalize() throws Throwable {
         if (savedState != null) {
             // This is a little tricky since we are most likely running in
@@ -131,6 +133,7 @@ public final class NativeGenerator extends IdScriptableObject {
         }
     }
 
+    @Override
     protected void initPrototypeId(int id) {
         String s;
         int arity;
@@ -145,6 +148,7 @@ public final class NativeGenerator extends IdScriptableObject {
         initPrototypeMethod(GENERATOR_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -237,6 +241,7 @@ public final class NativeGenerator extends IdScriptableObject {
 
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s) {
         int id;
 // #generated# Last update: 2007-06-14 13:13:03 EDT

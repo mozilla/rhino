@@ -76,12 +76,14 @@ final class NativeDate extends IdScriptableObject
         }
     }
 
+    @Override
     public String getClassName()
     {
         return "Date";
     }
 
-    public Object getDefaultValue(Class typeHint)
+    @Override
+    public Object getDefaultValue(Class<?> typeHint)
     {
         if (typeHint == null)
             typeHint = ScriptRuntime.StringClass;
@@ -93,6 +95,7 @@ final class NativeDate extends IdScriptableObject
         return date;
     }
 
+    @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
         addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_now,
@@ -104,6 +107,7 @@ final class NativeDate extends IdScriptableObject
         super.fillConstructorProperties(ctor);
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -159,6 +163,7 @@ final class NativeDate extends IdScriptableObject
         initPrototypeMethod(DATE_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -1417,6 +1422,7 @@ final class NativeDate extends IdScriptableObject
 
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;

@@ -70,6 +70,7 @@ final class NativeString extends IdScriptableObject
         string = s;
     }
 
+    @Override
     public String getClassName() {
         return "String";
     }
@@ -78,11 +79,13 @@ final class NativeString extends IdScriptableObject
         Id_length                    =  1,
         MAX_INSTANCE_ID              =  1;
 
+    @Override
     protected int getMaxInstanceId()
     {
         return MAX_INSTANCE_ID;
     }
 
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         if (s.equals("length")) {
@@ -91,12 +94,14 @@ final class NativeString extends IdScriptableObject
         return super.findInstanceIdInfo(s);
     }
 
+    @Override
     protected String getInstanceIdName(int id)
     {
         if (id == Id_length) { return "length"; }
         return super.getInstanceIdName(id);
     }
 
+    @Override
     protected Object getInstanceIdValue(int id)
     {
         if (id == Id_length) {
@@ -105,6 +110,7 @@ final class NativeString extends IdScriptableObject
         return super.getInstanceIdValue(id);
     }
 
+    @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode,
@@ -148,6 +154,7 @@ final class NativeString extends IdScriptableObject
         super.fillConstructorProperties(ctor);
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -194,6 +201,7 @@ final class NativeString extends IdScriptableObject
         initPrototypeMethod(STRING_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -433,6 +441,7 @@ final class NativeString extends IdScriptableObject
         return result.toString();
     }
 
+    @Override
     public String toString() {
         return string;
     }
@@ -440,6 +449,7 @@ final class NativeString extends IdScriptableObject
     /* Make array-style property lookup work for strings.
      * XXX is this ECMA?  A version check is probably needed. In js too.
      */
+    @Override
     public Object get(int index, Scriptable start) {
         if (0 <= index && index < string.length()) {
             return string.substring(index, index + 1);
@@ -447,6 +457,7 @@ final class NativeString extends IdScriptableObject
         return super.get(index, start);
     }
 
+    @Override
     public void put(int index, Scriptable start, Object value) {
         if (0 <= index && index < string.length()) {
             return;
@@ -848,6 +859,7 @@ final class NativeString extends IdScriptableObject
 
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;

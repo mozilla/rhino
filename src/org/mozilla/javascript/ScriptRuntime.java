@@ -132,10 +132,11 @@ public class ScriptRuntime {
             = Kit.classOrNull("org.mozilla.javascript.ContextFactory"),
         FunctionClass
             = Kit.classOrNull("org.mozilla.javascript.Function"),
-        ScriptableClass
-            = Kit.classOrNull("org.mozilla.javascript.Scriptable"),
         ScriptableObjectClass
             = Kit.classOrNull("org.mozilla.javascript.ScriptableObject");
+    public static final Class<Scriptable> ScriptableClass =
+        Scriptable.class;
+
 
     private static final String[] lazilyNames = {
         "RegExp",        "org.mozilla.javascript.regexp.NativeRegExp",

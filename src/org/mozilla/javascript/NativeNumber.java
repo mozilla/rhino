@@ -66,11 +66,13 @@ final class NativeNumber extends IdScriptableObject
         doubleValue = number;
     }
 
+    @Override
     public String getClassName()
     {
         return "Number";
     }
 
+    @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
         final int attr = ScriptableObject.DONTENUM |
@@ -94,6 +96,7 @@ final class NativeNumber extends IdScriptableObject
         super.fillConstructorProperties(ctor);
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -112,6 +115,7 @@ final class NativeNumber extends IdScriptableObject
         initPrototypeMethod(NUMBER_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -169,6 +173,7 @@ final class NativeNumber extends IdScriptableObject
         }
     }
 
+    @Override
     public String toString() {
         return ScriptRuntime.numberToString(doubleValue, 10);
     }
@@ -199,6 +204,7 @@ final class NativeNumber extends IdScriptableObject
 
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;
