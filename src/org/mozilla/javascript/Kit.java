@@ -109,7 +109,7 @@ public class Kit
     }
 
     /**
-     * Check that testClass is accesible from the given loader.
+     * Check that testClass is accessible from the given loader.
      */
     static boolean testIfCanLoadRhinoClasses(ClassLoader loader)
     {
