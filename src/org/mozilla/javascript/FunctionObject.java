@@ -118,7 +118,7 @@ public class FunctionObject extends BaseFunction
                           Scriptable scope)
     {
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox((Constructor) methodOrConstructor);
+            member = new MemberBox((Constructor<?>) methodOrConstructor);
             isStatic = true; // well, doesn't take a 'this'
         } else {
             member = new MemberBox((Method) methodOrConstructor);
@@ -126,7 +126,7 @@ public class FunctionObject extends BaseFunction
         }
         String methodName = member.getName();
         this.functionName = name;
-        Class[] types = member.argTypes;
+        Class<?>[] types = member.argTypes;
         int arity = types.length;
         if (arity == 4 && (types[1].isArray() || types[2].isArray())) {
             // Either variable args or an error.
@@ -170,14 +170,14 @@ public class FunctionObject extends BaseFunction
 
         if (member.isMethod()) {
             Method method = member.method();
-            Class returnType = method.getReturnType();
+            Class<?> returnType = method.getReturnType();
             if (returnType == Void.TYPE) {
                 hasVoidReturn = true;
             } else {
                 returnTypeTag = getTypeTag(returnType);
             }
         } else {
-            Class ctorType = member.getDeclaringClass();
+            Class<?> ctorType = member.getDeclaringClass();
             if (!ScriptRuntime.ScriptableClass.isAssignableFrom(ctorType)) {
                 throw Context.reportRuntimeError1(
                     "msg.bad.ctor.return", ctorType.getName());
@@ -192,7 +192,7 @@ public class FunctionObject extends BaseFunction
      *         or {@link #JAVA_UNSUPPORTED_TYPE} if the convertion is not
      *         possible
      */
-    public static int getTypeTag(Class type)
+    public static int getTypeTag(Class<?> type)
     {
         if (type == ScriptRuntime.StringClass)
             return JAVA_STRING_TYPE;
@@ -303,7 +303,7 @@ public class FunctionObject extends BaseFunction
      * @return the public methods declared in the specified class
      * @see Class#getDeclaredMethods()
      */
-    static Method[] getMethodList(Class clazz) {
+    static Method[] getMethodList(Class<?> clazz) {
         Method[] methods = null;
         try {
             // getDeclaredMethods may be rejected by the security manager
@@ -377,10 +377,10 @@ public class FunctionObject extends BaseFunction
     /**
      * @deprecated Use {@link #getTypeTag(Class)}
      * and {@link #convertArg(Context, Scriptable, Object, int)}
-     * for type convertion.
+     * for type conversion.
      */
     public static Object convertArg(Context cx, Scriptable scope,
-                                    Object arg, Class desired)
+                                    Object arg, Class<?> desired)
     {
         int tag = getTypeTag(desired);
         if (tag == JAVA_UNSUPPORTED_TYPE) {
@@ -421,7 +421,7 @@ public class FunctionObject extends BaseFunction
 
         } else {
             if (!isStatic) {
-                Class clazz = member.getDeclaringClass();
+                Class<?> clazz = member.getDeclaringClass();
                 if (!clazz.isInstance(thisObj)) {
                     boolean compatible = false;
                     if (thisObj == scope) {
@@ -529,7 +529,7 @@ public class FunctionObject extends BaseFunction
     {
         in.defaultReadObject();
         if (parmsLength > 0) {
-            Class[] types = member.argTypes;
+            Class<?>[] types = member.argTypes;
             typeTags = new byte[parmsLength];
             for (int i = 0; i != parmsLength; ++i) {
                 typeTags[i] = (byte)getTypeTag(types[i]);
@@ -537,7 +537,7 @@ public class FunctionObject extends BaseFunction
         }
         if (member.isMethod()) {
             Method method = member.method();
-            Class returnType = method.getReturnType();
+            Class<?> returnType = method.getReturnType();
             if (returnType == Void.TYPE) {
                 hasVoidReturn = true;
             } else {

@@ -73,7 +73,7 @@ public class NativeJavaArray extends NativeJavaObject
 
     public NativeJavaArray(Scriptable scope, Object array) {
         super(scope, null, ScriptRuntime.ObjectClass);
-        Class cl = array.getClass();
+        Class<?> cl = array.getClass();
         if (!cl.isArray()) {
             throw new RuntimeException("Array expected");
         }
@@ -137,7 +137,7 @@ public class NativeJavaArray extends NativeJavaObject
     }
 
     @Override
-    public Object getDefaultValue(Class hint) {
+    public Object getDefaultValue(Class<?> hint) {
         if (hint == null || hint == ScriptRuntime.StringClass)
             return array.toString();
         if (hint == ScriptRuntime.BooleanClass)
@@ -176,5 +176,5 @@ public class NativeJavaArray extends NativeJavaObject
 
     Object array;
     int length;
-    Class cls;
+    Class<?> cls;
 }

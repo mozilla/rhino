@@ -45,7 +45,8 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.*;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 import java.io.*;
 import org.mozilla.javascript.debug.DebuggableObject;
 
@@ -141,7 +142,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private transient Slot lastAccess = REMOVED;
 
     // associated values are not serialized
-    private transient volatile Hashtable associatedValues;
+    private transient volatile Map<Object,Object> associatedValues;
 
     private static final int SLOT_QUERY = 1;
     private static final int SLOT_MODIFY = 2;
@@ -1907,7 +1908,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public final Object getAssociatedValue(Object key)
     {
-        Hashtable h = associatedValues;
+        Map<Object,Object> h = associatedValues;
         if (h == null)
             return null;
         return h.get(key);
@@ -1954,17 +1955,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * given key or old value for any subsequent calls.
      * @see #getAssociatedValue(Object key)
      */
-    public final Object associateValue(Object key, Object value)
+    public synchronized final Object associateValue(Object key, Object value)
     {
         if (value == null) throw new IllegalArgumentException();
-        Hashtable h = associatedValues;
+        Map<Object,Object> h = associatedValues;
         if (h == null) {
-            synchronized (this) {
-                h = associatedValues;
-                if (h == null) {
-                    h = new Hashtable();
-                    associatedValues = h;
-                }
+            h = associatedValues;
+            if (h == null) {
+                h = new HashMap<Object,Object>();
+                associatedValues = h;
             }
         }
         return Kit.initHash(h, key, value);

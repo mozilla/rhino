@@ -83,6 +83,7 @@ public class PrivateAccessClass
     PrivateAccessClass pac2 = new PrivateAccessClass(2);
     PrivateNestedClass pnc = new PrivateNestedClass();
     System.out.println(privateString);
+    pac2.privateMethod(); // to silence warning
     return pnc.privateInt + staticPrivateInt + staticPrivateMethod() +
            pac.privateMethod();
   }

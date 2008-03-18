@@ -148,12 +148,12 @@ public abstract class SecurityController
         return loader;
     }
 
-    public static Class getStaticSecurityDomainClass() {
+    public static Class<?> getStaticSecurityDomainClass() {
         SecurityController sc = Context.getContext().getSecurityController();
         return sc == null ? null : sc.getStaticSecurityDomainClassInternal(); 
     }
     
-    public Class getStaticSecurityDomainClassInternal()
+    public Class<?> getStaticSecurityDomainClassInternal()
     {
         return null;
     }

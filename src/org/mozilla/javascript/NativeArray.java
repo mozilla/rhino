@@ -454,7 +454,7 @@ public class NativeArray extends IdScriptableObject
         return ids;
     }
 
-    public Object getDefaultValue(Class hint)
+    public Object getDefaultValue(Class<?> hint)
     {
         if (hint == ScriptRuntime.NumberClass) {
             Context cx = Context.getContext();

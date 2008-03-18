@@ -39,7 +39,7 @@
 
 package org.mozilla.javascript;
 
-import java.util.Hashtable;
+import java.util.Set;
 
 public class CompilerEnvirons
 {
@@ -228,6 +228,6 @@ public class CompilerEnvirons
     private boolean strictMode;
     private boolean warningAsError;
     private boolean generateObserverCount;
-    Hashtable activationNames;
+    Set<String> activationNames;
 }
 

@@ -110,7 +110,7 @@ public class ScriptRuntime {
      * that they won't cause problems by being loaded early.
      */
 
-    public final static Class
+    public final static Class<?>
         BooleanClass      = Kit.classOrNull("java.lang.Boolean"),
         ByteClass         = Kit.classOrNull("java.lang.Byte"),
         CharacterClass    = Kit.classOrNull("java.lang.Character"),
@@ -125,7 +125,7 @@ public class ScriptRuntime {
         StringClass       = Kit.classOrNull("java.lang.String"),
         DateClass         = Kit.classOrNull("java.util.Date");
 
-    public final static Class
+    public final static Class<?>
         ContextClass
             = Kit.classOrNull("org.mozilla.javascript.Context"),
         ContextFactoryClass
@@ -161,7 +161,7 @@ public class ScriptRuntime {
 
     private static final Object LIBRARY_SCOPE_KEY = new Object();
 
-    public static boolean isRhinoRuntimeType(Class cl)
+    public static boolean isRhinoRuntimeType(Class<?> cl)
     {
         if (cl.isPrimitive()) {
             return (cl != Character.TYPE);
@@ -906,7 +906,7 @@ public class ScriptRuntime {
      * @deprecated Use {@link #toObject(Scriptable, Object)} instead.
      */
     public static Scriptable toObject(Scriptable scope, Object val,
-                                      Class staticClass)
+                                      Class<?> staticClass)
     {
         if (val instanceof Scriptable) {
             return (Scriptable)val;
@@ -951,7 +951,7 @@ public class ScriptRuntime {
      * @deprecated Use {@link #toObject(Context, Scriptable, Object)} instead.
      */
     public static Scriptable toObject(Context cx, Scriptable scope, Object val,
-                                      Class staticClass)
+                                      Class<?> staticClass)
     {
         return toObject(cx, scope, val);
     }
@@ -2961,11 +2961,11 @@ public class ScriptRuntime {
 
     public static ScriptableObject getGlobal(Context cx) {
         final String GLOBAL_CLASS = "org.mozilla.javascript.tools.shell.Global";
-        Class globalClass = Kit.classOrNull(GLOBAL_CLASS);
+        Class<?> globalClass = Kit.classOrNull(GLOBAL_CLASS);
         if (globalClass != null) {
             try {
-                Class[] parm = { ScriptRuntime.ContextClass };
-                Constructor globalClassCtor = globalClass.getConstructor(parm);
+                Class<?>[] parm = { ScriptRuntime.ContextClass };
+                Constructor<?> globalClassCtor = globalClass.getConstructor(parm);
                 Object[] arg = { cx };
                 return (ScriptableObject) globalClassCtor.newInstance(arg);
             } catch (Exception e) {

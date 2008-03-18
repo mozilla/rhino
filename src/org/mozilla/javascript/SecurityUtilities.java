@@ -57,7 +57,7 @@ public class SecurityUtilities
     public static String getSystemProperty(final String name)
     {
         return (String)AccessController.doPrivileged(
-            new PrivilegedAction()
+            new PrivilegedAction<Object>()
             {
                 public Object run()
                 {
@@ -66,10 +66,10 @@ public class SecurityUtilities
             });
     }
     
-    public static ProtectionDomain getProtectionDomain(final Class clazz)
+    public static ProtectionDomain getProtectionDomain(final Class<?> clazz)
     {
         return (ProtectionDomain)AccessController.doPrivileged(
-                new PrivilegedAction()
+                new PrivilegedAction<Object>()
                 {
                     public Object run()
                     {

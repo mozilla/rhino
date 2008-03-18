@@ -92,7 +92,7 @@ public class ClassCompiler
     /**
      * Get the class that the generated target will extend.
      */
-    public Class getTargetExtends()
+    public Class<?> getTargetExtends()
     {
         return targetExtends;
     }
@@ -102,7 +102,7 @@ public class ClassCompiler
      *
      * @param extendsClass the class it extends
      */
-    public void setTargetExtends(Class extendsClass)
+    public void setTargetExtends(Class<?> extendsClass)
     {
         targetExtends = extendsClass;
     }
@@ -110,7 +110,7 @@ public class ClassCompiler
     /**
      * Get the interfaces that the generated target will implement.
      */
-    public Class[] getTargetImplements()
+    public Class<?>[] getTargetImplements()
     {
         return targetImplements == null ? null : (Class[])targetImplements.clone();
     }
@@ -121,7 +121,7 @@ public class ClassCompiler
      * @param implementsClasses an array of Class objects, one for each
      *                          interface the target will extend
      */
-    public void setTargetImplements(Class[] implementsClasses)
+    public void setTargetImplements(Class<?>[] implementsClasses)
     {
         targetImplements = implementsClasses == null ? null : (Class[])implementsClasses.clone();
     }
@@ -161,8 +161,8 @@ public class ClassCompiler
         ScriptOrFnNode tree = p.parse(source, sourceLocation, lineno);
         String encodedSource = p.getEncodedSource();
 
-        Class superClass = getTargetExtends();
-        Class[] interfaces = getTargetImplements();
+        Class<?> superClass = getTargetExtends();
+        Class<?>[] interfaces = getTargetImplements();
         String scriptClassName;
         boolean isPrimary = (interfaces == null && superClass == null);
         if (isPrimary) {
@@ -204,8 +204,8 @@ public class ClassCompiler
 
     private String mainMethodClassName;
     private CompilerEnvirons compilerEnv;
-    private Class targetExtends;
-    private Class[] targetImplements;
+    private Class<?> targetExtends;
+    private Class<?>[] targetImplements;
 
 }
 

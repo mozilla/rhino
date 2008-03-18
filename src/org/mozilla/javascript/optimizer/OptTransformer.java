@@ -39,7 +39,7 @@
 package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.*;
-import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * This class performs node transforms to prepare for optimization.
@@ -50,7 +50,7 @@ import java.util.Hashtable;
 
 class OptTransformer extends NodeTransformer {
 
-    OptTransformer(Hashtable possibleDirectCalls, ObjArray directCallTargets)
+    OptTransformer(Map<String,OptFunctionNode> possibleDirectCalls, ObjArray directCallTargets)
     {
         this.possibleDirectCalls = possibleDirectCalls;
         this.directCallTargets = directCallTargets;
@@ -128,6 +128,6 @@ class OptTransformer extends NodeTransformer {
         }
     }
 
-    private Hashtable possibleDirectCalls;
+    private Map<String,OptFunctionNode> possibleDirectCalls;
     private ObjArray directCallTargets;
 }

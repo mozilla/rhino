@@ -1564,7 +1564,7 @@ final class IRFactory
             boolean activation = false;
             if ("arguments".equals(name)
                 || (parser.compilerEnv.activationNames != null
-                    && parser.compilerEnv.activationNames.containsKey(name)))
+                    && parser.compilerEnv.activationNames.contains(name)))
             {
                 activation = true;
             } else if ("length".equals(name)) {

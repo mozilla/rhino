@@ -56,7 +56,7 @@ public class Main {
         GENERATED_TAG      = 2,
         STRING_TAG         = 3;
 
-    private final Vector all_pairs = new Vector();
+    private final List<IdValuePair> all_pairs = new ArrayList<IdValuePair>();
 
     private ToolErrorReporter R;
     private CodePrinter P;
@@ -139,7 +139,7 @@ public class Main {
                 case NORMAL_LINE:
                     if (tag_id == SWITCH_TAG) {
                         cur_state = SWITCH_TAG;
-                        all_pairs.removeAllElements();
+                        all_pairs.clear();
                         generated_begin = -1;
                     }
                     else if (tag_id == -SWITCH_TAG) {
@@ -222,7 +222,7 @@ public class Main {
         P.clear();
 
         IdValuePair[] pairs = new IdValuePair[all_pairs.size()];
-        all_pairs.copyInto(pairs);
+        all_pairs.toArray(pairs);
 
         SwitchGenerator g = new SwitchGenerator();
         g.char_tail_test_threshold = 2;
@@ -412,7 +412,7 @@ public class Main {
 
         pair.setLineNumber(body.getLineNumber());
 
-        all_pairs.addElement(pair);
+        all_pairs.add(pair);
     }
 
     private static boolean is_white_space(int c) {

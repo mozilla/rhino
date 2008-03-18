@@ -2399,13 +2399,13 @@ public class Interpreter implements Evaluator
         return sb.toString();
     }
 
-    public List getScriptStack(RhinoException ex)
+    public List<String> getScriptStack(RhinoException ex)
     {
         if (ex.interpreterStackInfo == null) {
             return null;
         }
         
-        List list = new ArrayList();
+        List<String> list = new ArrayList<String>();
         String lineSeparator =
                 SecurityUtilities.getSystemProperty("line.separator");
 
@@ -2415,7 +2415,7 @@ public class Interpreter implements Evaluator
         int linePCIndex = linePC.length;
         while (arrayIndex != 0) {
             --arrayIndex;
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             CallFrame frame = array[arrayIndex];
             while (frame != null) {
                 if (linePCIndex == 0) Kit.codeBug();

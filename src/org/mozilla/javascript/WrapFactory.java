@@ -75,7 +75,7 @@ public class WrapFactory
      * @return the wrapped value.
      */
     public Object wrap(Context cx, Scriptable scope,
-                       Object obj, Class staticType)
+                       Object obj, Class<?> staticType)
     {
         if (obj == null || obj == Undefined.instance
             || obj instanceof Scriptable)
@@ -98,7 +98,7 @@ public class WrapFactory
                 return String.valueOf(((Character)obj).charValue());
             }
         }
-        Class cls = obj.getClass();
+        Class<?> cls = obj.getClass();
         if (cls.isArray()) {
             return NativeJavaArray.wrap(scope, obj);
         }
@@ -117,7 +117,7 @@ public class WrapFactory
         if (obj instanceof Scriptable) {
             return (Scriptable)obj;
         }
-        Class cls = obj.getClass();
+        Class<?> cls = obj.getClass();
         if (cls.isArray()) {
             return NativeJavaArray.wrap(scope, obj);
         }
@@ -143,7 +143,7 @@ public class WrapFactory
      * @return the wrapped value which shall not be null
      */
     public Scriptable wrapAsJavaObject(Context cx, Scriptable scope,
-                                       Object javaObject, Class staticType)
+                                       Object javaObject, Class<?> staticType)
     {
         Scriptable wrap;
         wrap = new NativeJavaObject(scope, javaObject, staticType);

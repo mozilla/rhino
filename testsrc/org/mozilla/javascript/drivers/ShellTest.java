@@ -43,7 +43,7 @@ import java.util.*;
 import org.mozilla.javascript.tools.shell.*;
 
 /**
- * @version $Id: ShellTest.java,v 1.5 2007/10/11 19:44:10 szegedia%freemail.hu Exp $
+ * @version $Id: ShellTest.java,v 1.6 2008/03/18 15:10:19 nboyd%atg.com Exp $
  */
 class ShellTest {
     static final FileFilter DIRECTORY_FILTER = new FileFilter() {
@@ -222,7 +222,7 @@ class ShellTest {
 
     private static class ErrorReporterWrapper implements ErrorReporter {
         private ErrorReporter original;
-        private ArrayList errors = new ArrayList();
+        private ArrayList<Status.JsError> errors = new ArrayList<Status.JsError>();
 
         ErrorReporterWrapper(ErrorReporter original) {
             this.original = original;

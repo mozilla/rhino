@@ -44,7 +44,7 @@ package org.mozilla.javascript;
 
 import java.io.*;
 import java.lang.reflect.*;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.Date;
 
 /**
@@ -65,13 +65,13 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     public NativeJavaObject() { }
 
     public NativeJavaObject(Scriptable scope, Object javaObject,
-                            Class staticType)
+                            Class<?> staticType)
     {
         this(scope, javaObject, staticType, false);
     }
 
     public NativeJavaObject(Scriptable scope, Object javaObject,
-                            Class staticType, boolean isAdapter)
+                            Class<?> staticType, boolean isAdapter)
     {
         this.parent = scope;
         this.javaObject = javaObject;
@@ -81,7 +81,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     }
 
     protected void initMembers() {
-        Class dynamicType;
+        Class<?> dynamicType;
         if (javaObject != null) {
             dynamicType = javaObject.getClass();
         } else {
@@ -178,7 +178,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
 @deprecated Use {@link Context#getWrapFactory()} together with calling {@link
 WrapFactory#wrap(Context, Scriptable, Object, Class)}
 */
-    public static Object wrap(Scriptable scope, Object obj, Class staticType) {
+    public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
 
         Context cx = Context.getContext();
         return cx.getWrapFactory().wrap(cx, scope, obj, staticType);
@@ -192,7 +192,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
         return "JavaObject";
     }
 
-    public Object getDefaultValue(Class hint)
+    public Object getDefaultValue(Class<?> hint)
     {
         Object value;
         if (hint == null) {
@@ -235,7 +235,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
      * desired one.  This should be superceded by a conversion-cost calculation
      * function, but for now I'll hide behind precedent.
      */
-    public static boolean canConvert(Object fromObj, Class to) {
+    public static boolean canConvert(Object fromObj, Class<?> to) {
         int weight = getConversionWeight(fromObj, to);
 
         return (weight < CONVERSION_NONE);
@@ -264,7 +264,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
      * <a href="http://www.mozilla.org/js/liveconnect/lc3_method_overloading.html">
      * "preferred method conversions" from Live Connect 3</a>
      */
-    static int getConversionWeight(Object fromObj, Class to) {
+    static int getConversionWeight(Object fromObj, Class<?> to) {
         int fromCode = getJSTypeCode(fromObj);
 
         switch (fromCode) {
@@ -412,7 +412,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
         return CONVERSION_NONE;
     }
 
-    static int getSizeRank(Class aType) {
+    static int getSizeRank(Class<?> aType) {
         if (aType == Double.TYPE) {
             return 1;
         }
@@ -476,7 +476,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
             return JSTYPE_JAVA_CLASS;
         }
         else {
-            Class valueClass = value.getClass();
+            Class<?> valueClass = value.getClass();
             if (valueClass.isArray()) {
                 return JSTYPE_JAVA_ARRAY;
             }
@@ -492,7 +492,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
      * @deprecated as of 1.5 Release 4
      * @see org.mozilla.javascript.Context#jsToJava(Object, Class)
      */
-    public static Object coerceType(Class type, Object value)
+    public static Object coerceType(Class<?> type, Object value)
     {
         return coerceTypeImpl(type, value);
     }
@@ -501,7 +501,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
      * Type-munging for field setting and method invocation.
      * Conforms to LC3 specification
      */
-    static Object coerceTypeImpl(Class type, Object value)
+    static Object coerceTypeImpl(Class<?> type, Object value)
     {
         if (value != null && value.getClass() == type) {
             return value;
@@ -653,7 +653,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 // to the target (component) type.
                 NativeArray array = (NativeArray) value;
                 long length = array.getLength();
-                Class arrayType = type.getComponentType();
+                Class<?> arrayType = type.getComponentType();
                 Object Result = Array.newInstance(arrayType, (int)length);
                 for (int i = 0 ; i < length ; ++i) {
                     try  {
@@ -707,9 +707,9 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
         return value;
     }
 
-    private static Object coerceToNumber(Class type, Object value)
+    private static Object coerceToNumber(Class<?> type, Object value)
     {
-        Class valueClass = value.getClass();
+        Class<?> valueClass = value.getClass();
 
         // Character
         if (type == Character.TYPE || type == ScriptRuntime.CharacterClass) {
@@ -865,7 +865,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
         }
     }
 
-    private static long toInteger(Object value, Class type,
+    private static long toInteger(Object value, Class<?> type,
                                   double min, double max)
     {
         double d = toDouble(value);
@@ -889,7 +889,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
         return (long)d;
     }
 
-    static void reportConversionError(Object value, Class type)
+    static void reportConversionError(Object value, Class<?> type)
     {
         // It uses String.valueOf(value), not value.toString() since
         // value can be null, bug 282447.
@@ -967,9 +967,9 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
 
     protected transient Object javaObject;
 
-    protected transient Class staticType;
+    protected transient Class<?> staticType;
     protected transient JavaMembers members;
-    private transient Hashtable fieldAndMethods;
+    private transient Map<String,FieldAndMethods> fieldAndMethods;
     private transient boolean isAdapter;
 
     private static final Object COERCED_INTERFACE_KEY = new Object();
@@ -978,8 +978,8 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
 
     static {
         // Reflection in java is verbose
-        Class[] sig2 = new Class[2];
-        Class cl = Kit.classOrNull("org.mozilla.javascript.JavaAdapter");
+        Class<?>[] sig2 = new Class[2];
+        Class<?> cl = Kit.classOrNull("org.mozilla.javascript.JavaAdapter");
         if (cl != null) {
             try {
                 sig2[0] = ScriptRuntime.ObjectClass;

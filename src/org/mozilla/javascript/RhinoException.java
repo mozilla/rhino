@@ -248,12 +248,12 @@ public abstract class RhinoException extends RuntimeException
      */
     public String getScriptStackTrace(FilenameFilter filter)
     {
-        List interpreterStack;
+        List<String> interpreterStack;
         Evaluator interpreter = Context.createInterpreter();
         if (interpreter != null)
             interpreterStack = interpreter.getScriptStack(this);
         else
-            interpreterStack = new ArrayList();
+            interpreterStack = new ArrayList<String>();
         int interpreterStackIndex = 0;
         StringBuffer buffer = new StringBuffer();
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");

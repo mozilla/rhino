@@ -208,7 +208,7 @@ public class Delegator implements Function {
      *
      * @see org.mozilla.javascript.Scriptable#getDefaultValue
      */
-    public Object getDefaultValue(Class hint) {
+    public Object getDefaultValue(Class<?> hint) {
         return (hint == null ||
                 hint == ScriptRuntime.ScriptableClass ||
                 hint == ScriptRuntime.FunctionClass) ?

@@ -50,7 +50,10 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Locale;
 
 import org.mozilla.javascript.debug.DebuggableScript;
@@ -513,10 +516,10 @@ public class Context
         // Special workaround for the debugger
         String DBG = "org.mozilla.javascript.tools.debugger.Main";
         if (DBG.equals(listener.getClass().getName())) {
-            Class cl = listener.getClass();
-            Class factoryClass = Kit.classOrNull(
+            Class<?> cl = listener.getClass();
+            Class<?> factoryClass = Kit.classOrNull(
                 "org.mozilla.javascript.ContextFactory");
-            Class[] sig = { factoryClass };
+            Class<?>[] sig = { factoryClass };
             Object[] args = { ContextFactory.getGlobal() };
             try {
                 Method m = cl.getMethod("attachTo", sig);
@@ -1533,7 +1536,7 @@ public class Context
      * @see #toObject(Object, Scriptable)
      */
     public static Scriptable toObject(Object value, Scriptable scope,
-                                      Class staticType)
+                                      Class<?> staticType)
     {
         return ScriptRuntime.toObject(scope, value);
     }
@@ -1591,7 +1594,7 @@ public class Context
      * @return the converted value
      * @throws EvaluatorException if the conversion cannot be performed
      */
-    public static Object jsToJava(Object value, Class desiredType)
+    public static Object jsToJava(Object value, Class<?> desiredType)
         throws EvaluatorException
     {
         return NativeJavaObject.coerceTypeImpl(desiredType, value);
@@ -1604,7 +1607,7 @@ public class Context
      *         Note that {@link #jsToJava(Object, Class)} throws
      *         {@link EvaluatorException} instead.
      */
-    public static Object toType(Object value, Class desiredType)
+    public static Object toType(Object value, Class<?> desiredType)
         throws IllegalArgumentException
     {
         try {
@@ -1874,9 +1877,9 @@ public class Context
      */
     public final Object getThreadLocal(Object key)
     {
-        if (hashtable == null)
+        if (threadLocalMap == null)
             return null;
-        return hashtable.get(key);
+        return threadLocalMap.get(key);
     }
 
     /**
@@ -1885,12 +1888,12 @@ public class Context
      * @param key the key used to index the value
      * @param value the value to save
      */
-    public final void putThreadLocal(Object key, Object value)
+    public synchronized final void putThreadLocal(Object key, Object value)
     {
         if (sealed) onSealedMutation();
-        if (hashtable == null)
-            hashtable = new Hashtable();
-        hashtable.put(key, value);
+        if (threadLocalMap == null)
+            threadLocalMap = new HashMap<Object,Object>();
+        threadLocalMap.put(key, value);
     }
 
     /**
@@ -1901,9 +1904,9 @@ public class Context
     public final void removeThreadLocal(Object key)
     {
         if (sealed) onSealedMutation();
-        if (hashtable == null)
+        if (threadLocalMap == null)
             return;
-        hashtable.remove(key);
+        threadLocalMap.remove(key);
     }
 
     /**
@@ -2166,7 +2169,7 @@ public class Context
                 // Thread.getContextClassLoader can not load Rhino classes,
                 // try to use the loader of ContextFactory or Context
                 // subclasses.
-                Class fClass = f.getClass();
+                Class<?> fClass = f.getClass();
                 if (fClass != ScriptRuntime.ContextFactoryClass) {
                     loader = fClass.getClassLoader();
                 } else {
@@ -2305,9 +2308,9 @@ public class Context
         }
     }
 
-    private static Class codegenClass = Kit.classOrNull(
+    private static Class<?> codegenClass = Kit.classOrNull(
                              "org.mozilla.javascript.optimizer.Codegen");
-    private static Class interpreterClass = Kit.classOrNull(
+    private static Class<?> interpreterClass = Kit.classOrNull(
                              "org.mozilla.javascript.Interpreter");
 
     private Evaluator createCompiler()
@@ -2383,7 +2386,7 @@ public class Context
     RegExpProxy getRegExpProxy()
     {
         if (regExpProxy == null) {
-            Class cl = Kit.classOrNull(
+            Class<?> cl = Kit.classOrNull(
                           "org.mozilla.javascript.regexp.RegExpImpl");
             if (cl != null) {
                 regExpProxy = (RegExpProxy)Kit.newInstanceOrNull(cl);
@@ -2422,8 +2425,8 @@ public class Context
     {
         if (sealed) onSealedMutation();
         if (activationNames == null)
-            activationNames = new Hashtable(5);
-        activationNames.put(name, name);
+            activationNames = new HashSet<String>();
+        activationNames.add(name);
     }
 
     /**
@@ -2436,7 +2439,7 @@ public class Context
      */
     public final boolean isActivationNeeded(String name)
     {
-        return activationNames != null && activationNames.containsKey(name);
+        return activationNames != null && activationNames.contains(name);
     }
 
     /**
@@ -2488,14 +2491,14 @@ public class Context
     private Object debuggerData;
     private int enterCount;
     private Object propertyListeners;
-    private Hashtable hashtable;
+    private Map<Object,Object> threadLocalMap;
     private ClassLoader applicationClassLoader;
 
     /**
      * This is the list of names of objects forcing the creation of
      * function activation records.
      */
-    Hashtable activationNames;
+    Set<String> activationNames;
 
     // For the interpreter to store the last frame for error reports etc.
     Object lastInterpreterFrame;

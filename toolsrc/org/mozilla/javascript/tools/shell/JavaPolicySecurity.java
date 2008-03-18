@@ -48,7 +48,7 @@ import org.mozilla.javascript.*;
 public class JavaPolicySecurity extends SecurityProxy
 {
 
-    public Class getStaticSecurityDomainClassInternal() {
+    public Class<?> getStaticSecurityDomainClassInternal() {
         return ProtectionDomain.class;
     }
 
@@ -62,11 +62,11 @@ public class JavaPolicySecurity extends SecurityProxy
             this.domain = domain;
         }
 
-        public Class defineClass(String name, byte[] data) {
+        public Class<?> defineClass(String name, byte[] data) {
             return super.defineClass(name, data, 0, data.length, domain);
         }
 
-        public void linkClass(Class cl) {
+        public void linkClass(Class<?> cl) {
             resolveClass(cl);
         }
     }
@@ -104,11 +104,11 @@ public class JavaPolicySecurity extends SecurityProxy
             }
         }
 
-        public Enumeration elements()
+        public Enumeration<Permission> elements()
         {
-            return new Enumeration() {
+            return new Enumeration<Permission>() {
                 public boolean hasMoreElements() { return false; }
-                public Object nextElement() { return null; }
+                public Permission nextElement() { return null; }
             };
         }
 
@@ -139,7 +139,7 @@ public class JavaPolicySecurity extends SecurityProxy
                                          final Scriptable scope,
                                          final String filename)
     {
-        AccessController.doPrivileged(new PrivilegedAction() {
+        AccessController.doPrivileged(new PrivilegedAction<Object>() {
             public Object run() {
                 URL url = getUrlObj(filename);
                 ProtectionDomain staticDomain = getUrlDomain(url);
@@ -210,7 +210,7 @@ public class JavaPolicySecurity extends SecurityProxy
                                  final Object[] args)
     {
         ProtectionDomain staticDomain = (ProtectionDomain)securityDomain;
-        // There is no direct way in Java to intersect permitions according
+        // There is no direct way in Java to intersect permissions according
         // stack context with additional domain.
         // The following implementation first constructs ProtectionDomain
         // that allows actions only allowed by both staticDomain and current
@@ -229,7 +229,7 @@ public class JavaPolicySecurity extends SecurityProxy
         ProtectionDomain[] tmp = { dynamicDomain };
         AccessControlContext restricted = new AccessControlContext(tmp);
 
-        PrivilegedAction action = new PrivilegedAction() {
+        PrivilegedAction<Object> action = new PrivilegedAction<Object>() {
             public Object run() {
                 return callable.call(cx, scope, thisObj, args);
             }

@@ -196,7 +196,7 @@ public class Main {
             }
             if (arg.equals("-extends") && ++i < args.length) {
                 String targetExtends = args[i];
-                Class superClass;
+                Class<?> superClass;
                 try {
                     superClass = Class.forName(targetExtends);
                 } catch (ClassNotFoundException e) {
@@ -210,17 +210,16 @@ public class Main {
                 String targetImplements = args[i];
                 StringTokenizer st = new StringTokenizer(targetImplements,
                                                          ",");
-                Vector v = new Vector();
+                List<Class<?>> list = new ArrayList<Class<?>>();
                 while (st.hasMoreTokens()) {
                     String className = st.nextToken();
                     try {
-                        v.addElement(Class.forName(className));
+                        list.add(Class.forName(className));
                     } catch (ClassNotFoundException e) {
                         throw new Error(e.toString()); // TODO: better error
                     }
                 }
-                Class[] implementsClasses = new Class[v.size()];
-                v.copyInto(implementsClasses);
+                Class<?>[] implementsClasses = list.toArray(new Class<?>[list.size()]);
                 compiler.setTargetImplements(implementsClasses);
                 continue;
             }

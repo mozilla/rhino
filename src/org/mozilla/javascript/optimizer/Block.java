@@ -40,7 +40,8 @@ package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.*;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -134,7 +135,7 @@ class Block
     private static Block[] buildBlocks(Node[] statementNodes)
     {
             // a mapping from each target node to the block it begins
-        Hashtable theTargetBlocks = new Hashtable();
+        Map<Node,FatBlock> theTargetBlocks = new HashMap<Node,FatBlock>();
         ObjArray theBlocks = new ObjArray();
 
             // there's a block that starts at index 0

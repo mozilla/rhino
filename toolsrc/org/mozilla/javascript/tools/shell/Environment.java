@@ -49,9 +49,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
 
-import java.util.Vector;
-import java.util.Enumeration;
-import java.util.Properties;
+import java.util.Map;
 
 /**
  * Environment, intended to be instantiated at global scope, provides
@@ -117,14 +115,8 @@ public class Environment extends ScriptableObject
     }
 
     private Object[] collectIds() {
-        Properties props = System.getProperties();
-        Enumeration names = props.propertyNames();
-        Vector keys = new Vector();
-        while (names.hasMoreElements())
-            keys.addElement(names.nextElement());
-        Object[] ids = new Object[keys.size()];
-        keys.copyInto(ids);
-        return ids;
+        Map<Object,Object> props = System.getProperties();
+        return props.keySet().toArray();
     }
 
     public Object[] getIds() {

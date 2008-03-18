@@ -149,7 +149,7 @@ public class NativeJavaPackage extends ScriptableObject
         ClassShutter shutter = cx.getClassShutter();
         Scriptable newValue = null;
         if (shutter == null || shutter.visibleToScripts(className)) {
-            Class cl = null;
+            Class<?> cl = null;
             if (classLoader != null) {
                 cl = Kit.classOrNull(classLoader, className);
             } else {
@@ -174,7 +174,7 @@ public class NativeJavaPackage extends ScriptableObject
         return newValue;
     }
 
-    public Object getDefaultValue(Class ignored) {
+    public Object getDefaultValue(Class<?> ignored) {
         return toString();
     }
 

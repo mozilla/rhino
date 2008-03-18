@@ -53,7 +53,7 @@ public interface GeneratedClassLoader {
      * @param data class byte code
      * @return new class object
      */
-    public Class defineClass(String name, byte[] data);
+    public Class<?> defineClass(String name, byte[] data);
 
     /**
      * Link the given class.
@@ -62,5 +62,5 @@ public interface GeneratedClassLoader {
      *        {@link #defineClass(String, byte[])}
      * @see java.lang.ClassLoader
      */
-    public void linkClass(Class cl);
+    public void linkClass(Class<?> cl);
 }

@@ -237,7 +237,7 @@ public final class OptRuntime extends ScriptRuntime
 
     public static void main(final Script script, final String[] args)
     {
-        Context.call(new ContextAction() {
+        ContextFactory.getGlobal().call(new ContextAction() {
             public Object run(Context cx)
             {
                 ScriptableObject global = getGlobal(cx);

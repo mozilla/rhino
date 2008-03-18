@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * Collection of utilities
@@ -59,8 +59,8 @@ public class Kit
     static {
         // Are we running on a JDK 1.4 or later system?
         try {
-            Class ThrowableClass = Kit.classOrNull("java.lang.Throwable");
-            Class[] signature = { ThrowableClass };
+            Class<?> ThrowableClass = Kit.classOrNull("java.lang.Throwable");
+            Class<?>[] signature = { ThrowableClass };
             Throwable_initCause
                 = ThrowableClass.getMethod("initCause", signature);
         } catch (Exception ex) {
@@ -68,7 +68,7 @@ public class Kit
         }
     }
 
-    public static Class classOrNull(String className)
+    public static Class<?> classOrNull(String className)
     {
         try {
             return Class.forName(className);
@@ -82,13 +82,17 @@ public class Kit
         return null;
     }
 
-    public static Class classOrNull(ClassLoader loader, String className)
+    /**
+     * Attempt to load the class of the given name. Note that the type parameter
+     * isn't checked.
+     */
+    public static <T> Class<T> classOrNull(ClassLoader loader, String className)
     {
         try {
-            return loader.loadClass(className);
+            return (Class<T>) loader.loadClass(className);
         } catch (ClassNotFoundException ex) {
         } catch (SecurityException ex) {
-        } catch  (LinkageError ex) {
+        } catch (LinkageError ex) {
         } catch (IllegalArgumentException e) {
             // Can be thrown if name has characters that a class name
             // can not contain
@@ -96,7 +100,7 @@ public class Kit
         return null;
     }
 
-    static Object newInstanceOrNull(Class cl)
+    static Object newInstanceOrNull(Class<?> cl)
     {
         try {
             return cl.newInstance();
@@ -113,8 +117,8 @@ public class Kit
      */
     static boolean testIfCanLoadRhinoClasses(ClassLoader loader)
     {
-        Class testClass = ScriptRuntime.ContextFactoryClass;
-        Class x = Kit.classOrNull(loader, testClass.getName());
+        Class<?> testClass = ScriptRuntime.ContextFactoryClass;
+        Class<?> x = Kit.classOrNull(loader, testClass.getName());
         if (x != testClass) {
             // The check covers the case when x == null =>
             // loader does not know about testClass or the case
@@ -374,7 +378,7 @@ public class Kit
         }
     }
 
-    static Object initHash(Hashtable h, Object key, Object initialValue)
+    static Object initHash(Map<Object,Object> h, Object key, Object initialValue)
     {
         synchronized (h) {
             Object current = h.get(key);

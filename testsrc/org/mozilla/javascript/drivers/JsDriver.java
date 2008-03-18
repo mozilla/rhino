@@ -45,7 +45,7 @@ import org.w3c.dom.*;
 import org.mozilla.javascript.tools.shell.*;
 
 /**
- * @version $Id: JsDriver.java,v 1.5 2007/10/11 19:44:10 szegedia%freemail.hu Exp $
+ * @version $Id: JsDriver.java,v 1.6 2008/03/18 15:10:19 nboyd%atg.com Exp $
  */
 public class JsDriver {
     private JsDriver() {
@@ -74,7 +74,7 @@ public class JsDriver {
         }
         
         private String[] getTestList(String[] tests) {
-          ArrayList list = new ArrayList();
+          ArrayList<String> list = new ArrayList<String>();
           for (int i=0; i < tests.length; i++) {
             if (tests[i].startsWith("@"))
               addTestsFromFile(tests[i].substring(1), list);
@@ -84,11 +84,12 @@ public class JsDriver {
           return (String[])list.toArray(new String[0]);
         }
         
-        private void addTestsFromFile(String filename, ArrayList list) {
+        private void addTestsFromFile(String filename, ArrayList<String> list) {
             try {
                 Properties props = new Properties();
                 props.load(new FileInputStream(new File(filename)));
-                list.addAll(props.keySet());
+                for (Object obj: props.keySet())
+                    list.add(obj.toString());
             } catch (IOException e) {
                 throw new RuntimeException("Could not read file '" + filename + "'", e);
             }        	
@@ -113,7 +114,7 @@ public class JsDriver {
             return matches(skip, path);
         }
 
-        private void addFiles(List rv, String prefix, File directory) {
+        private void addFiles(List<Script> rv, String prefix, File directory) {
             File[] files = directory.listFiles();
             if (files == null) throw new RuntimeException("files null for " + directory);
             for (int i=0; i<files.length; i++) {
@@ -148,7 +149,7 @@ public class JsDriver {
         }
 
         Script[] getFiles() {
-            ArrayList rv = new ArrayList();
+            ArrayList<Script> rv = new ArrayList<Script>();
             addFiles(rv, "", testDirectory);
             return (Script[])rv.toArray(new Script[0]);
         }
@@ -619,7 +620,7 @@ public class JsDriver {
     }
 
     private static class Arguments {
-        private ArrayList options = new ArrayList();
+        private ArrayList<Option> options = new ArrayList<Option>();
 
         private Option bugUrl = new Option("b", "bugurl", false, false, "http://bugzilla.mozilla.org/show_bug.cgi?id=");
         private Option optimizationLevel = new Option("o", "optimization", false, false, "-1");
@@ -651,11 +652,13 @@ public class JsDriver {
             private boolean flag;
             private boolean ignored;
 
-            private ArrayList values = new ArrayList();
+            private ArrayList<String> values = new ArrayList<String>();
 
             //    array: can this option have multiple values?
             //    flag: is this option a simple true/false switch?
-            Option(String letterOption, String wordOption, boolean array, boolean flag, String unspecified) {
+            Option(String letterOption, String wordOption, boolean array,
+                   boolean flag, String unspecified)
+            {
                 this.letterOption = letterOption;
                 this.wordOption = wordOption;
                 this.flag = flag;
@@ -692,7 +695,7 @@ public class JsDriver {
                 return (String[])values.toArray(new String[0]);
             }
 
-            void process(List arguments) {
+            void process(List<String> arguments) {
                 String option = (String)arguments.get(0);
                 String dashLetter = (letterOption == null) ? (String)null : "-" + letterOption;
                 if (option.equals(dashLetter) || option.equals("--" + wordOption)) {
@@ -796,7 +799,7 @@ public class JsDriver {
             return console;
         }
         
-        void process(List arguments) {
+        void process(List<String> arguments) {
             while(arguments.size() > 0) {
                 String option = (String)arguments.get(0);
                 if (option.startsWith("--")) {
@@ -829,7 +832,7 @@ public class JsDriver {
     }
 
     public static void main(String[] args) throws Throwable {
-        ArrayList arguments = new ArrayList();
+        ArrayList<String> arguments = new ArrayList<String>();
         arguments.addAll(Arrays.asList(args));
         Arguments clArguments = new Arguments();
         clArguments.process(arguments);

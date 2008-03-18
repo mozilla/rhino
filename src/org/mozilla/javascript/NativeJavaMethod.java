@@ -156,14 +156,14 @@ public class NativeJavaMethod extends BaseFunction
 
         int index = findFunction(cx, methods, args);
         if (index < 0) {
-            Class c = methods[0].method().getDeclaringClass();
+            Class<?> c = methods[0].method().getDeclaringClass();
             String sig = c.getName() + '.' + getFunctionName() + '(' +
                          scriptSignature(args) + ')';
             throw Context.reportRuntimeError1("msg.java.no_such_method", sig);
         }
 
         MemberBox meth = methods[index];
-        Class[] argTypes = meth.argTypes;
+        Class<?>[] argTypes = meth.argTypes;
       
         if (meth.vararg) {
             // marshall the explicit parameters
@@ -186,7 +186,7 @@ public class NativeJavaMethod extends BaseFunction
                                            argTypes[argTypes.length - 1]);
             } else {            
                 // marshall the variable parameters
-                Class componentType = argTypes[argTypes.length - 1].
+                Class<?> componentType = argTypes[argTypes.length - 1].
                                          getComponentType();
                 varArgs = Array.newInstance(componentType, 
                                             args.length - argTypes.length + 1);            
@@ -220,7 +220,7 @@ public class NativeJavaMethod extends BaseFunction
             javaObject = null;  // don't need an object
         } else {
             Scriptable o = thisObj;
-            Class c = meth.getDeclaringClass();
+            Class<?> c = meth.getDeclaringClass();
             for (;;) {
                 if (o == null) {
                     throw Context.reportRuntimeError3(
@@ -241,10 +241,10 @@ public class NativeJavaMethod extends BaseFunction
         }
 
         Object retval = meth.invoke(javaObject, args);
-        Class staticType = meth.method().getReturnType();
+        Class<?> staticType = meth.method().getReturnType();
 
         if (debug) {
-            Class actualType = (retval == null) ? null
+            Class<?> actualType = (retval == null) ? null
                                                 : retval.getClass();
             System.err.println(" ----- Returned " + retval +
                                " actual = " + actualType +
@@ -254,7 +254,7 @@ public class NativeJavaMethod extends BaseFunction
         Object wrapped = cx.getWrapFactory().wrap(cx, scope,
                                                   retval, staticType);
         if (debug) {
-            Class actualType = (wrapped == null) ? null
+            Class<?> actualType = (wrapped == null) ? null
                                                  : wrapped.getClass();
             System.err.println(" ----- Wrapped as " + wrapped +
                                " class = " + actualType);
@@ -278,7 +278,7 @@ public class NativeJavaMethod extends BaseFunction
             return -1;
         } else if (methodsOrCtors.length == 1) {
             MemberBox member = methodsOrCtors[0];
-            Class[] argTypes = member.argTypes;
+            Class<?>[] argTypes = member.argTypes;
             int alength = argTypes.length;
             
             if (member.vararg) {
@@ -309,7 +309,7 @@ public class NativeJavaMethod extends BaseFunction
       search:
         for (int i = 0; i < methodsOrCtors.length; i++) {
             MemberBox member = methodsOrCtors[i];
-            Class[] argTypes = member.argTypes;
+            Class<?>[] argTypes = member.argTypes;
             int alength = argTypes.length;
             if (member.vararg) {
                 alength--;
@@ -374,17 +374,17 @@ public class NativeJavaMethod extends BaseFunction
                             if (preference != PREFERENCE_EQUAL) Kit.codeBug();
                             // This should not happen in theory
                             // but on some JVMs, Class.getMethods will return all
-                            // static methods of the class heirarchy, even if
+                            // static methods of the class hierarchy, even if
                             // a derived class's parameters match exactly.
-                            // We want to call the dervied class's method.
-                            if (bestFit.isStatic()
-                                && bestFit.getDeclaringClass().isAssignableFrom(
+                            // We want to call the derived class's method.
+                            if (bestFit.isStatic() &&
+                                bestFit.getDeclaringClass().isAssignableFrom(
                                        member.getDeclaringClass()))
                             {
                                 // On some JVMs, Class.getMethods will return all
-                                // static methods of the class heirarchy, even if
+                                // static methods of the class hierarchy, even if
                                 // a derived class's parameters match exactly.
-                                // We want to call the dervied class's method.
+                                // We want to call the derived class's method.
                                 if (debug) printDebug(
                                     "Substituting (overridden static)",
                                     member, args);
@@ -475,12 +475,12 @@ public class NativeJavaMethod extends BaseFunction
      * PREFERENCE_SECOND_ARG, or PREFERENCE_AMBIGUOUS.
      */
     private static int preferSignature(Object[] args, 
-                                       Class[] sig1,
+                                       Class<?>[] sig1,
                                        boolean vararg1,
-                                       Class[] sig2,
+                                       Class<?>[] sig2,
                                        boolean vararg2 )
     {
-        // TODO: This test is pretty primitive. It bascially prefers
+        // TODO: This test is pretty primitive. It basically prefers
         // a matching no vararg method over a vararg method independent
         // of the type conversion cost. This can lead to unexpected results.
         int alength = args.length;
@@ -506,8 +506,8 @@ public class NativeJavaMethod extends BaseFunction
         
         int totalPreference = 0;
         for (int j = 0; j < alength; j++) {
-            Class type1 = sig1[j];
-            Class type2 = sig2[j];
+            Class<?> type1 = sig1[j];
+            Class<?> type2 = sig2[j];
             if (type1 == type2) {
                 continue;
             }

@@ -69,7 +69,7 @@ public class Main
     static private final int EXITCODE_RUNTIME_ERROR = 3;
     static private final int EXITCODE_FILE_NOT_FOUND = 4;
     static boolean processStdin = true;
-    static Vector fileList = new Vector(5);
+    static List<String> fileList = new ArrayList<String>();
     private static SecurityProxy securityImpl;
 
     static {
@@ -152,7 +152,7 @@ public class Main
         shellContextFactory.setErrorReporter(errorReporter);
         String[] args = processOptions(origArgs);
         if (processStdin)
-            fileList.addElement(null);
+            fileList.add(null);
 
         if (!global.initialized) {
             global.init(shellContextFactory);
@@ -175,10 +175,9 @@ public class Main
         global.defineProperty("arguments", argsObj,
                               ScriptableObject.DONTENUM);
 
-        for (int i=0; i < fileList.size(); i++) {
-            processSource(cx, (String) fileList.elementAt(i));
+        for (String file: fileList) {
+            processSource(cx, file);
         }
-
     }
 
     public static Global getGlobal()
@@ -199,7 +198,7 @@ public class Main
             String arg = args[i];
             if (!arg.startsWith("-")) {
                 processStdin = false;
-                fileList.addElement(arg);
+                fileList.add(arg);
                 String[] result = new String[args.length - i - 1];
                 System.arraycopy(args, i+1, result, 0, args.length - i - 1);
                 return result;
@@ -278,7 +277,7 @@ public class Main
                     usageError = arg;
                     break goodUsage;
                 }
-                fileList.addElement(args[i].equals("-") ? null : args[i]);
+                fileList.add(args[i].equals("-") ? null : args[i]);
                 continue;
             }
             if (arg.equals("-sealedlib")) {
@@ -312,7 +311,7 @@ public class Main
     {
         Throwable exObj;
         try {
-            Class cl = Class.forName
+            Class<?> cl = Class.forName
                 ("org.mozilla.javascript.tools.shell.JavaPolicySecurity");
             securityImpl = (SecurityProxy)cl.newInstance();
             SecurityController.initGlobal(securityImpl);
@@ -499,7 +498,7 @@ public class Main
         String name = path.substring(nameStart, nameEnd);
         try {
             GeneratedClassLoader loader = SecurityController.createLoader(cx.getApplicationClassLoader(), securityDomain);
-            Class clazz = loader.defineClass(name, data);
+            Class<?> clazz = loader.defineClass(name, data);
             loader.linkClass(clazz);
             if (!Script.class.isAssignableFrom(clazz)) {
                 throw Context.reportRuntimeError("msg.must.implement.Script");

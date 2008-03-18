@@ -66,21 +66,21 @@ public class FunctionNode extends ScriptOrFnNode {
 
     public void addResumptionPoint(Node target) {
         if (generatorResumePoints == null)
-            generatorResumePoints = new ArrayList();
+            generatorResumePoints = new ArrayList<Node>();
         generatorResumePoints.add(target);
     }
 
-    public ArrayList getResumptionPoints() {
+    public ArrayList<Node> getResumptionPoints() {
         return generatorResumePoints;
     }
 
-    public HashMap getLiveLocals() {
+    public HashMap<Node,int[]> getLiveLocals() {
         return liveLocals;
     }
 
     public void addLiveLocals(Node node, int[] locals) {
         if (liveLocals == null)
-            liveLocals = new HashMap();
+            liveLocals = new HashMap<Node,int[]>();
         liveLocals.put(node, locals);
     }
 
@@ -112,6 +112,6 @@ public class FunctionNode extends ScriptOrFnNode {
     boolean itsNeedsActivation;
     boolean itsIgnoreDynamicScope;
     boolean itsIsGenerator;
-    ArrayList generatorResumePoints;
-    HashMap liveLocals;
+    ArrayList<Node> generatorResumePoints;
+    HashMap<Node,int[]> liveLocals;
 }

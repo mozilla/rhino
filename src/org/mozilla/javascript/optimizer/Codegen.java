@@ -47,7 +47,6 @@ import org.mozilla.javascript.*;
 import org.mozilla.classfile.*;
 import java.util.*;
 import java.lang.reflect.Constructor;
-import java.util.Hashtable;
 
 /**
  * This class generates code for a given IR tree.
@@ -70,7 +69,7 @@ public class Codegen implements Evaluator
         throw new UnsupportedOperationException();
     }
 
-    public List getScriptStack(RhinoException ex) {
+    public List<String> getScriptStack(RhinoException ex) {
         throw new UnsupportedOperationException();
     }
 
@@ -99,7 +98,7 @@ public class Codegen implements Evaluator
     public Script createScriptObject(Object bytecode,
                                      Object staticSecurityDomain)
     {
-        Class cl = defineClass(bytecode, staticSecurityDomain);
+        Class<?> cl = defineClass(bytecode, staticSecurityDomain);
 
         Script script;
         try {
@@ -115,11 +114,11 @@ public class Codegen implements Evaluator
                                          Object bytecode,
                                          Object staticSecurityDomain)
     {
-        Class cl = defineClass(bytecode, staticSecurityDomain);
+        Class<?> cl = defineClass(bytecode, staticSecurityDomain);
 
         NativeFunction f;
         try {
-            Constructor ctor = cl.getConstructors()[0];
+            Constructor<?>ctor = cl.getConstructors()[0];
             Object[] initArgs = { scope, cx, new Integer(0) };
             f = (NativeFunction)ctor.newInstance(initArgs);
         } catch (Exception ex) {
@@ -129,8 +128,8 @@ public class Codegen implements Evaluator
         return f;
     }
 
-    private Class defineClass(Object bytecode,
-                              Object staticSecurityDomain)
+    private Class<?> defineClass(Object bytecode,
+                                 Object staticSecurityDomain)
     {
         Object[] nameBytesPair = (Object[])bytecode;
         String className = (String)nameBytesPair[0];
@@ -144,7 +143,7 @@ public class Codegen implements Evaluator
                                                  staticSecurityDomain);
         Exception e;
         try {
-            Class cl = loader.defineClass(className, classBytes);
+            Class<?> cl = loader.defineClass(className, classBytes);
             loader.linkClass(cl);
             return cl;
         } catch (SecurityException x) {
@@ -204,7 +203,7 @@ public class Codegen implements Evaluator
 
         int optLevel = compilerEnv.getOptimizationLevel();
 
-        Hashtable possibleDirectCalls = null;
+        Map<String,OptFunctionNode> possibleDirectCalls = null;
         if (optLevel > 0) {
            /*
             * Collect all of the contained functions into a hashtable
@@ -221,7 +220,7 @@ public class Codegen implements Evaluator
                         String name = ofn.fnode.getFunctionName();
                         if (name.length() != 0) {
                             if (possibleDirectCalls == null) {
-                                possibleDirectCalls = new Hashtable();
+                                possibleDirectCalls = new HashMap<String,OptFunctionNode>();
                             }
                             possibleDirectCalls.put(name, ofn);
                         }
@@ -1588,7 +1587,7 @@ class BodyCodegen
                 epilogueLabel = cfw.acquireLabel();
             }
 
-            ArrayList targets = ((FunctionNode)scriptOrFn).getResumptionPoints();
+            ArrayList<Node> targets = ((FunctionNode)scriptOrFn).getResumptionPoints();
             if (targets != null) {
                 // get resumption point
                 generateGetGeneratorResumptionPoint();
@@ -1802,9 +1801,9 @@ class BodyCodegen
             addInstructionCount();        
         if (isGenerator) {
             // generate locals initialization
-            HashMap liveLocals = ((FunctionNode)scriptOrFn).getLiveLocals();
+            Map<Node,int[]> liveLocals = ((FunctionNode)scriptOrFn).getLiveLocals();
             if (liveLocals != null) {
-                ArrayList nodes = ((FunctionNode)scriptOrFn).getResumptionPoints();
+                ArrayList<Node> nodes = ((FunctionNode)scriptOrFn).getResumptionPoints();
                 for (int i = 0; i < nodes.size(); i++) {
                     Node node = (Node) nodes.get(i);
                     int[] live = (int [])liveLocals.get(node);
@@ -1826,9 +1825,7 @@ class BodyCodegen
 
             // generate dispatch tables for finally
             if (finallys != null) {
-                Enumeration en = finallys.keys();
-                while(en.hasMoreElements()) {
-                    Node n = (Node) en.nextElement();
+                for (Node n: finallys.keySet()) {
                     if (n.getType() == Token.FINALLY) {
                         FinallyReturnPoint ret =
                                 (FinallyReturnPoint)finallys.get(n);
@@ -3698,7 +3695,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         if (isGenerator && finallyTarget != null) {
             FinallyReturnPoint ret = new FinallyReturnPoint();
             if (finallys == null) {
-                finallys = new Hashtable();
+                finallys = new HashMap<Node,FinallyReturnPoint>();
             }
             // add the finally target to hashtable
             finallys.put(finallyTarget, ret);
@@ -5021,10 +5018,10 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private int maxLocals = 0;
     private int maxStack = 0;
 
-    private Hashtable finallys;
+    private Map<Node,FinallyReturnPoint> finallys;
 
     class FinallyReturnPoint {
-        public ArrayList jsrPoints  = new ArrayList();
+        public List<Integer> jsrPoints  = new ArrayList<Integer>();
         public int tableLabel = 0;        
     }
 }

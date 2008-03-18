@@ -107,7 +107,7 @@ public interface Evaluator {
      * @param ex exception from execution
      * @return list of strings for the stack trace
      */
-    public List getScriptStack(RhinoException ex);
+    public List<String> getScriptStack(RhinoException ex);
 
     /**
      * Mark the given script to indicate it was created by a call to
