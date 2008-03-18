@@ -143,6 +143,11 @@ public class Global extends ImporterTopLevel
 
         history = (NativeArray) cx.newArray(this, 0);
         defineProperty("history", history, ScriptableObject.DONTENUM);
+
+        // Check if we can use JLine for better command line handling
+        InputStream jlineStream = ShellLine.getStream();
+        if (jlineStream != null)
+            inStream = jlineStream;
         initialized = true;
     }
 
@@ -251,13 +256,17 @@ public class Global extends ImporterTopLevel
      *            during execution of methods of the named class
      * @see org.mozilla.javascript.ScriptableObject#defineClass(Scriptable,Class)
      */
+    @SuppressWarnings({"unchecked"})
     public static void defineClass(Context cx, Scriptable thisObj,
                                    Object[] args, Function funObj)
         throws IllegalAccessException, InstantiationException,
                InvocationTargetException
     {
-        Class clazz = getClass(args);
-        ScriptableObject.defineClass(thisObj, clazz);
+        Class<?> clazz = getClass(args);
+        if (!Scriptable.class.isAssignableFrom(clazz)) {
+            throw reportRuntimeError("msg.must.implement.Scriptable");
+        }
+        ScriptableObject.defineClass(thisObj, (Class<? extends Scriptable>)clazz);
     }
 
     /**
@@ -278,7 +287,7 @@ public class Global extends ImporterTopLevel
                                  Object[] args, Function funObj)
         throws IllegalAccessException, InstantiationException
     {
-        Class clazz = getClass(args);
+        Class<?> clazz = getClass(args);
         if (!Script.class.isAssignableFrom(clazz)) {
             throw reportRuntimeError("msg.must.implement.Script");
         }
@@ -286,7 +295,7 @@ public class Global extends ImporterTopLevel
         script.exec(cx, thisObj);
     }
 
-    private static Class getClass(Object[] args) {
+    private static Class<?> getClass(Object[] args) {
         if (args.length == 0) {
             throw reportRuntimeError("msg.expected.string.arg");
         }
@@ -294,7 +303,7 @@ public class Global extends ImporterTopLevel
         if (arg0 instanceof Wrapper) {
             Object wrapped = ((Wrapper)arg0).unwrap();
             if (wrapped instanceof Class)
-                return (Class)wrapped;
+                return (Class<?>)wrapped;
         }
         String className = Context.toString(args[0]);
         try {
