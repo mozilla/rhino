@@ -47,6 +47,9 @@ import java.lang.reflect.Proxy;
 import java.lang.reflect.InvocationTargetException;
 
 import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Function;
 
 /**
  * Provides a specialized input stream for consoles to handle line
@@ -55,27 +58,21 @@ import org.mozilla.javascript.Kit;
  */
 public class ShellLine {
 
-    public static InputStream getStream() {
+    public static InputStream getStream(Scriptable scope) {
         // We don't want a compile-time dependency on the JLine jar, so use
         // reflection to load and reference the JLine classes.
         ClassLoader classLoader = ShellLine.class.getClassLoader();
-        Class<?> readerClass = Kit.classOrNull(classLoader,
-                                               "jline.ConsoleReader");
+        Class<?> readerClass = Kit.classOrNull(classLoader, "jline.ConsoleReader");
         if (readerClass == null)
             return null;
         try {
             // ConsoleReader reader = new ConsoleReader();
             Constructor<?> c = readerClass.getConstructor();
             Object reader = c.newInstance();
-
+        
             // reader.setBellEnabled(false);
             Method m = readerClass.getMethod("setBellEnabled", Boolean.TYPE);
             m.invoke(reader, Boolean.FALSE);
-
-            String[] prefixes = { "arguments", "defineClass(", "defineClass(",
-                "deserialize(", "load(", "print(", "readFile(", "readUrl(",
-                "runCommand", "seal(", "serialize(", "spawn(", "sync(",
-                "quit()", "version(" };
 
             // reader.addCompletor(new FlexibleCompletor(prefixes));
             Class<?> completorClass = Kit.classOrNull(classLoader,
@@ -83,9 +80,9 @@ public class ShellLine {
             m = readerClass.getMethod("addCompletor", completorClass);
             Object completor = Proxy.newProxyInstance(classLoader,
                     new Class[] { completorClass },
-                    new FlexibleCompletor(completorClass, prefixes));
+                    new FlexibleCompletor(completorClass, scope));
             m.invoke(reader, completor);
-
+            
             // return new ConsoleReaderInputStream(reader);
             Class<?> inputStreamClass = Kit.classOrNull(classLoader,
                 "jline.ConsoleReaderInputStream");
@@ -106,36 +103,65 @@ public class ShellLine {
  * completed strings). This one completes whatever came before.
  */
 class FlexibleCompletor implements java.lang.reflect.InvocationHandler {
-    private String[] radicals;
     private Method completeMethod;
+    private Scriptable global;
 
-    FlexibleCompletor(Class<?> completorClass, String... radicals)
+    FlexibleCompletor(Class<?> completorClass, Scriptable global)
         throws NoSuchMethodException
     {
-        this.radicals = radicals;
+        this.global = global;
         this.completeMethod = completorClass.getMethod("complete", String.class,
-
                 Integer.TYPE, List.class);
     }
-
+    
     @SuppressWarnings({"unchecked"})
     public Object invoke(Object proxy, Method method, Object[] args) {
         if (method.equals(this.completeMethod)) {
-            int result = complete((String)args[0],
-                                  ((Integer) args[1]).intValue(),
-                                  (List<String>) args[2]);
+            int result = complete((String)args[0], ((Integer) args[1]).intValue(),
+                    (List<String>) args[2]);
             return new Integer(result);
         }
         throw new NoSuchMethodError(method.toString());
     }
 
     public int complete(String buffer, int cursor, List<String> candidates) {
+        // Starting from "cursor" at the end of the buffer, look backward
+        // and collect a list of identifiers separated by (possibly zero)
+        // dots. Then look up each identifier in turn until getting to the
+        // last, presumably incomplete fragment. Then enumerate all the
+        // properties of the last object and find any that have the
+        // fragment as a prefix and return those for autocompletion.
         int m = cursor - 1;
-        for (; m >= 0; m--) if (!Character.isLetter(buffer.charAt(m))) break;
-        String lastPart = buffer.substring(m+1, cursor);
-        for (String radical : radicals) {
-            if (radical.startsWith(lastPart)) candidates.add(radical);
+        while (m >= 0) {
+            char c = buffer.charAt(m--);
+            if (!Character.isJavaIdentifierPart(c) && c != '.')
+                break;
         }
-        return buffer.length()-lastPart.length();
+        String namesAndDots = buffer.substring(m+1, cursor);
+        String[] names = namesAndDots.split("\\.");
+        Scriptable obj = this.global;
+        for (int i=0; i < names.length - 1; i++) {
+            Object val = obj.get(names[i], global);
+            if (val instanceof Scriptable)
+                obj = (Scriptable) val;
+            else {
+                return buffer.length(); // no matches
+            }
+        }
+        Object[] ids = (obj instanceof ScriptableObject) 
+                       ? ((ScriptableObject)obj).getAllIds()
+                       : obj.getIds();
+        String lastPart = names[names.length-1];
+        for (int i=0; i < ids.length; i++) {
+            if (!(ids[i] instanceof String))
+                continue;
+            String id = (String)ids[i];
+            if (id.startsWith(lastPart)) {
+                if (obj.get(id, obj) instanceof Function)
+                    id += "(";
+                candidates.add(id);
+            }
+        }
+        return buffer.length() - lastPart.length();
     }
 }
