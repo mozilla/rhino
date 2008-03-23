@@ -107,7 +107,6 @@ public final class NativeGenerator extends IdScriptableObject {
             Context cx = Context.getCurrentContext();
             ContextFactory factory = cx != null ? cx.getFactory()
                                                 : ContextFactory.getGlobal();
-            Scriptable scope = ScriptableObject.getTopLevelScope(this);
             factory.call(new CloseGeneratorAction(this));
         }
     }

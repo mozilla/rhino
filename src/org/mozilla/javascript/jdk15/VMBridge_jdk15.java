@@ -62,7 +62,7 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
         if (member instanceof Method)
             return ((Method) member).isVarArgs();
         else if (member instanceof Constructor)
-            return ((Constructor) member).isVarArgs();
+            return ((Constructor<?>) member).isVarArgs();
         else 
             return false;
     }
@@ -72,14 +72,14 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
      * wrapping as a JavaScript Iterator. Otherwise, return null.
      * This method is in VMBridge since Iterable is a JDK 1.5 addition.
      */
-    public Iterator getJavaIterator(Context cx, Scriptable scope, Object obj) {
+    public Iterator<?> getJavaIterator(Context cx, Scriptable scope, Object obj) {
         if (obj instanceof Wrapper) {
             Object unwrapped = ((Wrapper) obj).unwrap();
-            Iterator iterator = null;
+            Iterator<?> iterator = null;
             if (unwrapped instanceof Iterator)
-                iterator = (Iterator) unwrapped;
+                iterator = (Iterator<?>) unwrapped;
             if (unwrapped instanceof Iterable)
-                iterator = ((Iterable)unwrapped).iterator();
+                iterator = ((Iterable<?>)unwrapped).iterator();
             return iterator;
         }
         return null;

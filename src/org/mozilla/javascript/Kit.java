@@ -86,10 +86,10 @@ public class Kit
      * Attempt to load the class of the given name. Note that the type parameter
      * isn't checked.
      */
-    public static <T> Class<T> classOrNull(ClassLoader loader, String className)
+    public static Class<?> classOrNull(ClassLoader loader, String className)
     {
         try {
-            return (Class<T>) loader.loadClass(className);
+            return loader.loadClass(className);
         } catch (ClassNotFoundException ex) {
         } catch (SecurityException ex) {
         } catch (LinkageError ex) {

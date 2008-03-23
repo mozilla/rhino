@@ -49,7 +49,7 @@ import org.mozilla.javascript.*;
 
 public class VMBridge_jdk13 extends VMBridge
 {
-    private ThreadLocal contextLocal = new ThreadLocal();
+    private ThreadLocal<Object[]> contextLocal = new ThreadLocal<Object[]>();
 
     protected Object getThreadContextHelper()
     {
@@ -62,7 +62,7 @@ public class VMBridge_jdk13 extends VMBridge
         // by Attila Szegedi in
         // https://bugzilla.mozilla.org/show_bug.cgi?id=281067#c5
 
-        Object[] storage = (Object[])contextLocal.get();
+        Object[] storage = contextLocal.get();
         if (storage == null) {
             storage = new Object[1];
             contextLocal.set(storage);
@@ -104,13 +104,13 @@ public class VMBridge_jdk13 extends VMBridge
     }
 
     protected Object getInterfaceProxyHelper(ContextFactory cf,
-                                             Class[] interfaces)
+                                             Class<?>[] interfaces)
     {
         // XXX: How to handle interfaces array withclasses from different
         // class loaders? Using cf.getApplicationClassLoader() ?
         ClassLoader loader = interfaces[0].getClassLoader();
-        Class cl = Proxy.getProxyClass(loader, interfaces);
-        Constructor c;
+        Class<?> cl = Proxy.getProxyClass(loader, interfaces);
+        Constructor<?> c;
         try {
             c = cl.getConstructor(new Class[] { InvocationHandler.class });
         } catch (NoSuchMethodException ex) {
@@ -126,7 +126,7 @@ public class VMBridge_jdk13 extends VMBridge
                                        final Object target,
                                        final Scriptable topScope)
     {
-        Constructor c = (Constructor)proxyHelper;
+        Constructor<?> c = (Constructor<?>)proxyHelper;
 
         InvocationHandler handler = new InvocationHandler() {
                 public Object invoke(Object proxy,
