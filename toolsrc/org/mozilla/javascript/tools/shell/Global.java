@@ -46,6 +46,10 @@ package org.mozilla.javascript.tools.shell;
 import java.io.*;
 import java.net.*;
 import java.lang.reflect.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 import org.mozilla.javascript.serialize.*;
@@ -68,6 +72,7 @@ public class Global extends ImporterTopLevel
     boolean initialized;
     private QuitAction quitAction;
     private String[] prompts = { "js> ", "  > " };
+    private HashMap<String,String> doctestCanonicalizations;
 
     public Global()
     {
@@ -145,7 +150,7 @@ public class Global extends ImporterTopLevel
         defineProperty("history", history, ScriptableObject.DONTENUM);
 
         // Check if we can use JLine for better command line handling
-        InputStream jlineStream = ShellLine.getStream();
+        InputStream jlineStream = ShellLine.getStream(this);
         if (jlineStream != null)
             inStream = jlineStream;
         initialized = true;
@@ -393,7 +398,8 @@ public class Global extends ImporterTopLevel
     public int runDoctest(Context cx, Scriptable scope, String session,
                           String sourceName, int lineNumber)
     {
-    	String[] lines = session.split("\n|\r");
+        doctestCanonicalizations = new HashMap<String,String>();
+        String[] lines = session.split("\n|\r");
         String prompt0 = this.prompts[0].trim();
         String prompt1 = this.prompts[1].trim();
         int testCount = 0;
@@ -471,11 +477,48 @@ public class Global extends ImporterTopLevel
      *      differences 
      */
     private boolean doctestOutputMatches(String expected, String actual) {
-        String expectedTrimmed = expected.trim();
-        String actualTrimmed = actual.trim().replace("\r\n", "\n");
-        return expectedTrimmed.equals(actualTrimmed);
+        expected = expected.trim();
+        actual = actual.trim().replace("\r\n", "\n");
+        if (expected.equals(actual))
+            return true;
+        for (Map.Entry<String,String> entry: doctestCanonicalizations.entrySet()) {
+            expected = expected.replace(entry.getKey(), entry.getValue());
+        }
+        if (expected.equals(actual))
+            return true;
+        // java.lang.Object.toString() prints out a unique hex number associated
+        // with each object. This number changes from run to run, so we want to
+        // ignore differences between these numbers in the output. We search for a
+        // regexp that matches the hex number preceded by '@', then enter mappings into
+        // "doctestCanonicalizations" so that we ensure that the mappings are
+        // consistent within a session.
+        Pattern p = Pattern.compile("@[0-9a-fA-F]+");
+        Matcher expectedMatcher = p.matcher(expected);
+        Matcher actualMatcher = p.matcher(actual);
+        for (;;) {
+            if (!expectedMatcher.find())
+                return false;
+            if (!actualMatcher.find())
+                return false;
+            if (actualMatcher.start() != expectedMatcher.start())
+                return false;
+            int start = expectedMatcher.start();
+            if (!expected.substring(0, start).equals(actual.substring(0, start)))
+                return false;
+            String expectedGroup = expectedMatcher.group();
+            String actualGroup = actualMatcher.group();
+            String mapping = doctestCanonicalizations.get(expectedGroup);
+            if (mapping == null) {
+                doctestCanonicalizations.put(expectedGroup, actualGroup);
+                expected = expected.replace(expectedGroup, actualGroup);
+            } else if (!actualGroup.equals(mapping)) {
+                return false; // wrong object!
+            }
+            if (expected.equals(actual))
+                return true;
+        }
     }
-
+    
     /**
      * The spawn function runs a given function or script in a different
      * thread.
