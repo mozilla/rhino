@@ -104,8 +104,7 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
 
     private Object buildValue()
     {
-        Class<? extends Scriptable> cl = 
-            (Class<? extends Scriptable>)Kit.classOrNull(className);
+        Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
         if (cl != null) {
             try {
                 Object value = ScriptableObject.buildClassCtor(scope, cl,
@@ -132,6 +131,11 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
             }
         }
         return Scriptable.NOT_FOUND;
+    }
+    
+    @SuppressWarnings({"unchecked"})
+    private Class<? extends Scriptable> cast(Class<?> cl) {
+        return (Class<? extends Scriptable>)cl;
     }
 
 }

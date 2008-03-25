@@ -48,7 +48,8 @@ package org.mozilla.javascript;
 
 import java.io.Reader;
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class implements the JavaScript parser.
@@ -93,7 +94,7 @@ public class Parser
     ScriptOrFnNode currentScriptOrFn;
     Node.Scope currentScope;
     private int nestingOfWith;
-    private Hashtable labelSet; // map of label names into nodes
+    private Map<String,Node> labelSet; // map of label names into nodes
     private ObjArray loopSet;
     private ObjArray loopAndSwitchSet;
     private boolean hasReturnValue;
@@ -542,7 +543,7 @@ public class Parser
         currentScope = fnNode;
         int savedNestingOfWith = nestingOfWith;
         nestingOfWith = 0;
-        Hashtable savedLabelSet = labelSet;
+        Map<String,Node> savedLabelSet = labelSet;
         labelSet = null;
         ObjArray savedLoopSet = loopSet;
         loopSet = null;
@@ -691,7 +692,7 @@ public class Parser
             String name = ts.getString();
             decompiler.addName(name);
             if (labelSet != null) {
-                label = (Node)labelSet.get(name);
+                label = labelSet.get(name);
             }
             if (label == null) {
                 reportError("msg.undef.label");
@@ -1212,7 +1213,7 @@ public class Parser
                 decompiler.addEOL(Token.COLON);
 
                 if (labelSet == null) {
-                    labelSet = new Hashtable();
+                    labelSet = new HashMap<String,Node>();
                 } else if (labelSet.containsKey(name)) {
                     reportError("msg.dup.label");
                 }

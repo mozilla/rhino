@@ -39,6 +39,8 @@ package org.mozilla.javascript.xmlimpl;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.mozilla.javascript.*;
 
@@ -184,29 +186,29 @@ class XmlProcessor {
         }
     }
 
-    private void addProcessingInstructionsTo(java.util.Vector v, Node node) {
+    private void addProcessingInstructionsTo(List<Node> list, Node node) {
         if (node instanceof ProcessingInstruction) {
-            v.add(node);
+            list.add(node);
         }
         if (node.getChildNodes() != null) {
             for (int i=0; i<node.getChildNodes().getLength(); i++) {
-                addProcessingInstructionsTo(v, node.getChildNodes().item(i));
+                addProcessingInstructionsTo(list, node.getChildNodes().item(i));
             }
         }
     }
 
-    private void addCommentsTo(java.util.Vector v, Node node) {
+    private void addCommentsTo(List<Node> list, Node node) {
         if (node instanceof Comment) {
-            v.add(node);
+            list.add(node);
         }
         if (node.getChildNodes() != null) {
             for (int i=0; i<node.getChildNodes().getLength(); i++) {
-                addProcessingInstructionsTo(v, node.getChildNodes().item(i));
+                addProcessingInstructionsTo(list, node.getChildNodes().item(i));
             }
         }
     }
 
-    private void addTextNodesToRemoveAndTrim(java.util.Vector toRemove, Node node) {
+    private void addTextNodesToRemoveAndTrim(List<Node> toRemove, Node node) {
         if (node instanceof Text) {
             Text text = (Text)node;
             boolean BUG_369394_IS_VALID = false;
@@ -237,18 +239,16 @@ class XmlProcessor {
             builder = getDocumentBuilderFromPool(); 
             Document document = builder.parse( new org.xml.sax.InputSource(new java.io.StringReader(syntheticXml)) );
             if (ignoreProcessingInstructions) {
-                java.util.Vector v = new java.util.Vector();
-                addProcessingInstructionsTo(v, document);
-                for (int i=0; i<v.size(); i++) {
-                    Node node = (Node)v.elementAt(i);
+                List<Node> list = new java.util.ArrayList<Node>();
+                addProcessingInstructionsTo(list, document);
+                for (Node node: list) {
                     node.getParentNode().removeChild(node);
                 }
             }
             if (ignoreComments) {
-                java.util.Vector v = new java.util.Vector();
-                addCommentsTo(v, document);
-                for (int i=0; i<v.size(); i++) {
-                    Node node = (Node)v.elementAt(i);
+                List<Node> list = new java.util.ArrayList<Node>();
+                addCommentsTo(list, document);
+                for (Node node: list) {
                     node.getParentNode().removeChild(node);
                 }
             }
@@ -258,10 +258,9 @@ class XmlProcessor {
                 //    so that it would know which whitespace to ignore.
 
                 //    Instead we will try to delete it ourselves.
-                java.util.Vector v = new java.util.Vector();
-                addTextNodesToRemoveAndTrim(v, document);
-                for (int i=0; i<v.size(); i++) {
-                    Node node = (Node)v.elementAt(i);
+                List<Node> list = new java.util.ArrayList<Node>();
+                addTextNodesToRemoveAndTrim(list, document);
+                for (Node node: list) {
                     node.getParentNode().removeChild(node);
                 }
             }
@@ -417,7 +416,7 @@ class XmlProcessor {
 
         //    We "mark" all the nodes first; if we tried to do this loop otherwise, it would behave unexpectedly (the inserted nodes
         //    would contribute to the length and it might never terminate).
-        java.util.Vector toIndent = new java.util.Vector();
+        ArrayList<Node> toIndent = new ArrayList<Node>();
         boolean indentChildren = false;
         for (int i=0; i<e.getChildNodes().getLength(); i++) {
             if (i == 1) indentChildren = true;
@@ -430,21 +429,22 @@ class XmlProcessor {
         }
         if (indentChildren) {
             for (int i=0; i<toIndent.size(); i++) {
-                e.insertBefore( e.getOwnerDocument().createTextNode(beforeContent), (Node)toIndent.elementAt(i) );
+                e.insertBefore(e.getOwnerDocument().createTextNode(beforeContent),
+                        toIndent.get(i));
             }
         }
         NodeList nodes = e.getChildNodes();
-        java.util.Vector v = new java.util.Vector();
-        for (int i=0; i<nodes.getLength(); i++) {
+        ArrayList<Element> list = new ArrayList<Element>();
+        for (int i=0; i < nodes.getLength(); i++) {
             if (nodes.item(i) instanceof Element) {
-                v.add( nodes.item(i) );
+                list.add((Element)nodes.item(i));
             }
         }
-        for (int i=0; i<v.size(); i++) {
-            beautifyElement( (Element)v.elementAt(i), indent + prettyIndent );
+        for (Element elem: list) {
+            beautifyElement(elem, indent + prettyIndent);
         }
         if (indentChildren) {
-            e.appendChild( e.getOwnerDocument().createTextNode(afterContent) );
+            e.appendChild(e.getOwnerDocument().createTextNode(afterContent));
         }
     }
 }

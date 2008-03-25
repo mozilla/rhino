@@ -145,12 +145,12 @@ class XMLName extends Ref {
         return rv;
     }
 
-    /** @deprecated */
+    /** TODO: marked deprecated by original author */
     static XMLName formProperty(String uri, String localName) {
         return formProperty(XmlNode.Namespace.create(uri), localName);
     }
 
-    /** @deprecated */
+    /** TODO: marked deprecated by original implementor */
     static XMLName create(String defaultNamespaceUri, String name) {
         if (name == null)
             throw new IllegalArgumentException();
@@ -309,7 +309,8 @@ class XMLName extends Ref {
                 // Check for attribute type and convert to textNode
                 if (xmlValue instanceof XML) {
                     if (((XML)xmlValue).isAttribute()) {
-                        xmlValue = target.makeXmlFromString(xmlName, xmlValue.toString());
+                        xmlValue = target.makeXmlFromString(xmlName,
+                                xmlValue.toString());
                     }
                 }
 
@@ -343,6 +344,7 @@ class XMLName extends Ref {
         }
     }
 
+    @Override
     public boolean has(Context cx) {
         if (xmlObject == null) {
             return false;
@@ -350,6 +352,7 @@ class XMLName extends Ref {
         return xmlObject.hasXMLProperty(this);
     }
 
+    @Override
     public Object get(Context cx) {
         if (xmlObject == null) {
             throw ScriptRuntime.undefReadError(Undefined.instance,
@@ -358,6 +361,7 @@ class XMLName extends Ref {
         return xmlObject.getXMLProperty(this);
     }
 
+    @Override
     public Object set(Context cx, Object value) {
         if (xmlObject == null) {
             throw ScriptRuntime.undefWriteError(Undefined.instance,
@@ -371,6 +375,7 @@ class XMLName extends Ref {
         return value;
     }
 
+    @Override
     public boolean delete(Context cx) {
         if (xmlObject == null) {
             return true;
@@ -379,6 +384,7 @@ class XMLName extends Ref {
         return !xmlObject.hasXMLProperty(this);
     }
 
+    @Override
     public String toString() {
         //return qname.localName();
         StringBuffer buff = new StringBuffer();
@@ -443,19 +449,19 @@ class XMLName extends Ref {
         }
     }
 
-    /**    @deprecated */
+    /* TODO: marked deprecated by original author */
     boolean isAttributeName() {
         return isAttributeName;
     }
 
-    //    TODO    Fix whether this is an attribute XMLName at construction?
-    /** @deprecated */
+    // TODO Fix whether this is an attribute XMLName at construction?
+    // Marked deprecated by original author
     void setAttributeName() {
 //        if (isAttributeName) throw new IllegalStateException();
         isAttributeName = true;
     }
 
-    /**    @deprecated */
+    /* TODO: was marked deprecated by original author */
     boolean isDescendants() {
         return isDescendants;
     }

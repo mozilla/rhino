@@ -45,8 +45,6 @@ import org.mozilla.javascript.*;
 import org.mozilla.javascript.xml.*;
 
 public final class XMLLibImpl extends XMLLib implements Serializable {
-    //    TODO    Document that this only works with JDK 1.5 or backport its
-    //    features to earlier versions
     private static final long serialVersionUID = 1L;
 
     //
@@ -62,7 +60,8 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         if (xmlObject instanceof XML) {
             return ((XML)xmlObject).toDomNode();
         } else {
-            throw new IllegalArgumentException("xmlObject is not an XML object in JavaScript.");
+            throw new IllegalArgumentException(
+                    "xmlObject is not an XML object in JavaScript.");
         }
     }
 
@@ -154,10 +153,10 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     }
 
     XMLName toXMLNameFromString(Context cx, String name) {
-        return XMLName.create( getDefaultNamespaceURI(cx), name );
+        return XMLName.create(getDefaultNamespaceURI(cx), name);
     }
 
-    /** @deprecated */
+    /* TODO: Marked deprecated by original author */
     XMLName toXMLName(Context cx, Object nameValue) {
         XMLName result;
 
@@ -374,8 +373,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         return new XML(this, this.globalScope, this.xmlPrototype, node);
     }
 
-    /**
-        @deprecated I believe this can be replaced by ecmaToXml below.
+    /* TODO: Can this can be replaced by ecmaToXml below?
      */
     final XML newXMLFromJs(Object inputObject) {
         String frag;
@@ -534,8 +532,8 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         }
     }
 
-    /**
-        @deprecated Too general; this should be split into overloaded methods.
+    /*
+        TODO: Too general; this should be split into overloaded methods.
         Is that possible?
      */
     XmlNode.QName toNodeQName(Context cx, Object nameValue, boolean attribute) {
@@ -566,31 +564,37 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     //    Override methods from XMLLib
     //
 
+    @Override
     public boolean isXMLName(Context _cx, Object nameObj) {
         return XMLName.accept(nameObj);
     }
 
+    @Override
     public Object toDefaultXmlNamespace(Context cx, Object uriValue) {
         return this.namespacePrototype.constructNamespace(uriValue);
     }
 
+    @Override
     public String escapeTextValue(Object o) {
         return options.escapeTextValue(o);
     }
 
+    @Override
     public String escapeAttributeValue(Object o) {
         return options.escapeAttributeValue(o);
     }
 
+    @Override
     public Ref nameRef(Context cx, Object name, Scriptable scope, int memberTypeFlags) {
         if ((memberTypeFlags & Node.ATTRIBUTE_FLAG) == 0) {
-            // should only be called foir cases like @name or @[expr]
+            // should only be called for cases like @name or @[expr]
             throw Kit.codeBug();
         }
         XMLName xmlName = toAttributeName(cx, name);
         return xmlPrimaryReference(cx, xmlName, scope);
     }
 
+    @Override
     public Ref nameRef(Context cx, Object namespace, Object name, Scriptable scope, int memberTypeFlags) {
         XMLName xmlName = XMLName.create(toNodeQName(cx, namespace, name), false, false);
 

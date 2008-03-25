@@ -80,6 +80,7 @@ final class QName extends IdScriptableObject
         exportAsJSClass(MAX_PROTOTYPE_ID, getParentScope(), sealed);
     }
 
+    @Override
     public String toString() {
         //    ECMA357 13.3.4.2
         if (delegate.getNamespace() == null) {
@@ -97,12 +98,10 @@ final class QName extends IdScriptableObject
         return delegate.getLocalName();
     }
 
-    /**
-        @deprecated
-
-        This property is supposed to be invisible and I think we can make it private at some point, though Namespace
-        might need it
-    */
+    /*
+     * TODO This property is supposed to be invisible and I think we can
+     *  make it private at some point, though Namespace might need it
+     */
     String prefix() {
         if (delegate.getNamespace() == null) return null;
         return delegate.getNamespace().getPrefix();
@@ -122,11 +121,13 @@ final class QName extends IdScriptableObject
         return delegate;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if(!(obj instanceof QName)) return false;
         return equals((QName)obj);
     }
 
+    @Override
     protected Object equivalentValues(Object value)
     {
         if(!(value instanceof QName)) return Scriptable.NOT_FOUND;
@@ -138,11 +139,13 @@ final class QName extends IdScriptableObject
         return this.delegate.isEqualTo(q.delegate);
     }
 
+    @Override
     public String getClassName() {
         return "QName";
     }
 
-    public Object getDefaultValue(Class hint) {
+    @Override
+    public Object getDefaultValue(Class<?> hint) {
         return toString();
     }
 
@@ -152,11 +155,13 @@ final class QName extends IdScriptableObject
         Id_uri                  = 2,
         MAX_INSTANCE_ID         = 2;
 
+    @Override
     protected int getMaxInstanceId()
     {
         return super.getMaxInstanceId() + MAX_INSTANCE_ID;
     }
 
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         int id;
@@ -184,6 +189,7 @@ final class QName extends IdScriptableObject
     }
 // #/string_id_map#
 
+    @Override
     protected String getInstanceIdName(int id)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -193,6 +199,7 @@ final class QName extends IdScriptableObject
         return super.getInstanceIdName(id);
     }
 
+    @Override
     protected Object getInstanceIdValue(int id)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -209,6 +216,7 @@ final class QName extends IdScriptableObject
         Id_toSource             = 3,
         MAX_PROTOTYPE_ID        = 3;
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;
@@ -229,6 +237,7 @@ final class QName extends IdScriptableObject
     }
 // #/string_id_map#
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -242,6 +251,7 @@ final class QName extends IdScriptableObject
         initPrototypeMethod(QNAME_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f,
                              Context cx,
                              Scriptable scope,

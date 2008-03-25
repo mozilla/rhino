@@ -39,7 +39,8 @@
 
 package org.mozilla.javascript.serialize;
 
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.io.*;
 
@@ -78,7 +79,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
     {
         super(out);
         this.scope = scope;
-        table = new Hashtable(31);
+        table = new HashMap<Object,String>();
         table.put(scope, "");
         enableReplaceObject(true);
         excludeStandardObjectNames();
@@ -203,5 +204,5 @@ public class ScriptableOutputStream extends ObjectOutputStream {
     }
 
     private Scriptable scope;
-    private Hashtable table;
+    private Map<Object,String> table;
 }

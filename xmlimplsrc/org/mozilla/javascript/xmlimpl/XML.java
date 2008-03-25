@@ -59,6 +59,7 @@ class XML extends XMLObjectImpl {
         this.node.setXml(this);
     }
 
+    @Override
     final XML getXML() {
         return this;
     }
@@ -74,7 +75,7 @@ class XML extends XMLObjectImpl {
         }
     }
 
-    /** @deprecated I would love to encapsulate this somehow. */
+    /* TODO: needs encapsulation. */
     XML makeXmlFromString(XMLName name, String value) {
         try {
             return newTextElementXML(this.node, name.toQname(), value.toString());
@@ -83,7 +84,7 @@ class XML extends XMLObjectImpl {
         }
     }
 
-    /** @deprecated Rename this, at the very least.  But it's not clear it's even necessary */
+    /* TODO: Rename this, at the very least.  But it's not clear it's even necessary */
     XmlNode getAnnotation() {
         return node;
     }
@@ -94,6 +95,7 @@ class XML extends XMLObjectImpl {
 
     //    TODO Either cross-reference this next comment with the specification or delete it and change the behavior
     //    The comment: XML[0] should return this, all other indexes are Undefined
+    @Override
     public Object get(int index, Scriptable start) {
         if (index == 0) {
             return this;
@@ -102,16 +104,19 @@ class XML extends XMLObjectImpl {
         }
     }
 
+    @Override
     public boolean has(int index, Scriptable start) {
         return (index == 0);
     }
 
+    @Override
     public void put(int index, Scriptable start, Object value) {
         //    TODO    Clarify the following comment and add a reference to the spec
         //    The comment: Spec says assignment to indexed XML object should return type error
         throw ScriptRuntime.typeError("Assignment to indexed XML is not allowed");
     }
 
+    @Override
     public Object[] getIds() {
         if (isPrototype()) {
             return new Object[0];
@@ -121,6 +126,7 @@ class XML extends XMLObjectImpl {
     }
 
     //    TODO    This is how I found it but I am not sure it makes sense
+    @Override
     public void delete(int index) {
         if (index == 0) {
             this.remove();
@@ -131,6 +137,7 @@ class XML extends XMLObjectImpl {
     //    Methods from XMLObjectImpl
     //
 
+    @Override
     boolean hasXMLProperty(XMLName xmlName) {
         if (isPrototype()) {
             return getMethod(xmlName.localName()) != NOT_FOUND;
@@ -139,6 +146,7 @@ class XML extends XMLObjectImpl {
         }
     }
 
+    @Override
     Object getXMLProperty(XMLName xmlName) {
         if (isPrototype()) {
             return getMethod(xmlName.localName());
@@ -181,6 +189,7 @@ class XML extends XMLObjectImpl {
         return name.getMyValueOn(this);
     }
 
+    @Override
     void deleteXMLProperty(XMLName name) {
         XMLList list = getPropertyList(name);
         for (int i=0; i<list.length(); i++) {
@@ -188,6 +197,7 @@ class XML extends XMLObjectImpl {
         }
     }
 
+    @Override
     void putXMLProperty(XMLName xmlName, Object value) {
         if (isPrototype()) {
             //    TODO    Is this really a no-op?  Check the spec to be sure
@@ -196,6 +206,7 @@ class XML extends XMLObjectImpl {
         }
     }
 
+    @Override
     boolean hasOwnProperty(XMLName xmlName) {
         boolean hasProperty = false;
 
@@ -209,6 +220,7 @@ class XML extends XMLObjectImpl {
         return hasProperty;
     }
 
+    @Override
     protected Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
             args = new Object[] { "" };
@@ -223,6 +235,7 @@ class XML extends XMLObjectImpl {
     }
 
     //    See ECMA 357, 11_2_2_1, Semantics, 3_f.
+    @Override
     public Scriptable getExtraMethodSource(Context cx) {
         if (hasSimpleContent()) {
             String src = toString();
@@ -239,6 +252,7 @@ class XML extends XMLObjectImpl {
         this.node.removeChild(index);
     }
 
+    @Override
     void normalize() {
         this.node.normalize();
     }
@@ -263,10 +277,12 @@ class XML extends XMLObjectImpl {
         this.node.deleteMe();
     }
 
+    @Override
     void addMatches(XMLList rv, XMLName name) {
         name.addMatches(rv, this);
     }
 
+    @Override
     XMLList elements(XMLName name) {
         XMLList rv = newXMLList();
         rv.setTargets(this, name.toQname());
@@ -280,6 +296,7 @@ class XML extends XMLObjectImpl {
         return rv;
     }
 
+    @Override
     XMLList child(XMLName xmlName) {
         //    TODO    Right now I think this method would allow child( "@xxx" ) to return the xxx attribute, which is wrong
 
@@ -303,6 +320,7 @@ class XML extends XMLObjectImpl {
         return this;
     }
 
+    @Override
     XMLList children() {
         XMLList rv = newXMLList();
         XMLName all = XMLName.formStar();
@@ -314,6 +332,7 @@ class XML extends XMLObjectImpl {
         return rv;
     }
 
+    @Override
     XMLList child(int index) {
         //    ECMA357 13.4.4.6 (numeric case)
         XMLList result = newXMLList();
@@ -336,6 +355,7 @@ class XML extends XMLObjectImpl {
         return this.node.getChildIndex();
     }
 
+    @Override
     boolean contains(Object xml) {
         if (xml instanceof XML) {
             return equivalentXml(xml);
@@ -345,6 +365,7 @@ class XML extends XMLObjectImpl {
     }
 
     //    Method overriding XMLObjectImpl
+    @Override
     boolean equivalentXml(Object target) {
         boolean result = false;
 
@@ -367,22 +388,26 @@ class XML extends XMLObjectImpl {
         return result;
     }
 
+    @Override
     XMLObjectImpl copy() {
         return newXML( this.node.copy() );
     }
 
+    @Override
     boolean hasSimpleContent() {
         if (isComment() || isProcessingInstruction()) return false;
         if (isText() || this.node.isAttributeType()) return true;
         return !this.node.hasChildElement();
     }
 
+    @Override
     boolean hasComplexContent() {
         return !hasSimpleContent();
     }
 
     //    TODO Cross-reference comment below with spec
     //    Comment is: Length of an XML object is always 1, it's a list of XML objects of size 1.
+    @Override
     int length() {
         return 1;
     }
@@ -396,12 +421,14 @@ class XML extends XMLObjectImpl {
         return ecmaClass();
     }
 
+    @Override
     Object parent() {
         XmlNode parent = this.node.parent();
         if (parent == null) return null;
         return newXML(this.node.parent());
     }
 
+    @Override
     boolean propertyIsEnumerable(Object name)
     {
         boolean result;
@@ -417,6 +444,7 @@ class XML extends XMLObjectImpl {
         return result;
     }
 
+    @Override
     Object valueOf() {
         return this;
     }
@@ -425,18 +453,21 @@ class XML extends XMLObjectImpl {
     //    Selection of children
     //
 
+    @Override
     XMLList comments() {
         XMLList rv = newXMLList();
         this.node.addMatchingChildren(rv, XmlNode.Filter.COMMENT);
         return rv;
     }
 
+    @Override
     XMLList text() {
         XMLList rv = newXMLList();
         this.node.addMatchingChildren(rv, XmlNode.Filter.TEXT);
         return rv;
     }
 
+    @Override
     XMLList processingInstructions(XMLName xmlName) {
         XMLList rv = newXMLList();
         this.node.addMatchingChildren(rv, XmlNode.Filter.PROCESSING_INSTRUCTION(xmlName));
@@ -664,6 +695,7 @@ class XML extends XMLObjectImpl {
         }
     }
 
+    @Override
     public String getClassName() {
         //    TODO:    This appears to confuse the interpreter if we use the "real" class property from ECMA.  Otherwise this code
         //    would be:
@@ -699,10 +731,12 @@ class XML extends XMLObjectImpl {
         return toXMLString();
     }
 
+    @Override
     public String toString() {
         return ecmaToString();
     }
 
+    @Override
     String toXMLString() {
         return this.node.ecmaToXMLString(getProcessor());
     }

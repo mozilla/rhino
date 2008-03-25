@@ -75,7 +75,7 @@ public class ScriptableInputStream extends ObjectInputStream {
         }
     }
 
-    protected Class resolveClass(ObjectStreamClass desc)
+    protected Class<?> resolveClass(ObjectStreamClass desc)
         throws IOException, ClassNotFoundException
     {
         String name = desc.getName();

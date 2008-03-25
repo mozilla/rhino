@@ -46,7 +46,7 @@ public class ScriptOrFnNode extends Node.Scope {
 
     public ScriptOrFnNode(int nodeType) {
         super(nodeType);
-        symbols = new ArrayList(4);
+        symbols = new ArrayList<Symbol>(4);
         setParent(null);
     }
 
@@ -170,7 +170,7 @@ public class ScriptOrFnNode extends Node.Scope {
      */
     void flattenSymbolTable(boolean flattenAllTables) {
         if (!flattenAllTables) {
-            ArrayList newSymbols = new ArrayList();
+            ArrayList<Symbol> newSymbols = new ArrayList<Symbol>();
             if (this.symbolTable != null) {
                 // Just replace "symbols" with the symbols in this object's
                 // symbol table. Can't just work from symbolTable map since
@@ -220,7 +220,7 @@ public class ScriptOrFnNode extends Node.Scope {
     private ObjArray functions;
     private ObjArray regexps;
     
-    private ArrayList symbols;
+    private ArrayList<Symbol> symbols;
     private int paramCount = 0;
     private String[] variableNames;
     private boolean[] isConsts;

@@ -83,6 +83,7 @@ class Namespace extends IdScriptableObject
         return ns.getPrefix();
     }
 
+    @Override
     public String toString() {
         return uri();
     }
@@ -95,22 +96,26 @@ class Namespace extends IdScriptableObject
         return uri().equals(n.uri());
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Namespace)) return false;
         return equals((Namespace)obj);
     }
 
+    @Override
     protected Object equivalentValues(Object value) {
         if (!(value instanceof Namespace)) return Scriptable.NOT_FOUND;
         boolean result = equals((Namespace)value);
         return result ? Boolean.TRUE : Boolean.FALSE;
     }
 
+    @Override
     public String getClassName() {
         return "Namespace";
     }
 
-    public Object getDefaultValue(Class hint) {
+    @Override
+    public Object getDefaultValue(Class<?> hint) {
         return uri();
     }
 
@@ -120,11 +125,13 @@ class Namespace extends IdScriptableObject
         Id_uri                  = 2,
         MAX_INSTANCE_ID         = 2;
 
+    @Override
     protected int getMaxInstanceId()
     {
         return super.getMaxInstanceId() + MAX_INSTANCE_ID;
     }
 
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         int id;
@@ -152,6 +159,7 @@ class Namespace extends IdScriptableObject
     }
 // #/string_id_map#
 
+    @Override
     protected String getInstanceIdName(int id)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -161,6 +169,7 @@ class Namespace extends IdScriptableObject
         return super.getInstanceIdName(id);
     }
 
+    @Override
     protected Object getInstanceIdValue(int id)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -181,6 +190,7 @@ class Namespace extends IdScriptableObject
         Id_toSource             = 3,
         MAX_PROTOTYPE_ID        = 3;
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;
@@ -201,6 +211,7 @@ class Namespace extends IdScriptableObject
     }
 // #/string_id_map#
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -214,6 +225,7 @@ class Namespace extends IdScriptableObject
         initPrototypeMethod(NAMESPACE_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f,
                              Context cx,
                              Scriptable scope,

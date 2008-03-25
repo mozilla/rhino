@@ -87,7 +87,7 @@ class XmlNode {
             document = processor.newDocument();
         }
         Node referenceDom = (reference != null) ? reference.dom : null;
-        Element e = document.createElementNS(qname.getUri(), qname.qualify(referenceDom));
+        Element e = document.createElementNS(qname.getNamespace().getUri(), qname.qualify(referenceDom));
         if (value != null) {
             e.appendChild(document.createTextNode(value));
         }
@@ -139,6 +139,7 @@ class XmlNode {
         return raw.ecmaToXmlString(this.dom);
     }
 
+    @Override
     public String toString() {
         return "XmlNode: type=" + dom.getNodeType() + " dom=" + dom.toString();
     }
@@ -329,8 +330,8 @@ class XmlNode {
     }
 
     private static class Namespaces {
-        private HashMap map = new HashMap();
-        private HashMap uriToPrefix = new HashMap();
+        private Map<String,String> map = new HashMap<String,String>();
+        private Map<String,String> uriToPrefix = new HashMap<String,String>();
 
         Namespaces() {
         }
@@ -348,26 +349,24 @@ class XmlNode {
 
         Namespace getNamespaceByUri(String uri) {
             if (uriToPrefix.get(uri) == null) return null;
-            return Namespace.create(uri, (String)uriToPrefix.get(uri));
+            return Namespace.create(uri, uriToPrefix.get(uri));
         }
 
         Namespace getNamespace(String prefix) {
             if (map.get(prefix) == null) return null;
-            return Namespace.create(prefix, (String)map.get(prefix));
+            return Namespace.create(prefix, map.get(prefix));
         }
 
         Namespace[] getNamespaces() {
-            Iterator i = map.keySet().iterator();
-            ArrayList rv = new ArrayList();
-            while(i.hasNext()) {
-                String prefix = (String)i.next();
-                String uri = (String)map.get(prefix);
+            ArrayList<Namespace> rv = new ArrayList<Namespace>();
+            for (String prefix: map.keySet()) {
+                String uri = map.get(prefix);
                 Namespace n = Namespace.create(prefix, uri);
                 if (!n.isEmpty()) {
-                    rv.add( n );
+                    rv.add(n);
                 }
             }
-            return (Namespace[])rv.toArray(new Namespace[0]);
+            return rv.toArray(new Namespace[rv.size()]);
         }
     }
 
@@ -401,7 +400,7 @@ class XmlNode {
     }
 
     final void renameNode(QName qname) {
-        this.dom = dom.getOwnerDocument().renameNode(dom, qname.getUri(), qname.qualify(dom));
+        this.dom = dom.getOwnerDocument().renameNode(dom, qname.getNamespace().getUri(), qname.qualify(dom));
     }
 
     void invalidateNamespacePrefix() {
@@ -526,15 +525,15 @@ class XmlNode {
     }
 
     XmlNode[] getMatchingChildren(Filter filter) {
-        ArrayList rv = new ArrayList();
+        ArrayList<XmlNode> rv = new ArrayList<XmlNode>();
         NodeList nodes = this.dom.getChildNodes();
         for (int i=0; i<nodes.getLength(); i++) {
             Node node = nodes.item(i);
             if (filter.accept(node)) {
-                rv.add( createImpl(node) );
+                rv.add(createImpl(node));
             }
         }
-        return (XmlNode[])rv.toArray(new XmlNode[0]);
+        return rv.toArray(new XmlNode[rv.size()]);
     }
 
     XmlNode[] getAttributes() {
@@ -602,6 +601,7 @@ class XmlNode {
         private Namespace() {
         }
 
+        @Override
         public String toString() {
             if (prefix == null) return "XmlNode.Namespace [" + uri + "]";
             return "XmlNode.Namespace [" + prefix + "{" + uri + "}]";
@@ -672,6 +672,7 @@ class XmlNode {
         private QName() {
         }
 
+        @Override
         public String toString() {
             return "XmlNode.QName [" + localName + "," + namespace + "]";
         }
@@ -744,16 +745,6 @@ class XmlNode {
             element.setAttributeNS(namespace.getUri(), qualify(namespace.getPrefix(), localName), value);
         }
 
-        /** @deprecated Use getNamespace() */
-        String getUri() {
-            return namespace.getUri();
-        }
-
-        /** @deprecated Use getNamespace() */
-        String getPrefix() {
-            return namespace.getPrefix();
-        }
-
         Namespace getNamespace() {
             return namespace;
         }
@@ -763,32 +754,32 @@ class XmlNode {
         }
     }
 
-    static class List {
-        private java.util.Vector v;
+    static class InternalList {
+        private List<XmlNode> list;
 
-        List() {
-            v = new java.util.Vector();
+        InternalList() {
+            list = new ArrayList<XmlNode>();
         }
 
         private void _add(XmlNode n) {
-            v.add(n);
+            list.add(n);
         }
 
         XmlNode item(int index) {
-            return (XmlNode)(v.get(index));
+            return list.get(index);
         }
 
         void remove(int index) {
-            v.remove(index);
+            list.remove(index);
         }
 
-        void add(List other) {
+        void add(InternalList other) {
             for (int i=0; i<other.length(); i++) {
                 _add(other.item(i));
             }
         }
 
-        void add(List from, int startInclusive, int endExclusive) {
+        void add(InternalList from, int startInclusive, int endExclusive) {
             for (int i=startInclusive; i<endExclusive; i++) {
                 _add(from.item(i));
             }
@@ -798,12 +789,12 @@ class XmlNode {
             _add(node);
         }
 
-        /** @deprecated */
+        /* TODO: was marked deprecated by original author */
         void add(XML xml) {
             _add(xml.getAnnotation());
         }
 
-        /** @deprecated */
+        /* TODO: was marked deprecated by original author */
         void addToList(Object toAdd) {
             if (toAdd instanceof Undefined) {
                 // Missing argument do nothing...
@@ -823,23 +814,26 @@ class XmlNode {
         }
 
         int length() {
-            return v.size();
+            return list.size();
         }
     }
 
     static abstract class Filter {
         static final Filter COMMENT = new Filter() {
+            @Override
             boolean accept(Node node) {
                 return node.getNodeType() == Node.COMMENT_NODE;
             }
         };
         static final Filter TEXT = new Filter() {
+            @Override
             boolean accept(Node node) {
                 return node.getNodeType() == Node.TEXT_NODE;
             }
         };
         static Filter PROCESSING_INSTRUCTION(final XMLName name) {
             return new Filter() {
+                @Override
                 boolean accept(Node node) {
                     if (node.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
                         ProcessingInstruction pi = (ProcessingInstruction)node;
@@ -850,11 +844,13 @@ class XmlNode {
             };
         }
         static Filter ELEMENT = new Filter() {
+            @Override
             boolean accept(Node node) {
                 return node.getNodeType() == Node.ELEMENT_NODE;
             }
         };
         static Filter TRUE = new Filter() {
+            @Override
             boolean accept(Node node) {
                 return true;
             }
