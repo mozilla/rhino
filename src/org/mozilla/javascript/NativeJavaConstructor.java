@@ -65,18 +65,21 @@ public class NativeJavaConstructor extends BaseFunction
         this.ctor = ctor;
     }
 
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
         return NativeJavaClass.constructSpecific(cx, scope, args, ctor);
     }
 
+    @Override
     public String getFunctionName()
     {
         String sig = JavaMembers.liveConnectSignature(ctor.argTypes);
         return "<init>".concat(sig);
     }
 
+    @Override
     public String toString()
     {
         return "[JavaConstructor " + ctor.getName() + "]";

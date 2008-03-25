@@ -73,6 +73,7 @@ public class JavaScriptException extends RhinoException
         this.value = value;
     }
 
+    @Override
     public String details()
     {
        try {

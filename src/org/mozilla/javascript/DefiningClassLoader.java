@@ -67,6 +67,7 @@ public class DefiningClassLoader extends ClassLoader
         resolveClass(cl);
     }
 
+    @Override
     public Class<?> loadClass(String name, boolean resolve)
         throws ClassNotFoundException
     {

@@ -81,30 +81,37 @@ public class NativeJavaPackage extends ScriptableObject
              Context.getCurrentContext().getApplicationClassLoader());
     }
 
+    @Override
     public String getClassName() {
         return "JavaPackage";
     }
 
+    @Override
     public boolean has(String id, Scriptable start) {
         return true;
     }
 
+    @Override
     public boolean has(int index, Scriptable start) {
         return false;
     }
 
+    @Override
     public void put(String id, Scriptable start, Object value) {
         // Can't add properties to Java packages.  Sorry.
     }
 
+    @Override
     public void put(int index, Scriptable start, Object value) {
         throw Context.reportRuntimeError0("msg.pkg.int");
     }
 
+    @Override
     public Object get(String id, Scriptable start) {
         return getPkgProperty(id, start, true);
     }
 
+    @Override
     public Object get(int index, Scriptable start) {
         return NOT_FOUND;
     }
@@ -174,14 +181,17 @@ public class NativeJavaPackage extends ScriptableObject
         return newValue;
     }
 
+    @Override
     public Object getDefaultValue(Class<?> ignored) {
         return toString();
     }
 
+    @Override
     public String toString() {
         return "[JavaPackage " + packageName + "]";
     }
 
+    @Override
     public boolean equals(Object obj) {
         if(obj instanceof NativeJavaPackage) {
             NativeJavaPackage njp = (NativeJavaPackage)obj;
@@ -190,6 +200,7 @@ public class NativeJavaPackage extends ScriptableObject
         return false;
     }
     
+    @Override
     public int hashCode() {
         return packageName.hashCode() ^ (classLoader == null ? 0 : classLoader.hashCode());
     }

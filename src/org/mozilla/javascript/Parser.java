@@ -1358,8 +1358,6 @@ public class Parser
      * statement.
      * @param inFor true if we are currently in the midst of the init
      * clause of a for.
-     * @param inStatement true if called in a statement (as opposed to an
-     * expression) context
      * @param declType A token value: either VAR, CONST, or LET depending on
      * context.
      * @return The parsed statement

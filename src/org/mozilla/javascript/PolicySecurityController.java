@@ -72,6 +72,7 @@ public class PolicySecurityController extends SecurityController
         callers =
             new WeakHashMap<CodeSource,Map<ClassLoader,SoftReference<SecureCaller>>>();
     
+    @Override
     public Class<?> getStaticSecurityDomainClassInternal() {
         return CodeSource.class;
     }
@@ -98,6 +99,7 @@ public class PolicySecurityController extends SecurityController
         }
     }
     
+    @Override
     public GeneratedClassLoader createClassLoader(final ClassLoader parent, 
             final Object securityDomain)
     {
@@ -111,6 +113,7 @@ public class PolicySecurityController extends SecurityController
             });
     }
 
+    @Override
     public Object getDynamicSecurityDomain(Object securityDomain)
     {
         // No separate notion of dynamic security domain - just return what was
@@ -118,6 +121,7 @@ public class PolicySecurityController extends SecurityController
         return securityDomain;
     }
 
+    @Override
     public Object callWithDomain(final Object securityDomain, final Context cx, 
             Callable callable, Scriptable scope, Scriptable thisObj, 
             Object[] args)
@@ -143,7 +147,7 @@ public class PolicySecurityController extends SecurityController
         synchronized (classLoaderMap) {
             SoftReference<SecureCaller> ref = classLoaderMap.get(classLoader);
             if (ref != null) {
-                caller = (SecureCaller)ref.get();
+                caller = ref.get();
             } else {
                 caller = null;
             }

@@ -56,6 +56,7 @@ public abstract class XMLLib
 	public static abstract class Factory {
 		public static Factory create(final String className) {
 			return new Factory() {
+			    @Override
 				public String getImplementationClassName() {
 					return className;
 				}

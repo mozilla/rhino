@@ -3011,6 +3011,7 @@ final class FieldOrMethodRef
         this.type = type;
     }
 
+    @Override
     public boolean equals(Object obj)
     {
         if (!(obj instanceof FieldOrMethodRef)) { return false; }
@@ -3020,6 +3021,7 @@ final class FieldOrMethodRef
             && type.equals(x.type);
     }
 
+    @Override
     public int hashCode()
     {
         if (hashCode == -1) {

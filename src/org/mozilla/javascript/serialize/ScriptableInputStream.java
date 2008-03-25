@@ -75,6 +75,7 @@ public class ScriptableInputStream extends ObjectInputStream {
         }
     }
 
+    @Override
     protected Class<?> resolveClass(ObjectStreamClass desc)
         throws IOException, ClassNotFoundException
     {
@@ -89,6 +90,7 @@ public class ScriptableInputStream extends ObjectInputStream {
         return super.resolveClass(desc);
     }
 
+    @Override
     protected Object resolveObject(Object obj)
         throws IOException
     {

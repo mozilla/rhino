@@ -100,6 +100,7 @@ public class NativeArray extends IdScriptableObject
         length = array.length;
     }
 
+    @Override
     public String getClassName()
     {
         return "Array";
@@ -109,11 +110,13 @@ public class NativeArray extends IdScriptableObject
         Id_length        =  1,
         MAX_INSTANCE_ID  =  1;
 
+    @Override
     protected int getMaxInstanceId()
     {
         return MAX_INSTANCE_ID;
     }
 
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         if (s.equals("length")) {
@@ -122,12 +125,14 @@ public class NativeArray extends IdScriptableObject
         return super.findInstanceIdInfo(s);
     }
 
+    @Override
     protected String getInstanceIdName(int id)
     {
         if (id == Id_length) { return "length"; }
         return super.getInstanceIdName(id);
     }
 
+    @Override
     protected Object getInstanceIdValue(int id)
     {
         if (id == Id_length) {
@@ -136,6 +141,7 @@ public class NativeArray extends IdScriptableObject
         return super.getInstanceIdValue(id);
     }
 
+    @Override
     protected void setInstanceIdValue(int id, Object value)
     {
         if (id == Id_length) {
@@ -144,6 +150,7 @@ public class NativeArray extends IdScriptableObject
         super.setInstanceIdValue(id, value);
     }
     
+    @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_join,
@@ -183,6 +190,7 @@ public class NativeArray extends IdScriptableObject
         super.fillConstructorProperties(ctor);
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -214,6 +222,7 @@ public class NativeArray extends IdScriptableObject
         initPrototypeMethod(ARRAY_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -316,6 +325,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
+    @Override
     public Object get(int index, Scriptable start)
     {
         if (!denseOnly && isGetterOrSetter(null, index, false))
@@ -325,6 +335,7 @@ public class NativeArray extends IdScriptableObject
         return super.get(index, start);
     }
 
+    @Override
     public boolean has(int index, Scriptable start)
     {
         if (!denseOnly && isGetterOrSetter(null, index, false))
@@ -352,6 +363,7 @@ public class NativeArray extends IdScriptableObject
         return -1;
     }
 
+    @Override
     public void put(String id, Scriptable start, Object value)
     {
         super.put(id, start, value);
@@ -382,6 +394,7 @@ public class NativeArray extends IdScriptableObject
         return true;
     }
 
+    @Override
     public void put(int index, Scriptable start, Object value)
     {
         if (start == this && !isSealed() && dense != null && 0 <= index &&
@@ -412,6 +425,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
+    @Override
     public void delete(int index)
     {
         if (dense != null && 0 <= index && index < dense.length &&
@@ -423,6 +437,7 @@ public class NativeArray extends IdScriptableObject
         }
     }
 
+    @Override
     public Object[] getIds()
     {
         Object[] superIds = super.getIds();
@@ -454,6 +469,7 @@ public class NativeArray extends IdScriptableObject
         return ids;
     }
 
+    @Override
     public Object getDefaultValue(Class<?> hint)
     {
         if (hint == ScriptRuntime.NumberClass) {
@@ -1599,6 +1615,7 @@ public class NativeArray extends IdScriptableObject
 
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;

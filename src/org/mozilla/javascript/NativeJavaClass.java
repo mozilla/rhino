@@ -78,6 +78,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         initMembers();
     }
 
+    @Override
     protected void initMembers() {
         Class<?> cl = (Class<?>)javaObject;
         members = JavaMembers.lookupClass(parent, cl, cl, false);
@@ -85,14 +86,17 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             = members.getFieldAndMethodsObjects(this, cl, true);
     }
 
+    @Override
     public String getClassName() {
         return "JavaClass";
     }
 
+    @Override
     public boolean has(String name, Scriptable start) {
         return members.has(name, true) || javaClassPropertyName.equals(name);
     }
 
+    @Override
     public Object get(String name, Scriptable start) {
         // When used as a constructor, ScriptRuntime.newObject() asks
         // for our prototype to create an object of the correct type.
@@ -131,10 +135,12 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         throw members.reportMemberNotFound(name);
     }
 
+    @Override
     public void put(String name, Scriptable start, Object value) {
         members.put(this, name, javaObject, value, true);
     }
 
+    @Override
     public Object[] getIds() {
         return members.getIds(true);
     }
@@ -143,6 +149,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         return (Class<?>) super.unwrap();
     }
 
+    @Override
     public Object getDefaultValue(Class<?> hint) {
         if (hint == null || hint == ScriptRuntime.StringClass)
             return this.toString();
@@ -277,6 +284,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         return cx.getWrapFactory().wrapNewObject(cx, topLevel, instance);
     }
 
+    @Override
     public String toString() {
         return "[JavaClass " + getClassObject().getName() + "]";
     }
@@ -289,6 +297,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
      * name conflicts between java.lang.Class's methods and the
      * static methods exposed by a JavaNativeClass.
      */
+    @Override
     public boolean hasInstance(Scriptable value) {
 
         if (value instanceof Wrapper &&

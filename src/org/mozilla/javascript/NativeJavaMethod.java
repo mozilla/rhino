@@ -74,6 +74,7 @@ public class NativeJavaMethod extends BaseFunction
         this(new MemberBox(method), name);
     }
 
+    @Override
     public String getFunctionName()
     {
         return functionName;
@@ -117,6 +118,7 @@ public class NativeJavaMethod extends BaseFunction
         return sig.toString();
     }
 
+    @Override
     String decompile(int indent, int flags)
     {
         StringBuffer sb = new StringBuffer();
@@ -132,6 +134,7 @@ public class NativeJavaMethod extends BaseFunction
         return sb.toString();
     }
 
+    @Override
     public String toString()
     {
         StringBuffer sb = new StringBuffer();
@@ -146,6 +149,7 @@ public class NativeJavaMethod extends BaseFunction
         return sb.toString();
     }
 
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {

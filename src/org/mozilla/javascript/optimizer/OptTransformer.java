@@ -56,11 +56,13 @@ class OptTransformer extends NodeTransformer {
         this.directCallTargets = directCallTargets;
     }
 
+    @Override
     protected void visitNew(Node node, ScriptOrFnNode tree) {
         detectDirectCall(node, tree);
         super.visitNew(node, tree);
     }
 
+    @Override
     protected void visitCall(Node node, ScriptOrFnNode tree) {
         detectDirectCall(node, tree);
         super.visitCall(node, tree);
@@ -106,7 +108,7 @@ class OptTransformer extends NodeTransformer {
                 }
                 if (targetName != null) {
                     OptFunctionNode ofn;
-                    ofn = (OptFunctionNode)possibleDirectCalls.get(targetName);
+                    ofn = possibleDirectCalls.get(targetName);
                     if (ofn != null
                         && argCount == ofn.fnode.getParamCount()
                         && !ofn.fnode.requiresActivation())

@@ -403,6 +403,7 @@ public class Kit
             this.key2 = key2;
         }
 
+        @Override
         public boolean equals(Object anotherObj)
         {
             if (!(anotherObj instanceof ComplexKey))
@@ -411,6 +412,7 @@ public class Kit
             return key1.equals(another.key1) && key2.equals(another.key2);
         }
 
+        @Override
         public int hashCode()
         {
             if (hash == 0) {

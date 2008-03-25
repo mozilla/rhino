@@ -1805,8 +1805,8 @@ class BodyCodegen
             if (liveLocals != null) {
                 ArrayList<Node> nodes = ((FunctionNode)scriptOrFn).getResumptionPoints();
                 for (int i = 0; i < nodes.size(); i++) {
-                    Node node = (Node) nodes.get(i);
-                    int[] live = (int [])liveLocals.get(node);
+                    Node node = nodes.get(i);
+                    int[] live = liveLocals.get(node);
                     if (live != null) {
                         cfw.markTableSwitchCase(generatorSwitch,
                             getNextGeneratorState(node));
@@ -1827,8 +1827,7 @@ class BodyCodegen
             if (finallys != null) {
                 for (Node n: finallys.keySet()) {
                     if (n.getType() == Token.FINALLY) {
-                        FinallyReturnPoint ret =
-                                (FinallyReturnPoint)finallys.get(n);
+                        FinallyReturnPoint ret = finallys.get(n);
                         // the finally will jump here
                         cfw.markLabel(ret.tableLabel, (short)1);
 
@@ -1841,7 +1840,7 @@ class BodyCodegen
                             // generate gotos back to the JSR location
                             cfw.markTableSwitchCase(startSwitch, c);
                             cfw.add(ByteCode.GOTO,
-                                    ((Integer)ret.jsrPoints.get(i)).intValue());
+                                    ret.jsrPoints.get(i).intValue());
                             c++;
                         }
                     }
@@ -2160,8 +2159,7 @@ class BodyCodegen
                         cfw.addALoad(finallyRegister);
                         cfw.add(ByteCode.CHECKCAST, "java/lang/Integer");
                         generateIntegerUnwrap();
-                        FinallyReturnPoint ret =
-                                (FinallyReturnPoint)finallys.get(node);
+                        FinallyReturnPoint ret = finallys.get(node);
                         ret.tableLabel = cfw.acquireLabel();
                         cfw.add(ByteCode.GOTO, ret.tableLabel);
                     } else {
@@ -3095,8 +3093,7 @@ class BodyCodegen
     }
 
     private void addGotoWithReturn(Node target) {
-        FinallyReturnPoint ret =
-                (FinallyReturnPoint)finallys.get(target);
+        FinallyReturnPoint ret = finallys.get(target);
         cfw.addLoadConstant(ret.jsrPoints.size());
         addGoto(target, ByteCode.GOTO);
         int retLabel = cfw.acquireLabel();

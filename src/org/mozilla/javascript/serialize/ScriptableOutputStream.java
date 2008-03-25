@@ -195,9 +195,11 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         private String name;
     }
 
+    @Override
     protected Object replaceObject(Object obj) throws IOException
     {
-        String name = (String) table.get(obj);
+        if (false) throw new IOException(); // suppress warning
+        String name = table.get(obj);
         if (name == null)
             return obj;
         return new PendingLookup(name);

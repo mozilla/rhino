@@ -333,7 +333,7 @@ class JavaMembers
     {
         Map<MethodSignature,Method> map = new HashMap<MethodSignature,Method>();
         discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
-        return (Method[])map.values().toArray(new Method[map.size()]);
+        return map.values().toArray(new Method[map.size()]);
     }
     
     private static void discoverAccessibleMethods(Class<?> clazz, 
@@ -423,6 +423,7 @@ class JavaMembers
             this(method.getName(), method.getParameterTypes());
         }
         
+        @Override
         public boolean equals(Object o)
         {
             if(o instanceof MethodSignature)
@@ -433,6 +434,7 @@ class JavaMembers
             return false;
         }
         
+        @Override
         public int hashCode()
         {
             return name.hashCode() ^ args.length;
@@ -896,6 +898,7 @@ class FieldAndMethods extends NativeJavaMethod
         setPrototype(ScriptableObject.getFunctionPrototype(scope));
     }
 
+    @Override
     public Object getDefaultValue(Class<?> hint)
     {
         if (hint == ScriptRuntime.FunctionClass)

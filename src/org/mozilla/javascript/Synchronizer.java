@@ -71,6 +71,7 @@ public class Synchronizer extends Delegator {
     /**
      * @see org.mozilla.javascript.Function#call
      */
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {

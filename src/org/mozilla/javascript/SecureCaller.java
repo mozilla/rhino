@@ -98,7 +98,7 @@ public abstract class SecureCaller
         {
             SoftReference<SecureCaller> ref = classLoaderMap.get(classLoader);
             if (ref != null) {
-                caller = (SecureCaller)ref.get();
+                caller = ref.get();
             } else {
                 caller = null;
             }

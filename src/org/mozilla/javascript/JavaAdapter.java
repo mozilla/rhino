@@ -71,6 +71,7 @@ public final class JavaAdapter implements IdFunctionCall
             this.names = names;
         }
 
+        @Override
         public boolean equals(Object obj)
         {
             if (!(obj instanceof JavaAdapterSignature))
@@ -97,6 +98,7 @@ public final class JavaAdapter implements IdFunctionCall
             return true;
         }
 
+        @Override
         public int hashCode()
         {
             return superClass.hashCode()

@@ -199,8 +199,7 @@ class Block
                         || (blockEndNodeType == Token.IFEQ)
                                 || (blockEndNodeType == Token.GOTO) ) {
                 Node target = ((Node.Jump)blockEndNode).target;
-                FatBlock branchTargetBlock
-                                    = (FatBlock)(theTargetBlocks.get(target));
+                FatBlock branchTargetBlock = theTargetBlocks.get(target);
                 target.putProp(Node.TARGETBLOCK_PROP,
                                            branchTargetBlock.realBlock);
                 fb.addSuccessor(branchTargetBlock);

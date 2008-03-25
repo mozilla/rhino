@@ -250,6 +250,7 @@ public class FunctionObject extends BaseFunction
      * (number of parameters of the method, or 1 if the method is a "varargs"
      * form).
      */
+    @Override
     public int getArity() {
         return parmsLength < 0 ? 1 : parmsLength;
     }
@@ -257,10 +258,12 @@ public class FunctionObject extends BaseFunction
     /**
      * Return the same value as {@link #getArity()}.
      */
+    @Override
     public int getLength() {
         return getArity();
     }
 
+    @Override
     public String getFunctionName()
     {
         return (functionName == null) ? "" : functionName;
@@ -399,6 +402,7 @@ public class FunctionObject extends BaseFunction
      * @see org.mozilla.javascript.Function#call(
      *          Context, Scriptable, Scriptable, Object[])
      */
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
@@ -500,6 +504,7 @@ public class FunctionObject extends BaseFunction
      * Return null to indicate that the call method should be used to create
      * new objects.
      */
+    @Override
     public Scriptable createObject(Context cx, Scriptable scope) {
         if (member.isCtor() || parmsLength == VARARGS_CTOR) {
             return null;

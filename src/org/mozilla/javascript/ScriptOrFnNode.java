@@ -176,7 +176,7 @@ public class ScriptOrFnNode extends Node.Scope {
                 // symbol table. Can't just work from symbolTable map since
                 // we need to retain duplicate parameters.
                 for (int i=0; i < symbols.size(); i++) {
-                    Symbol symbol = (Symbol) symbols.get(i);
+                    Symbol symbol = symbols.get(i);
                     if (symbol.containingTable == this) {
                         newSymbols.add(symbol);
                     }
@@ -187,7 +187,7 @@ public class ScriptOrFnNode extends Node.Scope {
         variableNames = new String[symbols.size()];
         isConsts = new boolean[symbols.size()];
         for (int i=0; i < symbols.size(); i++) {
-            Symbol symbol = (Symbol) symbols.get(i);
+            Symbol symbol = symbols.get(i);
             variableNames[i] = symbol.name;
             isConsts[i] = symbol.declType == Token.CONST;
             symbol.index = i;
