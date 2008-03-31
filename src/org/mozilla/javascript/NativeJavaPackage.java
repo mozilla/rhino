@@ -40,6 +40,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * This class reflects Java packages into the JavaScript environment.  We
  * lazily reflect classes and subpackages, and use a caching/sharing
@@ -57,8 +60,8 @@ public class NativeJavaPackage extends ScriptableObject
 {
     static final long serialVersionUID = 7445054382212031523L;
 
-    NativeJavaPackage(boolean internalUsage,
-                      String packageName, ClassLoader classLoader)
+    NativeJavaPackage(boolean internalUsage, String packageName,
+                      ClassLoader classLoader)
     {
         this.packageName = packageName;
         this.classLoader = classLoader;
@@ -149,6 +152,10 @@ public class NativeJavaPackage extends ScriptableObject
         Object cached = super.get(name, start);
         if (cached != NOT_FOUND)
             return cached;
+        if (negativeCache != null && negativeCache.contains(name)) {
+            // Performance optimization: see bug 421071
+            return null;
+        }
 
         String className = (packageName.length() == 0)
                                ? name : packageName + '.' + name;
@@ -167,11 +174,18 @@ public class NativeJavaPackage extends ScriptableObject
                 newValue.setPrototype(getPrototype());
             }
         }
-        if (newValue == null && createPkg) {
-            NativeJavaPackage pkg;
-            pkg = new NativeJavaPackage(true, className, classLoader);
-            ScriptRuntime.setObjectProtoAndParent(pkg, getParentScope());
-            newValue = pkg;
+        if (newValue == null) {
+            if (createPkg) {
+                NativeJavaPackage pkg;
+                pkg = new NativeJavaPackage(true, className, classLoader);
+                ScriptRuntime.setObjectProtoAndParent(pkg, getParentScope());
+                newValue = pkg;
+            } else {
+                // add to negative cache
+                if (negativeCache == null)
+                    negativeCache = new HashSet<String>();
+                negativeCache.add(name);
+            }
         }
         if (newValue != null) {
             // Make it available for fast lookup and sharing of
@@ -195,16 +209,19 @@ public class NativeJavaPackage extends ScriptableObject
     public boolean equals(Object obj) {
         if(obj instanceof NativeJavaPackage) {
             NativeJavaPackage njp = (NativeJavaPackage)obj;
-            return packageName.equals(njp.packageName) && classLoader == njp.classLoader;
+            return packageName.equals(njp.packageName) &&
+                   classLoader == njp.classLoader;
         }
         return false;
     }
     
     @Override
     public int hashCode() {
-        return packageName.hashCode() ^ (classLoader == null ? 0 : classLoader.hashCode());
+        return packageName.hashCode() ^ 
+               (classLoader == null ? 0 : classLoader.hashCode());
     }
 
     private String packageName;
     private ClassLoader classLoader;
+    private Set<String> negativeCache = null;
 }
