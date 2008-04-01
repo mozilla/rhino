@@ -676,7 +676,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
             else if (type.isInterface() && value instanceof Callable) {
                 // Try to use function as implementation of Java interface.
                 //
-                // XXX: Curently only instances of ScriptableObject are
+                // XXX: Currently only instances of ScriptableObject are
                 // supported since the resulting interface proxies should
                 // be reused next time conversion is made and generic
                 // Callable has no storage for it. Weak references can
