@@ -206,6 +206,22 @@
              windowtitle="${Name}" />
   </target>
 
+  <target name="dev-javadoc" depends="init">
+    <mkdir dir="${dist.dir}/javadoc"/>
+    <javadoc sourcepath="src"
+             destdir="${dist.dir}/javadoc"
+             version="true"
+             package="true"
+             author="true"
+             windowtitle="${Name}">
+       <fileset
+         dir="."
+         includes="**/*.java"
+         excludes="**/deprecatedsrc/**/*.java"
+       />
+    </javadoc>
+  </target>
+
   <target name="dist" depends="deepclean,jar,retrojar,copy-all,javadoc">
     <delete file="${dist.file}" />
     <zip destfile="${dist.file}">
