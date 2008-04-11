@@ -875,8 +875,9 @@ class TokenStream
             if (startToken != Token.DIV) Kit.codeBug();
         }
 
+        boolean inCharSet = false;
         int c;
-        while ((c = getChar()) != '/') {
+        while ((c = getChar()) != '/' || inCharSet) {
             if (c == '\n' || c == EOF_CHAR) {
                 ungetChar(c);
                 throw parser.reportError("msg.unterminated.re.lit");
@@ -884,8 +885,11 @@ class TokenStream
             if (c == '\\') {
                 addToString(c);
                 c = getChar();
+            } else if (c == '[') {
+                inCharSet = true;
+            } else if (c == ']') {
+                inCharSet = false;
             }
-
             addToString(c);
         }
         int reEnd = stringBufferTop;
