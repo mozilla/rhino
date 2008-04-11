@@ -69,7 +69,7 @@ public class Node
         ISNUMBER_PROP - this node generates code on Number children and
                         delivers a Number result (as opposed to Objects)
         DIRECTCALL_PROP - this call node should emit code to test the function
-                          object against the known class and call diret if it
+                          object against the known class and call direct if it
                           matches.
     */
 
@@ -80,7 +80,7 @@ public class Node
         SPECIALCALL_PROP   = 10,
         SKIP_INDEXES_PROP  = 11, // array of skipped indexes of array literal
         OBJECT_IDS_PROP    = 12, // array of properties for object literal
-        INCRDECR_PROP      = 13, // pre or post type of increment/decerement
+        INCRDECR_PROP      = 13, // pre or post type of increment/decrement
         CATCH_SCOPE_PROP   = 14, // index of catch scope block in catch
         LABEL_ID_PROP      = 15, // label id: code generation uses it
         MEMBER_TYPE_PROP   = 16, // type of element access operation
