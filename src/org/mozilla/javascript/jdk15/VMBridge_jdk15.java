@@ -58,6 +58,7 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
         }
     }
 
+    @Override
     public boolean isVarArgs(Member member) {
         if (member instanceof Method)
             return ((Method) member).isVarArgs();
@@ -72,6 +73,7 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
      * wrapping as a JavaScript Iterator. Otherwise, return null.
      * This method is in VMBridge since Iterable is a JDK 1.5 addition.
      */
+    @Override
     public Iterator<?> getJavaIterator(Context cx, Scriptable scope, Object obj) {
         if (obj instanceof Wrapper) {
             Object unwrapped = ((Wrapper) obj).unwrap();

@@ -51,6 +51,7 @@ public class VMBridge_jdk13 extends VMBridge
 {
     private ThreadLocal<Object[]> contextLocal = new ThreadLocal<Object[]>();
 
+    @Override
     protected Object getThreadContextHelper()
     {
         // To make subsequent batch calls to getContext/setContext faster
@@ -70,23 +71,27 @@ public class VMBridge_jdk13 extends VMBridge
         return storage;
     }
 
+    @Override
     protected Context getContext(Object contextHelper)
     {
         Object[] storage = (Object[])contextHelper;
         return (Context)storage[0];
     }
 
+    @Override
     protected void setContext(Object contextHelper, Context cx)
     {
         Object[] storage = (Object[])contextHelper;
         storage[0] = cx;
     }
 
+    @Override
     protected ClassLoader getCurrentThreadClassLoader()
     {
         return Thread.currentThread().getContextClassLoader();
     }
 
+    @Override
     protected boolean tryToMakeAccessible(Object accessibleObject)
     {
         if (!(accessibleObject instanceof AccessibleObject)) {
@@ -103,6 +108,7 @@ public class VMBridge_jdk13 extends VMBridge
         return accessible.isAccessible();
     }
 
+    @Override
     protected Object getInterfaceProxyHelper(ContextFactory cf,
                                              Class<?>[] interfaces)
     {
@@ -120,6 +126,7 @@ public class VMBridge_jdk13 extends VMBridge
         return c;
     }
 
+    @Override
     protected Object newInterfaceProxy(Object proxyHelper,
                                        final ContextFactory cf,
                                        final InterfaceAdapter adapter,
@@ -151,6 +158,7 @@ public class VMBridge_jdk13 extends VMBridge
         return proxy;
     }
     
+    @Override
     protected boolean isVarArgs(Member member) {
       return false;
     }
