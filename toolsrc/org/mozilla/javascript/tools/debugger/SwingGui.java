@@ -59,9 +59,9 @@ import org.mozilla.javascript.SecurityUtilities;
 
 import org.mozilla.javascript.tools.shell.ConsoleTextArea;
 
-import org.mozilla.javascript.tools.debugger.downloaded.JTreeTable;
-import org.mozilla.javascript.tools.debugger.downloaded.TreeTableModel;
-import org.mozilla.javascript.tools.debugger.downloaded.TreeTableModelAdapter;
+import org.mozilla.javascript.tools.debugger.treetable.JTreeTable;
+import org.mozilla.javascript.tools.debugger.treetable.TreeTableModel;
+import org.mozilla.javascript.tools.debugger.treetable.TreeTableModelAdapter;
 
 /**
  * GUI for the Rhino debugger.

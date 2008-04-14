@@ -42,15 +42,12 @@ Requires Ant version 1.2
 
   <target name="properties">
     <property file="build.properties"/>
-    <property name="debugger"
-              value="org/mozilla/javascript/tools/debugger"/>
   </target>
 
   <target name="compile" depends="properties">
     <javac srcdir="toolsrc"
            destdir="${classes}"
            includes="org/**/*.java"
-           excludes="org/**/debugger/*.java"
            deprecation="on"
            debug="${debug}"
            target="${target-jvm}"
@@ -66,31 +63,8 @@ Requires Ant version 1.2
     <mkdir dir="${dist.dir}/toolsrc"/>
     <copy todir="${dist.dir}/toolsrc">
       <fileset dir="toolsrc"
-               includes="**/*.java,**/*.properties,**/*.xml"
-               excludes="${debugger}/downloaded/**" />
+               includes="**/*.java,**/*.properties,**/*.xml" />
     </copy>
-  </target>
-
-  <target name="download-debugger" depends="properties">
-    <ant dir="toolsrc/${debugger}" target="download"/>
-  </target>
-
-  <target name="compile-debugger" depends="download-debugger">
-    <mkdir dir="classes"/>
-    <javac srcdir="toolsrc"
-           destdir="classes"
-           includes="org/**/debugger/*.java,org/**/debugger/downloaded/*.java"
-           classpath="js.jar"
-           deprecation="on"
-           target="${target-jvm}"
-           source="${source-level}"/>
-    <copy todir="classes">
-      <fileset dir="toolsrc" includes="org/**/*.properties" />
-    </copy>
-    <jar jarfile="js.jar"
-         basedir="classes"
-         update="yes"
-     />
   </target>
 
   <target name="clean" depends="properties">

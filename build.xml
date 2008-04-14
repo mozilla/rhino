@@ -90,6 +90,7 @@
     <copy todir="${dist.dir}" file="build.xml"/>
     <copy todir="${dist.dir}" file="build.properties"/>
     <copy todir="${dist.dir}" file="apiClasses.properties"/>
+    <copy todir="${dist.dir}" file="LICENSE.txt"/>
   </target>
 
   <target name="xmlimplsrc-compile" if="xmlimplsrc-present?">
