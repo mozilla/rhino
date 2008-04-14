@@ -600,10 +600,10 @@ public class Global extends ImporterTopLevel
      * JavaScript object, it is an option object. Otherwise it is converted to
      * string denoting the last argument and options objects assumed to be
      * empty.
-     * Te following properties of the option object are processed:
+     * The following properties of the option object are processed:
      * <ul>
      * <li><tt>args</tt> - provides an array of additional command arguments
-     * <li><tt>env</tt> - explicit environment object. All its enumeratable
+     * <li><tt>env</tt> - explicit environment object. All its enumerable
      *   properties define the corresponding environment variable names.
      * <li><tt>input</tt> - the process input. If it is not
      *   java.io.InputStream, it is converted to string and sent to the process
