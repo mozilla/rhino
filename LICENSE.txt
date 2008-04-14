@@ -817,7 +817,7 @@ The Mozilla Public License (http://www.mozilla.org/MPL/MPL-1.1.txt):
 
 Additionally, some files (currently the contents of
 toolsrc/org/mozilla/javascript/tools/debugger/treetable/) are available
-under the following license:
+only under the following license:
 
 ============================================================================
  * Copyright 1997, 1998 Sun Microsystems, Inc.  All Rights Reserved.
