@@ -1,4 +1,4 @@
-The majority of Rhino is available under both of the the following licenses:
+The majority of Rhino is MPL 1.1 / GPL 2.0 dual licensed:
 
 The Mozilla Public License (http://www.mozilla.org/MPL/MPL-1.1.txt):
 ============================================================================
@@ -472,8 +472,6 @@ The Mozilla Public License (http://www.mozilla.org/MPL/MPL-1.1.txt):
        use the text of this Exhibit A rather than the text found in the
        Original Code Source Code for Your Modifications.]
 ============================================================================
-
-And the GPL 2.0 (http://www.gnu.org/licenses/gpl-2.0.txt):
 
 ============================================================================
 	  GNU GENERAL PUBLIC LICENSE
