@@ -242,7 +242,7 @@ public class Context
      * Control if strict variable mode is enabled.
      * When the feature is on Rhino reports runtime errors if assignment
      * to a global variable that does not exist is executed. When the feature
-     * is off such assignments creates new variable in the global scope  as
+     * is off such assignments create a new variable in the global scope as
      * required by ECMA 262.
      * <p>
      * By default {@link #hasFeature(int)} returns false.
@@ -266,7 +266,7 @@ public class Context
      * When the feature is on Rhino will add a "fileName" and "lineNumber"
      * properties to Error objects automatically. When the feature is off, you
      * have to explicitly pass them as the second and third argument to the
-     * Error constructor. Note that neither behaviour is fully ECMA 262 
+     * Error constructor. Note that neither behavior is fully ECMA 262 
      * compliant (as 262 doesn't specify a three-arg constructor), but keeping 
      * the feature off results in Error objects that don't have
      * additional non-ECMA properties when constructed using the ECMA-defined
