@@ -158,17 +158,20 @@ public class Dim {
     /**
      * Table mapping URLs to information about the script source.
      */
-    private final Hashtable urlToSourceInfo = new Hashtable();
+    private final Map<String,SourceInfo> urlToSourceInfo = 
+        Collections.synchronizedMap(new HashMap<String,SourceInfo>());
 
     /**
      * Table mapping function names to information about the function.
      */
-    private final Hashtable functionNames = new Hashtable();
+    private final Map<String,FunctionSource> functionNames =
+        Collections.synchronizedMap(new HashMap<String,FunctionSource>());
 
     /**
      * Table mapping functions to information about the function.
      */
-    private final Hashtable functionToSource = new Hashtable();
+    private final Map<DebuggableScript,FunctionSource> functionToSource =
+        Collections.synchronizedMap(new HashMap<DebuggableScript,FunctionSource>());
 
     /**
      * ContextFactory.Listener instance attached to {@link #contextFactory}.
@@ -380,23 +383,16 @@ public class Dim {
      * Returns the FunctionSource object for the given function or script.
      */
     private FunctionSource functionSource(DebuggableScript fnOrScript) {
-        return (FunctionSource)functionToSource.get(fnOrScript);
+        return functionToSource.get(fnOrScript);
     }
 
     /**
      * Returns an array of all function names.
      */
     public String[] functionNames() {
-        String[] a;
         synchronized (urlToSourceInfo) {
-            Enumeration e = functionNames.keys();
-            a = new String[functionNames.size()];
-            int i = 0;
-            while (e.hasMoreElements()) {
-                a[i++] = (String)e.nextElement();
-            }
+            return functionNames.keySet().toArray(new String[functionNames.size()]);
         }
-        return a;
     }
 
     /**
@@ -495,9 +491,7 @@ public class Dim {
      * Clears all breakpoints.
      */
     public void clearAllBreakpoints() {
-        Enumeration e = urlToSourceInfo.elements();
-        while (e.hasMoreElements()) {
-            SourceInfo si = (SourceInfo)e.nextElement();
+        for (SourceInfo si: urlToSourceInfo.values()) {
             si.removeAllBreakpoints();
         }
     }
