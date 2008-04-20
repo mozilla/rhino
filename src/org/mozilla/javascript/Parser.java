@@ -97,7 +97,6 @@ public class Parser
     private Map<String,Node> labelSet; // map of label names into nodes
     private ObjArray loopSet;
     private ObjArray loopAndSwitchSet;
-    private boolean hasReturnValue;
     private int endFlags;
 // end of per function variables
     
@@ -549,8 +548,8 @@ public class Parser
         loopSet = null;
         ObjArray savedLoopAndSwitchSet = loopAndSwitchSet;
         loopAndSwitchSet = null;
-        boolean savedHasReturnValue = hasReturnValue;
         int savedFunctionEndFlags = endFlags;
+        endFlags = 0;
 
         Node destructuring = null;
         Node body;
@@ -621,7 +620,6 @@ public class Parser
             }
         }
         finally {
-            hasReturnValue = savedHasReturnValue;
             endFlags = savedFunctionEndFlags;
             loopAndSwitchSet = savedLoopAndSwitchSet;
             loopSet = savedLoopSet;
@@ -1322,7 +1320,6 @@ public class Parser
                 endFlags |= Node.END_RETURNS;
             } else {
                 endFlags |= Node.END_RETURNS_VALUE;
-                hasReturnValue = true;
             }
             ret = nf.createReturn(e, lineno);
             
