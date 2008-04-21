@@ -50,6 +50,7 @@ public class ShellContextFactory extends ContextFactory
     private boolean generatingDebug;
     private ErrorReporter errorReporter;
 
+    @Override
     protected boolean hasFeature(Context cx, int featureIndex)
     {
         switch (featureIndex) {
@@ -64,6 +65,7 @@ public class ShellContextFactory extends ContextFactory
         return super.hasFeature(cx, featureIndex);
     }
 
+    @Override
     protected void onContextCreated(Context cx)
     {
         cx.setLanguageVersion(languageVersion);

@@ -68,6 +68,7 @@ class ConsoleWriter extends java.io.OutputStream {
         buffer = new StringBuffer();
     }
 
+    @Override
     public synchronized void write(int ch) {
         buffer.append((char)ch);
         if(ch == '\n') {
@@ -84,12 +85,14 @@ class ConsoleWriter extends java.io.OutputStream {
         }
     }
 
+    @Override
     public synchronized void flush() {
         if (buffer.length() > 0) {
             flushBuffer();
         }
     }
 
+    @Override
     public void close () {
         flush();
     }
@@ -116,6 +119,7 @@ public class ConsoleTextArea
     private int historyIndex = -1;
     private int outputMark = 0;
 
+    @Override
     public void select(int start, int end) {
         requestFocus();
         super.select(start, end);
@@ -201,7 +205,7 @@ public class ConsoleTextArea
                     historyIndex = history.size() -1;
                 }
                 if(historyIndex >= 0) {
-                    String str = (String)history.get(historyIndex);
+                    String str = history.get(historyIndex);
                     int len = getDocument().getLength();
                     replaceRange(str, outputMark, len);
                     int caretPos = outputMark + str.length();
@@ -219,8 +223,8 @@ public class ConsoleTextArea
                 historyIndex++;
                 if(historyIndex < 0) {historyIndex = 0;}
                 int len = getDocument().getLength();
-                if(historyIndex < history.size()) {
-                    String str = (String)history.get(historyIndex);
+                if (historyIndex < history.size()) {
+                    String str = history.get(historyIndex);
                     replaceRange(str, outputMark, len);
                     caretPos = outputMark + str.length();
                 } else {

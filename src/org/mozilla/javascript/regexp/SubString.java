@@ -60,6 +60,7 @@ class SubString {
             charArray[j] = source[start + j];
     }
 
+    @Override
     public String toString() {
         return charArray == null
                ? ""

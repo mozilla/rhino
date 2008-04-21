@@ -43,7 +43,7 @@ import java.util.*;
 import org.mozilla.javascript.tools.shell.*;
 
 /**
- * @version $Id: ShellTest.java,v 1.6 2008/03/18 15:10:19 nboyd%atg.com Exp $
+ * @version $Id: ShellTest.java,v 1.7 2008/04/21 19:54:02 nboyd%atg.com Exp $
  */
 class ShellTest {
     static final FileFilter DIRECTORY_FILTER = new FileFilter() {
@@ -110,31 +110,37 @@ class ShellTest {
 
         static Status compose(final Status[] array) {
             return new Status() {
+                @Override
                 void running(File file) {
 					for (int i=0; i<array.length; i++) {
 						array[i].running(file);
 					}
                 }
+                @Override
                 void threw(Throwable t) {
 					for (int i=0; i<array.length; i++) {
 						array[i].threw(t);
 					}
 				}
+                @Override
                 void failed(String s) {
 					for (int i=0; i<array.length; i++) {
 						array[i].failed(s);
 					}
                 }
+                @Override
                 void exitCodesWere(int expected, int actual) {
 					for (int i=0; i<array.length; i++) {
 						array[i].exitCodesWere(expected, actual);
 					}
                 }
+                @Override
                 void outputWas(String s) {
 					for (int i=0; i<array.length; i++) {
 						array[i].outputWas(s);
 					}
                 }
+                @Override
                 void timedOut() {
 					for (int i=0; i<array.length; i++) {
 						array[i].timedOut();
@@ -169,6 +175,7 @@ class ShellTest {
                 this.lineOffset = lineOffset;
             }
 
+            @Override
             public String toString() {
                 String locationLine = sourceName + ":" + line + ": " + message;
                 String sourceLine = this.lineSource;
@@ -281,13 +288,13 @@ class ShellTest {
                                 runFileIfExists(cx, global, jsFile);
                                 //    Emulate SpiderMonkey enum value from mozilla/js/src/js.c
                                 for (int i=0; i<testState.errors.errors.size(); i++) {
-                                    Status.JsError thisOne = (Status.JsError)testState.errors.errors.get(i);
+                                    Status.JsError thisOne = testState.errors.errors.get(i);
                                     if (thisOne.getMessage().indexOf("java.lang.OutOfMemoryError") != -1) {
                                         testState.exitCode = 5;
                                         testState.errors.errors.remove(thisOne);
                                     }
                                 }
-                                status.hadErrors( (Status.JsError[])testState.errors.errors.toArray(new Status.JsError[0]) );
+                                status.hadErrors(testState.errors.errors.toArray(new Status.JsError[0]));
                             } catch (ThreadDeath e) {
                             } catch (Throwable t) {
                                 status.threw(t);

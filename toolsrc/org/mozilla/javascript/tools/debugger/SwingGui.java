@@ -213,6 +213,7 @@ public class SwingGui extends JFrame implements GuiCallback {
     /**
      * Sets the visibility of the debugger GUI.
      */
+    @Override
     public void setVisible(boolean b) {
         super.setVisible(b);
         if (b) {
@@ -336,6 +337,7 @@ public class SwingGui extends JFrame implements GuiCallback {
 
         javax.swing.filechooser.FileFilter filter =
             new javax.swing.filechooser.FileFilter() {
+                    @Override
                     public boolean accept(File f) {
                         if (f.isDirectory()) {
                             return true;
@@ -351,12 +353,14 @@ public class SwingGui extends JFrame implements GuiCallback {
                         return false;
                     }
 
+                    @Override
                     public String getDescription() {
                         return "JavaScript Files (*.js)";
                     }
                 };
         dlg.addChoosableFileFilter(filter);
         addWindowListener(new WindowAdapter() {
+                @Override
                 public void windowClosing(WindowEvent e) {
                     exit();
                 }
@@ -1061,6 +1065,7 @@ class EvalTextArea
     /**
      * Selects a subrange of the text.
      */
+    @Override
     public void select(int start, int end) {
         //requestFocus();
         super.select(start, end);
@@ -1271,6 +1276,7 @@ class EvalWindow extends JInternalFrame implements ActionListener {
     /**
      * Sets whether the text area is enabled.
      */
+    @Override
     public void setEnabled(boolean b) {
         super.setEnabled(b);
         evalTextArea.setEnabled(b);
@@ -1315,6 +1321,7 @@ class JSInternalConsole extends JInternalFrame implements ActionListener {
         setContentPane(scroller);
         pack();
         addInternalFrameListener(new InternalFrameAdapter() {
+                @Override
                 public void internalFrameActivated(InternalFrameEvent e) {
                     // hack
                     if (consoleTextArea.hasFocus()) {
@@ -1700,6 +1707,7 @@ class MoreWindows extends JDialog implements ActionListener {
         contentPane.add(buttonPane, BorderLayout.SOUTH);
         pack();
         addKeyListener(new KeyAdapter() {
+                @Override
                 public void keyPressed(KeyEvent ke) {
                     int code = ke.getKeyCode();
                     if (code == KeyEvent.VK_ESCAPE) {
@@ -1742,6 +1750,7 @@ class MoreWindows extends JDialog implements ActionListener {
      * MouseListener implementation for {@link #list}.
      */
     private class MouseHandler extends MouseAdapter {
+        @Override
         public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() == 2) {
                 setButton.doClick();
@@ -1845,6 +1854,7 @@ class FindFunction extends JDialog implements ActionListener {
         contentPane.add(buttonPane, BorderLayout.SOUTH);
         pack();
         addKeyListener(new KeyAdapter() {
+                @Override
                 public void keyPressed(KeyEvent ke) {
                     int code = ke.getKeyCode();
                     if (code == KeyEvent.VK_ESCAPE) {
@@ -1900,6 +1910,7 @@ class FindFunction extends JDialog implements ActionListener {
      * MouseListener implementation for {@link #list}.
      */
     class MouseHandler extends MouseAdapter {
+        @Override
         public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() == 2) {
                 setButton.doClick();
@@ -1961,6 +1972,7 @@ class FileHeader extends JPanel implements MouseListener {
     /**
      * Paints the component.
      */
+    @Override
     public void paint(Graphics g) {
         super.paint(g);
         FileTextArea textArea = fileWindow.textArea;
@@ -2269,6 +2281,7 @@ class FileWindow extends JInternalFrame implements ActionListener {
     /**
      * Disposes this FileWindow.
      */
+    @Override
     public void dispose() {
         debugGui.removeWindow(this);
         super.dispose();
@@ -2344,6 +2357,7 @@ class MyTableModel extends AbstractTableModel {
     /**
      * Returns the name of the given column.
      */
+    @Override
     public String getColumnName(int column) {
         switch (column) {
         case 0:
@@ -2357,6 +2371,7 @@ class MyTableModel extends AbstractTableModel {
     /**
      * Returns whether the given cell is editable.
      */
+    @Override
     public boolean isCellEditable(int row, int column) {
         return true;
     }
@@ -2377,6 +2392,7 @@ class MyTableModel extends AbstractTableModel {
     /**
      * Sets the value in the given cell.
      */
+    @Override
     public void setValueAt(Object value, int row, int column) {
         switch (column) {
         case 0:
@@ -2715,6 +2731,7 @@ class VariableModel implements TreeTableModel {
         /**
          * Returns a string representation of this node.
          */
+        @Override
         public String toString() {
             return id instanceof String
                 ? (String) id : "[" + ((Integer) id).intValue() + "]";
@@ -3020,6 +3037,7 @@ class ContextWindow extends JPanel implements ActionListener {
                                     frame.getListeners(WindowListener.class);
                                 frame.removeWindowListener((WindowListener)l[0]);
                                 frame.addWindowListener(new WindowAdapter() {
+                                        @Override
                                         public void windowClosing(WindowEvent e) {
                                             context.hidePopup();
                                             ((WindowListener)l[0]).windowClosing(e);
@@ -3121,6 +3139,7 @@ class ContextWindow extends JPanel implements ActionListener {
     /**
      * Disables the component.
      */
+    @Override
     public void disable() {
         context.setEnabled(false);
         thisTable.setEnabled(false);
@@ -3132,6 +3151,7 @@ class ContextWindow extends JPanel implements ActionListener {
     /**
      * Enables the component.
      */
+    @Override
     public void enable() {
         context.setEnabled(true);
         thisTable.setEnabled(true);

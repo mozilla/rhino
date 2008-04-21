@@ -203,6 +203,7 @@ class CodePrinter {
         offset -= end - begin;
     }
 
+    @Override
     public String toString() {
         return new String(buffer, 0, offset);
     }

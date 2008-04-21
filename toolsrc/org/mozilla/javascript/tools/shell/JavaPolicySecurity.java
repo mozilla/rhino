@@ -48,6 +48,7 @@ import org.mozilla.javascript.*;
 public class JavaPolicySecurity extends SecurityProxy
 {
 
+    @Override
     public Class<?> getStaticSecurityDomainClassInternal() {
         return ProtectionDomain.class;
     }
@@ -86,10 +87,12 @@ public class JavaPolicySecurity extends SecurityProxy
             setReadOnly();
         }
 
+        @Override
         public void add(Permission permission) {
             throw new RuntimeException("NOT IMPLEMENTED");
         }
 
+        @Override
         public boolean implies(Permission permission) {
             if (_statisPermissions != null) {
                 if (!_statisPermissions.implies(permission)) {
@@ -104,6 +107,7 @@ public class JavaPolicySecurity extends SecurityProxy
             }
         }
 
+        @Override
         public Enumeration<Permission> elements()
         {
             return new Enumeration<Permission>() {
@@ -112,6 +116,7 @@ public class JavaPolicySecurity extends SecurityProxy
             };
         }
 
+        @Override
         public String toString() {
             StringBuffer sb = new StringBuffer();
             sb.append(getClass().getName());
@@ -135,6 +140,7 @@ public class JavaPolicySecurity extends SecurityProxy
         new CodeSource(null,  (java.security.cert.Certificate[])null);
     }
 
+    @Override
     protected void callProcessFileSecure(final Context cx,
                                          final Scriptable scope,
                                          final String filename)
@@ -183,6 +189,7 @@ public class JavaPolicySecurity extends SecurityProxy
         return new ProtectionDomain(cs, pc);
     }
 
+    @Override
     public GeneratedClassLoader
     createClassLoader(ClassLoader parentLoader, Object securityDomain)
     {
@@ -190,6 +197,7 @@ public class JavaPolicySecurity extends SecurityProxy
         return new Loader(parentLoader, domain);
     }
 
+    @Override
     public Object getDynamicSecurityDomain(Object securityDomain)
     {
         ProtectionDomain staticDomain = (ProtectionDomain)securityDomain;
@@ -202,6 +210,7 @@ public class JavaPolicySecurity extends SecurityProxy
         return contextDomain;
     }
 
+    @Override
     public Object callWithDomain(Object securityDomain,
                                  final Context cx,
                                  final Callable callable,

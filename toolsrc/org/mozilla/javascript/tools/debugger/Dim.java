@@ -355,7 +355,7 @@ public class Dim {
         final SourceInfo sourceInfo = new SourceInfo(source, functions, url);
 
         synchronized (urlToSourceInfo) {
-            SourceInfo old = (SourceInfo)urlToSourceInfo.get(url);
+            SourceInfo old = urlToSourceInfo.get(url);
             if (old != null) {
                 sourceInfo.copyBreakpointsFrom(old);
             }
@@ -399,14 +399,14 @@ public class Dim {
      * Returns the FunctionSource object for the function with the given name.
      */
     public FunctionSource functionSourceByName(String functionName) {
-        return (FunctionSource)functionNames.get(functionName);
+        return functionNames.get(functionName);
     }
 
     /**
      * Returns the SourceInfo object for the given URL.
      */
     public SourceInfo sourceInfo(String url) {
-        return (SourceInfo)urlToSourceInfo.get(url);
+        return urlToSourceInfo.get(url);
     }
 
     /**

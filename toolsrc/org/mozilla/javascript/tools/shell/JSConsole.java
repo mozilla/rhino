@@ -92,6 +92,7 @@ public class JSConsole extends JFrame implements ActionListener
         dlg = new JFileChooser();
         javax.swing.filechooser.FileFilter filter =
             new javax.swing.filechooser.FileFilter() {
+                   @Override
                     public boolean accept(File f) {
                         if(f.isDirectory()) {
                             return true;
@@ -107,6 +108,7 @@ public class JSConsole extends JFrame implements ActionListener
                         return false;
                     }
 
+                   @Override
                     public String getDescription() {
                         return "JavaScript Files (*.js)";
                     }
@@ -163,6 +165,7 @@ public class JSConsole extends JFrame implements ActionListener
         consoleTextArea.setRows(24);
         consoleTextArea.setColumns(80);
         addWindowListener(new WindowAdapter() {
+                @Override
                 public void windowClosing(WindowEvent e) {
                     System.exit(0);
                 }
