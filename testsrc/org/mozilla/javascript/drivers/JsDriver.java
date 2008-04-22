@@ -45,7 +45,7 @@ import org.w3c.dom.*;
 import org.mozilla.javascript.tools.shell.*;
 
 /**
- * @version $Id: JsDriver.java,v 1.7 2008/04/21 19:54:02 nboyd%atg.com Exp $
+ * @version $Id: JsDriver.java,v 1.8 2008/04/22 12:13:17 nboyd%atg.com Exp $
  */
 public class JsDriver {
     private JsDriver() {
@@ -288,14 +288,17 @@ public class JsDriver {
             this.failureHtml = failureHtml;
         }
 
+        @Override
         void running(File file) {
         }
 
+        @Override
         void failed(String s) {
             failed = true;
             setContent(failureHtml, "failureDetails.reason", "Failure reason: \n" + s);
         }
 
+        @Override
         void exitCodesWere(int expected, int actual) {
             if (expected != actual) {
                 failed = true;
@@ -303,16 +306,19 @@ public class JsDriver {
             }
         }
 
+        @Override
         void threw(Throwable e) {
             failed = true;
             setContent(failureHtml, "failureDetails.reason", "Threw Java exception:\n" + newlineLineEndings(ShellTest.getStackTrace(e)));
         }
 
+        @Override
         void timedOut() {
             failed = true;
             setContent(failureHtml, "failureDetails.reason", "Timed out.");
         }
 
+        @Override
         void outputWas(String s) {
             this.output = s;
         }
@@ -382,6 +388,7 @@ public class JsDriver {
 			root.appendChild(target);
 		}
 		
+		@Override
 		void running(File file) {
 			this.start = new Date();
 		}
@@ -402,6 +409,7 @@ public class JsDriver {
 			e.setTextContent( newlineLineEndings(content) );
 		}
 		
+        @Override
 		void exitCodesWere(int expected, int actual) {
 			finish();
 			Element exit = createElement(target, "exit");
@@ -409,23 +417,27 @@ public class JsDriver {
 			exit.setAttribute("actual", String.valueOf(actual));
 		}
 		
+        @Override
 		void timedOut() {
 			finish();
 			createElement(target, "timedOut");
 		}
 		
+        @Override
 		void failed(String s) {
 			finish();
 			Element failed = createElement(target, "failed");
 			setTextContent(failed, s);
 		}
 		
+        @Override
 		void outputWas(String message) {
 			finish();
 			Element output = createElement(target, "output");
 			setTextContent(output, message);
 		}
 		
+        @Override
 		void threw(Throwable t) {
 			finish();
 			Element threw = createElement(target, "threw");
@@ -584,6 +596,7 @@ public class JsDriver {
             this.timeout = timeout;
         }
 
+        @Override
         int getTimeoutMilliseconds() {
             return timeout;
         }

@@ -64,6 +64,7 @@ public final class Continuation extends IdScriptableObject implements Function
         this.implementation = implementation;
     }
 
+    @Override
     public String getClassName()
     {
         return "Continuation";
@@ -88,6 +89,7 @@ public final class Continuation extends IdScriptableObject implements Function
         return false;
     }
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -99,6 +101,7 @@ public final class Continuation extends IdScriptableObject implements Function
         initPrototypeMethod(FTAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -115,6 +118,7 @@ public final class Continuation extends IdScriptableObject implements Function
 
 // #string_id_map#
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;
