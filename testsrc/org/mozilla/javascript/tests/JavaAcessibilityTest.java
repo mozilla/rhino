@@ -88,7 +88,17 @@ public class JavaAcessibilityTest extends TestCase {
     runScript(importClass + "new PrivateAccessClass(5)");
     runScript(importClass + "new PrivateAccessClass(5, \"foo\")");
   }
-  
+
+  public void testAccessingJavaBeanProperty() {
+      Object result = runScript(importClass +
+          "var x = new PrivateAccessClass(); x.javaBeanProperty + ' ' + x.getterCalled;");
+      assertEquals("6 true", result);
+
+      result = runScript(importClass +
+      "var x = new PrivateAccessClass(); x.javaBeanProperty = 4; x.javaBeanProperty + ' ' + x.setterCalled;");
+      assertEquals("4 true", result);
+  }
+
   private Object runScript(final String scriptSourceText) {
     return this.contextFactory.call(new ContextAction() {
       public Object run(Context context) {

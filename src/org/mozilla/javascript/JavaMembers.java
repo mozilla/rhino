@@ -598,9 +598,16 @@ class JavaMembers
 
                     // If we already have a member by this name, don't do this
                     // property.
-                    if (ht.containsKey(beanPropertyName)
-                            || toAdd.containsKey(beanPropertyName)) {
+                    if (toAdd.containsKey(beanPropertyName))
                         continue;
+                    Object v = ht.get(beanPropertyName);
+                    if (v != null) {
+                        // A private field shouldn't mask a public getter/setter
+                        if (!includePrivate ||
+                            !Modifier.isPrivate(((Member)v).getModifiers()))
+                        {
+                            continue;
+                        }
                     }
 
                     // Find the getter method, or if there is none, the is-

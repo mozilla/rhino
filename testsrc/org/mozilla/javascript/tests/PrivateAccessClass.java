@@ -74,8 +74,20 @@ public class PrivateAccessClass
   int packagePrivateMethod() { return 3; }
   private int privateMethod() { return 4; }
   protected int protectedMethod() { return 5; }
-  
-  /* 
+
+  private int javaBeanProperty = 6;
+  public boolean getterCalled = false;
+  public boolean setterCalled = false;
+  public int getJavaBeanProperty() {
+      getterCalled = true;
+      return javaBeanProperty;
+  }
+  public void setJavaBeanProperty(int i) {
+      setterCalled = true;
+      javaBeanProperty = i;
+  }
+
+  /*
    * Suppress warnings about unused private members.
    */
   public int referenceToPrivateMembers() {
@@ -85,6 +97,6 @@ public class PrivateAccessClass
     System.out.println(privateString);
     pac2.privateMethod(); // to silence warning
     return pnc.privateInt + staticPrivateInt + staticPrivateMethod() +
-           pac.privateMethod();
+           pac.privateMethod() + javaBeanProperty;
   }
 }
