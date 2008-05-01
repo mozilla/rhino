@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Norris Boyd
  *   Igor Bukanov
+ *   Daniel Gredler
  *   Bob Jervis
  *   Roger Lawrence
  *   Steve Weiss
@@ -130,13 +131,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private static final Slot REMOVED = new Slot(null, 0, READONLY);
 
     static {
-        REMOVED.wasDeleted = 1;
+        REMOVED.wasDeleted = true;
     }
 
     private transient Slot[] slots;
     // If count >= 0, it gives number of keys or if count < 0,
     // it indicates sealed object where ~count gives number of keys
     private int count;
+
+    // gateways into the definition-order linked list of slots
+    private transient Slot firstAdded;
+    private transient Slot lastAdded;
 
     // cache; may be removed for smaller memory footprint
     private transient Slot lastAccess = REMOVED;
@@ -157,9 +162,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         String name; // This can change due to caching
         int indexOrHash;
         private volatile short attributes;
-        transient volatile byte wasDeleted;
+        transient volatile boolean wasDeleted;
         volatile Object value;
-        transient volatile Slot next;
+        transient volatile Slot next; // next in hash table bucket
+        transient volatile Slot orderedNext; // next in linked list
 
         Slot(String name, int indexOrHash, int attributes)
         {
@@ -2125,7 +2131,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     break lastAccessCheck;
             }
 
-            if (slot.wasDeleted != 0)
+            if (slot.wasDeleted)
                 break lastAccessCheck;
 
             if (accessType == SLOT_MODIFY_GETTER_SETTER &&
@@ -2235,16 +2241,26 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         if (accessType == SLOT_MODIFY_GETTER_SETTER &&
                             !(slot instanceof GetterSlot))
                         {
-                            GetterSlot newSlot = new GetterSlot(name, indexOrHash,
-                                    slot.getAttributes());
+                            GetterSlot newSlot = new GetterSlot(name,
+                                    indexOrHash, slot.getAttributes());
                             newSlot.value = slot.value;
                             newSlot.next = slot.next;
+                            // add new slot to linked list
+                            if (lastAdded != null)
+                                lastAdded.orderedNext = newSlot;
+                            if (firstAdded == null)
+                                firstAdded = newSlot;
+                            lastAdded = newSlot;
+                            // add new slot to hash table
                             if (prev == slot) {
                                 slotsLocalRef[insertPos] = newSlot;
                             } else {
                                 prev.next = newSlot;
                             }
-                            slot.wasDeleted = (byte)1;
+                            // other housekeeping
+                            slot.wasDeleted = true;
+                            slot.value = null;
+                            slot.name = null;
                             if (slot == lastAccess) {
                                 lastAccess = REMOVED;
                             }
@@ -2271,6 +2287,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 if (accessType == SLOT_MODIFY_CONST)
                     newSlot.setAttributes(CONST);
                 ++count;
+                // add new slot to linked list
+                if (lastAdded != null)
+                    lastAdded.orderedNext = newSlot;
+                if (firstAdded == null)
+                    firstAdded = newSlot;
+                lastAdded = newSlot;
+                // add new slot to hash table, return it
                 addKnownAbsentSlot(slotsLocalRef, newSlot, insertPos);
                 return newSlot;
             }
@@ -2295,15 +2318,18 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     }
                     if (slot != null && (slot.getAttributes() & PERMANENT) == 0) {
                         count--;
+                        // remove slot from hash table
                         if (prev == slot) {
                             slotsLocalRef[slotIndex] = slot.next;
                         } else {
                             prev.next = slot.next;
                         }
-                        // Mark the slot as removed to handle a case when
-                        // another thread manages to put just removed slot
-                        // into lastAccess cache.
-                        slot.wasDeleted = (byte)1;
+                        // Mark the slot as removed. It is still referenced
+                        // from the order-added linked list, but will be
+                        // cleaned up later
+                        slot.wasDeleted = true;
+                        slot.value = null;
+                        slot.name = null;
                         if (slot == lastAccess) {
                             lastAccess = REMOVED;
                         }
@@ -2349,7 +2375,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * This is an optimization to use when inserting into empty table,
      * after table growth or during deserialization.
      */
-    private static void addKnownAbsentSlot(Slot[] slots, Slot slot, int insertPos)
+    private static void addKnownAbsentSlot(Slot[] slots, Slot slot,
+                                           int insertPos)
     {
         if (slots[insertPos] == null) {
             slots[insertPos] = slot;
@@ -2368,17 +2395,28 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (s == null)
             return a;
         int c = 0;
-        for (int i=0; i < s.length; i++) {
-            Slot slot = s[i];
-            while (slot != null) {
-                if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
-                    if (c == 0)
-                        a = new Object[s.length];
-                    a[c++] = (slot.name != null ? (Object) slot.name
-                              : new Integer(slot.indexOrHash));
-                }
-                slot = slot.next;
+        Slot slot = firstAdded; 
+        while (slot != null && slot.wasDeleted) {
+            // as long as we're traversing the order-added linked list,
+            // remove deleted slots
+            slot = slot.orderedNext;
+        }
+        firstAdded = slot;
+        while (slot != null) {
+            if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
+                if (c == 0)
+                    a = new Object[s.length];
+                a[c++] = slot.name != null
+                             ? (Object) slot.name
+                             : new Integer(slot.indexOrHash);
             }
+            Slot next = slot.orderedNext;
+            while (next != null && next.wasDeleted) {
+                // remove deleted slots
+                next = next.orderedNext;
+            }
+            slot.orderedNext = next;
+            slot = next;
         }
         if (c == a.length)
             return a;
@@ -2400,14 +2438,22 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             out.writeInt(0);
         } else {
             out.writeInt(slots.length);
-            for (int i = 0; i < slots.length; ++i) {
-                Slot slot = slots[i];
-                while (slot != null) {
-                    out.writeObject(slot);
-                    slot = slot.next;
-                    if (--objectsCount == 0)
-                        return;
+            Slot slot = firstAdded; 
+            while (slot != null && slot.wasDeleted) {
+                // as long as we're traversing the order-added linked list,
+                // remove deleted slots
+                slot = slot.orderedNext;
+            }
+            firstAdded = slot;
+            while (slot != null) {
+                out.writeObject(slot);
+                Slot next = slot.orderedNext;
+                while (next != null && next.wasDeleted) {
+                    // remove deleted slots
+                    next = next.orderedNext;
                 }
+                slot.orderedNext = next;
+                slot = next;
             }
         }
     }
@@ -2426,10 +2472,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 // "this" was sealed
                 objectsCount = ~objectsCount;
             }
-            for (int i = 0; i != objectsCount; ++i) {
-                Slot slot = (Slot)in.readObject();
-                int slotIndex = getSlotIndex(tableSize, slot.indexOrHash);
-                addKnownAbsentSlot(slots, slot, slotIndex);
+            Slot prev = null;
+            for (int i=0; i != objectsCount; ++i) {
+                lastAdded = (Slot)in.readObject();
+                if (i==0) {
+                    firstAdded = lastAdded;
+                } else {
+                    prev.orderedNext = lastAdded;
+                }
+                int slotIndex = getSlotIndex(tableSize, lastAdded.indexOrHash);
+                addKnownAbsentSlot(slots, lastAdded, slotIndex);
+                prev = lastAdded;
             }
         }
     }
