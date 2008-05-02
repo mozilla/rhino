@@ -3788,7 +3788,7 @@ public class ScriptRuntime {
 
     private static void storeScriptable(Context cx, Scriptable value)
     {
-        // The previosly stored scratchScriptable should be consumed
+        // The previously stored scratchScriptable should be consumed
         if (cx.scratchScriptable != null)
             throw new IllegalStateException();
         cx.scratchScriptable = value;
