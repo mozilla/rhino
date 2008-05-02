@@ -875,7 +875,7 @@ class TokenStream
             if (startToken != Token.DIV) Kit.codeBug();
         }
 
-        boolean inCharSet = false;
+        boolean inCharSet = false; // true if inside a '['..']' pair
         int c;
         while ((c = getChar()) != '/' || inCharSet) {
             if (c == '\n' || c == EOF_CHAR) {
