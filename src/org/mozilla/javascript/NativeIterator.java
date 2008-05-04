@@ -39,6 +39,7 @@ import java.util.Iterator;
  * @author Norris Boyd
  */
 public final class NativeIterator extends IdScriptableObject {
+    private static final long serialVersionUID = -4136968203581667681L;
     private static final Object ITERATOR_TAG = new Object();
     
     static void init(ScriptableObject scope, boolean sealed) {
@@ -89,6 +90,8 @@ public final class NativeIterator extends IdScriptableObject {
     public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
     
     static class StopIteration extends NativeObject {
+        private static final long serialVersionUID = 2485151085722377663L;
+
         @Override
         public String getClassName() {
             return STOP_ITERATION;

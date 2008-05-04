@@ -53,8 +53,8 @@ import javax.swing.event.TreeModelListener;
  * @author Philip Milne
  * @author Scott Violet
  */
-public class TreeTableModelAdapter extends AbstractTableModel
-{
+public class TreeTableModelAdapter extends AbstractTableModel {
+    private static final long serialVersionUID = 48741114609209052L;
     JTree tree;
     TreeTableModel treeTableModel;
 

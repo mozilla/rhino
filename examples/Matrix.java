@@ -36,7 +36,8 @@
  * ***** END LICENSE BLOCK ***** */
 
 import org.mozilla.javascript.*;
-import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Matrix: An example host object class that implements the Scriptable interface.
@@ -51,21 +52,20 @@ import java.util.Vector;
  * Here's a shell session showing the Matrix object in action:
  * <pre>
  * js> defineClass("Matrix")
- * js> m = new Matrix(2);              <i>A constructor call, see <a href="#Matrix">Matrix</a> below.</i>
- * [object Matrix]                     <i>The "Matrix" here comes from <a href"#getClassName">getClassName</a>.</i>
- * js> version(120);                   <i>switch to JavaScript1.2 to see arrays better</i>
- * 0
+ * js> var m = new Matrix(2); // A constructor call, see "Matrix(int dimension)"
+ * js> m                      // Object.toString will call "Matrix.getClassName()"
+ * [object Matrix]                     
  * js> m[0][0] = 3;
  * 3
- * js> m[0];                           <i>an array was created automatically!</i>
+ * js> uneval(m[0]);          // an array was created automatically!
  * [3]
- * js> m[1];                           <i>array is created even if we don't set a value</i>
+ * js> uneval(m[1]);          // array is created even if we don't set a value
  * []
- * js> m.dim;                          <i>we can access the "dim" property</i>
+ * js> m.dim;                 // we can access the "dim" property
  * 2
  * js> m.dim = 3;
  * 3
- * js> m.dim;                          <i>but not modify it</i>
+ * js> m.dim;                 // but not modify the "dim" property
  * 2
  * </pre>
  *
@@ -94,7 +94,7 @@ public class Matrix implements Scriptable {
                   "Dimension of Matrix must be greater than zero");
         }
         dim = dimension;
-        v = new Vector();
+        list = new ArrayList<Object>();
     }
 
     /**
@@ -146,15 +146,16 @@ public class Matrix implements Scriptable {
     /**
      * Get the indexed property.
      * <p>
-     * Look up the element in the associated vector and return
+     * Look up the element in the associated list and return
      * it if it exists. If it doesn't exist, create it.<p>
      * @param index the index of the integral property
      * @param start the object where the lookup began
      */
     public Object get(int index, Scriptable start) {
-        if (index >= v.size())
-            v.setSize(index+1);
-        Object result = v.elementAt(index);
+        while (index >= list.size()) {
+            list.add(null);
+        }
+        Object result = list.get(index);
         if (result != null)
             return result;
         if (dim > 2) {
@@ -167,7 +168,7 @@ public class Matrix implements Scriptable {
             Scriptable scope = ScriptableObject.getTopLevelScope(start);
             result = cx.newArray(scope, 0);
         }
-        v.setElementAt(result, index);
+        list.set(index, result);
         return result;
     }
 
@@ -248,7 +249,7 @@ public class Matrix implements Scriptable {
      * Use the convenience method from Context that takes care of calling
      * toString, etc.
      */
-    public Object getDefaultValue(Class typeHint) {
+    public Object getDefaultValue(Class<?> typeHint) {
         return "[object Matrix]";
     }
 
@@ -274,6 +275,6 @@ public class Matrix implements Scriptable {
      * Some private data for this class.
      */
     private int dim;
-    private Vector v;
+    private List<Object> list;
     private Scriptable prototype, parent;
 }

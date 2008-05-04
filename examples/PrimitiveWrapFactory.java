@@ -57,7 +57,7 @@ import org.mozilla.javascript.*;
 public class PrimitiveWrapFactory extends WrapFactory {
 
   public Object wrap(Context cx, Scriptable scope, Object obj,
-                     Class staticType)
+                     Class<?> staticType)
   {
     if (obj instanceof String || obj instanceof Number ||
         obj instanceof Boolean)

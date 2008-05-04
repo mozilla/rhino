@@ -79,6 +79,7 @@ import org.mozilla.javascript.*;
  */
 
 public class Foo extends ScriptableObject {
+    private static final long serialVersionUID = -3833489808933339159L;
 
     /**
      * The zero-parameter constructor.

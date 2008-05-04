@@ -37,6 +37,8 @@ package org.mozilla.javascript;
  * @author Norris Boyd
  */
 public final class NativeGenerator extends IdScriptableObject {
+    private static final long serialVersionUID = 1645892441041347273L;
+
     private static final Object GENERATOR_TAG = new Object();
 
     static NativeGenerator init(ScriptableObject scope, boolean sealed) {
@@ -281,5 +283,6 @@ public final class NativeGenerator extends IdScriptableObject {
     private boolean locked;
 
     public static class GeneratorClosedException extends RuntimeException {
+        private static final long serialVersionUID = 2561315658662379681L;
     }
 }

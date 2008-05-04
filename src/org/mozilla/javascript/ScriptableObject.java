@@ -157,8 +157,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     private static class Slot implements Serializable
     {
-        static final long serialVersionUID = -3539051633409902634L;
-
+        private static final long serialVersionUID = -6090581677123995491L;
         String name; // This can change due to caching
         int indexOrHash;
         private volatile short attributes;
