@@ -1962,7 +1962,7 @@ public class ScriptRuntime {
             if (!(v instanceof Callable))
                 return Boolean.FALSE;
             Callable f = (Callable) v;
-            Context cx = Context.enter();
+            Context cx = Context.getContext();
             try {
                 x.currentId = f.call(cx, x.iterator.getParentScope(), 
                                      x.iterator, emptyArgs);
@@ -1972,8 +1972,6 @@ public class ScriptRuntime {
                   return Boolean.FALSE;
                 }
                 throw e;
-            } finally {
-                Context.exit();
             }
         }
         for (;;) {
