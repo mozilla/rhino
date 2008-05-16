@@ -518,7 +518,7 @@ public class Parser
             name.length() > 0)
         {
             // Function statements define a symbol in the enclosing scope
-            defineSymbol(Token.FUNCTION, name);
+            defineSymbol(Token.FUNCTION, false, name);
         }
 
         boolean nested = insideFunction();
@@ -571,14 +571,14 @@ public class Parser
                             destructuring = new Node(Token.COMMA);
                         }
                         String parmName = currentScriptOrFn.getNextTempName();
-                        defineSymbol(Token.LP, parmName);
+                        defineSymbol(Token.LP, false, parmName);
                         destructuring.addChildToBack(
                             nf.createDestructuringAssignment(Token.VAR,
                                 primaryExpr(), nf.createName(parmName)));
                     } else {
                         mustMatchToken(Token.NAME, "msg.no.parm");
                         String s = ts.getString();
-                        defineSymbol(Token.LP, s);
+                        defineSymbol(Token.LP, false, s);
                         decompiler.addName(s);
                     }
                 } while (matchToken(Token.COMMA));
@@ -608,7 +608,7 @@ public class Parser
             {
                 // Function expressions define a name only in the body of the 
                 // function, and only if not hidden by a parameter name
-                defineSymbol(Token.FUNCTION, name);
+                defineSymbol(Token.FUNCTION, false, name);
             }
             
             decompiler.addToken(Token.RC);
@@ -1113,11 +1113,13 @@ public class Parser
             consumeToken();
             decompiler.addToken(Token.LET);
             if (peekToken() == Token.LP) {
-                pn = let(true);
+                return let(true);
             } else {
                 pn = variables(false, tt);
+                if (peekToken() == Token.SEMI)
+                    break;
+                return pn;
             }
-            return pn;
           }
 
           case Token.RETURN: 
@@ -1383,7 +1385,7 @@ public class Parser
                 first = false;
     
                 decompiler.addName(s);
-                defineSymbol(declType, s);
+                defineSymbol(declType, inFor, s);
             }
     
             Node init = null;
@@ -1450,7 +1452,7 @@ public class Parser
         return result;
     }
     
-    void defineSymbol(int declType, String name) {
+    void defineSymbol(int declType, boolean ignoreNotInBlock, String name) {
         Node.Scope definingScope = currentScope.getDefiningScope(name);
         Node.Scope.Symbol symbol = definingScope != null 
                                   ? definingScope.getSymbol(name)
@@ -1465,6 +1467,13 @@ public class Parser
               case Token.LET:
                 if (symbol != null && definingScope == currentScope) {
                     error = symbol.declType == Token.LET;
+                }
+                int currentScopeType = currentScope.getType();
+                if (!ignoreNotInBlock && 
+                    ((currentScopeType == Token.LOOP) ||
+                     (currentScopeType == Token.IF)))
+                {
+                    addError("msg.let.decl.not.in.block");
                 }
                 currentScope.putSymbol(name, 
                     new Node.Scope.Symbol(declType, name));
@@ -2158,7 +2167,7 @@ public class Parser
         if (tt == Token.LB || tt == Token.LC) {
             // handle destructuring assignment
             name = currentScriptOrFn.getNextTempName();
-            defineSymbol(Token.LP, name);
+            defineSymbol(Token.LP, false, name);
             expr = nf.createBinary(Token.COMMA,
                 nf.createAssignment(Token.ASSIGN, primaryExpr(), 
                                     nf.createName(name)),
@@ -2175,7 +2184,7 @@ public class Parser
         Node init = nf.createName(name);
         // Define as a let since we want the scope of the variable to
         // be restricted to the array comprehension
-        defineSymbol(Token.LET, name);
+        defineSymbol(Token.LET, false, name);
         
         mustMatchToken(Token.IN, "msg.in.after.for.name");
         decompiler.addToken(Token.IN);
@@ -2263,7 +2272,7 @@ public class Parser
                     String tempName = currentScriptOrFn.getNextTempName();
                     pushScope(scopeNode);
                     try {
-                        defineSymbol(Token.LET, tempName);
+                        defineSymbol(Token.LET, false, tempName);
                         Node expr = (Node) elems.get(0);
                         Node block = nf.createBlock(ts.getLineno());
                         Node init = new Node(Token.EXPR_VOID, 

@@ -1412,7 +1412,7 @@ final class IRFactory
             createName(Token.NAME, tempName, right)));
         try {
             parser.pushScope(result);
-            parser.defineSymbol(Token.LET, tempName);
+            parser.defineSymbol(Token.LET, true, tempName);
         } finally {
             parser.popScope();
         }
@@ -1447,7 +1447,7 @@ final class IRFactory
                         createName(Token.BINDNAME, name, null),
                         rightElem));
                     if (variableType != -1) {
-                        parser.defineSymbol(variableType, name);
+                        parser.defineSymbol(variableType, true, name);
                         destructuringNames.add(name);
                     }
                 } else {
@@ -1480,7 +1480,7 @@ final class IRFactory
                         createName(Token.BINDNAME, name, null),
                         rightElem));
                     if (variableType != -1) {
-                        parser.defineSymbol(variableType, name);
+                        parser.defineSymbol(variableType, true, name);
                         destructuringNames.add(name);
                     }
                 } else {
