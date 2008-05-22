@@ -1070,6 +1070,12 @@ public class Node
             return first.next.hasSideEffects() &&
                    first.next.next.hasSideEffects();
 
+          case Token.AND:
+          case Token.OR:
+            if (first == null || last == null)
+                Kit.codeBug();
+            return first.hasSideEffects() || last.hasSideEffects();
+
           case Token.ERROR:         // Avoid cascaded error messages
           case Token.EXPR_RESULT:
           case Token.ASSIGN:
