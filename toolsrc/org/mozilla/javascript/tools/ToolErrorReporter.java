@@ -85,7 +85,7 @@ public class ToolErrorReporter implements ErrorReporter {
         Context cx = Context.getCurrentContext();
         Locale locale = cx == null ? Locale.getDefault() : cx.getLocale();
 
-        // ResourceBundle does cacheing.
+        // ResourceBundle does caching.
         ResourceBundle rb = ResourceBundle.getBundle
             ("org.mozilla.javascript.tools.resources.Messages", locale);
 
