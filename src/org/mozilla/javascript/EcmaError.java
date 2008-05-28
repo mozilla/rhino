@@ -57,7 +57,7 @@ public class EcmaError extends RhinoException
      * Errors internal to the JavaScript engine will simply throw a
      * RuntimeException.
      *
-     * @param sourceName the name of the source reponsible for the error
+     * @param sourceName the name of the source responsible for the error
      * @param lineNumber the line number of the source
      * @param columnNumber the columnNumber of the source (may be zero if
      *                     unknown)
@@ -112,7 +112,7 @@ public class EcmaError extends RhinoException
      *
      * See ECMA edition 3, 15.11.7.10.
      *
-     * @return an implemenation-defined string describing the error.
+     * @return an implementation-defined string describing the error.
      */
     public String getErrorMessage()
     {
