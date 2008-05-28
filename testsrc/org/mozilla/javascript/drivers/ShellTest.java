@@ -43,7 +43,7 @@ import java.util.*;
 import org.mozilla.javascript.tools.shell.*;
 
 /**
- * @version $Id: ShellTest.java,v 1.7 2008/04/21 19:54:02 nboyd%atg.com Exp $
+ * @version $Id: ShellTest.java,v 1.8 2008/05/28 12:35:52 nboyd%atg.com Exp $
  */
 class ShellTest {
     static final FileFilter DIRECTORY_FILTER = new FileFilter() {
@@ -177,7 +177,12 @@ class ShellTest {
 
             @Override
             public String toString() {
-                String locationLine = sourceName + ":" + line + ": " + message;
+                String locationLine = "";
+                if (sourceName != null)
+                    locationLine += sourceName + ":";
+                if (line != 0)
+                    locationLine += line + ": ";
+                locationLine += message;
                 String sourceLine = this.lineSource;
                 String errCaret = null;
                 if (lineSource != null) {
