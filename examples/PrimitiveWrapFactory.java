@@ -55,7 +55,7 @@ import org.mozilla.javascript.*;
  * on that context.
  */
 public class PrimitiveWrapFactory extends WrapFactory {
-
+  @Override
   public Object wrap(Context cx, Scriptable scope, Object obj,
                      Class<?> staticType)
   {

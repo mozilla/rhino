@@ -107,6 +107,7 @@ public class Foo extends ScriptableObject {
     /**
      * Returns the name of this JavaScript class, "Foo".
      */
+    @Override
     public String getClassName() {
         return "Foo";
     }

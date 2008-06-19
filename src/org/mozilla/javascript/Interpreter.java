@@ -2576,8 +2576,8 @@ public class Interpreter implements Evaluator
         // When restarting continuation throwable is not null and to jump
         // to the code that rewind continuation state indexReg should be set
         // to -1.
-        // With the normal call throable == null and indexReg == -1 allows to
-        // catch bugs with using indeReg to access array eleemnts before
+        // With the normal call throwable == null and indexReg == -1 allows to
+        // catch bugs with using indeReg to access array elements before
         // initializing indexReg.
 
         GeneratorState generatorState = null;
@@ -3297,7 +3297,7 @@ switch (op) {
             cjump = new ContinuationJump((Continuation)fun, frame);
 
             // continuation result is the first argument if any
-            // of contination call
+            // of continuation call
             if (indexReg == 0) {
                 cjump.result = undefined;
             } else {

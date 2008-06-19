@@ -703,9 +703,9 @@ class TokenStream
                             skipLine();
                             continue retry;
                         }
-                        ungetChar('-');
+                        ungetCharIgnoreLineEnd('-');
                     }
-                    ungetChar('!');
+                    ungetCharIgnoreLineEnd('!');
                 }
                 if (matchChar('<')) {
                     if (matchChar('=')) {
@@ -1217,14 +1217,14 @@ class TokenStream
             Kit.codeBug();
         ungetBuffer[ungetCursor++] = c;
     }
-
+    
     private boolean matchChar(int test) throws IOException
     {
-        int c = getChar();
+        int c = getCharIgnoreLineEnd();
         if (c == test) {
             return true;
         } else {
-            ungetChar(c);
+            ungetCharIgnoreLineEnd(c);
             return false;
         }
     }
@@ -1287,7 +1287,54 @@ class TokenStream
             return c;
         }
     }
+    
+    private int getCharIgnoreLineEnd() throws IOException
+    {
+        if (ungetCursor != 0) {
+            return ungetBuffer[--ungetCursor];
+        }
 
+        for(;;) {
+            int c;
+            if (sourceString != null) {
+                if (sourceCursor == sourceEnd) {
+                    hitEOF = true;
+                    return EOF_CHAR;
+                }
+                c = sourceString.charAt(sourceCursor++);
+            } else {
+                if (sourceCursor == sourceEnd) {
+                    if (!fillSourceBuffer()) {
+                        hitEOF = true;
+                        return EOF_CHAR;
+                    }
+                }
+                c = sourceBuffer[sourceCursor++];
+            }
+
+            if (c <= 127) {
+                if (c == '\n' || c == '\r') {
+                    lineEndChar = c;
+                    c = '\n';
+                }
+            } else {
+                if (isJSFormatChar(c)) {
+                    continue;
+                }
+                if (ScriptRuntime.isJSLineTerminator(c)) {
+                    lineEndChar = c;
+                    c = '\n';
+                }
+            }
+            return c;
+        }
+    }
+    
+    private void ungetCharIgnoreLineEnd(int c)
+    {
+        ungetBuffer[ungetCursor++] = c;
+    }
+    
     private void skipLine() throws IOException
     {
         // skip to end of line
@@ -1379,8 +1426,8 @@ class TokenStream
 
     String regExpFlags;
 
-    // Set this to an inital non-null value so that the Parser has
-    // something to retrieve even if an error has occured and no
+    // Set this to an initial non-null value so that the Parser has
+    // something to retrieve even if an error has occurred and no
     // string is found.  Fosters one class of error, but saves lots of
     // code.
     private String string = "";

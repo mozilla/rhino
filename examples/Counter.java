@@ -48,6 +48,7 @@ public class Counter extends ScriptableObject {
     public void jsConstructor(int a) { count = a; }
 
     // The class name is defined by the getClassName method
+    @Override
     public String getClassName() { return "Counter"; }
 
     // The method jsGet_count defines the count property.

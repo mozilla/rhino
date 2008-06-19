@@ -47,6 +47,7 @@ public class DynamicScopes {
 
     static class MyFactory extends ContextFactory
     {
+        @Override
         protected boolean hasFeature(Context cx, int featureIndex)
         {
             if (featureIndex == Context.FEATURE_DYNAMIC_SCOPE) {

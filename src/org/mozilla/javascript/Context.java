@@ -360,9 +360,6 @@ public class Context
     /**
      * Same as calling {@link ContextFactory#enterContext()} on the global
      * ContextFactory instance.
-     * @deprecated use {@link ContextFactory#enter()} or 
-     * {@link ContextFactory#call(ContextAction)} instead as this method relies
-     * on usage of a static singleton "global" ContextFactory.
      * @return a Context associated with the current thread
      * @see #getCurrentContext()
      * @see #exit()

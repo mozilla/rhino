@@ -16,13 +16,13 @@ import org.mozilla.javascript.Scriptable;
 public class Bug421071Test extends TestCase {
     private ContextFactory factory;
     private TopLevelScope globalScope;
-    private Script script;
+    private Script testScript;
 
     public void testProblemReplicator() throws Exception {
         // before debugging please put the breakpoint in the
         // NativeJavaPackage.getPkgProperty()
         // and observe names passed in there
-        script = compileScript();
+        testScript = compileScript();
         runTestScript(); // this one does not get to the
                             // NativeJavaPackage.getPkgProperty() on my
                             // variables
@@ -55,7 +55,7 @@ public class Bug421071Test extends TestCase {
         // will start new thread to get as close as possible to original
         // environment, however the same behavior is exposed using new
         // ScriptRunner(script).run();
-        Thread thread = new Thread(new ScriptRunner(script));
+        Thread thread = new Thread(new ScriptRunner(testScript));
         thread.start();
         thread.join();
     }
@@ -79,6 +79,7 @@ public class Bug421071Test extends TestCase {
         return globalScope;
     }
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         globalScope = createGlobalScope();

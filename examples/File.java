@@ -113,6 +113,7 @@ public class File extends ScriptableObject {
     /**
      * Returns the name of this JavaScript class, "File".
      */
+    @Override
     public String getClassName() {
         return "File";
     }
@@ -238,6 +239,7 @@ public class File extends ScriptableObject {
      *
      * Close the file when this object is collected.
      */
+    @Override
     protected void finalize() {
         try {
             jsFunction_close();
