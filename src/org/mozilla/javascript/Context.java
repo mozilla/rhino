@@ -2115,9 +2115,6 @@ public class Context
      * The method is useful to observe long running scripts and if necessary
      * to terminate them.
      * <p>
-     * The instruction counting support is available only for interpreted
-     * scripts generated when the optimization level is set to -1.
-     * <p>
      * The default implementation calls
      * {@link ContextFactory#observeInstructionCount(Context cx,
      *                                               int instructionCount)}
