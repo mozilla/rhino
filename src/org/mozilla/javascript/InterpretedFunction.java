@@ -166,7 +166,7 @@ final class InterpretedFunction extends NativeFunction implements Script
 
     public Object exec(Context cx, Scriptable scope)
     {
-        if (idata.itsFunctionType != 0) {
+        if (!isScript()) {
             // Can only be applied to scripts
             throw new IllegalStateException();
         }
@@ -177,6 +177,10 @@ final class InterpretedFunction extends NativeFunction implements Script
         }
         return Interpreter.interpret(
             this, cx, scope, scope, ScriptRuntime.emptyArgs);
+    }
+    
+    public boolean isScript() {
+        return idata.itsFunctionType == 0;
     }
 
     @Override

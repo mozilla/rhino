@@ -172,6 +172,15 @@ final class MemberBox implements Serializable
                 // Retry after recovery
                 return method.invoke(target, args);
             }
+        } catch (InvocationTargetException ite) {
+            // Must allow ContinuationPending exceptions to propagate unhindered
+            Throwable e = ite;
+            do {
+                e = ((InvocationTargetException) e).getTargetException();
+            } while ((e instanceof InvocationTargetException));
+            if (e instanceof ContinuationPending) 
+                throw (ContinuationPending) e;
+            throw Context.throwAsScriptRuntimeEx(e);            
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }

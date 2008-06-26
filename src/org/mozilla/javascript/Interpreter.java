@@ -253,6 +253,7 @@ public class Interpreter implements Evaluator
 
         DebugFrame debuggerFrame;
         boolean useActivation;
+        boolean isContinuationsTopFrame;
 
         Scriptable thisObj;
         Scriptable[] scriptRegExps;
@@ -2480,6 +2481,8 @@ public class Interpreter implements Evaluator
         CallFrame frame = new CallFrame();
         initFrame(cx, scope, thisObj, args, null, 0, args.length,
                   ifun, null, frame);
+        frame.isContinuationsTopFrame = cx.isContinuationsTopCall;
+        cx.isContinuationsTopCall = false;
 
         return interpretLoop(cx, frame, null);
     }
@@ -2795,37 +2798,7 @@ switch (op) {
     case Token.SHEQ :
     case Token.SHNE : {
         --stackTop;
-        Object rhs = stack[stackTop + 1];
-        Object lhs = stack[stackTop];
-        boolean valBln;
-      shallow_compare: {
-            double rdbl, ldbl;
-            if (rhs == DBL_MRK) {
-                rdbl = sDbl[stackTop + 1];
-                if (lhs == DBL_MRK) {
-                    ldbl = sDbl[stackTop];
-                } else if (lhs instanceof Number) {
-                    ldbl = ((Number)lhs).doubleValue();
-                } else {
-                    valBln = false;
-                    break shallow_compare;
-                }
-            } else if (lhs == DBL_MRK) {
-                ldbl = sDbl[stackTop];
-                if (rhs == DBL_MRK) {
-                    rdbl = sDbl[stackTop + 1];
-                } else if (rhs instanceof Number) {
-                    rdbl = ((Number)rhs).doubleValue();
-                } else {
-                    valBln = false;
-                    break shallow_compare;
-                }
-            } else {
-                valBln = ScriptRuntime.shallowEq(lhs, rhs);
-                break shallow_compare;
-            }
-            valBln = (ldbl == rdbl);
-        }
+        boolean valBln = shallowEquals(stack, sDbl, stackTop);
         valBln ^= (op == Token.SHNE);
         stack[stackTop] = ScriptRuntime.wrapBoolean(valBln);
         continue Loop;
@@ -3313,16 +3286,17 @@ switch (op) {
         if (fun instanceof IdFunctionObject) {
             IdFunctionObject ifun = (IdFunctionObject)fun;
             if (Continuation.isContinuationConstructor(ifun)) {
-                captureContinuation(cx, frame, stackTop);
+                frame.stack[stackTop] = captureContinuation(cx,
+                        frame.parentFrame, false);
                 continue Loop;
             }
             // Bug 405654 -- make best effort to keep Function.apply and 
             // Function.call within this interpreter loop invocation
-            if(BaseFunction.isApplyOrCall(ifun)) {
+            if (BaseFunction.isApplyOrCall(ifun)) {
                 Callable applyCallable = ScriptRuntime.getCallable(funThisObj);
-                if(applyCallable instanceof InterpretedFunction) {
+                if (applyCallable instanceof InterpretedFunction) {
                     InterpretedFunction iApplyCallable = (InterpretedFunction)applyCallable;
-                    if(frame.fnOrScript.securityDomain == iApplyCallable.securityDomain) {
+                    if (frame.fnOrScript.securityDomain == iApplyCallable.securityDomain) {
                         frame = initFrameForApplyOrCall(cx, frame, indexReg,
                                 stack, sDbl, stackTop, op, calleeScope, ifun,
                                 iApplyCallable);
@@ -3332,8 +3306,12 @@ switch (op) {
             }
         }
 
+        cx.lastInterpreterFrame = frame;
+        frame.savedCallOp = op;
+        frame.savedStackTop = stackTop;
         stack[stackTop] = fun.call(cx, calleeScope, funThisObj, 
                 getArgsArray(stack, sDbl, stackTop + 2, indexReg));
+        cx.lastInterpreterFrame = null;
 
         continue Loop;
     }
@@ -3371,7 +3349,8 @@ switch (op) {
         if (fun instanceof IdFunctionObject) {
             IdFunctionObject ifun = (IdFunctionObject)fun;
             if (Continuation.isContinuationConstructor(ifun)) {
-                captureContinuation(cx, frame, stackTop);
+                frame.stack[stackTop] =
+                    captureContinuation(cx, frame.parentFrame, false);
                 continue Loop;
             }
         }
@@ -4014,6 +3993,37 @@ switch (op) {
                ? interpreterResult
                : ScriptRuntime.wrapNumber(interpreterResultDbl);
     }
+    
+    private static boolean shallowEquals(Object[] stack, double[] sDbl,
+            int stackTop)
+    {
+        Object rhs = stack[stackTop + 1];
+        Object lhs = stack[stackTop];
+        final Object DBL_MRK = UniqueTag.DOUBLE_MARK;
+        double rdbl, ldbl;
+        if (rhs == DBL_MRK) {
+            rdbl = sDbl[stackTop + 1];
+            if (lhs == DBL_MRK) {
+                ldbl = sDbl[stackTop];
+            } else if (lhs instanceof Number) {
+                ldbl = ((Number)lhs).doubleValue();
+            } else {
+                return false;
+            }
+        } else if (lhs == DBL_MRK) {
+            ldbl = sDbl[stackTop];
+            if (rhs == DBL_MRK) {
+                rdbl = sDbl[stackTop + 1];
+            } else if (rhs instanceof Number) {
+                rdbl = ((Number)rhs).doubleValue();
+            } else {
+                return false;
+            }
+        } else {
+            return ScriptRuntime.shallowEq(lhs, rhs);
+        }
+        return (ldbl == rdbl);
+    }
 
     private static CallFrame processThrowable(Context cx, Object throwable,
                                               CallFrame frame, int indexReg,
@@ -4469,16 +4479,26 @@ switch (op) {
         }
         frame.savedCallOp = 0;
     }
+    
+    public static Continuation captureContinuation(Context cx) {
+        if (cx.lastInterpreterFrame == null ||
+            !(cx.lastInterpreterFrame instanceof CallFrame))
+        {
+            throw new IllegalStateException("Interpreter frames not found");
+        }
+        return captureContinuation(cx, (CallFrame)cx.lastInterpreterFrame, true);
+    }
 
-    private static void captureContinuation(Context cx, CallFrame frame,
-                                            int stackTop)
+    private static Continuation captureContinuation(Context cx, CallFrame frame,
+        boolean requireContinuationsTopFrame)
     {
         Continuation c = new Continuation();
         ScriptRuntime.setObjectProtoAndParent(
             c, ScriptRuntime.getTopCallScope(cx));
 
-        // Make sure that all frames upstack frames are frozen
-        CallFrame x = frame.parentFrame;
+        // Make sure that all frames are frozen
+        CallFrame x = frame;
+        CallFrame outermost = frame;
         while (x != null && !x.frozen) {
             x.frozen = true;
             // Allow to GC unused stack space
@@ -4496,11 +4516,23 @@ switch (op) {
                 // object so it shall not be cleared: see comments in
                 // setCallResult
             }
+            outermost = x;
             x = x.parentFrame;
         }
+        
+        while (outermost.parentFrame != null)
+            outermost = outermost.parentFrame;
 
-        c.initImplementation(frame.parentFrame);
-        frame.stack[stackTop] = c;
+        if (requireContinuationsTopFrame && !outermost.isContinuationsTopFrame)
+        {
+            throw new IllegalStateException("Cannot capture continuation " +
+                    "from JavaScript code not called directly by " +
+                    "executeScriptWithContinuations or " +
+                    "callFunctionWithContinuations");
+        }
+        
+        c.initImplementation(frame);
+        return c;
     }
 
     private static int stack_int32(CallFrame frame, int i)

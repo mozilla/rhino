@@ -1121,12 +1121,123 @@ public class Context
             return null;
         }
     }
+    
+    /**
+     * Execute script that may pause execution by capturing a continuation.
+     * Caller must be prepared to catch a ContinuationPending exception
+     * and resume execution by calling 
+     * {@link #resumeContinuation(ContinuationPending, Object)}.
+     * @param script The script to execute. Script must have been compiled
+     *      with interpreted mode (optimization level -1)
+     * @param scope The scope to execute the script against
+     * @throws ContinuationPending if the script calls a function that results
+     *      in a call to {@link #captureContinuation()}
+     * @since 1.7 Release 2
+     */
+    public Object executeScriptWithContinuations(Script script,
+            Scriptable scope)
+        throws ContinuationPending
+    {
+        if (!(script instanceof InterpretedFunction) ||
+            !((InterpretedFunction)script).isScript())
+        {
+            // Can only be applied to scripts
+            throw new IllegalArgumentException("Script argument was not" +
+                    " a script or was not created by interpreted mode ");
+        }
+        return callFunctionWithContinuations((InterpretedFunction) script,
+                scope, ScriptRuntime.emptyArgs);
+    }
+    
+    /**
+     * Call function that may pause execution by capturing a continuation.
+     * Caller must be prepared to catch a ContinuationPending exception
+     * and resume execution by calling 
+     * {@link #resumeContinuation(ContinuationPending, Object)}.
+     * @param function The function to call. The function must have been
+     *      compiled with interpreted mode (optimization level -1)
+     * @param scope The scope to execute the script against
+     * @param args The arguments for the function
+     * @throws ContinuationPending if the script calls a function that results
+     *      in a call to {@link #captureContinuation()}
+     * @since 1.7 Release 2
+     */
+    public Object callFunctionWithContinuations(Callable function,
+            Scriptable scope, Object[] args)
+        throws ContinuationPending
+    {
+        if (!(function instanceof InterpretedFunction)) {
+            // Can only be applied to scripts
+            throw new IllegalArgumentException("Function argument was not" +
+                    " created by interpreted mode ");
+        }
+        if (ScriptRuntime.hasTopCall(this)) {
+            throw new IllegalStateException("Cannot have any pending top " +
+                    "calls when executing a script with continuations");
+        }
+        // Annotate so we can check later to ensure no java code in
+        // intervening frames
+        isContinuationsTopCall = true;
+        try {
+            return ScriptRuntime.doTopCall(function, this, scope, scope,
+                    args);
+        } catch (ContinuationPending continuation) {
+            throw continuation;
+        }
+    }
+    
+    /**
+     * Capture a continuation from the current execution. The execution must
+     * have been started via a call to 
+     * {@link #executeScriptWithContinuations(Script, Scriptable)} or
+     * {@link #callFunctionWithContinuations(Callable, Scriptable, Object[])}.
+     * This implies that the code calling
+     * this method must have been called as a function from the
+     * JavaScript script. Also, there cannot be any non-JavaScript code
+     * between the JavaScript frames (e.g., a call to eval()). The
+     * ContinuationPending exception returned must be thrown.
+     * @return A ContinuationPending exception that must be thrown
+     * @since 1.7 Release 2
+     */
+    public ContinuationPending captureContinuation() {
+        ContinuationPending pending = new ContinuationPending(
+                Interpreter.captureContinuation(this));
+        Scriptable scope = ScriptRuntime.getTopCallScope(this);
+        pending.setScope(scope);
+        return pending;
+    }
+    
+    /**
+     * Restarts execution of the JavaScript suspended at the call
+     * to {@link #captureContinuation()}. Execution of the code will resume
+     * with the functionResult as the result of the call that captured the
+     * continuation.
+     * Execution of the script will either conclude normally and the
+     * result returned, another continuation will be captured and
+     * thrown, or the script will terminate abnormally and throw an exception.
+     * @param continuation The value returned by a previous call to
+     * {@link #captureContinuation()}
+     * @param functionResult This value will appear to the code being resumed
+     *      as the result of the function that captured the continuation
+     * @throws ContinuationPending if another continuation is captured before
+     *      the code terminates
+     * @since 1.7 Release 2
+     */
+    public Object resumeContinuation(ContinuationPending continuation,
+            Object functionResult)
+            throws ContinuationPending
+    {
+        Object[] args = { functionResult };
+        return Interpreter.restartContinuation(
+                continuation.getContinuationState(),
+                this, continuation.getScope(), args);
+    }
 
     /**
      * Check whether a string is ready to be compiled.
      * <p>
      * stringIsCompilableUnit is intended to support interactive compilation of
-     * javascript.  If compiling the string would result in an error
+     * JavaScript.  If compiling the string would result in an error
      * that might be fixed by appending more source, this method
      * returns false.  In every other case, it returns true.
      * <p>
@@ -2456,6 +2567,7 @@ public class Context
     private Object sealKey;
 
     Scriptable topCallScope;
+    boolean isContinuationsTopCall;
     NativeCall currentActivationCall;
     XMLLib cachedXMLLib;
 
