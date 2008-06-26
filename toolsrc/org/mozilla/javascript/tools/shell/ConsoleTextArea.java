@@ -130,8 +130,8 @@ public class ConsoleTextArea
         history = new java.util.ArrayList<String>();
         console1 = new ConsoleWriter(this);
         console2 = new ConsoleWriter(this);
-        out = new PrintStream(console1);
-        err = new PrintStream(console2);
+        out = new PrintStream(console1, true);
+        err = new PrintStream(console2, true);
         PipedOutputStream outPipe = new PipedOutputStream();
         inPipe = new PrintWriter(outPipe);
         in = new PipedInputStream();
