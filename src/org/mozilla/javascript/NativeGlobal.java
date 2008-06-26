@@ -607,7 +607,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
 
     private static char toHexChar(int i) {
         if (i >> 4 != 0) Kit.codeBug();
-        return (char)((i < 10) ? i + '0' : i - 10 + 'a');
+        return (char)((i < 10) ? i + '0' : i - 10 + 'A');
     }
 
     private static int unHex(char c) {
