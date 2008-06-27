@@ -47,6 +47,7 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.io.*;
 import org.mozilla.javascript.debug.DebuggableObject;
@@ -1113,6 +1114,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         ctor.initAsConstructor(scope, proto);
 
         Method finishInit = null;
+        HashSet<String> names = new HashSet<String>(methods.length);
         for (int i=0; i < methods.length; i++) {
             if (methods[i] == ctorMember) {
                 continue;
@@ -1152,6 +1154,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             } else {
                 continue;
             }
+            String propName = name.substring(prefix.length());
+            if (names.contains(propName)) {
+                throw Context.reportRuntimeError2("duplicate.defineClass.name",
+                        name, propName);
+            }
+            names.add(propName);
             name = name.substring(prefix.length());
             if (prefix == setterPrefix)
                 continue;   // deal with set when we see get
