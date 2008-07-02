@@ -334,6 +334,8 @@ class XmlNode implements Serializable {
     }
 
     static class XmlNodeUserDataHandler implements UserDataHandler, Serializable {
+        private static final long serialVersionUID = 4666895518900769588L;
+
         public void handle(short operation, String key, Object data, Node src, Node dest) {
         }
     }
@@ -660,6 +662,8 @@ class XmlNode implements Serializable {
 
     //    TODO    Where is this class used?  No longer using it in QName implementation
     static class QName implements Serializable {
+        private static final long serialVersionUID = -6587069811691451077L;
+
         static QName create(Namespace namespace, String localName) {
             //    A null namespace indicates a wild-card match for any namespace
             //    A null localName indicates "*" from the point of view of ECMA357
@@ -770,6 +774,7 @@ class XmlNode implements Serializable {
     }
 
     static class InternalList implements Serializable {
+        private static final long serialVersionUID = -3633151157292048978L;
         private List<XmlNode> list;
 
         InternalList() {

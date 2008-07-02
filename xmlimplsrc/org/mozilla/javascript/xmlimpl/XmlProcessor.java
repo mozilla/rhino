@@ -78,6 +78,8 @@ class XmlProcessor implements Serializable {
     
     private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
 
+        private static final long serialVersionUID = 6918417235413084055L;
+
         private void throwError(SAXParseException e) {
             throw ScriptRuntime.constructError("TypeError", e.getMessage(),
                 e.getLineNumber() - 1);
