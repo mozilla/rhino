@@ -36,16 +36,23 @@
 
 package org.mozilla.javascript.xmlimpl;
 
-import java.util.*;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.w3c.dom.*;
-
-import org.mozilla.javascript.*;
-
-//    Disambiguate with org.mozilla.javascript
+import org.mozilla.javascript.Undefined;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.ProcessingInstruction;
+import org.w3c.dom.UserDataHandler;
 
-class XmlNode {
+class XmlNode implements Serializable {
     private static final String XML_NAMESPACES_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 
     private static final String USER_DATA_XMLNODE_KEY = XmlNode.class.getName();
@@ -118,10 +125,7 @@ class XmlNode {
 
     private static final long serialVersionUID = 1L;
 
-    private UserDataHandler events = new UserDataHandler() {
-        public void handle(short operation, String key, Object data, Node src, Node dest) {
-        }
-    };
+    private UserDataHandler events = new XmlNodeUserDataHandler();
 
     private Node dom;
 
@@ -327,6 +331,11 @@ class XmlNode {
     Namespace getNamespaceDeclaration() {
         if (dom.getPrefix() == null) return getNamespaceDeclaration("");
         return getNamespaceDeclaration(dom.getPrefix());
+    }
+
+    static class XmlNodeUserDataHandler implements UserDataHandler, Serializable {
+        public void handle(short operation, String key, Object data, Node src, Node dest) {
+        }
     }
 
     private static class Namespaces {
@@ -577,7 +586,13 @@ class XmlNode {
         }
     }
 
-    static class Namespace {
+    static class Namespace implements Serializable {
+
+        /**
+         * Serial version id for Namespace with fields prefix and uri
+         */
+        private static final long serialVersionUID = 4073904386884677090L;
+
         static Namespace create(String prefix, String uri) {
             if (prefix == null) throw new IllegalArgumentException("Empty string represents default namespace prefix");
             if (uri == null) throw new IllegalArgumentException("Namespace may not lack a URI");
@@ -644,7 +659,7 @@ class XmlNode {
     }
 
     //    TODO    Where is this class used?  No longer using it in QName implementation
-    static class QName {
+    static class QName implements Serializable {
         static QName create(Namespace namespace, String localName) {
             //    A null namespace indicates a wild-card match for any namespace
             //    A null localName indicates "*" from the point of view of ECMA357
@@ -754,7 +769,7 @@ class XmlNode {
         }
     }
 
-    static class InternalList {
+    static class InternalList implements Serializable {
         private List<XmlNode> list;
 
         InternalList() {

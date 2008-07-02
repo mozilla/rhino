@@ -39,6 +39,10 @@ package org.mozilla.javascript.xmlimpl;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -49,20 +53,30 @@ import org.w3c.dom.Node;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 
-class XmlProcessor {
+class XmlProcessor implements Serializable {
+    
+    private static final long serialVersionUID = 6903514433204808713L;
+    
     private boolean ignoreComments;
     private boolean ignoreProcessingInstructions;
     private boolean ignoreWhitespace;
     private boolean prettyPrint;
     private int prettyIndent;
 
-    private javax.xml.parsers.DocumentBuilderFactory dom;
-    private javax.xml.transform.TransformerFactory xform;
-    private DocumentBuilder documentBuilder;
+    private transient javax.xml.parsers.DocumentBuilderFactory dom;
+    private transient javax.xml.transform.TransformerFactory xform;
+    private transient DocumentBuilder documentBuilder;
     private RhinoSAXErrorHandler errorHandler = new RhinoSAXErrorHandler();
 
-
-    private static class RhinoSAXErrorHandler implements ErrorHandler {
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        this.dom = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        this.dom.setNamespaceAware(true);
+        this.dom.setIgnoringComments(false);
+        this.xform = javax.xml.transform.TransformerFactory.newInstance();
+    }
+    
+    private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
 
         private void throwError(SAXParseException e) {
             throw ScriptRuntime.constructError("TypeError", e.getMessage(),
