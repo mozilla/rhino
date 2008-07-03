@@ -2067,7 +2067,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             return true;
         if (slot instanceof GetterSlot) {
             Object setterObj = ((GetterSlot)slot).setter;
-            if (setterObj != null) {
+            if (setterObj == null) {
+                // Odd case: Assignment to a property with only a getter 
+                // defined. The assignment cancels out the getter.
+                ((GetterSlot)slot).getter = null;
+            } else {
                 Context cx = Context.getContext();
                 if (setterObj instanceof MemberBox) {
                     MemberBox nativeSetter = (MemberBox)setterObj;
