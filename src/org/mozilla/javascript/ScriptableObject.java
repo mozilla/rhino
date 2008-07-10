@@ -1149,9 +1149,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 }
             } else if (name.startsWith(getterPrefix)) {
                 prefix = getterPrefix;
-            } else if (name.startsWith(setterPrefix)) {
-                prefix = setterPrefix;
             } else {
+                // note that setterPrefix is among the unhandled names here -
+                // we deal with that when we see the getter
                 continue;
             }
             String propName = name.substring(prefix.length());
@@ -1161,8 +1161,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
             names.add(propName);
             name = name.substring(prefix.length());
-            if (prefix == setterPrefix)
-                continue;   // deal with set when we see get
             if (prefix == getterPrefix) {
                 if (!(proto instanceof ScriptableObject)) {
                     throw Context.reportRuntimeError2(
