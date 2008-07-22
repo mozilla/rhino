@@ -41,6 +41,7 @@ package org.mozilla.javascript;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.io.Serializable;
 
 /**
  * Cache of generated classes and data structures to access Java runtime
@@ -50,17 +51,14 @@ import java.util.HashMap;
  *
  * @since Rhino 1.5 Release 5
  */
-public class ClassCache
+public class ClassCache implements Serializable
 {
-    private static final Object AKEY = new Object();
+    private static final long serialVersionUID = -8866246036237312215L;
+    private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
-    private HashMap<Class<?>,JavaMembers> classTable
-        = new HashMap<Class<?>,JavaMembers>();
-    private HashMap<Class<?>,JavaMembers> javaAdapterGeneratedClasses
-        = new HashMap<Class<?>,JavaMembers>();
-    private HashMap<JavaAdapter.JavaAdapterSignature,Class<?>> classAdapterCache
-        = new HashMap<JavaAdapter.JavaAdapterSignature,Class<?>>();
-    private HashMap<Class<?>,Object> interfaceAdapterCache;
+    private transient HashMap<Class<?>,JavaMembers> classTable;
+    private transient HashMap<JavaAdapter.JavaAdapterSignature,Class<?>> classAdapterCache;
+    private transient HashMap<Class<?>,Object> interfaceAdapterCache;
     private int generatedClassSerial;
 
     /**
@@ -115,9 +113,8 @@ public class ClassCache
      */
     public synchronized void clearCaches()
     {
-        classTable.clear();
-        javaAdapterGeneratedClasses.clear();
-        classAdapterCache.clear();
+        classTable = null;
+        classAdapterCache = null;
         interfaceAdapterCache = null;
     }
 
@@ -161,11 +158,17 @@ public class ClassCache
      * @return a map from classes to associated JavaMembers objects
      */
     Map<Class<?>,JavaMembers> getClassCacheMap() {
+        if (classTable == null) {
+            classTable = new HashMap<Class<?>,JavaMembers>();
+        }
         return classTable;
     }
     
     Map<JavaAdapter.JavaAdapterSignature,Class<?>> getInterfaceAdapterCacheMap()
     {
+        if (classAdapterCache == null) {
+            classAdapterCache = new HashMap<JavaAdapter.JavaAdapterSignature,Class<?>>();
+        }
         return classAdapterCache;
     }
     

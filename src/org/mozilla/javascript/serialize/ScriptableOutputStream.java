@@ -82,9 +82,19 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         table = new HashMap<Object,String>();
         table.put(scope, "");
         enableReplaceObject(true);
-        excludeStandardObjectNames();
+        excludeStandardObjectNames(); // XXX
     }
-
+    
+    public void excludeAllIds(Object[] ids) {
+        for (Object id: ids) {
+            if (id instanceof String &&
+                (scope.get((String) id, scope) instanceof Scriptable))
+            {
+                this.addExcludedName((String)id);
+            }
+        }
+    }
+    
     /**
      * Adds a qualified name to the list of object to be excluded from
      * serialization. Names excluded from serialization are looked up
@@ -109,7 +119,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
     }
 
     /**
-     * Adds a qualified name to the list of object to be excluded from
+     * Adds a qualified name to the list of objects to be excluded from
      * serialization. Names excluded from serialization are looked up
      * in the new scope and replaced upon deserialization.
      * @param name a fully qualified name (of the form "a.b.c", where

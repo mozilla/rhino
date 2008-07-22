@@ -147,8 +147,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     // cache; may be removed for smaller memory footprint
     private transient Slot lastAccess = REMOVED;
 
-    // associated values are not serialized
-    private transient volatile Map<Object,Object> associatedValues;
+    private volatile Map<Object,Object> associatedValues;
 
     private static final int SLOT_QUERY = 1;
     private static final int SLOT_MODIFY = 2;
@@ -544,7 +543,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * XXX: write docs.
      */
     public void setGetterOrSetter(String name, int index,
-                                  Callable getterOrSeter, boolean isSetter)
+                                  Callable getterOrSetter, boolean isSetter)
     {
         if (name != null && index != 0)
             throw new IllegalArgumentException(name);
@@ -554,9 +553,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                                                SLOT_MODIFY_GETTER_SETTER);
         gslot.checkNotReadonly();
         if (isSetter) {
-            gslot.setter = getterOrSeter;
+            gslot.setter = getterOrSetter;
         } else {
-            gslot.getter = getterOrSeter;
+            gslot.getter = getterOrSetter;
         }
         gslot.value = Undefined.instance;
     }

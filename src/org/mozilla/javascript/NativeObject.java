@@ -50,7 +50,7 @@ public class NativeObject extends IdScriptableObject
 {
     static final long serialVersionUID = -6345305608474346996L;
 
-    private static final Object OBJECT_TAG = new Object();
+    private static final Object OBJECT_TAG = "Object";
 
     static void init(Scriptable scope, boolean sealed)
     {

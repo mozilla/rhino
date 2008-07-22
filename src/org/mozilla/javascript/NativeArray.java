@@ -63,7 +63,7 @@ public class NativeArray extends IdScriptableObject
      * always gets at least an object back, even when Array == null.
      */
 
-    private static final Object ARRAY_TAG = new Object();
+    private static final Object ARRAY_TAG = "Array";
     private static final Integer NEGATIVE_ONE = new Integer(-1);
 
     static void init(Scriptable scope, boolean sealed)

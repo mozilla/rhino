@@ -197,7 +197,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         return thisObj;
     }
 
-    private static final Object FTAG = new Object();
+    private static final Object FTAG = "With";
 
     private static final int
         Id_constructor = 1;

@@ -1,6 +1,5 @@
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.continuations.Continuation;
 
 /**
  * Exception thrown by 
@@ -9,13 +8,13 @@ import org.mozilla.javascript.continuations.Continuation;
  * when execution encounters a continuation captured by
  * {@link org.mozilla.javascript.Context#captureContinuation()}.
  * Exception will contain the captured state needed to restart the continuation
- * with {@link org.mozilla.javascript.Context#resumeContinuation(ContinuationPending, Object)}.
+ * with {@link org.mozilla.javascript.Context#resumeContinuation(Object, Scriptable, Object)}.
  * @author Norris Boyd
  */
 public class ContinuationPending extends RuntimeException {
-    private Continuation continuationState;
+    private static final long serialVersionUID = 4956008116771118856L;
+    private NativeContinuation continuationState;
     private Object applicationState;
-    private Scriptable scope;
     
     /**
      * Construct a ContinuationPending exception. Internal call only;
@@ -24,22 +23,30 @@ public class ContinuationPending extends RuntimeException {
      * and {@link org.mozilla.javascript.Context#callFunctionWithContinuations(Callable, Scriptable, Object[])}
      * @param continuationState Internal Continuation object
      */
-    ContinuationPending(Continuation continuationState) {
+    ContinuationPending(NativeContinuation continuationState) {
         this.continuationState = continuationState;
+    }
+    
+    /**
+     * Get continuation object. The only
+     * use for this object is to be passed to 
+     * {@link org.mozilla.javascript.Context#resumeContinuation(Continuation, Scriptable, Object)}.
+     * @return continuation object
+     */
+    public Object getContinuation() {
+        return continuationState;
     }
     
     /**
      * @return internal continuation state
      */
-    Continuation getContinuationState() {
+    NativeContinuation getContinuationState() {
         return continuationState;
     }
     
     /**
      * Store an arbitrary object that applications can use to associate
      * their state with the continuation.
-     * Note that this application state must be serializable if the application
-     * wishes to serialize the continuation.
      * @param applicationState arbitrary application state
      */
     public void setApplicationState(Object applicationState) {
@@ -51,13 +58,5 @@ public class ContinuationPending extends RuntimeException {
      */
     public Object getApplicationState() {
         return applicationState;
-    }
-
-    public Scriptable getScope() {
-        return scope;
-    }
-
-    public void setScope(Scriptable scope) {
-        this.scope = scope;
     }
 }

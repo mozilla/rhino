@@ -1126,7 +1126,7 @@ public class Context
      * Execute script that may pause execution by capturing a continuation.
      * Caller must be prepared to catch a ContinuationPending exception
      * and resume execution by calling 
-     * {@link #resumeContinuation(ContinuationPending, Object)}.
+     * {@link #resumeContinuation(Object, Scriptable, Object)}.
      * @param script The script to execute. Script must have been compiled
      *      with interpreted mode (optimization level -1)
      * @param scope The scope to execute the script against
@@ -1153,7 +1153,7 @@ public class Context
      * Call function that may pause execution by capturing a continuation.
      * Caller must be prepared to catch a ContinuationPending exception
      * and resume execution by calling 
-     * {@link #resumeContinuation(ContinuationPending, Object)}.
+     * {@link #resumeContinuation(Object, Scriptable, Object)}.
      * @param function The function to call. The function must have been
      *      compiled with interpreted mode (optimization level -1)
      * @param scope The scope to execute the script against
@@ -1178,12 +1178,7 @@ public class Context
         // Annotate so we can check later to ensure no java code in
         // intervening frames
         isContinuationsTopCall = true;
-        try {
-            return ScriptRuntime.doTopCall(function, this, scope, scope,
-                    args);
-        } catch (ContinuationPending continuation) {
-            throw continuation;
-        }
+        return ScriptRuntime.doTopCall(function, this, scope, scope, args);
     }
     
     /**
@@ -1200,11 +1195,8 @@ public class Context
      * @since 1.7 Release 2
      */
     public ContinuationPending captureContinuation() {
-        ContinuationPending pending = new ContinuationPending(
+        return new ContinuationPending(
                 Interpreter.captureContinuation(this));
-        Scriptable scope = ScriptRuntime.getTopCallScope(this);
-        pending.setScope(scope);
-        return pending;
     }
     
     /**
@@ -1215,22 +1207,22 @@ public class Context
      * Execution of the script will either conclude normally and the
      * result returned, another continuation will be captured and
      * thrown, or the script will terminate abnormally and throw an exception.
-     * @param continuation The value returned by a previous call to
-     * {@link #captureContinuation()}
+     * @param continuation The value returned by 
+     * {@link ContinuationPending.getContinuation()}
      * @param functionResult This value will appear to the code being resumed
      *      as the result of the function that captured the continuation
      * @throws ContinuationPending if another continuation is captured before
      *      the code terminates
      * @since 1.7 Release 2
      */
-    public Object resumeContinuation(ContinuationPending continuation,
-            Object functionResult)
+    public Object resumeContinuation(Object continuation,
+            Scriptable scope, Object functionResult)
             throws ContinuationPending
     {
         Object[] args = { functionResult };
         return Interpreter.restartContinuation(
-                continuation.getContinuationState(),
-                this, continuation.getScope(), args);
+                (org.mozilla.javascript.NativeContinuation) continuation,
+                this, scope, args);
     }
 
     /**

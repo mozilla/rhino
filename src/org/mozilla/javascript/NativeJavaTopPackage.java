@@ -181,7 +181,7 @@ public class NativeJavaTopPackage
         throw Context.reportRuntimeError0("msg.not.java.obj");
     }
 
-    private static final Object FTAG = new Object();
+    private static final Object FTAG = "JavaTopPackage";
     private static final int Id_getClass = 1;
 }
 

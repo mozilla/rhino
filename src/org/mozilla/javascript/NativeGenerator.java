@@ -39,7 +39,7 @@ package org.mozilla.javascript;
 public final class NativeGenerator extends IdScriptableObject {
     private static final long serialVersionUID = 1645892441041347273L;
 
-    private static final Object GENERATOR_TAG = new Object();
+    private static final Object GENERATOR_TAG = "Generator";
 
     static NativeGenerator init(ScriptableObject scope, boolean sealed) {
         // Generator

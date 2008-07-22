@@ -51,7 +51,7 @@ import org.mozilla.javascript.xml.*;
  */
 abstract class XMLObjectImpl extends XMLObject
 {
-    private static final Object XMLOBJECT_TAG = new Object();
+    private static final Object XMLOBJECT_TAG = "XMLObject";
 
     protected final XMLLibImpl lib;
     protected boolean prototypeFlag;

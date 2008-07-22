@@ -51,7 +51,7 @@ public final class NativeCall extends IdScriptableObject
 {
     static final long serialVersionUID = -7471457301304454454L;
 
-    private static final Object CALL_TAG = new Object();
+    private static final Object CALL_TAG = "Call";
 
     static void init(Scriptable scope, boolean sealed)
     {

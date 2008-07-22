@@ -772,7 +772,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
         return utf8Length;
     }
 
-    private static final Object FTAG = new Object();
+    private static final Object FTAG = "Global";
 
     private static final int
         Id_decodeURI           =  1,

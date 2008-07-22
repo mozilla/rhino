@@ -49,7 +49,7 @@ final class NativeMath extends IdScriptableObject
 {
     static final long serialVersionUID = -8838847185801131569L;
 
-    private static final Object MATH_TAG = new Object();
+    private static final Object MATH_TAG = "Math";
 
     static void init(Scriptable scope, boolean sealed)
     {

@@ -1135,6 +1135,6 @@ public final class JavaAdapter implements IdFunctionCall
         return array;
     }
 
-    private static final Object FTAG = new Object();
+    private static final Object FTAG = "JavaAdapter";
     private static final int Id_JavaAdapter = 1;
 }

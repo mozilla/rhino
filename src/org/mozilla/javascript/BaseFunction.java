@@ -51,7 +51,7 @@ public class BaseFunction extends IdScriptableObject implements Function
 
     static final long serialVersionUID = 5311394446546053859L;
 
-    private static final Object FUNCTION_TAG = new Object();
+    private static final Object FUNCTION_TAG = "Function";
 
     static void init(Scriptable scope, boolean sealed)
     {

@@ -51,7 +51,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.mozilla.javascript.continuations.Continuation;
 import org.mozilla.javascript.debug.DebugFrame;
 
 public class Interpreter implements Evaluator
@@ -303,7 +302,7 @@ public class Interpreter implements Evaluator
         Object result;
         double resultDbl;
 
-        ContinuationJump(Continuation c, CallFrame current)
+        ContinuationJump(NativeContinuation c, CallFrame current)
         {
             this.capturedFrame = (CallFrame)c.getImplementation();
             if (this.capturedFrame == null || current == null) {
@@ -2521,7 +2520,7 @@ public class Interpreter implements Evaluator
       return result;
     }
 
-    public static Object restartContinuation(Continuation c, Context cx,
+    public static Object restartContinuation(NativeContinuation c, Context cx,
                                              Scriptable scope, Object[] args)
     {
         if (!ScriptRuntime.hasTopCall(cx)) {
@@ -3264,10 +3263,10 @@ switch (op) {
             }
         }
 
-        if (fun instanceof Continuation) {
+        if (fun instanceof NativeContinuation) {
             // Jump to the captured continuation
             ContinuationJump cjump;
-            cjump = new ContinuationJump((Continuation)fun, frame);
+            cjump = new ContinuationJump((NativeContinuation)fun, frame);
 
             // continuation result is the first argument if any
             // of continuation call
@@ -3285,7 +3284,7 @@ switch (op) {
 
         if (fun instanceof IdFunctionObject) {
             IdFunctionObject ifun = (IdFunctionObject)fun;
-            if (Continuation.isContinuationConstructor(ifun)) {
+            if (NativeContinuation.isContinuationConstructor(ifun)) {
                 frame.stack[stackTop] = captureContinuation(cx,
                         frame.parentFrame, false);
                 continue Loop;
@@ -3348,7 +3347,7 @@ switch (op) {
 
         if (fun instanceof IdFunctionObject) {
             IdFunctionObject ifun = (IdFunctionObject)fun;
-            if (Continuation.isContinuationConstructor(ifun)) {
+            if (NativeContinuation.isContinuationConstructor(ifun)) {
                 frame.stack[stackTop] =
                     captureContinuation(cx, frame.parentFrame, false);
                 continue Loop;
@@ -4480,7 +4479,7 @@ switch (op) {
         frame.savedCallOp = 0;
     }
     
-    public static Continuation captureContinuation(Context cx) {
+    public static NativeContinuation captureContinuation(Context cx) {
         if (cx.lastInterpreterFrame == null ||
             !(cx.lastInterpreterFrame instanceof CallFrame))
         {
@@ -4489,10 +4488,10 @@ switch (op) {
         return captureContinuation(cx, (CallFrame)cx.lastInterpreterFrame, true);
     }
 
-    private static Continuation captureContinuation(Context cx, CallFrame frame,
+    private static NativeContinuation captureContinuation(Context cx, CallFrame frame,
         boolean requireContinuationsTopFrame)
     {
-        Continuation c = new Continuation();
+        NativeContinuation c = new NativeContinuation();
         ScriptRuntime.setObjectProtoAndParent(
             c, ScriptRuntime.getTopCallScope(cx));
 

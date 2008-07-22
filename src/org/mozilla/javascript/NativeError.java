@@ -50,7 +50,7 @@ final class NativeError extends IdScriptableObject
 {
     static final long serialVersionUID = -5338413581437645187L;
 
-    private static final Object ERROR_TAG = new Object();
+    private static final Object ERROR_TAG = "Error";
 
     static void init(Scriptable scope, boolean sealed)
     {

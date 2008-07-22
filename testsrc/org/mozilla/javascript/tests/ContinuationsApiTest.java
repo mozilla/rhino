@@ -13,16 +13,22 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ContinuationPending;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.WrappedException;
-import org.mozilla.javascript.serialize.*;
 
 /**
+ * Test of new API functions for running and resuming scripts containing
+ * continuations, and for suspending a continuation from a Java method
+ * called from JavaScript.
+ * 
  * @author Norris Boyd
  */
 public class ContinuationsApiTest extends TestCase {
   Scriptable globalScope;
     
-  public static class MyClass {
-      public int f(int a) {
+  public static class MyClass implements Serializable {
+
+    private static final long serialVersionUID = 4189002778806232070L;
+
+    public int f(int a) {
           Context cx = Context.enter();
           try {
               ContinuationPending pending = cx.captureContinuation();
@@ -71,7 +77,7 @@ public class ContinuationsApiTest extends TestCase {
           Object applicationState = pending.getApplicationState();
           assertEquals(new Integer(3), applicationState);
           int saved = (Integer) applicationState;
-          Object result = cx.resumeContinuation(pending, saved + 1);
+          Object result = cx.resumeContinuation(pending.getContinuation(), globalScope, saved + 1);
           assertEquals(5, ((Number)result).intValue());
 
       } finally {
@@ -92,20 +98,48 @@ public class ContinuationsApiTest extends TestCase {
               Object applicationState = pending.getApplicationState();
               assertEquals(new Integer(3), applicationState);
               int saved = (Integer) applicationState;
-              cx.resumeContinuation(pending, saved + 1);
+              cx.resumeContinuation(pending.getContinuation(), globalScope, saved + 1);
               fail("Should throw another ContinuationPending");
           } catch (ContinuationPending pending2) {
               Object applicationState2 = pending2.getApplicationState();
               assertEquals(new Integer(6), applicationState2);
               int saved2 = (Integer) applicationState2;
-              Object result2 = cx.resumeContinuation(pending2, saved2 + 1);
+              Object result2 = cx.resumeContinuation(pending2.getContinuation(), globalScope, saved2 + 1);
               assertEquals(13, ((Number)result2).intValue());
           }
       } finally {
           Context.exit();
       }
   }
-  
+
+  public void testScriptWithNestedContinuations() {
+      Context cx = Context.enter();
+      try {
+          cx.setOptimizationLevel(-1); // must use interpreter mode
+          Script script = cx.compileString("myObject.g( myObject.f(1) ) + 2;", 
+                  "test source", 1, null);
+          cx.executeScriptWithContinuations(script, globalScope);
+          fail("Should throw ContinuationPending");
+      } catch (ContinuationPending pending) {
+          try {
+              Object applicationState = pending.getApplicationState();
+              assertEquals(new Integer(1), applicationState);
+              int saved = (Integer) applicationState;
+              cx.resumeContinuation(pending.getContinuation(), globalScope, saved + 1);
+              fail("Should throw another ContinuationPending");
+          } catch (ContinuationPending pending2) {
+              Object applicationState2 = pending2.getApplicationState();
+              assertEquals(new Integer(4), applicationState2);
+              int saved2 = (Integer) applicationState2;
+              Object result2 = cx.resumeContinuation(pending2.getContinuation(), globalScope, saved2 + 2);
+              assertEquals(8, ((Number)result2).intValue());
+          }
+      } finally {
+          Context.exit();
+      }
+  }
+
+
   public void testFunctionWithContinuations() {
       Context cx = Context.enter();
       try {
@@ -121,7 +155,7 @@ public class ContinuationsApiTest extends TestCase {
           Object applicationState = pending.getApplicationState();
           assertEquals(7, ((Number)applicationState).intValue());
           int saved = (Integer) applicationState;
-          Object result = cx.resumeContinuation(pending, saved + 1);
+          Object result = cx.resumeContinuation(pending.getContinuation(), globalScope, saved + 1);
           assertEquals(8, ((Number)result).intValue());
       } finally {
           Context.exit();
@@ -134,6 +168,7 @@ public class ContinuationsApiTest extends TestCase {
    * don't reach all the way to the code called by
    * executeScriptWithContinuations or callFunctionWithContinuations.
    */
+  
   public void testErrorOnEvalCall() {
       Context cx = Context.enter();
       try {
@@ -167,25 +202,22 @@ public class ContinuationsApiTest extends TestCase {
       } catch (ContinuationPending pending) {
           // serialize
           ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          ScriptableOutputStream oos =
-              new ScriptableOutputStream(baos, globalScope);
-          oos.writeObject(pending);
+          ObjectOutputStream oos = new ObjectOutputStream(baos);
+          oos.writeObject(globalScope);
+          oos.writeObject(pending.getContinuation());
           oos.close();
           baos.close();
           byte[] serializedData = baos.toByteArray();
           
           // deserialize
           ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
-          ScriptableInputStream ois = new ScriptableInputStream(bais,
-                  globalScope);
-          ContinuationPending pending2 = (ContinuationPending) ois.readObject();
+          ObjectInputStream ois = new ObjectInputStream(bais);
+          globalScope = (Scriptable) ois.readObject();
+          Object continuation = ois.readObject();
           ois.close();
           bais.close();
           
-          Object applicationState = pending2.getApplicationState();
-          assertEquals(7, ((Number)applicationState).intValue());
-          int saved = (Integer) applicationState;
-          Object result = cx.resumeContinuation(pending2, saved + 1);
+          Object result = cx.resumeContinuation(continuation, globalScope, 8); /// XXX: 8 shoudl be applicationstate + 1
           assertEquals(8, ((Number)result).intValue());
       } finally {
           Context.exit();

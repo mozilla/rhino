@@ -150,7 +150,7 @@ public class ScriptRuntime {
         "getClass",      "org.mozilla.javascript.NativeJavaTopPackage",
         "JavaAdapter",   "org.mozilla.javascript.JavaAdapter",
         "JavaImporter",  "org.mozilla.javascript.ImporterTopLevel",
-        "Continuation",  "org.mozilla.javascript.continuations.Continuation",
+        "Continuation",  "org.mozilla.javascript.continuations.NativeContinuation",
         //	TODO	Grotesque hack using literal string (xml) just to minimize
 		//			changes for now
         "XML",           "(xml)",
@@ -159,7 +159,7 @@ public class ScriptRuntime {
         "QName",         "(xml)",
     };
 
-    private static final Object LIBRARY_SCOPE_KEY = new Object();
+    private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";
 
     public static boolean isRhinoRuntimeType(Class<?> cl)
     {

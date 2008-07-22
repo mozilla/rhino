@@ -58,7 +58,7 @@ final class NativeString extends IdScriptableObject
 {
     static final long serialVersionUID = 920268368584188687L;
 
-    private static final Object STRING_TAG = new Object();
+    private static final Object STRING_TAG = "String";
 
     static void init(Scriptable scope, boolean sealed)
     {
