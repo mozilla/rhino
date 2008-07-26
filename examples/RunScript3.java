@@ -58,7 +58,7 @@ public class RunScript3 {
                 s += args[i];
             }
 
-            // Now evaluate the string we've colected. We'll ignore the result.
+            // Now evaluate the string we've collected. We'll ignore the result.
             cx.evaluateString(scope, s, "<cmd>", 1, null);
 
             // Print the value of variable "x"
