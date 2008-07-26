@@ -3221,12 +3221,17 @@ public class ScriptRuntime {
         catchScopeObject.defineProperty(
             exceptionName, obj, ScriptableObject.PERMANENT);
 
-        // Add special Rhino object __exception__ defined in the catch
-        // scope that can be used to retrieve the Java exception associated
-        // with the JavaScript exception (to get stack trace info, etc.)
-        catchScopeObject.defineProperty(
-            "__exception__", Context.javaToJS(t, scope),
-            ScriptableObject.PERMANENT|ScriptableObject.DONTENUM);
+        try {
+            // Add special Rhino object __exception__ defined in the catch
+            // scope that can be used to retrieve the Java exception associated
+            // with the JavaScript exception (to get stack trace info, etc.)
+            catchScopeObject.defineProperty(
+                "__exception__", Context.javaToJS(t, scope),
+                ScriptableObject.PERMANENT|ScriptableObject.DONTENUM);
+        } catch (EvaluatorException e) {
+            // ClassShutter may restrict the ability to create the reflected
+            // object. Ignore if so.
+        }
 
         if (cacheObj) {
             catchScopeObject.associateValue(t, obj);
