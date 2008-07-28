@@ -3202,18 +3202,19 @@ public class ScriptRuntime {
             Scriptable errorObject = cx.newObject(scope, errorName, args);
             ScriptableObject.putProperty(errorObject, "name", errorName);
 
-            if (javaException != null) {
+            if (javaException != null && isVisible(cx, javaException)) {
                 Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException,
                                                        null);
                 ScriptableObject.defineProperty(
                     errorObject, "javaException", wrap,
                     ScriptableObject.PERMANENT | ScriptableObject.READONLY);
             }
-            Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-            ScriptableObject.defineProperty(
-                errorObject, "rhinoException", wrap,
-                ScriptableObject.PERMANENT | ScriptableObject.READONLY);
-
+            if (isVisible(cx, re)) {
+                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+                ScriptableObject.defineProperty(
+                        errorObject, "rhinoException", wrap,
+                        ScriptableObject.PERMANENT | ScriptableObject.READONLY);                
+            }
             obj = errorObject;
         }
 
@@ -3221,23 +3222,26 @@ public class ScriptRuntime {
         // See ECMA 12.4
         catchScopeObject.defineProperty(
             exceptionName, obj, ScriptableObject.PERMANENT);
-
-        try {
+        
+        if (isVisible(cx, t)) {
             // Add special Rhino object __exception__ defined in the catch
             // scope that can be used to retrieve the Java exception associated
             // with the JavaScript exception (to get stack trace info, etc.)
             catchScopeObject.defineProperty(
                 "__exception__", Context.javaToJS(t, scope),
                 ScriptableObject.PERMANENT|ScriptableObject.DONTENUM);
-        } catch (EvaluatorException e) {
-            // ClassShutter may restrict the ability to create the reflected
-            // object. Ignore if so.
         }
 
         if (cacheObj) {
             catchScopeObject.associateValue(t, obj);
         }
         return catchScopeObject;
+    }
+    
+    private static boolean isVisible(Context cx, Object obj) {
+        ClassShutter shutter = cx.getClassShutter();
+        return shutter == null ||
+            shutter.visibleToScripts(obj.getClass().getName());
     }
 
     public static Scriptable enterWith(Object obj, Context cx,
