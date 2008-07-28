@@ -30,7 +30,7 @@ public class ContinuationPending extends RuntimeException {
     /**
      * Get continuation object. The only
      * use for this object is to be passed to 
-     * {@link org.mozilla.javascript.Context#resumeContinuation(Continuation, Scriptable, Object)}.
+     * {@link org.mozilla.javascript.Context#resumeContinuation(Object, Scriptable, Object)}.
      * @return continuation object
      */
     public Object getContinuation() {

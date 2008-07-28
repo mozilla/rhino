@@ -1208,7 +1208,7 @@ public class Context
      * result returned, another continuation will be captured and
      * thrown, or the script will terminate abnormally and throw an exception.
      * @param continuation The value returned by 
-     * {@link ContinuationPending.getContinuation()}
+     * {@link ContinuationPending#getContinuation()}
      * @param functionResult This value will appear to the code being resumed
      *      as the result of the function that captured the continuation
      * @throws ContinuationPending if another continuation is captured before

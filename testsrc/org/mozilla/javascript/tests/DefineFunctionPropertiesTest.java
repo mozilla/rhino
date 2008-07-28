@@ -56,7 +56,7 @@ public class DefineFunctionPropertiesTest extends TestCase {
      * argument lists, and allows access to the 'this' object. For 
      * a global function, the 'this' object is the global object.
      * In this case we look up a value that we associated with the global
-     * object using {@link ScriptableObject.getAssociatedValue(Object)}.
+     * object using {@link ScriptableObject#getAssociatedValue(Object)}.
      */
     public static Object g(Context cx, Scriptable thisObj, Object[] args,
             Function funObj)
