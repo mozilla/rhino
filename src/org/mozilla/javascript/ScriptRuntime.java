@@ -150,7 +150,7 @@ public class ScriptRuntime {
         "getClass",      "org.mozilla.javascript.NativeJavaTopPackage",
         "JavaAdapter",   "org.mozilla.javascript.JavaAdapter",
         "JavaImporter",  "org.mozilla.javascript.ImporterTopLevel",
-        "Continuation",  "org.mozilla.javascript.continuations.NativeContinuation",
+        "Continuation",  "org.mozilla.javascript.NativeContinuation",
         //	TODO	Grotesque hack using literal string (xml) just to minimize
 		//			changes for now
         "XML",           "(xml)",
@@ -2991,7 +2991,8 @@ public class ScriptRuntime {
                                    Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args)
     {
-        if (scope == null) throw new IllegalArgumentException();
+        if (scope == null)
+            throw new IllegalArgumentException();
         if (cx.topCallScope != null) throw new IllegalStateException();
 
         Object result;
