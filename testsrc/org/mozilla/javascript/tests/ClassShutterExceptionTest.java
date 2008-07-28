@@ -15,8 +15,6 @@ import org.mozilla.javascript.RhinoException;
  */
 public class ClassShutterExceptionTest extends TestCase {
     
-    Scriptable globalScope;
-    
     /**
      * Define a ClassShutter that prevents access to all Java classes.
      */
@@ -29,7 +27,7 @@ public class ClassShutterExceptionTest extends TestCase {
     public void testClassShutterException() {
         Context cx = Context.enter();
         try {
-            globalScope = cx.initStandardObjects();
+            Scriptable globalScope = cx.initStandardObjects();
             cx.setClassShutter(new OpaqueShutter());
             cx.evaluateString(globalScope, 
                     "java.lang.System.out.println('hi');",
@@ -45,6 +43,7 @@ public class ClassShutterExceptionTest extends TestCase {
     public void testThrowingException() {
         Context cx = Context.enter();
         try {
+            Scriptable globalScope = cx.initStandardObjects();
             cx.setClassShutter(new OpaqueShutter());
             // JavaScript exceptions with no reference to Java
             // should not be affected by the ClassShutter
