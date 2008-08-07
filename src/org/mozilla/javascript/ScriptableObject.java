@@ -884,7 +884,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *
      * If the method's name is "jsConstructor", the method is
      * considered to define the body of the constructor. Only one
-     * method of this name may be defined.
+     * method of this name may be defined. You may use the varargs forms
+     * for constructors documented in {@link FunctionObject#FunctionObject(String, Member, Scriptable)}
+     * 
      * If no method is found that can serve as constructor, a Java
      * constructor will be selected to serve as the JavaScript
      * constructor in the following manner. If the class has only one
