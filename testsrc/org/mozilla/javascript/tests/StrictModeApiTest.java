@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.mozilla.javascript.tests;
 
 import junit.framework.TestCase;
@@ -8,11 +5,12 @@ import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.EvaluatorException;
 
 /**
+ * Test of strict mode APIs.
+ * 
  * @author Norris Boyd
  */
 public class StrictModeApiTest extends TestCase {
@@ -34,7 +32,7 @@ public class StrictModeApiTest extends TestCase {
     }
   };
   
-  public void testAccessingFields() {
+  public void testStrictModeError() {
     contextFactory = new MyContextFactory();
     Context cx = contextFactory.enterContext();
     try {
@@ -53,8 +51,8 @@ public class StrictModeApiTest extends TestCase {
   private Object runScript(final String scriptSourceText) {
     return this.contextFactory.call(new ContextAction() {
       public Object run(Context context) {
-        Script script = context.compileString(scriptSourceText, "", 1, null);
-        return script.exec(context, global);
+          return context.evaluateString(global, scriptSourceText,
+                  "test source", 1, null);
       }
     });
   }  
