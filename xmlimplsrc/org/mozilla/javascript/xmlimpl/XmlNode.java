@@ -94,7 +94,11 @@ class XmlNode implements Serializable {
             document = processor.newDocument();
         }
         Node referenceDom = (reference != null) ? reference.dom : null;
-        Element e = document.createElementNS(qname.getNamespace().getUri(), qname.qualify(referenceDom));
+        Namespace ns = qname.getNamespace();
+        Element e = (ns == null || ns.getUri().length() == 0)
+            ? document.createElementNS(null, qname.getLocalName())
+            : document.createElementNS(ns.getUri(),
+                                       qname.qualify(referenceDom));
         if (value != null) {
             e.appendChild(document.createTextNode(value));
         }
