@@ -3308,51 +3308,17 @@ switch (op) {
 
         // Bug 447697 -- make best effort to keep __noSuchMethod__ within this  
         // interpreter loop invocation
-        if(fun instanceof NoSuchMethodShim) {
+        if (fun instanceof NoSuchMethodShim) {
             // get the shim and the actual method
             NoSuchMethodShim noSuchMethodShim = (NoSuchMethodShim) fun;
             Callable noSuchMethodMethod = noSuchMethodShim.noSuchMethodMethod;
             // if the method is in fact an InterpretedFunction
-            if(noSuchMethodMethod instanceof InterpretedFunction) {
+            if (noSuchMethodMethod instanceof InterpretedFunction) {
                 InterpretedFunction ifun = (InterpretedFunction) noSuchMethodMethod;
                 if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
-                    // create an args array from the stack
-                    Object[] argsArray = null;
-                    // exactly like getArgsArray except that the first argument is
-                    // the method name from the shim
-                    int shift = stackTop + 2;
-                    if (indexReg == 0) {
-                        argsArray = new Object[] {noSuchMethodShim.methodName};
-                    } else {
-                        argsArray = new Object[indexReg + 1];
-                        argsArray[0] = noSuchMethodShim.methodName;
-                        for (int i = 0; i != indexReg; ++i, ++shift) {
-                            Object val = stack[shift];
-                            if (val == UniqueTag.DOUBLE_MARK) {
-                                val = ScriptRuntime.wrapNumber(sDbl[shift]);
-                            }
-                            argsArray[i + 1] = val;
-                        }
-                    }
-                    
-                    // exactly the same as if it's a regular InterpretedFunction
-                    CallFrame callParentFrame = frame;
-                    CallFrame calleeFrame = new CallFrame();
-                    if (op == Icode_TAIL_CALL) {
-                        callParentFrame = frame.parentFrame;
-                        exitFrame(cx, frame, null);
-                    }
-                    // init the frame with the underlying method with the 
-                    // adjusted args array and shim's function
-                    initFrame(cx, calleeScope, funThisObj, argsArray, null,
-                      0, indexReg + 1, ifun, callParentFrame,
-                      calleeFrame);
-                    if (op != Icode_TAIL_CALL) {
-                        frame.savedStackTop = stackTop;
-                        frame.savedCallOp = op;
-                    }
-    
-                    frame = calleeFrame;
+                    frame = initFrameForNoSuchMethod(cx, frame, indexReg, stack, sDbl,
+                                             stackTop, op, funThisObj, calleeScope,
+                                             noSuchMethodShim, ifun);
                     continue StateLoop;
                 }
             }
@@ -4044,6 +4010,49 @@ switch (op) {
         return (interpreterResult != DBL_MRK)
                ? interpreterResult
                : ScriptRuntime.wrapNumber(interpreterResultDbl);
+    }
+
+    /**
+     * Call __noSuchMethod__.
+     */
+    private static CallFrame initFrameForNoSuchMethod(Context cx,
+            CallFrame frame, int indexReg, Object[] stack, double[] sDbl,
+            int stackTop, int op, Scriptable funThisObj, Scriptable calleeScope,
+            NoSuchMethodShim noSuchMethodShim, InterpretedFunction ifun)
+    {
+        // create an args array from the stack
+        Object[] argsArray = null;
+        // exactly like getArgsArray except that the first argument
+        // is the method name from the shim
+        int shift = stackTop + 2;
+        Object[] elements = new Object[indexReg];
+        for (int i=0; i < indexReg; ++i, ++shift) {
+            Object val = stack[shift];
+            if (val == UniqueTag.DOUBLE_MARK) {
+                val = ScriptRuntime.wrapNumber(sDbl[shift]);
+            }
+            elements[i] = val;
+        }
+        argsArray = new Object[2];
+        argsArray[0] = noSuchMethodShim.methodName;
+        argsArray[1] = cx.newArray(calleeScope, elements);
+        
+        // exactly the same as if it's a regular InterpretedFunction
+        CallFrame callParentFrame = frame;
+        CallFrame calleeFrame = new CallFrame();
+        if (op == Icode_TAIL_CALL) {
+            callParentFrame = frame.parentFrame;
+            exitFrame(cx, frame, null);
+        }
+        // init the frame with the underlying method with the 
+        // adjusted args array and shim's function
+        initFrame(cx, calleeScope, funThisObj, argsArray, null,
+          0, 2, ifun, callParentFrame, calleeFrame);
+        if (op != Icode_TAIL_CALL) {
+            frame.savedStackTop = stackTop;
+            frame.savedCallOp = op;
+        }
+        return calleeFrame;
     }
     
     private static boolean shallowEquals(Object[] stack, double[] sDbl,
