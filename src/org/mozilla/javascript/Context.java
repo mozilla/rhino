@@ -318,21 +318,37 @@ public class Context
     public static final Object[] emptyArgs = ScriptRuntime.emptyArgs;
 
     /**
-     * Create a new Context.
+     * Creates a new Context. The context will be associated with the {@link 
+     * ContextFactory#getGlobal() global context factory}.
      *
      * Note that the Context must be associated with a thread before
      * it can be used to execute a script.
-     * @deprecated use {@link ContextFactory#enter()} or 
-     * {@link ContextFactory#call(ContextAction)} instead.
+     * @deprecated this constructor is deprecated because it creates a 
+     * dependency on a static singleton context factory. Use 
+     * {@link ContextFactory#enter()} or 
+     * {@link ContextFactory#call(ContextAction)} instead. If you subclass
+     * this class, consider using {@link #Context(ContextFactory)} constructor
+     * instead in the subclasses' constructors.
      */
     public Context()
     {
         this(ContextFactory.getGlobal());
     }
     
-    Context(ContextFactory factory)
+    /**
+     * Creates a new context. Provided as a preferred super constructor for
+     * subclasses in place of the deprecated default public constructor.
+     * @param factory the context factory associated with this context (most
+     * likely, the one that created the context). Can not be null. The context
+     * features are inherited from the factory, and the context will also 
+     * otherwise use its factory's services.
+     * @throws IllegalArgumentException if factory parameter is null.
+     */
+    protected Context(ContextFactory factory)
     {
-        assert factory != null;
+        if(factory == null) {
+            throw new IllegalArgumentException("factory == null");
+        }
         this.factory = factory;
         setLanguageVersion(VERSION_DEFAULT);
         optimizationLevel = codegenClass != null ? 0 : -1;
