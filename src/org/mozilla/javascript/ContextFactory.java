@@ -78,9 +78,6 @@ package org.mozilla.javascript;
  *     protected Context makeContext()
  *     {
  *         MyContext cx = new MyContext();
- *         // Use pure interpreter mode to allow for
- *         // {@link #observeInstructionCount(Context, int)} to work
- *         cx.setOptimizationLevel(-1);
  *         // Make Rhino runtime to call observeInstructionCount
  *         // each 10000 bytecode instructions
  *         cx.setInstructionObserverThreshold(10000);
@@ -407,8 +404,7 @@ public class ContextFactory
      * This can be used to customize {@link Context} without introducing
      * additional subclasses.
      */
-    protected void observeInstructionCount(Context cx, int instructionCount)
-    {
+    protected void observeInstructionCount(Context cx, int instructionCount) {
     }
 
     protected void onContextCreated(Context cx)
