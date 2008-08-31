@@ -84,7 +84,7 @@ class Optimizer
              */
             parameterUsedInNumberContext = false;
             for (int i = 0; i < theStatementNodes.length; i++) {
-                rewriteForNumberVariables(theStatementNodes[i]);
+                rewriteForNumberVariables(theStatementNodes[i], NumberType);
             }
             theFunction.setParameterNumberContext(parameterUsedInNumberContext);
         }
@@ -145,12 +145,12 @@ class Optimizer
         return false;
     }
 
-    private int rewriteForNumberVariables(Node n)
+    private int rewriteForNumberVariables(Node n, int desired)
     {
         switch (n.getType()) {
             case Token.EXPR_VOID : {
                     Node child = n.getFirstChild();
-                    int type = rewriteForNumberVariables(child);
+                    int type = rewriteForNumberVariables(child, NumberType);
                     if (type == NumberType)
                         n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
                      return NoType;
@@ -163,7 +163,8 @@ class Optimizer
                 {
                     int varIndex = theFunction.getVarIndex(n);
                     if (inDirectCallFunction
-                        && theFunction.isParameter(varIndex))
+                        && theFunction.isParameter(varIndex)
+                        && desired == NumberType)
                     {
                         n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
                         return NumberType;
@@ -180,7 +181,7 @@ class Optimizer
                     Node child = n.getFirstChild();
                     // "child" will be GETVAR or GETPROP or GETELEM
                     if (child.getType() == Token.GETVAR) {
-                        if (rewriteForNumberVariables(child) == NumberType) {
+                        if (rewriteForNumberVariables(child, NumberType) == NumberType) {
                             n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
                             markDCPNumberContext(child);
                             return NumberType;
@@ -188,14 +189,14 @@ class Optimizer
                       return NoType;                       
                     }
                     else if (child.getType() == Token.GETELEM) {
-                        return rewriteForNumberVariables(child);
+                        return rewriteForNumberVariables(child, NumberType);
                     }
                     return NoType;
                 }
             case Token.SETVAR : {
                     Node lChild = n.getFirstChild();
                     Node rChild = lChild.getNext();
-                    int rType = rewriteForNumberVariables(rChild);
+                    int rType = rewriteForNumberVariables(rChild, NumberType);
                     int varIndex = theFunction.getVarIndex(n);
                     if (inDirectCallFunction
                         && theFunction.isParameter(varIndex))
@@ -238,8 +239,8 @@ class Optimizer
             case Token.GT : {
                     Node lChild = n.getFirstChild();
                     Node rChild = lChild.getNext();
-                    int lType = rewriteForNumberVariables(lChild);
-                    int rType = rewriteForNumberVariables(rChild);
+                    int lType = rewriteForNumberVariables(lChild, NumberType);
+                    int rType = rewriteForNumberVariables(rChild, NumberType);
                     markDCPNumberContext(lChild);
                     markDCPNumberContext(rChild);
 
@@ -277,8 +278,8 @@ class Optimizer
             case Token.ADD : {
                     Node lChild = n.getFirstChild();
                     Node rChild = lChild.getNext();
-                    int lType = rewriteForNumberVariables(lChild);
-                    int rType = rewriteForNumberVariables(rChild);
+                    int lType = rewriteForNumberVariables(lChild, NumberType);
+                    int rType = rewriteForNumberVariables(rChild, NumberType);
 
 
                     if (convertParameter(lChild)) {
@@ -329,8 +330,8 @@ class Optimizer
             case Token.MOD : {
                     Node lChild = n.getFirstChild();
                     Node rChild = lChild.getNext();
-                    int lType = rewriteForNumberVariables(lChild);
-                    int rType = rewriteForNumberVariables(rChild);
+                    int lType = rewriteForNumberVariables(lChild, NumberType);
+                    int rType = rewriteForNumberVariables(rChild, NumberType);
                     markDCPNumberContext(lChild);
                     markDCPNumberContext(rChild);
                     if (lType == NumberType) {
@@ -379,7 +380,7 @@ class Optimizer
                     Node arrayBase = n.getFirstChild();
                     Node arrayIndex = arrayBase.getNext();
                     Node rValue = arrayIndex.getNext();
-                    int baseType = rewriteForNumberVariables(arrayBase);
+                    int baseType = rewriteForNumberVariables(arrayBase, NumberType);
                     if (baseType == NumberType) {// can never happen ???
                         if (!convertParameter(arrayBase)) {
                             n.removeChild(arrayBase);
@@ -387,7 +388,7 @@ class Optimizer
                                 new Node(Token.TO_OBJECT, arrayBase));
                         }
                     }
-                    int indexType = rewriteForNumberVariables(arrayIndex);
+                    int indexType = rewriteForNumberVariables(arrayIndex, NumberType);
                     if (indexType == NumberType) {
                         // setting the ISNUMBER_PROP signals the codegen
                         // to use the OptRuntime.setObjectIndex that takes
@@ -395,7 +396,7 @@ class Optimizer
                         n.putIntProp(Node.ISNUMBER_PROP, Node.LEFT);
                         markDCPNumberContext(arrayIndex);
                     }
-                    int rValueType = rewriteForNumberVariables(rValue);
+                    int rValueType = rewriteForNumberVariables(rValue, NumberType);
                     if (rValueType == NumberType) {
                         if (!convertParameter(rValue)) {
                             n.removeChild(rValue);
@@ -408,7 +409,7 @@ class Optimizer
             case Token.GETELEM : {
                     Node arrayBase = n.getFirstChild();
                     Node arrayIndex = arrayBase.getNext();
-                    int baseType = rewriteForNumberVariables(arrayBase);
+                    int baseType = rewriteForNumberVariables(arrayBase, NumberType);
                     if (baseType == NumberType) {// can never happen ???
                         if (!convertParameter(arrayBase)) {
                             n.removeChild(arrayBase);
@@ -416,7 +417,7 @@ class Optimizer
                                 new Node(Token.TO_OBJECT, arrayBase));
                         }
                     }
-                    int indexType = rewriteForNumberVariables(arrayIndex);
+                    int indexType = rewriteForNumberVariables(arrayIndex, NumberType);
                     if (indexType == NumberType) {
                         if (!convertParameter(arrayIndex)) {
                             // setting the ISNUMBER_PROP signals the codegen
@@ -430,14 +431,8 @@ class Optimizer
             case Token.CALL :
                 {
                     Node child = n.getFirstChild(); // the function node
-                    if (child.getType() == Token.GETELEM) {
-                        // Optimization of x[0]() is not supported
-                        // so bypass GETELEM optimization that
-                        // rewriteForNumberVariables would trigger
-                        rewriteAsObjectChildren(child, child.getFirstChild());
-                    } else {
-                        rewriteForNumberVariables(child);
-                    }
+                    // must be an object
+                    rewriteAsObjectChildren(child, child.getFirstChild());
                     child = child.getNext(); // the first arg
 
                     OptFunctionNode target
@@ -448,7 +443,7 @@ class Optimizer
     handle moving the pairs of parameters.
 */
                         while (child != null) {
-                            int type = rewriteForNumberVariables(child);
+                            int type = rewriteForNumberVariables(child, NumberType);
                             if (type == NumberType) {
                                 markDCPNumberContext(child);
                             }
@@ -471,7 +466,7 @@ class Optimizer
         // Force optimized children to be objects
         while (child != null) {
             Node nextChild = child.getNext();
-            int type = rewriteForNumberVariables(child);
+            int type = rewriteForNumberVariables(child, NoType);
             if (type == NumberType) {
                 if (!convertParameter(child)) {
                     n.removeChild(child);
