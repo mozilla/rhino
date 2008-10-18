@@ -43,6 +43,7 @@
 package org.mozilla.javascript.tools.shell;
 
 import java.io.*;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.MalformedURLException;
@@ -244,6 +245,15 @@ public class Main
                 shellContextFactory.setOptimizationLevel(opt);
                 continue;
             }
+            if (arg.equals("-enc")) {
+                if (++i == args.length) {
+                    usageError = arg;
+                    break goodUsage;
+                }
+                String enc = args[i];
+                shellContextFactory.setCharacterEncoding(enc);
+                continue;
+            }
             if (arg.equals("-strict")) {
                 shellContextFactory.setStrictMode(true);
                 errorReporter.setIsReportingWarnings(true);
@@ -348,8 +358,21 @@ public class Main
             // Use the interpreter for interactive input
             cx.setOptimizationLevel(-1);
 
-            BufferedReader in = new BufferedReader
-                (new InputStreamReader(global.getIn()));
+            String charEnc = shellContextFactory.getCharacterEncoding();
+            if(charEnc == null)
+            {
+                charEnc = System.getProperty("file.encoding");
+            }
+            BufferedReader in;
+            try
+            {
+                in = new BufferedReader(new InputStreamReader(global.getIn(), 
+                        charEnc));
+            }
+            catch(UnsupportedEncodingException e)
+            {
+                throw new UndeclaredThrowableException(e);
+            }
             int lineno = 1;
             boolean hitEOF = false;
             while (!hitEOF) {
@@ -582,8 +605,12 @@ public class Main
 
         InputStream is = null;
         int capacityHint = 0;
+        String encoding;
+        final String contentType;
         if (url == null) {
             File file = new File(path);
+            encoding = null;
+            contentType = null;
             capacityHint = (int)file.length();
             try {
                 is = new FileInputStream(file);
@@ -596,6 +623,9 @@ public class Main
             try {
                 URLConnection uc = url.openConnection();
                 is = uc.getInputStream();
+                ParsedContentType pct = new ParsedContentType(uc.getContentType());
+                contentType = pct.getContentType();
+                encoding = pct.getEncoding();
                 capacityHint = uc.getContentLength();
                 // Ignore insane values for Content-Length
                 if (capacityHint > (1 << 20)) {
@@ -622,16 +652,56 @@ public class Main
             Context.reportError(ex.toString());
             return null;
         }
-
+        
+        if(encoding == null) {
+            // None explicitly specified in Content-type header. Use RFC-4329
+            // 4.2.2 section to autodetect
+            if(data.length > 3 && data[0] == 0xFF && data[1] == 0xFE && data[2] == 0x00 && data[3] == 0x00) {
+                encoding = "UTF-32LE";
+            }
+            else if(data.length > 3 && data[0] == 0x00 && data[1] == 0x00 && data[2] == 0xFE && data[3] == 0xFF) {
+                encoding = "UTF-32BE";
+            }
+            else if(data.length > 2 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF) {
+                encoding = "UTF-8";
+            }
+            else if(data.length > 1 && data[0] == 0xFF && data[1] == 0xFE) {
+                encoding = "UTF-16LE";
+            }
+            else if(data.length > 1 && data[0] == 0xFE && data[1] == 0xFF) {
+                encoding = "UTF-16BE";
+            }
+            else {
+                // No autodetect. See if we have explicit value on command line
+                encoding = shellContextFactory.getCharacterEncoding();
+                if(encoding == null) {
+                    // No explicit encoding specification
+                    if(url == null) {
+                        // Local files default to system encoding
+                        encoding = System.getProperty("file.encoding");
+                    }
+                    else if(contentType != null && contentType.startsWith("application/")) {
+                        // application/* types default to UTF-8
+                        encoding = "UTF-8";
+                    }
+                    else {
+                        // text/* MIME types default to US-ASCII
+                        encoding = "US-ASCII";
+                    }
+                }
+            }
+        }
         Object result;
         if (!convertToString) {
             result = data;
         } else {
-            // Convert to String using the default encoding
-            // XXX: Use 'charset=' argument of Content-Type if URL?
-            result = new String(data);
+            try {
+                result = new String(data, encoding);
+            }
+            catch(UnsupportedEncodingException e) {
+                throw new UndeclaredThrowableException(e);
+            }
         }
         return result;
     }
-
 }

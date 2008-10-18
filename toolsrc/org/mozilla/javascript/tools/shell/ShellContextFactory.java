@@ -49,7 +49,8 @@ public class ShellContextFactory extends ContextFactory
     private int optimizationLevel;
     private boolean generatingDebug;
     private ErrorReporter errorReporter;
-
+    private String characterEncoding;
+    
     @Override
     protected boolean hasFeature(Context cx, int featureIndex)
     {
@@ -112,5 +113,15 @@ public class ShellContextFactory extends ContextFactory
     public void setGeneratingDebug(boolean generatingDebug)
     {
         this.generatingDebug = generatingDebug;
+    }
+    
+    public String getCharacterEncoding()
+    {
+        return characterEncoding;
+    }
+    
+    public void setCharacterEncoding(String characterEncoding)
+    {
+        this.characterEncoding = characterEncoding;
     }
 }
