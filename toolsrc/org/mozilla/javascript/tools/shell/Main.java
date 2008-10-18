@@ -656,19 +656,19 @@ public class Main
         if(encoding == null) {
             // None explicitly specified in Content-type header. Use RFC-4329
             // 4.2.2 section to autodetect
-            if(data.length > 3 && data[0] == 0xFF && data[1] == 0xFE && data[2] == 0x00 && data[3] == 0x00) {
+            if(data.length > 3 && data[0] == -1 && data[1] == -2 && data[2] == 0 && data[3] == 0) {
                 encoding = "UTF-32LE";
             }
-            else if(data.length > 3 && data[0] == 0x00 && data[1] == 0x00 && data[2] == 0xFE && data[3] == 0xFF) {
+            else if(data.length > 3 && data[0] == 0 && data[1] == 0 && data[2] == -2 && data[3] == -1) {
                 encoding = "UTF-32BE";
             }
-            else if(data.length > 2 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF) {
+            else if(data.length > 2 && data[0] == -17 && data[1] == -69 && data[2] == -65) {
                 encoding = "UTF-8";
             }
-            else if(data.length > 1 && data[0] == 0xFF && data[1] == 0xFE) {
+            else if(data.length > 1 && data[0] == -1 && data[1] == -2) {
                 encoding = "UTF-16LE";
             }
-            else if(data.length > 1 && data[0] == 0xFE && data[1] == 0xFF) {
+            else if(data.length > 1 && data[0] == -2 && data[1] == -1) {
                 encoding = "UTF-16BE";
             }
             else {
@@ -696,7 +696,13 @@ public class Main
             result = data;
         } else {
             try {
-                result = new String(data, encoding);
+                String strResult = new String(data, encoding);
+                // Skip BOM
+                if(strResult.length() > 0 && strResult.charAt(0) == '\uFEFF')
+                {
+                    strResult = strResult.substring(1);
+                }
+                result = strResult;
             }
             catch(UnsupportedEncodingException e) {
                 throw new UndeclaredThrowableException(e);
