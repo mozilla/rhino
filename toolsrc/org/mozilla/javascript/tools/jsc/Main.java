@@ -42,6 +42,7 @@ import java.io.*;
 import java.util.*;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.optimizer.ClassCompiler;
+import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 
 /**
@@ -138,6 +139,10 @@ public class Main {
             }
             if (arg.equals("-main-method-class") && ++i < args.length) {
                 compiler.setMainMethodClass(args[i]);
+                continue;
+            }
+            if (arg.equals("-encoding") && ++i < args.length) {
+                characterEncoding = args[i];
                 continue;
             }
             if (arg.equals("-o") && ++i < args.length) {
@@ -304,19 +309,16 @@ public class Main {
 
     private String readSource(File f)
     {
-        if (!f.exists()) {
-            addError("msg.jsfile.not.found", f.getAbsolutePath());
+        String absPath = f.getAbsolutePath();
+        if (!f.isFile()) {
+            addError("msg.jsfile.not.found", absPath);
             return null;
         }
         try {
-            Reader in = new FileReader(f);
-            try {
-                return Kit.readReader(in);
-            } finally {
-                in.close();
-            }
+            return (String)SourceReader.readFileOrUrl(absPath, true, 
+                    characterEncoding);
         } catch (FileNotFoundException ex) {
-            addError("msg.couldnt.open", f.getAbsolutePath());
+            addError("msg.couldnt.open", absPath);
         } catch (IOException ioe) {
             addFormatedError(ioe.toString());
         }
@@ -390,5 +392,6 @@ public class Main {
     private String targetName;
     private String targetPackage;
     private String destinationDir;
+    private String characterEncoding;
 }
 

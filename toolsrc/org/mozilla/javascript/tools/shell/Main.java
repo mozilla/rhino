@@ -42,13 +42,29 @@
 
 package org.mozilla.javascript.tools.shell;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.UndeclaredThrowableException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.MalformedURLException;
-import java.util.*;
-import org.mozilla.javascript.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextAction;
+import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.SecurityController;
+import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 
 /**
@@ -245,7 +261,7 @@ public class Main
                 shellContextFactory.setOptimizationLevel(opt);
                 continue;
             }
-            if (arg.equals("-enc")) {
+            if (arg.equals("-encoding")) {
                 if (++i == args.length) {
                     usageError = arg;
                     break goodUsage;
@@ -592,122 +608,13 @@ public class Main
      */
     private static Object readFileOrUrl(String path, boolean convertToString)
     {
-        URL url = null;
-        // Assume path is URL if it contains dot and there are at least
-        // 2 characters in the protocol part. The later allows under Windows
-        // to interpret paths with driver letter as file, not URL.
-        if (path.indexOf(':') >= 2) {
-            try {
-                url = new URL(path);
-            } catch (MalformedURLException ex) {
-            }
-        }
-
-        InputStream is = null;
-        int capacityHint = 0;
-        String encoding;
-        final String contentType;
-        if (url == null) {
-            File file = new File(path);
-            encoding = null;
-            contentType = null;
-            capacityHint = (int)file.length();
-            try {
-                is = new FileInputStream(file);
-            } catch (IOException ex) {
-                Context.reportError(ToolErrorReporter.getMessage(
-                    "msg.couldnt.open", path));
-                return null;
-            }
-        } else {
-            try {
-                URLConnection uc = url.openConnection();
-                is = uc.getInputStream();
-                ParsedContentType pct = new ParsedContentType(uc.getContentType());
-                contentType = pct.getContentType();
-                encoding = pct.getEncoding();
-                capacityHint = uc.getContentLength();
-                // Ignore insane values for Content-Length
-                if (capacityHint > (1 << 20)) {
-                    capacityHint = -1;
-                }
-            } catch (IOException ex) {
-                Context.reportError(ToolErrorReporter.getMessage(
-                    "msg.couldnt.open.url", url.toString(), ex.toString()));
-                return null;
-            }
-        }
-        if (capacityHint <= 0) {
-            capacityHint = 4096;
-        }
-
-        byte[] data;
         try {
-            try {
-                data = Kit.readStream(is, capacityHint);
-            } finally {
-                is.close();
-            }
+            return SourceReader.readFileOrUrl(path, convertToString, 
+                    shellContextFactory.getCharacterEncoding());
         } catch (IOException ex) {
-            Context.reportError(ex.toString());
+            Context.reportError(ToolErrorReporter.getMessage(
+                    "msg.couldnt.read.source", path, ex.getMessage()));
             return null;
         }
-        
-        if(encoding == null) {
-            // None explicitly specified in Content-type header. Use RFC-4329
-            // 4.2.2 section to autodetect
-            if(data.length > 3 && data[0] == -1 && data[1] == -2 && data[2] == 0 && data[3] == 0) {
-                encoding = "UTF-32LE";
-            }
-            else if(data.length > 3 && data[0] == 0 && data[1] == 0 && data[2] == -2 && data[3] == -1) {
-                encoding = "UTF-32BE";
-            }
-            else if(data.length > 2 && data[0] == -17 && data[1] == -69 && data[2] == -65) {
-                encoding = "UTF-8";
-            }
-            else if(data.length > 1 && data[0] == -1 && data[1] == -2) {
-                encoding = "UTF-16LE";
-            }
-            else if(data.length > 1 && data[0] == -2 && data[1] == -1) {
-                encoding = "UTF-16BE";
-            }
-            else {
-                // No autodetect. See if we have explicit value on command line
-                encoding = shellContextFactory.getCharacterEncoding();
-                if(encoding == null) {
-                    // No explicit encoding specification
-                    if(url == null) {
-                        // Local files default to system encoding
-                        encoding = System.getProperty("file.encoding");
-                    }
-                    else if(contentType != null && contentType.startsWith("application/")) {
-                        // application/* types default to UTF-8
-                        encoding = "UTF-8";
-                    }
-                    else {
-                        // text/* MIME types default to US-ASCII
-                        encoding = "US-ASCII";
-                    }
-                }
-            }
-        }
-        Object result;
-        if (!convertToString) {
-            result = data;
-        } else {
-            try {
-                String strResult = new String(data, encoding);
-                // Skip BOM
-                if(strResult.length() > 0 && strResult.charAt(0) == '\uFEFF')
-                {
-                    strResult = strResult.substring(1);
-                }
-                result = strResult;
-            }
-            catch(UnsupportedEncodingException e) {
-                throw new UndeclaredThrowableException(e);
-            }
-        }
-        return result;
     }
 }
