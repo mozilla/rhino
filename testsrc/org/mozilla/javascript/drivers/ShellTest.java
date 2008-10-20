@@ -38,12 +38,13 @@ package org.mozilla.javascript.drivers;
 
 import org.mozilla.javascript.*;
 import java.io.*;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.*;
 
 import org.mozilla.javascript.tools.shell.*;
 
 /**
- * @version $Id: ShellTest.java,v 1.8 2008/05/28 12:35:52 nboyd%atg.com Exp $
+ * @version $Id: ShellTest.java,v 1.9 2008/10/20 12:42:17 szegedia%freemail.hu Exp $
  */
 class ShellTest {
     static final FileFilter DIRECTORY_FILTER = new FileFilter() {
@@ -258,7 +259,16 @@ class ShellTest {
     }
 
     static abstract class Parameters {
+        private UncaughtExceptionHandler exceptionHandler;
         abstract int getTimeoutMilliseconds();
+        
+        UncaughtExceptionHandler getUncaughtExceptionHandler() {
+            return exceptionHandler;
+        }
+        
+        public void setUncaughtExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
+            this.exceptionHandler = exceptionHandler;
+        }
     }
 
     static void run(final ShellContextFactory shellContextFactory, final File jsFile, final Parameters parameters, final Status status) throws Exception {
@@ -271,6 +281,11 @@ class ShellTest {
         if (jsFile.getName().endsWith("-n.js")) {
             status.setNegative();
         }
+        UncaughtExceptionHandler exceptionHandler = parameters.getUncaughtExceptionHandler();
+        if(exceptionHandler != null) {
+            Thread.setDefaultUncaughtExceptionHandler(exceptionHandler);
+        }
+        
         Thread t = new Thread(new Runnable()
         {
             public void run()
@@ -316,6 +331,9 @@ class ShellTest {
             }
         }, jsFile.getPath());
         t.setDaemon(true);
+        if(exceptionHandler != null) {
+            t.setUncaughtExceptionHandler(exceptionHandler);
+        }
         t.start();
         t.join(parameters.getTimeoutMilliseconds());
         synchronized(testState)
