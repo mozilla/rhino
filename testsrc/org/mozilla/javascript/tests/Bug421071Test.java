@@ -71,7 +71,6 @@ public class Bug421071Test extends TestCase {
 
     private TopLevelScope createGlobalScope() {
         factory = new DynamicScopeContextFactory();
-        ContextFactory.initGlobal(factory);
         Context context = factory.enterContext();
         // noinspection deprecation
         TopLevelScope globalScope = new TopLevelScope(context);
