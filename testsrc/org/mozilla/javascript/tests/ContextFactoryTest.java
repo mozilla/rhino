@@ -27,8 +27,8 @@ public class ContextFactoryTest extends TestCase {
     }
 
     public void testCustomContextFactory() {
-        ContextFactory.initGlobal(new MyFactory());
-        Context cx = Context.enter();
+        ContextFactory factory = new MyFactory();
+        Context cx = factory.enterContext();
         try {
             Scriptable globalScope = cx.initStandardObjects();
             // Test that FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME is enabled
