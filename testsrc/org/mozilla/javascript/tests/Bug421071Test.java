@@ -1,7 +1,6 @@
 /*
  * @(#)Bug421071Test.java
  *
- * Copyright (c) 2008 Sabre, Inc. All rights reserved.
  */
 
 package org.mozilla.javascript.tests;
