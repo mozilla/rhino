@@ -27,9 +27,8 @@
 
   <target name="junit-compile">
     <mkdir dir="${test.classes}" />
-    <get src="http://mirrors.ibiblio.org/pub/mirrors/maven2/junit/junit/3.8.2/junit-3.8.2.jar" dest="lib/junit.jar" usetimestamp="true"/>
+    <get src="http://mirrors.ibiblio.org/pub/mirrors/maven2/junit/junit/4.5/junit-4.5.jar" dest="lib/junit.jar" usetimestamp="true"/>
     <javac
-      srcdir="testsrc"
       destdir="${test.classes}" debug="true"
       target="${target-jvm}"
       source="${source-level}"
@@ -37,9 +36,9 @@
       <classpath>
         <pathelement path="lib/junit.jar" />
         <pathelement path="${classes}" />
-        <pathelement path="${test-classes}" />
       </classpath>
-         <include name="org/mozilla/javascript/drivers/StandardTests.java" />
+        <src path="testsrc"/>
+        <src path="examples"/>
     </javac>
     <antcall target="copy-files" />
   </target>
@@ -100,7 +99,8 @@
   </target>
 	
   <target name="junit" depends="junit-compile,coverage-instrument">
-    <junit printsummary="on" fork="true" forkmode="once" maxmemory="${test.vm.mx}" showoutput="true">
+    <junit printsummary="on" fork="true" forkmode="once" maxmemory="${test.vm.mx}" showoutput="true"
+    	failureproperty="junitFailed">
       <sysproperty key="java.awt.headless" value="true" />
       <sysproperty key="mozilla.js.tests" value="${test.library.dir}" />
       <sysproperty key="mozilla.js.tests.timeout" value="${test.timeout}" />
@@ -115,7 +115,8 @@
         <pathelement path="lib/junit.jar" />
       </classpath>
       <batchtest todir="build/test">
-        <fileset dir="${test.classes}" includes="**/*Tests.class"/>
+        <fileset dir="${test.classes}" includes="**/tests/*Test.class"/>
+        <fileset dir="${test.classes}" includes="**/StandardTests.class"/>
       </batchtest>
       <formatter type="xml"/>
     </junit>
@@ -145,6 +146,7 @@
         <html outfile="${coverage.report.dir}/index.html"/>
       </report>
     </emma>
+  	<fail if="junitFailed" message="JUnit test(s) failed"/>
   </target>
 
   <target name="jsdriver" depends="compile">
