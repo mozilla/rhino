@@ -13,15 +13,15 @@ import org.mozilla.javascript.*;
  */
 public class Bug409702Test extends TestCase {
   
-    public static abstract class Test {
-        public Test() {
+    public static abstract class Foo {
+        public Foo() {
         }
 
         public abstract void a();
 
         public abstract int b();
 
-        public static abstract class Subclass extends Test {
+        public static abstract class Subclass extends Foo {
 
             @Override
             public final void a() {
@@ -33,7 +33,7 @@ public class Bug409702Test extends TestCase {
       final int value = 12;
       String source = 
           "var instance = " +
-          "  new JavaAdapter(" + Test.Subclass.class.getName() + "," +
+          "  new JavaAdapter(" + Foo.Subclass.class.getName() + "," +
           "{ b: function () { return " + value + "; } });" +
           "instance.b();";
 
