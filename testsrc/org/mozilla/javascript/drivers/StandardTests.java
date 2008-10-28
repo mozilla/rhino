@@ -40,7 +40,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Properties;
@@ -55,11 +54,11 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
  * Executes the tests in the js/tests directory, much like jsDriver.pl does.
  * Excludes tests found in the js/tests/rhino-n.tests file.
  * @author Attila Szegedi
- * @version $Id: StandardTests.java,v 1.8 2008/10/20 12:42:17 szegedia%freemail.hu Exp $
+ * @version $Id: StandardTests.java,v 1.9 2008/10/28 13:06:50 szegedia%freemail.hu Exp $
  */
 public class StandardTests extends TestSuite
 {
-    public static TestSuite suite() throws Exception
+	public static TestSuite suite() throws Exception
     {
         TestSuite suite = new TestSuite("Standard JavaScript tests");
 
@@ -212,20 +211,12 @@ public class StandardTests extends TestSuite
             }
         }
 
-        private static UncaughtExceptionHandler NOOP_EXCEPTION_HANDLER = 
-            new UncaughtExceptionHandler() {
-                public void uncaughtException(Thread arg0, Throwable arg1) {
-                    // do nothing
-                }   
-        };
-        
         @Override
         public void runBare() throws Exception
         {
             final ShellContextFactory shellContextFactory = new ShellContextFactory();
             shellContextFactory.setOptimizationLevel(optimizationLevel);
             ShellTestParameters params = new ShellTestParameters();
-            params.setUncaughtExceptionHandler(NOOP_EXCEPTION_HANDLER);
             ShellTest.run(shellContextFactory, jsFile, params, new JunitStatus());
         }
     }
