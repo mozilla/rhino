@@ -670,6 +670,11 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
+    String toSource(int indent) {
+        return toXMLString();
+    }
+
+    @Override
     String toXMLString() {
         //    See ECMA 10.2.1
         StringBuffer sb = new StringBuffer();
