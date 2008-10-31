@@ -235,9 +235,7 @@ public class FunctionObject extends BaseFunction
                 return arg;
             return new Double(ScriptRuntime.toNumber(arg));
           case JAVA_SCRIPTABLE_TYPE:
-            if (arg instanceof Scriptable)
-                return arg;
-            return ScriptRuntime.toObject(cx, scope, arg);
+              return ScriptRuntime.toObjectOrNull(cx, arg);
           case JAVA_OBJECT_TYPE:
             return arg;
           default:
