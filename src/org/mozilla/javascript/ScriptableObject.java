@@ -1557,6 +1557,19 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public synchronized void sealObject() {
         if (count >= 0) {
+            // Make sure all LazilyLoadedCtors are initialized before sealing.
+            Slot slot = firstAdded;
+            while (slot != null) {
+                if (slot.value instanceof LazilyLoadedCtor) {
+                    LazilyLoadedCtor initializer = (LazilyLoadedCtor) slot.value;
+                    try {
+                        initializer.init();
+                    } finally {
+                        slot.value = initializer.getValue();
+                    }
+                }
+                slot = slot.orderedNext;
+            }
             count = ~count;
         }
     }
