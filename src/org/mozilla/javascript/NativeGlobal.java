@@ -126,17 +126,17 @@ public class NativeGlobal implements Serializable, IdFunctionCall
             scope, "undefined", Undefined.instance,
             ScriptableObject.DONTENUM);
 
-        String[] errorMethods = Kit.semicolonSplit(""
-                                    +"ConversionError;"
-                                    +"EvalError;"
-                                    +"RangeError;"
-                                    +"ReferenceError;"
-                                    +"SyntaxError;"
-                                    +"TypeError;"
-                                    +"URIError;"
-                                    +"InternalError;"
-                                    +"JavaException;"
-                                    );
+        String[] errorMethods = {
+                "ConversionError",
+                "EvalError",
+                "RangeError",
+                "ReferenceError",
+                "SyntaxError",
+                "TypeError",
+                "URIError",
+                "InternalError",
+                "JavaException"
+        };
 
         /*
             Each error constructor gets its own Error object as a prototype,
