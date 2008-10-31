@@ -3749,7 +3749,7 @@ switch (op) {
         if (frame.debuggerFrame != null) {
             frame.debuggerFrame.onDebuggerStatement(cx);
         }
-        break Loop;
+        continue Loop;
     case Icode_LINE :
         frame.pcSourceLineStart = frame.pc;
         if (frame.debuggerFrame != null) {
