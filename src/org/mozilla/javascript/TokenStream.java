@@ -405,6 +405,7 @@ class TokenStream
                                < Context.VERSION_1_7)
                         {
                             // LET and YIELD are tokens only in 1.7 and later
+                            string = result == Token.LET ? "let" : "yield";
                             result = Token.NAME;
                         }
                         if (result != Token.RESERVED) {

@@ -737,6 +737,11 @@ class XML extends XMLObjectImpl {
     }
 
     @Override
+    String toSource(int indent) {
+        return toXMLString();
+    }
+
+    @Override
     String toXMLString() {
         return this.node.ecmaToXMLString(getProcessor());
     }

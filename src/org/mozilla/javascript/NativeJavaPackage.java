@@ -121,28 +121,19 @@ public class NativeJavaPackage extends ScriptableObject
 
     // set up a name which is known to be a package so we don't
     // need to look for a class by that name
-    void forcePackage(String name, Scriptable scope)
+    NativeJavaPackage forcePackage(String name, Scriptable scope)
     {
-        NativeJavaPackage pkg;
-        int end = name.indexOf('.');
-        if (end == -1) {
-            end = name.length();
-        }
-
-        String id = name.substring(0, end);
-        Object cached = super.get(id, this);
+        Object cached = super.get(name, this);
         if (cached != null && cached instanceof NativeJavaPackage) {
-            pkg = (NativeJavaPackage) cached;
+            return (NativeJavaPackage) cached;
         } else {
             String newPackage = packageName.length() == 0
-                                ? id
-                                : packageName + "." + id;
-            pkg = new NativeJavaPackage(true, newPackage, classLoader);
+                                ? name
+                                : packageName + "." + name;
+            NativeJavaPackage pkg = new NativeJavaPackage(true, newPackage, classLoader);
             ScriptRuntime.setObjectProtoAndParent(pkg, scope);
-            super.put(id, this, pkg);
-        }
-        if (end < name.length()) {
-            pkg.forcePackage(name.substring(end+1), scope);
+            super.put(name, this, pkg);
+            return pkg;
         }
     }
 
@@ -214,10 +205,10 @@ public class NativeJavaPackage extends ScriptableObject
         }
         return false;
     }
-    
+
     @Override
     public int hashCode() {
-        return packageName.hashCode() ^ 
+        return packageName.hashCode() ^
                (classLoader == null ? 0 : classLoader.hashCode());
     }
 

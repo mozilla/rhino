@@ -1329,8 +1329,7 @@ public class Context
      *
      * @param source the source string
      * @param sourceName a string describing the source, such as a filename
-     * @param lineno the starting line number for reporting errors. Use 
-     *        0 if the line number is unknown.
+     * @param lineno the starting line number for reporting errors
      * @param securityDomain an arbitrary object that specifies security
      *        information about the origin or owner of the script. For
      *        implementations that don't care about security, this value

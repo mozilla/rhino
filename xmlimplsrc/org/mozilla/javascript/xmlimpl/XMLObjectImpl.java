@@ -232,6 +232,7 @@ abstract class XMLObjectImpl extends XMLObject {
     abstract XMLList text();
     @Override
     public abstract String toString();
+    abstract String toSource(int indent);
     abstract String toXMLString();
     abstract Object valueOf();
 
@@ -449,15 +450,16 @@ abstract class XMLObjectImpl extends XMLObject {
         Id_setNamespace            = 36,
         Id_text                    = 37,
         Id_toString                = 38,
-        Id_toXMLString             = 39,
-        Id_valueOf                 = 40,
+        Id_toSource                = 39,
+        Id_toXMLString             = 40,
+        Id_valueOf                 = 41,
 
-        MAX_PROTOTYPE_ID           = 40;
+        MAX_PROTOTYPE_ID           = 41;
 
     @Override
     protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2007-08-20 09:04:06 EDT
+// #generated# Last update: 2008-10-21 12:32:31 MESZ
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 4: c=s.charAt(0);
@@ -476,7 +478,10 @@ abstract class XMLObjectImpl extends XMLObject {
                 else if (c=='v') { X="valueOf";id=Id_valueOf; }
                 break L;
             case 8: switch (s.charAt(2)) {
-                case 'S': X="toString";id=Id_toString; break L;
+                case 'S': c=s.charAt(7);
+                    if (c=='e') { X="toSource";id=Id_toSource; }
+                    else if (c=='g') { X="toString";id=Id_toString; }
+                    break L;
                 case 'd': X="nodeKind";id=Id_nodeKind; break L;
                 case 'e': X="elements";id=Id_elements; break L;
                 case 'i': X="children";id=Id_children; break L;
@@ -588,6 +593,7 @@ abstract class XMLObjectImpl extends XMLObject {
             case Id_setNamespace:      arity=1; s="setNamespace";      break;
             case Id_text:              arity=0; s="text";              break;
             case Id_toString:          arity=0; s="toString";          break;
+            case Id_toSource:          arity=1; s="toSource";          break;
             case Id_toXMLString:       arity=1; s="toXMLString";       break;
             case Id_valueOf:           arity=0; s="valueOf";           break;
 
@@ -803,6 +809,9 @@ abstract class XMLObjectImpl extends XMLObject {
                 return realThis.text();
             case Id_toString:
                 return realThis.toString();
+            case Id_toSource:
+                int indent = ScriptRuntime.toInt32(args, 0);
+                return realThis.toSource(indent);
             case Id_toXMLString: {
                 return realThis.toXMLString();
             }

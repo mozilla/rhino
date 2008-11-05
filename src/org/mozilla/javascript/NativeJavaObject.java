@@ -370,7 +370,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
 
         case JSTYPE_OBJECT:
             // Other objects takes #1-#3 spots
-            if (to == fromObj.getClass()) {
+            if (to.isInstance(fromObj)) {
                 // No conversion required
                 return 1;
             }

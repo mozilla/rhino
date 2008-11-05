@@ -332,6 +332,10 @@ js1_7/lexical/regress-336376-01.js
 # minor decompilation incompatibility
 js1_5/extensions/regress-384680.js
 
+# bad tests? Looks like Daylight savings time failures.
+ecma/Date/15.9.5.28-1.js
+ecma/Date/15.9.5.29-1.js
+
 # uninvestigated failures. May be some bugs in here.
 e4x/Regress/regress-373082.js
 e4x/XML/regress-376773.js
@@ -693,17 +697,19 @@ js1_7/block/regress-411279.js
 ecma_3/Number/15.7.4.2-01.js
 ecma_3/Number/15.7.4.3-01.js
 ecma_3/Number/15.7.4.7-2.js
-
-
+e4x/Regress/regress-355569.js
 ecma_3/Array/15.4.5.1-01.js
 ecma_3/Operators/order-01.js
 ecma_3/Statements/regress-444979.js
 ecma_3/String/15.5.4.11.js
 ecma_3/Unicode/regress-352044-01.js
 ecma_3/extensions/regress-430740.js
+ecma_3_1/Object/regress-444787.js
+ecma_3_1/RegExp/regress-305064.js
 js1_5/Array/regress-456845.js
 js1_5/Regress/regress-352604.js
 js1_5/Regress/regress-410852.js
+js1_5/Regress/regress-416628.js
 js1_5/Regress/regress-420919.js
 js1_5/Regress/regress-422348.js
 js1_5/Regress/regress-449627.js
@@ -740,6 +746,7 @@ js1_5/Regress/regress-456540-02.js
 js1_5/Regress/regress-457456.js
 js1_5/Regress/regress-457778.js
 js1_5/Regress/regress-459085.js
+js1_5/decompilation/regress-437288-02.js
 js1_5/decompilation/regress-457824.js
 js1_5/extensions/regress-352604.js
 js1_5/extensions/regress-356378.js
@@ -754,6 +761,7 @@ js1_5/extensions/regress-424683-01.js
 js1_5/extensions/regress-432075.js
 js1_5/extensions/regress-434837-01.js
 js1_5/extensions/regress-435345-01.js
+js1_5/extensions/regress-437288-01.js
 js1_5/extensions/regress-452178.js
 js1_5/extensions/regress-452338.js
 js1_5/extensions/regress-452372.js
@@ -777,7 +785,4 @@ js1_7/regress/regress-452960.js
 js1_7/regress/regress-453049.js
 js1_7/regress/regress-453051.js
 js1_7/regress/regress-453411.js
-ecma_3_1/Object/regress-444787.js
-ecma_3_1/RegExp/regress-305064.js
-e4x/Regress/regress-355569.js
-js1_5/Regress/regress-416628.js
+
