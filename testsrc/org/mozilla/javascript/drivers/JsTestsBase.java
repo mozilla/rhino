@@ -22,8 +22,13 @@ public class JsTestsBase extends TestCase {
         Scriptable scope = cx.newObject(shared);
         scope.setPrototype(shared);
         System.out.print(name + ": ");
-        Object result = cx.evaluateString(scope, source,
-                "jstest input", 1, null);
+        Object result;
+        try {
+            result = cx.evaluateString(scope, source, "jstest input", 1, null);
+        } catch (RuntimeException e) {
+            System.out.println("FAILED");
+            throw e;
+        }
         assertTrue(result != null);
         assertTrue("success".equals(result));
         System.out.println("passed");

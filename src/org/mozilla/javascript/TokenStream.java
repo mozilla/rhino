@@ -29,6 +29,7 @@
  *   Bob Jervis
  *   Terry Lucas
  *   Milen Nankov
+ *   Steve Yegge
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -83,7 +84,7 @@ class TokenStream
             this.sourceString = sourceString;
             this.sourceEnd = sourceString.length();
         }
-        this.sourceCursor = 0;
+        this.sourceCursor = this.cursor = 0;
     }
 
     /* This function uses the cached op, string and number fields in
@@ -295,6 +296,10 @@ class TokenStream
 
     final String getString() { return string; }
 
+    final char getQuoteChar() {
+        return (char) quoteChar;
+    }
+
     final double getNumber() { return number; }
 
     final boolean eof() { return hitEOF; }
@@ -309,9 +314,13 @@ class TokenStream
             for (;;) {
                 c = getChar();
                 if (c == EOF_CHAR) {
+                    tokenBeg = cursor - 1;
+                    tokenEnd = cursor;
                     return Token.EOF;
                 } else if (c == '\n') {
                     dirtyLine = false;
+                    tokenBeg = cursor - 1;
+                    tokenEnd = cursor;
                     return Token.EOL;
                 } else if (!isJSSpace(c)) {
                     if (c != '-') {
@@ -320,6 +329,10 @@ class TokenStream
                     break;
                 }
             }
+
+            // Assume the token will be 1 char - fixed up below.
+            tokenBeg = cursor - 1;
+            tokenEnd = cursor;
 
             if (c == '@') return Token.XMLATTR;
 
@@ -400,8 +413,8 @@ class TokenStream
                     // Return the corresponding token if it's a keyword
                     int result = stringToKeyword(str);
                     if (result != Token.EOF) {
-                        if ((result == Token.LET || result == Token.YIELD) && 
-                            parser.compilerEnv.getLanguageVersion() 
+                        if ((result == Token.LET || result == Token.YIELD) &&
+                            parser.compilerEnv.getLanguageVersion()
                                < Context.VERSION_1_7)
                         {
                             // LET and YIELD are tokens only in 1.7 and later
@@ -496,6 +509,7 @@ class TokenStream
                 }
                 ungetChar(c);
                 String numString = getStringFromBuffer();
+                this.string = numString;
 
                 double dval;
                 if (base == 10 && !isInteger) {
@@ -522,13 +536,14 @@ class TokenStream
                 // are any escaped characters in the string, we revert to
                 // building it out of a StringBuffer.
 
-                int quoteChar = c;
+                quoteChar = c;
                 stringBufferTop = 0;
 
                 c = getChar();
             strLoop: while (c != quoteChar) {
                     if (c == '\n' || c == EOF_CHAR) {
                         ungetChar(c);
+                        tokenEnd = cursor;
                         parser.addError("msg.unterminated.string.lit");
                         return Token.ERROR;
                     }
@@ -678,20 +693,22 @@ class TokenStream
 
             case '=':
                 if (matchChar('=')) {
-                    if (matchChar('='))
+                    if (matchChar('=')) {
                         return Token.SHEQ;
-                    else
+                    } else {
                         return Token.EQ;
+                    }
                 } else {
                     return Token.ASSIGN;
                 }
 
             case '!':
                 if (matchChar('=')) {
-                    if (matchChar('='))
+                    if (matchChar('=')) {
                         return Token.SHNE;
-                    else
+                    } else {
                         return Token.NE;
+                    }
                 } else {
                     return Token.NOT;
                 }
@@ -755,24 +772,37 @@ class TokenStream
             case '/':
                 // is it a // comment?
                 if (matchChar('/')) {
+                    tokenBeg = cursor - 2;
                     skipLine();
-                    continue retry;
+                    commentType = Token.CommentType.LINE;
+                    return Token.COMMENT;
                 }
+                // is it a /* or /** comment?
                 if (matchChar('*')) {
                     boolean lookForSlash = false;
+                    tokenBeg = cursor - 2;
+                    if (matchChar('*')) {
+                        lookForSlash = true;
+                        commentType = Token.CommentType.JSDOC;
+                    } else {
+                        commentType = Token.CommentType.BLOCK;
+                    }
                     for (;;) {
                         c = getChar();
                         if (c == EOF_CHAR) {
+                            tokenEnd = cursor - 1;
                             parser.addError("msg.unterminated.comment");
-                            return Token.ERROR;
+                            return Token.COMMENT;
                         } else if (c == '*') {
                             lookForSlash = true;
                         } else if (c == '/') {
                             if (lookForSlash) {
-                                continue retry;
+                                tokenEnd = cursor;
+                                return Token.COMMENT;
                             }
                         } else {
                             lookForSlash = false;
+                            tokenEnd = cursor;
                         }
                     }
                 }
@@ -808,10 +838,11 @@ class TokenStream
                 } else if (matchChar('-')) {
                     if (!dirtyLine) {
                         // treat HTML end-comment after possible whitespace
-                        // after line start as comment-utill-eol
+                        // after line start as comment-until-eol
                         if (matchChar('>')) {
                             skipLine();
-                            continue retry;
+                            commentType = Token.CommentType.HTML;
+                            return Token.COMMENT;
                         }
                     }
                     c = Token.DEC;
@@ -868,6 +899,7 @@ class TokenStream
     void readRegExp(int startToken)
         throws IOException
     {
+        int start = tokenBeg;
         stringBufferTop = 0;
         if (startToken == Token.ASSIGN_DIV) {
             // Miss-scanned /=
@@ -881,7 +913,10 @@ class TokenStream
         while ((c = getChar()) != '/' || inCharSet) {
             if (c == '\n' || c == EOF_CHAR) {
                 ungetChar(c);
-                throw parser.reportError("msg.unterminated.re.lit");
+                tokenEnd = cursor - 1;
+                this.string = new String(stringBuffer, 0, stringBufferTop);
+                parser.reportError("msg.unterminated.re.lit");
+                return;
             }
             if (c == '\\') {
                 addToString(c);
@@ -902,17 +937,26 @@ class TokenStream
                 addToString('i');
             else if (matchChar('m'))
                 addToString('m');
+            else if (matchChar('y'))  // FireFox 3
+                addToString('y');
             else
                 break;
         }
+        tokenEnd = start + stringBufferTop + 2;  // include slashes
 
         if (isAlpha(peekChar())) {
-            throw parser.reportError("msg.invalid.re.flag");
+            parser.reportError("msg.invalid.re.flag");
         }
 
         this.string = new String(stringBuffer, 0, reEnd);
         this.regExpFlags = new String(stringBuffer, reEnd,
                                       stringBufferTop - reEnd);
+    }
+
+    String readAndClearRegExpFlags() {
+        String flags = this.regExpFlags;
+        this.regExpFlags = null;
+        return flags;
     }
 
     boolean isXMLAttribute()
@@ -931,6 +975,7 @@ class TokenStream
 
     int getNextXMLToken() throws IOException
     {
+        tokenBeg = cursor;
         stringBufferTop = 0; // remember the XML
 
         for (int c = getChar(); c != EOF_CHAR; c = getChar()) {
@@ -1073,6 +1118,7 @@ class TokenStream
             }
         }
 
+        tokenEnd = cursor;
         stringBufferTop = 0; // throw away the string in progress
         this.string = null;
         parser.addError("msg.XML.bad.form");
@@ -1196,6 +1242,7 @@ class TokenStream
 
     private String getStringFromBuffer()
     {
+        tokenEnd = cursor;
         return new String(stringBuffer, 0, stringBufferTop);
     }
 
@@ -1217,12 +1264,14 @@ class TokenStream
         if (ungetCursor != 0 && ungetBuffer[ungetCursor - 1] == '\n')
             Kit.codeBug();
         ungetBuffer[ungetCursor++] = c;
+        cursor--;
     }
-    
+
     private boolean matchChar(int test) throws IOException
     {
         int c = getCharIgnoreLineEnd();
         if (c == test) {
+            tokenEnd = cursor;
             return true;
         } else {
             ungetCharIgnoreLineEnd(c);
@@ -1240,6 +1289,7 @@ class TokenStream
     private int getChar() throws IOException
     {
         if (ungetCursor != 0) {
+            cursor++;
             return ungetBuffer[--ungetCursor];
         }
 
@@ -1250,6 +1300,7 @@ class TokenStream
                     hitEOF = true;
                     return EOF_CHAR;
                 }
+                cursor++;
                 c = sourceString.charAt(sourceCursor++);
             } else {
                 if (sourceCursor == sourceEnd) {
@@ -1258,6 +1309,7 @@ class TokenStream
                         return EOF_CHAR;
                     }
                 }
+                cursor++;
                 c = sourceBuffer[sourceCursor++];
             }
 
@@ -1288,10 +1340,11 @@ class TokenStream
             return c;
         }
     }
-    
+
     private int getCharIgnoreLineEnd() throws IOException
     {
         if (ungetCursor != 0) {
+            cursor++;
             return ungetBuffer[--ungetCursor];
         }
 
@@ -1302,6 +1355,7 @@ class TokenStream
                     hitEOF = true;
                     return EOF_CHAR;
                 }
+                cursor++;
                 c = sourceString.charAt(sourceCursor++);
             } else {
                 if (sourceCursor == sourceEnd) {
@@ -1310,6 +1364,7 @@ class TokenStream
                         return EOF_CHAR;
                     }
                 }
+                cursor++;
                 c = sourceBuffer[sourceCursor++];
             }
 
@@ -1330,20 +1385,25 @@ class TokenStream
             return c;
         }
     }
-    
+
     private void ungetCharIgnoreLineEnd(int c)
     {
         ungetBuffer[ungetCursor++] = c;
+        cursor--;
     }
-    
+
     private void skipLine() throws IOException
     {
         // skip to end of line
         int c;
         while ((c = getChar()) != EOF_CHAR && c != '\n') { }
         ungetChar(c);
+        tokenEnd = cursor;
     }
 
+    /**
+     * Returns the offset into the current line.
+     */
     final int getOffset()
     {
         int n = sourceCursor - lineStart;
@@ -1422,6 +1482,42 @@ class TokenStream
         return true;
     }
 
+    /**
+     * Return the current position of the scanner cursor.
+     */
+    public int getCursor() {
+        return cursor;
+    }
+
+    /**
+     * Return the absolute source offset of the last scanned token.
+     */
+    public int getTokenBeg() {
+        return tokenBeg;
+    }
+
+    /**
+     * Return the absolute source end-offset of the last scanned token.
+     */
+    public int getTokenEnd() {
+        return tokenEnd;
+    }
+
+    /**
+     * Return tokenEnd - tokenBeg
+     */
+    public int getTokenLength() {
+        return tokenEnd - tokenBeg;
+    }
+
+    /**
+     * Return the type of the last scanned comment.
+     * @return type of last scanned comment, or 0 if none have been scanned.
+     */
+    public Token.CommentType getCommentType() {
+        return commentType;
+    }
+
     // stuff other than whitespace since start of line
     private boolean dirtyLine;
 
@@ -1434,6 +1530,9 @@ class TokenStream
     private String string = "";
     private double number;
 
+    // delimiter for last string literal scanned
+    private int quoteChar;
+
     private char[] stringBuffer = new char[128];
     private int stringBufferTop;
     private ObjToIntMap allStrings = new ObjToIntMap(50);
@@ -1445,14 +1544,29 @@ class TokenStream
     private boolean hitEOF = false;
 
     private int lineStart = 0;
-    private int lineno;
     private int lineEndChar = -1;
+    int lineno;
 
     private String sourceString;
     private Reader sourceReader;
     private char[] sourceBuffer;
     private int sourceEnd;
-    private int sourceCursor;
+
+    // sourceCursor is an index into a small buffer that keeps a
+    // sliding window of the source stream.
+    int sourceCursor;
+
+    // cursor is a monotonically increasing index into the original
+    // source stream, tracking exactly how far scanning has progressed.
+    // Its value is the index of the next character to be scanned.
+    int cursor;
+
+    // Record start and end positions of last scanned token.
+    int tokenBeg;
+    int tokenEnd;
+
+    // Type of last comment scanned.
+    Token.CommentType commentType;
 
     // for xml tokenizer
     private boolean xmlIsAttribute;

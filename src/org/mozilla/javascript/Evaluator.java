@@ -30,6 +30,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ast.ScriptNode;
+
 import java.util.List;
 
 /**
@@ -43,7 +45,7 @@ public interface Evaluator {
      * tree into an executable form.
      *
      * @param compilerEnv Compiler environment
-     * @param tree intermediate representation
+     * @param tree parse tree
      * @param encodedSource encoding of the source code for decompilation
      * @param returnFunction if true, compiling a function
      * @return an opaque object that can be passed to either
@@ -51,9 +53,9 @@ public interface Evaluator {
      *         value of returnFunction
      */
     public Object compile(CompilerEnvirons compilerEnv,
-                      ScriptOrFnNode tree,
-                      String encodedSource,
-                      boolean returnFunction);
+                          ScriptNode tree,
+                          String encodedSource,
+                          boolean returnFunction);
 
     /**
      * Create a function object.

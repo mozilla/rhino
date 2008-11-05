@@ -41,6 +41,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ast.FunctionNode;
+
 /**
  * The following class save decompilation information about the source.
  * Source information is returned from the parser as a String

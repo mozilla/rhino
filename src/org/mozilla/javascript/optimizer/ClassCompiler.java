@@ -1,4 +1,6 @@
-/* ***** BEGIN LICENSE BLOCK *****
+/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0
  *
  * The contents of this file are subject to the Mozilla Public License Version
@@ -37,6 +39,9 @@
 package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.ScriptNode;
 
 /**
  * Generates class files from script sources.
@@ -157,9 +162,15 @@ public class ClassCompiler
                                         int lineno,
                                         String mainClassName)
     {
-        Parser p = new Parser(compilerEnv, compilerEnv.getErrorReporter());
-        ScriptOrFnNode tree = p.parse(source, sourceLocation, lineno);
-        String encodedSource = p.getEncodedSource();
+        Parser p = new Parser(compilerEnv);
+        AstRoot ast = p.parse(source, sourceLocation, lineno);
+        IRFactory irf = new IRFactory(compilerEnv);
+        ScriptNode tree = irf.transformTree(ast);
+
+        // release reference to original parse tree & parser
+        irf = null;
+        ast = null;
+        p = null;
 
         Class<?> superClass = getTargetExtends();
         Class<?>[] interfaces = getTargetImplements();
@@ -175,7 +186,7 @@ public class ClassCompiler
         codegen.setMainMethodClass(mainMethodClassName);
         byte[] scriptClassBytes
             = codegen.compileToClassFile(compilerEnv, scriptClassName,
-                                         tree, encodedSource,
+                                         tree, tree.getEncodedSource(),
                                          false);
 
         if (isPrimary) {
@@ -185,7 +196,7 @@ public class ClassCompiler
         ObjToIntMap functionNames = new ObjToIntMap(functionCount);
         for (int i = 0; i != functionCount; ++i) {
             FunctionNode ofn = tree.getFunctionNode(i);
-            String name = ofn.getFunctionName();
+            String name = ofn.getName();
             if (name != null && name.length() != 0) {
                 functionNames.put(name, ofn.getParamCount());
             }

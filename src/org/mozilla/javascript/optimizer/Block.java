@@ -39,6 +39,7 @@
 package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.ast.Jump;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -198,7 +199,7 @@ class Block
             if ( (blockEndNodeType == Token.IFNE)
                         || (blockEndNodeType == Token.IFEQ)
                                 || (blockEndNodeType == Token.GOTO) ) {
-                Node target = ((Node.Jump)blockEndNode).target;
+                Node target = ((Jump)blockEndNode).target;
                 FatBlock branchTargetBlock = theTargetBlocks.get(target);
                 target.putProp(Node.TARGETBLOCK_PROP,
                                            branchTargetBlock.realBlock);

@@ -40,6 +40,8 @@
 package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.ScriptNode;
 
 final class OptFunctionNode
 {
@@ -49,13 +51,13 @@ final class OptFunctionNode
         fnode.setCompilerData(this);
     }
 
-    static OptFunctionNode get(ScriptOrFnNode scriptOrFn, int i)
+    static OptFunctionNode get(ScriptNode scriptOrFn, int i)
     {
         FunctionNode fnode = scriptOrFn.getFunctionNode(i);
         return (OptFunctionNode)fnode.getCompilerData();
     }
 
-    static OptFunctionNode get(ScriptOrFnNode scriptOrFn)
+    static OptFunctionNode get(ScriptNode scriptOrFn)
     {
         return (OptFunctionNode)scriptOrFn.getCompilerData();
     }

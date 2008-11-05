@@ -16,6 +16,9 @@ import org.mozilla.javascript.Callable;
 public class ObserveInstructionCountTest extends TestCase {
     // Custom Context to store execution time.
     static class MyContext extends Context {
+        MyContext(ContextFactory factory) {
+            super(factory);
+        }
         int quota;
     }
     
@@ -31,7 +34,7 @@ public class ObserveInstructionCountTest extends TestCase {
         @Override
         protected Context makeContext()
         {
-            MyContext cx = new MyContext();
+            MyContext cx = new MyContext(this);
             // Make Rhino runtime call observeInstructionCount
             // each 500 bytecode instructions (if we're really enforcing
             // a quota of 2000, we could set this closer to 2000)

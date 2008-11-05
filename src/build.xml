@@ -48,6 +48,14 @@ Requires Ant version 1.2
   <target name="compile" depends="compile-most,compile-jdk15">
   </target>
 
+  <target name="shell" depends="compile">
+    <java classname="org.mozilla.javascript.tools.shell.Main"
+          classpath="${classes}"
+          fork="true">
+      <arg line="-version 170"/>
+    </java>
+  </target>
+
   <target name="compile-most">
     <javac srcdir="src"
            destdir="${classes}"

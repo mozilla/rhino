@@ -56,6 +56,9 @@ package org.mozilla.javascript;
 
 public class Token
 {
+    public static enum CommentType {
+        LINE, BLOCK, JSDOC, HTML
+    }
 
     // debug flags
     public static final boolean printTrees = false;
@@ -258,13 +261,29 @@ public class Token
         LETEXPR        = 157,
         WITHEXPR       = 158,
         DEBUGGER       = 159,
-        LAST_TOKEN     = 159;
+        COMMENT        = 160,
+        LAST_TOKEN     = 160;
 
+    /**
+     * Returns a name for the token.  If Rhino is compiled with certain
+     * hardcoded debugging flags in this file, it calls {@code #typeToName};
+     * otherwise it returns a string whose value is the token number.
+     */
     public static String name(int token)
     {
         if (!printNames) {
             return String.valueOf(token);
         }
+        return typeToName(token);
+    }
+
+    /**
+     * Always returns a human-readable string for the token name.
+     * For instance, {@link #FINALLY} has the name "FINALLY".
+     * @param token the token code
+     * @return the actual name for the token code
+     */
+    public static String typeToName(int token) {
         switch (token) {
           case ERROR:           return "ERROR";
           case EOF:             return "EOF";
@@ -315,7 +334,7 @@ public class Token
           case TRUE:            return "TRUE";
           case SHEQ:            return "SHEQ";
           case SHNE:            return "SHNE";
-          case REGEXP:          return "OBJECT";
+          case REGEXP:          return "REGEXP";
           case BINDNAME:        return "BINDNAME";
           case THROW:           return "THROW";
           case RETHROW:         return "RETHROW";
@@ -426,9 +445,20 @@ public class Token
           case WITHEXPR:        return "WITHEXPR";
           case LETEXPR:         return "LETEXPR";
           case DEBUGGER:        return "DEBUGGER";
+          case COMMENT:         return "COMMENT";
         }
 
         // Token without name
         throw new IllegalStateException(String.valueOf(token));
+    }
+
+    /**
+     * Return true if the passed code is a valid Token constant.
+     * @param code a potential token code
+     * @return true if it's a known token
+     */
+    public static boolean isValidToken(int code) {
+        return code >= ERROR
+                && code <= LAST_TOKEN;
     }
 }

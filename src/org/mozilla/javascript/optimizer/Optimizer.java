@@ -40,6 +40,7 @@
 package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.ast.ScriptNode;
 
 class Optimizer
 {
@@ -50,7 +51,7 @@ class Optimizer
 
     // It is assumed that (NumberType | AnyType) == AnyType
 
-    void optimize(ScriptOrFnNode scriptOrFn)
+    void optimize(ScriptNode scriptOrFn)
     {
         //  run on one function at a time for now
         int functionCount = scriptOrFn.getFunctionCount();

@@ -205,10 +205,10 @@ public class NativeJavaPackage extends ScriptableObject
         }
         return false;
     }
-    
+
     @Override
     public int hashCode() {
-        return packageName.hashCode() ^ 
+        return packageName.hashCode() ^
                (classLoader == null ? 0 : classLoader.hashCode());
     }
 

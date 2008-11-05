@@ -81,6 +81,14 @@
     <ant antfile="deprecatedsrc/build.xml" target="compile"/>
   </target>
 
+  <target name="graph" depends="init">
+    <ant antfile="src/build.xml" target="graph"/>
+  </target> 
+
+  <target name="shell" depends="compile">
+    <ant antfile="src/build.xml" target="shell"/>
+  </target> 
+
   <target name="copy-source" depends="init">
     <ant antfile="src/build.xml" target="copy-source"/>
     <ant antfile="toolsrc/build.xml" target="copy-source"/>
@@ -110,8 +118,16 @@
     <jar jarfile="${jarfile}"
          basedir="${classes}"
          manifest="src/manifest"
-     compress="${jar-compression}"
+         compress="${jar-compression}"
      />
+  </target>
+
+  <target name="console" depends="jar">
+    <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
+    <java jar="${jarfile}"
+          fork="true">
+      <arg line="-version 170"/>
+    </java>
   </target>
 
   <target name="retrotranslator" depends="retrotranslator-check,retrotranslator-download">

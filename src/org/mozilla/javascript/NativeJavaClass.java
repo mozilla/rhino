@@ -208,8 +208,9 @@ public class NativeJavaClass extends NativeJavaObject implements Function
                 Object v = topLevel.get("JavaAdapter", topLevel);
                 if (v != NOT_FOUND) {
                     Function f = (Function) v;
+                    // Args are (interface, js object)
                     Object[] adapterArgs = { this, args[0] };
-                    return f.construct(cx, topLevel,adapterArgs);
+                    return f.construct(cx, topLevel, adapterArgs);
                 }
             } catch (Exception ex) {
                 // fall through to error

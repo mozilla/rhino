@@ -39,6 +39,7 @@
 package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.ast.ScriptNode;
 import java.util.Map;
 
 /**
@@ -57,18 +58,18 @@ class OptTransformer extends NodeTransformer {
     }
 
     @Override
-    protected void visitNew(Node node, ScriptOrFnNode tree) {
+    protected void visitNew(Node node, ScriptNode tree) {
         detectDirectCall(node, tree);
         super.visitNew(node, tree);
     }
 
     @Override
-    protected void visitCall(Node node, ScriptOrFnNode tree) {
+    protected void visitCall(Node node, ScriptNode tree) {
         detectDirectCall(node, tree);
         super.visitCall(node, tree);
     }
 
-    private void detectDirectCall(Node node, ScriptOrFnNode tree)
+    private void detectDirectCall(Node node, ScriptNode tree)
     {
         if (tree.getType() == Token.FUNCTION) {
             Node left = node.getFirstChild();

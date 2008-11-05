@@ -42,6 +42,11 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.Jump;
+import org.mozilla.javascript.ast.Scope;
+import org.mozilla.javascript.ast.ScriptNode;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +64,7 @@ public class NodeTransformer
     {
     }
 
-    public final void transform(ScriptOrFnNode tree)
+    public final void transform(ScriptNode tree)
     {
         transformCompilationUnit(tree);
         for (int i = 0; i != tree.getFunctionCount(); ++i) {
@@ -68,7 +73,7 @@ public class NodeTransformer
         }
     }
 
-    private void transformCompilationUnit(ScriptOrFnNode tree)
+    private void transformCompilationUnit(ScriptNode tree)
     {
         loops = new ObjArray();
         loopEnds = new ObjArray();
@@ -82,13 +87,13 @@ public class NodeTransformer
         tree.flattenSymbolTable(!createScopeObjects);
 
         //uncomment to print tree before transformation
-        //if (Token.printTrees) System.out.println(tree.toStringTree(tree));
+        if (Token.printTrees) System.out.println(tree.toStringTree(tree));
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects);
     }
 
-    private void transformCompilationUnit_r(final ScriptOrFnNode tree,
+    private void transformCompilationUnit_r(final ScriptNode tree,
                                             final Node parent,
-                                            Node.Scope scope,
+                                            Scope scope,
                                             boolean createScopeObjects)
     {
         Node node = null;
@@ -109,20 +114,20 @@ public class NodeTransformer
             if (createScopeObjects &&
                 (type == Token.BLOCK || type == Token.LOOP ||
                  type == Token.ARRAYCOMP) &&
-                (node instanceof Node.Scope))
+                (node instanceof Scope))
             {
-                Node.Scope newScope = (Node.Scope) node;
-                if (newScope.symbolTable != null) {
+                Scope newScope = (Scope) node;
+                if (newScope.getSymbolTable() != null) {
                     // transform to let statement so we get a with statement
                     // created to contain scoped let variables
                     Node let = new Node(type == Token.ARRAYCOMP ? Token.LETEXPR
                                                                 : Token.LET);
                     Node innerLet = new Node(Token.LET);
                     let.addChildToBack(innerLet);
-                    for (String name: newScope.symbolTable.keySet()) {
+                    for (String name: newScope.getSymbolTable().keySet()) {
                         innerLet.addChildToBack(Node.newString(Token.NAME, name));
                     }
-                    newScope.symbolTable = null; // so we don't transform again
+                    newScope.setSymbolTable(null); // so we don't transform again
                     Node oldNode = node;
                     node = replaceCurrent(parent, previous, node, let);
                     type = node.getType();
@@ -136,7 +141,7 @@ public class NodeTransformer
               case Token.SWITCH:
               case Token.LOOP:
                 loops.push(node);
-                loopEnds.push(((Node.Jump)node).target);
+                loopEnds.push(((Jump)node).target);
                 break;
 
               case Token.WITH:
@@ -152,7 +157,7 @@ public class NodeTransformer
 
               case Token.TRY:
               {
-                Node.Jump jump = (Node.Jump)node;
+                Jump jump = (Jump)node;
                 Node finallytarget = jump.getFinally();
                 if (finallytarget != null) {
                     hasFinally = true;
@@ -197,8 +202,8 @@ public class NodeTransformer
                     if (elemtype == Token.TRY || elemtype == Token.WITH) {
                         Node unwind;
                         if (elemtype == Token.TRY) {
-                            Node.Jump jsrnode = new Node.Jump(Token.JSR);
-                            Node jsrtarget = ((Node.Jump)n).getFinally();
+                            Jump jsrnode = new Jump(Token.JSR);
+                            Node jsrtarget = ((Jump)n).getFinally();
                             jsrnode.target = jsrtarget;
                             unwind = jsrnode;
                         } else {
@@ -235,8 +240,8 @@ public class NodeTransformer
               case Token.BREAK:
               case Token.CONTINUE:
               {
-                Node.Jump jump = (Node.Jump)node;
-                Node.Jump jumpStatement = jump.getJumpStatement();
+                Jump jump = (Jump)node;
+                Jump jumpStatement = jump.getJumpStatement();
                 if (jumpStatement == null) Kit.codeBug();
 
                 for (int i = loops.size(); ;) {
@@ -258,8 +263,8 @@ public class NodeTransformer
                         previous = addBeforeCurrent(parent, previous, node,
                                                     leave);
                     } else if (elemtype == Token.TRY) {
-                        Node.Jump tryNode = (Node.Jump)n;
-                        Node.Jump jsrFinally = new Node.Jump(Token.JSR);
+                        Jump tryNode = (Jump)n;
+                        Jump jsrFinally = new Jump(Token.JSR);
                         jsrFinally.target = tryNode.getFinally();
                         previous = addBeforeCurrent(parent, previous, node,
                                                     jsrFinally);
@@ -332,7 +337,7 @@ public class NodeTransformer
               }
 
               case Token.TYPEOFNAME: {
-                Node.Scope defining = scope.getDefiningScope(node.getString());
+                Scope defining = scope.getDefiningScope(node.getString());
                 if (defining != null) {
                     node.setScope(defining);
                 }
@@ -393,7 +398,7 @@ public class NodeTransformer
                     break; // already have a scope set
                 }
                 String name = nameSource.getString();
-                Node.Scope defining = scope.getDefiningScope(name);
+                Scope defining = scope.getDefiningScope(name);
                 if (defining != null) {
                     nameSource.setScope(defining);
                     if (type == Token.NAME) {
@@ -417,15 +422,15 @@ public class NodeTransformer
             }
 
             transformCompilationUnit_r(tree, node, 
-                node instanceof Node.Scope ? (Node.Scope)node : scope,
+                node instanceof Scope ? (Scope)node : scope,
                 createScopeObjects);
         }
     }
 
-    protected void visitNew(Node node, ScriptOrFnNode tree) {
+    protected void visitNew(Node node, ScriptNode tree) {
     }
 
-    protected void visitCall(Node node, ScriptOrFnNode tree) {
+    protected void visitCall(Node node, ScriptNode tree) {
     }
     
     protected Node visitLet(boolean createWith, Node parent, Node previous, 
@@ -502,13 +507,13 @@ public class NodeTransformer
                             body);
                     }
                     // We're removing the LETEXPR, so move the symbols
-                    Node.Scope.joinScopes((Node.Scope)current,
-                                          (Node.Scope)scopeNode);
+                    Scope.joinScopes((Scope)current,
+                                          (Scope)scopeNode);
                     current = c.getFirstChild(); // should be a NAME, checked below
                 }
                 if (current.getType() != Token.NAME) throw Kit.codeBug();
                 Node stringNode = Node.newString(current.getString());
-                stringNode.setScope((Node.Scope)scopeNode);
+                stringNode.setScope((Scope)scopeNode);
                 Node init = current.getFirstChild();
                 if (init == null) {
                     init = new Node(Token.VOID, Node.newNumber(0.0));
@@ -520,11 +525,21 @@ public class NodeTransformer
                 scopeNode.setType(Token.COMMA);
                 result.addChildToBack(scopeNode);
                 scopeNode.addChildToBack(body);
+                if (body instanceof Scope) {
+                    Scope scopeParent = ((Scope) body).getParentScope();
+                    ((Scope) body).setParentScope((Scope)scopeNode);
+                    ((Scope) scopeNode).setParentScope(scopeParent);
+                }
             } else {
                 result.addChildToBack(new Node(Token.EXPR_VOID, newVars));
                 scopeNode.setType(Token.BLOCK);
                 result.addChildToBack(scopeNode);
                 scopeNode.addChildrenToBack(body);
+                if (body instanceof Scope) {
+                    Scope scopeParent = ((Scope) body).getParentScope();
+                    ((Scope) body).setParentScope((Scope)scopeNode);
+                    ((Scope) scopeNode).setParentScope(scopeParent);
+                }
             }
         }
         return result;

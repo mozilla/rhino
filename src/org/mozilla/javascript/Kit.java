@@ -451,5 +451,20 @@ public class Kit
         ex.printStackTrace(System.err);
         throw ex;
     }
-}
 
+    /**
+     * Throws RuntimeException to indicate failed assertion.
+     * The function never returns and its return type is RuntimeException
+     * only to be able to write <tt>throw Kit.codeBug()</tt> if plain
+     * <tt>Kit.codeBug()</tt> triggers unreachable code error.
+     */
+    public static RuntimeException codeBug(String msg)
+        throws RuntimeException
+    {
+        msg = "FAILED ASSERTION: " + msg;
+        RuntimeException ex = new IllegalStateException(msg);
+        // Print stack trace ASAP
+        ex.printStackTrace(System.err);
+        throw ex;
+    }
+}
