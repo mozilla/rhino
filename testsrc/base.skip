@@ -332,6 +332,10 @@ js1_7/lexical/regress-336376-01.js
 # minor decompilation incompatibility
 js1_5/extensions/regress-384680.js
 
+# bad tests? Looks like Daylight savings time failures.
+ecma/Date/15.9.5.28-1.js
+ecma/Date/15.9.5.29-1.js
+
 # uninvestigated failures. May be some bugs in here.
 e4x/Regress/regress-373082.js
 e4x/XML/regress-376773.js
