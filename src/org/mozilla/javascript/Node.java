@@ -48,10 +48,7 @@ import org.mozilla.javascript.ast.NumberLiteral;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -682,7 +679,6 @@ public class Node implements Iterable<Node>
      */
     private int endCheckSwitch()
     {
-        Node n;
         int rv = END_UNREACHED;
 
         // examine the cases
@@ -720,7 +716,6 @@ public class Node implements Iterable<Node>
      */
     private int endCheckTry()
     {
-        Node n;
         int rv = END_UNREACHED;
 
         // a TryStatement isn't a jump - needs rewriting

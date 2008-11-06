@@ -188,7 +188,6 @@ public class Parser
         if (compilerEnv.reportWarningAsError()) {
             addError(messageId, messageArg, position, length);
         } else if (errorCollector != null) {
-            int lineOffset = position - lineBeginningFor(position);
             errorCollector.warning(message, sourceURI, position, length);
         } else {
             errorReporter.warning(message, sourceURI, ts.getLineno(),
@@ -214,8 +213,6 @@ public class Parser
         ++syntaxErrorCount;
         String message = lookupMessage(messageId, messageArg);
         if (errorCollector != null) {
-            int lineno = lineFor(position);
-            int lineOffset = position - lineBeginningFor(position);
             errorCollector.error(message, sourceURI, position, length);
         } else {
             int lineno = 1, offset = 1;
@@ -838,7 +835,6 @@ public class Parser
         }
 
         // error:  skip ahead to a probable statement boundary
-        int lineno = ts.lineno;
         guessingStatementEnd: for (;;) {
             int tt = peekTokenOrEOL();
             consumeToken();
@@ -1653,7 +1649,7 @@ public class Parser
         throws IOException
     {
         if (currentToken != Token.NAME) throw codeBug();
-        int lineno = ts.lineno, pos = ts.tokenBeg, end = ts.tokenEnd;
+        int pos = ts.tokenBeg;
 
         // set check for label and call down to primaryExpr
         currentFlaggedToken |= TI_CHECK_LABEL;
@@ -2824,7 +2820,7 @@ public class Parser
                   }
                   Name name = createNameNode();
                   String prop = ts.getString();
-                  int ppos = ts.tokenBeg, pend = ts.tokenEnd;
+                  int ppos = ts.tokenBeg;
 
                   if ((tt == Token.NAME
                        && peekToken() == Token.NAME
@@ -3059,27 +3055,6 @@ public class Parser
         return 0;
     }
 
-    /**
-     * Return line number for a source position.    Returns -1 if
-     * the {@link CompilerEnvirons} is not set to ide-mode,
-     * and {@link #parse(java.io.Reader,String,int)} was used.
-     */
-    private int lineFor(int pos) {
-        if (sourceChars == null) {
-            return -1;
-        }
-        char[] buf = sourceChars;
-        int count = 0, len = buf.length;
-        for (int i = 0; i < len; i++) {
-            char c = buf[i];
-            if (c == '\r' || c == '\n')
-                count++;
-            if (i >= pos)
-                break;
-        }
-        return count;
-    }
-
     private void warnMissingSemi(int pos, int end) {
         // Should probably change this to be a CompilerEnvirons setting,
         // with an enum Never, Always, Permissive, where Permissive means
@@ -3094,7 +3069,7 @@ public class Parser
     }
 
     private void warnTrailingComma(String messageId, int pos,
-                                   List elems, int commaPos) {
+                                   List<?> elems, int commaPos) {
         if (compilerEnv.getWarnTrailingComma()) {
             // back up from comma to beginning of line or array/objlit
             if (!elems.isEmpty()) {

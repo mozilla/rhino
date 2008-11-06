@@ -18,7 +18,9 @@ import org.mozilla.javascript.ScriptableObject;
 public class CustomSetterAcceptNullScriptableTest extends TestCase
 {
 	public static class Foo extends ScriptableObject {
-		@Override
+        private static final long serialVersionUID = -8771045033217033529L;
+
+        @Override
 		public String getClassName()
 		{
 			return "Foo";
@@ -28,7 +30,9 @@ public class CustomSetterAcceptNullScriptableTest extends TestCase
 	}
 
 	public static class Foo2 extends ScriptableObject {
-		@Override
+        private static final long serialVersionUID = -8880603824656138628L;
+
+        @Override
 		public String getClassName()
 		{
 			return "Foo2";

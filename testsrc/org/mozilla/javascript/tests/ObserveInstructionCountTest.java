@@ -23,6 +23,7 @@ public class ObserveInstructionCountTest extends TestCase {
     }
     
     static class QuotaExceeded extends RuntimeException {
+        private static final long serialVersionUID = -8018441873635071899L;
     }
     
     static {

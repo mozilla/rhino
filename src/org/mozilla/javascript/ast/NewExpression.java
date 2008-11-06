@@ -40,10 +40,6 @@ package org.mozilla.javascript.ast;
 
 import org.mozilla.javascript.Token;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * New expression. Node type is {@link Token#NEW}.<p>
  *

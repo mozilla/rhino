@@ -360,7 +360,7 @@ public final class IRFactory extends Parser
         List<AstNode> elems = node.getElements();
         Node array = new Node(Token.ARRAYLIT);
         List<Integer> skipIndexes = null;
-        for (int i = 0, j = 0; i < elems.size(); ++i) {
+        for (int i = 0; i < elems.size(); ++i) {
             AstNode elem = elems.get(i);
             if (elem.getType() != Token.EMPTY) {
                 array.addChildToBack(transform(elem));
@@ -393,6 +393,7 @@ public final class IRFactory extends Parser
             // Bug: for code like "var obj={p:3};[obj.p]=[9];", "left" will
             // be ARRAYLITERAL with an embedded GETPROP. This causes errors
             // at codegen.
+            Kit.codeBug();
             target = left;
         } else {
             target = transform(left);
@@ -1180,20 +1181,7 @@ public final class IRFactory extends Parser
     }
 
     /**
-     * If stmt is the child of a labeled statement, return the first label.
-     * @return a Label node, or {@code null}
-     */
-    private Node getLabel(AstNode stmt) {
-        Node parent = stmt.getParent();
-        if (parent instanceof LabeledStatement) {
-            LabeledStatement ls = (LabeledStatement) parent;
-            return ls.getFirstLabel();
-        }
-        return null;
-    }
-
-    /**
-     * If caseExpression argument is null it indicate default label.
+     * If caseExpression argument is null it indicates a default label.
      */
     private void addSwitchCase(Node switchBlock, Node caseExpression,
                                Node statements)

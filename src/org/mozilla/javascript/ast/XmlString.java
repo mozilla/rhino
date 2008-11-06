@@ -38,8 +38,6 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.Token;
-
 /**
  * AST node for an XML-text-only component of an XML literal expression.  This
  * node differs from a {@link StringLiteral} in that it does not have quotes for

@@ -38,8 +38,6 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.Token;
-
 /**
  * Base class for E4X XML attribute-access or property-get expressions.
  * Such expressions can take a variety of forms. The general syntax has
