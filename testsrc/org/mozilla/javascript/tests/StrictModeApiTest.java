@@ -30,7 +30,7 @@ public class StrictModeApiTest extends TestCase {
         } 
         return super.hasFeature(cx, featureIndex); 
     }
-  };
+  }
   
   public void testStrictModeError() {
     contextFactory = new MyContextFactory();
