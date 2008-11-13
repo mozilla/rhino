@@ -114,7 +114,7 @@ public final class OptRuntime extends ScriptRuntime
     public static Object callProp0(Object value, String property,
                                    Context cx, Scriptable scope)
     {
-        Callable f = getPropFunctionAndThis(value, property, cx);
+        Callable f = getPropFunctionAndThis(value, property, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }

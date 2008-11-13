@@ -3602,11 +3602,13 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 String property = id.getString();
                 cfw.addPush(property);
                 cfw.addALoad(contextLocal);
+                cfw.addALoad(thisObjLocal);
                 addScriptRuntimeInvoke(
                     "getPropFunctionAndThis",
                     "(Ljava/lang/Object;"
                     +"Ljava/lang/String;"
                     +"Lorg/mozilla/javascript/Context;"
+                    +"Lorg/mozilla/javascript/Scriptable;"
                     +")Lorg/mozilla/javascript/Callable;");
             } else {
                 // Optimizer do not optimize this case for now
@@ -4619,11 +4621,13 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +")Ljava/lang/Object;");
         } else {
             cfw.addALoad(contextLocal);
+            cfw.addALoad(thisObjLocal);
             addScriptRuntimeInvoke(
                 "getObjectProp",
                 "(Ljava/lang/Object;"
                 +"Ljava/lang/String;"
                 +"Lorg/mozilla/javascript/Context;"
+                +"Lorg/mozilla/javascript/Scriptable;"
                 +")Ljava/lang/Object;");
         }
     }
