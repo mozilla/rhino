@@ -2211,7 +2211,7 @@ public class Parser
     }
 
     /**
-     * Parse a new-expression, or if next token isn't {@link Token.NEW},
+     * Parse a new-expression, or if next token isn't {@link Token#NEW},
      * a primary expression.
      * @param allowCallSyntax passed down to {@link #memberExprTail}
      */
