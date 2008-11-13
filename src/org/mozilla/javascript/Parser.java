@@ -783,7 +783,7 @@ public class Parser
         return statements(null);
     }
 
-    private class ConditionData {
+    private static class ConditionData {
         AstNode condition;
         int lp = -1;
         int rp = -1;
