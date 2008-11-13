@@ -893,12 +893,29 @@ public class ScriptRuntime {
         return toObject(Context.getContext(), scope, val);
     }
 
+    /**
+     * Warning: this doesn't allow to resolve primitive prototype properly when many top scopes are involved
+     */
     public static Scriptable toObjectOrNull(Context cx, Object obj)
     {
         if (obj instanceof Scriptable) {
             return (Scriptable)obj;
         } else if (obj != null && obj != Undefined.instance) {
             return toObject(cx, getTopCallScope(cx), obj);
+        }
+        return null;
+    }
+
+    /**
+     * @param scope the scope that should be used to resolve primitive prototype
+     */
+    public static Scriptable toObjectOrNull(Context cx, Object obj,
+                                            final Scriptable scope)
+    {
+        if (obj instanceof Scriptable) {
+            return (Scriptable)obj;
+        } else if (obj != null && obj != Undefined.instance) {
+            return toObject(cx, scope, obj);
         }
         return null;
     }
@@ -1385,6 +1402,19 @@ public class ScriptRuntime {
         return getObjectProp(sobj, property, cx);
     }
 
+    /**
+     * @param scope the scope that should be used to resolve primitive prototype
+     */
+    public static Object getObjectProp(Object obj, String property,
+                                       Context cx, final Scriptable scope)
+    {
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
+        if (sobj == null) {
+            throw undefReadError(obj, property);
+        }
+        return getObjectProp(sobj, property, cx);
+    }
+    
     public static Object getObjectProp(Scriptable obj, String property,
                                        Context cx)
     {
@@ -2121,7 +2151,7 @@ public class ScriptRuntime {
 
         Object value;
         for (;;) {
-            // Ignore XML lookup as requred by ECMA 357, 11.2.2.1
+            // Ignore XML lookup as required by ECMA 357, 11.2.2.1
             value = ScriptableObject.getProperty(thisObj, index);
             if (value != Scriptable.NOT_FOUND) {
                 break;
@@ -2150,12 +2180,35 @@ public class ScriptRuntime {
      * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
      * The caller must call ScriptRuntime.lastStoredScriptable() immediately
      * after calling this method.
+     * Warning: this doesn't allow to resolve primitive prototype properly when
+     * many top scopes are involved.
      */
     public static Callable getPropFunctionAndThis(Object obj,
                                                   String property,
                                                   Context cx)
     {
         Scriptable thisObj = toObjectOrNull(cx, obj);
+        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
+    }
+
+    /**
+     * Prepare for calling obj.property(...): return function corresponding to
+     * obj.property and make obj properly converted to Scriptable available
+     * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
+     * The caller must call ScriptRuntime.lastStoredScriptable() immediately
+     * after calling this method.
+     */
+    public static Callable getPropFunctionAndThis(Object obj,
+                                                  String property,
+                                                  Context cx, final Scriptable scope)
+    {
+        Scriptable thisObj = toObjectOrNull(cx, obj, scope);
+        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
+    }
+    
+    private static Callable getPropFunctionAndThisHelper(Object obj,
+          String property, Context cx, Scriptable thisObj)
+    {
         if (thisObj == null) {
             throw undefCallError(obj, property);
         }
