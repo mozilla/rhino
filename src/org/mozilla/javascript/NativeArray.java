@@ -1521,7 +1521,7 @@ public class NativeArray extends IdScriptableObject
                       if (na.dense[i] != Scriptable.NOT_FOUND &&
                           ScriptRuntime.shallowEq(na.dense[i], compareTo))
                       {
-                          return new Long(i);
+                          return Long.valueOf(i);
                       }
                   }
                 }

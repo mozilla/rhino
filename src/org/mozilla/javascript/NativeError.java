@@ -90,7 +90,7 @@ final class NativeError extends IdScriptableObject
             int[] linep = new int[1];
             String fileName = Context.getSourcePositionFromStack(linep);
             ScriptableObject.putProperty(obj, "lineNumber", 
-                    new Integer(linep[0]));
+                    Integer.valueOf(linep[0]));
             if(arglen < 2) {
                 ScriptableObject.putProperty(obj, "fileName", fileName);
             }
