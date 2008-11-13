@@ -40,6 +40,9 @@
 
 package org.mozilla.javascript;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 /**
  * Factory class that Rhino runtime uses to create new {@link Context}
  * instances.  A <code>ContextFactory</code> can also notify listeners
@@ -347,9 +350,13 @@ public class ContextFactory
      * is installed.
      * Application can override the method to provide custom class loading.
      */
-    protected GeneratedClassLoader createClassLoader(ClassLoader parent)
+    protected GeneratedClassLoader createClassLoader(final ClassLoader parent)
     {
-        return new DefiningClassLoader(parent);
+        return AccessController.doPrivileged(new PrivilegedAction<DefiningClassLoader>() {
+            public DefiningClassLoader run(){
+                return new DefiningClassLoader(parent);
+            }
+        });
     }
 
     /**
