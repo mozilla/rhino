@@ -161,9 +161,9 @@ public class RegExpImpl implements RegExpProxy {
             result = re.executeRegExp(cx, scope, reImpl,
                                       str, indexp, NativeRegExp.TEST);
             if (result != null && result.equals(Boolean.TRUE))
-                result = new Integer(reImpl.leftContext.length);
+                result = Integer.valueOf(reImpl.leftContext.length);
             else
-                result = new Integer(-1);
+                result = Integer.valueOf(-1);
         } else if (data.global) {
             re.lastIndex = 0;
             for (int count = 0; indexp[0] <= str.length(); count++) {

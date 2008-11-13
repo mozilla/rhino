@@ -2431,7 +2431,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     a = new Object[s.length];
                 a[c++] = slot.name != null
                              ? (Object) slot.name
-                             : new Integer(slot.indexOrHash);
+                             : Integer.valueOf(slot.indexOrHash);
             }
             Slot next = slot.orderedNext;
             while (next != null && next.wasDeleted) {

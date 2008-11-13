@@ -58,7 +58,7 @@ final class NativeError extends IdScriptableObject
         ScriptableObject.putProperty(obj, "name", "Error");
         ScriptableObject.putProperty(obj, "message", "");
         ScriptableObject.putProperty(obj, "fileName", "");
-        ScriptableObject.putProperty(obj, "lineNumber", new Integer(0));
+        ScriptableObject.putProperty(obj, "lineNumber", Integer.valueOf(0));
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
@@ -80,7 +80,7 @@ final class NativeError extends IdScriptableObject
                 if (arglen >= 3) {
                     int line = ScriptRuntime.toInt32(args[2]);
                     ScriptableObject.putProperty(obj, "lineNumber",
-                            new Integer(line));
+                            Integer.valueOf(line));
                 }
             }
         }

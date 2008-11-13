@@ -292,7 +292,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         while (parent != null && !(parent instanceof AstRoot)) {
             parent = parent.getParent();
         }
-        return parent instanceof AstRoot ? (AstRoot)parent : null;
+        return (AstRoot)parent;
     }
 
     /**
@@ -558,7 +558,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         return parent == null ? 0 : 1 + parent.depth();
     }
 
-    protected class DebugPrintVisitor implements NodeVisitor {
+    protected static class DebugPrintVisitor implements NodeVisitor {
         private StringBuilder buffer;
         private static final int DEBUG_INDENT = 2;
         public DebugPrintVisitor(StringBuilder buf) {

@@ -350,7 +350,7 @@ class XMLList extends XMLObjectImpl implements Function {
             enumObjs = new Object[length()];
 
             for (int i = 0; i < enumObjs.length; i++) {
-                enumObjs[i] = new Integer(i);
+                enumObjs[i] = Integer.valueOf(i);
             }
         }
 
@@ -433,14 +433,11 @@ class XMLList extends XMLObjectImpl implements Function {
             XML xml = getXmlFromAnnotation(i);
 
             if (xml != null) {
-                Object o = xml.children();
-                if (o instanceof XMLList) {
-                    XMLList childList = (XMLList)o;
+                XMLList childList = xml.children();
 
-                    int cChildren = childList.length();
-                    for (int j = 0; j < cChildren; j++) {
-                        list.add(childList.item(j));
-                    }
+                int cChildren = childList.length();
+                for (int j = 0; j < cChildren; j++) {
+                    list.add(childList.item(j));
                 }
             }
         }

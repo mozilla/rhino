@@ -224,7 +224,7 @@ public class FunctionObject extends BaseFunction
           case JAVA_INT_TYPE:
               if (arg instanceof Integer)
                 return arg;
-            return new Integer(ScriptRuntime.toInt32(arg));
+            return Integer.valueOf(ScriptRuntime.toInt32(arg));
           case JAVA_BOOLEAN_TYPE:
               if (arg instanceof Boolean)
                 return arg;

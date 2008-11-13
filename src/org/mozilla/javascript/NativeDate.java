@@ -1130,7 +1130,7 @@ final class NativeDate extends IdScriptableObject
             }
             formatter = localeDateFormatter;
             break;
-          default: formatter = null; // unreachable
+          default: throw new AssertionError(); // unreachable
         }
 
         synchronized (formatter) {

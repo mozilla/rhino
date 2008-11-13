@@ -78,7 +78,7 @@ class XML extends XMLObjectImpl {
     /* TODO: needs encapsulation. */
     XML makeXmlFromString(XMLName name, String value) {
         try {
-            return newTextElementXML(this.node, name.toQname(), value.toString());
+            return newTextElementXML(this.node, name.toQname(), value);
         } catch(Exception e) {
             throw ScriptRuntime.typeError(e.getMessage());
         }
@@ -121,7 +121,7 @@ class XML extends XMLObjectImpl {
         if (isPrototype()) {
             return new Object[0];
         } else {
-            return new Object[] { new Integer(0) };
+            return new Object[] { Integer.valueOf(0) };
         }
     }
 

@@ -2337,7 +2337,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
              * Define the index and input properties last for better for/in loop
              * order (so they come after the elements).
              */
-            obj.put("index", obj, new Integer(start + gData.skipped));
+            obj.put("index", obj, Integer.valueOf(start + gData.skipped));
             obj.put("input", obj, str);
         }
 

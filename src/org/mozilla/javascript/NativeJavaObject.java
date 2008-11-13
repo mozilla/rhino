@@ -569,7 +569,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 // Placed here because it applies *only* to JS strings,
                 // not other JS objects converted to strings
                 if (((String)value).length() == 1) {
-                    return new Character(((String)value).charAt(0));
+                    return Character.valueOf(((String)value).charAt(0));
                 }
                 else {
                     return coerceToNumber(type, value);
@@ -716,7 +716,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
             if (valueClass == ScriptRuntime.CharacterClass) {
                 return value;
             }
-            return new Character((char)toInteger(value,
+            return Character.valueOf((char)toInteger(value,
                                                  ScriptRuntime.CharacterClass,
                                                  Character.MIN_VALUE,
                                                  Character.MAX_VALUE));
@@ -763,7 +763,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 return value;
             }
             else {
-                return new Integer((int)toInteger(value,
+                return Integer.valueOf((int)toInteger(value,
                                                   ScriptRuntime.IntegerClass,
                                                   Integer.MIN_VALUE,
                                                   Integer.MAX_VALUE));
@@ -783,7 +783,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                  */
                 final double max = Double.longBitsToDouble(0x43dfffffffffffffL);
                 final double min = Double.longBitsToDouble(0xc3e0000000000000L);
-                return new Long(toInteger(value,
+                return Long.valueOf(toInteger(value,
                                           ScriptRuntime.LongClass,
                                           min,
                                           max));
@@ -795,7 +795,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 return value;
             }
             else {
-                return new Short((short)toInteger(value,
+                return Short.valueOf((short)toInteger(value,
                                                   ScriptRuntime.ShortClass,
                                                   Short.MIN_VALUE,
                                                   Short.MAX_VALUE));
@@ -807,7 +807,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 return value;
             }
             else {
-                return new Byte((byte)toInteger(value,
+                return Byte.valueOf((byte)toInteger(value,
                                                 ScriptRuntime.ByteClass,
                                                 Byte.MIN_VALUE,
                                                 Byte.MAX_VALUE));

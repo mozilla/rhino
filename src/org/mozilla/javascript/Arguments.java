@@ -60,7 +60,7 @@ final class Arguments extends IdScriptableObject
         setPrototype(ScriptableObject.getObjectPrototype(parent));
 
         args = activation.originalArgs;
-        lengthObj = new Integer(args.length);
+        lengthObj = Integer.valueOf(args.length);
 
         NativeFunction f = activation.function;
         calleeObj = f;
@@ -294,7 +294,7 @@ final class Arguments extends IdScriptableObject
                 int offset = 0;
                 for (int i = 0; i != args.length; ++i) {
                     if (present == null || !present[i]) {
-                        ids[offset] = new Integer(i);
+                        ids[offset] = Integer.valueOf(i);
                         ++offset;
                     }
                 }

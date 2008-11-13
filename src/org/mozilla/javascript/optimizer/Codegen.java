@@ -122,7 +122,7 @@ public class Codegen implements Evaluator
         NativeFunction f;
         try {
             Constructor<?>ctor = cl.getConstructors()[0];
-            Object[] initArgs = { scope, cx, new Integer(0) };
+            Object[] initArgs = { scope, cx, Integer.valueOf(0) };
             f = (NativeFunction)ctor.newInstance(initArgs);
         } catch (Exception ex) {
             throw new RuntimeException
@@ -5042,7 +5042,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
     private Map<Node,FinallyReturnPoint> finallys;
 
-    class FinallyReturnPoint {
+    static class FinallyReturnPoint {
         public List<Integer> jsrPoints  = new ArrayList<Integer>();
         public int tableLabel = 0;        
     }

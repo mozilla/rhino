@@ -479,9 +479,9 @@ class JavaMembers
         for (int tableCursor = 0; tableCursor != 2; ++tableCursor) {
             boolean isStatic = (tableCursor == 0);
             Map<String,Object> ht = isStatic ? staticMembers : members;
-            for (String name: ht.keySet()) {
+            for (Map.Entry<String, Object> entry: ht.entrySet()) {
                 MemberBox[] methodBoxes;
-                Object value = ht.get(name);
+                Object value = entry.getValue();
                 if (value instanceof Method) {
                     methodBoxes = new MemberBox[1];
                     methodBoxes[0] = new MemberBox((Method)value);
@@ -499,7 +499,7 @@ class JavaMembers
                 if (scope != null) {
                     ScriptRuntime.setFunctionProtoAndParent(fun, scope);
                 }
-                ht.put(name, fun);
+                ht.put(entry.getKey(), fun);
             }
         }
 
@@ -674,7 +674,7 @@ class JavaMembers
       if (includePrivate && cl != ScriptRuntime.ClassClass) {
           try {
               Constructor<?>[] cons = cl.getDeclaredConstructors();
-              Constructor.setAccessible(cons, true);
+              AccessibleObject.setAccessible(cons, true);
 
               return cons;
           } catch (SecurityException e) {

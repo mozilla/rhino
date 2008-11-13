@@ -64,7 +64,7 @@ public class NativeArray extends IdScriptableObject
      */
 
     private static final Object ARRAY_TAG = "Array";
-    private static final Integer NEGATIVE_ONE = new Integer(-1);
+    private static final Integer NEGATIVE_ONE = Integer.valueOf(-1);
 
     static void init(Scriptable scope, boolean sealed)
     {
@@ -455,7 +455,7 @@ public class NativeArray extends IdScriptableObject
         for (int i = 0; i != N; ++i) {
             // Replace existing elements by their indexes
             if (dense[i] != NOT_FOUND) {
-                ids[presentCount] = new Integer(i);
+                ids[presentCount] = Integer.valueOf(i);
                 ++presentCount;
             }
         }
@@ -475,7 +475,7 @@ public class NativeArray extends IdScriptableObject
         if (hint == ScriptRuntime.NumberClass) {
             Context cx = Context.getContext();
             if (cx.getLanguageVersion() == Context.VERSION_1_2)
-                return new Long(length);
+                return Long.valueOf(length);
         }
         return super.getDefaultValue(hint);
     }
@@ -1513,7 +1513,7 @@ public class NativeArray extends IdScriptableObject
                       if (na.dense[i] != Scriptable.NOT_FOUND &&
                           ScriptRuntime.shallowEq(na.dense[i], compareTo))
                       {
-                          return new Long(i);
+                          return Long.valueOf(i);
                       }
                   }
                 } else {
@@ -1576,7 +1576,7 @@ public class NativeArray extends IdScriptableObject
                 continue;
             }
             innerArgs[0] = elem;
-            innerArgs[1] = new Long(i);
+            innerArgs[1] = Long.valueOf(i);
             innerArgs[2] = thisObj;
             Object result = f.call(cx, parent, thisArg, innerArgs);
             switch (id) {

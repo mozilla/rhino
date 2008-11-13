@@ -84,7 +84,7 @@ public class Label extends Jump {
      * empty string.
      */
     public void setName(String name) {
-        name = name == null ? name : name.trim();
+        name = name == null ? null : name.trim();
         if (name == null || "".equals(name))
             throw new IllegalArgumentException("invalid label name");
         this.name = name;

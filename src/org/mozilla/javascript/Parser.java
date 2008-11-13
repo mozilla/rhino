@@ -1532,17 +1532,17 @@ public class Parser
         AstNode ret;
 
         if (tt == Token.RETURN) {
-            endFlags |= e == null ? Block.END_RETURNS : Block.END_RETURNS_VALUE;
+            endFlags |= e == null ? Node.END_RETURNS : Node.END_RETURNS_VALUE;
             ret = new ReturnStatement(pos, end - pos, e);
 
             // see if we need a strict mode warning
             if (nowAllSet(before, endFlags,
-                          Block.END_RETURNS|Block.END_RETURNS_VALUE))
+                    Node.END_RETURNS|Node.END_RETURNS_VALUE))
                 addStrictWarning("msg.return.inconsistent", "", pos, end - pos);
         } else {
             if (!insideFunction())
                 reportError("msg.bad.yield");
-            endFlags |= Block.END_YIELDS;
+            endFlags |= Node.END_YIELDS;
             ret = new Yield(pos, end - pos, e);
             setRequiresActivation();
             setIsGenerator();
@@ -1554,7 +1554,7 @@ public class Parser
         // see if we are mixing yields and value returns.
         if (insideFunction()
             && nowAllSet(before, endFlags,
-                         Block.END_YIELDS|Block.END_RETURNS_VALUE)) {
+                    Node.END_YIELDS|Node.END_RETURNS_VALUE)) {
             Name name = ((FunctionNode)currentScriptOrFn).getFunctionName();
             if (name == null || name.length() == 0)
                 addError("msg.anon.generator.returns", "");
@@ -2359,7 +2359,7 @@ public class Parser
 
         if (tt == Token.DOTDOT) {
             mustHaveXML();
-            memberTypeFlags = XmlRef.DESCENDANTS_FLAG;
+            memberTypeFlags = Node.DESCENDANTS_FLAG;
         }
 
         if (!compilerEnv.isXmlAvailable()) {

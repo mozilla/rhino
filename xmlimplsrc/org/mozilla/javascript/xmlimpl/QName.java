@@ -128,6 +128,11 @@ final class QName extends IdScriptableObject
     }
 
     @Override
+    public int hashCode() {
+        return delegate.hashCode();
+    }
+
+    @Override
     protected Object equivalentValues(Object value)
     {
         if(!(value instanceof QName)) return Scriptable.NOT_FOUND;
@@ -136,7 +141,7 @@ final class QName extends IdScriptableObject
     }
 
     private boolean equals(QName q) {
-        return this.delegate.isEqualTo(q.delegate);
+        return this.delegate.equals(q.delegate);
     }
 
     @Override

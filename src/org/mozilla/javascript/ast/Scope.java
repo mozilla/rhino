@@ -183,10 +183,10 @@ public class Scope extends Jump {
         if (!Collections.disjoint(src.keySet(), dst.keySet())) {
             codeBug();
         }
-        for (String name : src.keySet()) {
-            Symbol sym = src.get(name);
+        for (Map.Entry<String, Symbol> entry: src.entrySet()) {
+            Symbol sym = entry.getValue();
             sym.setContainingTable(dest);
-            dst.put(name, sym);
+            dst.put(entry.getKey(), sym);
         }
     }
 

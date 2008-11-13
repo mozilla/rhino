@@ -651,8 +651,8 @@ public class Context
         Object listeners = propertyListeners;
         if (listeners != null && version != this.version) {
             firePropertyChangeImpl(listeners, languageVersionProperty,
-                               new Integer(this.version),
-                               new Integer(version));
+                               Integer.valueOf(this.version),
+                               Integer.valueOf(version));
         }
         this.version = version;
     }

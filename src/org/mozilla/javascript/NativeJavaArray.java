@@ -95,7 +95,7 @@ public class NativeJavaArray extends NativeJavaObject
     @Override
     public Object get(String id, Scriptable start) {
         if (id.equals("length"))
-            return new Integer(length);
+            return Integer.valueOf(length);
         Object result = super.get(id, start);
         if (result == NOT_FOUND &&
             !ScriptableObject.hasProperty(getPrototype(), id))
@@ -152,7 +152,7 @@ public class NativeJavaArray extends NativeJavaObject
         Object[] result = new Object[length];
         int i = length;
         while (--i >= 0)
-            result[i] = new Integer(i);
+            result[i] = Integer.valueOf(i);
         return result;
     }
 

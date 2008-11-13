@@ -712,10 +712,23 @@ class XmlNode implements Serializable {
             return equals(one.getUri(), two.getUri());
         }
 
-        final boolean isEqualTo(QName other) {
+        final boolean equals(QName other) {
             if (!namespacesEqual(this.namespace, other.namespace)) return false;
             if (!equals(this.localName, other.localName)) return false;
             return true;
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if(!(obj instanceof QName)) {
+                return false;
+            }
+            return equals((QName)obj);
+        }
+        
+        @Override
+        public int hashCode() {
+            return localName == null ? 0 : localName.hashCode();
         }
 
         void lookupPrefix(org.w3c.dom.Node node) {

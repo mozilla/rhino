@@ -101,6 +101,11 @@ class Namespace extends IdScriptableObject
         if (!(obj instanceof Namespace)) return false;
         return equals((Namespace)obj);
     }
+    
+    @Override
+    public int hashCode() {
+        return uri().hashCode();
+    }
 
     @Override
     protected Object equivalentValues(Object value) {

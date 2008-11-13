@@ -107,7 +107,7 @@ public class FunctionCall extends AstNode {
      */
     public void setArguments(List<AstNode> arguments) {
         if (arguments == null) {
-            this.arguments = arguments;
+            this.arguments = null;
         } else {
             if (this.arguments != null)
                 this.arguments.clear();

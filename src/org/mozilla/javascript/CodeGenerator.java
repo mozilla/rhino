@@ -1268,13 +1268,13 @@ class CodeGenerator extends Icode {
 
     private void addToken(int token)
     {
-        if (!Interpreter.validTokenCode(token)) throw Kit.codeBug();
+        if (!Icode.validTokenCode(token)) throw Kit.codeBug();
         addUint8(token);
     }
 
     private void addIcode(int icode)
     {
-        if (!Interpreter.validIcode(icode)) throw Kit.codeBug();
+        if (!Icode.validIcode(icode)) throw Kit.codeBug();
         // Write negative icode as uint8 bits
         addUint8(icode & 0xFF);
     }
@@ -1374,7 +1374,7 @@ class CodeGenerator extends Icode {
     private void addStringOp(int op, String str)
     {
         addStringPrefix(str);
-        if (Interpreter.validIcode(op)) {
+        if (Icode.validIcode(op)) {
             addIcode(op);
         } else {
             addToken(op);
@@ -1384,7 +1384,7 @@ class CodeGenerator extends Icode {
     private void addIndexOp(int op, int index)
     {
         addIndexPrefix(index);
-        if (Interpreter.validIcode(op)) {
+        if (Icode.validIcode(op)) {
             addIcode(op);
         } else {
             addToken(op);

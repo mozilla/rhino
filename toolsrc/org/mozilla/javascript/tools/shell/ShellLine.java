@@ -119,7 +119,7 @@ class FlexibleCompletor implements java.lang.reflect.InvocationHandler {
         if (method.equals(this.completeMethod)) {
             int result = complete((String)args[0], ((Integer) args[1]).intValue(),
                     (List<String>) args[2]);
-            return new Integer(result);
+            return Integer.valueOf(result);
         }
         throw new NoSuchMethodError(method.toString());
     }

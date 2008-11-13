@@ -442,7 +442,6 @@ public class Main
         } else {
             processFile(cx, global, filename);
         }
-        System.gc();
     }
 
     public static void processFile(Context cx, Scriptable scope,

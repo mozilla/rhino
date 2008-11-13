@@ -263,7 +263,7 @@ public class ScriptRuntime {
 
     public static Integer wrapInt(int i)
     {
-        return new Integer(i);
+        return Integer.valueOf(i);
     }
 
     public static Number wrapNumber(double x)
@@ -1303,7 +1303,7 @@ public class ScriptRuntime {
     {
         long indexTest = indexFromString(s);
         if (indexTest >= 0) {
-            return new Integer((int)indexTest);
+            return Integer.valueOf((int)indexTest);
         }
         return s;
     }
@@ -1316,7 +1316,7 @@ public class ScriptRuntime {
     {
         int i = (int)d;
         if (i == d) {
-            return new Integer(i);
+            return Integer.valueOf(i);
         }
         return toString(d);
     }
@@ -1482,7 +1482,7 @@ public class ScriptRuntime {
     {
         if (obj instanceof XMLObject) {
             XMLObject xmlObject = (XMLObject)obj;
-            return xmlObject.ecmaGet(cx, new Integer(index));
+            return xmlObject.ecmaGet(cx, Integer.valueOf(index));
         }
 
         Object result = ScriptableObject.getProperty(obj, index);
@@ -1577,7 +1577,7 @@ public class ScriptRuntime {
     {
         if (obj instanceof XMLObject) {
             XMLObject xmlObject = (XMLObject)obj;
-            xmlObject.ecmaPut(cx, new Integer(index), value);
+            xmlObject.ecmaPut(cx, Integer.valueOf(index), value);
         } else {
             ScriptableObject.putProperty(obj, index, value);
         }
@@ -2027,7 +2027,7 @@ public class ScriptRuntime {
                 int intId = ((Number)id).intValue();
                 if (!x.obj.has(intId, x.obj))
                     continue;   // must have been deleted
-                x.currentId = x.enumNumbers ? (Object) (new Integer(intId))
+                x.currentId = x.enumNumbers ? (Object) (Integer.valueOf(intId))
                                             : String.valueOf(intId);
             }
             return Boolean.TRUE;
@@ -3248,7 +3248,7 @@ public class ScriptRuntime {
             int line = re.lineNumber();
             Object args[];
             if (line > 0) {
-                args = new Object[] { errorMsg, sourceUri, new Integer(line) };
+                args = new Object[] { errorMsg, sourceUri, Integer.valueOf(line) };
             } else {
                 args = new Object[] { errorMsg, sourceUri };
             }
