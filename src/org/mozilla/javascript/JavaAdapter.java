@@ -204,7 +204,15 @@ public final class JavaAdapter implements IdFunctionCall
         try {
             Object adapter = adapterClass.getConstructor(ctorParms).
                                  newInstance(ctorArgs);
-            return getAdapterSelf(adapterClass, adapter);
+            Object self = getAdapterSelf(adapterClass, adapter);
+            // Return unwrapped JavaAdapter if it implements Scriptable
+            if (self instanceof Wrapper) {
+                Object unwrapped = ((Wrapper) self).unwrap();
+                if (unwrapped instanceof Scriptable) {
+                    return unwrapped;
+                }
+            }
+            return self;
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
