@@ -28,6 +28,7 @@
  *   Bob Jervis
  *   Roger Lawrence
  *   Steve Weiss
+ *   Hannes Wallnoefer
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -46,9 +47,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.io.*;
 import org.mozilla.javascript.debug.DebuggableObject;
 
@@ -68,7 +67,7 @@ import org.mozilla.javascript.debug.DebuggableObject;
 
 public abstract class ScriptableObject implements Scriptable, Serializable,
                                                   DebuggableObject,
-                                                  ConstProperties
+                                                  ConstProperties, Map
 {
 
     /**
@@ -2507,6 +2506,212 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 addKnownAbsentSlot(slots, lastAdded, slotIndex);
                 prev = lastAdded;
             }
+        }
+    }
+
+    // Methods and classes to implement java.util.Map interface
+
+    @Override
+    public int size() {
+        return count;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return count == 0;
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        if (key instanceof String) {
+            return has((String) key, this);
+        } else if (key instanceof Number) {
+            return has(((Number) key).intValue(), this);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        for (Object obj : values()) {
+            if (value == obj ||
+                    value != null && value.equals(obj)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public Object get(Object key) {
+        Object value = null;
+        if (key instanceof String) {
+            value = getImpl((String) key, 0, this);
+        } else if (key instanceof Number) {
+            value = getImpl(null, ((Number) key).intValue(), this);
+        }
+        if (value == Scriptable.NOT_FOUND || value == Undefined.instance) {
+            return null;
+        } else if (value instanceof Wrapper) {
+            return ((Wrapper) value).unwrap();
+        } else {
+            return value;
+        }
+    }
+
+    @Override
+    public Object remove(Object key) {
+        Object value = get(key);
+        if (key instanceof String) {
+            delete((String) key);
+        } else if (key instanceof Number) {
+            delete(((Number) key).intValue());
+        }
+        return value;
+    }
+
+    @Override
+    public Set<Object> keySet() {
+        return new KeySet();
+    }
+
+    @Override
+    public Collection<Object> values() {
+        return new ValueCollection();
+    }
+
+    @Override
+    public Set<Map.Entry<Object, Object>> entrySet() {
+        return new EntrySet();
+    }
+
+    @Override
+    public Object put(Object key, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void putAll(Map m) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+
+    class EntrySet extends AbstractSet<Map.Entry<Object, Object>> {
+        @Override
+        public Iterator<Map.Entry<Object, Object>> iterator() {
+            return new Iterator<Map.Entry<Object, Object>>() {
+                Object[] ids = getIds();
+                Object key = null;
+                int index = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return index < ids.length;
+                }
+
+                @Override
+                public Map.Entry<Object, Object> next() {
+                    key = ids[index++];
+                    Object value = get(key);
+                    return new AbstractMap.SimpleImmutableEntry<Object, Object>(key, value);
+                }
+
+                @Override
+                public void remove() {
+                    if (key == null) {
+                        throw new IllegalStateException();
+                    }
+                    ScriptableObject.this.remove(key);
+                    key = null;
+                }
+            };
+        }
+
+        @Override
+        public int size() {
+            return count;
+        }
+    }
+
+    class KeySet extends AbstractSet<Object> {
+
+        @Override
+        public boolean contains(Object key) {
+            return containsKey(key);
+        }
+
+        @Override
+        public Iterator<Object> iterator() {
+            return new Iterator<Object>() {
+                Object[] ids = getIds();
+                Object key;
+                int index = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return index < ids.length;
+                }
+
+                @Override
+                public Object next() {
+                    return (key = ids[index++]);
+                }
+
+                @Override
+                public void remove() {
+                    if (key == null) {
+                        throw new IllegalStateException();
+                    }
+                    ScriptableObject.this.remove(key);
+                    key = null;
+                }
+           };
+        }
+
+        @Override
+        public int size() {
+            return count;
+        }
+    }
+
+    class ValueCollection extends AbstractCollection<Object> {
+
+        @Override
+        public Iterator<Object> iterator() {
+            return new Iterator<Object>() {
+                Object[] ids = getIds();
+                Object key;
+                int index = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return index < ids.length;
+                }
+
+                @Override
+                public Object next() {
+                    return get((key = ids[index++]));
+                }
+
+                @Override
+                public void remove() {
+                    if (key == null) {
+                        throw new IllegalStateException();
+                    }
+                    ScriptableObject.this.remove(key);
+                    key = null;
+                }
+            };
+        }
+
+        @Override
+        public int size() {
+            return count;
         }
     }
 
