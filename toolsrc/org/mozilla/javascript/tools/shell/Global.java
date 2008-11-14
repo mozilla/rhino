@@ -1037,7 +1037,11 @@ public class Global extends ImporterTopLevel
                 }
             } else {
                 File f = new File(filePath);
-
+                if (!f.exists()) {
+                    throw new FileNotFoundException("File not found: " + filePath);
+                } else if (!f.canRead()) {
+                    throw new IOException("Cannot read file: " + filePath);
+                }
                 long length = f.length();
                 chunkLength = (int)length;
                 if (chunkLength != length)
