@@ -2049,7 +2049,7 @@ public class ScriptRuntime {
           case ENUMERATE_ARRAY:
           case ENUMERATE_ARRAY_NO_ITERATOR:
             Object[] elements = { x.currentId, enumValue(enumObj, cx) };
-            return cx.newArray(x.obj.getParentScope(), elements);
+            return cx.newArray(x.obj, elements);
           default:
             throw Kit.codeBug();
         }
