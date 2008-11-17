@@ -978,8 +978,6 @@ public class Node implements Iterable<Node>
           case Token.SEMI:
           case Token.INC:
           case Token.DEC:
-          case Token.EXPORT:
-          case Token.IMPORT:
           case Token.IF:
           case Token.ELSE:
           case Token.SWITCH:

@@ -128,7 +128,7 @@ class TokenStream
             Id_delete        = Token.DELPROP,
             Id_do            = Token.DO,
             Id_else          = Token.ELSE,
-            Id_export        = Token.EXPORT,
+            Id_export        = Token.RESERVED,
             Id_false         = Token.FALSE,
             Id_for           = Token.FOR,
             Id_function      = Token.FUNCTION,
@@ -165,7 +165,7 @@ class TokenStream
             Id_float         = Token.RESERVED,
             Id_goto          = Token.RESERVED,
             Id_implements    = Token.RESERVED,
-            Id_import        = Token.IMPORT,
+            Id_import        = Token.RESERVED,
             Id_instanceof    = Token.INSTANCEOF,
             Id_int           = Token.RESERVED,
             Id_interface     = Token.RESERVED,
@@ -427,11 +427,6 @@ class TokenStream
                                         isReservedKeywordAsIdentifier())
                         {
                             return result;
-                        } else {
-                            // If implementation permits to use future reserved
-                            // keywords in violation with the EcmaScript,
-                            // treat it as name but issue warning
-                            parser.addWarning("msg.reserved.keyword", str);
                         }
                     }
                 }
