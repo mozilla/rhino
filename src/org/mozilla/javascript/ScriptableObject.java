@@ -2511,17 +2511,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     // Methods and classes to implement java.util.Map interface
 
-    @Override
     public int size() {
         return count;
     }
 
-    @Override
     public boolean isEmpty() {
         return count == 0;
     }
 
-    @Override
     public boolean containsKey(Object key) {
         if (key instanceof String) {
             return has((String) key, this);
@@ -2531,7 +2528,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return false;
     }
 
-    @Override
     public boolean containsValue(Object value) {
         for (Object obj : values()) {
             if (value == obj ||
@@ -2542,7 +2538,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return false;
     }
 
-    @Override
     public Object get(Object key) {
         Object value = null;
         if (key instanceof String) {
@@ -2559,7 +2554,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
     }
 
-    @Override
     public Object remove(Object key) {
         Object value = get(key);
         if (key instanceof String) {
@@ -2570,32 +2564,26 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return value;
     }
 
-    @Override
     public Set<Object> keySet() {
         return new KeySet();
     }
 
-    @Override
     public Collection<Object> values() {
         return new ValueCollection();
     }
 
-    @Override
     public Set<Map.Entry<Object, Object>> entrySet() {
         return new EntrySet();
     }
 
-    @Override
     public Object put(Object key, Object value) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void putAll(Map m) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void clear() {
         throw new UnsupportedOperationException();
     }
@@ -2609,19 +2597,46 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 Object key = null;
                 int index = 0;
 
-                @Override
                 public boolean hasNext() {
                     return index < ids.length;
                 }
 
-                @Override
                 public Map.Entry<Object, Object> next() {
-                    key = ids[index++];
-                    Object value = get(key);
-                    return new AbstractMap.SimpleImmutableEntry<Object, Object>(key, value);
+                    final Object ekey = key = ids[index++];
+                    final Object value = get(key);
+                    return new Map.Entry<Object, Object>() {
+                        public Object getKey() {
+                            return ekey;
+                        }
+
+                        public Object getValue() {
+                            return value;
+                        }
+
+                        public Object setValue(Object value) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        public boolean equals(Object other) {
+                            if (!(other instanceof Map.Entry)) {
+                                return false;
+                            }
+                            Map.Entry e = (Map.Entry) other;
+                            return (ekey == null ? e.getKey() == null : ekey.equals(e.getKey()))
+                                && (value == null ? e.getValue() == null : value.equals(e.getValue()));
+                        }
+
+                        public int hashCode() {
+                            return (ekey == null ? 0 : ekey.hashCode()) ^
+                                   (value == null ? 0 : value.hashCode());
+                        }
+
+                        public String toString() {
+                            return ekey + "=" + value;
+                        }
+                    };
                 }
 
-                @Override
                 public void remove() {
                     if (key == null) {
                         throw new IllegalStateException();
@@ -2652,17 +2667,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 Object key;
                 int index = 0;
 
-                @Override
                 public boolean hasNext() {
                     return index < ids.length;
                 }
 
-                @Override
                 public Object next() {
                     return (key = ids[index++]);
                 }
 
-                @Override
                 public void remove() {
                     if (key == null) {
                         throw new IllegalStateException();
@@ -2688,17 +2700,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 Object key;
                 int index = 0;
 
-                @Override
                 public boolean hasNext() {
                     return index < ids.length;
                 }
 
-                @Override
                 public Object next() {
                     return get((key = ids[index++]));
                 }
 
-                @Override
                 public void remove() {
                     if (key == null) {
                         throw new IllegalStateException();
