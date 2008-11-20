@@ -4,6 +4,7 @@
     Location of mozilla/js/tests directory
   -->
   <property name="test.library.dir" location="../tests" />
+  <property name="test.jstests.jar" location="${test.library.dir}/src/jstests.jar" />
 
   <!--
     Destination to which testing classes should be built
@@ -108,11 +109,12 @@
       <classpath>
         <pathelement location="${xbean.jar}"/>
         <pathelement location="${jsr173.jar}"/>
-      	<pathelement path="${coverage.classes.dir}" />
+        <pathelement path="${coverage.classes.dir}" />
         <pathelement path="${classes}" />
         <pathelement path="${test.classes}" />
-     	<pathelement path="lib/emma.jar"/>
+        <pathelement path="lib/emma.jar"/>
         <pathelement path="lib/junit.jar" />
+        <pathelement location="${test.jstests.jar}"/>
       </classpath>
       <batchtest todir="build/test">
         <fileset dir="${test.classes}" includes="**/tests/*Test.class"/>
@@ -164,6 +166,7 @@
         <pathelement location="${jsr173.jar}"/>
         <pathelement path="${classes}" />
         <pathelement path="${test.classes}" />
+        <pathelement location="${test.jstests.jar}"/>
       </classpath>
       <arg value="-p" />
       <arg file="${test.library.dir}" />
