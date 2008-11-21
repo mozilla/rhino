@@ -54,7 +54,7 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
  * Executes the tests in the js/tests directory, much like jsDriver.pl does.
  * Excludes tests found in the js/tests/rhino-n.tests file.
  * @author Attila Szegedi
- * @version $Id: StandardTests.java,v 1.9 2008/10/28 13:06:50 szegedia%freemail.hu Exp $
+ * @version $Id: StandardTests.java,v 1.10 2008/11/21 11:25:31 hannes%helma.at Exp $
  */
 public class StandardTests extends TestSuite
 {
@@ -115,6 +115,9 @@ public class StandardTests extends TestSuite
         {
             File subdir = subdirs[i];
             String name = subdir.getName();
+            if (excludes.containsKey(name)) {
+                continue;
+            }
             TestSuite testSuite = new TestSuite(name);
             addCategories(testSuite, subdir, name + "/", excludes, optimizationLevel);
             topLevel.addTest(testSuite);
@@ -129,6 +132,9 @@ public class StandardTests extends TestSuite
         {
             File subdir = subdirs[i];
             String name = subdir.getName();
+            if (excludes.containsKey(prefix + name)) {
+                continue;
+            }
             TestSuite testCategory = new TestSuite(name);
             addTests(testCategory, subdir, prefix + name + "/", excludes, optimizationLevel);
             suite.addTest(testCategory);
