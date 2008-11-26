@@ -4233,7 +4233,10 @@ switch (op) {
     {
         Scriptable applyThis;
         if (indexReg != 0) {
-            applyThis = ScriptRuntime.toObjectOrNull(cx, stack[stackTop + 2]);
+            Object obj = stack[stackTop + 2];
+            if (obj == UniqueTag.DOUBLE_MARK)
+                obj = ScriptRuntime.wrapNumber(sDbl[stackTop + 2]);
+            applyThis = ScriptRuntime.toObjectOrNull(cx, obj);
         }
         else {
             applyThis = null;
