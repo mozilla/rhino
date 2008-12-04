@@ -46,7 +46,6 @@ import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * The class of exceptions thrown by the JavaScript engine.
