@@ -484,17 +484,12 @@ public class NativeJavaMethod extends BaseFunction
                                        Class<?>[] sig2,
                                        boolean vararg2 )
     {
-        // TODO: This test is pretty primitive. It basically prefers
+        // TODO: The original contributed patch always preferred
         // a matching no vararg method over a vararg method independent
-        // of the type conversion cost. This can lead to unexpected results.
+        // of the type conversion cost. This caused problems with the
+        // java.lang.reflect.Array.newInstance() method - see bug 467396.
         int alength = args.length;
-        if (!vararg1 && vararg2) {
-            // prefer the no vararg signature
-            return PREFERENCE_FIRST_ARG;
-        } else if (vararg1 && !vararg2) {
-            // prefer the no vararg signature
-            return PREFERENCE_SECOND_ARG;
-        } else if (vararg1 && vararg2) {
+        if (vararg1 && vararg2) {
             if (sig1.length < sig2.length) {
                 // prefer the signature with more explicit types
                 return PREFERENCE_SECOND_ARG;                
