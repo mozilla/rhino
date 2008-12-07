@@ -218,7 +218,7 @@
        <fileset
          dir="."
          includes="**/*.java"
-         excludes="**/deprecatedsrc/**/*.java"
+         excludes="**/deprecatedsrc/**/*.java,**/testsrc/**/*.java"
        />
     </javadoc>
   </target>
