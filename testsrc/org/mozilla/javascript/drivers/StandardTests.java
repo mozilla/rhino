@@ -38,13 +38,8 @@ package org.mozilla.javascript.drivers;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Properties;
-import java.util.List;
-import java.util.ArrayList;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -56,7 +51,7 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
  * Executes the tests in the js/tests directory, much like jsDriver.pl does.
  * Excludes tests found in the js/tests/rhino-n.tests file.
  * @author Attila Szegedi
- * @version $Id: StandardTests.java,v 1.11 2008/12/05 20:35:44 hannes%helma.at Exp $
+ * @version $Id: StandardTests.java,v 1.12 2008/12/08 22:56:21 nboyd%atg.com Exp $
  */
 public class StandardTests extends TestSuite
 {
