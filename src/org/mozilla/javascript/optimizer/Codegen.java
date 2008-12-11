@@ -2611,11 +2611,13 @@ class BodyCodegen
                         +")Ljava/lang/Object;");
                 }
                 else {
-                    addScriptRuntimeInvoke(
+                    cfw.addALoad(thisObjLocal);
+                	addScriptRuntimeInvoke(
                         "getObjectElem",
                         "(Ljava/lang/Object;"
                         +"Ljava/lang/Object;"
                         +"Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
                         +")Ljava/lang/Object;");
                 }
                 break;

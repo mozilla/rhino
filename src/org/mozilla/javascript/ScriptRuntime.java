@@ -1358,7 +1358,15 @@ public class ScriptRuntime {
      */
     public static Object getObjectElem(Object obj, Object elem, Context cx)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
+    	return getObjectElem(obj, elem, cx, getTopCallScope(cx));
+    }
+
+    /**
+     * Call obj.[[Get]](id)
+     */
+    public static Object getObjectElem(Object obj, Object elem, Context cx, final Scriptable scope)
+    {
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             throw undefReadError(obj, elem);
         }

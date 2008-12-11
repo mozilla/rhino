@@ -43,6 +43,20 @@ public class PrimitiveTypeScopeResolutionTest
     	testWithTwoScopes(str1, str2);
     }
 
+    /**
+     */
+    @Test
+    public void elementAccess() {
+        String str2 = "function f() { String.prototype.foo = 'from 2'; \n"
+            + "var s2 = 's2';\n"
+            + "var s2Foo = s2['foo'];\n"
+            + "if (s2Foo != 'from 2') throw 's2 got: ' + s2Foo;\n" // fails
+            + "}";
+
+        String str1 = "String.prototype.foo = 'from 1'; scope2.f()";
+    	testWithTwoScopes(str1, str2);
+    }
+
     private void testWithTwoScopes(final String scriptScope1,
                                    final String scriptScope2)
     {
