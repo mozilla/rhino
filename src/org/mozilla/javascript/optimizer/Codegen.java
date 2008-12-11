@@ -2611,7 +2611,7 @@ class BodyCodegen
                         +")Ljava/lang/Object;");
                 }
                 else {
-                    cfw.addALoad(thisObjLocal);
+                    cfw.addALoad(variableObjectLocal);
                 	addScriptRuntimeInvoke(
                         "getObjectElem",
                         "(Ljava/lang/Object;"
@@ -3607,7 +3607,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 String property = id.getString();
                 cfw.addPush(property);
                 cfw.addALoad(contextLocal);
-                cfw.addALoad(thisObjLocal);
+                cfw.addALoad(variableObjectLocal);
                 addScriptRuntimeInvoke(
                     "getPropFunctionAndThis",
                     "(Ljava/lang/Object;"
@@ -4626,7 +4626,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +")Ljava/lang/Object;");
         } else {
             cfw.addALoad(contextLocal);
-            cfw.addALoad(thisObjLocal);
+            cfw.addALoad(variableObjectLocal);
             addScriptRuntimeInvoke(
                 "getObjectProp",
                 "(Ljava/lang/Object;"
