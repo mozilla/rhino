@@ -3054,7 +3054,7 @@ switch (op) {
         Object value;
         Object id = stack[stackTop + 1];
         if (id != DBL_MRK) {
-            value = ScriptRuntime.getObjectElem(lhs, id, cx);
+            value = ScriptRuntime.getObjectElem(lhs, id, cx, frame.scope);
         } else {
             double d = sDbl[stackTop + 1];
             value = ScriptRuntime.getObjectIndex(lhs, d, cx);
