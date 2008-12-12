@@ -45,7 +45,7 @@ import org.w3c.dom.*;
 import org.mozilla.javascript.tools.shell.*;
 
 /**
- * @version $Id: JsDriver.java,v 1.8 2008/04/22 12:13:17 nboyd%atg.com Exp $
+ * @version $Id: JsDriver.java,v 1.8.2.1 2008/12/12 10:27:42 hannes%helma.at Exp $
  */
 public class JsDriver {
     private JsDriver() {
@@ -67,51 +67,31 @@ public class JsDriver {
         private String[] list;
         private String[] skip;
 
-        Tests(File testDirectory, String[] list, String[] skip) {
+        Tests(File testDirectory, String[] list, String[] skip) throws IOException {
             this.testDirectory = testDirectory;
             this.list = getTestList(list);
             this.skip = getTestList(skip);
         }
         
-        private String[] getTestList(String[] tests) {
+        private String[] getTestList(String[] tests) throws IOException {
           ArrayList<String> list = new ArrayList<String>();
           for (int i=0; i < tests.length; i++) {
             if (tests[i].startsWith("@"))
-              addTestsFromFile(tests[i].substring(1), list);
+              TestUtils.addTestsFromFile(tests[i].substring(1), list);
             else
               list.add(tests[i]);
           }
           return list.toArray(new String[0]);
         }
-        
-        private void addTestsFromFile(String filename, ArrayList<String> list) {
-            try {
-                Properties props = new Properties();
-                props.load(new FileInputStream(new File(filename)));
-                for (Object obj: props.keySet())
-                    list.add(obj.toString());
-            } catch (IOException e) {
-                throw new RuntimeException("Could not read file '" + filename + "'", e);
-            }        	
-        }
-
-        private boolean matches(String[] patterns, String path) {
-            for (int i=0; i<patterns.length; i++) {
-                if (path.startsWith(patterns[i])) {
-                    return true;
-                }
-            }
-            return false;
-        }
 
         private boolean matches(String path) {
             if (list.length == 0) return true;
-            return matches(list, path);
+            return TestUtils.matches(list, path);
         }
 
         private boolean excluded(String path) {
             if (skip.length == 0) return false;
-            return matches(skip, path);
+            return TestUtils.matches(skip, path);
         }
 
         private void addFiles(List<Script> rv, String prefix, File directory) {

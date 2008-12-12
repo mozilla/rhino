@@ -45,17 +45,13 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
-import org.mozilla.javascript.ErrorReporter;
-import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.*;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /**
- * @version $Id: ShellTest.java,v 1.9.2.1 2008/11/05 21:22:54 nboyd%atg.com Exp $
+ * @version $Id: ShellTest.java,v 1.9.2.2 2008/12/12 10:27:42 hannes%helma.at Exp $
  */
 class ShellTest {
     static final FileFilter DIRECTORY_FILTER = new FileFilter() {
@@ -279,6 +275,9 @@ class ShellTest {
         final PrintStream p = new PrintStream(out);
         global.setOut(p);
         global.setErr(p);
+        global.defineFunctionProperties(
+                new String[] { "options" }, ShellTest.class,
+                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
         final TestState testState = new TestState();
         if (jsFile.getName().endsWith("-n.js")) {
             status.setNegative();
@@ -381,5 +380,13 @@ class ShellTest {
         {
             status.failed(failures);
         }
+    }
+
+    // Global function to mimic options() function in spidermonkey.
+    // It looks like this toggles jit compiler mode in spidermonkey
+    // when called with "jit" as argument. Our version is a no-op
+    // and returns an empty string.
+    public static String options() {
+        return "";
     }
 }

@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 
-import org.mozilla.javascript.drivers.FileUtils;
+import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.drivers.JsTestsBase;
 
 public class JsTestsTest extends JsTestsBase {
@@ -13,7 +13,7 @@ public class JsTestsTest extends JsTestsBase {
     static final String jstestsExtension = ".jstest";
 
     public void runJsTests() throws IOException {
-        File[] tests = FileUtils.recursiveListFiles(new File(baseDirectory),
+        File[] tests = TestUtils.recursiveListFiles(new File(baseDirectory),
                 new FileFilter() {
                   public boolean accept(File f) {
                       return f.getName().endsWith(jstestsExtension);
