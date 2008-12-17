@@ -64,7 +64,7 @@ public class ObserveInstructionCountTest extends TestCase {
         }
     }
 
-    private void baseCase(int optimizationLevel) {
+    private void baseCase(int optimizationLevel, String source) {
         ContextFactory factory = new MyFactory();
         Context cx = factory.enterContext();
         cx.setOptimizationLevel(optimizationLevel);
@@ -72,7 +72,7 @@ public class ObserveInstructionCountTest extends TestCase {
         try {
             Scriptable globalScope = cx.initStandardObjects();
             cx.evaluateString(globalScope,
-                    "var i = 0; while (true) i++;",
+                    source,
                     "test source", 1, null);
             fail();
         } catch (QuotaExceeded e) {
@@ -84,11 +84,15 @@ public class ObserveInstructionCountTest extends TestCase {
         }
     }
     
-    public void testInterpreted() {
-        baseCase(-1); // interpreted mode
+    public void testWhileTrueInGlobal() {
+        String source = "var i=0; while (true) i++;";
+        baseCase(-1, source); // interpreted mode
+        baseCase(1, source); // compiled mode
     }
     
-    public void testCompiled() {
-        baseCase(1); // compiled mode
+    public void testWhileTrueInFunction() {
+        String source = "var i=0; function f() { while (true) i++; } f();";
+        baseCase(-1, source); // interpreted mode
+        baseCase(1, source); // compiled mode
     }
  }
