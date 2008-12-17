@@ -90,9 +90,22 @@ public class ObserveInstructionCountTest extends TestCase {
         baseCase(1, source); // compiled mode
     }
     
+    public void testWhileTrueNoCounterInGlobal() {
+        String source = "while (true);";
+        baseCase(-1, source); // interpreted mode
+        baseCase(1, source); // compiled mode
+    }
+    
     public void testWhileTrueInFunction() {
         String source = "var i=0; function f() { while (true) i++; } f();";
         baseCase(-1, source); // interpreted mode
         baseCase(1, source); // compiled mode
     }
+    
+    public void testForever() {
+        String source = "for(;;);";
+        baseCase(-1, source); // interpreted mode
+        baseCase(1, source); // compiled mode
+    }
+
  }
