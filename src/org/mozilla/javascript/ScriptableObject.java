@@ -27,6 +27,7 @@
  *   Daniel Gredler
  *   Bob Jervis
  *   Roger Lawrence
+ *   Cameron McCormack
  *   Steve Weiss
  *   Hannes Wallnoefer
  *
@@ -2424,22 +2425,28 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             slot = slot.orderedNext;
         }
         firstAdded = slot;
-        while (slot != null) {
-            if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
-                if (c == 0)
-                    a = new Object[s.length];
-                a[c++] = slot.name != null
-                             ? (Object) slot.name
-                             : Integer.valueOf(slot.indexOrHash);
+        if (slot != null) {
+            for (;;) {
+                if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
+                    if (c == 0)
+                        a = new Object[s.length];
+                    a[c++] = slot.name != null
+                                 ? (Object) slot.name
+                                 : Integer.valueOf(slot.indexOrHash);
+                }
+                Slot next = slot.orderedNext;
+                while (next != null && next.wasDeleted) {
+                    // remove deleted slots
+                    next = next.orderedNext;
+                }
+                slot.orderedNext = next;
+                if (next == null) {
+                    break;
+                }
+                slot = next;
             }
-            Slot next = slot.orderedNext;
-            while (next != null && next.wasDeleted) {
-                // remove deleted slots
-                next = next.orderedNext;
-            }
-            slot.orderedNext = next;
-            slot = next;
         }
+        lastAdded = slot;
         if (c == a.length)
             return a;
         Object[] result = new Object[c];
