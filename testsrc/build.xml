@@ -53,6 +53,7 @@
       source="${source-level}"
     >
       <classpath>
+        <pathelement path="lib/junit.jar" />
         <pathelement path="${classes}" />
       </classpath>
       <sourcepath path="testsrc" />
