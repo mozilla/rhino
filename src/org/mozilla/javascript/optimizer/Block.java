@@ -23,6 +23,7 @@
  *   Norris Boyd
  *   Igor Bukanov
  *   Roger Lawrence
+ *   Cameron McCormack
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -464,22 +465,23 @@ class Block
                                           int[] varTypes)
     {
         switch (n.getType()) {
-          case Token.NUMBER :
+          case Token.NUMBER:
               return Optimizer.NumberType;
 
-          case Token.CALL :
-          case Token.NEW :
-          case Token.REF_CALL :
+          case Token.CALL:
+          case Token.NEW:
+          case Token.REF_CALL:
               return Optimizer.AnyType;
 
-          case Token.GETELEM :
+          case Token.GETELEM:
              return Optimizer.AnyType;
 
-          case Token.GETVAR :
+          case Token.GETVAR:
               return varTypes[fn.getVarIndex(n)];
 
-          case Token.INC :
-          case Token.DEC :
+          case Token.INC:
+          case Token.DEC:
+          case Token.MUL:
           case Token.DIV:
           case Token.MOD:
           case Token.BITOR:
@@ -488,7 +490,9 @@ class Block
           case Token.LSH:
           case Token.RSH:
           case Token.URSH:
-          case Token.SUB :
+          case Token.SUB:
+          case Token.POS:
+          case Token.NEG:
               return Optimizer.NumberType;
           
           case Token.ARRAYLIT:
@@ -496,7 +500,7 @@ class Block
               return Optimizer.AnyType; // XXX: actually, we know it's not
                                         // number, but no type yet for that
 
-          case Token.ADD : {
+          case Token.ADD: {
               // if the lhs & rhs are known to be numbers, we can be sure that's
               // the result, otherwise it could be a string.
               Node child = n.getFirstChild();
