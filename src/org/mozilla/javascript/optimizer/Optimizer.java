@@ -391,11 +391,12 @@ class Optimizer
                     }
                     int indexType = rewriteForNumberVariables(arrayIndex, NumberType);
                     if (indexType == NumberType) {
-                        // setting the ISNUMBER_PROP signals the codegen
-                        // to use the OptRuntime.setObjectIndex that takes
-                        // a double index
-                        n.putIntProp(Node.ISNUMBER_PROP, Node.LEFT);
-                        markDCPNumberContext(arrayIndex);
+                        if (!convertParameter(arrayIndex)) {
+                            // setting the ISNUMBER_PROP signals the codegen
+                            // to use the OptRuntime.setObjectIndex that takes
+                            // a double index
+                            n.putIntProp(Node.ISNUMBER_PROP, Node.LEFT);
+                        }
                     }
                     int rValueType = rewriteForNumberVariables(rValue, NumberType);
                     if (rValueType == NumberType) {
