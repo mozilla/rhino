@@ -68,4 +68,6 @@ public interface RegExpProxy
                           String separator, Scriptable re,
                           int[] ip, int[] matchlen,
                           boolean[] matched, String[][] parensp);
+
+	public Object js_split(Context _cx, Scriptable _scope, String thisString, Object[] _args);
 }

@@ -508,6 +508,226 @@ public class RegExpImpl implements RegExpProxy {
         }
     }
 
+    /*
+     * See ECMA 15.5.4.8.  Modified to match JS 1.2 - optionally takes
+     * a limit argument and accepts a regular expression as the split
+     * argument.
+     */
+    public Object js_split(Context cx, Scriptable scope,
+                                   String target, Object[] args)
+    {
+        // create an empty Array to return;
+        Scriptable top = ScriptableObject.getTopLevelScope(scope);
+        Scriptable result = ScriptRuntime.newObject(cx, top, "Array", null);
+
+        // return an array consisting of the target if no separator given
+        // don't check against undefined, because we want
+        // 'fooundefinedbar'.split(void 0) to split to ['foo', 'bar']
+        if (args.length < 1) {
+            result.put(0, result, target);
+            return result;
+        }
+
+        // Use the second argument as the split limit, if given.
+        boolean limited = (args.length > 1) && (args[1] != Undefined.instance);
+        long limit = 0;  // Initialize to avoid warning.
+        if (limited) {
+            /* Clamp limit between 0 and 1 + string length. */
+            limit = ScriptRuntime.toUint32(args[1]);
+            if (limit > target.length())
+                limit = 1 + target.length();
+        }
+
+        String separator = null;
+        int[] matchlen = new int[1];
+        Scriptable re = null;
+        RegExpProxy reProxy = null;
+        if (args[0] instanceof Scriptable) {
+            reProxy = ScriptRuntime.getRegExpProxy(cx);
+            if (reProxy != null) {
+                Scriptable test = (Scriptable)args[0];
+                if (reProxy.isRegExp(test)) {
+                    re = test;
+                }
+            }
+        }
+        if (re == null) {
+            separator = ScriptRuntime.toString(args[0]);
+            matchlen[0] = separator.length();
+        }
+
+        // split target with separator or re
+        int[] ip = { 0 };
+        int match;
+        int len = 0;
+        boolean[] matched = { false };
+        String[][] parens = { null };
+        int version = cx.getLanguageVersion();
+        while ((match = find_split(cx, scope, target, separator, version,
+                                   reProxy, re, ip, matchlen, matched, parens))
+               >= 0)
+        {
+            if ((limited && len >= limit) || (match > target.length()))
+                break;
+
+            String substr;
+            if (target.length() == 0)
+                substr = target;
+            else
+                substr = target.substring(ip[0], match);
+
+            result.put(len, result, substr);
+            len++;
+        /*
+         * Imitate perl's feature of including parenthesized substrings
+         * that matched part of the delimiter in the new array, after the
+         * split substring that was delimited.
+         */
+            if (re != null && matched[0] == true) {
+                int size = parens[0].length;
+                for (int num = 0; num < size; num++) {
+                    if (limited && len >= limit)
+                        break;
+                    result.put(len, result, parens[0][num]);
+                    len++;
+                }
+                matched[0] = false;
+            }
+            ip[0] = match + matchlen[0];
+
+            if (version < Context.VERSION_1_3
+                && version != Context.VERSION_DEFAULT)
+            {
+        /*
+         * Deviate from ECMA to imitate Perl, which omits a final
+         * split unless a limit argument is given and big enough.
+         */
+                if (!limited && ip[0] == target.length())
+                    break;
+            }
+        }
+        return result;
+    }
+
+    /*
+     * Used by js_split to find the next split point in target,
+     * starting at offset ip and looking either for the given
+     * separator substring, or for the next re match.  ip and
+     * matchlen must be reference variables (assumed to be arrays of
+     * length 1) so they can be updated in the leading whitespace or
+     * re case.
+     *
+     * Return -1 on end of string, >= 0 for a valid index of the next
+     * separator occurrence if found, or the string length if no
+     * separator is found.
+     */
+    private static int find_split(Context cx, Scriptable scope, String target,
+                                  String separator, int version,
+                                  RegExpProxy reProxy, Scriptable re,
+                                  int[] ip, int[] matchlen, boolean[] matched,
+                                  String[][] parensp)
+    {
+        int i = ip[0];
+        int length = target.length();
+
+        /*
+         * Perl4 special case for str.split(' '), only if the user has selected
+         * JavaScript1.2 explicitly.  Split on whitespace, and skip leading w/s.
+         * Strange but true, apparently modeled after awk.
+         */
+        if (version == Context.VERSION_1_2 &&
+            re == null && separator.length() == 1 && separator.charAt(0) == ' ')
+        {
+            /* Skip leading whitespace if at front of str. */
+            if (i == 0) {
+                while (i < length && Character.isWhitespace(target.charAt(i)))
+                    i++;
+                ip[0] = i;
+            }
+
+            /* Don't delimit whitespace at end of string. */
+            if (i == length)
+                return -1;
+
+            /* Skip over the non-whitespace chars. */
+            while (i < length
+                   && !Character.isWhitespace(target.charAt(i)))
+                i++;
+
+            /* Now skip the next run of whitespace. */
+            int j = i;
+            while (j < length && Character.isWhitespace(target.charAt(j)))
+                j++;
+
+            /* Update matchlen to count delimiter chars. */
+            matchlen[0] = j - i;
+            return i;
+        }
+
+        /*
+         * Stop if past end of string.  If at end of string, we will
+         * return target length, so that
+         *
+         *  "ab,".split(',') => new Array("ab", "")
+         *
+         * and the resulting array converts back to the string "ab,"
+         * for symmetry.  NB: This differs from perl, which drops the
+         * trailing empty substring if the LIMIT argument is omitted.
+         */
+        if (i > length)
+            return -1;
+
+        /*
+         * Match a regular expression against the separator at or
+         * above index i.  Return -1 at end of string instead of
+         * trying for a match, so we don't get stuck in a loop.
+         */
+        if (re != null) {
+            return reProxy.find_split(cx, scope, target, separator, re,
+                                      ip, matchlen, matched, parensp);
+        }
+
+        /*
+         * Deviate from ECMA by never splitting an empty string by any separator
+         * string into a non-empty array (an array of length 1 that contains the
+         * empty string).
+         */
+        if (version != Context.VERSION_DEFAULT && version < Context.VERSION_1_3
+            && length == 0)
+            return -1;
+
+        /*
+         * Special case: if sep is the empty string, split str into
+         * one character substrings.  Let our caller worry about
+         * whether to split once at end of string into an empty
+         * substring.
+         *
+         * For 1.2 compatibility, at the end of the string, we return the length as
+         * the result, and set the separator length to 1 -- this allows the caller
+         * to include an additional null string at the end of the substring list.
+         */
+        if (separator.length() == 0) {
+            if (version == Context.VERSION_1_2) {
+                if (i == length) {
+                    matchlen[0] = 1;
+                    return i;
+                }
+                return i + 1;
+            }
+            return (i == length) ? -1 : i + 1;
+        }
+
+        /* Punt to j.l.s.indexOf; return target length if separator is
+         * not found.
+         */
+        if (ip[0] >= length)
+            return length;
+
+        i = target.indexOf(separator, ip[0]);
+
+        return (i != -1) ? i : length;
+    }
+
     String          input;         /* input string to match (perl $_, GC root) */
     boolean         multiline;     /* whether input contains newlines (perl $*) */
     SubString[]     parens;        /* Vector of SubString; last set of parens
