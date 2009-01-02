@@ -1550,8 +1550,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     /**
      * Seal this object.
      *
-     * A sealed object may not have properties added or removed. Once
-     * an object is sealed it may not be unsealed.
+     * It is an error to add properties to or delete properties from 
+     * a sealed object. It is possible to change the value of an 
+     * existing property. Once an object is sealed it may not be unsealed.
      *
      * @since 1.4R3
      */
@@ -1577,11 +1578,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     /**
      * Return true if this object is sealed.
      *
-     * It is an error to attempt to add or remove properties to
-     * a sealed object.
-     *
      * @return true if sealed, false otherwise.
      * @since 1.4R3
+     * @see #sealObject()
      */
     public final boolean isSealed() {
         return count < 0;
