@@ -117,7 +117,7 @@ public class SwitchStatement extends Jump {
     /**
      * Sets case statement list, and sets the parent of each child
      * case to this node.
-     * @param case list, which may be {@code null} to remove all the cases
+     * @param cases list, which may be {@code null} to remove all the cases
      */
     public void setCases(List<SwitchCase> cases) {
         if (cases == null) {

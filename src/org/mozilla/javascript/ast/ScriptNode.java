@@ -111,7 +111,7 @@ public class ScriptNode extends Scope {
 
     /**
      * Used by code generator.
-     * @see getEncodedSource
+     * @see #getEncodedSource
      */
     public void setEncodedSourceStart(int start) {
         this.encodedSourceStart = start;
@@ -127,7 +127,7 @@ public class ScriptNode extends Scope {
 
     /**
      * Used by code generator.
-     * @see getEncodedSource
+     * @see #getEncodedSource
      */
     public void setEncodedSourceEnd(int end) {
         this.encodedSourceEnd = end;
@@ -135,7 +135,7 @@ public class ScriptNode extends Scope {
 
     /**
      * Used by code generator.
-     * @see getEncodedSource
+     * @see #getEncodedSource
      */
     public void setEncodedSourceBounds(int start, int end) {
         this.encodedSourceStart = start;
@@ -144,7 +144,7 @@ public class ScriptNode extends Scope {
 
     /**
      * Used by the code generator.
-     * @see getEncodedSource
+     * @see #getEncodedSource
      */
     public void setEncodedSource(String encodedSource) {
         this.encodedSource = encodedSource;
