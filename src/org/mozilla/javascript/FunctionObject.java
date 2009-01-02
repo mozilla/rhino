@@ -87,9 +87,9 @@ public class FunctionObject extends BaseFunction
      *
      * Otherwise, if the FunctionObject will <i>not</i> be used to define a
      * constructor, the member must be a static Method with parameters
+     * <pre>
      *      (Context cx, Scriptable thisObj, Object[] args,
      *       Function funObj) </pre>
-     * <pre>
      * and an Object result.<p>
      *
      * When the function varargs form is called as part of a function call,
