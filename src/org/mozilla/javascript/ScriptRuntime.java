@@ -3473,9 +3473,13 @@ public class ScriptRuntime {
             int getterSetter = getterSetters[i];
             Object value = propertyValues[i];
             if (id instanceof String) {
-                if (getterSetter == 0)
-                    ScriptableObject.putProperty(object, (String)id, value);
-                else {
+                if (getterSetter == 0) {
+                    if (isSpecialProperty((String)id)) {
+                        specialRef(object, (String)id, cx).set(cx, value);
+                    } else {
+                        ScriptableObject.putProperty(object, (String)id, value);
+                    }
+                } else {
                     Callable fun;
                     String definer;
                     if (getterSetter < 0)   // < 0 means get foo() ...
