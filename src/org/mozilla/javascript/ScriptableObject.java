@@ -1985,11 +1985,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (value == null) throw new IllegalArgumentException();
         Map<Object,Object> h = associatedValues;
         if (h == null) {
-            h = associatedValues;
-            if (h == null) {
-                h = new HashMap<Object,Object>();
-                associatedValues = h;
-            }
+            h = new HashMap<Object,Object>();
+            associatedValues = h;
         }
         return Kit.initHash(h, key, value);
     }
