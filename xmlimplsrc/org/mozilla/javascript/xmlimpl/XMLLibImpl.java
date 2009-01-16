@@ -72,6 +72,47 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
             lib.exportToScope(sealed);
         }
     }
+    
+    public void setIgnoreComments(boolean b) {
+        options.setIgnoreComments(b);
+    }
+
+    public void setIgnoreWhitespace(boolean b) {
+        options.setIgnoreWhitespace(b);
+    }
+
+    public void setIgnoreProcessingInstructions(boolean b) {
+        options.setIgnoreProcessingInstructions(b);
+    }
+
+    public void setPrettyPrinting(boolean b) {
+        options.setPrettyPrinting(b);
+    }
+
+    public void setPrettyIndent(int i) {
+        options.setPrettyIndent(i);
+    }
+
+    public boolean isIgnoreComments() {
+        return options.isIgnoreComments();
+    }
+
+    public boolean isIgnoreProcessingInstructions() {
+        return options.isIgnoreProcessingInstructions();
+    }
+
+    public boolean isIgnoreWhitespace() {
+        return options.isIgnoreWhitespace();
+    }
+
+    public  boolean isPrettyPrinting() {
+        return options.isPrettyPrinting();
+    }
+
+    public int getPrettyIndent() {
+        return options.getPrettyIndent();
+    }
+
 
     private Scriptable globalScope;
 

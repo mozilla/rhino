@@ -130,4 +130,44 @@ public abstract class XMLLib
      * Construct namespace for default xml statement.
      */
     public abstract Object toDefaultXmlNamespace(Context cx, Object uriValue);
+    
+    public void setIgnoreComments(boolean b) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setIgnoreWhitespace(boolean b) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setIgnoreProcessingInstructions(boolean b) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setPrettyPrinting(boolean b) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setPrettyIndent(int i) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean isIgnoreComments() {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean isIgnoreProcessingInstructions() {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean isIgnoreWhitespace() {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean isPrettyPrinting() {
+        throw new UnsupportedOperationException();
+    }
+
+    public int getPrettyIndent() {
+        throw new UnsupportedOperationException();
+    }
 }
