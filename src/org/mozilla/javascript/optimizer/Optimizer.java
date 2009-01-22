@@ -182,7 +182,10 @@ class Optimizer
                     Node child = n.getFirstChild();
                     // "child" will be GETVAR or GETPROP or GETELEM
                     if (child.getType() == Token.GETVAR) {
-                        if (rewriteForNumberVariables(child, NumberType) == NumberType) {
+                        ;
+                        if (rewriteForNumberVariables(child, NumberType) == NumberType &&
+                            !convertParameter(child))
+                        {
                             n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
                             markDCPNumberContext(child);
                             return NumberType;
