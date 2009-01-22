@@ -203,6 +203,16 @@ class XMLList extends XMLObjectImpl implements Function {
 
             // Update the list with the new item at location 0.
             replace(0, item(0));
+            
+            if (targetObject != null && targetProperty != null &&
+                targetProperty.getLocalName() != null)
+            {
+                // Now add us to our parent
+                XMLName name2 = XMLName.formProperty(
+                        targetProperty.getNamespace().getUri(),
+                        targetProperty.getLocalName());
+                targetObject.putXMLProperty(name2, this);
+            }
         }
     }
 
