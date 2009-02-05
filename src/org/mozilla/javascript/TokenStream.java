@@ -964,6 +964,8 @@ class TokenStream
         xmlOpenTagsCount = 0;
         xmlIsAttribute = false;
         xmlIsTagContent = false;
+        if (!canUngetChar())
+            return Token.ERROR;
         ungetChar('<');
         return getNextXMLToken();
     }
@@ -1251,6 +1253,10 @@ class TokenStream
         }
         stringBuffer[N] = (char)c;
         stringBufferTop = N + 1;
+    }
+    
+    private boolean canUngetChar() {
+        return ungetCursor == 0 || ungetBuffer[ungetCursor - 1] != '\n';
     }
 
     private void ungetChar(int c)
