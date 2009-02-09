@@ -1333,11 +1333,12 @@ public class NativeArray extends IdScriptableObject
                 boolean canUseDense = true;
                 int length = (int) denseThis.length;
                 for (int i = 0; i < args.length && canUseDense; i++) {
-                    if (ScriptRuntime.instanceOf(args[i], ctor, cx)) {
+                    if (args[i] instanceof NativeArray) {
                         // only try to use dense approach for Array-like
                         // objects that are actually NativeArrays
-                        canUseDense = args[i] instanceof NativeArray;
-                        length += ((NativeArray) args[i]).length;
+                        final NativeArray arg = (NativeArray) args[i];
+                        canUseDense = arg.denseOnly;
+                        length += arg.length;
                     } else {
                         length++;
                     }
