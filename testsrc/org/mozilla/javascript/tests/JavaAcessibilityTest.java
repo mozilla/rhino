@@ -99,6 +99,13 @@ public class JavaAcessibilityTest extends TestCase {
       assertEquals("4 true", result);
   }
 
+  public void testOverloadFunctionRegression() {
+      Object result = runScript(
+        "(new java.util.GregorianCalendar()).set(3,4);'success';");
+      assertEquals("success", result);
+  }
+
+  
   private Object runScript(final String scriptSourceText) {
     return this.contextFactory.call(new ContextAction() {
       public Object run(Context context) {
