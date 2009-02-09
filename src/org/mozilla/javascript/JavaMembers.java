@@ -603,8 +603,9 @@ class JavaMembers
                     Object v = ht.get(beanPropertyName);
                     if (v != null) {
                         // A private field shouldn't mask a public getter/setter
-                        if (!includePrivate ||
+                        if (!includePrivate || !(v instanceof Member) ||
                             !Modifier.isPrivate(((Member)v).getModifiers()))
+
                         {
                             continue;
                         }
