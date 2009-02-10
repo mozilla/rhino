@@ -4,6 +4,9 @@
 # test has yet to be fixed, or because the test is not applicable to Rhino.
 #
 
+# bad test: cannot write a property that has only a getter defined
+js1_5/extensions/regress-341956-01.js
+
 # timer resolution test
 js1_5/extensions/regress-363258.js
 
