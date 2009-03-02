@@ -399,7 +399,7 @@ public class Global extends ImporterTopLevel
                           String sourceName, int lineNumber)
     {
         doctestCanonicalizations = new HashMap<String,String>();
-        String[] lines = session.split("\n|\r");
+        String[] lines = session.split("[\n\r]+");
         String prompt0 = this.prompts[0].trim();
         String prompt1 = this.prompts[1].trim();
         int testCount = 0;
