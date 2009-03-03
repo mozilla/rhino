@@ -46,6 +46,7 @@ package org.mozilla.javascript.optimizer;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
+import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.classfile.*;
 import java.util.*;
@@ -89,7 +90,16 @@ public class Codegen implements Evaluator
         synchronized (globalLock) {
             serial = ++globalSerialClassCounter;
         }
-        String mainClassName = "org.mozilla.javascript.gen.c"+serial;
+        
+        String baseName = "c";
+        if (tree.getSourceName().length() > 0) {
+          baseName = tree.getSourceName().replaceAll("\\W", "_");
+          if (!Character.isJavaIdentifierStart(baseName.charAt(0))) {
+            baseName = "_" + baseName;
+          }
+        }
+
+        String mainClassName = "org.mozilla.javascript.gen." + baseName + "_" + serial;
 
         byte[] mainClassBytes = compileToClassFile(compilerEnv, mainClassName,
                                                    tree, encodedSource,
@@ -1232,12 +1242,31 @@ public class Codegen implements Evaluator
 
     String getDirectCtorName(ScriptNode n)
     {
-        return "_n"+getIndex(n);
+        return "_n" + getIndex(n);
     }
 
     String getBodyMethodName(ScriptNode n)
     {
-        return "_c"+getIndex(n);
+        return "_c_" + cleanName(n) + "_" + getIndex(n);
+    }
+
+    /**
+     * Gets a Java-compatible "informative" name for the the ScriptOrFnNode
+     */
+    String cleanName(final ScriptNode n)
+    {
+      String result = "";
+      if (n instanceof FunctionNode) {
+        Name name = ((FunctionNode) n).getFunctionName();
+        if (name == null) {
+          result = "anonymous";
+        } else {
+          result = name.getIdentifier();
+        }
+      } else {
+        result = "script";
+      }
+      return result;
     }
 
     String getBodyMethodSignature(ScriptNode n)
