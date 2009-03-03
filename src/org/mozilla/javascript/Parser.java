@@ -729,6 +729,7 @@ public class Parser
         }
 
         if (memberExprNode != null) {
+            // TODO(stevey): fix missing functionality
             Kit.codeBug();
             fnNode.setMemberExprNode(memberExprNode);  // rewrite later
             /* old code:
@@ -1861,7 +1862,7 @@ public class Parser
           case Token.LP:
               if (symbol != null) {
                   // must be duplicate parameter. Second parameter hides the
-                  // first, so go ahead and add the second pararameter
+                  // first, so go ahead and add the second parameter
                   addWarning("msg.dup.parms", name);
               }
               currentScriptOrFn.putSymbol(new Symbol(declType, name));

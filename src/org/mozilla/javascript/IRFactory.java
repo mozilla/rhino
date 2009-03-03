@@ -87,6 +87,10 @@ public final class IRFactory extends Parser
         currentScriptOrFn = root;
         int sourceStartOffset = decompiler.getCurrentOffset();
 
+        if (Token.printTrees) {
+            System.out.println("IRFactory.transformTree");
+            System.out.println(root.debugPrint());
+        }
         ScriptNode script = (ScriptNode)transform(root);
 
         int sourceEndOffset = decompiler.getCurrentOffset();
@@ -390,6 +394,7 @@ public final class IRFactory extends Parser
         Node target = null;
         if (isDestructuring(left)) {
             decompile(left);
+            // TODO(stevey)
             // Bug: for code like "var obj={p:3};[obj.p]=[9];", "left" will
             // be ARRAYLITERAL with an embedded GETPROP. This causes errors
             // at codegen.
