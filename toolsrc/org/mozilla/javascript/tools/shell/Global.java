@@ -65,6 +65,7 @@ public class Global extends ImporterTopLevel
     static final long serialVersionUID = 4029130780977538005L;
 
     NativeArray history;
+    boolean attemptedJLineLoad;
     private InputStream inStream;
     private PrintStream outStream;
     private PrintStream errStream;
@@ -149,10 +150,6 @@ public class Global extends ImporterTopLevel
         history = (NativeArray) cx.newArray(this, 0);
         defineProperty("history", history, ScriptableObject.DONTENUM);
 
-        // Check if we can use JLine for better command line handling
-        InputStream jlineStream = ShellLine.getStream(this);
-        if (jlineStream != null)
-            inStream = jlineStream;
         initialized = true;
     }
 
@@ -815,7 +812,7 @@ public class Global extends ImporterTopLevel
     }
 
     /**
-     * Convert the argumnet to int32 number.
+     * Convert the argument to int32 number.
      */
     public static Object toint32(Context cx, Scriptable thisObj, Object[] args,
                                  Function funObj)
@@ -827,6 +824,13 @@ public class Global extends ImporterTopLevel
     }
 
     public InputStream getIn() {
+        if (inStream == null && !attemptedJLineLoad) {
+            // Check if we can use JLine for better command line handling
+            InputStream jlineStream = ShellLine.getStream(this);
+            if (jlineStream != null)
+                inStream = jlineStream;
+            attemptedJLineLoad = true;
+        }
         return inStream == null ? System.in : inStream;
     }
 
