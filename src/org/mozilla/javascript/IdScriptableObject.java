@@ -55,7 +55,7 @@ To define non-function properties, the descendant should override
 to get/set property value and provide its default attributes.
 
 
-To customize initializition of constructor and protype objects, descendant
+To customize initialization of constructor and prototype objects, descendant
 may override scopeInit or fillConstructorProperties methods.
 
 */
