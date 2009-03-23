@@ -49,7 +49,8 @@ public class TestUtils {
                 new ArrayList<String>() :
                 new ArrayList<String>(Arrays.asList(inherited));
         InputStream in = StandardTests.class.getResourceAsStream(resource);
-        addTestsFromStream(in, list);
+        if (in != null)
+            addTestsFromStream(in, list);
         return list.toArray(new String[0]);
     }
 
@@ -61,5 +62,4 @@ public class TestUtils {
         }
         return false;
     }
-
 }
