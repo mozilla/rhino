@@ -2819,6 +2819,7 @@ class BodyCodegen
                       case Token.REF_NS_NAME:
                         methodName = "nameRef";
                         signature = "(Ljava/lang/Object;"
+                                    +"Ljava/lang/Object;"
                                     +"Lorg/mozilla/javascript/Context;"
                                     +"Lorg/mozilla/javascript/Scriptable;"
                                     +"I"
