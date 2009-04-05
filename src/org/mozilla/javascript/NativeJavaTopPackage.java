@@ -98,7 +98,9 @@ public class NativeJavaTopPackage
             Context.reportRuntimeError0("msg.not.classloader");
             return null;
         }
-        return new NativeJavaPackage(true, "", loader);
+        NativeJavaPackage pkg = new NativeJavaPackage(true, "", loader);
+        ScriptRuntime.setObjectProtoAndParent(pkg, scope);
+        return pkg;
     }
 
     public static void init(Context cx, Scriptable scope, boolean sealed)
