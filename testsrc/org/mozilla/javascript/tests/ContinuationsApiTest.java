@@ -66,26 +66,26 @@ public class ContinuationsApiTest extends TestCase {
     private static final long serialVersionUID = 4189002778806232070L;
 
     public int f(int a) {
-          Context cx = Context.enter();
-          try {
-              ContinuationPending pending = cx.captureContinuation();
-              pending.setApplicationState(a);
-              throw pending;
-          } finally {
-              Context.exit();
-          }
-      }
+        Context cx = Context.enter();
+        try {
+            ContinuationPending pending = cx.captureContinuation();
+            pending.setApplicationState(a);
+            throw pending;
+        } finally {
+            Context.exit();
+        }
+    }
 
-      public int g(int a) {
-          Context cx = Context.enter();
-          try {
-              ContinuationPending pending = cx.captureContinuation();
-              pending.setApplicationState(2*a);
-              throw pending;
-          } finally {
-              Context.exit();
-          }
-      }
+    public int g(int a) {
+        Context cx = Context.enter();
+        try {
+            ContinuationPending pending = cx.captureContinuation();
+            pending.setApplicationState(2*a);
+            throw pending;
+        } finally {
+            Context.exit();
+        }
+    }
   }
 
   @Override

@@ -57,7 +57,6 @@ public class DoctestsTest {
         return new String(buf);
     }
 
-    @Parameters
     public static Collection<Object[]> doctestValues() throws IOException {
         File[] doctests = getDoctestFiles();
         List<Object[]> result = new ArrayList<Object[]>();
@@ -71,11 +70,12 @@ public class DoctestsTest {
     }
     
     // move "@Parameters" to this method to test a single doctest
+    @Parameters
     public static Collection<Object[]> singleDoctest() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
-        File f = new File(baseDirectory, "Counter.doctest");
+        File f = new File(baseDirectory, "477233.doctest");
         String contents = loadFile(f);
-        result.add(new Object[] { f.getName(), contents, -1 });
+        result.add(new Object[] { f.getName(), contents, 9 });
         return result;
     }
 
