@@ -94,7 +94,8 @@ public class Node implements Iterable<Node>
         DESTRUCTURING_ARRAY_LENGTH = 21,
         DESTRUCTURING_NAMES  = 22,
         DESTRUCTURING_PARAMS = 23,
-        LAST_PROP            = 23;
+        JSDOC_PROP           = 24,
+        LAST_PROP            = 24;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -199,6 +200,22 @@ public class Node implements Iterable<Node>
     public Node setType(int type) {
         this.type = type;
         return this;
+    }
+
+    /**
+     * Gets the JsDoc comment string attached to this node.
+     * @return the comment string or {@code null} if no JsDoc is attached to
+     *     this node
+     */
+    public String getJsDoc() {
+        return (String) getProp(JSDOC_PROP);
+    }
+
+    /**
+     * Sets the JsDoc comment string attached to this node.
+     */
+    public void setJsDoc(String jsdoc) {
+        putProp(JSDOC_PROP, jsdoc);
     }
 
     public boolean hasChildren() {

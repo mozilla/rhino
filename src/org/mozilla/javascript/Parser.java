@@ -107,6 +107,7 @@ public class Parser
     private int syntaxErrorCount;
 
     private List<Comment> scannedComments;
+    private String currentJsDocComment;
 
     protected int nestingOfFunction;
     private LabeledStatement currentLabel;
@@ -264,9 +265,26 @@ public class Parser
         if (scannedComments == null) {
             scannedComments = new ArrayList<Comment>();
         }
+        String comment = getCurrentSourceSubstring();
+        if (ts.commentType == Token.CommentType.JSDOC &&
+            compilerEnv.isRecordingLocalJsDocComments()) {
+            currentJsDocComment = comment;
+        }
         scannedComments.add(new Comment(ts.tokenBeg,
                                         ts.getTokenLength(),
-                                        ts.commentType));
+                                        ts.commentType,
+                                        comment));
+    }
+
+    private String getCurrentSourceSubstring() {
+        return ts.getSourceString().substring(
+            ts.tokenBeg, ts.tokenBeg + ts.getTokenLength());
+    }
+
+    private String getAndResetJsDoc() {
+        String saved = currentJsDocComment;
+        currentJsDocComment = null;
+        return saved;
     }
 
     // Returns the next token without consuming it.
@@ -701,6 +719,8 @@ public class Parser
             //    of the with object.
             fnNode.setIgnoreDynamicScope();
         }
+
+        fnNode.setJsDoc(getAndResetJsDoc());
 
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         try {
@@ -1264,6 +1284,10 @@ public class Parser
     {
         if (currentToken != Token.TRY) codeBug();
         consumeToken();
+
+        // Pull out JSDoc info and reset it before recursing.
+        String jsdoc = getAndResetJsDoc();
+
         int tryPos = ts.tokenBeg, lineno = ts.lineno, finallyPos = -1;
         if (peekToken() != Token.LC) {
             reportError("msg.no.brace.try");
@@ -1334,6 +1358,11 @@ public class Parser
         pn.setFinallyBlock(finallyBlock);
         pn.setFinallyPosition(finallyPos);
         pn.setLineno(lineno);
+
+        if (jsdoc != null) {
+            pn.setJsDoc(jsdoc);
+        }
+
         return pn;
     }
 
@@ -1712,6 +1741,10 @@ public class Parser
         VariableDeclaration pn = new VariableDeclaration(pos);
         pn.setType(declType);
         pn.setLineno(ts.lineno);
+        String varjsdoc = getAndResetJsDoc();
+        if (varjsdoc != null) {
+            pn.setJsDoc(varjsdoc);
+        }
         // Example:
         // var foo = {a: 1, b: 2}, bar = [3, 4];
         // var {b: s2, a: s1} = foo, x = 6, y, [s3, s4] = bar;
@@ -1735,6 +1768,8 @@ public class Parser
                 defineSymbol(declType, ts.getString(), inForInit);
             }
 
+            String jsdoc = getAndResetJsDoc();
+
             AstNode init = null;
             if (matchToken(Token.ASSIGN)) {
                 init = assignExpr();
@@ -1752,6 +1787,7 @@ public class Parser
             }
             vi.setInitializer(init);
             vi.setType(declType);
+            vi.setJsDoc(jsdoc);
             pn.addVariable(vi);
 
             if (!matchToken(Token.COMMA))
@@ -1901,9 +1937,23 @@ public class Parser
         tt = peekToken();
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
             consumeToken();
+
+            // Pull out JSDoc info and reset it before recursing.
+            String jsdoc = getAndResetJsDoc();
+
             markDestructuring(pn);
             int opPos = ts.tokenBeg;
             pn = new Assignment(tt, pn, assignExpr(), opPos);
+
+            if (jsdoc != null) {
+                pn.setJsDoc(jsdoc);
+            }
+        } else if (tt == Token.SEMI && pn.getType() == Token.GETPROP) {
+            // This may be dead code added intentionally, for JSDoc purposes.
+            // For example: /** @type Number */ C.prototype.x;
+            if (currentJsDocComment != null) {
+                pn.setJsDoc(getAndResetJsDoc());
+            }
         }
         return pn;
     }
@@ -2610,8 +2660,15 @@ public class Parser
         boolean wasInForInit = inForInit;
         inForInit = false;
         try {
+            String jsdoc = getAndResetJsDoc();
             AstNode e = expr();
             ParenthesizedExpression pn = new ParenthesizedExpression(e);
+            if (jsdoc == null) {
+                jsdoc = getAndResetJsDoc();
+            }
+            if (jsdoc != null) {
+                pn.setJsDoc(jsdoc);
+            }
             mustMatchToken(Token.RP, "msg.no.paren");
             pn.setLength(ts.tokenEnd - pn.getPosition());
             return pn;

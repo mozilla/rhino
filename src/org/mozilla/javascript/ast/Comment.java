@@ -79,30 +79,17 @@ public class Comment extends AstNode {
         type = Token.COMMENT;
     }
 
-    public Comment() {
-    }
-
-    public Comment(int pos) {
-        this(pos, 2, Token.CommentType.LINE);
-    }
-
-    /**
-     * Constructs a new Comment
-     * @param type the comment type
-     */
-    public Comment(Token.CommentType type) {
-        this(0, 1, type);
-    }
-
     /**
      * Constructs a new Comment
      * @param pos the start position
      * @param len the length including delimiter(s)
      * @param type the comment type
+     * @param value the value of the comment, as a string
      */
-    public Comment(int pos, int len, Token.CommentType type) {
+    public Comment(int pos, int len, Token.CommentType type, String value) {
         super(pos, len);
         commentType = type;
+        this.value = value;
     }
 
     /**
@@ -119,6 +106,13 @@ public class Comment extends AstNode {
      */
     public void setCommentType(Token.CommentType type) {
         this.commentType = type;
+    }
+
+    /**
+     * Returns a string of the comment value.
+     */
+    public String getValue() {
+        return value;
     }
 
     @Override

@@ -292,6 +292,8 @@ class TokenStream
         return id & 0xff;
     }
 
+    final String getSourceString() { return sourceString; }
+    
     final int getLineno() { return lineno; }
 
     final String getString() { return string; }

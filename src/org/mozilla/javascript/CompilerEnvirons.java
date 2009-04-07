@@ -244,6 +244,14 @@ public class CompilerEnvirons
         recordingComments = record;
     }
 
+    public boolean isRecordingLocalJsDocComments() {
+        return recordingLocalJsDocComments;
+    }
+
+    public void setRecordingLocalJsDocComments(boolean record) {
+        recordingLocalJsDocComments = record;
+    }
+
     /**
      * Turn on or off full error recovery.  In this mode, parse errors do not
      * throw an exception, and the parser attempts to build a full syntax tree
@@ -320,6 +328,7 @@ public class CompilerEnvirons
     private boolean warningAsError;
     private boolean generateObserverCount;
     private boolean recordingComments;
+    private boolean recordingLocalJsDocComments;
     private boolean recoverFromErrors;
     private boolean warnTrailingComma;
     private boolean ideMode;
