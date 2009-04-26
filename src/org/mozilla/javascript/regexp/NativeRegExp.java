@@ -182,6 +182,17 @@ public class NativeRegExp extends IdScriptableObject implements Function
         return "RegExp";
     }
 
+    /**
+     * Gets the value to be returned by the typeof operator called on this object.
+     * @see org.mozilla.javascript.ScriptableObject#getTypeOf()
+     * @return "object"
+     */
+    @Override
+    public String getTypeOf()
+    {
+    	return "object";
+    }
+
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {

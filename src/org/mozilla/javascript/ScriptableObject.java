@@ -237,6 +237,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         parentScopeObject = scope;
         prototypeObject = prototype;
     }
+    
+    /**
+     * Gets the value that will be returned by calling the typeof operator on this object.
+     * @return default is "object" unless {@link #avoidObjectDetection()} is <code>true</code> in which
+     * case it returns "undefined"
+     */
+    public String getTypeOf() {
+    	return avoidObjectDetection() ? "undefined" : "object";
+    }
 
     /**
      * Return the name of the class.

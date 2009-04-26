@@ -2496,17 +2496,10 @@ public class ScriptRuntime {
             return "object";
         if (value == Undefined.instance)
             return "undefined";
+        if (value instanceof ScriptableObject)
+        	return ((ScriptableObject) value).getTypeOf();
         if (value instanceof Scriptable)
-        {
-            if (value instanceof ScriptableObject &&
-                ((ScriptableObject)value).avoidObjectDetection())
-            {
-                return "undefined";
-            }
-            if (value instanceof XMLObject)
-                return "xml";
             return (value instanceof Callable) ? "function" : "object";
-        }
         if (value instanceof String)
             return "string";
         if (value instanceof Number)
