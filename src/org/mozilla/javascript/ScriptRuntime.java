@@ -232,7 +232,7 @@ public class ScriptRuntime {
 				className = cx.getE4xImplementationFactory().
                                getImplementationClassName();
 			}
-            new LazilyLoadedCtor(scope, topProperty, className, sealed);
+            new LazilyLoadedCtor(scope, topProperty, className, sealed, true);
         }
 
         return scope;
