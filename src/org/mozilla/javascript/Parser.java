@@ -626,7 +626,7 @@ public class Parser
         }
         // Would prefer not to call createDestructuringAssignment until codegen,
         // but the symbol definitions have to happen now, before body is parsed.
-        Node destructuring = null;
+        Map<String, Node> destructuring = null;
         do {
             int tt = peekToken();
             if (tt == Token.LB || tt == Token.LC) {
@@ -637,14 +637,11 @@ public class Parser
                 // parameter name, and add a statement to the body to initialize
                 // variables from the destructuring assignment
                 if (destructuring == null) {
-                    destructuring = new Node(Token.COMMA);
+                    destructuring = new HashMap<String, Node>();
                 }
                 String pname = currentScriptOrFn.getNextTempName();
                 defineSymbol(Token.LP, pname, false);
-                Node nameNode = createName(pname);
-                Node assign = createDestructuringAssignment(Token.VAR,
-                                                            expr, nameNode);
-                destructuring.addChildToBack(assign);
+                destructuring.put(pname, expr);
             } else {
                 if (mustMatchToken(Token.NAME, "msg.no.parm")) {
                     fnNode.addParam(createNameNode());
@@ -656,7 +653,15 @@ public class Parser
         } while (matchToken(Token.COMMA));
 
         if (destructuring != null) {
-            fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuring);
+            Node destructuringNode = new Node(Token.COMMA);
+            // Add assignment helper for each destructuring parameter
+            for (Map.Entry<String, Node> param: destructuring.entrySet()) {
+                Node assign = createDestructuringAssignment(Token.VAR,
+                        param.getValue(), createName(param.getKey()));
+                destructuringNode.addChildToBack(assign);
+
+            }
+            fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
         }
 
         if (mustMatchToken(Token.RP, "msg.no.paren.after.parms")) {
