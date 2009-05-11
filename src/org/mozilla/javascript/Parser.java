@@ -577,10 +577,15 @@ public class Parser
         return root;
     }
 
-    private Block parseFunctionBody()
+    private AstNode parseFunctionBody()
         throws IOException
     {
-        mustMatchToken(Token.LC, "msg.no.brace.body");
+        if (!matchToken(Token.LC)) {
+            if (compilerEnv.getLanguageVersion() < Context.VERSION_1_8) {
+                reportError("msg.no.brace.body");
+            }
+            return parseFunctionBodyExpr();
+        }
         ++nestingOfFunction;
         int pos = ts.tokenBeg;
         Block pn = new Block(pos);  // starts at LC position
@@ -667,6 +672,22 @@ public class Parser
         if (mustMatchToken(Token.RP, "msg.no.paren.after.parms")) {
             fnNode.setRp(ts.tokenBeg - fnNode.getPosition());
         }
+    }
+
+
+    private AstNode parseFunctionBodyExpr()
+        throws IOException
+    {
+        ++nestingOfFunction;
+        int lineno = ts.getLineno();
+        ReturnStatement n = new ReturnStatement(lineno);
+        n.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
+        try {
+            n.setReturnValue(assignExpr());
+        } finally {
+            --nestingOfFunction;
+        }
+        return n;
     }
 
     private FunctionNode function(int type)

@@ -95,7 +95,8 @@ public class Node implements Iterable<Node>
         DESTRUCTURING_NAMES  = 22,
         DESTRUCTURING_PARAMS = 23,
         JSDOC_PROP           = 24,
-        LAST_PROP            = 24;
+        EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return 
+        LAST_PROP            = 25;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types

@@ -236,6 +236,9 @@ public class FunctionNode extends ScriptNode {
     public void setBody(AstNode body) {
         assertNotNull(body);
         this.body = body;
+        if (Boolean.TRUE.equals(body.getProp(Node.EXPRESSION_CLOSURE_PROP))) {
+            setIsExpressionClosure(true);
+        }
         int absEnd = body.getPosition() + body.getLength();
         body.setParent(this);
         this.setLength(absEnd - this.position);

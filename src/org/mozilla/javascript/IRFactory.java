@@ -562,10 +562,12 @@ public final class IRFactory extends Parser
             ++nestingOfFunction;  // only for body, not params
             Node body = transform(fn.getBody());
 
-            decompiler.addToken(Token.RC);
+            if (!fn.isExpressionClosure()) {
+                decompiler.addToken(Token.RC);
+            }
             fn.setEncodedSourceBounds(start, decompiler.markFunctionEnd(start));
 
-            if (functionType != FunctionNode.FUNCTION_EXPRESSION) {
+            if (functionType != FunctionNode.FUNCTION_EXPRESSION && !fn.isExpressionClosure()) {
                 // Add EOL only if function is not part of expression
                 // since it gets SEMI + EOL from Statement in that case
                 decompiler.addToken(Token.EOL);
@@ -817,7 +819,11 @@ public final class IRFactory extends Parser
     }
 
     private Node transformReturn(ReturnStatement node) {
-        decompiler.addToken(Token.RETURN);
+        if (Boolean.TRUE.equals(node.getProp(Node.EXPRESSION_CLOSURE_PROP))) {
+            decompiler.addName(" ");
+        } else {
+            decompiler.addToken(Token.RETURN);
+        }
         AstNode rv = node.getReturnValue();
         Node value = rv == null ? null : transform(rv);
         decompiler.addEOL(Token.SEMI);
@@ -2146,7 +2152,9 @@ public final class IRFactory extends Parser
             }
         }
         decompiler.addToken(Token.RP);
-        decompiler.addEOL(Token.LC);
+        if (!fn.isExpressionClosure()) {
+            decompiler.addEOL(Token.LC);
+        }
         return mexpr;
     }
 
