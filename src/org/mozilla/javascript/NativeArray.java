@@ -258,11 +258,13 @@ public class NativeArray extends IdScriptableObject
               case ConstructorId_some:
               case ConstructorId_reduce:
               case ConstructorId_reduceRight: {
-                thisObj = ScriptRuntime.toObject(scope, args[0]);
-                Object[] newArgs = new Object[args.length-1];
-                for (int i=0; i < newArgs.length; i++)
-                    newArgs[i] = args[i+1];
-                args = newArgs;
+                if (args.length > 0) {
+                    thisObj = ScriptRuntime.toObject(scope, args[0]);
+                    Object[] newArgs = new Object[args.length-1];
+                    for (int i=0; i < newArgs.length; i++)
+                        newArgs[i] = args[i+1];
+                    args = newArgs;
+                }
                 id = -id;
                 continue again;
               }
