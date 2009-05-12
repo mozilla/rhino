@@ -76,18 +76,21 @@ public class JavaScriptException extends RhinoException
     @Override
     public String details()
     {
-       try {
-           return ScriptRuntime.toString(value);
-       } catch (RuntimeException rte) {
-           // ScriptRuntime.toString may throw a RuntimeException
-           if (value == null) {
-               return "null";
-           } else if (value instanceof Scriptable) {
-               return ScriptRuntime.defaultObjectToString((Scriptable)value);
-           } else {
-               return value.toString();
-           }
-       }
+        if (value == null) {
+            return "null";
+        } else if (value instanceof NativeError) {
+            return value.toString();
+        }
+        try {
+            return ScriptRuntime.toString(value);
+        } catch (RuntimeException rte) {
+            // ScriptRuntime.toString may throw a RuntimeException
+            if (value instanceof Scriptable) {
+                return ScriptRuntime.defaultObjectToString((Scriptable)value);
+            } else {
+                return value.toString();
+            }
+        }
     }
 
     /**
