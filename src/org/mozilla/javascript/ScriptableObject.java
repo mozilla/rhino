@@ -2555,9 +2555,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     public Object get(Object key) {
         Object value = null;
         if (key instanceof String) {
-            value = getImpl((String) key, 0, this);
+            value = get((String) key, this);
         } else if (key instanceof Number) {
-            value = getImpl(null, ((Number) key).intValue(), this);
+            value = get(((Number) key).intValue(), this);
         }
         if (value == Scriptable.NOT_FOUND || value == Undefined.instance) {
             return null;
