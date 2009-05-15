@@ -211,7 +211,28 @@ public class ContextFactory
         hasCustomGlobal = true;
         global = factory;
     }
-
+    
+    public interface GlobalSetter {
+        public void setContextFactoryGlobal(ContextFactory factory);
+        public ContextFactory getContextFactoryGlobal();
+    }
+    
+    public synchronized static GlobalSetter getGlobalSetter() {
+        if (hasCustomGlobal) {
+            throw new IllegalStateException();
+        }
+        hasCustomGlobal = true;
+        class GlobalSetterImpl implements GlobalSetter {
+            public void setContextFactoryGlobal(ContextFactory factory) {
+                global = factory == null ? new ContextFactory() : factory;
+            }
+            public ContextFactory getContextFactoryGlobal() {
+                return global;
+            }
+        }
+        return new GlobalSetterImpl();
+    }
+    
     /**
      * Create new {@link Context} instance to be associated with the current
      * thread.

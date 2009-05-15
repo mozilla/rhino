@@ -1969,20 +1969,40 @@ public class Context
      * @throws SecurityException if there is already a ClassShutter
      *         object for this Context
      */
-    public final void setClassShutter(ClassShutter shutter)
+    public synchronized final void setClassShutter(ClassShutter shutter)
     {
         if (sealed) onSealedMutation();
         if (shutter == null) throw new IllegalArgumentException();
-        if (classShutter != null) {
+        if (hasClassShutter) {
             throw new SecurityException("Cannot overwrite existing " +
                                         "ClassShutter object");
         }
         classShutter = shutter;
+        hasClassShutter = true;
     }
-
-    final ClassShutter getClassShutter()
+    
+    final synchronized ClassShutter getClassShutter()
     {
         return classShutter;
+    }
+    
+    public interface ClassShutterSetter {
+        public void setClassShutter(ClassShutter shutter);
+        public ClassShutter getClassShutter();
+    }
+    
+    public final synchronized ClassShutterSetter getClassShutterSetter() {
+        if (hasClassShutter)
+            return null;
+        hasClassShutter = true;
+        return new ClassShutterSetter() {
+            public void setClassShutter(ClassShutter shutter) {
+                classShutter = shutter;
+            }
+            public ClassShutter getClassShutter() {
+                return classShutter;
+            }
+        };
     }
 
     /**
@@ -2603,6 +2623,7 @@ public class Context
     int version;
 
     private SecurityController securityController;
+    private boolean hasClassShutter;
     private ClassShutter classShutter;
     private ErrorReporter errorReporter;
     RegExpProxy regExpProxy;
