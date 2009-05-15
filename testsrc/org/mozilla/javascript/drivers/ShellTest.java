@@ -51,24 +51,24 @@ import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /**
- * @version $Id: ShellTest.java,v 1.11 2008/12/05 20:35:44 hannes%helma.at Exp $
+ * @version $Id: ShellTest.java,v 1.12 2009/05/15 12:30:45 nboyd%atg.com Exp $
  */
-class ShellTest {
-    static final FileFilter DIRECTORY_FILTER = new FileFilter() {
+public class ShellTest {
+    public static final FileFilter DIRECTORY_FILTER = new FileFilter() {
         public boolean accept(File pathname)
         {
             return pathname.isDirectory() && !pathname.getName().equals("CVS");
         }
     };
 
-    static final FileFilter TEST_FILTER = new FileFilter() {
+    public static final FileFilter TEST_FILTER = new FileFilter() {
         public boolean accept(File pathname)
         {
             return pathname.getName().endsWith(".js") && !pathname.getName().equals("shell.js") && !pathname.getName().equals("browser.js") && !pathname.getName().equals("template.js");
         }
     };
 
-    static String getStackTrace(Throwable t) {
+    public static String getStackTrace(Throwable t) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         t.printStackTrace(new PrintStream(bytes));
         return new String(bytes.toByteArray());
@@ -89,18 +89,18 @@ class ShellTest {
         int exitCode = 0;
     }
 
-    static abstract class Status {
+    public static abstract class Status {
         private boolean negative;
 
-        final void setNegative() {
+        public final void setNegative() {
             this.negative = true;
         }
 
-        final boolean isNegative() {
+        public final boolean isNegative() {
             return this.negative;
         }
 
-        final void hadErrors(JsError[] errors) {
+        public final void hadErrors(JsError[] errors) {
             if (!negative && errors.length > 0) {
                 failed("JavaScript errors:\n" + JsError.toString(errors));
             } else if (negative && errors.length == 0) {
@@ -108,48 +108,48 @@ class ShellTest {
             }
         }
 
-        abstract void running(File jsFile);
+        public abstract void running(File jsFile);
 
-        abstract void failed(String s);
-        abstract void threw(Throwable t);
-        abstract void timedOut();
-        abstract void exitCodesWere(int expected, int actual);
-        abstract void outputWas(String s);
+        public abstract void failed(String s);
+        public abstract void threw(Throwable t);
+        public abstract void timedOut();
+        public abstract void exitCodesWere(int expected, int actual);
+        public abstract void outputWas(String s);
 
         static Status compose(final Status[] array) {
             return new Status() {
                 @Override
-                void running(File file) {
+                public void running(File file) {
 					for (int i=0; i<array.length; i++) {
 						array[i].running(file);
 					}
                 }
                 @Override
-                void threw(Throwable t) {
+                public void threw(Throwable t) {
 					for (int i=0; i<array.length; i++) {
 						array[i].threw(t);
 					}
 				}
                 @Override
-                void failed(String s) {
+                public void failed(String s) {
 					for (int i=0; i<array.length; i++) {
 						array[i].failed(s);
 					}
                 }
                 @Override
-                void exitCodesWere(int expected, int actual) {
+                public void exitCodesWere(int expected, int actual) {
 					for (int i=0; i<array.length; i++) {
 						array[i].exitCodesWere(expected, actual);
 					}
                 }
                 @Override
-                void outputWas(String s) {
+                public void outputWas(String s) {
 					for (int i=0; i<array.length; i++) {
 						array[i].outputWas(s);
 					}
                 }
                 @Override
-                void timedOut() {
+                public void timedOut() {
 					for (int i=0; i<array.length; i++) {
 						array[i].timedOut();
 					}
@@ -265,11 +265,18 @@ class ShellTest {
         }
     }
 
-    static abstract class Parameters {
-        abstract int getTimeoutMilliseconds();
+    public static abstract class Parameters {
+        public abstract int getTimeoutMilliseconds();
+    }
+    
+    @SuppressWarnings(value={"deprecation"})
+    private static void callStop(Thread t) {
+        t.stop();
     }
 
-    static void run(final ShellContextFactory shellContextFactory, final File jsFile, final Parameters parameters, final Status status) throws Exception {
+    public static void run(final ShellContextFactory shellContextFactory,
+            final File jsFile, final Parameters parameters,
+            final Status status) throws Exception {
         final Global global = new Global();
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final PrintStream p = new PrintStream(out);
@@ -277,7 +284,8 @@ class ShellTest {
         global.setErr(p);
         global.defineFunctionProperties(
                 new String[] { "options" }, ShellTest.class,
-                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT |
+                  ScriptableObject.READONLY);
         final TestState testState = new TestState();
         if (jsFile.getName().endsWith("-n.js")) {
             status.setNegative();
@@ -294,7 +302,6 @@ class ShellTest {
                     {
                         public Object run(Context cx)
                         {
-                            System.out.println("Running " + jsFile);
                             status.running(jsFile);
                             testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
                             cx.setErrorReporter( testState.errors );
@@ -304,14 +311,6 @@ class ShellTest {
                                 runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile(), "shell.js"));
                                 runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
                                 runFileIfExists(cx, global, jsFile);
-                                //    Emulate SpiderMonkey enum value from mozilla/js/src/js.c
-                                for (int i=0; i<testState.errors.errors.size(); i++) {
-                                    Status.JsError thisOne = testState.errors.errors.get(i);
-                                    if (thisOne.getMessage().indexOf("java.lang.OutOfMemoryError") != -1) {
-                                        testState.exitCode = 5;
-                                        testState.errors.errors.remove(thisOne);
-                                    }
-                                }
                                 status.hadErrors(testState.errors.errors.toArray(new Status.JsError[0]));
                             } catch (ThreadDeath e) {
                             } catch (Throwable t) {
@@ -344,7 +343,7 @@ class ShellTest {
         {
             if(!testState.finished)
             {
-                t.stop();
+                callStop(t);
                 status.timedOut();
             }
         }

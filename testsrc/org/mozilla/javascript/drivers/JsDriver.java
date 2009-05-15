@@ -45,7 +45,7 @@ import org.w3c.dom.*;
 import org.mozilla.javascript.tools.shell.*;
 
 /**
- * @version $Id: JsDriver.java,v 1.9 2008/12/05 20:35:44 hannes%helma.at Exp $
+ * @version $Id: JsDriver.java,v 1.10 2009/05/15 12:30:45 nboyd%atg.com Exp $
  */
 public class JsDriver {
     private JsDriver() {
@@ -149,7 +149,7 @@ public class JsDriver {
         }
 
         @Override
-        void running(File jsFile) {
+        public void running(File jsFile) {
             try {
                 console.println("Running: " + jsFile.getCanonicalPath());
                 this.jsFile = jsFile;
@@ -159,26 +159,26 @@ public class JsDriver {
         }
 
         @Override
-        void failed(String s) {
+        public void failed(String s) {
             console.println("Failed: " + jsFile + ": " + s);
             failed = true;
         }
 
         @Override
-        void threw(Throwable t) {
+        public void threw(Throwable t) {
             console.println("Failed: " + jsFile + " with exception.");
             console.println(ShellTest.getStackTrace(t));
             failed = true;
         }
 
         @Override
-        void timedOut() {
+        public void timedOut() {
             console.println("Failed: " + jsFile + ": timed out.");
             failed = true;
         }
 
         @Override
-        void exitCodesWere(int expected, int actual) {
+        public void exitCodesWere(int expected, int actual) {
             if (expected != actual) {
                 console.println("Failed: " + jsFile + " expected " + expected + " actual " + actual);
                 failed = true;
@@ -186,7 +186,7 @@ public class JsDriver {
         }
 
         @Override
-        void outputWas(String s) {
+        public void outputWas(String s) {
             if (!failed) {
                 console.println("Passed: " + jsFile);
                 if (trace) {
@@ -269,17 +269,17 @@ public class JsDriver {
         }
 
         @Override
-        void running(File file) {
+        public void running(File file) {
         }
 
         @Override
-        void failed(String s) {
+        public void failed(String s) {
             failed = true;
             setContent(failureHtml, "failureDetails.reason", "Failure reason: \n" + s);
         }
 
         @Override
-        void exitCodesWere(int expected, int actual) {
+        public void exitCodesWere(int expected, int actual) {
             if (expected != actual) {
                 failed = true;
                 setContent(failureHtml, "failureDetails.reason", "expected exit code " + expected + " but got " + actual);
@@ -287,19 +287,19 @@ public class JsDriver {
         }
 
         @Override
-        void threw(Throwable e) {
+        public void threw(Throwable e) {
             failed = true;
             setContent(failureHtml, "failureDetails.reason", "Threw Java exception:\n" + newlineLineEndings(ShellTest.getStackTrace(e)));
         }
 
         @Override
-        void timedOut() {
+        public void timedOut() {
             failed = true;
             setContent(failureHtml, "failureDetails.reason", "Timed out.");
         }
 
         @Override
-        void outputWas(String s) {
+        public void outputWas(String s) {
             this.output = s;
         }
 
@@ -369,7 +369,7 @@ public class JsDriver {
 		}
 		
 		@Override
-		void running(File file) {
+		public void running(File file) {
 			this.start = new Date();
 		}
 		
@@ -390,7 +390,7 @@ public class JsDriver {
 		}
 		
         @Override
-		void exitCodesWere(int expected, int actual) {
+        public void exitCodesWere(int expected, int actual) {
 			finish();
 			Element exit = createElement(target, "exit");
 			exit.setAttribute("expected", String.valueOf(expected));
@@ -398,27 +398,27 @@ public class JsDriver {
 		}
 		
         @Override
-		void timedOut() {
+        public void timedOut() {
 			finish();
 			createElement(target, "timedOut");
 		}
 		
         @Override
-		void failed(String s) {
+        public void failed(String s) {
 			finish();
 			Element failed = createElement(target, "failed");
 			setTextContent(failed, s);
 		}
 		
         @Override
-		void outputWas(String message) {
+        public void outputWas(String message) {
 			finish();
 			Element output = createElement(target, "output");
 			setTextContent(output, message);
 		}
 		
         @Override
-		void threw(Throwable t) {
+        public void threw(Throwable t) {
 			finish();
 			Element threw = createElement(target, "threw");
 			setTextContent(threw, ShellTest.getStackTrace(t));
@@ -577,7 +577,7 @@ public class JsDriver {
         }
 
         @Override
-        int getTimeoutMilliseconds() {
+        public int getTimeoutMilliseconds() {
             return timeout;
         }
     }
