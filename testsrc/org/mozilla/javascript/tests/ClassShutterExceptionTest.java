@@ -15,79 +15,65 @@ import org.mozilla.javascript.EvaluatorException;
  * @author Norris Boyd
  */
 public class ClassShutterExceptionTest extends TestCase {
+    private static Context.ClassShutterSetter classShutterSetter;
 
     /**
      * Define a ClassShutter that prevents access to all Java classes.
      */
     static class OpaqueShutter implements ClassShutter {
         public boolean visibleToScripts(String name) {
-            System.err.println("OpaqueShutter asked for " + name);
             return false;
         }
     }
-
-    public void testClassShutterException() {
+    
+    public void helper(String source) {
         Context cx = Context.enter();
+        Context.ClassShutterSetter setter = cx.getClassShutterSetter();
         try {
             Scriptable globalScope = cx.initStandardObjects();
-            cx.setClassShutter(new OpaqueShutter());
-            cx.evaluateString(globalScope,
-                    "java.lang.System.out.println('hi');",
-                    "test source", 1, null);
+            if (setter == null) {
+                setter = classShutterSetter;
+            } else {
+                classShutterSetter = setter;
+            }
+            setter.setClassShutter(new OpaqueShutter());
+            cx.evaluateString(globalScope, source, "test source", 1, null);
+        } finally {
+            setter.setClassShutter(null);
+            Context.exit();
+        }
+    }
+    
+    public void testClassShutterException() {
+        try {
+            helper("java.lang.System.out.println('hi');");
             fail();
         } catch (RhinoException e) {
             // OpaqueShutter should prevent access to java.lang...
             return;
-        } finally {
-            Context.exit();
         }
     }
 
     public void testThrowingException() {
-        Context cx = Context.enter();
-        try {
-            Scriptable globalScope = cx.initStandardObjects();
-            cx.setClassShutter(new OpaqueShutter());
-            // JavaScript exceptions with no reference to Java
-            // should not be affected by the ClassShutter
-            cx.evaluateString(globalScope,
-                    "try { throw 3; } catch (e) { }",
-                    "test source", 1, null);
-        } finally {
-            Context.exit();
-        }
+        // JavaScript exceptions with no reference to Java
+        // should not be affected by the ClassShutter
+        helper("try { throw 3; } catch (e) { }");
     }
 
     public void testThrowingEcmaError() {
-        Context cx = Context.enter();
         try {
-            Scriptable globalScope = cx.initStandardObjects();
-            cx.setClassShutter(new OpaqueShutter());
             // JavaScript exceptions with no reference to Java
             // should not be affected by the ClassShutter
-            cx.evaluateString(globalScope,
-                    "friggin' syntax error!",
-                    "test source", 1, null);
+            helper("friggin' syntax error!");
             fail("Should have thrown an exception");
         } catch (EvaluatorException e) {
             // should have thrown an exception for syntax error
-        } finally {
-            Context.exit();
         }
     }
 
     public void testThrowingEvaluatorException() {
-        Context cx = Context.enter();
-        try {
-            Scriptable globalScope = cx.initStandardObjects();
-            cx.setClassShutter(new OpaqueShutter());
             // JavaScript exceptions with no reference to Java
             // should not be affected by the ClassShutter
-            cx.evaluateString(globalScope,
-                    "try { eval('for;if;else'); } catch (e) { }",
-                    "test source", 1, null);
-        } finally {
-            Context.exit();
-        }
+            helper("try { eval('for;if;else'); } catch (e) { }");
     }
  }
