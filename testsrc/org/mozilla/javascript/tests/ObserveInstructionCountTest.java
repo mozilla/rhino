@@ -26,8 +26,17 @@ public class ObserveInstructionCountTest extends TestCase {
         private static final long serialVersionUID = -8018441873635071899L;
     }
     
-    static {
-        ContextFactory.initGlobal(new MyFactory());
+    private static ContextFactory.GlobalSetter globalSetter
+        = ContextFactory.getGlobalSetter();
+    
+    @Override
+    protected void setUp() {
+        globalSetter.setContextFactoryGlobal(new MyFactory());
+    }
+     
+    @Override
+    protected void tearDown() {
+        globalSetter.setContextFactoryGlobal(null);
     }
 
     static class MyFactory extends ContextFactory {
