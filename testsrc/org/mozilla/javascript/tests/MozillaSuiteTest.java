@@ -113,7 +113,7 @@ public class MozillaSuiteTest {
     
     // move "@Parameters" to this method to test a single Mozilla test
     public static Collection<Object[]> singleDoctest() throws IOException {
-        final String SINGLE_TEST_FILE = "js1_7/block/regress-352609.js";
+        final String SINGLE_TEST_FILE = "e4x/Expressions/11.1.1.js";
         final int SINGLE_TEST_OPTIMIZATION_LEVEL = -1;
         List<Object[]> result = new ArrayList<Object[]>();
         File f = new File(getTestDir(), SINGLE_TEST_FILE);
@@ -128,7 +128,7 @@ public class MozillaSuiteTest {
                 return Integer.parseInt(System.getProperty(
                     "mozilla.js.tests.timeout"));
             }
-            return 60000;
+            return 10000;
         }
     }
 
@@ -168,6 +168,7 @@ public class MozillaSuiteTest {
     
     @Test
     public void runMozillaTest() throws Exception {
+        //System.out.println("Test \"" + jsFile + "\" running under optimization level " + optimizationLevel);
         final ShellContextFactory shellContextFactory =
             new ShellContextFactory();
         shellContextFactory.setOptimizationLevel(optimizationLevel);

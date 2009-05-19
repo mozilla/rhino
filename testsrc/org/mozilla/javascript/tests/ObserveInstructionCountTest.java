@@ -9,6 +9,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Callable;
+import org.mozilla.javascript.drivers.TestUtils;
 
 /**
  * @author Norris Boyd
@@ -26,17 +27,14 @@ public class ObserveInstructionCountTest extends TestCase {
         private static final long serialVersionUID = -8018441873635071899L;
     }
     
-    private static ContextFactory.GlobalSetter globalSetter
-        = ContextFactory.getGlobalSetter();
-    
     @Override
     protected void setUp() {
-        globalSetter.setContextFactoryGlobal(new MyFactory());
+        TestUtils.setGlobalContextFactory(new MyFactory());
     }
      
     @Override
     protected void tearDown() {
-        globalSetter.setContextFactoryGlobal(null);
+        TestUtils.setGlobalContextFactory(null);
     }
 
     static class MyFactory extends ContextFactory {
