@@ -12,11 +12,14 @@ import org.mozilla.javascript.*;
  * @author Norris Boyd
  */
 public class Bug412433Test extends TestCase {
-    public void testMaleformedJavascript2()
+    public void testMalformedJavascript2()
     {
         Context context = Context.enter();
-        ScriptableObject scope = context.initStandardObjects();
-        context.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
-        Context.exit();
+        try {
+	        ScriptableObject scope = context.initStandardObjects();
+	        context.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
+        } finally {
+            Context.exit();
+        }
     }
 }
