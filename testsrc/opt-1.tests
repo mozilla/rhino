@@ -16,7 +16,6 @@ e4x/Expressions/11.6.3.js
 e4x/Expressions/regress-301545.js
 e4x/Expressions/regress-302531.js
 e4x/Expressions/regress-340024.js
-e4x/GC/regress-280844-2.js
 e4x/GC/regress-292455.js
 e4x/GC/regress-313952-01.js
 e4x/GC/regress-324117.js
@@ -330,7 +329,6 @@ ecma/Date/15.9.5.37-4.js
 ecma/Date/15.9.5.37-5.js
 ecma/Date/15.9.5.4-1.js
 ecma/Date/15.9.5.4-2-n.js
-ecma/Date/15.9.5.5.js
 ecma/Date/15.9.5.6.js
 ecma/Date/15.9.5.7.js
 ecma/Date/15.9.5.8.js
@@ -873,7 +871,6 @@ ecma_3/Array/regress-322135-01.js
 ecma_3/Date/15.9.4.3.js
 ecma_3/Date/15.9.5.3.js
 ecma_3/Date/15.9.5.4.js
-ecma_3/Date/15.9.5.5.js
 ecma_3/Date/15.9.5.6.js
 ecma_3/Date/15.9.5.7.js
 ecma_3/Exceptions/15.11.1.1.js
@@ -1189,7 +1186,6 @@ js1_5/GC/regress-316885-03.js
 js1_5/GC/regress-319980-01.js
 js1_5/GC/regress-324278.js
 js1_5/GC/regress-331719.js
-js1_5/GC/regress-338653.js
 js1_5/GC/regress-341877-01.js
 js1_5/GC/regress-341877-02.js
 js1_5/GC/regress-352606.js
@@ -1323,7 +1319,6 @@ js1_5/Regress/regress-343966.js
 js1_5/Regress/regress-344804.js
 js1_5/Regress/regress-344959.js
 js1_5/Regress/regress-346801.js
-#js1_5/Regress/regress-347306-01.js
 js1_5/Regress/regress-349482-01.js
 js1_5/Regress/regress-349482-02.js
 js1_5/Regress/regress-349592.js
@@ -1348,7 +1343,6 @@ js1_5/Regress/regress-407024.js
 js1_5/Regress/regress-407323.js
 js1_5/Regress/regress-407957.js
 js1_5/Regress/regress-57043.js
-js1_5/Regress/regress-58116.js
 js1_5/Regress/regress-68498-001.js
 js1_5/Regress/regress-68498-002.js
 js1_5/Regress/regress-68498-004.js
@@ -1455,7 +1449,6 @@ js1_5/extensions/regress-354541-01.js
 js1_5/extensions/regress-354541-03.js
 js1_5/extensions/regress-355982.js
 js1_5/extensions/regress-356402.js
-js1_5/extensions/regress-363258.js
 js1_5/extensions/regress-363988.js
 js1_5/extensions/regress-365527.js
 js1_5/extensions/regress-365692.js
@@ -1470,7 +1463,6 @@ js1_5/extensions/regress-367121.js
 js1_5/extensions/regress-367501-01.js
 js1_5/extensions/regress-367501-02.js
 js1_5/extensions/regress-367501-03.js
-js1_5/extensions/regress-367501-04.js
 js1_5/extensions/regress-367589.js
 js1_5/extensions/regress-369404.js
 js1_5/extensions/regress-374589.js
@@ -1787,4 +1779,3 @@ lc3/JavaObject/JavaObjectToShort-002-n.js
 lc3/JavaObject/JavaObjectToShort-003-n.js
 lc3/JavaObject/JavaObjectToShort-004-n.js
 lc3/StringMethods/string-001.js
-menuhead.js
