@@ -21,14 +21,19 @@ public class NativeStringTest extends TestCase {
 	 * in 1.7R2
 	 */
     public void testtoLowerCaseApply() {
-        final String source = "var x = String.toLowerCase; x.apply('HELLO')";
+        assertEvaluates("hello", "var x = String.toLowerCase; x.apply('HELLO')");
+        assertEvaluates("hello", "String.toLowerCase('HELLO')"); // first patch proposed to #492359 was breaking this
+    }
+
+    private void assertEvaluates(final Object expected, final String source) {
         final ContextAction action = new ContextAction() {
-        	public Object run(Context cx) {
-        		final Scriptable scope = cx.initStandardObjects();
-       			final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
-       			assertEquals("hello", rep);
-       			return null;
-        	}
+            public Object run(Context cx) {
+                final Scriptable scope = cx.initStandardObjects();
+                final Object rep = cx.evaluateString(scope, source, "test.js",
+                        0, null);
+                assertEquals(expected, rep);
+                return null;
+            }
         };
         Utils.runWithAllOptimizationLevels(action);
     }
