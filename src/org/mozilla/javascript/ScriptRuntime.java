@@ -1979,7 +1979,8 @@ public class ScriptRuntime {
             enumType != ENUMERATE_VALUES_NO_ITERATOR &&
             enumType != ENUMERATE_ARRAY_NO_ITERATOR)
         {
-            x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj, true);
+            x.iterator = toIterator(cx, x.obj.getParentScope(), x.obj,
+                                    enumType == ScriptRuntime.ENUMERATE_KEYS);
         }
         if (x.iterator == null) {
             // enumInit should read all initial ids before returning
