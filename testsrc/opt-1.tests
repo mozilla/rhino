@@ -1540,12 +1540,17 @@ js1_7/decompilation/regress-375794.js
 js1_7/decompilation/regress-380506.js
 js1_7/expressions/destructuring-scope.js
 js1_7/expressions/regress-346203.js
+js1_7/expressions/regress-346645-01.js
+js1_7/expressions/regress-346645-02.js
+js1_7/expressions/regress-346645-03.js
 js1_7/expressions/regress-349624.js
 js1_7/expressions/regress-349818.js
 js1_7/extensions/basic-Iterator.js
 js1_7/extensions/basic-for-in.js
+js1_7/extensions/destructuring-order.js
 js1_7/extensions/iterator-ctor.js
 js1_7/extensions/regress-346021.js
+js1_7/extensions/regress-346642-02.js
 js1_7/extensions/regress-346773.js
 js1_7/extensions/regress-349619.js
 js1_7/extensions/regress-350312.js
@@ -1635,6 +1640,7 @@ js1_7/regress/regress-372331.js
 js1_7/regress/regress-373827-01.js
 js1_7/regress/regress-373827-02.js
 js1_7/regress/regress-373828.js
+js1_7/regress/regress-379442.js
 js1_7/regress/regress-385393-05.js
 js1_7/regress/regress-407727-01.js
 js1_7/regress/regress-407727-02.js
