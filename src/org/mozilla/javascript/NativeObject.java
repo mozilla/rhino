@@ -71,6 +71,20 @@ public class NativeObject extends IdScriptableObject
     }
 
     @Override
+    protected void fillConstructorProperties(IdFunctionObject ctor)
+    {
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf,
+                "getPrototypeOf", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys,
+                "keys", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames,
+                "getOwnPropertyNames", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor,
+                "getOwnPropertyDescriptor", 2);
+        super.fillConstructorProperties(ctor);
+    }
+
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -256,6 +270,59 @@ public class NativeObject extends IdScriptableObject
               }
               return Undefined.instance;
 
+          case ConstructorId_getPrototypeOf:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                if (!(arg instanceof Scriptable)) {
+                    throw ScriptRuntime.typeError1("msg.arg.not.object",
+                                                   ScriptRuntime.typeof(arg));
+                }
+                Scriptable obj = (Scriptable) arg;
+                return obj.getPrototype();
+              }
+          case ConstructorId_keys:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                if (!(arg instanceof Scriptable)) {
+                    throw ScriptRuntime.typeError1("msg.arg.not.object",
+                                                   ScriptRuntime.typeof(arg));
+                }
+                Object[] ids = ((Scriptable) arg).getIds();
+                for (int i = 0; i < ids.length; i++) {
+                  ids[i] = ScriptRuntime.toString(ids[i]);
+                }
+                return cx.newArray(scope, ids);
+              }
+          case ConstructorId_getOwnPropertyNames:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                if (!(arg instanceof Scriptable)) {
+                    throw ScriptRuntime.typeError1("msg.arg.not.object",
+                                                   ScriptRuntime.typeof(arg));
+                }
+                Object[] ids = ((ScriptableObject) arg).getAllIds();
+                for (int i = 0; i < ids.length; i++) {
+                  ids[i] = ScriptRuntime.toString(ids[i]);
+                }
+                return cx.newArray(scope, ids);
+              }
+          case ConstructorId_getOwnPropertyDescriptor:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                if (!(arg instanceof ScriptableObject)) {
+                    // TODO(norris): There's a deeper issue here if
+                    // arg instanceof Scriptable. Should we create a new
+                    // interface to admit the new ECMAScript 5 operations?
+                    throw ScriptRuntime.typeError1("msg.arg.not.object",
+                                                   ScriptRuntime.typeof(arg));
+                }
+                ScriptableObject obj = (ScriptableObject) arg;
+                Object nameArg = args.length < 2 ? Undefined.instance : args[1];
+                String name = ScriptRuntime.toString(nameArg);
+                Scriptable desc = obj.getOwnPropertyDescriptor(cx, name);
+                return desc == null ? Undefined.instance : desc;
+              }
+
           default:
             throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -303,6 +370,11 @@ public class NativeObject extends IdScriptableObject
     }
 
     private static final int
+        ConstructorId_getPrototypeOf = -1,
+        ConstructorId_keys = -2,
+        ConstructorId_getOwnPropertyNames = -3,
+        ConstructorId_getOwnPropertyDescriptor = -4,
+
         Id_constructor           = 1,
         Id_toString              = 2,
         Id_toLocaleString        = 3,

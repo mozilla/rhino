@@ -202,6 +202,16 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
         }
 
+        ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
+            ScriptableObject desc = new NativeObject();
+            ScriptRuntime.setObjectProtoAndParent(desc, scope);
+            if (value != null) desc.defineProperty("value", value, EMPTY);
+            desc.defineProperty("writable",     (attributes & READONLY) == 0, EMPTY);
+            desc.defineProperty("enumerable",   (attributes & DONTENUM) == 0, EMPTY);
+            desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
+            return desc;
+        }
+
     }
 
     private static final class GetterSlot extends Slot
@@ -214,6 +224,16 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         GetterSlot(String name, int indexOrHash, int attributes)
         {
             super(name, indexOrHash, attributes);
+        }
+
+        @Override
+        ScriptableObject getPropertyDescriptor(Context cx, Scriptable parent) {
+          ScriptableObject desc = super.getPropertyDescriptor(cx, parent);
+          desc.delete("value");
+          desc.delete("writable");
+          if (getter != null) desc.defineProperty("get", getter, EMPTY);
+          if (setter != null) desc.defineProperty("set", setter, EMPTY);
+          return desc;
         }
     }
 
@@ -2521,6 +2541,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 prev = lastAdded;
             }
         }
+    }
+
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, String name) {
+      Slot slot = getSlot(name, 0, SLOT_QUERY);
+      return (slot == null) ? null : slot.getPropertyDescriptor(cx, getParentScope());
     }
 
     // Methods and classes to implement java.util.Map interface
