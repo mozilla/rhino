@@ -124,7 +124,7 @@ public class LabeledStatement extends AstNode {
 
     /**
      * Sets the labeled statement, and sets its parent to this node.
-     * @throws IllegalArgumentException} if statement is {@code null}
+     * @throws IllegalArgumentException if {@code statement} is {@code null}
      */
     public void setStatement(AstNode statement) {
         assertNotNull(statement);

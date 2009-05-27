@@ -171,7 +171,7 @@ public class TryStatement extends AstNode {
         sb.append(makeIndent(depth));
         sb.append("try ");
         sb.append(tryBlock.toSource(depth).trim());
-        for (CatchClause cc : catchClauses) {
+        for (CatchClause cc : getCatchClauses()) {
             sb.append(cc.toSource(depth));
         }
         if (finallyBlock != null) {

@@ -446,12 +446,20 @@ public class Parser
         if (currentLabel != null) {
             currentLabel.setStatement(loop);
             currentLabel.getFirstLabel().setLoop(loop);
+            // This is the only time during parsing that we set a node's parent
+            // before parsing the children.  In order for the child node offsets
+            // to be correct, we adjust the loop's reported position back to an
+            // absolute source offset, and restore it when we call exitLoop().
+            loop.setRelative(-currentLabel.getPosition());
         }
     }
 
     private void exitLoop() {
-        loopSet.remove(loopSet.size() - 1);
+        Loop loop = loopSet.remove(loopSet.size() - 1);
         loopAndSwitchSet.remove(loopAndSwitchSet.size() - 1);
+        if (loop.getParent() != null) {  // see comment in enterLoop
+            loop.setRelative(loop.getParent().getPosition());
+        }
         popScope();
     }
 
@@ -1383,7 +1391,9 @@ public class Parser
         pn.setTryBlock(tryBlock);
         pn.setCatchClauses(clauses);
         pn.setFinallyBlock(finallyBlock);
-        pn.setFinallyPosition(finallyPos);
+        if (finallyPos != -1) {
+            pn.setFinallyPosition(finallyPos - tryPos);
+        }
         pn.setLineno(lineno);
 
         if (jsdoc != null) {

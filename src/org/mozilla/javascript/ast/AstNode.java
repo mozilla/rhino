@@ -260,6 +260,15 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * @param parent the new parent. Can be {@code null}.
      */
     public void setParent(AstNode parent) {
+        if (parent == this.parent) {
+            return;
+        }
+
+        // Convert position back to absolute.
+        if (this.parent != null) {
+            setRelative(-this.parent.getPosition());
+        }
+
         this.parent = parent;
         if (parent != null) {
             setRelative(parent.getPosition());
