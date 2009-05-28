@@ -118,7 +118,7 @@
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
       <batchtest todir="build/test">
-        <fileset dir="${test.classes}" includes="**/tests/*Test.class"/>
+        <fileset dir="${test.classes}" includes="**/tests/**/*Test.class"/>
         <fileset dir="${test.classes}" includes="**/StandardTests.class"/>
       </batchtest>
       <formatter type="xml"/>
