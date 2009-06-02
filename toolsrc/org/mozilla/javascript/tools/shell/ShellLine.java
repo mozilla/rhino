@@ -62,6 +62,16 @@ public class ShellLine {
         // We don't want a compile-time dependency on the JLine jar, so use
         // reflection to load and reference the JLine classes.
         ClassLoader classLoader = ShellLine.class.getClassLoader();
+        if (classLoader == null) {
+            // If the attempt to get a class specific class loader above failed
+            // then fallback to the system class loader.
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+        if (classLoader == null) {
+            // If for some reason we still don't have a handle to a class
+            // loader then give up (avoid a NullPointerException).
+            return null;
+        }
         Class<?> readerClass = Kit.classOrNull(classLoader, "jline.ConsoleReader");
         if (readerClass == null)
             return null;
