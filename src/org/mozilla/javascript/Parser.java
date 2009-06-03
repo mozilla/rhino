@@ -266,7 +266,7 @@ public class Parser
         if (scannedComments == null) {
             scannedComments = new ArrayList<Comment>();
         }
-        String comment = getCurrentSourceSubstring();
+        String comment = ts.getAndResetCurrentComment();
         if (ts.commentType == Token.CommentType.JSDOC &&
             compilerEnv.isRecordingLocalJsDocComments()) {
             currentJsDocComment = comment;
@@ -275,11 +275,6 @@ public class Parser
                                         ts.getTokenLength(),
                                         ts.commentType,
                                         comment));
-    }
-
-    private String getCurrentSourceSubstring() {
-        return ts.getSourceString().substring(
-            ts.tokenBeg, ts.tokenBeg + ts.getTokenLength());
     }
 
     private String getAndResetJsDoc() {

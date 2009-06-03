@@ -767,6 +767,7 @@ class TokenStream
                 }
 
             case '/':
+                markCommentStart();
                 // is it a // comment?
                 if (matchChar('/')) {
                     tokenBeg = cursor - 2;
@@ -837,6 +838,7 @@ class TokenStream
                         // treat HTML end-comment after possible whitespace
                         // after line start as comment-until-eol
                         if (matchChar('>')) {
+                            markCommentStart("--");
                             skipLine();
                             commentType = Token.CommentType.HTML;
                             return Token.COMMENT;
@@ -1464,7 +1466,7 @@ class TokenStream
     {
         if (sourceString != null) Kit.codeBug();
         if (sourceEnd == sourceBuffer.length) {
-            if (lineStart != 0) {
+            if (lineStart != 0 && !isMarkingComment()) {
                 System.arraycopy(sourceBuffer, lineStart, sourceBuffer, 0,
                                  sourceEnd - lineStart);
                 sourceEnd -= lineStart;
@@ -1519,6 +1521,35 @@ class TokenStream
      */
     public Token.CommentType getCommentType() {
         return commentType;
+    }
+
+    private void markCommentStart() {
+        markCommentStart("");
+    }
+
+    private void markCommentStart(String prefix) {
+        if (parser.compilerEnv.isRecordingComments() && sourceReader != null) {
+            commentPrefix = prefix;
+            commentCursor = sourceCursor - 1;
+        }
+    }
+
+    private boolean isMarkingComment() {
+        return commentCursor != -1;
+    }
+
+     final String getAndResetCurrentComment() {
+        if (sourceString != null) {
+            if (isMarkingComment()) Kit.codeBug();
+            return sourceString.substring(tokenBeg, tokenEnd);
+        } else {
+            if (!isMarkingComment()) Kit.codeBug();
+            StringBuilder comment = new StringBuilder(commentPrefix);
+            comment.append(sourceBuffer, commentCursor,
+                getTokenLength() - commentPrefix.length());
+            commentCursor = -1;
+            return comment.toString();
+        }
     }
 
     // stuff other than whitespace since start of line
@@ -1577,4 +1608,7 @@ class TokenStream
     private int xmlOpenTagsCount;
 
     private Parser parser;
+
+    private String commentPrefix = "";
+    private int commentCursor = -1;
 }

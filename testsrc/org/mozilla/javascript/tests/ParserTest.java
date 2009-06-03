@@ -9,6 +9,9 @@ import org.mozilla.javascript.testing.TestErrorReporter;
 
 import junit.framework.TestCase;
 
+import java.io.IOException;
+import java.io.StringReader;
+
 public class ParserTest extends TestCase {
 
     public void testLinenoAssign() throws Exception {
@@ -99,6 +102,28 @@ public class ParserTest extends TestCase {
         assertTrue(vi.getInitializer() instanceof ParenthesizedExpression);
     }
 
+    public void testParseCommentsAsReader() throws IOException {
+        AstRoot root = parseAsReader(
+            "/** a */var a;\n /** b */var b; /** c */var c;");
+        assertNotNull(root.getComments());
+        assertEquals(3, root.getComments().size());
+        Comment[] comments = new Comment[3];
+        comments = root.getComments().toArray(comments);
+        assertEquals("/** a */", comments[0].getValue());
+        assertEquals("/** b */", comments[1].getValue());
+        assertEquals("/** c */", comments[2].getValue());
+    }
+
+    public void testParseCommentsAsReader2() throws IOException {
+        String js = "";
+        for (int i = 0; i < 100; i++) {
+            String stri = Integer.toString(i);
+            js += "/** Some comment for a" + stri + " */" +
+                  "var a" + stri + " = " + stri + ";\n";
+        }
+        AstRoot root = parseAsReader(js);
+    }
+    
     private AstRoot parse(String string) {
         return parse(string, true);    
     }
@@ -114,6 +139,24 @@ public class ParserTest extends TestCase {
 
         Parser p = new Parser(environment, testErrorReporter);
         AstRoot script = p.parse(string, null, 0);
+
+        assertTrue(testErrorReporter.hasEncounteredAllErrors());
+        assertTrue(testErrorReporter.hasEncounteredAllWarnings());
+
+        return script;
+    }
+
+    private AstRoot parseAsReader(String string) throws IOException {
+        CompilerEnvirons environment = new CompilerEnvirons();
+
+        TestErrorReporter testErrorReporter = new TestErrorReporter(null, null);
+        environment.setErrorReporter(testErrorReporter);
+
+        environment.setRecordingComments(true);
+        environment.setRecordingLocalJsDocComments(true);
+
+        Parser p = new Parser(environment, testErrorReporter);
+        AstRoot script = p.parse(new StringReader(string), null, 0);
 
         assertTrue(testErrorReporter.hasEncounteredAllErrors());
         assertTrue(testErrorReporter.hasEncounteredAllWarnings());
