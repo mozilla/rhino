@@ -3496,6 +3496,12 @@ public class Parser
               int type;
               if (nodeType == Token.GETPROP) {
                   type = Token.SETPROP;
+                  // TODO(stevey) - see https://bugzilla.mozilla.org/show_bug.cgi?id=492036
+                  // The new AST code generates NAME tokens for GETPROP ids where the old parser
+                  // generated STRING nodes. If we don't set the type to STRING below, this will
+                  // cause java.lang.VerifyError in codegen for code like
+                  // "var obj={p:3};[obj.p]=[9];"
+                  id.setType(Token.STRING);
               } else {
                   type = Token.SETELEM;
               }
