@@ -81,6 +81,12 @@ public class NativeObject extends IdScriptableObject
                 "getOwnPropertyNames", 1);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor,
                 "getOwnPropertyDescriptor", 2);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperty,
+                "defineProperty", 3);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isExtensible,
+                "isExtensible", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_preventExtensions,
+                "preventExtensions", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -273,21 +279,14 @@ public class NativeObject extends IdScriptableObject
           case ConstructorId_getPrototypeOf:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                if (!(arg instanceof Scriptable)) {
-                    throw ScriptRuntime.typeError1("msg.arg.not.object",
-                                                   ScriptRuntime.typeof(arg));
-                }
-                Scriptable obj = (Scriptable) arg;
+                Scriptable obj = ensureScriptable(arg);
                 return obj.getPrototype();
               }
           case ConstructorId_keys:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                if (!(arg instanceof Scriptable)) {
-                    throw ScriptRuntime.typeError1("msg.arg.not.object",
-                                                   ScriptRuntime.typeof(arg));
-                }
-                Object[] ids = ((Scriptable) arg).getIds();
+                Scriptable obj = ensureScriptable(arg);
+                Object[] ids = obj.getIds();
                 for (int i = 0; i < ids.length; i++) {
                   ids[i] = ScriptRuntime.toString(ids[i]);
                 }
@@ -296,11 +295,8 @@ public class NativeObject extends IdScriptableObject
           case ConstructorId_getOwnPropertyNames:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                if (!(arg instanceof Scriptable)) {
-                    throw ScriptRuntime.typeError1("msg.arg.not.object",
-                                                   ScriptRuntime.typeof(arg));
-                }
-                Object[] ids = ((ScriptableObject) arg).getAllIds();
+                ScriptableObject obj = ensureScriptableObject(arg);
+                Object[] ids = obj.getAllIds();
                 for (int i = 0; i < ids.length; i++) {
                   ids[i] = ScriptRuntime.toString(ids[i]);
                 }
@@ -309,23 +305,55 @@ public class NativeObject extends IdScriptableObject
           case ConstructorId_getOwnPropertyDescriptor:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                if (!(arg instanceof ScriptableObject)) {
-                    // TODO(norris): There's a deeper issue here if
-                    // arg instanceof Scriptable. Should we create a new
-                    // interface to admit the new ECMAScript 5 operations?
-                    throw ScriptRuntime.typeError1("msg.arg.not.object",
-                                                   ScriptRuntime.typeof(arg));
-                }
-                ScriptableObject obj = (ScriptableObject) arg;
+                // TODO(norris): There's a deeper issue here if
+                // arg instanceof Scriptable. Should we create a new
+                // interface to admit the new ECMAScript 5 operations?
+                ScriptableObject obj = ensureScriptableObject(arg);
                 Object nameArg = args.length < 2 ? Undefined.instance : args[1];
                 String name = ScriptRuntime.toString(nameArg);
                 Scriptable desc = obj.getOwnPropertyDescriptor(cx, name);
                 return desc == null ? Undefined.instance : desc;
               }
+          case ConstructorId_defineProperty:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                ScriptableObject obj = ensureScriptableObject(arg);
+                Object nameArg = args.length < 2 ? Undefined.instance : args[1];
+                String name = ScriptRuntime.toString(nameArg);
+                Object descArg = args.length < 3 ? Undefined.instance : args[2];
+                ScriptableObject desc = ensureScriptableObject(descArg);
+                obj.defineOwnProperty(name, desc);
+                return obj;
+              }
+          case ConstructorId_isExtensible:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                ScriptableObject obj = ensureScriptableObject(arg);
+                return obj.isExtensible();
+              }
+          case ConstructorId_preventExtensions:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                ScriptableObject obj = ensureScriptableObject(arg);
+                obj.preventExtensions();
+                return obj;
+              }
 
           default:
             throw new IllegalArgumentException(String.valueOf(id));
         }
+    }
+
+    private Scriptable ensureScriptable(Object arg) {
+      if ( !(arg instanceof Scriptable) )
+        throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
+      return (Scriptable) arg;
+    }
+
+    private ScriptableObject ensureScriptableObject(Object arg) {
+      if ( !(arg instanceof ScriptableObject) )
+        throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
+      return (ScriptableObject) arg;
     }
 
 // #string_id_map#
@@ -374,6 +402,9 @@ public class NativeObject extends IdScriptableObject
         ConstructorId_keys = -2,
         ConstructorId_getOwnPropertyNames = -3,
         ConstructorId_getOwnPropertyDescriptor = -4,
+        ConstructorId_defineProperty = -5,
+        ConstructorId_isExtensible = -6,
+        ConstructorId_preventExtensions = -7,
 
         Id_constructor           = 1,
         Id_toString              = 2,
