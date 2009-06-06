@@ -824,7 +824,6 @@ class JavaMembers
                                    Class<?> staticType, boolean includeProtected)
     {
         JavaMembers members;
-        scope = ScriptableObject.getTopLevelScope(scope);
         ClassCache cache = ClassCache.get(scope);
         Map<Class<?>,JavaMembers> ct = cache.getClassCacheMap();
 
@@ -835,7 +834,8 @@ class JavaMembers
                 return members;
             }
             try {
-                members = new JavaMembers(scope, cl, includeProtected);
+                members = new JavaMembers(cache.getAssociatedScope(), cl, 
+                        includeProtected);
                 break;
             } catch (SecurityException e) {
                 // Reflection may fail for objects that are in a restricted

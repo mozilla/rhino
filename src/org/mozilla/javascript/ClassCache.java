@@ -60,6 +60,7 @@ public class ClassCache implements Serializable
     private transient HashMap<JavaAdapter.JavaAdapterSignature,Class<?>> classAdapterCache;
     private transient HashMap<Class<?>,Object> interfaceAdapterCache;
     private int generatedClassSerial;
+    private Scriptable associatedScope; 
 
     /**
      * Search for ClassCache object in the given scope.
@@ -103,6 +104,7 @@ public class ClassCache implements Serializable
             throw new IllegalArgumentException();
         }
         if (this == topScope.associateValue(AKEY, this)) {
+            associatedScope = topScope;
             return true;
         }
         return false;
@@ -219,5 +221,9 @@ public class ClassCache implements Serializable
             }
             interfaceAdapterCache.put(cl, iadapter);
         }
+    }
+    
+    Scriptable getAssociatedScope() {
+        return associatedScope;
     }
 }
