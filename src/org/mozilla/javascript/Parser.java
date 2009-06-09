@@ -1975,8 +1975,11 @@ public class Parser
 
             markDestructuring(pn);
             int opPos = ts.tokenBeg;
+            int opLineno = ts.getLineno();
+
             pn = new Assignment(tt, pn, assignExpr(), opPos);
 
+            pn.setLineno(opLineno);
             if (jsdoc != null) {
                 pn.setJsDoc(jsdoc);
             }

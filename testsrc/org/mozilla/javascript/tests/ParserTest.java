@@ -15,13 +15,13 @@ import java.io.StringReader;
 public class ParserTest extends TestCase {
 
     public void testLinenoAssign() throws Exception {
-        AstRoot root = parse("a = b");
+        AstRoot root = parse("\n\na = b");
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         AstNode n = st.getExpression();
 
         assertTrue(n instanceof Assignment);
         assertEquals(Token.ASSIGN, n.getType());
-        assertEquals(0, n.getLineno());
+        assertEquals(2, n.getLineno());
     }
 
     public void testLinenoCall() throws Exception {
