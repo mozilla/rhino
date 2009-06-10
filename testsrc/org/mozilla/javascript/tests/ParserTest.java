@@ -14,7 +14,7 @@ import java.io.StringReader;
 
 public class ParserTest extends TestCase {
 
-    public void testLinenoAssign() throws Exception {
+    public void testLinenoAssign() {
         AstRoot root = parse("\n\na = b");
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         AstNode n = st.getExpression();
@@ -24,7 +24,7 @@ public class ParserTest extends TestCase {
         assertEquals(2, n.getLineno());
     }
 
-    public void testLinenoCall() throws Exception {
+    public void testLinenoCall() {
         AstRoot root = parse("\nfoo(123);");
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         AstNode n = st.getExpression();
@@ -34,7 +34,7 @@ public class ParserTest extends TestCase {
         assertEquals(1, n.getLineno());
     }
 
-    public void testLinenoGetProp() throws Exception {
+    public void testLinenoGetProp() {
         AstRoot root = parse("\nfoo.bar");
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         AstNode n = st.getExpression();
@@ -51,7 +51,7 @@ public class ParserTest extends TestCase {
         assertEquals(1, m.getLineno());
     }
 
-    public void testLinenoGetElem() throws Exception {
+    public void testLinenoGetElem() {
         AstRoot root = parse("\nfoo[123]");
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
         AstNode n = st.getExpression();
@@ -59,6 +59,19 @@ public class ParserTest extends TestCase {
         assertTrue(n instanceof ElementGet);
         assertEquals(Token.GETELEM, n.getType());
         assertEquals(1, n.getLineno());
+    }
+
+    public void testInOperatorInForLoop1() {
+        parse("var a={};function b_(p){ return p;};" +
+              "for(var i=b_(\"length\" in a);i<0;) {}");
+    }
+
+    public void testInOperatorInForLoop2() {
+        parse("var a={}; for (;(\"length\" in a);) {}");
+    }
+
+    public void testInOperatorInForLoop3() {
+        parse("for (x in y) {}");
     }
 
     public void testJSDocAttachment1() {

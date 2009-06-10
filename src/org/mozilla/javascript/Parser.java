@@ -2286,12 +2286,18 @@ public class Parser
             return null;
 
         List<AstNode> result = new ArrayList<AstNode>();
-        do {
-            if (peekToken() == Token.YIELD)
-                reportError("msg.yield.parenthesized");
-            result.add(assignExpr());
-        } while (matchToken(Token.COMMA));
-
+        boolean wasInForInit = inForInit;
+        inForInit = false;
+        try {
+            do {
+                if (peekToken() == Token.YIELD)
+                    reportError("msg.yield.parenthesized");
+                result.add(assignExpr());
+            } while (matchToken(Token.COMMA));
+        } finally {
+            inForInit = wasInForInit;
+        }
+        
         mustMatchToken(Token.RP, "msg.no.paren.arg");
         return result;
     }
