@@ -167,3 +167,7 @@ js> // defined getters and setters must be functions
 js> expectTypeError(function() { define({}, 'a', {get:1}); })
 js> expectTypeError(function() { define({}, 'a', {set:1}); })
 
+js> // make sure defineProperty works properly with numbers as ids
+js> Object.defineProperty({}, 0, {value:1, enumerable:true})['0']
+1
+

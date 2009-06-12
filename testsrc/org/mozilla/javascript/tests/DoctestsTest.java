@@ -93,6 +93,9 @@ public class DoctestsTest {
             System.out.println(name + "(" + optimizationLevel + "): " +
                     testsPassed + " passed.");
             assertTrue(testsPassed > 0);
+        } catch (Exception ex) {
+          System.out.println(name + "(" + optimizationLevel + "): FAILED due to "+ex);
+          throw ex;
         } finally {
             Context.exit();
         }  

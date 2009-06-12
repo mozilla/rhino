@@ -1496,6 +1496,21 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         gslot.setter = setterBox;
     }
 
+    public void defineOwnProperties(Context cx, ScriptableObject props) {
+        Object[] ids = props.getIds();
+        for (Object id : ids) {
+            String name = ScriptRuntime.toString(id);
+            Object descObj = props.get(id);
+            ScriptableObject desc = ensureScriptableObject(descObj);
+            checkValidPropertyDefinition(getSlot(name, 0, SLOT_QUERY), desc);
+        }
+        for (Object id : ids) {
+            String name = ScriptRuntime.toString(id);
+            ScriptableObject desc = (ScriptableObject) props.get(id);
+            defineOwnProperty(cx, name, desc, false);
+        }
+    }
+
     /**
      * Defines a property on an object
      *
@@ -1504,96 +1519,108 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param name the name of the property
      * @param desc the new property descriptor, as described in 8.6.1
      */
-    public void defineOwnProperty(String name, ScriptableObject desc) {
-      Slot slot = getSlot(name, 0, SLOT_QUERY);
-      final int attributes;
-
-      if (slot == null) { // new slot
-        if (!isExtensible()) throw ScriptRuntime.typeError("msg.not.extensible");
-        slot = getSlot(name, 0, SLOT_MODIFY);
-        attributes = applyDescriptorToAttributeBitset(DONTENUM|READONLY|PERMANENT, desc);
-      } else {
-        checkLegalPropertyRedefinition(name, desc);
-        attributes = applyDescriptorToAttributeBitset(getAttributes(name), desc);
-      }
-
-      defineOwnProperty(slot, desc, attributes);
+    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+      defineOwnProperty(cx, id, desc, true);
     }
 
-    private void defineOwnProperty(Slot slot, ScriptableObject desc, int attributes) {
+    private void defineOwnProperty(Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+      Slot slot = getSlot(cx, id, SLOT_QUERY);
+
+      if (checkValid)
+        checkValidPropertyDefinition(slot, desc);
+      
+      final int attributes;
+      if (slot == null) { // new slot
+        slot = getSlot(cx, id, SLOT_MODIFY);
+        attributes = applyDescriptorToAttributeBitset(DONTENUM|READONLY|PERMANENT, desc);
+      } else {
+        attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
+      }
+
+      defineOwnProperty(cx, slot, desc, attributes);
+    }
+
+    private void defineOwnProperty(Context cx, Slot slot, ScriptableObject desc, int attributes) {
       if (isAccessorDescriptor(desc)) {
         if ( !(slot instanceof GetterSlot) ) 
-          slot = getSlot(slot.name, 0, SLOT_MODIFY_GETTER_SETTER);
+          slot = getSlot(cx, slot.name, SLOT_MODIFY_GETTER_SETTER);
 
         GetterSlot gslot = (GetterSlot) slot;
 
         Object getter = getProperty(desc, "get");
         if (getter != NOT_FOUND) {
-          if ( !(getter instanceof Callable) ) {
-            throw ScriptRuntime.notFunctionError(getter);
-          } else {
             gslot.getter = getter;
-          }
         }
         Object setter = getProperty(desc, "set");
         if (setter != NOT_FOUND) {
-          if ( !(setter instanceof Callable) ) {
-            throw ScriptRuntime.notFunctionError(setter);
-          } else {
             gslot.setter = setter;
-          }
         }
 
         gslot.value = Undefined.instance;
         gslot.setAttributes(attributes);
       } else {
         if (slot instanceof GetterSlot && isDataDescriptor(desc)) {
-          slot = getSlot(slot.name, 0, SLOT_CONVERT_ACCESSOR_TO_DATA);
+            slot = getSlot(cx, slot.name, SLOT_CONVERT_ACCESSOR_TO_DATA);
         }
 
         Object value = getProperty(desc, "value");
         if (value != NOT_FOUND) {
-          slot.value = value;
+            slot.value = value;
         }
         slot.setAttributes(attributes);
       }
     }
 
-    private void checkLegalPropertyRedefinition(String name, ScriptableObject desc) {
-      ScriptableObject current = getOwnPropertyDescriptor(Context.getContext(), name);
-      if (Boolean.FALSE.equals(current.get("configurable")) ) {
-        if (Boolean.TRUE.equals(tryBoolean(getProperty(desc, "configurable")))) 
-          throw ScriptRuntime.typeError1("msg.change.configurable.false.to.true", name);
-        if (changes(current.get("enumerable"), tryBoolean(getProperty(desc, "enumerable"))))
-          throw ScriptRuntime.typeError1("msg.change.enumerable.with.configurable.false", name);
+    private void checkValidPropertyDefinition(Slot slot, ScriptableObject desc) {
+      Object getter = getProperty(desc, "get");
+      if (getter != NOT_FOUND && !(getter instanceof Callable)) {
+        throw ScriptRuntime.notFunctionError(getter);
+      }
+      Object setter = getProperty(desc, "set");
+      if (setter != NOT_FOUND && !(setter instanceof Callable)) {
+        throw ScriptRuntime.notFunctionError(setter);
+      }
 
-        if (isGenericDescriptor(desc)) {
-          // no further validation required
-        } else if (isDataDescriptor(desc) && isDataDescriptor(current)) {
-          if (Boolean.FALSE.equals(current.get("writable"))) {
-            if (Boolean.TRUE.equals(tryBoolean(getProperty(desc, "writable"))))
-              throw ScriptRuntime.typeError1("msg.change.writable.false.to.true.with.configurable.false", name);
-
-            if (changes(current.get("value"), getProperty(desc, "value")))
-              throw ScriptRuntime.typeError1("msg.change.value.with.writable.false", name);
+      if (slot == null) { // new property
+        if (!isExtensible()) throw ScriptRuntime.typeError("msg.not.extensible");
+      } else {
+        String name = slot.name;
+        ScriptableObject current = getOwnPropertyDescriptor(Context.getContext(), name);
+        if (Boolean.FALSE.equals(current.get("configurable")) ) {
+          if (Boolean.TRUE.equals(tryBoolean(getProperty(desc, "configurable")))) 
+            throw ScriptRuntime.typeError1("msg.change.configurable.false.to.true", name);
+          if (changes(current.get("enumerable"), tryBoolean(getProperty(desc, "enumerable"))))
+            throw ScriptRuntime.typeError1("msg.change.enumerable.with.configurable.false", name);
+  
+          if (isGenericDescriptor(desc)) {
+            // no further validation required
+          } else if (isDataDescriptor(desc) && isDataDescriptor(current)) {
+            if (Boolean.FALSE.equals(current.get("writable"))) {
+              if (Boolean.TRUE.equals(tryBoolean(getProperty(desc, "writable"))))
+                throw ScriptRuntime.typeError1("msg.change.writable.false.to.true.with.configurable.false", name);
+  
+              if (changes(current.get("value"), getProperty(desc, "value")))
+                throw ScriptRuntime.typeError1("msg.change.value.with.writable.false", name);
+            }
+          } else if (isAccessorDescriptor(desc) && isAccessorDescriptor(current)) {
+              if (changes(current.get("set"), setter))
+                throw ScriptRuntime.typeError1("msg.change.setter.with.configurable.false", name);
+  
+              if (changes(current.get("get"), getter)) 
+                throw ScriptRuntime.typeError1("msg.change.getter.with.configurable.false", name);
+          } else {
+            if (isDataDescriptor(current))
+              throw ScriptRuntime.typeError1("msg.change.property.data.to.accessor.with.configurable.false", name);
+            else
+              throw ScriptRuntime.typeError1("msg.change.property.accessor.to.data.with.configurable.false", name);
           }
-        } else if (isAccessorDescriptor(desc) && isAccessorDescriptor(current)) {
-          if (changes(current.get("set"), getProperty(desc, "set")))
-            throw ScriptRuntime.typeError1("msg.change.setter.with.configurable.false", name);
-
-          if (changes(current.get("get"), getProperty(desc, "get"))) 
-            throw ScriptRuntime.typeError1("msg.change.getter.with.configurable.false", name);
-        } else {
-          if (isDataDescriptor(current))
-            throw ScriptRuntime.typeError1("msg.change.property.data.to.accessor.with.configurable.false", name);
-          else
-            throw ScriptRuntime.typeError1("msg.change.property.accessor.to.data.with.configurable.false", name);
         }
       }
     }
 
     private static Object tryBoolean(Object value) {
-      if (value == NOT_FOUND) return NOT_FOUND;
+      if (value == NOT_FOUND)
+          return NOT_FOUND;
       return ScriptRuntime.toBoolean(value);
     }
 
@@ -1629,11 +1656,25 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private boolean isDataDescriptor(ScriptableObject desc) {
       return hasProperty(desc, "value") || hasProperty(desc, "writable");
     }
+    
     private boolean isAccessorDescriptor(ScriptableObject desc) {
       return hasProperty(desc, "get") || hasProperty(desc, "set");
     }
+    
     private boolean isGenericDescriptor(ScriptableObject desc) {
       return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
+    }
+
+    protected Scriptable ensureScriptable(Object arg) {
+      if ( !(arg instanceof Scriptable) )
+        throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
+      return (Scriptable) arg;
+    }
+
+    protected ScriptableObject ensureScriptableObject(Object arg) {
+      if ( !(arg instanceof ScriptableObject) )
+        throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
+      return (ScriptableObject) arg;
     }
 
     /**
@@ -2727,9 +2768,23 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
     }
 
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, String name) {
-      Slot slot = getSlot(name, 0, SLOT_QUERY);
-      return (slot == null) ? null : slot.getPropertyDescriptor(cx, getParentScope());
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+      Slot slot = getSlot(cx, id, SLOT_QUERY);
+      if (slot == null) return null;
+      Scriptable scope = getParentScope();
+      return slot.getPropertyDescriptor(cx, (scope == null ? this : scope));
+    }
+
+    protected Slot getSlot(Context cx, Object id, int accessType) {
+      final Slot slot;
+      String name = ScriptRuntime.toStringIdOrIndex(cx, id);
+      if (name == null) {
+        int index = ScriptRuntime.lastIndexResult(cx);
+        slot = getSlot(null, index, accessType);
+      } else {
+        slot = getSlot(name, 0, accessType);
+      }
+      return slot;
     }
 
     // Methods and classes to implement java.util.Map interface
