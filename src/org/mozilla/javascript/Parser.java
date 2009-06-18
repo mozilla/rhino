@@ -262,7 +262,7 @@ public class Parser
         return n.getPosition() + n.getLength();
     }
 
-    private void recordComment() {
+    private void recordComment(int lineno) {
         if (scannedComments == null) {
             scannedComments = new ArrayList<Comment>();
         }
@@ -271,10 +271,12 @@ public class Parser
             compilerEnv.isRecordingLocalJsDocComments()) {
             currentJsDocComment = comment;
         }
-        scannedComments.add(new Comment(ts.tokenBeg,
-                                        ts.getTokenLength(),
-                                        ts.commentType,
-                                        comment));
+        Comment commentNode = new Comment(ts.tokenBeg,
+                                          ts.getTokenLength(),
+                                          ts.commentType,
+                                          comment);
+        commentNode.setLineno(lineno);
+        scannedComments.add(commentNode);
     }
 
     private String getAndResetJsDoc() {
@@ -307,17 +309,19 @@ public class Parser
             return currentToken;
         }
 
+        int lineno = ts.getLineno();
         int tt = ts.getToken();
         boolean sawEOL = false;
 
         // process comments and whitespace
         while (tt == Token.EOL || tt == Token.COMMENT) {
             if (tt == Token.EOL) {
+                lineno++;
                 sawEOL = true;
             } else {
                 sawEOL = false;
                 if (compilerEnv.isRecordingComments()) {
-                    recordComment();
+                    recordComment(lineno);
                 }
             }
             tt = ts.getToken();

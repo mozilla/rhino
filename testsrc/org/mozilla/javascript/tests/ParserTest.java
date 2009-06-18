@@ -61,6 +61,48 @@ public class ParserTest extends TestCase {
         assertEquals(1, n.getLineno());
     }
 
+    public void testLinenoComment() {
+        AstRoot root = parse("\n/** a */");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(1, root.getComments().first().getLineno());
+    }
+
+    public void testLinenoComment2() {
+        AstRoot root = parse("\n/**\n\n a */");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(1, root.getComments().first().getLineno());
+    }
+
+    public void testLinenoComment3() {
+        AstRoot root = parse("\n  \n\n/**\n\n a */");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(3, root.getComments().first().getLineno());
+    }
+
+    public void testLinenoComment4() {
+        AstRoot root = parse("\n  \n\n  /**\n\n a */");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(3, root.getComments().first().getLineno());
+    }
+
+    public void testLineComment5() {
+        AstRoot root = parse("  /**\n* a.\n* b.\n* c.*/\n");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(0, root.getComments().first().getLineno());
+    }
+
+    public void testLineComment6() {
+        AstRoot root = parse("  \n/**\n* a.\n* b.\n* c.*/\n");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(1, root.getComments().first().getLineno());
+    }
+
     public void testInOperatorInForLoop1() {
         parse("var a={};function b_(p){ return p;};" +
               "for(var i=b_(\"length\" in a);i<0;) {}");
