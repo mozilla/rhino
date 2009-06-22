@@ -93,6 +93,14 @@ public class NativeObject extends IdScriptableObject
                 "defineProperties", 2);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_create,
                 "create", 2);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isSealed,
+                "isSealed", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isFrozen,
+                "isFrozen", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_seal,
+                "seal", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_freeze,
+                "freeze", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -364,10 +372,73 @@ public class NativeObject extends IdScriptableObject
                 if (args.length > 1 && args[1] != Undefined.instance) {
                   Scriptable props = Context.toObject(args[1], getParentScope());
                   newObject.defineOwnProperties(cx, ensureScriptableObject(props));
-    }
+                }
 
                 return newObject;
-    }
+              }
+
+          case ConstructorId_isSealed:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                ScriptableObject obj = ensureScriptableObject(arg);
+
+                for (Object name: obj.getAllIds()) {
+                  Object configurable = obj.getOwnPropertyDescriptor(cx, name).get("configurable");
+                  if (Boolean.TRUE.equals(configurable)) 
+                    return false;
+                }
+
+                return !obj.isExtensible();
+              }
+          case ConstructorId_isFrozen:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                ScriptableObject obj = ensureScriptableObject(arg);
+
+                for (Object name: obj.getAllIds()) {
+                  ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
+                  if (Boolean.TRUE.equals(desc.get("configurable"))) 
+                    return false;
+                  if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
+                    return false;
+                }
+
+                return !obj.isExtensible();
+              }
+          case ConstructorId_seal:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                ScriptableObject obj = ensureScriptableObject(arg);
+
+                for (Object name: obj.getAllIds()) {
+                  ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
+                  if (Boolean.TRUE.equals(desc.get("configurable"))) {
+                    desc.put("configurable", desc, false);
+                    obj.defineOwnProperty(cx, name, desc); 
+                  }
+                }
+                obj.preventExtensions();
+
+                return obj;
+              }
+          case ConstructorId_freeze:
+              {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                ScriptableObject obj = ensureScriptableObject(arg);
+
+                for (Object name: obj.getAllIds()) {
+                  ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
+                  if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
+                    desc.put("writable", desc, false);
+                  if (Boolean.TRUE.equals(desc.get("configurable")))
+                    desc.put("configurable", desc, false);
+                  obj.defineOwnProperty(cx, name, desc);
+                }
+                obj.preventExtensions();
+
+                return obj;
+              }
+
 
           default:
             throw new IllegalArgumentException(String.valueOf(id));
@@ -425,6 +496,10 @@ public class NativeObject extends IdScriptableObject
         ConstructorId_preventExtensions = -7,
         ConstructorId_defineProperties= -8,
         ConstructorId_create = -9,
+        ConstructorId_isSealed = -10,
+        ConstructorId_isFrozen = -11,
+        ConstructorId_seal = -12,
+        ConstructorId_freeze = -13,
 
         Id_constructor           = 1,
         Id_toString              = 2,

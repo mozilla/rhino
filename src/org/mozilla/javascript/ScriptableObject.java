@@ -1653,15 +1653,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
       return attributes;
     }
 
-    private boolean isDataDescriptor(ScriptableObject desc) {
+    protected boolean isDataDescriptor(ScriptableObject desc) {
       return hasProperty(desc, "value") || hasProperty(desc, "writable");
     }
-    
-    private boolean isAccessorDescriptor(ScriptableObject desc) {
+
+    protected boolean isAccessorDescriptor(ScriptableObject desc) {
       return hasProperty(desc, "get") || hasProperty(desc, "set");
     }
-    
-    private boolean isGenericDescriptor(ScriptableObject desc) {
+
+    protected boolean isGenericDescriptor(ScriptableObject desc) {
       return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
     }
 
