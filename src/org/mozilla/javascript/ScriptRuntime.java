@@ -2923,8 +2923,6 @@ public class ScriptRuntime {
         }
 
         // for primitive values on LHS, return false
-        // XXX we may want to change this so that
-        // 5 instanceof Number == true
         if (! (a instanceof Scriptable))
             return false;
 
