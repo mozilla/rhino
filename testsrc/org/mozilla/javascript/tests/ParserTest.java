@@ -146,6 +146,16 @@ public class ParserTest extends TestCase {
         assertNotNull(vi.getInitializer().getJsDoc());
     }
 
+    public void testJSDocAttachment4() {
+        AstRoot root = parse("(function() {/** should not be attached */})()");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        FunctionCall fc = (FunctionCall) st.getExpression();
+        ParenthesizedExpression pe = (ParenthesizedExpression) fc.getTarget();
+        assertNull(pe.getJsDoc());
+    }
+
     public void testParsingWithoutJSDoc() {
         AstRoot root = parse("var a = /** @type number */(x);", false);
         assertNotNull(root.getComments());

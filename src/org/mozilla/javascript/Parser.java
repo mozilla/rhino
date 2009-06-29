@@ -624,6 +624,7 @@ public class Parser
         }
 
         int end = ts.tokenEnd;
+        getAndResetJsDoc();
         if (mustMatchToken(Token.RC, "msg.no.brace.after.body"))
             end = ts.tokenEnd;
         pn.setLength(end - pos);
