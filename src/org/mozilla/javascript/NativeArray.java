@@ -41,6 +41,7 @@
 package org.mozilla.javascript;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -868,207 +869,78 @@ public class NativeArray extends IdScriptableObject
     /**
      * See ECMA 15.4.4.5
      */
-    private static Scriptable js_sort(Context cx, Scriptable scope,
-                                      Scriptable thisObj, Object[] args)
+    private static Scriptable js_sort(final Context cx, final Scriptable scope,
+            final Scriptable thisObj, final Object[] args)
     {
-        long length = getLengthProperty(cx, thisObj);
-
-        if (length <= 1) { return thisObj; }
-
-        Object compare;
-        Object[] cmpBuf;
-
+        final Comparator<Object> comparator;
         if (args.length > 0 && Undefined.instance != args[0]) {
-            // sort with given compare function
-            compare = args[0];
-            cmpBuf = new Object[2]; // Buffer for cmp arguments
+            final Callable jsCompareFunction = ScriptRuntime
+                    .getValueFunctionAndThis(args[0], cx);
+            final Scriptable funThis = ScriptRuntime.lastStoredScriptable(cx);
+            final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
+            comparator = new Comparator<Object>() {
+                public int compare(final Object x, final Object y) {
+                    // sort undefined to end
+                    if (x == y) {
+                        return 0;
+                    } else if (y == Undefined.instance
+                            || y == Scriptable.NOT_FOUND) {
+                        return -1;
+                    } else if (x == Undefined.instance
+                            || x == Scriptable.NOT_FOUND) {
+                        return 1;
+                    }
+
+                    cmpBuf[0] = x;
+                    cmpBuf[1] = y;
+                    Object ret = jsCompareFunction.call(cx, scope, funThis,
+                            cmpBuf);
+                    final double d = ScriptRuntime.toNumber(ret);
+                    if (d < 0) {
+                        return -1;
+                    } else if (d > 0) {
+                        return +1;
+                    }
+                    return 0; // ??? double and 0???
+                }
+            };
         } else {
-            // sort with default compare
-            compare = null;
-            cmpBuf = null;
-        }
-        if (thisObj instanceof NativeArray) {
-            NativeArray na = (NativeArray) thisObj;
-            if (na.denseOnly) {
-                int ilength = (int) length;
-                heapsort(cx, scope, na.dense, ilength, compare, cmpBuf);
-                return thisObj;
-            }
+            comparator = new Comparator<Object>() {
+                public int compare(final Object x, final Object y) {
+                    // sort undefined to end
+                    if (x == y)
+                        return 0;
+                    else if (y == Undefined.instance
+                            || y == Scriptable.NOT_FOUND) {
+                        return -1;
+                    } else if (x == Undefined.instance
+                            || x == Scriptable.NOT_FOUND) {
+                        return 1;
+                    }
+
+                    final String a = ScriptRuntime.toString(x);
+                    final String b = ScriptRuntime.toString(y);
+                    return a.compareTo(b);
+                }
+            };
         }
 
-        // Should we use the extended sort function, or the faster one?
-        if (length >= Integer.MAX_VALUE) {
-            heapsort_extended(cx, scope, thisObj, length, compare, cmpBuf);
-        } else {
-            int ilength = (int)length;
-            // copy the JS array into a working array, so it can be
-            // sorted cheaply.
-            Object[] working = new Object[ilength];
-            for (int i = 0; i != ilength; ++i) {
-                working[i] = getElem(cx, thisObj, i);
-            }
-
-            heapsort(cx, scope, working, ilength, compare, cmpBuf);
-
-            // copy the working array back into thisObj
-            for (int i = 0; i != ilength; ++i) {
-                setElem(cx, thisObj, i, working[i]);
-            }
+        final int length = (int) getLengthProperty(cx, thisObj);
+        // copy the JS array into a working array, so it can be
+        // sorted cheaply.
+        final Object[] working = new Object[length];
+        for (int i = 0; i != length; ++i) {
+            working[i] = getElem(cx, thisObj, i);
         }
+
+        Arrays.sort(working, comparator);
+
+        // copy the working array back into thisObj
+        for (int i = 0; i < length; ++i) {
+            setElem(cx, thisObj, i, working[i]);
+        }
+
         return thisObj;
-    }
-
-    // Return true only if x > y
-    private static boolean isBigger(Context cx, Scriptable scope,
-                                    Object x, Object y,
-                                    Object cmp, Object[] cmpBuf)
-    {
-        if (cmp == null) {
-            if (cmpBuf != null) Kit.codeBug();
-        } else {
-            if (cmpBuf == null || cmpBuf.length != 2) Kit.codeBug();
-        }
-
-        Object undef = Undefined.instance;
-        Object notfound = Scriptable.NOT_FOUND;
-
-        // sort undefined to end
-        if (y == undef || y == notfound) {
-            return false; // x can not be bigger then undef
-        } else if (x == undef || x == notfound) {
-            return true; // y != undef here, so x > y
-        }
-
-        if (cmp == null) {
-            // if no cmp function supplied, sort lexicographically
-            String a = ScriptRuntime.toString(x);
-            String b = ScriptRuntime.toString(y);
-            return a.compareTo(b) > 0;
-        }
-        else {
-            // assemble args and call supplied JS cmp function
-            cmpBuf[0] = x;
-            cmpBuf[1] = y;
-            Callable fun = ScriptRuntime.getValueFunctionAndThis(cmp, cx);
-            Scriptable funThis = ScriptRuntime.lastStoredScriptable(cx);
-
-            Object ret = fun.call(cx, scope, funThis, cmpBuf);
-            double d = ScriptRuntime.toNumber(ret);
-
-            // XXX what to do when cmp function returns NaN?  ECMA states
-            // that it's then not a 'consistent comparison function'... but
-            // then what do we do?  Back out and start over with the generic
-            // cmp function when we see a NaN?  Throw an error?
-
-            // for now, just ignore it:
-
-            return d > 0;
-        }
-    }
-
-/** Heapsort implementation.
- * See "Introduction to Algorithms" by Cormen, Leiserson, Rivest for details.
- * Adjusted for zero based indexes.
- */
-    private static void heapsort(Context cx, Scriptable scope,
-                                 Object[] array, int length,
-                                 Object cmp, Object[] cmpBuf)
-    {
-        if (length <= 1) Kit.codeBug();
-
-        // Build heap
-        for (int i = length / 2; i != 0;) {
-            --i;
-            Object pivot = array[i];
-            heapify(cx, scope, pivot, array, i, length, cmp, cmpBuf);
-        }
-
-        // Sort heap
-        for (int i = length; i != 1;) {
-            --i;
-            Object pivot = array[i];
-            array[i] = array[0];
-            heapify(cx, scope, pivot, array, 0, i, cmp, cmpBuf);
-        }
-    }
-
-/** pivot and child heaps of i should be made into heap starting at i,
- * original array[i] is never used to have less array access during sorting.
- */
-    private static void heapify(Context cx, Scriptable scope,
-                                Object pivot, Object[] array, int i, int end,
-                                Object cmp, Object[] cmpBuf)
-    {
-        for (;;) {
-            int child = i * 2 + 1;
-            if (child >= end) {
-                break;
-            }
-            Object childVal = array[child];
-            if (child + 1 < end) {
-                Object nextVal = array[child + 1];
-                if (isBigger(cx, scope, nextVal, childVal, cmp, cmpBuf)) {
-                    ++child; childVal = nextVal;
-                }
-            }
-            if (!isBigger(cx, scope, childVal, pivot, cmp, cmpBuf)) {
-                break;
-            }
-            array[i] = childVal;
-            i = child;
-        }
-        array[i] = pivot;
-    }
-
-/** Version of heapsort that call getElem/setElem on target to query/assign
- * array elements instead of Java array access
- */
-    private static void heapsort_extended(Context cx, Scriptable scope,
-                                          Scriptable target, long length,
-                                          Object cmp, Object[] cmpBuf)
-    {
-        if (length <= 1) Kit.codeBug();
-
-        // Build heap
-        for (long i = length / 2; i != 0;) {
-            --i;
-            Object pivot = getElem(cx, target, i);
-            heapify_extended(cx, scope, pivot, target, i, length, cmp, cmpBuf);
-        }
-
-        // Sort heap
-        for (long i = length; i != 1;) {
-            --i;
-            Object pivot = getElem(cx, target, i);
-            setElem(cx, target, i, getElem(cx, target, 0));
-            heapify_extended(cx, scope, pivot, target, 0, i, cmp, cmpBuf);
-        }
-    }
-
-    private static void heapify_extended(Context cx, Scriptable scope,
-                                         Object pivot, Scriptable target,
-                                         long i, long end,
-                                         Object cmp, Object[] cmpBuf)
-    {
-        for (;;) {
-            long child = i * 2 + 1;
-            if (child >= end) {
-                break;
-            }
-            Object childVal = getElem(cx, target, child);
-            if (child + 1 < end) {
-                Object nextVal = getElem(cx, target, child + 1);
-                if (isBigger(cx, scope, nextVal, childVal, cmp, cmpBuf)) {
-                    ++child; childVal = nextVal;
-                }
-            }
-            if (!isBigger(cx, scope, childVal, pivot, cmp, cmpBuf)) {
-                break;
-            }
-            setElem(cx, target, i, childVal);
-            i = child;
-        }
-        setElem(cx, target, i, pivot);
     }
 
     /**
