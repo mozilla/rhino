@@ -1687,7 +1687,6 @@ switch (op) {
         frame.savedStackTop = stackTop;
         stack[stackTop] = fun.call(cx, calleeScope, funThisObj, 
                 getArgsArray(stack, sDbl, stackTop + 2, indexReg));
-        cx.lastInterpreterFrame = null;
 
         continue Loop;
     }
