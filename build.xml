@@ -131,7 +131,7 @@
   </target>
 
   <target name="retrotranslator" depends="retrotranslator-check,retrotranslator-download">
-    <taskdef name="retrotranslator" classpath="build/download/Retrotranslator-1.2.3-bin/retrotranslator-transformer-1.2.3.jar"
+    <taskdef name="retrotranslator" classpath="build/download/Retrotranslator-1.2.8-bin/retrotranslator-transformer-1.2.8.jar"
       classname="net.sf.retrotranslator.transformer.RetrotranslatorTask"/>
   </target>
 
@@ -139,17 +139,17 @@
   <target name="retrotranslator-check">
     <condition property="retrotranslator.available">
       <and>
-        <available file="build/download/Retrotranslator-1.2.3-bin/retrotranslator-transformer-1.2.3.jar"/>
-        <available file="build/download/Retrotranslator-1.2.3-bin/retrotranslator-runtime-1.2.3.jar"/>
-        <available file="build/download/Retrotranslator-1.2.3-bin/backport-util-concurrent-3.1.jar"/>
+        <available file="build/download/Retrotranslator-1.2.8-bin/retrotranslator-transformer-1.2.8.jar"/>
+        <available file="build/download/Retrotranslator-1.2.8-bin/retrotranslator-runtime-1.2.8.jar"/>
+        <available file="build/download/Retrotranslator-1.2.8-bin/backport-util-concurrent-3.1.jar"/>
       </and>
     </condition>
   </target>
 
   <target name="retrotranslator-download" unless="retrotranslator.available">
     <mkdir dir="build/download"/>
-    <get src="http://downloads.sourceforge.net/retrotranslator/Retrotranslator-1.2.3-bin.zip" dest="build/download/Retrotranslator-1.2.3-bin.zip" usetimestamp="true"/>
-    <unzip src="build/download/Retrotranslator-1.2.3-bin.zip" dest="build/download"/>
+    <get src="http://downloads.sourceforge.net/retrotranslator/Retrotranslator-1.2.8-bin.zip" dest="build/download/Retrotranslator-1.2.8-bin.zip" usetimestamp="true"/>
+    <unzip src="build/download/Retrotranslator-1.2.8-bin.zip" dest="build/download"/>
   </target>
 
   <target name="retrojar" depends="jar,retrotranslator">
