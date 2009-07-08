@@ -382,18 +382,22 @@ public class NativeObject extends IdScriptableObject
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 ScriptableObject obj = ensureScriptableObject(arg);
 
+                if (obj.isExtensible()) return false;
+
                 for (Object name: obj.getAllIds()) {
                   Object configurable = obj.getOwnPropertyDescriptor(cx, name).get("configurable");
                   if (Boolean.TRUE.equals(configurable)) 
                     return false;
                 }
 
-                return !obj.isExtensible();
+                return true;
               }
           case ConstructorId_isFrozen:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 ScriptableObject obj = ensureScriptableObject(arg);
+
+                if (obj.isExtensible()) return false;
 
                 for (Object name: obj.getAllIds()) {
                   ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
@@ -403,7 +407,7 @@ public class NativeObject extends IdScriptableObject
                     return false;
                 }
 
-                return !obj.isExtensible();
+                return true;
               }
           case ConstructorId_seal:
               {
