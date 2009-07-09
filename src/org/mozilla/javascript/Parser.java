@@ -597,6 +597,7 @@ public class Parser
         ++nestingOfFunction;
         int pos = ts.tokenBeg;
         Block pn = new Block(pos);  // starts at LC position
+        pn.setLineno(ts.lineno);
         try {
             bodyLoop: for (;;) {
                 AstNode n;
@@ -1008,7 +1009,9 @@ public class Parser
               return pn;  // LabeledStatement
 
           default:
+              lineno = ts.lineno;
               pn = new ExpressionStatement(expr(), !insideFunction());
+              pn.setLineno(lineno);
               break;
         }
 
@@ -1093,6 +1096,7 @@ public class Parser
             switchLoop: for (;;) {
                 tt = nextToken();
                 int casePos = ts.tokenBeg;
+                int caseLineno = ts.lineno;
                 AstNode caseExpression = null;
                 switch (tt) {
                     case Token.RC:
@@ -1121,6 +1125,7 @@ public class Parser
                 SwitchCase caseNode = new SwitchCase(casePos);
                 caseNode.setExpression(caseExpression);
                 caseNode.setLength(ts.tokenEnd - pos);  // include colon
+                caseNode.setLineno(caseLineno);
 
                 while ((tt = peekToken()) != Token.RC
                        && tt != Token.CASE
@@ -1231,6 +1236,7 @@ public class Parser
                 if (peekToken() == Token.SEMI) {
                     // no loop condition
                     cond = new EmptyExpression(ts.tokenBeg, 1);
+                    cond.setLineno(ts.lineno);
                 } else {
                     cond = expr();
                 }
@@ -1239,6 +1245,7 @@ public class Parser
                 int tmpPos = ts.tokenEnd;
                 if (peekToken() == Token.RP) {
                     incr = new EmptyExpression(tmpPos, 1);
+                    incr.setLineno(ts.lineno);
                 } else {
                     incr = expr();
                 }
@@ -1301,6 +1308,7 @@ public class Parser
             AstNode init = null;
             if (tt == Token.SEMI) {
                 init = new EmptyExpression(ts.tokenBeg, 1);
+                init.setLineno(ts.lineno);
             } else if (tt == Token.VAR || tt == Token.LET) {
                 consumeToken();
                 init = variables(tt, ts.tokenBeg);
@@ -1336,6 +1344,7 @@ public class Parser
         int peek = peekToken();
         if (peek == Token.CATCH) {
             while (matchToken(Token.CATCH)) {
+                int catchLineNum = ts.lineno;
                 if (sawDefaultCatch) {
                     reportError("msg.catch.unreachable");
                 }
@@ -1368,6 +1377,7 @@ public class Parser
                     catchNode.setIfPosition(guardPos - catchPos);
                 }
                 catchNode.setParens(lp, rp);
+                catchNode.setLineno(catchLineNum);
 
                 if (mustMatchToken(Token.RC, "msg.no.brace.after.body"))
                     tryEnd = ts.tokenEnd;
@@ -1723,12 +1733,14 @@ public class Parser
         AstNode expr = expr();
 
         if (expr.getType() != Token.LABEL) {
-            return new ExpressionStatement(expr, !insideFunction());
+            AstNode n = new ExpressionStatement(expr, !insideFunction());
+            n.lineno = expr.lineno;
+            return n;
         }
 
         LabeledStatement bundle = new LabeledStatement(pos);
         recordLabel((Label)expr, bundle);
-
+        bundle.setLineno(ts.lineno);
         // look for more labels
         AstNode stmt = null;
         while (peekToken() == Token.NAME) {
@@ -1802,8 +1814,11 @@ public class Parser
                 // Simple variable name
                 mustMatchToken(Token.NAME, "msg.bad.var");
                 name = createNameNode();
+                name.setLineno(ts.getLineno());
                 defineSymbol(declType, ts.getString(), inForInit);
             }
+
+            int lineno = ts.lineno;
 
             String jsdoc = getAndResetJsDoc();
 
@@ -1825,6 +1840,7 @@ public class Parser
             vi.setInitializer(init);
             vi.setType(declType);
             vi.setJsDoc(jsdoc);
+            vi.setLineno(lineno);
             pn.addVariable(vi);
 
             if (!matchToken(Token.COMMA))
@@ -1952,6 +1968,7 @@ public class Parser
         AstNode pn = assignExpr();
         int pos = pn.getPosition();
         while (matchToken(Token.COMMA)) {
+            int lineno = ts.lineno;
             int opPos = ts.tokenBeg;
             if (compilerEnv.isStrictMode() && !pn.hasSideEffects())
                 addStrictWarning("msg.no.side.effects", "",
@@ -1959,6 +1976,7 @@ public class Parser
             if (peekToken() == Token.YIELD)
                 reportError("msg.yield.parenthesized");
             pn = new InfixExpression(Token.COMMA, pn, assignExpr(), opPos);
+            pn.setLineno(lineno);
         }
         return pn;
     }
@@ -2003,6 +2021,7 @@ public class Parser
     {
         AstNode pn = orExpr();
         if (matchToken(Token.HOOK)) {
+            int line = ts.lineno;
             int qmarkPos = ts.tokenBeg, colonPos = -1;
             AstNode ifTrue = assignExpr();
             if (mustMatchToken(Token.COLON, "msg.no.colon.cond"))
@@ -2010,6 +2029,7 @@ public class Parser
             AstNode ifFalse = assignExpr();
             int beg = pn.getPosition(), len = getNodeEnd(ifFalse) - beg;
             ConditionalExpression ce = new ConditionalExpression(beg, len);
+            ce.setLineno(line);
             ce.setTestExpression(pn);
             ce.setTrueExpression(ifTrue);
             ce.setFalseExpression(ifFalse);
@@ -2081,6 +2101,7 @@ public class Parser
         AstNode pn = relExpr();
         for (;;) {
             int tt = peekToken(), opPos = ts.tokenBeg;
+            int lineno = ts.lineno;
             switch (tt) {
               case Token.EQ:
               case Token.NE:
@@ -2096,6 +2117,7 @@ public class Parser
                         parseToken = Token.SHNE;
                 }
                 pn = new InfixExpression(parseToken, pn, relExpr(), opPos);
+                pn.setLineno(lineno);
                 continue;
             }
             break;
@@ -2109,6 +2131,7 @@ public class Parser
         AstNode pn = shiftExpr();
         for (;;) {
             int tt = peekToken(), opPos = ts.tokenBeg;
+            int line = ts.lineno;
             switch (tt) {
               case Token.IN:
                 if (inForInit)
@@ -2121,6 +2144,7 @@ public class Parser
               case Token.GT:
                 consumeToken();
                 pn = new InfixExpression(tt, pn, shiftExpr(), opPos);
+                pn.setLineno(line);
                 continue;
             }
             break;
@@ -2155,7 +2179,9 @@ public class Parser
             int tt = peekToken(), opPos = ts.tokenBeg;
             if (tt == Token.ADD || tt == Token.SUB) {
                 consumeToken();
+                int lineno = ts.lineno;
                 pn = new InfixExpression(tt, pn, mulExpr(), opPos);
+                pn.setLineno(lineno);
                 continue;
             }
             break;
@@ -2174,7 +2200,9 @@ public class Parser
               case Token.DIV:
               case Token.MOD:
                 consumeToken();
+                int line = ts.lineno;
                 pn = new InfixExpression(tt, pn, unaryExpr(), opPos);
+                pn.setLineno(line);
                 continue;
             }
             break;
@@ -2185,7 +2213,9 @@ public class Parser
     private AstNode unaryExpr()
         throws IOException
     {
+        AstNode node;
         int tt = peekToken();
+        int line = ts.lineno;
 
         switch(tt) {
           case Token.VOID:
@@ -2193,29 +2223,38 @@ public class Parser
           case Token.BITNOT:
           case Token.TYPEOF:
               consumeToken();
-              return new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
+              node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
+              node.setLineno(line);
+              return node;
 
           case Token.ADD:
               consumeToken();
               // Convert to special POS token in parse tree
-              return new UnaryExpression(Token.POS, ts.tokenBeg, unaryExpr());
+              node = new UnaryExpression(Token.POS, ts.tokenBeg, unaryExpr());
+              node.setLineno(line);
+              return node;
 
           case Token.SUB:
               consumeToken();
               // Convert to special NEG token in parse tree
-              return new UnaryExpression(Token.NEG, ts.tokenBeg, unaryExpr());
+              node = new UnaryExpression(Token.NEG, ts.tokenBeg, unaryExpr());
+              node.setLineno(line);
+              return node;
 
           case Token.INC:
           case Token.DEC:
               consumeToken();
               UnaryExpression expr = new UnaryExpression(tt, ts.tokenBeg,
                                                          memberExpr(true));
+              expr.setLineno(line);
               checkBadIncDec(expr);
               return expr;
 
           case Token.DELPROP:
               consumeToken();
-              return new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
+              node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
+              node.setLineno(line);
+              return node;
 
           case Token.ERROR:
               consumeToken();
@@ -2239,6 +2278,7 @@ public class Parser
               consumeToken();
               UnaryExpression uexpr =
                       new UnaryExpression(tt, ts.tokenBeg, pn, true);
+              uexpr.setLineno(line);
               checkBadIncDec(uexpr);
               return uexpr;
         }
@@ -2718,6 +2758,7 @@ public class Parser
         inForInit = false;
         try {
             String jsdoc = getAndResetJsDoc();
+            int lineno = ts.lineno;
             AstNode e = expr();
             ParenthesizedExpression pn = new ParenthesizedExpression(e);
             if (jsdoc == null) {
@@ -2728,6 +2769,7 @@ public class Parser
             }
             mustMatchToken(Token.RP, "msg.no.paren");
             pn.setLength(ts.tokenEnd - pn.getPosition());
+            pn.setLineno(lineno);
             return pn;
         } finally {
             inForInit = wasInForInit;
