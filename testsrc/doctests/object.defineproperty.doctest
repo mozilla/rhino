@@ -171,3 +171,14 @@ js> // make sure defineProperty works properly with numbers as ids
 js> Object.defineProperty({}, 0, {value:1, enumerable:true})['0']
 1
 
+js> // make sure defineProperty works properly with arrays
+js> Object.defineProperty([], 0, {value:1, enumerable:true})[0]
+1
+
+js> // make sure defineProperty works properly with arrays
+js> Object.defineProperty([], 'a', {value:1, enumerable:true})['a']
+1
+
+js> // make sure defineProperty updates length properly for arrays
+js> Object.defineProperty([], 0, {value:1}).length
+1

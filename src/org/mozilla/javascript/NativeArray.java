@@ -505,6 +505,59 @@ public class NativeArray extends IdScriptableObject
         return super.getDefaultValue(hint);
     }
 
+    private ScriptableObject defaultIndexPropertyDescriptor(Object value) {
+      Scriptable scope = getParentScope();
+      if (scope == null) scope = this;
+      ScriptableObject desc = new NativeObject();
+      ScriptRuntime.setObjectProtoAndParent(desc, scope);
+      desc.defineProperty("value", value, EMPTY);
+      desc.defineProperty("writable", true, EMPTY);
+      desc.defineProperty("enumerable", true, EMPTY);
+      desc.defineProperty("configurable", true, EMPTY);
+      return desc;
+    }
+
+    @Override
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+      if (dense != null) {
+        int index = toIndex(id);
+        if (0 <= index && index < length) {
+          Object value = dense[index];
+          return defaultIndexPropertyDescriptor(value);
+        }
+      }
+      return super.getOwnPropertyDescriptor(cx, id);
+    }
+
+    @Override
+    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+      if (dense != null) {
+        Object[] values = dense;
+        dense = null;
+        denseOnly = false;
+        for (int i = 0; i < values.length; i++) {
+          if (values[i] != NOT_FOUND) {
+            put(i, this, values[i]);
+          }
+        }
+      }
+      int index = toIndex(id);
+      if (index >= length) {
+        length = index + 1;
+      }
+      super.defineOwnProperty(cx, id, desc);
+    }
+
+    private int toIndex(Object id) {
+      if (id instanceof String) {
+        return (int) toArrayIndex((String) id);
+      } else if (id instanceof Number) {
+        return ((Number) id).intValue();
+      } else {
+        return -1;
+      }
+    }
+
     /**
      * See ECMA 15.4.1,2
      */

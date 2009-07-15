@@ -54,3 +54,25 @@ js> Object.getOwnPropertyDescriptor({undefined: 1}, undefined).toSource()
 js> Object.getOwnPropertyDescriptor({0:1}, 0).toSource()
 ({value:1, writable:true, enumerable:true, configurable:true})
 
+js> Object.getOwnPropertyDescriptor([1], 0).toSource()
+({value:1, writable:true, enumerable:true, configurable:true})
+
+js> Object.getOwnPropertyDescriptor([1], '0').toSource()
+({value:1, writable:true, enumerable:true, configurable:true})
+
+js> Object.getOwnPropertyDescriptor([1], 1) === undefined
+true
+
+js> Object.getOwnPropertyDescriptor([1], -1) === undefined
+true
+
+js> var arr = []; 
+js> arr.a = 1;
+1
+js> Object.getOwnPropertyDescriptor(arr, 'a').toSource()
+({value:1, writable:true, enumerable:true, configurable:true})
+
+js> var arr = Object.defineProperty([], 'a', {value:1, writable:false,})
+js> var desc = Object.getOwnPropertyDescriptor(arr, 'a'); ([desc.value, desc.writable]).toSource()
+[1, false]
+
