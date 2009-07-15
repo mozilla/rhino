@@ -104,6 +104,20 @@ public class ParserTest extends TestCase {
         assertEquals(1, root.getComments().first().getLineno());
     }
 
+    public void testLinenoComment7() {
+        AstRoot root = parse("var x;\n/**\n\n a */");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(1, root.getComments().first().getLineno());
+    }
+
+    public void testLinenoComment8() {
+        AstRoot root = parse("\nvar x;/**\n\n a */");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(1, root.getComments().first().getLineno());
+    }
+
     public void testLinenoLiteral() {
         AstRoot root = parse(
             "\nvar d =\n" +
