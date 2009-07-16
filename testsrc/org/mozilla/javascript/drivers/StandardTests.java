@@ -51,40 +51,45 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
  * Executes the tests in the js/tests directory, much like jsDriver.pl does.
  * Excludes tests found in the js/tests/rhino-n.tests file.
  * @author Attila Szegedi
- * @version $Id: StandardTests.java,v 1.13 2009/05/15 12:30:45 nboyd%atg.com Exp $
+ * @version $Id: StandardTests.java,v 1.14 2009/07/16 15:17:49 nboyd%atg.com Exp $
  */
 public class StandardTests extends TestSuite
 {
+    // Disable this suite in favor of
+    // org.mozilla.javascript.tests.MozillaSuiteTest
+    private static final boolean DISABLE = true;
+
 	public static TestSuite suite() throws Exception
     {
         TestSuite suite = new TestSuite("Standard JavaScript tests");
-
-        File testDir = null;
-        if (System.getProperty("mozilla.js.tests") != null) {
-            testDir = new File(System.getProperty("mozilla.js.tests"));
-        } else {
-            URL url = StandardTests.class.getResource(".");
-            String path = url.getFile();
-            int jsIndex = path.lastIndexOf("/js");
-            if(jsIndex == -1)
-            {
-                throw new IllegalStateException("You aren't running the tests from within the standard mozilla/js directory structure");
+        if (DISABLE) {
+            File testDir = null;
+            if (System.getProperty("mozilla.js.tests") != null) {
+                testDir = new File(System.getProperty("mozilla.js.tests"));
+            } else {
+                URL url = StandardTests.class.getResource(".");
+                String path = url.getFile();
+                int jsIndex = path.lastIndexOf("/js");
+                if(jsIndex == -1)
+                {
+                    throw new IllegalStateException("You aren't running the tests from within the standard mozilla/js directory structure");
+                }
+                path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
+                path = path.replace("%20", " ");
+                testDir = new File(path, "tests");
             }
-            path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
-            path = path.replace("%20", " ");
-            testDir = new File(path, "tests");
-        }
-        if(!testDir.isDirectory())
-        {
-            throw new FileNotFoundException(testDir + " is not a directory");
-        }
-        String[] excludes = TestUtils.loadTestsFromResource("/base.skip", null);
-        String[] opt1Excludes = TestUtils.loadTestsFromResource("/opt1.skip", excludes);
-        for(int i = -1; i < 2; ++i)
-        {
-            TestSuite optimizationLevelSuite = new TestSuite("Optimization level " + i);
-            addSuites(optimizationLevelSuite, testDir, i == -1 ? excludes : opt1Excludes, i);
-            suite.addTest(optimizationLevelSuite);
+            if(!testDir.isDirectory())
+            {
+                throw new FileNotFoundException(testDir + " is not a directory");
+            }
+            String[] excludes = TestUtils.loadTestsFromResource("/base.skip", null);
+            String[] opt1Excludes = TestUtils.loadTestsFromResource("/opt1.skip", excludes);
+            for(int i = -1; i < 2; ++i)
+            {
+                TestSuite optimizationLevelSuite = new TestSuite("Optimization level " + i);
+                addSuites(optimizationLevelSuite, testDir, i == -1 ? excludes : opt1Excludes, i);
+                suite.addTest(optimizationLevelSuite);
+            }
         }
         return suite;
     }
