@@ -41,6 +41,7 @@
 package org.mozilla.javascript;
 
 import java.text.Collator;
+import java.util.Locale;
 
 /**
  * This class implements the String native object.
@@ -308,11 +309,11 @@ final class NativeString extends IdScriptableObject
     
               case Id_toLowerCase:
                 // See ECMA 15.5.4.11
-                return ScriptRuntime.toString(thisObj).toLowerCase();
+                return ScriptRuntime.toString(thisObj).toLowerCase(Locale.ROOT);
     
               case Id_toUpperCase:
                 // See ECMA 15.5.4.12
-                return ScriptRuntime.toString(thisObj).toUpperCase();
+                return ScriptRuntime.toString(thisObj).toUpperCase(Locale.ROOT);
     
               case Id_substr:
                 return js_substr(ScriptRuntime.toString(thisObj), args);
