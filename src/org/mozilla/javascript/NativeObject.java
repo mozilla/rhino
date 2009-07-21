@@ -363,7 +363,7 @@ public class NativeObject extends IdScriptableObject
           case ConstructorId_create:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                Scriptable obj = ensureScriptable(arg);
+                Scriptable obj = (arg == null) ? null : ensureScriptable(arg);
 
                 ScriptableObject newObject = new NativeObject();
                 newObject.setParentScope(this.getParentScope());

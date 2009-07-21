@@ -4,7 +4,7 @@ js> Object.create;
 function create() { [native code for Object.create, arity=2] }
 
 js> expectTypeError(function() { Object.create() });
-js> [undefined, null, true, 1, 'hello'].forEach(function(value) { 
+js> [undefined, true, 1, 'hello'].forEach(function(value) { 
   >   expectTypeError(function() { Object.create(value) }) 
   > })
 js> expectTypeError(function() { Object.create({}, null) }) 
@@ -28,3 +28,8 @@ js> [obj.a, obj.b].toSource()
 [2, 3]
 
 js> expectTypeError(function() { Object.create({}, {b: {value:1}, c:1}) });
+
+js> var obj = Object.create(null, {a: {value:1}})
+js> Object.getPrototypeOf(obj) === null
+true
+
