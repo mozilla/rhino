@@ -133,31 +133,31 @@ public class ParserTest extends TestCase {
 
         VariableDeclaration stmt1 = (VariableDeclaration) root.getFirstChild();
         List<VariableInitializer> vars1 = stmt1.getVariables();
-        VariableInitializer firstVar = (VariableInitializer) vars1.get(0);
+        VariableInitializer firstVar = vars1.get(0);
         Name firstVarName = (Name) firstVar.getTarget();
         AstNode firstVarLiteral = firstVar.getInitializer();
 
         VariableDeclaration stmt2 = (VariableDeclaration) stmt1.getNext();
         List<VariableInitializer> vars2 = stmt2.getVariables();
-        VariableInitializer secondVar = (VariableInitializer) vars2.get(0);
+        VariableInitializer secondVar = vars2.get(0);
         Name secondVarName = (Name) secondVar.getTarget();
         AstNode secondVarLiteral = secondVar.getInitializer();
 
         VariableDeclaration stmt3 = (VariableDeclaration) stmt2.getNext();
        List<VariableInitializer> vars3 = stmt3.getVariables();
-        VariableInitializer thirdVar = (VariableInitializer) vars3.get(0);
+        VariableInitializer thirdVar = vars3.get(0);
         Name thirdVarName = (Name) thirdVar.getTarget();
         AstNode thirdVarLiteral = thirdVar.getInitializer();
 
         VariableDeclaration stmt4 = (VariableDeclaration) stmt3.getNext();
         List<VariableInitializer> vars4 = stmt4.getVariables();
-        VariableInitializer fourthVar = (VariableInitializer) vars4.get(0);
+        VariableInitializer fourthVar = vars4.get(0);
         Name fourthVarName = (Name) fourthVar.getTarget();
         AstNode fourthVarLiteral = fourthVar.getInitializer();
 
         VariableDeclaration stmt5 = (VariableDeclaration) stmt4.getNext();
         List<VariableInitializer> vars5 = stmt5.getVariables();
-        VariableInitializer fifthVar = (VariableInitializer) vars5.get(0);
+        VariableInitializer fifthVar = vars5.get(0);
         Name fifthVarName = (Name) fifthVar.getTarget();
         AstNode fifthVarLiteral = fifthVar.getInitializer();
 
@@ -183,11 +183,11 @@ public class ParserTest extends TestCase {
         AstNode switchVar = switchStmt.getExpression();
         List<SwitchCase> cases = switchStmt.getCases();
         SwitchCase firstCase = cases.get(0);
-        AstNode caseArg = (AstNode) firstCase.getExpression();
+        AstNode caseArg = firstCase.getExpression();
         List<AstNode> caseBody = firstCase.getStatements();
         ExpressionStatement exprStmt = (ExpressionStatement) caseBody.get(0);
         UnaryExpression incrExpr = (UnaryExpression) exprStmt.getExpression();
-        AstNode incrVar = (AstNode) incrExpr.getOperand();
+        AstNode incrVar = incrExpr.getOperand();
 
         SwitchCase secondCase = cases.get(1);
         AstNode defaultCase = cases.get(2);
@@ -214,7 +214,7 @@ public class ParserTest extends TestCase {
             "    c) {\n" +
             "}\n");
         FunctionNode function = (FunctionNode) root.getFirstChild();
-        Name functionName = (Name) function.getFunctionName();
+        Name functionName = function.getFunctionName();
 
         AstNode body = function.getBody();
         List<AstNode> params = function.getParams();
@@ -238,7 +238,7 @@ public class ParserTest extends TestCase {
 
       VariableDeclaration decl = (VariableDeclaration) root.getFirstChild();
       List<VariableInitializer> vars = decl.getVariables();
-      VariableInitializer init = (VariableInitializer) vars.get(0);
+      VariableInitializer init = vars.get(0);
       AstNode declName = init.getTarget();
       AstNode expr = init.getInitializer();
 
@@ -259,7 +259,7 @@ public class ParserTest extends TestCase {
           "    4;\n" +
           "}\n");
       FunctionNode function = (FunctionNode) root.getFirstChild();
-      Name functionName = (Name) function.getFunctionName();
+      Name functionName = function.getFunctionName();
 
       AstNode body = function.getBody();
       ReturnStatement returnStmt = (ReturnStatement) body.getFirstChild();
@@ -304,19 +304,19 @@ public class ParserTest extends TestCase {
 
         VariableDeclaration stmt1 = (VariableDeclaration) root.getFirstChild();
         List<VariableInitializer> vars1 = stmt1.getVariables();
-        VariableInitializer var1 = (VariableInitializer) vars1.get(0);
+        VariableInitializer var1 = vars1.get(0);
         Name firstVarName = (Name) var1.getTarget();
         InfixExpression var1Add = (InfixExpression) var1.getInitializer();
 
         VariableDeclaration stmt2 = (VariableDeclaration) stmt1.getNext();
         List<VariableInitializer> vars2 = stmt2.getVariables();
-        VariableInitializer var2 = (VariableInitializer) vars2.get(0);
+        VariableInitializer var2 = vars2.get(0);
         Name secondVarName = (Name) var2.getTarget();
         InfixExpression var2Add = (InfixExpression) var2.getInitializer();
 
         VariableDeclaration stmt3 = (VariableDeclaration) stmt2.getNext();
         List<VariableInitializer> vars3 = stmt3.getVariables();
-        VariableInitializer var3 = (VariableInitializer) vars3.get(0);
+        VariableInitializer var3 = vars3.get(0);
         Name thirdVarName = (Name) var3.getTarget();
         InfixExpression thirdVarDiv = (InfixExpression) var3.getInitializer();
 
@@ -401,8 +401,8 @@ public class ParserTest extends TestCase {
         AstNode tryBlock = tryStmt.getTryBlock();
         List<CatchClause> catchBlocks = tryStmt.getCatchClauses();
         CatchClause catchClause= catchBlocks.get(0);
-        Block catchVarBlock = (Block) catchClause.getBody();
-        Name catchVar = (Name) catchClause.getVarName();
+        Block catchVarBlock = catchClause.getBody();
+        Name catchVar = catchClause.getVarName();
         AstNode finallyBlock = tryStmt.getFinallyBlock();
         AstNode finallyStmt = (AstNode) finallyBlock.getFirstChild();
 
