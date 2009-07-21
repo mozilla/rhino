@@ -716,6 +716,27 @@ public abstract class IdScriptableObject extends ScriptableObject
         return f;
     }
 
+    @Override
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+      ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
+      if (desc == null && id instanceof String) {
+        Object value = get((String) id, this);
+        if (value != NOT_FOUND) {
+          boolean isMethod = (value instanceof Callable);
+
+          desc = new NativeObject();
+          Scriptable scope = getParentScope();
+          ScriptRuntime.setObjectProtoAndParent(desc, scope);
+
+          desc.defineProperty("value",        value, EMPTY);
+          desc.defineProperty("enumerable",   false, EMPTY);
+          desc.defineProperty("writable",     !isMethod, EMPTY);
+          desc.defineProperty("configurable", !isMethod, EMPTY);
+        }
+      }
+      return desc;
+    }
+
     private void readObject(ObjectInputStream stream)
         throws IOException, ClassNotFoundException
     {
