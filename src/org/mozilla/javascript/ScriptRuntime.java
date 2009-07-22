@@ -139,7 +139,6 @@ public class ScriptRuntime {
     public static final Class<Scriptable> ScriptableClass =
         Scriptable.class;
 
-
     private static final String[] lazilyNames = {
         "RegExp",        "org.mozilla.javascript.regexp.NativeRegExp",
         "Packages",      "org.mozilla.javascript.NativeJavaTopPackage",
@@ -161,6 +160,9 @@ public class ScriptRuntime {
         "QName",         "(xml)",
     };
 
+    // Locale object used to request locale-neutral operations.
+    public static Locale ROOT_LOCALE = new Locale("");
+ 
     private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";
 
     public static boolean isRhinoRuntimeType(Class<?> cl)
