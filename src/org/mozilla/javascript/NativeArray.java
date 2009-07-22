@@ -494,6 +494,18 @@ public class NativeArray extends IdScriptableObject
       return allIds.toArray();
     }
 
+    public Integer[] getIndexIds() {
+      Object[] ids = getIds();
+      java.util.List<Integer> indices = new java.util.ArrayList<Integer>(ids.length);
+      for (Object id : ids) {
+        int int32Id = ScriptRuntime.toInt32(id);
+        if (int32Id >= 0 && ScriptRuntime.toString(int32Id).equals(ScriptRuntime.toString(id))) {
+          indices.add(int32Id);
+        }
+      }
+      return indices.toArray(new Integer[indices.size()]);
+    }
+
     @Override
     public Object getDefaultValue(Class<?> hint)
     {

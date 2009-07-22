@@ -213,6 +213,7 @@ public class ScriptRuntime {
         NativeNumber.init(scope, sealed);
         NativeDate.init(scope, sealed);
         NativeMath.init(scope, sealed);
+        NativeJSON.init(scope, sealed);
 
         NativeWith.init(scope, sealed);
         NativeCall.init(scope, sealed);
