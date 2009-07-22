@@ -40,8 +40,6 @@
  * ***** END LICENSE BLOCK ***** */
 
 package org.mozilla.javascript;
-import java.util.Map;
-import java.util.LinkedHashMap;
 
 /**
  * This class implements the Object native object.
