@@ -1516,7 +1516,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *
      * Based on [[DefineOwnProperty]] from 8.12.10 of the spec
      *
-     * @param name the name of the property
+     * @param cx the current Context
+     * @param id the name/index of the property
      * @param desc the new property descriptor, as described in 8.6.1
      */
     public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
