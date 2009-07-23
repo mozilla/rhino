@@ -385,7 +385,6 @@ public class ParserTest extends TestCase {
         assertEquals(7, elseClause.getLineno());
     }
 
-
     public void testLinenoTry() {
         AstRoot root = parse(
             "\ntry {\n" +
@@ -514,6 +513,273 @@ public class ParserTest extends TestCase {
         assertEquals(1, aRef.getLineno());
         assertEquals(2, bRef.getLineno());
         assertEquals(3, cRef.getLineno());
+    }
+
+    public void testRegexpLocation() {
+      AstNode root = parse(
+          "\nvar path =\n" +
+          "      replace(\n" +
+          "/a/g," +
+          "'/');\n");
+
+      VariableDeclaration firstVarDecl =
+          (VariableDeclaration) root.getFirstChild();
+      List<VariableInitializer> vars1 = firstVarDecl.getVariables();
+      VariableInitializer firstInitializer = vars1.get(0);
+      Name firstVarName = (Name) firstInitializer.getTarget();
+      FunctionCall callNode =(FunctionCall) firstInitializer.getInitializer();
+      AstNode fnName = callNode.getTarget();
+      List<AstNode> args = callNode.getArguments();
+      RegExpLiteral regexObject = (RegExpLiteral) args.get(0);
+      AstNode aString = args.get(1);
+
+      assertEquals(1, firstVarDecl.getLineno());
+      assertEquals(1, firstVarName.getLineno());
+      assertEquals(2, callNode.getLineno());
+      assertEquals(2, fnName.getLineno());
+      assertEquals(3, regexObject.getLineno());
+      assertEquals(3, aString.getLineno());
+    }
+
+    public void testNestedOr() {
+      AstNode root = parse(
+          "\nif (a && \n" +
+          "    b() || \n" +
+          "    /* comment */\n" +
+          "    c) {\n" +
+          "}\n"
+                           );
+
+      IfStatement ifStmt = (IfStatement) root.getFirstChild();
+      InfixExpression orClause = (InfixExpression) ifStmt.getCondition();
+      InfixExpression andClause = (InfixExpression) orClause.getLeft();
+      AstNode cName = orClause.getRight();
+
+      assertEquals(1, ifStmt.getLineno());
+      assertEquals(2, orClause.getLineno());
+      assertEquals(1, andClause.getLineno());
+      assertEquals(4, cName.getLineno());
+
+    }
+
+    public void testObjectLitLocation() {
+      AstNode root = parse(
+          "\nvar foo =\n" +
+          "{ \n" +
+          "'A' : 'A', \n" +
+          "'B' : 'B', \n" +
+          "'C' : \n" +
+          "      'C' \n" +
+          "};\n");
+
+      VariableDeclaration firstVarDecl =
+          (VariableDeclaration) root.getFirstChild();
+      List<VariableInitializer> vars1 = firstVarDecl.getVariables();
+      VariableInitializer firstInitializer = vars1.get(0);
+      Name firstVarName = (Name) firstInitializer.getTarget();
+
+      ObjectLiteral objectLiteral =
+          (ObjectLiteral) firstInitializer.getInitializer();
+      List<ObjectProperty> props = objectLiteral.getElements();
+      ObjectProperty firstObjectLit = props.get(0);
+      ObjectProperty secondObjectLit = props.get(1);
+      ObjectProperty thirdObjectLit = props.get(2);
+
+      AstNode firstKey = firstObjectLit.getLeft();
+      AstNode firstValue = firstObjectLit.getRight();
+      AstNode secondKey = secondObjectLit.getLeft();
+      AstNode secondValue = secondObjectLit.getRight();
+      AstNode thirdKey = thirdObjectLit.getLeft();
+      AstNode thirdValue = thirdObjectLit.getRight();
+
+      assertEquals(1, firstVarName.getLineno());
+      assertEquals(2, firstObjectLit.getLineno());
+      assertEquals(3, firstKey.getLineno());
+      assertEquals(3, firstValue.getLineno());
+
+      assertEquals(4, secondKey.getLineno());
+      assertEquals(4, secondValue.getLineno());
+
+      assertEquals(5, thirdKey.getLineno());
+      assertEquals(6, thirdValue.getLineno());
+    }
+
+    public void testTryWithoutCatchLocation() {
+      AstNode root = parse(
+          "\ntry {\n" +
+          "  var x = 1;\n" +
+          "} finally {\n" +
+          "  var y = 2;\n" +
+          "}\n");
+
+      TryStatement tryStmt = (TryStatement) root.getFirstChild();
+      AstNode tryBlock = tryStmt.getTryBlock();
+      List<CatchClause> catchBlocks = tryStmt.getCatchClauses();
+      Scope finallyBlock = (Scope) tryStmt.getFinallyBlock();
+      AstNode finallyStmt = (AstNode) finallyBlock.getFirstChild();
+
+      assertEquals(1, tryStmt.getLineno());
+      assertEquals(1, tryBlock.getLineno());
+      assertEquals(3, finallyBlock.getLineno());
+      assertEquals(4, finallyStmt.getLineno());
+    }
+
+    public void testTryWithoutFinallyLocation() {
+      AstNode root = parse(
+          "\ntry {\n" +
+          "  var x = 1;\n" +
+          "} catch (ex) {\n" +
+          "  var y = 2;\n" +
+          "}\n");
+
+      TryStatement tryStmt = (TryStatement) root.getFirstChild();
+      Scope tryBlock = (Scope) tryStmt.getTryBlock();
+      List<CatchClause> catchBlocks = tryStmt.getCatchClauses();
+      CatchClause catchClause = catchBlocks.get(0);
+      AstNode catchStmt = catchClause.getBody();
+      AstNode exceptionVar = catchClause.getVarName();
+      AstNode varDecl = (AstNode) catchStmt.getFirstChild();
+
+      assertEquals(1, tryStmt.getLineno());
+      assertEquals(1, tryBlock.getLineno());
+      assertEquals(3, catchClause.getLineno());
+      assertEquals(3, catchStmt.getLineno());
+      assertEquals(3, exceptionVar.getLineno());
+      assertEquals(4, varDecl.getLineno());
+    }
+
+    public void testLinenoMultilineEq() {
+      AstRoot root = parse(
+          "\nif\n" +
+          "    (((a == \n" +
+          "  3) && \n" +
+          "  (b == 2)) || \n" +
+          " (c == 1)) {\n" +
+          "}\n");
+      IfStatement ifStmt = (IfStatement) root.getFirstChild();
+      InfixExpression orTest = (InfixExpression) ifStmt.getCondition();
+      ParenthesizedExpression cTestParen =
+          (ParenthesizedExpression) orTest.getRight();
+      InfixExpression cTest = (InfixExpression) cTestParen.getExpression();
+      ParenthesizedExpression andTestParen =
+          (ParenthesizedExpression) orTest.getLeft();
+      InfixExpression andTest = (InfixExpression) andTestParen.getExpression();
+      AstNode aTest = andTest.getLeft();
+      AstNode bTest = andTest.getRight();
+
+      assertEquals(1, ifStmt.getLineno());
+      assertEquals(4, orTest.getLineno());
+      assertEquals(3, andTest.getLineno());
+      assertEquals(2, aTest.getLineno());
+      assertEquals(4, bTest.getLineno());
+      assertEquals(5, cTest.getLineno());
+      assertEquals(5, cTestParen.getLineno());
+      assertEquals(2, andTestParen.getLineno());
+    }
+
+    public void testLinenoMultilineBitTest() {
+      AstRoot root = parse(
+          "\nif (\n" +
+          "      ((a \n" +
+          "        | 3 \n" +
+          "       ) == \n" +
+          "       (b \n" +
+          "        & 2)) && \n" +
+          "      ((a \n" +
+          "         ^ 0xffff) \n" +
+          "       != \n" +
+          "       (c \n" +
+          "        << 1))) {\n" +
+          "}\n");
+
+      IfStatement ifStmt = (IfStatement) root.getFirstChild();
+      InfixExpression andTest = (InfixExpression) ifStmt.getCondition();
+      ParenthesizedExpression bigLHSExpr =
+          (ParenthesizedExpression) andTest.getLeft();
+      ParenthesizedExpression bigRHSExpr =
+          (ParenthesizedExpression) andTest.getRight();
+
+      InfixExpression eqTest = (InfixExpression) bigLHSExpr.getExpression();
+      InfixExpression notEqTest = (InfixExpression) bigRHSExpr.getExpression();
+
+      ParenthesizedExpression test1Expr =
+          (ParenthesizedExpression) eqTest.getLeft();
+      ParenthesizedExpression test2Expr =
+          (ParenthesizedExpression) eqTest.getRight();
+
+      ParenthesizedExpression test3Expr =
+          (ParenthesizedExpression) notEqTest.getLeft();
+      ParenthesizedExpression test4Expr =
+          (ParenthesizedExpression) notEqTest.getRight();
+
+      InfixExpression bitOrTest = (InfixExpression) test1Expr.getExpression();
+      InfixExpression bitAndTest = (InfixExpression) test2Expr.getExpression();
+      InfixExpression bitXorTest = (InfixExpression) test3Expr.getExpression();
+      InfixExpression bitShiftTest = (InfixExpression) test4Expr.getExpression();
+
+      assertEquals(1, ifStmt.getLineno());
+
+      assertEquals(2, bigLHSExpr.getLineno());
+      assertEquals(7, bigRHSExpr.getLineno());
+      assertEquals(4, eqTest.getLineno());
+      assertEquals(9, notEqTest.getLineno());
+
+      assertEquals(2, test1Expr.getLineno());
+      assertEquals(5, test2Expr.getLineno());
+      assertEquals(7, test3Expr.getLineno());
+      assertEquals(10, test4Expr.getLineno());
+
+      assertEquals(3, bitOrTest.getLineno());
+      assertEquals(6, bitAndTest.getLineno());
+      assertEquals(8, bitXorTest.getLineno());
+      assertEquals(11, bitShiftTest.getLineno());
+    }
+
+    public void testLinenoFunctionCall() {
+      AstNode root = parse(
+          "\nfoo.\n" +
+          "bar.\n" +
+          "baz(1);");
+
+      ExpressionStatement stmt = (ExpressionStatement) root.getFirstChild();
+      FunctionCall fc = (FunctionCall) stmt.getExpression();
+      // Line number should get closest to the actual paren.
+      assertEquals(3, fc.getLineno());
+    }
+
+    public void testLinenoName() {
+      AstNode root = parse(
+          "\na;\n" +
+          "b.\n" +
+          "c;\n");
+
+      ExpressionStatement exprStmt = (ExpressionStatement) root.getFirstChild();
+      AstNode aRef = (AstNode) exprStmt.getExpression();
+      ExpressionStatement bExprStmt = (ExpressionStatement) exprStmt.getNext();
+      AstNode bRef = (AstNode) bExprStmt.getExpression();
+
+      assertEquals(1, aRef.getLineno());
+      assertEquals(2, bRef.getLineno());
+    }
+
+    public void testLinenoDeclaration() {
+      AstNode root = parse(
+          "\na.\n" +
+          "b=\n" +
+          "function() {};\n");
+
+      ExpressionStatement exprStmt = (ExpressionStatement) root.getFirstChild();
+      Assignment fnAssignment = (Assignment) exprStmt.getExpression();
+      PropertyGet aDotbName = (PropertyGet) fnAssignment.getLeft();
+      AstNode aName = aDotbName.getLeft();
+      AstNode bName = aDotbName.getRight();
+      FunctionNode fnNode = (FunctionNode) fnAssignment.getRight();
+
+      assertEquals(2, fnAssignment.getLineno());
+      assertEquals(1, aDotbName.getLineno());
+      assertEquals(1, aName.getLineno());
+      assertEquals(2, bName.getLineno());
+      assertEquals(3, fnNode.getLineno());
     }
 
     public void testInOperatorInForLoop1() {
