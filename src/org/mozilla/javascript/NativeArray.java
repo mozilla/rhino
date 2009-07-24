@@ -194,6 +194,8 @@ public class NativeArray extends IdScriptableObject
                 "reduce", 2);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight,
                 "reduceRight", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray,
+                "isArray", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -271,6 +273,9 @@ public class NativeArray extends IdScriptableObject
                 id = -id;
                 continue again;
               }
+
+              case ConstructorId_isArray:
+                return args.length > 0 && (args[0] instanceof NativeArray);
     
               case Id_constructor: {
                 boolean inNewExpr = (thisObj == null);
@@ -1722,7 +1727,8 @@ public class NativeArray extends IdScriptableObject
         ConstructorId_map                  = -Id_map,
         ConstructorId_some                 = -Id_some,
         ConstructorId_reduce               = -Id_reduce,
-        ConstructorId_reduceRight          = -Id_reduceRight;
+        ConstructorId_reduceRight          = -Id_reduceRight,
+        ConstructorId_isArray              = -24;
 
     /**
      * Internal representation of the JavaScript array's length property.
