@@ -501,7 +501,7 @@ final class NativeJSON extends IdScriptableObject
     {
         int id;
 // #generated# Last update: 2009-05-25 16:01:00 EDT
-        {   id = 0; String X = null; int c;
+        {   id = 0; String X = null;
             L: switch (s.length()) {
             case 5: X="parse";id=Id_parse; break L;
             case 8: X="toSource";id=Id_toSource; break L;
