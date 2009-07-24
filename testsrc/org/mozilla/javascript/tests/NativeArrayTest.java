@@ -5,12 +5,8 @@ import org.junit.Before;
 
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
-import static org.junit.matchers.JUnitMatchers.hasItem;
-import static org.junit.matchers.JUnitMatchers.both;
 
 import org.mozilla.javascript.NativeArray;
-import java.util.Arrays;
 
 public class NativeArrayTest {
   private NativeArray array;
