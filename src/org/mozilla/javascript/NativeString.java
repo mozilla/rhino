@@ -150,8 +150,6 @@ final class NativeString extends IdScriptableObject
                 ConstructorId_localeCompare, "localeCompare", 2);
         addIdFunctionProperty(ctor, STRING_TAG,
                 ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_fromCharCode, "fromCharCode", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -197,6 +195,7 @@ final class NativeString extends IdScriptableObject
           case Id_localeCompare:     arity=1; s="localeCompare";     break;
           case Id_toLocaleLowerCase: arity=0; s="toLocaleLowerCase"; break;
           case Id_toLocaleUpperCase: arity=0; s="toLocaleUpperCase"; break;
+          case Id_trim:              arity=0; s="trim";              break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -413,9 +412,42 @@ final class NativeString extends IdScriptableObject
                     return ScriptRuntime.toString(thisObj)
                             .toUpperCase(cx.getLocale());
                 }
+              case Id_trim:
+                {
+                    String str = ScriptRuntime.toString(thisObj);
+                    char[] chars = str.toCharArray();
+
+                    int start = 0;
+                    while (start < chars.length && isWhitespaceOrLineTerminator(chars[start])) {
+                      start++;
+                    }
+                    int end = chars.length;
+                    while (end > start && isWhitespaceOrLineTerminator(chars[end-1])) {
+                      end--;
+                    }
+
+                    return str.substring(start, end);
+                }
             }
             throw new IllegalArgumentException(String.valueOf(id));
         }
+    }
+
+    private boolean isWhitespaceOrLineTerminator(char c) {
+      switch (c) {
+        // ecma whitespace
+        case 0x0009: case 0x000B: case 0x000C: case 0x0020: case 0x00A0: case 0xFEFF: 
+        // unicode whitespace (category Zs)
+        case 0x1680: case 0x180E: 
+        case 0x2000: case 0x2001: case 0x2002: case 0x2003: case 0x2004: case 0x2005: 
+        case 0x2006: case 0x2007: case 0x2008: case 0x2009: case 0x200A: 
+        case 0x202F: case 0x205F: case 0x3000: 
+        // ecma line terminators
+        case 0x000A: case 0x000D: case 0x2028: case 0x2029: 
+          return true;
+        default:
+          return false;
+      }
     }
 
     private static NativeString realThis(Scriptable thisObj, IdFunctionObject f)
@@ -653,7 +685,7 @@ final class NativeString extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2007-05-01 22:11:49 EDT
+// #generated# Last update: 2009-07-23 07:32:39 EST
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(2);
@@ -664,6 +696,7 @@ final class NativeString extends IdScriptableObject
             case 4: c=s.charAt(0);
                 if (c=='b') { X="bold";id=Id_bold; }
                 else if (c=='l') { X="link";id=Id_link; }
+                else if (c=='t') { X="trim";id=Id_trim; }
                 break L;
             case 5: switch (s.charAt(4)) {
                 case 'd': X="fixed";id=Id_fixed; break L;
@@ -757,7 +790,8 @@ final class NativeString extends IdScriptableObject
         Id_localeCompare             = 34,
         Id_toLocaleLowerCase         = 35,
         Id_toLocaleUpperCase         = 36,
-        MAX_PROTOTYPE_ID             = 36;
+        Id_trim                      = 37,
+        MAX_PROTOTYPE_ID             = Id_trim;
 
 // #/string_id_map#
 
