@@ -7,6 +7,11 @@
   <property name="test.jstests.jar" location="${test.library.dir}/src/jstests.jar" />
 
   <!--
+    URL from which junit.jar can be retrieved
+  -->
+  <property name="test.junit.url" value="http://mirrors.ibiblio.org/pub/mirrors/maven2/junit/junit/4.5/junit-4.5.jar"/>
+
+  <!--
     Destination to which testing classes should be built
   -->
   <property name="test.classes" value="${build.dir}/test/classes" />
@@ -26,9 +31,14 @@
   -->
   <property name="test.vm.mx" value="256m" />
 
+  <target name="get-junit">
+	<mkdir dir="lib"/>
+	<get src="${test.junit.url}" dest="lib/junit.jar" usetimestamp="true"/>
+  </target>
+
   <target name="junit-compile">
     <mkdir dir="${test.classes}" />
-    <get src="http://mirrors.ibiblio.org/pub/mirrors/maven2/junit/junit/4.5/junit-4.5.jar" dest="lib/junit.jar" usetimestamp="true"/>
+	<antcall target="get-junit"/>
     <javac
       destdir="${test.classes}" debug="true"
       target="${target-jvm}"
@@ -46,6 +56,7 @@
 
   <target name="compile">
     <mkdir dir="${test.classes}" />
+	<antcall target="get-junit"/>
     <javac
       srcdir="testsrc"
       destdir="${test.classes}" debug="true"
