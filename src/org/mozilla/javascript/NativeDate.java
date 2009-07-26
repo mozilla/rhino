@@ -44,6 +44,10 @@ package org.mozilla.javascript;
 
 import java.util.Date;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
+import java.util.TimeZone;
+import java.util.SimpleTimeZone;
 
 /**
  * This class implements the Date native object.
@@ -58,6 +62,12 @@ final class NativeDate extends IdScriptableObject
 
     private static final String js_NaN_date_str = "Invalid Date";
 
+    private static final DateFormat isoFormat;
+    static {
+      isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+      isoFormat.setTimeZone(new SimpleTimeZone(0, "UTC"));
+    }
+
     static void init(Scriptable scope, boolean sealed)
     {
         NativeDate obj = new NativeDate();
@@ -71,7 +81,7 @@ final class NativeDate extends IdScriptableObject
         if (thisTimeZone == null) {
             // j.u.TimeZone is synchronized, so setting class statics from it
             // should be OK.
-            thisTimeZone = java.util.TimeZone.getDefault();
+            thisTimeZone = TimeZone.getDefault();
             LocalTZA = thisTimeZone.getRawOffset();
         }
     }
@@ -158,6 +168,7 @@ final class NativeDate extends IdScriptableObject
           case Id_setFullYear:        arity=3; s="setFullYear";        break;
           case Id_setUTCFullYear:     arity=3; s="setUTCFullYear";     break;
           case Id_setYear:            arity=1; s="setYear";            break;
+          case Id_toISOString:        arity=0; s="toISOString";        break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(DATE_TAG, id, s, arity);
@@ -364,6 +375,15 @@ final class NativeDate extends IdScriptableObject
             }
             realThis.date = t;
             return ScriptRuntime.wrapNumber(t);
+
+          case Id_toISOString:
+            if (t == t) {
+              synchronized (isoFormat) {
+                return isoFormat.format(new Date((long) t));
+              }
+            }
+            String msg = ScriptRuntime.getMessage0("msg.invalid.date");
+            throw ScriptRuntime.constructError("RangeError", msg);
 
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -1046,7 +1066,7 @@ final class NativeDate extends IdScriptableObject
             append0PaddedUint(result, offset, 4);
 
             if (timeZoneFormatter == null)
-                timeZoneFormatter = new java.text.SimpleDateFormat("zzz");
+                timeZoneFormatter = new SimpleDateFormat("zzz");
 
             // Find an equivalent year before getting the timezone
             // comment.  See DaylightSavingTA.
@@ -1056,7 +1076,7 @@ final class NativeDate extends IdScriptableObject
                 t = MakeDate(day, TimeWithinDay(t));
              }
             result.append(" (");
-            java.util.Date date = new Date((long) t);
+            Date date = new Date((long) t);
             synchronized (timeZoneFormatter) {
                 result.append(timeZoneFormatter.format(date));
             }
@@ -1106,7 +1126,7 @@ final class NativeDate extends IdScriptableObject
 
     private static String toLocale_helper(double t, int methodId)
     {
-        java.text.DateFormat formatter;
+        DateFormat formatter;
         switch (methodId) {
           case Id_toLocaleString:
             if (localeDateTimeFormatter == null) {
@@ -1426,7 +1446,7 @@ final class NativeDate extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2007-05-09 08:15:38 EDT
+// #generated# Last update: 2009-07-22 02:46:13 EST
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 6: X="getDay";id=Id_getDay; break L;
@@ -1481,6 +1501,7 @@ final class NativeDate extends IdScriptableObject
                     else if (c=='s') { X="setFullYear";id=Id_setFullYear; }
                     break L;
                 case 'M': X="toGMTString";id=Id_toGMTString; break L;
+                case 'S': X="toISOString";id=Id_toISOString; break L;
                 case 'T': X="toUTCString";id=Id_toUTCString; break L;
                 case 'U': c=s.charAt(0);
                     if (c=='g') {
@@ -1589,20 +1610,21 @@ final class NativeDate extends IdScriptableObject
         Id_setFullYear          = 43,
         Id_setUTCFullYear       = 44,
         Id_setYear              = 45,
+        Id_toISOString          = 46,
 
-        MAX_PROTOTYPE_ID        = 45;
+        MAX_PROTOTYPE_ID        = Id_toISOString;
 
     private static final int
         Id_toGMTString  =  Id_toUTCString; // Alias, see Ecma B.2.6
 // #/string_id_map#
 
     /* cached values */
-    private static java.util.TimeZone thisTimeZone;
+    private static TimeZone thisTimeZone;
     private static double LocalTZA;
-    private static java.text.DateFormat timeZoneFormatter;
-    private static java.text.DateFormat localeDateTimeFormatter;
-    private static java.text.DateFormat localeDateFormatter;
-    private static java.text.DateFormat localeTimeFormatter;
+    private static DateFormat timeZoneFormatter;
+    private static DateFormat localeDateTimeFormatter;
+    private static DateFormat localeDateFormatter;
+    private static DateFormat localeTimeFormatter;
 
     private double date;
 }
