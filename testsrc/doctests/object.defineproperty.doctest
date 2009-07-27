@@ -182,3 +182,9 @@ js> Object.defineProperty([], 'a', {value:1, enumerable:true})['a']
 js> // make sure defineProperty updates length properly for arrays
 js> Object.defineProperty([], 0, {value:1}).length
 1
+
+js> // make sure that getters and setters are actually used to get and set property
+js> Object.defineProperty({}, 'a', {get:function() { return "get called"; }}).a
+get called
+js> Object.defineProperty({}, 'a', {set:function(val) { print("set called with "+val); }}).a = 1; undefined;
+set called with 1

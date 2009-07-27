@@ -2315,8 +2315,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
             slot = getSlot(name, index, SLOT_MODIFY);
         }
-        if ((slot.getAttributes() & READONLY) != 0)
-            return true;
         if (slot instanceof GetterSlot) {
             Object setterObj = ((GetterSlot)slot).setter;
             if (setterObj == null) {
@@ -2353,6 +2351,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 }
                 return true;
             }
+        } else if ((slot.getAttributes() & READONLY) != 0) {
+            return true;
         }
         if (this == start) {
             slot.value = value;
