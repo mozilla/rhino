@@ -2724,13 +2724,17 @@ public class ScriptRuntime {
         }
     }
 
-    private static Object toPrimitive(Object val)
+    public static Object toPrimitive(Object val) {
+        return toPrimitive(val, null);
+    }
+    
+    public static Object toPrimitive(Object val, Class<?> typeHint)
     {
         if (!(val instanceof Scriptable)) {
             return val;
         }
         Scriptable s = (Scriptable)val;
-        Object result = s.getDefaultValue(null);
+        Object result = s.getDefaultValue(typeHint);
         if (result instanceof Scriptable)
             throw typeError0("msg.bad.default.value");
         return result;
@@ -2820,9 +2824,10 @@ public class ScriptRuntime {
         }
     }
     
-    private static boolean isPrimitive(Object obj) {
-        return (obj instanceof Number) || (obj instanceof String) ||
-               (obj instanceof Boolean);
+    public static boolean isPrimitive(Object obj) {
+        return obj == null || obj == Undefined.instance || 
+                (obj instanceof Number) || (obj instanceof String) ||
+                (obj instanceof Boolean);
     }
 
     static boolean eqNumber(double x, Object y)

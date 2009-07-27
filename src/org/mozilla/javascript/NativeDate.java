@@ -169,6 +169,7 @@ final class NativeDate extends IdScriptableObject
           case Id_setUTCFullYear:     arity=3; s="setUTCFullYear";     break;
           case Id_setYear:            arity=1; s="setYear";            break;
           case Id_toISOString:        arity=0; s="toISOString";        break;
+          case Id_toJSON:             arity=1; s="toJSON";             break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(DATE_TAG, id, s, arity);
@@ -203,6 +204,44 @@ final class NativeDate extends IdScriptableObject
                     return date_format(now(), Id_toString);
                 return jsConstructor(args);
             }
+
+          case Id_toJSON:
+            {
+                if (thisObj instanceof NativeDate) {
+                    return ((NativeDate) thisObj).toISOString();
+                }
+
+                final String toISOString = "toISOString";
+
+                Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+                Object tv = ScriptRuntime.toPrimitive(o, ScriptRuntime.NumberClass);
+                if (tv instanceof Number) {
+                    double d = ((Number) tv).doubleValue();
+                    if (d != d || Double.isInfinite(d)) {
+                        return null;
+                    }
+                }
+                Object toISO = o.get(toISOString, o);
+                if (toISO == NOT_FOUND) {
+                    throw ScriptRuntime.typeError2("msg.function.not.found.in", 
+                            toISOString,
+                            ScriptRuntime.toString(o));
+                }
+                if ( !(toISO instanceof Callable) ) {
+                    throw ScriptRuntime.typeError3("msg.isnt.function.in", 
+                            toISOString,
+                            ScriptRuntime.toString(o),
+                            ScriptRuntime.toString(toISO));
+                }
+                Object result = ((Callable) toISO).call(cx, scope, o,
+                            ScriptRuntime.emptyArgs);
+                if ( !ScriptRuntime.isPrimitive(result) ) {
+                    throw ScriptRuntime.typeError1("msg.toisostring.must.return.primitive", 
+                            ScriptRuntime.toString(result));
+                } 
+                return result;
+            }
+
         }
 
         // The rest of Date.prototype methods require thisObj to be Date
@@ -377,17 +416,21 @@ final class NativeDate extends IdScriptableObject
             return ScriptRuntime.wrapNumber(t);
 
           case Id_toISOString:
-            if (t == t) {
-              synchronized (isoFormat) {
-                return isoFormat.format(new Date((long) t));
-              }
-            }
-            String msg = ScriptRuntime.getMessage0("msg.invalid.date");
-            throw ScriptRuntime.constructError("RangeError", msg);
+            return realThis.toISOString();
 
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
 
+    }
+
+    private String toISOString() {
+        if (date == date) {
+            synchronized (isoFormat) {
+                return isoFormat.format(new Date((long) date));
+            }
+        }
+        String msg = ScriptRuntime.getMessage0("msg.invalid.date");
+        throw ScriptRuntime.constructError("RangeError", msg);
     }
 
     /* ECMA helper functions */
@@ -1446,10 +1489,13 @@ final class NativeDate extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2009-07-22 02:46:13 EST
+// #generated# Last update: 2009-07-22 05:44:02 EST
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
-            case 6: X="getDay";id=Id_getDay; break L;
+            case 6: c=s.charAt(0);
+                if (c=='g') { X="getDay";id=Id_getDay; }
+                else if (c=='t') { X="toJSON";id=Id_toJSON; }
+                break L;
             case 7: switch (s.charAt(3)) {
                 case 'D': c=s.charAt(0);
                     if (c=='g') { X="getDate";id=Id_getDate; }
@@ -1611,8 +1657,9 @@ final class NativeDate extends IdScriptableObject
         Id_setUTCFullYear       = 44,
         Id_setYear              = 45,
         Id_toISOString          = 46,
+        Id_toJSON               = 47,
 
-        MAX_PROTOTYPE_ID        = Id_toISOString;
+        MAX_PROTOTYPE_ID        = Id_toJSON;
 
     private static final int
         Id_toGMTString  =  Id_toUTCString; // Alias, see Ecma B.2.6
