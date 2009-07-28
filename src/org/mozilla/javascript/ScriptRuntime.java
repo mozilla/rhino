@@ -73,6 +73,30 @@ public class ScriptRuntime {
     protected ScriptRuntime() {
     }
 
+
+    /**
+     * Returns representation of the [[ThrowTypeError]] object.
+     * See ECMA 5 spec, 13.2.3
+     */
+    public static BaseFunction typeErrorThrower() {
+      if (THROW_TYPE_ERROR == null) {
+        BaseFunction thrower = new BaseFunction() {
+          @Override
+          public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            throw typeError0("msg.op.not.allowed");
+          }
+          @Override
+          public int getLength() {
+            return 0;
+          }
+        };
+        thrower.preventExtensions();
+        THROW_TYPE_ERROR = thrower;
+      }
+      return THROW_TYPE_ERROR;
+    }
+    private static BaseFunction THROW_TYPE_ERROR = null;
+
     static class NoSuchMethodShim implements Callable {
         String methodName;
         Callable noSuchMethodMethod;

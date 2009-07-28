@@ -235,6 +235,7 @@ public class BaseFunction extends IdScriptableObject implements Function
           case Id_toSource:    arity=1; s="toSource";    break;
           case Id_apply:       arity=2; s="apply";       break;
           case Id_call:        arity=1; s="call";        break;
+          case Id_bind:        arity=1; s="bind";        break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(FUNCTION_TAG, id, s, arity);
@@ -292,6 +293,24 @@ public class BaseFunction extends IdScriptableObject implements Function
           case Id_call:
             return ScriptRuntime.applyOrCall(id == Id_apply,
                                              cx, scope, thisObj, args);
+
+          case Id_bind:
+            if ( !(thisObj instanceof Callable) ) {
+              throw ScriptRuntime.notFunctionError(thisObj);
+            }
+            Callable targetFunction = (Callable) thisObj;
+            int argc = args.length;
+            final Scriptable boundThis;
+            final Object[] boundArgs;
+            if (argc > 0) {
+              boundThis = ScriptRuntime.toObject(cx, scope, args[0]);
+              boundArgs = new Object[argc-1];
+              System.arraycopy(args, 1, boundArgs, 0, argc-1);
+            } else {
+              boundThis = ScriptRuntime.toObject(cx, scope, Undefined.instance);
+              boundArgs = ScriptRuntime.emptyArgs;
+            }
+            return new BoundFunction(cx, targetFunction, boundThis, boundArgs);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -539,10 +558,13 @@ public class BaseFunction extends IdScriptableObject implements Function
     {
         int id;
 // #string_id_map#
-// #generated# Last update: 2007-05-09 08:15:15 EDT
+// #generated# Last update: 2009-07-24 16:00:52 EST
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
-            case 4: X="call";id=Id_call; break L;
+            case 4: c=s.charAt(0);
+                if (c=='b') { X="bind";id=Id_bind; }
+                else if (c=='c') { X="call";id=Id_call; }
+                break L;
             case 5: X="apply";id=Id_apply; break L;
             case 8: c=s.charAt(3);
                 if (c=='o') { X="toSource";id=Id_toSource; }
@@ -563,8 +585,9 @@ public class BaseFunction extends IdScriptableObject implements Function
         Id_toSource       = 3,
         Id_apply          = 4,
         Id_call           = 5,
+        Id_bind           = 6,
 
-        MAX_PROTOTYPE_ID  = 5;
+        MAX_PROTOTYPE_ID  = Id_bind;
 
 // #/string_id_map#
 
