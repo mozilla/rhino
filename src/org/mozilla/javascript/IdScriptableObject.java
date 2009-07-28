@@ -726,7 +726,7 @@ public abstract class IdScriptableObject extends ScriptableObject
 
           desc = new NativeObject();
           Scriptable scope = getParentScope();
-          ScriptRuntime.setObjectProtoAndParent(desc, scope);
+          ScriptRuntime.setObjectProtoAndParent(desc, (scope == null ? this : scope));
 
           desc.defineProperty("value",        value, EMPTY);
           desc.defineProperty("enumerable",   false, EMPTY);
