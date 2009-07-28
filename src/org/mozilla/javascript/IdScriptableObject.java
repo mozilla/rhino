@@ -730,8 +730,8 @@ public abstract class IdScriptableObject extends ScriptableObject
 
           desc.defineProperty("value",        value, EMPTY);
           desc.defineProperty("enumerable",   false, EMPTY);
-          desc.defineProperty("writable",     !isMethod, EMPTY);
-          desc.defineProperty("configurable", !isMethod, EMPTY);
+          desc.defineProperty("writable",     isMethod, EMPTY);
+          desc.defineProperty("configurable", isMethod, EMPTY);
         }
       }
       return desc;
