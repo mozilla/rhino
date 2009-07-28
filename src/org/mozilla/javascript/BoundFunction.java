@@ -50,7 +50,7 @@ public class BoundFunction extends BaseFunction {
   private final Object[] boundArgs;
   private final int length;
 
-  public BoundFunction(Context cx, Callable targetFunction, Scriptable boundThis,
+  public BoundFunction(Context cx, Scriptable scope, Callable targetFunction, Scriptable boundThis,
                        Object[] boundArgs)
   {
     this.targetFunction = targetFunction;
@@ -61,6 +61,8 @@ public class BoundFunction extends BaseFunction {
     } else {
       length = 0;
     }
+
+    ScriptRuntime.setFunctionProtoAndParent(this, scope);
 
     Function thrower = ScriptRuntime.typeErrorThrower();
     NativeObject throwing = new NativeObject();

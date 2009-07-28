@@ -310,7 +310,7 @@ public class BaseFunction extends IdScriptableObject implements Function
               boundThis = ScriptRuntime.toObject(cx, scope, Undefined.instance);
               boundArgs = ScriptRuntime.emptyArgs;
             }
-            return new BoundFunction(cx, targetFunction, boundThis, boundArgs);
+            return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }

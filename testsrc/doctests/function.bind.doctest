@@ -48,6 +48,9 @@ js> add1.length
 js> Object.isExtensible(add1)
 true
 
+js> Object.getPrototypeOf(add1) === Function.prototype
+true
+
 js> expectTypeError(function() {
   >   var x = add1.caller
   > })
