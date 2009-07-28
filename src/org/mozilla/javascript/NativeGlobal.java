@@ -144,20 +144,19 @@ public class NativeGlobal implements Serializable, IdFunctionCall
         */
         for (int i = 0; i < errorMethods.length; i++) {
             String name = errorMethods[i];
-            Scriptable errorProto = ScriptRuntime.
-                                        newObject(cx, scope, "Error",
+            ScriptableObject errorProto = 
+              (ScriptableObject) ScriptRuntime.newObject(cx, scope, "Error",
                                                   ScriptRuntime.emptyArgs);
             errorProto.put("name", errorProto, name);
-            if (sealed) {
-                if (errorProto instanceof ScriptableObject) {
-                    ((ScriptableObject)errorProto).sealObject();
-                }
-            }
+            errorProto.put("message", errorProto, "");
             IdFunctionObject ctor = new IdFunctionObject(obj, FTAG,
                                                          Id_new_CommonError,
                                                          name, 1, scope);
             ctor.markAsConstructor(errorProto);
+            errorProto.put("constructor", errorProto, ctor);
+            errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
             if (sealed) {
+                errorProto.sealObject();
                 ctor.sealObject();
             }
             ctor.exportAsScopeProperty();
