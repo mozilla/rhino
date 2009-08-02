@@ -1581,6 +1581,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
       if (setter != NOT_FOUND && !(setter instanceof Callable)) {
         throw ScriptRuntime.notFunctionError(setter);
       }
+      if (isDataDescriptor(desc) && isAccessorDescriptor(desc)) {
+         throw ScriptRuntime.typeError0("msg.both.data.and.accessor.desc");
+      }
 
       if (slot == null) { // new property
         if (!isExtensible()) throw ScriptRuntime.typeError("msg.not.extensible");
