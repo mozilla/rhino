@@ -1621,7 +1621,7 @@ public class NativeArray extends IdScriptableObject
         }
         if (value == Scriptable.NOT_FOUND) {
             // reproduce spidermonkey error message
-            throw Context.reportRuntimeError0("msg.empty.array.reduce");
+            throw ScriptRuntime.typeError0("msg.empty.array.reduce");
         }
         return value;
     }
