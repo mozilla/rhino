@@ -155,7 +155,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         NativeRegExpCtor ctor = new NativeRegExpCtor();
         // Bug #324006: ECMA-262 15.10.6.1 says "The initial value of
         // RegExp.prototype.constructor is the builtin RegExp constructor." 
-        proto.put("constructor", proto, ctor);
+        proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM);
 
         ScriptRuntime.setFunctionProtoAndParent(ctor, scope);
 
