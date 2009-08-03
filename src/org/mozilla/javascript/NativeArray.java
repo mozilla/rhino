@@ -157,23 +157,23 @@ public class NativeArray extends IdScriptableObject
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_join,
-                "join", 2);
+                "join", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reverse,
-                "reverse", 1);
+                "reverse", 0);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_sort,
-                "sort", 2);
+                "sort", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_push,
-                "push", 2);
+                "push", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_pop,
-                "pop", 2);
+                "pop", 0);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_shift,
-                "shift", 2);
+                "shift", 0);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_unshift,
-                "unshift", 2);
+                "unshift", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_splice,
                 "splice", 2);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_concat,
-                "concat", 2);
+                "concat", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_slice,
                 "slice", 2);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_indexOf,
@@ -207,27 +207,27 @@ public class NativeArray extends IdScriptableObject
         switch (id) {
           case Id_constructor:    arity=1; s="constructor";    break;
           case Id_toString:       arity=0; s="toString";       break;
-          case Id_toLocaleString: arity=1; s="toLocaleString"; break;
+          case Id_toLocaleString: arity=0; s="toLocaleString"; break;
           case Id_toSource:       arity=0; s="toSource";       break;
           case Id_join:           arity=1; s="join";           break;
           case Id_reverse:        arity=0; s="reverse";        break;
           case Id_sort:           arity=1; s="sort";           break;
           case Id_push:           arity=1; s="push";           break;
-          case Id_pop:            arity=1; s="pop";            break;
-          case Id_shift:          arity=1; s="shift";          break;
+          case Id_pop:            arity=0; s="pop";            break;
+          case Id_shift:          arity=0; s="shift";          break;
           case Id_unshift:        arity=1; s="unshift";        break;
-          case Id_splice:         arity=1; s="splice";         break;
+          case Id_splice:         arity=2; s="splice";         break;
           case Id_concat:         arity=1; s="concat";         break;
-          case Id_slice:          arity=1; s="slice";          break;
-          case Id_indexOf:        arity=1; s="indexOf";        break;
-          case Id_lastIndexOf:    arity=1; s="lastIndexOf";    break;
-          case Id_every:          arity=1; s="every";          break;
-          case Id_filter:         arity=1; s="filter";         break;
-          case Id_forEach:        arity=1; s="forEach";        break;
-          case Id_map:            arity=1; s="map";            break;
-          case Id_some:           arity=1; s="some";           break;
-          case Id_reduce:         arity=1; s="reduce";         break;
-          case Id_reduceRight:    arity=1; s="reduceRight";    break;
+          case Id_slice:          arity=2; s="slice";          break;
+          case Id_indexOf:        arity=2; s="indexOf";        break;
+          case Id_lastIndexOf:    arity=2; s="lastIndexOf";    break;
+          case Id_every:          arity=2; s="every";          break;
+          case Id_filter:         arity=2; s="filter";         break;
+          case Id_forEach:        arity=2; s="forEach";        break;
+          case Id_map:            arity=2; s="map";            break;
+          case Id_some:           arity=2; s="some";           break;
+          case Id_reduce:         arity=2; s="reduce";         break;
+          case Id_reduceRight:    arity=2; s="reduceRight";    break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(ARRAY_TAG, id, s, arity);
