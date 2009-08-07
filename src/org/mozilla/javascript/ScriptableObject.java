@@ -1574,11 +1574,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     private void checkValidPropertyDefinition(Slot slot, ScriptableObject desc) {
       Object getter = getProperty(desc, "get");
-      if (getter != NOT_FOUND && !(getter instanceof Callable)) {
+      if (getter != NOT_FOUND && getter != Undefined.instance && !(getter instanceof Callable)) {
         throw ScriptRuntime.notFunctionError(getter);
       }
       Object setter = getProperty(desc, "set");
-      if (setter != NOT_FOUND && !(setter instanceof Callable)) {
+      if (setter != NOT_FOUND && setter != Undefined.instance && !(setter instanceof Callable)) {
         throw ScriptRuntime.notFunctionError(setter);
       }
       if (isDataDescriptor(desc) && isAccessorDescriptor(desc)) {
@@ -1590,27 +1590,27 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
       } else {
         String name = slot.name;
         ScriptableObject current = getOwnPropertyDescriptor(Context.getContext(), name);
-        if (Boolean.FALSE.equals(current.get("configurable")) ) {
-          if (Boolean.TRUE.equals(tryBoolean(getProperty(desc, "configurable")))) 
+        if (isFalse(current.get("configurable", current))) {
+          if (isTrue(getProperty(desc, "configurable"))) 
             throw ScriptRuntime.typeError1("msg.change.configurable.false.to.true", name);
-          if (changes(current.get("enumerable"), tryBoolean(getProperty(desc, "enumerable"))))
+          if (isTrue(current.get("enumerable", current)) != isTrue(getProperty(desc, "enumerable")))
             throw ScriptRuntime.typeError1("msg.change.enumerable.with.configurable.false", name);
   
           if (isGenericDescriptor(desc)) {
             // no further validation required
           } else if (isDataDescriptor(desc) && isDataDescriptor(current)) {
-            if (Boolean.FALSE.equals(current.get("writable"))) {
-              if (Boolean.TRUE.equals(tryBoolean(getProperty(desc, "writable"))))
+            if (isFalse(current.get("writable", current))) {
+              if (isTrue(getProperty(desc, "writable")))
                 throw ScriptRuntime.typeError1("msg.change.writable.false.to.true.with.configurable.false", name);
   
-              if (changes(current.get("value"), getProperty(desc, "value")))
+              if (changes(current.get("value", current), getProperty(desc, "value")))
                 throw ScriptRuntime.typeError1("msg.change.value.with.writable.false", name);
             }
           } else if (isAccessorDescriptor(desc) && isAccessorDescriptor(current)) {
-              if (changes(current.get("set"), setter))
+              if (changes(current.get("set", current), setter))
                 throw ScriptRuntime.typeError1("msg.change.setter.with.configurable.false", name);
   
-              if (changes(current.get("get"), getter)) 
+              if (changes(current.get("get", current), getter)) 
                 throw ScriptRuntime.typeError1("msg.change.getter.with.configurable.false", name);
           } else {
             if (isDataDescriptor(current))
@@ -1622,15 +1622,20 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
       }
     }
 
-    private static Object tryBoolean(Object value) {
-      if (value == NOT_FOUND)
-          return NOT_FOUND;
-      return ScriptRuntime.toBoolean(value);
+    private static boolean isTrue(Object value) {
+      return (value == NOT_FOUND) ? false : ScriptRuntime.toBoolean(value);
+    }
+
+    private static boolean isFalse(Object value) {
+      return !isTrue(value);
     }
 
     private boolean changes(Object currentValue, Object newValue) {
-      return (newValue != NOT_FOUND) && 
-        (currentValue == NOT_FOUND || ! ScriptRuntime.shallowEq(currentValue, newValue));
+      if (newValue == NOT_FOUND) return false;
+      if (currentValue == NOT_FOUND) {
+        currentValue = Undefined.instance;
+      }
+      return !ScriptRuntime.shallowEq(currentValue, newValue);
     }
 
     private int applyDescriptorToAttributeBitset(int attributes,

@@ -114,7 +114,7 @@ js> // can change writable from true to false when configurable is false
 js> var obj = define({},  'a', {writable:true, configurable:false});
 js> var obj = define(obj, 'a', {writable:false});
 
-js> // can set enumerable to the same value when configuable is false
+js> // can set enumerable to the same value when configurable is false
 js> var obj = define({},  'a', {enumerable:true, configurable:false});
 js> var obj = define(obj, 'a', {enumerable:true});
 
@@ -188,3 +188,10 @@ js> Object.defineProperty({}, 'a', {get:function() { return "get called"; }}).a
 get called
 js> Object.defineProperty({}, 'a', {set:function(val) { print("set called with "+val); }}).a = 1; undefined;
 set called with 1
+
+js> // an accessor property without a setter behaves as if the setter were undefined
+js> // and thus the setter can be set to undefined even when configurable is false
+js> var obj = Object.defineProperty({}, 'a', {get:function(){return 1}})
+js> var _ = Object.defineProperty(obj, 'a', {set:undefined})
+js>
+
