@@ -720,21 +720,36 @@ public abstract class IdScriptableObject extends ScriptableObject
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
       ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
       if (desc == null && id instanceof String) {
-        Object value = get((String) id, this);
-        if (value != NOT_FOUND) {
-          boolean isMethod = (value instanceof Callable);
-
-          desc = new NativeObject();
-          Scriptable scope = getParentScope();
-          ScriptRuntime.setObjectProtoAndParent(desc, (scope == null ? this : scope));
-
-          desc.defineProperty("value",        value, EMPTY);
-          desc.defineProperty("enumerable",   false, EMPTY);
-          desc.defineProperty("writable",     isMethod, EMPTY);
-          desc.defineProperty("configurable", isMethod, EMPTY);
-        }
+        desc = getBuiltInDescriptor((String) id);
       }
       return desc;
+    }
+
+    private ScriptableObject getBuiltInDescriptor(String name) {
+      Object value = null;
+      int attr = EMPTY;
+
+      Scriptable scope = getParentScope();
+      if (scope == null) {
+        scope = this;
+      }
+
+      int info = findInstanceIdInfo(name);
+      if (info != 0) {
+        int id = (info & 0xFFFF);
+        value = getInstanceIdValue(id);
+        attr = (info >>> 16);
+        return buildDataDescriptor(scope, value, attr);
+      } 
+      if (prototypeValues != null) {
+        int id = prototypeValues.findId(name);
+        if (id != 0) {
+          value = prototypeValues.get(id);
+          attr = prototypeValues.getAttributes(id);
+          return buildDataDescriptor(scope, value, attr);
+        }
+      }
+      return null;
     }
 
     private void readObject(ObjectInputStream stream)

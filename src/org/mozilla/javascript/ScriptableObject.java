@@ -206,15 +206,23 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
 
         ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-            ScriptableObject desc = new NativeObject();
-            ScriptRuntime.setObjectProtoAndParent(desc, scope);
-            if (value != null) desc.defineProperty("value", value, EMPTY);
-            desc.defineProperty("writable",     (attributes & READONLY) == 0, EMPTY);
-            desc.defineProperty("enumerable",   (attributes & DONTENUM) == 0, EMPTY);
-            desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
-            return desc;
+            return buildDataDescriptor(
+                scope, 
+                (value == null ? Undefined.instance : value), 
+                attributes);
         }
 
+    }
+
+    protected static ScriptableObject buildDataDescriptor(Scriptable scope, Object value, int attributes) {
+      ScriptableObject desc = new NativeObject();
+      ScriptRuntime.setObjectProtoAndParent(desc, scope);
+
+      desc.defineProperty("value",        value, EMPTY);
+      desc.defineProperty("writable",     (attributes & READONLY) == 0, EMPTY);
+      desc.defineProperty("enumerable",   (attributes & DONTENUM) == 0, EMPTY);
+      desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
+      return desc;
     }
 
     private static final class GetterSlot extends Slot

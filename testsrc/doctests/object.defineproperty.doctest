@@ -32,7 +32,7 @@ js> var describe = Object.getOwnPropertyDescriptor;
 js> // when define new property with empty descriptor then default values are used for the descriptor
 js> var obj = define({}, 'a', {});
 js> describe(obj, 'a').toSource()
-({writable:false, enumerable:false, configurable:false})
+({value:undefined, writable:false, enumerable:false, configurable:false})
 
 js> // when define new property with data descriptor then those values are used for the descriptor
 js> var obj = define({}, 'a', { value: 2, writable: true });
