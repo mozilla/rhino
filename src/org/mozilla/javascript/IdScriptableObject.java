@@ -376,12 +376,14 @@ public abstract class IdScriptableObject extends ScriptableObject
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int id = (info & 0xFFFF);
-            return getInstanceIdValue(id);
+            Object value = getInstanceIdValue(id);
+            if (value != NOT_FOUND) return value;
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(name);
             if (id != 0) {
-                return prototypeValues.get(id);
+                Object value = prototypeValues.get(id);
+                if (value != NOT_FOUND) return value;
             }
         }
         return super.get(name, start);
@@ -715,6 +717,42 @@ public abstract class IdScriptableObject extends ScriptableObject
         if (isSealed()) { f.sealObject(); }
         return f;
     }
+
+    @Override
+    public void defineOwnProperty(Context cx, Object key, ScriptableObject desc) {
+      if (key instanceof String) {
+        String name = (String) key;
+        int info = findInstanceIdInfo(name);
+        if (info != 0) {
+            int id = (info & 0xFFFF);
+            if (isAccessorDescriptor(desc)) {
+              delete(id); // it will be replaced with a slot
+            } else {
+              int attr = (info >>> 16);
+              Object value = getProperty(desc, "value");
+              setInstanceIdValue(id, value == NOT_FOUND ? Undefined.instance : value);
+              setAttributes(id, applyDescriptorToAttributeBitset(attr, desc));
+              return;
+            }
+        }
+        if (prototypeValues != null) {
+            int id = prototypeValues.findId(name);
+            if (id != 0) {
+              if (isAccessorDescriptor(desc)) {
+                prototypeValues.delete(id); // it will be replaced with a slot
+              } else {
+                int attr = prototypeValues.getAttributes(id);
+                Object value = getProperty(desc, "value");
+                prototypeValues.set(id, this, value == NOT_FOUND ? Undefined.instance : value);
+                prototypeValues.setAttributes(id, applyDescriptorToAttributeBitset(attr, desc));
+                return;
+              }
+            }
+        }
+      }
+      super.defineOwnProperty(cx, key, desc);
+    }
+
 
     @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {

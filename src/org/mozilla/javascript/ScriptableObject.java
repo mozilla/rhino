@@ -1646,7 +1646,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
       return !ScriptRuntime.shallowEq(currentValue, newValue);
     }
 
-    private int applyDescriptorToAttributeBitset(int attributes,
+    protected int applyDescriptorToAttributeBitset(int attributes,
                                                  ScriptableObject desc)
     {
       Object enumerable = getProperty(desc, "enumerable");

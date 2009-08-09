@@ -189,6 +189,12 @@ get called
 js> Object.defineProperty({}, 'a', {set:function(val) { print("set called with "+val); }}).a = 1; undefined;
 set called with 1
 
+js> // make sure defineProperty works for builtin properties
+js> Object.defineProperty(JSON, 'stringify', {value:1}).stringify
+1
+js> Object.defineProperty(JSON, 'parse', {get:function() {print('do get'); return undefined}}).parse
+do get
+
 js> // an accessor property without a setter behaves as if the setter were undefined
 js> // and thus the setter can be set to undefined even when configurable is false
 js> var obj = Object.defineProperty({}, 'a', {get:function(){return 1}})
