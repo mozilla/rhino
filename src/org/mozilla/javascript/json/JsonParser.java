@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Norris Boyd
  *   Raphael Speyer
+ *   Hannes Wallnoefer
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -39,13 +40,8 @@
 
 package org.mozilla.javascript.json;
 
-import org.mozilla.javascript.json.JsonLexer.Token;
-
-import static org.mozilla.javascript.json.JsonLexer.Token.*;
-import static org.mozilla.javascript.json.JsonLexer.VALUE_START_TOKENS;
-
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,205 +51,310 @@ import java.util.List;
  *
  * See ECMA 15.12.
  * @author Raphael Speyer
+ * @author Hannes Wallnoefer
  */
-
 public class JsonParser {
-  public JsonParser(Context cx, Scriptable scope) {
-    this.cx = cx;
-    this.scope = scope;
-  }
 
-  private Context cx;
-  private Scriptable scope;
+    private Context cx;
+    private Scriptable scope;
 
-  private Object readNull(JsonLexer lexer) throws ParseException {
-    expectCurrentToken(lexer, NULL);
-    lexer.moveNext();
-    return null;
-  }
+    private int pos;
+    private int length;
+    private String src;
 
-  private Boolean readBoolean(JsonLexer lexer) throws ParseException {
-    expectCurrentToken(lexer, BOOLEAN);
-    Boolean bool = BOOLEAN.evaluate(lexer.getLexeme());
-    lexer.moveNext();
-    return bool;
-  }
-
-  private Number readNumber(JsonLexer lexer) throws ParseException {
-    expectCurrentToken(lexer, NUMBER);
-    Number num = NUMBER.evaluate(lexer.getLexeme());
-    lexer.moveNext();
-    return num;
-  }
-
-  private String readString(JsonLexer lexer) throws ParseException {
-    expectCurrentToken(lexer, STRING);
-    String str = STRING.evaluate(lexer.getLexeme());
-    lexer.moveNext();
-    return str;
-  }
-
-  private Scriptable newObject() {
-    return cx.newObject(scope);
-  }
-
-  private Scriptable readObject(JsonLexer lexer) throws ParseException {
-    expectCurrentToken(lexer, OPEN_BRACE);
-    expectMoveNext(lexer, STRING, CLOSE_BRACE);
-    Scriptable object = newObject();
-
-    while (isCurrentToken(lexer, STRING)) {
-      String string = readString(lexer);
-      expectCurrentToken(lexer,COLON);
-      expectMoveNext(lexer, VALUE_START_TOKENS);
-      Object value = readValue(lexer);
-      object.put(string, object, value);
-      if (isCurrentToken(lexer, CLOSE_BRACE))
-        break;
-      else {
-        expectCurrentToken(lexer,COMMA);
-        expectMoveNext(lexer, VALUE_START_TOKENS);
-      }
+    public JsonParser(Context cx, Scriptable scope) {
+        this.cx = cx;
+        this.scope = scope;
     }
 
-    expectCurrentToken(lexer, CLOSE_BRACE);
-    lexer.moveNext();
-
-    return object;
-  }
-
-  private Scriptable newArray(List<Object> items) {
-    return cx.newArray(scope, items.toArray());
-  }
-
-  private Scriptable readArray(JsonLexer lexer) throws ParseException {
-    expectCurrentToken(lexer,OPEN_BRACKET);
-    expectMoveNext(lexer, NULL, BOOLEAN, NUMBER, STRING, OPEN_BRACKET, OPEN_BRACE, CLOSE_BRACKET);
-
-    List<Object> array = new ArrayList<Object>();
-
-    while (isCurrentToken(lexer, VALUE_START_TOKENS)) {
-      array.add(readValue(lexer));
-
-      if (isCurrentToken(lexer, CLOSE_BRACKET)) {
-        break;
-      } else {
-        expectCurrentToken(lexer,COMMA);
-        expectMoveNext(lexer, VALUE_START_TOKENS);
-      }
-    }
-
-    expectCurrentToken(lexer,CLOSE_BRACKET);
-    lexer.moveNext();
-
-    return newArray(array);
-  }
-
-  private Object readValue(JsonLexer lexer) throws ParseException {
-    if (isCurrentToken(lexer, NULL)) {
-      return readNull(lexer);
-    } else if (isCurrentToken(lexer, BOOLEAN)) {
-      return readBoolean(lexer);
-    } else if (isCurrentToken(lexer, NUMBER)) {
-      return readNumber(lexer);
-    } else if (isCurrentToken(lexer, STRING)) {
-      return readString(lexer);
-    } else if (isCurrentToken(lexer, OPEN_BRACKET)) {
-      return readArray(lexer);
-    } else if (isCurrentToken(lexer, OPEN_BRACE)) {
-      return readObject(lexer);
-    } else {
-      throw new ParseException(lexer.getLexeme(), VALUE_START_TOKENS);
-    }
-  }
-
-  /**
-   * Checks that the current token is <tt>expected</tt>, and if not throws a ParseException
-   */
-  private void expectCurrentToken(JsonLexer lexer, Token expected) throws ParseException {
-    if (!isCurrentToken(lexer, expected)) {
-      throw new ParseException(lexer.getLexeme(), expected);
-    }
-  }
-
-  /**
-   * Checks that the current token is one of <tt>expected</tt>, and if not throws a ParseException
-   */
-  private void expectCurrentToken(JsonLexer lexer, Token... expected) throws ParseException {
-    if (!isCurrentToken(lexer, expected)) {
-      throw new ParseException(lexer.getLexeme(), expected);
-    }
-  }
-
-  /**
-   * Attempts to move the lexer to the next token, and throws a ParseException with the expected next token types if not successful
-   */
-  private void expectMoveNext(JsonLexer lexer, Token... expected) throws ParseException {
-    if (!lexer.moveNext()) {
-      throw new ParseException("no valid tokens from " + lexer.getOffset(), expected);
-    }
-    expectCurrentToken(lexer, expected);
-  }
-
-  private boolean isCurrentToken(JsonLexer lexer, Token tok) {
-    return lexer.getToken() == tok;
-  }
-
-  private boolean isCurrentToken(JsonLexer lexer, Token... toks) {
-    for (Token tok : toks) {
-      if (lexer.getToken() == tok)
-        return true;
-    }
-    return false;
-  }
-
-  public static class ParseException extends Exception {
-
-    private ParseException(String message) {
-      super(message);
-    }
-
-    private ParseException(Throwable error) {
-      super(error);
-    }
-
-    private ParseException(String found, Token... expected) {
-      super(buildMessage(found, expected));
-    }
-
-    private static String buildMessage(String found, Token... expected) {
-      StringBuffer buffer = new StringBuffer("Expected: ");
-
-      for (int i = 0; i < expected.length; i++) {
-        buffer.append(expected[i].toString());
-        if (i < expected.length - 1)
-          buffer.append(" or ");
-      }
-
-      buffer.append(" , Found: '" + found + "'");
-      
-      return buffer.toString();
-    }
-  }
-
-  public Object parseValue(String json) throws ParseException {
-    if (json == null) 
-      throw new ParseException("Input JSON string may not be null");
-    try {
-      JsonLexer lexer = initLexer(json, VALUE_START_TOKENS);
-      Object value = readValue(lexer);
-      if (lexer.finished() && lexer.getLexeme().equals("")) 
+    public synchronized Object parseValue(String json) throws ParseException {
+        if (json == null) {
+            throw new ParseException("Input string may not be null");
+        }
+        pos = 0;
+        length = json.length();
+        src = json;
+        Object value = readValue();
+        if (pos < length) {
+            throw new ParseException("Expected end of stream at char " + pos);
+        }
         return value;
-      else
-        throw new ParseException("Expected end of stream at char "+lexer.getOffset());
-    } catch (IllegalArgumentException iae) {
-      throw new ParseException(iae);
     }
-  }
 
-  private JsonLexer initLexer(String json, Token... firstToken) throws ParseException {
-    JsonLexer lexer = new JsonLexer(json);
-    expectMoveNext(lexer, firstToken);
-    return lexer;
-  }
+    private Object readValue() throws ParseException {
+        while (pos < length) {
+            char c = src.charAt(pos++);
+            switch (c) {
+                case ' ':
+                case '\t':
+                case '\r':
+                case '\n':
+                    break;
+                case '{':
+                    return readObject();
+                case '[':
+                    return readArray();
+                case 't':
+                    return readTrue();
+                case 'f':
+                    return readFalse();
+                case '"':
+                    return readString();
+                case 'n':
+                    return readNull();
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case '0':
+                case '-':
+                    return readNumber(c);
+                default:
+                    throw new ParseException("Unexpected token: " + c);
+            }
+        }
+        throw new ParseException("Empty JSON string");
+    }
+
+    private Object readObject() throws ParseException {
+        Scriptable object = cx.newObject(scope);
+        String id;
+        Object value;
+        boolean needsComma = false;
+        while (pos < length) {
+            char c = src.charAt(pos++);
+            switch(c) {
+                case ' ':
+                case '\t':
+                case '\r':
+                case '\n':
+                    break;
+                case '}':
+                    return object;
+                case ',':
+                    if (!needsComma) {
+                        throw new ParseException("Unexpected comma in object literal");
+                    }
+                    needsComma = false;
+                    break;
+                case '"':
+                    if (needsComma) {
+                        throw new ParseException("Missing comma in object literal");
+                    }
+                    id = readString();
+                    consume(':');
+                    value = readValue();
+                    object.put(id, object, value);
+                    needsComma = true;
+                    break;
+                default:
+                    throw new ParseException("Unexpected token in object literal");
+            }
+        }
+        throw new ParseException("Unterminated object literal");
+    }
+
+    private Object readArray() throws ParseException {
+        List<Object> list = new ArrayList<Object>();
+        boolean needsComma = false;
+        while (pos < length) {
+            char c = src.charAt(pos);
+            switch(c) {
+                case ' ':
+                case '\t':
+                case '\r':
+                case '\n':
+                    pos += 1;
+                    break;
+                case ']':
+                    pos += 1;
+                    return cx.newArray(scope, list.toArray());
+                case ',':
+                    if (!needsComma) {
+                        throw new ParseException("Unexpected comma in array literal");
+                    }
+                    needsComma = false;
+                    pos += 1;
+                    break;
+                default:
+                    if (needsComma) {
+                        throw new ParseException("Missing comma in array literal");
+                    }
+                    list.add(readValue());
+                    needsComma = true;
+            }
+        }
+        throw new ParseException("Unterminated array literal");
+    }
+
+    private String readString() throws ParseException {
+        StringBuilder b = new StringBuilder();
+        while (pos < length) {
+            char c = src.charAt(pos++);
+            if (c <= '\u001F') {
+                throw new ParseException("String contains control character");
+            }
+            switch(c) {
+                case '\\':
+                    if (pos >= length) {
+                        throw new ParseException("Unterminated string");
+                    }
+                    c = src.charAt(pos++);
+                    switch (c) {
+                        case '"':
+                            b.append('"');
+                            break;
+                        case '\\':
+                            b.append('\\');
+                            break;
+                        case '/':
+                            b.append('/');
+                            break;
+                        case 'f':
+                            b.append('\f');
+                            break;
+                        case 'n':
+                            b.append('\n');
+                            break;
+                        case 'r':
+                            b.append('\r');
+                            break;
+                        case 't':
+                            b.append('\t');
+                            break;
+                        case 'u':
+                            if (length - pos < 5) {
+                                throw new ParseException("Invalid character code: \\u" + src.substring(pos));
+                            }
+                            try {
+                                b.append((char) Integer.parseInt(src.substring(pos, pos + 4), 16));
+                                pos += 4;
+                            } catch (NumberFormatException nfx) {
+                                throw new ParseException("Invalid character code: " + src.substring(pos, pos + 4));
+                            }
+                            break;
+                        default:
+                            throw new ParseException("Unexcpected character in string: '\\" + c + "'");
+                    }
+                    break;
+                case '"':
+                    return b.toString();
+                default:
+                    b.append(c);
+                    break;
+            }
+        }
+        throw new ParseException("Unterminated string literal");
+    }
+
+    private Number readNumber(char first) throws ParseException {
+        StringBuilder b = new StringBuilder();
+        b.append(first);
+        while (pos < length) {
+            char c = src.charAt(pos);
+            if (!Character.isDigit(c)
+                    && c != '-'
+                    && c != '+'
+                    && c != '.'
+                    && c != 'e'
+                    && c != 'E') {
+                break;
+            }
+            pos += 1;
+            b.append(c);
+        }
+        String num = b.toString();
+        int numLength = num.length();
+        try {
+            // check for leading zeroes
+            for (int i = 0; i < numLength; i++) {
+                char c = num.charAt(i);
+                if (Character.isDigit(c)) {
+                    if (c == '0'
+                            && numLength > i + 1
+                            && Character.isDigit(num.charAt(i + 1))) {
+                        throw new ParseException("Unsupported number format: " + num);
+                    }
+                    break;
+                }
+            }
+            double d = Double.valueOf(num);
+            if ((int)d == d) {
+                return new Integer((int) d);
+            } else {
+                return new Double(d);
+            }
+        } catch (NumberFormatException nfe) {
+            throw new ParseException("Unsupported number format: " + num);
+        }
+    }
+
+    private Boolean readTrue() throws ParseException {
+        if (length - pos < 3
+                || src.charAt(pos) != 'r'
+                || src.charAt(pos + 1) != 'u'
+                || src.charAt(pos + 2) != 'e') {
+            throw new ParseException("Unexpected token: t");
+        }
+        pos += 3;
+        return Boolean.TRUE;
+    }
+
+    private Boolean readFalse() throws ParseException {
+        if (length - pos < 4
+                || src.charAt(pos) != 'a'
+                || src.charAt(pos + 1) != 'l'
+                || src.charAt(pos + 2) != 's'
+                || src.charAt(pos + 3) != 'e') {
+            throw new ParseException("Unexpected token: f");
+        }
+        pos += 4;
+        return Boolean.FALSE;
+    }
+
+    private Object readNull() throws ParseException {
+        if (length - pos < 3
+                || src.charAt(pos) != 'u'
+                || src.charAt(pos + 1) != 'l'
+                || src.charAt(pos + 2) != 'l') {
+            throw new ParseException("Unexpected token: n");
+        }
+        pos += 3;
+        return null;
+    }
+
+    private void consume(char token) throws ParseException {
+        while (pos < length) {
+            char c = src.charAt(pos++);
+            switch(c) {
+                case ' ':
+                case '\t':
+                case '\r':
+                case '\n':
+                    break;
+                default:
+                    if (c == token) {
+                        return;
+                    } else {
+                        throw new ParseException("Expected " + token + " found " + c);
+                    }
+            }
+        }
+    }
+
+    public static class ParseException extends Exception {
+        ParseException(String message) {
+            super(message);
+        }
+
+        ParseException(Exception cause) {
+            super(cause);
+        }
+    }
+
 }
