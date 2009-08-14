@@ -215,6 +215,9 @@ public class JsonParser {
                         case '/':
                             b.append('/');
                             break;
+                        case 'b':
+                            b.append('\b');
+                            break;
                         case 'f':
                             b.append('\f');
                             break;
