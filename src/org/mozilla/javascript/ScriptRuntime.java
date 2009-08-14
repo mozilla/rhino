@@ -1631,9 +1631,11 @@ public class ScriptRuntime {
             String s = toStringIdOrIndex(cx, elem);
             if (s == null) {
                 int index = lastIndexResult(cx);
-                result = ScriptableObject.deleteProperty(target, index);
+            	target.delete(index);
+                return !target.has(index, target);
             } else {
-                result = ScriptableObject.deleteProperty(target, s);
+            	target.delete(s);
+                return !target.has(s, target);
             }
         }
         return result;
