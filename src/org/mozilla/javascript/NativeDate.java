@@ -66,6 +66,7 @@ final class NativeDate extends IdScriptableObject
     static {
       isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
       isoFormat.setTimeZone(new SimpleTimeZone(0, "UTC"));
+      isoFormat.setLenient(false);
     }
 
     static void init(Scriptable scope, boolean sealed)
@@ -855,6 +856,10 @@ final class NativeDate extends IdScriptableObject
 
     private static double date_parseString(String s)
     {
+        try {
+          if (s.length() == 24) return isoFormat.parse(s).getTime();
+        } catch (java.text.ParseException ex) {}
+
         int year = -1;
         int mon = -1;
         int mday = -1;
