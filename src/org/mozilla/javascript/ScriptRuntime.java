@@ -3454,21 +3454,24 @@ public class ScriptRuntime {
                     ++j;
                 }
             }
-            return cx.newObject(scope, "Array", sparse);
+            NativeArray array = new NativeArray(sparse);
+            setObjectProtoAndParent(array, scope);
+            return array;
         }
         
-        Scriptable arrayObj = cx.newObject(scope, "Array",
-                                           ScriptRuntime.emptyArgs);
+        NativeArray array = new NativeArray(length);
+        setObjectProtoAndParent(array, scope);
+
         int skip = 0;
         for (int i = 0, j = 0; i != length; ++i) {
             if (skip != skipCount && skipIndices[skip] == i) {
                 ++skip;
                 continue;
             }
-            ScriptableObject.putProperty(arrayObj, i, objects[j]);
+            ScriptableObject.putProperty(array, i, objects[j]);
             ++j;
         }
-        return arrayObj;
+        return array;
     }
 
   /**
