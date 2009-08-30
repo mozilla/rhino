@@ -43,6 +43,9 @@ package org.mozilla.javascript;
 import java.io.Serializable;
 
 import org.mozilla.javascript.xml.XMLLib;
+import static org.mozilla.javascript.ScriptableObject.DONTENUM;
+import static org.mozilla.javascript.ScriptableObject.READONLY;
+import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 
 /**
  * This class implements the global native object (function and value
@@ -117,14 +120,14 @@ public class NativeGlobal implements Serializable, IdFunctionCall
 
         ScriptableObject.defineProperty(
             scope, "NaN", ScriptRuntime.NaNobj,
-            ScriptableObject.DONTENUM);
+            READONLY|DONTENUM|PERMANENT);
         ScriptableObject.defineProperty(
             scope, "Infinity",
             ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY),
-            ScriptableObject.DONTENUM);
+            READONLY|DONTENUM|PERMANENT);
         ScriptableObject.defineProperty(
             scope, "undefined", Undefined.instance,
-            ScriptableObject.DONTENUM);
+            READONLY|DONTENUM|PERMANENT);
 
         String[] errorMethods = {
                 "ConversionError",
