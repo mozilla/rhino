@@ -188,7 +188,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     return js_escape(args);
 
                 case Id_eval:
-                    return js_eval(cx, scope, thisObj, args);
+                    return js_eval(cx, scope, args);
 
                 case Id_isFinite: {
                     boolean result;
@@ -538,15 +538,14 @@ public class NativeGlobal implements Serializable, IdFunctionCall
         return s;
     }
 
-    private Object js_eval(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
+    /**
+     * This is an indirect call to eval, and thus uses the global environment.
+     * Direct calls are executed via ScriptRuntime.callSpecial().
+     */
+    private Object js_eval(Context cx, Scriptable scope, Object[] args)
     {
-        if (thisObj.getParentScope() == null) {
-            // We allow indirect calls to eval as long as the script will execute in 
-            // the global scope.
-            return ScriptRuntime.evalSpecial(cx, scope, thisObj, args, "eval code", 1);
-        }
-        String m = ScriptRuntime.getMessage1("msg.cant.call.indirect", "eval");
-        throw NativeGlobal.constructError(cx, "EvalError", m, scope);
+        Scriptable global = ScriptableObject.getTopLevelScope(scope);
+        return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
     }
 
     static boolean isEvalFunction(Object functionObj)

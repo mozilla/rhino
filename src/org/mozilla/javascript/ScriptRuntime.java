@@ -2365,7 +2365,7 @@ public class ScriptRuntime {
                                      String filename, int lineNumber)
     {
         if (callType == Node.SPECIALCALL_EVAL) {
-            if (NativeGlobal.isEvalFunction(fun)) {
+            if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
                 return evalSpecial(cx, scope, callerThis, args,
                                    filename, lineNumber);
             }

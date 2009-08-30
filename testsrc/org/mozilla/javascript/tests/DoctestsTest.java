@@ -86,10 +86,8 @@ public class DoctestsTest {
         try {
             cx.setOptimizationLevel(optimizationLevel);
             Global global = new Global(cx);
-            Scriptable scope = cx.newObject(global);
-            scope.setPrototype(global);
             // global.runDoctest throws an exception on any failure
-            int testsPassed = global.runDoctest(cx, scope, source, name, 1);
+            int testsPassed = global.runDoctest(cx, global, source, name, 1);
             System.out.println(name + "(" + optimizationLevel + "): " +
                     testsPassed + " passed.");
             assertTrue(testsPassed > 0);
