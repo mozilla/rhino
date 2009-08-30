@@ -284,6 +284,44 @@ public class ScriptRuntime {
         return c == '\n' || c == '\r' || c == 0x2028 || c == 0x2029;
     }
 
+    public static boolean isJSWhitespaceOrLineTerminator(int c) {
+      return (isStrWhiteSpaceChar(c) || isJSLineTerminator(c));
+    }
+
+    /**
+     * Indicates if the character is a Str whitespace char according to ECMA spec:
+     * StrWhiteSpaceChar :::
+      <TAB>
+      <SP>
+      <NBSP>
+      <FF>
+      <VT>
+      <CR>
+      <LF>
+      <LS>
+      <PS>
+      <USP>
+      <BOM>
+     */
+    static boolean isStrWhiteSpaceChar(int c)
+    {
+    	switch (c) {
+    		case ' ': // <SP>
+    		case '\n': // <LF>
+    		case '\r': // <CR>
+    		case '\t': // <TAB>
+    		case '\u00A0': // <NBSP>
+    		case '\u000C': // <FF>
+    		case '\u000B': // <VT>
+    		case '\u2028': // <LS>
+    		case '\u2029': // <PS>
+        case '\uFEFF': // <BOM>
+    			return true;
+    		default:
+    			return Character.getType(c) == Character.SPACE_SEPARATOR;
+    	}
+    }
+
     public static Boolean wrapBoolean(boolean b)
     {
         return b ? Boolean.TRUE : Boolean.FALSE;
@@ -555,7 +593,7 @@ public class ScriptRuntime {
                 return +0.0;
             }
             startChar = s.charAt(start);
-            if (!Character.isWhitespace(startChar))
+            if (!ScriptRuntime.isStrWhiteSpaceChar(startChar))
                 break;
             start++;
         }
@@ -581,7 +619,7 @@ public class ScriptRuntime {
 
         int end = len - 1;
         char endChar;
-        while (Character.isWhitespace(endChar = s.charAt(end)))
+        while (ScriptRuntime.isStrWhiteSpaceChar(endChar = s.charAt(end)))
             end--;
         if (endChar == 'y') {
             // check for "Infinity"

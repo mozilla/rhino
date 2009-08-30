@@ -418,11 +418,11 @@ final class NativeString extends IdScriptableObject
                     char[] chars = str.toCharArray();
 
                     int start = 0;
-                    while (start < chars.length && isWhitespaceOrLineTerminator(chars[start])) {
+                    while (start < chars.length && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[start])) {
                       start++;
                     }
                     int end = chars.length;
-                    while (end > start && isWhitespaceOrLineTerminator(chars[end-1])) {
+                    while (end > start && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[end-1])) {
                       end--;
                     }
 
@@ -431,23 +431,6 @@ final class NativeString extends IdScriptableObject
             }
             throw new IllegalArgumentException(String.valueOf(id));
         }
-    }
-
-    private boolean isWhitespaceOrLineTerminator(char c) {
-      switch (c) {
-        // ecma whitespace
-        case 0x0009: case 0x000B: case 0x000C: case 0x0020: case 0x00A0: case 0xFEFF: 
-        // unicode whitespace (category Zs)
-        case 0x1680: case 0x180E: 
-        case 0x2000: case 0x2001: case 0x2002: case 0x2003: case 0x2004: case 0x2005: 
-        case 0x2006: case 0x2007: case 0x2008: case 0x2009: case 0x200A: 
-        case 0x202F: case 0x205F: case 0x3000: 
-        // ecma line terminators
-        case 0x000A: case 0x000D: case 0x2028: case 0x2029: 
-          return true;
-        default:
-          return false;
-      }
     }
 
     private static NativeString realThis(Scriptable thisObj, IdFunctionObject f)

@@ -263,7 +263,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
         char c;
         do {
             c = s.charAt(start);
-            if (!isStrWhiteSpaceChar(c))
+            if (!ScriptRuntime.isStrWhiteSpaceChar(c))
                 break;
             start++;
         } while (start < len);
@@ -301,38 +301,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     }
 
     /**
-     * Indicates if the character is a Str whitespace char according to ECMA spec:
-     * StrWhiteSpaceChar :::
-      <TAB>
-      <SP>
-      <NBSP>
-      <FF>
-      <VT>
-      <CR>
-      <LF>
-      <LS>
-      <PS>
-      <USP>
-     */
-    static boolean isStrWhiteSpaceChar(char c)
-    {
-    	switch (c) {
-    		case '\t': // <TAB>
-    		case ' ': // <SP>
-    		case '\u00A0': // <NBSP>
-    		case '\u000C': // <FF>
-    		case '\u000B': // <VT>
-    		case '\r': // <CR>
-    		case '\n': // <LF>
-    		case '\u2028': // <LS>
-    		case '\u2029': // <PS>
-    			return true;
-    		default:
-    			return Character.getType(c) == Character.SPACE_SEPARATOR;
-    	}
-    }
-
-    /**
      * The global method parseFloat, as per ECMA-262 15.1.2.3.
      *
      * @param args the arguments to parseFloat, ignoring args[>=1]
@@ -352,7 +320,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                 return ScriptRuntime.NaNobj;
             }
             c = s.charAt(start);
-            if (!isStrWhiteSpaceChar(c)) {
+            if (!ScriptRuntime.isStrWhiteSpaceChar(c)) {
                 break;
             }
             ++start;
