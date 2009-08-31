@@ -370,8 +370,8 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
 
         case JSTYPE_OBJECT:
             // Other objects takes #1-#3 spots
-            if (Scriptable.class.isAssignableFrom(to) && to.isInstance(fromObj)) {
-                // No conversion required
+            if (to != ScriptRuntime.ObjectClass && to.isInstance(fromObj)) {
+                // No conversion required, but don't apply for java.lang.Object
                 return 1;
             }
             if (to.isArray()) {
