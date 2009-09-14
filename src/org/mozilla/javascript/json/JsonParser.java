@@ -71,7 +71,6 @@ public class JsonParser {
         if (json == null) {
             throw new ParseException("Input string may not be null");
         }
-        json = json.trim();
         pos = 0;
         length = json.length();
         src = json;
