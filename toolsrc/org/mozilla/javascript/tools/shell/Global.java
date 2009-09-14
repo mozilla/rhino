@@ -379,7 +379,8 @@ public class Global extends ImporterTopLevel
     }
     
     /**
-     * Example: doctest("js> function f() {\n  >   return 3;\n  > }\njs> f();\n3\n"); returns true
+     * Example: doctest("js> function f() {\n  >   return 3;\n  > }\njs> f();\n3\n"); returns 2
+     * (since 2 tests were executed).
      */
     public static Object doctest(Context cx, Scriptable thisObj,
                                  Object[] args, Function funObj)
