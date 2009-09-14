@@ -592,7 +592,9 @@ public class BaseFunction extends IdScriptableObject implements Function
 // #/string_id_map#
 
     private Object prototypeProperty;
-    // For function object instances, attribute is PERMANENT; see ECMA 15.3.5.2
-    private int prototypePropertyAttributes = PERMANENT;
+    // For function object instances, attributes are
+    //  {configurable:false, enumerable:false}; 
+    // see ECMA 15.3.5.2
+    private int prototypePropertyAttributes = PERMANENT|DONTENUM;
 }
 

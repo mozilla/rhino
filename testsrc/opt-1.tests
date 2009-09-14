@@ -439,15 +439,10 @@ ecma/GlobalObject/15.1-2-n.js
 ecma/GlobalObject/15.1.1.1.js
 ecma/GlobalObject/15.1.1.2.js
 ecma/GlobalObject/15.1.2.1-2.js
-ecma/GlobalObject/15.1.2.2-1.js
 ecma/GlobalObject/15.1.2.2-2.js
-ecma/GlobalObject/15.1.2.3-1.js
 ecma/GlobalObject/15.1.2.3-2.js
-ecma/GlobalObject/15.1.2.4.js
-ecma/GlobalObject/15.1.2.5-1.js
 ecma/GlobalObject/15.1.2.5-2.js
 ecma/GlobalObject/15.1.2.5-3.js
-ecma/GlobalObject/15.1.2.7.js
 ecma/LexicalConventions/7.1-1.js
 ecma/LexicalConventions/7.1-2.js
 ecma/LexicalConventions/7.1-3.js
@@ -688,7 +683,6 @@ ecma/extensions/11.6.1-2.js
 ecma/extensions/11.6.1-3.js
 ecma/extensions/11.6.2-1.js
 ecma/extensions/15-2.js
-ecma/extensions/15.1.2.1-1.js
 ecma/extensions/15.2.1.1.js
 ecma/extensions/15.2.3-1.js
 ecma/extensions/15.2.4.js
@@ -1167,7 +1161,6 @@ js1_5/Exceptions/regress-350837.js
 js1_5/Expressions/regress-192288.js
 js1_5/Expressions/regress-96526-argsub.js
 js1_5/Expressions/regress-96526-noargsub.js
-js1_5/Function/10.1.6-01.js
 js1_5/Function/10.1.6.js
 js1_5/Function/15.3.4.4.js
 js1_5/Function/regress-123371.js
