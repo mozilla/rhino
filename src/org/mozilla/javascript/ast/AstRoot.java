@@ -57,6 +57,7 @@ import java.util.TreeSet;
 public class AstRoot extends ScriptNode {
 
     private SortedSet<Comment> comments;
+    private boolean inStrictMode;
 
     {
         type = Token.SCRIPT;
@@ -105,6 +106,14 @@ public class AstRoot extends ScriptNode {
         }
         comments.add(comment);
         comment.setParent(this);
+    }
+    
+    public void setInStrictMode(boolean inStrictMode) {
+        this.inStrictMode = inStrictMode;
+    }
+    
+    public boolean isInStrictMode() {
+        return inStrictMode;
     }
 
     /**

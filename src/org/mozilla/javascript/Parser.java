@@ -57,6 +57,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * This class implements the JavaScript parser.<p>
@@ -112,6 +114,7 @@ public class Parser
     protected int nestingOfFunction;
     private LabeledStatement currentLabel;
     private boolean inDestructuringAssignment;
+    private boolean inUseStrictDirective;
 
     // The following are per function variables and should be saved/restored
     // during function parsing.  See PerFunctionVariables class below.
@@ -527,6 +530,11 @@ public class Parser
 
         int baseLineno = ts.lineno;  // line number where source starts
         int end = pos;  // in case source is empty
+        
+        boolean inDirectivePrologue = true;
+        boolean savedStrictMode = inUseStrictDirective;
+        // TODO: eval code should get strict mode from invoking code
+        inUseStrictDirective = false;
 
         try {
             for (;;) {
@@ -547,6 +555,16 @@ public class Parser
                     }
                 } else {
                     n = statement();
+                    if (inDirectivePrologue) {
+                        String directive = getDirective(n);
+                        if (directive == null) {
+                            inDirectivePrologue = false;
+                        } else if (directive.equals("use strict")) {
+                            inUseStrictDirective = true;
+                            root.setInStrictMode(true);
+                        }
+                    }
+
                 }
                 end = getNodeEnd(n);
                 root.addChildToBack(n);
@@ -557,6 +575,8 @@ public class Parser
             if (!compilerEnv.isIdeMode())
                 throw Context.reportRuntimeError(msg, sourceURI,
                                                  ts.lineno, null, 0);
+        } finally {
+            inUseStrictDirective = savedStrictMode;
         }
 
         if (this.syntaxErrorCount != 0) {
@@ -597,6 +617,11 @@ public class Parser
         ++nestingOfFunction;
         int pos = ts.tokenBeg;
         Block pn = new Block(pos);  // starts at LC position
+        
+        boolean inDirectivePrologue = true;
+        boolean savedStrictMode = inUseStrictDirective;
+        // Don't set 'inUseStrictDirective' to false: inherit strict mode.
+        
         pn.setLineno(ts.lineno);
         try {
             bodyLoop: for (;;) {
@@ -614,6 +639,14 @@ public class Parser
                     break;
                   default:
                     n = statement();
+                    if (inDirectivePrologue) {
+                        String directive = getDirective(n);
+                        if (directive == null) {
+                            inDirectivePrologue = false;
+                        } else if (directive.equals("use strict")) {
+                            inUseStrictDirective = true;
+                        }
+                    }
                     break;
                 }
                 pn.addStatement(n);
@@ -622,6 +655,7 @@ public class Parser
             // Ignore it
         } finally {
             --nestingOfFunction;
+            inUseStrictDirective = savedStrictMode;
         }
 
         int end = ts.tokenEnd;
@@ -630,6 +664,16 @@ public class Parser
             end = ts.tokenEnd;
         pn.setLength(end - pos);
         return pn;
+    }
+    
+    private String getDirective(AstNode n) {
+        if (n instanceof ExpressionStatement) {
+            AstNode e = ((ExpressionStatement) n).getExpression();
+            if (e instanceof StringLiteral) {
+                return ((StringLiteral) e).getValue();
+            }
+        }
+        return null;
     }
 
     private void parseFunctionParams(FunctionNode fnNode)
@@ -642,6 +686,7 @@ public class Parser
         // Would prefer not to call createDestructuringAssignment until codegen,
         // but the symbol definitions have to happen now, before body is parsed.
         Map<String, Node> destructuring = null;
+        Set<String> paramNames = new HashSet<String>();
         do {
             int tt = peekToken();
             if (tt == Token.LB || tt == Token.LC) {
@@ -660,7 +705,13 @@ public class Parser
             } else {
                 if (mustMatchToken(Token.NAME, "msg.no.parm")) {
                     fnNode.addParam(createNameNode());
-                    defineSymbol(Token.LP, ts.getString());
+                    String paramName = ts.getString();
+                    defineSymbol(Token.LP, paramName);
+                    if (this.inUseStrictDirective) {
+                        if (paramNames.contains(paramName))
+                            addError("msg.dup.param.strict", paramName);
+                        paramNames.add(paramName);
+                    }
                 } else {
                     fnNode.addParam(makeErrorNode());
                 }
@@ -951,6 +1002,9 @@ public class Parser
               break;
 
           case Token.WITH:
+              if (this.inUseStrictDirective) {
+                  reportError("msg.no.with.strict");
+              }
               return withStatement();
 
           case Token.CONST:
@@ -2731,10 +2785,16 @@ public class Parser
           case Token.NAME:
               return name(ttFlagged, tt);
 
-          case Token.NUMBER:
+          case Token.NUMBER: {
+              String s = ts.getString();
+              if (this.inUseStrictDirective && ts.isNumberOctal()) {
+                  reportError("msg.no.octal.strict");
+              }
               return new NumberLiteral(ts.tokenBeg,
-                                       ts.getString(),
+                                       s,
                                        ts.getNumber());
+          }
+          
           case Token.STRING:
               return createStringLiteral();
 
@@ -2984,9 +3044,11 @@ public class Parser
         int pos = ts.tokenBeg, lineno = ts.lineno;
         int afterComma = -1;
         List<ObjectProperty> elems = new ArrayList<ObjectProperty>();
+        Set<String> propertyNames = new HashSet<String>();
 
       commaLoop:
         for (;;) {
+            String propertyName = null;
             int tt = peekToken();
             switch(tt) {
               case Token.NAME:
@@ -2999,17 +3061,19 @@ public class Parser
                       stringProp = createStringLiteral();
                   }
                   Name name = createNameNode();
-                  String prop = ts.getString();
+                  propertyName = ts.getString();
                   int ppos = ts.tokenBeg;
 
                   if ((tt == Token.NAME
                        && peekToken() == Token.NAME
-                       && ("get".equals(prop) || "set".equals(prop))))
+                       && ("get".equals(propertyName) || "set".equals(propertyName))))
                   {
                       consumeToken();
                       name = createNameNode();
-                      elems.add(getterSetterProperty(ppos, name,
-                                                     "get".equals(prop)));
+                      ObjectProperty objectProp = getterSetterProperty(ppos, name,
+                                                     "get".equals(propertyName));
+                      elems.add(objectProp);
+                      propertyName = objectProp.getLeft().getString();
                   } else {
                       AstNode pname = stringProp != null ? stringProp : name;
                       elems.add(plainProperty(pname, tt));
@@ -3022,6 +3086,7 @@ public class Parser
                   AstNode nl = new NumberLiteral(ts.tokenBeg,
                                                  ts.getString(),
                                                  ts.getNumber());
+                  propertyName = ts.getString();
                   elems.add(plainProperty(nl, tt));
                   break;
 
@@ -3034,6 +3099,13 @@ public class Parser
               default:
                   reportError("msg.bad.prop");
                   break;
+            }
+            
+            if (this.inUseStrictDirective) {
+                if (propertyNames.contains(propertyName)) {
+                    addError("msg.dup.obj.lit.prop.strict", propertyName);
+                }
+                propertyNames.add(propertyName);
             }
 
             if (matchToken(Token.COMMA)) {

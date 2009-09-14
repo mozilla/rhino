@@ -305,6 +305,7 @@ class TokenStream
     }
 
     final double getNumber() { return number; }
+    final boolean isNumberOctal() { return isOctal; }
 
     final boolean eof() { return hitEOF; }
 
@@ -440,7 +441,7 @@ class TokenStream
 
             // is it a number?
             if (isDigit(c) || (c == '.' && isDigit(peekChar()))) {
-
+                isOctal = false;
                 stringBufferTop = 0;
                 int base = 10;
 
@@ -451,6 +452,7 @@ class TokenStream
                         c = getChar();
                     } else if (isDigit(c)) {
                         base = 8;
+                        isOctal = true;
                     } else {
                         addToString('0');
                     }
@@ -1567,6 +1569,7 @@ class TokenStream
     // code.
     private String string = "";
     private double number;
+    private boolean isOctal;
 
     // delimiter for last string literal scanned
     private int quoteChar;
