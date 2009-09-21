@@ -47,6 +47,7 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.FunctionNode;
@@ -113,7 +114,8 @@ class CodeGenerator extends Icode {
         }
         itsData = new InterpreterData(compilerEnv.getLanguageVersion(),
                                       scriptOrFn.getSourceName(),
-                                      encodedSource);
+                                      encodedSource,
+                                      ((AstRoot)tree).isInStrictMode());
         itsData.topLevel = true;
 
         if (returnFunction) {
@@ -784,13 +786,14 @@ class CodeGenerator extends Icode {
             stackChange(-1);
             break;
 
+          case Token.STRICT_SETNAME:
           case Token.SETNAME:
             {
                 String name = child.getString();
                 visitExpression(child, 0);
                 child = child.getNext();
                 visitExpression(child, 0);
-                addStringOp(Token.SETNAME, name);
+                addStringOp(type, name);
                 stackChange(-1);
             }
             break;

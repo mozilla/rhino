@@ -1039,6 +1039,20 @@ switch (op) {
           frame.idata.itsSourceFile, sourceLine);
       break Loop;
     }
+    case Token.STRICT_SETNAME: {
+        Object rhs = stack[stackTop];
+        if (rhs == DBL_MRK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        --stackTop;
+        Scriptable lhs = (Scriptable)stack[stackTop];
+        if (lhs != null) {
+            stack[stackTop] = ScriptRuntime.setName(lhs, rhs, cx,
+                                                    frame.scope, stringReg);
+            continue Loop;
+        }
+        stack[stackTop] = cx.newObject(frame.scope, "ReferenceError",
+                                       new Object[] { stringReg });
+    }
+    /* fall through */
     case Token.THROW: {
         Object value = stack[stackTop];
         if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(sDbl[stackTop]);

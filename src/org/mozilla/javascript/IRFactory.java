@@ -85,6 +85,7 @@ public final class IRFactory extends Parser
      */
     public ScriptNode transformTree(AstRoot root) {
         currentScriptOrFn = root;
+        this.inUseStrictDirective = root.isInStrictMode();
         int sourceStartOffset = decompiler.getCurrentOffset();
 
         if (Token.printTrees) {

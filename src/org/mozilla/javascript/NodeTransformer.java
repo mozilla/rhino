@@ -42,6 +42,7 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
@@ -88,13 +89,17 @@ public class NodeTransformer
 
         //uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
-        transformCompilationUnit_r(tree, tree, tree, createScopeObjects);
+        boolean inStrictMode = tree instanceof AstRoot &&
+                               ((AstRoot)tree).isInStrictMode();
+        transformCompilationUnit_r(tree, tree, tree, createScopeObjects,
+                                   inStrictMode);
     }
 
     private void transformCompilationUnit_r(final ScriptNode tree,
                                             final Node parent,
                                             Scope scope,
-                                            boolean createScopeObjects)
+                                            boolean createScopeObjects,
+                                            boolean inStrictMode)
     {
         Node node = null;
       siblingLoop:
@@ -229,7 +234,8 @@ public class NodeTransformer
                         unwindBlock.addChildToBack(returnNode);
                         // transform return expression
                         transformCompilationUnit_r(tree, store, scope, 
-                                                   createScopeObjects);
+                                                   createScopeObjects,
+                                                   inStrictMode);
                     }
                     // skip transformCompilationUnit_r to avoid infinite loop
                     continue siblingLoop;
@@ -373,8 +379,12 @@ public class NodeTransformer
             	  break;
               }
 
-              case Token.NAME:
               case Token.SETNAME:
+                  if (inStrictMode) {
+                      node.setType(Token.STRICT_SETNAME);
+                  }
+                  /* fall through */
+              case Token.NAME:
               case Token.SETCONST:
               case Token.DELPROP:
               {
@@ -403,7 +413,8 @@ public class NodeTransformer
                     nameSource.setScope(defining);
                     if (type == Token.NAME) {
                         node.setType(Token.GETVAR);
-                    } else if (type == Token.SETNAME) {
+                    } else if (type == Token.SETNAME ||
+                               type == Token.STRICT_SETNAME) {
                         node.setType(Token.SETVAR);
                         nameSource.setType(Token.STRING);
                     } else if (type == Token.SETCONST) {
@@ -423,7 +434,7 @@ public class NodeTransformer
 
             transformCompilationUnit_r(tree, node, 
                 node instanceof Scope ? (Scope)node : scope,
-                createScopeObjects);
+                createScopeObjects, inStrictMode);
         }
     }
 

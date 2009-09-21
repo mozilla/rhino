@@ -2673,6 +2673,10 @@ class BodyCodegen
                 visitSetName(node, child);
                 break;
 
+              case Token.STRICT_SETNAME:
+                  visitStrictSetName(node, child);
+                  break;
+                  
               case Token.SETCONST:
                 visitSetConst(node, child);
                 break;
@@ -4474,6 +4478,26 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         cfw.addPush(name);
         addScriptRuntimeInvoke(
             "setName",
+            "(Lorg/mozilla/javascript/Scriptable;"
+            +"Ljava/lang/Object;"
+            +"Lorg/mozilla/javascript/Context;"
+            +"Lorg/mozilla/javascript/Scriptable;"
+            +"Ljava/lang/String;"
+            +")Ljava/lang/Object;");
+    }
+
+    private void visitStrictSetName(Node node, Node child)
+    {
+        String name = node.getFirstChild().getString();
+        while (child != null) {
+            generateExpression(child, node);
+            child = child.getNext();
+        }
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        cfw.addPush(name);
+        addScriptRuntimeInvoke(
+            "strictSetName",
             "(Lorg/mozilla/javascript/Scriptable;"
             +"Ljava/lang/Object;"
             +"Lorg/mozilla/javascript/Context;"

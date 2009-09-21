@@ -150,119 +150,120 @@ public class Token
         REF_CALL       = 70, // f(args)    = something or f(args)++
         REF_SPECIAL    = 71, // reference for special properties like __proto
         YIELD          = 72,  // JS 1.7 yield pseudo keyword
+        STRICT_SETNAME = 73,
 
         // For XML support:
-        DEFAULTNAMESPACE = 73, // default xml namespace =
-        ESCXMLATTR     = 74,
-        ESCXMLTEXT     = 75,
-        REF_MEMBER     = 76, // Reference for x.@y, x..y etc.
-        REF_NS_MEMBER  = 77, // Reference for x.ns::y, x..ns::y etc.
-        REF_NAME       = 78, // Reference for @y, @[y] etc.
-        REF_NS_NAME    = 79; // Reference for ns::y, @ns::y@[y] etc.
+        DEFAULTNAMESPACE = 74, // default xml namespace =
+        ESCXMLATTR     = 75,
+        ESCXMLTEXT     = 76,
+        REF_MEMBER     = 77, // Reference for x.@y, x..y etc.
+        REF_NS_MEMBER  = 78, // Reference for x.ns::y, x..ns::y etc.
+        REF_NAME       = 79, // Reference for @y, @[y] etc.
+        REF_NS_NAME    = 80; // Reference for ns::y, @ns::y@[y] etc.
 
         // End of interpreter bytecodes
     public final static int
         LAST_BYTECODE_TOKEN    = REF_NS_NAME,
 
-        TRY            = 80,
-        SEMI           = 81,  // semicolon
-        LB             = 82,  // left and right brackets
-        RB             = 83,
-        LC             = 84,  // left and right curlies (braces)
-        RC             = 85,
-        LP             = 86,  // left and right parentheses
-        RP             = 87,
-        COMMA          = 88,  // comma operator
+        TRY            = 81,
+        SEMI           = 82,  // semicolon
+        LB             = 83,  // left and right brackets
+        RB             = 84,
+        LC             = 85,  // left and right curlies (braces)
+        RC             = 86,
+        LP             = 87,  // left and right parentheses
+        RP             = 88,
+        COMMA          = 89,  // comma operator
 
-        ASSIGN         = 89,  // simple assignment  (=)
-        ASSIGN_BITOR   = 90,  // |=
-        ASSIGN_BITXOR  = 91,  // ^=
-        ASSIGN_BITAND  = 92,  // |=
-        ASSIGN_LSH     = 93,  // <<=
-        ASSIGN_RSH     = 94,  // >>=
-        ASSIGN_URSH    = 95,  // >>>=
-        ASSIGN_ADD     = 96,  // +=
-        ASSIGN_SUB     = 97,  // -=
-        ASSIGN_MUL     = 98,  // *=
-        ASSIGN_DIV     = 99,  // /=
-        ASSIGN_MOD     = 100;  // %=
+        ASSIGN         = 90,  // simple assignment  (=)
+        ASSIGN_BITOR   = 91,  // |=
+        ASSIGN_BITXOR  = 92,  // ^=
+        ASSIGN_BITAND  = 93,  // |=
+        ASSIGN_LSH     = 94,  // <<=
+        ASSIGN_RSH     = 95,  // >>=
+        ASSIGN_URSH    = 96,  // >>>=
+        ASSIGN_ADD     = 97,  // +=
+        ASSIGN_SUB     = 98,  // -=
+        ASSIGN_MUL     = 99,  // *=
+        ASSIGN_DIV     = 100,  // /=
+        ASSIGN_MOD     = 101;  // %=
 
     public final static int
         FIRST_ASSIGN   = ASSIGN,
         LAST_ASSIGN    = ASSIGN_MOD,
 
-        HOOK           = 101, // conditional (?:)
-        COLON          = 102,
-        OR             = 103, // logical or (||)
-        AND            = 104, // logical and (&&)
-        INC            = 105, // increment/decrement (++ --)
-        DEC            = 106,
-        DOT            = 107, // member operator (.)
-        FUNCTION       = 108, // function keyword
-        EXPORT         = 109, // export keyword
-        IMPORT         = 110, // import keyword
-        IF             = 111, // if keyword
-        ELSE           = 112, // else keyword
-        SWITCH         = 113, // switch keyword
-        CASE           = 114, // case keyword
-        DEFAULT        = 115, // default keyword
-        WHILE          = 116, // while keyword
-        DO             = 117, // do keyword
-        FOR            = 118, // for keyword
-        BREAK          = 119, // break keyword
-        CONTINUE       = 120, // continue keyword
-        VAR            = 121, // var keyword
-        WITH           = 122, // with keyword
-        CATCH          = 123, // catch keyword
-        FINALLY        = 124, // finally keyword
-        VOID           = 125, // void keyword
-        RESERVED       = 126, // reserved keywords
+        HOOK           = 102, // conditional (?:)
+        COLON          = 103,
+        OR             = 104, // logical or (||)
+        AND            = 105, // logical and (&&)
+        INC            = 106, // increment/decrement (++ --)
+        DEC            = 107,
+        DOT            = 108, // member operator (.)
+        FUNCTION       = 109, // function keyword
+        EXPORT         = 110, // export keyword
+        IMPORT         = 111, // import keyword
+        IF             = 112, // if keyword
+        ELSE           = 113, // else keyword
+        SWITCH         = 114, // switch keyword
+        CASE           = 115, // case keyword
+        DEFAULT        = 116, // default keyword
+        WHILE          = 117, // while keyword
+        DO             = 118, // do keyword
+        FOR            = 119, // for keyword
+        BREAK          = 120, // break keyword
+        CONTINUE       = 121, // continue keyword
+        VAR            = 122, // var keyword
+        WITH           = 123, // with keyword
+        CATCH          = 124, // catch keyword
+        FINALLY        = 125, // finally keyword
+        VOID           = 126, // void keyword
+        RESERVED       = 127, // reserved keywords
 
-        EMPTY          = 127,
+        EMPTY          = 128,
 
         /* types used for the parse tree - these never get returned
          * by the scanner.
          */
 
-        BLOCK          = 128, // statement block
-        LABEL          = 129, // label
-        TARGET         = 130,
-        LOOP           = 131,
-        EXPR_VOID      = 132, // expression statement in functions
-        EXPR_RESULT    = 133, // expression statement in scripts
-        JSR            = 134,
-        SCRIPT         = 135, // top-level node for entire script
-        TYPEOFNAME     = 136, // for typeof(simple-name)
-        USE_STACK      = 137,
-        SETPROP_OP     = 138, // x.y op= something
-        SETELEM_OP     = 139, // x[y] op= something
-        LOCAL_BLOCK    = 140,
-        SET_REF_OP     = 141, // *reference op= something
+        BLOCK          = 129, // statement block
+        LABEL          = 130, // label
+        TARGET         = 131,
+        LOOP           = 132,
+        EXPR_VOID      = 133, // expression statement in functions
+        EXPR_RESULT    = 134, // expression statement in scripts
+        JSR            = 135,
+        SCRIPT         = 136, // top-level node for entire script
+        TYPEOFNAME     = 137, // for typeof(simple-name)
+        USE_STACK      = 138,
+        SETPROP_OP     = 139, // x.y op= something
+        SETELEM_OP     = 140, // x[y] op= something
+        LOCAL_BLOCK    = 141,
+        SET_REF_OP     = 142, // *reference op= something
 
         // For XML support:
-        DOTDOT         = 142,  // member operator (..)
-        COLONCOLON     = 143,  // namespace::name
-        XML            = 144,  // XML type
-        DOTQUERY       = 145,  // .() -- e.g., x.emps.emp.(name == "terry")
-        XMLATTR        = 146,  // @
-        XMLEND         = 147,
+        DOTDOT         = 143,  // member operator (..)
+        COLONCOLON     = 144,  // namespace::name
+        XML            = 145,  // XML type
+        DOTQUERY       = 146,  // .() -- e.g., x.emps.emp.(name == "terry")
+        XMLATTR        = 147,  // @
+        XMLEND         = 148,
 
         // Optimizer-only-tokens
-        TO_OBJECT      = 148,
-        TO_DOUBLE      = 149,
+        TO_OBJECT      = 149,
+        TO_DOUBLE      = 150,
 
-        GET            = 150,  // JS 1.5 get pseudo keyword
-        SET            = 151,  // JS 1.5 set pseudo keyword
-        LET            = 152,  // JS 1.7 let pseudo keyword
-        CONST          = 153,
-        SETCONST       = 154,
-        SETCONSTVAR    = 155,
-        ARRAYCOMP      = 156,  // array comprehension
-        LETEXPR        = 157,
-        WITHEXPR       = 158,
-        DEBUGGER       = 159,
-        COMMENT        = 160,
-        LAST_TOKEN     = 160;
+        GET            = 151,  // JS 1.5 get pseudo keyword
+        SET            = 152,  // JS 1.5 set pseudo keyword
+        LET            = 153,  // JS 1.7 let pseudo keyword
+        CONST          = 154,
+        SETCONST       = 155,
+        SETCONSTVAR    = 156,
+        ARRAYCOMP      = 157,  // array comprehension
+        LETEXPR        = 158,
+        WITHEXPR       = 159,
+        DEBUGGER       = 160,
+        COMMENT        = 161,
+        LAST_TOKEN     = 162;
 
     /**
      * Returns a name for the token.  If Rhino is compiled with certain

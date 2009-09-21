@@ -114,7 +114,7 @@ public class Parser
     protected int nestingOfFunction;
     private LabeledStatement currentLabel;
     private boolean inDestructuringAssignment;
-    private boolean inUseStrictDirective;
+    protected boolean inUseStrictDirective;
 
     // The following are per function variables and should be saved/restored
     // during function parsing.  See PerFunctionVariables class below.
@@ -240,16 +240,27 @@ public class Parser
             ? ScriptRuntime.getMessage0(messageId)
             : ScriptRuntime.getMessage1(messageId, messageArg);
     }
-
+    
     void reportError(String messageId) {
+        reportError(messageId, null);
+    }
+
+    void reportError(String messageId, String messageArg) {
         if (ts == null) {  // happens in some regression tests
-            reportError(messageId, 1, 1);
+            reportError(messageId, messageArg, 1, 1);
         } else {
-            reportError(messageId, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+            reportError(messageId, messageArg, ts.tokenBeg,
+                        ts.tokenEnd - ts.tokenBeg);
         }
     }
 
     void reportError(String messageId, int position, int length)
+    {
+        reportError(messageId, null, position, length);
+    }
+
+    void reportError(String messageId, String messageArg, int position,
+                     int length)
     {
         addError(messageId, position, length);
 
@@ -708,6 +719,11 @@ public class Parser
                     String paramName = ts.getString();
                     defineSymbol(Token.LP, paramName);
                     if (this.inUseStrictDirective) {
+                        if ("eval".equals(paramName) ||
+                            "arguments".equals(paramName))
+                        {
+                            reportError("msg.bad.id.strict", paramName);
+                        }
                         if (paramNames.contains(paramName))
                             addError("msg.dup.param.strict", paramName);
                         paramNames.add(paramName);
@@ -762,6 +778,12 @@ public class Parser
 
         if (matchToken(Token.NAME)) {
             name = createNameNode(true, Token.NAME);
+            if (inUseStrictDirective) {
+                String id = name.getIdentifier();
+                if ("eval".equals(id)|| "arguments".equals(id)) {
+                    reportError("msg.bad.id.strict", id);                
+                }
+            }
             if (!matchToken(Token.LP)) {
                 if (compilerEnv.isAllowMemberExprAsFunctionName()) {
                     AstNode memberExprHead = name;
@@ -1408,6 +1430,14 @@ public class Parser
 
                 mustMatchToken(Token.NAME, "msg.bad.catchcond");
                 Name varName = createNameNode();
+                String varNameString = varName.getIdentifier();
+                if (inUseStrictDirective) {
+                    if ("eval".equals(varNameString) ||
+                        "arguments".equals(varNameString))
+                    {
+                        reportError("msg.bad.id.strict", varNameString);
+                    }
+                }
 
                 AstNode catchCond = null;
                 if (matchToken(Token.IF)) {
@@ -1869,6 +1899,13 @@ public class Parser
                 mustMatchToken(Token.NAME, "msg.bad.var");
                 name = createNameNode();
                 name.setLineno(ts.getLineno());
+                if (inUseStrictDirective) {
+                    String id = ts.getString();
+                    if ("eval".equals(id) || "arguments".equals(ts.getString()))
+                    {
+                        reportError("msg.bad.id.strict", id);                    
+                    }
+                }
                 defineSymbol(declType, ts.getString(), inForInit);
             }
 
@@ -3631,6 +3668,12 @@ public class Parser
         int nodeType = left.getType();
         switch (nodeType) {
           case Token.NAME:
+              if (inUseStrictDirective &&
+                  "eval".equals(((Name) left).getIdentifier()))
+              {
+                  reportError("msg.bad.id.strict",
+                              ((Name) left).getIdentifier());
+              }
               left.setType(Token.BINDNAME);
               return new Node(Token.SETNAME, left, right);
 

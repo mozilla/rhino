@@ -52,13 +52,13 @@ final class InterpreterData implements Serializable, DebuggableScript
     static final int INITIAL_STRINGTABLE_SIZE = 64;
     static final int INITIAL_NUMBERTABLE_SIZE = 64;
 
-    InterpreterData(int languageVersion,
-                    String sourceFile, String encodedSource)
+    InterpreterData(int languageVersion, String sourceFile,
+                    String encodedSource, boolean isStrict)
     {
         this.languageVersion = languageVersion;
         this.itsSourceFile = sourceFile;
         this.encodedSource = encodedSource;
-
+        this.isStrict = isStrict;
         init();
     }
 
@@ -111,7 +111,7 @@ final class InterpreterData implements Serializable, DebuggableScript
     int languageVersion;
 
     boolean useDynamicScope;
-
+    boolean isStrict;
     boolean topLevel;
 
     Object[] literalIds;
@@ -188,5 +188,4 @@ final class InterpreterData implements Serializable, DebuggableScript
     {
          return parentData;
     }
-
 }

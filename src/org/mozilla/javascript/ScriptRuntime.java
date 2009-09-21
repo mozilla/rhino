@@ -1948,7 +1948,34 @@ public class ScriptRuntime {
             bound.put(id, bound, value);
         }
         return value;
-    }
+    }    
+
+    public static Object strictSetName(Scriptable bound, Object value,
+            Context cx, Scriptable scope, String id) {
+        if (bound != null) {
+            // TODO: The LeftHandSide also may not be a reference to a
+            // data property with the attribute value {[[Writable]]:false},
+            // to an accessor property with the attribute value
+            // {[[Put]]:undefined}, nor to a non-existent property of an
+            // object whose [[Extensible]] internal property has the value
+            // false. In these cases a TypeError exception is thrown (11.13.1).
+            if (bound instanceof XMLObject) {
+                XMLObject xmlObject = (XMLObject) bound;
+                xmlObject.ecmaPut(cx, id, value);
+            } else {
+                ScriptableObject.putProperty(bound, id, value);
+            }
+        } else {
+            // See ES5 8.7.2
+            int[] linep = new int[1];
+            String filename = Context.getSourcePositionFromStack(linep);
+            throw new JavaScriptException(cx.newObject(scope, "ReferenceError",
+                    new Object[] { id }),
+                    filename,
+                    linep[0]);
+        }
+        return value;
+    }    
 
     public static Object setConst(Scriptable bound, Object value,
                                  Context cx, String id)
