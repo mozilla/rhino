@@ -3087,6 +3087,7 @@ public class Parser
         for (;;) {
             String propertyName = null;
             int tt = peekToken();
+            String jsdoc = getAndResetJsDoc();
             switch(tt) {
               case Token.NAME:
               case Token.STRING:
@@ -3107,12 +3108,14 @@ public class Parser
                   {
                       consumeToken();
                       name = createNameNode();
+                      name.setJsDoc(jsdoc);
                       ObjectProperty objectProp = getterSetterProperty(ppos, name,
                                                      "get".equals(propertyName));
                       elems.add(objectProp);
                       propertyName = objectProp.getLeft().getString();
                   } else {
                       AstNode pname = stringProp != null ? stringProp : name;
+                      pname.setJsDoc(jsdoc);
                       elems.add(plainProperty(pname, tt));
                   }
                   break;
@@ -3123,6 +3126,7 @@ public class Parser
                   AstNode nl = new NumberLiteral(ts.tokenBeg,
                                                  ts.getString(),
                                                  ts.getNumber());
+                  nl.setJsDoc(jsdoc);
                   propertyName = ts.getString();
                   elems.add(plainProperty(nl, tt));
                   break;
@@ -3145,6 +3149,10 @@ public class Parser
                 propertyNames.add(propertyName);
             }
 
+            // Eat any dangling jsdoc in the property.
+            getAndResetJsDoc();
+            jsdoc = null;
+            
             if (matchToken(Token.COMMA)) {
                 afterComma = ts.tokenEnd;
             } else {

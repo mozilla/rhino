@@ -754,9 +754,9 @@ public class ParserTest extends TestCase {
           "c;\n");
 
       ExpressionStatement exprStmt = (ExpressionStatement) root.getFirstChild();
-      AstNode aRef = (AstNode) exprStmt.getExpression();
+      AstNode aRef = exprStmt.getExpression();
       ExpressionStatement bExprStmt = (ExpressionStatement) exprStmt.getNext();
-      AstNode bRef = (AstNode) bExprStmt.getExpression();
+      AstNode bRef = bExprStmt.getExpression();
 
       assertEquals(1, aRef.getLineno());
       assertEquals(2, bRef.getLineno());
@@ -833,6 +833,55 @@ public class ParserTest extends TestCase {
         FunctionCall fc = (FunctionCall) st.getExpression();
         ParenthesizedExpression pe = (ParenthesizedExpression) fc.getTarget();
         assertNull(pe.getJsDoc());
+    }
+
+    public void testJSDocAttachment5() {
+        AstRoot root = parse("({/** attach me */ 1: 2});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+        ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+        NumberLiteral number =
+            (NumberLiteral) lit.getElements().get(0).getLeft();
+        assertNotNull(number.getJsDoc());
+    }
+
+    public void testJSDocAttachment6() {
+        AstRoot root = parse("({1: /** don't attach me */ 2, 3: 4});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+        ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+        for (ObjectProperty el : lit.getElements()) {
+          assertNull(el.getLeft().getJsDoc());
+          assertNull(el.getRight().getJsDoc());
+        }
+    }
+
+    public void testJSDocAttachment7() {
+        AstRoot root = parse("({/** attach me */ '1': 2});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+        ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+        StringLiteral stringLit =
+            (StringLiteral) lit.getElements().get(0).getLeft();
+        assertNotNull(stringLit.getJsDoc());
+    }
+
+    public void testJSDocAttachment8() {
+        AstRoot root = parse("({'1': /** attach me */ (foo())});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+        ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+        ParenthesizedExpression parens =
+            (ParenthesizedExpression) lit.getElements().get(0).getRight();
+        assertNotNull(parens.getJsDoc());
     }
 
     public void testParsingWithoutJSDoc() {
