@@ -487,7 +487,7 @@ public class NativeJavaMethod extends BaseFunction
         int totalPreference = 0;
         for (int j = 0; j < args.length; j++) {
             Class<?> type1 = vararg1 && j >= sig1.length ? sig1[sig1.length-1] : sig1[j];
-            Class<?> type2 = vararg2 && j >= sig1.length ? sig2[sig1.length-1] : sig2[j];
+            Class<?> type2 = vararg2 && j >= sig2.length ? sig2[sig2.length-1] : sig2[j];
             if (type1 == type2) {
                 continue;
             }
