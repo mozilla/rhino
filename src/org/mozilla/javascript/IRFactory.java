@@ -692,8 +692,7 @@ public final class IRFactory extends Parser
         Node nx = createCallOrNew(Token.NEW, transform(node.getTarget()));
         nx.setLineno(node.getLineno());
         List<AstNode> args = node.getArguments();
-        if (!args.isEmpty())
-            decompiler.addToken(Token.LP);
+        decompiler.addToken(Token.LP);
         for (int i = 0; i < args.size(); i++) {
             AstNode arg = args.get(i);
             nx.addChildToBack(transform(arg));
@@ -701,8 +700,7 @@ public final class IRFactory extends Parser
                 decompiler.addToken(Token.COMMA);
             }
         }
-        if (!args.isEmpty())
-            decompiler.addToken(Token.RP);
+        decompiler.addToken(Token.RP);
         if (node.getInitializer() != null) {
             nx.addChildToBack(transformObjectLiteral(node.getInitializer()));
         }

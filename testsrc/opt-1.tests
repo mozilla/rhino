@@ -1353,10 +1353,8 @@ js1_5/decompilation/regress-349663.js
 js1_5/decompilation/regress-350670.js
 js1_5/decompilation/regress-351625.js
 js1_5/decompilation/regress-351626.js
-js1_5/decompilation/regress-351705.js
 js1_5/decompilation/regress-352022.js
 js1_5/decompilation/regress-352073.js
-js1_5/decompilation/regress-352312.js
 js1_5/decompilation/regress-352360.js
 js1_5/decompilation/regress-352873-01.js
 js1_5/decompilation/regress-352873-02.js
@@ -1366,7 +1364,6 @@ js1_5/decompilation/regress-354910.js
 js1_5/decompilation/regress-371692.js
 js1_5/decompilation/regress-373678.js
 js1_5/decompilation/regress-375639.js
-js1_5/decompilation/regress-376564.js
 js1_5/decompilation/regress-383721.js
 js1_5/decompilation/regress-406555.js
 js1_5/extensions/catchguard-001.js
