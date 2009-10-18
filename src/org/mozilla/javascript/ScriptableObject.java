@@ -1635,9 +1635,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     private void defineOwnProperty(Context cx, Slot slot, ScriptableObject desc, int attributes) {
+      String name = slot.name;
+      int index = slot.indexOrHash;
+
       if (isAccessorDescriptor(desc)) {
-        if ( !(slot instanceof GetterSlot) ) 
-          slot = getSlot(cx, slot.name, SLOT_MODIFY_GETTER_SETTER);
+        if ( !(slot instanceof GetterSlot) ) {
+          slot = getSlot(cx, (name != null ? name : index), SLOT_MODIFY_GETTER_SETTER);
+        }
 
         GetterSlot gslot = (GetterSlot) slot;
 
@@ -1654,7 +1658,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         gslot.setAttributes(attributes);
       } else {
         if (slot instanceof GetterSlot && isDataDescriptor(desc)) {
-            slot = getSlot(cx, slot.name, SLOT_CONVERT_ACCESSOR_TO_DATA);
+            slot = getSlot(cx, (name != null ? name : index), SLOT_CONVERT_ACCESSOR_TO_DATA);
         }
 
         Object value = getProperty(desc, "value");
@@ -1715,11 +1719,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
       }
     }
 
-    private static boolean isTrue(Object value) {
+    protected static boolean isTrue(Object value) {
       return (value == NOT_FOUND) ? false : ScriptRuntime.toBoolean(value);
     }
 
-    private static boolean isFalse(Object value) {
+    protected static boolean isFalse(Object value) {
       return !isTrue(value);
     }
 
@@ -1822,6 +1826,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public static Scriptable getFunctionPrototype(Scriptable scope) {
         return getClassPrototype(scope, "Function");
+    }
+
+    public static Scriptable getArrayPrototype(Scriptable scope) {
+        return getClassPrototype(scope, "Array");
     }
 
     /**

@@ -893,7 +893,6 @@ ecma_3/FunExpr/fe-001.js
 ecma_3/FunExpr/fe-002.js
 ecma_3/Function/15.3.4.3-1.js
 ecma_3/Function/15.3.4.4-1.js
-ecma_3/Function/arguments-001.js
 ecma_3/Function/arguments-002.js
 ecma_3/Function/call-001.js
 ecma_3/Function/regress-131964.js
@@ -1278,8 +1277,6 @@ js1_5/Regress/regress-328012.js
 js1_5/Regress/regress-328897.js
 js1_5/Regress/regress-329383.js
 js1_5/Regress/regress-330951.js
-js1_5/Regress/regress-334807-01.js
-js1_5/Regress/regress-334807-03.js
 js1_5/Regress/regress-334807-05.js
 js1_5/Regress/regress-334807-06.js
 js1_5/Regress/regress-338307.js
