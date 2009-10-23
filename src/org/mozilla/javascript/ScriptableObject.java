@@ -2428,9 +2428,16 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             Object setterObj = ((GetterSlot)slot).setter;
             if (setterObj == null) {
                 if (((GetterSlot)slot).getter != null) {
-                  // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
-                  // we should throw a TypeError in this case.
-                  throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
+                  if (Context.getContext().hasFeature(Context.FEATURE_WRITE_READONLY_PROPERTIES)) {
+                    // Odd case: Assignment to a property with only a getter 
+                    // defined. The assignment cancels out the getter.
+                    ((GetterSlot)slot).getter = null;
+                  }
+                  else {
+                    // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
+                    // we should throw a TypeError in this case.
+                    throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
+                  }
                 }
             } else {
                 Context cx = Context.getContext();
