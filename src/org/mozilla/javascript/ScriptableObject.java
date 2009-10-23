@@ -2425,19 +2425,18 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             slot = getSlot(name, index, SLOT_MODIFY);
         }
         if (slot instanceof GetterSlot) {
-            Object setterObj = ((GetterSlot)slot).setter;
+            final GetterSlot getterSlot = (GetterSlot)slot;
+            final Object setterObj = getterSlot.setter;
             if (setterObj == null) {
-                if (((GetterSlot)slot).getter != null) {
-                  if (Context.getContext().hasFeature(Context.FEATURE_WRITE_READONLY_PROPERTIES)) {
-                    // Odd case: Assignment to a property with only a getter 
-                    // defined. The assignment cancels out the getter.
-                    ((GetterSlot)slot).getter = null;
+                if (getterSlot.getter != null) {
+                  if (Context.getContext().hasFeature(Context.FEATURE_STRICT_MODE)) {
+                      // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
+                      // we should throw a TypeError in this case.
+                      throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
                   }
-                  else {
-                    // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
-                    // we should throw a TypeError in this case.
-                    throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
-                  }
+                  // Odd case: Assignment to a property with only a getter 
+                  // defined. The assignment cancels out the getter.
+                  getterSlot.getter = null;
                 }
             } else {
                 Context cx = Context.getContext();

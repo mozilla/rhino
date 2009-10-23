@@ -315,16 +315,6 @@ public class Context
      */
     public static final int FEATURE_ENHANCED_JAVA_ACCESS = 13;
 
-    /**
-     * Enable assignment to properties with only a getter defined.
-     * This was Rhino's standard behaviour until 1.7R2, but for 1.7R2 it will
-     * honor TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2 and throw a 
-     * TypeError instead. 
-     * By default {@link #hasFeature(int)} returns false.
-     * @since 1.7 Release 2
-     */
-    public static final int FEATURE_WRITE_READONLY_PROPERTIES = 14;
-
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
