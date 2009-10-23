@@ -87,6 +87,11 @@ public class Dim {
     private ScopeProvider scopeProvider;
 
     /**
+     * The SourceProvider object that provides the source of evaluated scripts.
+     */
+    private SourceProvider sourceProvider;
+
+    /**
      * The index of the current stack frame.
      */
     private int frameIndex = -1;
@@ -197,6 +202,13 @@ public class Dim {
      */
     public void setScopeProvider(ScopeProvider scopeProvider) {
         this.scopeProvider = scopeProvider;
+    }
+
+    /**
+     * Sets the ScopeProvider to be used.
+     */
+    public void setSourceProvider(final SourceProvider sourceProvider) {
+        this.sourceProvider = sourceProvider;
     }
 
     /**
@@ -352,6 +364,13 @@ public class Dim {
         }
         String url = getNormalizedUrl(topScript);
         DebuggableScript[] functions = getAllFunctions(topScript);
+        if (sourceProvider != null) {
+            final String providedSource = sourceProvider.getSource(topScript); 
+            if(providedSource != null) {
+                source = providedSource; 
+            }
+        }
+
         final SourceInfo sourceInfo = new SourceInfo(source, functions, url);
 
         synchronized (urlToSourceInfo) {
