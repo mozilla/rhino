@@ -697,7 +697,6 @@ public class ClassFileWriter {
                 addToCodeInt16(theOperand2);
             }
             else {
-                addToCodeBuffer(ByteCode.WIDE);
                 addToCodeBuffer(ByteCode.IINC);
                 addToCodeBuffer(theOperand1);
                 addToCodeBuffer(theOperand2);
