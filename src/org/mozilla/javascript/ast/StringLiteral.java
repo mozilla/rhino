@@ -39,6 +39,7 @@
 package org.mozilla.javascript.ast;
 
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.ScriptRuntime;
 
 /**
  * AST node for a single- or double-quoted string literal.
@@ -109,15 +110,11 @@ public class StringLiteral extends AstNode {
 
     @Override
     public String toSource(int depth) {
-        // TODO(stevey):  make sure this unescapes everything properly
-        String q = String.valueOf(getQuoteCharacter());
-        String rep = "\\\\" + q;
-        String s = value.replaceAll(q, rep);
-        s = s.replaceAll("\n", "\\\\n");
-        s = s.replaceAll("\r", "\\\\r");
-        s = s.replaceAll("\t", "\\\\t");
-        s = s.replaceAll("\f", "\\\\f");
-        return makeIndent(depth) + q + s + q;
+        return new StringBuilder(makeIndent(depth))
+                .append(quoteChar)
+                .append(ScriptRuntime.escapeString(value, quoteChar))
+                .append(quoteChar)
+                .toString();
     }
 
     /**
