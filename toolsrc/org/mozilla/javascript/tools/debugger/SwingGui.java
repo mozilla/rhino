@@ -730,10 +730,10 @@ public class SwingGui extends JFrame implements GuiCallback {
                 setExtendedState(Frame.NORMAL);
             }
             toFront();
-            context.enable();
+            context.setEnabled(true);
         } else {
             if (currentWindow != null) currentWindow.setPosition(-1);
-            context.disable();
+            context.setEnabled(false);
         }
     }
 
@@ -3133,31 +3133,19 @@ class ContextWindow extends JPanel implements ActionListener {
             });
         t1.addComponentListener(clistener);
         t2.addComponentListener(clistener);
-        disable();
+        setEnabled(false);
     }
 
     /**
-     * Disables the component.
+     * Enables or disables the component.
      */
     @Override
-    public void disable() {
-        context.setEnabled(false);
-        thisTable.setEnabled(false);
-        localsTable.setEnabled(false);
-        evaluator.setEnabled(false);
-        cmdLine.setEnabled(false);
-    }
-
-    /**
-     * Enables the component.
-     */
-    @Override
-    public void enable() {
-        context.setEnabled(true);
-        thisTable.setEnabled(true);
-        localsTable.setEnabled(true);
-        evaluator.setEnabled(true);
-        cmdLine.setEnabled(true);
+    public void setEnabled(boolean enabled) {
+        context.setEnabled(enabled);
+        thisTable.setEnabled(enabled);
+        localsTable.setEnabled(enabled);
+        evaluator.setEnabled(enabled);
+        cmdLine.setEnabled(enabled);
     }
 
     /**
