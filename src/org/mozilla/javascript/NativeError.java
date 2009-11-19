@@ -105,6 +105,14 @@ final class NativeError extends IdScriptableObject
     }
 
     @Override
+    public String toString()
+    {
+        // According to spec, Error.prototype.toString() may return undefined. 
+        Object toString =  js_toString(this);
+        return toString instanceof String ? (String) toString : super.toString();
+    }
+
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
