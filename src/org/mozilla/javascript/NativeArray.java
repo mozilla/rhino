@@ -177,23 +177,23 @@ public class NativeArray extends IdScriptableObject
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_slice,
                 "slice", 2);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_indexOf,
-                "indexOf", 2);
+                "indexOf", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_lastIndexOf,
-                "lastIndexOf", 2);
+                "lastIndexOf", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_every,
-                "every", 2);
+                "every", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_filter,
-                "filter", 2);
+                "filter", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_forEach,
-                "forEach", 2);
+                "forEach", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_map,
-                "map", 2);
+                "map", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some,
-                "some", 2);
+                "some", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce,
-                "reduce", 2);
+                "reduce", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight,
-                "reduceRight", 2);
+                "reduceRight", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray,
                 "isArray", 1);
         super.fillConstructorProperties(ctor);
@@ -219,15 +219,15 @@ public class NativeArray extends IdScriptableObject
           case Id_splice:         arity=2; s="splice";         break;
           case Id_concat:         arity=1; s="concat";         break;
           case Id_slice:          arity=2; s="slice";          break;
-          case Id_indexOf:        arity=2; s="indexOf";        break;
-          case Id_lastIndexOf:    arity=2; s="lastIndexOf";    break;
-          case Id_every:          arity=2; s="every";          break;
-          case Id_filter:         arity=2; s="filter";         break;
-          case Id_forEach:        arity=2; s="forEach";        break;
-          case Id_map:            arity=2; s="map";            break;
-          case Id_some:           arity=2; s="some";           break;
-          case Id_reduce:         arity=2; s="reduce";         break;
-          case Id_reduceRight:    arity=2; s="reduceRight";    break;
+          case Id_indexOf:        arity=1; s="indexOf";        break;
+          case Id_lastIndexOf:    arity=1; s="lastIndexOf";    break;
+          case Id_every:          arity=1; s="every";          break;
+          case Id_filter:         arity=1; s="filter";         break;
+          case Id_forEach:        arity=1; s="forEach";        break;
+          case Id_map:            arity=1; s="map";            break;
+          case Id_some:           arity=1; s="some";           break;
+          case Id_reduce:         arity=1; s="reduce";         break;
+          case Id_reduceRight:    arity=1; s="reduceRight";    break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(ARRAY_TAG, id, s, arity);
