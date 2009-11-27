@@ -40,6 +40,39 @@ public class GlobalParseXTest extends TestCase {
         assertEvaluates("7.89", "String(parseFloat('" + prefix + "7.89 '))");
     }
 
+	/**
+	 * Test for bug #531436
+	 * https://bugzilla.mozilla.org/show_bug.cgi?id=531436
+	 * Trailing noise should be ignored
+	 * (see ECMA spec 15.1.2.3)
+	 */
+    public void testParseFloatTrailingNoise() {
+    	testParseFloat("7890", "789e1");
+    	testParseFloat("7890", "789E1");
+    	testParseFloat("7890", "789E+1");
+    	testParseFloat("7890", "789E+1e");
+    	testParseFloat("789", "7890E-1");
+    	testParseFloat("789", "7890E-1e");
+
+    	testParseFloat("789", "789hello");
+    	testParseFloat("789", "789e");
+    	testParseFloat("789", "789E");
+    	testParseFloat("789", "789e+");
+    	testParseFloat("789", "789Efgh");
+    	testParseFloat("789", "789efgh");
+    	testParseFloat("789", "789e-");
+    	testParseFloat("789", "789e-hello");
+    	testParseFloat("789", "789e+hello");
+    	testParseFloat("789", "789+++hello");
+    	testParseFloat("789", "789-e-+hello");
+    	testParseFloat("789", "789e+e++hello");
+    	testParseFloat("789", "789e-e++hello");
+    }
+
+    private void testParseFloat(final String expected, final String value) {
+        assertEvaluates(expected, "String(parseFloat('" + value + "'))");
+    }
+
     private void assertEvaluates(final Object expected, final String source) {
         final ContextAction action = new ContextAction() {
             public Object run(Context cx) {

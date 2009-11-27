@@ -352,6 +352,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
         // Find the end of the legal bit
         int decimal = -1;
         int exponent = -1;
+        boolean exponentValid = false;
         for (; i < len; i++) {
             switch (s.charAt(i)) {
               case '.':
@@ -362,26 +363,39 @@ public class NativeGlobal implements Serializable, IdFunctionCall
 
               case 'e':
               case 'E':
-                if (exponent != -1)
+                if (exponent != -1) {
                     break;
+                } else if (i == len - 1) {
+                    break;
+                }
                 exponent = i;
                 continue;
 
               case '+':
               case '-':
                  // Only allow '+' or '-' after 'e' or 'E'
-                if (exponent != i-1)
+                if (exponent != i-1) {
                     break;
+                } else if (i == len - 1) {
+                    --i;
+                    break;
+                }
                 continue;
 
               case '0': case '1': case '2': case '3': case '4':
               case '5': case '6': case '7': case '8': case '9':
+                if (exponent != -1) {
+                    exponentValid = true;
+                }
                 continue;
 
               default:
                 break;
             }
             break;
+        }
+        if (exponent != -1 && !exponentValid) {
+            i = exponent;
         }
         s = s.substring(start, i);
         try {
