@@ -2434,9 +2434,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                       // we should throw a TypeError in this case.
                       throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
                   }
-                  // Odd case: Assignment to a property with only a getter 
-                  // defined. The assignment cancels out the getter.
-                  getterSlot.getter = null;
+                  // Assignment to a property with only a getter defined. The
+                  // assignment is ignored. See bug 478047.
+                  return true;
                 }
             } else {
                 Context cx = Context.getContext();

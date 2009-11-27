@@ -4,7 +4,6 @@ import org.junit.Test;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.annotations.*;
@@ -26,12 +25,11 @@ public class DefineClassTest {
             assertNull(evaluate(cx, "a.foo;"));
             assertEquals(evaluate(cx, "a.foo = 'foo'; a.foo;"), "FOO");
             assertEquals(evaluate(cx, "a.bar;"), "bar");
-            try {
-                evaluate(cx, "a.bar = 'bar'; a.bar;");
-                fail("setting property with no setter should throw error");
-            } catch (EcmaError e) {
-                // expected, as AnnotatedHostObject.bar only has a getter
-            }
+
+            // Setting a property with no setting should be silently
+            // ignored in non-strict mode.
+            evaluate(cx, "a.bar = 'new bar'");
+            assertEquals("bar", evaluate(cx, "a.bar;"));
         } finally {
             Context.exit();
         }
@@ -48,12 +46,11 @@ public class DefineClassTest {
             assertNull(evaluate(cx, "t.foo;"));
             assertEquals(evaluate(cx, "t.foo = 'foo'; t.foo;"), "FOO");
             assertEquals(evaluate(cx, "t.bar;"), "bar");
-            try {
-                evaluate(cx, "t.bar = 'bar'; t.bar;");
-                fail("setting property with no setter should throw error");
-            } catch (EcmaError e) {
-                // expected, as TraditionalHostObject.bar only has a getter
-            }
+
+            // Setting a property with no setting should be silently
+            // ignored in non-strict mode.
+            evaluate(cx, "t.bar = 'new bar'");
+            assertEquals("bar", evaluate(cx, "t.bar;"));
         } finally {
             Context.exit();
         }
@@ -82,6 +79,7 @@ public class DefineClassTest {
 
         public AnnotatedHostObject() {}
 
+        @Override
         public String getClassName() {
             return "AnnotatedHostObject";
         }
@@ -137,6 +135,7 @@ public class DefineClassTest {
 
         public TraditionalHostObject() {}
 
+        @Override
         public String getClassName() {
             return "TraditionalHostObject";
         }
