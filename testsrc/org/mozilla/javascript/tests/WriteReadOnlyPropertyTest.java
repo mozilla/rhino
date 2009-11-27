@@ -92,5 +92,6 @@ public class WriteReadOnlyPropertyTest {
 		{
 			return prop_;
 		}
-	};
+	}
 }
+
