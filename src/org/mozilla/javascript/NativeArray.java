@@ -1540,7 +1540,8 @@ public class NativeArray extends IdScriptableObject
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
         long length = getLengthProperty(cx, thisObj);
-        Scriptable array = ScriptRuntime.newObject(cx, scope, "Array", null);
+        int resultLength = id == Id_map ? (int) length : 0;
+        Scriptable array = cx.newArray(scope, resultLength);
         long j=0;
         for (long i=0; i < length; i++) {
             Object[] innerArgs = new Object[3];
