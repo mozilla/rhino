@@ -75,6 +75,7 @@ public class JsonParser {
         length = json.length();
         src = json;
         Object value = readValue();
+        consumeWhitespace();
         if (pos < length) {
             throw new ParseException("Expected end of stream at char " + pos);
         }
@@ -82,14 +83,10 @@ public class JsonParser {
     }
 
     private Object readValue() throws ParseException {
+        consumeWhitespace();
         while (pos < length) {
             char c = src.charAt(pos++);
             switch (c) {
-                case ' ':
-                case '\t':
-                case '\r':
-                case '\n':
-                    break;
                 case '{':
                     return readObject();
                 case '[':
@@ -126,14 +123,10 @@ public class JsonParser {
         String id;
         Object value;
         boolean needsComma = false;
+        consumeWhitespace();
         while (pos < length) {
             char c = src.charAt(pos++);
             switch(c) {
-                case ' ':
-                case '\t':
-                case '\r':
-                case '\n':
-                    break;
                 case '}':
                     return object;
                 case ',':
@@ -155,6 +148,7 @@ public class JsonParser {
                 default:
                     throw new ParseException("Unexpected token in object literal");
             }
+            consumeWhitespace();
         }
         throw new ParseException("Unterminated object literal");
     }
@@ -162,15 +156,10 @@ public class JsonParser {
     private Object readArray() throws ParseException {
         List<Object> list = new ArrayList<Object>();
         boolean needsComma = false;
+        consumeWhitespace();
         while (pos < length) {
             char c = src.charAt(pos);
             switch(c) {
-                case ' ':
-                case '\t':
-                case '\r':
-                case '\n':
-                    pos += 1;
-                    break;
                 case ']':
                     pos += 1;
                     return cx.newArray(scope, list.toArray());
@@ -188,6 +177,7 @@ public class JsonParser {
                     list.add(readValue());
                     needsComma = true;
             }
+            consumeWhitespace();
         }
         throw new ParseException("Unterminated array literal");
     }
@@ -331,22 +321,32 @@ public class JsonParser {
         return null;
     }
 
-    private void consume(char token) throws ParseException {
+    private void consumeWhitespace() {
         while (pos < length) {
-            char c = src.charAt(pos++);
-            switch(c) {
+            char c = src.charAt(pos);
+            switch (c) {
                 case ' ':
                 case '\t':
                 case '\r':
                 case '\n':
+                    pos += 1;
                     break;
                 default:
-                    if (c == token) {
-                        return;
-                    } else {
-                        throw new ParseException("Expected " + token + " found " + c);
-                    }
+                    return;
             }
+        }
+    }
+
+    private void consume(char token) throws ParseException {
+        consumeWhitespace();
+        if (pos >= length) {
+            throw new ParseException("Expected " + token + " but reached end of stream");
+        }
+        char c = src.charAt(pos++);
+        if (c == token) {
+            return;
+        } else {
+            throw new ParseException("Expected " + token + " found " + c);
         }
     }
 

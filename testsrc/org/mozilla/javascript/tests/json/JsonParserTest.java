@@ -177,6 +177,21 @@ public class JsonParserTest {
             parser.parseValue("\"\u001f\"");
     }
 
+    @Test
+    public void shouldAllowTrailingWhitespace() throws Exception {
+        parser.parseValue("1 ");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldThrowParseExceptionWhenIncompleteObject() throws Exception {
+        parser.parseValue("{\"a\" ");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldThrowParseExceptionWhenIncompleteArray() throws Exception {
+        parser.parseValue("[1 ");
+    }
+
     private String str(char... chars) {
         return new String(chars);
     }
