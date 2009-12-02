@@ -1633,6 +1633,7 @@ public class Parser
         }
 
         WithStatement pn = new WithStatement(pos, getNodeEnd(body) - pos);
+        pn.setJsDoc(getAndResetJsDoc());
         pn.setExpression(obj);
         pn.setStatement(body);
         pn.setParens(lp, rp);
