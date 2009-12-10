@@ -1920,7 +1920,7 @@ public class Parser
                 end = getNodeEnd(init);
             }
 
-            VariableInitializer vi = new VariableInitializer(kidPos, end);
+            VariableInitializer vi = new VariableInitializer(kidPos, end - kidPos);
             if (destructuring != null) {
                 if (init == null && !inForInit) {
                     reportError("msg.destruct.assign.no.init");
