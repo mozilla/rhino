@@ -250,6 +250,9 @@ class XMLList extends XMLObjectImpl implements Function {
                 //    There may well be a better way to do this
                 //    TODO    Find a way to refactor this whole method and simplify it
                 xmlValue = item(index);
+                if (xmlValue == null) {
+                    xmlValue = item(0).copy();
+                }
                 ((XML)xmlValue).setChildren(value);
             }
         }
