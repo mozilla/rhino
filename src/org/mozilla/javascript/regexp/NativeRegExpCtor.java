@@ -290,6 +290,21 @@ class NativeRegExpCtor extends BaseFunction
             case Id_UNDERSCORE:
                 getImpl().input = ScriptRuntime.toString(value);
                 return;
+
+            case Id_lastMatch:
+            case Id_AMPERSAND:
+            case Id_lastParen:
+            case Id_PLUS:
+            case Id_leftContext:
+            case Id_BACK_QUOTE:
+            case Id_rightContext:
+            case Id_QUOTE:
+                return;
+            default:
+                int substring_number = shifted - DOLLAR_ID_BASE - 1;
+                if (0 <= substring_number && substring_number <= 8) {
+                  return;
+                }
         }
         super.setInstanceIdValue(id, value);
     }

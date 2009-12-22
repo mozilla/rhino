@@ -25,3 +25,9 @@ false
 
 js> Object.isFrozen(obj)
 true
+
+js> var _ = Object.freeze([])
+js> var _ = Object.freeze({})
+js> var _ = Object.freeze(function(){})
+js> var _ = Object.freeze(/a/)
+js> var _ = Object.freeze(RegExp)

@@ -198,18 +198,24 @@ public class BaseFunction extends IdScriptableObject implements Function
     @Override
     protected void setInstanceIdValue(int id, Object value)
     {
-        if (id == Id_prototype) {
-            if ((prototypePropertyAttributes & READONLY) == 0) {
-                prototypeProperty = (value != null)
-                                    ? value : UniqueTag.NULL_VALUE;
-            }
-            return;
-        } else if (id == Id_arguments) {
-            if (value == NOT_FOUND) {
-                // This should not be called since "arguments" is PERMANENT
-                Kit.codeBug();
-            }
-            defaultPut("arguments", value);
+        switch (id) {
+            case Id_prototype:
+                if ((prototypePropertyAttributes & READONLY) == 0) {
+                    prototypeProperty = (value != null)
+                                        ? value : UniqueTag.NULL_VALUE;
+                }
+                return;
+            case Id_arguments:
+                if (value == NOT_FOUND) {
+                    // This should not be called since "arguments" is PERMANENT
+                    Kit.codeBug();
+                }
+                defaultPut("arguments", value);
+                return;
+            case Id_name:
+            case Id_arity:
+            case Id_length:
+                return;
         }
         super.setInstanceIdValue(id, value);
     }

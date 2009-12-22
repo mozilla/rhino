@@ -2503,8 +2503,14 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     @Override
     protected void setInstanceIdValue(int id, Object value)
     {
-        if (id == Id_lastIndex) {
+        switch (id) {
+          case Id_lastIndex:
             lastIndex = ScriptRuntime.toNumber(value);
+            return;
+          case Id_source:
+          case Id_global:
+          case Id_ignoreCase:
+          case Id_multiline:
             return;
         }
         super.setInstanceIdValue(id, value);
