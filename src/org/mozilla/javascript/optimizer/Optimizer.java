@@ -182,7 +182,6 @@ class Optimizer
                     Node child = n.getFirstChild();
                     // "child" will be GETVAR or GETPROP or GETELEM
                     if (child.getType() == Token.GETVAR) {
-                        ;
                         if (rewriteForNumberVariables(child, NumberType) == NumberType &&
                             !convertParameter(child))
                         {

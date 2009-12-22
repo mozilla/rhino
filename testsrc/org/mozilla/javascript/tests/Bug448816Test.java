@@ -15,12 +15,14 @@ public class Bug448816Test extends TestCase {
 
     Map<Object, Object> map, reference;
 
+    @SuppressWarnings("unchecked")
+    @Override
     protected void setUp() {
         // set up a reference map
         reference = new LinkedHashMap<Object, Object>();
         reference.put("a", "a");
         reference.put("b", Boolean.TRUE);
-        reference.put("c", new HashMap());
+        reference.put("c", new HashMap<Object, Object>());
         reference.put(new Integer(1), new Integer(42));
         // get a js object as map
         Context context = Context.enter();

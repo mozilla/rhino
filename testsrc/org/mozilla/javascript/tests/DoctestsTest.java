@@ -12,7 +12,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.Global;
 
