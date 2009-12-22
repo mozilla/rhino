@@ -1,0 +1,10 @@
+js> var x = <x><foo>bar</foo></x>;
+js> x.foo[0] = "baz";
+baz
+js> x.foo[1] = "barf";
+barf
+js> x
+<x>
+  <foo>baz</foo>
+  <foo>barf</foo>
+</x>
