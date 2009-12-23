@@ -600,8 +600,14 @@ class XmlNode implements Serializable {
         private static final long serialVersionUID = 4073904386884677090L;
 
         static Namespace create(String prefix, String uri) {
-            if (prefix == null) throw new IllegalArgumentException("Empty string represents default namespace prefix");
-            if (uri == null) throw new IllegalArgumentException("Namespace may not lack a URI");
+            if (prefix == null) {
+                throw new IllegalArgumentException(
+                        "Empty string represents default namespace prefix");
+            }
+            if (uri == null) {
+                throw new IllegalArgumentException(
+                        "Namespace may not lack a URI");
+            }
             Namespace rv = new Namespace();
             rv.prefix = prefix;
             rv.uri = uri;
@@ -611,6 +617,12 @@ class XmlNode implements Serializable {
         static Namespace create(String uri) {
             Namespace rv = new Namespace();
             rv.uri = uri;
+            
+            // Avoid null prefix for "" namespace
+            if (uri.length() == 0) {
+                rv.prefix = "";
+            }
+
             return rv;
         }
 
