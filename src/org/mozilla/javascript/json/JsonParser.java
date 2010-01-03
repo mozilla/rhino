@@ -42,6 +42,7 @@ package org.mozilla.javascript.json;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -142,7 +143,15 @@ public class JsonParser {
                     id = readString();
                     consume(':');
                     value = readValue();
-                    object.put(id, object, value);
+
+                    double d = ScriptRuntime.toNumber(id);
+                    int index = (int) d;
+                    if (d != index) {
+                      object.put(id, object, value);
+                    } else {
+                      object.put(index, object, value);
+                    }
+
                     needsComma = true;
                     break;
                 default:
