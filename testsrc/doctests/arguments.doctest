@@ -1,5 +1,5 @@
 js> var args = (function() { return arguments })()
-js> Object.getPrototypeOf(args) === Array.prototype
+js> Object.getPrototypeOf(args) === Object.prototype
 true
 js> args.constructor === Object.prototype.constructor
 true

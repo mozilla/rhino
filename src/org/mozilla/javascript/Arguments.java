@@ -59,7 +59,7 @@ final class Arguments extends IdScriptableObject
 
         Scriptable parent = activation.getParentScope();
         setParentScope(parent);
-        setPrototype(ScriptableObject.getArrayPrototype(parent));
+        setPrototype(ScriptableObject.getObjectPrototype(parent));
 
         args = activation.originalArgs;
         lengthObj = Integer.valueOf(args.length);
@@ -71,10 +71,6 @@ final class Arguments extends IdScriptableObject
         objectCtor = (BaseFunction) getProperty(topLevel, "Object");
 
         constructor = objectCtor;
-        toString = new IdFunctionObject(this, FTAG, Id_toString, "toString",
-                                        0, parent);
-        toLocaleString = new IdFunctionObject(this, FTAG, Id_toLocaleString,
-                                              "toLocaleString", 0, parent);
 
         int version = f.getLanguageVersion();
         if (version <= Context.VERSION_1_3
@@ -90,31 +86,6 @@ final class Arguments extends IdScriptableObject
     public String getClassName()
     {
         return FTAG;
-    }
-
-    @Override
-    public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
-    {
-        int methodId = f.methodId();
-        switch (methodId) {
-          case Id_toString:
-            return getObjectPrototypeMethod("toString").
-                call(cx, scope, thisObj, args);
-          case Id_toLocaleString:
-            return getObjectPrototypeMethod("toLocaleString").
-                call(cx, scope, thisObj, args);
-        }
-        throw f.unknown();
-    }
-
-    private Callable getObjectPrototypeMethod(String name) {
-        Scriptable proto = (Scriptable) objectCtor.getPrototypeProperty();
-        Object method = proto.get(name, proto);
-        if ( !(method instanceof Callable) ) {
-           throw ScriptRuntime.notFunctionError(proto, method, name);
-        }
-        return (Callable) method;
     }
 
     private Object arg(int index) {
@@ -229,10 +200,8 @@ final class Arguments extends IdScriptableObject
         Id_length           = 2,
         Id_caller           = 3,
         Id_constructor      = 4,
-        Id_toString         = 5,
-        Id_toLocaleString   = 6,
 
-        MAX_INSTANCE_ID     = 6;
+        MAX_INSTANCE_ID     = Id_constructor;
 
     @Override
     protected int getMaxInstanceId()
@@ -244,18 +213,16 @@ final class Arguments extends IdScriptableObject
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2009-08-07 14:12:07 EST
+// #generated# Last update: 2010-01-06 05:48:21 ARST
         L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 6: c=s.charAt(5);
+            int s_length = s.length();
+            if (s_length==6) {
+                c=s.charAt(5);
                 if (c=='e') { X="callee";id=Id_callee; }
                 else if (c=='h') { X="length";id=Id_length; }
                 else if (c=='r') { X="caller";id=Id_caller; }
-                break L;
-            case 8: X="toString";id=Id_toString; break L;
-            case 11: X="constructor";id=Id_constructor; break L;
-            case 14: X="toLocaleString";id=Id_toLocaleString; break L;
             }
+            else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
         }
@@ -269,8 +236,6 @@ final class Arguments extends IdScriptableObject
           case Id_caller:
           case Id_length:
           case Id_constructor:
-          case Id_toString:
-          case Id_toLocaleString:
             attr = DONTENUM;
             break;
           default: throw new IllegalStateException();
@@ -288,8 +253,6 @@ final class Arguments extends IdScriptableObject
             case Id_length: return "length";
             case Id_caller: return "caller";
             case Id_constructor: return "constructor";
-            case Id_toString: return "toString";
-            case Id_toLocaleString: return "toLocaleString";
         }
         return null;
     }
@@ -313,10 +276,6 @@ final class Arguments extends IdScriptableObject
             }
             case Id_constructor:
                 return constructor;
-            case Id_toString:
-                return toString;
-            case Id_toLocaleString:
-                return toLocaleString;
         }
         return super.getInstanceIdValue(id);
     }
@@ -331,8 +290,6 @@ final class Arguments extends IdScriptableObject
                 callerObj = (value != null) ? value : UniqueTag.NULL_VALUE;
                 return;
             case Id_constructor: constructor = value; return;
-            case Id_toString: toString = value; return;
-            case Id_toLocaleString: toLocaleString = value; return;
         }
         super.setInstanceIdValue(id, value);
     }
@@ -441,8 +398,6 @@ final class Arguments extends IdScriptableObject
     private Object calleeObj;
     private Object lengthObj;
     private Object constructor;
-    private Object toString;
-    private Object toLocaleString;
 
     private NativeCall activation;
 
