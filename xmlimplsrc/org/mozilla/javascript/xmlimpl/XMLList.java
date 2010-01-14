@@ -251,7 +251,10 @@ class XMLList extends XMLObjectImpl implements Function {
                 //    TODO    Find a way to refactor this whole method and simplify it
                 xmlValue = item(index);
                 if (xmlValue == null) {
-                    xmlValue = item(0).copy();
+                    XML x = item(0);
+                    xmlValue = x == null
+                        ? newTextElementXML(null,targetProperty,null)
+                        : x.copy();
                 }
                 ((XML)xmlValue).setChildren(value);
             }
@@ -259,10 +262,12 @@ class XMLList extends XMLObjectImpl implements Function {
 
         // Find the parent
         if (index < length()) {
-            parent = item(index).parent();
+          parent = item(index).parent();
+        } else if (length() == 0) {
+          parent = targetObject != null ? targetObject.getXML() : parent();
         } else {
-            // Appending
-            parent = parent();
+          // Appending
+          parent = parent();
         }
 
         if (parent instanceof XML) {
