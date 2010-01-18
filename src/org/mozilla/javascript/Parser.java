@@ -843,7 +843,7 @@ public class Parser
                 String msg = (name != null && name.length() > 0)
                            ? "msg.no.return.value"
                            : "msg.anon.no.return.value";
-                addStrictWarning(msg, name.getIdentifier());
+                addStrictWarning(msg, name == null ? "" : name.getIdentifier());
             }
 
             // Function expressions define a name only in the body of the
