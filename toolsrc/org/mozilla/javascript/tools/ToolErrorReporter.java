@@ -218,7 +218,7 @@ public class ToolErrorReporter implements ErrorReporter {
         return sb.toString();
     }
 
-    private final String messagePrefix = "js: ";
+    private final static String messagePrefix = "js: ";
     private boolean hasReportedErrorFlag;
     private boolean reportWarnings;
     private PrintStream err;
