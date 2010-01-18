@@ -42,6 +42,7 @@ import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -148,7 +149,9 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.ASSIGN_MOD, "%=");
     }
 
-    public static class PositionComparator implements Comparator<AstNode> {
+    public static class PositionComparator implements Comparator<AstNode>, Serializable {
+        private static final long serialVersionUID = 1L;
+
         /**
          * Sorts nodes by (relative) start position.  The start positions are
          * relative to their parent, so this comparator is only meaningful for
