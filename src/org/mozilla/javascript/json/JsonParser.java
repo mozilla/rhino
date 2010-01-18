@@ -287,9 +287,9 @@ public class JsonParser {
             }
             double d = Double.valueOf(num);
             if ((int)d == d) {
-                return new Integer((int) d);
+                return Integer.valueOf((int)d);
             } else {
-                return new Double(d);
+                return Double.valueOf(d);
             }
         } catch (NumberFormatException nfe) {
             throw new ParseException("Unsupported number format: " + num);
