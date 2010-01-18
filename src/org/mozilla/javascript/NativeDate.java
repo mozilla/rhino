@@ -857,7 +857,13 @@ final class NativeDate extends IdScriptableObject
     private static double date_parseString(String s)
     {
         try {
-          if (s.length() == 24) return isoFormat.parse(s).getTime();
+          if (s.length() == 24) {
+              final Date d;
+              synchronized(isoFormat) {
+                  d = isoFormat.parse(s);
+              }
+              return d.getTime();
+          }
         } catch (java.text.ParseException ex) {}
 
         int year = -1;
