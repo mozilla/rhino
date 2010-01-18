@@ -11,14 +11,14 @@ import org.mozilla.javascript.ContextFactory;
 public class TestUtils {
     private static ContextFactory.GlobalSetter globalSetter;
 
-    public static void GrabContextFactoryGlobalSetter() {
+    public static void grabContextFactoryGlobalSetter() {
         if (globalSetter == null) {
             globalSetter = ContextFactory.getGlobalSetter();
         }
     }
 
     public static void setGlobalContextFactory(ContextFactory factory) {
-        GrabContextFactoryGlobalSetter();
+        grabContextFactoryGlobalSetter();
         globalSetter.setContextFactoryGlobal(factory);
     }
 
