@@ -18,10 +18,10 @@ public class Evaluator {
     try {
       Scriptable scope = cx.initStandardObjects();
       if (bindings != null) {
-          for (String id : bindings.keySet()) {
-            Scriptable object = bindings.get(id);
+          for (Map.Entry<String, Scriptable> entry : bindings.entrySet()) {
+            final Scriptable object = entry.getValue();
             object.setParentScope(scope);
-            scope.put(id, scope, object);
+            scope.put(entry.getKey(), scope, object);
           }
       }
       return cx.evaluateString(scope, source, "source", 1, null);
