@@ -285,11 +285,12 @@ public class JsonParser {
                     break;
                 }
             }
-            double d = Double.valueOf(num);
-            if ((int)d == d) {
-                return Integer.valueOf((int)d);
+            final double dval = Double.parseDouble(num);
+            final int ival = (int)dval;
+            if (ival == dval) {
+                return Integer.valueOf(ival);
             } else {
-                return Double.valueOf(d);
+                return Double.valueOf(dval);
             }
         } catch (NumberFormatException nfe) {
             throw new ParseException("Unsupported number format: " + num);

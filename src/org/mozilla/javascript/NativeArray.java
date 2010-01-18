@@ -1511,13 +1511,13 @@ public class NativeArray extends IdScriptableObject
         if (isLast) {
           for (long i=start; i >= 0; i--) {
               if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
-                  return new Long(i);
+                  return Long.valueOf(i);
               }
           }
         } else {
           for (long i=start; i < length; i++) {
               if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
-                  return new Long(i);
+                  return Long.valueOf(i);
               }
           }
         }
@@ -1619,7 +1619,7 @@ public class NativeArray extends IdScriptableObject
                 Object[] innerArgs = new Object[4];
                 innerArgs[0] = value;
                 innerArgs[1] = elem;
-                innerArgs[2] = new Long(i);
+                innerArgs[2] = Long.valueOf(i);
                 innerArgs[3] = thisObj;
                 value = f.call(cx, parent, parent, innerArgs);
             }

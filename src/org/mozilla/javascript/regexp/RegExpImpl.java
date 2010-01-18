@@ -325,7 +325,7 @@ public class RegExpImpl implements RegExpProxy {
                     args[i+1] = Undefined.instance;
                 }
             }
-            args[parenCount+1] = new Integer(reImpl.leftContext.length);
+            args[parenCount+1] = Integer.valueOf(reImpl.leftContext.length);
             args[parenCount+2] = rdata.str;
             // This is a hack to prevent expose of reImpl data to
             // JS function which can run new regexps modifing
