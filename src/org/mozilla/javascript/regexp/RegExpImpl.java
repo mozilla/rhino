@@ -152,7 +152,6 @@ public class RegExpImpl implements RegExpProxy {
             Object compiled = NativeRegExp.compileRE(cx, src, opt, forceFlat);
             re = new NativeRegExp(topScope, compiled);
         }
-        data.regexp = re;
 
         data.global = (re.getFlags() & NativeRegExp.JSREG_GLOB) != 0;
         int[] indexp = { 0 };
@@ -745,7 +744,6 @@ final class GlobData
     int      optarg;    /* input: index of optional flags argument */
     boolean  global;    /* output: whether regexp was global */
     String   str;       /* output: 'this' parameter object as string */
-    NativeRegExp regexp;/* output: regexp parameter object private data */
 
     // match-specific data
 

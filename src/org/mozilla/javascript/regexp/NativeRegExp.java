@@ -2638,7 +2638,6 @@ class RENode {
     RENode          kid;        /* first operand */
 
     RENode          kid2;       /* second operand */
-    int             num;        /* could be a number */
     int             parenIndex; /* or a parenthesis index */
 
                                 /* or a range */
