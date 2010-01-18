@@ -191,10 +191,14 @@ public class JavaPolicySecurity extends SecurityProxy
 
     @Override
     public GeneratedClassLoader
-    createClassLoader(ClassLoader parentLoader, Object securityDomain)
+    createClassLoader(final ClassLoader parentLoader, Object securityDomain)
     {
-        ProtectionDomain domain = (ProtectionDomain)securityDomain;
-        return new Loader(parentLoader, domain);
+        final ProtectionDomain domain = (ProtectionDomain)securityDomain;
+        return AccessController.doPrivileged(new PrivilegedAction<Loader>() {
+            public Loader run() {
+                return new Loader(parentLoader, domain);
+            }
+        });
     }
 
     @Override
