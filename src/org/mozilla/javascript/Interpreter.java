@@ -59,7 +59,6 @@ import org.mozilla.javascript.debug.DebugFrame;
 public final class Interpreter extends Icode implements Evaluator
 {
     // data for parsing
-    CompilerEnvirons compilerEnv;
     InterpreterData itsData;
 
     static final int EXCEPTION_TRY_START_SLOT  = 0;
@@ -230,7 +229,6 @@ public final class Interpreter extends Icode implements Evaluator
                           String encodedSource,
                           boolean returnFunction)
     {
-        this.compilerEnv = compilerEnv;
         CodeGenerator cgen = new CodeGenerator();
         itsData = cgen.compile(compilerEnv, tree, encodedSource, returnFunction);
         return itsData;
