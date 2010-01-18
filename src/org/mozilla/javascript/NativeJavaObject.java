@@ -992,7 +992,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 adapter_readAdapterObject = cl.getMethod("readAdapterObject",
                                                          sig2);
 
-            } catch (Exception ex) {
+            } catch (NoSuchMethodException e) {
                 adapter_writeAdapterObject = null;
                 adapter_readAdapterObject = null;
             }

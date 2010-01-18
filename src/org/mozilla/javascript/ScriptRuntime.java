@@ -3120,9 +3120,13 @@ public class ScriptRuntime {
                 Constructor<?> globalClassCtor = globalClass.getConstructor(parm);
                 Object[] arg = { cx };
                 return (ScriptableObject) globalClassCtor.newInstance(arg);
-            } catch (Exception e) {
+            } 
+            catch (RuntimeException e) {
+                throw e;
+            } 
+            catch (Exception e) {
                 // fall through...
-            }
+            } 
         }
         return new ImporterTopLevel(cx);
     }
