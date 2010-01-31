@@ -42,7 +42,7 @@ public class WriteReadOnlyPropertyTest {
 	}
 
 	void testWriteReadOnly(final boolean acceptWriteReadOnly) throws Exception {
-		final Method readMethod = Foo.class.getMethod("getMyProp", null);
+		final Method readMethod = Foo.class.getMethod("getMyProp", (Class[])null);
 		final Foo foo = new Foo("hello");
         foo.defineProperty("myProp", null, readMethod, null, ScriptableObject.EMPTY);
 
