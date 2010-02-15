@@ -1969,6 +1969,33 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
+     * Gets an indexed property from an object or any object in its prototype 
+     * chain and coerces it to the requested Java type.
+     * <p>
+     * Searches the prototype chain for a property with integral index
+     * <code>index</code>. Note that if you wish to look for properties with numerical
+     * but non-integral indicies, you should use getProperty(Scriptable,String) with
+     * the string value of the index.
+     * <p>
+     * @param obj a JavaScript object
+     * @param index an integral index
+     * @param type the required Java type of the result
+     * @return the value of a property with name <code>name</code> found in
+     *         <code>obj</code> or any object in its prototype chain, or
+     *         null if not found. Note that it does not return 
+     *         {@link Scriptable#NOT_FOUND} as it can ordinarily not be 
+     *         converted to most of the types.
+     * @since 1.7R3
+     */
+    public static <T> T getTypedProperty(Scriptable s, int index, Class<T> type) {
+        Object val = getProperty(s, index);
+        if(val == Scriptable.NOT_FOUND) {
+            val = null;
+        }
+        return type.cast(Context.jsToJava(val, type));
+    }
+
+    /**
      * Gets an indexed property from an object or any object in its prototype chain.
      * <p>
      * Searches the prototype chain for a property with integral index
@@ -1994,6 +2021,30 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             obj = obj.getPrototype();
         } while (obj != null);
         return result;
+    }
+
+    /**
+     * Gets a named property from an object or any object in its prototype chain
+     * and coerces it to the requested Java type.
+     * <p>
+     * Searches the prototype chain for a property named <code>name</code>.
+     * <p>
+     * @param obj a JavaScript object
+     * @param name a property name
+     * @param type the required Java type of the result
+     * @return the value of a property with name <code>name</code> found in
+     *         <code>obj</code> or any object in its prototype chain, or
+     *         null if not found. Note that it does not return 
+     *         {@link Scriptable#NOT_FOUND} as it can ordinarily not be 
+     *         converted to most of the types.
+     * @since 1.7R3
+     */
+    public static <T> T getTypedProperty(Scriptable s, String name, Class<T> type) {
+        Object val = getProperty(s, name);
+        if(val == Scriptable.NOT_FOUND) {
+            val = null;
+        }
+        return type.cast(Context.jsToJava(val, type));
     }
 
     /**

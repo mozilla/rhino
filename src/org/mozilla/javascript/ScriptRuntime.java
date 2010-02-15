@@ -4022,6 +4022,22 @@ public class ScriptRuntime {
         return Context.reportRuntimeError1(msg, val.getClass().getName());
     }
 
+    /**
+     * Equivalent to executing "new Error(message)" from JavaScript. 
+     * @param cx the current context
+     * @param scope the current scope
+     * @param message the message
+     * @return a JavaScriptException you should throw
+     */
+    public static JavaScriptException throwError(Context cx, Scriptable scope, 
+            String message) {
+        final Scriptable error = cx.newObject(scope, "Error", 
+                new Object[] { message });
+        return new JavaScriptException(error, 
+                ScriptableObject.getTypedProperty(error, "fileName", String.class),
+                ScriptableObject.getTypedProperty(error, "lineNumber", Number.class).intValue());
+    }
+
     public static final Object[] emptyArgs = new Object[0];
     public static final String[] emptyStrings = new String[0];
     

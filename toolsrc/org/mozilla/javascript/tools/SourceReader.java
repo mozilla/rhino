@@ -9,11 +9,11 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import org.mozilla.javascript.Kit;
-import org.mozilla.javascript.tools.shell.ParsedContentType;
+import org.mozilla.javascript.commonjs.module.provider.ParsedContentType;
 
 /**
  * @author Attila Szegedi
- * @version $Id: SourceReader.java,v 1.1 2008/10/18 18:57:26 szegedia%freemail.hu Exp $
+ * @version $Id: SourceReader.java,v 1.2 2010/02/15 19:31:17 szegedia%freemail.hu Exp $
  */
 public class SourceReader
 {
