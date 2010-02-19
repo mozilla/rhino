@@ -31,7 +31,7 @@ import org.mozilla.javascript.UniqueTag;
  * program, you need to invoke either {@link #install(Scriptable)} or 
  * {@link #requireMain(Context, String)}.
  * @author Attila Szegedi
- * @version $Id: Require.java,v 1.1 2010/02/15 19:31:14 szegedia%freemail.hu Exp $
+ * @version $Id: Require.java,v 1.2 2010/02/19 09:47:19 szegedia%freemail.hu Exp $
  */
 public class Require extends ScriptableObject implements Function
 {
@@ -325,7 +325,10 @@ public class Require extends ScriptableObject implements Function
             }
             return moduleScript;
         }
-        catch(IOException e) {
+        catch(RuntimeException e) {
+            throw e;
+        }
+        catch(Exception e) {
             throw Context.throwAsScriptRuntimeEx(e);
         }
     }

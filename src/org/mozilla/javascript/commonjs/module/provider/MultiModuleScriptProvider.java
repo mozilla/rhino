@@ -12,7 +12,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
 /**
  * A multiplexer for module script providers.
  * @author Attila Szegedi
- * @version $Id: MultiModuleScriptProvider.java,v 1.1 2010/02/15 19:31:12 szegedia%freemail.hu Exp $
+ * @version $Id: MultiModuleScriptProvider.java,v 1.2 2010/02/19 09:47:19 szegedia%freemail.hu Exp $
  */
 public class MultiModuleScriptProvider implements ModuleScriptProvider
 {
@@ -31,7 +31,7 @@ public class MultiModuleScriptProvider implements ModuleScriptProvider
         this.providers = l.toArray(new ModuleScriptProvider[l.size()]);
     }
     
-    public ModuleScript getModuleScript(Context cx, String moduleId, Scriptable paths) throws IOException {
+    public ModuleScript getModuleScript(Context cx, String moduleId, Scriptable paths) throws Exception {
         for (ModuleScriptProvider provider : providers) {
             final ModuleScript script = provider.getModuleScript(cx, moduleId, paths);
             if(script != null) {
