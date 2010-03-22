@@ -56,25 +56,48 @@ public class SecurityUtilities
      */
     public static String getSystemProperty(final String name)
     {
-        return (String)AccessController.doPrivileged(
-            new PrivilegedAction<Object>()
+        return AccessController.doPrivileged(
+            new PrivilegedAction<String>()
             {
-                public Object run()
+                public String run()
                 {
                     return System.getProperty(name);
                 }
             });
     }
-    
+
     public static ProtectionDomain getProtectionDomain(final Class<?> clazz)
     {
-        return (ProtectionDomain)AccessController.doPrivileged(
-                new PrivilegedAction<Object>()
+        return AccessController.doPrivileged(
+                new PrivilegedAction<ProtectionDomain>()
                 {
-                    public Object run()
+                    public ProtectionDomain run()
                     {
                         return clazz.getProtectionDomain();
                     }
                 });
+    }
+
+    /**
+     * Look up the top-most element in the current stack representing a
+     * script and return its protection domain. This relies on the system-wide
+     * SecurityManager being an instance of {@link RhinoSecurityManager},
+     * otherwise it returns <code>null</code>.
+     * @return The protection of the top-most script in the current stack, or null
+     */
+    public static ProtectionDomain getScriptProtectionDomain() {
+        final SecurityManager securityManager = System.getSecurityManager();
+        if (securityManager instanceof RhinoSecurityManager) {
+            return AccessController.doPrivileged(
+                new PrivilegedAction<ProtectionDomain>() {
+                    public ProtectionDomain run() {
+                        Class c = ((RhinoSecurityManager) securityManager)
+                                    .getCurrentScriptClass();
+                        return c == null ? null : c.getProtectionDomain();
+                    }
+                }
+            );
+        }
+        return null;
     }
 }

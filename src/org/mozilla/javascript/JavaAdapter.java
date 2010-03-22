@@ -499,7 +499,11 @@ public final class JavaAdapter implements IdFunctionCall
         Object staticDomain;
         Class<?> domainClass = SecurityController.getStaticSecurityDomainClass();
         if(domainClass == CodeSource.class || domainClass == ProtectionDomain.class) {
-            ProtectionDomain protectionDomain = JavaAdapter.class.getProtectionDomain();
+            // use the calling script's security domain if available
+            ProtectionDomain protectionDomain = SecurityUtilities.getScriptProtectionDomain();
+            if (protectionDomain == null) {
+                protectionDomain = JavaAdapter.class.getProtectionDomain();
+            }
             if(domainClass == CodeSource.class) {
                 staticDomain = protectionDomain == null ? null : protectionDomain.getCodeSource();
             }
