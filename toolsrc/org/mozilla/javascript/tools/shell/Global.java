@@ -555,7 +555,8 @@ public class Global extends ImporterTopLevel
     /**
      * The sync function creates a synchronized function (in the sense
      * of a Java synchronized method) from an existing function. The
-     * new function synchronizes on the <code>this</code> object of
+     * new function synchronizes on the the second argument if it is
+     * defined, or otherwise the <code>this</code> object of
      * its invocation.
      * js> var o = { f : sync(function(x) {
      *       print("entry");
@@ -575,8 +576,12 @@ public class Global extends ImporterTopLevel
     public static Object sync(Context cx, Scriptable thisObj, Object[] args,
                               Function funObj)
     {
-        if (args.length == 1 && args[0] instanceof Function) {
-            return new Synchronizer((Function)args[0]);
+        if (args.length >= 1 && args.length <= 2 && args[0] instanceof Function) {
+            Object syncObject = null;
+            if (args.length == 2 && args[1] != Undefined.instance) {
+                syncObject = args[1];
+            }
+            return new Synchronizer((Function)args[0], syncObject);
         }
         else {
             throw reportRuntimeError("msg.sync.args");
