@@ -3359,6 +3359,10 @@ public class ScriptRuntime {
 
             Scriptable errorObject = cx.newObject(scope, errorName, args);
             ScriptableObject.putProperty(errorObject, "name", errorName);
+            // set exception in Error objects to enable non-ECMA "stack" property
+            if (errorObject instanceof NativeError) {
+                ((NativeError) errorObject).setStackProvider(re);
+            }
 
             if (javaException != null && isVisible(cx, javaException)) {
                 Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException,
