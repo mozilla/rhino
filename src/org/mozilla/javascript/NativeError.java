@@ -52,8 +52,6 @@ final class NativeError extends IdScriptableObject
 
     private static final Object ERROR_TAG = "Error";
 
-    private RhinoException stackProvider;
-
     static void init(Scriptable scope, boolean sealed)
     {
         NativeError obj = new NativeError();
@@ -84,6 +82,17 @@ final class NativeError extends IdScriptableObject
                     ScriptableObject.putProperty(obj, "lineNumber",
                             Integer.valueOf(line));
                 }
+            }
+        }
+        if(arglen < 3 && cx.hasFeature(Context.FEATURE_LOCATION_INFORMATION_IN_ERROR)) {
+            // Fill in fileName and lineNumber automatically when not specified
+            // explicitly, see Bugzilla issue #342807
+            int[] linep = new int[1];
+            String fileName = Context.getSourcePositionFromStack(linep);
+            ScriptableObject.putProperty(obj, "lineNumber", 
+                    Integer.valueOf(linep[0]));
+            if(arglen < 2) {
+                ScriptableObject.putProperty(obj, "fileName", fileName);
             }
         }
         return obj;
@@ -136,41 +145,6 @@ final class NativeError extends IdScriptableObject
             return js_toSource(cx, scope, thisObj);
         }
         throw new IllegalArgumentException(String.valueOf(id));
-    }
-
-    public void setStackProvider(RhinoException re) {
-        // We go some extra miles to make sure the stack property is only
-        // generated on demand, is cached after the first access, and is
-        // overwritable like an ordinary property. Hence this setup with
-        // the getter and setter below.
-        if (stackProvider == null) {
-            stackProvider = re;
-            try {
-                defineProperty("stack", null,
-                        NativeError.class.getMethod("getStack"),
-                        NativeError.class.getMethod("setStack", Object.class), 0);
-            } catch (NoSuchMethodException nsm) {
-                // should not happen
-                throw new RuntimeException(nsm);
-            }
-        }
-    }
-
-    public Object getStack() {
-        Object value =  stackProvider == null ?
-                NOT_FOUND : stackProvider.getScriptStackTrace();
-        // We store the stack as local property both to cache it
-        // and to make the property writable
-        setStack(value);
-        return value;
-    }
-
-    public void setStack(Object value) {
-        if (stackProvider != null) {
-            stackProvider = null;
-            delete("stack");            
-        }
-        put("stack", this, value);
     }
 
     private static Object js_toString(Scriptable thisObj) {

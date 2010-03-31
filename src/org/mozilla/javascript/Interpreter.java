@@ -756,29 +756,15 @@ public final class Interpreter extends Icode implements Evaluator
         return sb.toString();
     }
 
-    public List<String> getScriptStack(RhinoException ex) {
-        ScriptStackElement[][] stack = getScriptStackElements(ex);
-        List<String> list = new ArrayList<String>(stack.length);
-        String lineSeparator =
-                SecurityUtilities.getSystemProperty("line.separator");
-        for (ScriptStackElement[] group : stack) {
-            StringBuilder sb = new StringBuilder();
-            for (ScriptStackElement elem : group) {
-                elem.renderJavaStyle(sb);
-                sb.append(lineSeparator);
-            }
-            list.add(sb.toString());
-        }
-        return list;
-    }
-
-    public ScriptStackElement[][] getScriptStackElements(RhinoException ex)
+    public List<String> getScriptStack(RhinoException ex)
     {
         if (ex.interpreterStackInfo == null) {
             return null;
         }
 
-        List<ScriptStackElement[]> list = new ArrayList<ScriptStackElement[]>();
+        List<String> list = new ArrayList<String>();
+        String lineSeparator =
+                SecurityUtilities.getSystemProperty("line.separator");
 
         CallFrame[] array = (CallFrame[])ex.interpreterStackInfo;
         int[] linePC = ex.interpreterLineData;
@@ -786,28 +772,31 @@ public final class Interpreter extends Icode implements Evaluator
         int linePCIndex = linePC.length;
         while (arrayIndex != 0) {
             --arrayIndex;
+            StringBuilder sb = new StringBuilder();
             CallFrame frame = array[arrayIndex];
-            List<ScriptStackElement> group = new ArrayList<ScriptStackElement>();
             while (frame != null) {
                 if (linePCIndex == 0) Kit.codeBug();
                 --linePCIndex;
                 InterpreterData idata = frame.idata;
-                String fileName = idata.itsSourceFile;
-                String functionName = null;
-                int lineNumber = -1;
+                sb.append("\tat ");
+                sb.append(idata.itsSourceFile);
                 int pc = linePC[linePCIndex];
                 if (pc >= 0) {
-                    lineNumber = getIndex(idata.itsICode, pc);
+                    // Include line info only if available
+                    sb.append(':');
+                    sb.append(getIndex(idata.itsICode, pc));
                 }
                 if (idata.itsName != null && idata.itsName.length() != 0) {
-                    functionName = idata.itsName;
+                    sb.append(" (");
+                    sb.append(idata.itsName);
+                    sb.append(')');
                 }
+                sb.append(lineSeparator);
                 frame = frame.parentFrame;
-                group.add(new ScriptStackElement(fileName, functionName, lineNumber));
             }
-            list.add(group.toArray(new ScriptStackElement[group.size()]));
+            list.add(sb.toString());
         }
-        return list.toArray(new ScriptStackElement[list.size()][]);
+        return list;
     }
 
     static String getEncodedSource(InterpreterData idata)
