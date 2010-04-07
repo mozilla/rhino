@@ -2962,8 +2962,7 @@ public class Parser
                        && elements.size() == 1) {
                 return arrayComprehension(elements.get(0), pos);
             } else if (tt == Token.EOF) {
-                end = ts.tokenBeg;
-                break;
+                reportError("msg.no.bracket.arg");
             } else {
                 if (!after_lb_or_comma) {
                     reportError("msg.no.bracket.arg");
