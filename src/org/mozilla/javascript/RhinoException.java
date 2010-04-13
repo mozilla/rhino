@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Norris Boyd
  *   Igor Bukanov
+ *   Hannes Wallnoefer
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -55,11 +56,6 @@ import java.util.regex.Pattern;
  */
 public abstract class RhinoException extends RuntimeException
 {
-    static class DefaultFilenameFilter implements FilenameFilter {
-        public boolean accept(File dir, String name) {
-            return name.regionMatches(true, name.length() - 3, ".js", 0, 3);
-        }
-    }
 
     RhinoException()
     {
@@ -232,29 +228,16 @@ public abstract class RhinoException extends RuntimeException
     /**
      * Get a string representing the script stack of this exception.
      * If optimization is enabled, this includes java stack elements
-     * with a source name ending with ".js".
+     * whose source and method names suggest they have been generated
+     * by the Rhino script compiler.
      * @return a script stack dump
      * @since 1.6R6
      */
     public String getScriptStackTrace()
     {
-        return getScriptStackTrace(new DefaultFilenameFilter());
-    }
-
-    /**
-     * Get a string representing the script stack of this exception.
-     * If optimization is enabled, this includes java stack elements
-     * with a source name matching the <code>filter</code>.
-     * @param filter the file name filter to determine whether a file is a 
-     *               script file
-     * @return a script stack dump
-     * @since 1.6R6
-     */
-    public String getScriptStackTrace(FilenameFilter filter)
-    {
         StringBuilder buffer = new StringBuilder();
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
-        ScriptStackElement[] stack = getScriptStack(filter);
+        ScriptStackElement[] stack = getScriptStack();
         for (ScriptStackElement elem : stack) {
             if (useMozillaStackStyle) {
                 elem.renderMozillaStyle(buffer);
@@ -267,33 +250,29 @@ public abstract class RhinoException extends RuntimeException
     }
 
     /**
-     * Get the script stack of this exception as an array of
-     * {@link ScriptStackElement}s.
-     * If optimization is enabled, this includes java stack elements
-     * with a source name ending with ".js".
-     * @return the script stack for this exception
-     * @since 1.7R3
+     * Get a string representing the script stack of this exception.
+     * @deprecated the filter argument is ignored as we are able to
+     * recognize script stack elements by our own. Use
+     * #getScriptStackTrace() instead.
+     * @param filter ignored
+     * @return a script stack dump
+     * @since 1.6R6
      */
-    public ScriptStackElement[] getScriptStack() {
-        return getScriptStack(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".js");
-            }
-        });
+    public String getScriptStackTrace(FilenameFilter filter)
+    {
+        return getScriptStackTrace();
     }
 
     /**
      * Get the script stack of this exception as an array of
      * {@link ScriptStackElement}s.
      * If optimization is enabled, this includes java stack elements
-     * with a source name matching the <code>filter</code>.
-     * @param filter the file name filter to determine whether a file is a
-     *               script file
+     * whose source and method names suggest they have been generated
+     * by the Rhino script compiler.
      * @return the script stack for this exception
      * @since 1.7R3
      */
-    public ScriptStackElement[] getScriptStack(FilenameFilter filter)
-    {
+    public ScriptStackElement[] getScriptStack() {
         List<ScriptStackElement> list = new ArrayList<ScriptStackElement>();
         ScriptStackElement[][] interpreterStack = null;
         if (interpreterStackInfo != null) {
@@ -308,20 +287,22 @@ public abstract class RhinoException extends RuntimeException
         // kudos to Marc Guillemot for coming up with this
         Pattern pattern = Pattern.compile("_c_(.*)_\\d+");
         for (StackTraceElement e : stack) {
-            String name = e.getFileName();
-            if (e.getLineNumber() > -1 && name != null
-                    && filter.accept(null, name)) {
-                String functionName = e.getMethodName();
-                Matcher match = pattern.matcher(functionName);
+            String fileName = e.getFileName();
+            if (e.getMethodName().startsWith("_c_")
+                    && e.getLineNumber() > -1
+                    && fileName != null
+                    && !fileName.endsWith(".java")) {
+                String methodName = e.getMethodName();
+                Matcher match = pattern.matcher(methodName);
                 // the method representing the main script is always "_c_script_0" -
                 // at least we hope so
-                functionName = !"_c_script_0".equals(functionName) && match.find() ?
+                methodName = !"_c_script_0".equals(methodName) && match.find() ?
                         match.group(1) : null;
-                list.add(new ScriptStackElement(e.getFileName(), functionName, e.getLineNumber()));
-            } else if (interpreterStack != null
-                    && interpreterStack.length > interpreterStackIndex
-                    && "org.mozilla.javascript.Interpreter".equals(e.getClassName())
-                    && "interpretLoop".equals(e.getMethodName())) {
+                list.add(new ScriptStackElement(fileName, methodName, e.getLineNumber()));
+            } else if ("org.mozilla.javascript.Interpreter".equals(e.getClassName())
+                    && "interpretLoop".equals(e.getMethodName())
+                    && interpreterStack != null
+                    && interpreterStack.length > interpreterStackIndex) {
                 for (ScriptStackElement elem : interpreterStack[interpreterStackIndex++]) {
                     list.add(elem);
                 }
