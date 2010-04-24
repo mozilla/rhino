@@ -737,7 +737,7 @@ public class Codegen implements Evaluator
                 }
             }
             OptFunctionNode ofn = OptFunctionNode.get(scriptOrFnNodes[i]);
-            cfw.addInvoke(ByteCode.INVOKEVIRTUAL,
+            cfw.addInvoke(ByteCode.INVOKESPECIAL,
                           mainClassName,
                           getFunctionInitMethodName(ofn),
                           FUNCTION_INIT_SIGNATURE);
