@@ -719,8 +719,10 @@ class TokenStream
                 if (matchChar('!')) {
                     if (matchChar('-')) {
                         if (matchChar('-')) {
+                            tokenBeg = cursor - 4;
                             skipLine();
-                            continue retry;
+                            commentType = Token.CommentType.HTML;
+                            return Token.COMMENT;
                         }
                         ungetCharIgnoreLineEnd('-');
                     }
