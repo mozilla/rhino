@@ -1977,7 +1977,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * but non-integral indicies, you should use getProperty(Scriptable,String) with
      * the string value of the index.
      * <p>
-     * @param obj a JavaScript object
+     * @param s a JavaScript object
      * @param index an integral index
      * @param type the required Java type of the result
      * @return the value of a property with name <code>name</code> found in
@@ -2029,7 +2029,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * <p>
      * Searches the prototype chain for a property named <code>name</code>.
      * <p>
-     * @param obj a JavaScript object
+     * @param s a JavaScript object
      * @param name a property name
      * @param type the required Java type of the result
      * @return the value of a property with name <code>name</code> found in
