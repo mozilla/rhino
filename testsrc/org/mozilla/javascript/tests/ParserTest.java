@@ -15,6 +15,19 @@ import java.util.List;
 
 public class ParserTest extends TestCase {
 
+    public void testAutoSemiColonBetweenNames() {
+        AstRoot root = parse("\nx\ny\nz\n");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        assertEquals("x", first.getString());
+        AstNode second = ((ExpressionStatement)
+            root.getFirstChild().getNext()).getExpression();
+        assertEquals("y", second.getString());
+        AstNode third = ((ExpressionStatement)
+            root.getFirstChild().getNext().getNext()).getExpression();
+        assertEquals("z", third.getString());
+    }
+
     public void testLinenoAssign() {
         AstRoot root = parse("\n\na = b");
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();

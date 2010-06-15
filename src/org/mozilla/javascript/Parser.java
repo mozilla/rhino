@@ -3229,7 +3229,7 @@ public class Parser
         int beg = ts.tokenBeg;
         String s = ts.getString();
         int lineno = ts.lineno;
-        if (currentToken != Token.NAME) {
+        if (!"".equals(prevNameTokenString)) {
             beg = prevNameTokenStart;
             s = prevNameTokenString;
             lineno = prevNameTokenLineno;
