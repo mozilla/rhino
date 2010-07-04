@@ -831,10 +831,15 @@ class JavaMembers
         for (;;) {
             members = ct.get(cl);
             if (members != null) {
+                if (cl != dynamicType) {
+                    // member lookup for the original class failed because of
+                    // missing privileges, cache the result so we don't try again
+                    ct.put(dynamicType, members);
+                }
                 return members;
             }
             try {
-                members = new JavaMembers(cache.getAssociatedScope(), cl, 
+                members = new JavaMembers(cache.getAssociatedScope(), cl,
                         includeProtected);
                 break;
             } catch (SecurityException e) {
@@ -860,8 +865,14 @@ class JavaMembers
             }
         }
 
-        if (cache.isCachingEnabled())
+        if (cache.isCachingEnabled()) {
             ct.put(cl, members);
+            if (cl != dynamicType) {
+                // member lookup for the original class failed because of
+                // missing privileges, cache the result so we don't try again
+                ct.put(dynamicType, members);
+            }
+        }
         return members;
     }
 
