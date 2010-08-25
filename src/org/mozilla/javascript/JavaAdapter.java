@@ -425,7 +425,7 @@ public final class JavaAdapter implements IdFunctionCall
                                    argTypes, method.getReturnType());
                     generatedOverrides.put(methodKey, 0);
                     generatedMethods.put(methodName, 0);
-                    
+
                     // if a method was overridden, generate a "super$method"
                     // which lets the delegate call the superclass' version.
                     if (!isAbstractMethod) {
@@ -454,15 +454,20 @@ public final class JavaAdapter implements IdFunctionCall
         return cfw.toByteArray();
     }
 
-    static Method[] getOverridableMethods(Class<?> c)
+    static Method[] getOverridableMethods(Class<?> clazz)
     {
         ArrayList<Method> list = new ArrayList<Method>();
         HashSet<String> skip = new HashSet<String>();
-        while (c != null) {
+        // Check superclasses before interfaces so we always choose
+        // implemented methods over abstract ones, even if a subclass
+        // re-implements an interface already implemented in a superclass
+        // (e.g. java.util.ArrayList)
+        for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
             appendOverridableMethods(c, list, skip);
+        }
+        for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
             for (Class<?> intf: c.getInterfaces())
                 appendOverridableMethods(intf, list, skip);
-            c = c.getSuperclass();
         }
         return list.toArray(new Method[list.size()]);
     }
