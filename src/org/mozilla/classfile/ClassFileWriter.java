@@ -4183,8 +4183,12 @@ public class ClassFileWriter {
         // version 50) should have stack maps generated.
         InputStream is = null;
         try {
-            is = ClassFileWriter.class.getClassLoader().getResourceAsStream(
+            is = ClassFileWriter.class.getResourceAsStream(
                 "org/mozilla/classfile/ClassFileWriter.class");
+            if (is == null) {
+                is = ClassLoader.getSystemResourceAsStream(
+                    "org/mozilla/classfile/ClassFileWriter.class");
+            }
             byte[] header = new byte[8];
             is.read(header);
             MinorVersion = (header[4] << 8) | header[5];
