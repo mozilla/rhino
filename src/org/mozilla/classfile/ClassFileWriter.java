@@ -4182,6 +4182,7 @@ public class ClassFileWriter {
         // bytecode features we need. For example, Java 6 bytecode (classfile
         // version 50) should have stack maps generated.
         InputStream is = null;
+        int major = 48, minor = 0;
         try {
             is = ClassFileWriter.class.getResourceAsStream(
                 "org/mozilla/classfile/ClassFileWriter.class");
@@ -4191,12 +4192,14 @@ public class ClassFileWriter {
             }
             byte[] header = new byte[8];
             is.read(header);
-            MinorVersion = (header[4] << 8) | header[5];
-            MajorVersion = (header[6] << 8) | header[7];
-            GenerateStackMap = MajorVersion >= 50;
-        } catch (IOException e) {
-            throw new RuntimeException("could not determine bytecode version");
+            minor = (header[4] << 8) | header[5];
+            major = (header[6] << 8) | header[7];
+        } catch (Exception e) {
+            // Unable to get class file, use default bytecode version
         } finally {
+            MinorVersion = minor;
+            MajorVersion = major;
+            GenerateStackMap = major >= 50;
             if (is != null) {
                 try {
                     is.close();
