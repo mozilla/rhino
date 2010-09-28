@@ -52,12 +52,11 @@ class SubString {
 
     public SubString(char[] source, int start, int len)
     {
-    // there must be a better way of doing this??
         index = 0;
         length = len;
         charArray = new char[len];
-        for (int j = 0; j < len; j++)
-            charArray[j] = source[start + j];
+        // is this copy needed?
+        System.arraycopy(source, start, charArray, 0, len);
     }
 
     @Override
