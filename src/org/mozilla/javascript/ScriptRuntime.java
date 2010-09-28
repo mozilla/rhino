@@ -3846,6 +3846,13 @@ public class ScriptRuntime {
     {
         // Use obj and value for better error reporting
         String objString = toString(obj);
+        if (obj instanceof NativeFunction) {
+            // Omit function body in string representations of functions
+            int curly = objString.indexOf('{');
+            if (curly > -1) {
+                objString = objString.substring(0, curly + 1) + "...}";
+            }
+        }
         if (value == Scriptable.NOT_FOUND) {
             return typeError2("msg.function.not.found.in", propertyName,
                     objString);
