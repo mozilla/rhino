@@ -523,13 +523,13 @@ public class BaseFunction extends IdScriptableObject implements Function
             }
             sourceBuf.append(ScriptRuntime.toString(args[i]));
         }
-        sourceBuf.append(") {");
+        sourceBuf.append(") {\n");
         if (arglen != 0) {
             // append function body
             String funBody = ScriptRuntime.toString(args[arglen - 1]);
             sourceBuf.append(funBody);
         }
-        sourceBuf.append('}');
+        sourceBuf.append("\n}");
         String source = sourceBuf.toString();
 
         int[] linep = new int[1];
