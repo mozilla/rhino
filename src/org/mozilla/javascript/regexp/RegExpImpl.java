@@ -727,14 +727,14 @@ public class RegExpImpl implements RegExpProxy {
         return (i != -1) ? i : length;
     }
 
-    String          input;         /* input string to match (perl $_, GC root) */
-    boolean         multiline;     /* whether input contains newlines (perl $*) */
-    SubString[]     parens;        /* Vector of SubString; last set of parens
+    protected String          input;         /* input string to match (perl $_, GC root) */
+    protected boolean         multiline;     /* whether input contains newlines (perl $*) */
+    protected SubString[]     parens;        /* Vector of SubString; last set of parens
                                       matched (perl $1, $2) */
-    SubString       lastMatch;     /* last string matched (perl $&) */
-    SubString       lastParen;     /* last paren matched (perl $+) */
-    SubString       leftContext;   /* input to left of last match (perl $`) */
-    SubString       rightContext;  /* input to right of last match (perl $') */
+    protected SubString       lastMatch;     /* last string matched (perl $&) */
+    protected SubString       lastParen;     /* last paren matched (perl $+) */
+    protected SubString       leftContext;   /* input to left of last match (perl $`) */
+    protected SubString       rightContext;  /* input to right of last match (perl $') */
 }
 
 

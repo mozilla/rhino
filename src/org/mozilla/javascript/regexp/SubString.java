@@ -37,7 +37,7 @@
 
 package org.mozilla.javascript.regexp;
 
-class SubString {
+public class SubString {
 
     public SubString()
     {
@@ -66,7 +66,7 @@ class SubString {
                : new String(charArray, index, length);
     }
 
-    static final SubString emptySubString = new SubString();
+    public static final SubString emptySubString = new SubString();
 
     char[] charArray;
     int    index;
