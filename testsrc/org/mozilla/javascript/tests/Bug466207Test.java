@@ -103,5 +103,6 @@ public class Bug466207Test extends TestCase {
             assertEquals(it1.previous(), it2.previous());
         }
         assertFalse(it2.hasPrevious());
+        compareIterators(it1, it2);
     }
 }
