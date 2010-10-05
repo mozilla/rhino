@@ -41,8 +41,13 @@
 package org.mozilla.javascript;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -50,7 +55,7 @@ import java.util.Set;
  * @author Norris Boyd
  * @author Mike McCabe
  */
-public class NativeArray extends IdScriptableObject
+public class NativeArray extends IdScriptableObject implements List
 {
     static final long serialVersionUID = 7331366857676127338L;
 
@@ -1629,6 +1634,219 @@ public class NativeArray extends IdScriptableObject
             throw ScriptRuntime.typeError0("msg.empty.array.reduce");
         }
         return value;
+    }
+
+    // methods to implement java.util.List
+
+    public boolean contains(Object o) {
+        return indexOf(o) > -1;
+    }
+
+    public Object[] toArray() {
+        return toArray(ScriptRuntime.emptyArgs);
+    }
+
+    public Object[] toArray(Object[] a) {
+        long longLen = length;
+        if (longLen > Integer.MAX_VALUE) {
+            throw new IllegalStateException();
+        }
+        int len = (int) longLen;
+        Object[] array = a.length >= len ?
+                a : (Object[]) java.lang.reflect.Array
+                .newInstance(a.getClass().getComponentType(), len);
+        for (int i = 0; i < len; i++) {
+            array[i] = get(i);
+        }
+        return array;
+    }
+
+    public boolean containsAll(Collection c) {
+        for (Object aC : c)
+            if (!contains(aC))
+                return false;
+        return true;
+    }
+
+    public int size() {
+        long longLen = length;
+        if (longLen > Integer.MAX_VALUE) {
+            throw new IllegalStateException();
+        }
+        return (int) longLen;
+    }
+
+    public Object get(long index) {
+        if (index < 0 || index >= length) {
+            throw new IndexOutOfBoundsException();
+        }
+        Object value = getRawElem(this, index);
+        if (value == Scriptable.NOT_FOUND || value == Undefined.instance) {
+            return null;
+        } else if (value instanceof Wrapper) {
+            return ((Wrapper) value).unwrap();
+        } else {
+            return value;
+        }
+    }
+
+    public Object get(int index) {
+        return get((long) index);
+    }
+
+    public int indexOf(Object o) {
+        long longLen = length;
+        if (longLen > Integer.MAX_VALUE) {
+            throw new IllegalStateException();
+        }
+        int len = (int) longLen;
+        if (o == null) {
+            for (int i = 0; i < len; i++) {
+                if (get(i) == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = 0; i < len; i++) {
+                if (o.equals(get(i))) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public int lastIndexOf(Object o) {
+        long longLen = length;
+        if (longLen > Integer.MAX_VALUE) {
+            throw new IllegalStateException();
+        }
+        int len = (int) longLen;
+        if (o == null) {
+            for (int i = len - 1; i >= 0; i--) {
+                if (get(i) == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = len - 1; i >= 0; i--) {
+                if (o.equals(get(i))) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public Iterator iterator() {
+        return listIterator(0);
+    }
+
+    public ListIterator listIterator() {
+        return listIterator(0);
+    }
+
+    public ListIterator listIterator(final int start) {
+        long longLen = length;
+        if (longLen > Integer.MAX_VALUE) {
+            throw new IllegalStateException();
+        }
+        final int len = (int) longLen;
+
+        if (start < 0 || start > len) {
+            throw new IndexOutOfBoundsException("Index: " + start);
+        }
+
+        return new ListIterator() {
+
+            int cursor = start;
+
+            public boolean hasNext() {
+                return cursor < len;
+            }
+
+            public Object next() {
+                if (cursor == len) {
+                    throw new NoSuchElementException();
+                }
+                return get(cursor++);
+            }
+
+            public boolean hasPrevious() {
+                return cursor > 0;
+            }
+
+            public Object previous() {
+                if (cursor == 0) {
+                    throw new NoSuchElementException();
+                }
+                return get(--cursor);
+            }
+
+            public int nextIndex() {
+                return cursor;
+            }
+
+            public int previousIndex() {
+                return cursor - 1;
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+            public void add(Object o) {
+                throw new UnsupportedOperationException();
+            }
+
+            public void set(Object o) {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    public boolean add(Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean addAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean removeAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean retainAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+    public void add(int index, Object element) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean addAll(int index, Collection c) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Object set(int index, Object element) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Object remove(int index) {
+        throw new UnsupportedOperationException();
+    }
+
+    public List subList(int fromIndex, int toIndex) {
+        throw new UnsupportedOperationException();
     }
 
 // #string_id_map#

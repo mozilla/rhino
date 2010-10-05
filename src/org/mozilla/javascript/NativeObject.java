@@ -41,12 +41,19 @@
 
 package org.mozilla.javascript;
 
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * This class implements the Object native object.
  * See ECMA 15.2.
  * @author Norris Boyd
  */
-public class NativeObject extends IdScriptableObject
+public class NativeObject extends IdScriptableObject implements Map
 {
     static final long serialVersionUID = -6345305608474346996L;
 
@@ -446,6 +453,199 @@ public class NativeObject extends IdScriptableObject
             throw new IllegalArgumentException(String.valueOf(id));
         }
     }
+
+    // methods implementing java.util.Map
+
+    public boolean containsKey(Object key) {
+        if (key instanceof String) {
+            return has((String) key, this);
+        } else if (key instanceof Number) {
+            return has(((Number) key).intValue(), this);
+        }
+        return false;
+    }
+
+    public boolean containsValue(Object value) {
+        for (Object obj : values()) {
+            if (value == obj ||
+                    value != null && value.equals(obj)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Object remove(Object key) {
+        Object value = get(key);
+        if (key instanceof String) {
+            delete((String) key);
+        } else if (key instanceof Number) {
+            delete(((Number) key).intValue());
+        }
+        return value;
+    }
+
+
+    public Set<Object> keySet() {
+        return new KeySet();
+    }
+
+    public Collection<Object> values() {
+        return new ValueCollection();
+    }
+
+    public Set<Map.Entry<Object, Object>> entrySet() {
+        return new EntrySet();
+    }
+
+    public Object put(Object key, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void putAll(Map m) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+
+    class EntrySet extends AbstractSet<Entry<Object, Object>> {
+        @Override
+        public Iterator<Entry<Object, Object>> iterator() {
+            return new Iterator<Map.Entry<Object, Object>>() {
+                Object[] ids = getIds();
+                Object key = null;
+                int index = 0;
+
+                public boolean hasNext() {
+                    return index < ids.length;
+                }
+
+                public Map.Entry<Object, Object> next() {
+                    final Object ekey = key = ids[index++];
+                    final Object value = get(key);
+                    return new Map.Entry<Object, Object>() {
+                        public Object getKey() {
+                            return ekey;
+                        }
+
+                        public Object getValue() {
+                            return value;
+                        }
+
+                        public Object setValue(Object value) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        public boolean equals(Object other) {
+                            if (!(other instanceof Map.Entry)) {
+                                return false;
+                            }
+                            Map.Entry e = (Map.Entry) other;
+                            return (ekey == null ? e.getKey() == null : ekey.equals(e.getKey()))
+                                && (value == null ? e.getValue() == null : value.equals(e.getValue()));
+                        }
+
+                        public int hashCode() {
+                            return (ekey == null ? 0 : ekey.hashCode()) ^
+                                   (value == null ? 0 : value.hashCode());
+                        }
+
+                        public String toString() {
+                            return ekey + "=" + value;
+                        }
+                    };
+                }
+
+                public void remove() {
+                    if (key == null) {
+                        throw new IllegalStateException();
+                    }
+                    NativeObject.this.remove(key);
+                    key = null;
+                }
+            };
+        }
+
+        @Override
+        public int size() {
+            return NativeObject.this.size();
+        }
+    }
+
+    class KeySet extends AbstractSet<Object> {
+
+        @Override
+        public boolean contains(Object key) {
+            return containsKey(key);
+        }
+
+        @Override
+        public Iterator<Object> iterator() {
+            return new Iterator<Object>() {
+                Object[] ids = getIds();
+                Object key;
+                int index = 0;
+
+                public boolean hasNext() {
+                    return index < ids.length;
+                }
+
+                public Object next() {
+                    return (key = ids[index++]);
+                }
+
+                public void remove() {
+                    if (key == null) {
+                        throw new IllegalStateException();
+                    }
+                    NativeObject.this.remove(key);
+                    key = null;
+                }
+           };
+        }
+
+        @Override
+        public int size() {
+            return NativeObject.this.size();
+        }
+    }
+
+    class ValueCollection extends AbstractCollection<Object> {
+
+        @Override
+        public Iterator<Object> iterator() {
+            return new Iterator<Object>() {
+                Object[] ids = getIds();
+                Object key;
+                int index = 0;
+
+                public boolean hasNext() {
+                    return index < ids.length;
+                }
+
+                public Object next() {
+                    return get((key = ids[index++]));
+                }
+
+                public void remove() {
+                    if (key == null) {
+                        throw new IllegalStateException();
+                    }
+                    NativeObject.this.remove(key);
+                    key = null;
+                }
+            };
+        }
+
+        @Override
+        public int size() {
+            return NativeObject.this.size();
+        }
+    }
+
 
 // #string_id_map#
 

@@ -47,12 +47,27 @@
 
 package org.mozilla.javascript;
 
-import java.lang.reflect.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
-import java.util.*;
-import java.io.*;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+
 import org.mozilla.javascript.debug.DebuggableObject;
-import org.mozilla.javascript.annotations.*;
+import org.mozilla.javascript.annotations.JSConstructor;
+import org.mozilla.javascript.annotations.JSFunction;
+import org.mozilla.javascript.annotations.JSGetter;
+import org.mozilla.javascript.annotations.JSSetter;
+import org.mozilla.javascript.annotations.JSStaticFunction;
 
 /**
  * This is the default implementation of the Scriptable interface. This
@@ -70,7 +85,7 @@ import org.mozilla.javascript.annotations.*;
 
 public abstract class ScriptableObject implements Scriptable, Serializable,
                                                   DebuggableObject,
-                                                  ConstProperties, Map
+                                                  ConstProperties
 {
 
     /**
@@ -2954,7 +2969,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
       return slot;
     }
 
-    // Methods and classes to implement java.util.Map interface
+    // Partial implementation of java.util.Map. See NativeObject for
+    // a subclass that implements java.util.Map.
 
     public int size() {
         return count;
@@ -2964,24 +2980,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return count == 0;
     }
 
-    public boolean containsKey(Object key) {
-        if (key instanceof String) {
-            return has((String) key, this);
-        } else if (key instanceof Number) {
-            return has(((Number) key).intValue(), this);
-        }
-        return false;
-    }
-
-    public boolean containsValue(Object value) {
-        for (Object obj : values()) {
-            if (value == obj ||
-                    value != null && value.equals(obj)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public Object get(Object key) {
         Object value = null;
@@ -2996,176 +2994,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             return ((Wrapper) value).unwrap();
         } else {
             return value;
-        }
-    }
-
-    public Object remove(Object key) {
-        Object value = get(key);
-        if (key instanceof String) {
-            delete((String) key);
-        } else if (key instanceof Number) {
-            delete(((Number) key).intValue());
-        }
-        return value;
-    }
-
-    public Set<Object> keySet() {
-        return new KeySet();
-    }
-
-    public Collection<Object> values() {
-        return new ValueCollection();
-    }
-
-    public Set<Map.Entry<Object, Object>> entrySet() {
-        return new EntrySet();
-    }
-
-    public Object put(Object key, Object value) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void putAll(Map m) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void clear() {
-        throw new UnsupportedOperationException();
-    }
-
-
-    class EntrySet extends AbstractSet<Map.Entry<Object, Object>> {
-        @Override
-        public Iterator<Map.Entry<Object, Object>> iterator() {
-            return new Iterator<Map.Entry<Object, Object>>() {
-                Object[] ids = getIds();
-                Object key = null;
-                int index = 0;
-
-                public boolean hasNext() {
-                    return index < ids.length;
-                }
-
-                public Map.Entry<Object, Object> next() {
-                    final Object ekey = key = ids[index++];
-                    final Object value = get(key);
-                    return new Map.Entry<Object, Object>() {
-                        public Object getKey() {
-                            return ekey;
-                        }
-
-                        public Object getValue() {
-                            return value;
-                        }
-
-                        public Object setValue(Object value) {
-                            throw new UnsupportedOperationException();
-                        }
-
-                        public boolean equals(Object other) {
-                            if (!(other instanceof Map.Entry)) {
-                                return false;
-                            }
-                            Map.Entry e = (Map.Entry) other;
-                            return (ekey == null ? e.getKey() == null : ekey.equals(e.getKey()))
-                                && (value == null ? e.getValue() == null : value.equals(e.getValue()));
-                        }
-
-                        public int hashCode() {
-                            return (ekey == null ? 0 : ekey.hashCode()) ^
-                                   (value == null ? 0 : value.hashCode());
-                        }
-
-                        public String toString() {
-                            return ekey + "=" + value;
-                        }
-                    };
-                }
-
-                public void remove() {
-                    if (key == null) {
-                        throw new IllegalStateException();
-                    }
-                    ScriptableObject.this.remove(key);
-                    key = null;
-                }
-            };
-        }
-
-        @Override
-        public int size() {
-            return count;
-        }
-    }
-
-    class KeySet extends AbstractSet<Object> {
-
-        @Override
-        public boolean contains(Object key) {
-            return containsKey(key);
-        }
-
-        @Override
-        public Iterator<Object> iterator() {
-            return new Iterator<Object>() {
-                Object[] ids = getIds();
-                Object key;
-                int index = 0;
-
-                public boolean hasNext() {
-                    return index < ids.length;
-                }
-
-                public Object next() {
-                    return (key = ids[index++]);
-                }
-
-                public void remove() {
-                    if (key == null) {
-                        throw new IllegalStateException();
-                    }
-                    ScriptableObject.this.remove(key);
-                    key = null;
-                }
-           };
-        }
-
-        @Override
-        public int size() {
-            return count;
-        }
-    }
-
-    class ValueCollection extends AbstractCollection<Object> {
-
-        @Override
-        public Iterator<Object> iterator() {
-            return new Iterator<Object>() {
-                Object[] ids = getIds();
-                Object key;
-                int index = 0;
-
-                public boolean hasNext() {
-                    return index < ids.length;
-                }
-
-                public Object next() {
-                    return get((key = ids[index++]));
-                }
-
-                public void remove() {
-                    if (key == null) {
-                        throw new IllegalStateException();
-                    }
-                    ScriptableObject.this.remove(key);
-                    key = null;
-                }
-            };
-        }
-
-        @Override
-        public int size() {
-            return count;
         }
     }
 
