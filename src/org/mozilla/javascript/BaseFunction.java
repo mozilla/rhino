@@ -523,7 +523,7 @@ public class BaseFunction extends IdScriptableObject implements Function
             }
             sourceBuf.append(ScriptRuntime.toString(args[i]));
         }
-        sourceBuf.append(") {\n");
+        sourceBuf.append(") {");
         if (arglen != 0) {
             // append function body
             String funBody = ScriptRuntime.toString(args[arglen - 1]);
