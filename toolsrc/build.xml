@@ -50,6 +50,7 @@ Requires Ant version 1.2
            includes="org/**/*.java"
            deprecation="on"
            debug="${debug}"
+           includeAntRuntime="false"
            target="${target-jvm}"
            source="${source-level}"
     >

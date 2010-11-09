@@ -71,6 +71,7 @@
 			destdir="${classes}"
 			deprecation="on"
 			debug="${debug}"
+                        includeAntRuntime="false"
 			target="${target-jvm}"
 			source="${source-level}"
 		/>		
@@ -101,6 +102,7 @@
 			debug="${debug}"
 			classpathref="xmlbeans.classpath"
 			failonerror="${xmlimpl.compile.failonerror}"
+                        includeAntRuntime="false"
 			target="${target-jvm}"
 			source="${source-level}"
 		/>

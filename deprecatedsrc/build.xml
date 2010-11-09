@@ -44,6 +44,7 @@
            includes="org/mozilla/javascript/*.java"
            deprecation="on"
            debug="${debug}"
+           includeAntRuntime="false"
 	   target="${target-jvm}"
  	   source="${source-level}"
 	   >
