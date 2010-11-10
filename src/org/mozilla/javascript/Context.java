@@ -527,7 +527,7 @@ public class Context
 
     /**
      * @deprecated
-     * @see ContextFactory#addListener(ContextFactory.Listener)
+     * @see ContextFactory#addListener(org.mozilla.javascript.ContextFactory.Listener)
      * @see ContextFactory#getGlobal()
      */
     public static void addContextListener(ContextListener listener)
@@ -556,7 +556,7 @@ public class Context
 
     /**
      * @deprecated
-     * @see ContextFactory#removeListener(ContextFactory.Listener)
+     * @see ContextFactory#removeListener(org.mozilla.javascript.ContextFactory.Listener)
      * @see ContextFactory#getGlobal()
      */
     public static void removeContextListener(ContextListener listener)
