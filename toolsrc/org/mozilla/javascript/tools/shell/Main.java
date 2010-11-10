@@ -371,9 +371,6 @@ public class Main
                 ps.println(cx.getImplementationVersion());
             }
 
-            // Use the interpreter for interactive input
-            cx.setOptimizationLevel(-1);
-
             String charEnc = shellContextFactory.getCharacterEncoding();
             if(charEnc == null)
             {
