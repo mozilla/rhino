@@ -309,11 +309,11 @@ public class BaseFunction extends IdScriptableObject implements Function
             final Scriptable boundThis;
             final Object[] boundArgs;
             if (argc > 0) {
-              boundThis = ScriptRuntime.toObject(cx, scope, args[0]);
+              boundThis = ScriptRuntime.toObjectOrNull(cx, args[0], scope);
               boundArgs = new Object[argc-1];
               System.arraycopy(args, 1, boundArgs, 0, argc-1);
             } else {
-              boundThis = ScriptRuntime.toObject(cx, scope, Undefined.instance);
+              boundThis = null;
               boundArgs = ScriptRuntime.emptyArgs;
             }
             return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
