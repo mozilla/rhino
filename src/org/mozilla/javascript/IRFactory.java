@@ -1266,12 +1266,16 @@ public final class IRFactory extends Parser
 
         if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
             Name name = fnNode.getFunctionName();
-            if (name != null && name.length() != 0) {
+            if (name != null && name.length() != 0
+                    && fnNode.getSymbol(name.getIdentifier()) == null) {
                 // A function expression needs to have its name as a
                 // variable (if it isn't already allocated as a variable).
                 // See ECMA Ch. 13.  We add code to the beginning of the
                 // function to initialize a local variable of the
-                // function's name to the function value.
+                // function's name to the function value, but only if the
+                // function doesn't already define a formal parameter, var,
+                // or nested function with the same name.
+                fnNode.putSymbol(new Symbol(Token.FUNCTION, name.getIdentifier()));
                 Node setFn = new Node(Token.EXPR_VOID,
                                  new Node(Token.SETNAME,
                                           Node.newString(Token.BINDNAME,

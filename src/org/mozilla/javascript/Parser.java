@@ -845,14 +845,6 @@ public class Parser
                            : "msg.anon.no.return.value";
                 addStrictWarning(msg, name == null ? "" : name.getIdentifier());
             }
-
-            // Function expressions define a name only in the body of the
-            // function, and only if not hidden by a parameter name
-            if (syntheticType == FunctionNode.FUNCTION_EXPRESSION
-                && name != null && name.length() > 0
-                && currentScope.getSymbol(name.getIdentifier()) == null) {
-                defineSymbol(Token.FUNCTION, name.getIdentifier());
-            }
         } finally {
             savedVars.restore();
         }
