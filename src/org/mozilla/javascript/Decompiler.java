@@ -818,6 +818,10 @@ public class Decompiler
                 result.append('@');
                 break;
 
+            case Token.DEBUGGER:
+                result.append("debugger;\n");
+                break;
+
             default:
                 // If we don't know how to decompile it, raise an exception.
                 throw new RuntimeException("Token: " +
