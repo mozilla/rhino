@@ -116,18 +116,21 @@ public class Codegen implements Evaluator
     {
         final Class<?> cl = defineClass(bytecode, staticSecurityDomain);
 
-        // Run as privileged action to allow script instantiation even if the script class
-        // itself does not have the required permissions (access declared members etc).
-        Script script = AccessController.doPrivileged(new PrivilegedAction<Script>() {
-            public Script run() {
-                try {
-                    return (Script) cl.newInstance();
-                } catch (Exception ex) {
-                    throw new RuntimeException(
+        // Run as privileged action to allow script instantiation even if
+        // the script class itself does not have the required permissions
+        // (access declared members etc).
+        Script script = AccessController.doPrivileged(
+            new PrivilegedAction<Script>() {
+                public Script run() {
+                    try {
+                        return (Script) cl.newInstance();
+                    } catch (Exception ex) {
+                        throw new RuntimeException(
                             "Unable to instantiate compiled class", ex);
+                    }
                 }
             }
-        });
+        );
         return script;
     }
 
