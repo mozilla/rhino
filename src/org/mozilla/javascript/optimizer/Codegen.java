@@ -49,6 +49,9 @@ import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.classfile.*;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 import java.lang.reflect.Constructor;
 
@@ -111,15 +114,20 @@ public class Codegen implements Evaluator
     public Script createScriptObject(Object bytecode,
                                      Object staticSecurityDomain)
     {
-        Class<?> cl = defineClass(bytecode, staticSecurityDomain);
+        final Class<?> cl = defineClass(bytecode, staticSecurityDomain);
 
-        Script script;
-        try {
-            script = (Script)cl.newInstance();
-        } catch (Exception ex) {
-            throw new RuntimeException
-                ("Unable to instantiate compiled class:"+ex.toString());
-        }
+        // Run as privileged action to allow script instantiation even if the script class
+        // itself does not have the required permissions (access declared members etc).
+        Script script = AccessController.doPrivileged(new PrivilegedAction<Script>() {
+            public Script run() {
+                try {
+                    return (Script) cl.newInstance();
+                } catch (Exception ex) {
+                    throw new RuntimeException(
+                            "Unable to instantiate compiled class", ex);
+                }
+            }
+        });
         return script;
     }
 
