@@ -51,7 +51,7 @@ import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /**
- * @version $Id: ShellTest.java,v 1.12 2009/05/15 12:30:45 nboyd%atg.com Exp $
+ * @version $Id: ShellTest.java,v 1.13 2010/12/15 10:21:22 hannes%helma.at Exp $
  */
 public class ShellTest {
     public static final FileFilter DIRECTORY_FILTER = new FileFilter() {
@@ -105,6 +105,14 @@ public class ShellTest {
                 failed("JavaScript errors:\n" + JsError.toString(errors));
             } else if (negative && errors.length == 0) {
                 failed("Should have produced runtime error.");
+            }
+        }
+
+        public final void hadErrors(File jsFile, JsError[] errors) {
+            if (!negative && errors.length > 0) {
+                failed("JavaScript errors in " + jsFile + ":\n" + JsError.toString(errors));
+            } else if (negative && errors.length == 0) {
+                failed("Should have produced runtime error in " + jsFile + ".");
             }
         }
 
@@ -311,7 +319,7 @@ public class ShellTest {
                                 runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile(), "shell.js"));
                                 runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
                                 runFileIfExists(cx, global, jsFile);
-                                status.hadErrors(testState.errors.errors.toArray(new Status.JsError[0]));
+                                status.hadErrors(jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
                             } catch (ThreadDeath e) {
                             } catch (Throwable t) {
                                 status.threw(t);
