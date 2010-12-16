@@ -161,7 +161,8 @@ public class NativeJavaPackage extends ScriptableObject
                 cl = Kit.classOrNull(className);
             }
             if (cl != null) {
-                newValue = new NativeJavaClass(getTopLevelScope(this), cl);
+                WrapFactory wrapFactory = cx.getWrapFactory();
+                newValue = wrapFactory.wrapJavaClass(cx, getTopLevelScope(this), cl);
                 newValue.setPrototype(getPrototype());
             }
         }
