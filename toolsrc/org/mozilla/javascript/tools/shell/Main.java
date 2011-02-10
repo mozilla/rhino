@@ -27,6 +27,7 @@
  *   Igor Bukanov
  *   Rob Ginda
  *   Kurt Westerfeld
+ *   Hannes Wallnoefer
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -48,9 +49,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
@@ -88,6 +96,7 @@ public class Main
     static boolean processStdin = true;
     static List<String> fileList = new ArrayList<String>();
     private static SecurityProxy securityImpl;
+    private final static ScriptCache scriptCache = new ScriptCache(32);
 
     static {
         global.initQuitAction(new IProxy(IProxy.SYSTEM_EXIT));
@@ -452,32 +461,43 @@ public class Main
     }
 
     static void processFileSecure(Context cx, Scriptable scope,
-                                  String path, Object securityDomain)
-    {
-        Script script;
-        if (path.endsWith(".class")) {
-            script = loadCompiledScript(cx, path, securityDomain);
-        } else {
-            String source = (String)readFileOrUrl(path, true);
-            if (source == null) {
-                exitCode = EXITCODE_FILE_NOT_FOUND;
-                return;
-            }
+                                  String path, Object securityDomain) {
 
-            // Support the executable script #! syntax:  If
-            // the first line begins with a '#', treat the whole
-            // line as a comment.
-            if (source.length() > 0 && source.charAt(0) == '#') {
-                for (int i = 1; i != source.length(); ++i) {
-                    int c = source.charAt(i);
-                    if (c == '\n' || c == '\r') {
-                        source = source.substring(i);
-                        break;
+        boolean isClass = path.endsWith(".class");
+        Object source = readFileOrUrl(path, !isClass);
+
+        if (source == null) {
+            exitCode = EXITCODE_FILE_NOT_FOUND;
+            return;
+        }
+
+        byte[] digest = getDigest(source);
+        String key = path + "_" + cx.getOptimizationLevel();
+        ScriptReference ref = scriptCache.get(key, digest);
+        Script script = ref != null ? ref.get() : null;
+
+        if (script == null) {
+            if (isClass) {
+                script = loadCompiledScript(cx, path, (byte[])source, securityDomain);
+            } else {
+                String strSrc = (String) source;
+                // Support the executable script #! syntax:  If
+                // the first line begins with a '#', treat the whole
+                // line as a comment.
+                if (strSrc.length() > 0 && strSrc.charAt(0) == '#') {
+                    for (int i = 1; i != strSrc.length(); ++i) {
+                        int c = strSrc.charAt(i);
+                        if (c == '\n' || c == '\r') {
+                            strSrc = strSrc.substring(i);
+                            break;
+                        }
                     }
                 }
+                script = loadScriptFromSource(cx, strSrc, path, 1, securityDomain);
             }
-            script = loadScriptFromSource(cx, source, path, 1, securityDomain);
+            scriptCache.put(key, digest, script);
         }
+
         if (script != null) {
             evaluateScript(script, cx, scope);
         }
@@ -508,10 +528,34 @@ public class Main
         return null;
     }
 
+    private static byte[] getDigest(Object source) {
+        byte[] bytes, digest = null;
+
+        if (source != null) {
+            if (source instanceof String) {
+                try {
+                    bytes = ((String)source).getBytes("UTF-8");
+                } catch (UnsupportedEncodingException ue) {
+                    bytes = ((String)source).getBytes();
+                }
+            } else {
+                bytes = (byte[])source;
+            }
+            try {
+                MessageDigest md = MessageDigest.getInstance("MD5");
+                digest = md.digest(bytes);
+            } catch (NoSuchAlgorithmException nsa) {
+                // Should not happen
+                throw new RuntimeException(nsa);
+            }
+        }
+
+        return digest;
+    }
+
     private static Script loadCompiledScript(Context cx, String path,
-                                             Object securityDomain)
+                                             byte[] data, Object securityDomain)
     {
-        byte[] data = (byte[])readFileOrUrl(path, false);
         if (data == null) {
             exitCode = EXITCODE_FILE_NOT_FOUND;
             return null;
@@ -612,5 +656,51 @@ public class Main
                     "msg.couldnt.read.source", path, ex.getMessage()));
             return null;
         }
+    }
+
+    static class ScriptReference extends SoftReference<Script> {
+        String path;
+        byte[] digest;
+
+        ScriptReference(String path, byte[] digest,
+                        Script script, ReferenceQueue<Script> queue) {
+            super(script, queue);
+            this.path = path;
+            this.digest = digest;
+        }
+    }
+
+    static class ScriptCache extends LinkedHashMap<String, ScriptReference> {
+        ReferenceQueue<Script> queue;
+        int capacity;
+
+        ScriptCache(int capacity) {
+            super(capacity + 1, 2f, true);
+            this.capacity = capacity;
+            queue = new ReferenceQueue<Script>();
+        }
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, ScriptReference> eldest) {
+            return size() > capacity;
+        }
+
+        ScriptReference get(String path, byte[] digest) {
+            ScriptReference ref;
+            while((ref = (ScriptReference) queue.poll()) != null) {
+                remove(ref.path);
+            }
+            ref = get(path);
+            if (ref != null && !Arrays.equals(digest, ref.digest)) {
+                remove(ref.path);
+                ref = null;
+            }
+            return ref;
+        }
+
+        void put(String path, byte[] digest, Script script) {
+            put(path, new ScriptReference(path, digest, script, queue));
+        }
+
     }
 }
