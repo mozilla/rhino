@@ -133,15 +133,22 @@ public class MozillaSuiteTest {
     }
 
     private static class JunitStatus extends ShellTest.Status {
+        File file;
+
         @Override
         public final void running(File jsFile) {
-            //    do nothing
+            // remember file in case we fail
+            file = jsFile;
         }
 
         @Override
         public final void failed(String s) {
-            System.out.println("Failed: " + s);
-            Assert.fail(s);
+            // Include test source in message, this is the only way
+            // to locate the test in a Parameterized JUnit test
+            String msg = "In \"" + file + "\":" +
+                         System.getProperty("line.separator") + s;
+            System.out.println(msg);
+            Assert.fail(msg);
         }
 
         @Override
