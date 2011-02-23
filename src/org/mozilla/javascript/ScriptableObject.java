@@ -1194,7 +1194,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         ctor.initAsConstructor(scope, proto);
 
         Method finishInit = null;
-        HashSet<String> names = new HashSet<String>(methods.length);
+        HashSet<String> staticNames = new HashSet<String>(),
+                        instanceNames = new HashSet<String>();
         for (Method method : methods) {
             if (method == ctorMember) {
                 continue;
@@ -1243,6 +1244,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     continue;
                 }
             }
+
+            boolean isStatic = annotation instanceof JSStaticFunction
+                    || prefix == staticFunctionPrefix;
+            HashSet<String> names = isStatic ? staticNames : instanceNames;
             String propName = getPropertyName(name, prefix, annotation);
             if (names.contains(propName)) {
                 throw Context.reportRuntimeError2("duplicate.defineClass.name",
@@ -1250,6 +1255,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
             names.add(propName);
             name = propName;
+
             if (annotation instanceof JSGetter || prefix == getterPrefix) {
                 if (!(proto instanceof ScriptableObject)) {
                     throw Context.reportRuntimeError2(
@@ -1267,8 +1273,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 continue;
             }
 
-            boolean isStatic = annotation instanceof JSStaticFunction
-                    || prefix == staticFunctionPrefix;
             if (isStatic && !Modifier.isStatic(method.getModifiers())) {
                 throw Context.reportRuntimeError(
                         "jsStaticFunction must be used with static method.");
