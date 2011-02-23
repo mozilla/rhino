@@ -3990,9 +3990,10 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
      */
     private void addInstructionCount() {
         int count = cfw.getCurrentCodeOffset() - savedCodeOffset;
-        if (count == 0)
-            return;
-        addInstructionCount(count);
+        // TODO we used to return for count == 0 but that broke the following:
+        //    while(true) continue; (see bug 531600)
+        // To be safe, we now always count at least 1 instruction when invoked.
+        addInstructionCount(Math.max(count, 1));
     }
 
     /**
