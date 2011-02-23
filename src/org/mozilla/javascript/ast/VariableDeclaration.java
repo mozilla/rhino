@@ -153,6 +153,9 @@ public class VariableDeclaration extends AstNode {
         sb.append(declTypeName());
         sb.append(" ");
         printList(variables, sb);
+        if (!(getParent() instanceof Loop)) {
+            sb.append(";\n");
+        }
         return sb.toString();
     }
 
