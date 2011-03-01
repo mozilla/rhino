@@ -4191,7 +4191,14 @@ public class ClassFileWriter {
                     "org/mozilla/classfile/ClassFileWriter.class");
             }
             byte[] header = new byte[8];
-            is.read(header);
+            // read loop is required since JDK7 will only provide 2 bytes
+            // on the first read() - see bug #630111
+            int read = 0;
+            while (read < 8) {
+                int c = is.read(header, read, 8 - read);
+                if (c < 0) throw new IOException();
+                read += c;
+            }
             minor = (header[4] << 8) | header[5];
             major = (header[6] << 8) | header[7];
         } catch (Exception e) {
