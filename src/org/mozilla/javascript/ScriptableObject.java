@@ -146,12 +146,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     private Scriptable parentScopeObject;
 
-    private static final Slot REMOVED = new Slot(null, 0, READONLY);
-
-    static {
-        REMOVED.wasDeleted = true;
-    }
-
     private transient Slot[] slots;
     // If count >= 0, it gives number of keys or if count < 0,
     // it indicates sealed object where ~count gives number of keys
@@ -161,17 +155,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private transient Slot firstAdded;
     private transient Slot lastAdded;
 
-    // cache; may be removed for smaller memory footprint
-    private transient Slot lastAccess = REMOVED;
 
     private volatile Map<Object,Object> associatedValues;
 
     private static final int SLOT_QUERY = 1;
     private static final int SLOT_MODIFY = 2;
-    private static final int SLOT_REMOVE = 3;
+    private static final int SLOT_MODIFY_CONST = 3;
     private static final int SLOT_MODIFY_GETTER_SETTER = 4;
-    private static final int SLOT_MODIFY_CONST = 5;
-    private static final int SLOT_CONVERT_ACCESSOR_TO_DATA = 6;
+    private static final int SLOT_CONVERT_ACCESSOR_TO_DATA = 5;
+
+    // initial slot array size, must be a power of 2
+    private static final int INITIAL_SLOT_SIZE = 4;
 
     private boolean isExtensible = true;
 
@@ -200,6 +194,22 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             if (name != null) {
                 indexOrHash = name.hashCode();
             }
+        }
+
+        boolean setValue(Object value, Scriptable owner, Scriptable start) {
+            if ((attributes & READONLY) != 0) {
+                return true;
+            }
+            if (owner == start) {
+                this.value = value;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        Object getValue(Scriptable start) {
+            return value;
         }
 
         final int getAttributes()
@@ -263,6 +273,84 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
           if (setter != null) desc.defineProperty("set", setter, EMPTY);
           return desc;
         }
+
+        @Override
+        boolean setValue(Object value, Scriptable owner, Scriptable start) {
+            if (setter == null) {
+                if (getter != null) {
+                    if (Context.getContext().hasFeature(Context.FEATURE_STRICT_MODE)) {
+                        // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
+                        // we should throw a TypeError in this case.
+                        throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
+                    }
+                    // Assignment to a property with only a getter defined. The
+                    // assignment is ignored. See bug 478047.
+                    return true;
+                }
+            } else {
+                Context cx = Context.getContext();
+                if (setter instanceof MemberBox) {
+                    MemberBox nativeSetter = (MemberBox)setter;
+                    Class<?> pTypes[] = nativeSetter.argTypes;
+                    // XXX: cache tag since it is already calculated in
+                    // defineProperty ?
+                    Class<?> valueType = pTypes[pTypes.length - 1];
+                    int tag = FunctionObject.getTypeTag(valueType);
+                    Object actualArg = FunctionObject.convertArg(cx, start,
+                                                                 value, tag);
+                    Object setterThis;
+                    Object[] args;
+                    if (nativeSetter.delegateTo == null) {
+                        setterThis = start;
+                        args = new Object[] { actualArg };
+                    } else {
+                        setterThis = nativeSetter.delegateTo;
+                        args = new Object[] { start, actualArg };
+                    }
+                    nativeSetter.invoke(setterThis, args);
+                } else {
+                    Function f = (Function)setter;
+                    f.call(cx, f.getParentScope(), start,
+                           new Object[] { value });
+                }
+                return true;
+            }
+            return super.setValue(value, owner, start);
+        }
+
+        @Override
+        Object getValue(Scriptable start) {
+            if (getter != null) {
+                if (getter instanceof MemberBox) {
+                    MemberBox nativeGetter = (MemberBox)getter;
+                    Object getterThis;
+                    Object[] args;
+                    if (nativeGetter.delegateTo == null) {
+                        getterThis = start;
+                        args = ScriptRuntime.emptyArgs;
+                    } else {
+                        getterThis = nativeGetter.delegateTo;
+                        args = new Object[] { start };
+                    }
+                    return nativeGetter.invoke(getterThis, args);
+                } else {
+                    Function f = (Function)getter;
+                    Context cx = Context.getContext();
+                    return f.call(cx, f.getParentScope(), start,
+                                  ScriptRuntime.emptyArgs);
+                }
+            }
+            if (value instanceof LazilyLoadedCtor) {
+                LazilyLoadedCtor initializer = (LazilyLoadedCtor)value;
+                try {
+                    initializer.init();
+                } finally {
+                    value = initializer.getValue();
+                }
+            }
+            return value;
+        }
+
     }
 
     static void checkValidAttributes(int attributes)
@@ -406,7 +494,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     public void delete(String name)
     {
         checkNotSealed(name, 0);
-        accessSlot(name, 0, SLOT_REMOVE);
+        removeSlot(name, 0);
     }
 
     /**
@@ -420,7 +508,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     public void delete(int index)
     {
         checkNotSealed(null, index);
-        accessSlot(null, index, SLOT_REMOVE);
+        removeSlot(null, index);
     }
 
     /**
@@ -2417,41 +2505,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (slot == null) {
             return Scriptable.NOT_FOUND;
         }
-        if (!(slot instanceof GetterSlot)) {
-            return slot.value;
-        }
-        Object getterObj = ((GetterSlot)slot).getter;
-        if (getterObj != null) {
-            if (getterObj instanceof MemberBox) {
-                MemberBox nativeGetter = (MemberBox)getterObj;
-                Object getterThis;
-                Object[] args;
-                if (nativeGetter.delegateTo == null) {
-                    getterThis = start;
-                    args = ScriptRuntime.emptyArgs;
-                } else {
-                    getterThis = nativeGetter.delegateTo;
-                    args = new Object[] { start };
-                }
-                return nativeGetter.invoke(getterThis, args);
-            } else {
-                Function f = (Function)getterObj;
-                Context cx = Context.getContext();
-                return f.call(cx, f.getParentScope(), start,
-                              ScriptRuntime.emptyArgs);
-            }
-        }
-        Object value = slot.value;
-        if (value instanceof LazilyLoadedCtor) {
-            LazilyLoadedCtor initializer = (LazilyLoadedCtor)value;
-            try {
-                initializer.init();
-            } finally {
-                value = initializer.getValue();
-                slot.value = value;
-            }
-        }
-        return value;
+        return slot.getValue(start);
     }
 
     /**
@@ -2497,57 +2551,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
             slot = getSlot(name, index, SLOT_MODIFY);
         }
-        if (slot instanceof GetterSlot) {
-            final GetterSlot getterSlot = (GetterSlot)slot;
-            final Object setterObj = getterSlot.setter;
-            if (setterObj == null) {
-                if (getterSlot.getter != null) {
-                  if (Context.getContext().hasFeature(Context.FEATURE_STRICT_MODE)) {
-                      // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
-                      // we should throw a TypeError in this case.
-                      throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
-                  }
-                  // Assignment to a property with only a getter defined. The
-                  // assignment is ignored. See bug 478047.
-                  return true;
-                }
-            } else {
-                Context cx = Context.getContext();
-                if (setterObj instanceof MemberBox) {
-                    MemberBox nativeSetter = (MemberBox)setterObj;
-                    Class<?> pTypes[] = nativeSetter.argTypes;
-                    // XXX: cache tag since it is already calculated in
-                    // defineProperty ?
-                    Class<?> valueType = pTypes[pTypes.length - 1];
-                    int tag = FunctionObject.getTypeTag(valueType);
-                    Object actualArg = FunctionObject.convertArg(cx, start,
-                                                                 value, tag);
-                    Object setterThis;
-                    Object[] args;
-                    if (nativeSetter.delegateTo == null) {
-                        setterThis = start;
-                        args = new Object[] { actualArg };
-                    } else {
-                        setterThis = nativeSetter.delegateTo;
-                        args = new Object[] { start, actualArg };
-                    }
-                    nativeSetter.invoke(setterThis, args);
-                } else {
-                    Function f = (Function)setterObj;
-                    f.call(cx, f.getParentScope(), start,
-                           new Object[] { value });
-                }
-                return true;
-            }
-        } else if ((slot.getAttributes() & READONLY) != 0) {
-            return true;
-        }
-        if (this == start) {
-            slot.value = value;
-            return true;
-        } else {
-            return false;
-        }
+        return slot.setValue(value, this, start);
     }
 
     private Slot findAttributeSlot(String name, int index, int accessType)
@@ -2561,255 +2565,192 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
-     * Locate the slot with given name or index.
+     * Locate the slot with given name or index. Depending on the accessType
+     * parameter and the current slot status, a new slot may be allocated.
      *
      * @param name property name or null if slot holds spare array index.
      * @param index index or 0 if slot holds property name.
      */
     private Slot getSlot(String name, int index, int accessType)
     {
-        Slot slot;
-
-        // Query last access cache and check that it was not deleted.
-      lastAccessCheck:
-        {
-            slot = lastAccess;
-            if (name != null) {
-                if (name != slot.name)
-                    break lastAccessCheck;
-                // No String.equals here as successful slot search update
-                // name object with fresh reference of the same string.
-            } else {
-                if (slot.name != null || index != slot.indexOrHash)
-                    break lastAccessCheck;
-            }
-
-            if (slot.wasDeleted)
-                break lastAccessCheck;
-
-            if (accessType == SLOT_MODIFY_GETTER_SETTER &&
-                !(slot instanceof GetterSlot))
-                break lastAccessCheck;
-
-            if (accessType == SLOT_CONVERT_ACCESSOR_TO_DATA &&
-                (slot instanceof GetterSlot))
-                break lastAccessCheck;
-
-            return slot;
-        }
-
-        slot = accessSlot(name, index, accessType);
-        if (slot != null) {
-            // Update the cache
-            lastAccess = slot;
-        }
-        return slot;
-    }
-
-    private Slot accessSlot(String name, int index, int accessType)
-    {
         int indexOrHash = (name != null ? name.hashCode() : index);
 
-        if (accessType == SLOT_QUERY ||
-            accessType == SLOT_MODIFY ||
-            accessType == SLOT_MODIFY_CONST ||
-            accessType == SLOT_MODIFY_GETTER_SETTER ||
-            accessType == SLOT_CONVERT_ACCESSOR_TO_DATA)
-        {
-            // Check the hashtable without using synchronization
+        // Check the hashtable without using synchronization
 
-            Slot[] slotsLocalRef = slots; // Get stable local reference
-            if (slotsLocalRef == null) {
-                if (accessType == SLOT_QUERY)
-                    return null;
-            } else {
-                int tableSize = slotsLocalRef.length;
-                int slotIndex = getSlotIndex(tableSize, indexOrHash);
-                Slot slot = slotsLocalRef[slotIndex];
-                while (slot != null) {
-                    String sname = slot.name;
-                    if (sname != null) {
-                        if (sname == name)
-                            break;
-                        if (name != null && indexOrHash == slot.indexOrHash) {
-                            if (name.equals(sname)) {
-                                // This will avoid calling String.equals when
-                                // slot is accessed with same string object
-                                // next time.
-                                slot.name = name;
-                                break;
-                            }
-                        }
-                    } else if (name == null &&
-                               indexOrHash == slot.indexOrHash) {
-                        break;
-                    }
-                    slot = slot.next;
-                }
-                if (accessType == SLOT_QUERY) {
-                    return slot;
-                } else if (accessType == SLOT_MODIFY) {
-                    if (slot != null)
-                        return slot;
-                } else if (accessType == SLOT_MODIFY_GETTER_SETTER) {
-                    if (slot instanceof GetterSlot)
-                        return slot;
-                } else if (accessType == SLOT_MODIFY_CONST) {
-                    if (slot != null)
-                        return slot;
-                } else if (accessType == SLOT_CONVERT_ACCESSOR_TO_DATA) {
-                    if ( !(slot instanceof GetterSlot) )
-                        return slot;
+        Slot[] slotsLocalRef = slots; // Get stable local reference
+        if (slotsLocalRef != null) {
+            Slot slot;
+            int slotIndex = getSlotIndex(slotsLocalRef.length, indexOrHash);
+            for (slot = slotsLocalRef[slotIndex];
+                 slot != null;
+                 slot = slot.next) {
+                Object sname = slot.name;
+                if (indexOrHash == slot.indexOrHash &&
+                        (sname == name ||
+                                (name != null && name.equals(sname)))) {
+                    break;
                 }
             }
+            switch (accessType) {
+                case SLOT_QUERY:
+                    return slot;
+                case SLOT_MODIFY:
+                case SLOT_MODIFY_CONST:
+                    if (slot != null)
+                        return slot;
+                    break;
+                case SLOT_MODIFY_GETTER_SETTER:
+                    if (slot instanceof GetterSlot)
+                        return slot;
+                    break;
+                case SLOT_CONVERT_ACCESSOR_TO_DATA:
+                    if ( !(slot instanceof GetterSlot) )
+                        return slot;
+                    break;
+            }
+        } else if (accessType == SLOT_QUERY) {
+            return null;
+        }
 
-            // A new slot has to be inserted or the old has to be replaced
-            // by GetterSlot. Time to synchronize.
+        // A new slot has to be inserted or the old has to be replaced
+        // by GetterSlot. Time to synchronize.
+        return createSlot(name, indexOrHash, accessType);
+    }
 
-            synchronized (this) {
-                // Refresh local ref if another thread triggered grow
-                slotsLocalRef = slots;
-                int insertPos;
-                if (count == 0) {
-                    // Always throw away old slots if any on empty insert
-                    slotsLocalRef = new Slot[5];
-                    slots = slotsLocalRef;
-                    insertPos = getSlotIndex(slotsLocalRef.length, indexOrHash);
-                } else {
-                    int tableSize = slotsLocalRef.length;
-                    insertPos = getSlotIndex(tableSize, indexOrHash);
-                    Slot prev = slotsLocalRef[insertPos];
-                    Slot slot = prev;
-                    while (slot != null) {
-                        if (slot.indexOrHash == indexOrHash &&
-                            (slot.name == name ||
-                             (name != null && name.equals(slot.name))))
-                        {
-                            break;
-                        }
-                        prev = slot;
-                        slot = slot.next;
-                    }
-
-                    if (slot != null) {
-                        // Another thread just added a slot with same
-                        // name/index before this one entered synchronized
-                        // block. This is a race in application code and
-                        // probably indicates bug there. But for the hashtable
-                        // implementation it is harmless with the only
-                        // complication is the need to replace the added slot
-                        // if we need GetterSlot and the old one is not.
-
-                        Slot newSlot;
-
-                        if (accessType == SLOT_MODIFY_GETTER_SETTER && !(slot instanceof GetterSlot)) {
-                            newSlot = new GetterSlot(name, indexOrHash, slot.getAttributes());
-                        } else if (accessType == SLOT_CONVERT_ACCESSOR_TO_DATA && (slot instanceof GetterSlot)) {
-                            newSlot = new Slot(name, indexOrHash, slot.getAttributes());
-                        } else if (accessType == SLOT_MODIFY_CONST) {
-                          return null;
-                        } else {
-                          return slot;
-                        }
-
-                        newSlot.value = slot.value;
-                        newSlot.next = slot.next;
-                        // add new slot to linked list
-                        if (lastAdded != null)
-                            lastAdded.orderedNext = newSlot;
-                        if (firstAdded == null)
-                            firstAdded = newSlot;
-                        lastAdded = newSlot;
-                        // add new slot to hash table
-                        if (prev == slot) {
-                            slotsLocalRef[insertPos] = newSlot;
-                        } else {
-                            prev.next = newSlot;
-                        }
-                        // other housekeeping
-                        slot.wasDeleted = true;
-                        slot.value = null;
-                        slot.name = null;
-                        if (slot == lastAccess) {
-                            lastAccess = REMOVED;
-                        }
-                        return newSlot;
-                    } else {
-                      // Check if the table is not too full before inserting.
-                      if (4 * (count + 1) > 3 * slotsLocalRef.length) {
-                          slotsLocalRef = new Slot[slotsLocalRef.length * 2 + 1];
-                          copyTable(slots, slotsLocalRef, count);
-                          slots = slotsLocalRef;
-                          insertPos = getSlotIndex(slotsLocalRef.length,
-                                  indexOrHash);
-                      }
-                    }
+    private synchronized Slot createSlot(String name, int indexOrHash, int accessType) {
+        Slot[] slotsLocalRef = slots;
+        int insertPos;
+        if (count == 0) {
+            // Always throw away old slots if any on empty insert.
+            slotsLocalRef = new Slot[INITIAL_SLOT_SIZE];
+            slots = slotsLocalRef;
+            insertPos = getSlotIndex(slotsLocalRef.length, indexOrHash);
+        } else {
+            int tableSize = slotsLocalRef.length;
+            insertPos = getSlotIndex(tableSize, indexOrHash);
+            Slot prev = slotsLocalRef[insertPos];
+            Slot slot = prev;
+            while (slot != null) {
+                if (slot.indexOrHash == indexOrHash &&
+                        (slot.name == name ||
+                                (name != null && name.equals(slot.name))))
+                {
+                    break;
                 }
-                Slot newSlot = (accessType == SLOT_MODIFY_GETTER_SETTER
-                                ? new GetterSlot(name, indexOrHash, 0)
-                                : new Slot(name, indexOrHash, 0));
-                if (accessType == SLOT_MODIFY_CONST)
-                    newSlot.setAttributes(CONST);
-                ++count;
+                prev = slot;
+                slot = slot.next;
+            }
+
+            if (slot != null) {
+                // Another thread just added a slot with same
+                // name/index before this one entered synchronized
+                // block. This is a race in application code and
+                // probably indicates bug there. But for the hashtable
+                // implementation it is harmless with the only
+                // complication is the need to replace the added slot
+                // if we need GetterSlot and the old one is not.
+
+                Slot newSlot;
+
+                if (accessType == SLOT_MODIFY_GETTER_SETTER && !(slot instanceof GetterSlot)) {
+                    newSlot = new GetterSlot(name, indexOrHash, slot.getAttributes());
+                } else if (accessType == SLOT_CONVERT_ACCESSOR_TO_DATA && (slot instanceof GetterSlot)) {
+                    newSlot = new Slot(name, indexOrHash, slot.getAttributes());
+                } else if (accessType == SLOT_MODIFY_CONST) {
+                    return null;
+                } else {
+                    return slot;
+                }
+
+                newSlot.value = slot.value;
+                newSlot.next = slot.next;
                 // add new slot to linked list
                 if (lastAdded != null)
                     lastAdded.orderedNext = newSlot;
                 if (firstAdded == null)
                     firstAdded = newSlot;
                 lastAdded = newSlot;
-                // add new slot to hash table, return it
-                addKnownAbsentSlot(slotsLocalRef, newSlot, insertPos);
+                // add new slot to hash table
+                if (prev == slot) {
+                    slotsLocalRef[insertPos] = newSlot;
+                } else {
+                    prev.next = newSlot;
+                }
+                // other housekeeping
+                slot.wasDeleted = true;
+                slot.value = null;
+                slot.name = null;
                 return newSlot;
-            }
-
-        } else if (accessType == SLOT_REMOVE) {
-            synchronized (this) {
-                Slot[] slotsLocalRef = slots;
-                if (count != 0) {
-                    int tableSize = slots.length;
-                    int slotIndex = getSlotIndex(tableSize, indexOrHash);
-                    Slot prev = slotsLocalRef[slotIndex];
-                    Slot slot = prev;
-                    while (slot != null) {
-                        if (slot.indexOrHash == indexOrHash &&
-                            (slot.name == name ||
-                             (name != null && name.equals(slot.name))))
-                        {
-                            break;
-                        }
-                        prev = slot;
-                        slot = slot.next;
-                    }
-                    if (slot != null && (slot.getAttributes() & PERMANENT) == 0) {
-                        count--;
-                        // remove slot from hash table
-                        if (prev == slot) {
-                            slotsLocalRef[slotIndex] = slot.next;
-                        } else {
-                            prev.next = slot.next;
-                        }
-                        // Mark the slot as removed. It is still referenced
-                        // from the order-added linked list, but will be
-                        // cleaned up later
-                        slot.wasDeleted = true;
-                        slot.value = null;
-                        slot.name = null;
-                        if (slot == lastAccess) {
-                            lastAccess = REMOVED;
-                        }
-                    }
+            } else {
+                // Check if the table is not too full before inserting.
+                if (4 * (count + 1) > 3 * slotsLocalRef.length) {
+                    // table size must be a power of 2, always grow by x2
+                    slotsLocalRef = new Slot[slotsLocalRef.length * 2];
+                    copyTable(slots, slotsLocalRef, count);
+                    slots = slotsLocalRef;
+                    insertPos = getSlotIndex(slotsLocalRef.length,
+                            indexOrHash);
                 }
             }
-            return null;
+        }
+        Slot newSlot = (accessType == SLOT_MODIFY_GETTER_SETTER
+                ? new GetterSlot(name, indexOrHash, 0)
+                : new Slot(name, indexOrHash, 0));
+        if (accessType == SLOT_MODIFY_CONST)
+            newSlot.setAttributes(CONST);
+        ++count;
+        // add new slot to linked list
+        if (lastAdded != null)
+            lastAdded.orderedNext = newSlot;
+        if (firstAdded == null)
+            firstAdded = newSlot;
+        lastAdded = newSlot;
+        // add new slot to hash table, return it
+        addKnownAbsentSlot(slotsLocalRef, newSlot, insertPos);
+        return newSlot;
+    }
 
-        } else {
-            throw Kit.codeBug();
+    private synchronized void removeSlot(String name, int index) {
+        int indexOrHash = (name != null ? name.hashCode() : index);
+
+        Slot[] slotsLocalRef = slots;
+        if (count != 0) {
+            int tableSize = slots.length;
+            int slotIndex = getSlotIndex(tableSize, indexOrHash);
+            Slot prev = slotsLocalRef[slotIndex];
+            Slot slot = prev;
+            while (slot != null) {
+                if (slot.indexOrHash == indexOrHash &&
+                        (slot.name == name ||
+                                (name != null && name.equals(slot.name))))
+                {
+                    break;
+                }
+                prev = slot;
+                slot = slot.next;
+            }
+            if (slot != null && (slot.getAttributes() & PERMANENT) == 0) {
+                count--;
+                // remove slot from hash table
+                if (prev == slot) {
+                    slotsLocalRef[slotIndex] = slot.next;
+                } else {
+                    prev.next = slot.next;
+                }
+                // Mark the slot as removed. It is still referenced
+                // from the order-added linked list, but will be
+                // cleaned up later
+                slot.wasDeleted = true;
+                slot.value = null;
+                slot.name = null;
+            }
         }
     }
 
     private static int getSlotIndex(int tableSize, int indexOrHash)
     {
-        return (indexOrHash & 0x7fffffff) % tableSize;
+        // tableSize is a power of 2
+        return indexOrHash & (tableSize - 1);
     }
 
     // Must be inside synchronized (this)
@@ -2932,10 +2873,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         throws IOException, ClassNotFoundException
     {
         in.defaultReadObject();
-        lastAccess = REMOVED;
 
         int tableSize = in.readInt();
         if (tableSize != 0) {
+            // If tableSize is not a power of 2 find the closest 
+            // power of 2 >= the original size.
+            if ((tableSize & (tableSize - 1)) != 0) {
+                int newSize = INITIAL_SLOT_SIZE;
+                while (newSize < tableSize)
+                    newSize <<= 1;
+                tableSize = newSize;
+            }
             slots = new Slot[tableSize];
             int objectsCount = count;
             if (objectsCount < 0) {
