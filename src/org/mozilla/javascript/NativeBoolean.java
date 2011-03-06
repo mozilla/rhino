@@ -57,7 +57,7 @@ final class NativeBoolean extends IdScriptableObject
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    private NativeBoolean(boolean b)
+    NativeBoolean(boolean b)
     {
         booleanValue = b;
     }

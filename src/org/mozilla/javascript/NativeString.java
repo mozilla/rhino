@@ -67,7 +67,7 @@ final class NativeString extends IdScriptableObject
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    private NativeString(String s) {
+    NativeString(String s) {
         string = s;
     }
 

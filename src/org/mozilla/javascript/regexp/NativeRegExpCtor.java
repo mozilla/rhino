@@ -86,7 +86,7 @@ class NativeRegExpCtor extends BaseFunction
     {
         NativeRegExp re = new NativeRegExp();
         re.compile(cx, scope, args);
-        ScriptRuntime.setObjectProtoAndParent(re, scope);
+        ScriptRuntime.setBuiltinProtoAndParent(re, scope, TopLevel.Builtins.RegExp);
         return re;
     }
 

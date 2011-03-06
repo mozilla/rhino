@@ -1484,9 +1484,12 @@ public class Context
      *              against
      * @return the new object
      */
-    public final Scriptable newObject(Scriptable scope)
+    public Scriptable newObject(Scriptable scope)
     {
-        return newObject(scope, "Object", ScriptRuntime.emptyArgs);
+        NativeObject result = new NativeObject();
+        ScriptRuntime.setBuiltinProtoAndParent(result, scope,
+                TopLevel.Builtins.Object);
+        return result;
     }
 
     /**
@@ -1499,7 +1502,7 @@ public class Context
      * @param constructorName the name of the constructor to call
      * @return the new object
      */
-    public final Scriptable newObject(Scriptable scope, String constructorName)
+    public Scriptable newObject(Scriptable scope, String constructorName)
     {
         return newObject(scope, constructorName, ScriptRuntime.emptyArgs);
     }
@@ -1523,8 +1526,8 @@ public class Context
      * @param args the array of arguments for the constructor
      * @return the new object
      */
-    public final Scriptable newObject(Scriptable scope, String constructorName,
-                                      Object[] args)
+    public Scriptable newObject(Scriptable scope, String constructorName,
+                                Object[] args)
     {
         scope = ScriptableObject.getTopLevelScope(scope);
         Function ctor = ScriptRuntime.getExistingCtor(this, scope,
@@ -1541,10 +1544,11 @@ public class Context
      *               additional properties added dynamically).
      * @return the new array object
      */
-    public final Scriptable newArray(Scriptable scope, int length)
+    public Scriptable newArray(Scriptable scope, int length)
     {
         NativeArray result = new NativeArray(length);
-        ScriptRuntime.setObjectProtoAndParent(result, scope);
+        ScriptRuntime.setBuiltinProtoAndParent(result, scope,
+                TopLevel.Builtins.Array);
         return result;
     }
 
@@ -1558,12 +1562,13 @@ public class Context
      *                 SomeObjectSubclass[].
      * @return the new array object.
      */
-    public final Scriptable newArray(Scriptable scope, Object[] elements)
+    public Scriptable newArray(Scriptable scope, Object[] elements)
     {
         if (elements.getClass().getComponentType() != ScriptRuntime.ObjectClass)
             throw new IllegalArgumentException();
         NativeArray result = new NativeArray(elements);
-        ScriptRuntime.setObjectProtoAndParent(result, scope);
+        ScriptRuntime.setBuiltinProtoAndParent(result, scope,
+                TopLevel.Builtins.Array);
         return result;
     }
 

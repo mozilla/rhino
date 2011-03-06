@@ -168,8 +168,7 @@ public class NativeJavaArray extends NativeJavaObject
     public Scriptable getPrototype() {
         if (prototype == null) {
             prototype =
-                ScriptableObject.getClassPrototype(this.getParentScope(),
-                                                   "Array");
+                ScriptableObject.getArrayPrototype(this.getParentScope());
         }
         return prototype;
     }

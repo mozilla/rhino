@@ -61,7 +61,7 @@ final class NativeNumber extends IdScriptableObject
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    private NativeNumber(double number)
+    NativeNumber(double number)
     {
         doubleValue = number;
     }

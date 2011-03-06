@@ -216,7 +216,7 @@ public class ScriptRuntime {
         Scriptable objectProto = ScriptableObject.getObjectPrototype(scope);
 
         // Function.prototype.__proto__ should be Object.prototype
-        Scriptable functionProto = ScriptableObject.getFunctionPrototype(scope);
+        Scriptable functionProto = ScriptableObject.getClassPrototype(scope, "Function");
         functionProto.setPrototype(objectProto);
 
         // Set the prototype of the object passed in if need be
@@ -260,6 +260,10 @@ public class ScriptRuntime {
                                getImplementationClassName();
 			}
             new LazilyLoadedCtor(scope, topProperty, className, sealed, true);
+        }
+
+        if (scope instanceof TopLevel) {
+            ((TopLevel)scope).cacheBuiltins();
         }
 
         return scope;
@@ -1008,20 +1012,26 @@ public class ScriptRuntime {
         if (val instanceof Scriptable) {
             return (Scriptable) val;
         }
+        if (val instanceof String) {
+            NativeString result = new NativeString((String)val);
+            setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.String);
+            return result;
+        }
+        if (val instanceof Number) {
+            NativeNumber result = new NativeNumber(((Number)val).doubleValue());
+            setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Number);
+            return result;
+        }
+        if (val instanceof Boolean) {
+            NativeBoolean result = new NativeBoolean(((Boolean)val).booleanValue());
+            setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Boolean);
+            return result;
+        }
         if (val == null) {
             throw typeError0("msg.null.to.object");
         }
         if (val == Undefined.instance) {
             throw typeError0("msg.undef.to.object");
-        }
-        String className = val instanceof String ? "String" :
-                           val instanceof Number ? "Number" :
-                           val instanceof Boolean ? "Boolean" :
-                           null;
-        if (className != null) {
-            Object[] args = { val };
-            scope = ScriptableObject.getTopLevelScope(scope);
-            return newObject(cx, scope, className, args);
         }
 
         // Extension: Wrap as a LiveConnect object.
@@ -1062,6 +1072,16 @@ public class ScriptRuntime {
     {
         scope = ScriptableObject.getTopLevelScope(scope);
         Function ctor = getExistingCtor(cx, scope, constructorName);
+        if (args == null) { args = ScriptRuntime.emptyArgs; }
+        return ctor.construct(cx, scope, args);
+    }
+
+    public static Scriptable newBuiltinObject(Context cx, Scriptable scope,
+                                              TopLevel.Builtins type,
+                                              Object[] args)
+    {
+        scope = ScriptableObject.getTopLevelScope(scope);
+        Function ctor = TopLevel.getBuiltinCtor(cx, scope, type);
         if (args == null) { args = ScriptRuntime.emptyArgs; }
         return ctor.construct(cx, scope, args);
     }
@@ -3462,6 +3482,16 @@ public class ScriptRuntime {
         object.setPrototype(proto);
     }
 
+    public static void setBuiltinProtoAndParent(ScriptableObject object,
+                                                Scriptable scope,
+                                                TopLevel.Builtins type)
+    {
+        scope = ScriptableObject.getTopLevelScope(scope);
+        object.setParentScope(scope);
+        object.setPrototype(TopLevel.getBuiltinPrototype(scope, type));
+    }
+
+
     public static void initFunction(Context cx, Scriptable scope,
                                     NativeFunction function, int type,
                                     boolean fromEvalCode)
@@ -3523,13 +3553,10 @@ public class ScriptRuntime {
                     ++j;
                 }
             }
-            NativeArray array = new NativeArray(sparse);
-            setObjectProtoAndParent(array, scope);
-            return array;
+            return cx.newArray(scope, sparse);
         }
         
-        NativeArray array = new NativeArray(length);
-        setObjectProtoAndParent(array, scope);
+        Scriptable array = cx.newArray(scope, length);
 
         int skip = 0;
         for (int i = 0, j = 0; i != length; ++i) {
@@ -4038,8 +4065,8 @@ public class ScriptRuntime {
      */
     public static JavaScriptException throwError(Context cx, Scriptable scope, 
             String message) {
-        final Scriptable error = cx.newObject(scope, "Error", 
-                new Object[] { message });
+        final Scriptable error = newBuiltinObject(cx, scope,
+                TopLevel.Builtins.Error, new Object[] { message });
         return new JavaScriptException(error, 
                 ScriptableObject.getTypedProperty(error, "fileName", String.class),
                 ScriptableObject.getTypedProperty(error, "lineNumber", Number.class).intValue());

@@ -350,7 +350,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         if (protoVal instanceof Scriptable) {
             return (Scriptable) protoVal;
         }
-        return getClassPrototype(this, "Object");
+        return ScriptableObject.getObjectPrototype(this);
     }
 
     /**

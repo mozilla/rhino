@@ -51,6 +51,7 @@ import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
 /**
@@ -173,7 +174,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
         this.re = (RECompiled)regexpCompiled;
         this.lastIndex = 0;
-        ScriptRuntime.setObjectProtoAndParent(this, scope);
+        ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
     }
 
     @Override
@@ -2261,7 +2262,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     /*
      * indexp is assumed to be an array of length 1
      */
-    Object executeRegExp(Context cx, Scriptable scopeObj, RegExpImpl res,
+    Object executeRegExp(Context cx, Scriptable scope, RegExpImpl res,
                          String str, int indexp[], int matchType)
     {
         REGlobalData gData = new REGlobalData();
@@ -2304,8 +2305,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
              * matches, an index property telling the length of the left context,
              * and an input property referring to the input string.
              */
-            Scriptable scope = getTopLevelScope(scopeObj);
-            result = ScriptRuntime.newObject(cx, scope, "Array", null);
+            result = cx.newArray(scope, 0);
             obj = (Scriptable) result;
 
             String matchstr = new String(charArray, index, matchlen);

@@ -292,8 +292,7 @@ public class RegExpImpl implements RegExpProxy {
                                    RegExpImpl reImpl)
     {
         if (mdata.arrayobj == null) {
-            Scriptable s = ScriptableObject.getTopLevelScope(scope);
-            mdata.arrayobj = ScriptRuntime.newObject(cx, s, "Array", null);
+            mdata.arrayobj = cx.newArray(scope, 0);
         }
         SubString matchsub = reImpl.lastMatch;
         String matchstr = matchsub.toString();
@@ -516,8 +515,7 @@ public class RegExpImpl implements RegExpProxy {
                                    String target, Object[] args)
     {
         // create an empty Array to return;
-        Scriptable top = ScriptableObject.getTopLevelScope(scope);
-        Scriptable result = ScriptRuntime.newObject(cx, top, "Array", null);
+        Scriptable result = cx.newArray(scope, 0);
 
         // return an array consisting of the target if no separator given
         // don't check against undefined, because we want

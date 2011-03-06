@@ -233,7 +233,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     protected static ScriptableObject buildDataDescriptor(Scriptable scope, Object value, int attributes) {
       ScriptableObject desc = new NativeObject();
-      ScriptRuntime.setObjectProtoAndParent(desc, scope);
+      ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
 
       desc.defineProperty("value",        value, EMPTY);
       desc.defineProperty("writable",     (attributes & READONLY) == 0, EMPTY);
@@ -1836,7 +1836,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * See ECMA 15.2.4.
      */
     public static Scriptable getObjectPrototype(Scriptable scope) {
-        return getClassPrototype(scope, "Object");
+        return TopLevel.getBuiltinPrototype(getTopLevelScope(scope),
+                TopLevel.Builtins.Object);
     }
 
     /**
@@ -1844,11 +1845,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * See ECMA 15.3.4.
      */
     public static Scriptable getFunctionPrototype(Scriptable scope) {
-        return getClassPrototype(scope, "Function");
+        return TopLevel.getBuiltinPrototype(getTopLevelScope(scope),
+                TopLevel.Builtins.Function);
     }
 
     public static Scriptable getArrayPrototype(Scriptable scope) {
-        return getClassPrototype(scope, "Array");
+        return TopLevel.getBuiltinPrototype(getTopLevelScope(scope),
+                TopLevel.Builtins.Array);
     }
 
     /**

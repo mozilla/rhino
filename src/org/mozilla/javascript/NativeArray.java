@@ -531,7 +531,7 @@ public class NativeArray extends IdScriptableObject implements List
       Scriptable scope = getParentScope();
       if (scope == null) scope = this;
       ScriptableObject desc = new NativeObject();
-      ScriptRuntime.setObjectProtoAndParent(desc, scope);
+      ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
       desc.defineProperty("value", value, EMPTY);
       desc.defineProperty("writable", true, EMPTY);
       desc.defineProperty("enumerable", true, EMPTY);
@@ -1190,7 +1190,7 @@ public class NativeArray extends IdScriptableObject implements List
         scope = getTopLevelScope(scope);
         int argc = args.length;
         if (argc == 0)
-            return ScriptRuntime.newObject(cx, scope, "Array", null);
+            return cx.newArray(scope, 0);
         long length = getLengthProperty(cx, thisObj);
 
         /* Convert the first argument into a starting index. */
@@ -1239,9 +1239,8 @@ public class NativeArray extends IdScriptableObject implements List
                     Object[] copy = new Object[intLen];
                     System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
                     result = cx.newArray(scope, copy);
-            	} else {
-            		Scriptable resultArray = ScriptRuntime.newObject(cx, scope,
-                        "Array", null);
+                } else {
+                    Scriptable resultArray = cx.newArray(scope, 0);
                     for (long last = begin; last != end; last++) {
                         Object temp = getElem(cx, thisObj, last);
                         setElem(cx, resultArray, last - begin, temp);
@@ -1254,8 +1253,8 @@ public class NativeArray extends IdScriptableObject implements List
                 /* Emulate C JS1.2; if no elements are removed, return undefined. */
                 result = Undefined.instance;
             } else {
-            	result = ScriptRuntime.newObject(cx, scope, "Array", null);
-        	}
+                result = cx.newArray(scope, 0);
+            }
         }
 
         /* Find the direction (up or down) to copy and make way for argv. */
@@ -1390,7 +1389,7 @@ public class NativeArray extends IdScriptableObject implements List
                                 Object[] args)
     {
         Scriptable scope = getTopLevelScope(this);
-        Scriptable result = ScriptRuntime.newObject(cx, scope, "Array", null);
+        Scriptable result = cx.newArray(scope, 0);
         long length = getLengthProperty(cx, thisObj);
 
         long begin, end;

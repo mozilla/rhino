@@ -190,8 +190,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         scope = ScriptableObject.getTopLevelScope(scope);
         NativeWith thisObj = new NativeWith();
         thisObj.setPrototype(args.length == 0
-                             ? ScriptableObject.getClassPrototype(scope,
-                                                                  "Object")
+                             ? ScriptableObject.getObjectPrototype(scope)
                              : ScriptRuntime.toObject(cx, scope, args[0]));
         thisObj.setParentScope(scope);
         return thisObj;
