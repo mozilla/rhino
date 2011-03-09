@@ -2573,11 +2573,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     private Slot getSlot(String name, int index, int accessType)
     {
-        int indexOrHash = (name != null ? name.hashCode() : index);
-
         // Check the hashtable without using synchronization
-
         Slot[] slotsLocalRef = slots; // Get stable local reference
+        if (slotsLocalRef == null && accessType == SLOT_QUERY) {
+            return null;
+        }
+
+        int indexOrHash = (name != null ? name.hashCode() : index);
         if (slotsLocalRef != null) {
             Slot slot;
             int slotIndex = getSlotIndex(slotsLocalRef.length, indexOrHash);
@@ -2608,8 +2610,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         return slot;
                     break;
             }
-        } else if (accessType == SLOT_QUERY) {
-            return null;
         }
 
         // A new slot has to be inserted or the old has to be replaced
