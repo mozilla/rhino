@@ -61,22 +61,27 @@ public abstract class XMLObject extends IdScriptableObject
     /**
      * Implementation of ECMAScript [[Has]].
      */
-    public abstract boolean ecmaHas(Context cx, Object id);
+    public abstract boolean has(Context cx, Object id);
 
     /**
      * Implementation of ECMAScript [[Get]].
      */
-    public abstract Object ecmaGet(Context cx, Object id);
+    public abstract Object get(Context cx, Object id);
 
     /**
      * Implementation of ECMAScript [[Put]].
      */
-    public abstract void ecmaPut(Context cx, Object id, Object value);
+    public abstract void put(Context cx, Object id, Object value);
 
     /**
      * Implementation of ECMAScript [[Delete]].
      */
-    public abstract boolean ecmaDelete(Context cx, Object id);
+    public abstract boolean delete(Context cx, Object id);
+
+
+    public abstract Object getFunctionProperty(Context cx, String name);
+
+    public abstract Object getFunctionProperty(Context cx, int id);
 
     /**
      * Return an additional object to look for methods that runtime should
