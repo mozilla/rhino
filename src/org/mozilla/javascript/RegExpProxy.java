@@ -48,7 +48,6 @@ package org.mozilla.javascript;
 public interface RegExpProxy
 {
     // Types of regexp actions
-
     public static final int RA_MATCH   = 1;
     public static final int RA_REPLACE = 2;
     public static final int RA_SEARCH  = 3;
@@ -69,5 +68,6 @@ public interface RegExpProxy
                           int[] ip, int[] matchlen,
                           boolean[] matched, String[][] parensp);
 
-	public Object js_split(Context _cx, Scriptable _scope, String thisString, Object[] _args);
+    public Object js_split(Context _cx, Scriptable _scope,
+                           String thisString, Object[] _args);
 }
