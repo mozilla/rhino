@@ -69,6 +69,8 @@ import java.util.EnumMap;
  */
 public class TopLevel extends IdScriptableObject {
 
+    static final long serialVersionUID = -4648046356662472260L;
+
     /**
      * An enumeration of built-in ECMAScript objects.
      */
