@@ -4065,11 +4065,11 @@ public class ScriptRuntime {
      */
     public static JavaScriptException throwError(Context cx, Scriptable scope, 
             String message) {
+      int[] linep = { 0 };
+      String filename = Context.getSourcePositionFromStack(linep);
         final Scriptable error = newBuiltinObject(cx, scope,
-                TopLevel.Builtins.Error, new Object[] { message });
-        return new JavaScriptException(error, 
-                ScriptableObject.getTypedProperty(error, "fileName", String.class),
-                ScriptableObject.getTypedProperty(error, "lineNumber", Number.class).intValue());
+                TopLevel.Builtins.Error, new Object[] { message, filename, Integer.valueOf(linep[0]) });
+        return new JavaScriptException(error, filename, linep[0]);
     }
 
     public static final Object[] emptyArgs = new Object[0];
