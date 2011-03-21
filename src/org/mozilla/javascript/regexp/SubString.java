@@ -37,6 +37,9 @@
 
 package org.mozilla.javascript.regexp;
 
+/**
+ * A utility class for lazily instantiated substrings.
+ */
 public class SubString {
 
     public SubString()
@@ -45,30 +48,28 @@ public class SubString {
 
     public SubString(String str)
     {
+        this.str = str;
         index = 0;
-        charArray = str.toCharArray();
         length = str.length();
     }
 
-    public SubString(char[] source, int start, int len)
+    public SubString(String source, int start, int len)
     {
-        index = 0;
+        str = source;
+        index = start;
         length = len;
-        charArray = new char[len];
-        // is this copy needed?
-        System.arraycopy(source, start, charArray, 0, len);
     }
 
     @Override
     public String toString() {
-        return charArray == null
+        return str == null
                ? ""
-               : new String(charArray, index, length);
+               : str.substring(index, index + length);
     }
 
     public static final SubString emptySubString = new SubString();
 
-    char[] charArray;
+    String str;
     int    index;
     int    length;
 }

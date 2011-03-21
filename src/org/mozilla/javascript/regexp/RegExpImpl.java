@@ -100,7 +100,6 @@ public class RegExpImpl implements RegExpProxy {
                 data.leftIndex = 0;
                 Object val = matchOrReplace(cx, scope, thisObj, args,
                                             this, data, true);
-                SubString rc = this.rightContext;
 
                 if (data.charBuf == null) {
                     if (data.global || val == null
@@ -112,7 +111,8 @@ public class RegExpImpl implements RegExpProxy {
                     SubString lc = this.leftContext;
                     replace_glob(data, cx, scope, this, lc.index, lc.length);
                 }
-                data.charBuf.append(rc.charArray, rc.index, rc.length);
+                SubString rc = this.rightContext;
+                data.charBuf.append(rc.str, rc.index, rc.index + rc.length);
                 return data.charBuf.toString();
             }
 
@@ -363,15 +363,15 @@ public class RegExpImpl implements RegExpProxy {
         }
 
         int growth = leftlen + replen + reImpl.rightContext.length;
-        StringBuffer charBuf = rdata.charBuf;
+        StringBuilder charBuf = rdata.charBuf;
         if (charBuf == null) {
-            charBuf = new StringBuffer(growth);
+            charBuf = new StringBuilder(growth);
             rdata.charBuf = charBuf;
         } else {
             charBuf.ensureCapacity(rdata.charBuf.length() + growth);
         }
 
-        charBuf.append(reImpl.leftContext.charArray, leftIndex, leftlen);
+        charBuf.append(reImpl.leftContext.str, leftIndex, leftIndex + leftlen);
         if (rdata.lambda != null) {
             charBuf.append(lambdaStr);
         } else {
@@ -475,7 +475,7 @@ public class RegExpImpl implements RegExpProxy {
     private static void do_replace(GlobData rdata, Context cx,
                                    RegExpImpl regExpImpl)
     {
-        StringBuffer charBuf = rdata.charBuf;
+        StringBuilder charBuf = rdata.charBuf;
         int cp = 0;
         String da = rdata.repstr;
         int dp = rdata.dollar;
@@ -490,7 +490,7 @@ public class RegExpImpl implements RegExpProxy {
                 if (sub != null) {
                     len = sub.length;
                     if (len > 0) {
-                        charBuf.append(sub.charArray, sub.index, len);
+                        charBuf.append(sub.str, sub.index, sub.index + len);
                     }
                     cp += skip[0];
                     dp += skip[0];
@@ -752,6 +752,6 @@ final class GlobData
     Function      lambda;        /* replacement function object or null */
     String        repstr;        /* replacement string */
     int           dollar = -1;   /* -1 or index of first $ in repstr */
-    StringBuffer  charBuf;       /* result characters, null initially */
+    StringBuilder charBuf;       /* result characters, null initially */
     int           leftIndex;     /* leftContext index, always 0 for JS1.2 */
 }
