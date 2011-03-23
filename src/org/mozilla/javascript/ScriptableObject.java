@@ -1792,8 +1792,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
       if (slot == null) { // new property
         if (!isExtensible()) throw ScriptRuntime.typeError("msg.not.extensible");
       } else {
-        String name = slot.name;
-        ScriptableObject current = getOwnPropertyDescriptor(Context.getContext(), name);
+        String name = slot.name == null ?
+                String.valueOf(slot.indexOrHash) : slot.name;
+        ScriptableObject current = slot.getPropertyDescriptor(Context.getContext(), this);
         if (isFalse(current.get("configurable", current))) {
           if (isTrue(getProperty(desc, "configurable"))) 
             throw ScriptRuntime.typeError1("msg.change.configurable.false.to.true", name);
