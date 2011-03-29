@@ -454,6 +454,50 @@ public class Token
     }
 
     /**
+     * Convert a keyword token to a name string for use with the
+     * {@link Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER} feature.
+     * @param token A token
+     * @return the corresponding name string
+     */
+    public static String keywordToName(int token) {
+        switch (token) {
+            case Token.BREAK:      return "break";
+            case Token.CASE:       return "case";
+            case Token.CONTINUE:   return "continue";
+            case Token.DEFAULT:    return "default";
+            case Token.DELPROP:    return "delete";
+            case Token.DO:         return "do";
+            case Token.ELSE:       return "else";
+            case Token.FALSE:      return "false";
+            case Token.FOR:        return "for";
+            case Token.FUNCTION:   return "function";
+            case Token.IF:         return "if";
+            case Token.IN:         return "in";
+            case Token.LET:        return "let";
+            case Token.NEW:        return "new";
+            case Token.NULL:       return "null";
+            case Token.RETURN:     return "return";
+            case Token.SWITCH:     return "switch";
+            case Token.THIS:       return "this";
+            case Token.TRUE:       return "true";
+            case Token.TYPEOF:     return "typeof";
+            case Token.VAR:        return "var";
+            case Token.VOID:       return "void";
+            case Token.WHILE:      return "while";
+            case Token.WITH:       return "with";
+            case Token.YIELD:      return "yield";
+            case Token.CATCH:      return "catch";
+            case Token.CONST:      return "const";
+            case Token.DEBUGGER:   return "debugger";
+            case Token.FINALLY:    return "finally";
+            case Token.INSTANCEOF: return "instanceof";
+            case Token.THROW:      return "throw";
+            case Token.TRY:        return "try";
+            default:               return null;
+        }
+    }
+
+    /**
      * Return true if the passed code is a valid Token constant.
      * @param code a potential token code
      * @return true if it's a known token

@@ -2615,7 +2615,8 @@ public class Parser
 
         AstNode ref = null;  // right side of . or .. operator
 
-        switch (nextToken()) {
+        int token = nextToken();
+        switch (token) {
           case Token.THROW:
               // needed for generator.throw();
               saveNameTokenData(ts.tokenBeg, "throw", ts.lineno);
@@ -2640,6 +2641,15 @@ public class Parser
               break;
 
           default:
+              if (compilerEnv.isReservedKeywordAsIdentifier()) {
+                  // allow keywords as property names, e.g. ({if: 1})
+                  String name = Token.keywordToName(token);
+                  if (name != null) {
+                      saveNameTokenData(ts.tokenBeg, name, ts.lineno);
+                      ref = propertyName(-1, name, memberTypeFlags);
+                      break;
+                  }
+              }
               reportError("msg.no.name.after.dot");
               return makeErrorNode();
         }
@@ -3130,6 +3140,19 @@ public class Parser
                   break commaLoop;
 
               default:
+                  if (compilerEnv.isReservedKeywordAsIdentifier()) {
+                      // convert keyword to property name, e.g. ({if: 1})
+                      propertyName = Token.keywordToName(tt);
+                      if (propertyName != null) {
+                          afterComma = -1;
+                          saveNameTokenData(ts.tokenBeg, propertyName, ts.lineno);
+                          consumeToken();
+                          AstNode pname = createNameNode();
+                          pname.setJsDoc(jsdoc);
+                          elems.add(plainProperty(pname, tt));
+                          break;
+                      }
+                  }
                   reportError("msg.bad.prop");
                   break;
             }
