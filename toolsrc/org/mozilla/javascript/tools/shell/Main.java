@@ -281,6 +281,7 @@ public class Main
             }
             if (arg.equals("-strict")) {
                 shellContextFactory.setStrictMode(true);
+                shellContextFactory.setAllowReservedKeywords(false);
                 errorReporter.setIsReportingWarnings(true);
                 continue;
             }

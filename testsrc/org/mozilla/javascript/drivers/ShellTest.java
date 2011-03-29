@@ -51,7 +51,7 @@ import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /**
- * @version $Id: ShellTest.java,v 1.13 2010/12/15 10:21:22 hannes%helma.at Exp $
+ * @version $Id: ShellTest.java,v 1.14 2011/03/29 15:17:49 hannes%helma.at Exp $
  */
 public class ShellTest {
     public static final FileFilter DIRECTORY_FILTER = new FileFilter() {
@@ -64,7 +64,10 @@ public class ShellTest {
     public static final FileFilter TEST_FILTER = new FileFilter() {
         public boolean accept(File pathname)
         {
-            return pathname.getName().endsWith(".js") && !pathname.getName().equals("shell.js") && !pathname.getName().equals("browser.js") && !pathname.getName().equals("template.js");
+            return pathname.getName().endsWith(".js")
+                    && !pathname.getName().equals("shell.js")
+                    && !pathname.getName().equals("browser.js")
+                    && !pathname.getName().equals("template.js");
         }
     };
 
@@ -294,12 +297,14 @@ public class ShellTest {
                 new String[] { "options" }, ShellTest.class,
                 ScriptableObject.DONTENUM | ScriptableObject.PERMANENT |
                   ScriptableObject.READONLY);
+        // test suite expects keywords to be disallowed as identifiers
+        shellContextFactory.setAllowReservedKeywords(false);
         final TestState testState = new TestState();
         if (jsFile.getName().endsWith("-n.js")) {
             status.setNegative();
         }
         final Throwable thrown[] = {null};
-        
+
         Thread t = new Thread(new Runnable()
         {
             public void run()
