@@ -8,7 +8,7 @@ import org.mozilla.javascript.Scriptable;
  * Implemented by objects that can provide the source text for the script. The
  * design of the interface supports cache revalidation. 
  * @author Attila Szegedi
- * @version $Id: ModuleSourceProvider.java,v 1.1 2010/02/15 19:31:12 szegedia%freemail.hu Exp $
+ * @version $Id: ModuleSourceProvider.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public interface ModuleSourceProvider
 {

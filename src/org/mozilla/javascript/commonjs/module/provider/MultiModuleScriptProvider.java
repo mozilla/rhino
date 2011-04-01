@@ -12,7 +12,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
 /**
  * A multiplexer for module script providers.
  * @author Attila Szegedi
- * @version $Id: MultiModuleScriptProvider.java,v 1.2 2010/02/19 09:47:19 szegedia%freemail.hu Exp $
+ * @version $Id: MultiModuleScriptProvider.java,v 1.3 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public class MultiModuleScriptProvider implements ModuleScriptProvider
 {

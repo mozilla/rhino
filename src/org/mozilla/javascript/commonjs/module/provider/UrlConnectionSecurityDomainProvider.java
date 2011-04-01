@@ -11,7 +11,7 @@ import org.mozilla.javascript.Context;
  * String, int, Object)}) based on the properties obtainable through their URL 
  * connection.
  * @author Attila Szegedi
- * @version $Id: UrlConnectionSecurityDomainProvider.java,v 1.1 2010/02/15 19:31:12 szegedia%freemail.hu Exp $
+ * @version $Id: UrlConnectionSecurityDomainProvider.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public interface UrlConnectionSecurityDomainProvider
 {

@@ -31,7 +31,7 @@ import org.mozilla.javascript.UniqueTag;
  * program, you need to invoke either {@link #install(Scriptable)} or 
  * {@link #requireMain(Context, String)}.
  * @author Attila Szegedi
- * @version $Id: Require.java,v 1.2 2010/02/19 09:47:19 szegedia%freemail.hu Exp $
+ * @version $Id: Require.java,v 1.3 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public class Require extends ScriptableObject implements Function
 {

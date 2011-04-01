@@ -7,7 +7,7 @@ import java.util.StringTokenizer;
  * Breaks a "contentType; charset=encoding" MIME type into content type and
  * encoding parts.
  * @author Attila Szegedi
- * @version $Id: ParsedContentType.java,v 1.1 2010/02/15 19:31:12 szegedia%freemail.hu Exp $
+ * @version $Id: ParsedContentType.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public final class ParsedContentType implements Serializable
 {

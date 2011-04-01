@@ -22,7 +22,7 @@ import java.io.Serializable;
  * {@link Object#equals(Object)} as caches themselves can rely on it to compare
  * them semantically. Also, it is advisable to have them be serializable.
  * @author Attila Szegedi
- * @version $Id: ModuleSource.java,v 1.1 2010/02/15 19:31:12 szegedia%freemail.hu Exp $
+ * @version $Id: ModuleSource.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public class ModuleSource implements Serializable
 {

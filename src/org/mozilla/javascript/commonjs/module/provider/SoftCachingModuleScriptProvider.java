@@ -23,7 +23,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  * for garbage collection if it is otherwise unused under memory pressure.
  * Instances of this class are thread safe. 
  * @author Attila Szegedi
- * @version $Id: SoftCachingModuleScriptProvider.java,v 1.1 2010/02/15 19:31:12 szegedia%freemail.hu Exp $
+ * @version $Id: SoftCachingModuleScriptProvider.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public class SoftCachingModuleScriptProvider extends CachingModuleScriptProviderBase 
 {

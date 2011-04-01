@@ -8,7 +8,7 @@ import org.mozilla.javascript.Scriptable;
  * obtain {@link ModuleScript} objects. We provide two default implementations,
  * but you can of course roll your own if they don't suit your needs. 
  * @author Attila Szegedi
- * @version $Id: ModuleScriptProvider.java,v 1.2 2010/02/19 09:47:19 szegedia%freemail.hu Exp $
+ * @version $Id: ModuleScriptProvider.java,v 1.3 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public interface ModuleScriptProvider
 {

@@ -20,7 +20,7 @@ import org.mozilla.javascript.ScriptableObject;
  * have loading from an URI built into its design, for the simple reason that
  * the require.paths is defined in terms of URIs. 
  * @author Attila Szegedi
- * @version $Id: ModuleSourceProviderBase.java,v 1.1 2010/02/15 19:31:12 szegedia%freemail.hu Exp $
+ * @version $Id: ModuleSourceProviderBase.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public class ModuleSourceProviderBase implements ModuleSourceProvider, Serializable
 {

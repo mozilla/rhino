@@ -10,7 +10,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  * use them and obtain them through a {@link ModuleScriptProvider}. Instances
  * are immutable.
  * @author Attila Szegedi
- * @version $Id: ModuleScript.java,v 1.1 2010/02/15 19:31:14 szegedia%freemail.hu Exp $
+ * @version $Id: ModuleScript.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public class ModuleScript implements Serializable
 {

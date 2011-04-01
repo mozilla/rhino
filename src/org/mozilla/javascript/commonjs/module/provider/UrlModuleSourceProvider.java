@@ -24,7 +24,7 @@ import java.util.List;
  * model, and allows for fallback heuristic expiry calculation when no server
  * specified expiry is provided. 
  * @author Attila Szegedi
- * @version $Id: UrlModuleSourceProvider.java,v 1.2 2010/03/23 11:25:57 szegedia%freemail.hu Exp $
+ * @version $Id: UrlModuleSourceProvider.java,v 1.3 2011/04/01 02:39:19 hannes%helma.at Exp $
  */
 public class UrlModuleSourceProvider extends ModuleSourceProviderBase
 {
