@@ -7,6 +7,7 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Iterator;
@@ -24,7 +25,7 @@ import java.util.List;
  * model, and allows for fallback heuristic expiry calculation when no server
  * specified expiry is provided. 
  * @author Attila Szegedi
- * @version $Id: UrlModuleSourceProvider.java,v 1.3 2011/04/01 02:39:19 hannes%helma.at Exp $
+ * @version $Id: UrlModuleSourceProvider.java,v 1.4 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public class UrlModuleSourceProvider extends ModuleSourceProviderBase
 {
@@ -81,30 +82,32 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
     }
 
     @Override
-    protected ModuleSource loadModuleSourceFromPrivilegedLocations(
-            String moduleId, Object validator) throws IOException
+    protected ModuleSource loadFromPrivilegedLocations(
+            String moduleId, Object validator)
+            throws IOException, URISyntaxException
     {
-        return loadModuleSourceFromPathList(moduleId, validator, privilegedUris);
+        return loadFromPathList(moduleId, validator, privilegedUris);
     }
 
     @Override
-    protected ModuleSource loadModuleSourceFromFallbackLocations(
-            String moduleId, Object validator) throws IOException
+    protected ModuleSource loadFromFallbackLocations(
+            String moduleId, Object validator)
+            throws IOException, URISyntaxException
     {
-        return loadModuleSourceFromPathList(moduleId, validator, fallbackUris);
+        return loadFromPathList(moduleId, validator, fallbackUris);
     }
     
-    private ModuleSource loadModuleSourceFromPathList(String moduleId, 
-            Object validator, Iterable<URI> paths) throws IOException
+    private ModuleSource loadFromPathList(String moduleId,
+            Object validator, Iterable<URI> paths)
+            throws IOException, URISyntaxException
     {
         if(paths == null) {
             return null;
         }
-        final String relativeModuleUri = moduleId + ".js";
         for (URI path : paths) {
-            final ModuleSource moduleSource = loadModuleSourceFromUri(
-                    path.resolve(relativeModuleUri), validator);
-            if(moduleSource != null) {
+            final ModuleSource moduleSource = loadFromUri(
+                    path.resolve(moduleId), path, validator);
+            if (moduleSource != null) {
                 return moduleSource;
             }
         }
@@ -112,19 +115,20 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
     }
 
     @Override
-    protected ModuleSource loadModuleSourceFromUri(URI uri, Object validator)
-    throws IOException
+    protected ModuleSource loadFromUri(URI uri, URI base, Object validator)
+    throws IOException, URISyntaxException
     {
-        try {
-            return loadModuleSourceFromUriInternal(uri, validator);
-        }
-        catch(FileNotFoundException e) {
-            return null;
-        }
+        // We expect modules to have a ".js" file name extension ...
+        URI fullUri = new URI(uri + ".js");
+        ModuleSource source = loadFromActualUri(fullUri, base, validator);
+        // ... but for compatibility we support modules without extension,
+        // or ids with explicit extension.
+        return source != null ?
+               source : loadFromActualUri(uri, base, validator);
     }
     
-    private ModuleSource loadModuleSourceFromUriInternal(URI uri, 
-            Object validator) throws IOException
+    protected ModuleSource loadFromActualUri(URI uri, URI base, Object validator)
+    throws IOException
     {
         final URL url = uri.toURL();
         final long request_time = System.currentTimeMillis();
@@ -132,7 +136,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
         final URLValidator applicableValidator;
         if(validator instanceof URLValidator) {
             final URLValidator uriValidator = ((URLValidator)validator);
-            applicableValidator = uriValidator.appliesTo(uri) ? uriValidator : 
+            applicableValidator = uriValidator.appliesTo(uri) ? uriValidator :
                 null;
         }
         else {
@@ -141,9 +145,9 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
         if(applicableValidator != null) {
             applicableValidator.applyConditionals(urlConnection);
         }
-        urlConnection.connect();
         try {
-            if(applicableValidator != null && 
+            urlConnection.connect();
+            if(applicableValidator != null &&
                     applicableValidator.updateValidator(urlConnection, 
                             request_time, urlConnectionExpiryCalculator))
             {
@@ -152,9 +156,12 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
             }
     
             return new ModuleSource(getReader(urlConnection), 
-                    getSecurityDomain(urlConnection), uri.toString(), 
-                    new URLValidator(uri, urlConnection, request_time, 
+                    getSecurityDomain(urlConnection), uri, base,
+                    new URLValidator(uri, urlConnection, request_time,
                             urlConnectionExpiryCalculator));
+        }
+        catch(FileNotFoundException e) {
+            return null;
         }
         catch(RuntimeException e) {
             close(urlConnection);
@@ -227,7 +234,8 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
     
     @Override
     protected boolean entityNeedsRevalidation(Object validator) {
-        return !(validator instanceof URLValidator) || ((URLValidator)validator).entityNeedsRevalidation();
+        return !(validator instanceof URLValidator)
+                || ((URLValidator)validator).entityNeedsRevalidation();
     }
     
     private static class URLValidator implements Serializable {
@@ -238,7 +246,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
         private final String entityTags;
         private long expiry;
         
-        public URLValidator(URI uri, URLConnection urlConnection, 
+        public URLValidator(URI uri, URLConnection urlConnection,
                 long request_time, UrlConnectionExpiryCalculator 
                 urlConnectionExpiryCalculator) {
             this.uri = uri;

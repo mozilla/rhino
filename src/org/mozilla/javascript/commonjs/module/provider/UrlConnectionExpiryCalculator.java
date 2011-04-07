@@ -7,7 +7,7 @@ import java.net.URLConnection;
  * calculating the expiry of a cached resource in cases where the server of the
  * resource doesn't provide explicit expiry information.
  * @author Attila Szegedi
- * @version $Id: UrlConnectionExpiryCalculator.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
+ * @version $Id: UrlConnectionExpiryCalculator.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public interface UrlConnectionExpiryCalculator
 {

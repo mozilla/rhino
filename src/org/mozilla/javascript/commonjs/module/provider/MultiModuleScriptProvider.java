@@ -1,6 +1,6 @@
 package org.mozilla.javascript.commonjs.module.provider;
 
-import java.io.IOException;
+import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -12,7 +12,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
 /**
  * A multiplexer for module script providers.
  * @author Attila Szegedi
- * @version $Id: MultiModuleScriptProvider.java,v 1.3 2011/04/01 02:39:19 hannes%helma.at Exp $
+ * @version $Id: MultiModuleScriptProvider.java,v 1.4 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public class MultiModuleScriptProvider implements ModuleScriptProvider
 {
@@ -31,9 +31,11 @@ public class MultiModuleScriptProvider implements ModuleScriptProvider
         this.providers = l.toArray(new ModuleScriptProvider[l.size()]);
     }
     
-    public ModuleScript getModuleScript(Context cx, String moduleId, Scriptable paths) throws Exception {
+    public ModuleScript getModuleScript(Context cx, String moduleId, URI uri,
+                                        Scriptable paths) throws Exception {
         for (ModuleScriptProvider provider : providers) {
-            final ModuleScript script = provider.getModuleScript(cx, moduleId, paths);
+            final ModuleScript script = provider.getModuleScript(cx, moduleId,
+                    uri, paths);
             if(script != null) {
                 return script;
             }

@@ -1,8 +1,8 @@
 package org.mozilla.javascript.commonjs.module.provider;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
+import java.net.URI;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -17,7 +17,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
  * class and its subclasses are thread safe (and written to perform decently 
  * under concurrent access).
  * @author Attila Szegedi
- * @version $Id: CachingModuleScriptProviderBase.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
+ * @version $Id: CachingModuleScriptProviderBase.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public abstract class CachingModuleScriptProviderBase 
 implements ModuleScriptProvider, Serializable
@@ -58,12 +58,13 @@ implements ModuleScriptProvider, Serializable
     }
 
     public ModuleScript getModuleScript(Context cx, String moduleId, 
-            Scriptable paths) throws IOException
+            URI moduleUri, Scriptable paths) throws Exception
     {
         final CachedModuleScript cachedModule1 = getLoadedModule(moduleId);
         final Object validator1 = getValidator(cachedModule1);
-        final ModuleSource moduleSource = moduleSourceProvider.getModuleSource(
-                moduleId, paths, validator1);
+        final ModuleSource moduleSource = (moduleUri == null)
+                ? moduleSourceProvider.loadSource(moduleId, paths, validator1)
+                : moduleSourceProvider.loadSource(moduleUri, validator1);
         if(moduleSource == ModuleSourceProvider.NOT_MODIFIED) {
             return cachedModule1.getModule();
         }
@@ -80,11 +81,12 @@ implements ModuleScriptProvider, Serializable
                         return cachedModule2.getModule();
                     }
                 }
-                final String uri = moduleSource.getUri();
+                final URI sourceUri = moduleSource.getUri();
                 final ModuleScript moduleScript = new ModuleScript(
-                        cx.compileReader(reader, uri, 1, 
-                                moduleSource.getSecurityDomain()), uri);
-                putLoadedModule(moduleId, moduleScript, 
+                        cx.compileReader(reader, sourceUri.toString(), 1,
+                                moduleSource.getSecurityDomain()),
+                        sourceUri, moduleSource.getBase());
+                putLoadedModule(moduleId, moduleScript,
                         moduleSource.getValidator());
                 return moduleScript;
             }
@@ -93,7 +95,7 @@ implements ModuleScriptProvider, Serializable
             reader.close();
         }
     }
-    
+
     /**
      * Store a loaded module script for later retrieval using 
      * {@link #getLoadedModule(String)}.
@@ -115,7 +117,7 @@ implements ModuleScriptProvider, Serializable
     /**
      * Instances of this class represent a loaded and cached module script.
      * @author Attila Szegedi
-     * @version $Id: CachingModuleScriptProviderBase.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
+     * @version $Id: CachingModuleScriptProviderBase.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
      */
     public static class CachedModuleScript {
         private final ModuleScript moduleScript;

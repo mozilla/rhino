@@ -1,11 +1,11 @@
 package org.mozilla.javascript.commonjs.module.provider;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +23,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  * for garbage collection if it is otherwise unused under memory pressure.
  * Instances of this class are thread safe. 
  * @author Attila Szegedi
- * @version $Id: SoftCachingModuleScriptProvider.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
+ * @version $Id: SoftCachingModuleScriptProvider.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public class SoftCachingModuleScriptProvider extends CachingModuleScriptProviderBase 
 {
@@ -48,7 +48,8 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
     
     @Override
     public ModuleScript getModuleScript(Context cx, String moduleId,
-            Scriptable paths) throws FileNotFoundException, IOException
+            URI uri, Scriptable paths)
+            throws Exception
     {
         // Overridden to clear the reference queue before retrieving the 
         // script.
@@ -59,7 +60,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
             }
             scripts.remove(ref.getModuleId(), ref);
         }
-        return super.getModuleScript(cx, moduleId, paths);
+        return super.getModuleScript(cx, moduleId, uri, paths);
     }
     
     @Override
@@ -73,19 +74,22 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
             Object validator)
     {
         scripts.put(moduleId, new ScriptReference(moduleScript.getScript(), 
-                moduleId, moduleScript.getUri(), validator, scriptRefQueue));
+                moduleId, moduleScript.getUri(), moduleScript.getBase(),
+                validator, scriptRefQueue));
     }
     
     private static class ScriptReference extends SoftReference<Script> {
         private final String moduleId;
-        private final String uri;
+        private final URI uri;
+        private final URI base;
         private final Object validator;
         
-        ScriptReference(Script script, String moduleId, String uri, 
+        ScriptReference(Script script, String moduleId, URI uri, URI base,
                 Object validator, ReferenceQueue<Script> refQueue) {
             super(script, refQueue);
             this.moduleId = moduleId;
             this.uri = uri;
+            this.base = base;
             this.validator = validator;
         }
         
@@ -94,7 +98,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
             if(script == null) {
                 return null;
             }
-            return new CachedModuleScript(new ModuleScript(script, uri), 
+            return new CachedModuleScript(new ModuleScript(script, uri, base),
                     validator); 
         }
         

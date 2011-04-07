@@ -14,7 +14,7 @@ import org.mozilla.javascript.Scriptable;
  * Every setter returns "this", so you can easily chain their invocations for 
  * additional convenience.
  * @author Attila Szegedi
- * @version $Id: RequireBuilder.java,v 1.3 2011/04/01 02:39:19 hannes%helma.at Exp $
+ * @version $Id: RequireBuilder.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
 public class RequireBuilder implements Serializable
 {

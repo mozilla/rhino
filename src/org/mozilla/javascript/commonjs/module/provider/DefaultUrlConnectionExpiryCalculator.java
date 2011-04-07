@@ -9,7 +9,7 @@ import java.net.URLConnection;
  * of {@link #calculateExpiry(URLConnection)} returns 
  * {@link System#currentTimeMillis()} incremented with the relative expiry. 
  * @author Attila Szegedi
- * @version $Id: DefaultUrlConnectionExpiryCalculator.java,v 1.2 2011/04/01 02:39:19 hannes%helma.at Exp $
+ * @version $Id: DefaultUrlConnectionExpiryCalculator.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public class DefaultUrlConnectionExpiryCalculator 
 implements UrlConnectionExpiryCalculator, Serializable
