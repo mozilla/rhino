@@ -2887,6 +2887,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             // If tableSize is not a power of 2 find the closest 
             // power of 2 >= the original size.
             if ((tableSize & (tableSize - 1)) != 0) {
+                if (tableSize > 1 << 30)
+                    throw new RuntimeException("Property table overflow");
                 int newSize = INITIAL_SLOT_SIZE;
                 while (newSize < tableSize)
                     newSize <<= 1;
