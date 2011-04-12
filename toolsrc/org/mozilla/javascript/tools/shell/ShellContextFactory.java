@@ -66,6 +66,9 @@ public class ShellContextFactory extends ContextFactory
 
           case Context.FEATURE_WARNING_AS_ERROR:
             return warningAsError;
+
+          case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
+            return generatingDebug;
         }
         return super.hasFeature(cx, featureIndex);
     }
