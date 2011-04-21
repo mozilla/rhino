@@ -1290,8 +1290,9 @@ public class ScriptRuntime {
     }
 
     /**
-     * Return -1L if str is not an index or the index value as lower 32
-     * bits of the result.
+     * Return -1L if str is not an index, or the index value as lower 32
+     * bits of the result. Note that the result needs to be cast to an int
+     * in order to produce the actual index, which may be negative.
      */
     public static long indexFromString(String str)
     {
