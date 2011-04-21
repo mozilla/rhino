@@ -1293,7 +1293,7 @@ public class ScriptRuntime {
      * Return -1L if str is not an index or the index value as lower 32
      * bits of the result.
      */
-    private static long indexFromString(String str)
+    public static long indexFromString(String str)
     {
         // The length of the decimal string representation of
         //  Integer.MAX_VALUE, 2147483647

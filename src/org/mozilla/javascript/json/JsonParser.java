@@ -144,9 +144,8 @@ public class JsonParser {
                     consume(':');
                     value = readValue();
 
-                    double d = ScriptRuntime.toNumber(id);
-                    int index = (int) d;
-                    if (d != index) {
+                    int index = (int) ScriptRuntime.indexFromString(id);
+                    if (index < 0) {
                       object.put(id, object, value);
                     } else {
                       object.put(index, object, value);
