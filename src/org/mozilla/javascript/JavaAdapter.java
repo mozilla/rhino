@@ -208,6 +208,10 @@ public final class JavaAdapter implements IdFunctionCall
             if (self instanceof Wrapper) {
                 Object unwrapped = ((Wrapper) self).unwrap();
                 if (unwrapped instanceof Scriptable) {
+                    if (unwrapped instanceof ScriptableObject) {
+                        ScriptRuntime.setObjectProtoAndParent(
+                                (ScriptableObject)unwrapped, scope);
+                    }
                     return unwrapped;
                 }
             }
