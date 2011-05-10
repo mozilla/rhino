@@ -193,7 +193,7 @@
     <mkdir dir="${dist.dir}/testsrc"/>
     <copy todir="${dist.dir}/testsrc">
       <fileset dir="testsrc"
-        includes="**/*.java,**/*.properties,**/*.xml,**/*.html,**/*.skip" />
+        includes="**/*.java,**/*.js,**/*.jstest,**/*.properties,**/*.xml,**/*.html,**/*.skip" />
     </copy>
   </target>
 </project>
