@@ -52,7 +52,7 @@ public class CompilerEnvirons
         languageVersion = Context.VERSION_DEFAULT;
         generateDebugInfo = true;
         useDynamicScope = false;
-        reservedKeywordAsIdentifier = false;
+        reservedKeywordAsIdentifier = true;
         allowMemberExprAsFunctionName = false;
         xmlAvailable = true;
         optimizationLevel = 0;
