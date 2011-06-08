@@ -237,6 +237,7 @@ public class ByteCode {
         INVOKESPECIAL = 0xB7,
         INVOKESTATIC = 0xB8,
         INVOKEINTERFACE = 0xB9,
+        INVOKEDYNAMIC = 0xBA,
         NEW = 0xBB,
         NEWARRAY = 0xBC,
         ANEWARRAY = 0xBD,
@@ -270,5 +271,18 @@ public class ByteCode {
             T_INT = 10,
             T_LONG = 11;
 
+        /*
+         * Types for MethodHandle
+         */
+        public static final byte
+            MH_GETFIELD = 1,
+            MH_GETSTATIC = 2,
+            MH_PUTFIELD = 3,
+            MH_PUTSTATIC = 4,
+            MH_INVOKEVIRTUAL = 5,
+            MH_INVOKESTATIC = 6,
+            MH_INVOKESPECIAL = 7,
+            MH_NEWINVOKESPECIAL = 8,
+            MH_INVOKEINTERFACE = 9;
 
 }

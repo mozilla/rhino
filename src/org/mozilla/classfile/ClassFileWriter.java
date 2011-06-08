@@ -895,6 +895,50 @@ public class ClassFileWriter {
         }
     }
 
+    public void addInvokeDynamic(String methodName, String methodType,
+                                 ClassFileWriter.MethodHandle bsm, Object... bsmArgs) {
+        if (DEBUGCODE) {
+            System.out.println("Add invokedynamic, " + methodName + ", " + methodType);
+        }
+        // JDK 1.7 major class file version is required for invokedynamic
+        if (MajorVersion < 51) MajorVersion = 51;
+
+        int parameterInfo = sizeOfParameters(methodType);
+        // int parameterCount = parameterInfo >>> 16;
+        int stackDiff = (short)parameterInfo;
+
+        int newStack = itsStackTop + stackDiff;
+        if (newStack < 0 || Short.MAX_VALUE < newStack) badStack(newStack);
+
+        addToCodeBuffer(ByteCode.INVOKEDYNAMIC);
+        if (itsBootstrapMethods == null) {
+            itsBootstrapMethods = new ObjArray();
+        }
+        int bootstrapMethodIndex = itsBootstrapMethods.size();
+
+        int bsmEntryLength = 2 + 2 + bsmArgs.length * 2;
+        byte[] bsmEntry = new byte[bsmEntryLength];
+        putInt16(itsConstantPool.addMethodHandle(bsm), bsmEntry, 0);
+        putInt16(bsmArgs.length, bsmEntry, 2);
+        for (int i = 0; i < bsmArgs.length; i++) {
+            putInt16(itsConstantPool.addConstant(bsmArgs[i]), bsmEntry, 4 + i * 2);
+        }
+
+        itsBootstrapMethods.add(bsmEntry);
+        itsBootstrapMethodsLength += bsmEntryLength;
+        short invokedynamicIndex = itsConstantPool.addInvokeDynamic(
+                methodName, methodType, bootstrapMethodIndex);
+        addToCodeInt16(invokedynamicIndex);
+        addToCodeInt16(0);
+
+        itsStackTop = (short)newStack;
+        if (newStack > itsMaxStack) itsMaxStack = (short)newStack;
+        if (DEBUGSTACK) {
+            System.out.println("After invokedynamic stack = " + itsStackTop);
+        }
+
+    }
+
     /**
      * Generate code to load the given integer on stack.
      *
@@ -2192,6 +2236,21 @@ public class ClassFileWriter {
                         push(TypeInfo.fromType(returnType, itsConstantPool));
                     }
                     break;
+                case ByteCode.INVOKEDYNAMIC:
+                    index = getOperand(bci + 1, 2);
+                    methodType = (String)
+                            itsConstantPool.getConstantData(index);
+                    parameterCount = sizeOfParameters(methodType) >>> 16;
+                    for (int i = 0; i < parameterCount; i++) {
+                        pop();
+                    }
+                    rParen = methodType.indexOf(')');
+                    returnType = methodType.substring(rParen + 1);
+                    returnType = descriptorToInternalName(returnType);
+                    if (!returnType.equals("V")) {
+                        push(TypeInfo.fromType(returnType, itsConstantPool));
+                    }
+                    break;
                 case ByteCode.GETFIELD:
                     pop();
                 case ByteCode.GETSTATIC:
@@ -2737,10 +2796,6 @@ public class ClassFileWriter {
     {
         int size = 0;
 
-        if (itsSourceFileNameIndex != 0) {
-            itsConstantPool.addUtf8("SourceFile");
-        }
-
         size += 8; //writeLong(FileHeaderConstant);
         size += itsConstantPool.getWriteSize();
         size += 2; //writeShort(itsFlags);
@@ -2751,40 +2806,50 @@ public class ClassFileWriter {
 
         size += 2; //writeShort(itsFields.size());
         for (int i = 0; i < itsFields.size(); i++) {
-            size += ((ClassFileField)(itsFields.get(i))).getWriteSize();
+            size += ((ClassFileField)itsFields.get(i)).getWriteSize();
         }
 
         size += 2; //writeShort(itsMethods.size());
         for (int i = 0; i < itsMethods.size(); i++) {
-            size += ((ClassFileMethod)(itsMethods.get(i))).getWriteSize();
+            size += ((ClassFileMethod)itsMethods.get(i)).getWriteSize();
         }
 
+        size += 2; //writeShort(attributeCount);
         if (itsSourceFileNameIndex != 0) {
-            size += 2; //writeShort(1);  attributes count
             size += 2; //writeShort(sourceFileAttributeNameIndex);
             size += 4; //writeInt(2);
             size += 2; //writeShort(itsSourceFileNameIndex);
-        }else {
-            size += 2; //out.writeShort(0);  no attributes
+        }
+        if (itsBootstrapMethods != null) {
+            size += 2; //writeShort(bootstrapMethodsAttrNameIndex);
+            size += 4; //writeInt(itsBootstrapMethodsLength);
+            size += 2; //writeShort(bootstrapMethods.length);
+            size += itsBootstrapMethodsLength;
         }
 
         return size;
     }
 
     /**
-     * Get the class file as array of bytesto the OutputStream.
+     * Get the class file as array of bytes.
      */
     public byte[] toByteArray()
     {
+        int attributeCount = 0;
+        short bootstrapMethodsAttrNameIndex = 0;
+        short sourceFileAttrNameIndex = 0;
+        if (itsBootstrapMethods != null) {
+            ++attributeCount;
+            bootstrapMethodsAttrNameIndex = itsConstantPool.addUtf8("BootstrapMethods");
+        }
+        if (itsSourceFileNameIndex != 0) {
+            ++attributeCount;
+            sourceFileAttrNameIndex = itsConstantPool.addUtf8("SourceFile");
+        }
+
         int dataSize = getWriteSize();
         byte[] data = new byte[dataSize];
         int offset = 0;
-
-        short sourceFileAttributeNameIndex = 0;
-        if (itsSourceFileNameIndex != 0) {
-            sourceFileAttributeNameIndex = itsConstantPool.addUtf8(
-                                               "SourceFile");
-        }
 
         offset = putInt32(FileHeaderConstant, data, offset);
         offset = putInt16(MinorVersion, data, offset);
@@ -2808,13 +2873,21 @@ public class ClassFileWriter {
             ClassFileMethod method = (ClassFileMethod)itsMethods.get(i);
             offset = method.write(data, offset);
         }
+        offset = putInt16(attributeCount, data, offset); // attributes count
+        if (itsBootstrapMethods != null) {
+            offset = putInt16(bootstrapMethodsAttrNameIndex, data, offset);
+            offset = putInt32(itsBootstrapMethodsLength + 2, data, offset);
+            offset = putInt16(itsBootstrapMethods.size(), data, offset);
+            for (int i = 0; i < itsBootstrapMethods.size(); i++) {
+                byte[] entry = (byte[]) itsBootstrapMethods.get(i);
+                System.arraycopy(entry, 0, data, offset, entry.length);
+                offset += entry.length;
+            }
+        }
         if (itsSourceFileNameIndex != 0) {
-            offset = putInt16(1, data, offset); // attributes count
-            offset = putInt16(sourceFileAttributeNameIndex, data, offset);
+            offset = putInt16(sourceFileAttrNameIndex, data, offset);
             offset = putInt32(2, data, offset);
             offset = putInt16(itsSourceFileNameIndex, data, offset);
-        } else {
-            offset = putInt16(0, data, offset); // no attributes
         }
 
         if (offset != dataSize) {
@@ -3185,6 +3258,7 @@ public class ClassFileWriter {
 
             case ByteCode.GOTO_W:
             case ByteCode.INVOKEINTERFACE:
+            case ByteCode.INVOKEDYNAMIC:
             case ByteCode.JSR_W:
                 return 5;
 
@@ -3568,6 +3642,7 @@ public class ClassFileWriter {
             case ByteCode.INEG:
             case ByteCode.INSTANCEOF:
             case ByteCode.INVOKESTATIC:
+            case ByteCode.INVOKEDYNAMIC:
             case ByteCode.L2D:
             case ByteCode.LALOAD:
             case ByteCode.LNEG:
@@ -4063,6 +4138,7 @@ public class ClassFileWriter {
                 case ByteCode.INVOKESPECIAL:    return "invokespecial";
                 case ByteCode.INVOKESTATIC:     return "invokestatic";
                 case ByteCode.INVOKEINTERFACE:  return "invokeinterface";
+                case ByteCode.INVOKEDYNAMIC:    return "invokedynamic";
                 case ByteCode.NEW:              return "new";
                 case ByteCode.NEWARRAY:         return "newarray";
                 case ByteCode.ANEWARRAY:        return "anewarray";
@@ -4166,7 +4242,8 @@ public class ClassFileWriter {
     private static final int LineNumberTableSize = 16;
     private static final int ExceptionTableSize = 4;
 
-    private static final int MajorVersion;
+    // Temporarily made non-final to accommodate for invokedynamic
+    private static int MajorVersion;
     private static final int MinorVersion;
     private static final boolean GenerateStackMap;
 
@@ -4216,6 +4293,31 @@ public class ClassFileWriter {
         }
     }
 
+    public static final class MethodHandle {
+
+        final byte tag;
+        final String owner;
+        final String name;
+        final String desc;
+
+        public MethodHandle(byte tag, String owner, String name, String desc) {
+            this.tag = tag;
+            this.owner = owner;
+            this.name = name;
+            this.desc = desc;
+        }
+    }
+
+    public static final class MethodType {
+
+        final String desc;
+
+        public MethodType(String desc) {
+            this.desc = desc;
+        }
+
+    }
+
     private final static int FileHeaderConstant = 0xCAFEBABE;
     // Set DEBUG flags to true to get better checking and progress info.
     private static final boolean DEBUGSTACK = false;
@@ -4259,6 +4361,8 @@ public class ClassFileWriter {
     private long[] itsFixupTable;
     private int itsFixupTableTop;
     private ObjArray itsVarDescriptors;
+    private ObjArray itsBootstrapMethods;
+    private int itsBootstrapMethodsLength = 0;
 
     private char[] tmpCharBuffer = new char[64];
 }
@@ -4421,7 +4525,10 @@ final class ConstantPool
         CONSTANT_Long = 5,
         CONSTANT_Double = 6,
         CONSTANT_NameAndType = 12,
-        CONSTANT_Utf8 = 1;
+        CONSTANT_Utf8 = 1,
+        CONSTANT_MethodType = 16,
+        CONSTANT_MethodHandle = 15,
+        CONSTANT_InvokeDynamic = 18;
 
     int write(byte[] data, int offset)
     {
@@ -4491,6 +4598,31 @@ final class ConstantPool
         }
         itsPoolTypes.put(theIndex, CONSTANT_String);
         return theIndex;
+    }
+
+    int addConstant(Object value) {
+        if (value instanceof Integer || value instanceof Byte
+                || value instanceof Short) {
+            return addConstant(((Number) value).intValue());
+        } else if (value instanceof Character) {
+            return addConstant(((Character) value).charValue());
+        } else if (value instanceof Boolean) {
+            return addConstant(((Boolean) value).booleanValue() ? 1 : 0);
+        } else if (value instanceof Float) {
+            return addConstant(((Float) value).floatValue());
+        } else if (value instanceof Long) {
+            return addConstant(((Long) value).longValue());
+        } else if (value instanceof Double) {
+            return addConstant(((Double) value).doubleValue());
+        } else if (value instanceof String) {
+            return addConstant((String) value);
+        } else if (value instanceof ClassFileWriter.MethodType) {
+            return addMethodType((ClassFileWriter.MethodType) value);
+        } else if (value instanceof ClassFileWriter.MethodHandle) {
+            return addMethodHandle((ClassFileWriter.MethodHandle) value);
+        } else {
+            throw new IllegalArgumentException("value " + value);
+        }
     }
 
     boolean isUnderUtfEncodingLimit(String s)
@@ -4684,6 +4816,55 @@ final class ConstantPool
                                                   methodType);
         setConstantData(itsTopIndex, r);
         itsPoolTypes.put(itsTopIndex, CONSTANT_InterfaceMethodref);
+        return (short)(itsTopIndex++);
+    }
+
+    short addInvokeDynamic(String methodName, String methodType,
+                          int bootstrapMethodIndex)
+    {
+        short nameTypeIndex = addNameAndType(methodName, methodType);
+
+        ensure(5);
+        itsPool[itsTop++] = CONSTANT_InvokeDynamic;
+        itsTop = ClassFileWriter.putInt16(bootstrapMethodIndex, itsPool, itsTop);
+        itsTop = ClassFileWriter.putInt16(nameTypeIndex, itsPool, itsTop);
+
+        setConstantData(itsTopIndex, methodType);
+        itsPoolTypes.put(itsTopIndex, CONSTANT_InvokeDynamic);
+        return (short)(itsTopIndex++);
+    }
+
+    short addMethodHandle(ClassFileWriter.MethodHandle mh)
+    {
+        short ref;
+        if (mh.tag <= ByteCode.MH_PUTSTATIC) {
+            ref = addFieldRef(mh.owner, mh.name, mh.desc);
+        } else if (mh.tag == ByteCode.MH_INVOKEINTERFACE) {
+            ref = addInterfaceMethodRef(mh.owner, mh.name, mh.desc);
+        } else {
+            ref = addMethodRef(mh.owner, mh.name, mh.desc);
+        }
+
+        ensure(4);
+        itsPool[itsTop++] = CONSTANT_MethodHandle;
+        itsPool[itsTop++] = mh.tag;
+        itsTop = ClassFileWriter.putInt16(ref, itsPool, itsTop);
+
+        setConstantData(itsTopIndex, mh);
+        itsPoolTypes.put(itsTopIndex, CONSTANT_MethodHandle);
+        return (short)(itsTopIndex++);
+    }
+
+    short addMethodType(ClassFileWriter.MethodType mt)
+    {
+        short ref = addUtf8(mt.desc);
+
+        ensure(3);
+        itsPool[itsTop++] = CONSTANT_MethodType;
+        itsTop = ClassFileWriter.putInt16(ref, itsPool, itsTop);
+
+        setConstantData(itsTopIndex, mt);
+        itsPoolTypes.put(itsTopIndex, CONSTANT_MethodType);
         return (short)(itsTopIndex++);
     }
 
