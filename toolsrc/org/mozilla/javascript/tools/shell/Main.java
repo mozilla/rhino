@@ -62,7 +62,6 @@ import java.util.Map;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
-import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.Kit;
@@ -560,9 +559,6 @@ public class Main
         try {
             return cx.compileString(scriptSource, path, lineno,
                                     securityDomain);
-        } catch (EvaluatorException ee) {
-            // Already printed message.
-            exitCode = EXITCODE_RUNTIME_ERROR;
         } catch (RhinoException rex) {
             ToolErrorReporter.reportException(
                 cx.getErrorReporter(), rex);
