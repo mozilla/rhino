@@ -49,7 +49,11 @@ import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.classfile.*;
+import org.mozilla.classfile.ClassFileWriter.MethodHandle;
 
+import java.lang.invoke.CallSite;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.*;
 import java.lang.reflect.Constructor;
 
@@ -3331,6 +3335,17 @@ class BodyCodegen
                             +"Lorg/mozilla/javascript/Context;"
                             +"Lorg/mozilla/javascript/Scriptable;"
                             +")Ljava/lang/Object;";
+                // generate invokedynamic for foo.bar() calls
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                MethodHandle bootstrap = new MethodHandle(ByteCode.MH_INVOKESTATIC,
+                        "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
+                        "bootstrapProp0Call",
+                        MethodType.methodType(
+                                CallSite.class, MethodHandles.Lookup.class,
+                                String.class, MethodType.class).toMethodDescriptorString());
+                cfw.addInvokeDynamic(methodName, signature, bootstrap);
+                return;
             } else if (childType == Token.GETPROPNOWARN) {
                 throw Kit.codeBug();
             } else {
