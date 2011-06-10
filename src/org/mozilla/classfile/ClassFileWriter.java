@@ -901,7 +901,10 @@ public class ClassFileWriter {
             System.out.println("Add invokedynamic, " + methodName + ", " + methodType);
         }
         // JDK 1.7 major class file version is required for invokedynamic
-        if (MajorVersion < 51) MajorVersion = 51;
+        if (MajorVersion < 51) {
+            throw new RuntimeException(
+                    "Please build and run with JDK 1.7 for invokedynamic support");
+        }
 
         int parameterInfo = sizeOfParameters(methodType);
         // int parameterCount = parameterInfo >>> 16;
@@ -4240,8 +4243,7 @@ public class ClassFileWriter {
     private static final int LineNumberTableSize = 16;
     private static final int ExceptionTableSize = 4;
 
-    // Temporarily made non-final to accommodate for invokedynamic
-    private static int MajorVersion;
+    private static final int MajorVersion;
     private static final int MinorVersion;
     private static final boolean GenerateStackMap;
 
