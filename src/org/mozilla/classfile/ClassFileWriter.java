@@ -2239,8 +2239,7 @@ public class ClassFileWriter {
                     break;
                 case ByteCode.INVOKEDYNAMIC:
                     index = getOperand(bci + 1, 2);
-                    methodType = (String)
-                            itsConstantPool.getConstantData(index);
+                    methodType = (String) itsConstantPool.getConstantData(index);
                     parameterCount = sizeOfParameters(methodType) >>> 16;
                     for (int i = 0; i < parameterCount; i++) {
                         pop();
@@ -4800,9 +4799,9 @@ final class ConstantPool
             if (tooBigString) {
                 throw new IllegalArgumentException("Too big string");
             }
+            setConstantData(theIndex, k);
+            itsPoolTypes.put(theIndex, CONSTANT_Utf8);
         }
-        setConstantData(theIndex, k);
-        itsPoolTypes.put(theIndex, CONSTANT_Utf8);
         return (short)theIndex;
     }
 
@@ -4931,6 +4930,7 @@ final class ConstantPool
             itsTop = ClassFileWriter.putInt16(nameTypeIndex, itsPool, itsTop);
             theIndex = itsTopIndex++;
             itsConstantHash.put(entry, theIndex);
+            setConstantData(theIndex, methodType);
             itsPoolTypes.put(theIndex, CONSTANT_InvokeDynamic);
         }
         return (short)(theIndex);
