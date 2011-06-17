@@ -292,7 +292,7 @@ final class QName extends IdScriptableObject
         }
         XmlNode.Namespace ns = null;
         if (q_prefix != null) {
-            ns = XmlNode.Namespace.create(q_uri, q_prefix);
+            ns = XmlNode.Namespace.create(q_prefix, q_uri);
         } else if (q_uri != null) {
             ns = XmlNode.Namespace.create(q_uri);
         } else {

@@ -147,7 +147,7 @@
   <target name="xmlbeans-get" unless="xmlbeans-zip-present?">
     <property
       name="xmlbeans.url"
-      value="http://www.apache.org/dist/xmlbeans/binaries/xmlbeans-2.2.0.zip"
+      value="http://www.apache.org/dist/xmlbeans/binaries/xmlbeans-2.5.0.zip"
     />
 
     <mkdir dir="${xmlbeans.tmp}" />
@@ -157,8 +157,8 @@
   <target name="xmlbeans-unzip" unless="xmlbeans-present?">
     <antcall target="xmlbeans-get" />
     <unzip src="${xmlbeans.zip}" dest="${xmlbeans.tmp}" />
-    <copy tofile="${xbean.jar}" file="${xmlbeans.tmp}/xmlbeans-2.2.0/lib/xbean.jar" />
-    <copy tofile="${jsr173.jar}" file="${xmlbeans.tmp}/xmlbeans-2.2.0/lib/jsr173_1.0_api.jar" />
+    <copy tofile="${xbean.jar}" file="${xmlbeans.tmp}/xmlbeans-2.5.0/lib/xbean.jar" />
+    <copy tofile="${jsr173.jar}" file="${xmlbeans.tmp}/xmlbeans-2.5.0/lib/jsr173_1.0_api.jar" />
     <delete dir="${xmlbeans.tmp}" />
   </target>
 </project>
