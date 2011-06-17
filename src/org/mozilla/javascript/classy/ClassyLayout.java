@@ -274,6 +274,7 @@ public class ClassyLayout {
                 break;
             x = (ClassyLayout) cache;
         }
+        if (TRACE_LAYOUTS) System.out.println("Guessed Extension: "+x);
         return x;
     }
     private ClassyLayout probeCache(Object name) {
@@ -282,6 +283,7 @@ public class ClassyLayout {
         if (cache == null) {
             return null;
         }
+        if (TRACE_LAYOUTS) System.out.println("Probing cache: "+cache);
         if (cache instanceof ClassyLayout) {
             ClassyLayout extension = (ClassyLayout) cache;
             if (extension.lastMapping.name() == name) {
