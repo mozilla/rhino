@@ -315,13 +315,14 @@ public class ClassyLayout {
         }
         ArrayList<ClassyLayout> extensions;
         if (cache instanceof ClassyLayout) {
-            extensions = new ArrayList<ClassyLayout>(4);
+            extensionCache = extensions = new ArrayList<ClassyLayout>(4);
             extensions.add((ClassyLayout) cache);
         } else {
             extensions = asList(cache);
         }
         extensions.add(extension);
     }
+
     @SuppressWarnings("unchecked") private static ArrayList<ClassyLayout> asList(Object x) {
         return (ArrayList<ClassyLayout>) x;
     }
