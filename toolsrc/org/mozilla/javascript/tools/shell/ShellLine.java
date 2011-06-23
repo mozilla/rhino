@@ -79,7 +79,7 @@ public class ShellLine {
             // ConsoleReader reader = new ConsoleReader();
             Constructor<?> c = readerClass.getConstructor();
             Object reader = c.newInstance();
-        
+
             // reader.setBellEnabled(false);
             Method m = readerClass.getMethod("setBellEnabled", Boolean.TYPE);
             m.invoke(reader, Boolean.FALSE);
@@ -92,7 +92,7 @@ public class ShellLine {
                     new Class[] { completorClass },
                     new FlexibleCompletor(completorClass, scope));
             m.invoke(reader, completor);
-            
+
             // return new ConsoleReaderInputStream(reader);
             Class<?> inputStreamClass = Kit.classOrNull(classLoader,
                 "jline.ConsoleReaderInputStream");
@@ -123,7 +123,7 @@ class FlexibleCompletor implements java.lang.reflect.InvocationHandler {
         this.completeMethod = completorClass.getMethod("complete", String.class,
                 Integer.TYPE, List.class);
     }
-    
+
     @SuppressWarnings({"unchecked"})
     public Object invoke(Object proxy, Method method, Object[] args) {
         if (method.equals(this.completeMethod)) {
@@ -159,7 +159,7 @@ class FlexibleCompletor implements java.lang.reflect.InvocationHandler {
                 return buffer.length(); // no matches
             }
         }
-        Object[] ids = (obj instanceof ScriptableObject) 
+        Object[] ids = (obj instanceof ScriptableObject)
                        ? ((ScriptableObject)obj).getAllIds()
                        : obj.getIds();
         String lastPart = names[names.length-1];

@@ -295,7 +295,7 @@ class TokenStream
     }
 
     final String getSourceString() { return sourceString; }
-    
+
     final int getLineno() { return lineno; }
 
     final String getString() { return string; }
@@ -1264,7 +1264,7 @@ class TokenStream
         stringBuffer[N] = (char)c;
         stringBufferTop = N + 1;
     }
-    
+
     private boolean canUngetChar() {
         return ungetCursor == 0 || ungetBuffer[ungetCursor - 1] != '\n';
     }

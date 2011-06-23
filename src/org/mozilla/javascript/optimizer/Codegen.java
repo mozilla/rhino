@@ -65,7 +65,7 @@ public class Codegen implements Evaluator
     public void captureStackInfo(RhinoException ex) {
         throw new UnsupportedOperationException();
     }
-    
+
     public String getSourcePositionFromStack(Context cx, int[] linep) {
         throw new UnsupportedOperationException();
     }
@@ -91,7 +91,7 @@ public class Codegen implements Evaluator
         synchronized (globalLock) {
             serial = ++globalSerialClassCounter;
         }
-        
+
         String baseName = "c";
         if (tree.getSourceName().length() > 0) {
           baseName = tree.getSourceName().replaceAll("\\W", "_");
@@ -198,7 +198,7 @@ public class Codegen implements Evaluator
             throw reportClassFileFormatException(scriptOrFn, e.getMessage());
         }
     }
-    
+
     private RuntimeException reportClassFileFormatException(
         ScriptNode scriptOrFn,
         String message)
@@ -455,7 +455,7 @@ public class Codegen implements Evaluator
         }
 
         // if there are no generators defined, we don't implement a
-        // resumeGenerator(). The base class provides a default implementation. 
+        // resumeGenerator(). The base class provides a default implementation.
         if (!hasGenerators)
             return;
 
@@ -467,7 +467,7 @@ public class Codegen implements Evaluator
                         (short)(ClassFileWriter.ACC_PUBLIC
                                 | ClassFileWriter.ACC_FINAL));
 
-        // load arguments for dispatch to the corresponding *_gen method 
+        // load arguments for dispatch to the corresponding *_gen method
         cfw.addALoad(0);
         cfw.addALoad(1);
         cfw.addALoad(2);
@@ -1361,7 +1361,7 @@ class BodyCodegen
     void generateBodyCode()
     {
         isGenerator = Codegen.isGenerator(scriptOrFn);
-        
+
         // generate the body of the current function or script object
         initBodyGeneration();
 
@@ -1374,7 +1374,7 @@ class BodyCodegen
                           "Lorg/mozilla/javascript/Context;" +
                           "Lorg/mozilla/javascript/Scriptable;" +
                           "Ljava/lang/Object;" +
-                          "Ljava/lang/Object;I)Ljava/lang/Object;"; 
+                          "Ljava/lang/Object;I)Ljava/lang/Object;";
             cfw.startMethod(codegen.getBodyMethodName(scriptOrFn) + "_gen",
                     type,
                     (short)(ClassFileWriter.ACC_STATIC
@@ -1468,7 +1468,7 @@ class BodyCodegen
                 codegen.mainClassSignature);
 
         generateNestedFunctionInits();
-        
+
         // create the NativeGenerator object that we return
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(thisObjLocal);
@@ -1615,7 +1615,7 @@ class BodyCodegen
                     OptRuntime.GeneratorState.thisObj_NAME,
                     OptRuntime.GeneratorState.thisObj_TYPE);
             cfw.addAStore(thisObjLocal);
-            
+
             if (epilogueLabel == -1) {
                 epilogueLabel = cfw.acquireLabel();
             }
@@ -1624,7 +1624,7 @@ class BodyCodegen
             if (targets != null) {
                 // get resumption point
                 generateGetGeneratorResumptionPoint();
-  
+
                 // generate dispatch table
                 generatorSwitch = cfw.addTableSwitch(0,
                     targets.size() + GENERATOR_START);
@@ -1831,7 +1831,7 @@ class BodyCodegen
     private void generateEpilogue()
     {
         if (compilerEnv.isGenerateObserverCount())
-            addInstructionCount();        
+            addInstructionCount();
         if (isGenerator) {
             // generate locals initialization
             Map<Node,int[]> liveLocals = ((FunctionNode)scriptOrFn).getLiveLocals();
@@ -1903,7 +1903,7 @@ class BodyCodegen
 
             Codegen.pushUndefined(cfw);
             cfw.add(ByteCode.ARETURN);
-            
+
         } else if (fnCurrent == null) {
             cfw.addALoad(popvLocal);
             cfw.add(ByteCode.ARETURN);
@@ -1960,7 +1960,7 @@ class BodyCodegen
               case Token.SCRIPT:
               case Token.BLOCK:
               case Token.EMPTY:
-                // no-ops. 
+                // no-ops.
                 if (compilerEnv.isGenerateObserverCount()) {
                     // Need to add instruction count even for no-ops to catch
                     // cases like while (1) {}
@@ -2043,7 +2043,7 @@ class BodyCodegen
               case Token.THROW:
                 generateExpression(child, node);
                 if (compilerEnv.isGenerateObserverCount())
-                    addInstructionCount();                   
+                    addInstructionCount();
                 generateThrowJavaScriptException();
                 break;
 
@@ -2110,9 +2110,9 @@ class BodyCodegen
               case Token.ENUM_INIT_ARRAY:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
-                int enumType = type == Token.ENUM_INIT_KEYS 
+                int enumType = type == Token.ENUM_INIT_KEYS
                                    ? ScriptRuntime.ENUMERATE_KEYS :
-                               type == Token.ENUM_INIT_VALUES 
+                               type == Token.ENUM_INIT_VALUES
                                    ? ScriptRuntime.ENUMERATE_VALUES :
                                ScriptRuntime.ENUMERATE_ARRAY;
                 cfw.addPush(enumType);
@@ -2171,7 +2171,7 @@ class BodyCodegen
               case Token.IFEQ:
               case Token.IFNE:
                 if (compilerEnv.isGenerateObserverCount())
-                    addInstructionCount(); 
+                    addInstructionCount();
                 visitGoto((Jump)node, type, child);
                 break;
 
@@ -2188,7 +2188,7 @@ class BodyCodegen
                     if (isGenerator)
                         generateIntegerWrap();
                     cfw.addAStore(finallyRegister);
-                    
+
                     while (child != null) {
                         generateStatement(child);
                         child = child.getNext();
@@ -2677,7 +2677,7 @@ class BodyCodegen
               case Token.STRICT_SETNAME:
                   visitStrictSetName(node, child);
                   break;
-                  
+
               case Token.SETCONST:
                 visitSetConst(node, child);
                 break;
@@ -2883,7 +2883,7 @@ class BodyCodegen
                 generateStatement(leaveWith);
                 break;
               }
-              
+
               case Token.ARRAYCOMP: {
                 Node initStmt = child;
                 Node expr = child.getNext();
@@ -2891,7 +2891,7 @@ class BodyCodegen
                 generateExpression(expr, node);
                 break;
               }
-              
+
               default:
                 throw new RuntimeException("Unexpected node type "+type);
         }
@@ -3618,7 +3618,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 cfw.addALoad(tempLocal);
                 releaseWordLocal(tempLocal);
             }
-            
+
             cfw.add(ByteCode.AASTORE);
 
             argChild = argChild.getNext();
@@ -4000,7 +4000,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
      * Generate calls to ScriptRuntime.addInstructionCount to keep track of
      * executed instructions and call <code>observeInstructionCount()</code>
      * if a threshold is exceeded.<br>
-     * Takes the count as a parameter - used to add monitoring to loops and 
+     * Takes the count as a parameter - used to add monitoring to loops and
      * other blocks that don't have any ops - this allows
      * for monitoring/killing of while(true) loops and such.
      */
@@ -5102,6 +5102,6 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
     static class FinallyReturnPoint {
         public List<Integer> jsrPoints  = new ArrayList<Integer>();
-        public int tableLabel = 0;        
+        public int tableLabel = 0;
     }
 }

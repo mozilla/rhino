@@ -48,7 +48,7 @@ import java.io.Serializable;
  * for operations on its parent.
  */
 public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
-    
+
     private static final long serialVersionUID = 1L;
 
     static void init(Scriptable scope, boolean sealed)

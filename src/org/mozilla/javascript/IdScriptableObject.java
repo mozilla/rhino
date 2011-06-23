@@ -778,7 +778,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         value = getInstanceIdValue(id);
         attr = (info >>> 16);
         return buildDataDescriptor(scope, value, attr);
-      } 
+      }
       if (prototypeValues != null) {
         int id = prototypeValues.findId(name);
         if (id != 0) {

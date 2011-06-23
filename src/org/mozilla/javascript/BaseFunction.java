@@ -56,7 +56,7 @@ public class BaseFunction extends IdScriptableObject implements Function
     static void init(Scriptable scope, boolean sealed)
     {
         BaseFunction obj = new BaseFunction();
-        // Function.prototype attributes: see ECMA 15.3.3.1 
+        // Function.prototype attributes: see ECMA 15.3.3.1
         obj.prototypePropertyAttributes = DONTENUM | READONLY | PERMANENT;
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
@@ -74,9 +74,9 @@ public class BaseFunction extends IdScriptableObject implements Function
     public String getClassName() {
         return "Function";
     }
-    
+
     /**
-     * Gets the value returned by calling the typeof operator on this object. 
+     * Gets the value returned by calling the typeof operator on this object.
      * @see org.mozilla.javascript.ScriptableObject#getTypeOf()
      * @return "function" or "undefined" if {@link #avoidObjectDetection()} returns <code>true</code>
      */
@@ -250,7 +250,7 @@ public class BaseFunction extends IdScriptableObject implements Function
     static boolean isApply(IdFunctionObject f) {
         return f.hasTag(FUNCTION_TAG) && f.methodId() == Id_apply;
     }
-    
+
     static boolean isApplyOrCall(IdFunctionObject f) {
         if(f.hasTag(FUNCTION_TAG)) {
             switch(f.methodId()) {
@@ -550,7 +550,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         Evaluator evaluator = Context.createInterpreter();
         if (evaluator == null) {
             throw new JavaScriptException("Interpreter not present",
-                    filename, linep[0]);            
+                    filename, linep[0]);
         }
 
         // Compile with explicit interpreter instance to force interpreter
@@ -599,7 +599,7 @@ public class BaseFunction extends IdScriptableObject implements Function
 
     private Object prototypeProperty;
     // For function object instances, attributes are
-    //  {configurable:false, enumerable:false}; 
+    //  {configurable:false, enumerable:false};
     // see ECMA 15.3.5.2
     private int prototypePropertyAttributes = PERMANENT|DONTENUM;
 }

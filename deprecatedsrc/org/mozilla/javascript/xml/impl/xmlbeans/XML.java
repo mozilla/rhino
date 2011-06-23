@@ -59,7 +59,7 @@ class XML extends XMLObjectImpl
     final static class XScriptAnnotation extends XmlBookmark implements Serializable
     {
         private static final long serialVersionUID = 1L;
-        
+
         javax.xml.namespace.QName _name;
         XML _xScriptXML;
 
@@ -721,7 +721,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
             {
                 cursToCopy.toNextToken();
             }
-            
+
             cursToCopy.copyXml(copyCurs);
             if (!cursToCopy.toNextSibling())        // If element skip element.
             {

@@ -72,7 +72,7 @@ public class JsDriver {
             this.list = getTestList(list);
             this.skip = getTestList(skip);
         }
-        
+
         private String[] getTestList(String[] tests) throws IOException {
           ArrayList<String> list = new ArrayList<String>();
           for (int i=0; i < tests.length; i++) {
@@ -357,38 +357,38 @@ public class JsDriver {
             }
         }
     }
-	
+
 	private static class XmlStatus extends ShellTest.Status {
 		private Element target;
 		private Date start;
-		
+
 		XmlStatus(String path, Element root) {
 			this.target = root.getOwnerDocument().createElement("test");
 			this.target.setAttribute("path", path);
 			root.appendChild(target);
 		}
-		
+
 		@Override
 		public void running(File file) {
 			this.start = new Date();
 		}
-		
+
 		private Element createElement(Element parent, String name) {
 			Element rv = parent.getOwnerDocument().createElement(name);
 			parent.appendChild(rv);
 			return rv;
 		}
-		
+
 		private void finish() {
 			Date end = new Date();
 			long elapsed = end.getTime() - start.getTime();
 			this.target.setAttribute("elapsed", String.valueOf(elapsed));
 		}
-		
+
 		private void setTextContent(Element e, String content) {
 			e.setTextContent( newlineLineEndings(content) );
 		}
-		
+
         @Override
         public void exitCodesWere(int expected, int actual) {
 			finish();
@@ -396,27 +396,27 @@ public class JsDriver {
 			exit.setAttribute("expected", String.valueOf(expected));
 			exit.setAttribute("actual", String.valueOf(actual));
 		}
-		
+
         @Override
         public void timedOut() {
 			finish();
 			createElement(target, "timedOut");
 		}
-		
+
         @Override
         public void failed(String s) {
 			finish();
 			Element failed = createElement(target, "failed");
 			setTextContent(failed, s);
 		}
-		
+
         @Override
         public void outputWas(String message) {
 			finish();
 			Element output = createElement(target, "output");
 			setTextContent(output, message);
 		}
-		
+
         @Override
         public void threw(Throwable t) {
 			finish();
@@ -433,7 +433,7 @@ public class JsDriver {
 
         private Document html;
         private Element failureHtml;
-		
+
 		private Document xml;
 
 		private Date start;
@@ -443,7 +443,7 @@ public class JsDriver {
         Results(ShellContextFactory factory, Arguments arguments, boolean trace) {
             this.factory = factory;
             this.arguments = arguments;
-			
+
 			File output = arguments.getOutputFile();
 			if (output == null) {
 				output = new File("rhino-test-results." + new java.text.SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + ".html");
@@ -491,7 +491,7 @@ public class JsDriver {
                 throw new RuntimeException("Parser failure", e);
             }
         }
-		
+
 		void start() {
             this.html = getTemplate();
             this.failureHtml = getElementById(html.getDocumentElement(), "failureDetails.prototype");
@@ -507,7 +507,7 @@ public class JsDriver {
                 throw new RuntimeException("No");
             }
             this.failureHtml.getParentNode().removeChild(this.failureHtml);
-			
+
 			try {
 				this.xml = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
 					.getDOMImplementation().createDocument(null, "results", null)
@@ -519,7 +519,7 @@ public class JsDriver {
 			} catch (javax.xml.parsers.ParserConfigurationException e) {
 				throw new RuntimeException(e);
 			}
-			
+
 			this.start = new Date();
 		}
 
@@ -541,7 +541,7 @@ public class JsDriver {
             }
             hStatus.finish();
         }
-		
+
         private void set(Document document, String id, String value) {
             getElementById(document.getDocumentElement(), id).setTextContent(value);
         }
@@ -605,7 +605,7 @@ public class JsDriver {
         arguments.getConsole().println("Running " + all.length + " tests.");
 
         Results results = new Results(factory, arguments, arguments.trace());
-		
+
 		results.start();
         for (int i=0; i<all.length; i++) {
             results.run(all[i], new ShellTestParameters(arguments.getTimeout()));
@@ -623,7 +623,7 @@ public class JsDriver {
 
         private Option bugUrl = new Option("b", "bugurl", false, false, "http://bugzilla.mozilla.org/show_bug.cgi?id=");
         private Option optimizationLevel = new Option("o", "optimization", false, false, "-1");
-        private Option strict = new Option(null, "strict", false, true, null);        
+        private Option strict = new Option(null, "strict", false, true, null);
         private Option outputFile = new Option("f", "file", false, false, null);
         private Option help = new Option("h", "help", false, true, null);
         private Option logFailuresToConsole = new Option("k", "confail", false, true, null);
@@ -633,7 +633,7 @@ public class JsDriver {
         private Option trace = new Option("t", "trace", false, true, null);
         private Option lxrUrl = new Option("u", "lxrurl", false, false, "http://lxr.mozilla.org/mozilla/source/js/tests/");
         private Option timeout = new Option(null, "timeout", false, false, "60000");
-       
+
         public static class Console {
           public void print(String message) {
             System.out.print(message);
@@ -720,8 +720,8 @@ public class JsDriver {
         //    -b URL, --bugurl=URL
         public String getBugUrl() {
             return bugUrl.getValue();
-        }       
-        
+        }
+
         //    -c PATH, --classpath=PATH
         //    Does not apply; we will use the VM's classpath
 
@@ -732,7 +732,7 @@ public class JsDriver {
         public int getOptimizationLevel() {
             return optimizationLevel.getInt();
         }
-        
+
         //    --strict
         public boolean isStrict() {
           return strict.getSwitch();
@@ -742,7 +742,7 @@ public class JsDriver {
         public File getOutputFile() {
             return outputFile.getFile();
         }
-        
+
         //    -h, --help
         public boolean help() {
             return help.getSwitch();
@@ -799,7 +799,7 @@ public class JsDriver {
         public Console getConsole() {
             return console;
         }
-        
+
         void process(List<String> arguments) {
             while(arguments.size() > 0) {
                 String option = arguments.get(0);
@@ -824,7 +824,7 @@ public class JsDriver {
                         options.get(i).process(arguments);
                     }
                 }
-                
+
                 if (arguments.size() == lengthBefore) {
 					System.err.println("WARNING: ignoring unrecognized option " + arguments.remove(0));
                 }

@@ -49,7 +49,7 @@ import org.mozilla.javascript.Token;
  */
 public class Symbol {
 
-    // One of Token.FUNCTION, Token.LP (for parameters), Token.VAR, 
+    // One of Token.FUNCTION, Token.LP (for parameters), Token.VAR,
     // Token.LET, or Token.CONST
     private int declType;
     private int index = -1;

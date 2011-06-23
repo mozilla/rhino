@@ -12,13 +12,13 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * A base implementation for all module script providers that actually load 
+ * A base implementation for all module script providers that actually load
  * module scripts. Performs validation of identifiers, allows loading from
- * preferred locations (attempted before require.paths), from require.paths 
- * itself, and from fallback locations (attempted after require.paths). Note 
- * that while this base class strives to be as generic as possible, it does 
+ * preferred locations (attempted before require.paths), from require.paths
+ * itself, and from fallback locations (attempted after require.paths). Note
+ * that while this base class strives to be as generic as possible, it does
  * have loading from an URI built into its design, for the simple reason that
- * the require.paths is defined in terms of URIs. 
+ * the require.paths is defined in terms of URIs.
  * @author Attila Szegedi
  * @version $Id: ModuleSourceProviderBase.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
@@ -33,7 +33,7 @@ public abstract class ModuleSourceProviderBase implements
         if(!entityNeedsRevalidation(validator)) {
             return NOT_MODIFIED;
         }
-        
+
         ModuleSource moduleSource = loadFromPrivilegedLocations(
                 moduleId, validator);
         if(moduleSource != null) {
@@ -60,7 +60,7 @@ public abstract class ModuleSourceProviderBase implements
         final long llength = ScriptRuntime.toUint32(
                 ScriptableObject.getProperty(paths, "length"));
         // Yeah, I'll ignore entries beyond Integer.MAX_VALUE; so sue me.
-        int ilength = llength > Integer.MAX_VALUE ? Integer.MAX_VALUE : 
+        int ilength = llength > Integer.MAX_VALUE ? Integer.MAX_VALUE :
             (int)llength;
 
         for(int i = 0; i < ilength; ++i) {
@@ -89,21 +89,21 @@ public abstract class ModuleSourceProviderBase implements
     }
 
     /**
-     * Override to determine whether according to the validator, the cached 
-     * module script needs revalidation. A validator can carry expiry 
+     * Override to determine whether according to the validator, the cached
+     * module script needs revalidation. A validator can carry expiry
      * information. If the cached representation is not expired, it doesn'
      * t need revalidation, otherwise it does. When no cache revalidation is
-     * required, the external resource will not be contacted at all, so some 
-     * level of expiry (staleness tolerance) can greatly enhance performance. 
-     * The default implementation always returns true so it will always require 
+     * required, the external resource will not be contacted at all, so some
+     * level of expiry (staleness tolerance) can greatly enhance performance.
+     * The default implementation always returns true so it will always require
      * revalidation.
      * @param validator the validator
-     * @return returns true if the cached module needs revalidation. 
+     * @return returns true if the cached module needs revalidation.
      */
     protected boolean entityNeedsRevalidation(Object validator) {
         return true;
     }
-    
+
     /**
      * Override in a subclass to load a module script from a logical URI. The
      * URI is absolute but does not have a file name extension such as ".js".
@@ -112,10 +112,10 @@ public abstract class ModuleSourceProviderBase implements
      * @param uri the URI of the script, without file name extension.
      * @param base the base URI the uri was resolved from.
      * @param validator a validator that can be used to revalidate an existing
-     * cached source at the URI. Can be null if there is no cached source 
+     * cached source at the URI. Can be null if there is no cached source
      * available.
-     * @return the loaded module script, or null if it can't be found, or 
-     * {@link ModuleSourceProvider#NOT_MODIFIED} if it revalidated the existing 
+     * @return the loaded module script, or null if it can't be found, or
+     * {@link ModuleSourceProvider#NOT_MODIFIED} if it revalidated the existing
      * cached source against the URI.
      * @throws IOException if the module script was found, but an I/O exception
      * prevented it from being loaded.
@@ -125,8 +125,8 @@ public abstract class ModuleSourceProviderBase implements
             Object validator) throws IOException, URISyntaxException;
 
     /**
-     * Override to obtain a module source from privileged locations. This will 
-     * be called before source is attempted to be obtained from URIs specified 
+     * Override to obtain a module source from privileged locations. This will
+     * be called before source is attempted to be obtained from URIs specified
      * in require.paths.
      * @param moduleId the ID of the module
      * @param validator a validator that can be used to validate an existing
@@ -146,8 +146,8 @@ public abstract class ModuleSourceProviderBase implements
     }
 
     /**
-     * Override to obtain a module source from fallback locations. This will 
-     * be called after source is attempted to be obtained from URIs specified 
+     * Override to obtain a module source from fallback locations. This will
+     * be called after source is attempted to be obtained from URIs specified
      * in require.paths.
      * @param moduleId the ID of the module
      * @param validator a validator that can be used to validate an existing

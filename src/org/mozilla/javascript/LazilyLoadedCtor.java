@@ -50,7 +50,7 @@ import java.security.PrivilegedAction;
  */
 public final class LazilyLoadedCtor implements java.io.Serializable {
 	private static final long serialVersionUID = 1L;
-	
+
     private static final int STATE_BEFORE_INIT = 0;
     private static final int STATE_INITIALIZING = 1;
     private static final int STATE_WITH_VALUE = 2;
@@ -63,7 +63,7 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
     private Object initializedValue;
     private int state;
 
-    public LazilyLoadedCtor(ScriptableObject scope, String propertyName, 
+    public LazilyLoadedCtor(ScriptableObject scope, String propertyName,
             String className, boolean sealed)
     {
         this(scope, propertyName, className, sealed, false);
@@ -129,7 +129,7 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
             return buildValue0();
         }
     }
-    
+
     private Object buildValue0()
     {
         Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
@@ -160,7 +160,7 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
         }
         return Scriptable.NOT_FOUND;
     }
-    
+
     @SuppressWarnings({"unchecked"})
     private Class<? extends Scriptable> cast(Class<?> cl) {
         return (Class<? extends Scriptable>)cl;

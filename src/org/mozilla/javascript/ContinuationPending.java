@@ -39,7 +39,7 @@
 package org.mozilla.javascript;
 
 /**
- * Exception thrown by 
+ * Exception thrown by
  * {@link org.mozilla.javascript.Context#executeScriptWithContinuations(Script, Scriptable)}
  * and {@link org.mozilla.javascript.Context#callFunctionWithContinuations(Callable, Scriptable, Object[])}
  * when execution encounters a continuation captured by
@@ -52,7 +52,7 @@ public class ContinuationPending extends RuntimeException {
     private static final long serialVersionUID = 4956008116771118856L;
     private NativeContinuation continuationState;
     private Object applicationState;
-    
+
     /**
      * Construct a ContinuationPending exception. Internal call only;
      * users of the API should get continuations created on their behalf by
@@ -63,24 +63,24 @@ public class ContinuationPending extends RuntimeException {
     ContinuationPending(NativeContinuation continuationState) {
         this.continuationState = continuationState;
     }
-    
+
     /**
      * Get continuation object. The only
-     * use for this object is to be passed to 
+     * use for this object is to be passed to
      * {@link org.mozilla.javascript.Context#resumeContinuation(Object, Scriptable, Object)}.
      * @return continuation object
      */
     public Object getContinuation() {
         return continuationState;
     }
-    
+
     /**
      * @return internal continuation state
      */
     NativeContinuation getContinuationState() {
         return continuationState;
     }
-    
+
     /**
      * Store an arbitrary object that applications can use to associate
      * their state with the continuation.

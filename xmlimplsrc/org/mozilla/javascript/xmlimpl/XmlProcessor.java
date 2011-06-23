@@ -54,9 +54,9 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 
 class XmlProcessor implements Serializable {
-    
+
     private static final long serialVersionUID = 6903514433204808713L;
-    
+
     private boolean ignoreComments;
     private boolean ignoreProcessingInstructions;
     private boolean ignoreWhitespace;
@@ -75,7 +75,7 @@ class XmlProcessor implements Serializable {
         this.dom.setIgnoringComments(false);
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
     }
-    
+
     private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
 
         private static final long serialVersionUID = 6918417235413084055L;
@@ -174,7 +174,7 @@ class XmlProcessor implements Serializable {
     private javax.xml.parsers.DocumentBuilderFactory getDomFactory() {
         return dom;
     }
-    
+
     private synchronized DocumentBuilder getDocumentBuilderFromPool()
         throws javax.xml.parsers.ParserConfigurationException
     {
@@ -189,7 +189,7 @@ class XmlProcessor implements Serializable {
         result.setErrorHandler(errorHandler);
         return result;
     }
-        
+
     private synchronized void returnDocumentBuilderToPool(DocumentBuilder db) {
         if (documentBuilder == null) {
             try {
@@ -252,7 +252,7 @@ class XmlProcessor implements Serializable {
         try {
             String syntheticXml = "<parent xmlns=\"" + defaultNamespaceUri +
                 "\">" + xml + "</parent>";
-            builder = getDocumentBuilderFromPool(); 
+            builder = getDocumentBuilderFromPool();
             Document document = builder.parse( new org.xml.sax.InputSource(new java.io.StringReader(syntheticXml)) );
             if (ignoreProcessingInstructions) {
                 List<Node> list = new java.util.ArrayList<Node>();

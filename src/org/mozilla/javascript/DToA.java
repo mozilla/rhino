@@ -793,7 +793,7 @@ class DToA {
                             }
                             else
                                 if (d < 0.5 - eps) {
-                                    stripTrailingZeroes(buf);                                    
+                                    stripTrailingZeroes(buf);
 //                                    while(*--s == '0') ;
 //                                    s++;
                                     return k + 1;
@@ -1151,7 +1151,7 @@ class DToA {
         return k + 1;
     }
 
-    private static void 
+    private static void
     stripTrailingZeroes(StringBuffer buf)
     {
 //      while(*--s == '0') ;

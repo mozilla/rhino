@@ -17,9 +17,9 @@ import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
 public class MultiModuleScriptProvider implements ModuleScriptProvider
 {
     private final ModuleScriptProvider[] providers;
-    
+
     /**
-     * Creates a new multiplexing module script provider tht gathers the 
+     * Creates a new multiplexing module script provider tht gathers the
      * specified providers
      * @param providers the providers to multiplex.
      */
@@ -30,7 +30,7 @@ public class MultiModuleScriptProvider implements ModuleScriptProvider
         }
         this.providers = l.toArray(new ModuleScriptProvider[l.size()]);
     }
-    
+
     public ModuleScript getModuleScript(Context cx, String moduleId, URI uri,
                                         Scriptable paths) throws Exception {
         for (ModuleScriptProvider provider : providers) {

@@ -7,7 +7,7 @@ import org.mozilla.javascript.Wrapper;
 import junit.framework.TestCase;
 
 /**
- * Test for overloaded varargs/non-varargs methods. 
+ * Test for overloaded varargs/non-varargs methods.
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=467396
  * @author Hannes Wallnoefer
  */

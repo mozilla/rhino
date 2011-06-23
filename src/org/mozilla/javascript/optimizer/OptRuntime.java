@@ -291,7 +291,7 @@ public final class OptRuntime extends ScriptRuntime
         public int resumptionPoint;
         static final String resumptionPoint_NAME = "resumptionPoint";
         static final String resumptionPoint_TYPE = "I";
-        
+
         public Scriptable thisObj;
         static final String thisObj_NAME = "thisObj";
         static final String thisObj_TYPE =

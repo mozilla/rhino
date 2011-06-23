@@ -157,7 +157,7 @@ public class StandardTests extends TestSuite
 
         @Override
         public final void outputWas(String s) {
-            // Do nothing; we don't want to see the output when running JUnit 
+            // Do nothing; we don't want to see the output when running JUnit
             // tests.
         }
 

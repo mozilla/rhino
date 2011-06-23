@@ -157,7 +157,7 @@ public class VMBridge_jdk13 extends VMBridge
         }
         return proxy;
     }
-    
+
     @Override
     protected boolean isVarArgs(Member member) {
       return false;

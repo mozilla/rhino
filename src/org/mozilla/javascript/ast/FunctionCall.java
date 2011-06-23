@@ -51,7 +51,7 @@ public class FunctionCall extends AstNode {
 
     protected static final List<AstNode> NO_ARGS =
         Collections.unmodifiableList(new ArrayList<AstNode>());
-        
+
     protected AstNode target;
     protected List<AstNode> arguments;
     protected int lp = -1;

@@ -54,7 +54,7 @@ import java.util.ArrayList;
  * js> defineClass("Matrix")
  * js> var m = new Matrix(2); // A constructor call, see "Matrix(int dimension)"
  * js> m                      // Object.toString will call "Matrix.getClassName()"
- * [object Matrix]                     
+ * [object Matrix]
  * js> m[0][0] = 3;
  * 3
  * js> uneval(m[0]);          // an array was created automatically!

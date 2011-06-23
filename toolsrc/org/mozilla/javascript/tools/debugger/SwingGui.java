@@ -152,13 +152,13 @@ public class SwingGui extends JFrame implements GuiCallback {
     /**
      * Hash table of internal frame names to the internal frames themselves.
      */
-    private final Map<String,JFrame> toplevels = 
+    private final Map<String,JFrame> toplevels =
         Collections.synchronizedMap(new HashMap<String,JFrame>());
 
     /**
      * Hash table of script URLs to their internal frames.
      */
-    private final Map<String,FileWindow> fileWindows = 
+    private final Map<String,FileWindow> fileWindows =
         Collections.synchronizedMap(new HashMap<String,FileWindow>());
 
 
@@ -1389,7 +1389,7 @@ class FilePopupMenu extends JPopupMenu {
      * The popup x position.
      */
     int x;
-    
+
     /**
      * The popup y position.
      */
@@ -2043,7 +2043,7 @@ class FileHeader extends JPanel implements MouseListener {
      */
     public void mouseEntered(MouseEvent e) {
     }
-    
+
     /**
      * Called when a mouse button is pressed.
      */
@@ -2115,7 +2115,7 @@ class FileWindow extends JInternalFrame implements ActionListener {
      * The FileHeader that is the gutter for {@link #textArea}.
      */
     private FileHeader fileHeader;
-    
+
     /**
      * Scroll pane for containing {@link #textArea}.
      */
@@ -3209,13 +3209,13 @@ class Menubar extends JMenuBar implements ActionListener {
     /**
      * Items that are enabled only when interrupted.
      */
-    private List<JMenuItem> interruptOnlyItems = 
+    private List<JMenuItem> interruptOnlyItems =
         Collections.synchronizedList(new ArrayList<JMenuItem>());
 
     /**
      * Items that are enabled only when running.
      */
-    private List<JMenuItem> runOnlyItems = 
+    private List<JMenuItem> runOnlyItems =
         Collections.synchronizedList(new ArrayList<JMenuItem>());
 
     /**

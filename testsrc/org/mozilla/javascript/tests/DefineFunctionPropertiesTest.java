@@ -5,13 +5,13 @@ import junit.framework.TestCase;
 
 /**
  * Example of defining global functions.
- * 
+ *
  * @author Norris Boyd
  */
 public class DefineFunctionPropertiesTest extends TestCase {
     ScriptableObject global;
     static Object key = "DefineFunctionPropertiesTest";
-    
+
     /**
      * Demonstrates how to create global functions in JavaScript
      * from static methods defined in Java.
@@ -29,14 +29,14 @@ public class DefineFunctionPropertiesTest extends TestCase {
             Context.exit();
         }
     }
-    
+
     /**
      * Simple global function that doubles its input.
      */
     public static int f(int a) {
         return a * 2;
     }
-    
+
     /**
      * Simple test: call 'f' defined above
      */
@@ -50,10 +50,10 @@ public class DefineFunctionPropertiesTest extends TestCase {
             Context.exit();
         }
     }
-    
+
     /**
      * More complicated example: this form of call allows variable
-     * argument lists, and allows access to the 'this' object. For 
+     * argument lists, and allows access to the 'this' object. For
      * a global function, the 'this' object is the global object.
      * In this case we look up a value that we associated with the global
      * object using {@link ScriptableObject#getAssociatedValue(Object)}.
@@ -64,14 +64,14 @@ public class DefineFunctionPropertiesTest extends TestCase {
         Object arg = args.length > 0 ? args[0] : Undefined.instance;
         Object privateValue = Undefined.instance;
         if (thisObj instanceof ScriptableObject) {
-            privateValue = 
+            privateValue =
                 ((ScriptableObject) thisObj).getAssociatedValue(key);
         }
         return arg.toString() + privateValue;
     }
-    
+
     /**
-     * Associate a value with the global scope and call function 'g' 
+     * Associate a value with the global scope and call function 'g'
      * defined above.
      */
     public void testPrivateData() {

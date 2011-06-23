@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.mozilla.javascript.tests;
 
@@ -25,7 +25,7 @@ public class ClassShutterExceptionTest extends TestCase {
             return false;
         }
     }
-    
+
     public void helper(String source) {
         Context cx = Context.enter();
         Context.ClassShutterSetter setter = cx.getClassShutterSetter();
@@ -43,7 +43,7 @@ public class ClassShutterExceptionTest extends TestCase {
             Context.exit();
         }
     }
-    
+
     public void testClassShutterException() {
         try {
             helper("java.lang.System.out.println('hi');");

@@ -388,7 +388,7 @@ public class Global extends ImporterTopLevel
         in.close();
         return Context.toObject(deserialized, scope);
     }
-    
+
     public String[] getPrompts(Context cx) {
         if (ScriptableObject.hasProperty(this, "prompts")) {
             Object promptsJS = ScriptableObject.getProperty(this,
@@ -415,7 +415,7 @@ public class Global extends ImporterTopLevel
         }
         return prompts;
     }
-    
+
     /**
      * Example: doctest("js> function f() {\n  >   return 3;\n  > }\njs> f();\n3\n"); returns 2
      * (since 2 tests were executed).
@@ -430,7 +430,7 @@ public class Global extends ImporterTopLevel
         Global global = getInstance(funObj);
         return new Integer(global.runDoctest(cx, global, session, null, 0));
     }
-    
+
     public int runDoctest(Context cx, Scriptable scope, String session,
                           String sourceName, int lineNumber)
     {
@@ -500,17 +500,17 @@ public class Global extends ImporterTopLevel
     	}
     	return testCount;
     }
-    
+
     /**
      * Compare actual result of doctest to expected, modulo some
      * acceptable differences. Currently just trims the strings
      * before comparing, but should ignore differences in line numbers
      * for error messages for example.
-     * 
+     *
      * @param expected the expected string
      * @param actual the actual string
      * @return true iff actual matches expected modulo some acceptable
-     *      differences 
+     *      differences
      */
     private boolean doctestOutputMatches(String expected, String actual) {
         expected = expected.trim();
@@ -554,7 +554,7 @@ public class Global extends ImporterTopLevel
                 return true;
         }
     }
-    
+
     /**
      * The spawn function runs a given function or script in a different
      * thread.

@@ -40,7 +40,7 @@ public class RequireTest extends TestCase
 
     private Context createContext()
     {
-        final Context cx = Context.enter(); 
+        final Context cx = Context.enter();
         cx.setOptimizationLevel(-1);
         return cx;
     }
@@ -64,7 +64,7 @@ public class RequireTest extends TestCase
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
         require.install(scope);
-        cx.evaluateReader(scope, getReader("testRelativeId.js"), 
+        cx.evaluateReader(scope, getReader("testRelativeId.js"),
                 "testRelativeId.js", 1, null);
     }
 
@@ -73,7 +73,7 @@ public class RequireTest extends TestCase
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
         require.install(scope);
-        cx.evaluateReader(scope, getReader("testSetMainForAlreadyLoadedModule.js"), 
+        cx.evaluateReader(scope, getReader("testSetMainForAlreadyLoadedModule.js"),
                 "testSetMainForAlreadyLoadedModule.js", 1, null);
         try {
             require.requireMain(cx, "assert");
@@ -83,11 +83,11 @@ public class RequireTest extends TestCase
             assertEquals(e.getMessage(), "Attempt to set main module after it was loaded");
         }
     }
-    
+
     private Reader getReader(String name) {
         return new InputStreamReader(getClass().getResourceAsStream(name));
     }
-    
+
     private void testWithSandboxedRequire(String moduleId) throws Exception {
         final Context cx = createContext();
         getSandboxedRequire(cx).requireMain(cx, moduleId);
@@ -97,11 +97,11 @@ public class RequireTest extends TestCase
     throws URISyntaxException {
         return getSandboxedRequire(cx, cx.initStandardObjects(), true);
     }
-    
+
     private Require getSandboxedRequire(Context cx, Scriptable scope, boolean sandboxed)
             throws URISyntaxException
     {
-        return new Require(cx, cx.initStandardObjects(), 
+        return new Require(cx, cx.initStandardObjects(),
                 new StrongCachingModuleScriptProvider(
                         new UrlModuleSourceProvider(Collections.singleton(
                                 getDirectory()), null)), null, null, true);

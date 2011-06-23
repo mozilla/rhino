@@ -67,7 +67,7 @@ public class Bug448816Test extends TestCase {
         assertTrue(map.size() == 4);
         assertEquals(map.remove("b"), Boolean.TRUE);
         reference.remove("b");
-        assertTrue(map.size() == 3);        
+        assertTrue(map.size() == 3);
         assertEquals(reference, map);
         testCollections();
     }
