@@ -86,7 +86,7 @@ class DefaultErrorReporter implements ErrorReporter
                 error = TYPE_ERROR_NAME;
                 message = message.substring(prefix.length());
             }
-            throw ScriptRuntime.constructError(error, message, sourceURI, 
+            throw ScriptRuntime.constructError(error, message, sourceURI,
                                                line, lineText, lineOffset);
         }
         if (chainedReporter != null) {

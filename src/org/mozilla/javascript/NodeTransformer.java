@@ -139,7 +139,7 @@ public class NodeTransformer
                     let.addChildToBack(oldNode);
                 }
             }
-            
+
             switch (type) {
 
               case Token.LABEL:
@@ -233,7 +233,7 @@ public class NodeTransformer
                         returnNode = new Node(Token.RETURN_RESULT);
                         unwindBlock.addChildToBack(returnNode);
                         // transform return expression
-                        transformCompilationUnit_r(tree, store, scope, 
+                        transformCompilationUnit_r(tree, store, scope,
                                                    createScopeObjects,
                                                    inStrictMode);
                     }
@@ -353,7 +353,7 @@ public class NodeTransformer
               case Token.TYPEOF:
               case Token.IFNE: {
                   /* We want to suppress warnings for undefined property o.p
-                   * for the following constructs: typeof o.p, if (o.p), 
+                   * for the following constructs: typeof o.p, if (o.p),
                    * if (!o.p), if (o.p == undefined), if (undefined == o.p)
                    */
             	  Node child = node.getFirstChild();
@@ -432,7 +432,7 @@ public class NodeTransformer
               }
             }
 
-            transformCompilationUnit_r(tree, node, 
+            transformCompilationUnit_r(tree, node,
                 node instanceof Scope ? (Scope)node : scope,
                 createScopeObjects, inStrictMode);
         }
@@ -443,8 +443,8 @@ public class NodeTransformer
 
     protected void visitCall(Node node, ScriptNode tree) {
     }
-    
-    protected Node visitLet(boolean createWith, Node parent, Node previous, 
+
+    protected Node visitLet(boolean createWith, Node parent, Node previous,
                             Node scopeNode)
     {
         Node vars = scopeNode.getFirstChild();

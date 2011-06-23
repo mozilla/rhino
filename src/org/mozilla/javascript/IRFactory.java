@@ -613,7 +613,7 @@ public final class IRFactory extends Parser
         decompiler.addToken(Token.RP);
         decompiler.addEOL(Token.LC);
         Node ifTrue = transform(n.getThenPart());
-        Node ifFalse = null;        
+        Node ifFalse = null;
         if (n.getElsePart() != null) {
             decompiler.addToken(Token.RC);
             decompiler.addToken(Token.ELSE);
@@ -2231,7 +2231,7 @@ public final class IRFactory extends Parser
         decompiler.addToken(Token.DOT);
         decompile(node.getProperty());
     }
-    
+
     // only used for destructuring forms
     void decompileElementGet(ElementGet node) {
         decompile(node.getTarget());

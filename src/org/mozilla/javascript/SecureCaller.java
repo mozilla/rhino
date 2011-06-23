@@ -55,27 +55,27 @@ import java.util.WeakHashMap;
 public abstract class SecureCaller
 {
     private static final byte[] secureCallerImplBytecode = loadBytecode();
-    
+
     // We're storing a CodeSource -> (ClassLoader -> SecureRenderer), since we
     // need to have one renderer per class loader. We're using weak hash maps
     // and soft references all the way, since we don't want to interfere with
     // cleanup of either CodeSource or ClassLoader objects.
-    private static final Map<CodeSource,Map<ClassLoader,SoftReference<SecureCaller>>> 
+    private static final Map<CodeSource,Map<ClassLoader,SoftReference<SecureCaller>>>
     callers =
         new WeakHashMap<CodeSource,Map<ClassLoader,SoftReference<SecureCaller>>>();
-    
-    public abstract Object call(Callable callable, Context cx, 
+
+    public abstract Object call(Callable callable, Context cx,
             Scriptable scope, Scriptable thisObj, Object[] args);
-    
+
     /**
-     * Call the specified callable using a protection domain belonging to the 
-     * specified code source. 
+     * Call the specified callable using a protection domain belonging to the
+     * specified code source.
      */
-    static Object callSecurely(final CodeSource codeSource, Callable callable, 
+    static Object callSecurely(final CodeSource codeSource, Callable callable,
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
     {
         final Thread thread = Thread.currentThread();
-        // Run in doPrivileged as we might be checked for "getClassLoader" 
+        // Run in doPrivileged as we might be checked for "getClassLoader"
         // runtime permission
         final ClassLoader classLoader = (ClassLoader)AccessController.doPrivileged(
             new PrivilegedAction<Object>() {
@@ -105,7 +105,7 @@ public abstract class SecureCaller
             if (caller == null) {
                 try
                 {
-                    // Run in doPrivileged as we'll be checked for 
+                    // Run in doPrivileged as we'll be checked for
                     // "createClassLoader" runtime permission
                     caller = (SecureCaller)AccessController.doPrivileged(
                             new PrivilegedExceptionAction<Object>()
@@ -118,11 +118,11 @@ public abstract class SecureCaller
                                 effectiveClassLoader = thisClass.getClassLoader();
                             } else {
                                 effectiveClassLoader = classLoader;
-                            }  
-                            SecureClassLoaderImpl secCl = 
+                            }
+                            SecureClassLoaderImpl secCl =
                                 new SecureClassLoaderImpl(effectiveClassLoader);
                             Class<?> c = secCl.defineAndLinkClass(
-                                    SecureCaller.class.getName() + "Impl", 
+                                    SecureCaller.class.getName() + "Impl",
                                     secureCallerImplBytecode, codeSource);
                             return c.newInstance();
                         }
@@ -137,14 +137,14 @@ public abstract class SecureCaller
         }
         return caller.call(callable, cx, scope, thisObj, args);
     }
-    
+
     private static class SecureClassLoaderImpl extends SecureClassLoader
     {
         SecureClassLoaderImpl(ClassLoader parent)
         {
             super(parent);
         }
-        
+
         Class<?> defineAndLinkClass(String name, byte[] bytes, CodeSource cs)
         {
             Class<?> cl = defineClass(name, bytes, 0, bytes.length, cs);
@@ -152,7 +152,7 @@ public abstract class SecureCaller
             return cl;
         }
     }
-    
+
     private static byte[] loadBytecode()
     {
         return (byte[])AccessController.doPrivileged(new PrivilegedAction<Object>()
@@ -163,7 +163,7 @@ public abstract class SecureCaller
             }
         });
     }
-    
+
     private static byte[] loadBytecodePrivileged()
     {
         URL url = SecureCaller.class.getResource("SecureCallerImpl.clazz");

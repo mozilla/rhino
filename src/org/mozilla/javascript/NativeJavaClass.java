@@ -114,7 +114,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         if (members.has(name, true)) {
             return members.get(this, name, javaObject, true);
         }
-        
+
         Context cx = Context.getContext();
         Scriptable scope = ScriptableObject.getTopLevelScope(start);
         WrapFactory wrapFactory = cx.getWrapFactory();
@@ -123,7 +123,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             return wrapFactory.wrap(cx, scope, javaObject,
                                     ScriptRuntime.ClassClass);
         }
-        
+
         // experimental:  look for nested classes by appending $name to
         // current class' name.
         Class<?> nestedClass = findNestedClass(getClassObject(), name);
@@ -133,7 +133,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             nestedValue.setParentScope(this);
             return nestedValue;
         }
-        
+
         throw members.reportMemberNotFound(name);
     }
 
@@ -230,16 +230,16 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     {
         Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
         Class<?>[] argTypes = ctor.argTypes;
-      
+
         if (ctor.vararg) {
             // marshall the explicit parameter
             Object[] newArgs = new Object[argTypes.length];
             for (int i = 0; i < argTypes.length-1; i++) {
                 newArgs[i] = Context.jsToJava(args[i], argTypes[i]);
             }
-            
+
             Object varArgs;
-            
+
             // Handle special situation where a single variable parameter
             // is given and it is a Java or ECMA array.
             if (args.length == argTypes.length &&
@@ -248,21 +248,21 @@ public class NativeJavaClass extends NativeJavaObject implements Function
                  args[args.length-1] instanceof NativeJavaArray))
             {
                 // convert the ECMA array into a native array
-                varArgs = Context.jsToJava(args[args.length-1], 
+                varArgs = Context.jsToJava(args[args.length-1],
                                            argTypes[argTypes.length - 1]);
-            } else {            
+            } else {
                 // marshall the variable parameter
                 Class<?> componentType = argTypes[argTypes.length - 1].
                                         getComponentType();
-                varArgs = Array.newInstance(componentType, 
-                                            args.length - argTypes.length + 1);            
+                varArgs = Array.newInstance(componentType,
+                                            args.length - argTypes.length + 1);
                 for (int i=0; i < Array.getLength(varArgs); i++) {
                     Object value = Context.jsToJava(args[argTypes.length-1 + i],
                                                     componentType);
                     Array.set(varArgs, i, value);
                 }
             }
-            
+
             // add varargs
             newArgs[argTypes.length-1] = varArgs;
             // replace the original args with the new one
@@ -280,7 +280,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
                 }
             }
         }
-        
+
         Object instance = ctor.newInstance(args);
         // we need to force this to be wrapped, because construct _has_
         // to return a scriptable

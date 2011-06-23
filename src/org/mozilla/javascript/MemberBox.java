@@ -178,9 +178,9 @@ final class MemberBox implements Serializable
             do {
                 e = ((InvocationTargetException) e).getTargetException();
             } while ((e instanceof InvocationTargetException));
-            if (e instanceof ContinuationPending) 
+            if (e instanceof ContinuationPending)
                 throw (ContinuationPending) e;
-            throw Context.throwAsScriptRuntimeEx(e);            
+            throw Context.throwAsScriptRuntimeEx(e);
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }

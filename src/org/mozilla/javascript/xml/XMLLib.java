@@ -43,10 +43,10 @@ import org.mozilla.javascript.*;
 public abstract class XMLLib
 {
     private static final Object XML_LIB_KEY = new Object();
-	
+
 	/**
 		An object which specifies an XMLLib implementation to be used at runtime.
-	 
+
 		This interface should be considered experimental.  It may be better
 		(and certainly more flexible) to write an interface that returns an
 		XMLLib object rather than a class name, for example.  But that would
@@ -62,7 +62,7 @@ public abstract class XMLLib
 				}
 			};
 		}
-		
+
 		public abstract String getImplementationClassName();
 	}
 
@@ -130,7 +130,7 @@ public abstract class XMLLib
      * Construct namespace for default xml statement.
      */
     public abstract Object toDefaultXmlNamespace(Context cx, Object uriValue);
-    
+
     public void setIgnoreComments(boolean b) {
         throw new UnsupportedOperationException();
     }

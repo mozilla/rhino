@@ -929,9 +929,9 @@ public class ParserTest extends TestCase {
         }
         AstRoot root = parseAsReader(js);
     }
-    
+
     private AstRoot parse(String string) {
-        return parse(string, true);    
+        return parse(string, true);
     }
 
     private AstRoot parse(String string, boolean jsdoc) {

@@ -26,8 +26,8 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /**
  * This JUnit suite runs the Mozilla test suite (in mozilla.org CVS
- * at /mozilla/js/tests). 
- * 
+ * at /mozilla/js/tests).
+ *
  * Not all tests in the suite are run. Since the mozilla.org tests are
  * designed and maintained for the SpiderMonkey engine, tests in the
  * suite may not pass due to feature set differences and known bugs.
@@ -45,14 +45,14 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
 public class MozillaSuiteTest {
     private final File jsFile;
     private final int optimizationLevel;
-    
+
     static final int[] OPT_LEVELS = { -1, 0, 9 };
 
     public MozillaSuiteTest(File jsFile, int optimizationLevel) {
         this.jsFile = jsFile;
         this.optimizationLevel = optimizationLevel;
     }
-    
+
     public static File getTestDir() throws IOException {
         File testDir = null;
         if (System.getProperty("mozilla.js.tests") != null) {
@@ -74,11 +74,11 @@ public class MozillaSuiteTest {
         }
         return testDir;
     }
-    
+
     public static String getTestFilename(int optimizationLevel) {
         return "opt" + optimizationLevel + ".tests";
     }
-    
+
     public static File[] getTestFiles(int optimizationLevel) throws IOException {
         File testDir = getTestDir();
         String[] tests = TestUtils.loadTestsFromResource(
@@ -90,7 +90,7 @@ public class MozillaSuiteTest {
         }
         return files;
     }
-    
+
     public static String loadFile(File f) throws IOException {
         int length = (int) f.length(); // don't worry about very long files
         char[] buf = new char[length];
@@ -110,7 +110,7 @@ public class MozillaSuiteTest {
         }
         return result;
     }
-    
+
     // move "@Parameters" to this method to test a single Mozilla test
     public static Collection<Object[]> singleDoctest() throws IOException {
         final String SINGLE_TEST_FILE = "e4x/Expressions/11.1.1.js";
@@ -158,7 +158,7 @@ public class MozillaSuiteTest {
 
         @Override
         public final void outputWas(String s) {
-            // Do nothing; we don't want to see the output when running JUnit 
+            // Do nothing; we don't want to see the output when running JUnit
             // tests.
         }
 
@@ -172,7 +172,7 @@ public class MozillaSuiteTest {
             failed("Timed out.");
         }
     }
-    
+
     @Test
     public void runMozillaTest() throws Exception {
         //System.out.println("Test \"" + jsFile + "\" running under optimization level " + optimizationLevel);
@@ -182,8 +182,8 @@ public class MozillaSuiteTest {
         ShellTestParameters params = new ShellTestParameters();
         JunitStatus status = new JunitStatus();
         ShellTest.run(shellContextFactory, jsFile, params, status);
-    }    
-    
+    }
+
 
     /**
      * The main class will run all the test files that are *not* covered in
@@ -195,7 +195,7 @@ public class MozillaSuiteTest {
             for (int i=0; i < OPT_LEVELS.length; i++) {
                 int optLevel = OPT_LEVELS[i];
                 File testDir = getTestDir();
-                File[] allTests = 
+                File[] allTests =
                     TestUtils.recursiveListFiles(testDir,
                         new FileFilter() {
                             public boolean accept(File pathname)

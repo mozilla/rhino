@@ -172,7 +172,7 @@ class XMLList extends XMLObjectImpl implements Function {
                 targetProperty.getLocalName() != null &&
                 targetProperty.getLocalName().length() > 0)
             {
-                // Add an empty element with our targetProperty name and 
+                // Add an empty element with our targetProperty name and
                 // then set it.
                 XML xmlValue = newTextElementXML(null, targetProperty, null);
                 addToList(xmlValue);
@@ -204,7 +204,7 @@ class XMLList extends XMLObjectImpl implements Function {
 
             // Update the list with the new item at location 0.
             replace(0, item(0));
-            
+
             if (targetObject != null && targetProperty != null &&
                 targetProperty.getLocalName() != null)
             {

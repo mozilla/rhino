@@ -7,7 +7,7 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * Test for overloaded array concat with non-dense arg. 
+ * Test for overloaded array concat with non-dense arg.
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=477604
  * @author Marc Guillemot
  */

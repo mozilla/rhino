@@ -163,7 +163,7 @@ public class Dim {
     /**
      * Table mapping URLs to information about the script source.
      */
-    private final Map<String,SourceInfo> urlToSourceInfo = 
+    private final Map<String,SourceInfo> urlToSourceInfo =
         Collections.synchronizedMap(new HashMap<String,SourceInfo>());
 
     /**
@@ -365,9 +365,9 @@ public class Dim {
         String url = getNormalizedUrl(topScript);
         DebuggableScript[] functions = getAllFunctions(topScript);
         if (sourceProvider != null) {
-            final String providedSource = sourceProvider.getSource(topScript); 
+            final String providedSource = sourceProvider.getSource(topScript);
             if(providedSource != null) {
-                source = providedSource; 
+                source = providedSource;
             }
         }
 
@@ -1387,7 +1387,7 @@ interruptedCheck:
          * Array indicating which lines can have breakpoints set.
          */
         private boolean[] breakableLines;
-        
+
         /**
          * Array indicating whether a breakpoint is set on the line.
          */

@@ -12,11 +12,11 @@ import org.mozilla.javascript.Scriptable;
 
 public class JsTestsBase extends TestCase {
     private int optimizationLevel;
-    
+
     public void setOptimizationLevel(int level) {
         this.optimizationLevel = level;
     }
-  
+
     public void runJsTest(Context cx, Scriptable shared, String name, String source) {
         // create a lightweight top-level scope
         Scriptable scope = cx.newObject(shared);
@@ -33,7 +33,7 @@ public class JsTestsBase extends TestCase {
         assertTrue("success".equals(result));
         System.out.println("passed");
     }
-    
+
     public void runJsTests(File[] tests) throws IOException {
         ContextFactory factory = ContextFactory.getGlobal();
         Context cx = factory.enterContext();

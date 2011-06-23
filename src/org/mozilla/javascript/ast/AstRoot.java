@@ -107,11 +107,11 @@ public class AstRoot extends ScriptNode {
         comments.add(comment);
         comment.setParent(this);
     }
-    
+
     public void setInStrictMode(boolean inStrictMode) {
         this.inStrictMode = inStrictMode;
     }
-    
+
     public boolean isInStrictMode() {
         return inStrictMode;
     }

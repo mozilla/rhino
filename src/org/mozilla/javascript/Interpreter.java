@@ -1677,7 +1677,7 @@ switch (op) {
             }
         }
 
-        // Bug 447697 -- make best effort to keep __noSuchMethod__ within this  
+        // Bug 447697 -- make best effort to keep __noSuchMethod__ within this
         // interpreter loop invocation
         if (fun instanceof NoSuchMethodShim) {
             // get the shim and the actual method
@@ -1698,7 +1698,7 @@ switch (op) {
         cx.lastInterpreterFrame = frame;
         frame.savedCallOp = op;
         frame.savedStackTop = stackTop;
-        stack[stackTop] = fun.call(cx, calleeScope, funThisObj, 
+        stack[stackTop] = fun.call(cx, calleeScope, funThisObj,
                 getArgsArray(stack, sDbl, stackTop + 2, indexReg));
 
         continue Loop;
@@ -2406,7 +2406,7 @@ switch (op) {
         argsArray = new Object[2];
         argsArray[0] = noSuchMethodShim.methodName;
         argsArray[1] = cx.newArray(calleeScope, elements);
-        
+
         // exactly the same as if it's a regular InterpretedFunction
         CallFrame callParentFrame = frame;
         CallFrame calleeFrame = new CallFrame();
@@ -2414,7 +2414,7 @@ switch (op) {
             callParentFrame = frame.parentFrame;
             exitFrame(cx, frame, null);
         }
-        // init the frame with the underlying method with the 
+        // init the frame with the underlying method with the
         // adjusted args array and shim's function
         initFrame(cx, calleeScope, funThisObj, argsArray, null,
           0, 2, ifun, callParentFrame, calleeFrame);
@@ -2424,7 +2424,7 @@ switch (op) {
         }
         return calleeFrame;
     }
-    
+
     private static boolean shallowEquals(Object[] stack, double[] sDbl,
             int stackTop)
     {
@@ -2913,7 +2913,7 @@ switch (op) {
         }
         frame.savedCallOp = 0;
     }
-    
+
     public static NativeContinuation captureContinuation(Context cx) {
         if (cx.lastInterpreterFrame == null ||
             !(cx.lastInterpreterFrame instanceof CallFrame))
@@ -2953,11 +2953,11 @@ switch (op) {
             outermost = x;
             x = x.parentFrame;
         }
-        
+
         if (requireContinuationsTopFrame) {
             while (outermost.parentFrame != null)
                 outermost = outermost.parentFrame;
-    
+
             if (!outermost.isContinuationsTopFrame) {
                 throw new IllegalStateException("Cannot capture continuation " +
                         "from JavaScript code not called directly by " +
@@ -2965,7 +2965,7 @@ switch (op) {
                         "callFunctionWithContinuations");
             }
         }
-        
+
         c.initImplementation(frame);
         return c;
     }

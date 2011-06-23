@@ -47,9 +47,9 @@ import java.awt.event.MouseEvent;
 import java.util.EventObject;
 
 /**
- * This example shows how to create a simple JTreeTable component, 
- * by using a JTree as a renderer (and editor) for the cells in a 
- * particular column in the JTable.  
+ * This example shows how to create a simple JTreeTable component,
+ * by using a JTree as a renderer (and editor) for the cells in a
+ * particular column in the JTable.
  *
  * @version 1.2 10/27/98
  *
@@ -58,7 +58,7 @@ import java.util.EventObject;
  */
 public class JTreeTable extends JTable {
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = -2103973006456695515L;
     /** A subclass of JTree. */
@@ -67,27 +67,27 @@ public class JTreeTable extends JTable {
     public JTreeTable(TreeTableModel treeTableModel) {
         super();
 
-        // Create the tree. It will be used as a renderer and editor. 
+        // Create the tree. It will be used as a renderer and editor.
         tree = new TreeTableCellRenderer(treeTableModel);
 
-        // Install a tableModel representing the visible rows in the tree. 
+        // Install a tableModel representing the visible rows in the tree.
         super.setModel(new TreeTableModelAdapter(treeTableModel, tree));
 
-        // Force the JTable and JTree to share their row selection models. 
-        ListToTreeSelectionModelWrapper selectionWrapper = new 
+        // Force the JTable and JTree to share their row selection models.
+        ListToTreeSelectionModelWrapper selectionWrapper = new
                                 ListToTreeSelectionModelWrapper();
         tree.setSelectionModel(selectionWrapper);
-        setSelectionModel(selectionWrapper.getListSelectionModel()); 
+        setSelectionModel(selectionWrapper.getListSelectionModel());
 
-        // Install the tree editor renderer and editor. 
-        setDefaultRenderer(TreeTableModel.class, tree); 
+        // Install the tree editor renderer and editor.
+        setDefaultRenderer(TreeTableModel.class, tree);
         setDefaultEditor(TreeTableModel.class, new TreeTableCellEditor());
 
         // No grid.
         setShowGrid(false);
 
         // No intercell spacing
-        setIntercellSpacing(new Dimension(0, 0));       
+        setIntercellSpacing(new Dimension(0, 0));
 
         // And update the height of the trees row to match that of
         // the table.
@@ -109,31 +109,31 @@ public class JTreeTable extends JTable {
             tree.updateUI();
         }
         // Use the tree's default foreground and background colors in the
-        // table. 
+        // table.
         LookAndFeel.installColorsAndFont(this, "Tree.background",
                                          "Tree.foreground", "Tree.font");
     }
 
-    /* Workaround for BasicTableUI anomaly. Make sure the UI never tries to 
-     * paint the editor. The UI currently uses different techniques to 
-     * paint the renderers and editors and overriding setBounds() below 
-     * is not the right thing to do for an editor. Returning -1 for the 
-     * editing row in this case, ensures the editor is never painted. 
+    /* Workaround for BasicTableUI anomaly. Make sure the UI never tries to
+     * paint the editor. The UI currently uses different techniques to
+     * paint the renderers and editors and overriding setBounds() below
+     * is not the right thing to do for an editor. Returning -1 for the
+     * editing row in this case, ensures the editor is never painted.
      */
     @Override
     public int getEditingRow() {
         return (getColumnClass(editingColumn) == TreeTableModel.class) ? -1 :
-                editingRow;  
+                editingRow;
     }
 
     /**
      * Overridden to pass the new rowHeight to the tree.
      */
     @Override
-    public void setRowHeight(int rowHeight) { 
-        super.setRowHeight(rowHeight); 
+    public void setRowHeight(int rowHeight) {
+        super.setRowHeight(rowHeight);
         if (tree != null && tree.getRowHeight() != rowHeight) {
-            tree.setRowHeight(getRowHeight()); 
+            tree.setRowHeight(getRowHeight());
         }
     }
 
@@ -153,7 +153,7 @@ public class JTreeTable extends JTable {
         protected int visibleRow;
 
         public TreeTableCellRenderer(TreeModel model) {
-            super(model); 
+            super(model);
         }
 
         /**
@@ -164,10 +164,10 @@ public class JTreeTable extends JTable {
         public void updateUI() {
             super.updateUI();
             // Make the tree's cell renderer use the table's cell selection
-            // colors. 
+            // colors.
             TreeCellRenderer tcr = getCellRenderer();
             if (tcr instanceof DefaultTreeCellRenderer) {
-                DefaultTreeCellRenderer dtcr = ((DefaultTreeCellRenderer)tcr); 
+                DefaultTreeCellRenderer dtcr = ((DefaultTreeCellRenderer)tcr);
                 // For 1.1 uncomment this, 1.2 has a bug that will cause an
                 // exception to be thrown if the border selection color is
                 // null.
@@ -184,12 +184,12 @@ public class JTreeTable extends JTable {
          * the table.
          */
         @Override
-        public void setRowHeight(int rowHeight) { 
+        public void setRowHeight(int rowHeight) {
             if (rowHeight > 0) {
-                super.setRowHeight(rowHeight); 
+                super.setRowHeight(rowHeight);
                 if (JTreeTable.this != null &&
                     JTreeTable.this.getRowHeight() != rowHeight) {
-                    JTreeTable.this.setRowHeight(getRowHeight()); 
+                    JTreeTable.this.setRowHeight(getRowHeight());
                 }
             }
         }
@@ -292,7 +292,7 @@ public class JTreeTable extends JTable {
      */
     public class ListToTreeSelectionModelWrapper
         extends DefaultTreeSelectionModel
-    { 
+    {
         private static final long serialVersionUID = 8168140829623071131L;
 
         /** Set to true when we are updating the ListSelectionModel. */
@@ -310,7 +310,7 @@ public class JTreeTable extends JTable {
          * accordingly.
          */
         public ListSelectionModel getListSelectionModel() {
-            return listSelectionModel; 
+            return listSelectionModel;
         }
 
         /**

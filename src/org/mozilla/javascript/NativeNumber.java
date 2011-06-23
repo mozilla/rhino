@@ -161,7 +161,7 @@ final class NativeNumber extends IdScriptableObject
             return num_to(value, args, DToA.DTOSTR_FIXED,
                           DToA.DTOSTR_FIXED, -20, 0);
 
-          case Id_toExponential: { 
+          case Id_toExponential: {
               // Handle special values before range check
               if(Double.isNaN(value)) {
                   return "NaN";

@@ -234,8 +234,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
         ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
             return buildDataDescriptor(
-                scope, 
-                (value == null ? Undefined.instance : value), 
+                scope,
+                (value == null ? Undefined.instance : value),
                 attributes);
         }
 
@@ -373,7 +373,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         parentScopeObject = scope;
         prototypeObject = prototype;
     }
-    
+
     /**
      * Gets the value that will be returned by calling the typeof operator on this object.
      * @return default is "object" unless {@link #avoidObjectDetection()} is <code>true</code> in which
@@ -710,7 +710,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
           if (gslot == null)
             return;
         }
-        
+
         if (!force) {
           gslot.checkNotReadonly();
         }
@@ -725,14 +725,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     /**
      * Get the getter or setter for a given property. Used by __lookupGetter__
      * and __lookupSetter__.
-     * 
+     *
      * @param name Name of the object. If nonnull, index must be 0.
      * @param index Index of the object. If nonzero, name must be null.
      * @param isSetter If true, return the setter, otherwise return the getter.
      * @exception IllegalArgumentException if both name and index are nonnull
      *            and nonzero respectively.
-     * @return Null if the property does not exist. Otherwise returns either 
-     *         the getter or the setter for the property, depending on 
+     * @return Null if the property does not exist. Otherwise returns either
+     *         the getter or the setter for the property, depending on
      *         the value of isSetter (may be undefined if unset).
      */
     public Object getGetterOrSetter(String name, int index, boolean isSetter)
@@ -860,7 +860,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     {
         return getDefaultValue(this, typeHint);
     }
-    
+
     public static Object getDefaultValue(Scriptable object, Class<?> typeHint)
     {
         Context cx = null;
@@ -959,7 +959,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
         return ScriptRuntime.jsDelegatesTo(instance, this);
     }
-    
+
     /**
      * Emulate the SpiderMonkey (and Firefox) feature of allowing
      * custom objects to avoid detection by normal "object detection"
@@ -1048,7 +1048,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * considered to define the body of the constructor. Only one
      * method of this name may be defined. You may use the varargs forms
      * for constructors documented in {@link FunctionObject#FunctionObject(String, Member, Scriptable)}
-     * 
+     *
      * If no method is found that can serve as constructor, a Java
      * constructor will be selected to serve as the JavaScript
      * constructor in the following manner. If the class has only one
@@ -1231,7 +1231,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             {
                 Class<? extends Scriptable> superScriptable =
                     extendsScriptable(superClass);
-                String name = ScriptableObject.defineClass(scope, 
+                String name = ScriptableObject.defineClass(scope,
                         superScriptable, sealed, mapInheritance);
                 if (name != null) {
                     superProto = ScriptableObject.getClassPrototype(scope, name);
@@ -1258,7 +1258,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
         if (ctorMember == null) {
             ctorMember = FunctionObject.findSingleMethod(methods, ctorName);
-        }        
+        }
         if (ctorMember == null) {
             if (ctors.length == 1) {
                 ctorMember = ctors[0];
@@ -2016,8 +2016,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     /**
      * Seal this object.
      *
-     * It is an error to add properties to or delete properties from 
-     * a sealed object. It is possible to change the value of an 
+     * It is an error to add properties to or delete properties from
+     * a sealed object. It is possible to change the value of an
      * existing property. Once an object is sealed it may not be unsealed.
      *
      * @since 1.4R3
@@ -2087,7 +2087,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
-     * Gets an indexed property from an object or any object in its prototype 
+     * Gets an indexed property from an object or any object in its prototype
      * chain and coerces it to the requested Java type.
      * <p>
      * Searches the prototype chain for a property with integral index
@@ -2100,8 +2100,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param type the required Java type of the result
      * @return the value of a property with name <code>name</code> found in
      *         <code>obj</code> or any object in its prototype chain, or
-     *         null if not found. Note that it does not return 
-     *         {@link Scriptable#NOT_FOUND} as it can ordinarily not be 
+     *         null if not found. Note that it does not return
+     *         {@link Scriptable#NOT_FOUND} as it can ordinarily not be
      *         converted to most of the types.
      * @since 1.7R3
      */
@@ -2152,8 +2152,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param type the required Java type of the result
      * @return the value of a property with name <code>name</code> found in
      *         <code>obj</code> or any object in its prototype chain, or
-     *         null if not found. Note that it does not return 
-     *         {@link Scriptable#NOT_FOUND} as it can ordinarily not be 
+     *         null if not found. Note that it does not return
+     *         {@link Scriptable#NOT_FOUND} as it can ordinarily not be
      *         converted to most of the types.
      * @since 1.7R3
      */
@@ -2276,7 +2276,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * to {@link Scriptable#put(int, Scriptable, Object)} on the prototype
      * passing <code>obj</code> as the <code>start</code> argument. This allows
      * the prototype to veto the property setting in case the prototype defines
-     * the property with [[ReadOnly]] attribute. If the property is not found, 
+     * the property with [[ReadOnly]] attribute. If the property is not found,
      * it is added in <code>obj</code>.
      * @param obj a JavaScript object
      * @param index a property index
@@ -2808,7 +2808,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (s == null)
             return a;
         int c = 0;
-        Slot slot = firstAdded; 
+        Slot slot = firstAdded;
         while (slot != null && slot.wasDeleted) {
             // as long as we're traversing the order-added linked list,
             // remove deleted slots
@@ -2857,7 +2857,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             out.writeInt(0);
         } else {
             out.writeInt(slots.length);
-            Slot slot = firstAdded; 
+            Slot slot = firstAdded;
             while (slot != null && slot.wasDeleted) {
                 // as long as we're traversing the order-added linked list,
                 // remove deleted slots
@@ -2884,7 +2884,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
         int tableSize = in.readInt();
         if (tableSize != 0) {
-            // If tableSize is not a power of 2 find the closest 
+            // If tableSize is not a power of 2 find the closest
             // power of 2 >= the original size.
             if ((tableSize & (tableSize - 1)) != 0) {
                 if (tableSize > 1 << 30)

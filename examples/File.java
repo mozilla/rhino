@@ -73,7 +73,7 @@ import java.util.ArrayList;
 public class File extends ScriptableObject {
 
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 2549960399774237828L;
     /**

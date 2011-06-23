@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.mozilla.javascript.tests;
 
@@ -14,7 +14,7 @@ import org.mozilla.javascript.Scriptable;
  * @author Marc Guillemot
  */
 public class GlobalParseXTest extends TestCase {
-    
+
 	/**
 	 * Test for bug #501972
 	 * https://bugzilla.mozilla.org/show_bug.cgi?id=501972

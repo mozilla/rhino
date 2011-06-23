@@ -79,7 +79,7 @@ public class NativeArray extends IdScriptableObject implements List
         NativeArray obj = new NativeArray(0);
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
-    
+
     static int getMaximumInitialCapacity() {
         return maximumInitialCapacity;
     }
@@ -157,7 +157,7 @@ public class NativeArray extends IdScriptableObject implements List
         }
         super.setInstanceIdValue(id, value);
     }
-    
+
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
@@ -281,7 +281,7 @@ public class NativeArray extends IdScriptableObject implements List
 
               case ConstructorId_isArray:
                 return args.length > 0 && (args[0] instanceof NativeArray);
-    
+
               case Id_constructor: {
                 boolean inNewExpr = (thisObj == null);
                 if (!inNewExpr) {
@@ -290,53 +290,53 @@ public class NativeArray extends IdScriptableObject implements List
                 }
                 return jsConstructor(cx, scope, args);
               }
-    
+
               case Id_toString:
                 return toStringHelper(cx, scope, thisObj,
                     cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
-    
+
               case Id_toLocaleString:
                 return toStringHelper(cx, scope, thisObj, false, true);
-    
+
               case Id_toSource:
                 return toStringHelper(cx, scope, thisObj, true, false);
-    
+
               case Id_join:
                 return js_join(cx, thisObj, args);
-    
+
               case Id_reverse:
                 return js_reverse(cx, thisObj, args);
-    
+
               case Id_sort:
                 return js_sort(cx, scope, thisObj, args);
-    
+
               case Id_push:
                 return js_push(cx, thisObj, args);
-    
+
               case Id_pop:
                 return js_pop(cx, thisObj, args);
-    
+
               case Id_shift:
                 return js_shift(cx, thisObj, args);
-    
+
               case Id_unshift:
                 return js_unshift(cx, thisObj, args);
-    
+
               case Id_splice:
                 return js_splice(cx, scope, thisObj, args);
-    
+
               case Id_concat:
                 return js_concat(cx, scope, thisObj, args);
-    
+
               case Id_slice:
                 return js_slice(cx, thisObj, args);
-    
+
               case Id_indexOf:
                 return indexOfHelper(cx, thisObj, args, false);
-    
+
               case Id_lastIndexOf:
                 return indexOfHelper(cx, thisObj, args, true);
-    
+
               case Id_every:
               case Id_filter:
               case Id_forEach:
@@ -617,7 +617,7 @@ public class NativeArray extends IdScriptableObject implements List
     public long jsGet_length() {
         return getLength();
     }
-    
+
     /**
      * Change the value of the internal flag that determines whether all
      * storage is handed by a dense backing array rather than an associative
@@ -1531,7 +1531,7 @@ public class NativeArray extends IdScriptableObject implements List
     /**
      * Implements the methods "every", "filter", "forEach", "map", and "some".
      */
-    private Object iterativeMethod(Context cx, int id, Scriptable scope, 
+    private Object iterativeMethod(Context cx, int id, Scriptable scope,
                                    Scriptable thisObj, Object[] args)
     {
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
@@ -1900,7 +1900,7 @@ public class NativeArray extends IdScriptableObject implements List
 // #/generated#
         return id;
     }
-    
+
     private static final int
         Id_constructor          = 1,
         Id_toString             = 2,
@@ -1929,7 +1929,7 @@ public class NativeArray extends IdScriptableObject implements List
         MAX_PROTOTYPE_ID        = 23;
 
 // #/string_id_map#
-    
+
     private static final int
         ConstructorId_join                 = -Id_join,
         ConstructorId_reverse              = -Id_reverse,

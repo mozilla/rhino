@@ -84,7 +84,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         enableReplaceObject(true);
         excludeStandardObjectNames(); // XXX
     }
-    
+
     public void excludeAllIds(Object[] ids) {
         for (Object id: ids) {
             if (id instanceof String &&
@@ -94,7 +94,7 @@ public class ScriptableOutputStream extends ObjectOutputStream {
             }
         }
     }
-    
+
     /**
      * Adds a qualified name to the list of object to be excluded from
      * serialization. Names excluded from serialization are looked up
@@ -110,8 +110,8 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         if(obj != null && obj != UniqueTag.NOT_FOUND) {
             if (!(obj instanceof Scriptable)) {
                 throw new IllegalArgumentException(
-                        "Object for excluded name " + name + 
-                        " is not a Scriptable, it is " + 
+                        "Object for excluded name " + name +
+                        " is not a Scriptable, it is " +
                         obj.getClass().getName());
             }
             table.put(obj, name);
@@ -170,8 +170,8 @@ public class ScriptableOutputStream extends ObjectOutputStream {
         for (int i=0; i < names.length; i++) {
             addExcludedName(names[i]);
         }
-        
-        String[] optionalNames = { 
+
+        String[] optionalNames = {
                 "XML", "XML.prototype",
                 "XMLList", "XMLList.prototype",
         };

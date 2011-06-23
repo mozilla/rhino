@@ -76,7 +76,7 @@ public interface IdeErrorReporter extends ErrorReporter {
      * @param length the length of the region contributing to the warning
      */
     void warning(String message, String sourceName, int offset, int length);
-                 
+
     /**
      * Report an error.<p>
      *

@@ -36,7 +36,7 @@ public class GeneratedClassNameTest extends TestCase
 	          return context.compileString("var f = 1", scriptName, 1, null);
 	        }
 	      });
-	    
+
 	    // remove serial number
 	    String name = script.getClass().getSimpleName();
 	    assertEquals(expectedName, name.substring(0, name.lastIndexOf('_')));

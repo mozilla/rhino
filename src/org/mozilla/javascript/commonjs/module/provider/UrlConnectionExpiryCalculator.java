@@ -3,7 +3,7 @@ package org.mozilla.javascript.commonjs.module.provider;
 import java.net.URLConnection;
 
 /**
- * Implemented by objects that can be used as heuristic strategies for 
+ * Implemented by objects that can be used as heuristic strategies for
  * calculating the expiry of a cached resource in cases where the server of the
  * resource doesn't provide explicit expiry information.
  * @author Attila Szegedi
