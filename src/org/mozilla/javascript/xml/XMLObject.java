@@ -131,7 +131,7 @@ public abstract class XMLObject extends IdScriptableObject
     }
 
     /**
-     * Gets the value returned by calling the typeof operator on this object. 
+     * Gets the value returned by calling the typeof operator on this object.
      * @see org.mozilla.javascript.ScriptableObject#getTypeOf()
      * @return "xml" or "undefined" if {@link #avoidObjectDetection()} returns <code>true</code>
      */

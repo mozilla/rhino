@@ -162,7 +162,7 @@ public class ScriptNode extends Scope {
      * {@link AstNode#toSource} method, although it's not guaranteed to produce
      * exactly the same results as {@code Object.toSource} with respect to
      * formatting, parenthesization and other details.
-     * 
+     *
      * @return the encoded source, or {@code null} if it was not recorded.
      */
     public String getEncodedSource() {

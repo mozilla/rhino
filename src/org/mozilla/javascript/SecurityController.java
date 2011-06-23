@@ -150,9 +150,9 @@ public abstract class SecurityController
 
     public static Class<?> getStaticSecurityDomainClass() {
         SecurityController sc = Context.getContext().getSecurityController();
-        return sc == null ? null : sc.getStaticSecurityDomainClassInternal(); 
+        return sc == null ? null : sc.getStaticSecurityDomainClassInternal();
     }
-    
+
     public Class<?> getStaticSecurityDomainClassInternal()
     {
         return null;

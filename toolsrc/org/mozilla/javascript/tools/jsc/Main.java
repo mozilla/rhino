@@ -315,7 +315,7 @@ public class Main {
             return null;
         }
         try {
-            return (String)SourceReader.readFileOrUrl(absPath, true, 
+            return (String)SourceReader.readFileOrUrl(absPath, true,
                     characterEncoding);
         } catch (FileNotFoundException ex) {
             addError("msg.couldnt.open", absPath);

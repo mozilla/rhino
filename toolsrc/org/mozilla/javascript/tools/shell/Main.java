@@ -422,7 +422,7 @@ public class Main
             BufferedReader in;
             try
             {
-                in = new BufferedReader(new InputStreamReader(global.getIn(), 
+                in = new BufferedReader(new InputStreamReader(global.getIn(),
                         charEnc));
             }
             catch(UnsupportedEncodingException e)
@@ -695,7 +695,7 @@ public class Main
     private static Object readFileOrUrl(String path, boolean convertToString)
     {
         try {
-            return SourceReader.readFileOrUrl(path, convertToString, 
+            return SourceReader.readFileOrUrl(path, convertToString,
                     shellContextFactory.getCharacterEncoding());
         } catch (IOException ex) {
             Context.reportError(ToolErrorReporter.getMessage(

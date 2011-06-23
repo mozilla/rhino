@@ -64,10 +64,10 @@ public class VMBridge_jdk15 extends org.mozilla.javascript.jdk13.VMBridge_jdk13
             return ((Method) member).isVarArgs();
         else if (member instanceof Constructor)
             return ((Constructor<?>) member).isVarArgs();
-        else 
+        else
             return false;
     }
-    
+
     /**
      * If "obj" is a java.util.Iterator or a java.lang.Iterable, return a
      * wrapping as a JavaScript Iterator. Otherwise, return null.

@@ -26,7 +26,7 @@ public class TypeOfTest extends TestCase
 		{
         	typeOfValue_ = _typeOfValue;
 		}
-        
+
         @Override
         public String getTypeOf()
         {

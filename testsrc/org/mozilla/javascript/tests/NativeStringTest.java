@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.mozilla.javascript.tests;
 
@@ -13,7 +13,7 @@ import org.mozilla.javascript.Scriptable;
  * @author Marc Guillemot
  */
 public class NativeStringTest extends TestCase {
-    
+
 	/**
 	 * Test for bug #492359
 	 * https://bugzilla.mozilla.org/show_bug.cgi?id=492359

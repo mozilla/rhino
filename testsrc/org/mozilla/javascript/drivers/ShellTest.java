@@ -279,7 +279,7 @@ public class ShellTest {
     public static abstract class Parameters {
         public abstract int getTimeoutMilliseconds();
     }
-    
+
     @SuppressWarnings(value={"deprecation"})
     private static void callStop(Thread t) {
         t.stop();

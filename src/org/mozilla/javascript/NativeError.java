@@ -98,7 +98,7 @@ final class NativeError extends IdScriptableObject
     @Override
     public String toString()
     {
-        // According to spec, Error.prototype.toString() may return undefined. 
+        // According to spec, Error.prototype.toString() may return undefined.
         Object toString =  js_toString(this);
         return toString instanceof String ? (String) toString : super.toString();
     }
@@ -168,7 +168,7 @@ final class NativeError extends IdScriptableObject
     public void setStack(Object value) {
         if (stackProvider != null) {
             stackProvider = null;
-            delete("stack");            
+            delete("stack");
         }
         put("stack", this, value);
     }

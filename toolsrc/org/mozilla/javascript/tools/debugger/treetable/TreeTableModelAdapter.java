@@ -43,10 +43,10 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 
 /**
- * This is a wrapper class takes a TreeTableModel and implements 
- * the table model interface. The implementation is trivial, with 
- * all of the event dispatching support provided by the superclass: 
- * the AbstractTableModel. 
+ * This is a wrapper class takes a TreeTableModel and implements
+ * the table model interface. The implementation is trivial, with
+ * all of the event dispatching support provided by the superclass:
+ * the AbstractTableModel.
  *
  * @version 1.2 10/27/98
  *
@@ -64,12 +64,12 @@ public class TreeTableModelAdapter extends AbstractTableModel {
 
         tree.addTreeExpansionListener(new TreeExpansionListener() {
             // Don't use fireTableRowsInserted() here; the selection model
-            // would get updated twice. 
-            public void treeExpanded(TreeExpansionEvent event) {  
-              fireTableDataChanged(); 
+            // would get updated twice.
+            public void treeExpanded(TreeExpansionEvent event) {
+              fireTableDataChanged();
             }
-            public void treeCollapsed(TreeExpansionEvent event) {  
-              fireTableDataChanged(); 
+            public void treeCollapsed(TreeExpansionEvent event) {
+              fireTableDataChanged();
             }
         });
 
@@ -96,7 +96,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
         });
     }
 
-    // Wrappers, implementing TableModel interface. 
+    // Wrappers, implementing TableModel interface.
 
     public int getColumnCount() {
         return treeTableModel.getColumnCount();
@@ -118,7 +118,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
 
     protected Object nodeForRow(int row) {
         TreePath treePath = tree.getPathForRow(row);
-        return treePath.getLastPathComponent();         
+        return treePath.getLastPathComponent();
     }
 
     public Object getValueAt(int row, int column) {
@@ -127,7 +127,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int row, int column) {
-         return treeTableModel.isCellEditable(nodeForRow(row), column); 
+         return treeTableModel.isCellEditable(nodeForRow(row), column);
     }
 
     @Override

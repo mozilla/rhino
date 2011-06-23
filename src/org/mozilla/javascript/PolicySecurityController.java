@@ -52,11 +52,11 @@ import org.mozilla.classfile.ClassFileWriter;
 /**
  * A security controller relying on Java {@link Policy} in effect. When you use
  * this security controller, your securityDomain objects must be instances of
- * {@link CodeSource} representing the location from where you load your 
+ * {@link CodeSource} representing the location from where you load your
  * scripts. Any Java policy "grant" statements matching the URL and certificate
- * in code sources will apply to the scripts. If you specify any certificates 
+ * in code sources will apply to the scripts. If you specify any certificates
  * within your {@link CodeSource} objects, it is your responsibility to verify
- * (or not) that the script source files are signed in whatever 
+ * (or not) that the script source files are signed in whatever
  * implementation-specific way you're using.
  * @author Attila Szegedi
  */
@@ -71,7 +71,7 @@ public class PolicySecurityController extends SecurityController
     private static final Map<CodeSource,Map<ClassLoader,SoftReference<SecureCaller>>>
         callers =
             new WeakHashMap<CodeSource,Map<ClassLoader,SoftReference<SecureCaller>>>();
-    
+
     @Override
     public Class<?> getStaticSecurityDomainClassInternal() {
         return CodeSource.class;
@@ -81,7 +81,7 @@ public class PolicySecurityController extends SecurityController
     implements GeneratedClassLoader
     {
         private final CodeSource codeSource;
-        
+
         Loader(ClassLoader parent, CodeSource codeSource)
         {
             super(parent);
@@ -92,15 +92,15 @@ public class PolicySecurityController extends SecurityController
         {
             return defineClass(name, data, 0, data.length, codeSource);
         }
-        
+
         public void linkClass(Class<?> cl)
         {
             resolveClass(cl);
         }
     }
-    
+
     @Override
-    public GeneratedClassLoader createClassLoader(final ClassLoader parent, 
+    public GeneratedClassLoader createClassLoader(final ClassLoader parent,
             final Object securityDomain)
     {
         return (Loader)AccessController.doPrivileged(
@@ -122,11 +122,11 @@ public class PolicySecurityController extends SecurityController
     }
 
     @Override
-    public Object callWithDomain(final Object securityDomain, final Context cx, 
-            Callable callable, Scriptable scope, Scriptable thisObj, 
+    public Object callWithDomain(final Object securityDomain, final Context cx,
+            Callable callable, Scriptable scope, Scriptable thisObj,
             Object[] args)
     {
-        // Run in doPrivileged as we might be checked for "getClassLoader" 
+        // Run in doPrivileged as we might be checked for "getClassLoader"
         // runtime permission
         final ClassLoader classLoader = (ClassLoader)AccessController.doPrivileged(
             new PrivilegedAction<Object>() {
@@ -155,17 +155,17 @@ public class PolicySecurityController extends SecurityController
             {
                 try
                 {
-                    // Run in doPrivileged as we'll be checked for 
+                    // Run in doPrivileged as we'll be checked for
                     // "createClassLoader" runtime permission
                     caller = (SecureCaller)AccessController.doPrivileged(
                             new PrivilegedExceptionAction<Object>()
                     {
                         public Object run() throws Exception
                         {
-                            Loader loader = new Loader(classLoader, 
+                            Loader loader = new Loader(classLoader,
                                     codeSource);
                             Class<?> c = loader.defineClass(
-                                    SecureCaller.class.getName() + "Impl", 
+                                    SecureCaller.class.getName() + "Impl",
                                     secureCallerImplBytecode);
                             return c.newInstance();
                         }
@@ -180,32 +180,32 @@ public class PolicySecurityController extends SecurityController
         }
         return caller.call(callable, cx, scope, thisObj, args);
     }
-    
+
     public abstract static class SecureCaller
     {
-        public abstract Object call(Callable callable, Context cx, Scriptable scope, 
+        public abstract Object call(Callable callable, Context cx, Scriptable scope,
                 Scriptable thisObj, Object[] args);
     }
-    
-    
+
+
     private static byte[] loadBytecode()
     {
         String secureCallerClassName = SecureCaller.class.getName();
         ClassFileWriter cfw = new ClassFileWriter(
-                secureCallerClassName + "Impl", secureCallerClassName, 
+                secureCallerClassName + "Impl", secureCallerClassName,
                 "<generated>");
         cfw.startMethod("<init>", "()V", ClassFileWriter.ACC_PUBLIC);
         cfw.addALoad(0);
-        cfw.addInvoke(ByteCode.INVOKESPECIAL, secureCallerClassName, 
+        cfw.addInvoke(ByteCode.INVOKESPECIAL, secureCallerClassName,
                 "<init>", "()V");
         cfw.add(ByteCode.RETURN);
         cfw.stopMethod((short)1);
-        String callableCallSig = 
+        String callableCallSig =
             "Lorg/mozilla/javascript/Context;" +
             "Lorg/mozilla/javascript/Scriptable;" +
             "Lorg/mozilla/javascript/Scriptable;" +
             "[Ljava/lang/Object;)Ljava/lang/Object;";
-        
+
         cfw.startMethod("call",
                 "(Lorg/mozilla/javascript/Callable;" + callableCallSig,
                 (short)(ClassFileWriter.ACC_PUBLIC
@@ -213,8 +213,8 @@ public class PolicySecurityController extends SecurityController
         for(int i = 1; i < 6; ++i) {
             cfw.addALoad(i);
         }
-        cfw.addInvoke(ByteCode.INVOKEINTERFACE, 
-                "org/mozilla/javascript/Callable", "call", 
+        cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                "org/mozilla/javascript/Callable", "call",
                 "(" + callableCallSig);
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short)6);

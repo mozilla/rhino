@@ -55,7 +55,7 @@ public class AbstractCellEditor implements CellEditor {
 
     /*
      * Notify all listeners that have registered interest for
-     * notification on this event type.  
+     * notification on this event type.
      * @see EventListenerList
      */
     protected void fireEditingStopped() {
@@ -66,13 +66,13 @@ public class AbstractCellEditor implements CellEditor {
         for (int i = listeners.length-2; i>=0; i-=2) {
             if (listeners[i]==CellEditorListener.class) {
                 ((CellEditorListener)listeners[i+1]).editingStopped(new ChangeEvent(this));
-            }          
+            }
         }
     }
 
     /*
      * Notify all listeners that have registered interest for
-     * notification on this event type.  
+     * notification on this event type.
      * @see EventListenerList
      */
     protected void fireEditingCanceled() {
@@ -83,7 +83,7 @@ public class AbstractCellEditor implements CellEditor {
         for (int i = listeners.length-2; i>=0; i-=2) {
             if (listeners[i]==CellEditorListener.class) {
                 ((CellEditorListener)listeners[i+1]).editingCanceled(new ChangeEvent(this));
-            }          
+            }
         }
     }
 }

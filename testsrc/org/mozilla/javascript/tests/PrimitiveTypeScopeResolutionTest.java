@@ -7,8 +7,8 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * Unit tests for <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=374918">Bug 374918 - 
- * String primitive prototype wrongly resolved when used with many top scopes</a>  
+ * Unit tests for <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=374918">Bug 374918 -
+ * String primitive prototype wrongly resolved when used with many top scopes</a>
  * @author Marc Guillemot
  */
 public class PrimitiveTypeScopeResolutionTest
@@ -28,7 +28,7 @@ public class PrimitiveTypeScopeResolutionTest
             + "scope2.f()";
     	testWithTwoScopes(str1, str2);
     }
-    
+
     /**
      */
     @Test
@@ -95,14 +95,14 @@ public class PrimitiveTypeScopeResolutionTest
 		{
 			return "MySimpleScriptableObject";
 		}
-		
+
 		@Override
 		public String toString()
 		{
 			return label_;
 		}
 	}
-	
+
     public static class MyObject extends ScriptableObject {
         private static final long serialVersionUID = 1L;
 
@@ -118,7 +118,7 @@ public class PrimitiveTypeScopeResolutionTest
   }
 
   /**
-   * Test that FunctionObject use the right top scope to convert a primitive 
+   * Test that FunctionObject use the right top scope to convert a primitive
    * to an object
    */
   @Test

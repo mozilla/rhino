@@ -269,7 +269,7 @@ public class NativeObject extends IdScriptableObject implements Map
                   if (args.length < 1 ||
                       !(thisObj instanceof ScriptableObject))
                       return Undefined.instance;
-                  
+
                   ScriptableObject so = (ScriptableObject)thisObj;
                   String name = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
                   int index = (name != null ? 0
@@ -391,7 +391,7 @@ public class NativeObject extends IdScriptableObject implements Map
 
                 for (Object name: obj.getAllIds()) {
                   Object configurable = obj.getOwnPropertyDescriptor(cx, name).get("configurable");
-                  if (Boolean.TRUE.equals(configurable)) 
+                  if (Boolean.TRUE.equals(configurable))
                     return false;
                 }
 
@@ -406,7 +406,7 @@ public class NativeObject extends IdScriptableObject implements Map
 
                 for (Object name: obj.getAllIds()) {
                   ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-                  if (Boolean.TRUE.equals(desc.get("configurable"))) 
+                  if (Boolean.TRUE.equals(desc.get("configurable")))
                     return false;
                   if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
                     return false;
@@ -423,7 +423,7 @@ public class NativeObject extends IdScriptableObject implements Map
                   ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
                   if (Boolean.TRUE.equals(desc.get("configurable"))) {
                     desc.put("configurable", desc, false);
-                    obj.defineOwnProperty(cx, name, desc); 
+                    obj.defineOwnProperty(cx, name, desc);
                   }
                 }
                 obj.preventExtensions();

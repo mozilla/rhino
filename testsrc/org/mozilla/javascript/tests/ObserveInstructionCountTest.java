@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.mozilla.javascript.tests;
 
@@ -22,16 +22,16 @@ public class ObserveInstructionCountTest extends TestCase {
         }
         int quota;
     }
-    
+
     static class QuotaExceeded extends RuntimeException {
         private static final long serialVersionUID = -8018441873635071899L;
     }
-    
+
     @Override
     protected void setUp() {
         TestUtils.setGlobalContextFactory(new MyFactory());
     }
-     
+
     @Override
     protected void tearDown() {
         TestUtils.setGlobalContextFactory(null);
@@ -90,25 +90,25 @@ public class ObserveInstructionCountTest extends TestCase {
             Context.exit();
         }
     }
-    
+
     public void testWhileTrueInGlobal() {
         String source = "var i=0; while (true) i++;";
         baseCase(-1, source); // interpreted mode
         baseCase(1, source); // compiled mode
     }
-    
+
     public void testWhileTrueNoCounterInGlobal() {
         String source = "while (true);";
         baseCase(-1, source); // interpreted mode
         baseCase(1, source); // compiled mode
     }
-    
+
     public void testWhileTrueInFunction() {
         String source = "var i=0; function f() { while (true) i++; } f();";
         baseCase(-1, source); // interpreted mode
         baseCase(1, source); // compiled mode
     }
-    
+
     public void testForever() {
         String source = "for(;;);";
         baseCase(-1, source); // interpreted mode

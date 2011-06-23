@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.mozilla.javascript.tests;
 
@@ -12,7 +12,7 @@ import org.mozilla.javascript.*;
  * @author Norris Boyd
  */
 public class Bug409702Test extends TestCase {
-  
+
     public static abstract class Foo {
         public Foo() {
         }
@@ -28,10 +28,10 @@ public class Bug409702Test extends TestCase {
             }
         }
     }
-  
+
   public void testAdapter() {
       final int value = 12;
-      String source = 
+      String source =
           "var instance = " +
           "  new JavaAdapter(" + Foo.Subclass.class.getName() + "," +
           "{ b: function () { return " + value + "; } });" +
@@ -45,5 +45,5 @@ public class Bug409702Test extends TestCase {
       } finally {
           Context.exit();
       }
-  }  
+  }
 }

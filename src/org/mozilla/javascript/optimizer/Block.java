@@ -495,7 +495,7 @@ class Block
           case Token.POS:
           case Token.NEG:
               return Optimizer.NumberType;
-          
+
           case Token.ARRAYLIT:
           case Token.OBJECTLIT:
               return Optimizer.AnyType; // XXX: actually, we know it's not

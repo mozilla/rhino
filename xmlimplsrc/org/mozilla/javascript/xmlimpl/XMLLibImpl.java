@@ -72,7 +72,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
             lib.exportToScope(sealed);
         }
     }
-    
+
     public void setIgnoreComments(boolean b) {
         options.setIgnoreComments(b);
     }

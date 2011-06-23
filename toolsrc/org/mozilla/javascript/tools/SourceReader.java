@@ -17,7 +17,7 @@ import org.mozilla.javascript.commonjs.module.provider.ParsedContentType;
  */
 public class SourceReader
 {
-    public static Object readFileOrUrl(String path, boolean convertToString, 
+    public static Object readFileOrUrl(String path, boolean convertToString,
             String defaultEncoding) throws IOException
     {
         URL url = null;
@@ -62,14 +62,14 @@ public class SourceReader
             if (capacityHint <= 0) {
                 capacityHint = 4096;
             }
-    
+
             data = Kit.readStream(is, capacityHint);
         } finally {
             if(is != null) {
                 is.close();
             }
         }
-    
+
         Object result;
         if (!convertToString) {
             result = data;
