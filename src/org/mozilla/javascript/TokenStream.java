@@ -608,11 +608,13 @@ class TokenStream
                             }
                             break;
 
-                        case '\n':
-                            // Remove line terminator after escape to follow
-                            // SpiderMonkey and C/C++
-                            c = getChar();
-                            continue strLoop;
+                        case '\n': // <LF>
+                        case '\r': // <CR>
+                        case '\u2028': // <LS>
+                        case '\u2029': // <PS>
+                            // Line terminators can be included in strings when escaped
+                            // As per 7.3 of the ECMA 5 spec.
+                            break;
 
                         default:
                             if ('0' <= c && c < '8') {
@@ -1137,7 +1139,7 @@ class TokenStream
      */
     private boolean readQuotedString(int quote) throws IOException
     {
-        for (int c = getChar(); c != EOF_CHAR; c = getChar()) {
+        for (int c = getChar(); c != EOF_CHAR; c = getChar(true)) {
             addToString(c);
             if (c == quote) return true;
         }
@@ -1297,7 +1299,12 @@ class TokenStream
         return c;
     }
 
-    private int getChar() throws IOException
+    private int getChar() throws IOException 
+    {
+      return getChar(false);
+    }
+
+    private int getChar(boolean preserveLineTerminators) throws IOException
     {
         if (ungetCursor != 0) {
             cursor++;
@@ -1346,7 +1353,7 @@ class TokenStream
                 }
                 if (ScriptRuntime.isJSLineTerminator(c)) {
                     lineEndChar = c;
-                    c = '\n';
+                    c = preserveLineTerminators ? c : '\n';
                 }
             }
             return c;

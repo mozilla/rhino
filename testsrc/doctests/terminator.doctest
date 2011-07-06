@@ -1,0 +1,9 @@
+js> var lf = '\u000A', cr = '\u000D', ls = '\u2028', ps = '\u2029';
+js> eval('"\\'+lf+'"') === lf;
+true
+js> eval('"\\'+cr+'"') === lf;
+true
+js> eval('"\\'+ls+'"') === lf;
+true
+js> eval('"\\'+ps+'"') === lf;
+true
