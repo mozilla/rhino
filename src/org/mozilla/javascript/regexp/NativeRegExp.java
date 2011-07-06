@@ -74,6 +74,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
 {
     static final long serialVersionUID = 4965263491464903264L;
 
+    private static final String MATCH_EMPTY_PATTERN = "(?:)";
+
     private static final Object REGEXP_TAG = new Object();
 
     public static final int JSREG_GLOB = 0x1;       // 'g' flag: global
@@ -146,9 +148,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
     public static void init(Context cx, Scriptable scope, boolean sealed)
     {
-
         NativeRegExp proto = new NativeRegExp();
-        proto.re = (RECompiled)compileRE(cx, "", null, false);
+        proto.setCompiledRegExp(compileRE(cx, "", null, false));
         proto.activatePrototypeMap(MAX_PROTOTYPE_ID);
         proto.setParentScope(scope);
         proto.setPrototype(getObjectPrototype(scope));
@@ -170,11 +171,20 @@ public class NativeRegExp extends IdScriptableObject implements Function
         defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
     }
 
-    NativeRegExp(Scriptable scope, Object regexpCompiled)
+    NativeRegExp(Scriptable scope, RECompiled regexpCompiled)
     {
-        this.re = (RECompiled)regexpCompiled;
+        setCompiledRegExp(regexpCompiled);
         this.lastIndex = 0;
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
+    }
+
+    private void setCompiledRegExp(RECompiled re) {
+      this.re = re;
+      if (re.source.length == 0) {
+        this.escapedSource = MATCH_EMPTY_PATTERN;
+      } else {
+        this.escapedSource = new String(re.source).replaceAll("/", "\\\\/");
+      }
     }
 
     @Override
@@ -213,7 +223,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 throw ScriptRuntime.typeError0("msg.bad.regexp.compile");
             }
             NativeRegExp thatObj = (NativeRegExp) args[0];
-            this.re = thatObj.re;
+            setCompiledRegExp(thatObj.re);
             this.lastIndex = thatObj.lastIndex;
             return this;
         }
@@ -221,7 +231,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;
-        this.re = (RECompiled)compileRE(cx, s, global, false);
+        setCompiledRegExp(compileRE(cx, s, global, false));
         this.lastIndex = 0;
         return this;
     }
@@ -231,8 +241,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
         StringBuffer buf = new StringBuffer();
         buf.append('/');
-        if (re.source.length != 0) {
-            buf.append(re.source);
+        if (this.escapedSource.length() != 0) {
+            buf.append(this.escapedSource);
         } else {
             // See bugzilla 226045
             buf.append("(?:)");
@@ -285,10 +295,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
         return rval;
     }
 
-    static Object compileRE(Context cx, String str, String global, boolean flat)
+    static RECompiled compileRE(Context cx, String str, String global, boolean flat)
     {
-        RECompiled regexp = new RECompiled();
-        regexp.source = str.toCharArray();
+        RECompiled regexp = new RECompiled(str.toCharArray());
         int length = str.length();
 
         int flags = 0;
@@ -2486,7 +2495,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
           case Id_lastIndex:
             return ScriptRuntime.wrapNumber(lastIndex);
           case Id_source:
-            return new String(re.source);
+            return this.escapedSource;
           case Id_global:
             return ScriptRuntime.wrapBoolean((re.flags & JSREG_GLOB) != 0);
           case Id_ignoreCase:
@@ -2606,6 +2615,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 // #/string_id_map#
 
     private RECompiled re;
+    private String escapedSource;
     double lastIndex;          /* index after last match, for //g iterator */
 
 }       // class NativeRegExp
@@ -2614,7 +2624,11 @@ class RECompiled implements Serializable
 {
     static final long serialVersionUID = -6144956577595844213L;
 
-    char []source;          /* locked source string, sans // */
+    public RECompiled(char[] source) {
+      this.source = source;
+    }
+
+    final char []source;          /* locked source string, sans // */
     int parenCount;         /* number of parenthesized submatches */
     int flags;              /* flags  */
     byte[] program;         /* regular expression bytecode */
