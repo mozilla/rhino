@@ -1608,11 +1608,12 @@ public class NativeArray extends IdScriptableObject implements List
         Function f = (Function) callbackArg;
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
         long length = getLengthProperty(cx, thisObj);
-        // offset hack to serve both reduce and reduceRight with the same loop
-        long offset = id == Id_reduceRight ? length - 1 : 0;
+        // hack to serve both reduce and reduceRight with the same loop
+        boolean movingLeft = id == Id_reduce;
         Object value = args.length > 1 ? args[1] : Scriptable.NOT_FOUND;
         for (long i = 0; i < length; i++) {
-            Object elem = getRawElem(thisObj, Math.abs(i - offset));
+            long index = movingLeft ? i : (length - 1 - i);
+            Object elem = getRawElem(thisObj, index);
             if (elem == Scriptable.NOT_FOUND) {
                 continue;
             }
@@ -1620,11 +1621,7 @@ public class NativeArray extends IdScriptableObject implements List
                 // no initial value passed, use first element found as inital value
                 value = elem;
             } else {
-                Object[] innerArgs = new Object[4];
-                innerArgs[0] = value;
-                innerArgs[1] = elem;
-                innerArgs[2] = Long.valueOf(i);
-                innerArgs[3] = thisObj;
+                Object[] innerArgs = { value, elem, index, thisObj };
                 value = f.call(cx, parent, parent, innerArgs);
             }
         }
