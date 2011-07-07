@@ -117,6 +117,11 @@ final class QName extends IdScriptableObject
         return equals((QName)obj);
     }
 
+    public int hashCode()
+    {
+        return localName.hashCode() ^ (uri == null ? 0 : uri.hashCode());
+    }
+
     protected Object equivalentValues(Object value)
     {
         if(!(value instanceof QName)) return Scriptable.NOT_FOUND;
