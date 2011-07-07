@@ -4199,8 +4199,8 @@ public class ClassFileWriter {
                 if (c < 0) throw new IOException();
                 read += c;
             }
-            minor = (header[4] << 8) | header[5];
-            major = (header[6] << 8) | header[7];
+            minor = (header[4] << 8) | (header[5] & 0xff);
+            major = (header[6] << 8) | (header[7] & 0xff);
         } catch (Exception e) {
             // Unable to get class file, use default bytecode version
         } finally {
