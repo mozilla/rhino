@@ -2609,7 +2609,6 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 // #/string_id_map#
 
     private RECompiled re;
-    private String escapedSource;
     double lastIndex;          /* index after last match, for //g iterator */
 
 }       // class NativeRegExp
