@@ -149,7 +149,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     public static void init(Context cx, Scriptable scope, boolean sealed)
     {
         NativeRegExp proto = new NativeRegExp();
-        proto.setCompiledRegExp(compileRE(cx, "", null, false));
+        proto.re = compileRE(cx, "", null, false);
         proto.activatePrototypeMap(MAX_PROTOTYPE_ID);
         proto.setParentScope(scope);
         proto.setPrototype(getObjectPrototype(scope));
@@ -173,17 +173,16 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
     NativeRegExp(Scriptable scope, RECompiled regexpCompiled)
     {
-        setCompiledRegExp(regexpCompiled);
+        this.re = regexpCompiled;
         this.lastIndex = 0;
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
     }
 
-    private void setCompiledRegExp(RECompiled re) {
-      this.re = re;
-      if (re.source.length == 0) {
-        this.escapedSource = MATCH_EMPTY_PATTERN;
+    private String getEscapedSource() {
+      if (this.re.source.length == 0) {
+        return MATCH_EMPTY_PATTERN;
       } else {
-        this.escapedSource = new String(re.source).replaceAll("/", "\\\\/");
+        return new String(re.source).replaceAll("/", "\\\\/");
       }
     }
 
@@ -223,7 +222,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 throw ScriptRuntime.typeError0("msg.bad.regexp.compile");
             }
             NativeRegExp thatObj = (NativeRegExp) args[0];
-            setCompiledRegExp(thatObj.re);
+            this.re = thatObj.re;
             this.lastIndex = thatObj.lastIndex;
             return this;
         }
@@ -231,7 +230,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;
-        setCompiledRegExp(compileRE(cx, s, global, false));
+        this.re = compileRE(cx, s, global, false);
         this.lastIndex = 0;
         return this;
     }
@@ -241,12 +240,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
         StringBuffer buf = new StringBuffer();
         buf.append('/');
-        if (this.escapedSource.length() != 0) {
-            buf.append(this.escapedSource);
-        } else {
-            // See bugzilla 226045
-            buf.append("(?:)");
-        }
+        buf.append(this.getEscapedSource());
         buf.append('/');
         if ((re.flags & JSREG_GLOB) != 0)
             buf.append('g');
@@ -2495,7 +2489,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
           case Id_lastIndex:
             return ScriptRuntime.wrapNumber(lastIndex);
           case Id_source:
-            return this.escapedSource;
+            return this.getEscapedSource();
           case Id_global:
             return ScriptRuntime.wrapBoolean((re.flags & JSREG_GLOB) != 0);
           case Id_ignoreCase:

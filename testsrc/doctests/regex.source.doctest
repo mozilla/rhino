@@ -7,6 +7,8 @@ js> var sourceIsValid = function(re) {
   >   return "The value of the source property was "+literal+" which is not a valid regexp literal value";
   > }
 
+js> sourceIsValid(RegExp(''))
+true
 js> sourceIsValid(RegExp('a'))
 true
 js> sourceIsValid(RegExp('\\\\'))
