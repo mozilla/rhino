@@ -129,6 +129,7 @@ public abstract class ClassyScriptable implements Scriptable, HasLayout {
 
     protected ClassyLayout layout;
     private Slot[] slots;
+    private Scriptable parentScope;
 
     protected Slot extendLayoutWith(Object name) {
         ClassyLayout newLayout = layout.safeExtendWith(name);
@@ -261,12 +262,11 @@ public abstract class ClassyScriptable implements Scriptable, HasLayout {
     }
 
     public Scriptable getParentScope() {
-        // We don't use this, since classy scriptables are not functions.
-        return (Scriptable) rawGetImpl(SpecialName.PARENT_SCOPE, this);
+        return parentScope;
     }
 
     public void setParentScope(Scriptable parentScope) {
-        rawPutImpl(SpecialName.PARENT_SCOPE, this, parentScope);
+        this.parentScope = parentScope;
     }
 
     // Other randomn ECMA operators.
