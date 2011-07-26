@@ -211,7 +211,7 @@ public class ScriptRuntime {
         (new ClassCache()).associate(scope);
 
         BaseFunction.init(scope, sealed);
-        NativeObject.init(scope, sealed);
+        NativeClassyObject.init(scope, sealed);
 
         Scriptable objectProto = ScriptableObject.getObjectPrototype(scope);
 

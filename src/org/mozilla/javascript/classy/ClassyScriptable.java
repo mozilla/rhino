@@ -45,6 +45,10 @@ import java.util.*;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
+import org.mozilla.javascript.classy.ClassyLayout.Mapping;
+
 import static org.mozilla.javascript.classy.ClassyLayout.*;
 
 /**
@@ -58,8 +62,7 @@ import static org.mozilla.javascript.classy.ClassyLayout.*;
  * @author John Rose
  */
 
-public abstract class ClassyScriptable extends ScriptableObject
-        implements Scriptable, HasLayout {
+public abstract class ClassyScriptable implements Scriptable, HasLayout {
     public static final boolean ENABLED;  // to turn this on, run rhino with -J-Dorg.mozilla.javascript.classy=true
     static {
         boolean ENABLED_ = false;
@@ -330,6 +333,44 @@ public abstract class ClassyScriptable extends ScriptableObject
 
     static ClassyLayout makeRootLayout() {
         return new ClassyLayout(null);
+    }
+
+    protected Object getValueAtOffset(int offset, Scriptable start) {
+    	Slot slot = slots[offset];
+    	return slot.getValue(start);
+    }
+
+    protected void putValueAtOffset(int offset, Scriptable start, Object value) {
+    	Slot slot = slots[offset];
+    	slot.setValue(value, this, start);
+    }
+
+    // Partial implementation of java.util.Map. See NativeObject for
+    // a subclass that implements java.util.Map.
+
+    public int size() {
+        return layout.length();
+    }
+
+    public boolean isEmpty() {
+        return layout.length() == 0;
+    }
+
+
+    public Object get(Object key) {
+        Object value = null;
+        if (key instanceof String) {
+            value = get((String) key, this);
+        } else if (key instanceof Number) {
+            value = get(((Number) key).intValue(), this);
+        }
+        if (value == Scriptable.NOT_FOUND || value == Undefined.instance) {
+            return null;
+        } else if (value instanceof Wrapper) {
+            return ((Wrapper) value).unwrap();
+        } else {
+            return value;
+        }
     }
 
 }
