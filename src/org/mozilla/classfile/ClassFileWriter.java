@@ -1289,7 +1289,7 @@ public class ClassFileWriter {
         markLabel(theLabel);
     }
 
-    private int getLabelPC(int label)
+    public int getLabelPC(int label)
     {
         if (!(label < 0))
             throw new IllegalArgumentException("Bad label, no biscuit");
@@ -1680,21 +1680,45 @@ public class ClassFileWriter {
          * However, it turns out that if the code being modified falls into an
          * exception handler, it causes problems. Therefore, if it does, then
          * we steal the locals from the exception block.
+         *
+         * If the block itself is an exception handler, we remove it from the
+         * exception table to simplify block dependencies.
          */
         private void killSuperBlock(SuperBlock sb) {
             int[] locals = new int[0];
             int[] stack = new int[] { TypeInfo.OBJECT("java/lang/Throwable",
                                                       itsConstantPool) };
+
+            // If the super block is handled by any exception handler, use its
+            // locals as the killed block's locals. Ignore uninitialized
+            // handlers, because they will also be killed and removed from the
+            // exception table.
             for (int i = 0; i < itsExceptionTableTop; i++) {
                 ExceptionTableEntry ete = itsExceptionTable[i];
                 int eteStart = getLabelPC(ete.itsStartLabel);
                 int eteEnd = getLabelPC(ete.itsEndLabel);
-                if ((sb.getStart() >= eteStart && sb.getStart() < eteEnd) ||
-                    (eteStart >= sb.getStart() && eteStart < sb.getEnd())) {
-                    int handlerPC = getLabelPC(ete.itsHandlerLabel);
-                    SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
+                int handlerPC = getLabelPC(ete.itsHandlerLabel);
+                SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
+                if ((sb.getStart() > eteStart && sb.getStart() < eteEnd) ||
+                    (eteStart > sb.getStart() && eteStart < sb.getEnd()) &&
+                    handlerSB.isInitialized()) {
                     locals = handlerSB.getLocals();
                     break;
+                }
+            }
+
+            // Remove any exception table entry whose handler is the killed
+            // block. This removes block dependencies to make stack maps for
+            // dead blocks easier to create.
+            for (int i = 0; i < itsExceptionTableTop; i++) {
+                ExceptionTableEntry ete = itsExceptionTable[i];
+                int eteStart = getLabelPC(ete.itsStartLabel);
+                if (eteStart == sb.getStart()) {
+                    for (int j = i + 1; j < itsExceptionTableTop; j++) {
+                        itsExceptionTable[j - 1] = itsExceptionTable[j];
+                    }
+                    itsExceptionTableTop--;
+                    i--;
                 }
             }
 
