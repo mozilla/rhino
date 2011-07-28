@@ -758,6 +758,16 @@ public class NativeArray extends IdScriptableObject implements List
         }
     }
 
+    // Similar as setElem(), but triggers deleteElem() if value is NOT_FOUND
+    private static void setRawElem(Context cx, Scriptable target, long index,
+                                   Object value) {
+        if (value == NOT_FOUND) {
+            deleteElem(target, index);
+        } else {
+            setElem(cx, target, index, value);
+        }
+    }
+
     private static String toStringHelper(Context cx, Scriptable scope,
                                          Scriptable thisObj,
                                          boolean toSource, boolean toLocale)
@@ -937,10 +947,10 @@ public class NativeArray extends IdScriptableObject implements List
         long half = len / 2;
         for(long i=0; i < half; i++) {
             long j = len - i - 1;
-            Object temp1 = getElem(cx, thisObj, i);
-            Object temp2 = getElem(cx, thisObj, j);
-            setElem(cx, thisObj, i, temp2);
-            setElem(cx, thisObj, j, temp1);
+            Object temp1 = getRawElem(thisObj, i);
+            Object temp2 = getRawElem(thisObj, j);
+            setRawElem(cx, thisObj, i, temp2);
+            setRawElem(cx, thisObj, j, temp1);
         }
         return thisObj;
     }
@@ -1104,7 +1114,7 @@ public class NativeArray extends IdScriptableObject implements List
                 Object result = na.dense[0];
                 System.arraycopy(na.dense, 1, na.dense, 0, (int)na.length);
                 na.dense[(int)na.length] = NOT_FOUND;
-                return result;
+                return result == NOT_FOUND ? Undefined.instance : result;
             }
         }
         Object result;
@@ -1122,8 +1132,8 @@ public class NativeArray extends IdScriptableObject implements List
              */
             if (length > 0) {
                 for (i = 1; i <= length; i++) {
-                    Object temp = getElem(cx, thisObj, i);
-                    setElem(cx, thisObj, i - 1, temp);
+                    Object temp = getRawElem(thisObj, i);
+                    setRawElem(cx, thisObj, i - 1, temp);
                 }
             }
             // We don't need to delete the last property, because
@@ -1159,8 +1169,8 @@ public class NativeArray extends IdScriptableObject implements List
             /*  Slide up the array to make room for args at the bottom */
             if (length > 0) {
                 for (long last = length - 1; last >= 0; last--) {
-                    Object temp = getElem(cx, thisObj, last);
-                    setElem(cx, thisObj, last + argc, temp);
+                    Object temp = getRawElem(thisObj, last);
+                    setRawElem(cx, thisObj, last + argc, temp);
                 }
             }
 
@@ -1242,9 +1252,13 @@ public class NativeArray extends IdScriptableObject implements List
                 } else {
                     Scriptable resultArray = cx.newArray(scope, 0);
                     for (long last = begin; last != end; last++) {
-                        Object temp = getElem(cx, thisObj, last);
-                        setElem(cx, resultArray, last - begin, temp);
+                        Object temp = getRawElem(thisObj, last);
+                        if (temp != NOT_FOUND) {
+                            setElem(cx, resultArray, last - begin, temp);
+                        }
                     }
+                    // Need to set length for sparse result array
+                    setLengthProperty(cx, resultArray, end - begin);
                     result = resultArray;
             	}
             }
@@ -1277,13 +1291,13 @@ public class NativeArray extends IdScriptableObject implements List
 
         if (delta > 0) {
             for (long last = length - 1; last >= end; last--) {
-                Object temp = getElem(cx, thisObj, last);
-                setElem(cx, thisObj, last + delta, temp);
+                Object temp = getRawElem(thisObj, last);
+                setRawElem(cx, thisObj, last + delta, temp);
             }
         } else if (delta < 0) {
             for (long last = end; last < length; last++) {
-                Object temp = getElem(cx, thisObj, last);
-                setElem(cx, thisObj, last + delta, temp);
+                Object temp = getRawElem(thisObj, last);
+                setRawElem(cx, thisObj, last + delta, temp);
             }
         }
 
@@ -1358,8 +1372,10 @@ public class NativeArray extends IdScriptableObject implements List
 
             // Copy from the target object into the result
             for (slot = 0; slot < length; slot++) {
-                Object temp = getElem(cx, thisObj, slot);
-                setElem(cx, result, slot, temp);
+                Object temp = getRawElem(thisObj, slot);
+                if (temp != NOT_FOUND) {
+                    setElem(cx, result, slot, temp);
+                }
             }
         } else {
             setElem(cx, result, slot++, thisObj);
@@ -1375,13 +1391,16 @@ public class NativeArray extends IdScriptableObject implements List
                 Scriptable arg = (Scriptable)args[i];
                 length = getLengthProperty(cx, arg);
                 for (long j = 0; j < length; j++, slot++) {
-                    Object temp = getElem(cx, arg, j);
-                    setElem(cx, result, slot, temp);
+                    Object temp = getRawElem(arg, j);
+                    if (temp != NOT_FOUND) {
+                        setElem(cx, result, slot, temp);
+                    }
                 }
             } else {
                 setElem(cx, result, slot++, args[i]);
             }
         }
+        setLengthProperty(cx, result, slot);
         return result;
     }
 
@@ -1406,9 +1425,12 @@ public class NativeArray extends IdScriptableObject implements List
         }
 
         for (long slot = begin; slot < end; slot++) {
-            Object temp = getElem(cx, thisObj, slot);
-            setElem(cx, result, slot - begin, temp);
+            Object temp = getRawElem(thisObj, slot);
+            if (temp != NOT_FOUND) {
+                setElem(cx, result, slot - begin, temp);
+            }
         }
+        setLengthProperty(cx, result, Math.max(0, end - begin));
 
         return result;
     }
