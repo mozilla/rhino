@@ -130,6 +130,7 @@ public abstract class ClassyScriptable implements Scriptable, HasLayout {
     protected ClassyLayout layout;
     private Slot[] slots;
     private Scriptable parentScope;
+    private Scriptable prototype;
 
     protected Slot extendLayoutWith(Object name) {
         ClassyLayout newLayout = layout.safeExtendWith(name);
@@ -254,11 +255,11 @@ public abstract class ClassyScriptable implements Scriptable, HasLayout {
     }
 
     public Scriptable getPrototype() {
-        return (Scriptable) layout.prototype();
+        return prototype;
     }
 
     public void setPrototype(Scriptable prototype) {
-        layout = layout.changePrototype(prototype);
+        this.prototype = prototype;
     }
 
     public Scriptable getParentScope() {
