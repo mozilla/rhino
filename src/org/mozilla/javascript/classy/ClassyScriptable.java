@@ -336,12 +336,12 @@ public abstract class ClassyScriptable implements Scriptable, HasLayout {
         return new ClassyLayout(null);
     }
 
-    protected Object getValueAtOffset(int offset, Scriptable start) {
+    public Object getValueAtOffset(int offset, Scriptable start) {
     	Slot slot = slots[offset];
     	return slot.getValue(start);
     }
 
-    protected void putValueAtOffset(int offset, Scriptable start, Object value) {
+    public void putValueAtOffset(int offset, Scriptable start, Object value) {
     	Slot slot = slots[offset];
     	slot.setValue(value, this, start);
     }
