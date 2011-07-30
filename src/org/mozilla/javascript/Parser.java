@@ -240,7 +240,7 @@ public class Parser
             ? ScriptRuntime.getMessage0(messageId)
             : ScriptRuntime.getMessage1(messageId, messageArg);
     }
-    
+
     void reportError(String messageId) {
         reportError(messageId, null);
     }
@@ -541,7 +541,7 @@ public class Parser
 
         int baseLineno = ts.lineno;  // line number where source starts
         int end = pos;  // in case source is empty
-        
+
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
         // TODO: eval code should get strict mode from invoking code
@@ -628,11 +628,11 @@ public class Parser
         ++nestingOfFunction;
         int pos = ts.tokenBeg;
         Block pn = new Block(pos);  // starts at LC position
-        
+
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
         // Don't set 'inUseStrictDirective' to false: inherit strict mode.
-        
+
         pn.setLineno(ts.lineno);
         try {
             bodyLoop: for (;;) {
@@ -676,7 +676,7 @@ public class Parser
         pn.setLength(end - pos);
         return pn;
     }
-    
+
     private String getDirective(AstNode n) {
         if (n instanceof ExpressionStatement) {
             AstNode e = ((ExpressionStatement) n).getExpression();
@@ -781,7 +781,7 @@ public class Parser
             if (inUseStrictDirective) {
                 String id = name.getIdentifier();
                 if ("eval".equals(id)|| "arguments".equals(id)) {
-                    reportError("msg.bad.id.strict", id);                
+                    reportError("msg.bad.id.strict", id);
                 }
             }
             if (!matchToken(Token.LP)) {
@@ -1896,7 +1896,7 @@ public class Parser
                     String id = ts.getString();
                     if ("eval".equals(id) || "arguments".equals(ts.getString()))
                     {
-                        reportError("msg.bad.id.strict", id);                    
+                        reportError("msg.bad.id.strict", id);
                     }
                 }
                 defineSymbol(declType, ts.getString(), inForInit);
@@ -2438,7 +2438,7 @@ public class Parser
         } finally {
             inForInit = wasInForInit;
         }
-        
+
         mustMatchToken(Token.RP, "msg.no.paren.arg");
         return result;
     }
@@ -2834,7 +2834,7 @@ public class Parser
                                        s,
                                        ts.getNumber());
           }
-          
+
           case Token.STRING:
               return createStringLiteral();
 
@@ -3156,7 +3156,7 @@ public class Parser
                   reportError("msg.bad.prop");
                   break;
             }
-            
+
             if (this.inUseStrictDirective) {
                 if (propertyNames.contains(propertyName)) {
                     addError("msg.dup.obj.lit.prop.strict", propertyName);
@@ -3167,7 +3167,7 @@ public class Parser
             // Eat any dangling jsdoc in the property.
             getAndResetJsDoc();
             jsdoc = null;
-            
+
             if (matchToken(Token.COMMA)) {
                 afterComma = ts.tokenEnd;
             } else {
@@ -3766,7 +3766,7 @@ public class Parser
     }
 
     // throw a failed-assertion with some helpful debugging info
-    private RuntimeException codeBug() 
+    private RuntimeException codeBug()
         throws RuntimeException
     {
         throw Kit.codeBug("ts.cursor=" + ts.cursor

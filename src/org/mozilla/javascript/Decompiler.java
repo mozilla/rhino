@@ -753,11 +753,11 @@ public class Decompiler
             case Token.CONST:
                 result.append("const ");
                 break;
-                
+
             case Token.YIELD:
                 result.append("yield ");
                 break;
-            
+
             case Token.NOT:
                 result.append('!');
                 break;

@@ -1,18 +1,18 @@
 package org.mozilla.javascript;
 
 /**
- * A <code>java.lang.SecurityManager</code> subclass that provides access to 
- * the current top-most script class on the execution stack. This can be used 
- * to get the class loader or protection domain of the script that triggered 
- * the current action. It is required for JavaAdapters to have the same 
- * <code>ProtectionDomain</code> as the script code that created them. 
+ * A <code>java.lang.SecurityManager</code> subclass that provides access to
+ * the current top-most script class on the execution stack. This can be used
+ * to get the class loader or protection domain of the script that triggered
+ * the current action. It is required for JavaAdapters to have the same
+ * <code>ProtectionDomain</code> as the script code that created them.
  * Embeddings that implement their own SecurityManager can use this as base class.
  */
 public class RhinoSecurityManager extends SecurityManager {
 
     /**
      * Get the class of the top-most stack element representing a script.
-     * @return The class of the top-most script in the current stack, 
+     * @return The class of the top-most script in the current stack,
      *         or null if no script is currently running
      */
     protected Class getCurrentScriptClass() {

@@ -51,7 +51,7 @@ public class ShellContextFactory extends ContextFactory
     private boolean allowReservedKeywords = true;
     private ErrorReporter errorReporter;
     private String characterEncoding;
-    
+
     @Override
     protected boolean hasFeature(Context cx, int featureIndex)
     {
@@ -121,12 +121,12 @@ public class ShellContextFactory extends ContextFactory
     {
         this.generatingDebug = generatingDebug;
     }
-    
+
     public String getCharacterEncoding()
     {
         return characterEncoding;
     }
-    
+
     public void setCharacterEncoding(String characterEncoding)
     {
         this.characterEncoding = characterEncoding;

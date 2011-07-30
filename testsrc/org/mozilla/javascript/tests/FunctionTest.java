@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.mozilla.javascript.tests;
 
@@ -14,12 +14,12 @@ import org.mozilla.javascript.Scriptable;
  * @author Marc Guillemot
  */
 public class FunctionTest extends TestCase {
-    
+
 	/**
 	 * Test for bug #600479
 	 * https://bugzilla.mozilla.org/show_bug.cgi?id=600479
 	 * Syntax of function built from Function's constructor string parameter was not correct
-	 * when this string contained "//".  
+	 * when this string contained "//".
 	 */
     public void testFunctionWithSlashSlash() {
         assertEvaluates(true, "new Function('return true//;').call()");

@@ -53,12 +53,12 @@ public class WriteReadOnlyPropertyTest {
 
 				final ScriptableObject top = cx.initStandardObjects();
 				ScriptableObject.putProperty(top, "foo", foo);
-				
+
 				cx.evaluateString(top, script, "script", 0, null);
 				return null;
 			}
 		};
-		
+
 		final ContextFactory contextFactory = new ContextFactory() {
 			@Override
 			protected boolean hasFeature(final Context cx, final int featureIndex) {
@@ -87,7 +87,7 @@ public class WriteReadOnlyPropertyTest {
 		{
 			return "Foo";
 		}
-		
+
 		public String getMyProp()
 		{
 			return prop_;

@@ -10,7 +10,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * Takes care that it's possible to set <code>null</code> value 
+ * Takes care that it's possible to set <code>null</code> value
  * when using custom setter for a {@link Scriptable} object.
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=461138
  * @author Marc Guillemot
@@ -25,7 +25,7 @@ public class CustomSetterAcceptNullScriptableTest extends TestCase
 		{
 			return "Foo";
 		}
-		
+
 		public void setMyProp(final Foo2 s) { }
 	}
 
@@ -40,7 +40,7 @@ public class CustomSetterAcceptNullScriptableTest extends TestCase
 	}
 
 	public void testSetNullForScriptableSetter() throws Exception {
-		
+
 		final String scriptCode = "foo.myProp = new Foo2();\n"
 			+ "foo.myProp = null;";
 
@@ -50,15 +50,15 @@ public class CustomSetterAcceptNullScriptableTest extends TestCase
 		try {
 	        final ScriptableObject topScope = cx.initStandardObjects();
 	        final Foo foo = new Foo();
-	
+
 	        // define custom setter method
 	        final Method setMyPropMethod = Foo.class.getMethod("setMyProp", Foo2.class);
 	        foo.defineProperty("myProp", null, null, setMyPropMethod, ScriptableObject.EMPTY);
-	
+
 	        topScope.put("foo", topScope, foo);
-	        
+
 	        ScriptableObject.defineClass(topScope, Foo2.class);
-			
+
 	        cx.evaluateString(topScope, scriptCode, "myScript", 1, null);
 		}
 		finally {

@@ -51,7 +51,7 @@ public interface DestructuringForm {
    * target of a destructuring assignment.
    */
   void setIsDestructuring(boolean destructuring);
-    
+
   /**
    * Returns true if this node is in a destructuring position:
    * a function parameter, the target of a variable initializer, the

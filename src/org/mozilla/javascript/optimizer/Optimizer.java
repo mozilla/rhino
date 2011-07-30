@@ -189,7 +189,7 @@ class Optimizer
                             markDCPNumberContext(child);
                             return NumberType;
                         }
-                      return NoType;                       
+                      return NoType;
                     }
                     else if (child.getType() == Token.GETELEM) {
                         return rewriteForNumberVariables(child, NumberType);

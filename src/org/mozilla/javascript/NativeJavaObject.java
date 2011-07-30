@@ -87,7 +87,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         } else {
             dynamicType = staticType;
         }
-        members = JavaMembers.lookupClass(parent, dynamicType, staticType, 
+        members = JavaMembers.lookupClass(parent, dynamicType, staticType,
                                           isAdapter);
         fieldAndMethods
             = members.getFieldAndMethodsObjects(this, javaObject, false);
@@ -603,7 +603,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
             break;
 
         case JSTYPE_JAVA_OBJECT:
-        case JSTYPE_JAVA_ARRAY:              
+        case JSTYPE_JAVA_ARRAY:
             if (value instanceof Wrapper) {
               value = ((Wrapper)value).unwrap();
             }
@@ -613,7 +613,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 }
                 return coerceToNumber(type, value);
             }
-            else { 
+            else {
               if (type == ScriptRuntime.StringClass) {
                     return value.toString();
                 }
@@ -838,7 +838,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
         else {
             Method meth;
             try {
-                meth = value.getClass().getMethod("doubleValue", 
+                meth = value.getClass().getMethod("doubleValue",
                 		                          (Class [])null);
             }
             catch (NoSuchMethodException e) {
@@ -849,7 +849,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
             }
             if (meth != null) {
                 try {
-                    return ((Number)meth.invoke(value, 
+                    return ((Number)meth.invoke(value,
                     		                    (Object [])null)).doubleValue();
                 }
                 catch (IllegalAccessException e) {

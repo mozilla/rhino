@@ -95,7 +95,7 @@ public class Node implements Iterable<Node>
         DESTRUCTURING_NAMES  = 22,
         DESTRUCTURING_PARAMS = 23,
         JSDOC_PROP           = 24,
-        EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return 
+        EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return
         DESTRUCTURING_SHORTHAND = 26, // JS 1.8 destructuring shorthand
         LAST_PROP            = 26;
 
@@ -1027,6 +1027,38 @@ public class Node implements Iterable<Node>
 
           default:
             return false;
+        }
+    }
+
+    /**
+     * Recursively unlabel every TARGET or YIELD node in the tree.
+     *
+     * This is used and should only be used for inlining finally blocks where
+     * jsr instructions used to be. It is somewhat hackish, but implementing
+     * a clone() operation would take much, much more effort.
+     *
+     * This solution works for inlining finally blocks because you should never
+     * be writing any given block to the class file simultaneously. Therefore,
+     * an unlabeling will never occur in the middle of a block.
+     */
+    public void resetTargets()
+    {
+        if (type == Token.FINALLY) {
+            resetTargets_r();
+        } else {
+            Kit.codeBug();
+        }
+    }
+
+    private void resetTargets_r()
+    {
+        if (type == Token.TARGET || type == Token.YIELD) {
+            labelId(-1);
+        }
+        Node child = first;
+        while (child != null) {
+            child.resetTargets_r();
+            child = child.next;
         }
     }
 

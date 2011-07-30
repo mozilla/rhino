@@ -322,12 +322,12 @@ class JavaMembers
 
     /**
      * Retrieves mapping of methods to accessible methods for a class.
-     * In case the class is not public, retrieves methods with same 
-     * signature as its public methods from public superclasses and 
-     * interfaces (if they exist). Basically upcasts every method to the 
+     * In case the class is not public, retrieves methods with same
+     * signature as its public methods from public superclasses and
+     * interfaces (if they exist). Basically upcasts every method to the
      * nearest accessible method.
      */
-    private static Method[] discoverAccessibleMethods(Class<?> clazz, 
+    private static Method[] discoverAccessibleMethods(Class<?> clazz,
                                                       boolean includeProtected,
                                                       boolean includePrivate)
     {
@@ -335,8 +335,8 @@ class JavaMembers
         discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
         return map.values().toArray(new Method[map.size()]);
     }
-    
-    private static void discoverAccessibleMethods(Class<?> clazz, 
+
+    private static void discoverAccessibleMethods(Class<?> clazz,
             Map<MethodSignature,Method> map, boolean includeProtected,
             boolean includePrivate)
     {
@@ -349,7 +349,7 @@ class JavaMembers
                             for (int i = 0; i < methods.length; i++) {
                                 Method method = methods[i];
                                 int mods = method.getModifiers();
-    
+
                                 if (Modifier.isPublic(mods) ||
                                     Modifier.isProtected(mods) ||
                                     includePrivate)
@@ -370,7 +370,7 @@ class JavaMembers
                             Method[] methods = clazz.getMethods();
                             for (int i = 0; i < methods.length; i++) {
                                 Method method = methods[i];
-                                MethodSignature sig 
+                                MethodSignature sig
                                     = new MethodSignature(method);
                                 if (!map.containsKey(sig))
                                     map.put(sig, method);
@@ -416,18 +416,18 @@ class JavaMembers
     {
         private final String name;
         private final Class<?>[] args;
-        
+
         private MethodSignature(String name, Class<?>[] args)
         {
             this.name = name;
             this.args = args;
         }
-        
+
         MethodSignature(Method method)
         {
             this(method.getName(), method.getParameterTypes());
         }
-        
+
         @Override
         public boolean equals(Object o)
         {
@@ -438,14 +438,14 @@ class JavaMembers
             }
             return false;
         }
-        
+
         @Override
         public int hashCode()
         {
             return name.hashCode() ^ args.length;
         }
     }
-    
+
     private void reflect(Scriptable scope, boolean includeProtected)
     {
         // We reflect methods first, because we want overloaded field/method
@@ -578,7 +578,7 @@ class JavaMembers
                 boolean memberIsGetMethod = name.startsWith("get");
                 boolean memberIsSetMethod = name.startsWith("set");
                 boolean memberIsIsMethod = name.startsWith("is");
-                if (memberIsGetMethod || memberIsIsMethod 
+                if (memberIsGetMethod || memberIsIsMethod
                         || memberIsSetMethod) {
                     // Double check name component.
                     String nameComponent
@@ -636,14 +636,14 @@ class JavaMembers
                         if (member instanceof NativeJavaMethod) {
                             NativeJavaMethod njmSet = (NativeJavaMethod)member;
                             if (getter != null) {
-                                // We have a getter. Now, do we have a matching 
+                                // We have a getter. Now, do we have a matching
                                 // setter?
                                 Class<?> type = getter.method().getReturnType();
                                 setter = extractSetMethod(type, njmSet.methods,
                                                             isStatic);
                             } else {
                                 // No getter, find any set method
-                                setter = extractSetMethod(njmSet.methods, 
+                                setter = extractSetMethod(njmSet.methods,
                                                             isStatic);
                             }
                             if (njmSet.methods.length > 1) {

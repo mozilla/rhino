@@ -26,7 +26,7 @@
  *   Norris Boyd
  *   Mike McCabe
  *   Ilya Frank
- *   
+ *
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -224,12 +224,12 @@ final class NativeDate extends IdScriptableObject
                 }
                 Object toISO = o.get(toISOString, o);
                 if (toISO == NOT_FOUND) {
-                    throw ScriptRuntime.typeError2("msg.function.not.found.in", 
+                    throw ScriptRuntime.typeError2("msg.function.not.found.in",
                             toISOString,
                             ScriptRuntime.toString(o));
                 }
                 if ( !(toISO instanceof Callable) ) {
-                    throw ScriptRuntime.typeError3("msg.isnt.function.in", 
+                    throw ScriptRuntime.typeError3("msg.isnt.function.in",
                             toISOString,
                             ScriptRuntime.toString(o),
                             ScriptRuntime.toString(toISO));
@@ -237,9 +237,9 @@ final class NativeDate extends IdScriptableObject
                 Object result = ((Callable) toISO).call(cx, scope, o,
                             ScriptRuntime.emptyArgs);
                 if ( !ScriptRuntime.isPrimitive(result) ) {
-                    throw ScriptRuntime.typeError1("msg.toisostring.must.return.primitive", 
+                    throw ScriptRuntime.typeError1("msg.toisostring.must.return.primitive",
                             ScriptRuntime.toString(result));
-                } 
+                }
                 return result;
             }
 

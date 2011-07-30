@@ -20,9 +20,9 @@ public class Bug419940Test extends TestCase {
            return value;
         }
     }
-   
+
   public void testAdapter() {
-      String source = 
+      String source =
           "(new JavaAdapter(" + Foo.class.getName() + ", {})).doSomething();";
 
       Context cx = ContextFactory.getGlobal().enterContext();
@@ -33,5 +33,5 @@ public class Bug419940Test extends TestCase {
       } finally {
           Context.exit();
       }
-  }  
+  }
 }

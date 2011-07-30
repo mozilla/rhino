@@ -89,7 +89,7 @@ public class ErrorCollector implements IdeErrorReporter {
     /**
      * @inheritDoc
      */
-    public void error(String message, String sourceName, 
+    public void error(String message, String sourceName,
                       int fileOffset, int length)
     {
         errors.add(new ParseProblem(ParseProblem.Type.Error,

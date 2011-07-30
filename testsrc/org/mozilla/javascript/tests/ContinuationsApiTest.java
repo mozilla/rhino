@@ -127,7 +127,7 @@ public class ContinuationsApiTest extends TestCase {
       try {
           cx.setOptimizationLevel(-1); // must use interpreter mode
           Script script = cx.compileString(
-              "myObject.f(3) + myObject.g(3) + 2;", 
+              "myObject.f(3) + myObject.g(3) + 2;",
               "test source", 1, null);
           cx.executeScriptWithContinuations(script, globalScope);
           fail("Should throw ContinuationPending");

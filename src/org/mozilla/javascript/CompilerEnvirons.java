@@ -84,7 +84,7 @@ public class CompilerEnvirons
 
         generatingSource = cx.isGeneratingSource();
         activationNames = cx.activationNames;
-        
+
         // Observer code generation in compiled code :
         generateObserverCount = cx.generateObserverCount;
     }

@@ -141,7 +141,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     private static final byte REOP_REPEAT        = 51; /* directs execution of greedy quantifier */
     private static final byte REOP_MINIMALREPEAT = 52; /* directs execution of non-greedy quantifier */
     private static final byte REOP_END           = 53;
-     
+
 
 
     public static void init(Context cx, Scriptable scope, boolean sealed)
@@ -155,7 +155,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
         NativeRegExpCtor ctor = new NativeRegExpCtor();
         // Bug #324006: ECMA-262 15.10.6.1 says "The initial value of
-        // RegExp.prototype.constructor is the builtin RegExp constructor." 
+        // RegExp.prototype.constructor is the builtin RegExp constructor."
         proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM);
 
         ScriptRuntime.setFunctionProtoAndParent(ctor, scope);

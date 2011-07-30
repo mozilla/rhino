@@ -6,7 +6,7 @@ import java.net.URI;
 import org.mozilla.javascript.Script;
 
 /**
- * Represents a compiled CommonJS module script. The {@link Require} functions 
+ * Represents a compiled CommonJS module script. The {@link Require} functions
  * use them and obtain them through a {@link ModuleScriptProvider}. Instances
  * are immutable.
  * @author Attila Szegedi
@@ -15,7 +15,7 @@ import org.mozilla.javascript.Script;
 public class ModuleScript implements Serializable
 {
     private static final long serialVersionUID = 1L;
-    
+
     private final Script script;
     private final URI uri;
     private final URI base;
@@ -31,7 +31,7 @@ public class ModuleScript implements Serializable
         this.uri = uri;
         this.base = base;
     }
-    
+
     /**
      * Returns the script object representing the code of the module.
      * @return the script object representing the code of the module.

@@ -475,13 +475,13 @@ public final class JavaAdapter implements IdFunctionCall
         }
         return list.toArray(new Method[list.size()]);
     }
-    
-    private static void appendOverridableMethods(Class<?> c, 
+
+    private static void appendOverridableMethods(Class<?> c,
             ArrayList<Method> list, HashSet<String> skip)
     {
         Method[] methods = c.getDeclaredMethods();
         for (int i = 0; i < methods.length; i++) {
-            String methodKey = methods[i].getName() + 
+            String methodKey = methods[i].getName() +
                 getMethodSignature(methods[i],
                         methods[i].getParameterTypes());
             if (skip.contains(methodKey))
@@ -522,7 +522,7 @@ public final class JavaAdapter implements IdFunctionCall
         else {
             staticDomain = null;
         }
-        GeneratedClassLoader loader = SecurityController.createLoader(null, 
+        GeneratedClassLoader loader = SecurityController.createLoader(null,
                 staticDomain);
         Class<?> result = loader.defineClass(className, classBytes);
         loader.linkClass(result);

@@ -8,7 +8,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * Primitive numbers are not wrapped before calling apply. 
+ * Primitive numbers are not wrapped before calling apply.
  * Test for bug <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=466661">466661</a>.
  * @author Marc Guillemot
  */

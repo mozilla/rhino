@@ -60,7 +60,7 @@ public class ClassCache implements Serializable
     private transient HashMap<JavaAdapter.JavaAdapterSignature,Class<?>> classAdapterCache;
     private transient HashMap<Class<?>,Object> interfaceAdapterCache;
     private int generatedClassSerial;
-    private Scriptable associatedScope; 
+    private Scriptable associatedScope;
 
     /**
      * Search for ClassCache object in the given scope.
@@ -155,7 +155,7 @@ public class ClassCache implements Serializable
             clearCaches();
         cachingIsEnabled = enabled;
     }
-    
+
     /**
      * @return a map from classes to associated JavaMembers objects
      */
@@ -165,7 +165,7 @@ public class ClassCache implements Serializable
         }
         return classTable;
     }
-    
+
     Map<JavaAdapter.JavaAdapterSignature,Class<?>> getInterfaceAdapterCacheMap()
     {
         if (classAdapterCache == null) {
@@ -173,7 +173,7 @@ public class ClassCache implements Serializable
         }
         return classAdapterCache;
     }
-    
+
     /**
      * @deprecated
      * The method always returns false.
@@ -208,8 +208,8 @@ public class ClassCache implements Serializable
 
     Object getInterfaceAdapter(Class<?> cl)
     {
-        return interfaceAdapterCache == null 
-                    ? null 
+        return interfaceAdapterCache == null
+                    ? null
                     : interfaceAdapterCache.get(cl);
     }
 
@@ -222,7 +222,7 @@ public class ClassCache implements Serializable
             interfaceAdapterCache.put(cl, iadapter);
         }
     }
-    
+
     Scriptable getAssociatedScope() {
         return associatedScope;
     }

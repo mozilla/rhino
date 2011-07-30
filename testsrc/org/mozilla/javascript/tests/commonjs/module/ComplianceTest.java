@@ -71,13 +71,13 @@ public class ComplianceTest extends TestCase
             }
         };
     }
-    
-    private static Require createRequire(File dir, Context cx, Scriptable scope) 
-    throws URISyntaxException 
+
+    private static Require createRequire(File dir, Context cx, Scriptable scope)
+    throws URISyntaxException
     {
         return new Require(cx, scope, new StrongCachingModuleScriptProvider(
                 new UrlModuleSourceProvider(Collections.singleton(new URI(
-                        "file:" + dir.getAbsolutePath().replace(File.separatorChar,'/') + "/")), 
+                        "file:" + dir.getAbsolutePath().replace(File.separatorChar,'/') + "/")),
                         Collections.singleton(new URI(ComplianceTest.class.getResource(".").toExternalForm() + "/")))),
                         null, null, false);
     }
@@ -87,7 +87,7 @@ public class ComplianceTest extends TestCase
         Print(Scriptable scope) {
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
-        
+
         public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                 Object[] args)
         {

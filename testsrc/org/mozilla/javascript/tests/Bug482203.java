@@ -15,7 +15,7 @@ public class Bug482203 extends TestCase {
         Context cx = Context.enter();
         cx.setOptimizationLevel(-1);
         Script script = cx.compileReader(new InputStreamReader(
-                Bug482203.class.getResourceAsStream("conttest.js")), 
+                Bug482203.class.getResourceAsStream("conttest.js")),
                 "", 1, null);
         Scriptable scope = cx.initStandardObjects();
         script.exec(cx, scope);
@@ -34,7 +34,7 @@ public class Bug482203 extends TestCase {
         try {
 	        cx.setOptimizationLevel(-1);
 	        Script script = cx.compileReader(new InputStreamReader(
-	                Bug482203.class.getResourceAsStream("conttest.js")), 
+	                Bug482203.class.getResourceAsStream("conttest.js")),
 	                "", 1, null);
 	        Scriptable scope = cx.initStandardObjects();
 	        cx.executeScriptWithContinuations(script, scope);

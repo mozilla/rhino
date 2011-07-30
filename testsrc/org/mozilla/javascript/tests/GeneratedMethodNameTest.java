@@ -33,7 +33,7 @@ public class GeneratedMethodNameTest extends TestCase
 	}
 
 	public void testScriptName() throws Exception {
-		final String scriptCode = 
+		final String scriptCode =
 		  "var m = javaNameGetter.readCurrentFunctionJavaName();\n"
 			+ "if (m != 'script') throw 'got '  + m;";
 		doTest(scriptCode);
@@ -56,7 +56,7 @@ public class GeneratedMethodNameTest extends TestCase
 			+ "myFunc();";
 		doTest(scriptCode);
 	}
-	
+
 	public class JavaNameGetter {
 	    public String readCurrentFunctionJavaName() {
             final Throwable t = new RuntimeException();
