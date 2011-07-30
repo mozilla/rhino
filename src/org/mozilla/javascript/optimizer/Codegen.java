@@ -5069,15 +5069,27 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +"Lorg/mozilla/javascript/Context;"
                 +")Ljava/lang/Object;");
         } else {
+            // generate invokedynamic instruction for foo.bar
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
-            addScriptRuntimeInvoke(
+            MethodHandle bootstrap = new MethodHandle(ByteCode.MH_INVOKESTATIC,
+                    "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
+                    "bootstrapGetObjectProp",
+                    MethodType.methodType(
+                            CallSite.class, MethodHandles.Lookup.class,
+                            String.class, MethodType.class).toMethodDescriptorString());
+            cfw.addInvokeDynamic("getObjectProp", "(Ljava/lang/Object;"
+                            +"Ljava/lang/String;"
+                            +"Lorg/mozilla/javascript/Context;"
+                            +"Lorg/mozilla/javascript/Scriptable;"
+                            +")Ljava/lang/Object;", bootstrap);
+            /* addScriptRuntimeInvoke(
                 "getObjectProp",
                 "(Ljava/lang/Object;"
                 +"Ljava/lang/String;"
                 +"Lorg/mozilla/javascript/Context;"
                 +"Lorg/mozilla/javascript/Scriptable;"
-                +")Ljava/lang/Object;");
+                +")Ljava/lang/Object;"); */
         }
     }
 
