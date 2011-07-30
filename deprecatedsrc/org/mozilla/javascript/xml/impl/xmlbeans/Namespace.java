@@ -135,6 +135,11 @@ class Namespace extends IdScriptableObject
         return equals((Namespace)obj);
     }
 
+    public int hashCode()
+    {
+        return uri().hashCode();
+    }
+
     protected Object equivalentValues(Object value)
     {
         if (!(value instanceof Namespace)) return Scriptable.NOT_FOUND;

@@ -46,6 +46,7 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -594,7 +595,12 @@ public class NativeObject extends IdScriptableObject implements Map
                 }
 
                 public Object next() {
-                    return (key = ids[index++]);
+                    try {
+                        return (key = ids[index++]);
+                    } catch(ArrayIndexOutOfBoundsException e) {
+                        key = null;
+                        throw new NoSuchElementException();
+                    }
                 }
 
                 public void remove() {

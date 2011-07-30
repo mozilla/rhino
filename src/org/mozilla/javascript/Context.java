@@ -1486,9 +1486,11 @@ public class Context
      */
     public Scriptable newObject(Scriptable scope)
     {
-        NativeObject result = new NativeObject();
-        ScriptRuntime.setBuiltinProtoAndParent(result, scope,
-                TopLevel.Builtins.Object);
+        NativeClassyObject result = new NativeClassyObject();
+        scope = ScriptableObject.getTopLevelScope(scope);
+        result.setParentScope(scope);
+        result.setPrototype(TopLevel.getBuiltinPrototype(scope,
+                TopLevel.Builtins.Object));
         return result;
     }
 

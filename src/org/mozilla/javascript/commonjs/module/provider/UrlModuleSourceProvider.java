@@ -130,7 +130,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
     protected ModuleSource loadFromActualUri(URI uri, URI base, Object validator)
     throws IOException
     {
-        final URL url = uri.toURL();
+        final URL url = new URL(base == null ? null : base.toURL(), uri.toString());
         final long request_time = System.currentTimeMillis();
         final URLConnection urlConnection = openUrlConnection(url);
         final URLValidator applicableValidator;
