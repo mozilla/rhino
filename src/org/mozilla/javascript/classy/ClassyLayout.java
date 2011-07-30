@@ -385,6 +385,6 @@ public class ClassyLayout {
         return mappings().toString() + "/proto=" + prototype + "#" + System.identityHashCode(this);
     }
 
-    static final boolean TRACE_LAYOUTS = true;
+    static final boolean TRACE_LAYOUTS = false;
     static final boolean CACHE_LAYOUTS = true;
 }
