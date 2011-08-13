@@ -6,6 +6,7 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.classy.ClassyLayout;
+import org.mozilla.javascript.classy.ClassyLayout.Mapping;
 import org.mozilla.javascript.classy.ClassyScriptable;
 
 import java.lang.invoke.CallSite;
@@ -45,6 +46,17 @@ public class InvokeDynamicSupport {
         callSite.setTarget(check);
         return callSite;
     }
+    
+    public static CallSite bootstrapSetObjectProp(MethodHandles.Lookup lookup,
+    		                                      String name, MethodType type){
+    	CachingCallSite callSite = new CachingCallSite(lookup, name, type);
+    	MethodHandle check = SETOBJPROP.bindTo(callSite);
+    	check = check.asType(type);
+
+    	callSite.setTarget(check);
+    	return callSite;
+    }
+    
 
     public static boolean checkClass(Class<?> clazz, Object receiver) {
         return receiver instanceof NativeJavaObject &&
@@ -129,11 +141,60 @@ public class InvokeDynamicSupport {
 
         return classy.getValueAtOffset(offset, classy);
     }
+    
+        
 
     public static Object getFastObjectProp(Object obj, int offset) {
         ClassyScriptable classy = (ClassyScriptable) obj;
         return classy.getValueAtOffset(offset, classy);
     }
+    
+    public static Object setObjectProp(CachingCallSite callSite, Object obj,
+                               String property, Object value, Context cx)
+            throws Throwable {
+    	
+        if (!(obj instanceof ClassyScriptable)) {
+            callSite.setTarget(SETOBJPROP_FALLBACK);
+            return SETOBJPROP_FALLBACK.invoke(obj, property, value, cx);
+        }
+
+        ClassyScriptable classy = (ClassyScriptable) obj;
+        ClassyLayout layout = classy.getLayout();
+        
+        Mapping mapping = layout.findMapping(property);
+        int offset;
+        
+        if(mapping == null){
+            classy.put(property, classy, value);
+            layout = classy.getLayout();
+            mapping = layout.findMapping(property);
+            offset = mapping.offset();
+        }else{
+            offset = mapping.offset();
+            classy.putValueAtOffset(offset, classy, value);
+        }
+      
+        MethodHandle target = MethodHandles.insertArguments(SETFASTOBJPROP, 1,
+                Integer.valueOf(offset),value);
+        target = MethodHandles.dropArguments(target, 3, Context.class);
+        
+        MethodHandle test = CHECK_LAYOUT.bindTo(layout);
+        test = test.asType(MethodType.methodType(boolean.class, Object.class));
+
+        MethodHandle guard = MethodHandles.guardWithTest(test, target, callSite.getTarget());
+        callSite.setTarget(guard);        
+        	
+        return value;
+    }
+    
+    public static Object setFastObjectProp(Object obj, int offset, Object value){
+    	
+    	ClassyScriptable classy = (ClassyScriptable)obj;
+    	classy.putValueAtOffset(offset, classy, value);
+    	
+    	return value;
+    }
+    
 
     private static final MethodHandle CHECK_CLASS;
     private static final MethodHandle CHECK_LAYOUT;
@@ -143,6 +204,10 @@ public class InvokeDynamicSupport {
     private static final MethodHandle GETOBJPROP_FALLBACK;
     private static final MethodHandle GETFASTOBJPROP;
     private static final MethodHandle UNWRAP;
+    private static final MethodHandle SETOBJPROP_FALLBACK;
+    private static final MethodHandle SETOBJPROP;
+    private static final MethodHandle SETFASTOBJPROP;
+
     static {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         try {
@@ -168,6 +233,14 @@ public class InvokeDynamicSupport {
                     MethodType.methodType(Object.class, Object.class, Integer.TYPE));
             UNWRAP = lookup.findStatic(InvokeDynamicSupport.class, "unwrapObject",
                     MethodType.methodType(Object.class, Object.class));
+            SETOBJPROP_FALLBACK = lookup.findStatic(ScriptRuntime.class, "setObjectProp", 
+            		MethodType.methodType(Object.class, Object.class,
+            				String.class, Object.class,Context.class));
+            SETOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "setObjectProp", 
+            		MethodType.methodType(Object.class, CachingCallSite.class,
+            				Object.class, String.class, Object.class, Context.class));
+            SETFASTOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "setFastObjectProp", 
+                    MethodType.methodType(Object.class, Object.class, Integer.TYPE, Object.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

@@ -5131,13 +5131,24 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         }
         generateExpression(child, node);
         cfw.addALoad(contextLocal);
-        addScriptRuntimeInvoke(
-            "setObjectProp",
-            "(Ljava/lang/Object;"
-            +"Ljava/lang/String;"
-            +"Ljava/lang/Object;"
-            +"Lorg/mozilla/javascript/Context;"
-            +")Ljava/lang/Object;");
+//        addScriptRuntimeInvoke(
+//            "setObjectProp",
+//            "(Ljava/lang/Object;"
+//            +"Ljava/lang/String;"
+//            +"Ljava/lang/Object;"
+//            +"Lorg/mozilla/javascript/Context;"
+//            +")Ljava/lang/Object;");
+        MethodHandle bootstrap = new MethodHandle(ByteCode.MH_INVOKESTATIC,
+                "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
+                "bootstrapSetObjectProp",
+                MethodType.methodType(
+                        CallSite.class, MethodHandles.Lookup.class,
+                        String.class, MethodType.class).toMethodDescriptorString());
+        cfw.addInvokeDynamic("setObjectProp", "(Ljava/lang/Object;"
+                        +"Ljava/lang/String;"
+                        +"Ljava/lang/Object;"
+                        +"Lorg/mozilla/javascript/Context;"
+                        +")Ljava/lang/Object;", bootstrap);
     }
 
     private void visitSetElem(int type, Node node, Node child)
