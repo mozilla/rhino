@@ -164,25 +164,26 @@ public class InvokeDynamicSupport {
         Mapping mapping = layout.findMapping(property);
         int offset;
         
-        if(mapping == null){
+        if (mapping == null) {
             classy.put(property, classy, value);
             layout = classy.getLayout();
             mapping = layout.findMapping(property);
             offset = mapping.offset();
-        }else{
+        } else {
             offset = mapping.offset();
             classy.putValueAtOffset(offset, classy, value);
         }
       
         MethodHandle target = MethodHandles.insertArguments(SETFASTOBJPROP, 1,
-                Integer.valueOf(offset),value);
+                Integer.valueOf(offset));
+        target = MethodHandles.dropArguments(target, 1, String.class);
         target = MethodHandles.dropArguments(target, 3, Context.class);
-        
+
         MethodHandle test = CHECK_LAYOUT.bindTo(layout);
         test = test.asType(MethodType.methodType(boolean.class, Object.class));
 
         MethodHandle guard = MethodHandles.guardWithTest(test, target, callSite.getTarget());
-        callSite.setTarget(guard);        
+        callSite.setTarget(guard);
         	
         return value;
     }
@@ -233,13 +234,13 @@ public class InvokeDynamicSupport {
                     MethodType.methodType(Object.class, Object.class, Integer.TYPE));
             UNWRAP = lookup.findStatic(InvokeDynamicSupport.class, "unwrapObject",
                     MethodType.methodType(Object.class, Object.class));
-            SETOBJPROP_FALLBACK = lookup.findStatic(ScriptRuntime.class, "setObjectProp", 
+            SETOBJPROP_FALLBACK = lookup.findStatic(ScriptRuntime.class, "setObjectProp",
             		MethodType.methodType(Object.class, Object.class,
             				String.class, Object.class,Context.class));
-            SETOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "setObjectProp", 
+            SETOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "setObjectProp",
             		MethodType.methodType(Object.class, CachingCallSite.class,
             				Object.class, String.class, Object.class, Context.class));
-            SETFASTOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "setFastObjectProp", 
+            SETFASTOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "setFastObjectProp",
                     MethodType.methodType(Object.class, Object.class, Integer.TYPE, Object.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
