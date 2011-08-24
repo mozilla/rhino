@@ -39,6 +39,7 @@ package org.mozilla.javascript.xmlimpl;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -65,7 +66,8 @@ class XmlProcessor implements Serializable {
 
     private transient javax.xml.parsers.DocumentBuilderFactory dom;
     private transient javax.xml.transform.TransformerFactory xform;
-    private transient DocumentBuilder documentBuilder;
+    private transient ConcurrentLinkedQueue< DocumentBuilder > documentBuilderPool;
+
     private RhinoSAXErrorHandler errorHandler = new RhinoSAXErrorHandler();
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
@@ -74,6 +76,7 @@ class XmlProcessor implements Serializable {
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
+        this.documentBuilderPool = new ConcurrentLinkedQueue< DocumentBuilder >();
     }
 
     private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
@@ -104,6 +107,7 @@ class XmlProcessor implements Serializable {
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
+        this.documentBuilderPool = new ConcurrentLinkedQueue< DocumentBuilder >();
     }
 
     final void setDefault() {
@@ -175,30 +179,29 @@ class XmlProcessor implements Serializable {
         return dom;
     }
 
-    private synchronized DocumentBuilder getDocumentBuilderFromPool()
+    // Get from pool, or create one without locking, if needed.
+    private DocumentBuilder getDocumentBuilderFromPool()
         throws javax.xml.parsers.ParserConfigurationException
     {
-        DocumentBuilder result;
-        if (documentBuilder == null) {
+        DocumentBuilder result = null;
+        result = documentBuilderPool.poll();
+        if (result == null){
             javax.xml.parsers.DocumentBuilderFactory factory = getDomFactory();
             result = factory.newDocumentBuilder();
-        } else {
-            result = documentBuilder;
-            documentBuilder = null;
         }
         result.setErrorHandler(errorHandler);
         return result;
     }
 
-    private synchronized void returnDocumentBuilderToPool(DocumentBuilder db) {
-        if (documentBuilder == null) {
-            try {
-                db.reset();
-                documentBuilder = db;
-            } catch (UnsupportedOperationException e) {
-                // document builders that don't support reset() can't
-                // be pooled
-            }
+    // Insert into pool, if resetable. Unlimited capacity - will never 
+    // be more than the maximum used concurrently.
+    private void returnDocumentBuilderToPool(DocumentBuilder db) {
+        try {
+            db.reset();
+            documentBuilderPool.offer(db);
+        } catch (UnsupportedOperationException e) {
+            // document builders that don't support reset() can't
+            // be pooled
         }
     }
 
