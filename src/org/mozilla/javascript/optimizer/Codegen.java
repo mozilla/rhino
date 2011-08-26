@@ -5055,42 +5055,27 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +")Ljava/lang/Object;");
             return;
         }
-        /*
-            for 'this.foo' we call getObjectProp(Scriptable...) which can
-            skip some casting overhead.
-        */
-        int childType = child.getType();
-        if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
-            cfw.addALoad(contextLocal);
-            addScriptRuntimeInvoke(
-                "getObjectProp",
-                "(Lorg/mozilla/javascript/Scriptable;"
-                +"Ljava/lang/String;"
-                +"Lorg/mozilla/javascript/Context;"
-                +")Ljava/lang/Object;");
-        } else {
-            // generate invokedynamic instruction for foo.bar
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            MethodHandle bootstrap = new MethodHandle(ByteCode.MH_INVOKESTATIC,
-                    "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
-                    "bootstrapGetObjectProp",
-                    MethodType.methodType(
-                            CallSite.class, MethodHandles.Lookup.class,
-                            String.class, MethodType.class).toMethodDescriptorString());
-            cfw.addInvokeDynamic("getObjectProp", "(Ljava/lang/Object;"
-                            +"Ljava/lang/String;"
-                            +"Lorg/mozilla/javascript/Context;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
-                            +")Ljava/lang/Object;", bootstrap);
-            /* addScriptRuntimeInvoke(
-                "getObjectProp",
-                "(Ljava/lang/Object;"
-                +"Ljava/lang/String;"
-                +"Lorg/mozilla/javascript/Context;"
-                +"Lorg/mozilla/javascript/Scriptable;"
-                +")Ljava/lang/Object;"); */
-        }
+        // generate invokedynamic instruction for foo.bar
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        MethodHandle bootstrap = new MethodHandle(ByteCode.MH_INVOKESTATIC,
+                "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
+                "bootstrapGetObjectProp",
+                MethodType.methodType(
+                        CallSite.class, MethodHandles.Lookup.class,
+                        String.class, MethodType.class).toMethodDescriptorString());
+        cfw.addInvokeDynamic("getObjectProp", "(Ljava/lang/Object;"
+                        +"Ljava/lang/String;"
+                        +"Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +")Ljava/lang/Object;", bootstrap);
+        /* addScriptRuntimeInvoke(
+            "getObjectProp",
+            "(Ljava/lang/Object;"
+            +"Ljava/lang/String;"
+            +"Lorg/mozilla/javascript/Context;"
+            +"Lorg/mozilla/javascript/Scriptable;"
+            +")Ljava/lang/Object;"); */
     }
 
     private void visitSetProp(int type, Node node, Node child)
