@@ -855,8 +855,8 @@ public class ScriptRuntime {
         if (value == Undefined.instance) {
             return "undefined";
         }
-        if (value instanceof String) {
-            String escaped = escapeString((String)value);
+        if (value instanceof CharSequence) {
+            String escaped = escapeString(value.toString());
             StringBuffer sb = new StringBuffer(escaped.length() + 2);
             sb.append('\"');
             sb.append(escaped);
@@ -2915,7 +2915,7 @@ public class ScriptRuntime {
                 return false;
             } else if (y instanceof Number) {
                 return x == ((Number)y).doubleValue();
-            } else if (y instanceof String) {
+            } else if (y instanceof CharSequence) {
                 return x == toNumber(y);
             } else if (y instanceof Boolean) {
                 return x == (((Boolean)y).booleanValue() ? 1.0 : +0.0);
