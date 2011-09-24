@@ -54,21 +54,23 @@ package org.mozilla.javascript;
 public class ConsString implements CharSequence {
 
     private CharSequence s1, s2;
-    private final int length, depth;
+    private final int length;
+    private int depth;
 
     public ConsString(CharSequence str1, CharSequence str2) {
         s1 = str1;
         s2 = str2;
         length = str1.length() + str2.length();
         // Don't let it grow too deep, can cause stack overflows in flatten()
-        int d = 1;
-        if (str1 instanceof ConsString) d += ((ConsString)str1).depth;
-        if (str2 instanceof ConsString) d += ((ConsString)str2).depth;
-        if (d > 100) {
+        depth = 1;
+        if (str1 instanceof ConsString) {
+            depth += ((ConsString)str1).depth;
+        }
+        if (str2 instanceof ConsString) {
+            depth += ((ConsString)str2).depth;
+        }
+        if (depth > 100) {
             flatten();
-            depth = 1;
-        } else {
-            depth = d;
         }
     }
 
@@ -84,6 +86,7 @@ public class ConsString implements CharSequence {
         appendTo(b);
         s1 = b.toString();
         s2 = "";
+        depth = 1;
     }
 
     private synchronized void appendTo(StringBuilder b) {
