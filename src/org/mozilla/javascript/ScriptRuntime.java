@@ -770,6 +770,9 @@ public class ScriptRuntime {
     }
 
     public static CharSequence toCharSequence(Object val) {
+        if (val instanceof NativeString) {
+            return ((NativeString)val).toCharSequence();
+        }
         return val instanceof CharSequence ? (CharSequence) val : toString(val);
     }
 

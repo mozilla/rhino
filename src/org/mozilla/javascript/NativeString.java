@@ -231,14 +231,14 @@ final class NativeString extends IdScriptableObject
               case ConstructorId_toLocaleLowerCase: {
                 if (args.length > 0) {
                     thisObj = ScriptRuntime.toObject(scope,
-                            ScriptRuntime.toString(args[0]));
+                            ScriptRuntime.toCharSequence(args[0]));
                     Object[] newArgs = new Object[args.length-1];
                     for (int i=0; i < newArgs.length; i++)
                         newArgs[i] = args[i+1];
                     args = newArgs;
                 } else {
                     thisObj = ScriptRuntime.toObject(scope,
-                            ScriptRuntime.toString(thisObj));
+                            ScriptRuntime.toCharSequence(thisObj));
                 }
                 id = -id;
                 continue again;
@@ -304,7 +304,7 @@ final class NativeString extends IdScriptableObject
                         args);
 
               case Id_substring:
-                return js_substring(cx, ScriptRuntime.toString(thisObj), args);
+                return js_substring(cx, ScriptRuntime.toCharSequence(thisObj), args);
 
               case Id_toLowerCase:
                 // See ECMA 15.5.4.11
@@ -317,13 +317,13 @@ final class NativeString extends IdScriptableObject
                          ScriptRuntime.ROOT_LOCALE);
 
               case Id_substr:
-                return js_substr(ScriptRuntime.toString(thisObj), args);
+                return js_substr(ScriptRuntime.toCharSequence(thisObj), args);
 
               case Id_concat:
                 return js_concat(ScriptRuntime.toString(thisObj), args);
 
               case Id_slice:
-                return js_slice(ScriptRuntime.toString(thisObj), args);
+                return js_slice(ScriptRuntime.toCharSequence(thisObj), args);
 
               case Id_bold:
                 return tagify(thisObj, "b", null, null);
@@ -465,6 +465,10 @@ final class NativeString extends IdScriptableObject
         return result.toString();
     }
 
+    public CharSequence toCharSequence() {
+        return string;
+    }
+
     @Override
     public String toString() {
         return string.toString();
@@ -528,7 +532,7 @@ final class NativeString extends IdScriptableObject
     /*
      * See ECMA 15.5.4.15
      */
-    private static String js_substring(Context cx, String target,
+    private static CharSequence js_substring(Context cx, CharSequence target,
                                        Object[] args)
     {
         int length = target.length();
@@ -561,7 +565,7 @@ final class NativeString extends IdScriptableObject
                 }
             }
         }
-        return target.substring((int)start, (int)end);
+        return target.subSequence((int)start, (int)end);
     }
 
     int getLength() {
@@ -571,7 +575,7 @@ final class NativeString extends IdScriptableObject
     /*
      * Non-ECMA methods.
      */
-    private static String js_substr(String target, Object[] args) {
+    private static CharSequence js_substr(CharSequence target, Object[] args) {
         if (args.length < 1)
             return target;
 
@@ -598,7 +602,7 @@ final class NativeString extends IdScriptableObject
                 end = length;
         }
 
-        return target.substring((int)begin, (int)end);
+        return target.subSequence((int)begin, (int)end);
     }
 
     /*
@@ -630,7 +634,7 @@ final class NativeString extends IdScriptableObject
         return result.toString();
     }
 
-    private static String js_slice(String target, Object[] args) {
+    private static CharSequence js_slice(CharSequence target, Object[] args) {
         if (args.length != 0) {
             double begin = ScriptRuntime.toInteger(args[0]);
             double end;
@@ -657,7 +661,7 @@ final class NativeString extends IdScriptableObject
                 if (end < begin)
                     end = begin;
             }
-            return target.substring((int)begin, (int)end);
+            return target.subSequence((int) begin, (int) end);
         }
         return target;
     }

@@ -103,15 +103,37 @@ public class ConsString implements CharSequence {
         return length;
     }
 
-    public synchronized char charAt(int index) {
-        if ((index < 0) || (index >= length)) {
-            throw new StringIndexOutOfBoundsException(index);
+    public char charAt(int index) {
+        if (s1 instanceof String && s2 == "") {
+            return s1.charAt(index);
         }
-        int l1 = s1.length();
-        return index >= l1 ? s2.charAt(index - l1) : s1.charAt(index);
+        synchronized (this) {
+            if ((index < 0) || (index >= length)) {
+                throw new StringIndexOutOfBoundsException(index);
+            }
+            int l1 = s1.length();
+            return index >= l1 ? s2.charAt(index - l1) : s1.charAt(index);
+        }
     }
 
     public CharSequence subSequence(int start, int end) {
-        throw new UnsupportedOperationException();
+        if (s1 instanceof String && s2 == "") {
+            return s1.subSequence(start, end);
+        }
+        synchronized (this) {
+            if (start == 0 && end == length) {
+                return this;
+            }
+            int l1 = s1.length();
+            if (start >= l1) {
+                return s2.subSequence(start - l1, end - l1);
+            } else if (end <= l1) {
+                return s1.subSequence(start, end);
+            } else {
+                return new ConsString(
+                        s1.subSequence(start, l1),
+                        s2.subSequence(0, end - l1));
+            }
+        }
     }
 }
