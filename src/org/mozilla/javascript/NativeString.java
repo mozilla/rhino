@@ -67,7 +67,7 @@ final class NativeString extends IdScriptableObject
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    NativeString(String s) {
+    NativeString(CharSequence s) {
         string = s;
     }
 
@@ -256,8 +256,8 @@ final class NativeString extends IdScriptableObject
               }
 
               case Id_constructor: {
-                String s = (args.length >= 1)
-                    ? ScriptRuntime.toString(args[0]) : "";
+                CharSequence s = (args.length >= 1)
+                    ? ScriptRuntime.toCharSequence(args[0]) : "";
                 if (thisObj == null) {
                     // new String(val) creates a new String object.
                     return new NativeString(s);
@@ -272,14 +272,14 @@ final class NativeString extends IdScriptableObject
                 return realThis(thisObj, f).string;
 
               case Id_toSource: {
-                String s = realThis(thisObj, f).string;
-                return "(new String(\""+ScriptRuntime.escapeString(s)+"\"))";
+                CharSequence s = realThis(thisObj, f).string;
+                return "(new String(\""+ScriptRuntime.escapeString(s.toString())+"\"))";
               }
 
               case Id_charAt:
               case Id_charCodeAt: {
                  // See ECMA 15.5.4.[4,5]
-                String target = ScriptRuntime.toString(thisObj);
+                CharSequence target = ScriptRuntime.toCharSequence(thisObj);
                 double pos = ScriptRuntime.toInteger(args, 0);
                 if (pos < 0 || pos >= target.length()) {
                     if (id == Id_charAt) return "";
@@ -467,7 +467,7 @@ final class NativeString extends IdScriptableObject
 
     @Override
     public String toString() {
-        return string;
+        return string.toString();
     }
 
     /* Make array-style property lookup work for strings.
@@ -476,7 +476,7 @@ final class NativeString extends IdScriptableObject
     @Override
     public Object get(int index, Scriptable start) {
         if (0 <= index && index < string.length()) {
-            return string.substring(index, index + 1);
+            return String.valueOf(string.charAt(index));
         }
         return super.get(index, start);
     }
@@ -797,6 +797,6 @@ final class NativeString extends IdScriptableObject
         ConstructorId_localeCompare  = -Id_localeCompare,
         ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
 
-    private String string;
+    private CharSequence string;
 }
 

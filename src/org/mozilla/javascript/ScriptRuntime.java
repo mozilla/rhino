@@ -1018,7 +1018,7 @@ public class ScriptRuntime {
         }
         if (val instanceof CharSequence) {
             // FIXME we want to avoid toString() here, especially for concat()
-            NativeString result = new NativeString(val.toString());
+            NativeString result = new NativeString((CharSequence)val);
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.String);
             return result;
         }

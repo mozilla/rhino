@@ -51,8 +51,12 @@ public class ConsString implements CharSequence {
         return length;
     }
 
-    public char charAt(int index) {
-        throw new UnsupportedOperationException();
+    public synchronized char charAt(int index) {
+        if ((index < 0) || (index >= length)) {
+            throw new StringIndexOutOfBoundsException(index);
+        }
+        int l1 = s1.length();
+        return index >= l1 ? s2.charAt(index - l1) : s1.charAt(index);
     }
 
     public CharSequence subSequence(int start, int end) {
