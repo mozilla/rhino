@@ -147,6 +147,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.ASSIGN_MUL, "*=");
         operatorNames.put(Token.ASSIGN_DIV, "/=");
         operatorNames.put(Token.ASSIGN_MOD, "%=");
+        operatorNames.put(Token.ASSIGN_BITXOR, "^=");
     }
 
     public static class PositionComparator implements Comparator<AstNode>, Serializable {
