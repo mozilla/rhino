@@ -79,7 +79,10 @@ public class ArrayComprehensionLoop extends ForInLoop {
     @Override
     public String toSource(int depth) {
         return makeIndent(depth)
-                + " for ("
+                + " for "
+                + " for " 
+                + (isForEach()?"each ":"")
+                + "("
                 + iterator.toSource(0)
                 + " in "
                 + iteratedObject.toSource(0)
