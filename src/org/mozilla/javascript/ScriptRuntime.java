@@ -2828,7 +2828,9 @@ public class ScriptRuntime {
      */
     public static boolean eq(Object x, Object y)
     {
-        if (x == null || x == Undefined.instance) {
+        if (x == y && !(x instanceof Number)) {
+            return true;
+        } else if (x == null || x == Undefined.instance) {
             if (y == null || y == Undefined.instance) {
                 return true;
             }

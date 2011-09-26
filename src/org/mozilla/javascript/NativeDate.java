@@ -1157,9 +1157,9 @@ final class NativeDate extends IdScriptableObject
             if (arg0 instanceof Scriptable)
                 arg0 = ((Scriptable) arg0).getDefaultValue(null);
             double date;
-            if (arg0 instanceof String) {
+            if (arg0 instanceof CharSequence) {
                 // it's a string; parse it.
-                date = date_parseString((String)arg0);
+                date = date_parseString(arg0.toString());
             } else {
                 // if it's not a string, use it as a millisecond date
                 date = ScriptRuntime.toNumber(arg0);

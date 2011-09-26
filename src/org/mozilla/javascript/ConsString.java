@@ -39,17 +39,20 @@
 package org.mozilla.javascript;
 
 /**
- * <p>A string implementation optimized for concatenation using the "+" operator.
- * Instead of copying characters to a new character array, this class keeps
- * references to the two character sequences. Characters are only converted
- * to a String if either toString() is called or a certain depth level is
- * reached.</p>
+ * <p>This class represents a string composed of two components, each of which
+ * may be a <code>java.lang.String</code> or another ConsString.</p>
+ *
+ * <p>This string representation is optimized for concatenation using the "+"
+ * operator. Instead of immediately copying both components to a new character
+ * array, ConsString keeps references to the original components and only
+ * converts them to a String if either toString() is called or a certain depth
+ * level is reached.</p>
  *
  * <p>Note that instances of this class are only immutable if both parts are
  * immutable, i.e. either Strings or ConsStrings that are ultimately composed
  * of Strings.</p>
  *
- * <p></p>Both the name and the concept are borrowed from V8.</p>
+ * <p>Both the name and the concept are borrowed from V8.</p>
  */
 public class ConsString implements CharSequence {
 
