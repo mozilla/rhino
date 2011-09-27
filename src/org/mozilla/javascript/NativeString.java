@@ -263,13 +263,14 @@ final class NativeString extends IdScriptableObject
                     return new NativeString(s);
                 }
                 // String(val) converts val to a string value.
-                return s;
+                return s instanceof String ? s : s.toString();
               }
 
               case Id_toString:
               case Id_valueOf:
                 // ECMA 15.5.4.2: 'the toString function is not generic.
-                return realThis(thisObj, f).string;
+                CharSequence cs = realThis(thisObj, f).string;
+                return cs instanceof String ? cs : cs.toString();
 
               case Id_toSource: {
                 CharSequence s = realThis(thisObj, f).string;
