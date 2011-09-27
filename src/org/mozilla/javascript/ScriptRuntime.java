@@ -397,6 +397,8 @@ public class ScriptRuntime {
                 return +0.0;
             if (val == Undefined.instance)
                 return NaN;
+            if (val instanceof String)
+                return toNumber((String) val);
             if (val instanceof CharSequence)
                 return toNumber(val.toString());
             if (val instanceof Boolean)
@@ -788,6 +790,9 @@ public class ScriptRuntime {
             }
             if (val == Undefined.instance) {
                 return "undefined";
+            }
+            if (val instanceof String) {
+                return (String)val;
             }
             if (val instanceof CharSequence) {
                 return val.toString();
