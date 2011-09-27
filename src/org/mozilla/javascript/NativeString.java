@@ -472,7 +472,7 @@ final class NativeString extends IdScriptableObject
 
     @Override
     public String toString() {
-        return string.toString();
+        return string instanceof String ? (String)string : string.toString();
     }
 
     /* Make array-style property lookup work for strings.

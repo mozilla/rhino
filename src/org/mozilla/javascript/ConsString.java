@@ -64,7 +64,6 @@ public class ConsString implements CharSequence {
         s1 = str1;
         s2 = str2;
         length = str1.length() + str2.length();
-        // Don't let it grow too deep, can cause stack overflows in flatten()
         depth = 1;
         if (str1 instanceof ConsString) {
             depth += ((ConsString)str1).depth;
@@ -72,24 +71,25 @@ public class ConsString implements CharSequence {
         if (str2 instanceof ConsString) {
             depth += ((ConsString)str2).depth;
         }
-        if (depth > 100) {
+        // Don't let it grow too deep, can cause stack overflows
+        if (depth > 2000) {
             flatten();
         }
     }
 
     public String toString() {
-        if (!(s1 instanceof String) || s2 != "") {
-            flatten();
-        }
-        return (String) s1;
+        return depth == 0 ? (String)s1 : flatten();
     }
 
-    private synchronized void flatten() {
-        StringBuilder b = new StringBuilder(length);
-        appendTo(b);
-        s1 = b.toString();
-        s2 = "";
-        depth = 1;
+    private synchronized String flatten() {
+        if (depth > 0) {
+            StringBuilder b = new StringBuilder(length);
+            appendTo(b);
+            s1 = b.toString();
+            s2 = "";
+            depth = 0;
+        }
+        return (String)s1;
     }
 
     private synchronized void appendTo(StringBuilder b) {
@@ -110,36 +110,13 @@ public class ConsString implements CharSequence {
     }
 
     public char charAt(int index) {
-        if (s1 instanceof String && s2 == "") {
-            return s1.charAt(index);
-        }
-        synchronized (this) {
-            if ((index < 0) || (index >= length)) {
-                throw new StringIndexOutOfBoundsException(index);
-            }
-            int l1 = s1.length();
-            return index >= l1 ? s2.charAt(index - l1) : s1.charAt(index);
-        }
+        String str = depth == 0 ? (String)s1 : flatten();
+        return str.charAt(index);
     }
 
     public CharSequence subSequence(int start, int end) {
-        if (s1 instanceof String && s2 == "") {
-            return s1.subSequence(start, end);
-        }
-        synchronized (this) {
-            if (start == 0 && end == length) {
-                return this;
-            }
-            int l1 = s1.length();
-            if (start >= l1) {
-                return s2.subSequence(start - l1, end - l1);
-            } else if (end <= l1) {
-                return s1.subSequence(start, end);
-            } else {
-                return new ConsString(
-                        s1.subSequence(start, l1),
-                        s2.subSequence(0, end - l1));
-            }
-        }
+        String str = depth == 0 ? (String)s1 : flatten();
+        return str.substring(start, end);
     }
+
 }
