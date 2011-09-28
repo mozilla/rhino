@@ -2833,9 +2833,7 @@ public class ScriptRuntime {
      */
     public static boolean eq(Object x, Object y)
     {
-        if (x == y && !(x instanceof Number)) {
-            return true;
-        } else if (x == null || x == Undefined.instance) {
+        if (x == null || x == Undefined.instance) {
             if (y == null || y == Undefined.instance) {
                 return true;
             }
@@ -2848,6 +2846,8 @@ public class ScriptRuntime {
             return false;
         } else if (x instanceof Number) {
             return eqNumber(((Number)x).doubleValue(), y);
+        } else if (x == y) {
+            return true;
         } else if (x instanceof CharSequence) {
             return eqString(x.toString(), y);
         } else if (x instanceof Boolean) {
@@ -2864,9 +2864,6 @@ public class ScriptRuntime {
             return eqNumber(b ? 1.0 : 0.0, y);
         } else if (x instanceof Scriptable) {
             if (y instanceof Scriptable) {
-                if (x == y) {
-                    return true;
-                }
                 if (x instanceof ScriptableObject) {
                     Object test = ((ScriptableObject)x).equivalentValues(y);
                     if (test != Scriptable.NOT_FOUND) {
