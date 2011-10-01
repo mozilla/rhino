@@ -2849,7 +2849,7 @@ public class ScriptRuntime {
         } else if (x == y) {
             return true;
         } else if (x instanceof CharSequence) {
-            return eqString(x.toString(), y);
+            return eqString((CharSequence)x, y);
         } else if (x instanceof Boolean) {
             boolean b = ((Boolean)x).booleanValue();
             if (y instanceof Boolean) {
@@ -2898,8 +2898,8 @@ public class ScriptRuntime {
                 return eqNumber(d, x);
             } else if (y instanceof Number) {
                 return eqNumber(((Number)y).doubleValue(), x);
-            } else if (y instanceof String) {
-                return eqString((String)y, x);
+            } else if (y instanceof CharSequence) {
+                return eqString((CharSequence)y, x);
             }
             // covers the case when y == Undefined.instance as well
             return false;
@@ -2942,20 +2942,21 @@ public class ScriptRuntime {
         }
     }
 
-    private static boolean eqString(String x, Object y)
+    private static boolean eqString(CharSequence x, Object y)
     {
         for (;;) {
             if (y == null || y == Undefined.instance) {
                 return false;
             } else if (y instanceof CharSequence) {
-                return x.equals(y.toString());
+                CharSequence c = (CharSequence)y;
+                return x.length() == c.length() && x.toString().equals(c.toString());
             } else if (y instanceof Number) {
-                return toNumber(x) == ((Number)y).doubleValue();
+                return toNumber(x.toString()) == ((Number)y).doubleValue();
             } else if (y instanceof Boolean) {
-                return toNumber(x) == (((Boolean)y).booleanValue() ? 1.0 : 0.0);
+                return toNumber(x.toString()) == (((Boolean)y).booleanValue() ? 1.0 : 0.0);
             } else if (y instanceof Scriptable) {
                 if (y instanceof ScriptableObject) {
-                    Object test = ((ScriptableObject)y).equivalentValues(x);
+                    Object test = ((ScriptableObject)y).equivalentValues(x.toString());
                     if (test != Scriptable.NOT_FOUND) {
                         return ((Boolean)test).booleanValue();
                     }
