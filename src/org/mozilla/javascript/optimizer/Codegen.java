@@ -5438,7 +5438,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private OptFunctionNode fnCurrent;
     private boolean isTopLevel;
 
-    private static final int MAX_LOCALS = 256;
+    private static final int MAX_LOCALS = 1024;
     private int[] locals;
     private short firstFreeLocal;
     private short localsMax;
