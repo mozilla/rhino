@@ -356,8 +356,8 @@ public class ScriptRuntime {
                 return ((Boolean) val).booleanValue();
             if (val == null || val == Undefined.instance)
                 return false;
-            if (val instanceof String)
-                return ((String) val).length() != 0;
+            if (val instanceof CharSequence)
+                return ((CharSequence) val).length() != 0;
             if (val instanceof Number) {
                 double d = ((Number) val).doubleValue();
                 return (d == d && d != 0.0);
@@ -399,6 +399,8 @@ public class ScriptRuntime {
                 return NaN;
             if (val instanceof String)
                 return toNumber((String) val);
+            if (val instanceof CharSequence)
+                return toNumber(val.toString());
             if (val instanceof Boolean)
                 return ((Boolean) val).booleanValue() ? 1 : +0.0;
             if (val instanceof Scriptable) {
@@ -769,6 +771,13 @@ public class ScriptRuntime {
         return !TokenStream.isKeyword(s);
     }
 
+    public static CharSequence toCharSequence(Object val) {
+        if (val instanceof NativeString) {
+            return ((NativeString)val).toCharSequence();
+        }
+        return val instanceof CharSequence ? (CharSequence) val : toString(val);
+    }
+
     /**
      * Convert the value to a string.
      *
@@ -784,6 +793,9 @@ public class ScriptRuntime {
             }
             if (val instanceof String) {
                 return (String)val;
+            }
+            if (val instanceof CharSequence) {
+                return val.toString();
             }
             if (val instanceof Number) {
                 // XXX should we just teach NativeNumber.stringValue()
@@ -851,8 +863,8 @@ public class ScriptRuntime {
         if (value == Undefined.instance) {
             return "undefined";
         }
-        if (value instanceof String) {
-            String escaped = escapeString((String)value);
+        if (value instanceof CharSequence) {
+            String escaped = escapeString(value.toString());
             StringBuffer sb = new StringBuffer(escaped.length() + 2);
             sb.append('\"');
             sb.append(escaped);
@@ -1012,8 +1024,9 @@ public class ScriptRuntime {
         if (val instanceof Scriptable) {
             return (Scriptable) val;
         }
-        if (val instanceof String) {
-            NativeString result = new NativeString((String)val);
+        if (val instanceof CharSequence) {
+            // FIXME we want to avoid toString() here, especially for concat()
+            NativeString result = new NativeString((CharSequence)val);
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.String);
             return result;
         }
@@ -2520,7 +2533,7 @@ public class ScriptRuntime {
         if (args.length < 1)
             return Undefined.instance;
         Object x = args[0];
-        if (!(x instanceof String)) {
+        if (!(x instanceof CharSequence)) {
             if (cx.hasFeature(Context.FEATURE_STRICT_MODE) ||
                 cx.hasFeature(Context.FEATURE_STRICT_EVAL))
             {
@@ -2553,7 +2566,7 @@ public class ScriptRuntime {
 
         // Compile with explicit interpreter instance to force interpreter
         // mode.
-        Script script = cx.compileString((String)x, evaluator,
+        Script script = cx.compileString(x.toString(), evaluator,
                                          reporter, sourceName, 1, null);
         evaluator.setEvalScriptFlag(script);
         Callable c = (Callable)script;
@@ -2573,7 +2586,7 @@ public class ScriptRuntime {
         	return ((ScriptableObject) value).getTypeOf();
         if (value instanceof Scriptable)
             return (value instanceof Callable) ? "function" : "object";
-        if (value instanceof String)
+        if (value instanceof CharSequence)
             return "string";
         if (value instanceof Number)
             return "number";
@@ -2628,21 +2641,21 @@ public class ScriptRuntime {
             val1 = ((Scriptable) val1).getDefaultValue(null);
         if (val2 instanceof Scriptable)
             val2 = ((Scriptable) val2).getDefaultValue(null);
-        if (!(val1 instanceof String) && !(val2 instanceof String))
+        if (!(val1 instanceof CharSequence) && !(val2 instanceof CharSequence))
             if ((val1 instanceof Number) && (val2 instanceof Number))
                 return wrapNumber(((Number)val1).doubleValue() +
                                   ((Number)val2).doubleValue());
             else
                 return wrapNumber(toNumber(val1) + toNumber(val2));
-        return toString(val1).concat(toString(val2));
+        return new ConsString(toCharSequence(val1), toCharSequence(val2));
     }
 
-    public static String add(String val1, Object val2) {
-        return val1.concat(toString(val2));
+    public static CharSequence add(CharSequence val1, Object val2) {
+        return new ConsString(val1, toCharSequence(val2));
     }
 
-    public static String add(Object val1, String val2) {
-        return toString(val1).concat(val2);
+    public static CharSequence add(Object val1, CharSequence val2) {
+        return new ConsString(toCharSequence(val1), val2);
     }
 
     /**
@@ -2833,8 +2846,10 @@ public class ScriptRuntime {
             return false;
         } else if (x instanceof Number) {
             return eqNumber(((Number)x).doubleValue(), y);
-        } else if (x instanceof String) {
-            return eqString((String)x, y);
+        } else if (x == y) {
+            return true;
+        } else if (x instanceof CharSequence) {
+            return eqString((CharSequence)x, y);
         } else if (x instanceof Boolean) {
             boolean b = ((Boolean)x).booleanValue();
             if (y instanceof Boolean) {
@@ -2849,9 +2864,6 @@ public class ScriptRuntime {
             return eqNumber(b ? 1.0 : 0.0, y);
         } else if (x instanceof Scriptable) {
             if (y instanceof Scriptable) {
-                if (x == y) {
-                    return true;
-                }
                 if (x instanceof ScriptableObject) {
                     Object test = ((ScriptableObject)x).equivalentValues(y);
                     if (test != Scriptable.NOT_FOUND) {
@@ -2886,8 +2898,8 @@ public class ScriptRuntime {
                 return eqNumber(d, x);
             } else if (y instanceof Number) {
                 return eqNumber(((Number)y).doubleValue(), x);
-            } else if (y instanceof String) {
-                return eqString((String)y, x);
+            } else if (y instanceof CharSequence) {
+                return eqString((CharSequence)y, x);
             }
             // covers the case when y == Undefined.instance as well
             return false;
@@ -2910,7 +2922,7 @@ public class ScriptRuntime {
                 return false;
             } else if (y instanceof Number) {
                 return x == ((Number)y).doubleValue();
-            } else if (y instanceof String) {
+            } else if (y instanceof CharSequence) {
                 return x == toNumber(y);
             } else if (y instanceof Boolean) {
                 return x == (((Boolean)y).booleanValue() ? 1.0 : +0.0);
@@ -2930,20 +2942,21 @@ public class ScriptRuntime {
         }
     }
 
-    private static boolean eqString(String x, Object y)
+    private static boolean eqString(CharSequence x, Object y)
     {
         for (;;) {
             if (y == null || y == Undefined.instance) {
                 return false;
-            } else if (y instanceof String) {
-                return x.equals(y);
+            } else if (y instanceof CharSequence) {
+                CharSequence c = (CharSequence)y;
+                return x.length() == c.length() && x.toString().equals(c.toString());
             } else if (y instanceof Number) {
-                return toNumber(x) == ((Number)y).doubleValue();
+                return toNumber(x.toString()) == ((Number)y).doubleValue();
             } else if (y instanceof Boolean) {
-                return toNumber(x) == (((Boolean)y).booleanValue() ? 1.0 : 0.0);
+                return toNumber(x.toString()) == (((Boolean)y).booleanValue() ? 1.0 : 0.0);
             } else if (y instanceof Scriptable) {
                 if (y instanceof ScriptableObject) {
-                    Object test = ((ScriptableObject)y).equivalentValues(x);
+                    Object test = ((ScriptableObject)y).equivalentValues(x.toString());
                     if (test != Scriptable.NOT_FOUND) {
                         return ((Boolean)test).booleanValue();
                     }
@@ -2972,9 +2985,9 @@ public class ScriptRuntime {
             if (y instanceof Number) {
                 return ((Number)x).doubleValue() == ((Number)y).doubleValue();
             }
-        } else if (x instanceof String) {
-            if (y instanceof String) {
-                return x.equals(y);
+        } else if (x instanceof CharSequence) {
+            if (y instanceof CharSequence) {
+                return x.toString().equals(y.toString());
             }
         } else if (x instanceof Boolean) {
             if (y instanceof Boolean) {
@@ -3060,8 +3073,8 @@ public class ScriptRuntime {
                 val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
             if (val2 instanceof Scriptable)
                 val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
-            if (val1 instanceof String && val2 instanceof String) {
-                return ((String)val1).compareTo((String)val2) < 0;
+            if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
+                return val1.toString().compareTo(val2.toString()) < 0;
             }
             d1 = toNumber(val1);
             d2 = toNumber(val2);
@@ -3080,8 +3093,8 @@ public class ScriptRuntime {
                 val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
             if (val2 instanceof Scriptable)
                 val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
-            if (val1 instanceof String && val2 instanceof String) {
-                return ((String)val1).compareTo((String)val2) <= 0;
+            if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
+                return val1.toString().compareTo(val2.toString()) <= 0;
             }
             d1 = toNumber(val1);
             d2 = toNumber(val2);

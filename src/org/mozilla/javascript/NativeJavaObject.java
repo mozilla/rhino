@@ -449,7 +449,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
         else if (value == Undefined.instance) {
             return JSTYPE_UNDEFINED;
         }
-        else if (value instanceof String) {
+        else if (value instanceof CharSequence) {
             return JSTYPE_STRING;
         }
         else if (value instanceof Number) {
@@ -559,7 +559,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
 
         case JSTYPE_STRING:
             if (type == ScriptRuntime.StringClass || type.isInstance(value)) {
-                return value;
+                return value.toString();
             }
             else if (type == Character.TYPE
                      || type == ScriptRuntime.CharacterClass)
@@ -568,8 +568,8 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 // character
                 // Placed here because it applies *only* to JS strings,
                 // not other JS objects converted to strings
-                if (((String)value).length() == 1) {
-                    return Character.valueOf(((String)value).charAt(0));
+                if (((CharSequence)value).length() == 1) {
+                    return Character.valueOf(((CharSequence)value).charAt(0));
                 }
                 else {
                     return coerceToNumber(type, value);

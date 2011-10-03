@@ -423,7 +423,8 @@ public class ContextFactory
                                Context cx, Scriptable scope,
                                Scriptable thisObj, Object[] args)
     {
-        return callable.call(cx, scope, thisObj, args);
+        Object result = callable.call(cx, scope, thisObj, args);
+        return result instanceof ConsString ? result.toString() : result;
     }
 
     /**
