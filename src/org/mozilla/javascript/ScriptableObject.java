@@ -165,11 +165,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private static final int SLOT_CONVERT_ACCESSOR_TO_DATA = 5;
 
     // initial slot array size, must be a power of 2
-    private static final int INITIAL_SLOT_SIZE = 4;
+    private static final int INITIAL_SLOT_SIZE = 8;
 
     private boolean isExtensible = true;
 
-    private static class Slot implements Serializable
+    private static class Slot implements Serializable, Cloneable
     {
         private static final long serialVersionUID = -6090581677123995491L;
         String name; // This can change due to caching
@@ -237,6 +237,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 scope,
                 (value == null ? Undefined.instance : value),
                 attributes);
+        }
+
+        @Override
+        public Slot clone() {
+            try {
+                return (Slot)super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
         }
 
     }
@@ -2694,8 +2703,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 if (4 * (count + 1) > 3 * slotsLocalRef.length) {
                     // table size must be a power of 2, always grow by x2
                     slotsLocalRef = new Slot[slotsLocalRef.length * 2];
-                    copyTable(slots, slotsLocalRef, count);
-                    slots = slotsLocalRef;
+                    swapTable(slotsLocalRef, count);
                     insertPos = getSlotIndex(slotsLocalRef.length,
                             indexOrHash);
                 }
@@ -2745,9 +2753,24 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 } else {
                     prev.next = slot.next;
                 }
-                // Mark the slot as removed. It is still referenced
-                // from the order-added linked list, but will be
-                // cleaned up later
+
+                // remove from ordered list. Previously this was done lazily in
+                // getIds() but delete is an infrequent operation so O(n)
+                // should be ok
+                if (slot == firstAdded) {
+                    prev = null;
+                    firstAdded = slot.orderedNext;
+                } else {
+                    prev = firstAdded;
+                    while (prev.orderedNext != slot) {
+                        prev = prev.orderedNext;
+                    }
+                    prev.orderedNext = slot.orderedNext;
+                }
+                if (slot == lastAdded) {
+                    lastAdded = prev;
+                }
+
                 slot.wasDeleted = true;
                 slot.value = null;
                 slot.name = null;
@@ -2761,26 +2784,46 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return indexOrHash & (tableSize - 1);
     }
 
-    // Must be inside synchronized (this)
-    private static void copyTable(Slot[] slots, Slot[] newSlots, int count)
+    private synchronized void swapTable(Slot[] newSlots, int count)
     {
         if (count == 0) throw Kit.codeBug();
 
+        // We must clone the existing slots since we may need to change
+        // the slots' next fields and unsynchronized getSlot() may
+        // read-access slots while we're at it. See bug 688458.
         int tableSize = newSlots.length;
-        int i = slots.length;
-        for (;;) {
-            --i;
-            Slot slot = slots[i];
-            while (slot != null) {
-                int insertPos = getSlotIndex(tableSize, slot.indexOrHash);
-                Slot next = slot.next;
-                addKnownAbsentSlot(newSlots, slot, insertPos);
-                slot.next = null;
-                slot = next;
-                if (--count == 0)
-                    return;
+        Slot slot = firstAdded, firstSlot = null, lastSlot = null;
+
+        while (slot != null) {
+            if (slot.wasDeleted) {
+                slot = slot.orderedNext;
+                continue;
             }
+
+            Slot newSlot = slot.clone();
+            newSlot.next = newSlot.orderedNext = null;
+
+            if (firstSlot == null) {
+                firstSlot = newSlot;
+            }
+
+            int insertPos = getSlotIndex(tableSize, newSlot.indexOrHash);
+            addKnownAbsentSlot(newSlots, newSlot, insertPos);
+
+            if (lastSlot != null) {
+                lastSlot.orderedNext = newSlot;
+            }
+            lastSlot = newSlot;
+
+            --count;
+            slot = slot.orderedNext;
         }
+
+        if (count != 0) throw Kit.codeBug("Wrong property count");
+
+        firstAdded = firstSlot;
+        lastAdded = lastSlot;
+        slots = newSlots;
     }
 
     /**
@@ -2810,33 +2853,26 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         int c = 0;
         Slot slot = firstAdded;
         while (slot != null && slot.wasDeleted) {
-            // as long as we're traversing the order-added linked list,
-            // remove deleted slots
+            // we used to removed deleted slots from the linked list here
+            // but this is now done in removeSlot(). There may still be deleted
+            // slots (e.g. from slot conversion) but we don't want to mess
+            // with the list in unsynchronized code.
             slot = slot.orderedNext;
         }
-        firstAdded = slot;
-        if (slot != null) {
-            for (;;) {
-                if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
-                    if (c == 0)
-                        a = new Object[s.length];
-                    a[c++] = slot.name != null
-                                 ? slot.name
-                                 : Integer.valueOf(slot.indexOrHash);
-                }
-                Slot next = slot.orderedNext;
-                while (next != null && next.wasDeleted) {
-                    // remove deleted slots
-                    next = next.orderedNext;
-                }
-                slot.orderedNext = next;
-                if (next == null) {
-                    break;
-                }
-                slot = next;
+        while (slot != null) {
+            if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
+                if (c == 0)
+                    a = new Object[s.length];
+                a[c++] = slot.name != null
+                        ? slot.name
+                        : Integer.valueOf(slot.indexOrHash);
+            }
+            slot = slot.orderedNext;
+            while (slot != null && slot.wasDeleted) {
+                // skip deleted slots, see comment above
+                slot = slot.orderedNext;
             }
         }
-        lastAdded = slot;
         if (c == a.length)
             return a;
         Object[] result = new Object[c];
