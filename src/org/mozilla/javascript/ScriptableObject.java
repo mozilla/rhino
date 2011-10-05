@@ -250,15 +250,16 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     }
 
-    protected static ScriptableObject buildDataDescriptor(Scriptable scope, Object value, int attributes) {
-      ScriptableObject desc = new NativeObject();
-      ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-
-      desc.defineProperty("value",        value, EMPTY);
-      desc.defineProperty("writable",     (attributes & READONLY) == 0, EMPTY);
-      desc.defineProperty("enumerable",   (attributes & DONTENUM) == 0, EMPTY);
-      desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
-      return desc;
+    protected static ScriptableObject buildDataDescriptor(Scriptable scope,
+                                                          Object value,
+                                                          int attributes) {
+        ScriptableObject desc = new NativeObject();
+        ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
+        desc.defineProperty("value", value, EMPTY);
+        desc.defineProperty("writable", (attributes & READONLY) == 0, EMPTY);
+        desc.defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY);
+        desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
+        return desc;
     }
 
     private static final class GetterSlot extends Slot
@@ -274,13 +275,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
 
         @Override
-        ScriptableObject getPropertyDescriptor(Context cx, Scriptable parent) {
-          ScriptableObject desc = super.getPropertyDescriptor(cx, parent);
-          desc.delete("value");
-          desc.delete("writable");
-          if (getter != null) desc.defineProperty("get", getter, EMPTY);
-          if (setter != null) desc.defineProperty("set", setter, EMPTY);
-          return desc;
+        ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
+            int attr = getAttributes();
+            ScriptableObject desc = new NativeObject();
+            ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
+            desc.defineProperty("enumerable", (attr & DONTENUM) == 0, EMPTY);
+            desc.defineProperty("configurable", (attr & PERMANENT) == 0, EMPTY);
+            if (getter != null) desc.defineProperty("get", getter, EMPTY);
+            if (setter != null) desc.defineProperty("set", setter, EMPTY);
+            return desc;
         }
 
         @Override
@@ -1733,30 +1736,26 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         defineOwnProperty(cx, id, desc, true);
     }
 
-    private void defineOwnProperty(Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+    private void defineOwnProperty(Context cx, Object id, ScriptableObject desc,
+                                   boolean checkValid) {
         Slot slot = getSlot(cx, id, SLOT_QUERY);
 
         if (checkValid)
             checkValidPropertyDefinition(slot, desc);
 
+        boolean isAccessor = isAccessorDescriptor(desc);
         final int attributes;
+
         if (slot == null) { // new slot
-            slot = getSlot(cx, id, SLOT_MODIFY);
+            slot = getSlot(cx, id, isAccessor ? SLOT_MODIFY_GETTER_SETTER : SLOT_MODIFY);
             attributes = applyDescriptorToAttributeBitset(DONTENUM|READONLY|PERMANENT, desc);
         } else {
             attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
         }
 
-        defineOwnProperty(cx, slot, desc, attributes);
-    }
-
-    private void defineOwnProperty(Context cx, Slot slot, ScriptableObject desc, int attributes) {
-        String name = slot.name;
-        int index = slot.indexOrHash;
-
-        if (isAccessorDescriptor(desc)) {
+        if (isAccessor) {
             if ( !(slot instanceof GetterSlot) ) {
-                slot = getSlot(cx, (name != null ? name : index), SLOT_MODIFY_GETTER_SETTER);
+                slot = getSlot(cx, id, SLOT_MODIFY_GETTER_SETTER);
             }
 
             GetterSlot gslot = (GetterSlot) slot;
@@ -1774,7 +1773,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             gslot.setAttributes(attributes);
         } else {
             if (slot instanceof GetterSlot && isDataDescriptor(desc)) {
-                slot = getSlot(cx, (name != null ? name : index), SLOT_CONVERT_ACCESSOR_TO_DATA);
+                slot = getSlot(cx, id, SLOT_CONVERT_ACCESSOR_TO_DATA);
             }
 
             Object value = getProperty(desc, "value");
@@ -2959,15 +2958,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     protected Slot getSlot(Context cx, Object id, int accessType) {
-        final Slot slot;
         String name = ScriptRuntime.toStringIdOrIndex(cx, id);
         if (name == null) {
-            int index = ScriptRuntime.lastIndexResult(cx);
-            slot = getSlot(null, index, accessType);
+            return getSlot(null, ScriptRuntime.lastIndexResult(cx), accessType);
         } else {
-            slot = getSlot(name, 0, accessType);
+            return getSlot(name, 0, accessType);
         }
-        return slot;
     }
 
     // Partial implementation of java.util.Map. See NativeObject for
