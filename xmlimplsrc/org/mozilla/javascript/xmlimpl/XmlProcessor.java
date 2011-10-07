@@ -39,13 +39,14 @@ package org.mozilla.javascript.xmlimpl;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import org.mozilla.javascript.*;
 
@@ -66,8 +67,7 @@ class XmlProcessor implements Serializable {
 
     private transient javax.xml.parsers.DocumentBuilderFactory dom;
     private transient javax.xml.transform.TransformerFactory xform;
-    private transient ConcurrentLinkedQueue< DocumentBuilder > documentBuilderPool;
-
+    private transient LinkedBlockingDeque<DocumentBuilder> documentBuilderPool;
     private RhinoSAXErrorHandler errorHandler = new RhinoSAXErrorHandler();
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
@@ -76,7 +76,8 @@ class XmlProcessor implements Serializable {
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
-        this.documentBuilderPool = new ConcurrentLinkedQueue< DocumentBuilder >();
+        int poolSize = Runtime.getRuntime().availableProcessors() * 2;
+        this.documentBuilderPool = new LinkedBlockingDeque<DocumentBuilder>(poolSize);
     }
 
     private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
@@ -107,7 +108,8 @@ class XmlProcessor implements Serializable {
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
-        this.documentBuilderPool = new ConcurrentLinkedQueue< DocumentBuilder >();
+        int poolSize = Runtime.getRuntime().availableProcessors() * 2;
+        this.documentBuilderPool = new LinkedBlockingDeque<DocumentBuilder>(poolSize);
     }
 
     final void setDefault() {
@@ -181,27 +183,23 @@ class XmlProcessor implements Serializable {
 
     // Get from pool, or create one without locking, if needed.
     private DocumentBuilder getDocumentBuilderFromPool()
-        throws javax.xml.parsers.ParserConfigurationException
-    {
-        DocumentBuilder result = null;
-        result = documentBuilderPool.poll();
-        if (result == null){
-            javax.xml.parsers.DocumentBuilderFactory factory = getDomFactory();
-            result = factory.newDocumentBuilder();
+            throws ParserConfigurationException {
+        DocumentBuilder builder = documentBuilderPool.pollFirst();
+        if (builder == null){
+            builder = getDomFactory().newDocumentBuilder();
         }
-        result.setErrorHandler(errorHandler);
-        return result;
+        builder.setErrorHandler(errorHandler);
+        return builder;
     }
 
-    // Insert into pool, if resetable. Unlimited capacity - will never 
-    // be more than the maximum used concurrently.
+    // Insert into pool, if resettable. Pool capacity is limited to
+    // number of processors * 2.
     private void returnDocumentBuilderToPool(DocumentBuilder db) {
         try {
             db.reset();
-            documentBuilderPool.offer(db);
+            documentBuilderPool.offerFirst(db);
         } catch (UnsupportedOperationException e) {
-            // document builders that don't support reset() can't
-            // be pooled
+            // document builders that don't support reset() can't be pooled
         }
     }
 
