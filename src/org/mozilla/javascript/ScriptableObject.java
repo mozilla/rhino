@@ -320,7 +320,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         args = new Object[] { start, actualArg };
                     }
                     nativeSetter.invoke(setterThis, args);
-                } else {
+                } else if (setter instanceof Function) {
                     Function f = (Function)setter;
                     f.call(cx, f.getParentScope(), start,
                            new Object[] { value });
@@ -345,7 +345,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         args = new Object[] { start };
                     }
                     return nativeGetter.invoke(getterThis, args);
-                } else {
+                } else if (getter instanceof Function) {
                     Function f = (Function)getter;
                     Context cx = Context.getContext();
                     return f.call(cx, f.getParentScope(), start,
