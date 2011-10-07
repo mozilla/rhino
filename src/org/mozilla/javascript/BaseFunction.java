@@ -159,6 +159,10 @@ public class BaseFunction extends IdScriptableObject implements Function
             attr = DONTENUM | READONLY | PERMANENT;
             break;
           case Id_prototype:
+            // some functions such as built-ins don't have a prototype property
+            if (!hasPrototypeProperty()) {
+                return 0;
+            }
             attr = prototypePropertyAttributes;
             break;
           case Id_arguments:
@@ -441,28 +445,34 @@ public class BaseFunction extends IdScriptableObject implements Function
 
     public int getLength() { return 0; }
 
-    public String getFunctionName()
-    {
+    public String getFunctionName() {
         return "";
     }
 
-    final Object getPrototypeProperty() {
+    protected boolean hasPrototypeProperty() {
+        return prototypeProperty != null || this instanceof NativeFunction;
+    }
+
+    protected Object getPrototypeProperty() {
         Object result = prototypeProperty;
         if (result == null) {
-            synchronized (this) {
-                result = prototypeProperty;
-                if (result == null) {
-                    setupDefaultPrototype();
-                    result = prototypeProperty;
-                }
+            // only create default prototype on native JavaScript functions,
+            // not on built-in functions, java methods, host objects etc.
+            if (this instanceof NativeFunction) {
+                result = setupDefaultPrototype();
+            } else {
+                result = Undefined.instance;
             }
+        } else if (result == UniqueTag.NULL_VALUE) {
+            result = null;
         }
-        else if (result == UniqueTag.NULL_VALUE) { result = null; }
         return result;
     }
 
-    private void setupDefaultPrototype()
-    {
+    private synchronized Object setupDefaultPrototype() {
+        if (prototypeProperty != null) {
+            return prototypeProperty;
+        }
         NativeObject obj = new NativeObject();
         final int attr = ScriptableObject.DONTENUM;
         obj.defineProperty("constructor", this, attr);
@@ -475,6 +485,7 @@ public class BaseFunction extends IdScriptableObject implements Function
             // not the one we just made, it must remain grounded
             obj.setPrototype(proto);
         }
+        return obj;
     }
 
     private Object getArguments()
