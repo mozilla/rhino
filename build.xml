@@ -166,14 +166,20 @@
          compress="${jar-compression}">
       <include name="org/mozilla/javascript/*.class"/>
 
+      <include name="org/mozilla/javascript/json/*.class"/>
+      <include name="org/mozilla/javascript/ast/*.class"/>
+      <include name="org/mozilla/javascript/annotations/*.class"/>
+
       <include name="org/mozilla/javascript/debug/*.class"/>
       <include name="org/mozilla/javascript/resources/*.properties"/>
       <include name="org/mozilla/javascript/xml/*.class"/>
       <include name="org/mozilla/javascript/continuations/*.class"/>
       <include name="org/mozilla/javascript/jdk13/*.class"/>
+      <include name="org/mozilla/javascript/jdk15/*.class"/>
 
       <!-- exclude classes that defines only int constants -->
-      <exclude name="org/mozilla/javascript/Token.class"/>
+      <!-- turns out to be required by ast.UnaryExpression.setOperator -->
+      <!-- <exclude name="org/mozilla/javascript/Token.class"/> -->
 
       <!-- exclude classes that uses class generation library -->
       <exclude name="org/mozilla/javascript/JavaAdapter*.class"/>
