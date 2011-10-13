@@ -333,7 +333,6 @@ public class Parser
                 lineno++;
                 sawEOL = true;
             } else {
-                sawEOL = false;
                 if (compilerEnv.isRecordingComments()) {
                     recordComment(lineno);
                 }
