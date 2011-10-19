@@ -1307,6 +1307,13 @@ interruptedCheck:
         public int getLineNumber() {
             return lineNumber;
         }
+        
+        /**
+         * Returns the current function name.
+         */
+        public String getFunctionName() {
+            return fsource.name();
+        }
     }
 
     /**
