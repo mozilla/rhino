@@ -58,8 +58,8 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         obj.setParentScope(scope);
         obj.setPrototype(ScriptableObject.getObjectPrototype(scope));
 
-        IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_constructor,
-                                         "With", 0, scope);
+        IdFunctionObject ctor = new IdFunctionObject(obj, Id_constructor, "With",
+                                         0, scope);
         ctor.markAsConstructor(obj);
         if (sealed) {
             ctor.sealObject();
@@ -167,10 +167,8 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (f.hasTag(FTAG)) {
-            if (f.methodId() == Id_constructor) {
-                throw Context.reportRuntimeError1("msg.cant.call.indirect", "With");
-            }
+        if (f.methodId() == Id_constructor) {
+            throw Context.reportRuntimeError1("msg.cant.call.indirect", "With");
         }
         throw f.unknown();
     }
@@ -179,7 +177,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     {
         if (functionObj instanceof IdFunctionObject) {
             IdFunctionObject f = (IdFunctionObject)functionObj;
-            return f.hasTag(FTAG) && f.methodId() == Id_constructor;
+            return f.methodId() == Id_constructor;
         }
         return false;
     }
@@ -195,8 +193,6 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         thisObj.setParentScope(scope);
         return thisObj;
     }
-
-    private static final Object FTAG = "With";
 
     private static final int
         Id_constructor = 1;

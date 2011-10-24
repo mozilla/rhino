@@ -59,8 +59,6 @@ class NativeScript extends BaseFunction
 {
     static final long serialVersionUID = -6795101161980121700L;
 
-    private static final Object SCRIPT_TAG = "Script";
-
     static void init(Scriptable scope, boolean sealed)
     {
         NativeScript obj = new NativeScript(null);
@@ -130,16 +128,13 @@ class NativeScript extends BaseFunction
           case Id_compile:     arity=1; s="compile";     break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(SCRIPT_TAG, id, s, arity);
+        initPrototypeMethod(id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(SCRIPT_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         int id = f.methodId();
         switch (id) {
           case Id_constructor: {

@@ -121,16 +121,13 @@ public final class NativeIterator extends IdScriptableObject {
           case Id___iterator__:   arity=1; s=ITERATOR_PROPERTY_NAME; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(ITERATOR_TAG, id, s, arity);
+        initPrototypeMethod(id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(ITERATOR_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         int id = f.methodId();
 
         if (id == Id_constructor) {

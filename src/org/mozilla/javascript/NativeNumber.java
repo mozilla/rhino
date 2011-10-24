@@ -51,8 +51,6 @@ final class NativeNumber extends IdScriptableObject
 {
     static final long serialVersionUID = 3504516769741512101L;
 
-    private static final Object NUMBER_TAG = "Number";
-
     private static final int MAX_PRECISION = 100;
 
     static void init(Scriptable scope, boolean sealed)
@@ -112,16 +110,13 @@ final class NativeNumber extends IdScriptableObject
           case Id_toPrecision:    arity=1; s="toPrecision";    break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(NUMBER_TAG, id, s, arity);
+        initPrototypeMethod(id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(NUMBER_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         int id = f.methodId();
         if (id == Id_constructor) {
             double val = (args.length >= 1)

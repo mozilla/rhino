@@ -635,11 +635,10 @@ public abstract class IdScriptableObject extends ScriptableObject
         }
     }
 
-    public final void initPrototypeMethod(Object tag, int id, String name,
-                                          int arity)
+    protected final void initPrototypeMethod(int id, String name, int arity)
     {
         Scriptable scope = ScriptableObject.getTopLevelScope(this);
-        IdFunctionObject f = newIdFunction(tag, id, name, arity, scope);
+        IdFunctionObject f = newIdFunction(id, name, arity, scope);
         prototypeValues.initValue(id, name, f, DONTENUM);
     }
 
@@ -674,11 +673,11 @@ public abstract class IdScriptableObject extends ScriptableObject
     {
     }
 
-    protected void addIdFunctionProperty(Scriptable obj, Object tag, int id,
-                                         String name, int arity)
+    protected void addIdFunctionProperty(Scriptable obj, int id, String name,
+                                         int arity)
     {
         Scriptable scope = ScriptableObject.getTopLevelScope(obj);
-        IdFunctionObject f = newIdFunction(tag, id, name, arity, scope);
+        IdFunctionObject f = newIdFunction(id, name, arity, scope);
         f.addAsProperty(obj);
     }
 
@@ -709,11 +708,10 @@ public abstract class IdScriptableObject extends ScriptableObject
                                        f.getFunctionName());
     }
 
-    private IdFunctionObject newIdFunction(Object tag, int id, String name,
-                                           int arity, Scriptable scope)
+    IdFunctionObject newIdFunction(int id, String name, int arity,
+                                           Scriptable scope)
     {
-        IdFunctionObject f = new IdFunctionObject(this, tag, id, name, arity,
-                                                  scope);
+        IdFunctionObject f = new IdFunctionObject(this, id, name, arity, scope);
         if (isSealed()) { f.sealObject(); }
         return f;
     }

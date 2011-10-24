@@ -118,8 +118,8 @@ public class NativeJavaTopPackage
         }
 
         // getClass implementation
-        IdFunctionObject getClass = new IdFunctionObject(top, FTAG, Id_getClass,
-                                                         "getClass", 1, scope);
+        IdFunctionObject getClass = new IdFunctionObject(top, Id_getClass, "getClass",
+                                                         1, scope);
 
         // We want to get a real alias, and not a distinct JavaPackage
         // with the same packageName, so that we share classes and top
@@ -148,10 +148,8 @@ public class NativeJavaTopPackage
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (f.hasTag(FTAG)) {
-            if (f.methodId() == Id_getClass) {
-                return js_getClass(cx, scope, args);
-            }
+        if (f.methodId() == Id_getClass) {
+            return js_getClass(cx, scope, args);
         }
         throw f.unknown();
     }
@@ -182,7 +180,6 @@ public class NativeJavaTopPackage
         throw Context.reportRuntimeError0("msg.not.java.obj");
     }
 
-    private static final Object FTAG = "JavaTopPackage";
     private static final int Id_getClass = 1;
 }
 

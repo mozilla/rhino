@@ -58,8 +58,6 @@ final class NativeJSON extends IdScriptableObject
 {
     static final long serialVersionUID = -4567599697595654984L;
 
-    private static final Object JSON_TAG = "JSON";
-
     private static final int MAX_STRINGIFY_GAP_LENGTH = 10;
 
     static void init(Scriptable scope, boolean sealed)
@@ -92,7 +90,7 @@ final class NativeJSON extends IdScriptableObject
               case Id_stringify: arity = 3; name = "stringify"; break;
               default: throw new IllegalStateException(String.valueOf(id));
             }
-            initPrototypeMethod(JSON_TAG, id, name, arity);
+            initPrototypeMethod(id, name, arity);
         } else {
             throw new IllegalStateException(String.valueOf(id));
         }
@@ -102,9 +100,6 @@ final class NativeJSON extends IdScriptableObject
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(JSON_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         int methodId = f.methodId();
         switch (methodId) {
             case Id_toSource:

@@ -49,8 +49,6 @@ final class NativeBoolean extends IdScriptableObject
 {
     static final long serialVersionUID = -3716996899943880933L;
 
-    private static final Object BOOLEAN_TAG = "Boolean";
-
     static void init(Scriptable scope, boolean sealed)
     {
         NativeBoolean obj = new NativeBoolean(false);
@@ -89,16 +87,13 @@ final class NativeBoolean extends IdScriptableObject
           case Id_valueOf:     arity=0; s="valueOf";     break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(BOOLEAN_TAG, id, s, arity);
+        initPrototypeMethod(id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(BOOLEAN_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         int id = f.methodId();
 
         if (id == Id_constructor) {

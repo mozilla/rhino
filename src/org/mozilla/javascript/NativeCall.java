@@ -51,8 +51,6 @@ public final class NativeCall extends IdScriptableObject
 {
     static final long serialVersionUID = -7471457301304454454L;
 
-    private static final Object CALL_TAG = "Call";
-
     static void init(Scriptable scope, boolean sealed)
     {
         NativeCall obj = new NativeCall();
@@ -123,16 +121,13 @@ public final class NativeCall extends IdScriptableObject
         } else {
             throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(CALL_TAG, id, s, arity);
+        initPrototypeMethod(id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(CALL_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         int id = f.methodId();
         if (id == Id_constructor) {
             if (thisObj != null) {

@@ -59,8 +59,6 @@ final class NativeString extends IdScriptableObject
 {
     static final long serialVersionUID = 920268368584188687L;
 
-    private static final Object STRING_TAG = "String";
-
     static void init(Scriptable scope, boolean sealed)
     {
         NativeString obj = new NativeString("");
@@ -114,42 +112,42 @@ final class NativeString extends IdScriptableObject
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode,
-                "fromCharCode", 1);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_charAt, "charAt", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_charCodeAt, "charCodeAt", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_indexOf, "indexOf", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_lastIndexOf, "lastIndexOf", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_split, "split", 3);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_substring, "substring", 3);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_toLowerCase, "toLowerCase", 1);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_toUpperCase, "toUpperCase", 1);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_substr, "substr", 3);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_concat, "concat", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_slice, "slice", 3);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_equalsIgnoreCase, "equalsIgnoreCase", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_match, "match", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_search, "search", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_replace, "replace", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_localeCompare, "localeCompare", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1);
+        addIdFunctionProperty(ctor, ConstructorId_fromCharCode, "fromCharCode",
+                1);
+        addIdFunctionProperty(ctor, ConstructorId_charAt,
+                "charAt", 2);
+        addIdFunctionProperty(ctor, ConstructorId_charCodeAt,
+                "charCodeAt", 2);
+        addIdFunctionProperty(ctor, ConstructorId_indexOf,
+                "indexOf", 2);
+        addIdFunctionProperty(ctor, ConstructorId_lastIndexOf,
+                "lastIndexOf", 2);
+        addIdFunctionProperty(ctor, ConstructorId_split,
+                "split", 3);
+        addIdFunctionProperty(ctor, ConstructorId_substring,
+                "substring", 3);
+        addIdFunctionProperty(ctor, ConstructorId_toLowerCase,
+                "toLowerCase", 1);
+        addIdFunctionProperty(ctor, ConstructorId_toUpperCase,
+                "toUpperCase", 1);
+        addIdFunctionProperty(ctor, ConstructorId_substr,
+                "substr", 3);
+        addIdFunctionProperty(ctor, ConstructorId_concat,
+                "concat", 2);
+        addIdFunctionProperty(ctor, ConstructorId_slice,
+                "slice", 3);
+        addIdFunctionProperty(ctor, ConstructorId_equalsIgnoreCase,
+                "equalsIgnoreCase", 2);
+        addIdFunctionProperty(ctor, ConstructorId_match,
+                "match", 2);
+        addIdFunctionProperty(ctor, ConstructorId_search,
+                "search", 2);
+        addIdFunctionProperty(ctor, ConstructorId_replace,
+                "replace", 2);
+        addIdFunctionProperty(ctor, ConstructorId_localeCompare,
+                "localeCompare", 2);
+        addIdFunctionProperty(ctor, ConstructorId_toLocaleLowerCase,
+                "toLocaleLowerCase", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -198,16 +196,13 @@ final class NativeString extends IdScriptableObject
           case Id_trim:              arity=0; s="trim";              break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(STRING_TAG, id, s, arity);
+        initPrototypeMethod(id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(STRING_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         int id = f.methodId();
       again:
         for(;;) {

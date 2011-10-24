@@ -51,8 +51,6 @@ public class BaseFunction extends IdScriptableObject implements Function
 
     static final long serialVersionUID = 5311394446546053859L;
 
-    private static final Object FUNCTION_TAG = "Function";
-
     static void init(Scriptable scope, boolean sealed)
     {
         BaseFunction obj = new BaseFunction();
@@ -248,20 +246,18 @@ public class BaseFunction extends IdScriptableObject implements Function
           case Id_bind:        arity=1; s="bind";        break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(FUNCTION_TAG, id, s, arity);
+        initPrototypeMethod(id, s, arity);
     }
 
     static boolean isApply(IdFunctionObject f) {
-        return f.hasTag(FUNCTION_TAG) && f.methodId() == Id_apply;
+        return f.methodId() == Id_apply;
     }
 
     static boolean isApplyOrCall(IdFunctionObject f) {
-        if(f.hasTag(FUNCTION_TAG)) {
-            switch(f.methodId()) {
-                case Id_apply:
-                case Id_call:
-                    return true;
-            }
+        switch(f.methodId()) {
+            case Id_apply:
+            case Id_call:
+                return true;
         }
         return false;
     }
@@ -270,9 +266,6 @@ public class BaseFunction extends IdScriptableObject implements Function
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(FUNCTION_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         int id = f.methodId();
         switch (id) {
           case Id_constructor:

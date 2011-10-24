@@ -49,8 +49,6 @@ final class NativeMath extends IdScriptableObject
 {
     static final long serialVersionUID = -8838847185801131569L;
 
-    private static final Object MATH_TAG = "Math";
-
     static void init(Scriptable scope, boolean sealed)
     {
         NativeMath obj = new NativeMath();
@@ -97,7 +95,7 @@ final class NativeMath extends IdScriptableObject
               case Id_tan:      arity = 1; name = "tan";      break;
               default: throw new IllegalStateException(String.valueOf(id));
             }
-            initPrototypeMethod(MATH_TAG, id, name, arity);
+            initPrototypeMethod(id, name, arity);
         } else {
             String name;
             double x;
@@ -121,9 +119,6 @@ final class NativeMath extends IdScriptableObject
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(MATH_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
         double x;
         int methodId = f.methodId();
         switch (methodId) {
