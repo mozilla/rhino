@@ -45,19 +45,20 @@ public class IdFunctionObject extends BaseFunction
 
     static final long serialVersionUID = -5332312783643935019L;
 
-    public IdFunctionObject(IdFunctionCall idcall, int id, int arity)
+    public IdFunctionObject(IdFunctionCall idcall, Object tag, int id, int arity)
     {
         if (arity < 0)
             throw new IllegalArgumentException();
 
         this.idcall = idcall;
+        this.tag = tag;
         this.methodId = id;
         this.arity = arity;
         if (arity < 0) throw new IllegalArgumentException();
     }
 
-    public IdFunctionObject(IdFunctionCall idcall, int id, String name,
-                            int arity, Scriptable scope)
+    public IdFunctionObject(IdFunctionCall idcall, Object tag, int id,
+                            String name, int arity, Scriptable scope)
     {
         super(scope, null);
 
@@ -67,6 +68,7 @@ public class IdFunctionObject extends BaseFunction
             throw new IllegalArgumentException();
 
         this.idcall = idcall;
+        this.tag = tag;
         this.methodId = id;
         this.arity = arity;
         this.functionName = name;
@@ -78,6 +80,11 @@ public class IdFunctionObject extends BaseFunction
         if (scope == null) throw new IllegalArgumentException();
         this.functionName = name;
         setParentScope(scope);
+    }
+
+    public final boolean hasTag(Object tag)
+    {
+        return this.tag == tag;
     }
 
     public final int methodId()
@@ -181,6 +188,7 @@ public class IdFunctionObject extends BaseFunction
     }
 
     private final IdFunctionCall idcall;
+    private final Object tag;
     private final int methodId;
     private int arity;
     private boolean useCallAsConstructor;

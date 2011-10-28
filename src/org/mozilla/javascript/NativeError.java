@@ -50,6 +50,8 @@ final class NativeError extends IdScriptableObject
 {
     static final long serialVersionUID = -5338413581437645187L;
 
+    private static final Object ERROR_TAG = "Error";
+
     private RhinoException stackProvider;
 
     static void init(Scriptable scope, boolean sealed)
@@ -112,13 +114,16 @@ final class NativeError extends IdScriptableObject
           case Id_toSource:    arity=0; s="toSource";    break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(id, s, arity);
+        initPrototypeMethod(ERROR_TAG, id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
+        if (!f.hasTag(ERROR_TAG)) {
+            return super.execIdCall(f, cx, scope, thisObj, args);
+        }
         int id = f.methodId();
         switch (id) {
           case Id_constructor:

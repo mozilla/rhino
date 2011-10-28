@@ -58,6 +58,8 @@ final class NativeDate extends IdScriptableObject
 {
     static final long serialVersionUID = -8307438915861678966L;
 
+    private static final Object DATE_TAG = "Date";
+
     private static final String js_NaN_date_str = "Invalid Date";
 
     private static final DateFormat isoFormat;
@@ -107,12 +109,12 @@ final class NativeDate extends IdScriptableObject
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
-        addIdFunctionProperty(ctor, ConstructorId_now, "now",
-                              0);
-        addIdFunctionProperty(ctor, ConstructorId_parse, "parse",
-                              1);
-        addIdFunctionProperty(ctor, ConstructorId_UTC, "UTC",
-                              1);
+        addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_now,
+                              "now", 0);
+        addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_parse,
+                              "parse", 1);
+        addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_UTC,
+                              "UTC", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -171,13 +173,16 @@ final class NativeDate extends IdScriptableObject
           case Id_toJSON:             arity=1; s="toJSON";             break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(id, s, arity);
+        initPrototypeMethod(DATE_TAG, id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
+        if (!f.hasTag(DATE_TAG)) {
+            return super.execIdCall(f, cx, scope, thisObj, args);
+        }
         int id = f.methodId();
         switch (id) {
           case ConstructorId_now:

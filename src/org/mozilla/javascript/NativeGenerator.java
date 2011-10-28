@@ -146,13 +146,16 @@ public final class NativeGenerator extends IdScriptableObject {
           case Id___iterator__:   arity=1; s="__iterator__";   break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(id, s, arity);
+        initPrototypeMethod(GENERATOR_TAG, id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
+        if (!f.hasTag(GENERATOR_TAG)) {
+            return super.execIdCall(f, cx, scope, thisObj, args);
+        }
         int id = f.methodId();
 
         if (!(thisObj instanceof NativeGenerator))

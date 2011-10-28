@@ -75,6 +75,8 @@ package org.mozilla.javascript;
 public class ImporterTopLevel extends TopLevel {
     static final long serialVersionUID = -9095380847465315412L;
 
+    private static final Object IMPORTER_TAG = "Importer";
+
     public ImporterTopLevel() { }
 
     public ImporterTopLevel(Context cx) {
@@ -250,13 +252,16 @@ public class ImporterTopLevel extends TopLevel {
           case Id_importPackage: arity=1; s="importPackage"; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(id, s, arity);
+        initPrototypeMethod(IMPORTER_TAG, id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
+        if (!f.hasTag(IMPORTER_TAG)) {
+            return super.execIdCall(f, cx, scope, thisObj, args);
+        }
         int id = f.methodId();
         switch (id) {
           case Id_constructor:

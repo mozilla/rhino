@@ -70,6 +70,8 @@ public class NativeArray extends IdScriptableObject implements List
      * equivalent of "new Array" in the current scope, except that it
      * always gets at least an object back, even when Array == null.
      */
+
+    private static final Object ARRAY_TAG = "Array";
     private static final Integer NEGATIVE_ONE = Integer.valueOf(-1);
 
     static void init(Scriptable scope, boolean sealed)
@@ -159,46 +161,46 @@ public class NativeArray extends IdScriptableObject implements List
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
-        addIdFunctionProperty(ctor, ConstructorId_join, "join",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_reverse, "reverse",
-                0);
-        addIdFunctionProperty(ctor, ConstructorId_sort, "sort",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_push, "push",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_pop, "pop",
-                0);
-        addIdFunctionProperty(ctor, ConstructorId_shift, "shift",
-                0);
-        addIdFunctionProperty(ctor, ConstructorId_unshift, "unshift",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_splice, "splice",
-                2);
-        addIdFunctionProperty(ctor, ConstructorId_concat, "concat",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_slice, "slice",
-                2);
-        addIdFunctionProperty(ctor, ConstructorId_indexOf, "indexOf",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_lastIndexOf, "lastIndexOf",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_every, "every",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_filter, "filter",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_forEach, "forEach",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_map, "map",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_some, "some",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_reduce, "reduce",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_reduceRight, "reduceRight",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_isArray, "isArray",
-                1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_join,
+                "join", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reverse,
+                "reverse", 0);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_sort,
+                "sort", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_push,
+                "push", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_pop,
+                "pop", 0);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_shift,
+                "shift", 0);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_unshift,
+                "unshift", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_splice,
+                "splice", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_concat,
+                "concat", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_slice,
+                "slice", 2);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_indexOf,
+                "indexOf", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_lastIndexOf,
+                "lastIndexOf", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_every,
+                "every", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_filter,
+                "filter", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_forEach,
+                "forEach", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_map,
+                "map", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some,
+                "some", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce,
+                "reduce", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight,
+                "reduceRight", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray,
+                "isArray", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -233,13 +235,16 @@ public class NativeArray extends IdScriptableObject implements List
           case Id_reduceRight:    arity=1; s="reduceRight";    break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(id, s, arity);
+        initPrototypeMethod(ARRAY_TAG, id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
+        if (!f.hasTag(ARRAY_TAG)) {
+            return super.execIdCall(f, cx, scope, thisObj, args);
+        }
         int id = f.methodId();
       again:
         for (;;) {

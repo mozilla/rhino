@@ -110,8 +110,8 @@ public class NativeGlobal implements Serializable, IdFunctionCall
               default:
                   throw Kit.codeBug();
             }
-            IdFunctionObject f = new IdFunctionObject(obj, id, name, arity,
-                                                      scope);
+            IdFunctionObject f = new IdFunctionObject(obj, FTAG, id, name,
+                                                      arity, scope);
             if (sealed) {
                 f.sealObject();
             }
@@ -152,9 +152,9 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                                                   ScriptRuntime.emptyArgs);
             errorProto.put("name", errorProto, name);
             errorProto.put("message", errorProto, "");
-            IdFunctionObject ctor = new IdFunctionObject(obj, Id_new_CommonError,
-                                                         name,
-                                                         1, scope);
+            IdFunctionObject ctor = new IdFunctionObject(obj, FTAG,
+                                                         Id_new_CommonError,
+                                                         name, 1, scope);
             ctor.markAsConstructor(errorProto);
             errorProto.put("constructor", errorProto, ctor);
             errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
@@ -169,7 +169,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-//        if (f.hasTag(FTAG)) {
+        if (f.hasTag(FTAG)) {
             int methodId = f.methodId();
             switch (methodId) {
                 case Id_decodeURI:
@@ -242,12 +242,9 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     // The implementation of all the ECMA error constructors
                     // (SyntaxError, TypeError, etc.)
                     return NativeError.make(cx, scope, f, args);
-                default : {
-                  throw f.unknown();
-                }
             }
-//        }
-//        throw f.unknown();
+        }
+        throw f.unknown();
     }
 
     /**
@@ -537,7 +534,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     {
         if (functionObj instanceof IdFunctionObject) {
             IdFunctionObject function = (IdFunctionObject)functionObj;
-            if (function.methodId() == Id_eval) {
+            if (function.hasTag(FTAG) && function.methodId() == Id_eval) {
                 return true;
             }
         }
@@ -789,6 +786,8 @@ public class NativeGlobal implements Serializable, IdFunctionCall
         }
         return utf8Length;
     }
+
+    private static final Object FTAG = "Global";
 
     private static final int
         Id_decodeURI           =  1,

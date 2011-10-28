@@ -58,6 +58,8 @@ public class NativeObject extends IdScriptableObject implements Map
 {
     static final long serialVersionUID = -6345305608474346996L;
 
+    private static final Object OBJECT_TAG = "Object";
+
     static void init(Scriptable scope, boolean sealed)
     {
         NativeObject obj = new NativeObject();
@@ -79,32 +81,32 @@ public class NativeObject extends IdScriptableObject implements Map
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
-        addIdFunctionProperty(ctor, ConstructorId_getPrototypeOf, "getPrototypeOf",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_keys, "keys",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_getOwnPropertyNames, "getOwnPropertyNames",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_getOwnPropertyDescriptor, "getOwnPropertyDescriptor",
-                2);
-        addIdFunctionProperty(ctor, ConstructorId_defineProperty, "defineProperty",
-                3);
-        addIdFunctionProperty(ctor, ConstructorId_isExtensible, "isExtensible",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_preventExtensions, "preventExtensions",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_defineProperties, "defineProperties",
-                2);
-        addIdFunctionProperty(ctor, ConstructorId_create, "create",
-                2);
-        addIdFunctionProperty(ctor, ConstructorId_isSealed, "isSealed",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_isFrozen, "isFrozen",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_seal, "seal",
-                1);
-        addIdFunctionProperty(ctor, ConstructorId_freeze, "freeze",
-                1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getPrototypeOf,
+                "getPrototypeOf", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys,
+                "keys", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames,
+                "getOwnPropertyNames", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor,
+                "getOwnPropertyDescriptor", 2);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperty,
+                "defineProperty", 3);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isExtensible,
+                "isExtensible", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_preventExtensions,
+                "preventExtensions", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperties,
+                "defineProperties", 2);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_create,
+                "create", 2);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isSealed,
+                "isSealed", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isFrozen,
+                "isFrozen", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_seal,
+                "seal", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_freeze,
+                "freeze", 1);
         super.fillConstructorProperties(ctor);
     }
 
@@ -133,13 +135,16 @@ public class NativeObject extends IdScriptableObject implements Map
             arity=1; s="__lookupSetter__";     break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(id, s, arity);
+        initPrototypeMethod(OBJECT_TAG, id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
+        if (!f.hasTag(OBJECT_TAG)) {
+            return super.execIdCall(f, cx, scope, thisObj, args);
+        }
         int id = f.methodId();
         switch (id) {
           case Id_constructor: {

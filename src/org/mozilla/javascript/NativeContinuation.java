@@ -43,6 +43,8 @@ public final class NativeContinuation extends IdScriptableObject
 {
     static final long serialVersionUID = 1794167133757605367L;
 
+    private static final Object FTAG = "Continuation";
+
     private Object implementation;
 
     public static void init(Context cx, Scriptable scope, boolean sealed)
@@ -80,7 +82,7 @@ public final class NativeContinuation extends IdScriptableObject
 
     public static boolean isContinuationConstructor(IdFunctionObject f)
     {
-        if (f.methodId() == Id_constructor) {
+        if (f.hasTag(FTAG) && f.methodId() == Id_constructor) {
             return true;
         }
         return false;
@@ -95,13 +97,16 @@ public final class NativeContinuation extends IdScriptableObject
           case Id_constructor: arity=0; s="constructor"; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(id, s, arity);
+        initPrototypeMethod(FTAG, id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
+        if (!f.hasTag(FTAG)) {
+            return super.execIdCall(f, cx, scope, thisObj, args);
+        }
         int id = f.methodId();
         switch (id) {
           case Id_constructor:

@@ -74,6 +74,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
 {
     static final long serialVersionUID = 4965263491464903264L;
 
+    private static final Object REGEXP_TAG = new Object();
+
     public static final int JSREG_GLOB = 0x1;       // 'g' flag: global
     public static final int JSREG_FOLD = 0x2;       // 'i' flag: fold
     public static final int JSREG_MULTILINE = 0x4;  // 'm' flag: multiline
@@ -2525,13 +2527,16 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
           case Id_prefix:   arity=1; s="prefix";   break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(id, s, arity);
+        initPrototypeMethod(REGEXP_TAG, id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
+        if (!f.hasTag(REGEXP_TAG)) {
+            return super.execIdCall(f, cx, scope, thisObj, args);
+        }
         int id = f.methodId();
         switch (id) {
           case Id_compile:

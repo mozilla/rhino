@@ -108,8 +108,8 @@ public final class JavaAdapter implements IdFunctionCall
     public static void init(Context cx, Scriptable scope, boolean sealed)
     {
         JavaAdapter obj = new JavaAdapter();
-        IdFunctionObject ctor = new IdFunctionObject(obj, Id_JavaAdapter, "JavaAdapter",
-                                                     1, scope);
+        IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_JavaAdapter,
+                                                     "JavaAdapter", 1, scope);
         ctor.markAsConstructor(null);
         if (sealed) {
             ctor.sealObject();
@@ -120,8 +120,10 @@ public final class JavaAdapter implements IdFunctionCall
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (f.methodId() == Id_JavaAdapter) {
-            return js_createAdapter(cx, scope, args);
+        if (f.hasTag(FTAG)) {
+            if (f.methodId() == Id_JavaAdapter) {
+                return js_createAdapter(cx, scope, args);
+            }
         }
         throw f.unknown();
     }
@@ -1153,5 +1155,6 @@ public final class JavaAdapter implements IdFunctionCall
         return array;
     }
 
+    private static final Object FTAG = "JavaAdapter";
     private static final int Id_JavaAdapter = 1;
 }
