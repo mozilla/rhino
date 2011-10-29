@@ -489,6 +489,8 @@ if (regexp.anchorCh >= 0) {
             }
             if (!parseTerm(state))
                 return false;
+            if (headTerm == null && state.progLength > 0)
+                headTerm = new RENode(REOP_EMPTY);
             if (headTerm == null)
                 headTerm = state.result;
             else {
