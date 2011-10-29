@@ -352,15 +352,16 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                                   ScriptRuntime.emptyArgs);
                 }
             }
-            if (value instanceof LazilyLoadedCtor) {
-                LazilyLoadedCtor initializer = (LazilyLoadedCtor)value;
+            Object val = this.value;
+            if (val instanceof LazilyLoadedCtor) {
+                LazilyLoadedCtor initializer = (LazilyLoadedCtor)val;
                 try {
                     initializer.init();
                 } finally {
-                    value = initializer.getValue();
+                    this.value = val = initializer.getValue();
                 }
             }
-            return value;
+            return val;
         }
 
     }
@@ -2035,8 +2036,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             // Make sure all LazilyLoadedCtors are initialized before sealing.
             Slot slot = firstAdded;
             while (slot != null) {
-                if (slot.value instanceof LazilyLoadedCtor) {
-                    LazilyLoadedCtor initializer = (LazilyLoadedCtor) slot.value;
+                Object value = slot.value;
+                if (value instanceof LazilyLoadedCtor) {
+                    LazilyLoadedCtor initializer = (LazilyLoadedCtor) value;
                     try {
                         initializer.init();
                     } finally {
@@ -2730,7 +2732,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
         Slot[] slotsLocalRef = slots;
         if (count != 0) {
-            int tableSize = slots.length;
+            int tableSize = slotsLocalRef.length;
             int slotIndex = getSlotIndex(tableSize, indexOrHash);
             Slot prev = slotsLocalRef[slotIndex];
             Slot slot = prev;
@@ -2837,8 +2839,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             slots[insertPos] = slot;
         } else {
             Slot prev = slots[insertPos];
-            while (prev.next != null) {
-                prev = prev.next;
+            Slot next = prev.next;
+            while (next != null) {
+                prev = next;
+                next = prev.next;
             }
             prev.next = slot;
         }
