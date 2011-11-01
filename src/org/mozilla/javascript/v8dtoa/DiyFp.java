@@ -89,7 +89,7 @@ class DiyFp implements Cloneable {
         long tmp = (bd >>> 32) + (ad & kM32) + (bc & kM32);
         // By adding 1U << 31 to tmp we round the final result.
         // Halfway cases will be round up.
-        tmp += 1 << 31;
+        tmp += 1L << 31;
         long result_f = ac + (ad >>> 32) + (bc >>> 32) + (tmp >>> 32);
         e += other.e + 64;
         f = result_f;
