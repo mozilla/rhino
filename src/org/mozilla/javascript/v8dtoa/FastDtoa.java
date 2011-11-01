@@ -27,7 +27,7 @@
 
 package org.mozilla.javascript.v8dtoa;
 
-public class FastDToA {
+public class FastDtoa {
 
     // FastDtoa will produce at most kFastDtoaMaximalLength digits.
     static final int kFastDtoaMaximalLength = 17;
@@ -57,7 +57,7 @@ public class FastDToA {
     // Output: returns true if the buffer is guaranteed to contain the closest
     //    representable number to the input.
     //  Modifies the generated digits in the buffer to approach (round towards) w.
-    static boolean roundWeed(DToABuffer buffer,
+    static boolean roundWeed(FastDtoaBuffer buffer,
                              long distance_too_high_w,
                              long unsafe_interval,
                              long rest,
@@ -319,7 +319,7 @@ public class FastDToA {
     static boolean digitGen(DiyFp low,
                      DiyFp w,
                      DiyFp high,
-                     DToABuffer buffer,
+                     FastDtoaBuffer buffer,
                      int mk) {
         assert(low.e() == w.e() && w.e() == high.e());
         assert(low.f() + 1 <= high.f() - 1);
@@ -429,7 +429,7 @@ public class FastDToA {
     // The last digit will be closest to the actual v. That is, even if several
     // digits might correctly yield 'v' when read again, the closest will be
     // computed.
-    static boolean grisu3(double v, DToABuffer buffer) {
+    static boolean grisu3(double v, FastDtoaBuffer buffer) {
         long bits = Double.doubleToLongBits(v);
         DiyFp w = DoubleHelper.asNormalizedDiyFp(bits);
         // boundary_minus and boundary_plus are the boundaries between v and its
@@ -477,26 +477,23 @@ public class FastDToA {
     }
 
 
-    public static boolean fastDToA(double v,
-                     DToABuffer buffer) {
+    public static boolean dtoa(double v, FastDtoaBuffer buffer) {
         assert(v > 0);
         assert(!Double.isNaN(v));
         assert(!Double.isInfinite(v));
 
+        buffer.reset();
         return grisu3(v, buffer);
     }
 
     // for testing
-    public static String fastDToA(double v) {
+    public static FastDtoaBuffer dtoa(double v) {
         assert(v > 0);
         assert(!Double.isNaN(v));
         assert(!Double.isInfinite(v));
 
-        DToABuffer buffer = new DToABuffer();
-        if (grisu3(v, buffer)) {
-            return new String(buffer.chars, 0, buffer.end);
-        }
-        return null;
+        FastDtoaBuffer buffer = new FastDtoaBuffer();
+        return grisu3(v, buffer) ? buffer : null;
     }
 
 }
