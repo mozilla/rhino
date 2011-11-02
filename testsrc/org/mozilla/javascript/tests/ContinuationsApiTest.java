@@ -42,6 +42,7 @@ import java.io.*;
 
 import junit.framework.TestCase;
 
+import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Function;
@@ -379,6 +380,26 @@ public class ContinuationsApiTest extends TestCase {
       } finally {
           Context.exit();
       }
+  }
+
+  public void testConsStringSerialization() throws IOException, ClassNotFoundException {
+      
+      ConsString r1 = new ConsString("foo", "bar");
+      
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream oos = new ObjectOutputStream(baos);
+      
+      oos.writeObject(r1);
+      
+      oos.flush();
+      
+      ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+      ObjectInputStream ois = new ObjectInputStream(bais);
+      
+      ConsString r2 = (ConsString) ois.readObject();
+      
+      assertEquals("still the same at the other end", r1.toString(), r2.toString());
+      
   }
 
 }

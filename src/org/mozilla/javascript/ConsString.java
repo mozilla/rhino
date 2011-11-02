@@ -38,6 +38,11 @@
 
 package org.mozilla.javascript;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
 /**
  * <p>This class represents a string composed of two components, each of which
  * may be a <code>java.lang.String</code> or another ConsString.</p>
@@ -54,9 +59,11 @@ package org.mozilla.javascript;
  *
  * <p>Both the name and the concept are borrowed from V8.</p>
  */
-public class ConsString implements CharSequence {
+public class ConsString implements CharSequence, Serializable {
 
-    private CharSequence s1, s2;
+    private static final long serialVersionUID = -8432806714471372570L;
+
+    private transient CharSequence s1, s2;
     private final int length;
     private int depth;
 
@@ -76,7 +83,26 @@ public class ConsString implements CharSequence {
             flatten();
         }
     }
+    
+    private void readObject(ObjectInputStream in)
+        throws IOException, ClassNotFoundException
+    {
+        in.defaultReadObject();
+        s1 = (String)in.readObject();
+        s2 = "";
+        //because it might not be accurate since 
+        //the object was flattened in serialization:
+        depth = 0;
+    }
 
+    private void writeObject(ObjectOutputStream out)
+        throws IOException
+    {
+        out.defaultWriteObject();
+        out.writeObject(this.toString());
+    }
+
+    
     public String toString() {
         return depth == 0 ? (String)s1 : flatten();
     }
