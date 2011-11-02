@@ -57,7 +57,7 @@ public class FastDtoa {
     // Output: returns true if the buffer is guaranteed to contain the closest
     //    representable number to the input.
     //  Modifies the generated digits in the buffer to approach (round towards) w.
-    static boolean roundWeed(FastDtoaBuffer buffer,
+    static boolean roundWeed(FastDtoaBuilder buffer,
                              long distance_too_high_w,
                              long unsafe_interval,
                              long rest,
@@ -319,7 +319,7 @@ public class FastDtoa {
     static boolean digitGen(DiyFp low,
                      DiyFp w,
                      DiyFp high,
-                     FastDtoaBuffer buffer,
+                     FastDtoaBuilder buffer,
                      int mk) {
         assert(low.e() == w.e() && w.e() == high.e());
         assert(low.f() + 1 <= high.f() - 1);
@@ -429,7 +429,7 @@ public class FastDtoa {
     // The last digit will be closest to the actual v. That is, even if several
     // digits might correctly yield 'v' when read again, the closest will be
     // computed.
-    static boolean grisu3(double v, FastDtoaBuffer buffer) {
+    static boolean grisu3(double v, FastDtoaBuilder buffer) {
         long bits = Double.doubleToLongBits(v);
         DiyFp w = DoubleHelper.asNormalizedDiyFp(bits);
         // boundary_minus and boundary_plus are the boundaries between v and its
@@ -477,23 +477,26 @@ public class FastDtoa {
     }
 
 
-    public static boolean dtoa(double v, FastDtoaBuffer buffer) {
+    public static boolean dtoa(double v, FastDtoaBuilder buffer) {
         assert(v > 0);
         assert(!Double.isNaN(v));
         assert(!Double.isInfinite(v));
 
-        buffer.reset();
         return grisu3(v, buffer);
     }
 
-    // for testing
-    public static FastDtoaBuffer dtoa(double v) {
-        assert(v > 0);
-        assert(!Double.isNaN(v));
-        assert(!Double.isInfinite(v));
+    public static String numberToString(double v) {
+        FastDtoaBuilder buffer = new FastDtoaBuilder();
+        return numberToString(v, buffer) ? buffer.format() : null;
+    }
 
-        FastDtoaBuffer buffer = new FastDtoaBuffer();
-        return grisu3(v, buffer) ? buffer : null;
+    public static boolean numberToString(double v, FastDtoaBuilder buffer) {
+        buffer.reset();
+        if (v < 0) {
+            buffer.append('-');
+            v = -v;
+        }
+        return dtoa(v, buffer);
     }
 
 }
