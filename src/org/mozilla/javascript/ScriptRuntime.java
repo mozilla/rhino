@@ -848,7 +848,7 @@ public class ScriptRuntime {
         if (base != 10) {
             return DToA.JS_dtobasestr(base, d);
         } else {
-            StringBuffer result = new StringBuffer();
+            StringBuilder result = new StringBuilder();
             DToA.JS_dtostr(result, DToA.DTOSTR_STANDARD, 0, d);
             return result.toString();
         }

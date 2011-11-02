@@ -228,7 +228,7 @@ final class NativeNumber extends IdScriptableObject
                 throw ScriptRuntime.constructError("RangeError", msg);
             }
         }
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         DToA.JS_dtostr(sb, oneArgMode, precision + precisionOffset, val);
         return sb.toString();
     }
