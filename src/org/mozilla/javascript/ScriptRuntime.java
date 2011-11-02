@@ -640,19 +640,6 @@ public class ScriptRuntime {
         // A non-hexadecimal, non-infinity number:
         // just try a normal floating point conversion
         String sub = s.substring(start, end+1);
-        if (MSJVM_BUG_WORKAROUNDS) {
-            // The MS JVM will accept non-conformant strings
-            // rather than throwing a NumberFormatException
-            // as it should.
-            for (int i=sub.length()-1; i >= 0; i--) {
-                char c = sub.charAt(i);
-                if (('0' <= c && c <= '9') || c == '.' ||
-                    c == 'e' || c == 'E'  ||
-                    c == '+' || c == '-')
-                    continue;
-                return NaN;
-            }
-        }
         try {
             return Double.valueOf(sub).doubleValue();
         } catch (NumberFormatException ex) {
@@ -682,9 +669,6 @@ public class ScriptRuntime {
 
         return result;
     }
-
-    /* Work around Microsoft Java VM bugs. */
-    private final static boolean MSJVM_BUG_WORKAROUNDS = true;
 
     public static String escapeString(String s)
     {
