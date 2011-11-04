@@ -3220,33 +3220,47 @@ class BodyCodegen
         for (int i = 0; i != count; ++i) {
             cfw.add(ByteCode.DUP);
             cfw.addPush(i);
-            int childType = child.getType();
-            if (childType == Token.GET) {
-                generateExpression(child.getFirstChild(), node);
-            } else if (childType == Token.SET) {
-                generateExpression(child.getFirstChild(), node);
+            int childType = child2.getType();
+            if (childType == Token.GET || childType == Token.SET) {
+                generateExpression(child2.getFirstChild(), node);
             } else {
-                generateExpression(child, node);
+                generateExpression(child2, node);
             }
             cfw.add(ByteCode.AASTORE);
-            child = child.getNext();
-        }
-        // load array with getterSetter values
-        cfw.addPush(count);
-        cfw.add(ByteCode.NEWARRAY, ByteCode.T_INT);
-        for (int i = 0; i != count; ++i) {
-            cfw.add(ByteCode.DUP);
-            cfw.addPush(i);
-            int childType = child2.getType();
-            if (childType == Token.GET) {
-                cfw.add(ByteCode.ICONST_M1);
-            } else if (childType == Token.SET) {
-                cfw.add(ByteCode.ICONST_1);
-            } else {
-                cfw.add(ByteCode.ICONST_0);
-            }
-            cfw.add(ByteCode.IASTORE);
             child2 = child2.getNext();
+        }
+        // check if object literal actually has any getters or setters
+        boolean hasGetterSetters = false;
+        child2 = child;
+        for (int i = 0; i != count; ++i) {
+            int childType = child2.getType();
+            if (childType == Token.GET || childType == Token.SET) {
+                hasGetterSetters = true;
+                break;
+            }
+            child2 = child2.getNext();
+        }
+        // create getter/setter flag array
+        if (hasGetterSetters) {
+            cfw.addPush(count);
+            cfw.add(ByteCode.NEWARRAY, ByteCode.T_INT);
+            child2 = child;
+            for (int i = 0; i != count; ++i) {
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(i);
+                int childType = child2.getType();
+                if (childType == Token.GET) {
+                    cfw.add(ByteCode.ICONST_M1);
+                } else if (childType == Token.SET) {
+                    cfw.add(ByteCode.ICONST_1);
+                } else {
+                    cfw.add(ByteCode.ICONST_0);
+                }
+                cfw.add(ByteCode.IASTORE);
+                child2 = child2.getNext();
+            }
+        } else {
+            cfw.add(ByteCode.ACONST_NULL);
         }
 
         cfw.addALoad(contextLocal);

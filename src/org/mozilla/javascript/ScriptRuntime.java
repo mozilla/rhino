@@ -3543,11 +3543,9 @@ public class ScriptRuntime {
                                               Object[] propertyValues,
                                               Context cx, Scriptable scope)
     {
-        // This will initialize to all zeros, exactly what we need for old-style
-        // getterSetters values (no getters or setters in the list)
-        int [] getterSetters = new int[propertyIds.length];
-        return newObjectLiteral(propertyIds, propertyValues, getterSetters,
-                cx, scope);
+        // Passing null for getterSetters means no getters or setters
+        return newObjectLiteral(propertyIds, propertyValues, null, cx, scope);
+
     }
 
     public static Scriptable newObjectLiteral(Object[] propertyIds,
@@ -3558,33 +3556,24 @@ public class ScriptRuntime {
         Scriptable object = cx.newObject(scope);
         for (int i = 0, end = propertyIds.length; i != end; ++i) {
             Object id = propertyIds[i];
-            int getterSetter = getterSetters[i];
+            int getterSetter = getterSetters == null ? 0 : getterSetters[i];
             Object value = propertyValues[i];
             if (id instanceof String) {
                 if (getterSetter == 0) {
                     if (isSpecialProperty((String)id)) {
                         specialRef(object, (String)id, cx).set(cx, value);
                     } else {
-                        ScriptableObject.putProperty(object, (String)id, value);
+                        object.put((String)id, object, value);
                     }
                 } else {
-                    Callable fun;
-                    String definer;
-                    if (getterSetter < 0)   // < 0 means get foo() ...
-                        definer = "__defineGetter__";
-                    else
-                        definer = "__defineSetter__";
-                    fun = getPropFunctionAndThis(object, definer, cx);
-                    // Must consume the last scriptable object in cx
-                    lastStoredScriptable(cx);
-                    Object[] outArgs = new Object[2];
-                    outArgs[0] = id;
-                    outArgs[1] = value;
-                    fun.call(cx, scope, object, outArgs);
+                    ScriptableObject so = (ScriptableObject)object;
+                    Callable getterOrSetter = (Callable)value;
+                    boolean isSetter = getterSetter == 1;
+                    so.setGetterOrSetter((String)id, 0, getterOrSetter, isSetter);
                 }
             } else {
                 int index = ((Integer)id).intValue();
-                ScriptableObject.putProperty(object, index, value);
+                object.put(index, object, value);
             }
         }
         return object;
