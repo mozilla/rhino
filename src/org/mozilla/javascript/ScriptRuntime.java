@@ -2221,26 +2221,7 @@ public class ScriptRuntime {
             throw undefCallError(obj, String.valueOf(index));
         }
 
-        Object value;
-        if (thisObj instanceof XMLObject) {
-            Scriptable sobj = thisObj;
-            do {
-                XMLObject xmlObject = (XMLObject)sobj;
-                value = xmlObject.getFunctionProperty(cx, index);
-                if (value != Scriptable.NOT_FOUND) {
-                    break;
-                }
-                sobj = xmlObject.getExtraMethodSource(cx);
-                if (sobj != null) {
-                    thisObj = sobj;
-                    if (!(sobj instanceof XMLObject)) {
-                        value = ScriptableObject.getProperty(sobj, index);
-                    }
-                }
-            } while (sobj instanceof XMLObject);
-        } else {
-            value = ScriptableObject.getProperty(thisObj, index);
-        }
+        Object value = ScriptableObject.getProperty(thisObj, index);
         if (!(value instanceof Callable)) {
             throw notFunctionError(value, elem);
         }
@@ -2288,30 +2269,11 @@ public class ScriptRuntime {
             throw undefCallError(obj, property);
         }
 
-        Object value;
-        if (thisObj instanceof XMLObject) {
-            Scriptable sobj = thisObj;
-            do {
-                XMLObject xmlObject = (XMLObject)sobj;
-                value = xmlObject.getFunctionProperty(cx, property);
-                if (value != Scriptable.NOT_FOUND) {
-                    break;
-                }
-                sobj = xmlObject.getExtraMethodSource(cx);
-                if (sobj != null) {
-                    thisObj = sobj;
-                    if (!(sobj instanceof XMLObject)) {
-                        value = ScriptableObject.getProperty(sobj, property);
-                    }
-                }
-            } while (sobj instanceof XMLObject);
-        } else {
-            value = ScriptableObject.getProperty(thisObj, property);
-            if (!(value instanceof Callable)) {
-                Object noSuchMethod = ScriptableObject.getProperty(thisObj, "__noSuchMethod__");
-                if (noSuchMethod instanceof Callable)
-                    value = new NoSuchMethodShim((Callable)noSuchMethod, property);
-            }
+        Object value = ScriptableObject.getProperty(thisObj, property);
+        if (!(value instanceof Callable)) {
+            Object noSuchMethod = ScriptableObject.getProperty(thisObj, "__noSuchMethod__");
+            if (noSuchMethod instanceof Callable)
+                value = new NoSuchMethodShim((Callable)noSuchMethod, property);
         }
 
         if (!(value instanceof Callable)) {
