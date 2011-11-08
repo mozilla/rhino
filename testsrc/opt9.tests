@@ -964,6 +964,7 @@ ecma_3/RegExp/regress-28686.js
 ecma_3/RegExp/regress-309840.js
 ecma_3/RegExp/regress-312351.js
 ecma_3/RegExp/regress-31316.js
+ecma_3/RegExp/regress-334158.js
 ecma_3/RegExp/regress-346090.js
 ecma_3/RegExp/regress-375715-02.js
 ecma_3/RegExp/regress-375715-03.js
