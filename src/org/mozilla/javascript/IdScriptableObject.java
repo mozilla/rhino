@@ -62,6 +62,9 @@ may override scopeInit or fillConstructorProperties methods.
 public abstract class IdScriptableObject extends ScriptableObject
     implements IdFunctionCall
 {
+
+    static final long serialVersionUID = -8305344746752490335L;
+    
     private transient volatile PrototypeValues prototypeValues;
 
     private static final class PrototypeValues implements Serializable
