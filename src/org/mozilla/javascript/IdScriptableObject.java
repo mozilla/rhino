@@ -62,21 +62,19 @@ may override scopeInit or fillConstructorProperties methods.
 public abstract class IdScriptableObject extends ScriptableObject
     implements IdFunctionCall
 {
-    private transient volatile PrototypeValues prototypeValues;
+    private transient PrototypeValues prototypeValues;
 
     private static final class PrototypeValues implements Serializable
     {
         static final long serialVersionUID = 3038645279153854371L;
 
-        private static final int VALUE_SLOT = 0;
         private static final int NAME_SLOT = 1;
         private static final int SLOT_SPAN = 2;
 
         private IdScriptableObject obj;
         private int maxId;
-        private volatile Object[] valueArray;
-        private volatile short[] attributeArray;
-        private volatile int lastFoundId = 1;
+        private Object[] valueArray;
+        private short[] attributeArray;
 
         // The following helps to avoid creation of valueArray during runtime
         // initialization for common case of "constructor" property
@@ -133,9 +131,9 @@ public abstract class IdScriptableObject extends ScriptableObject
             }
             int index = (id - 1) * SLOT_SPAN;
             synchronized (this) {
-                Object value2 = array[index + VALUE_SLOT];
+                Object value2 = array[index];
                 if (value2 == null) {
-                    array[index + VALUE_SLOT] = value;
+                    array[index] = value;
                     array[index + NAME_SLOT] = name;
                     attributeArray[id - 1] = (short)attributes;
                 } else {
@@ -167,22 +165,7 @@ public abstract class IdScriptableObject extends ScriptableObject
 
         final int findId(String name)
         {
-            Object[] array = valueArray;
-            if (array == null) {
-                return obj.findPrototypeId(name);
-            }
-            int id = lastFoundId;
-            if (name == array[(id - 1) * SLOT_SPAN + NAME_SLOT]) {
-                return id;
-            }
-            id = obj.findPrototypeId(name);
-            if (id != 0) {
-                int nameSlot = (id - 1) * SLOT_SPAN + NAME_SLOT;
-                // Make cache to work!
-                array[nameSlot] = name;
-                lastFoundId = id;
-            }
-            return id;
+            return obj.findPrototypeId(name);
         }
 
         final boolean has(int id)
@@ -192,7 +175,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                 // Not yet initialized, assume all exists
                 return true;
             }
-            int valueSlot = (id  - 1) * SLOT_SPAN + VALUE_SLOT;
+            int valueSlot = (id  - 1) * SLOT_SPAN;
             Object value = array[valueSlot];
             if (value == null) {
                 // The particular entry has not been yet initialized
@@ -220,7 +203,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                     if (value == null) {
                         value = UniqueTag.NULL_VALUE;
                     }
-                    int valueSlot = (id  - 1) * SLOT_SPAN + VALUE_SLOT;
+                    int valueSlot = (id  - 1) * SLOT_SPAN;
                     synchronized (this) {
                         valueArray[valueSlot] = value;
                     }
@@ -238,7 +221,7 @@ public abstract class IdScriptableObject extends ScriptableObject
             ensureId(id);
             int attr = attributeArray[id - 1];
             if ((attr & PERMANENT) == 0) {
-                int valueSlot = (id  - 1) * SLOT_SPAN + VALUE_SLOT;
+                int valueSlot = (id  - 1) * SLOT_SPAN;
                 synchronized (this) {
                     valueArray[valueSlot] = NOT_FOUND;
                     attributeArray[id - 1] = EMPTY;
@@ -309,7 +292,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                     }
                 }
             }
-            int valueSlot = (id  - 1) * SLOT_SPAN + VALUE_SLOT;
+            int valueSlot = (id  - 1) * SLOT_SPAN;
             Object value = array[valueSlot];
             if (value == null) {
                 if (id == constructorId) {
@@ -373,20 +356,26 @@ public abstract class IdScriptableObject extends ScriptableObject
     @Override
     public Object get(String name, Scriptable start)
     {
+        // Check for slot first for performance. This is a very hot code
+        // path that should be further optimized.
+        Object value = super.get(name, start);
+        if (value != NOT_FOUND) {
+            return value;
+        }
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int id = (info & 0xFFFF);
-            Object value = getInstanceIdValue(id);
+            value = getInstanceIdValue(id);
             if (value != NOT_FOUND) return value;
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(name);
             if (id != 0) {
-                Object value = prototypeValues.get(id);
+                value = prototypeValues.get(id);
                 if (value != NOT_FOUND) return value;
             }
         }
-        return super.get(name, start);
+        return NOT_FOUND;
     }
 
     @Override
