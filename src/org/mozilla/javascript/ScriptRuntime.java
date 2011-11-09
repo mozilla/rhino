@@ -472,7 +472,7 @@ public class ScriptRuntime {
                  * answer.
                  */
                 try {
-                    return Double.valueOf(s.substring(start, end)).doubleValue();
+                    return Double.parseDouble(s.substring(start, end));
                 } catch (NumberFormatException nfe) {
                     return NaN;
                 }
@@ -640,8 +640,18 @@ public class ScriptRuntime {
         // A non-hexadecimal, non-infinity number:
         // just try a normal floating point conversion
         String sub = s.substring(start, end+1);
+        // Quick test to check string contains only valid characters because
+        // Double.parseDouble() can be slow and accept input we want to reject
+        for (int i = sub.length() - 1; i >= 0; i--) {
+            char c = sub.charAt(i);
+            if (('0' <= c && c <= '9') || c == '.' ||
+                    c == 'e' || c == 'E'  ||
+                    c == '+' || c == '-')
+                continue;
+            return NaN;
+        }
         try {
-            return Double.valueOf(sub).doubleValue();
+            return Double.parseDouble(sub);
         } catch (NumberFormatException ex) {
             return NaN;
         }
