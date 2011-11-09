@@ -376,6 +376,11 @@ if (regexp.anchorCh >= 0) {
         return Character.isLetter(c) || isDigit(c) || c == '_';
     }
 
+    private static boolean isControlLetter(char c)
+    {
+        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+    }
+
     private static boolean isLineTerm(char c)
     {
         return ScriptRuntime.isJSLineTerminator(c);
@@ -547,9 +552,10 @@ if (regexp.anchorCh >= 0) {
                     localMax = 0xB;
                     break;
                 case 'c':
-                    if (((index + 1) < end) && Character.isLetter(src[index + 1]))
+                    if ((index < end) && isControlLetter(src[index]))
                         localMax = (char)(src[index++] & 0x1F);
                     else
+                        --index;
                         localMax = '\\';
                     break;
                 case 'u':
@@ -877,8 +883,8 @@ if (regexp.anchorCh >= 0) {
                     break;
                 /* Control letter */
                 case 'c':
-                    if (((state.cp + 1) < state.cpend) &&
-                                        Character.isLetter(src[state.cp + 1]))
+                    if ((state.cp < state.cpend) &&
+                                        isControlLetter(src[state.cp]))
                         c = (char)(src[state.cp++] & 0x1F);
                     else {
                         /* back off to accepting the original '\' as a literal */
@@ -1509,7 +1515,7 @@ if (regexp.anchorCh >= 0) {
                     thisCh = 0xB;
                     break;
                 case 'c':
-                    if (((src + 1) < end) && isWord(gData.regexp.source[src + 1]))
+                    if ((src < end) && isControlLetter(gData.regexp.source[src]))
                         thisCh = (char)(gData.regexp.source[src++] & 0x1F);
                     else {
                         --src;
