@@ -489,20 +489,13 @@ if (regexp.anchorCh >= 0) {
             }
             if (!parseTerm(state))
                 return false;
-            if (headTerm == null)
+            if (headTerm == null) {
                 headTerm = state.result;
-            else {
-                if (tailTerm == null) {
-                    headTerm.next = state.result;
-                    tailTerm = state.result;
-                    while (tailTerm.next != null) tailTerm = tailTerm.next;
-                }
-                else {
-                    tailTerm.next = state.result;
-                    tailTerm = tailTerm.next;
-                    while (tailTerm.next != null) tailTerm = tailTerm.next;
-                }
+                tailTerm = headTerm;
             }
+            else
+                tailTerm.next = state.result;
+            while (tailTerm.next != null) tailTerm = tailTerm.next;
         }
     }
 
