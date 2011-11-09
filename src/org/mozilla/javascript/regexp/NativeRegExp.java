@@ -592,7 +592,7 @@ if (regexp.anchorCh >= 0) {
                         reportError("msg.bad.range", "");
                         return false;
                     }
-                    target.bmsize = 65535;
+                    target.bmsize = 65536;
                     return true;
                 case '0':
                 case '1':
@@ -660,7 +660,7 @@ if (regexp.anchorCh >= 0) {
             if (localMax > max)
                 max = localMax;
         }
-        target.bmsize = max;
+        target.bmsize = max + 1;
         return true;
     }
 
@@ -1418,7 +1418,7 @@ if (regexp.anchorCh >= 0) {
     addCharacterToCharSet(RECharSet cs, char c)
     {
         int byteIndex = (c / 8);
-        if (c > cs.length)
+        if (c >= cs.length)
             throw new RuntimeException();
         cs.bits[byteIndex] |= 1 << (c & 0x7);
     }
@@ -1433,7 +1433,7 @@ if (regexp.anchorCh >= 0) {
         int byteIndex1 = (c1 / 8);
         int byteIndex2 = (c2 / 8);
 
-        if ((c2 > cs.length) || (c1 > c2))
+        if ((c2 >= cs.length) || (c1 > c2))
             throw new RuntimeException();
 
         c1 &= 0x7;
@@ -1478,7 +1478,7 @@ if (regexp.anchorCh >= 0) {
         boolean inRange = false;
 
         charSet.sense = true;
-        byteLength = (charSet.length / 8) + 1;
+        byteLength = (charSet.length + 7) / 8;
         charSet.bits = new byte[byteLength];
 
         if (src == end)
@@ -1580,25 +1580,25 @@ if (regexp.anchorCh >= 0) {
                 case 'D':
                     addCharacterRangeToCharSet(charSet, (char)0, (char)('0' - 1));
                     addCharacterRangeToCharSet(charSet, (char)('9' + 1),
-                                                (char)(charSet.length));
+                                                (char)(charSet.length - 1));
                     continue;
                 case 's':
-                    for (i = charSet.length; i >= 0; i--)
+                    for (i = (charSet.length - 1); i >= 0; i--)
                         if (isREWhiteSpace(i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'S':
-                    for (i = charSet.length; i >= 0; i--)
+                    for (i = (charSet.length - 1); i >= 0; i--)
                         if (!isREWhiteSpace(i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'w':
-                    for (i = charSet.length; i >= 0; i--)
+                    for (i = (charSet.length - 1); i >= 0; i--)
                         if (isWord((char)i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'W':
-                    for (i = charSet.length; i >= 0; i--)
+                    for (i = (charSet.length - 1); i >= 0; i--)
                         if (!isWord((char)i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
@@ -1660,12 +1660,12 @@ if (regexp.anchorCh >= 0) {
         int byteIndex = ch / 8;
         if (charSet.sense) {
             if ((charSet.length == 0) ||
-                 ( (ch > charSet.length)
+                 ( (ch >= charSet.length)
                     || ((charSet.bits[byteIndex] & (1 << (ch & 0x7))) == 0) ))
                 return false;
         } else {
             if (! ((charSet.length == 0) ||
-                     ( (ch > charSet.length)
+                     ( (ch >= charSet.length)
                         || ((charSet.bits[byteIndex] & (1 << (ch & 0x7))) == 0) )))
                 return false;
         }
