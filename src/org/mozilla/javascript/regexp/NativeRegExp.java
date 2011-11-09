@@ -376,6 +376,11 @@ if (regexp.anchorCh >= 0) {
         return Character.isLetter(c) || isDigit(c) || c == '_';
     }
 
+    private static boolean isControlLetter(char c)
+    {
+        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+    }
+
     private static boolean isLineTerm(char c)
     {
         return ScriptRuntime.isJSLineTerminator(c);
@@ -489,20 +494,13 @@ if (regexp.anchorCh >= 0) {
             }
             if (!parseTerm(state))
                 return false;
-            if (headTerm == null)
+            if (headTerm == null) {
                 headTerm = state.result;
-            else {
-                if (tailTerm == null) {
-                    headTerm.next = state.result;
-                    tailTerm = state.result;
-                    while (tailTerm.next != null) tailTerm = tailTerm.next;
-                }
-                else {
-                    tailTerm.next = state.result;
-                    tailTerm = tailTerm.next;
-                    while (tailTerm.next != null) tailTerm = tailTerm.next;
-                }
+                tailTerm = headTerm;
             }
+            else
+                tailTerm.next = state.result;
+            while (tailTerm.next != null) tailTerm = tailTerm.next;
         }
     }
 
@@ -554,9 +552,10 @@ if (regexp.anchorCh >= 0) {
                     localMax = 0xB;
                     break;
                 case 'c':
-                    if (((index + 1) < end) && Character.isLetter(src[index + 1]))
+                    if ((index < end) && isControlLetter(src[index]))
                         localMax = (char)(src[index++] & 0x1F);
                     else
+                        --index;
                         localMax = '\\';
                     break;
                 case 'u':
@@ -593,7 +592,7 @@ if (regexp.anchorCh >= 0) {
                         reportError("msg.bad.range", "");
                         return false;
                     }
-                    target.bmsize = 65535;
+                    target.bmsize = 65536;
                     return true;
                 case '0':
                 case '1':
@@ -661,7 +660,7 @@ if (regexp.anchorCh >= 0) {
             if (localMax > max)
                 max = localMax;
         }
-        target.bmsize = max;
+        target.bmsize = max + 1;
         return true;
     }
 
@@ -884,8 +883,8 @@ if (regexp.anchorCh >= 0) {
                     break;
                 /* Control letter */
                 case 'c':
-                    if (((state.cp + 1) < state.cpend) &&
-                                        Character.isLetter(src[state.cp + 1]))
+                    if ((state.cp < state.cpend) &&
+                                        isControlLetter(src[state.cp]))
                         c = (char)(src[state.cp++] & 0x1F);
                     else {
                         /* back off to accepting the original '\' as a literal */
@@ -1419,7 +1418,7 @@ if (regexp.anchorCh >= 0) {
     addCharacterToCharSet(RECharSet cs, char c)
     {
         int byteIndex = (c / 8);
-        if (c > cs.length)
+        if (c >= cs.length)
             throw new RuntimeException();
         cs.bits[byteIndex] |= 1 << (c & 0x7);
     }
@@ -1434,7 +1433,7 @@ if (regexp.anchorCh >= 0) {
         int byteIndex1 = (c1 / 8);
         int byteIndex2 = (c2 / 8);
 
-        if ((c2 > cs.length) || (c1 > c2))
+        if ((c2 >= cs.length) || (c1 > c2))
             throw new RuntimeException();
 
         c1 &= 0x7;
@@ -1479,7 +1478,7 @@ if (regexp.anchorCh >= 0) {
         boolean inRange = false;
 
         charSet.sense = true;
-        byteLength = (charSet.length / 8) + 1;
+        byteLength = (charSet.length + 7) / 8;
         charSet.bits = new byte[byteLength];
 
         if (src == end)
@@ -1516,7 +1515,7 @@ if (regexp.anchorCh >= 0) {
                     thisCh = 0xB;
                     break;
                 case 'c':
-                    if (((src + 1) < end) && isWord(gData.regexp.source[src + 1]))
+                    if ((src < end) && isControlLetter(gData.regexp.source[src]))
                         thisCh = (char)(gData.regexp.source[src++] & 0x1F);
                     else {
                         --src;
@@ -1581,25 +1580,25 @@ if (regexp.anchorCh >= 0) {
                 case 'D':
                     addCharacterRangeToCharSet(charSet, (char)0, (char)('0' - 1));
                     addCharacterRangeToCharSet(charSet, (char)('9' + 1),
-                                                (char)(charSet.length));
+                                                (char)(charSet.length - 1));
                     continue;
                 case 's':
-                    for (i = charSet.length; i >= 0; i--)
+                    for (i = (charSet.length - 1); i >= 0; i--)
                         if (isREWhiteSpace(i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'S':
-                    for (i = charSet.length; i >= 0; i--)
+                    for (i = (charSet.length - 1); i >= 0; i--)
                         if (!isREWhiteSpace(i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'w':
-                    for (i = charSet.length; i >= 0; i--)
+                    for (i = (charSet.length - 1); i >= 0; i--)
                         if (isWord((char)i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'W':
-                    for (i = charSet.length; i >= 0; i--)
+                    for (i = (charSet.length - 1); i >= 0; i--)
                         if (!isWord((char)i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
@@ -1661,12 +1660,12 @@ if (regexp.anchorCh >= 0) {
         int byteIndex = ch / 8;
         if (charSet.sense) {
             if ((charSet.length == 0) ||
-                 ( (ch > charSet.length)
+                 ( (ch >= charSet.length)
                     || ((charSet.bits[byteIndex] & (1 << (ch & 0x7))) == 0) ))
                 return false;
         } else {
             if (! ((charSet.length == 0) ||
-                     ( (ch > charSet.length)
+                     ( (ch >= charSet.length)
                         || ((charSet.bits[byteIndex] & (1 << (ch & 0x7))) == 0) )))
                 return false;
         }

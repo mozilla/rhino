@@ -516,7 +516,7 @@ class TokenStream
                 if (base == 10 && !isInteger) {
                     try {
                         // Use Java conversion to number from string...
-                        dval = Double.valueOf(numString).doubleValue();
+                        dval = Double.parseDouble(numString);
                     }
                     catch (NumberFormatException ex) {
                         parser.addError("msg.caught.nfe");

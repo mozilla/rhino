@@ -56,6 +56,14 @@ function PrintScore(score) {
 }
 
 
-BenchmarkSuite.RunSuites({ NotifyResult: PrintResult,
-                           NotifyError: PrintError,
-                           NotifyScore: PrintScore });
+// Run more than once to warm up JVM
+var runs = parseInt(arguments[0]) || 10;
+
+for (var i = 1; i <= runs; i++) {
+  print('Run ' + i + ' out of ' + runs + ':');
+  BenchmarkSuite.RunSuites({ NotifyResult: PrintResult,
+                             NotifyError: PrintError,
+                             NotifyScore: PrintScore });
+  print('');
+  gc();
+}
