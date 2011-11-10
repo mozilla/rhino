@@ -165,11 +165,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private static final int SLOT_CONVERT_ACCESSOR_TO_DATA = 5;
 
     // initial slot array size, must be a power of 2
-    private static final int INITIAL_SLOT_SIZE = 8;
+    private static final int INITIAL_SLOT_SIZE = 4;
 
     private boolean isExtensible = true;
 
-    private static class Slot implements Serializable, Cloneable
+    private static class Slot implements Serializable
     {
         private static final long serialVersionUID = -6090581677123995491L;
         String name; // This can change due to caching
@@ -177,7 +177,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         private volatile short attributes;
         transient volatile boolean wasDeleted;
         volatile Object value;
-        transient volatile Slot next; // next in hash table bucket
+        transient Slot next; // next in hash table bucket
         transient volatile Slot orderedNext; // next in linked list
 
         Slot(String name, int indexOrHash, int attributes)
@@ -212,24 +212,21 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             return value;
         }
 
-        final int getAttributes()
+        int getAttributes()
         {
             return attributes;
         }
 
-        final synchronized void setAttributes(int value)
+        synchronized void setAttributes(int value)
         {
             checkValidAttributes(value);
             attributes = (short)value;
         }
 
-        final void checkNotReadonly()
-        {
-            if ((attributes & READONLY) != 0) {
-                String str = (name != null ? name
-                              : Integer.toString(indexOrHash));
-                throw Context.reportRuntimeError1("msg.modify.readonly", str);
-            }
+        void markDeleted() {
+            wasDeleted = true;
+            value = null;
+            name = null;
         }
 
         ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
@@ -237,15 +234,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 scope,
                 (value == null ? Undefined.instance : value),
                 attributes);
-        }
-
-        @Override
-        public Slot clone() {
-            try {
-                return (Slot)super.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
-            }
         }
 
     }
@@ -362,6 +350,67 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 }
             }
             return val;
+        }
+
+        @Override
+        void markDeleted() {
+            super.markDeleted();
+            getter = null;
+            setter = null;
+        }
+    }
+
+    /**
+     * A wrapper around a slot that allows the slot to be used in a new slot
+     * table while keeping it functioning in its old slot table/linked list
+     * context. This is used when linked slots are copied to a new slot table.
+     * In a multi-threaded environment, these slots may still be accessed
+     * through their old slot table. See bug 688458.
+     */
+    private static class RelinkedSlot extends Slot {
+
+        final Slot slot;
+
+        RelinkedSlot(Slot slot) {
+            super(slot.name, slot.indexOrHash, slot.attributes);
+            // Make sure we always wrap the actual slot, not another relinked one
+            this.slot = slot instanceof RelinkedSlot ?
+                    ((RelinkedSlot)slot).slot : slot;
+        }
+
+        @Override
+        boolean setValue(Object value, Scriptable owner, Scriptable start) {
+            return slot.setValue(value, owner, start);
+        }
+
+        @Override
+        Object getValue(Scriptable start) {
+            return slot.getValue(start);
+        }
+
+        @Override
+        ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
+            return slot.getPropertyDescriptor(cx, scope);
+        }
+
+        @Override
+        int getAttributes() {
+            return slot.getAttributes();
+        }
+
+        @Override
+        void setAttributes(int value) {
+            slot.setAttributes(value);
+        }
+
+        @Override
+        void markDeleted() {
+            super.markDeleted();
+            slot.markDeleted();
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.writeObject(slot);  // just serialize the wrapped slot
         }
 
     }
@@ -706,26 +755,33 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         setGetterOrSetter(name, index, getterOrSetter, isSetter, false);
     }
 
-    private void setGetterOrSetter(String name, int index, Callable getterOrSetter, boolean isSetter, boolean force)
+    private void setGetterOrSetter(String name, int index, Callable getterOrSetter,
+                                   boolean isSetter, boolean force)
     {
         if (name != null && index != 0)
             throw new IllegalArgumentException(name);
 
         if (!force) {
-          checkNotSealed(name, index);
+            checkNotSealed(name, index);
         }
 
         final GetterSlot gslot;
         if (isExtensible()) {
-          gslot = (GetterSlot)getSlot(name, index, SLOT_MODIFY_GETTER_SETTER);
+            gslot = (GetterSlot)getSlot(name, index, SLOT_MODIFY_GETTER_SETTER);
         } else {
-          gslot = (GetterSlot)getSlot(name, index, SLOT_QUERY);
-          if (gslot == null)
-            return;
+            Slot slot = getSlot(name, index, SLOT_QUERY);
+            if (slot instanceof RelinkedSlot)
+                slot = ((RelinkedSlot)slot).slot;
+            if (!(slot instanceof GetterSlot))
+                return;
+            gslot = (GetterSlot) slot;
         }
 
         if (!force) {
-          gslot.checkNotReadonly();
+            int attributes = gslot.getAttributes();
+            if ((attributes & READONLY) != 0) {
+                throw Context.reportRuntimeError1("msg.modify.readonly", name);
+            }
         }
         if (isSetter) {
             gslot.setter = getterOrSetter;
@@ -755,6 +811,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Slot slot = getSlot(name, index, SLOT_QUERY);
         if (slot == null)
             return null;
+        if (slot instanceof RelinkedSlot)
+            slot = ((RelinkedSlot)slot).slot;
         if (slot instanceof GetterSlot) {
             GetterSlot gslot = (GetterSlot)slot;
             Object result = isSetter ? gslot.setter : gslot.getter;
@@ -772,6 +830,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     protected boolean isGetterOrSetter(String name, int index, boolean setter) {
         Slot slot = getSlot(name, index, SLOT_QUERY);
+        if (slot instanceof RelinkedSlot)
+            slot = ((RelinkedSlot)slot).slot;
         if (slot instanceof GetterSlot) {
             if (setter && ((GetterSlot)slot).setter != null) return true;
             if (!setter && ((GetterSlot)slot).getter != null) return true;
@@ -1754,6 +1814,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
         }
 
+        if (slot instanceof RelinkedSlot) {
+            slot = ((RelinkedSlot)slot).slot;
+        }
+
         if (isAccessor) {
             if ( !(slot instanceof GetterSlot) ) {
                 slot = getSlot(cx, id, SLOT_MODIFY_GETTER_SETTER);
@@ -2620,10 +2684,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         return slot;
                     break;
                 case SLOT_MODIFY_GETTER_SETTER:
+                    if (slot instanceof RelinkedSlot)
+                        slot = ((RelinkedSlot)slot).slot;
                     if (slot instanceof GetterSlot)
                         return slot;
                     break;
                 case SLOT_CONVERT_ACCESSOR_TO_DATA:
+                    if (slot instanceof RelinkedSlot)
+                        slot = ((RelinkedSlot)slot).slot;
                     if ( !(slot instanceof GetterSlot) )
                         return slot;
                     break;
@@ -2668,11 +2736,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 // complication is the need to replace the added slot
                 // if we need GetterSlot and the old one is not.
 
+                if (slot instanceof RelinkedSlot)
+                    slot = ((RelinkedSlot)slot).slot;
                 Slot newSlot;
 
-                if (accessType == SLOT_MODIFY_GETTER_SETTER && !(slot instanceof GetterSlot)) {
+                if (accessType == SLOT_MODIFY_GETTER_SETTER
+                        && !(slot instanceof GetterSlot)) {
                     newSlot = new GetterSlot(name, indexOrHash, slot.getAttributes());
-                } else if (accessType == SLOT_CONVERT_ACCESSOR_TO_DATA && (slot instanceof GetterSlot)) {
+                } else if (accessType == SLOT_CONVERT_ACCESSOR_TO_DATA
+                        && (slot instanceof GetterSlot)) {
                     newSlot = new Slot(name, indexOrHash, slot.getAttributes());
                 } else if (accessType == SLOT_MODIFY_CONST) {
                     return null;
@@ -2695,16 +2767,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     prev.next = newSlot;
                 }
                 // other housekeeping
-                slot.wasDeleted = true;
-                slot.value = null;
-                slot.name = null;
+                slot.markDeleted();
                 return newSlot;
             } else {
                 // Check if the table is not too full before inserting.
                 if (4 * (count + 1) > 3 * slotsLocalRef.length) {
                     // table size must be a power of 2, always grow by x2
                     slotsLocalRef = new Slot[slotsLocalRef.length * 2];
-                    swapTable(slotsLocalRef, count);
+                    copyTable(slots, slotsLocalRef, count);
+                    slots = slotsLocalRef;
                     insertPos = getSlotIndex(slotsLocalRef.length,
                             indexOrHash);
                 }
@@ -2758,23 +2829,26 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 // remove from ordered list. Previously this was done lazily in
                 // getIds() but delete is an infrequent operation so O(n)
                 // should be ok
-                if (slot == firstAdded) {
+
+                // ordered list always uses the actual slot
+                Slot deleted =  (slot instanceof RelinkedSlot) ?
+                        ((RelinkedSlot)slot).slot : slot;
+                if (deleted == firstAdded) {
                     prev = null;
-                    firstAdded = slot.orderedNext;
+                    firstAdded = deleted.orderedNext;
                 } else {
                     prev = firstAdded;
-                    while (prev.orderedNext != slot) {
+                    while (prev.orderedNext != deleted) {
                         prev = prev.orderedNext;
                     }
-                    prev.orderedNext = slot.orderedNext;
+                    prev.orderedNext = deleted.orderedNext;
                 }
-                if (slot == lastAdded) {
+                if (deleted == lastAdded) {
                     lastAdded = prev;
                 }
 
-                slot.wasDeleted = true;
-                slot.value = null;
-                slot.name = null;
+                // Mark the slot as removed.
+                slot.markDeleted();
             }
         }
     }
@@ -2785,46 +2859,27 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return indexOrHash & (tableSize - 1);
     }
 
-    private synchronized void swapTable(Slot[] newSlots, int count)
+    // Must be inside synchronized (this)
+    private static void copyTable(Slot[] oldSlots, Slot[] newSlots, int count)
     {
         if (count == 0) throw Kit.codeBug();
 
-        // We must clone the existing slots since we may need to change
-        // the slots' next fields and unsynchronized getSlot() may
-        // read-access slots while we're at it. See bug 688458.
         int tableSize = newSlots.length;
-        Slot slot = firstAdded, firstSlot = null, lastSlot = null;
-
-        while (slot != null) {
-            if (slot.wasDeleted) {
-                slot = slot.orderedNext;
-                continue;
+        int i = oldSlots.length;
+        for (;;) {
+            --i;
+            Slot slot = oldSlots[i];
+            while (slot != null) {
+                int insertPos = getSlotIndex(tableSize, slot.indexOrHash);
+                // If slot has next chain in old table use a new
+                // RelinkedSlot wrapper to keep old table valid
+                Slot insSlot = slot.next == null ? slot : new RelinkedSlot(slot);
+                addKnownAbsentSlot(newSlots, insSlot, insertPos);
+                slot = slot.next;
+                if (--count == 0)
+                    return;
             }
-
-            Slot newSlot = slot.clone();
-            newSlot.next = newSlot.orderedNext = null;
-
-            if (firstSlot == null) {
-                firstSlot = newSlot;
-            }
-
-            int insertPos = getSlotIndex(tableSize, newSlot.indexOrHash);
-            addKnownAbsentSlot(newSlots, newSlot, insertPos);
-
-            if (lastSlot != null) {
-                lastSlot.orderedNext = newSlot;
-            }
-            lastSlot = newSlot;
-
-            --count;
-            slot = slot.orderedNext;
         }
-
-        if (count != 0) throw Kit.codeBug("Wrong property count");
-
-        firstAdded = firstSlot;
-        lastAdded = lastSlot;
-        slots = newSlots;
     }
 
     /**
