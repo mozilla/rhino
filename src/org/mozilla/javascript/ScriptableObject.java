@@ -374,8 +374,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         RelinkedSlot(Slot slot) {
             super(slot.name, slot.indexOrHash, slot.attributes);
             // Make sure we always wrap the actual slot, not another relinked one
-            this.slot = slot instanceof RelinkedSlot ?
-                    ((RelinkedSlot)slot).slot : slot;
+            this.slot = unwrapSlot(slot);
         }
 
         @Override
@@ -769,9 +768,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (isExtensible()) {
             gslot = (GetterSlot)getSlot(name, index, SLOT_MODIFY_GETTER_SETTER);
         } else {
-            Slot slot = getSlot(name, index, SLOT_QUERY);
-            if (slot instanceof RelinkedSlot)
-                slot = ((RelinkedSlot)slot).slot;
+            Slot slot = unwrapSlot(getSlot(name, index, SLOT_QUERY));
             if (!(slot instanceof GetterSlot))
                 return;
             gslot = (GetterSlot) slot;
@@ -808,11 +805,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     {
         if (name != null && index != 0)
             throw new IllegalArgumentException(name);
-        Slot slot = getSlot(name, index, SLOT_QUERY);
+        Slot slot = unwrapSlot(getSlot(name, index, SLOT_QUERY));
         if (slot == null)
             return null;
-        if (slot instanceof RelinkedSlot)
-            slot = ((RelinkedSlot)slot).slot;
         if (slot instanceof GetterSlot) {
             GetterSlot gslot = (GetterSlot)slot;
             Object result = isSetter ? gslot.setter : gslot.getter;
@@ -829,9 +824,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @return whether the property is a getter or a setter
      */
     protected boolean isGetterOrSetter(String name, int index, boolean setter) {
-        Slot slot = getSlot(name, index, SLOT_QUERY);
-        if (slot instanceof RelinkedSlot)
-            slot = ((RelinkedSlot)slot).slot;
+        Slot slot = unwrapSlot(getSlot(name, index, SLOT_QUERY));
         if (slot instanceof GetterSlot) {
             if (setter && ((GetterSlot)slot).setter != null) return true;
             if (!setter && ((GetterSlot)slot).getter != null) return true;
@@ -1814,9 +1807,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
         }
 
-        if (slot instanceof RelinkedSlot) {
-            slot = ((RelinkedSlot)slot).slot;
-        }
+        slot = unwrapSlot(slot);
 
         if (isAccessor) {
             if ( !(slot instanceof GetterSlot) ) {
@@ -2619,7 +2610,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
             if (constFlag != EMPTY) {
-                slot = getSlot(name, index, SLOT_MODIFY_CONST);
+                slot = unwrapSlot(getSlot(name, index, SLOT_MODIFY_CONST));
                 int attr = slot.getAttributes();
                 if ((attr & READONLY) == 0)
                     throw Context.reportRuntimeError1("msg.var.redecl", name);
@@ -2644,6 +2635,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             throw Context.reportRuntimeError1("msg.prop.not.found", str);
         }
         return slot;
+    }
+
+    private static Slot unwrapSlot(Slot slot) {
+        return (slot instanceof RelinkedSlot) ? ((RelinkedSlot)slot).slot : slot;
     }
 
     /**
@@ -2684,14 +2679,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                         return slot;
                     break;
                 case SLOT_MODIFY_GETTER_SETTER:
-                    if (slot instanceof RelinkedSlot)
-                        slot = ((RelinkedSlot)slot).slot;
+                    slot = unwrapSlot(slot);
                     if (slot instanceof GetterSlot)
                         return slot;
                     break;
                 case SLOT_CONVERT_ACCESSOR_TO_DATA:
-                    if (slot instanceof RelinkedSlot)
-                        slot = ((RelinkedSlot)slot).slot;
+                    slot = unwrapSlot(slot);
                     if ( !(slot instanceof GetterSlot) )
                         return slot;
                     break;
@@ -2736,8 +2729,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 // complication is the need to replace the added slot
                 // if we need GetterSlot and the old one is not.
 
-                if (slot instanceof RelinkedSlot)
-                    slot = ((RelinkedSlot)slot).slot;
+                slot = unwrapSlot(slot);
                 Slot newSlot;
 
                 if (accessType == SLOT_MODIFY_GETTER_SETTER
@@ -2831,8 +2823,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 // should be ok
 
                 // ordered list always uses the actual slot
-                Slot deleted =  (slot instanceof RelinkedSlot) ?
-                        ((RelinkedSlot)slot).slot : slot;
+                Slot deleted =  unwrapSlot(slot);
                 if (deleted == firstAdded) {
                     prev = null;
                     firstAdded = deleted.orderedNext;
