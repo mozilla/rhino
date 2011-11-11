@@ -9,7 +9,7 @@ var tests = [
     "string-base64", "string-fasta", "string-tagcloud", "string-unpack-code", "string-validate-input"
 ];
 
-var repeatCount = 12; // number of iterations
+var repeatCount = 20; // number of iterations
 var count = 5; // number of last iterations to consider
 
 var results = { times: [], categories: {}};
