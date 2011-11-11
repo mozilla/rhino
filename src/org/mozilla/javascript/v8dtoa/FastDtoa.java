@@ -25,6 +25,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Ported to Java from Mozilla's version of V8-dtoa by Hannes Wallnoefer.
+// The original revision was 67d1049b0bf9 from the mozilla-central tree.
+
 package org.mozilla.javascript.v8dtoa;
 
 public class FastDtoa {
