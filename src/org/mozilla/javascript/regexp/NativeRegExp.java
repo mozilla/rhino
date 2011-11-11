@@ -2027,6 +2027,11 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
                 continue;
 
             case REOP_ENDCHILD:
+                //
+                // If we have not gotten a result here, it is because of an
+                // empty match.  Do the same thing REOP_EMPTY would do.
+                //
+                result = true;
                 // Use the current continuation.
                 pc = currentContinuation_pc;
                 op = currentContinuation_op;
