@@ -64,12 +64,6 @@ import java.math.BigInteger;
 class DToA {
 
 
-/* "-0.0000...(1073 zeros after decimal point)...0001\0" is the longest string that we could produce,
- * which occurs when printing -5e-324 in binary.  We could compute a better estimate of the size of
- * the output string and malloc fewer bytes depending on d and base, but why bother? */
-
-    private static final int DTOBASESTR_BUFFER_SIZE = 1078;
-
     private static char BASEDIGIT(int digit) {
         return (char)((digit >= 10) ? 'a' - 10 + digit : '0' + digit);
     }
@@ -303,14 +297,13 @@ class DToA {
         } else {
             /* We have a fraction. */
 
-            char[] buffer;       /* The output string */
-            int p;               /* index to current position in the buffer */
+            StringBuilder buffer;       /* The output string */
             int digit;
             double df;           /* The fractional part of d */
             BigInteger b;
 
-            buffer = new char[DTOBASESTR_BUFFER_SIZE];
-            p = 0;
+            buffer = new StringBuilder();
+            buffer.append(intDigits).append('.');
             df = d - dfloor;
 
             long dBits = Double.doubleToLongBits(d);
@@ -390,14 +383,10 @@ class DToA {
                     done = true;
                 }
 //                JS_ASSERT(digit < (uint32)base);
-                buffer[p++] = BASEDIGIT(digit);
+                buffer.append(BASEDIGIT(digit));
             } while (!done);
 
-            StringBuffer sb = new StringBuffer(intDigits.length() + 1 + p);
-            sb.append(intDigits);
-            sb.append('.');
-            sb.append(buffer, 0, p);
-            return sb.toString();
+            return buffer.toString();
         }
 
     }
@@ -462,7 +451,7 @@ class DToA {
         return b.multiply(BigInteger.valueOf(5).pow(k));
     }
 
-    static boolean roundOff(StringBuffer buf)
+    static boolean roundOff(StringBuilder buf)
     {
         int i = buf.length();
         while (i != 0) {
@@ -487,7 +476,7 @@ class DToA {
      * bufsize should be two greater than the maximum number of output characters expected. */
     static int
     JS_dtoa(double d, int mode, boolean biasUp, int ndigits,
-                    boolean[] sign, StringBuffer buf)
+                    boolean[] sign, StringBuilder buf)
     {
         /*  Arguments ndigits, decpt, sign are similar to those
             of ecvt and fcvt; trailing zeros are suppressed from
@@ -1152,7 +1141,7 @@ class DToA {
     }
 
     private static void
-    stripTrailingZeroes(StringBuffer buf)
+    stripTrailingZeroes(StringBuilder buf)
     {
 //      while(*--s == '0') ;
 //      s++;
@@ -1172,7 +1161,7 @@ class DToA {
         2};  /* DTOSTR_PRECISION */
 
     static void
-    JS_dtostr(StringBuffer buffer, int mode, int precision, double d)
+    JS_dtostr(StringBuilder buffer, int mode, int precision, double d)
     {
         int decPt;                                    /* Position of decimal point relative to first digit returned by JS_dtoa */
         boolean[] sign = new boolean[1];            /* true if the sign bit was set in d */

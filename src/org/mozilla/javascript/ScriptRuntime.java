@@ -56,6 +56,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLObject;
 import org.mozilla.javascript.xml.XMLLib;
 
@@ -842,9 +843,15 @@ public class ScriptRuntime {
         if (base != 10) {
             return DToA.JS_dtobasestr(base, d);
         } else {
-            StringBuffer result = new StringBuffer();
-            DToA.JS_dtostr(result, DToA.DTOSTR_STANDARD, 0, d);
-            return result.toString();
+            // V8 FastDtoa can't convert all numbers, so try it first but
+            // fall back to old DToA in case it fails
+            String result = FastDtoa.numberToString(d);
+            if (result != null) {
+                return result;
+            }
+            StringBuilder buffer = new StringBuilder();
+            DToA.JS_dtostr(buffer, DToA.DTOSTR_STANDARD, 0, d);
+            return buffer.toString();
         }
 
     }
