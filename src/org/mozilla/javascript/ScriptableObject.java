@@ -489,7 +489,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public Object get(String name, Scriptable start)
     {
-        return getImpl(name, 0, start);
+        Slot slot = getSlot(name, 0, SLOT_QUERY);
+        if (slot == null) {
+            return Scriptable.NOT_FOUND;
+        }
+        return slot.getValue(start);
     }
 
     /**
@@ -501,7 +505,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public Object get(int index, Scriptable start)
     {
-        return getImpl(null, index, start);
+        Slot slot = getSlot(null, index, SLOT_QUERY);
+        if (slot == null) {
+            return Scriptable.NOT_FOUND;
+        }
+        return slot.getValue(start);
     }
 
     /**
@@ -521,7 +529,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void put(String name, Scriptable start, Object value)
     {
-        if (putImpl(name, 0, start, value, EMPTY))
+        if (putImpl(name, 0, start, value))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -537,7 +545,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void put(int index, Scriptable start, Object value)
     {
-        if (putImpl(null, index, start, value, EMPTY))
+        if (putImpl(null, index, start, value))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -589,7 +597,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void putConst(String name, Scriptable start, Object value)
     {
-        if (putImpl(name, 0, start, value, READONLY))
+        if (putConstImpl(name, 0, start, value, READONLY))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -601,7 +609,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     public void defineConst(String name, Scriptable start)
     {
-        if (putImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST))
+        if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -2572,14 +2580,38 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return Kit.initHash(h, key, value);
     }
 
-    private Object getImpl(String name, int index, Scriptable start)
+    /**
+     *
+     * @param name
+     * @param index
+     * @param start
+     * @param value
+     * @return false if this != start and no slot was found.  true if this == start
+     * or this != start and a READONLY slot was found.
+     */
+    private boolean putImpl(String name, int index, Scriptable start,
+                            Object value)
     {
-        Slot slot = getSlot(name, index, SLOT_QUERY);
-        if (slot == null) {
-            return Scriptable.NOT_FOUND;
+        // This method is very hot (basically called on each assignment)
+        // so we inline the extensible/sealed checks below.
+        Slot slot;
+        if (this != start) {
+            slot = getSlot(name, index, SLOT_QUERY);
+            if (slot == null) {
+                return false;
+            }
+        } else if (!isExtensible) {
+            slot = getSlot(name, index, SLOT_QUERY);
+            if (slot == null) {
+                return true;
+            }
+        } else {
+            if (count < 0) checkNotSealed(name, index);
+            slot = getSlot(name, index, SLOT_MODIFY);
         }
-        return slot.getValue(start);
+        return slot.setValue(value, this, start);
     }
+
 
     /**
      *
@@ -2592,9 +2624,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @return false if this != start and no slot was found.  true if this == start
      * or this != start and a READONLY slot was found.
      */
-    private boolean putImpl(String name, int index, Scriptable start,
-                            Object value, int constFlag)
+    private boolean putConstImpl(String name, int index, Scriptable start,
+                                 Object value, int constFlag)
     {
+        assert (constFlag != EMPTY);
         Slot slot;
         if (this != start) {
             slot = getSlot(name, index, SLOT_QUERY);
@@ -2609,20 +2642,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         } else {
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
-            if (constFlag != EMPTY) {
-                slot = unwrapSlot(getSlot(name, index, SLOT_MODIFY_CONST));
-                int attr = slot.getAttributes();
-                if ((attr & READONLY) == 0)
-                    throw Context.reportRuntimeError1("msg.var.redecl", name);
-                if ((attr & UNINITIALIZED_CONST) != 0) {
-                    slot.value = value;
-                    // clear the bit on const initialization
-                    if (constFlag != UNINITIALIZED_CONST)
-                        slot.setAttributes(attr & ~UNINITIALIZED_CONST);
-                }
-                return true;
+            slot = unwrapSlot(getSlot(name, index, SLOT_MODIFY_CONST));
+            int attr = slot.getAttributes();
+            if ((attr & READONLY) == 0)
+                throw Context.reportRuntimeError1("msg.var.redecl", name);
+            if ((attr & UNINITIALIZED_CONST) != 0) {
+                slot.value = value;
+                // clear the bit on const initialization
+                if (constFlag != UNINITIALIZED_CONST)
+                    slot.setAttributes(attr & ~UNINITIALIZED_CONST);
             }
-            slot = getSlot(name, index, SLOT_MODIFY);
+            return true;
         }
         return slot.setValue(value, this, start);
     }
