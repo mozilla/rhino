@@ -309,17 +309,33 @@
 
   <target name="benchmark-v8-opt-1" depends="jar">
     <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
-    <java jar="${jarfile}" dir="testsrc/benchmarks/v8" fork="true">
-      <jvmarg value="-Xmx256m"/>
+    <java jar="${jarfile}" dir="testsrc/benchmarks/v8-benchmarks-v5" fork="true">
+      <jvmarg value="-server"/>
       <arg line="-opt -1 run.js"/>
     </java>
   </target>
 
   <target name="benchmark-v8-opt0" depends="jar">
     <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
-    <java jar="${jarfile}" dir="testsrc/benchmarks/v8" fork="true">
-      <jvmarg value="-Xmx256m"/>
+    <java jar="${jarfile}" dir="testsrc/benchmarks/v8-benchmarks-v5" fork="true">
+      <jvmarg value="-server"/>
       <arg line="-opt 0 run.js"/>
+    </java>
+  </target>
+
+  <target name="benchmark-sunspider-opt0" depends="jar">
+    <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
+    <java jar="${jarfile}" dir="testsrc/benchmarks/sunspider-0.9.1" fork="true">
+      <jvmarg value="-server"/>
+      <arg line="-opt 0 run.js"/>
+    </java>
+  </target>
+
+  <target name="benchmark-sunspider-opt9" depends="jar">
+    <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
+    <java jar="${jarfile}" dir="testsrc/benchmarks/sunspider-0.9.1" fork="true">
+      <jvmarg value="-server"/>
+      <arg line="-opt 9 run.js"/>
     </java>
   </target>
 
