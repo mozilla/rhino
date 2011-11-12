@@ -373,7 +373,7 @@ if (regexp.anchorCh >= 0) {
 
     private static boolean isWord(char c)
     {
-        return Character.isLetter(c) || isDigit(c) || c == '_';
+        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || isDigit(c) || c == '_';
     }
 
     private static boolean isControlLetter(char c)
