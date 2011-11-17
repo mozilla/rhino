@@ -42,6 +42,8 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.*;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 /**
  * This class reflects Java methods into the JavaScript environment and
@@ -60,6 +62,12 @@ public class NativeJavaMethod extends BaseFunction
     NativeJavaMethod(MemberBox[] methods)
     {
         this.functionName = methods[0].getName();
+        this.methods = methods;
+    }
+
+    NativeJavaMethod(MemberBox[] methods, String name)
+    {
+        this.functionName = name;
         this.methods = methods;
     }
 
@@ -139,10 +147,15 @@ public class NativeJavaMethod extends BaseFunction
     {
         StringBuffer sb = new StringBuffer();
         for (int i = 0, N = methods.length; i != N; ++i) {
-            Method method = methods[i].method();
-            sb.append(JavaMembers.javaSignature(method.getReturnType()));
-            sb.append(' ');
-            sb.append(method.getName());
+            // Check member type, we also use this for overloaded constructors
+            if (methods[i].isMethod()) {
+                Method method = methods[i].method();
+                sb.append(JavaMembers.javaSignature(method.getReturnType()));
+                sb.append(' ');
+                sb.append(method.getName());
+            } else {
+                sb.append(methods[i].getName());
+            }
             sb.append(JavaMembers.liveConnectSignature(methods[i].argTypes));
             sb.append('\n');
         }
@@ -158,7 +171,7 @@ public class NativeJavaMethod extends BaseFunction
             throw new RuntimeException("No methods defined for call");
         }
 
-        int index = findFunction(cx, methods, args);
+        int index = findCachedFunction(cx, args);
         if (index < 0) {
             Class<?> c = methods[0].method().getDeclaringClass();
             String sig = c.getName() + '.' + getFunctionName() + '(' +
@@ -268,6 +281,33 @@ public class NativeJavaMethod extends BaseFunction
             wrapped = Undefined.instance;
         }
         return wrapped;
+    }
+
+    int findCachedFunction(Context cx, Object[] args) {
+        if (methods.length > 1) {
+            if (overloadCache != null) {
+                for (ResolvedOverload ovl : overloadCache) {
+                    if (ovl.matches(args)) {
+                        return ovl.index;
+                    }
+                }
+            } else {
+                overloadCache = new LinkedList<ResolvedOverload>();
+            }
+            int index = findFunction(cx, methods, args);
+            // As a sanity measure, don't let the lookup cache grow longer
+            // than twice the number of overloaded methods
+            if (overloadCache.size() < methods.length * 2) {
+                synchronized (overloadCache) {
+                    ResolvedOverload ovl = new ResolvedOverload(args, index);
+                    if (!overloadCache.contains(ovl)) {
+                        overloadCache.addFirst(ovl);
+                    }
+                }
+            }
+            return index;
+        }
+        return findFunction(cx, methods, args);
     }
 
     /**
@@ -552,5 +592,52 @@ public class NativeJavaMethod extends BaseFunction
 
     MemberBox[] methods;
     private String functionName;
+    private transient LinkedList<ResolvedOverload> overloadCache;
 }
 
+class ResolvedOverload {
+    final Class<?>[] types;
+    final int index;
+
+    ResolvedOverload(Object[] args, int index) {
+        this.index = index;
+        types = new Class<?>[args.length];
+        for (int i = 0, l = args.length; i < l; i++) {
+            Object arg = args[i];
+            if (arg == null || arg == Undefined.instance) {
+                types[i] = null;
+            } else {
+                types[i] = arg.getClass();
+            }
+        }
+    }
+
+    boolean matches(Object[] args) {
+        if (args.length != types.length) {
+            return false;
+        }
+        for (int i = 0, l = args.length; i < l; i++) {
+            Object arg = args[i];
+            if (arg == null || arg == Undefined.instance) {
+                if (types[i] != null) return false;
+            } else if (arg.getClass() != types[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof ResolvedOverload)) {
+            return false;
+        }
+        ResolvedOverload ovl = (ResolvedOverload) other;
+        return Arrays.equals(types, ovl.types) && index == ovl.index;
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(types);
+    }
+}
