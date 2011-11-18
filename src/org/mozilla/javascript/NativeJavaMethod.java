@@ -604,11 +604,7 @@ class ResolvedOverload {
         types = new Class<?>[args.length];
         for (int i = 0, l = args.length; i < l; i++) {
             Object arg = args[i];
-            if (arg == null || arg == Undefined.instance) {
-                types[i] = null;
-            } else {
-                types[i] = arg.getClass();
-            }
+            types[i] = arg == null ? null : arg.getClass();
         }
     }
 
@@ -618,7 +614,7 @@ class ResolvedOverload {
         }
         for (int i = 0, l = args.length; i < l; i++) {
             Object arg = args[i];
-            if (arg == null || arg == Undefined.instance) {
+            if (arg == null) {
                 if (types[i] != null) return false;
             } else if (arg.getClass() != types[i]) {
                 return false;
