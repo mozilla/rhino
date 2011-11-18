@@ -139,20 +139,12 @@ class XML extends XMLObjectImpl {
 
     @Override
     boolean hasXMLProperty(XMLName xmlName) {
-        if (isPrototype()) {
-            return getMethod(xmlName.localName()) != NOT_FOUND;
-        } else {
-            return (getPropertyList(xmlName).length() > 0) || (getMethod(xmlName.localName()) != NOT_FOUND);
-        }
+        return (getPropertyList(xmlName).length() > 0);
     }
 
     @Override
     Object getXMLProperty(XMLName xmlName) {
-        if (isPrototype()) {
-            return getMethod(xmlName.localName());
-        } else {
-            return getPropertyList(xmlName);
-        }
+        return getPropertyList(xmlName);
     }
 
     //

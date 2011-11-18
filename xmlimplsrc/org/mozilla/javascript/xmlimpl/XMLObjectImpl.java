@@ -214,10 +214,6 @@ abstract class XMLObjectImpl extends XMLObject {
 
     protected abstract Object jsConstructor(Context cx, boolean inNewExpr, Object[] args);
 
-    final Object getMethod(String id) {
-        return super.get(id, this);
-    }
-
     //
     //
     // Methods overriding ScriptableObject

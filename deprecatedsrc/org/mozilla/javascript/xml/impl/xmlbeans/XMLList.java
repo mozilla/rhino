@@ -321,24 +321,13 @@ class XMLList extends XMLObjectImpl implements Function
 
     /**
      *
-     * @param name
-     * @param start
+     * @param xmlName
      * @return
      */
     boolean hasXMLProperty(XMLName xmlName)
     {
-        boolean result = false;
-
-        // Has now should return true if the property would have results > 0 or
-        // if it's a method name
-        String name = xmlName.localName();
-        if ((getPropertyList(xmlName).length() > 0) ||
-            (getMethod(name) != NOT_FOUND))
-        {
-            result = true;
-        }
-
-        return result;
+        // Has now should return true if the property would have results > 0
+        return (getPropertyList(xmlName).length() > 0);
     }
 
 
