@@ -323,6 +323,14 @@
     </java>
   </target>
 
+  <target name="benchmark-sunspider-opt-1" depends="jar">
+    <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
+    <java jar="${jarfile}" dir="testsrc/benchmarks/sunspider-0.9.1" fork="true">
+      <jvmarg value="-server"/>
+      <arg line="-opt -1 run.js"/>
+    </java>
+  </target>
+
   <target name="benchmark-sunspider-opt0" depends="jar">
     <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
     <java jar="${jarfile}" dir="testsrc/benchmarks/sunspider-0.9.1" fork="true">
