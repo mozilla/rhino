@@ -1377,13 +1377,14 @@ switch (op) {
         stack[stackTop] = ScriptRuntime.setConst(lhs, rhs, cx, stringReg);
         continue Loop;
     }
-    case Token.DELPROP : {
+    case Token.DELPROP :
+    case Icode_DELNAME : {
         Object rhs = stack[stackTop];
         if (rhs == DBL_MRK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         --stackTop;
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.delete(lhs, rhs, cx);
+        stack[stackTop] = ScriptRuntime.delete(lhs, rhs, cx, op == Icode_DELNAME);
         continue Loop;
     }
     case Token.GETPROPNOWARN : {

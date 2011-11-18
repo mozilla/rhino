@@ -1723,6 +1723,14 @@ public class ScriptRuntime {
     }
 
     /**
+     * @deprecated
+     */
+    public static Object delete(Object obj, Object id, Context cx)
+    {
+        return delete(obj, id, cx, false);
+    }
+
+    /**
      * The delete operator
      *
      * See ECMA 11.4.1
@@ -1733,10 +1741,13 @@ public class ScriptRuntime {
      * define a return value. Here we assume that the [[Delete]]
      * method doesn't return a value.
      */
-    public static Object delete(Object obj, Object id, Context cx)
+    public static Object delete(Object obj, Object id, Context cx, boolean isName)
     {
         Scriptable sobj = toObjectOrNull(cx, obj);
         if (sobj == null) {
+            if (isName) {
+                return Boolean.TRUE;
+            }
             String idStr = (id == null) ? "null" : id.toString();
             throw typeError2("msg.undef.prop.delete", toString(obj), idStr);
         }

@@ -2745,15 +2745,17 @@ class BodyCodegen
                 break;
 
               case Token.DELPROP:
+                boolean isName = child.getType() == Token.BINDNAME;
                 generateExpression(child, node);
                 child = child.getNext();
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
+                cfw.addPush(isName);
                 addScriptRuntimeInvoke("delete",
                                        "(Ljava/lang/Object;"
                                        +"Ljava/lang/Object;"
                                        +"Lorg/mozilla/javascript/Context;"
-                                       +")Ljava/lang/Object;");
+                                       +"Z)Ljava/lang/Object;");
                 break;
 
               case Token.BINDNAME:

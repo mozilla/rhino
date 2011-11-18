@@ -144,7 +144,7 @@ abstract class Icode {
         Icode_GETVAR1                   = -48,
         Icode_SETVAR1                   = -49,
 
-    // Load unefined
+    // Load undefined
         Icode_UNDEF                     = -50,
         Icode_ZERO                      = -51,
         Icode_ONE                       = -52,
@@ -173,8 +173,11 @@ abstract class Icode {
 
        Icode_DEBUGGER                   = -64,
 
+    // delete operator used on a name
+       Icode_DELNAME                    = -65,
+
        // Last icode
-        MIN_ICODE                       = -64;
+        MIN_ICODE                       = -65;
 
     static String bytecodeName(int bytecode)
     {
