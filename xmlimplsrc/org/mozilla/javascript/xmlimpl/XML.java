@@ -343,6 +343,13 @@ class XML extends XMLObjectImpl {
         return child.getXml();
     }
 
+    /* Return the last added element */
+    XML getLastXmlChild() {
+        int pos = this.node.getChildCount() - 1;
+        if (pos < 0) return null;
+        return getXmlChild(pos);
+    }
+
     int childIndex() {
         return this.node.getChildIndex();
     }
