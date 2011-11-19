@@ -45,6 +45,9 @@ js1_5/Regress/regress-98901.js
 js1_5/Array/regress-99120-01.js
 js1_5/extensions/regress-371636.js
 
+# ES5 requires decoder to throw URIError on overlong UTF-8 sequences
+js1_5/Regress/regress-172699.js
+
 # large concatenation of strings
 js1_5/Function/regress-338121-01.js
 js1_5/Function/regress-338121-02.js
