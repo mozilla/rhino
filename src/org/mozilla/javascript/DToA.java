@@ -574,7 +574,9 @@ class DToA {
         else {
             /* d is denormalized */
             i = bbits[0] + be[0] + (Bias + (P-1) - 1);
-            x = (i > 32) ? word0(d) << (64 - i) | word1(d) >>> (i - 32) : word1(d) << (32 - i);
+            x = (i > 32)
+                    ? ((long) word0(d)) << (64 - i) | word1(d) >>> (i - 32)
+                    : ((long) word1(d)) << (32 - i);
 //            d2 = x;
 //            word0(d2) -= 31*Exp_msk1; /* adjust exponent */
             d2 = setWord0(x, word0(x) - 31*Exp_msk1);
