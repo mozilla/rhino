@@ -137,11 +137,6 @@ class CodeGenerator extends Icode {
         if (theFunction.getFunctionName() != null) {
             itsData.itsName = theFunction.getName();
         }
-        if (!theFunction.getIgnoreDynamicScope()) {
-            if (compilerEnv.isUseDynamicScope()) {
-                itsData.useDynamicScope = true;
-            }
-        }
         if (theFunction.isGenerator()) {
           addIcode(Icode_GENERATOR);
           addUint16(theFunction.getBaseLineno() & 0xFFFF);

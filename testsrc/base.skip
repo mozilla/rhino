@@ -24,6 +24,9 @@ js1_5/extensions/regress-367501-04.js
 # stress test that can potentially time out
 js1_5/Regress/regress-404755.js
 
+# uses deprecated way of doing dynamic scope
+tests/js1_5/Scope/regress-181834.js
+
 # should be investigated: semicolon insertion
 ecma_3/LexicalConventions/7.9.1.js
 ecma_3/extensions/7.9.1.js

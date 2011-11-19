@@ -2676,11 +2676,7 @@ switch (op) {
 
         Scriptable scope;
         if (idata.itsFunctionType != 0) {
-            if (!idata.useDynamicScope) {
-                scope = fnOrScript.getParentScope();
-            } else {
-                scope = callerScope;
-            }
+            scope = fnOrScript.getParentScope();
 
             if (useActivation) {
                 scope = ScriptRuntime.createFunctionActivation(

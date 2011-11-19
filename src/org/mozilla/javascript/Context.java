@@ -2060,27 +2060,6 @@ public class Context
 
     /**
      * @deprecated
-     * @see #FEATURE_DYNAMIC_SCOPE
-     * @see #hasFeature(int)
-     */
-    public final boolean hasCompileFunctionsWithDynamicScope()
-    {
-        return compileFunctionsWithDynamicScopeFlag;
-    }
-
-    /**
-     * @deprecated
-     * @see #FEATURE_DYNAMIC_SCOPE
-     * @see #hasFeature(int)
-     */
-    public final void setCompileFunctionsWithDynamicScope(boolean flag)
-    {
-        if (sealed) onSealedMutation();
-        compileFunctionsWithDynamicScopeFlag = flag;
-    }
-
-    /**
-     * @deprecated
      * @see ClassCache#get(Scriptable)
      * @see ClassCache#setCachingEnabled(boolean)
      */
@@ -2635,7 +2614,6 @@ public class Context
     private boolean generatingDebug;
     private boolean generatingDebugChanged;
     private boolean generatingSource=true;
-    boolean compileFunctionsWithDynamicScopeFlag;
     boolean useDynamicScope;
     private int optimizationLevel;
     private int maximumInterpreterStackDepth;

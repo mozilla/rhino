@@ -120,7 +120,6 @@ public class Parser
     // during function parsing.  See PerFunctionVariables class below.
     ScriptNode currentScriptOrFn;
     Scope currentScope;
-    int nestingOfWith;
     private int endFlags;
     private boolean inForInit;  // bound temporarily during forStatement()
     private Map<String,LabeledStatement> labelSet;
@@ -818,15 +817,6 @@ public class Parser
         fnNode.setFunctionType(type);
         if (lpPos != -1)
             fnNode.setLp(lpPos - functionSourceStart);
-
-        if (insideFunction() || nestingOfWith > 0) {
-            // 1. Nested functions are not affected by the dynamic scope flag
-            //    as dynamic scope is already a parent of their scope.
-            // 2. Functions defined under the with statement also immune to
-            //    this setup, in which case dynamic scope is ignored in favor
-            //    of the with object.
-            fnNode.setIgnoreDynamicScope();
-        }
 
         fnNode.setJsDoc(getAndResetJsDoc());
 
@@ -1615,13 +1605,7 @@ public class Parser
         if (mustMatchToken(Token.RP, "msg.no.paren.after.with"))
             rp = ts.tokenBeg;
 
-        ++nestingOfWith;
-        AstNode body;
-        try {
-            body = statement();
-        } finally {
-            --nestingOfWith;
-        }
+        AstNode body = statement();
 
         WithStatement pn = new WithStatement(pos, getNodeEnd(body) - pos);
         pn.setJsDoc(getAndResetJsDoc());
@@ -3427,7 +3411,6 @@ public class Parser
     {
         private ScriptNode savedCurrentScriptOrFn;
         private Scope savedCurrentScope;
-        private int savedNestingOfWith;
         private int savedEndFlags;
         private boolean savedInForInit;
         private Map<String,LabeledStatement> savedLabelSet;
@@ -3440,9 +3423,6 @@ public class Parser
 
             savedCurrentScope = Parser.this.currentScope;
             Parser.this.currentScope = fnNode;
-
-            savedNestingOfWith = Parser.this.nestingOfWith;
-            Parser.this.nestingOfWith = 0;
 
             savedLabelSet = Parser.this.labelSet;
             Parser.this.labelSet = null;
@@ -3463,7 +3443,6 @@ public class Parser
         void restore() {
             Parser.this.currentScriptOrFn = savedCurrentScriptOrFn;
             Parser.this.currentScope = savedCurrentScope;
-            Parser.this.nestingOfWith = savedNestingOfWith;
             Parser.this.labelSet = savedLabelSet;
             Parser.this.loopSet = savedLoopSet;
             Parser.this.loopAndSwitchSet = savedLoopAndSwitchSet;

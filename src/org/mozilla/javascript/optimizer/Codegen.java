@@ -1421,12 +1421,10 @@ class BodyCodegen
         localsMax = firstFreeLocal;
 
         // get top level scope
-        if (fnCurrent != null && !inDirectCallFunction
-            && (!compilerEnv.isUseDynamicScope()
-                || fnCurrent.fnode.getIgnoreDynamicScope()))
+        if (fnCurrent != null && !inDirectCallFunction)
         {
-            // Unless we're either in a direct call or using dynamic scope,
-            // use the enclosing scope of the function as our variable object.
+            // Unless we're in a direct call use the enclosing scope
+            // of the function as our variable object.
             cfw.addALoad(funObjLocal);
             cfw.addInvoke(ByteCode.INVOKEINTERFACE,
                           "org/mozilla/javascript/Scriptable",
@@ -1577,12 +1575,10 @@ class BodyCodegen
             }
         }
 
-        if (fnCurrent != null && !inDirectCallFunction
-            && (!compilerEnv.isUseDynamicScope()
-                || fnCurrent.fnode.getIgnoreDynamicScope()))
+        if (fnCurrent != null && !inDirectCallFunction)
         {
-            // Unless we're either in a direct call or using dynamic scope,
-            // use the enclosing scope of the function as our variable object.
+            // Unless we're in a direct call use the enclosing scope
+            // of the function as our variable object.
             cfw.addALoad(funObjLocal);
             cfw.addInvoke(ByteCode.INVOKEINTERFACE,
                           "org/mozilla/javascript/Scriptable",
@@ -3494,21 +3490,16 @@ class BodyCodegen
         cfw.add(ByteCode.SWAP);
         cfw.add(ByteCode.POP);
         // stack: ... directFunct
-        if (compilerEnv.isUseDynamicScope()) {
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-        } else {
-            cfw.add(ByteCode.DUP);
-            // stack: ... directFunct directFunct
-            cfw.addInvoke(ByteCode.INVOKEINTERFACE,
-                          "org/mozilla/javascript/Scriptable",
-                          "getParentScope",
-                          "()Lorg/mozilla/javascript/Scriptable;");
-            // stack: ... directFunct scope
-            cfw.addALoad(contextLocal);
-            // stack: ... directFunct scope cx
-            cfw.add(ByteCode.SWAP);
-        }
+        cfw.add(ByteCode.DUP);
+        // stack: ... directFunct directFunct
+        cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                      "org/mozilla/javascript/Scriptable",
+                      "getParentScope",
+                      "()Lorg/mozilla/javascript/Scriptable;");
+        // stack: ... directFunct scope
+        cfw.addALoad(contextLocal);
+        // stack: ... directFunct scope cx
+        cfw.add(ByteCode.SWAP);
         // stack: ... directFunc cx scope
 
         if (type == Token.NEW) {
