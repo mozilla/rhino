@@ -1388,6 +1388,8 @@ if (regexp.anchorCh >= 0) {
     {
         int len;
         int i;
+        if (gData.parens == null || parenIndex >= gData.parens.length)
+            return false;
         int parenContent = gData.parens_index(parenIndex);
         if (parenContent == -1)
             return true;
