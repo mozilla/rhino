@@ -3050,11 +3050,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     // a subclass that implements java.util.Map.
 
     public int size() {
-        return count;
+        return count < 0 ? ~count : count;
     }
 
     public boolean isEmpty() {
-        return count == 0;
+        return count == 0 || count == -1;
     }
 
 
