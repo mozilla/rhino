@@ -144,7 +144,9 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
 
     public Scriptable getPrototype() {
         if (prototype == null && javaObject instanceof String) {
-            return TopLevel.getBuiltinPrototype(parent, TopLevel.Builtins.String);
+            return TopLevel.getBuiltinPrototype(
+                    ScriptableObject.getTopLevelScope(parent),
+                    TopLevel.Builtins.String);
         }
         return prototype;
     }
