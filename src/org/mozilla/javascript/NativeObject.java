@@ -64,8 +64,9 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
     static void init(Scriptable scope, boolean sealed)
     {
         NativeObject proto = new NativeObject();
+        proto.setParentScope(scope);
         IdFunctionObject ctor = null;
-        for (Methods m : Methods.values()) {
+        for (Methods m : METHODS) {
             IdFunctionObject idfun = new IdFunctionObject(proto, OBJECT_TAG,
                     m.ordinal(), m.name(), m.arity, scope);
             idfun.addAsProperty(proto);
@@ -76,7 +77,7 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
                 ctor.exportAsScopeProperty();
             }
         }
-        for (StaticMethods m : StaticMethods.values()) {
+        for (StaticMethods m : STATIC_METHODS) {
             IdFunctionObject idfun = new IdFunctionObject(proto, OBJECT_STATIC_TAG,
                     m.ordinal(), m.name(),  m.arity, scope);
             idfun.addAsProperty(ctor);
@@ -105,7 +106,7 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
         int id = f.methodId();
 
         if (f.hasTag(OBJECT_TAG)) {
-            Methods method = Methods.values()[id];
+            Methods method = METHODS[id];
 
             switch (method) {
                 case constructor: {
@@ -261,7 +262,7 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
 
         if (f.hasTag(OBJECT_STATIC_TAG)) {
 
-            switch (StaticMethods.values()[id]) {
+            switch (STATIC_METHODS[id]) {
                 case getPrototypeOf:
                 {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
@@ -657,5 +658,8 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
             this.arity = arity;
         }
     }
+
+    private static final Methods[] METHODS = Methods.values();
+    private static final StaticMethods[] STATIC_METHODS = StaticMethods.values();
 
 }
