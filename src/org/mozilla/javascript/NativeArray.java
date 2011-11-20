@@ -148,10 +148,6 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
             StaticMethods staticMethod = STATIC_METHODS[id];
 
             switch (staticMethod) {
-                case isArray:
-                    return Boolean.valueOf(
-                            args.length > 0 && (args[0] instanceof NativeArray));
-
                 case join:
                 case reverse:
                 case sort:
@@ -170,7 +166,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
                 case map:
                 case some:
                 case reduce:
-                case reduceRight: {
+                case reduceRight:
                     if (args.length > 0) {
                         thisObj = ScriptRuntime.toObject(scope, args[0]);
                         Object[] newArgs = new Object[args.length-1];
@@ -178,8 +174,13 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
                             newArgs[i] = args[i+1];
                         args = newArgs;
                     }
+                    break;
                     // Continue to instance method switch below
-                }
+
+                case isArray:
+                    return Boolean.valueOf(
+                            args.length > 0 && (args[0] instanceof NativeArray));
+
             }
         }
 
@@ -294,7 +295,10 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
     @Override
     public Object get(String name, Scriptable start) {
         if ("length".equals(name)) {
-            return ScriptRuntime.wrapNumber(length);
+            if (boxedLength == null || boxedLength.longValue() != length) {
+                boxedLength =  ScriptRuntime.wrapNumber(length);
+            }
+            return boxedLength;
         }
         return super.get(name, start);
     }
@@ -1793,7 +1797,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
     }
 
     enum Methods {
-        join(1), // method indices here must match thos of StaticMethods below
+        join(1), // method indices here must match those of StaticMethods below
         reverse(0),
         sort(1),
         push(1),
@@ -1858,6 +1862,11 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
      * Internal representation of the JavaScript array's length property.
      */
     private long length;
+
+    /**
+     * Cache boxed length to avoid repeated wrapping
+     */
+    private Number boxedLength;
 
     /**
      * Fast storage for dense arrays. Sparse arrays will use the superclass's
