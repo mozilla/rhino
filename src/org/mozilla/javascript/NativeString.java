@@ -55,7 +55,7 @@ import java.text.Collator;
  * @author Mike McCabe
  * @author Norris Boyd
  */
-final class NativeString extends IdScriptableObject
+final class NativeString extends ScriptableObject implements IdFunctionCall
 {
     static final long serialVersionUID = 920268368584188687L;
 
@@ -63,8 +63,30 @@ final class NativeString extends IdScriptableObject
 
     static void init(Scriptable scope, boolean sealed)
     {
-        NativeString obj = new NativeString("");
-        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        NativeString proto = new NativeString("");
+        proto.setParentScope(scope);
+        proto.setPrototype(getObjectPrototype(scope));
+        IdFunctionObject ctor = null;
+        for (Methods method : Methods.values()) {
+            IdFunctionObject idfun = new IdFunctionObject(proto, method,
+                    0, method.name(), method.arity, scope);
+            idfun.addAsProperty(proto);
+            if (method == Methods.constructor) {
+                ctor = idfun;
+                ctor.initFunction(proto.getClassName(), scope);
+                ctor.markAsConstructor(proto);
+                ctor.exportAsScopeProperty();
+            }
+        }
+        for (StaticMethods method : StaticMethods.values()) {
+            IdFunctionObject idfun = new IdFunctionObject(proto, method,
+                    0, method.name(),  method.arity, scope);
+            idfun.addAsProperty(ctor);
+        }
+        if (sealed) {
+            proto.sealObject();
+            ctor.sealObject();
+        }
     }
 
     NativeString(CharSequence s) {
@@ -76,159 +98,34 @@ final class NativeString extends IdScriptableObject
         return "String";
     }
 
-    private static final int
-        Id_length                    =  1,
-        MAX_INSTANCE_ID              =  1;
-
-    @Override
-    protected int getMaxInstanceId()
-    {
-        return MAX_INSTANCE_ID;
-    }
-
-    @Override
-    protected int findInstanceIdInfo(String s)
-    {
-        if (s.equals("length")) {
-            return instanceIdInfo(DONTENUM | READONLY | PERMANENT, Id_length);
-        }
-        return super.findInstanceIdInfo(s);
-    }
-
-    @Override
-    protected String getInstanceIdName(int id)
-    {
-        if (id == Id_length) { return "length"; }
-        return super.getInstanceIdName(id);
-    }
-
-    @Override
-    protected Object getInstanceIdValue(int id)
-    {
-        if (id == Id_length) {
-            return ScriptRuntime.wrapInt(string.length());
-        }
-        return super.getInstanceIdValue(id);
-    }
-
-    @Override
-    protected void fillConstructorProperties(IdFunctionObject ctor)
-    {
-        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode,
-                "fromCharCode", 1);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_charAt, "charAt", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_charCodeAt, "charCodeAt", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_indexOf, "indexOf", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_lastIndexOf, "lastIndexOf", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_split, "split", 3);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_substring, "substring", 3);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_toLowerCase, "toLowerCase", 1);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_toUpperCase, "toUpperCase", 1);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_substr, "substr", 3);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_concat, "concat", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_slice, "slice", 3);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_equalsIgnoreCase, "equalsIgnoreCase", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_match, "match", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_search, "search", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_replace, "replace", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_localeCompare, "localeCompare", 2);
-        addIdFunctionProperty(ctor, STRING_TAG,
-                ConstructorId_toLocaleLowerCase, "toLocaleLowerCase", 1);
-        super.fillConstructorProperties(ctor);
-    }
-
-    @Override
-    protected void initPrototypeId(int id)
-    {
-        String s;
-        int arity;
-        switch (id) {
-          case Id_constructor:       arity=1; s="constructor";       break;
-          case Id_toString:          arity=0; s="toString";          break;
-          case Id_toSource:          arity=0; s="toSource";          break;
-          case Id_valueOf:           arity=0; s="valueOf";           break;
-          case Id_charAt:            arity=1; s="charAt";            break;
-          case Id_charCodeAt:        arity=1; s="charCodeAt";        break;
-          case Id_indexOf:           arity=1; s="indexOf";           break;
-          case Id_lastIndexOf:       arity=1; s="lastIndexOf";       break;
-          case Id_split:             arity=2; s="split";             break;
-          case Id_substring:         arity=2; s="substring";         break;
-          case Id_toLowerCase:       arity=0; s="toLowerCase";       break;
-          case Id_toUpperCase:       arity=0; s="toUpperCase";       break;
-          case Id_substr:            arity=2; s="substr";            break;
-          case Id_concat:            arity=1; s="concat";            break;
-          case Id_slice:             arity=2; s="slice";             break;
-          case Id_bold:              arity=0; s="bold";              break;
-          case Id_italics:           arity=0; s="italics";           break;
-          case Id_fixed:             arity=0; s="fixed";             break;
-          case Id_strike:            arity=0; s="strike";            break;
-          case Id_small:             arity=0; s="small";             break;
-          case Id_big:               arity=0; s="big";               break;
-          case Id_blink:             arity=0; s="blink";             break;
-          case Id_sup:               arity=0; s="sup";               break;
-          case Id_sub:               arity=0; s="sub";               break;
-          case Id_fontsize:          arity=0; s="fontsize";          break;
-          case Id_fontcolor:         arity=0; s="fontcolor";         break;
-          case Id_link:              arity=0; s="link";              break;
-          case Id_anchor:            arity=0; s="anchor";            break;
-          case Id_equals:            arity=1; s="equals";            break;
-          case Id_equalsIgnoreCase:  arity=1; s="equalsIgnoreCase";  break;
-          case Id_match:             arity=1; s="match";             break;
-          case Id_search:            arity=1; s="search";            break;
-          case Id_replace:           arity=1; s="replace";           break;
-          case Id_localeCompare:     arity=1; s="localeCompare";     break;
-          case Id_toLocaleLowerCase: arity=0; s="toLocaleLowerCase"; break;
-          case Id_toLocaleUpperCase: arity=0; s="toLocaleUpperCase"; break;
-          case Id_trim:              arity=0; s="trim";              break;
-          default: throw new IllegalArgumentException(String.valueOf(id));
-        }
-        initPrototypeMethod(STRING_TAG, id, s, arity);
-    }
-
-    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(STRING_TAG)) {
-            return super.execIdCall(f, cx, scope, thisObj, args);
-        }
-        int id = f.methodId();
-      again:
-        for(;;) {
-            switch (id) {
-              case ConstructorId_charAt:
-              case ConstructorId_charCodeAt:
-              case ConstructorId_indexOf:
-              case ConstructorId_lastIndexOf:
-              case ConstructorId_split:
-              case ConstructorId_substring:
-              case ConstructorId_toLowerCase:
-              case ConstructorId_toUpperCase:
-              case ConstructorId_substr:
-              case ConstructorId_concat:
-              case ConstructorId_slice:
-              case ConstructorId_equalsIgnoreCase:
-              case ConstructorId_match:
-              case ConstructorId_search:
-              case ConstructorId_replace:
-              case ConstructorId_localeCompare:
-              case ConstructorId_toLocaleLowerCase: {
+        Object tag = f.getTag();
+        Methods method = null;
+
+        if (tag instanceof Methods) {
+            method = (Methods) tag;
+        } else if (tag instanceof StaticMethods) {
+            StaticMethods staticMethod = (StaticMethods) tag;
+            switch ((StaticMethods) tag) {
+              case charAt:
+              case charCodeAt:
+              case indexOf:
+              case lastIndexOf:
+              case split:
+              case substring:
+              case toLowerCase:
+              case toUpperCase:
+              case substr:
+              case concat:
+              case slice:
+              case equalsIgnoreCase:
+              case match:
+              case search:
+              case replace:
+              case localeCompare:
+              case toLocaleLowerCase: {
                 if (args.length > 0) {
                     thisObj = ScriptRuntime.toObject(scope,
                             ScriptRuntime.toCharSequence(args[0]));
@@ -240,22 +137,27 @@ final class NativeString extends IdScriptableObject
                     thisObj = ScriptRuntime.toObject(scope,
                             ScriptRuntime.toCharSequence(thisObj));
                 }
-                id = -id;
-                continue again;
+                method = staticMethod.instanceMethod;
+                break;
               }
 
-              case ConstructorId_fromCharCode: {
+              case fromCharCode: {
                 int N = args.length;
                 if (N < 1)
                     return "";
-                StringBuffer sb = new StringBuffer(N);
+                StringBuilder sb = new StringBuilder(N);
                 for (int i = 0; i != N; ++i) {
                     sb.append(ScriptRuntime.toUint16(args[i]));
                 }
                 return sb.toString();
               }
+            }
+        }
 
-              case Id_constructor: {
+        if (method != null) {
+            switch (method) {
+
+              case constructor: {
                 CharSequence s = (args.length >= 1)
                     ? ScriptRuntime.toCharSequence(args[0]) : "";
                 if (thisObj == null) {
@@ -266,122 +168,122 @@ final class NativeString extends IdScriptableObject
                 return s instanceof String ? s : s.toString();
               }
 
-              case Id_toString:
-              case Id_valueOf:
+              case toString:
+              case valueOf:
                 // ECMA 15.5.4.2: 'the toString function is not generic.
                 CharSequence cs = realThis(thisObj, f).string;
                 return cs instanceof String ? cs : cs.toString();
 
-              case Id_toSource: {
+              case toSource: {
                 CharSequence s = realThis(thisObj, f).string;
                 return "(new String(\""+ScriptRuntime.escapeString(s.toString())+"\"))";
               }
 
-              case Id_charAt:
-              case Id_charCodeAt: {
+              case charAt:
+              case charCodeAt: {
                  // See ECMA 15.5.4.[4,5]
                 CharSequence target = ScriptRuntime.toCharSequence(thisObj);
                 double pos = ScriptRuntime.toInteger(args, 0);
                 if (pos < 0 || pos >= target.length()) {
-                    if (id == Id_charAt) return "";
+                    if (method == Methods.charAt) return "";
                     else return ScriptRuntime.NaNobj;
                 }
                 char c = target.charAt((int)pos);
-                if (id == Id_charAt) return String.valueOf(c);
+                if (method == Methods.charAt) return String.valueOf(c);
                 else return ScriptRuntime.wrapInt(c);
               }
 
-              case Id_indexOf:
+              case indexOf:
                 return ScriptRuntime.wrapInt(js_indexOf(
                     ScriptRuntime.toString(thisObj), args));
 
-              case Id_lastIndexOf:
+              case lastIndexOf:
                 return ScriptRuntime.wrapInt(js_lastIndexOf(
                     ScriptRuntime.toString(thisObj), args));
 
-              case Id_split:
+              case split:
                 return ScriptRuntime.checkRegExpProxy(cx).
                   js_split(cx, scope, ScriptRuntime.toString(thisObj),
                         args);
 
-              case Id_substring:
+              case substring:
                 return js_substring(cx, ScriptRuntime.toCharSequence(thisObj), args);
 
-              case Id_toLowerCase:
+              case toLowerCase:
                 // See ECMA 15.5.4.11
                 return ScriptRuntime.toString(thisObj).toLowerCase(
                          ScriptRuntime.ROOT_LOCALE);
 
-              case Id_toUpperCase:
+              case toUpperCase:
                 // See ECMA 15.5.4.12
                 return ScriptRuntime.toString(thisObj).toUpperCase(
                          ScriptRuntime.ROOT_LOCALE);
 
-              case Id_substr:
+              case substr:
                 return js_substr(ScriptRuntime.toCharSequence(thisObj), args);
 
-              case Id_concat:
+              case concat:
                 return js_concat(ScriptRuntime.toString(thisObj), args);
 
-              case Id_slice:
+              case slice:
                 return js_slice(ScriptRuntime.toCharSequence(thisObj), args);
 
-              case Id_bold:
+              case bold:
                 return tagify(thisObj, "b", null, null);
 
-              case Id_italics:
+              case italics:
                 return tagify(thisObj, "i", null, null);
 
-              case Id_fixed:
+              case fixed:
                 return tagify(thisObj, "tt", null, null);
 
-              case Id_strike:
+              case strike:
                 return tagify(thisObj, "strike", null, null);
 
-              case Id_small:
+              case small:
                 return tagify(thisObj, "small", null, null);
 
-              case Id_big:
+              case big:
                 return tagify(thisObj, "big", null, null);
 
-              case Id_blink:
+              case blink:
                 return tagify(thisObj, "blink", null, null);
 
-              case Id_sup:
+              case sup:
                 return tagify(thisObj, "sup", null, null);
 
-              case Id_sub:
+              case sub:
                 return tagify(thisObj, "sub", null, null);
 
-              case Id_fontsize:
+              case fontsize:
                 return tagify(thisObj, "font", "size", args);
 
-              case Id_fontcolor:
+              case fontcolor:
                 return tagify(thisObj, "font", "color", args);
 
-              case Id_link:
+              case link:
                 return tagify(thisObj, "a", "href", args);
 
-              case Id_anchor:
+              case anchor:
                 return tagify(thisObj, "a", "name", args);
 
-              case Id_equals:
-              case Id_equalsIgnoreCase: {
+              case equals:
+              case equalsIgnoreCase: {
                 String s1 = ScriptRuntime.toString(thisObj);
                 String s2 = ScriptRuntime.toString(args, 0);
                 return ScriptRuntime.wrapBoolean(
-                    (id == Id_equals) ? s1.equals(s2)
+                    (method == Methods.equals) ? s1.equals(s2)
                                       : s1.equalsIgnoreCase(s2));
               }
 
-              case Id_match:
-              case Id_search:
-              case Id_replace:
+              case match:
+              case search:
+              case replace:
                 {
                     int actionType;
-                    if (id == Id_match) {
+                    if (method == Methods.match) {
                         actionType = RegExpProxy.RA_MATCH;
-                    } else if (id == Id_search) {
+                    } else if (method == Methods.search) {
                         actionType = RegExpProxy.RA_SEARCH;
                     } else {
                         actionType = RegExpProxy.RA_REPLACE;
@@ -390,7 +292,7 @@ final class NativeString extends IdScriptableObject
                         action(cx, scope, thisObj, args, actionType);
                 }
                 // ECMA-262 1 5.5.4.9
-              case Id_localeCompare:
+              case localeCompare:
                 {
                     // For now, create and configure a collator instance. I can't
                     // actually imagine that this'd be slower than caching them
@@ -403,17 +305,17 @@ final class NativeString extends IdScriptableObject
                             ScriptRuntime.toString(thisObj),
                             ScriptRuntime.toString(args, 0)));
                 }
-              case Id_toLocaleLowerCase:
+              case toLocaleLowerCase:
                 {
                     return ScriptRuntime.toString(thisObj)
                             .toLowerCase(cx.getLocale());
                 }
-              case Id_toLocaleUpperCase:
+              case toLocaleUpperCase:
                 {
                     return ScriptRuntime.toString(thisObj)
                             .toUpperCase(cx.getLocale());
                 }
-              case Id_trim:
+              case trim:
                 {
                     String str = ScriptRuntime.toString(thisObj);
                     char[] chars = str.toCharArray();
@@ -430,14 +332,14 @@ final class NativeString extends IdScriptableObject
                     return str.substring(start, end);
                 }
             }
-            throw new IllegalArgumentException(String.valueOf(id));
         }
+        return null;
     }
 
     private static NativeString realThis(Scriptable thisObj, IdFunctionObject f)
     {
         if (!(thisObj instanceof NativeString))
-            throw incompatibleCallError(f);
+            throw IdScriptableObject.incompatibleCallError(f);
         return (NativeString)thisObj;
     }
 
@@ -448,7 +350,7 @@ final class NativeString extends IdScriptableObject
                                  String attribute, Object[] args)
     {
         String str = ScriptRuntime.toString(thisObj);
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append('<');
         result.append(tag);
         if (attribute != null) {
@@ -475,9 +377,22 @@ final class NativeString extends IdScriptableObject
         return string instanceof String ? (String)string : string.toString();
     }
 
+    @Override
+    public Object get(String name, Scriptable start) {
+        if ("length".equals(name)) {
+            return ScriptRuntime.wrapInt(string.length());
+        }
+        return super.get(name, start);
+    }
+
+    @Override
+    public boolean has(String name, Scriptable start) {
+        return "length".equals(name) || super.has(name, start);
+    }
+
     /* Make array-style property lookup work for strings.
-     * XXX is this ECMA?  A version check is probably needed. In js too.
-     */
+    * XXX is this ECMA?  A version check is probably needed. In js too.
+    */
     @Override
     public Object get(int index, Scriptable start) {
         if (0 <= index && index < string.length()) {
@@ -492,6 +407,16 @@ final class NativeString extends IdScriptableObject
             return;
         }
         super.put(index, start, value);
+    }
+
+    @Override
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+        if ("length".equals(id)) {
+            return buildDataDescriptor(getParentScope(),
+                    ScriptRuntime.wrapInt(string.length()),
+                    READONLY | DONTENUM | PERMANENT);
+        }
+        return super.getOwnPropertyDescriptor(cx, id);
     }
 
     /*
@@ -618,7 +543,7 @@ final class NativeString extends IdScriptableObject
         }
 
         // Find total capacity for the final string to avoid unnecessary
-        // re-allocations in StringBuffer
+        // re-allocations in StringBuilder
         int size = target.length();
         String[] argsAsStrings = new String[N];
         for (int i = 0; i != N; ++i) {
@@ -627,7 +552,7 @@ final class NativeString extends IdScriptableObject
             size += s.length();
         }
 
-        StringBuffer result = new StringBuffer(size);
+        StringBuilder result = new StringBuilder(size);
         result.append(target);
         for (int i = 0; i != N; ++i) {
             result.append(argsAsStrings[i]);
@@ -667,140 +592,78 @@ final class NativeString extends IdScriptableObject
         return target;
     }
 
-// #string_id_map#
+    enum Methods {
+        constructor(1),
+        toString(0),
+        toSource(0),
+        valueOf(0),
+        charAt(1),
+        charCodeAt(1),
+        indexOf(1),
+        lastIndexOf(1),
+        split(2),
+        substring(2),
+        toLowerCase(0),
+        toUpperCase(0),
+        substr(2),
+        concat(1),
+        slice(2),
+        bold(0),
+        italics(0),
+        fixed(0),
+        strike(0),
+        small(0),
+        big(0),
+        blink(0),
+        sup(0),
+        sub(0),
+        fontsize(0),
+        fontcolor(0),
+        link(0),
+        anchor(0),
+        equals(1),
+        equalsIgnoreCase(1),
+        match(1),
+        search(1),
+        replace(1),
+        localeCompare(1),
+        toLocaleLowerCase(0),
+        toLocaleUpperCase(0),
+        trim(0);
 
-    @Override
-    protected int findPrototypeId(String s)
-    {
-        int id;
-// #generated# Last update: 2009-07-23 07:32:39 EST
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 3: c=s.charAt(2);
-                if (c=='b') { if (s.charAt(0)=='s' && s.charAt(1)=='u') {id=Id_sub; break L0;} }
-                else if (c=='g') { if (s.charAt(0)=='b' && s.charAt(1)=='i') {id=Id_big; break L0;} }
-                else if (c=='p') { if (s.charAt(0)=='s' && s.charAt(1)=='u') {id=Id_sup; break L0;} }
-                break L;
-            case 4: c=s.charAt(0);
-                if (c=='b') { X="bold";id=Id_bold; }
-                else if (c=='l') { X="link";id=Id_link; }
-                else if (c=='t') { X="trim";id=Id_trim; }
-                break L;
-            case 5: switch (s.charAt(4)) {
-                case 'd': X="fixed";id=Id_fixed; break L;
-                case 'e': X="slice";id=Id_slice; break L;
-                case 'h': X="match";id=Id_match; break L;
-                case 'k': X="blink";id=Id_blink; break L;
-                case 'l': X="small";id=Id_small; break L;
-                case 't': X="split";id=Id_split; break L;
-                } break L;
-            case 6: switch (s.charAt(1)) {
-                case 'e': X="search";id=Id_search; break L;
-                case 'h': X="charAt";id=Id_charAt; break L;
-                case 'n': X="anchor";id=Id_anchor; break L;
-                case 'o': X="concat";id=Id_concat; break L;
-                case 'q': X="equals";id=Id_equals; break L;
-                case 't': X="strike";id=Id_strike; break L;
-                case 'u': X="substr";id=Id_substr; break L;
-                } break L;
-            case 7: switch (s.charAt(1)) {
-                case 'a': X="valueOf";id=Id_valueOf; break L;
-                case 'e': X="replace";id=Id_replace; break L;
-                case 'n': X="indexOf";id=Id_indexOf; break L;
-                case 't': X="italics";id=Id_italics; break L;
-                } break L;
-            case 8: c=s.charAt(4);
-                if (c=='r') { X="toString";id=Id_toString; }
-                else if (c=='s') { X="fontsize";id=Id_fontsize; }
-                else if (c=='u') { X="toSource";id=Id_toSource; }
-                break L;
-            case 9: c=s.charAt(0);
-                if (c=='f') { X="fontcolor";id=Id_fontcolor; }
-                else if (c=='s') { X="substring";id=Id_substring; }
-                break L;
-            case 10: X="charCodeAt";id=Id_charCodeAt; break L;
-            case 11: switch (s.charAt(2)) {
-                case 'L': X="toLowerCase";id=Id_toLowerCase; break L;
-                case 'U': X="toUpperCase";id=Id_toUpperCase; break L;
-                case 'n': X="constructor";id=Id_constructor; break L;
-                case 's': X="lastIndexOf";id=Id_lastIndexOf; break L;
-                } break L;
-            case 13: X="localeCompare";id=Id_localeCompare; break L;
-            case 16: X="equalsIgnoreCase";id=Id_equalsIgnoreCase; break L;
-            case 17: c=s.charAt(8);
-                if (c=='L') { X="toLocaleLowerCase";id=Id_toLocaleLowerCase; }
-                else if (c=='U') { X="toLocaleUpperCase";id=Id_toLocaleUpperCase; }
-                break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+        private final int arity;
+        Methods(int arity) {
+            this.arity = arity;
         }
-// #/generated#
-        return id;
     }
 
-    private static final int
-        ConstructorId_fromCharCode   = -1,
+    enum StaticMethods {
+        fromCharCode(1, false),
+        charAt(2, true),
+        charCodeAt(2, true),
+        indexOf(2, true),
+        lastIndexOf(2, true),
+        split(3, true),
+        substring(3, true),
+        toLowerCase(1, true),
+        toUpperCase(1, true),
+        substr(3, true),
+        concat(2, true),
+        slice(3, true),
+        equalsIgnoreCase(2, true),
+        match(2, true),
+        search(2, true),
+        replace(2, true),
+        localeCompare(2, true),
+        toLocaleLowerCase(1, true);
 
-        Id_constructor               = 1,
-        Id_toString                  = 2,
-        Id_toSource                  = 3,
-        Id_valueOf                   = 4,
-        Id_charAt                    = 5,
-        Id_charCodeAt                = 6,
-        Id_indexOf                   = 7,
-        Id_lastIndexOf               = 8,
-        Id_split                     = 9,
-        Id_substring                 = 10,
-        Id_toLowerCase               = 11,
-        Id_toUpperCase               = 12,
-        Id_substr                    = 13,
-        Id_concat                    = 14,
-        Id_slice                     = 15,
-        Id_bold                      = 16,
-        Id_italics                   = 17,
-        Id_fixed                     = 18,
-        Id_strike                    = 19,
-        Id_small                     = 20,
-        Id_big                       = 21,
-        Id_blink                     = 22,
-        Id_sup                       = 23,
-        Id_sub                       = 24,
-        Id_fontsize                  = 25,
-        Id_fontcolor                 = 26,
-        Id_link                      = 27,
-        Id_anchor                    = 28,
-        Id_equals                    = 29,
-        Id_equalsIgnoreCase          = 30,
-        Id_match                     = 31,
-        Id_search                    = 32,
-        Id_replace                   = 33,
-        Id_localeCompare             = 34,
-        Id_toLocaleLowerCase         = 35,
-        Id_toLocaleUpperCase         = 36,
-        Id_trim                      = 37,
-        MAX_PROTOTYPE_ID             = Id_trim;
-
-// #/string_id_map#
-
-    private static final int
-        ConstructorId_charAt         = -Id_charAt,
-        ConstructorId_charCodeAt     = -Id_charCodeAt,
-        ConstructorId_indexOf        = -Id_indexOf,
-        ConstructorId_lastIndexOf    = -Id_lastIndexOf,
-        ConstructorId_split          = -Id_split,
-        ConstructorId_substring      = -Id_substring,
-        ConstructorId_toLowerCase    = -Id_toLowerCase,
-        ConstructorId_toUpperCase    = -Id_toUpperCase,
-        ConstructorId_substr         = -Id_substr,
-        ConstructorId_concat         = -Id_concat,
-        ConstructorId_slice          = -Id_slice,
-        ConstructorId_equalsIgnoreCase = -Id_equalsIgnoreCase,
-        ConstructorId_match          = -Id_match,
-        ConstructorId_search         = -Id_search,
-        ConstructorId_replace        = -Id_replace,
-        ConstructorId_localeCompare  = -Id_localeCompare,
-        ConstructorId_toLocaleLowerCase = -Id_toLocaleLowerCase;
+        private final int arity;
+        private final Methods instanceMethod;
+        StaticMethods(int arity, boolean callsInstance) {
+            this.arity = arity;
+            this.instanceMethod = callsInstance ? Methods.valueOf(name()) : null;
+        }
+    }
 
     private CharSequence string;
 }
