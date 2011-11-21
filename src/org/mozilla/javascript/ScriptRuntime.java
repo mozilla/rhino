@@ -242,10 +242,6 @@ public class ScriptRuntime {
         NativeMath.init(scope, sealed);
         NativeJSON.init(scope, sealed);
 
-        NativeWith.init(scope, sealed);
-        NativeCall.init(scope, sealed);
-        NativeScript.init(scope, sealed);
-
         NativeIterator.init(scope, sealed); // Also initializes NativeGenerator
 
         boolean withXml = cx.hasFeature(Context.FEATURE_E4X) &&
@@ -2399,11 +2395,6 @@ public class ScriptRuntime {
                 return evalSpecial(cx, scope, callerThis, args,
                                    filename, lineNumber);
             }
-        } else if (callType == Node.SPECIALCALL_WITH) {
-            if (NativeWith.isWithFunction(fun)) {
-                throw Context.reportRuntimeError1("msg.only.from.new",
-                                                  "With");
-            }
         } else {
             throw Kit.codeBug();
         }
@@ -2418,10 +2409,6 @@ public class ScriptRuntime {
         if (callType == Node.SPECIALCALL_EVAL) {
             if (NativeGlobal.isEvalFunction(fun)) {
                 throw typeError1("msg.not.ctor", "eval");
-            }
-        } else if (callType == Node.SPECIALCALL_WITH) {
-            if (NativeWith.isWithFunction(fun)) {
-                return NativeWith.newWithSpecial(cx, scope, args);
             }
         } else {
             throw Kit.codeBug();
