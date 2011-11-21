@@ -71,8 +71,6 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
      * always gets at least an object back, even when Array == null.
      */
 
-    private static final Object ARRAY_TAG = "Array.prototype";
-    private static final Object ARRAY_STATIC_TAG = "Array";
     private static final Integer NEGATIVE_ONE = Integer.valueOf(-1);
 
     static void init(Scriptable scope, boolean sealed)
@@ -81,20 +79,20 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
         proto.setParentScope(scope);
         proto.setPrototype(getObjectPrototype(scope));
         IdFunctionObject ctor = null;
-        for (Methods m : METHODS) {
-            IdFunctionObject idfun = new IdFunctionObject(proto, ARRAY_TAG,
-                    m.ordinal(), m.name(), m.arity, scope);
+        for (Methods method : Methods.values()) {
+            IdFunctionObject idfun = new IdFunctionObject(proto, method,
+                    0, method.name(), method.arity, scope);
             idfun.addAsProperty(proto);
-            if (m == Methods.constructor) {
+            if (method == Methods.constructor) {
                 ctor = idfun;
                 ctor.initFunction(proto.getClassName(), scope);
                 ctor.markAsConstructor(proto);
                 ctor.exportAsScopeProperty();
             }
         }
-        for (StaticMethods m : STATIC_METHODS) {
-            IdFunctionObject idfun = new IdFunctionObject(proto, ARRAY_STATIC_TAG,
-                    m.ordinal(), m.name(),  m.arity, scope);
+        for (StaticMethods method : StaticMethods.values()) {
+            IdFunctionObject idfun = new IdFunctionObject(proto, method,
+                    0, method.name(),  method.arity, scope);
             idfun.addAsProperty(ctor);
         }
         if (sealed) {
@@ -142,10 +140,13 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        int id = f.methodId();
+        Object tag = f.getTag();
+        Methods method = null;
 
-        if (f.hasTag(ARRAY_STATIC_TAG)) {
-            StaticMethods staticMethod = STATIC_METHODS[id];
+        if (tag instanceof Methods) {
+            method = (Methods) tag;
+        } else if (tag instanceof StaticMethods) {
+            StaticMethods staticMethod = (StaticMethods) tag;
 
             switch (staticMethod) {
                 case join:
@@ -174,6 +175,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
                             newArgs[i] = args[i+1];
                         args = newArgs;
                     }
+                    method = staticMethod.instanceMethod;
                     break;
                     // Continue to instance method switch below
 
@@ -184,74 +186,75 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
             }
         }
 
-        Methods method = METHODS[id];
-        switch (method) {
-            case constructor: {
-                boolean inNewExpr = (thisObj == null);
-                if (!inNewExpr) {
-                    // IdFunctionObject.construct will set up parent, proto
-                    return f.construct(cx, scope, args);
+        if (method != null) {
+            switch (method) {
+                case constructor: {
+                    boolean inNewExpr = (thisObj == null);
+                    if (!inNewExpr) {
+                        // IdFunctionObject.construct will set up parent, proto
+                        return f.construct(cx, scope, args);
+                    }
+                    return jsConstructor(cx, scope, args);
                 }
-                return jsConstructor(cx, scope, args);
+
+                case toString:
+                    return toStringHelper(cx, scope, thisObj,
+                            cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
+
+                case toLocaleString:
+                    return toStringHelper(cx, scope, thisObj, false, true);
+
+                case toSource:
+                    return toStringHelper(cx, scope, thisObj, true, false);
+
+                case join:
+                    return js_join(cx, thisObj, args);
+
+                case reverse:
+                    return js_reverse(cx, thisObj, args);
+
+                case sort:
+                    return js_sort(cx, scope, thisObj, args);
+
+                case push:
+                    return js_push(cx, thisObj, args);
+
+                case pop:
+                    return js_pop(cx, thisObj, args);
+
+                case shift:
+                    return js_shift(cx, thisObj, args);
+
+                case unshift:
+                    return js_unshift(cx, thisObj, args);
+
+                case splice:
+                    return js_splice(cx, scope, thisObj, args);
+
+                case concat:
+                    return js_concat(cx, scope, thisObj, args);
+
+                case slice:
+                    return js_slice(cx, thisObj, args);
+
+                case indexOf:
+                    return indexOfHelper(cx, thisObj, args, false);
+
+                case lastIndexOf:
+                    return indexOfHelper(cx, thisObj, args, true);
+
+                case every:
+                case filter:
+                case forEach:
+                case map:
+                case some:
+                    return iterativeMethod(cx, method, scope, thisObj, args);
+                case reduce:
+                case reduceRight:
+                    return reduceMethod(cx, method, scope, thisObj, args);
             }
-
-            case toString:
-                return toStringHelper(cx, scope, thisObj,
-                        cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE), false);
-
-            case toLocaleString:
-                return toStringHelper(cx, scope, thisObj, false, true);
-
-            case toSource:
-                return toStringHelper(cx, scope, thisObj, true, false);
-
-            case join:
-                return js_join(cx, thisObj, args);
-
-            case reverse:
-                return js_reverse(cx, thisObj, args);
-
-            case sort:
-                return js_sort(cx, scope, thisObj, args);
-
-            case push:
-                return js_push(cx, thisObj, args);
-
-            case pop:
-                return js_pop(cx, thisObj, args);
-
-            case shift:
-                return js_shift(cx, thisObj, args);
-
-            case unshift:
-                return js_unshift(cx, thisObj, args);
-
-            case splice:
-                return js_splice(cx, scope, thisObj, args);
-
-            case concat:
-                return js_concat(cx, scope, thisObj, args);
-
-            case slice:
-                return js_slice(cx, thisObj, args);
-
-            case indexOf:
-                return indexOfHelper(cx, thisObj, args, false);
-
-            case lastIndexOf:
-                return indexOfHelper(cx, thisObj, args, true);
-
-            case every:
-            case filter:
-            case forEach:
-            case map:
-            case some:
-                return iterativeMethod(cx, method, scope, thisObj, args);
-            case reduce:
-            case reduceRight:
-                return reduceMethod(cx, method, scope, thisObj, args);
         }
-        throw new IllegalArgumentException(String.valueOf(id));
+        throw new IllegalArgumentException(String.valueOf(tag));
     }
 
     @Override
@@ -1797,7 +1800,8 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
     }
 
     enum Methods {
-        join(1), // method indices here must match those of StaticMethods below
+        constructor(1),
+        join(1),
         reverse(0),
         sort(1),
         push(1),
@@ -1818,8 +1822,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
         reduceRight(1),
         toString(0),
         toLocaleString(0),
-        toSource(0),
-        constructor(1);
+        toSource(0);
 
         private final int arity;
         Methods(int arity) {
@@ -1828,35 +1831,34 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
     }
 
     enum StaticMethods {
-        join(1), // method indices here must match those of Methods above
-        reverse(0),
-        sort(1),
-        push(1),
-        pop(0),
-        shift(0),
-        unshift(1),
-        splice(2),
-        concat(1),
-        slice(2),
-        indexOf(1),
-        lastIndexOf(1),
-        every(1),
-        filter(1),
-        forEach(1),
-        map(1),
-        some(1),
-        reduce(1),
-        reduceRight(1),
-        isArray(1);
+        join(1, true),
+        reverse(0, true),
+        sort(1, true),
+        push(1, true),
+        pop(0, true),
+        shift(0, true),
+        unshift(1, true),
+        splice(2, true),
+        concat(1, true),
+        slice(2, true),
+        indexOf(1, true),
+        lastIndexOf(1, true),
+        every(1, true),
+        filter(1, true),
+        forEach(1, true),
+        map(1, true),
+        some(1, true),
+        reduce(1, true),
+        reduceRight(1, true),
+        isArray(1, false);
 
         private final int arity;
-        StaticMethods(int arity) {
+        private final Methods instanceMethod;
+        StaticMethods(int arity, boolean callsInstance) {
             this.arity = arity;
+            this.instanceMethod = callsInstance ? Methods.valueOf(name()) : null;
         }
     }
-
-    private static final Methods[] METHODS = Methods.values();
-    private static final StaticMethods[] STATIC_METHODS = StaticMethods.values();
 
     /**
      * Internal representation of the JavaScript array's length property.

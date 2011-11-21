@@ -58,28 +58,25 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
 {
     static final long serialVersionUID = -6345305608474346996L;
 
-    private static final Object OBJECT_TAG = "Object.prototype";
-    private static final Object OBJECT_STATIC_TAG = "Object";
-
     static void init(Scriptable scope, boolean sealed)
     {
         NativeObject proto = new NativeObject();
         proto.setParentScope(scope);
         IdFunctionObject ctor = null;
-        for (Methods m : METHODS) {
-            IdFunctionObject idfun = new IdFunctionObject(proto, OBJECT_TAG,
-                    m.ordinal(), m.name(), m.arity, scope);
+        for (Methods method : Methods.values()) {
+            IdFunctionObject idfun = new IdFunctionObject(proto, method,
+                    0, method.name(), method.arity, scope);
             idfun.addAsProperty(proto);
-            if (m == Methods.constructor) {
+            if (method == Methods.constructor) {
                 ctor = idfun;
                 ctor.initFunction(proto.getClassName(), scope);
                 ctor.markAsConstructor(proto);
                 ctor.exportAsScopeProperty();
             }
         }
-        for (StaticMethods m : STATIC_METHODS) {
-            IdFunctionObject idfun = new IdFunctionObject(proto, OBJECT_STATIC_TAG,
-                    m.ordinal(), m.name(),  m.arity, scope);
+        for (StaticMethods method : StaticMethods.values()) {
+            IdFunctionObject idfun = new IdFunctionObject(proto, method,
+                    0, method.name(),  method.arity, scope);
             idfun.addAsProperty(ctor);
         }
         if (sealed) {
@@ -103,10 +100,10 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        int id = f.methodId();
+        Object tag = f.getTag();
 
-        if (f.hasTag(OBJECT_TAG)) {
-            Methods method = METHODS[id];
+        if (tag instanceof Methods) {
+            Methods method = (Methods) tag;
 
             switch (method) {
                 case constructor: {
@@ -260,9 +257,9 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
             }
         }
 
-        if (f.hasTag(OBJECT_STATIC_TAG)) {
+        if (tag instanceof StaticMethods) {
 
-            switch (STATIC_METHODS[id]) {
+            switch ((StaticMethods) tag) {
                 case getPrototypeOf:
                 {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
@@ -418,7 +415,7 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
             }
         }
 
-        throw new IllegalArgumentException(String.valueOf(id));
+        throw new IllegalArgumentException(String.valueOf(tag));
     }
 
     // methods implementing java.util.Map
@@ -658,8 +655,5 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
             this.arity = arity;
         }
     }
-
-    private static final Methods[] METHODS = Methods.values();
-    private static final StaticMethods[] STATIC_METHODS = StaticMethods.values();
 
 }
