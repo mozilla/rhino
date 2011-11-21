@@ -495,7 +495,7 @@ public class NativeJavaMethod extends BaseFunction
         String memberName = firstFitMember.getName();
         String memberClass = firstFitMember.getDeclaringClass().getName();
 
-        if (methodsOrCtors[0].isMethod()) {
+        if (methodsOrCtors[0].isCtor()) {
             throw Context.reportRuntimeError3(
                 "msg.constructor.ambiguous",
                 memberName, scriptSignature(args), buf.toString());
