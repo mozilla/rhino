@@ -87,6 +87,11 @@ public class IdFunctionObject extends BaseFunction
         return this.tag == tag;
     }
 
+    public final Object getTag()
+    {
+        return tag;
+    }
+
     public final int methodId()
     {
         return methodId;
