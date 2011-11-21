@@ -347,15 +347,11 @@ public class ContextFactory
         // so that past implementors of ContextFactory do not fail at runtime
         // upon invocation of this method.
         // Note that the default implementation returns null if we
-        // neither have XMLBeans nor a DOM3 implementation present.
+        // don't have a DOM3 implementation present.
 
         if (isDom3Present()) {
             return org.mozilla.javascript.xml.XMLLib.Factory.create(
                 "org.mozilla.javascript.xmlimpl.XMLLibImpl"
-            );
-        } else if (Kit.classOrNull("org.apache.xmlbeans.XmlCursor") != null) {
-            return org.mozilla.javascript.xml.XMLLib.Factory.create(
-                "org.mozilla.javascript.xml.impl.xmlbeans.XMLLibImpl"
             );
         } else {
             return null;
