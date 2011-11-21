@@ -47,25 +47,9 @@ import java.io.Serializable;
  * It simply delegates every action to its prototype except
  * for operations on its parent.
  */
-public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
+public class NativeWith implements Scriptable, Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    static void init(Scriptable scope, boolean sealed)
-    {
-        NativeWith obj = new NativeWith();
-
-        obj.setParentScope(scope);
-        obj.setPrototype(ScriptableObject.getObjectPrototype(scope));
-
-        IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_constructor,
-                                         "With", 0, scope);
-        ctor.markAsConstructor(obj);
-        if (sealed) {
-            ctor.sealObject();
-        }
-        ctor.exportAsScopeProperty();
-    }
 
     private NativeWith() {
     }
@@ -163,43 +147,6 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         // NativeWith itself does not support it
         throw new IllegalStateException();
     }
-
-    public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
-    {
-        if (f.hasTag(FTAG)) {
-            if (f.methodId() == Id_constructor) {
-                throw Context.reportRuntimeError1("msg.cant.call.indirect", "With");
-            }
-        }
-        throw f.unknown();
-    }
-
-    static boolean isWithFunction(Object functionObj)
-    {
-        if (functionObj instanceof IdFunctionObject) {
-            IdFunctionObject f = (IdFunctionObject)functionObj;
-            return f.hasTag(FTAG) && f.methodId() == Id_constructor;
-        }
-        return false;
-    }
-
-    static Object newWithSpecial(Context cx, Scriptable scope, Object[] args)
-    {
-        ScriptRuntime.checkDeprecated(cx, "With");
-        scope = ScriptableObject.getTopLevelScope(scope);
-        NativeWith thisObj = new NativeWith();
-        thisObj.setPrototype(args.length == 0
-                             ? ScriptableObject.getObjectPrototype(scope)
-                             : ScriptRuntime.toObject(cx, scope, args[0]));
-        thisObj.setParentScope(scope);
-        return thisObj;
-    }
-
-    private static final Object FTAG = "With";
-
-    private static final int
-        Id_constructor = 1;
 
     protected Scriptable prototype;
     protected Scriptable parent;
