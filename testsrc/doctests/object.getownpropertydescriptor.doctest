@@ -41,8 +41,6 @@ true
 
 js> desc.__proto__ === Object.prototype
 true
-js> desc.__parent__;
-[object global]
 
 js> var func = function(){}
 js> func.a = 1; Object.getOwnPropertyDescriptor(func, 'a').toSource()

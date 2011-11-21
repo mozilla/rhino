@@ -726,9 +726,6 @@ public class Dim {
             if (proto != null) {
                 ids[extra++] = "__proto__";
             }
-            if (parent != null) {
-                ids[extra++] = "__parent__";
-            }
         }
 
         return ids;

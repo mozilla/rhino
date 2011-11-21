@@ -44,7 +44,6 @@ class SpecialRef extends Ref
 
     private static final int SPECIAL_NONE = 0;
     private static final int SPECIAL_PROTO = 1;
-    private static final int SPECIAL_PARENT = 2;
 
     private Scriptable target;
     private int type;
@@ -67,13 +66,11 @@ class SpecialRef extends Ref
         int type;
         if (name.equals("__proto__")) {
             type = SPECIAL_PROTO;
-        } else if (name.equals("__parent__")) {
-            type = SPECIAL_PARENT;
         } else {
             throw new IllegalArgumentException(name);
         }
 
-        if (!cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
+        if (!cx.hasFeature(Context.FEATURE_PROTO_PROPERTY)) {
             // Clear special after checking for valid name!
             type = SPECIAL_NONE;
         }
@@ -89,8 +86,6 @@ class SpecialRef extends Ref
             return ScriptRuntime.getObjectProp(target, name, cx);
           case SPECIAL_PROTO:
             return target.getPrototype();
-          case SPECIAL_PARENT:
-            return target.getParentScope();
           default:
             throw Kit.codeBug();
         }
@@ -103,7 +98,6 @@ class SpecialRef extends Ref
           case SPECIAL_NONE:
             return ScriptRuntime.setObjectProp(target, name, value, cx);
           case SPECIAL_PROTO:
-          case SPECIAL_PARENT:
             {
                 Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value);
                 if (obj != null) {
@@ -115,18 +109,10 @@ class SpecialRef extends Ref
                             throw Context.reportRuntimeError1(
                                 "msg.cyclic.value", name);
                         }
-                        if (type == SPECIAL_PROTO) {
-                            search = search.getPrototype();
-                        } else {
-                            search = search.getParentScope();
-                        }
+                        search = search.getPrototype();
                     } while (search != null);
                 }
-                if (type == SPECIAL_PROTO) {
-                    target.setPrototype(obj);
-                } else {
-                    target.setParentScope(obj);
-                }
+                target.setPrototype(obj);
                 return obj;
             }
           default:

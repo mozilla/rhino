@@ -1709,7 +1709,7 @@ public class ScriptRuntime {
 
     static boolean isSpecialProperty(String s)
     {
-        return s.equals("__proto__") || s.equals("__parent__");
+        return s.equals("__proto__");
     }
 
     public static Ref specialRef(Object obj, String specialProperty,
