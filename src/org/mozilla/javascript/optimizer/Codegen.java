@@ -54,6 +54,7 @@ import org.mozilla.classfile.*;
 
 import java.util.*;
 import java.lang.reflect.Constructor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class generates code for a given IR tree.
@@ -89,10 +90,7 @@ public class Codegen implements Evaluator
                           String encodedSource,
                           boolean returnFunction)
     {
-        int serial;
-        synchronized (globalLock) {
-            serial = ++globalSerialClassCounter;
-        }
+        int serial = globalSerialClassCounter.incrementAndGet();
 
         String baseName = "c";
         if (tree.getSourceName().length() > 0) {
@@ -104,12 +102,8 @@ public class Codegen implements Evaluator
 
         String mainClassName = "org.mozilla.javascript.gen." + baseName + "_" + serial;
 
-        byte[] mainClassBytes = compileToClassFile(compilerEnv, mainClassName,
-                                                   tree, encodedSource,
-                                                   returnFunction);
-
-        classes.put(mainClassName, mainClassBytes);
-        return classes;
+        return compileToClassFile(compilerEnv, mainClassName, tree,
+                encodedSource, returnFunction);
     }
 
     public Script createScriptObject(Object bytecode,
@@ -183,11 +177,11 @@ public class Codegen implements Evaluator
         return mainClass;
     }
 
-    byte[] compileToClassFile(CompilerEnvirons compilerEnv,
-                              String mainClassName,
-                              ScriptNode scriptOrFn,
-                              String encodedSource,
-                              boolean returnFunction)
+    Map<String,byte[]> compileToClassFile(CompilerEnvirons compilerEnv,
+                                          String mainClassName,
+                                          ScriptNode scriptOrFn,
+                                          String encodedSource,
+                                          boolean returnFunction)
     {
         this.compilerEnv = compilerEnv;
 
@@ -208,10 +202,11 @@ public class Codegen implements Evaluator
             = ClassFileWriter.classNameToSignature(mainClassName);
 
         try {
-            return generateCode(encodedSource);
+            classes.put(mainClassName, generateCode(encodedSource));
         } catch (ClassFileWriter.ClassFileFormatException e) {
             throw reportClassFileFormatException(scriptOrFn, e.getMessage());
         }
+        return classes;
     }
 
     private RuntimeException reportClassFileFormatException(
@@ -1352,8 +1347,8 @@ public class Codegen implements Evaluator
         = "(Lorg/mozilla/javascript/Scriptable;"
            +"Lorg/mozilla/javascript/Context;I)V";
 
-    private static final Object globalLock = new Object();
-    private static int globalSerialClassCounter;
+    private static final AtomicInteger globalSerialClassCounter =
+            new AtomicInteger();
 
     private CompilerEnvirons compilerEnv;
 

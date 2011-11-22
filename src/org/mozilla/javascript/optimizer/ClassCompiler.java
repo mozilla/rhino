@@ -43,6 +43,8 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 
+import java.util.Map;
+
 /**
  * Generates class files from script sources.
  *
@@ -157,7 +159,7 @@ public class ClassCompiler
      *         array. The initial element of the array always holds
      *         mainClassName and array[1] holds its byte code.
      */
-    public Object[] compileToClassFiles(String source,
+    public Map<String,byte[]> compileToClassFiles(String source,
                                         String sourceLocation,
                                         int lineno,
                                         String mainClassName)
@@ -184,13 +186,13 @@ public class ClassCompiler
 
         Codegen codegen = new Codegen();
         codegen.setMainMethodClass(mainMethodClassName);
-        byte[] scriptClassBytes
+        Map<String,byte[]> classes
             = codegen.compileToClassFile(compilerEnv, scriptClassName,
                                          tree, tree.getEncodedSource(),
                                          false);
 
         if (isPrimary) {
-            return new Object[] { scriptClassName, scriptClassBytes };
+            return classes;
         }
         int functionCount = tree.getFunctionCount();
         ObjToIntMap functionNames = new ObjToIntMap(functionCount);
@@ -204,13 +206,11 @@ public class ClassCompiler
         if (superClass == null) {
             superClass = ScriptRuntime.ObjectClass;
         }
-        byte[] mainClassBytes
-            = JavaAdapter.createAdapterCode(
+        classes.put(mainClassName, JavaAdapter.createAdapterCode(
                 functionNames, mainClassName,
-                superClass, interfaces, scriptClassName);
+                superClass, interfaces, scriptClassName));
 
-        return new Object[] { mainClassName, mainClassBytes,
-                              scriptClassName, scriptClassBytes };
+        return classes;
     }
 
     private String mainMethodClassName;

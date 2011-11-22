@@ -273,10 +273,10 @@ public class Main {
                 mainClassName = targetPackage+"."+mainClassName;
             }
 
-            Object[] compiled
+            Map<String,byte[]> compiled
                 = compiler.compileToClassFiles(source, filename, 1,
                                                mainClassName);
-            if (compiled == null || compiled.length == 0) {
+            if (compiled == null || compiled.isEmpty()) {
                 return;
             }
 
@@ -289,9 +289,9 @@ public class Main {
                     targetTopDir = new File(parent);
                 }
             }
-            for (int j = 0; j != compiled.length; j += 2) {
-                String className = (String)compiled[j];
-                byte[] bytes = (byte[])compiled[j + 1];
+            for (Map.Entry<String,byte[]> entry : compiled.entrySet()) {
+                String className = entry.getKey();
+                byte[] bytes = entry.getValue();
                 File outfile = getOutputFile(targetTopDir, className);
                 try {
                     FileOutputStream os = new FileOutputStream(outfile);
