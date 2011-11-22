@@ -108,7 +108,8 @@ public class Codegen implements Evaluator
                                                    tree, encodedSource,
                                                    returnFunction);
 
-        return new Object[] { mainClassName, mainClassBytes };
+        classes.put(mainClassName, mainClassBytes);
+        return classes;
     }
 
     public Script createScriptObject(Object bytecode,
@@ -147,9 +148,7 @@ public class Codegen implements Evaluator
     private Class<?> defineClass(Object bytecode,
                                  Object staticSecurityDomain)
     {
-        Object[] nameBytesPair = (Object[])bytecode;
-        String className = (String)nameBytesPair[0];
-        byte[] classBytes = (byte[])nameBytesPair[1];
+        Map<String, byte[]> classMap = (Map<String, byte[]>)bytecode;
 
         // The generated classes in this case refer only to Rhino classes
         // which must be accessible through this class loader
@@ -157,17 +156,31 @@ public class Codegen implements Evaluator
         GeneratedClassLoader loader;
         loader = SecurityController.createLoader(rhinoLoader,
                                                  staticSecurityDomain);
-        Exception e;
+        Exception e = null;
+        Class<?> mainClass = null;
+        List<Class<?>> classes = new ArrayList<Class<?>>(classMap.size());
         try {
-            Class<?> cl = loader.defineClass(className, classBytes);
-            loader.linkClass(cl);
-            return cl;
+            for (Map.Entry<String, byte[]> entry : classMap.entrySet()) {
+                classes.add(loader.defineClass(entry.getKey(), entry.getValue()));
+            }
+            for (Class<?> clazz : classes) {
+                loader.linkClass(clazz);
+                if (clazz.getName().equals(mainClassName)) {
+                    mainClass = clazz;
+                }
+            }
         } catch (SecurityException x) {
             e = x;
         } catch (IllegalArgumentException x) {
             e = x;
         }
-        throw new RuntimeException("Malformed optimizer package " + e);
+        if (e != null) {
+            throw new RuntimeException("Malformed optimizer package " + e);
+        }
+        if (mainClass == null) {
+            throw new RuntimeException("Malformed optimizer package: no main class");
+        }
+        return mainClass;
     }
 
     byte[] compileToClassFile(CompilerEnvirons compilerEnv,
@@ -1308,12 +1321,12 @@ public class Codegen implements Evaluator
         throw new RuntimeException("Bad tree in codegen");
     }
 
-     void setMainMethodClass(String className)
-     {
-         mainMethodClass = className;
-     }
+    void setMainMethodClass(String className)
+    {
+        mainMethodClass = className;
+    }
 
-     static final String DEFAULT_MAIN_METHOD_CLASS
+    static final String DEFAULT_MAIN_METHOD_CLASS
         = "org.mozilla.javascript.optimizer.OptRuntime";
 
     private static final String SUPER_CLASS_NAME
@@ -1335,9 +1348,9 @@ public class Codegen implements Evaluator
            +"Lorg/mozilla/javascript/Scriptable;"
            +")V";
 
-   static final String FUNCTION_CONSTRUCTOR_SIGNATURE
+    static final String FUNCTION_CONSTRUCTOR_SIGNATURE
         = "(Lorg/mozilla/javascript/Scriptable;"
-          +"Lorg/mozilla/javascript/Context;I)V";
+           +"Lorg/mozilla/javascript/Context;I)V";
 
     private static final Object globalLock = new Object();
     private static int globalSerialClassCounter;
@@ -1352,6 +1365,8 @@ public class Codegen implements Evaluator
 
     String mainClassName;
     String mainClassSignature;
+
+    Map<String, byte[]> classes = new HashMap<String, byte[]>();
 
     private double[] itsConstantList;
     private int itsConstantListSize;
