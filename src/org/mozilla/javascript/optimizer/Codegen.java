@@ -1585,10 +1585,8 @@ class BodyCodegen
             }
         }
 
-        if (fnCurrent != null && !inDirectCallFunction)
-        {
-            // Unless we're in a direct call use the enclosing scope
-            // of the function as our variable object.
+        if (fnCurrent != null) {
+            // Use the enclosing scope of the function as our variable object.
             cfw.addALoad(funObjLocal);
             cfw.addInvoke(ByteCode.INVOKEINTERFACE,
                           "org/mozilla/javascript/Scriptable",
@@ -3500,16 +3498,8 @@ class BodyCodegen
         cfw.add(ByteCode.SWAP);
         cfw.add(ByteCode.POP);
         // stack: ... directFunct
-        cfw.add(ByteCode.DUP);
-        // stack: ... directFunct directFunct
-        cfw.addInvoke(ByteCode.INVOKEINTERFACE,
-                      "org/mozilla/javascript/Scriptable",
-                      "getParentScope",
-                      "()Lorg/mozilla/javascript/Scriptable;");
-        // stack: ... directFunct scope
         cfw.addALoad(contextLocal);
-        // stack: ... directFunct scope cx
-        cfw.add(ByteCode.SWAP);
+        cfw.addALoad(variableObjectLocal);
         // stack: ... directFunc cx scope
 
         if (type == Token.NEW) {
@@ -4409,10 +4399,10 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         switch (child.getType()) {
           case Token.GETVAR:
             if (!hasVarsInRegs) Kit.codeBug();
+            boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+            int varIndex = fnCurrent.getVarIndex(child);
+            short reg = varRegisters[varIndex];
             if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-                int varIndex = fnCurrent.getVarIndex(child);
-                short reg = varRegisters[varIndex];
                 int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
                 cfw.addDLoad(reg + offset);
                 if (post) {
@@ -4429,10 +4419,11 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 }
                 cfw.addDStore(reg + offset);
             } else {
-                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-                int varIndex = fnCurrent.getVarIndex(child);
-                short reg = varRegisters[varIndex];
-                cfw.addALoad(reg);
+                if (varIsDirectCallParameter(varIndex)) {
+                    dcpLoadAsObject(reg);
+                } else {
+                    cfw.addALoad(reg);
+                }
                 if (post) {
                     cfw.add(ByteCode.DUP);
                 }
