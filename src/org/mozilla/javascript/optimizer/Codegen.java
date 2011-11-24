@@ -1575,10 +1575,8 @@ class BodyCodegen
             }
         }
 
-        if (fnCurrent != null && !inDirectCallFunction)
-        {
-            // Unless we're in a direct call use the enclosing scope
-            // of the function as our variable object.
+        if (fnCurrent != null) {
+            // Use the enclosing scope of the function as our variable object.
             cfw.addALoad(funObjLocal);
             cfw.addInvoke(ByteCode.INVOKEINTERFACE,
                           "org/mozilla/javascript/Scriptable",
@@ -3490,16 +3488,8 @@ class BodyCodegen
         cfw.add(ByteCode.SWAP);
         cfw.add(ByteCode.POP);
         // stack: ... directFunct
-        cfw.add(ByteCode.DUP);
-        // stack: ... directFunct directFunct
-        cfw.addInvoke(ByteCode.INVOKEINTERFACE,
-                      "org/mozilla/javascript/Scriptable",
-                      "getParentScope",
-                      "()Lorg/mozilla/javascript/Scriptable;");
-        // stack: ... directFunct scope
         cfw.addALoad(contextLocal);
-        // stack: ... directFunct scope cx
-        cfw.add(ByteCode.SWAP);
+        cfw.addALoad(variableObjectLocal);
         // stack: ... directFunc cx scope
 
         if (type == Token.NEW) {
