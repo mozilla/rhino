@@ -42,6 +42,7 @@ package org.mozilla.javascript.optimizer;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.ast.Jump;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -368,7 +369,7 @@ class Block
     private void markAnyTypeVariables(int[] varTypes)
     {
         for (int i = 0; i != varTypes.length; i++) {
-            if (itsLiveOnEntrySet.test(i)) {
+            if (itsLiveOnEntrySet.get(i)) {
                 assignType(varTypes, i, Optimizer.AnyType);
             }
         }
@@ -392,7 +393,7 @@ class Block
                 Node child = n.getFirstChild();
                 if (child.getType() == Token.GETVAR) {
                     int varIndex = fn.getVarIndex(child);
-                    if (!itsNotDefSet.test(varIndex))
+                    if (!itsNotDefSet.get(varIndex))
                         itsUseBeforeDefSet.set(varIndex);
                     itsNotDefSet.set(varIndex);
                 }
@@ -409,7 +410,7 @@ class Block
             case Token.GETVAR :
             {
                 int varIndex = fn.getVarIndex(n);
-                if (!itsNotDefSet.test(varIndex))
+                if (!itsNotDefSet.get(varIndex))
                     itsUseBeforeDefSet.set(varIndex);
             }
             break;
@@ -431,15 +432,15 @@ class Block
     private void initLiveOnEntrySets(OptFunctionNode fn, Node[] statementNodes)
     {
         int listLength = fn.getVarCount();
-        itsUseBeforeDefSet = new DataFlowBitSet(listLength);
-        itsNotDefSet = new DataFlowBitSet(listLength);
-        itsLiveOnEntrySet = new DataFlowBitSet(listLength);
-        itsLiveOnExitSet = new DataFlowBitSet(listLength);
+        itsUseBeforeDefSet = new BitSet(listLength);
+        itsNotDefSet = new BitSet(listLength);
+        itsLiveOnEntrySet = new BitSet(listLength);
+        itsLiveOnExitSet = new BitSet(listLength);
         for (int i = itsStartNodeIndex; i <= itsEndNodeIndex; i++) {
             Node n = statementNodes[i];
             lookForVariableAccess(fn, n);
         }
-        itsNotDefSet.not();         // truth in advertising
+        itsNotDefSet.flip(0, listLength);         // truth in advertising
     }
 
     /*
@@ -456,8 +457,17 @@ class Block
                 itsLiveOnExitSet.or(itsSuccessors[i].itsLiveOnEntrySet);
             }
         }
-        return itsLiveOnEntrySet.df2(itsLiveOnExitSet,
-                itsUseBeforeDefSet, itsNotDefSet);
+        return updateEntrySet(itsLiveOnEntrySet, itsLiveOnExitSet,
+                              itsUseBeforeDefSet, itsNotDefSet);
+    }
+
+    private boolean updateEntrySet(BitSet entrySet, BitSet exitSet,
+                                   BitSet useBeforeDef, BitSet notDef) {
+        int card = entrySet.cardinality();
+        entrySet.or(exitSet);
+        entrySet.and(notDef);
+        entrySet.or(useBeforeDef);
+        return entrySet.cardinality() != card;
     }
 
     /*
@@ -590,13 +600,13 @@ class Block
         if (DEBUG) {
             for (int i = 0; i < fn.getVarCount(); i++) {
                 String name = fn.fnode.getParamOrVarName(i);
-                if (itsUseBeforeDefSet.test(i))
+                if (itsUseBeforeDefSet.get(i))
                     System.out.println(name + " is used before def'd");
-                if (itsNotDefSet.test(i))
+                if (itsNotDefSet.get(i))
                     System.out.println(name + " is not def'd");
-                if (itsLiveOnEntrySet.test(i))
+                if (itsLiveOnEntrySet.get(i))
                     System.out.println(name + " is live on entry");
-                if (itsLiveOnExitSet.test(i))
+                if (itsLiveOnExitSet.get(i))
                     System.out.println(name + " is live on exit");
             }
         }
@@ -613,10 +623,10 @@ class Block
     private int itsBlockID;               // a unique index for each block
 
     // reaching def bit sets -
-    private DataFlowBitSet itsLiveOnEntrySet;
-    private DataFlowBitSet itsLiveOnExitSet;
-    private DataFlowBitSet itsUseBeforeDefSet;
-    private DataFlowBitSet itsNotDefSet;
+    private BitSet itsLiveOnEntrySet;
+    private BitSet itsLiveOnExitSet;
+    private BitSet itsUseBeforeDefSet;
+    private BitSet itsNotDefSet;
 
     static final boolean DEBUG = false;
     private static int debug_blockCount;
