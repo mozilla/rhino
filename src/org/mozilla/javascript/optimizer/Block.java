@@ -75,9 +75,9 @@ class Block
         Block[] getSuccessors() { return reduceToArray(successors); }
         Block[] getPredecessors() { return reduceToArray(predecessors); }
 
-            // all the Blocks that come immediately after this
+        // all the Blocks that come immediately after this
         private ObjToIntMap successors = new ObjToIntMap();
-            // all the Blocks that come immediately before this
+        // all the Blocks that come immediately before this
         private ObjToIntMap predecessors = new ObjToIntMap();
 
         Block realBlock;
@@ -136,48 +136,49 @@ class Block
 
     private static Block[] buildBlocks(Node[] statementNodes)
     {
-            // a mapping from each target node to the block it begins
+        // a mapping from each target node to the block it begins
         Map<Node,FatBlock> theTargetBlocks = new HashMap<Node,FatBlock>();
         ObjArray theBlocks = new ObjArray();
 
-            // there's a block that starts at index 0
+        // there's a block that starts at index 0
         int beginNodeIndex = 0;
 
         for (int i = 0; i < statementNodes.length; i++) {
             switch (statementNodes[i].getType()) {
                 case Token.TARGET :
-                    {
-                        if (i != beginNodeIndex) {
-                            FatBlock fb = newFatBlock(beginNodeIndex, i - 1);
-                            if (statementNodes[beginNodeIndex].getType()
-                                                        == Token.TARGET)
-                                theTargetBlocks.put(statementNodes[beginNodeIndex], fb);
-                            theBlocks.add(fb);
-                             // start the next block at this node
-                            beginNodeIndex = i;
+                {
+                    if (i != beginNodeIndex) {
+                        FatBlock fb = newFatBlock(beginNodeIndex, i - 1);
+                        if (statementNodes[beginNodeIndex].getType() == Token.TARGET) {
+                            theTargetBlocks.put(statementNodes[beginNodeIndex], fb);
                         }
+                        theBlocks.add(fb);
+                        // start the next block at this node
+                        beginNodeIndex = i;
                     }
-                    break;
+                }
+                break;
                 case Token.IFNE :
                 case Token.IFEQ :
                 case Token.GOTO :
-                    {
-                        FatBlock fb = newFatBlock(beginNodeIndex, i);
-                        if (statementNodes[beginNodeIndex].getType()
-                                                       == Token.TARGET)
-                            theTargetBlocks.put(statementNodes[beginNodeIndex], fb);
-                        theBlocks.add(fb);
-                            // start the next block at the next node
-                        beginNodeIndex = i + 1;
+                {
+                    FatBlock fb = newFatBlock(beginNodeIndex, i);
+                    if (statementNodes[beginNodeIndex].getType() == Token.TARGET) {
+                        theTargetBlocks.put(statementNodes[beginNodeIndex], fb);
                     }
-                    break;
+                    theBlocks.add(fb);
+                    // start the next block at the next node
+                    beginNodeIndex = i + 1;
+                }
+                break;
             }
         }
 
         if (beginNodeIndex != statementNodes.length) {
             FatBlock fb = newFatBlock(beginNodeIndex, statementNodes.length - 1);
-            if (statementNodes[beginNodeIndex].getType() == Token.TARGET)
+            if (statementNodes[beginNodeIndex].getType() == Token.TARGET) {
                 theTargetBlocks.put(statementNodes[beginNodeIndex], fb);
+            }
             theBlocks.add(fb);
         }
 
@@ -189,8 +190,7 @@ class Block
             Node blockEndNode = statementNodes[fb.realBlock.itsEndNodeIndex];
             int blockEndNodeType = blockEndNode.getType();
 
-            if ((blockEndNodeType != Token.GOTO)
-                                         && (i < (theBlocks.size() - 1))) {
+            if ((blockEndNodeType != Token.GOTO) && (i < (theBlocks.size() - 1))) {
                 FatBlock fallThruTarget = (FatBlock)(theBlocks.get(i + 1));
                 fb.addSuccessor(fallThruTarget);
                 fallThruTarget.addPredecessor(fb);
@@ -198,12 +198,11 @@ class Block
 
 
             if ( (blockEndNodeType == Token.IFNE)
-                        || (blockEndNodeType == Token.IFEQ)
-                                || (blockEndNodeType == Token.GOTO) ) {
+                    || (blockEndNodeType == Token.IFEQ)
+                    || (blockEndNodeType == Token.GOTO) ) {
                 Node target = ((Jump)blockEndNode).target;
                 FatBlock branchTargetBlock = theTargetBlocks.get(target);
-                target.putProp(Node.TARGETBLOCK_PROP,
-                                           branchTargetBlock.realBlock);
+                target.putProp(Node.TARGETBLOCK_PROP, branchTargetBlock.realBlock);
                 fb.addSuccessor(branchTargetBlock);
                 branchTargetBlock.addPredecessor(fb);
             }
@@ -242,27 +241,29 @@ class Block
             Block b = blockList[i];
             pw.println("#" + b.itsBlockID);
             pw.println("from " + b.itsStartNodeIndex
-                            + " "
-                            + statementNodes[b.itsStartNodeIndex].toString());
+                    + " "
+                    + statementNodes[b.itsStartNodeIndex].toString());
             pw.println("thru " + b.itsEndNodeIndex
-                            + " "
-                            + statementNodes[b.itsEndNodeIndex].toString());
+                    + " "
+                    + statementNodes[b.itsEndNodeIndex].toString());
             pw.print("Predecessors ");
             if (b.itsPredecessors != null) {
-                for (int j = 0; j < b.itsPredecessors.length; j++)
+                for (int j = 0; j < b.itsPredecessors.length; j++) {
                     pw.print(b.itsPredecessors[j].itsBlockID + " ");
+                }
                 pw.println();
-            }
-            else
+            } else {
                 pw.println("none");
+            }
             pw.print("Successors ");
             if (b.itsSuccessors != null) {
-                for (int j = 0; j < b.itsSuccessors.length; j++)
+                for (int j = 0; j < b.itsSuccessors.length; j++) {
                     pw.print(b.itsSuccessors[j].itsBlockID + " ");
+                }
                 pw.println();
-            }
-            else
+            } else {
                 pw.println("none");
+            }
         }
         return sw.toString();
     }
@@ -306,12 +307,12 @@ class Block
                 if (needRescan) {
                     vIndex = theBlocks.length - 1;
                     needRescan = false;
-                }
-                else
+                } else {
                     break;
-            }
-            else
+                }
+            } else {
                 vIndex--;
+            }
         }
 /*
         if any variable is live on entry to block 0, we have to mark it as
@@ -349,12 +350,12 @@ class Block
                 if (needRescan) {
                     vIndex = 0;
                     needRescan = false;
-                }
-                else
+                } else {
                     break;
-            }
-            else
+                }
+            } else {
                 vIndex++;
+            }
         }
     }
 
@@ -386,31 +387,31 @@ class Block
         switch (n.getType()) {
             case Token.DEC :
             case Token.INC :
-                {
-                    Node child = n.getFirstChild();
-                    if (child.getType() == Token.GETVAR) {
-                        int varIndex = fn.getVarIndex(child);
-                        if (!itsNotDefSet.test(varIndex))
-                            itsUseBeforeDefSet.set(varIndex);
-                        itsNotDefSet.set(varIndex);
-                    }
-                }
-                break;
-            case Token.SETVAR :
-                {
-                    Node lhs = n.getFirstChild();
-                    Node rhs = lhs.getNext();
-                    lookForVariableAccess(fn, rhs);
-                    itsNotDefSet.set(fn.getVarIndex(n));
-                }
-                break;
-            case Token.GETVAR :
-                {
-                    int varIndex = fn.getVarIndex(n);
+            {
+                Node child = n.getFirstChild();
+                if (child.getType() == Token.GETVAR) {
+                    int varIndex = fn.getVarIndex(child);
                     if (!itsNotDefSet.test(varIndex))
                         itsUseBeforeDefSet.set(varIndex);
+                    itsNotDefSet.set(varIndex);
                 }
-                break;
+            }
+            break;
+            case Token.SETVAR :
+            {
+                Node lhs = n.getFirstChild();
+                Node rhs = lhs.getNext();
+                lookForVariableAccess(fn, rhs);
+                itsNotDefSet.set(fn.getVarIndex(n));
+            }
+            break;
+            case Token.GETVAR :
+            {
+                int varIndex = fn.getVarIndex(n);
+                if (!itsNotDefSet.test(varIndex))
+                    itsUseBeforeDefSet.set(varIndex);
+            }
+            break;
             default :
                 Node child = n.getFirstChild();
                 while (child != null) {
@@ -449,11 +450,13 @@ class Block
     private boolean doReachedUseDataFlow()
     {
         itsLiveOnExitSet.clear();
-        if (itsSuccessors != null)
-            for (int i = 0; i < itsSuccessors.length; i++)
+        if (itsSuccessors != null) {
+            for (int i = 0; i < itsSuccessors.length; i++) {
                 itsLiveOnExitSet.or(itsSuccessors[i].itsLiveOnEntrySet);
+            }
+        }
         return itsLiveOnEntrySet.df2(itsLiveOnExitSet,
-                                            itsUseBeforeDefSet, itsNotDefSet);
+                itsUseBeforeDefSet, itsNotDefSet);
     }
 
     /*
@@ -466,49 +469,49 @@ class Block
                                           int[] varTypes)
     {
         switch (n.getType()) {
-          case Token.NUMBER:
-              return Optimizer.NumberType;
+            case Token.NUMBER:
+                return Optimizer.NumberType;
 
-          case Token.CALL:
-          case Token.NEW:
-          case Token.REF_CALL:
-              return Optimizer.AnyType;
+            case Token.CALL:
+            case Token.NEW:
+            case Token.REF_CALL:
+                return Optimizer.AnyType;
 
-          case Token.GETELEM:
-             return Optimizer.AnyType;
+            case Token.GETELEM:
+                return Optimizer.AnyType;
 
-          case Token.GETVAR:
-              return varTypes[fn.getVarIndex(n)];
+            case Token.GETVAR:
+                return varTypes[fn.getVarIndex(n)];
 
-          case Token.INC:
-          case Token.DEC:
-          case Token.MUL:
-          case Token.DIV:
-          case Token.MOD:
-          case Token.BITOR:
-          case Token.BITXOR:
-          case Token.BITAND:
-          case Token.LSH:
-          case Token.RSH:
-          case Token.URSH:
-          case Token.SUB:
-          case Token.POS:
-          case Token.NEG:
-              return Optimizer.NumberType;
+            case Token.INC:
+            case Token.DEC:
+            case Token.MUL:
+            case Token.DIV:
+            case Token.MOD:
+            case Token.BITOR:
+            case Token.BITXOR:
+            case Token.BITAND:
+            case Token.LSH:
+            case Token.RSH:
+            case Token.URSH:
+            case Token.SUB:
+            case Token.POS:
+            case Token.NEG:
+                return Optimizer.NumberType;
 
-          case Token.ARRAYLIT:
-          case Token.OBJECTLIT:
-              return Optimizer.AnyType; // XXX: actually, we know it's not
-                                        // number, but no type yet for that
+            case Token.ARRAYLIT:
+            case Token.OBJECTLIT:
+                return Optimizer.AnyType; // XXX: actually, we know it's not
+            // number, but no type yet for that
 
-          case Token.ADD: {
-              // if the lhs & rhs are known to be numbers, we can be sure that's
-              // the result, otherwise it could be a string.
-              Node child = n.getFirstChild();
-              int lType = findExpressionType(fn, child, varTypes);
-              int rType = findExpressionType(fn, child.getNext(), varTypes);
-              return lType | rType;    // we're not distinguishing strings yet
-          }
+            case Token.ADD: {
+                // if the lhs & rhs are known to be numbers, we can be sure that's
+                // the result, otherwise it could be a string.
+                Node child = n.getFirstChild();
+                int lType = findExpressionType(fn, child, varTypes);
+                int rType = findExpressionType(fn, child.getNext(), varTypes);
+                return lType | rType;    // we're not distinguishing strings yet
+            }
         }
 
         Node child = n.getFirstChild();
@@ -530,38 +533,38 @@ class Block
         boolean result = false;
         Node child = n.getFirstChild();
         switch (n.getType()) {
-          default :
-            while (child != null) {
-                result |= findDefPoints(fn, child, varTypes);
-                child = child.getNext();
+            default :
+                while (child != null) {
+                    result |= findDefPoints(fn, child, varTypes);
+                    child = child.getNext();
+                }
+                break;
+            case Token.DEC :
+            case Token.INC :
+                if (child.getType() == Token.GETVAR) {
+                    // theVar is a Number now
+                    int i = fn.getVarIndex(child);
+                    result |= assignType(varTypes, i, Optimizer.NumberType);
+                }
+                break;
+            case Token.SETPROP :
+            case Token.SETPROP_OP :
+                if (child.getType() == Token.GETVAR) {
+                    int i = fn.getVarIndex(child);
+                    assignType(varTypes, i, Optimizer.AnyType);
+                }
+                while (child != null) {
+                    result |= findDefPoints(fn, child, varTypes);
+                    child = child.getNext();
+                }
+                break;
+            case Token.SETVAR : {
+                Node rValue = child.getNext();
+                int theType = findExpressionType(fn, rValue, varTypes);
+                int i = fn.getVarIndex(n);
+                result |= assignType(varTypes, i, theType);
+                break;
             }
-            break;
-          case Token.DEC :
-          case Token.INC :
-            if (child.getType() == Token.GETVAR) {
-                // theVar is a Number now
-                int i = fn.getVarIndex(child);
-                result |= assignType(varTypes, i, Optimizer.NumberType);
-            }
-            break;
-          case Token.SETPROP :
-          case Token.SETPROP_OP :
-            if (child.getType() == Token.GETVAR) {
-                int i = fn.getVarIndex(child);
-                assignType(varTypes, i, Optimizer.AnyType);
-            }
-            while (child != null) {
-                result |= findDefPoints(fn, child, varTypes);
-                child = child.getNext();
-            }
-            break;
-          case Token.SETVAR : {
-            Node rValue = child.getNext();
-            int theType = findExpressionType(fn, rValue, varTypes);
-            int i = fn.getVarIndex(n);
-            result |= assignType(varTypes, i, theType);
-            break;
-          }
         }
         return result;
     }
@@ -573,8 +576,9 @@ class Block
 
         for (int i = itsStartNodeIndex; i <= itsEndNodeIndex; i++) {
             Node n = statementNodes[i];
-            if (n != null)
+            if (n != null) {
                 changed |= findDefPoints(fn, n, varTypes);
+            }
         }
 
         return changed;
@@ -597,9 +601,9 @@ class Block
         }
     }
 
-        // all the Blocks that come immediately after this
+    // all the Blocks that come immediately after this
     private Block[] itsSuccessors;
-        // all the Blocks that come immediately before this
+    // all the Blocks that come immediately before this
     private Block[] itsPredecessors;
 
     private int itsStartNodeIndex;       // the Node at the start of the block
@@ -607,7 +611,7 @@ class Block
 
     private int itsBlockID;               // a unique index for each block
 
-// reaching def bit sets -
+    // reaching def bit sets -
     private DataFlowBitSet itsLiveOnEntrySet;
     private DataFlowBitSet itsLiveOnExitSet;
     private DataFlowBitSet itsUseBeforeDefSet;
