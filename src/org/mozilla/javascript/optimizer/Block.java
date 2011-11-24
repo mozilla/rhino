@@ -361,7 +361,8 @@ class Block
 
     private static boolean assignType(int[] varTypes, int index, int type)
     {
-        return type != (varTypes[index] |= type);
+        int prev = varTypes[index];
+        return prev != (varTypes[index] |= type);
     }
 
     private void markAnyTypeVariables(int[] varTypes)
