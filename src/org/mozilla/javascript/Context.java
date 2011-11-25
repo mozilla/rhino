@@ -1534,8 +1534,7 @@ public class Context
                                 Object[] args)
     {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = ScriptRuntime.getExistingCtor(this, scope,
-                                                      constructorName);
+        Function ctor = ScriptRuntime.getExistingCtor(scope, constructorName);
         if (args == null) { args = ScriptRuntime.emptyArgs; }
         return ctor.construct(this, scope, args);
     }
