@@ -1252,7 +1252,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
     {
         // create an empty Array to return.
         scope = getTopLevelScope(scope);
-        Function ctor = ScriptRuntime.getExistingCtor(cx, scope, "Array");
+        Function ctor = ScriptRuntime.getExistingCtor(scope, "Array");
         Scriptable result = ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
         if (thisObj instanceof NativeArray && result instanceof NativeArray) {
             NativeArray denseThis = (NativeArray) thisObj;

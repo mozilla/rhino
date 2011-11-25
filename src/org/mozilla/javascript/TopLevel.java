@@ -124,13 +124,11 @@ public class TopLevel extends IdScriptableObject {
      * an instance of this class or does have a cache of built-ins,
      * the constructor is looked up via normal property lookup.
      *
-     * @param cx the current Context
      * @param scope the top-level scope
      * @param type the built-in type
      * @return the built-in constructor
      */
-    public static Function getBuiltinCtor(Context cx,
-                                          Scriptable scope,
+    public static Function getBuiltinCtor(Scriptable scope,
                                           Builtins type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
@@ -141,7 +139,7 @@ public class TopLevel extends IdScriptableObject {
             }
         }
         // fall back to normal constructor lookup
-        return ScriptRuntime.getExistingCtor(cx, scope, type.name());
+        return ScriptRuntime.getExistingCtor(scope, type.name());
     }
 
     /**

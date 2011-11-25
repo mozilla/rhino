@@ -1081,7 +1081,7 @@ public class ScriptRuntime {
                                        String constructorName, Object[] args)
     {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = getExistingCtor(cx, scope, constructorName);
+        Function ctor = getExistingCtor(scope, constructorName);
         if (args == null) { args = ScriptRuntime.emptyArgs; }
         return ctor.construct(cx, scope, args);
     }
@@ -1091,7 +1091,7 @@ public class ScriptRuntime {
                                               Object[] args)
     {
         scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = TopLevel.getBuiltinCtor(cx, scope, type);
+        Function ctor = TopLevel.getBuiltinCtor(scope, type);
         if (args == null) { args = ScriptRuntime.emptyArgs; }
         return ctor.construct(cx, scope, args);
     }
@@ -1283,8 +1283,7 @@ public class ScriptRuntime {
         return ScriptableObject.getProperty(scope, id);
     }
 
-    static Function getExistingCtor(Context cx, Scriptable scope,
-                                    String constructorName)
+    static Function getExistingCtor(Scriptable scope, String constructorName)
     {
         Object ctorVal = ScriptableObject.getProperty(scope, constructorName);
         if (ctorVal instanceof Function) {
