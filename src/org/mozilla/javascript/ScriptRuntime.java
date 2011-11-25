@@ -1545,7 +1545,7 @@ public class ScriptRuntime {
         }
         Object result = ScriptableObject.getProperty(sobj, property);
         if (result == Scriptable.NOT_FOUND) {
-          return Undefined.instance;
+            return Undefined.instance;
         }
         return result;
     }
@@ -3820,9 +3820,11 @@ public class ScriptRuntime {
 
     private static void warnAboutNonJSObject(Object nonJSObject)
     {
-        String message =
-"RHINO USAGE WARNING: Missed Context.javaToJS() conversion:\n"
-+"Rhino runtime detected object "+nonJSObject+" of class "+nonJSObject.getClass().getName()+" where it expected String, Number, Boolean or Scriptable instance. Please check your code for missing Context.javaToJS() call.";
+        String message = "RHINO USAGE WARNING: Missed Context.javaToJS() conversion:\n"
+                + "Rhino runtime detected object " + nonJSObject + " of class "
+                + nonJSObject.getClass().getName() + " where it expected "
+                + "String, Number, Boolean or Scriptable instance. "
+                + "Please check your code for missing Context.javaToJS() call.";
         Context.reportWarning(message);
         // Just to be sure that it would be noticed
         System.err.println(message);
