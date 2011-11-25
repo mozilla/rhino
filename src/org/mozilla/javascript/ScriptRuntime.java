@@ -1775,7 +1775,6 @@ public class ScriptRuntime {
         Object result;
         Scriptable thisObj = scope; // It is used only if asFunctionCall==true.
 
-        XMLObject firstXMLObject = null;
         for (;;) {
             if (scope instanceof NativeWith) {
                 Scriptable withObj = scope.getPrototype();
@@ -1786,9 +1785,6 @@ public class ScriptRuntime {
                         thisObj = xmlObj;
                         result = xmlObj.get(name, xmlObj);
                         break;
-                    }
-                    if (firstXMLObject == null) {
-                        firstXMLObject = xmlObj;
                     }
                 } else {
                     result = ScriptableObject.getProperty(withObj, name);
@@ -1825,14 +1821,7 @@ public class ScriptRuntime {
             if (parentScope == null) {
                 result = topScopeName(cx, scope, name);
                 if (result == Scriptable.NOT_FOUND) {
-                    if (firstXMLObject == null || asFunctionCall) {
-                        throw notFoundError(scope, name);
-                    }
-                    // The name was not found, but we did find an XML
-                    // object in the scope chain and we are looking for name,
-                    // not function. The result should be an empty XMLList
-                    // in name context.
-                    result = firstXMLObject.get(name, firstXMLObject);
+                    throw notFoundError(scope, name);
                 }
                 // For top scope thisObj for functions is always scope itself.
                 thisObj = scope;
@@ -1875,7 +1864,6 @@ public class ScriptRuntime {
      */
     public static Scriptable bind(Context cx, Scriptable scope, String id)
     {
-        Scriptable firstXMLObject = null;
         Scriptable parent = scope.getParentScope();
         childScopesChecks: if (parent != null) {
             // Check for possibly nested "with" scopes first
@@ -1885,9 +1873,6 @@ public class ScriptRuntime {
                     XMLObject xmlObject = (XMLObject)withObj;
                     if (xmlObject.has(cx, id)) {
                         return xmlObject;
-                    }
-                    if (firstXMLObject == null) {
-                        firstXMLObject = xmlObject;
                     }
                 } else {
                     if (ScriptableObject.hasProperty(withObj, id)) {
@@ -1915,12 +1900,7 @@ public class ScriptRuntime {
         if (cx.useDynamicScope) {
             scope = checkDynamicScope(cx.topCallScope, scope);
         }
-        if (ScriptableObject.hasProperty(scope, id)) {
-            return scope;
-        }
-        // Nothing was found, but since XML objects always bind
-        // return one if found
-        return firstXMLObject;
+        return ScriptableObject.hasProperty(scope, id) ? scope :  null;
     }
 
     public static Object setName(Scriptable bound, Object value,
