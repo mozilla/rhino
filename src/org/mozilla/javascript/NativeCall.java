@@ -24,6 +24,7 @@
  * Contributor(s):
  *   Norris Boyd
  *   Bob Jervis
+ *   Hannes Wallnoefer
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -47,20 +48,20 @@ package org.mozilla.javascript;
  * @see org.mozilla.javascript.Arguments
  * @author Norris Boyd
  */
-public final class NativeCall extends ScriptableObject
+public class NativeCall extends ScriptableObject
 {
     static final long serialVersionUID = -7471457301304454454L;
 
-    NativeCall() { }
-
-    NativeCall(NativeFunction function, Scriptable scope, Object[] args)
-    {
+    protected NativeCall(NativeFunction function, Object[] args) {
         this.function = function;
+        this.originalArgs = args;
+    }
 
+    NativeCall(NativeFunction function, Scriptable scope, Object[] args) {
+        this.function = function;
+        this.originalArgs = args;
         setParentScope(scope);
         // leave prototype null
-
-        this.originalArgs = (args == null) ? ScriptRuntime.emptyArgs : args;
 
         // initialize values of arguments
         int paramAndVarCount = function.getParamAndVarCount();
@@ -99,8 +100,8 @@ public final class NativeCall extends ScriptableObject
         return "Call";
     }
 
-    NativeFunction function;
-    Object[] originalArgs;
+    final protected NativeFunction function;
+    final protected Object[] originalArgs;
 
     transient NativeCall parentActivationCall;
 }
