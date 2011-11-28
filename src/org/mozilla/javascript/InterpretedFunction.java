@@ -203,31 +203,31 @@ final class InterpretedFunction extends NativeFunction implements Script
     }
 
     @Override
-    protected int getLanguageVersion()
+    public int getLanguageVersion()
     {
         return idata.languageVersion;
     }
 
     @Override
-    protected int getParamCount()
+    public int getParamCount()
     {
         return idata.argCount;
     }
 
     @Override
-    protected int getParamAndVarCount()
+    public int getParamAndVarCount()
     {
         return idata.argNames.length;
     }
 
     @Override
-    protected String getParamOrVarName(int index)
+    public String getParamOrVarName(int index)
     {
         return idata.argNames[index];
     }
 
     @Override
-    protected boolean getParamOrVarConst(int index)
+    public boolean getParamOrVarConst(int index)
     {
         return idata.argIsConst[index];
     }

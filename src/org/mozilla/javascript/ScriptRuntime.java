@@ -1838,7 +1838,7 @@ public class ScriptRuntime {
         return result;
     }
 
-    private static Object topScopeName(Context cx, Scriptable scope,
+    protected static Object topScopeName(Context cx, Scriptable scope,
                                        String name)
     {
         if (cx.useDynamicScope) {
@@ -1864,36 +1864,23 @@ public class ScriptRuntime {
     public static Scriptable bind(Context cx, Scriptable scope, String id)
     {
         Scriptable parent = scope.getParentScope();
-        childScopesChecks: if (parent != null) {
-            // Check for possibly nested "with" scopes first
-            while (scope instanceof NativeWith) {
+        while (parent != null) {
+            if (scope instanceof NativeCall) {
+                if (scope.has(id, scope)) {
+                    return scope;
+                }
+            } else if (scope instanceof NativeWith) {
                 Scriptable withObj = scope.getPrototype();
-                if (withObj instanceof XMLObject) {
-                    XMLObject xmlObject = (XMLObject)withObj;
-                    if (xmlObject.has(cx, id)) {
-                        return xmlObject;
-                    }
-                } else {
-                    if (ScriptableObject.hasProperty(withObj, id)) {
-                        return withObj;
-                    }
+                if (ScriptableObject.hasProperty(withObj, id)) {
+                    return withObj;
                 }
-                scope = parent;
-                parent = parent.getParentScope();
-                if (parent == null) {
-                    break childScopesChecks;
-                }
-            }
-            for (;;) {
+            } else {
                 if (ScriptableObject.hasProperty(scope, id)) {
                     return scope;
                 }
-                scope = parent;
-                parent = parent.getParentScope();
-                if (parent == null) {
-                    break childScopesChecks;
-                }
             }
+            scope = parent;
+            parent = parent.getParentScope();
         }
         // scope here is top scope
         if (cx.useDynamicScope) {
@@ -2536,11 +2523,17 @@ public class ScriptRuntime {
     }
 
     /**
+     * @deprecated
+     */
+    public static String typeofName(Scriptable scope, String id) {
+        return typeofName(Context.getContext(), scope, id);
+    }
+
+    /**
      * The typeof operator that correctly handles the undefined case
      */
-    public static String typeofName(Scriptable scope, String id)
+    public static String typeofName(Context cx, Scriptable scope, String id)
     {
-        Context cx = Context.getContext();
         Scriptable val = bind(cx, scope, id);
         if (val == null)
             return "undefined";
@@ -3929,7 +3922,7 @@ public class ScriptRuntime {
         return value;
     }
 
-    private static void storeScriptable(Context cx, Scriptable value)
+    protected static void storeScriptable(Context cx, Scriptable value)
     {
         // The previously stored scratchScriptable should be consumed
         if (cx.scratchScriptable != null)

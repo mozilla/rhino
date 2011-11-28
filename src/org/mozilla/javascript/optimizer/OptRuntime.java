@@ -40,6 +40,7 @@
 package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.xml.XMLObject;
 
 public final class OptRuntime extends ScriptRuntime
 {
@@ -98,12 +99,34 @@ public final class OptRuntime extends ScriptRuntime
     }
 
     /**
+     * Implement name(args) call shrinking optimizer code.
+     */
+    public static Object callName(Object[] args, String name,  int optCallLevel,
+                                  int optCallIndex, Context cx, Scriptable scope)
+    {
+        Callable f = getNameFunctionAndThis(name, cx, scope, optCallLevel, optCallIndex);
+        Scriptable thisObj = lastStoredScriptable(cx);
+        return f.call(cx, scope, thisObj, args);
+    }
+
+    /**
      * Implement name() call shrinking optimizer code.
      */
     public static Object callName0(String name,
                                    Context cx, Scriptable scope)
     {
         Callable f = getNameFunctionAndThis(name, cx, scope);
+        Scriptable thisObj = lastStoredScriptable(cx);
+        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+    }
+
+    /**
+     * Implement name() call shrinking optimizer code.
+     */
+    public static Object callName0(String name, int optCallLevel, int optCallIndex,
+                                   Context cx, Scriptable scope)
+    {
+        Callable f = getNameFunctionAndThis(name, cx, scope, optCallLevel, optCallIndex);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
@@ -156,6 +179,20 @@ public final class OptRuntime extends ScriptRuntime
         ScriptRuntime.initFunction(cx, scope, fn, functionType, false);
     }
 
+    public static void initFunction(NativeFunction fn, int functionType,
+                                    int optCallIndex, Scriptable scope,
+                                    Context cx)
+    {
+        if (optCallIndex != -1) {
+            while (scope instanceof NativeWith) {
+                scope = scope.getParentScope();
+            }
+            ((OptCall)scope).set(optCallIndex, fn);
+        } else {
+            ScriptRuntime.initFunction(cx, scope, fn, functionType, false);
+        }
+    }
+
     public static Object callSpecial(Context cx, Callable fun,
                                      Scriptable thisObj, Object[] args,
                                      Scriptable scope,
@@ -172,6 +209,262 @@ public final class OptRuntime extends ScriptRuntime
                                           Scriptable callerThis, int callType)
     {
         return ScriptRuntime.newSpecial(cx, fun, args, scope, callType);
+    }
+
+    public static Object setName(Scriptable bound, Object value,
+                                 Context cx, Scriptable scope, String id,
+                                 int optCallIndex, boolean strict)
+    {
+        if (bound instanceof OptCall) {
+            ((OptCall)bound).set(optCallIndex, value);
+            return value;
+        }
+        return strict ? ScriptRuntime.strictSetName(bound, value, cx, scope, id)
+                      : ScriptRuntime.setName(bound, value, cx, scope, id);
+    }
+
+
+    public static Object setConst(Scriptable bound, Object value, Context cx,
+                                  String id, int optCallIndex)
+    {
+        if (bound instanceof OptCall) {
+            ((OptCall) bound).setConst(optCallIndex, value);
+            return value;
+        }
+        return ScriptRuntime.setConst(bound, value, cx, id);
+    }
+
+    public static Object name(Context cx, Scriptable scope, String name,
+                              int optCallLevel, int optCallIndex)
+    {
+        Object result;
+        Scriptable parent = scope.getParentScope();
+
+        while (parent != null) {
+            if (scope instanceof OptCall) {
+                if (optCallLevel-- == 0) {
+                    // We found our target opt activation object
+                    return ((OptCall)scope).get(optCallIndex);
+                }
+            } else if (scope instanceof NativeCall) {
+                // Activation scopes do not prototype chain and Scriptable.get
+                // can be called directly.
+                result = scope.get(name, scope);
+                if (result != Scriptable.NOT_FOUND) {
+                    return result;
+                }
+            } else {
+                if (scope instanceof NativeWith
+                        && scope.getPrototype() instanceof XMLObject) {
+                    if (scope.has(name, scope)) {
+                        return scope.get(name, scope);
+                    }
+                } else {
+                    result = ScriptableObject.getProperty(scope, name);
+                    if (result != Scriptable.NOT_FOUND) {
+                        return result;
+                    }
+                }
+            }
+            scope = parent;
+            parent = parent.getParentScope();
+        }
+
+        result = topScopeName(cx, scope, name);
+        if (result == Scriptable.NOT_FOUND) {
+            throw notFoundError(scope, name);
+        }
+
+        return result;
+    }
+
+    public static Scriptable bind(Context cx, Scriptable scope, String id,
+                                  int optCallLevel)
+    {
+        Scriptable parent = scope.getParentScope();
+        while (parent != null) {
+            if (scope instanceof OptCall) {
+                if (optCallLevel-- == 0) {
+                    return scope;
+                }
+            } else if (scope instanceof NativeCall) {
+                if (scope.has(id, scope)) {
+                    return scope;
+                }
+            } else if (scope instanceof NativeWith) {
+                Scriptable withObj = scope.getPrototype();
+                if (ScriptableObject.hasProperty(withObj, id)) {
+                    return withObj;
+                }
+            } else {
+                if (ScriptableObject.hasProperty(scope, id)) {
+                    return scope;
+                }
+            }
+            scope = parent;
+            parent = parent.getParentScope();
+        }
+
+        // scope here is top scope
+        return ScriptRuntime.bind(cx, scope, id);
+    }
+
+    public static Callable getNameFunctionAndThis(String name, Context cx,
+                                                  Scriptable scope,
+                                                  int optCallLevel,
+                                                  int optCallIndex)
+    {
+        Object result;
+        Scriptable thisObj;
+        Scriptable parent = scope.getParentScope();
+
+        for (;;) {
+            if (parent == null) {
+                result = topScopeName(cx, scope, name);
+                thisObj = scope;
+                break;
+            } else if (scope instanceof OptCall) {
+                if (optCallLevel-- == 0) {
+                    // We found our target opt activation object
+                    result = ((OptCall)scope).get(optCallIndex);
+                    thisObj = ScriptableObject.getTopLevelScope(parent);
+                    break;
+                }
+            } else if (scope instanceof NativeCall) {
+                // Activation scopes do not prototype chain and Scriptable.get
+                // can be called directly.
+                result = scope.get(name, scope);
+                if (result != Scriptable.NOT_FOUND) {
+                    // this object for nested functions is top scope
+                    thisObj = ScriptableObject.getTopLevelScope(parent);
+                    break;
+                }
+            } else if (scope instanceof NativeWith) {
+                // we can't just use getProperty() on with objects because
+                // XMLObject.get() returns empty XMLList instead of  NOT_FOUND
+                Scriptable withObj = scope.getPrototype();
+                if (withObj instanceof XMLObject) {
+                    if (withObj.has(name, withObj)) {
+                        result = withObj.get(name, withObj);
+                        thisObj = withObj;
+                        break;
+                    }
+                } else {
+                    result = ScriptableObject.getProperty(scope, name);
+                    if (result != Scriptable.NOT_FOUND) {
+                        thisObj = withObj;
+                        break;
+                    }
+                }
+            } else {
+                // Can happen if Rhino embedding decided that nested
+                // scopes are useful for what ever reasons.
+                result = ScriptableObject.getProperty(scope, name);
+                if (result != Scriptable.NOT_FOUND) {
+                    thisObj = scope;
+                    break;
+                }
+            }
+            scope = parent;
+            parent = parent.getParentScope();
+        }
+
+        if (!(result instanceof Callable)) {
+            if (result == Scriptable.NOT_FOUND) {
+                throw notFoundError(scope, name);
+            } else {
+                throw notFunctionError(result, name);
+            }
+        }
+        storeScriptable(cx, thisObj);
+        return (Callable) result;
+    }
+
+    public static String typeofName(Context cx, Scriptable scope, String id,
+                                    int optCallLevel, int optCallIndex)
+    {
+        Scriptable bound = bind(cx, scope, id, optCallLevel);
+        if (bound == null)
+            return "undefined";
+        Object value;
+        if (bound instanceof OptCall) {
+            value = ((OptCall)bound).get(optCallIndex);
+        } else {
+            value = ScriptableObject.getProperty(bound, id);
+        }
+        return typeof(value);
+    }
+
+    public static Object nameIncrDecr(Scriptable scope, String id,
+                                      Context cx, int incrDecrMask,
+                                      int optCallLevel, int optCallIndex) {
+        Scriptable target;
+        Object value;
+        search: {
+            do {
+                if (scope.getParentScope() == null) {
+                    // delegate top level scopes to ScriptRuntime
+                    return ScriptRuntime.nameIncrDecr(scope, id, cx, incrDecrMask);
+                }
+                target = scope;
+                if (target instanceof OptCall) {
+                    if (optCallLevel-- == 0) {
+                        value = ((OptCall) target).get(optCallIndex);
+                        break search;
+                    }
+                } else {
+                    do {
+                        if (target instanceof NativeWith &&
+                                target.getPrototype() instanceof XMLObject) {
+                            break;
+                        }
+                        value = target.get(id, scope);
+                        if (value != Scriptable.NOT_FOUND) {
+                            break search;
+                        }
+                        target = target.getPrototype();
+                    } while (target != null);
+                }
+                scope = scope.getParentScope();
+            } while (scope != null);
+            throw notFoundError(scope, id);
+        }
+
+        boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+        double number;
+
+        if (value instanceof Number) {
+            number = ((Number)value).doubleValue();
+        } else {
+            number = toNumber(value);
+            if (post) {
+                // convert result to number
+                value = wrapNumber(number);
+            }
+        }
+        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+            ++number;
+        } else {
+            --number;
+        }
+        Number result = wrapNumber(number);
+        if (target instanceof OptCall && optCallIndex > -1) {
+            ((OptCall)target).set(optCallIndex, result);
+        } else {
+            target.put(id, scope, result);
+        }
+        if (post) {
+            return value;
+        } else {
+            return result;
+        }
+    }
+
+    public static Scriptable createOptFuncActivation(NativeFunction funObj,
+                                                     Scriptable scope,
+                                                     Object[] args)
+    {
+        return new OptCall(funObj, scope, args);
     }
 
     public static Double wrapDouble(double num)

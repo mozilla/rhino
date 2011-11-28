@@ -1755,7 +1755,7 @@ switch (op) {
         continue Loop;
     }
     case Icode_TYPEOFNAME :
-        stack[++stackTop] = ScriptRuntime.typeofName(frame.scope, stringReg);
+        stack[++stackTop] = ScriptRuntime.typeofName(cx, frame.scope, stringReg);
         continue Loop;
     case Token.STRING :
         stack[++stackTop] = stringReg;

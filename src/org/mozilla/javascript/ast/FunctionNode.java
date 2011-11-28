@@ -43,6 +43,7 @@ package org.mozilla.javascript.ast;
 
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
+import org.mozilla.javascript.optimizer.OptCall;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,10 +116,12 @@ public class FunctionNode extends ScriptNode {
     // codegen variables
     private int functionType;
     private boolean needsActivation;
+    private boolean containsEval;
     private boolean isGenerator;
     private List<Node> generatorResumePoints;
     private Map<Node,int[]> liveLocals;
     private AstNode memberExprNode;
+    private Map<String, Integer> bindings;
 
     {
         type = Token.FUNCTION;
@@ -208,7 +211,7 @@ public class FunctionNode extends ScriptNode {
      * to disambiguate the function name node from the parameter nodes.
      */
     public boolean isParam(AstNode node) {
-        return params == null ? false : params.contains(node);
+        return params != null && params.contains(node);
     }
 
     /**
@@ -310,6 +313,54 @@ public class FunctionNode extends ScriptNode {
 
     public void setRequiresActivation() {
         needsActivation = true;
+    }
+
+    /**
+     * Return true if this function supports the indexed Activation object
+     * implemented by {@link OptCall}. This is true if it requires activation
+     * but does not contain {@code eval()} calls.
+     *
+     * @return true if this function supports indexed activation.
+     */
+    public boolean hasIndexedActivation() {
+        return needsActivation && !containsEval;
+    }
+
+    /**
+     * Create a map of parameters and local variables names to their
+     * index. This map is used to lookup parameters and variables without
+     * a hashmap in {@link OptCall} activation objects.
+     *
+     * @return a map of parameter and variable names to indices
+     */
+    public Map<String, Integer> getBindings() {
+        if (bindings == null) {
+            Map<String, Integer> map = new HashMap<String, Integer>();
+            int paramCount = getParamCount();
+            String[] names = getParamAndVarNames();
+
+            for (int i = 0; i < paramCount; i++) {
+                map.put(names[i], Integer.valueOf(i));
+            }
+            // check if a parameter shadows the arguments object
+            boolean shadowedArguments = map.containsKey("arguments");
+            for (int i = paramCount, l = names.length; i < l; i++) {
+                map.put(names[i], Integer.valueOf(i));
+            }
+            if (!shadowedArguments) {
+                map.put("arguments", Integer.valueOf(OptCall.ARGUMENTS_ID));
+            }
+            bindings = map;
+        }
+        return bindings;
+    }
+
+    public boolean containsEval() {
+        return containsEval;
+    }
+
+    public void setContainsEval() {
+        containsEval = true;
     }
 
     public boolean isGenerator() {

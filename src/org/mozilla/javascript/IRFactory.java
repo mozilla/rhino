@@ -1778,8 +1778,9 @@ public final class IRFactory extends Parser
         }
         Node node = new Node(nodeType, child);
         if (type != Node.NON_SPECIALCALL) {
-            // Calls to these functions require activation objects.
+            // Calls to eval function requires activation objects.
             setRequiresActivation();
+            setContainsEval();
             node.putIntProp(Node.SPECIALCALL_PROP, type);
         }
         return node;

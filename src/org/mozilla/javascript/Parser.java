@@ -3288,12 +3288,20 @@ public class Parser
         }
     }
 
+    protected void setContainsEval() {
+        if (insideFunction()) {
+            ((FunctionNode)currentScriptOrFn).setContainsEval();
+        }
+    }
+
     private void checkCallRequiresActivation(AstNode pn) {
         if ((pn.getType() == Token.NAME
-             && "eval".equals(((Name)pn).getIdentifier()))
-            || (pn.getType() == Token.GETPROP &&
-                "eval".equals(((PropertyGet)pn).getProperty().getIdentifier())))
+                    && "eval".equals(((Name)pn).getIdentifier()))
+                || (pn.getType() == Token.GETPROP
+                    && "eval".equals(((PropertyGet)pn).getProperty().getIdentifier()))) {
             setRequiresActivation();
+            setContainsEval();
+        }
     }
 
     protected void setIsGenerator() {
