@@ -336,12 +336,7 @@ public class Codegen implements Evaluator
         for (int i = 0; i != count; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
 
-            BodyCodegen bodygen = new BodyCodegen();
-            bodygen.cfw = cfw;
-            bodygen.codegen = this;
-            bodygen.compilerEnv = compilerEnv;
-            bodygen.scriptOrFn = n;
-            bodygen.scriptOrFnIndex = i;
+            BodyCodegen bodygen = new BodyCodegen(this, cfw, compilerEnv, n, i);
 
             try {
                 bodygen.generateBodyCode();
@@ -1365,6 +1360,17 @@ public class Codegen implements Evaluator
 
 class BodyCodegen
 {
+
+    BodyCodegen(Codegen codegen, ClassFileWriter cfw,
+                CompilerEnvirons compilerEnv, ScriptNode scriptOrFn,
+                int scriptOrFnIndex) {
+        this.cfw = cfw;
+        this.codegen = codegen;
+        this.compilerEnv = compilerEnv;
+        this.scriptOrFn = scriptOrFn;
+        this.scriptOrFnIndex = scriptOrFnIndex;
+    }
+
     void generateBodyCode()
     {
         isGenerator = Codegen.isGenerator(scriptOrFn);
