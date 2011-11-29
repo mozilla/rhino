@@ -123,6 +123,9 @@ class CodeGenerator extends Icode {
         } else {
             generateICodeFromTree(scriptOrFn);
         }
+        if (compilerEnv.isEval()) {
+            itsData.evalScriptFlag = true;
+        }
         return itsData;
     }
 

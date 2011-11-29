@@ -111,10 +111,4 @@ public interface Evaluator {
      */
     public List<String> getScriptStack(RhinoException ex);
 
-    /**
-     * Mark the given script to indicate it was created by a call to
-     * eval() or to a Function constructor.
-     * @param script script to mark as from eval
-     */
-    public void setEvalScriptFlag(Script script);
 }

@@ -289,6 +289,14 @@ public class CompilerEnvirons
         return allowSharpComments;
     }
 
+    public boolean isEval() {
+        return isEval;
+    }
+
+    public void setEval(boolean eval) {
+        isEval = eval;
+    }
+
     /**
      * Returns a {@code CompilerEnvirons} suitable for using Rhino
      * in an IDE environment.  Most features are enabled by default.
@@ -325,5 +333,6 @@ public class CompilerEnvirons
     private boolean warnTrailingComma;
     private boolean ideMode;
     private boolean allowSharpComments;
+    private boolean isEval;
     Set<String> activationNames;
 }

@@ -2491,11 +2491,9 @@ public class ScriptRuntime {
                     filename, lineNumber);
         }
 
-        // Compile with explicit interpreter instance to force interpreter
-        // mode.
-        Script script = cx.compileString(x.toString(), evaluator,
-                                         reporter, sourceName, 1, null);
-        evaluator.setEvalScriptFlag(script);
+        // Compile with explicit interpreter instance to force interpreter mode.
+        Script script = cx.compileString(x.toString(), evaluator, reporter,
+                                         sourceName, 1, null, true);
         Callable c = (Callable)script;
         return c.call(cx, scope, (Scriptable)thisArg, ScriptRuntime.emptyArgs);
     }

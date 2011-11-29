@@ -81,10 +81,6 @@ public class Codegen implements Evaluator
         throw new UnsupportedOperationException();
     }
 
-    public void setEvalScriptFlag(Script script) {
-        throw new UnsupportedOperationException();
-    }
-
     public Object compile(CompilerEnvirons compilerEnv,
                           ScriptNode tree,
                           String encodedSource,
@@ -1347,8 +1343,7 @@ public class Codegen implements Evaluator
         = "(Lorg/mozilla/javascript/Scriptable;"
            +"Lorg/mozilla/javascript/Context;I)V";
 
-    private static final AtomicInteger globalSerialClassCounter =
-            new AtomicInteger();
+    private static final AtomicInteger globalSerialClassCounter = new AtomicInteger();
 
     private CompilerEnvirons compilerEnv;
 
@@ -1754,7 +1749,7 @@ class BodyCodegen
             cfw.addALoad(thisObjLocal);
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
-            cfw.addPush(0); // false to indicate it is not eval script
+            cfw.addPush(compilerEnv.isEval());
             addScriptRuntimeInvoke("initScript",
                                    "(Lorg/mozilla/javascript/NativeFunction;"
                                    +"Lorg/mozilla/javascript/Scriptable;"
@@ -3163,12 +3158,13 @@ class BodyCodegen
         cfw.addPush(optCallIndex);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(contextLocal);           // load 'cx'
+        cfw.addPush(compilerEnv.isEval());
         addOptRuntimeInvoke("initFunction",
                             "(Lorg/mozilla/javascript/NativeFunction;"
                             +"II"
                             +"Lorg/mozilla/javascript/Scriptable;"
                             +"Lorg/mozilla/javascript/Context;"
-                            +")V");
+                            +"Z)V");
     }
 
     private int getTargetLabel(Node target)

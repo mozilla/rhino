@@ -244,11 +244,6 @@ public final class Interpreter extends Icode implements Evaluator
                                                 staticSecurityDomain);
     }
 
-    public void setEvalScriptFlag(Script script) {
-        ((InterpretedFunction)script).idata.evalScriptFlag = true;
-    }
-
-
     public Function createFunctionObject(Context cx, Scriptable scope,
             Object bytecode, Object staticSecurityDomain)
     {

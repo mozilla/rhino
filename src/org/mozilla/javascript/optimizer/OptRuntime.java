@@ -181,7 +181,7 @@ public final class OptRuntime extends ScriptRuntime
 
     public static void initFunction(NativeFunction fn, int functionType,
                                     int optCallIndex, Scriptable scope,
-                                    Context cx)
+                                    Context cx, boolean isEval)
     {
         if (optCallIndex != -1) {
             while (scope instanceof NativeWith) {
@@ -189,7 +189,7 @@ public final class OptRuntime extends ScriptRuntime
             }
             ((OptCall)scope).set(optCallIndex, fn);
         } else {
-            ScriptRuntime.initFunction(cx, scope, fn, functionType, false);
+            ScriptRuntime.initFunction(cx, scope, fn, functionType, isEval);
         }
     }
 

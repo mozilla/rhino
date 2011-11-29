@@ -1330,7 +1330,7 @@ public class Context
             lineno = 0;
         }
         return (Script) compileImpl(null, in, null, sourceName, lineno,
-                                    securityDomain, false, null, null);
+                                    securityDomain, false, null, null, false);
     }
 
     /**
@@ -1358,19 +1358,19 @@ public class Context
             lineno = 0;
         }
         return compileString(source, null, null, sourceName, lineno,
-                             securityDomain);
+                             securityDomain, false);
     }
 
     final Script compileString(String source,
                                Evaluator compiler,
                                ErrorReporter compilationErrorReporter,
                                String sourceName, int lineno,
-                               Object securityDomain)
+                               Object securityDomain, boolean isEval)
     {
         try {
             return (Script) compileImpl(null, null, source, sourceName, lineno,
-                                        securityDomain, false,
-                                        compiler, compilationErrorReporter);
+                                        securityDomain, false, compiler,
+                                        compilationErrorReporter, isEval);
         } catch (IOException ex) {
             // Should not happen when dealing with source as string
             throw new RuntimeException();
@@ -1411,7 +1411,8 @@ public class Context
         try {
             return (Function) compileImpl(scope, null, source, sourceName,
                                           lineno, securityDomain, true,
-                                          compiler, compilationErrorReporter);
+                                          compiler, compilationErrorReporter,
+                                          false);
         }
         catch (IOException ioe) {
             // Should never happen because we just made the reader
@@ -2345,7 +2346,8 @@ public class Context
                                String sourceName, int lineno,
                                Object securityDomain, boolean returnFunction,
                                Evaluator compiler,
-                               ErrorReporter compilationErrorReporter)
+                               ErrorReporter compilationErrorReporter,
+                               boolean isEval)
         throws IOException
     {
         if(sourceName == null) {
@@ -2363,6 +2365,7 @@ public class Context
 
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
+        compilerEnv.setEval(isEval);
         if (compilationErrorReporter == null) {
             compilationErrorReporter = compilerEnv.getErrorReporter();
         }
@@ -2446,7 +2449,7 @@ public class Context
     private static Class<?> interpreterClass = Kit.classOrNull(
                              "org.mozilla.javascript.Interpreter");
 
-    private Evaluator createCompiler()
+    Evaluator createCompiler()
     {
         Evaluator result = null;
         if (optimizationLevel >= 0 && codegenClass != null) {
