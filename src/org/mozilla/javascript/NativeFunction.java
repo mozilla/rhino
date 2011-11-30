@@ -52,11 +52,6 @@ import org.mozilla.javascript.debug.DebuggableScript;
 public abstract class NativeFunction extends BaseFunction
 {
 
-    public final void initScriptFunction(Context cx, Scriptable scope)
-    {
-        ScriptRuntime.setFunctionProtoAndParent(this, scope);
-    }
-
     /**
      * @param indent How much to indent the decompiled result
      *

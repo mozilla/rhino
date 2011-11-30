@@ -39,15 +39,18 @@
 
 package org.mozilla.javascript.optimizer;
 
+import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 
 final class OptFunctionNode
 {
-    OptFunctionNode(FunctionNode fnode)
+    OptFunctionNode(FunctionNode fnode, String className)
     {
         this.fnode = fnode;
+        this.className = className;
+        this.classSignature = ClassFileWriter.classNameToSignature(className);
         fnode.setCompilerData(this);
     }
 
@@ -143,6 +146,8 @@ final class OptFunctionNode
     }
 
     FunctionNode fnode;
+    String className;
+    String classSignature;
     private boolean[] numberVarFlags;
     private int directTargetIndex = -1;
     private boolean itsParameterNumberContext;

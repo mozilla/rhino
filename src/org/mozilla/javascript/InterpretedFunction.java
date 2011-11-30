@@ -133,7 +133,7 @@ final class InterpretedFunction extends NativeFunction implements Script
 
     private void initInterpretedFunction(Context cx, Scriptable scope)
     {
-        initScriptFunction(cx, scope);
+        ScriptRuntime.setFunctionProtoAndParent(this, scope);
         if (idata.itsRegExpLiterals != null) {
             functionRegExps = createRegExpWraps(cx, scope);
         }
