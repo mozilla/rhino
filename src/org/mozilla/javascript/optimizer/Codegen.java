@@ -914,6 +914,12 @@ class BodyCodegen
     // appended by "_gen".
     private void generateResumeGenerator()
     {
+        // don't implement resumeGenerator() unless this is a generator.
+        // The base class provides a default implementation.
+        if (!isGenerator) {
+            return;
+        }
+
         cfw.startMethod("resumeGenerator",
                         "(Lorg/mozilla/javascript/Context;" +
                         "Lorg/mozilla/javascript/Scriptable;" +
