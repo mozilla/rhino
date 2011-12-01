@@ -51,6 +51,10 @@ import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.classfile.*;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
+import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
+import static org.mozilla.classfile.ClassFileWriter.ACC_FINAL;
 
 import java.util.*;
 import java.lang.reflect.Constructor;
@@ -440,7 +444,7 @@ class BodyCodegen
 
     private void generateMain()
     {
-        cfw.startMethod("main", "([Ljava/lang/String;)V", STATIC_PUBLIC);
+        cfw.startMethod("main", "([Ljava/lang/String;)V", ACC_STATIC_PUBLIC);
 
         // load new ScriptImpl()
         cfw.add(ByteCode.NEW, cfw.getClassName());
@@ -465,7 +469,7 @@ class BodyCodegen
                         "(Lorg/mozilla/javascript/Context;"
                         +"Lorg/mozilla/javascript/Scriptable;"
                         +")Ljava/lang/Object;",
-                        PUBLIC_FINAL);
+                        ACC_PUBLIC_FINAL);
 
         final int CONTEXT_ARG = 1;
         final int SCOPE_ARG = 2;
@@ -491,7 +495,7 @@ class BodyCodegen
 
     private void generateScriptCtor()
     {
-        cfw.startMethod("<init>", "()V", ClassFileWriter.ACC_PUBLIC);
+        cfw.startMethod("<init>", "()V", ACC_PUBLIC);
         cfw.addLoadThis();
         cfw.addInvoke(ByteCode.INVOKESPECIAL, SUPER_CLASS_NAME, "<init>", "()V");
         cfw.add(ByteCode.RETURN);
@@ -517,11 +521,11 @@ class BodyCodegen
                           "Ljava/lang/Object;" +
                           "Ljava/lang/Object;I)Ljava/lang/Object;";
             cfw.startMethod(Codegen.getBodyMethodName(scriptOrFn) + "_gen",
-                    type, ClassFileWriter.ACC_STATIC);
+                    type, ACC_STATIC);
         } else {
             cfw.startMethod(Codegen.getBodyMethodName(scriptOrFn),
                     getBodyMethodSignature(scriptOrFn, classSignature),
-                    ClassFileWriter.ACC_STATIC);
+                    ACC_STATIC);
         }
 
         // generate name -> index bindings for OptCall activation
@@ -577,7 +581,7 @@ class BodyCodegen
     {
         cfw.startMethod(Codegen.getBodyMethodName(scriptOrFn),
                         getBodyMethodSignature(scriptOrFn, classSignature),
-                        ClassFileWriter.ACC_STATIC);
+                        ACC_STATIC);
 
         initBodyGeneration();
         argsLocal = firstFreeLocal++;
@@ -631,8 +635,7 @@ class BodyCodegen
         final int SCOPE_ARG = 1;
         final int CONTEXT_ARG = 2;
 
-        cfw.startMethod("<init>", FUNCTION_CONSTRUCTOR_SIGNATURE,
-                        ClassFileWriter.ACC_PUBLIC);
+        cfw.startMethod("<init>", FUNCTION_CONSTRUCTOR_SIGNATURE, ACC_PUBLIC);
         cfw.addLoadThis();
         cfw.addInvoke(ByteCode.INVOKESPECIAL, SUPER_CLASS_NAME, "<init>", "()V");
 
@@ -666,7 +669,7 @@ class BodyCodegen
                         "Lorg/mozilla/javascript/Scriptable;" +
                         "Lorg/mozilla/javascript/Scriptable;" +
                         "[Ljava/lang/Object;)Ljava/lang/Object;",
-                        PUBLIC_FINAL);
+                        ACC_PUBLIC_FINAL);
 
         // Generate code for:
         // if (!ScriptRuntime.hasTopCall(cx)) {
@@ -743,189 +746,157 @@ class BodyCodegen
 
         cfw.stopMethod((short)5);
         // 5: this, cx, scope, js this, args[]
-    }    
+    }
 
     private void generateNativeFunctionOverrides() {
-        // Override NativeFunction.getLanguageVersion() with
-        // public int getLanguageVersion() { return <version-constant>; }
+        // Override/implement methods in NativeFunction
 
-        String encodedSource = codegen.encodedSource;
-        cfw.startMethod("getLanguageVersion", "()I", ClassFileWriter.ACC_PUBLIC);
+        // NativeFunction.getLanguageVersion
+        cfw.startMethod("getLanguageVersion", "()I", ACC_PUBLIC);
         cfw.addPush(compilerEnv.getLanguageVersion());
         cfw.add(ByteCode.IRETURN);
-        // 1: this and no argument or locals
-        cfw.stopMethod((short)1);
+        cfw.stopMethod((short)1); // 1: this and no argument or locals
 
-        // The rest of NativeFunction overrides require specific code for each
-        // script/function id
+        // NativeFunction.getFunctionName
+        cfw.startMethod("getFunctionName", "()Ljava/lang/String;", ACC_PUBLIC);
+        // Push function name
+        if (scriptOrFn.getType() == Token.SCRIPT) {
+            cfw.addPush("");
+        } else {
+            String name = ((FunctionNode)scriptOrFn).getName();
+            cfw.addPush(name);
+        }
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short)1);  // Only this
 
-        final int Do_getFunctionName      = 0;
-        final int Do_getParamCount        = 1;
-        final int Do_getParamAndVarCount  = 2;
-        final int Do_getParamOrVarName    = 3;
-        final int Do_getEncodedSource     = 4;
-        final int Do_getParamOrVarConst   = 5;
-        final int SWITCH_COUNT            = 6;
+        // NativeFunction.getParamCount
+        cfw.startMethod("getParamCount", "()I", ACC_PUBLIC);
+        // Push number of defined parameters
+        cfw.addPush(scriptOrFn.getParamCount());
+        cfw.add(ByteCode.IRETURN);
+        cfw.stopMethod((short)1);  // Only this
 
-        for (int methodIndex = 0; methodIndex != SWITCH_COUNT; ++methodIndex) {
-            if (methodIndex == Do_getEncodedSource && encodedSource == null) {
-                continue;
+        // NativeFunction.getParamAndVarCount
+        cfw.startMethod("getParamAndVarCount", "()I", ACC_PUBLIC);
+        // Push number of defined parameters and declared variables
+        cfw.addPush(scriptOrFn.getParamAndVarCount());
+        cfw.add(ByteCode.IRETURN);
+        cfw.stopMethod((short)1);  // Only this
+
+
+        // NativeFunction.getParamOrVarName
+        cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;", ACC_PUBLIC);
+        // Push name of parameter using another switch
+        // over paramAndVarCount
+        int paramAndVarCount = scriptOrFn.getParamAndVarCount();
+        if (paramAndVarCount == 0) {
+            // The runtime should never call the method in this
+            // case but to make bytecode verifier happy return null
+            // as throwing execption takes more code
+            cfw.add(ByteCode.ACONST_NULL);
+            cfw.add(ByteCode.ARETURN);
+        } else if (paramAndVarCount == 1) {
+            // As above do not check for valid index but always
+            // return the name of the first param
+            cfw.addPush(scriptOrFn.getParamOrVarName(0));
+            cfw.add(ByteCode.ARETURN);
+        } else {
+            // Do switch over getParamOrVarName
+            cfw.addILoad(1); // param or var index
+            // do switch from 1 .. paramAndVarCount - 1 mapping 0
+            // to the default case
+            int paramSwitchStart = cfw.addTableSwitch(
+                    1, paramAndVarCount - 1);
+            for (int j = 0; j != paramAndVarCount; ++j) {
+                if (cfw.getStackTop() != 0) Kit.codeBug();
+                String s = scriptOrFn.getParamOrVarName(j);
+                if (j == 0) {
+                    cfw.markTableSwitchDefault(paramSwitchStart);
+                } else {
+                    cfw.markTableSwitchCase(paramSwitchStart, j - 1,
+                            0);
+                }
+                cfw.addPush(s);
+                cfw.add(ByteCode.ARETURN);
             }
+        }
+        cfw.stopMethod((short)2);  // this + paramOrVarIndex
 
-            // Generate:
-            //   prologue;
-            //   switch over function id to implement function-specific action
-            //   epilogue
 
-            short methodLocals;
-            switch (methodIndex) {
-                case Do_getFunctionName:
-                    methodLocals = 1; // Only this
-                    cfw.startMethod("getFunctionName", "()Ljava/lang/String;",
-                            ClassFileWriter.ACC_PUBLIC);
-                    // Push function name
-                    if (scriptOrFn.getType() == Token.SCRIPT) {
-                        cfw.addPush("");
-                    } else {
-                        String name = ((FunctionNode)scriptOrFn).getName();
-                        cfw.addPush(name);
-                    }
-                    cfw.add(ByteCode.ARETURN);
-                    break;
-                case Do_getParamCount:
-                    methodLocals = 1; // Only this
-                    cfw.startMethod("getParamCount", "()I",
-                            ClassFileWriter.ACC_PUBLIC);
-                    // Push number of defined parameters
-                    cfw.addPush(scriptOrFn.getParamCount());
-                    cfw.add(ByteCode.IRETURN);
-                    break;
-                case Do_getParamAndVarCount:
-                    methodLocals = 1; // Only this
-                    cfw.startMethod("getParamAndVarCount", "()I",
-                            ClassFileWriter.ACC_PUBLIC);
-                    // Push number of defined parameters and declared variables
-                    cfw.addPush(scriptOrFn.getParamAndVarCount());
-                    cfw.add(ByteCode.IRETURN);
-                    break;
-                case Do_getParamOrVarName:
-                    methodLocals = 1 + 1; // this + paramOrVarIndex
-                    cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;",
-                            ClassFileWriter.ACC_PUBLIC);
-                    // Push name of parameter using another switch
-                    // over paramAndVarCount
-                    int paramAndVarCount = scriptOrFn.getParamAndVarCount();
-                    if (paramAndVarCount == 0) {
-                        // The runtime should never call the method in this
-                        // case but to make bytecode verifier happy return null
-                        // as throwing execption takes more code
-                        cfw.add(ByteCode.ACONST_NULL);
-                        cfw.add(ByteCode.ARETURN);
-                    } else if (paramAndVarCount == 1) {
-                        // As above do not check for valid index but always
-                        // return the name of the first param
-                        cfw.addPush(scriptOrFn.getParamOrVarName(0));
-                        cfw.add(ByteCode.ARETURN);
-                    } else {
-                        // Do switch over getParamOrVarName
-                        cfw.addILoad(1); // param or var index
-                        // do switch from 1 .. paramAndVarCount - 1 mapping 0
-                        // to the default case
-                        int paramSwitchStart = cfw.addTableSwitch(
-                                1, paramAndVarCount - 1);
-                        for (int j = 0; j != paramAndVarCount; ++j) {
-                            if (cfw.getStackTop() != 0) Kit.codeBug();
-                            String s = scriptOrFn.getParamOrVarName(j);
-                            if (j == 0) {
-                                cfw.markTableSwitchDefault(paramSwitchStart);
-                            } else {
-                                cfw.markTableSwitchCase(paramSwitchStart, j - 1,
-                                        0);
-                            }
-                            cfw.addPush(s);
-                            cfw.add(ByteCode.ARETURN);
-                        }
-                    }
-                    break;
-                case Do_getParamOrVarConst:
-                    methodLocals = 1 + 1 + 1; // this + paramOrVarName
-                    cfw.startMethod("getParamOrVarConst", "(I)Z",
-                            ClassFileWriter.ACC_PUBLIC);
-
-                    // Push name of parameter using another switch
-                    // over paramAndVarCount
-                    paramAndVarCount = scriptOrFn.getParamAndVarCount();
-                    boolean [] constness = scriptOrFn.getParamAndVarConst();
-                    if (paramAndVarCount == 0) {
-                        // The runtime should never call the method in this
-                        // case but to make bytecode verifier happy return null
-                        // as throwing execption takes more code
-                        cfw.add(ByteCode.ICONST_0);
-                        cfw.add(ByteCode.IRETURN);
-                    } else if (paramAndVarCount == 1) {
-                        // As above do not check for valid index but always
-                        // return the name of the first param
-                        cfw.addPush(constness[0]);
-                        cfw.add(ByteCode.IRETURN);
-                    } else {
-                        // Search for first const
-                        int first = 0;
-                        while (first < paramAndVarCount && !constness[first]) {
-                            ++first;
-                        }
-                        if (first == paramAndVarCount) {
-                            // No const, no need to do a switch statement
-                            cfw.add(ByteCode.ICONST_0);
-                            cfw.add(ByteCode.IRETURN);
-                        } else {
-                            int last = paramAndVarCount - 1;
-                            while (last > first && !constness[last]) {
-                                --last;
-                            }
-                            // Do switch over getParamOrVarName
-                            cfw.addILoad(1); // param or var index
-                            // do switch from first .. last mapping default
-                            // case to false
-                            int paramSwitchStart = cfw.addTableSwitch(first, last);
-                            // Generate default and non-const cases
-                            cfw.markTableSwitchDefault(paramSwitchStart);
-                            for (int j = first; j <= last; ++j) {
-                                if (cfw.getStackTop() != 0) Kit.codeBug();
-                                if (!constness[j]) {
-                                    cfw.markTableSwitchCase(paramSwitchStart,
-                                            j - first);
-                                }
-                            }
-                            cfw.add(ByteCode.ICONST_0);
-                            cfw.add(ByteCode.IRETURN);
-                            // Generate const cases
-                            for (int j = first; j <= last; ++j) {
-                                if (cfw.getStackTop() != 0) Kit.codeBug();
-                                if (constness[j]) {
-                                    cfw.markTableSwitchCase(paramSwitchStart,
-                                            j - first);
-                                }
-                            }
-                            cfw.addPush(ByteCode.ICONST_1);
-                            cfw.add(ByteCode.IRETURN);
-                        }
-                    }
-                    break;
-                case Do_getEncodedSource:
-                    methodLocals = 1; // Only this
-                    cfw.startMethod("getEncodedSource", "()Ljava/lang/String;",
-                            ClassFileWriter.ACC_PUBLIC);
-                    // Push encodedSource.substring(start, end)
-                    int start = scriptOrFn.getEncodedSourceStart();
-                    int end = scriptOrFn.getEncodedSourceEnd();
-                    cfw.addPush(encodedSource.substring(start, end));
-                    cfw.add(ByteCode.ARETURN);
-                    break;
-                default:
-                    throw Kit.codeBug();
+        // NativeFunction.getParamOrVarConst
+        cfw.startMethod("getParamOrVarConst", "(I)Z", ACC_PUBLIC);
+        // We look for const declarations. If we find any
+        // minimize the scope of the switch statement and use
+        // the default case for non-const.
+        paramAndVarCount = scriptOrFn.getParamAndVarCount();
+        boolean [] constness = scriptOrFn.getParamAndVarConst();
+        if (paramAndVarCount == 0) {
+            // The runtime should never call the method in this
+            // case but to make bytecode verifier happy return null
+            // as throwing execption takes more code
+            cfw.add(ByteCode.ICONST_0);
+            cfw.add(ByteCode.IRETURN);
+        } else if (paramAndVarCount == 1) {
+            // As above do not check for valid index but always
+            // return the name of the first param
+            cfw.addPush(constness[0]);
+            cfw.add(ByteCode.IRETURN);
+        } else {
+            // Search for first const index
+            int first = 0;
+            while (first < paramAndVarCount && !constness[first]) {
+                ++first;
             }
+            if (first == paramAndVarCount) {
+                // No const, no need to do a switch statement
+                cfw.add(ByteCode.ICONST_0);
+                cfw.add(ByteCode.IRETURN);
+            } else {
+                int last = paramAndVarCount - 1;
+                while (last > first && !constness[last]) {
+                    --last;
+                }
+                // Do switch over paramOrVarIndex
+                cfw.addILoad(1); // param or var index
+                // do switch from first .. last mapping default
+                // case to false
+                int paramSwitchStart = cfw.addTableSwitch(first, last);
+                // Generate default and non-const cases
+                cfw.markTableSwitchDefault(paramSwitchStart);
+                for (int j = first; j <= last; ++j) {
+                    if (cfw.getStackTop() != 0) Kit.codeBug();
+                    if (!constness[j]) {
+                        cfw.markTableSwitchCase(paramSwitchStart,
+                                j - first);
+                    }
+                }
+                cfw.add(ByteCode.ICONST_0);
+                cfw.add(ByteCode.IRETURN);
+                // Generate const cases
+                for (int j = first; j <= last; ++j) {
+                    if (cfw.getStackTop() != 0) Kit.codeBug();
+                    if (constness[j]) {
+                        cfw.markTableSwitchCase(paramSwitchStart,
+                                j - first);
+                    }
+                }
+                cfw.addPush(ByteCode.ICONST_1);
+                cfw.add(ByteCode.IRETURN);
+            }
+        }
+        cfw.stopMethod((short)2);  // this + paramOrVarIndex
 
-            cfw.stopMethod(methodLocals);
+
+        // NativeFunction.getEncodedSource
+        String encodedSource = codegen.encodedSource;
+        if (encodedSource != null) {
+            cfw.startMethod("getEncodedSource", "()Ljava/lang/String;", ACC_PUBLIC);
+            // Push encodedSource.substring(start, end)
+            int start = scriptOrFn.getEncodedSourceStart();
+            int end = scriptOrFn.getEncodedSourceEnd();
+            cfw.addPush(encodedSource.substring(start, end));
+            cfw.add(ByteCode.ARETURN);
+            cfw.stopMethod((short)1);  // Only this
         }
     }
 
@@ -948,7 +919,7 @@ class BodyCodegen
                         "Lorg/mozilla/javascript/Scriptable;" +
                         "ILjava/lang/Object;" +
                         "Ljava/lang/Object;)Ljava/lang/Object;",
-                        PUBLIC_FINAL);
+                        ACC_PUBLIC_FINAL);
 
         // load arguments for dispatch to the corresponding *_gen method
         cfw.addALoad(0);
@@ -989,7 +960,7 @@ class BodyCodegen
 */
         cfw.startMethod(Codegen.getDirectCtorName(scriptOrFn),
                         getBodyMethodSignature(scriptOrFn, ofn.classSignature),
-                        ClassFileWriter.ACC_STATIC);
+                        ACC_STATIC);
 
         int argCount = scriptOrFn.getParamCount();
         int firstLocal = (4 + argCount * 3) + 1;
@@ -1086,11 +1057,11 @@ class BodyCodegen
             return;
         }
         cfw.addField(REGEXP_ARRAY_FIELD_NAME, REGEXP_ARRAY_FIELD_TYPE,
-                     ClassFileWriter.ACC_PRIVATE);
+                     ACC_PRIVATE);
 
         cfw.startMethod(REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE,
-            (short)(STATIC_PRIVATE | ClassFileWriter.ACC_SYNCHRONIZED));
-        cfw.addField("_reInitDone", "Z", STATIC_PRIVATE);
+            (short)(ACC_STATIC_PRIVATE | ClassFileWriter.ACC_SYNCHRONIZED));
+        cfw.addField("_reInitDone", "Z", ACC_STATIC_PRIVATE);
         cfw.add(ByteCode.GETSTATIC, className, "_reInitDone", "Z");
         int doInit = cfw.acquireLabel();
         cfw.add(ByteCode.IFEQ, doInit);
@@ -1103,7 +1074,7 @@ class BodyCodegen
             String reFieldType = "Ljava/lang/Object;";
             String reString = scriptOrFn.getRegexpString(j);
             String reFlags = scriptOrFn.getRegexpFlags(j);
-            cfw.addField(reFieldName, reFieldType, STATIC_PRIVATE);
+            cfw.addField(reFieldName, reFieldType, ACC_STATIC_PRIVATE);
             cfw.addALoad(0); // proxy
             cfw.addALoad(1); // context
             cfw.addPush(reString);
@@ -1134,14 +1105,14 @@ class BodyCodegen
         if (N == 0)
             return;
 
-        cfw.startMethod("<clinit>", "()V", STATIC_FINAL);
+        cfw.startMethod("<clinit>", "()V", ACC_STATIC_FINAL);
 
         double[] array = itsConstantList;
         for (int i = 0; i != N; ++i) {
             double num = array[i];
             String constantName = "_k" + i;
             String constantType = Codegen.getStaticConstantWrapperType(num);
-            cfw.addField(constantName, constantType, STATIC_PRIVATE);
+            cfw.addField(constantName, constantType, ACC_STATIC_PRIVATE);
             int inum = (int)num;
             if (inum == num) {
                 cfw.add(ByteCode.NEW, "java/lang/Integer");
@@ -5271,14 +5242,10 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     static final int GENERATOR_START = 0;
     static final int GENERATOR_YIELD_START = 1;
 
-    static private final short PUBLIC_FINAL =
-            (short)(ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL);
-    static private final short STATIC_PUBLIC =
-            (short)(ClassFileWriter.ACC_STATIC | ClassFileWriter.ACC_PUBLIC);
-    static private final short STATIC_PRIVATE =
-            (short)(ClassFileWriter.ACC_STATIC | ClassFileWriter.ACC_PRIVATE);
-    static private final short STATIC_FINAL =
-            (short)(ClassFileWriter.ACC_STATIC | ClassFileWriter.ACC_FINAL);
+    static private final short ACC_PUBLIC_FINAL = (short)(ACC_PUBLIC | ACC_FINAL);
+    static private final short ACC_STATIC_PUBLIC = (short)(ACC_STATIC | ACC_PUBLIC);
+    static private final short ACC_STATIC_PRIVATE = (short)(ACC_STATIC | ACC_PRIVATE);
+    static private final short ACC_STATIC_FINAL = (short)(ACC_STATIC | ACC_FINAL);
 
     ClassFileWriter cfw;
     Codegen codegen;
