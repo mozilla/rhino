@@ -89,14 +89,12 @@ class OptTransformer extends NodeTransformer {
             /*
              * Optimize a call site by converting call("a", b, c) into :
              *
-             *  FunctionObjectFor"a" <-- instance variable init'd by constructor
-             *
              *  // this is a DIRECTCALL node
              *  fn = GetProp(tmp = GetBase("a"), "a");
-             *  if (fn == FunctionObjectFor"a")
-             *      fn.call(tmp, b, c)
+             *  if (fn instanceof FunctionClass)
+             *      ((FunctionClass)fn).call(tmp, b, c)
              *  else
-             *      ScriptRuntime.Call(fn, tmp, b, c)
+             *      ScriptRuntime.Call(fn, tmp, [b, c])
              */
             if (possibleDirectCalls != null) {
                 String targetName = null;
