@@ -42,6 +42,8 @@
 package org.mozilla.javascript.regexp;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
@@ -2417,8 +2419,11 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 
     @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-        int index = properties.get(id, -1);
-        switch (index) {
+        Integer index = properties.get(id);
+        if (id == null) {
+            return super.getOwnPropertyDescriptor(cx, id);
+        }
+        switch (index.intValue()) {
             case ID_LAST_INDEX:
                 return buildDataDescriptor(getParentScope(),
                         ScriptRuntime.wrapNumber(lastIndex),
@@ -2430,20 +2435,20 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
                 return buildDataDescriptor(getParentScope(),
                         get((String)id, this),
                         READONLY | DONTENUM | PERMANENT);
-            default: 
-                return super.getOwnPropertyDescriptor(cx, id);
         }
+        return super.getOwnPropertyDescriptor(cx, id);
     }
 
     @Override
     public boolean has(String name, Scriptable start) {
-        return properties.has(name) || super.has(name, start);
+        return properties.containsKey(name) || super.has(name, start);
     }
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        if (properties.has(name)) {
-            if (name.equals("lastIndex")) {
+        Integer id = properties.get(name);
+        if (id != null) {
+            if (id.intValue() == ID_LAST_INDEX) {
                 lastIndex = ScriptRuntime.toNumber(value);
             }
         } else {
@@ -2453,8 +2458,11 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 
     @Override
     public Object get(String name, Scriptable start) {
-        int id = properties.get(name, -1);
-        switch (id) {
+        Integer id = properties.get(name);
+        if (id == null) {
+            return super.get(name, start);
+        }
+        switch (id.intValue()) {
             case ID_LAST_INDEX:
                 return ScriptRuntime.wrapNumber(lastIndex);
             case ID_SOURCE:
@@ -2465,9 +2473,8 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_FOLD) != 0);
             case ID_MULTILINE:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_MULTILINE) != 0);
-            default: 
-                return super.get(name, start);
         }
+        return super.get(name, start);
     }
 
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
@@ -2512,16 +2519,16 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
                              ID_SOURCE = 1,
                              ID_GLOBAL = 2,
                              ID_IGNORE_CASE = 3,
-                             ID_MULTILINE = 4;            
+                             ID_MULTILINE = 4;
     
-    static ObjToIntMap properties = new ObjToIntMap(8);
+    static Map<String,Integer> properties = new HashMap<String,Integer>(6);
     
     static {
-        properties.put("lastIndex", ID_LAST_INDEX);
-        properties.put("source", ID_SOURCE);
-        properties.put("global", ID_GLOBAL);
-        properties.put("ignoreCase", ID_IGNORE_CASE);
-        properties.put("multiline", ID_MULTILINE);
+        properties.put("lastIndex", Integer.valueOf(ID_LAST_INDEX));
+        properties.put("source", Integer.valueOf(ID_SOURCE));
+        properties.put("global", Integer.valueOf(ID_GLOBAL));
+        properties.put("ignoreCase", Integer.valueOf(ID_IGNORE_CASE));
+        properties.put("multiline", Integer.valueOf(ID_MULTILINE));
     }
 
     enum Methods {
