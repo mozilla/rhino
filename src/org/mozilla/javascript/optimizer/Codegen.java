@@ -204,8 +204,8 @@ public class Codegen implements Evaluator
         String sourceFile = null;
         if (compilerEnv.isGenerateDebugInfo()) {
             sourceFile = scriptOrFnNodes[0].getSourceName();
-        }                        
-        
+        }
+
         try {
             int count = scriptOrFnNodes.length;
             for (int i = 0; i != count; ++i) {
@@ -375,7 +375,7 @@ public class Codegen implements Evaluator
     {
         mainMethodClass = className;
     }
-    
+
     String getMainMethodClass()
     {
         return mainMethodClass;
@@ -410,7 +410,7 @@ class BodyCodegen
         this.compilerEnv = compilerEnv;
         this.scriptOrFn = scriptOrFn;
         this.sourceFile = sourceFile;
-        
+
         isTopLevel = (scriptOrFn == codegen.scriptOrFnNodes[0]);
 
         if (isTopLevel) {
@@ -552,7 +552,7 @@ class BodyCodegen
         generateEpilogue();
 
         cfw.stopMethod((short)(localsMax + 1));
-        
+
         generateCallMethod();
         generateResumeGenerator();
         generateNativeFunctionOverrides();
@@ -561,6 +561,24 @@ class BodyCodegen
             // generate the user visible method which when invoked will
             // return a generator object
             generateGenerator();
+        }
+
+        if (literals != null) {
+            // literals list may grow while we're looping
+            for (int i = 0; i < literals.size(); i++) {
+                Node node = literals.get(i);
+                int type = node.getType();
+                switch (type) {
+                    case Token.OBJECTLIT:
+                        generateObjectLiteralFactory(node, i + 1);
+                        break;
+                    case Token.ARRAYLIT:
+                        generateArrayLiteralFactory(node, i + 1);
+                        break;
+                    default:
+                        Kit.codeBug(Token.typeToName(type));
+                }
+            }
         }
 
         if (scriptOrFn.getType() == Token.FUNCTION) {
@@ -661,7 +679,7 @@ class BodyCodegen
         // 3 = this + scope + context
         cfw.stopMethod((short)3);
     }
-    
+
     private void generateCallMethod()
     {
         cfw.startMethod("call",
@@ -950,7 +968,7 @@ class BodyCodegen
         // this method uses as many locals as there are arguments (hence 6)
         cfw.stopMethod((short)6);
     }
-    
+
     private void emitDirectConstructor(OptFunctionNode ofn)
     {
 /*
@@ -1097,7 +1115,7 @@ class BodyCodegen
                             +")Ljava/lang/Object;");
             cfw.add(ByteCode.PUTSTATIC, className,
                     reFieldName, reFieldType);
-        }        
+        }
 
         cfw.addPush(1);
         cfw.add(ByteCode.PUTSTATIC, className, "_reInitDone", "Z");
@@ -1138,6 +1156,38 @@ class BodyCodegen
         cfw.stopMethod((short)0);
     }
 
+    private void generateArrayLiteralFactory(Node node, int count) {
+        String methodName = "createArrayLiteral" + count;
+        initBodyGeneration();
+        argsLocal = firstFreeLocal++;
+        localsMax = firstFreeLocal;
+        cfw.startMethod(methodName, "(Lorg/mozilla/javascript/Context;"
+                +"Lorg/mozilla/javascript/Scriptable;"
+                +"Lorg/mozilla/javascript/Scriptable;"
+                +"[Ljava/lang/Object;"
+                +")Lorg/mozilla/javascript/Scriptable;",
+                ACC_PRIVATE);
+        visitArrayLiteral(node, node.getFirstChild(), true);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short)(localsMax + 1));
+    }
+
+    private void generateObjectLiteralFactory(Node node, int count) {
+        String methodName = "createObjectLiteral" + count;
+        initBodyGeneration();
+        argsLocal = firstFreeLocal++;
+        localsMax = firstFreeLocal;
+        cfw.startMethod(methodName, "(Lorg/mozilla/javascript/Context;"
+                +"Lorg/mozilla/javascript/Scriptable;"
+                +"Lorg/mozilla/javascript/Scriptable;"
+                +"[Ljava/lang/Object;"
+                +")Lorg/mozilla/javascript/Scriptable;",
+                ACC_PRIVATE);
+        visitObjectLiteral(node, node.getFirstChild(), true);
+        cfw.add(ByteCode.ARETURN);
+        cfw.stopMethod((short)(localsMax + 1));
+    }
+
     private static String getBodyMethodSignature(ScriptNode node, String classSig)
     {
         StringBuffer sb = new StringBuffer();
@@ -1157,8 +1207,8 @@ class BodyCodegen
         }
         sb.append("[Ljava/lang/Object;)Ljava/lang/Object;");
         return sb.toString();
-    }    
-    
+    }
+
     void pushNumberAsObject(double num)
     {
         if (num == 0.0) {
@@ -1221,7 +1271,7 @@ class BodyCodegen
             cfw.add(ByteCode.GETSTATIC, className, constantName, constantType);
         }
     }
-    
+
 
     private void generateNestedFunctionInits()
     {
@@ -1696,6 +1746,8 @@ class BodyCodegen
                 break;
 
               case Token.LOCAL_BLOCK: {
+                boolean prevLocal = inLocalBlock;
+                inLocalBlock = true;
                 int local = getNewWordLocal();
                 if (isGenerator) {
                     cfw.add(ByteCode.ACONST_NULL);
@@ -1708,6 +1760,7 @@ class BodyCodegen
                 }
                 releaseWordLocal((short)local);
                 node.removeProp(Node.LOCAL_PROP);
+                inLocalBlock = prevLocal;
                 break;
               }
 
@@ -2184,11 +2237,11 @@ class BodyCodegen
               }
 
               case Token.ARRAYLIT:
-                visitArrayLiteral(node, child);
+                visitArrayLiteral(node, child, false);
                 break;
 
               case Token.OBJECTLIT:
-                visitObjectLiteral(node, child);
+                visitObjectLiteral(node, child, false);
                 break;
 
               case Token.NOT: {
@@ -2901,12 +2954,35 @@ class BodyCodegen
         ret.jsrPoints.add(Integer.valueOf(retLabel));
     }
 
-    private void visitArrayLiteral(Node node, Node child)
+    private void visitArrayLiteral(Node node, Node child, boolean topLevel)
     {
         int count = 0;
         for (Node cursor = child; cursor != null; cursor = cursor.getNext()) {
             ++count;
         }
+
+        // If code budget is tight swap out literals into separate method
+        if (!topLevel && (count > 10 || cfw.getCurrentCodeOffset() > 30000)
+                && !hasVarsInRegs && !isGenerator && !inLocalBlock) {
+            if (literals == null) {
+                literals = new LinkedList<Node>();
+            }
+            literals.add(node);
+            String methodName = "createArrayLiteral" + literals.size();
+            cfw.addALoad(funObjLocal);
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            cfw.addALoad(thisObjLocal);
+            cfw.addALoad(argsLocal);
+            cfw.addInvoke(ByteCode.INVOKEVIRTUAL, className, methodName,
+                    "(Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"[Ljava/lang/Object;"
+                        +")Lorg/mozilla/javascript/Scriptable;");
+            return;
+        }
+
         // load array to store array literal objects
         addNewObjectArray(count);
         for (int i = 0; i != count; ++i) {
@@ -2935,10 +3011,32 @@ class BodyCodegen
              +")Lorg/mozilla/javascript/Scriptable;");
     }
 
-    private void visitObjectLiteral(Node node, Node child)
+    private void visitObjectLiteral(Node node, Node child, boolean topLevel)
     {
         Object[] properties = (Object[])node.getProp(Node.OBJECT_IDS_PROP);
         int count = properties.length;
+
+        // If code budget is tight swap out literals into separate method
+        if (!topLevel && (count > 10 || cfw.getCurrentCodeOffset() > 30000)
+                && !hasVarsInRegs && !isGenerator && !inLocalBlock) {
+            if (literals == null) {
+                literals = new LinkedList<Node>();
+            }
+            literals.add(node);
+            String methodName = "createObjectLiteral" + literals.size();
+            cfw.addALoad(funObjLocal);
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            cfw.addALoad(thisObjLocal);
+            cfw.addALoad(argsLocal);
+            cfw.addInvoke(ByteCode.INVOKEVIRTUAL, className, methodName,
+                    "(Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"[Ljava/lang/Object;"
+                        +")Lorg/mozilla/javascript/Scriptable;");
+            return;
+        }
 
         // load array with property ids
         addNewObjectArray(count);
@@ -5226,7 +5324,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
     static final String SUPER_CLASS_NAME
         = "org.mozilla.javascript.NativeFunction";
-    
+
     static final String FUNCTION_CONSTRUCTOR_SIGNATURE
         = "(Lorg/mozilla/javascript/Scriptable;"
            +"Lorg/mozilla/javascript/Context;)V";
@@ -5268,9 +5366,9 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private int[] locals;
     private short firstFreeLocal;
     private short localsMax;
-    
+
     private double[] itsConstantList;
-    private int itsConstantListSize;    
+    private int itsConstantListSize;
 
     private String sourceFile;
     private int itsLineNumber;
@@ -5281,6 +5379,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private boolean itsForcedObjectParameters;
     private int enterAreaStartLabel;
     private int epilogueLabel;
+    private boolean inLocalBlock;
 
     // special known locals. If you add a new local here, be sure
     // to initialize it to -1 in initBodyGeneration
@@ -5303,6 +5402,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
     private Map<Node,FinallyReturnPoint> finallys;
     private List<Map<String, Integer>> bindings;
+    private List<Node> literals;
 
     static class FinallyReturnPoint {
         public List<Integer> jsrPoints  = new ArrayList<Integer>();
