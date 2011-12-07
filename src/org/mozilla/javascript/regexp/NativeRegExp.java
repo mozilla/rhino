@@ -2419,62 +2419,58 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 
     @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-        Integer index = properties.get(id);
-        if (id == null) {
+        Properties prop = properties.get(id);
+        if (prop == null) {
             return super.getOwnPropertyDescriptor(cx, id);
         }
-        switch (index.intValue()) {
-            case ID_LAST_INDEX:
+        switch (prop) {
+            case lastIndex:
                 return buildDataDescriptor(getParentScope(),
                         ScriptRuntime.wrapNumber(lastIndex),
                         DONTENUM | PERMANENT);
-            case ID_SOURCE:
-            case ID_GLOBAL:
-            case ID_IGNORE_CASE:
-            case ID_MULTILINE:
+            default:
                 return buildDataDescriptor(getParentScope(),
                         get((String)id, this),
                         READONLY | DONTENUM | PERMANENT);
         }
-        return super.getOwnPropertyDescriptor(cx, id);
     }
 
     @Override
     public boolean has(String name, Scriptable start) {
-        return properties.containsKey(name) || super.has(name, start);
+        return super.has(name, start) || properties.containsKey(name);
     }
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        Integer id = properties.get(name);
-        if (id != null) {
-            if (id.intValue() == ID_LAST_INDEX) {
+        Properties prop = properties.get(name);
+        if (prop == null) {
+            super.put(name, start, value);
+        } else {
+            if (prop == Properties.lastIndex) {
                 lastIndex = ScriptRuntime.toNumber(value);
             }
-        } else {
-            super.put(name, start, value);
         }
     }
 
     @Override
     public Object get(String name, Scriptable start) {
-        Integer id = properties.get(name);
-        if (id == null) {
+        Properties prop = properties.get(name);
+        if (prop == null) {
             return super.get(name, start);
         }
-        switch (id.intValue()) {
-            case ID_LAST_INDEX:
+        switch (prop) {
+            case lastIndex:
                 return ScriptRuntime.wrapNumber(lastIndex);
-            case ID_SOURCE:
+            case source:
                 return new String(re.source);
-            case ID_GLOBAL:
+            case global:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_GLOB) != 0);
-            case ID_IGNORE_CASE:
+            case ignoreCase:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_FOLD) != 0);
-            case ID_MULTILINE:
+            case multiline:
                 return ScriptRuntime.wrapBoolean((re.flags & JSREG_MULTILINE) != 0);
         }
-        return super.get(name, start);
+        throw new IllegalArgumentException(name); // won't happen
     }
 
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
@@ -2515,20 +2511,18 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
         return (NativeRegExp)thisObj;
     }
 
-    private static final int ID_LAST_INDEX = 0,
-                             ID_SOURCE = 1,
-                             ID_GLOBAL = 2,
-                             ID_IGNORE_CASE = 3,
-                             ID_MULTILINE = 4;
-    
-    static Map<String,Integer> properties = new HashMap<String,Integer>(6);
-    
+    enum Properties {
+        lastIndex,
+        source,
+        global,
+        ignoreCase,
+        multiline
+    }
+
+    static Map<String,Properties> properties = new HashMap<String,Properties>(6);
     static {
-        properties.put("lastIndex", Integer.valueOf(ID_LAST_INDEX));
-        properties.put("source", Integer.valueOf(ID_SOURCE));
-        properties.put("global", Integer.valueOf(ID_GLOBAL));
-        properties.put("ignoreCase", Integer.valueOf(ID_IGNORE_CASE));
-        properties.put("multiline", Integer.valueOf(ID_MULTILINE));
+        for (Properties prop : Properties.values())
+            properties.put(prop.name(), prop);
     }
 
     enum Methods {
