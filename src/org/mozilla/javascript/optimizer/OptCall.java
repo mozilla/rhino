@@ -41,12 +41,13 @@
 import org.mozilla.javascript.Arguments;
 import org.mozilla.javascript.NativeCall;
 import org.mozilla.javascript.NativeFunction;
-import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.UniqueTag;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>A function activation object that eliminates hash lookups for parameter
@@ -73,7 +74,7 @@ public class OptCall extends NativeCall {
     private int paramAndVarCount;  // number of declared params + local vars
     private int localsStart;       // index of first local (var or missing arg)
     private transient Object arguments;   // the arguments object
-    private transient ObjToIntMap propertyMap;
+    private transient Map<String,Integer> propertyMap;
 
     public final static int ARGUMENTS_ID = Integer.MAX_VALUE;
     private static final long serialVersionUID = 2569902684936819858L;
@@ -173,9 +174,9 @@ public class OptCall extends NativeCall {
     @Override
     public Object get(String name, Scriptable start) {
         if (propertyMap == null) initPropertyMap();
-        int index = propertyMap.get(name, -1);
-        if (index > -1) {
-            return get(index);
+        Integer index = propertyMap.get(name);
+        if (index != null) {
+            return get(index.intValue());
         }
         return super.get(name, start);
     }
@@ -183,15 +184,15 @@ public class OptCall extends NativeCall {
     @Override
     public boolean has(String name, Scriptable start) {
         if (propertyMap == null) initPropertyMap();
-        return propertyMap.has(name) || super.has(name, start);
+        return propertyMap.containsKey(name) || super.has(name, start);
     }
 
     @Override
     public void put(String name, Scriptable start, Object value) {
         if (propertyMap == null) initPropertyMap();
-        int index = propertyMap.get(name, -1);
-        if (index > -1) {
-            set(index, value);
+        Integer index = propertyMap.get(name);
+        if (index != null) {
+            set(index.intValue(), value);
         } else {
             super.put(name, start, value);
         }
@@ -202,20 +203,20 @@ public class OptCall extends NativeCall {
         // the Scriptable interface. Note that these are only for interpreted
         // eval() code and should never be called by optimized code.
         if (propertyMap == null) {
-            ObjToIntMap map = new ObjToIntMap(paramAndVarCount);
+            Map<String,Integer> map = new HashMap<String,Integer>(paramAndVarCount);
             int paramCount = function.getParamCount();
             for (int i = 0; i < paramCount; i++) {
-                map.put(function.getParamOrVarName(i), i);
+                map.put(function.getParamOrVarName(i), Integer.valueOf(i));
             }
             // Only add arguments object if it isn't shadowed by a parameter
             // with the same name
-            if (!map.has("arguments")) {
-                map.put("arguments", ARGUMENTS_ID);
+            if (!map.containsKey("arguments")) {
+                map.put("arguments", Integer.valueOf(ARGUMENTS_ID));
             }
             for (int i = paramCount; i < paramAndVarCount; i++) {
                 String name = function.getParamOrVarName(i);
-                if (!map.has(name)) {
-                    map.put(function.getParamOrVarName(i), i);
+                if (!map.containsKey(name)) {
+                    map.put(function.getParamOrVarName(i), Integer.valueOf(i));
                 }
             }
             propertyMap = map;
