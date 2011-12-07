@@ -1420,8 +1420,10 @@ if (regexp.anchorCh >= 0) {
     addCharacterToCharSet(RECharSet cs, char c)
     {
         int byteIndex = (c / 8);
-        if (c >= cs.length)
-            throw new RuntimeException();
+        if (c >= cs.length) {
+            throw ScriptRuntime.constructError("SyntaxError",
+                    "invalid range in character class");
+        }
         cs.bits[byteIndex] |= 1 << (c & 0x7);
     }
 
@@ -1435,8 +1437,10 @@ if (regexp.anchorCh >= 0) {
         int byteIndex1 = (c1 / 8);
         int byteIndex2 = (c2 / 8);
 
-        if ((c2 >= cs.length) || (c1 > c2))
-            throw new RuntimeException();
+        if ((c2 >= cs.length) || (c1 > c2)) {
+            throw ScriptRuntime.constructError("SyntaxError",
+                    "invalid range in character class");
+        }
 
         c1 &= 0x7;
         c2 &= 0x7;
