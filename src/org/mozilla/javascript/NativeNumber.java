@@ -146,7 +146,7 @@ final class NativeNumber extends IdScriptableObject
           case Id_toLocaleString:
             {
                 // toLocaleString is just an alias for toString for now
-                int base = (args.length == 0)
+                int base = (args.length == 0 || args[0] == Undefined.instance)
                     ? 10 : ScriptRuntime.toInt32(args[0]);
                 return ScriptRuntime.numberToString(value, base);
             }
