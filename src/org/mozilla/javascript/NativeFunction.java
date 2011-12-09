@@ -52,6 +52,8 @@ import org.mozilla.javascript.debug.DebuggableScript;
 public abstract class NativeFunction extends BaseFunction
 {
 
+    static final long serialVersionUID = 8713897114082216401L;
+
     /**
      * @param indent How much to indent the decompiled result
      *
