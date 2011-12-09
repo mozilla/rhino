@@ -84,7 +84,13 @@ public class IdFunctionObject extends BaseFunction
 
     public final boolean hasTag(Object tag)
     {
-        return this.tag == tag;
+        if(tag == null && this.tag == null) {
+            return true;
+        }
+        if(tag == null) {
+            return false;
+        }
+        return tag.equals(this.tag);
     }
 
     public final int methodId()

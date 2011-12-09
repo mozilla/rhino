@@ -88,6 +88,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                                                   ConstProperties
 {
 
+    static final long serialVersionUID = 2829861078851942586L;
+    
     /**
      * The empty property attribute.
      *
