@@ -3088,9 +3088,20 @@ public class Parser
                   int ppos = ts.tokenBeg;
 
                   if ((tt == Token.NAME
-                       && peekToken() == Token.NAME
+                       && peekToken() != Token.COLON
                        && ("get".equals(propertyName) || "set".equals(propertyName))))
                   {
+                      if (peekToken() != Token.NAME) {
+                          String conv = Token.keywordToName(peekToken());
+                          if (conv != null) {
+                              if (!compilerEnv.isReservedKeywordAsIdentifier()) {
+                                  reportError("msg.bad.prop");
+                              }
+                              saveNameTokenData(ts.tokenBeg, conv, ts.lineno);
+                          } else {
+                              reportError("msg.no.colon.prop");
+                          }
+                      }
                       consumeToken();
                       name = createNameNode();
                       name.setJsDoc(jsdoc);
