@@ -84,24 +84,9 @@ public class ConsString implements CharSequence, Serializable {
         }
     }
     
-    private void readObject(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
-        in.defaultReadObject();
-        s1 = (String)in.readObject();
-        s2 = "";
-        //because it might not be accurate since 
-        //the object was flattened in serialization:
-        depth = 0;
+    private Object writeReplace() {
+        return this.toString();
     }
-
-    private void writeObject(ObjectOutputStream out)
-        throws IOException
-    {
-        out.defaultWriteObject();
-        out.writeObject(this.toString());
-    }
-
     
     public String toString() {
         return depth == 0 ? (String)s1 : flatten();

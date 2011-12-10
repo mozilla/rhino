@@ -397,7 +397,7 @@ public class ContinuationsApiTest extends TestCase {
       
       ObjectInputStream ois = new ObjectInputStream(bais);
       
-      ConsString r2 = (ConsString) ois.readObject();
+      CharSequence r2 = (CharSequence) ois.readObject();
       
       assertEquals("still the same at the other end", r1.toString(), r2.toString());
       
