@@ -2751,36 +2751,36 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
 
             if (slot != null) {
-                // Another thread just added a slot with same
-                // name/index before this one entered synchronized
-                // block. This is a race in application code and
-                // probably indicates bug there. But for the hashtable
-                // implementation it is harmless with the only
-                // complication is the need to replace the added slot
-                // if we need GetterSlot and the old one is not.
+                // A slot with same name/index already exists. This means that
+                // a slot is being redefined from a value to a getter slot or
+                // vice versa, or it could be a race in application code.
+                // Check if we need to replace the slot depending on the
+                // accessType flag and return the appropriate slot instance.
 
-                slot = unwrapSlot(slot);
+                Slot inner = unwrapSlot(slot);
                 Slot newSlot;
 
                 if (accessType == SLOT_MODIFY_GETTER_SETTER
-                        && !(slot instanceof GetterSlot)) {
-                    newSlot = new GetterSlot(name, indexOrHash, slot.getAttributes());
+                        && !(inner instanceof GetterSlot)) {
+                    newSlot = new GetterSlot(name, indexOrHash, inner.getAttributes());
                 } else if (accessType == SLOT_CONVERT_ACCESSOR_TO_DATA
-                        && (slot instanceof GetterSlot)) {
-                    newSlot = new Slot(name, indexOrHash, slot.getAttributes());
+                        && (inner instanceof GetterSlot)) {
+                    newSlot = new Slot(name, indexOrHash, inner.getAttributes());
                 } else if (accessType == SLOT_MODIFY_CONST) {
                     return null;
                 } else {
-                    return slot;
+                    return inner;
                 }
 
-                newSlot.value = slot.value;
+                newSlot.value = inner.value;
                 newSlot.next = slot.next;
                 // add new slot to linked list
-                if (lastAdded != null)
+                if (lastAdded != null) {
                     lastAdded.orderedNext = newSlot;
-                if (firstAdded == null)
+                }
+                if (firstAdded == null) {
                     firstAdded = newSlot;
+                }
                 lastAdded = newSlot;
                 // add new slot to hash table
                 if (prev == slot) {
