@@ -388,7 +388,7 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
                         ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
                         if (Boolean.TRUE.equals(desc.get("configurable"))) {
                             desc.put("configurable", desc, false);
-                            obj.defineOwnProperty(cx, name, desc);
+                            obj.defineOwnProperty(cx, name, desc, false);
                         }
                     }
                     obj.preventExtensions();
@@ -406,7 +406,7 @@ public class NativeObject extends ScriptableObject implements IdFunctionCall, Ma
                             desc.put("writable", desc, false);
                         if (Boolean.TRUE.equals(desc.get("configurable")))
                             desc.put("configurable", desc, false);
-                        obj.defineOwnProperty(cx, name, desc);
+                        obj.defineOwnProperty(cx, name, desc, false);
                     }
                     obj.preventExtensions();
 

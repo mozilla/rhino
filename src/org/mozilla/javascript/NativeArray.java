@@ -387,7 +387,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
             }
         }
         super.put(index, start, value);
-        if (start == this) {
+        if (start == this && (lengthAttr & READONLY) == 0) {
             // only set the array length if given an array index (ECMA 15.4.0)
             if (this.length <= index) {
                 // avoid overflowing index!
@@ -486,11 +486,28 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
     }
 
     @Override
+    public int getAttributes(String name) {
+        if (name.equals("length")) {
+            return lengthAttr;
+        }
+        return super.getAttributes(name);
+    }
+
+    @Override
+    public void setAttributes(String name, int attributes) {
+        if (name.equals("length")) {
+            lengthAttr = attributes;
+            return;
+        }
+        super.setAttributes(name, attributes);
+    }
+
+    @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
       if ("length".equals(id)) {
           return buildDataDescriptor(getParentScope(),
                   ScriptRuntime.wrapNumber(length),
-                  DONTENUM | PERMANENT);
+                  lengthAttr);
       }
       if (dense != null) {
         int index = toDenseIndex(id);
@@ -503,7 +520,22 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+    protected void defineOwnProperty(Context cx, Object id,
+                                     ScriptableObject desc,
+                                     boolean checkValid) {
+      if (id.equals("length")) {
+        checkPropertyDefinition(desc);
+        if (checkValid) {
+          ScriptableObject current = getOwnPropertyDescriptor(cx, "length");
+          checkPropertyChange("length", current, desc);
+        }
+        Object value = getProperty(desc, "value");
+        if (value != NOT_FOUND) {
+          setLength(value);
+        }
+        lengthAttr = applyDescriptorToAttributeBitset(lengthAttr, desc);
+        return;
+      }
       if (dense != null) {
         Object[] values = dense;
         dense = null;
@@ -518,7 +550,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
       if (index >= length) {
         length = index + 1;
       }
-      super.defineOwnProperty(cx, id, desc);
+      super.defineOwnProperty(cx, id, desc, checkValid);
     }
 
     /**
@@ -581,6 +613,9 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
          * 2. If Result(1) is false, return.
          * ?
          */
+        if ((lengthAttr & READONLY) != 0) {
+            return;
+        }
 
         double d = ScriptRuntime.toNumber(val);
         long longVal = ScriptRuntime.toUint32(d);
@@ -1878,6 +1913,11 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
      * Cache boxed length to avoid repeated wrapping
      */
     private Number boxedLength;
+
+    /**
+     * Attributes of the array's length property
+     */
+    private int lengthAttr = DONTENUM | PERMANENT;
 
     /**
      * Fast storage for dense arrays. Sparse arrays will use the superclass's

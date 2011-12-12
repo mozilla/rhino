@@ -48,7 +48,7 @@ package org.mozilla.javascript;
  * @see org.mozilla.javascript.NativeCall
  * @author Norris Boyd
  */
-public class Arguments extends ScriptableObject 
+public class Arguments extends ScriptableObject
 {
     static final long serialVersionUID = 4275508002492040609L;
 
@@ -124,7 +124,7 @@ public class Arguments extends ScriptableObject
         }
         return super.get(index, start);
     }
-    
+
     /**
      * Return the activation name of the given parameter, or null if the
      * parameter does not have an activation name, either because it is
@@ -281,8 +281,10 @@ public class Arguments extends ScriptableObject
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
-        super.defineOwnProperty(cx, id, desc);
+    protected void defineOwnProperty(Context cx, Object id,
+                                     ScriptableObject desc,
+                                     boolean checkValid) {
+        super.defineOwnProperty(cx, id, desc, checkValid);
 
         double d = ScriptRuntime.toNumber(id);
         int index = (int) d;
@@ -310,7 +312,7 @@ public class Arguments extends ScriptableObject
             CALLEE = "callee",
             CONSTRUCTOR = "constructor",
             LENGTH = "length";
-    
+
     // Fields to hold caller, callee and length properties,
     // where NOT_FOUND value tags deleted properties.
     private Object calleeObj;
