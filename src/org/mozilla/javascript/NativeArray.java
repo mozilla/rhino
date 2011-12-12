@@ -277,22 +277,41 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
         return super.has(index, start);
     }
 
+    private static long toArrayIndex(Object id) {
+        if (id instanceof String) {
+            return toArrayIndex((String)id);
+        } else if (id instanceof Number) {
+            return toArrayIndex(((Number)id).doubleValue());
+        }
+        return -1;
+    }
+
     // if id is an array index (ECMA 15.4.0), return the number,
     // otherwise return -1L
     private static long toArrayIndex(String id)
     {
-        double d = ScriptRuntime.toNumber(id);
+        long index = toArrayIndex(ScriptRuntime.toNumber(id));
+        // Assume that ScriptRuntime.toString(index) is the same
+        // as java.lang.Long.toString(index) for long
+        if (Long.toString(index).equals(id)) {
+            return index;
+        }
+        return -1;
+    }
+
+    private static long toArrayIndex(double d) {
         if (d == d) {
             long index = ScriptRuntime.toUint32(d);
             if (index == d && index != 4294967295L) {
-                // Assume that ScriptRuntime.toString(index) is the same
-                // as java.lang.Long.toString(index) for long
-                if (Long.toString(index).equals(id)) {
-                    return index;
-                }
+                return index;
             }
         }
         return -1;
+    }
+
+    private static int toDenseIndex(Object id) {
+      long index = toArrayIndex(id);
+      return 0 <= index && index < Integer.MAX_VALUE ? (int) index : -1;
     }
 
     @Override
@@ -474,7 +493,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
                   DONTENUM | PERMANENT);
       }
       if (dense != null) {
-        int index = toIndex(id);
+        int index = toDenseIndex(id);
         if (0 <= index && index < length) {
           Object value = dense[index];
           return defaultIndexPropertyDescriptor(value);
@@ -495,21 +514,11 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
           }
         }
       }
-      int index = toIndex(id);
+      long index = toArrayIndex(id);
       if (index >= length) {
         length = index + 1;
       }
       super.defineOwnProperty(cx, id, desc);
-    }
-
-    private int toIndex(Object id) {
-      if (id instanceof String) {
-        return (int) toArrayIndex((String) id);
-      } else if (id instanceof Number) {
-        return ((Number) id).intValue();
-      } else {
-        return -1;
-      }
     }
 
     /**
@@ -675,7 +684,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
         if (index > Integer.MAX_VALUE) {
             return ScriptableObject.getProperty(target, Long.toString(index));
         } else {
-            return ScriptableObject.getProperty(target, (int) index);
+            return ScriptableObject.getProperty(target, (int)index);
         }
     }
 
