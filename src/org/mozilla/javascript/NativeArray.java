@@ -1409,13 +1409,12 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
                 // default
                 start = length-1;
             } else {
-                start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
+                start = (long)ScriptRuntime.toInteger(args[1]);
                 if (start >= length)
                     start = length-1;
                 else if (start < 0)
                     start += length;
-                // Note that start may be negative, but that's okay
-                // as the result of -1 will fall out from the code below
+                if (start < 0) return NEGATIVE_ONE;
             }
         } else {
             // indexOf
@@ -1433,14 +1432,13 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
                 // default
                 start = 0;
             } else {
-                start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
+                start = (long)ScriptRuntime.toInteger(args[1]);
                 if (start < 0) {
                     start += length;
                     if (start < 0)
                         start = 0;
                 }
-                // Note that start may be > length-1, but that's okay
-                // as the result of -1 will fall out from the code below
+                if (start > length - 1) return NEGATIVE_ONE;
             }
         }
         if (thisObj instanceof NativeArray) {
@@ -1468,13 +1466,15 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
         }
         if (isLast) {
           for (long i=start; i >= 0; i--) {
-              if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
+              Object val = getRawElem(thisObj, i);
+              if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
                   return Long.valueOf(i);
               }
           }
         } else {
           for (long i=start; i < length; i++) {
-              if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
+              Object val = getRawElem(thisObj, i);
+              if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
                   return Long.valueOf(i);
               }
           }
