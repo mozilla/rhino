@@ -72,8 +72,8 @@ public class BoundFunction extends BaseFunction {
     throwing.put("configurable", throwing, false);
     throwing.preventExtensions();
 
-    this.defineOwnProperty(cx, "caller", throwing);
-    this.defineOwnProperty(cx, "arguments", throwing);
+    this.defineOwnProperty(cx, "caller", throwing, false);
+    this.defineOwnProperty(cx, "arguments", throwing, false);
   }
 
   @Override

@@ -463,10 +463,10 @@ public abstract class IdScriptableObject extends ScriptableObject
         ScriptableObject.checkValidAttributes(attributes);
         int info = findInstanceIdInfo(name);
         if (info != 0) {
+            int id = (info & 0xFFFF);
             int currentAttributes = (info >>> 16);
             if (attributes != currentAttributes) {
-                throw new RuntimeException(
-                    "Change of attributes for this id is not supported");
+                setInstanceIdAttributes(id, attributes);
             }
             return;
         }
@@ -576,6 +576,20 @@ public abstract class IdScriptableObject extends ScriptableObject
     protected void setInstanceIdValue(int id, Object value)
     {
         throw new IllegalStateException(String.valueOf(id));
+    }
+
+    /**
+     * Update the attributes of the given instance property. Classes which
+     * want to support changing property attributes via Object.defineProperty
+     * must override this method. The default implementation throws
+     * InternalError.
+     * @param id the instance property id
+     * @param attr the new attribute bitset
+     */
+    protected void setInstanceIdAttributes(int id, int attr) {
+        throw ScriptRuntime.constructError("InternalError",
+                "Changing attributes not supported for " + getClassName()
+                + " " + getInstanceIdName(id) + " property");
     }
 
     /** 'thisObj' will be null if invoked as constructor, in which case
@@ -717,10 +731,18 @@ public abstract class IdScriptableObject extends ScriptableObject
             if (isAccessorDescriptor(desc)) {
               delete(id); // it will be replaced with a slot
             } else {
+              checkPropertyDefinition(desc);
+              ScriptableObject current = getOwnPropertyDescriptor(cx, key);
+              checkPropertyChange(name, current, desc);
               int attr = (info >>> 16);
               Object value = getProperty(desc, "value");
-              setInstanceIdValue(id, value == NOT_FOUND ? Undefined.instance : value);
-              setAttributes(id, applyDescriptorToAttributeBitset(attr, desc));
+              if (value != NOT_FOUND && (attr & READONLY) == 0) {
+                Object currentValue = getInstanceIdValue(id);
+                if (!sameValue(value, currentValue)) {
+                  setInstanceIdValue(id, value);
+                }
+              }
+              setAttributes(name, applyDescriptorToAttributeBitset(attr, desc));
               return;
             }
         }
@@ -730,9 +752,17 @@ public abstract class IdScriptableObject extends ScriptableObject
               if (isAccessorDescriptor(desc)) {
                 prototypeValues.delete(id); // it will be replaced with a slot
               } else {
+                checkPropertyDefinition(desc);
+                ScriptableObject current = getOwnPropertyDescriptor(cx, key);
+                checkPropertyChange(name, current, desc);
                 int attr = prototypeValues.getAttributes(id);
                 Object value = getProperty(desc, "value");
-                prototypeValues.set(id, this, value == NOT_FOUND ? Undefined.instance : value);
+                if (value != NOT_FOUND && (attr & READONLY) == 0) {
+                  Object currentValue = prototypeValues.get(id);
+                  if (!sameValue(value, currentValue)) {
+                    prototypeValues.set(id, this, value);
+                  }
+                }
                 prototypeValues.setAttributes(id, applyDescriptorToAttributeBitset(attr, desc));
                 return;
               }

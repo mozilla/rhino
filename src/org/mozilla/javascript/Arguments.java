@@ -362,8 +362,10 @@ final class Arguments extends IdScriptableObject
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
-      super.defineOwnProperty(cx, id, desc);
+    protected void defineOwnProperty(Context cx, Object id,
+                                     ScriptableObject desc,
+                                     boolean checkValid) {
+      super.defineOwnProperty(cx, id, desc, checkValid);
 
       double d = ScriptRuntime.toNumber(id);
       int index = (int) d;

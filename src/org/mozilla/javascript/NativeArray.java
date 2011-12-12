@@ -125,10 +125,17 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
+    protected void setInstanceIdAttributes(int id, int attr) {
+        if (id == Id_length) {
+            lengthAttr = attr;
+        }
+    }
+
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         if (s.equals("length")) {
-            return instanceIdInfo(DONTENUM | PERMANENT, Id_length);
+            return instanceIdInfo(lengthAttr, Id_length);
         }
         return super.findInstanceIdInfo(s);
     }
@@ -461,7 +468,7 @@ public class NativeArray extends IdScriptableObject implements List
             }
         }
         super.put(index, start, value);
-        if (start == this) {
+        if (start == this && (lengthAttr & READONLY) == 0) {
             // only set the array length if given an array index (ECMA 15.4.0)
             if (this.length <= index) {
                 // avoid overflowing index!
@@ -571,7 +578,9 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+    protected void defineOwnProperty(Context cx, Object id,
+                                     ScriptableObject desc,
+                                     boolean checkValid) {
       if (dense != null) {
         Object[] values = dense;
         dense = null;
@@ -586,7 +595,7 @@ public class NativeArray extends IdScriptableObject implements List
       if (index >= length) {
         length = index + 1;
       }
-      super.defineOwnProperty(cx, id, desc);
+      super.defineOwnProperty(cx, id, desc, checkValid);
     }
 
     /**
@@ -649,6 +658,9 @@ public class NativeArray extends IdScriptableObject implements List
          * 2. If Result(1) is false, return.
          * ?
          */
+        if ((lengthAttr & READONLY) != 0) {
+            return;
+        }
 
         double d = ScriptRuntime.toNumber(val);
         long longVal = ScriptRuntime.toUint32(d);
@@ -1984,6 +1996,11 @@ public class NativeArray extends IdScriptableObject implements List
      * Internal representation of the JavaScript array's length property.
      */
     private long length;
+
+    /**
+     * Attributes of the array's length property
+     */
+    private int lengthAttr = DONTENUM | PERMANENT;
 
     /**
      * Fast storage for dense arrays. Sparse arrays will use the superclass's
