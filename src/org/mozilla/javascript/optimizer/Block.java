@@ -510,6 +510,14 @@ class Block
             case Token.NEG:
                 return Optimizer.NumberType;
 
+            case Token.EQ:
+            case Token.NE:
+            case Token.LT:
+            case Token.LE:
+            case Token.GT:
+            case Token.GE:
+            case Token.SHEQ:
+            case Token.SHNE:
             case Token.ARRAYLIT:
             case Token.OBJECTLIT:
                 return Optimizer.AnyType; // XXX: actually, we know it's not
@@ -555,7 +563,7 @@ class Block
                 if (child.getType() == Token.GETVAR) {
                     // theVar is a Number now
                     int i = fn.getVarIndex(child);
-                    result |= assignType(varTypes, i, Optimizer.NumberType);
+                    result = assignType(varTypes, i, Optimizer.NumberType);
                 }
                 break;
             case Token.SETPROP :
@@ -573,7 +581,7 @@ class Block
                 Node rValue = child.getNext();
                 int theType = findExpressionType(fn, rValue, varTypes);
                 int i = fn.getVarIndex(n);
-                result |= assignType(varTypes, i, theType);
+                result = assignType(varTypes, i, theType);
                 break;
             }
         }
