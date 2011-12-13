@@ -199,13 +199,14 @@ public class Arguments extends ScriptableObject
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        super.put(name, start, value);
-        if (name.equals(LENGTH)) {
-            lengthObj = NOT_FOUND;
-        } else if (name.equals(CONSTRUCTOR)) {
-            constructor = NOT_FOUND;
-        } else if (name.equals(CALLEE)) {
-            calleeObj = NOT_FOUND;
+        if (name.equals(LENGTH) && lengthObj != NOT_FOUND) {
+            lengthObj = value;
+        } else if (name.equals(CONSTRUCTOR) && constructor != NOT_FOUND) {
+            constructor = value;
+        } else if (name.equals(CALLEE) && calleeObj != NOT_FOUND) {
+            calleeObj = value;
+        } else {
+            super.put(name, start, value);
         }
     }
 
@@ -285,6 +286,14 @@ public class Arguments extends ScriptableObject
                                      ScriptableObject desc,
                                      boolean checkValid) {
         super.defineOwnProperty(cx, id, desc, checkValid);
+
+        if (id.equals(LENGTH)) {
+            lengthObj = NOT_FOUND;
+        } else if (id.equals(CONSTRUCTOR)) {
+            constructor = NOT_FOUND;
+        } else if (id.equals(CALLEE)) {
+            calleeObj = NOT_FOUND;
+        }
 
         double d = ScriptRuntime.toNumber(id);
         int index = (int) d;
