@@ -706,10 +706,9 @@ public abstract class IdScriptableObject extends ScriptableObject
      * operator.
      * @throws RuntimeException if no more instanceof target can be found
      */
-    protected static EcmaError incompatibleCallError(IdFunctionObject f)
+    public static EcmaError incompatibleCallError(IdFunctionObject f)
     {
-        throw ScriptRuntime.typeError1("msg.incompat.call",
-                                       f.getFunctionName());
+        throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
     }
 
     private IdFunctionObject newIdFunction(Object tag, int id, String name,
