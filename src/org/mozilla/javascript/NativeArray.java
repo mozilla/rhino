@@ -566,6 +566,14 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
+    public int getAttributes(int index) {
+        if (dense != null && index >= 0 && index < length) {
+            return EMPTY;
+        }
+        return super.getAttributes(index);
+    }
+
+    @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
       if (dense != null) {
         int index = toDenseIndex(id);
