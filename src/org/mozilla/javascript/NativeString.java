@@ -410,6 +410,14 @@ final class NativeString extends ScriptableObject implements IdFunctionCall
     }
 
     @Override
+    public int getAttributes(String id) {
+        if ("length".equals(id)) {
+            return READONLY | DONTENUM | PERMANENT;
+        }
+        return super.getAttributes(id);
+    }
+
+    @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
         if ("length".equals(id)) {
             return buildDataDescriptor(getParentScope(),
