@@ -504,7 +504,8 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
 
     @Override
     public int getAttributes(int index) {
-        if (dense != null && index >= 0 && index < length) {
+        if (dense != null && index >= 0 && index < dense.length
+                && dense[index] != NOT_FOUND) {
             return EMPTY;
         }
         return super.getAttributes(index);
@@ -519,7 +520,7 @@ public class NativeArray extends ScriptableObject implements IdFunctionCall, Lis
       }
       if (dense != null) {
         int index = toDenseIndex(id);
-        if (0 <= index && index < length) {
+        if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
           Object value = dense[index];
           return defaultIndexPropertyDescriptor(value);
         }
