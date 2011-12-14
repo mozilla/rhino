@@ -1471,6 +1471,7 @@ public class ClassFileWriter {
             stackTop = 0;
             workListTop = 0;
             rawStackMapTop = 0;
+            wide = false;
         }
 
         void generate() {
@@ -2062,7 +2063,7 @@ public class ClassFileWriter {
                     push(TypeInfo.DOUBLE);
                     break;
                 case ByteCode.ISTORE:
-                    executeStore(getOperand(bci + 1), TypeInfo.INTEGER);
+                    executeStore(getOperand(bci + 1, wide ? 2 : 1), TypeInfo.INTEGER);
                     break;
                 case ByteCode.ISTORE_0:
                 case ByteCode.ISTORE_1:
@@ -2071,7 +2072,7 @@ public class ClassFileWriter {
                     executeStore(bc - ByteCode.ISTORE_0, TypeInfo.INTEGER);
                     break;
                 case ByteCode.LSTORE:
-                    executeStore(getOperand(bci + 1), TypeInfo.LONG);
+                    executeStore(getOperand(bci + 1, wide ? 2 : 1), TypeInfo.LONG);
                     break;
                 case ByteCode.LSTORE_0:
                 case ByteCode.LSTORE_1:
@@ -2080,16 +2081,16 @@ public class ClassFileWriter {
                     executeStore(bc - ByteCode.LSTORE_0, TypeInfo.LONG);
                     break;
                 case ByteCode.FSTORE:
-                    executeStore(getOperand(bci + 1), TypeInfo.FLOAT);
+                    executeStore(getOperand(bci + 1, wide ? 2 : 1), TypeInfo.FLOAT);
                     break;
                 case ByteCode.FSTORE_0:
                 case ByteCode.FSTORE_1:
                 case ByteCode.FSTORE_2:
                 case ByteCode.FSTORE_3:
-                    executeStore(getOperand(bci + 1), TypeInfo.FLOAT);
+                    executeStore(bc - ByteCode.FSTORE_0, TypeInfo.FLOAT);
                     break;
                 case ByteCode.DSTORE:
-                    executeStore(getOperand(bci + 1), TypeInfo.DOUBLE);
+                    executeStore(getOperand(bci + 1, wide ? 2 : 1), TypeInfo.DOUBLE);
                     break;
                 case ByteCode.DSTORE_0:
                 case ByteCode.DSTORE_1:
@@ -2098,7 +2099,7 @@ public class ClassFileWriter {
                     executeStore(bc - ByteCode.DSTORE_0, TypeInfo.DOUBLE);
                     break;
                 case ByteCode.ALOAD:
-                    executeALoad(getOperand(bci + 1));
+                    executeALoad(getOperand(bci + 1, wide ? 2 : 1));
                     break;
                 case ByteCode.ALOAD_0:
                 case ByteCode.ALOAD_1:
@@ -2107,7 +2108,7 @@ public class ClassFileWriter {
                     executeALoad(bc - ByteCode.ALOAD_0);
                     break;
                 case ByteCode.ASTORE:
-                    executeAStore(getOperand(bci + 1));
+                    executeAStore(getOperand(bci + 1, wide ? 2 : 1));
                     break;
                 case ByteCode.ASTORE_0:
                 case ByteCode.ASTORE_1:
@@ -2285,6 +2286,9 @@ public class ClassFileWriter {
                     push(TypeInfo.OBJECT(typeIndex));
                     break;
                 case ByteCode.WIDE:
+                    // Alters behaviour of next instruction
+                    wide = true;
+                    break;
                 case ByteCode.MULTIANEWARRAY:
                 case ByteCode.LOOKUPSWITCH:
                     // Currently not used in any part of Rhino, so ignore it
@@ -2292,11 +2296,14 @@ public class ClassFileWriter {
                 case ByteCode.RET:
                 case ByteCode.JSR_W:
                 default:
-                    throw new IllegalArgumentException("bad opcode");
+                    throw new IllegalArgumentException("bad opcode: " + bc);
             }
 
             if (length == 0) {
-                length = opcodeLength(bc);
+                length = opcodeLength(bc, wide);
+            }
+            if (wide && bc != ByteCode.WIDE) {
+                wide = false;
             }
             return length;
         }
@@ -2613,6 +2620,8 @@ public class ClassFileWriter {
 
         private byte[] rawStackMap;
         private int rawStackMapTop;
+
+        private boolean wide;
 
         static final boolean DEBUGSTACKMAP = false;
     }
@@ -2999,7 +3008,7 @@ public class ClassFileWriter {
      * This is different from opcodeCount, since opcodeCount counts logical
      * operands.
      */
-    static int opcodeLength(int opcode) {
+    static int opcodeLength(int opcode, boolean wide) {
         switch (opcode) {
             case ByteCode.AALOAD:
             case ByteCode.AASTORE:
@@ -3153,21 +3162,22 @@ public class ClassFileWriter {
             case ByteCode.SWAP:
             case ByteCode.WIDE:
                 return 1;
+            case ByteCode.BIPUSH:
+            case ByteCode.LDC:
+            case ByteCode.NEWARRAY:
+                return 2;
             case ByteCode.ALOAD:
             case ByteCode.ASTORE:
-            case ByteCode.BIPUSH:
             case ByteCode.DLOAD:
             case ByteCode.DSTORE:
             case ByteCode.FLOAD:
             case ByteCode.FSTORE:
             case ByteCode.ILOAD:
             case ByteCode.ISTORE:
-            case ByteCode.LDC:
             case ByteCode.LLOAD:
             case ByteCode.LSTORE:
-            case ByteCode.NEWARRAY:
             case ByteCode.RET:
-                return 2;
+                return wide ? 3 : 2;
 
             case ByteCode.ANEWARRAY:
             case ByteCode.CHECKCAST:
@@ -3190,7 +3200,6 @@ public class ClassFileWriter {
             case ByteCode.IF_ICMPLE:
             case ByteCode.IF_ICMPLT:
             case ByteCode.IF_ICMPNE:
-            case ByteCode.IINC:
             case ByteCode.INSTANCEOF:
             case ByteCode.INVOKESPECIAL:
             case ByteCode.INVOKESTATIC:
@@ -3203,6 +3212,9 @@ public class ClassFileWriter {
             case ByteCode.PUTSTATIC:
             case ByteCode.SIPUSH:
                 return 3;
+
+            case ByteCode.IINC:
+                return wide ? 5 : 3;
 
             case ByteCode.MULTIANEWARRAY:
                 return 4;
