@@ -42,11 +42,11 @@
 package org.mozilla.javascript;
 
 import java.io.CharArrayWriter;
-import java.io.File;
 import java.io.FilenameFilter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -285,27 +285,25 @@ public abstract class RhinoException extends RuntimeException
         // Pattern to recover function name from java method name -
         // see Codegen.getBodyMethodName()
         // kudos to Marc Guillemot for coming up with this
-        Pattern pattern = Pattern.compile("_c_(.*)_\\d+");
+        Pattern pattern = Pattern.compile("call_(.*)");
         for (StackTraceElement e : stack) {
             String fileName = e.getFileName();
-            if (e.getMethodName().startsWith("_c_")
+            if (e.getMethodName().startsWith("call_")
                     && e.getLineNumber() > -1
                     && fileName != null
                     && !fileName.endsWith(".java")) {
                 String methodName = e.getMethodName();
                 Matcher match = pattern.matcher(methodName);
-                // the method representing the main script is always "_c_script_0" -
+                // the method representing the main script is always "call_script" -
                 // at least we hope so
-                methodName = !"_c_script_0".equals(methodName) && match.find() ?
+                methodName = !"call_script".equals(methodName) && match.find() ?
                         match.group(1) : null;
                 list.add(new ScriptStackElement(fileName, methodName, e.getLineNumber()));
             } else if ("org.mozilla.javascript.Interpreter".equals(e.getClassName())
                     && "interpretLoop".equals(e.getMethodName())
                     && interpreterStack != null
                     && interpreterStack.length > interpreterStackIndex) {
-                for (ScriptStackElement elem : interpreterStack[interpreterStackIndex++]) {
-                    list.add(elem);
-                }
+                Collections.addAll(list, interpreterStack[interpreterStackIndex++]);
             }
         }
         return list.toArray(new ScriptStackElement[list.size()]);

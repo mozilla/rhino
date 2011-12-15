@@ -62,7 +62,7 @@ public class GeneratedMethodNameTest extends TestCase
             final Throwable t = new RuntimeException();
             // remove prefix and suffix of method name
             return t.getStackTrace()[8].getMethodName().
-                replaceFirst("_[^_]*_(.*)_[^_]*", "$1");
+                replaceFirst("call_(.*)", "$1");
 	    }
 	}
 

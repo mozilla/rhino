@@ -129,8 +129,8 @@ public class Codegen implements Evaluator
 
         NativeFunction f;
         try {
-            Constructor<?>ctor = cl.getConstructors()[0];
-            Object[] initArgs = { scope, cx, Integer.valueOf(0) };
+            Constructor<?> ctor = cl.getConstructors()[0];
+            Object[] initArgs = { scope, cx };
             f = (NativeFunction)ctor.newInstance(initArgs);
         } catch (Exception ex) {
             throw new RuntimeException
@@ -190,7 +190,6 @@ public class Codegen implements Evaluator
         this.mainClassSignature = ClassFileWriter.classNameToSignature(mainClassName);
         this.encodedSource = encodedSource;
 
-        initScriptNodesData(scriptOrFn);
         transform(scriptOrFn);
 
         if (Token.printTrees) {
@@ -200,6 +199,8 @@ public class Codegen implements Evaluator
         if (returnFunction) {
             scriptOrFn = scriptOrFn.getFunctionNode(0);
         }
+
+        initScriptNodesData(scriptOrFn);
 
         String sourceFile = null;
         if (compilerEnv.isGenerateDebugInfo()) {
@@ -280,10 +281,7 @@ public class Codegen implements Evaluator
     {
         for (int i = 0, N = scriptOrFn.getFunctionCount(); i != N; ++i) {
             FunctionNode fn = scriptOrFn.getFunctionNode(i);
-            String className = mainClassName
-                    + "$" + cleanName(fn)
-                    + "_" + fn.getIndex();
-            new OptFunctionNode(fn, className);
+            new OptFunctionNode(fn);
             initOptFunctions(fn);
         }
     }
@@ -298,7 +296,13 @@ public class Codegen implements Evaluator
         x.toArray(scriptOrFnNodes);
 
         for (int i = 0; i != count; ++i) {
-            scriptOrFnNodes[i].setIndex(i);
+            if (scriptOrFnNodes[i] instanceof FunctionNode) {
+                OptFunctionNode ofn = OptFunctionNode.get(scriptOrFnNodes[i]);
+                String className = mainClassName + "$"
+                                   + cleanName(ofn.fnode) + "_" + i;
+                ofn.className = className;
+                ofn.classSignature = ClassFileWriter.classNameToSignature(className);
+            }
         }
     }
 
@@ -334,12 +338,12 @@ public class Codegen implements Evaluator
 
     static String getDirectCtorName(ScriptNode n)
     {
-        return "_n" + n.getIndex();
+        return "new_" + cleanName(n);
     }
 
     static String getBodyMethodName(ScriptNode n)
     {
-        return "_c_" + cleanName(n) + "_" + n.getIndex();
+        return "call_" + cleanName(n);
     }
 
     /**
@@ -363,7 +367,7 @@ public class Codegen implements Evaluator
 
     static String getCompiledRegexpName(ScriptNode n, int regexpIndex)
     {
-        return "_re" + n.getIndex() + "_" + regexpIndex;
+        return "_re_" + regexpIndex;
     }
 
     static RuntimeException badTree()
@@ -628,8 +632,6 @@ class BodyCodegen
         cfw.addALoad(contextLocal);           // load 'cx'
         cfw.addInvoke(ByteCode.INVOKESPECIAL, className, "<init>",
                       FUNCTION_CONSTRUCTOR_SIGNATURE);
-
-        if (isTopLevel) Kit.codeBug();  // Only functions can be generators
 
         generateNestedFunctionInits();
 
@@ -5336,11 +5338,6 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
            +")V";
     static final String REGEXP_ARRAY_FIELD_NAME = "_re";
     static final String REGEXP_ARRAY_FIELD_TYPE = "[Ljava/lang/Object;";
-
-    static final String FUNCTION_INIT_SIGNATURE
-        =  "(Lorg/mozilla/javascript/Context;"
-           +"Lorg/mozilla/javascript/Scriptable;"
-           +")V";
 
     static final int GENERATOR_TERMINATE = -1;
     static final int GENERATOR_START = 0;

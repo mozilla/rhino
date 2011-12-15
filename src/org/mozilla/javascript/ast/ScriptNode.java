@@ -59,7 +59,6 @@ public class ScriptNode extends Scope {
     private String sourceName;
     private String encodedSource;
     private int endLineno = -1;
-    private int index;
 
     private List<FunctionNode> functions;
     private List<RegExpLiteral> regexps;
@@ -289,22 +288,6 @@ public class ScriptNode extends Scope {
 
     public void setSymbols(List<Symbol> symbols) {
         this.symbols = symbols;
-    }
-
-    /**
-     * Get the script or function's index within its main script.
-     * @return the script or function index
-     */
-    public int getIndex() {
-        return index;
-    }
-
-    /**
-     * Set the script or function's index within its main script.
-     * @param index the script or function index
-     */
-    public void setIndex(int index) {
-        this.index = index;
     }
 
     /**
