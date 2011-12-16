@@ -1828,7 +1828,11 @@ public class Parser
             }
         }
 
-        bundle.setLength(getNodeEnd(stmt) - pos);
+        // If stmt has parent assigned its position already is relative
+        // (See bug #710225)
+        bundle.setLength(stmt.getParent() == null
+                     ? getNodeEnd(stmt) - pos
+                     : getNodeEnd(stmt));
         bundle.setStatement(stmt);
         return bundle;
     }
