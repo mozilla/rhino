@@ -1828,7 +1828,10 @@ public class Parser
             }
         }
 
-        bundle.setLength(getNodeEnd(stmt) - pos);
+        // Fix for #710225. We cannot use getNodeEnd() when stmt already has the parent asigned
+        bundle.setLength(stmt.getParent() == null
+                         ? getNodeEnd(stmt) - pos
+                         : stmt.getPosition() + stmt.getLength());
         bundle.setStatement(stmt);
         return bundle;
     }
