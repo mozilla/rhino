@@ -197,6 +197,7 @@ public class Require extends BaseFunction
                 id = uri.toString();
             } else {
                 // try to convert to a relative URI rooted on base
+                uri = base.resolve(id);
                 id = base.relativize(current).resolve(id).toString();
                 if (id.charAt(0) == '.') {
                     // resulting URI is not contained in base,
