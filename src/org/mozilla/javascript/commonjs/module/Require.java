@@ -189,11 +189,11 @@ public class Require extends BaseFunction
             ModuleScope moduleScope = (ModuleScope) thisObj;
             URI base = moduleScope.getBase();
             URI current = moduleScope.getUri();
+            uri = current.resolve(id);
 
             if (base == null) {
                 // calling module is absolute, resolve to absolute URI
                 // (but without file extension)
-                uri = current.resolve(id);
                 id = uri.toString();
             } else {
                 // try to convert to a relative URI rooted on base
@@ -205,7 +205,6 @@ public class Require extends BaseFunction
                         throw ScriptRuntime.throwError(cx, scope,
                             "Module \"" + id + "\" is not contained in sandbox.");
                     } else {
-                        uri = current.resolve(id);
                         id = uri.toString();
                     }
                 }
