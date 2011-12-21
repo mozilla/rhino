@@ -189,6 +189,7 @@ public class Require extends BaseFunction
             ModuleScope moduleScope = (ModuleScope) thisObj;
             URI base = moduleScope.getBase();
             URI current = moduleScope.getUri();
+            uri = current.resolve(id);
 
             if (base == null) {
                 // calling module is absolute, resolve to absolute URI
