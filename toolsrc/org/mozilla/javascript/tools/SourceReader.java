@@ -17,20 +17,24 @@ import org.mozilla.javascript.commonjs.module.provider.ParsedContentType;
  */
 public class SourceReader
 {
-    public static Object readFileOrUrl(String path, boolean convertToString,
-            String defaultEncoding) throws IOException
-    {
-        URL url = null;
-        // Assume path is URL if it contains dot and there are at least
+    public static URL toUrl(String path) {
+        // Assume path is URL if it contains a colon and there are at least
         // 2 characters in the protocol part. The later allows under Windows
         // to interpret paths with driver letter as file, not URL.
         if (path.indexOf(':') >= 2) {
             try {
-                url = new URL(path);
+                return new URL(path);
             } catch (MalformedURLException ex) {
+                // not a URL
             }
         }
+        return null;
+    }
 
+    public static Object readFileOrUrl(String path, boolean convertToString,
+            String defaultEncoding) throws IOException
+    {
+        URL url = toUrl(path);
         InputStream is = null;
         int capacityHint = 0;
         String encoding;
