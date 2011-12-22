@@ -136,7 +136,7 @@ class TokenStream
             Id_function      = Token.FUNCTION,
             Id_if            = Token.IF,
             Id_in            = Token.IN,
-            Id_let           = Token.LET,
+            Id_let           = Token.LET,  // reserved ES5 strict
             Id_new           = Token.NEW,
             Id_null          = Token.NULL,
             Id_return        = Token.RETURN,
@@ -148,44 +148,44 @@ class TokenStream
             Id_void          = Token.VOID,
             Id_while         = Token.WHILE,
             Id_with          = Token.WITH,
-            Id_yield         = Token.YIELD,
+            Id_yield         = Token.YIELD,  // reserved ES5 strict
 
             // the following are #ifdef RESERVE_JAVA_KEYWORDS in jsscan.c
-            Id_abstract      = Token.RESERVED,
-            Id_boolean       = Token.RESERVED,
-            Id_byte          = Token.RESERVED,
+            Id_abstract      = Token.RESERVED,  // ES3 only
+            Id_boolean       = Token.RESERVED,  // ES3 only
+            Id_byte          = Token.RESERVED,  // ES3 only
             Id_catch         = Token.CATCH,
-            Id_char          = Token.RESERVED,
-            Id_class         = Token.RESERVED,
-            Id_const         = Token.CONST,
+            Id_char          = Token.RESERVED,  // ES3 only
+            Id_class         = Token.RESERVED,  
+            Id_const         = Token.CONST,     // reserved
             Id_debugger      = Token.DEBUGGER,
-            Id_double        = Token.RESERVED,
+            Id_double        = Token.RESERVED,  // ES3 only
             Id_enum          = Token.RESERVED,
             Id_extends       = Token.RESERVED,
-            Id_final         = Token.RESERVED,
+            Id_final         = Token.RESERVED,  // ES3 only
             Id_finally       = Token.FINALLY,
-            Id_float         = Token.RESERVED,
-            Id_goto          = Token.RESERVED,
-            Id_implements    = Token.RESERVED,
+            Id_float         = Token.RESERVED,  // ES3 only
+            Id_goto          = Token.RESERVED,  // ES3 only
+            Id_implements    = Token.RESERVED,  // ES3, ES5 strict
             Id_import        = Token.RESERVED,
             Id_instanceof    = Token.INSTANCEOF,
-            Id_int           = Token.RESERVED,
-            Id_interface     = Token.RESERVED,
-            Id_long          = Token.RESERVED,
-            Id_native        = Token.RESERVED,
-            Id_package       = Token.RESERVED,
-            Id_private       = Token.RESERVED,
-            Id_protected     = Token.RESERVED,
-            Id_public        = Token.RESERVED,
-            Id_short         = Token.RESERVED,
-            Id_static        = Token.RESERVED,
+            Id_int           = Token.RESERVED,  // ES3
+            Id_interface     = Token.RESERVED,  // ES3, ES5 strict
+            Id_long          = Token.RESERVED,  // ES3 only
+            Id_native        = Token.RESERVED,  // ES3 only
+            Id_package       = Token.RESERVED,  // ES3, ES5 strict
+            Id_private       = Token.RESERVED,  // ES3, ES5 strict
+            Id_protected     = Token.RESERVED,  // ES3, ES5 strict
+            Id_public        = Token.RESERVED,  // ES3, ES5 strict
+            Id_short         = Token.RESERVED,  // ES3 only
+            Id_static        = Token.RESERVED,  // ES3, ES5 strict
             Id_super         = Token.RESERVED,
-            Id_synchronized  = Token.RESERVED,
+            Id_synchronized  = Token.RESERVED,  // ES3 only
             Id_throw         = Token.THROW,
-            Id_throws        = Token.RESERVED,
-            Id_transient     = Token.RESERVED,
+            Id_throws        = Token.RESERVED,  // ES3 only
+            Id_transient     = Token.RESERVED,  // ES3 only  
             Id_try           = Token.TRY,
-            Id_volatile      = Token.RESERVED;
+            Id_volatile      = Token.RESERVED;  // ES3 only
 
         int id;
         String s = name;
@@ -426,6 +426,9 @@ class TokenStream
                             string = result == Token.LET ? "let" : "yield";
                             result = Token.NAME;
                         }
+                        // Save the string in case we need to use in
+                        // object literal definitions.
+                        this.string = (String)allStrings.intern(str);                        
                         if (result != Token.RESERVED) {
                             return result;
                         } else if (!parser.compilerEnv.

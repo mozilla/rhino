@@ -2593,7 +2593,13 @@ public class Parser
         }
 
         if (!compilerEnv.isXmlAvailable()) {
-            mustMatchToken(Token.NAME, "msg.no.name.after.dot");
+            int maybeName = nextToken();
+            if (maybeName != Token.NAME &&
+                !(compilerEnv.isAllowKeywordAsObjectPropertyName()
+                && TokenStream.isKeyword(ts.getString()))) {
+              reportError("msg.no.name.after.dot");
+            }
+
             Name name = createNameNode(true, Token.GETPROP);
             PropertyGet pg = new PropertyGet(pn, name, dotPos);
             pg.setLineno(lineno);
@@ -3079,43 +3085,32 @@ public class Parser
             Comment jsdocNode = getAndResetJsDoc();
             switch(tt) {
               case Token.NAME:
-              case Token.STRING:
-                  saveNameTokenData(ts.tokenBeg, ts.getString(), ts.lineno);
-                  consumeToken();
-                  StringLiteral stringProp = null;
-                  if (tt == Token.STRING) {
-                      stringProp = createStringLiteral();
-                  }
+                  afterComma = -1;
                   Name name = createNameNode();
                   propertyName = ts.getString();
                   int ppos = ts.tokenBeg;
+                  consumeToken();
 
-                  if ((tt == Token.NAME
-                       && (peekToken() == Token.NAME || convertToName(peekToken()))
-                       && ("get".equals(propertyName) || "set".equals(propertyName))))
+                  if ((peekToken() != Token.COLON
+                      && ("get".equals(propertyName)
+                          || "set".equals(propertyName))))
                   {
-                      consumeToken();
-                      name = createNameNode();
-                      name.setJsDocNode(jsdocNode);
-                      ObjectProperty objectProp = getterSetterProperty(ppos, name,
-                                                     "get".equals(propertyName));
-                      elems.add(objectProp);
-                      propertyName = objectProp.getLeft().getString();
+                      boolean isGet = "get".equals(propertyName);
+                      AstNode pname = objliteralProperty();
+                      if (pname == null) {
+                        propertyName = null;
+                      } else {
+                        propertyName = ts.getString();
+                        ObjectProperty objectProp = getterSetterProperty(
+                              ppos, pname, isGet);
+                        pname.setJsDocNode(jsdocNode);
+                        elems.add(objectProp);
+                      }
                   } else {
-                      AstNode pname = stringProp != null ? stringProp : name;
+                      AstNode pname = name;
                       pname.setJsDocNode(jsdocNode);
                       elems.add(plainProperty(pname, tt));
                   }
-                  break;
-
-              case Token.NUMBER:
-                  consumeToken();
-                  AstNode nl = new NumberLiteral(ts.tokenBeg,
-                                                 ts.getString(),
-                                                 ts.getNumber());
-                  nl.setJsDocNode(jsdocNode);
-                  propertyName = ts.getString();
-                  elems.add(plainProperty(nl, tt));
                   break;
 
               case Token.RC:
@@ -3124,20 +3119,15 @@ public class Parser
                   break commaLoop;
 
               default:
-                  if (compilerEnv.isReservedKeywordAsIdentifier()) {
-                      // convert keyword to property name, e.g. ({if: 1})
-                      propertyName = Token.keywordToName(tt);
-                      if (propertyName != null) {
-                          afterComma = -1;
-                          saveNameTokenData(ts.tokenBeg, propertyName, ts.lineno);
-                          consumeToken();
-                          AstNode pname = createNameNode();
-                          pname.setJsDocNode(jsdocNode);
-                          elems.add(plainProperty(pname, tt));
-                          break;
-                      }
+                  AstNode pname = objliteralProperty();
+                  if (pname == null) {
+                    propertyName = null;
+                  } else {
+                    afterComma = -1;
+                    propertyName = ts.getString();
+                    pname.setJsDocNode(jsdocNode);
+                    elems.add(plainProperty(pname, tt));
                   }
-                  reportError("msg.bad.prop");
                   break;
             }
 
@@ -3167,6 +3157,38 @@ public class Parser
         pn.setElements(elems);
         pn.setLineno(lineno);
         return pn;
+    }
+
+    private AstNode objliteralProperty() throws IOException {
+        AstNode pname;
+        int tt = peekToken();
+        switch(tt) {
+          case Token.NAME:
+              pname = createNameNode();
+              break;
+
+          case Token.STRING:
+              pname = createStringLiteral();
+              break;
+
+          case Token.NUMBER:
+              pname = new NumberLiteral(
+                  ts.tokenBeg, ts.getString(), ts.getNumber());
+              break;
+
+          default:
+              if (compilerEnv.isReservedKeywordAsIdentifier()
+                  && TokenStream.isKeyword(ts.getString())) {
+                  // convert keyword to property name, e.g. ({if: 1})
+                  pname = createNameNode();
+                  break;
+              }
+              reportError("msg.bad.prop");
+              return null;
+        }
+
+        consumeToken();
+        return pname;
     }
 
     private ObjectProperty plainProperty(AstNode property, int ptt)
