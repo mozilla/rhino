@@ -940,6 +940,20 @@ public class ParserTest extends TestCase {
         AstRoot root = parseAsReader(js);
     }
 
+    public void testParseUnicodeFormatStringLiteral() {
+        AstRoot root = parse("'A\u200DB'");
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        StringLiteral stringLit = (StringLiteral) st.getExpression();
+        assertEquals("A\u200DB", stringLit.getValue());
+    }
+
+    public void testParseUnicodeFormatName() {
+        AstRoot root = parse("A\u200DB");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        assertEquals("AB", first.getString());
+    }
+
     private AstRoot parse(String string) {
         return parse(string, true);
     }

@@ -540,7 +540,7 @@ class TokenStream
                 quoteChar = c;
                 stringBufferTop = 0;
 
-                c = getChar();
+                c = getChar(false);
             strLoop: while (c != quoteChar) {
                     if (c == '\n' || c == EOF_CHAR) {
                         ungetChar(c);
@@ -634,7 +634,7 @@ class TokenStream
                         }
                     }
                     addToString(c);
-                    c = getChar();
+                    c = getChar(false);
                 }
 
                 String str = getStringFromBuffer();
@@ -1299,6 +1299,11 @@ class TokenStream
 
     private int getChar() throws IOException
     {
+        return getChar(true);
+    }
+
+    private int getChar(boolean skipFormattingChars) throws IOException
+    {
         if (ungetCursor != 0) {
             cursor++;
             return ungetBuffer[--ungetCursor];
@@ -1341,7 +1346,7 @@ class TokenStream
                 }
             } else {
                 if (c == BYTE_ORDER_MARK) return c; // BOM is considered whitespace
-                if (isJSFormatChar(c)) {
+                if (skipFormattingChars && isJSFormatChar(c)) {
                     continue;
                 }
                 if (ScriptRuntime.isJSLineTerminator(c)) {
