@@ -38,6 +38,18 @@ public class ParserTest extends TestCase {
         assertEquals("var s = 3;\nvar t = 1;\n", root.toSource());
     }
 
+    public void testAutoSemiBeforeComment1() {
+        parse("var a = 1\n/** a */ var b = 2");
+    }
+
+    public void testAutoSemiBeforeComment2() {
+        parse("var a = 1\n/** a */\n var b = 2");
+    }
+
+    public void testAutoSemiBeforeComment3() {
+        parse("var a = 1\n/** a */\n /** b */ var b = 2");
+    }
+
     public void testLinenoAssign() {
         AstRoot root = parse("\n\na = b");
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
