@@ -277,11 +277,10 @@ public class Parser
         return n.getPosition() + n.getLength();
     }
 
-    private void recordComment(int lineno) {
+    private void recordComment(int lineno, String comment) {
         if (scannedComments == null) {
             scannedComments = new ArrayList<Comment>();
         }
-        String comment = ts.getAndResetCurrentComment();
         Comment commentNode = new Comment(ts.tokenBeg,
                                           ts.getTokenLength(),
                                           ts.commentType,
@@ -299,6 +298,18 @@ public class Parser
         currentJsDocComment = null;
         return saved;
     }
+
+
+    private int getNumberOfEols(String comment) {
+      int lines = 0;
+      for (int i = comment.length()-1; i >= 0; i--) {
+        if (comment.charAt(i) == '\n') {
+          lines++;
+        }
+      }
+      return lines;
+    }
+
 
     // Returns the next token without consuming it.
     // If previous token was consumed, calls scanner to get new token.
@@ -335,7 +346,11 @@ public class Parser
                 sawEOL = true;
             } else {
                 if (compilerEnv.isRecordingComments()) {
-                    recordComment(lineno);
+                    String comment = ts.getAndResetCurrentComment();
+                    recordComment(lineno, comment);
+                    // Comments may contain multiple lines, get the number
+                    // of EoLs and increase the lineno
+                    lineno += getNumberOfEols(comment);
                 }
             }
             tt = ts.getToken();
