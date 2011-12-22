@@ -2065,7 +2065,6 @@ public class Parser
             if (peekToken() == Token.YIELD)
                 reportError("msg.yield.parenthesized");
             pn = new InfixExpression(Token.COMMA, pn, assignExpr(), opPos);
-            pn.setLineno(lineno);
         }
         return pn;
     }
@@ -2091,7 +2090,6 @@ public class Parser
 
             pn = new Assignment(tt, pn, assignExpr(), opPos);
 
-            pn.setLineno(opLineno);
             if (jsdocNode != null) {
                 pn.setJsDocNode(jsdocNode);
             }
@@ -2137,7 +2135,6 @@ public class Parser
             int opPos = ts.tokenBeg;
             int lineno = ts.lineno;
             pn = new InfixExpression(Token.OR, pn, orExpr(), opPos);
-            pn.setLineno(lineno);
         }
         return pn;
     }
@@ -2150,7 +2147,6 @@ public class Parser
             int opPos = ts.tokenBeg;
             int lineno = ts.lineno;
             pn = new InfixExpression(Token.AND, pn, andExpr(), opPos);
-            pn.setLineno(lineno);
         }
         return pn;
     }
@@ -2163,7 +2159,6 @@ public class Parser
             int opPos = ts.tokenBeg;
             int lineno = ts.lineno;
             pn = new InfixExpression(Token.BITOR, pn, bitXorExpr(), opPos);
-            pn.setLineno(lineno);
         }
         return pn;
     }
@@ -2176,7 +2171,6 @@ public class Parser
             int opPos = ts.tokenBeg;
             int lineno = ts.lineno;
             pn = new InfixExpression(Token.BITXOR, pn, bitAndExpr(), opPos);
-            pn.setLineno(lineno);
         }
         return pn;
     }
@@ -2189,7 +2183,6 @@ public class Parser
             int opPos = ts.tokenBeg;
             int lineno = ts.lineno;
             pn = new InfixExpression(Token.BITAND, pn, eqExpr(), opPos);
-            pn.setLineno(lineno);
         }
         return pn;
     }
@@ -2216,7 +2209,6 @@ public class Parser
                         parseToken = Token.SHNE;
                 }
                 pn = new InfixExpression(parseToken, pn, relExpr(), opPos);
-                pn.setLineno(lineno);
                 continue;
             }
             break;
@@ -2243,7 +2235,6 @@ public class Parser
               case Token.GT:
                 consumeToken();
                 pn = new InfixExpression(tt, pn, shiftExpr(), opPos);
-                pn.setLineno(line);
                 continue;
             }
             break;
@@ -2264,7 +2255,6 @@ public class Parser
               case Token.RSH:
                 consumeToken();
                 pn = new InfixExpression(tt, pn, addExpr(), opPos);
-                pn.setLineno(lineno);
                 continue;
             }
             break;
@@ -2282,7 +2272,6 @@ public class Parser
                 consumeToken();
                 int lineno = ts.lineno;
                 pn = new InfixExpression(tt, pn, mulExpr(), opPos);
-                pn.setLineno(lineno);
                 continue;
             }
             break;
@@ -2303,7 +2292,6 @@ public class Parser
                 consumeToken();
                 int line = ts.lineno;
                 pn = new InfixExpression(tt, pn, unaryExpr(), opPos);
-                pn.setLineno(line);
                 continue;
             }
             break;
@@ -2325,7 +2313,6 @@ public class Parser
           case Token.TYPEOF:
               consumeToken();
               node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
-              node.setLineno(line);
               return node;
 
           case Token.ADD:
@@ -2673,7 +2660,7 @@ public class Parser
         result.setPosition(pos);
         result.setLength(getNodeEnd(ref) - pos);
         result.setOperatorPosition(dotPos - pos);
-        result.setLineno(lineno);
+        result.setLineno(pn.getLineno());
         result.setLeft(pn);  // do this after setting position
         result.setRight(ref);
         return result;
