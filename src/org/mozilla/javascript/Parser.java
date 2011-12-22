@@ -111,7 +111,7 @@ public class Parser
     private int syntaxErrorCount;
 
     private List<Comment> scannedComments;
-    private String currentJsDocComment;
+    private Comment currentJsDocComment;
 
     protected int nestingOfFunction;
     private LabeledStatement currentLabel;
@@ -282,20 +282,20 @@ public class Parser
             scannedComments = new ArrayList<Comment>();
         }
         String comment = ts.getAndResetCurrentComment();
-        if (ts.commentType == Token.CommentType.JSDOC &&
-            compilerEnv.isRecordingLocalJsDocComments()) {
-            currentJsDocComment = comment;
-        }
         Comment commentNode = new Comment(ts.tokenBeg,
                                           ts.getTokenLength(),
                                           ts.commentType,
                                           comment);
+        if (ts.commentType == Token.CommentType.JSDOC &&
+            compilerEnv.isRecordingLocalJsDocComments()) {
+            currentJsDocComment = commentNode;
+        }
         commentNode.setLineno(lineno);
         scannedComments.add(commentNode);
     }
 
-    private String getAndResetJsDoc() {
-        String saved = currentJsDocComment;
+    private Comment getAndResetJsDoc() {
+        Comment saved = currentJsDocComment;
         currentJsDocComment = null;
         return saved;
     }
@@ -815,7 +815,7 @@ public class Parser
         if (lpPos != -1)
             fnNode.setLp(lpPos - functionSourceStart);
 
-        fnNode.setJsDoc(getAndResetJsDoc());
+        fnNode.setJsDocNode(getAndResetJsDoc());
 
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         try {
@@ -1383,7 +1383,7 @@ public class Parser
         consumeToken();
 
         // Pull out JSDoc info and reset it before recursing.
-        String jsdoc = getAndResetJsDoc();
+        Comment jsdocNode = getAndResetJsDoc();
 
         int tryPos = ts.tokenBeg, lineno = ts.lineno, finallyPos = -1;
         if (peekToken() != Token.LC) {
@@ -1468,8 +1468,8 @@ public class Parser
         }
         pn.setLineno(lineno);
 
-        if (jsdoc != null) {
-            pn.setJsDoc(jsdoc);
+        if (jsdocNode != null) {
+            pn.setJsDocNode(jsdocNode);
         }
 
         return pn;
@@ -1605,7 +1605,7 @@ public class Parser
         AstNode body = statement();
 
         WithStatement pn = new WithStatement(pos, getNodeEnd(body) - pos);
-        pn.setJsDoc(getAndResetJsDoc());
+        pn.setJsDocNode(getAndResetJsDoc());
         pn.setExpression(obj);
         pn.setStatement(body);
         pn.setParens(lp, rp);
@@ -1851,9 +1851,9 @@ public class Parser
         VariableDeclaration pn = new VariableDeclaration(pos);
         pn.setType(declType);
         pn.setLineno(ts.lineno);
-        String varjsdoc = getAndResetJsDoc();
-        if (varjsdoc != null) {
-            pn.setJsDoc(varjsdoc);
+        Comment varjsdocNode = getAndResetJsDoc();
+        if (varjsdocNode != null) {
+            pn.setJsDocNode(varjsdocNode);
         }
         // Example:
         // var foo = {a: 1, b: 2}, bar = [3, 4];
@@ -1888,7 +1888,7 @@ public class Parser
 
             int lineno = ts.lineno;
 
-            String jsdoc = getAndResetJsDoc();
+            Comment jsdocNode = getAndResetJsDoc();
 
             AstNode init = null;
             if (matchToken(Token.ASSIGN)) {
@@ -1907,7 +1907,7 @@ public class Parser
             }
             vi.setInitializer(init);
             vi.setType(declType);
-            vi.setJsDoc(jsdoc);
+            vi.setJsDocNode(jsdocNode);
             vi.setLineno(lineno);
             pn.addVariable(vi);
 
@@ -2063,7 +2063,7 @@ public class Parser
             consumeToken();
 
             // Pull out JSDoc info and reset it before recursing.
-            String jsdoc = getAndResetJsDoc();
+            Comment jsdocNode = getAndResetJsDoc();
 
             markDestructuring(pn);
             int opPos = ts.tokenBeg;
@@ -2072,14 +2072,14 @@ public class Parser
             pn = new Assignment(tt, pn, assignExpr(), opPos);
 
             pn.setLineno(opLineno);
-            if (jsdoc != null) {
-                pn.setJsDoc(jsdoc);
+            if (jsdocNode != null) {
+                pn.setJsDocNode(jsdocNode);
             }
         } else if (tt == Token.SEMI && pn.getType() == Token.GETPROP) {
             // This may be dead code added intentionally, for JSDoc purposes.
             // For example: /** @type Number */ C.prototype.x;
             if (currentJsDocComment != null) {
-                pn.setJsDoc(getAndResetJsDoc());
+                pn.setJsDocNode(getAndResetJsDoc());
             }
         }
         return pn;
@@ -2876,7 +2876,7 @@ public class Parser
         boolean wasInForInit = inForInit;
         inForInit = false;
         try {
-            String jsdoc = getAndResetJsDoc();
+            Comment jsdocNode = getAndResetJsDoc();
             int lineno = ts.lineno;
             int begin = ts.tokenBeg;
             AstNode e = expr();
@@ -2884,11 +2884,11 @@ public class Parser
                 return generatorExpression(e, begin);
             }
             ParenthesizedExpression pn = new ParenthesizedExpression(e);
-            if (jsdoc == null) {
-                jsdoc = getAndResetJsDoc();
+            if (jsdocNode == null) {
+                jsdocNode = getAndResetJsDoc();
             }
-            if (jsdoc != null) {
-                pn.setJsDoc(jsdoc);
+            if (jsdocNode != null) {
+                pn.setJsDocNode(jsdocNode);
             }
             mustMatchToken(Token.RP, "msg.no.paren");
             pn.setLength(ts.tokenEnd - pn.getPosition());
@@ -3180,7 +3180,7 @@ public class Parser
         for (;;) {
             String propertyName = null;
             int tt = peekToken();
-            String jsdoc = getAndResetJsDoc();
+            Comment jsdocNode = getAndResetJsDoc();
             switch(tt) {
               case Token.NAME:
               case Token.STRING:
@@ -3200,14 +3200,14 @@ public class Parser
                   {
                       consumeToken();
                       name = createNameNode();
-                      name.setJsDoc(jsdoc);
+                      name.setJsDocNode(jsdocNode);
                       ObjectProperty objectProp = getterSetterProperty(ppos, name,
                                                      "get".equals(propertyName));
                       elems.add(objectProp);
                       propertyName = objectProp.getLeft().getString();
                   } else {
                       AstNode pname = stringProp != null ? stringProp : name;
-                      pname.setJsDoc(jsdoc);
+                      pname.setJsDocNode(jsdocNode);
                       elems.add(plainProperty(pname, tt));
                   }
                   break;
@@ -3217,7 +3217,7 @@ public class Parser
                   AstNode nl = new NumberLiteral(ts.tokenBeg,
                                                  ts.getString(),
                                                  ts.getNumber());
-                  nl.setJsDoc(jsdoc);
+                  nl.setJsDocNode(jsdocNode);
                   propertyName = ts.getString();
                   elems.add(plainProperty(nl, tt));
                   break;
@@ -3228,12 +3228,18 @@ public class Parser
                   break commaLoop;
 
               default:
-                  if (convertToName(tt)) {
-                      consumeToken();
-                      AstNode pname = createNameNode();
-                      pname.setJsDoc(jsdoc);
-                      elems.add(plainProperty(pname, tt));
-                      break;
+                  if (compilerEnv.isReservedKeywordAsIdentifier()) {
+                      // convert keyword to property name, e.g. ({if: 1})
+                      propertyName = Token.keywordToName(tt);
+                      if (propertyName != null) {
+                          afterComma = -1;
+                          saveNameTokenData(ts.tokenBeg, propertyName, ts.lineno);
+                          consumeToken();
+                          AstNode pname = createNameNode();
+                          pname.setJsDocNode(jsdocNode);
+                          elems.add(plainProperty(pname, tt));
+                          break;
+                      }
                   }
                   reportError("msg.bad.prop");
                   break;
@@ -3248,6 +3254,7 @@ public class Parser
 
             // Eat any dangling jsdoc in the property.
             getAndResetJsDoc();
+            jsdocNode = null;
 
             if (matchToken(Token.COMMA)) {
                 afterComma = ts.tokenEnd;
