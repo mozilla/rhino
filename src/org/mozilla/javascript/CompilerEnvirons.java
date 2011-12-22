@@ -52,6 +52,7 @@ public class CompilerEnvirons
         languageVersion = Context.VERSION_DEFAULT;
         generateDebugInfo = true;
         reservedKeywordAsIdentifier = true;
+        allowKeywordAsObjectPropertyName = false;
         allowMemberExprAsFunctionName = false;
         xmlAvailable = true;
         optimizationLevel = 0;
@@ -65,11 +66,13 @@ public class CompilerEnvirons
     public void initFromContext(Context cx)
     {
         setErrorReporter(cx.getErrorReporter());
-        this.languageVersion = cx.getLanguageVersion();
+        languageVersion = cx.getLanguageVersion();
         generateDebugInfo = (!cx.isGeneratingDebugChanged()
                              || cx.isGeneratingDebug());
         reservedKeywordAsIdentifier
             = cx.hasFeature(Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER);
+        allowKeywordAsObjectPropertyName
+            = (languageVersion >= Context.VERSION_1_8);
         allowMemberExprAsFunctionName
             = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
         strictMode
@@ -127,6 +130,14 @@ public class CompilerEnvirons
     public void setReservedKeywordAsIdentifier(boolean flag)
     {
         reservedKeywordAsIdentifier = flag;
+    }
+
+    public boolean isAllowKeywordAsObjectPropertyName() {
+      return allowKeywordAsObjectPropertyName;
+    }
+
+    public void setAllowKeywordAsObjectPropertyName(boolean flag) {
+      this.allowKeywordAsObjectPropertyName = flag;
     }
 
     /**
@@ -295,16 +306,17 @@ public class CompilerEnvirons
      * The {@link ErrorReporter} is set to an {@link ErrorCollector}.
      */
     public static CompilerEnvirons ideEnvirons() {
-        CompilerEnvirons env = new CompilerEnvirons();
-        env.setRecoverFromErrors(true);
-        env.setRecordingComments(true);
-        env.setStrictMode(true);
-        env.setWarnTrailingComma(true);
-        env.setLanguageVersion(170);
-        env.setReservedKeywordAsIdentifier(true);
-        env.setIdeMode(true);
-        env.setErrorReporter(new ErrorCollector());
-        return env;
+      CompilerEnvirons env = new CompilerEnvirons();
+      env.setRecoverFromErrors(true);
+      env.setRecordingComments(true);
+      env.setStrictMode(true);
+      env.setWarnTrailingComma(true);
+      env.setLanguageVersion(170);
+      env.setReservedKeywordAsIdentifier(true);
+      env.setAllowKeywordAsObjectPropertyName(true);
+      env.setIdeMode(true);
+      env.setErrorReporter(new ErrorCollector());
+      return env;
     }
 
     private ErrorReporter errorReporter;
@@ -312,6 +324,7 @@ public class CompilerEnvirons
     private int languageVersion;
     private boolean generateDebugInfo;
     private boolean reservedKeywordAsIdentifier;
+    private boolean allowKeywordAsObjectPropertyName;
     private boolean allowMemberExprAsFunctionName;
     private boolean xmlAvailable;
     private int optimizationLevel;

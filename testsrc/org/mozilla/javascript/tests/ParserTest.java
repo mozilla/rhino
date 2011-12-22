@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import org.mozilla.javascript.ast.*;
 
 import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.testing.TestErrorReporter;
@@ -14,6 +15,13 @@ import java.io.StringReader;
 import java.util.List;
 
 public class ParserTest extends TestCase {
+    boolean allowKeywordsAsObjectLiteralsKeys = false;
+
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      allowKeywordsAsObjectLiteralsKeys = false;
+    }
 
     public void testAutoSemiColonBetweenNames() {
         AstRoot root = parse("\nx\ny\nz\n");
@@ -921,6 +929,66 @@ public class ParserTest extends TestCase {
     }
 
     public void testJSDocAttachment9() {
+        AstRoot root = parse("({/** attach me */ foo: 2});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+        ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+        Name objLitKey =
+            (Name) lit.getElements().get(0).getLeft();
+        assertNotNull(objLitKey.getJsDoc());
+    }
+
+    public void testJSDocAttachment10() {
+        AstRoot root = parse("({foo: /** attach me */ (bar)});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+        ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+        ParenthesizedExpression parens =
+            (ParenthesizedExpression) lit.getElements().get(0).getRight();
+        assertNotNull(parens.getJsDoc());
+    }
+
+    public void testJSDocAttachment11() {
+      AstRoot root = parse("({/** attach me */ get foo() {}});");
+      assertNotNull(root.getComments());
+      assertEquals(1, root.getComments().size());
+      ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+      ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+      ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+      Name objLitKey =
+          (Name) lit.getElements().get(0).getLeft();
+      assertNotNull(objLitKey.getJsDoc());
+  }
+
+    public void testJSDocAttachment12() {
+      AstRoot root = parse("({/** attach me */ get 1() {}});");
+      assertNotNull(root.getComments());
+      assertEquals(1, root.getComments().size());
+      ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+      ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+      ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+      NumberLiteral number =
+          (NumberLiteral) lit.getElements().get(0).getLeft();
+      assertNotNull(number.getJsDoc());
+  }
+
+  public void testJSDocAttachment13() {
+      AstRoot root = parse("({/** attach me */ get 'foo'() {}});");
+      assertNotNull(root.getComments());
+      assertEquals(1, root.getComments().size());
+      ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+      ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+      ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+      StringLiteral stringLit =
+          (StringLiteral) lit.getElements().get(0).getLeft();
+      assertNotNull(stringLit.getJsDoc());
+  }
+
+    public void testJSDocAttachment14() {
         AstRoot root = parse("var a = (/** @type {!Foo} */ {});");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
@@ -1015,21 +1083,97 @@ public class ParserTest extends TestCase {
         assertEquals("AB", first.getString());
     }
 
+    public void testParseObjectLiteral1() {
+      allowKeywordsAsObjectLiteralsKeys = true;
+
+      parse("({a:1});");
+      parse("({'a':1});");
+      parse("({0:1});");
+
+      // property getter and setter definitions accept string and number
+      parse("({get a() {return 1}});");
+      parse("({get 'a'() {return 1}});");
+      parse("({get 0() {return 1}});");
+
+      parse("({set a(a) {return 1}});");
+      parse("({set 'a'(a) {return 1}});");
+      parse("({set 0(a) {return 1}});");
+
+      // keywords ok
+      parse("({function:1});");
+      // reserved words ok
+      parse("({float:1});");
+    }
+
+    public void testParseObjectLiteral2() {
+      // keywords, fail
+      expectParseErrors("({function:1});",
+          new String[] { "invalid property id" });
+
+      allowKeywordsAsObjectLiteralsKeys = true;
+
+      // keywords ok
+      parse("({function:1});");
+    }
+
+    public void testParseKeywordPropertyAccess() {
+      allowKeywordsAsObjectLiteralsKeys = true;
+
+      // keywords ok
+      parse("({function:1}).function;");
+
+      // reserved words ok.
+      parse("({import:1}).import;");
+    }
+
+    private void expectParseErrors(String string, String [] errors) {
+      parse(string, errors, null, false);
+    }
+
     private AstRoot parse(String string) {
         return parse(string, true);
     }
 
     private AstRoot parse(String string, boolean jsdoc) {
-        CompilerEnvirons environment = new CompilerEnvirons();
+       return parse(string, null, null, jsdoc);
+    }
 
-        TestErrorReporter testErrorReporter = new TestErrorReporter(null, null);
+    private AstRoot parse(
+        String string, final String [] errors, final String [] warnings,
+        boolean jsdoc) {
+        CompilerEnvirons environment = new CompilerEnvirons();
+        environment.setReservedKeywordAsIdentifier(
+            allowKeywordsAsObjectLiteralsKeys);
+
+        TestErrorReporter testErrorReporter =
+            new TestErrorReporter(errors, warnings) {
+          @Override
+          public EvaluatorException runtimeError(
+               String message, String sourceName, int line, String lineSource,
+               int lineOffset) {
+             if (errors == null) {
+               throw new UnsupportedOperationException();
+             }
+             return new EvaluatorException(
+               message, sourceName, line, lineSource, lineOffset);
+           }
+        };
         environment.setErrorReporter(testErrorReporter);
 
         environment.setRecordingComments(true);
         environment.setRecordingLocalJsDocComments(jsdoc);
 
         Parser p = new Parser(environment, testErrorReporter);
-        AstRoot script = p.parse(string, null, 0);
+        AstRoot script = null;
+        try {
+          script = p.parse(string, null, 0);
+        } catch (EvaluatorException e) {
+          if (errors == null) {
+            // EvaluationExceptions should not occur when we aren't expecting
+            // errors.
+            throw e;
+          }
+        }
 
         assertTrue(testErrorReporter.hasEncounteredAllErrors());
         assertTrue(testErrorReporter.hasEncounteredAllWarnings());
