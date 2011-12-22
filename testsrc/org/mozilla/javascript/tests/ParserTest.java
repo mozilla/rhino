@@ -940,6 +940,18 @@ public class ParserTest extends TestCase {
         assertNotNull(st.getExpression().getJsDoc());
     }
 
+    public void testJSDocAttachment16() {
+        AstRoot root = parse(
+        "/** @suppress {with} */ with (context) {\n" +
+        "  eval('[' + expr + ']');\n" +
+        "}\n");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+
+        WithStatement st = (WithStatement) root.getFirstChild();
+        assertNotNull(st.getJsDoc());
+    }
+
     public void testParsingWithoutJSDoc() {
         AstRoot root = parse("var a = /** @type number */(x);", false);
         assertNotNull(root.getComments());

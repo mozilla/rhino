@@ -1593,6 +1593,9 @@ public class Parser
     {
         if (currentToken != Token.WITH) codeBug();
         consumeToken();
+
+        Comment withComment = getAndResetJsDoc();
+
         int lineno = ts.lineno, pos = ts.tokenBeg, lp = -1, rp = -1;
         if (mustMatchToken(Token.LP, "msg.no.paren.with"))
             lp = ts.tokenBeg;
@@ -1605,7 +1608,7 @@ public class Parser
         AstNode body = statement();
 
         WithStatement pn = new WithStatement(pos, getNodeEnd(body) - pos);
-        pn.setJsDocNode(getAndResetJsDoc());
+        pn.setJsDocNode(withComment);
         pn.setExpression(obj);
         pn.setStatement(body);
         pn.setParens(lp, rp);
