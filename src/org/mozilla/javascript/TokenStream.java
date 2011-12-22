@@ -156,7 +156,7 @@ class TokenStream
             Id_byte          = Token.RESERVED,  // ES3 only
             Id_catch         = Token.CATCH,
             Id_char          = Token.RESERVED,  // ES3 only
-            Id_class         = Token.RESERVED,  
+            Id_class         = Token.RESERVED,
             Id_const         = Token.CONST,     // reserved
             Id_debugger      = Token.DEBUGGER,
             Id_double        = Token.RESERVED,  // ES3 only
@@ -183,7 +183,7 @@ class TokenStream
             Id_synchronized  = Token.RESERVED,  // ES3 only
             Id_throw         = Token.THROW,
             Id_throws        = Token.RESERVED,  // ES3 only
-            Id_transient     = Token.RESERVED,  // ES3 only  
+            Id_transient     = Token.RESERVED,  // ES3 only
             Id_try           = Token.TRY,
             Id_volatile      = Token.RESERVED;  // ES3 only
 
@@ -428,7 +428,7 @@ class TokenStream
                         }
                         // Save the string in case we need to use in
                         // object literal definitions.
-                        this.string = (String)allStrings.intern(str);                        
+                        this.string = (String)allStrings.intern(str);
                         if (result != Token.RESERVED) {
                             return result;
                         } else if (!parser.compilerEnv.
@@ -437,6 +437,10 @@ class TokenStream
                             return result;
                         }
                     }
+                } else if (isKeyword(str)) {
+                    // If a string contains unicodes, and converted to a keyword,
+                    // we convert the last character back to unicode
+                    str = convertLastCharToHex(str);
                 }
                 this.string = (String)allStrings.intern(str);
                 return Token.NAME;
@@ -1566,6 +1570,19 @@ class TokenStream
             commentCursor = -1;
             return comment.toString();
         }
+    }
+
+    private String convertLastCharToHex(String str) {
+      int lastIndex = str.length()-1;
+      StringBuffer buf = new StringBuffer(
+          str.substring(0, lastIndex));
+      buf.append("\\u");
+      String hexCode = Integer.toHexString(str.charAt(lastIndex));
+      for (int i = 0; i < 4-hexCode.length(); ++i) {
+        buf.append('0');
+      }
+      buf.append(hexCode);
+      return buf.toString();
     }
 
     // stuff other than whitespace since start of line
