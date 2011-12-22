@@ -1,0 +1,6 @@
+CVS
+*.swp
+build
+lib
+build.local.properties
+downloaded

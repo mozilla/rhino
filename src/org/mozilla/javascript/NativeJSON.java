@@ -44,17 +44,28 @@ import org.mozilla.javascript.json.JsonParser;
 
 import java.util.Stack;
 import java.util.Collection;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Arrays;
 import java.util.List;
 import java.util.LinkedList;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * This class implements the JSON native object.
  * See ECMA 15.12.
  * @author Matthew Crumley, Raphael Speyer
  */
-final class NativeJSON extends IdScriptableObject
+public final class NativeJSON extends IdScriptableObject
 {
     static final long serialVersionUID = -4567599697595654984L;
 
@@ -222,6 +233,10 @@ final class NativeJSON extends IdScriptableObject
         }
 
         Stack<Scriptable> stack = new Stack<Scriptable>();
+        Stack<Object> jstack = new Stack<Object>();
+        // consider making completely static for better caching?
+        HashMap<Class<?>,HashMap<String,Method>> beanMaps = new HashMap<Class<?>,HashMap<String,Method>>();
+        HashMap<Class<?>,HashMap<String,Field>> fieldMaps = new HashMap<Class<?>,HashMap<String,Field>>();
         String indent;
         String gap;
         Callable replacer;
@@ -298,6 +313,10 @@ final class NativeJSON extends IdScriptableObject
             value = getProperty(holder, ((Number) key).intValue());
         }
 
+        if (value instanceof NativeJavaArray)
+            return jja(((NativeJavaArray) value).unwrap(), state);
+        if (value instanceof NativeJavaObject)
+            return jo((Scriptable) value, state);
         if (value instanceof Scriptable) {
             Object toJSON = getProperty((Scriptable) value, "toJSON");
             if (toJSON instanceof Callable) {
@@ -362,7 +381,213 @@ final class NativeJSON extends IdScriptableObject
         return builder.toString();
     }
 
+    private static String toBeanName(String name) {
+        if (name == null || name.length() == 0)
+            return name;
+
+        if (name.length() > 1 && Character.isUpperCase(name.charAt(1))
+                && Character.isUpperCase(name.charAt(0))) {
+            return name;
+        }
+        char chars[] = name.toCharArray();
+        chars[0] = Character.toLowerCase(chars[0]);
+        return new String(chars);
+    }
+    private static HashMap<String,Method> beanMap(Object o, StringifyState s) {
+        Class<?> clazz = o.getClass();
+        if (s.beanMaps.containsKey(clazz))
+            return s.beanMaps.get(clazz);
+        HashMap<String,Method> clazzBeanMap;
+
+        if (clazz != Class.class)
+            clazzBeanMap = beanMap(Class.class, s);
+        else
+            clazzBeanMap = new HashMap<String,Method>();
+
+        Method[] methods = clazz.getMethods();
+        HashMap<String,Method> beanMap = new HashMap<String,Method>();
+        for (Method m : methods) {
+            if (Modifier.isStatic(m.getModifiers()))
+                continue;
+            String name = m.getName();
+            if (name.startsWith("is")
+                    && Character.isUpperCase(name.charAt(2))) {
+                Class<?> rtype = m.getReturnType();
+                if ((rtype == Boolean.class || rtype == boolean.class)
+                        && m.getParameterTypes().length == 0) {
+                    String beanProp = toBeanName(name.substring(2));
+                    if (!clazzBeanMap.containsKey(beanProp))
+                        beanMap.put(beanProp, m);
+                }
+            }
+            if (name.startsWith("get")
+                    && Character.isUpperCase(name.charAt(3))
+                    && m.getParameterTypes().length == 0) {
+                String beanProp = toBeanName(name.substring(3));
+                if (!clazzBeanMap.containsKey(beanProp))
+                    beanMap.put(beanProp, m);
+            }
+        }
+        s.beanMaps.put(clazz, beanMap);
+        return beanMap;
+    }
+    private static HashMap<String,Field> fieldMap(Object o, StringifyState s) {
+        Class<?> clazz = o.getClass();
+        if (s.fieldMaps.containsKey(clazz))
+            return s.fieldMaps.get(clazz);
+        Field[] fields = clazz.getFields();
+        HashMap<String,Field> fieldMap = new HashMap<String,Field>();
+        for (Field f : fields) {
+            if (Modifier.isStatic(f.getModifiers()))
+                continue;
+            String name = f.getName();
+            fieldMap.put(name, f);
+        }
+        s.fieldMaps.put(clazz, fieldMap);
+        return fieldMap;
+    }
+    private static String mjo(Map value, StringifyState state) {
+        if (value == null)
+            return "null";
+
+        state.jstack.push(value);
+
+        String stepback = state.indent;
+        state.indent = state.indent + state.gap;
+        List<Object> partial = new LinkedList<Object>();
+
+        for (Object p : value.keySet()) {
+            Object strP = jjo(value.get(p), state);
+            if (strP != null) {
+                String member = quote(p.toString()) + ":";
+                if (state.gap.length() > 0) {
+                    member = member + " ";
+                }
+                member = member + strP;
+                partial.add(member);
+            }
+        }
+
+        final String finalValue;
+
+        if (partial.isEmpty()) {
+            finalValue = "{}";
+        } else {
+            if (state.gap.length() == 0) {
+                finalValue = '{' + join(partial, ",") + '}';
+            } else {
+                String separator = ",\n" + state.indent;
+                String properties = join(partial, separator);
+                finalValue = "{\n" + state.indent + properties + '\n' +
+                    stepback + '}';
+            }
+        }
+
+        state.jstack.pop();
+        state.indent = stepback;
+        return finalValue;
+    }
+    private static String jjo(Object value, StringifyState state) {
+
+        if (value == null)
+            return "null";
+
+        // serialize a Map as if it were an object with properties
+        if (value instanceof Map)
+            return mjo((Map) value, state);
+
+        // serialize it as if it were an array
+        if (value instanceof Collection)
+            return cja((Collection) value, state);
+
+        // boolean values and numbers may be unquoted
+        if (value instanceof Boolean || value instanceof Number)
+            return value.toString();
+
+        Class<?> clazz = value.getClass();
+        // primitives get away with no quoting
+        if (clazz.isPrimitive() && clazz != char.class)
+            return value.toString();
+
+        // an array
+        if (clazz.isArray())
+            return jja(value, state);
+
+        // assume everything in java.lang.** to be a quoted string
+        if (clazz.getName().startsWith("java.lang."))
+            return quote(value.toString());
+
+        state.jstack.push(value);
+
+        String stepback = state.indent;
+        state.indent = state.indent + state.gap;
+
+        Map<String,Method> beanMap = beanMap(value, state);
+        Map<String,Field> fieldMap = fieldMap(value, state);
+        Map<Method,String> nameMap = new IdentityHashMap<Method,String>();
+        for (String p : beanMap.keySet())
+            nameMap.put(beanMap.get(p), p);
+
+        List<Object> partial = new LinkedList<Object>();
+        LinkedList<Member> members = new LinkedList<Member>();
+
+        members.addAll(beanMap.values());
+        members.addAll(fieldMap.values());
+
+        for (Member m : members) {
+            Object beanVal = null;
+            String name = m.getName();
+            try {
+                if (m instanceof Method) {
+                    beanVal = ((Method) m).invoke(value);
+                    name = nameMap.get((Method) m);
+                } else if (m instanceof Field) {
+                    beanVal = ((Field) m).get(value);
+                } else
+                    throw new IllegalArgumentException(m.getClass().getName());
+                // remove cyclic references
+                if (state.jstack.search(beanVal) != -1)
+                    continue;
+            }
+            catch (IllegalAccessException e) { continue; }
+            catch (InvocationTargetException e) { continue; }
+            Object strP = jjo(beanVal, state);
+            if (strP != null) {
+                String member = quote(name) + ":";
+                if (state.gap.length() > 0) {
+                    member = member + " ";
+                }
+                member = member + strP;
+                partial.add(member);
+            }
+        }
+
+        final String finalValue;
+
+        if (partial.isEmpty()) {
+            finalValue = "{}";
+        } else {
+            if (state.gap.length() == 0) {
+                finalValue = '{' + join(partial, ",") + '}';
+            } else {
+                String separator = ",\n" + state.indent;
+                String properties = join(partial, separator);
+                finalValue = "{\n" + state.indent + properties + '\n' +
+                    stepback + '}';
+            }
+        }
+
+        state.jstack.pop();
+        state.indent = stepback;
+        return finalValue;
+    }
+
     private static String jo(Scriptable value, StringifyState state) {
+        if (value instanceof NativeJavaObject) {
+            Object v = ((NativeJavaObject)value).unwrap();
+            return jjo(v, state);
+        }
+
         if (state.stack.search(value) != -1) {
             throw ScriptRuntime.typeError0("msg.cyclic.value");
         }
@@ -446,6 +671,82 @@ final class NativeJSON extends IdScriptableObject
         }
 
         state.stack.pop();
+        state.indent = stepback;
+        return finalValue;
+    }
+
+    private static String jja(Object value, StringifyState state) {
+        if (state.jstack.search(value) != -1) {
+            throw ScriptRuntime.typeError0("msg.cyclic.value");
+        }
+        state.jstack.push(value);
+
+        String stepback = state.indent;
+        state.indent = state.indent + state.gap;
+        List<Object> partial = new LinkedList<Object>();
+
+        int len = Array.getLength(value);
+        for (int index = 0; index < len; index++) {
+            Object strP = jjo(Array.get(value, index), state);
+            if (strP == null) {
+                partial.add("null");
+            } else {
+                partial.add(strP);
+            }
+        }
+
+        final String finalValue;
+
+        if (partial.isEmpty()) {
+            finalValue = "[]";
+        } else {
+            if (state.gap.length() == 0) {
+                finalValue = '[' + join(partial, ",") + ']';
+            } else {
+                String separator = ",\n" + state.indent;
+                String properties = join(partial, separator);
+                finalValue = "[\n" + state.indent + properties + '\n' + stepback + ']';
+            }
+        }
+
+        state.jstack.pop();
+        state.indent = stepback;
+        return finalValue;
+    }
+    private static String cja(Collection value, StringifyState state) {
+        if (state.jstack.search(value) != -1) {
+            throw ScriptRuntime.typeError0("msg.cyclic.value");
+        }
+        state.jstack.push(value);
+
+        String stepback = state.indent;
+        state.indent = state.indent + state.gap;
+        List<Object> partial = new LinkedList<Object>();
+
+        for (Object o : value) {
+            Object strP = jjo(o, state);
+            if (strP == null) {
+                partial.add("null");
+            } else {
+                partial.add(strP);
+            }
+        }
+
+        final String finalValue;
+
+        if (partial.isEmpty()) {
+            finalValue = "[]";
+        } else {
+            if (state.gap.length() == 0) {
+                finalValue = '[' + join(partial, ",") + ']';
+            } else {
+                String separator = ",\n" + state.indent;
+                String properties = join(partial, separator);
+                finalValue = "[\n" + state.indent + properties + '\n' + stepback + ']';
+            }
+        }
+
+        state.jstack.pop();
         state.indent = stepback;
         return finalValue;
     }
