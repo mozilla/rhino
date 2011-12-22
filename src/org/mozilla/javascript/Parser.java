@@ -3205,6 +3205,7 @@ public class Parser
                           || "set".equals(propertyName))))
                   {
                       boolean isGet = "get".equals(propertyName);
+                      entryKind = isGet ? GET_ENTRY : SET_ENTRY;
                       AstNode pname = objliteralProperty();
                       if (pname == null) {
                         propertyName = null;

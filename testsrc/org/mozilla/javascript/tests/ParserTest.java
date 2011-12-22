@@ -605,6 +605,17 @@ public class ParserTest extends TestCase {
 
     }
 
+    public void testObjectLitGetterAndSetter() {
+        AstNode root = parse(
+            "'use strict';\n" +
+            "function App() {}\n" +
+            "App.prototype = {\n" +
+            "  get appData() { return this.appData_; },\n" +
+            "  set appData(data) { this.appData_ = data; }\n" +
+            "};");
+        assertNotNull(root);
+    }
+
     public void testObjectLitLocation() {
       AstNode root = parse(
           "\nvar foo =\n" +
