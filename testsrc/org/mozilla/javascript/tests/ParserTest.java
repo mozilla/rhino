@@ -919,6 +919,18 @@ public class ParserTest extends TestCase {
         assertNotNull(parens.getJsDoc());
     }
 
+    public void testJSDocAttachment9() {
+        AstRoot root = parse("var a = (/** @type {!Foo} */ {});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals("/** @type {!Foo} */",
+                     root.getComments().first().getValue());
+        VariableDeclaration vd = (VariableDeclaration) root.getFirstChild();
+        VariableInitializer vi = vd.getVariables().get(0);
+        assertNotNull(((ParenthesizedExpression)vi.getInitializer())
+                       .getExpression().getJsDoc());
+    }
+
     public void testParsingWithoutJSDoc() {
         AstRoot root = parse("var a = /** @type number */(x);", false);
         assertNotNull(root.getComments());
