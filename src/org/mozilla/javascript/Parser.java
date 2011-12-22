@@ -2075,7 +2075,7 @@ public class Parser
             if (jsdocNode != null) {
                 pn.setJsDocNode(jsdocNode);
             }
-        } else if (tt == Token.SEMI && pn.getType() == Token.GETPROP) {
+        } else if (tt == Token.SEMI) {
             // This may be dead code added intentionally, for JSDoc purposes.
             // For example: /** @type Number */ C.prototype.x;
             if (currentJsDocComment != null) {

@@ -931,6 +931,15 @@ public class ParserTest extends TestCase {
                        .getExpression().getJsDoc());
     }
 
+    public void testJSDocAttachment15() {
+        AstRoot root = parse("/** @private */ x(); function f() {}");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        assertNotNull(st.getExpression().getJsDoc());
+    }
+
     public void testParsingWithoutJSDoc() {
         AstRoot root = parse("var a = /** @type number */(x);", false);
         assertNotNull(root.getComments());
