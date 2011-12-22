@@ -1083,6 +1083,35 @@ public class ParserTest extends TestCase {
         assertEquals("AB", first.getString());
     }
 
+    public void testParseUnicodeReservedKeywords1() {
+        AstRoot root = parse("\\u0069\\u0066");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        assertEquals("i\\u0066", first.getString());
+    }
+
+    public void testParseUnicodeReservedKeywords2() {
+        AstRoot root = parse("v\\u0061\\u0072");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        assertEquals("va\\u0072", first.getString());
+    }
+
+    public void testParseUnicodeReservedKeywords3() {
+        // All are keyword "while"
+        AstRoot root = parse("w\\u0068\\u0069\\u006C\\u0065;" +
+            "\\u0077\\u0068il\\u0065; \\u0077h\\u0069le;");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        AstNode second = ((ExpressionStatement)
+            root.getFirstChild().getNext()).getExpression();
+        AstNode third = ((ExpressionStatement)
+            root.getFirstChild().getNext().getNext()).getExpression();
+        assertEquals("whil\\u0065", first.getString());
+        assertEquals("whil\\u0065", second.getString());
+        assertEquals("whil\\u0065", third.getString());
+    }
+
     public void testParseObjectLiteral1() {
       allowKeywordsAsObjectLiteralsKeys = true;
 
