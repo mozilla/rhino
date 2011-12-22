@@ -3175,6 +3175,7 @@ public class Parser
         int afterComma = -1;
         List<ObjectProperty> elems = new ArrayList<ObjectProperty>();
         Set<String> propertyNames = new HashSet<String>();
+        Comment objJsdocNode = getAndResetJsDoc();
 
       commaLoop:
         for (;;) {
@@ -3259,6 +3260,9 @@ public class Parser
 
         mustMatchToken(Token.RC, "msg.no.brace.prop");
         ObjectLiteral pn = new ObjectLiteral(pos, ts.tokenEnd - pos);
+        if (objJsdocNode != null) {
+            pn.setJsDocNode(objJsdocNode);
+        }
         pn.setElements(elems);
         pn.setLineno(lineno);
         return pn;
