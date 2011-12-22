@@ -1053,6 +1053,21 @@ public class ParserTest extends TestCase {
         AstRoot root = parseAsReader(js);
     }
 
+    public void testLinenoCommentsWithJSDoc() throws IOException {
+        AstRoot root = parseAsReader(
+            "/* foo \n" +
+            " bar \n" +
+            "*/\n" +
+            "/** @param {string} x */\n" +
+            "function a(x) {};\n");
+        assertNotNull(root.getComments());
+        assertEquals(2, root.getComments().size());
+        Comment[] comments = new Comment[2];
+        comments = root.getComments().toArray(comments);
+        assertEquals(0, comments[0].getLineno());
+        assertEquals(3, comments[1].getLineno());
+    }
+
     public void testParseUnicodeFormatStringLiteral() {
         AstRoot root = parse("'A\u200DB'");
         ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
