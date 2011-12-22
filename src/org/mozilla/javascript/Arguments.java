@@ -68,9 +68,7 @@ final class Arguments extends IdScriptableObject
         calleeObj = f;
 
         Scriptable topLevel = getTopLevelScope(parent);
-        objectCtor = (BaseFunction) getProperty(topLevel, "Object");
-
-        constructor = objectCtor;
+        constructor = getProperty(topLevel, "Object");
 
         int version = f.getLanguageVersion();
         if (version <= Context.VERSION_1_3
@@ -364,8 +362,10 @@ final class Arguments extends IdScriptableObject
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
-      super.defineOwnProperty(cx, id, desc);
+    protected void defineOwnProperty(Context cx, Object id,
+                                     ScriptableObject desc,
+                                     boolean checkValid) {
+      super.defineOwnProperty(cx, id, desc, checkValid);
 
       double d = ScriptRuntime.toNumber(id);
       int index = (int) d;
@@ -400,8 +400,6 @@ final class Arguments extends IdScriptableObject
     private Object constructor;
 
     private NativeCall activation;
-
-    private BaseFunction objectCtor;
 
 // Initially args holds activation.getOriginalArgs(), but any modification
 // of its elements triggers creation of a copy. If its element holds NOT_FOUND,

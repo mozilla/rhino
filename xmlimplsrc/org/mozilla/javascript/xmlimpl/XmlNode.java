@@ -619,7 +619,7 @@ class XmlNode implements Serializable {
             rv.uri = uri;
 
             // Avoid null prefix for "" namespace
-            if (uri.length() == 0) {
+            if (uri == null || uri.length() == 0) {
                 rv.prefix = "";
             }
 

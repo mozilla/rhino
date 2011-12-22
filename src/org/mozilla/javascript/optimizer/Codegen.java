@@ -307,8 +307,6 @@ public class Codegen implements Evaluator
                                                   sourceFile);
         cfw.addField(ID_FIELD_NAME, "I",
                      ClassFileWriter.ACC_PRIVATE);
-        cfw.addField(DIRECT_CALL_PARENT_FIELD, mainClassSignature,
-                     ClassFileWriter.ACC_PRIVATE);
         cfw.addField(REGEXP_ARRAY_FIELD_NAME, REGEXP_ARRAY_FIELD_TYPE,
                      ClassFileWriter.ACC_PRIVATE);
 
@@ -351,15 +349,6 @@ public class Codegen implements Evaluator
                 if (ofn.isTargetOfDirectCall()) {
                     emitDirectConstructor(cfw, ofn);
                 }
-            }
-        }
-
-        if (directCallTargets != null) {
-            int N = directCallTargets.size();
-            for (int j = 0; j != N; ++j) {
-                cfw.addField(getDirectTargetFieldName(j),
-                             mainClassSignature,
-                             ClassFileWriter.ACC_PRIVATE);
             }
         }
 
@@ -1238,11 +1227,6 @@ public class Codegen implements Evaluator
         return scriptOrFnIndexes.getExisting(n);
     }
 
-    static String getDirectTargetFieldName(int i)
-    {
-        return "_dt" + i;
-    }
-
     String getDirectCtorName(ScriptNode n)
     {
         return "_n" + getIndex(n);
@@ -1319,8 +1303,7 @@ public class Codegen implements Evaluator
     private static final String SUPER_CLASS_NAME
         = "org.mozilla.javascript.NativeFunction";
 
-    static final String DIRECT_CALL_PARENT_FIELD = "_dcp";
-    private static final String ID_FIELD_NAME = "_id";
+    static final String ID_FIELD_NAME = "_id";
 
     private static final String REGEXP_INIT_METHOD_NAME = "_reInit";
     private static final String REGEXP_INIT_METHOD_SIGNATURE
@@ -1421,12 +1404,10 @@ class BodyCodegen
         localsMax = firstFreeLocal;
 
         // get top level scope
-        if (fnCurrent != null && !inDirectCallFunction
-            && (!compilerEnv.isUseDynamicScope()
-                || fnCurrent.fnode.getIgnoreDynamicScope()))
+        if (fnCurrent != null)
         {
-            // Unless we're either in a direct call or using dynamic scope,
-            // use the enclosing scope of the function as our variable object.
+            // Unless we're in a direct call use the enclosing scope
+            // of the function as our variable object.
             cfw.addALoad(funObjLocal);
             cfw.addInvoke(ByteCode.INVOKEINTERFACE,
                           "org/mozilla/javascript/Scriptable",
@@ -1455,19 +1436,6 @@ class BodyCodegen
         cfw.addPush(scriptOrFnIndex);
         cfw.addInvoke(ByteCode.INVOKESPECIAL, codegen.mainClassName,
                       "<init>", Codegen.FUNCTION_CONSTRUCTOR_SIGNATURE);
-
-        // Init mainScript field
-        cfw.add(ByteCode.DUP);
-        if (isTopLevel) Kit.codeBug();  // Only functions can be generators
-        cfw.add(ByteCode.ALOAD_0);
-        cfw.add(ByteCode.GETFIELD,
-                codegen.mainClassName,
-                Codegen.DIRECT_CALL_PARENT_FIELD,
-                codegen.mainClassSignature);
-        cfw.add(ByteCode.PUTFIELD,
-                codegen.mainClassName,
-                Codegen.DIRECT_CALL_PARENT_FIELD,
-                codegen.mainClassSignature);
 
         generateNestedFunctionInits();
 
@@ -1577,12 +1545,8 @@ class BodyCodegen
             }
         }
 
-        if (fnCurrent != null && !inDirectCallFunction
-            && (!compilerEnv.isUseDynamicScope()
-                || fnCurrent.fnode.getIgnoreDynamicScope()))
-        {
-            // Unless we're either in a direct call or using dynamic scope,
-            // use the enclosing scope of the function as our variable object.
+        if (fnCurrent != null) {
+            // Use the enclosing scope of the function as our variable object.
             cfw.addALoad(funObjLocal);
             cfw.addInvoke(ByteCode.INVOKEINTERFACE,
                           "org/mozilla/javascript/Scriptable",
@@ -2745,15 +2709,17 @@ class BodyCodegen
                 break;
 
               case Token.DELPROP:
+                boolean isName = child.getType() == Token.BINDNAME;
                 generateExpression(child, node);
                 child = child.getNext();
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
+                cfw.addPush(isName);
                 addScriptRuntimeInvoke("delete",
                                        "(Ljava/lang/Object;"
                                        +"Ljava/lang/Object;"
                                        +"Lorg/mozilla/javascript/Context;"
-                                       +")Ljava/lang/Object;");
+                                       +"Z)Ljava/lang/Object;");
                 break;
 
               case Token.BINDNAME:
@@ -3065,41 +3031,6 @@ class BodyCodegen
         cfw.addInvoke(ByteCode.INVOKESPECIAL, codegen.mainClassName,
                       "<init>", Codegen.FUNCTION_CONSTRUCTOR_SIGNATURE);
 
-        // Init mainScript field;
-        cfw.add(ByteCode.DUP);
-        if (isTopLevel) {
-            cfw.add(ByteCode.ALOAD_0);
-        } else {
-            cfw.add(ByteCode.ALOAD_0);
-            cfw.add(ByteCode.GETFIELD,
-                    codegen.mainClassName,
-                    Codegen.DIRECT_CALL_PARENT_FIELD,
-                    codegen.mainClassSignature);
-        }
-        cfw.add(ByteCode.PUTFIELD,
-                codegen.mainClassName,
-                Codegen.DIRECT_CALL_PARENT_FIELD,
-                codegen.mainClassSignature);
-
-        int directTargetIndex = ofn.getDirectTargetIndex();
-        if (directTargetIndex >= 0) {
-            cfw.add(ByteCode.DUP);
-            if (isTopLevel) {
-                cfw.add(ByteCode.ALOAD_0);
-            } else {
-                cfw.add(ByteCode.ALOAD_0);
-                cfw.add(ByteCode.GETFIELD,
-                        codegen.mainClassName,
-                        Codegen.DIRECT_CALL_PARENT_FIELD,
-                        codegen.mainClassSignature);
-            }
-            cfw.add(ByteCode.SWAP);
-            cfw.add(ByteCode.PUTFIELD,
-                    codegen.mainClassName,
-                    Codegen.getDirectTargetFieldName(directTargetIndex),
-                    codegen.mainClassSignature);
-        }
-
         if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
             // Leave closure object on stack and do not pass it to
             // initFunction which suppose to connect statements to scope
@@ -3220,33 +3151,47 @@ class BodyCodegen
         for (int i = 0; i != count; ++i) {
             cfw.add(ByteCode.DUP);
             cfw.addPush(i);
-            int childType = child.getType();
-            if (childType == Token.GET) {
-                generateExpression(child.getFirstChild(), node);
-            } else if (childType == Token.SET) {
-                generateExpression(child.getFirstChild(), node);
+            int childType = child2.getType();
+            if (childType == Token.GET || childType == Token.SET) {
+                generateExpression(child2.getFirstChild(), node);
             } else {
-                generateExpression(child, node);
+                generateExpression(child2, node);
             }
             cfw.add(ByteCode.AASTORE);
-            child = child.getNext();
-        }
-        // load array with getterSetter values
-        cfw.addPush(count);
-        cfw.add(ByteCode.NEWARRAY, ByteCode.T_INT);
-        for (int i = 0; i != count; ++i) {
-            cfw.add(ByteCode.DUP);
-            cfw.addPush(i);
-            int childType = child2.getType();
-            if (childType == Token.GET) {
-                cfw.add(ByteCode.ICONST_M1);
-            } else if (childType == Token.SET) {
-                cfw.add(ByteCode.ICONST_1);
-            } else {
-                cfw.add(ByteCode.ICONST_0);
-            }
-            cfw.add(ByteCode.IASTORE);
             child2 = child2.getNext();
+        }
+        // check if object literal actually has any getters or setters
+        boolean hasGetterSetters = false;
+        child2 = child;
+        for (int i = 0; i != count; ++i) {
+            int childType = child2.getType();
+            if (childType == Token.GET || childType == Token.SET) {
+                hasGetterSetters = true;
+                break;
+            }
+            child2 = child2.getNext();
+        }
+        // create getter/setter flag array
+        if (hasGetterSetters) {
+            cfw.addPush(count);
+            cfw.add(ByteCode.NEWARRAY, ByteCode.T_INT);
+            child2 = child;
+            for (int i = 0; i != count; ++i) {
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(i);
+                int childType = child2.getType();
+                if (childType == Token.GET) {
+                    cfw.add(ByteCode.ICONST_M1);
+                } else if (childType == Token.SET) {
+                    cfw.add(ByteCode.ICONST_1);
+                } else {
+                    cfw.add(ByteCode.ICONST_0);
+                }
+                cfw.add(ByteCode.IASTORE);
+                child2 = child2.getNext();
+            }
+        } else {
+            cfw.add(ByteCode.ACONST_NULL);
         }
 
         cfw.addALoad(contextLocal);
@@ -3441,6 +3386,7 @@ class BodyCodegen
                                     int type, Node child)
     {
         Node firstArgChild = child.getNext();
+        String className = codegen.mainClassName;
 
         short thisObjLocal = 0;
         if (type == Token.NEW) {
@@ -3453,46 +3399,20 @@ class BodyCodegen
         // stack: ... functionObj
 
         int beyond = cfw.acquireLabel();
-
-        int directTargetIndex = target.getDirectTargetIndex();
-        if (isTopLevel) {
-            cfw.add(ByteCode.ALOAD_0);
-        } else {
-            cfw.add(ByteCode.ALOAD_0);
-            cfw.add(ByteCode.GETFIELD, codegen.mainClassName,
-                    Codegen.DIRECT_CALL_PARENT_FIELD,
-                    codegen.mainClassSignature);
-        }
-        cfw.add(ByteCode.GETFIELD, codegen.mainClassName,
-                Codegen.getDirectTargetFieldName(directTargetIndex),
-                codegen.mainClassSignature);
-
-        cfw.add(ByteCode.DUP2);
-        // stack: ... functionObj directFunct functionObj directFunct
-
         int regularCall = cfw.acquireLabel();
-        cfw.add(ByteCode.IF_ACMPNE, regularCall);
 
-        // stack: ... functionObj directFunct
-        short stackHeight = cfw.getStackTop();
-        cfw.add(ByteCode.SWAP);
-        cfw.add(ByteCode.POP);
+        cfw.add(ByteCode.DUP);
+        cfw.add(ByteCode.INSTANCEOF, className);
+        cfw.add(ByteCode.IFEQ, regularCall);
+        cfw.add(ByteCode.CHECKCAST, className);
+        cfw.add(ByteCode.DUP);
+        cfw.add(ByteCode.GETFIELD, className, Codegen.ID_FIELD_NAME, "I");
+        cfw.addPush(codegen.getIndex(target.fnode));
+        cfw.add(ByteCode.IF_ICMPNE, regularCall);
+
         // stack: ... directFunct
-        if (compilerEnv.isUseDynamicScope()) {
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-        } else {
-            cfw.add(ByteCode.DUP);
-            // stack: ... directFunct directFunct
-            cfw.addInvoke(ByteCode.INVOKEINTERFACE,
-                          "org/mozilla/javascript/Scriptable",
-                          "getParentScope",
-                          "()Lorg/mozilla/javascript/Scriptable;");
-            // stack: ... directFunct scope
-            cfw.addALoad(contextLocal);
-            // stack: ... directFunct scope cx
-            cfw.add(ByteCode.SWAP);
-        }
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
         // stack: ... directFunc cx scope
 
         if (type == Token.NEW) {
@@ -3541,9 +3461,8 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
         cfw.add(ByteCode.GOTO, beyond);
 
-        cfw.markLabel(regularCall, stackHeight);
-        // stack: ... functionObj directFunct
-        cfw.add(ByteCode.POP);
+        cfw.markLabel(regularCall);
+        // stack: ... functionObj
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         // stack: ... functionObj cx scope
@@ -4392,10 +4311,10 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         switch (child.getType()) {
           case Token.GETVAR:
             if (!hasVarsInRegs) Kit.codeBug();
+            boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+            int varIndex = fnCurrent.getVarIndex(child);
+            short reg = varRegisters[varIndex];
             if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-                int varIndex = fnCurrent.getVarIndex(child);
-                short reg = varRegisters[varIndex];
                 int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
                 cfw.addDLoad(reg + offset);
                 if (post) {
@@ -4412,10 +4331,11 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 }
                 cfw.addDStore(reg + offset);
             } else {
-                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-                int varIndex = fnCurrent.getVarIndex(child);
-                short reg = varRegisters[varIndex];
-                cfw.addALoad(reg);
+                if (varIsDirectCallParameter(varIndex)) {
+                    dcpLoadAsObject(reg);
+                } else {
+                    cfw.addALoad(reg);
+                }
                 if (post) {
                     cfw.add(ByteCode.DUP);
                 }

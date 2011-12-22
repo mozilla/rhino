@@ -137,11 +137,6 @@ class CodeGenerator extends Icode {
         if (theFunction.getFunctionName() != null) {
             itsData.itsName = theFunction.getName();
         }
-        if (!theFunction.getIgnoreDynamicScope()) {
-            if (compilerEnv.isUseDynamicScope()) {
-                itsData.useDynamicScope = true;
-            }
-        }
         if (theFunction.isGenerator()) {
           addIcode(Icode_GENERATOR);
           addUint16(theFunction.getBaseLineno() & 0xFFFF);
@@ -680,8 +675,21 @@ class CodeGenerator extends Icode {
             addStringOp(type, child.getString());
             break;
 
-          case Token.GETELEM:
           case Token.DELPROP:
+            boolean isName = child.getType() == Token.BINDNAME;
+            visitExpression(child, 0);
+            child = child.getNext();
+            visitExpression(child, 0);
+            if (isName) {
+                // special handling for delete name
+                addIcode(Icode_DELNAME);
+            } else {
+                addToken(Token.DELPROP);
+            }
+            stackChange(-1);
+            break;
+
+          case Token.GETELEM:
           case Token.BITAND:
           case Token.BITOR:
           case Token.BITXOR:

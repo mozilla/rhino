@@ -110,7 +110,6 @@ final class InterpreterData implements Serializable, DebuggableScript
 
     int languageVersion;
 
-    boolean useDynamicScope;
     boolean isStrict;
     boolean topLevel;
 

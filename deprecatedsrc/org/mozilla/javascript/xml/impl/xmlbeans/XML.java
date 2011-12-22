@@ -1152,36 +1152,13 @@ todo need to handle namespace prefix not found in XML look for namespace type in
     /**
      * Does the named property exist
      *
-     * @param name
-     * @param start
+     * @param xmlName
      * @return
      */
     boolean hasXMLProperty(XMLName xmlName)
     {
-        boolean result = false;
-
-        if (prototypeFlag)
-        {
-            String name = xmlName.localName();
-
-            if (getMethod(name) != NOT_FOUND)
-            {
-                result = true;
-            }
-        }
-        else
-        {
-            // Has now should return true if the property would have results > 0 or
-            // if it's a method name
-            String name = xmlName.localName();
-            if ((getPropertyList(xmlName).length() > 0) ||
-                (getMethod(name) != NOT_FOUND))
-            {
-                result = true;
-            }
-        }
-
-        return result;
+        // Has now should return true if the property would have results > 0
+        return (getPropertyList(xmlName).length() > 0);
     }
 
 
@@ -1230,32 +1207,17 @@ todo need to handle namespace prefix not found in XML look for namespace type in
 
     /**
      *
-     * @param name
-     * @param start
+     * @param xmlName
      * @return
      */
     Object getXMLProperty(XMLName xmlName)
     {
-        Object result = NOT_FOUND;
-
-        if (prototypeFlag)
-        {
-            String name = xmlName.localName();
-
-            result = getMethod(name);
-        }
-        else
-        {
-            result = getPropertyList(xmlName);
-        }
-
-        return result;
+        return getPropertyList(xmlName);
     }
 
     /**
      *
-     * @param name
-     * @param start
+     * @param xmlName
      * @param value
      */
     void putXMLProperty(XMLName xmlName, Object value)

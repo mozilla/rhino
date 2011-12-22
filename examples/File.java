@@ -37,6 +37,10 @@
  * ***** END LICENSE BLOCK ***** */
 
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.annotations.JSConstructor;
+import org.mozilla.javascript.annotations.JSFunction;
+import org.mozilla.javascript.annotations.JSGetter;
+
 import java.io.*;
 import java.util.List;
 import java.util.ArrayList;
@@ -95,6 +99,7 @@ public class File extends ScriptableObject {
      * Otherwise System.in or System.out is assumed as appropriate
      * to the use.
      */
+    @JSConstructor
     public static Scriptable jsConstructor(Context cx, Object[] args,
                                            Function ctorObj,
                                            boolean inNewExpr)
@@ -123,7 +128,8 @@ public class File extends ScriptableObject {
      *
      * Used to define the "name" property.
      */
-    public String jsGet_name() {
+    @JSGetter
+    public String getName() {
         return name;
     }
 
@@ -138,12 +144,13 @@ public class File extends ScriptableObject {
      * @exception IOException if an error occurred while accessing the file
      *            associated with this object
      */
-    public Object jsFunction_readLines()
+    @JSFunction
+    public Object readLines()
         throws IOException
     {
         List<String> list = new ArrayList<String>();
         String s;
-        while ((s = jsFunction_readLine()) != null) {
+        while ((s = readLine()) != null) {
             list.add(s);
         }
         String[] lines = list.toArray(new String[list.size()]);
@@ -160,7 +167,8 @@ public class File extends ScriptableObject {
      *            associated with this object, or EOFException if the object
      *            reached the end of the file
      */
-    public String jsFunction_readLine() throws IOException {
+    @JSFunction
+    public String readLine() throws IOException {
         return getReader().readLine();
     }
 
@@ -171,7 +179,8 @@ public class File extends ScriptableObject {
      *            associated with this object, or EOFException if the object
      *            reached the end of the file
      */
-    public String jsFunction_readChar() throws IOException {
+    @JSFunction
+    public String readChar() throws IOException {
         int i = getReader().read();
         if (i == -1)
             return null;
@@ -189,7 +198,8 @@ public class File extends ScriptableObject {
      * @exception IOException if an error occurred while accessing the file
      *            associated with this object
      */
-    public static void jsFunction_write(Context cx, Scriptable thisObj,
+    @JSFunction
+    public static void write(Context cx, Scriptable thisObj,
                                         Object[] args, Function funObj)
         throws IOException
     {
@@ -204,14 +214,16 @@ public class File extends ScriptableObject {
      *            associated with this object
      *
      */
-    public static void jsFunction_writeLine(Context cx, Scriptable thisObj,
+    @JSFunction
+    public static void writeLine(Context cx, Scriptable thisObj,
                                             Object[] args, Function funObj)
         throws IOException
     {
         write0(thisObj, args, true);
     }
 
-    public int jsGet_lineNumber()
+    @JSGetter
+    public int getLineNumber()
         throws FileNotFoundException
     {
         return getReader().getLineNumber();
@@ -224,7 +236,8 @@ public class File extends ScriptableObject {
      * @exception IOException if an error occurred while accessing the file
      *            associated with this object
      */
-    public void jsFunction_close() throws IOException {
+    @JSFunction
+    public void close() throws IOException {
         if (reader != null) {
             reader.close();
             reader = null;
@@ -242,7 +255,7 @@ public class File extends ScriptableObject {
     @Override
     protected void finalize() {
         try {
-            jsFunction_close();
+            close();
         }
         catch (IOException e) {
         }
@@ -251,7 +264,8 @@ public class File extends ScriptableObject {
     /**
      * Get the Java reader.
      */
-    public Object jsFunction_getReader() {
+    @JSFunction("getReader")
+    public Object getJSReader() {
         if (reader == null)
             return null;
         // Here we use toObject() to "wrap" the BufferedReader object
@@ -264,10 +278,11 @@ public class File extends ScriptableObject {
     /**
      * Get the Java writer.
      *
-     * @see File#jsFunction_getReader
+     * @see File#getReader
      *
      */
-    public Object jsFunction_getWriter() {
+    @JSFunction
+    public Object getWriter() {
         if (writer == null)
             return null;
         Scriptable parent = ScriptableObject.getTopLevelScope(this);

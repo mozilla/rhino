@@ -597,7 +597,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     utf8buf = new byte[6];
                 }
                 if (0xDC00 <= C && C <= 0xDFFF) {
-                    throw Context.reportRuntimeError0("msg.bad.uri");
+                    throw uriError();
                 }
                 int V;
                 if (C < 0xD800 || 0xDBFF < C) {
@@ -605,11 +605,11 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                 } else {
                     k++;
                     if (k == length) {
-                        throw Context.reportRuntimeError0("msg.bad.uri");
+                        throw uriError();
                     }
                     char C2 = str.charAt(k);
                     if (!(0xDC00 <= C2 && C2 <= 0xDFFF)) {
-                        throw Context.reportRuntimeError0("msg.bad.uri");
+                        throw uriError();
                     }
                     V = ((C - 0xD800) << 10) + (C2 - 0xDC00) + 0x10000;
                 }
@@ -672,9 +672,9 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                 }
                 int start = k;
                 if (k + 3 > length)
-                    throw Context.reportRuntimeError0("msg.bad.uri");
+                    throw uriError();
                 int B = unHex(str.charAt(k + 1), str.charAt(k + 2));
-                if (B < 0) throw Context.reportRuntimeError0("msg.bad.uri");
+                if (B < 0) throw uriError();
                 k += 3;
                 if ((B & 0x80) == 0) {
                     C = (char)B;
@@ -684,7 +684,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     int utf8Tail, ucs4Char, minUcs4Char;
                     if ((B & 0xC0) == 0x80) {
                         // First  UTF-8 should be ouside 0x80..0xBF
-                        throw Context.reportRuntimeError0("msg.bad.uri");
+                        throw uriError();
                     } else if ((B & 0x20) == 0) {
                         utf8Tail = 1; ucs4Char = B & 0x1F;
                         minUcs4Char = 0x80;
@@ -702,29 +702,31 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                         minUcs4Char = 0x4000000;
                     } else {
                         // First UTF-8 can not be 0xFF or 0xFE
-                        throw Context.reportRuntimeError0("msg.bad.uri");
+                        throw uriError();
                     }
                     if (k + 3 * utf8Tail > length)
-                        throw Context.reportRuntimeError0("msg.bad.uri");
+                        throw uriError();
                     for (int j = 0; j != utf8Tail; j++) {
                         if (str.charAt(k) != '%')
-                            throw Context.reportRuntimeError0("msg.bad.uri");
+                            throw uriError();
                         B = unHex(str.charAt(k + 1), str.charAt(k + 2));
                         if (B < 0 || (B & 0xC0) != 0x80)
-                            throw Context.reportRuntimeError0("msg.bad.uri");
+                            throw uriError();
                         ucs4Char = (ucs4Char << 6) | (B & 0x3F);
                         k += 3;
                     }
                     // Check for overlongs and other should-not-present codes
                     if (ucs4Char < minUcs4Char
-                        || ucs4Char == 0xFFFE || ucs4Char == 0xFFFF)
-                    {
+                            || (ucs4Char >= 0xD800 && ucs4Char <= 0xDFFF)) {
+                        ucs4Char = INVALID_UTF8;
+                    } else if (ucs4Char == 0xFFFE || ucs4Char == 0xFFFF) {
                         ucs4Char = 0xFFFD;
                     }
                     if (ucs4Char >= 0x10000) {
                         ucs4Char -= 0x10000;
-                        if (ucs4Char > 0xFFFFF)
-                            throw Context.reportRuntimeError0("msg.bad.uri");
+                        if (ucs4Char > 0xFFFFF) {
+                            throw uriError();
+                        }
                         char H = (char)((ucs4Char >>> 10) + 0xD800);
                         C = (char)((ucs4Char & 0x3FF) + 0xDC00);
                         buf[bufTop++] = H;
@@ -746,19 +748,25 @@ public class NativeGlobal implements Serializable, IdFunctionCall
 
     private static boolean encodeUnescaped(char c, boolean fullUri) {
         if (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z')
-            || ('0' <= c && c <= '9'))
-        {
+                || ('0' <= c && c <= '9')) {
             return true;
         }
-        if ("-_.!~*'()".indexOf(c) >= 0)
+        if ("-_.!~*'()".indexOf(c) >= 0) {
             return true;
+        }
         if (fullUri) {
             return URI_DECODE_RESERVED.indexOf(c) >= 0;
         }
         return false;
     }
 
+    private static EcmaError uriError() {
+        return ScriptRuntime.constructError("URIError",
+                ScriptRuntime.getMessage0("msg.bad.uri"));
+    }
+
     private static final String URI_DECODE_RESERVED = ";/?:@&=+$,#";
+    private static final int INVALID_UTF8 = Integer.MAX_VALUE;
 
     /* Convert one UCS-4 char and write it into a UTF-8 buffer, which must be
     * at least 6 bytes long.  Return the number of UTF-8 bytes of data written.

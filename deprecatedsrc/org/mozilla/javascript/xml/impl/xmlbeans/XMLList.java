@@ -321,24 +321,13 @@ class XMLList extends XMLObjectImpl implements Function
 
     /**
      *
-     * @param name
-     * @param start
+     * @param xmlName
      * @return
      */
     boolean hasXMLProperty(XMLName xmlName)
     {
-        boolean result = false;
-
-        // Has now should return true if the property would have results > 0 or
-        // if it's a method name
-        String name = xmlName.localName();
-        if ((getPropertyList(xmlName).length() > 0) ||
-            (getMethod(name) != NOT_FOUND))
-        {
-            result = true;
-        }
-
-        return result;
+        // Has now should return true if the property would have results > 0
+        return (getPropertyList(xmlName).length() > 0);
     }
 
 
@@ -1599,13 +1588,31 @@ class XMLList extends XMLObjectImpl implements Function
         if(isApply || methodName.equals("call"))
             return applyOrCall(isApply, cx, scope, thisObj, args);
 
-        Callable method = ScriptRuntime.getElemFunctionAndThis(
-                              this, methodName, cx);
-        // Call lastStoredScriptable to clear stored thisObj
-        // but ignore the result as the method should use the supplied
-        // thisObj, not one from redirected call
-        ScriptRuntime.lastStoredScriptable(cx);
-        return method.call(cx, scope, thisObj, args);
+        if (!(thisObj instanceof XMLObject)) {
+            throw ScriptRuntime.typeError1("msg.incompat.call", methodName);
+        }
+        Object func = null;
+        Scriptable sobj = thisObj;
+
+        while (sobj instanceof XMLObject) {
+            XMLObject xmlObject = (XMLObject) sobj;
+            func = xmlObject.getFunctionProperty(cx, methodName);
+            if (func != Scriptable.NOT_FOUND) {
+                break;
+            }
+            sobj = xmlObject.getExtraMethodSource(cx);
+            if (sobj != null) {
+                thisObj = sobj;
+                if (!(sobj instanceof XMLObject)) {
+                    func = ScriptableObject.getProperty(sobj, methodName);
+                }
+            }
+        }
+
+        if (!(func instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(thisObj, func, methodName);
+        }
+        return ((Callable)func).call(cx, scope, thisObj, args);
     }
 
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)

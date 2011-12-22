@@ -146,7 +146,7 @@ final class NativeNumber extends IdScriptableObject
           case Id_toLocaleString:
             {
                 // toLocaleString is just an alias for toString for now
-                int base = (args.length == 0)
+                int base = (args.length == 0 || args[0] == Undefined.instance)
                     ? 10 : ScriptRuntime.toInt32(args[0]);
                 return ScriptRuntime.numberToString(value, base);
             }
@@ -228,7 +228,7 @@ final class NativeNumber extends IdScriptableObject
                 throw ScriptRuntime.constructError("RangeError", msg);
             }
         }
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         DToA.JS_dtostr(sb, oneArgMode, precision + precisionOffset, val);
         return sb.toString();
     }

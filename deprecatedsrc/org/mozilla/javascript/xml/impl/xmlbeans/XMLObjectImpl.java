@@ -143,11 +143,6 @@ abstract class XMLObjectImpl extends XMLObject
                                             Object[] args);
 
 
-    final Object getMethod(String id)
-    {
-        return super.get(id, this);
-    }
-
     //
     //
     // Methods overriding ScriptableObject

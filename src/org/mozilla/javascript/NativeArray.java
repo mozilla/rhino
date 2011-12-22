@@ -125,10 +125,17 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
+    protected void setInstanceIdAttributes(int id, int attr) {
+        if (id == Id_length) {
+            lengthAttr = attr;
+        }
+    }
+
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         if (s.equals("length")) {
-            return instanceIdInfo(DONTENUM | PERMANENT, Id_length);
+            return instanceIdInfo(lengthAttr, Id_length);
         }
         return super.findInstanceIdInfo(s);
     }
@@ -371,22 +378,41 @@ public class NativeArray extends IdScriptableObject implements List
         return super.has(index, start);
     }
 
+    private static long toArrayIndex(Object id) {
+        if (id instanceof String) {
+            return toArrayIndex((String)id);
+        } else if (id instanceof Number) {
+            return toArrayIndex(((Number)id).doubleValue());
+        }
+        return -1;
+    }
+
     // if id is an array index (ECMA 15.4.0), return the number,
     // otherwise return -1L
     private static long toArrayIndex(String id)
     {
-        double d = ScriptRuntime.toNumber(id);
+        long index = toArrayIndex(ScriptRuntime.toNumber(id));
+        // Assume that ScriptRuntime.toString(index) is the same
+        // as java.lang.Long.toString(index) for long
+        if (Long.toString(index).equals(id)) {
+            return index;
+        }
+        return -1;
+    }
+
+    private static long toArrayIndex(double d) {
         if (d == d) {
             long index = ScriptRuntime.toUint32(d);
             if (index == d && index != 4294967295L) {
-                // Assume that ScriptRuntime.toString(index) is the same
-                // as java.lang.Long.toString(index) for long
-                if (Long.toString(index).equals(id)) {
-                    return index;
-                }
+                return index;
             }
         }
         return -1;
+    }
+
+    private static int toDenseIndex(Object id) {
+      long index = toArrayIndex(id);
+      return 0 <= index && index < Integer.MAX_VALUE ? (int) index : -1;
     }
 
     @Override
@@ -442,7 +468,7 @@ public class NativeArray extends IdScriptableObject implements List
             }
         }
         super.put(index, start, value);
-        if (start == this) {
+        if (start == this && (lengthAttr & READONLY) == 0) {
             // only set the array length if given an array index (ECMA 15.4.0)
             if (this.length <= index) {
                 // avoid overflowing index!
@@ -540,10 +566,19 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
+    public int getAttributes(int index) {
+        if (dense != null && index >= 0 && index < dense.length
+                && dense[index] != NOT_FOUND) {
+            return EMPTY;
+        }
+        return super.getAttributes(index);
+    }
+
+    @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
       if (dense != null) {
-        int index = toIndex(id);
-        if (0 <= index && index < length) {
+        int index = toDenseIndex(id);
+        if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
           Object value = dense[index];
           return defaultIndexPropertyDescriptor(value);
         }
@@ -552,7 +587,9 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+    protected void defineOwnProperty(Context cx, Object id,
+                                     ScriptableObject desc,
+                                     boolean checkValid) {
       if (dense != null) {
         Object[] values = dense;
         dense = null;
@@ -563,21 +600,11 @@ public class NativeArray extends IdScriptableObject implements List
           }
         }
       }
-      int index = toIndex(id);
+      long index = toArrayIndex(id);
       if (index >= length) {
         length = index + 1;
       }
-      super.defineOwnProperty(cx, id, desc);
-    }
-
-    private int toIndex(Object id) {
-      if (id instanceof String) {
-        return (int) toArrayIndex((String) id);
-      } else if (id instanceof Number) {
-        return ((Number) id).intValue();
-      } else {
-        return -1;
-      }
+      super.defineOwnProperty(cx, id, desc, checkValid);
     }
 
     /**
@@ -640,6 +667,9 @@ public class NativeArray extends IdScriptableObject implements List
          * 2. If Result(1) is false, return.
          * ?
          */
+        if ((lengthAttr & READONLY) != 0) {
+            return;
+        }
 
         double d = ScriptRuntime.toNumber(val);
         long longVal = ScriptRuntime.toUint32(d);
@@ -743,7 +773,7 @@ public class NativeArray extends IdScriptableObject implements List
         if (index > Integer.MAX_VALUE) {
             return ScriptableObject.getProperty(target, Long.toString(index));
         } else {
-            return ScriptableObject.getProperty(target, (int) index);
+            return ScriptableObject.getProperty(target, (int)index);
         }
     }
 
@@ -1477,13 +1507,12 @@ public class NativeArray extends IdScriptableObject implements List
                 // default
                 start = length-1;
             } else {
-                start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
+                start = (long)ScriptRuntime.toInteger(args[1]);
                 if (start >= length)
                     start = length-1;
                 else if (start < 0)
                     start += length;
-                // Note that start may be negative, but that's okay
-                // as the result of -1 will fall out from the code below
+                if (start < 0) return NEGATIVE_ONE;
             }
         } else {
             // indexOf
@@ -1501,14 +1530,13 @@ public class NativeArray extends IdScriptableObject implements List
                 // default
                 start = 0;
             } else {
-                start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
+                start = (long)ScriptRuntime.toInteger(args[1]);
                 if (start < 0) {
                     start += length;
                     if (start < 0)
                         start = 0;
                 }
-                // Note that start may be > length-1, but that's okay
-                // as the result of -1 will fall out from the code below
+                if (start > length - 1) return NEGATIVE_ONE;
             }
         }
         if (thisObj instanceof NativeArray) {
@@ -1536,13 +1564,15 @@ public class NativeArray extends IdScriptableObject implements List
         }
         if (isLast) {
           for (long i=start; i >= 0; i--) {
-              if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
+              Object val = getRawElem(thisObj, i);
+              if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
                   return Long.valueOf(i);
               }
           }
         } else {
           for (long i=start; i < length; i++) {
-              if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
+              Object val = getRawElem(thisObj, i);
+              if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
                   return Long.valueOf(i);
               }
           }
@@ -1975,6 +2005,11 @@ public class NativeArray extends IdScriptableObject implements List
      * Internal representation of the JavaScript array's length property.
      */
     private long length;
+
+    /**
+     * Attributes of the array's length property
+     */
+    private int lengthAttr = DONTENUM | PERMANENT;
 
     /**
      * Fast storage for dense arrays. Sparse arrays will use the superclass's

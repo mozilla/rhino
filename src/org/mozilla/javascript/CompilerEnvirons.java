@@ -51,7 +51,6 @@ public class CompilerEnvirons
         errorReporter = DefaultErrorReporter.instance;
         languageVersion = Context.VERSION_DEFAULT;
         generateDebugInfo = true;
-        useDynamicScope = false;
         reservedKeywordAsIdentifier = true;
         allowMemberExprAsFunctionName = false;
         xmlAvailable = true;
@@ -67,7 +66,6 @@ public class CompilerEnvirons
     {
         setErrorReporter(cx.getErrorReporter());
         this.languageVersion = cx.getLanguageVersion();
-        useDynamicScope = cx.compileFunctionsWithDynamicScopeFlag;
         generateDebugInfo = (!cx.isGeneratingDebugChanged()
                              || cx.isGeneratingDebug());
         reservedKeywordAsIdentifier
@@ -119,11 +117,6 @@ public class CompilerEnvirons
     public void setGenerateDebugInfo(boolean flag)
     {
         this.generateDebugInfo = flag;
-    }
-
-    public final boolean isUseDynamicScope()
-    {
-        return useDynamicScope;
     }
 
     public final boolean isReservedKeywordAsIdentifier()
@@ -318,7 +311,6 @@ public class CompilerEnvirons
 
     private int languageVersion;
     private boolean generateDebugInfo;
-    private boolean useDynamicScope;
     private boolean reservedKeywordAsIdentifier;
     private boolean allowMemberExprAsFunctionName;
     private boolean xmlAvailable;

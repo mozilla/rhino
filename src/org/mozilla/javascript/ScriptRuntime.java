@@ -56,6 +56,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLObject;
 import org.mozilla.javascript.xml.XMLLib;
 
@@ -472,7 +473,7 @@ public class ScriptRuntime {
                  * answer.
                  */
                 try {
-                    return Double.valueOf(s.substring(start, end)).doubleValue();
+                    return Double.parseDouble(s.substring(start, end));
                 } catch (NumberFormatException nfe) {
                     return NaN;
                 }
@@ -640,21 +641,18 @@ public class ScriptRuntime {
         // A non-hexadecimal, non-infinity number:
         // just try a normal floating point conversion
         String sub = s.substring(start, end+1);
-        if (MSJVM_BUG_WORKAROUNDS) {
-            // The MS JVM will accept non-conformant strings
-            // rather than throwing a NumberFormatException
-            // as it should.
-            for (int i=sub.length()-1; i >= 0; i--) {
-                char c = sub.charAt(i);
-                if (('0' <= c && c <= '9') || c == '.' ||
+        // Quick test to check string contains only valid characters because
+        // Double.parseDouble() can be slow and accept input we want to reject
+        for (int i = sub.length() - 1; i >= 0; i--) {
+            char c = sub.charAt(i);
+            if (('0' <= c && c <= '9') || c == '.' ||
                     c == 'e' || c == 'E'  ||
                     c == '+' || c == '-')
-                    continue;
-                return NaN;
-            }
+                continue;
+            return NaN;
         }
         try {
-            return Double.valueOf(sub).doubleValue();
+            return Double.parseDouble(sub);
         } catch (NumberFormatException ex) {
             return NaN;
         }
@@ -682,9 +680,6 @@ public class ScriptRuntime {
 
         return result;
     }
-
-    /* Work around Microsoft Java VM bugs. */
-    private final static boolean MSJVM_BUG_WORKAROUNDS = true;
 
     public static String escapeString(String s)
     {
@@ -848,9 +843,15 @@ public class ScriptRuntime {
         if (base != 10) {
             return DToA.JS_dtobasestr(base, d);
         } else {
-            StringBuffer result = new StringBuffer();
-            DToA.JS_dtostr(result, DToA.DTOSTR_STANDARD, 0, d);
-            return result.toString();
+            // V8 FastDtoa can't convert all numbers, so try it first but
+            // fall back to old DToA in case it fails
+            String result = FastDtoa.numberToString(d);
+            if (result != null) {
+                return result;
+            }
+            StringBuilder buffer = new StringBuilder();
+            DToA.JS_dtostr(buffer, DToA.DTOSTR_STANDARD, 0, d);
+            return buffer.toString();
         }
 
     }
@@ -1722,6 +1723,14 @@ public class ScriptRuntime {
     }
 
     /**
+     * @deprecated
+     */
+    public static Object delete(Object obj, Object id, Context cx)
+    {
+        return delete(obj, id, cx, false);
+    }
+
+    /**
      * The delete operator
      *
      * See ECMA 11.4.1
@@ -1732,10 +1741,13 @@ public class ScriptRuntime {
      * define a return value. Here we assume that the [[Delete]]
      * method doesn't return a value.
      */
-    public static Object delete(Object obj, Object id, Context cx)
+    public static Object delete(Object obj, Object id, Context cx, boolean isName)
     {
         Scriptable sobj = toObjectOrNull(cx, obj);
         if (sobj == null) {
+            if (isName) {
+                return Boolean.TRUE;
+            }
             String idStr = (id == null) ? "null" : id.toString();
             throw typeError2("msg.undef.prop.delete", toString(obj), idStr);
         }
@@ -2237,26 +2249,7 @@ public class ScriptRuntime {
             throw undefCallError(obj, String.valueOf(index));
         }
 
-        Object value;
-        if (thisObj instanceof XMLObject) {
-            Scriptable sobj = thisObj;
-            do {
-                XMLObject xmlObject = (XMLObject)sobj;
-                value = xmlObject.getFunctionProperty(cx, index);
-                if (value != Scriptable.NOT_FOUND) {
-                    break;
-                }
-                sobj = xmlObject.getExtraMethodSource(cx);
-                if (sobj != null) {
-                    thisObj = sobj;
-                    if (!(sobj instanceof XMLObject)) {
-                        value = ScriptableObject.getProperty(sobj, index);
-                    }
-                }
-            } while (sobj instanceof XMLObject);
-        } else {
-            value = ScriptableObject.getProperty(thisObj, index);
-        }
+        Object value = ScriptableObject.getProperty(thisObj, index);
         if (!(value instanceof Callable)) {
             throw notFunctionError(value, elem);
         }
@@ -2304,30 +2297,11 @@ public class ScriptRuntime {
             throw undefCallError(obj, property);
         }
 
-        Object value;
-        if (thisObj instanceof XMLObject) {
-            Scriptable sobj = thisObj;
-            do {
-                XMLObject xmlObject = (XMLObject)sobj;
-                value = xmlObject.getFunctionProperty(cx, property);
-                if (value != Scriptable.NOT_FOUND) {
-                    break;
-                }
-                sobj = xmlObject.getExtraMethodSource(cx);
-                if (sobj != null) {
-                    thisObj = sobj;
-                    if (!(sobj instanceof XMLObject)) {
-                        value = ScriptableObject.getProperty(sobj, property);
-                    }
-                }
-            } while (sobj instanceof XMLObject);
-        } else {
-            value = ScriptableObject.getProperty(thisObj, property);
-            if (!(value instanceof Callable)) {
-                Object noSuchMethod = ScriptableObject.getProperty(thisObj, "__noSuchMethod__");
-                if (noSuchMethod instanceof Callable)
-                    value = new NoSuchMethodShim((Callable)noSuchMethod, property);
-            }
+        Object value = ScriptableObject.getProperty(thisObj, property);
+        if (!(value instanceof Callable)) {
+            Object noSuchMethod = ScriptableObject.getProperty(thisObj, "__noSuchMethod__");
+            if (noSuchMethod instanceof Callable)
+                value = new NoSuchMethodShim((Callable)noSuchMethod, property);
         }
 
         if (!(value instanceof Callable)) {
@@ -3559,11 +3533,9 @@ public class ScriptRuntime {
                                               Object[] propertyValues,
                                               Context cx, Scriptable scope)
     {
-        // This will initialize to all zeros, exactly what we need for old-style
-        // getterSetters values (no getters or setters in the list)
-        int [] getterSetters = new int[propertyIds.length];
-        return newObjectLiteral(propertyIds, propertyValues, getterSetters,
-                cx, scope);
+        // Passing null for getterSetters means no getters or setters
+        return newObjectLiteral(propertyIds, propertyValues, null, cx, scope);
+
     }
 
     public static Scriptable newObjectLiteral(Object[] propertyIds,
@@ -3574,33 +3546,24 @@ public class ScriptRuntime {
         Scriptable object = cx.newObject(scope);
         for (int i = 0, end = propertyIds.length; i != end; ++i) {
             Object id = propertyIds[i];
-            int getterSetter = getterSetters[i];
+            int getterSetter = getterSetters == null ? 0 : getterSetters[i];
             Object value = propertyValues[i];
             if (id instanceof String) {
                 if (getterSetter == 0) {
                     if (isSpecialProperty((String)id)) {
                         specialRef(object, (String)id, cx).set(cx, value);
                     } else {
-                        ScriptableObject.putProperty(object, (String)id, value);
+                        object.put((String)id, object, value);
                     }
                 } else {
-                    Callable fun;
-                    String definer;
-                    if (getterSetter < 0)   // < 0 means get foo() ...
-                        definer = "__defineGetter__";
-                    else
-                        definer = "__defineSetter__";
-                    fun = getPropFunctionAndThis(object, definer, cx);
-                    // Must consume the last scriptable object in cx
-                    lastStoredScriptable(cx);
-                    Object[] outArgs = new Object[2];
-                    outArgs[0] = id;
-                    outArgs[1] = value;
-                    fun.call(cx, scope, object, outArgs);
+                    ScriptableObject so = (ScriptableObject)object;
+                    Callable getterOrSetter = (Callable)value;
+                    boolean isSetter = getterSetter == 1;
+                    so.setGetterOrSetter((String)id, 0, getterOrSetter, isSetter);
                 }
             } else {
                 int index = ((Integer)id).intValue();
-                ScriptableObject.putProperty(object, index, value);
+                object.put(index, object, value);
             }
         }
         return object;

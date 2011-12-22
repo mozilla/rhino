@@ -190,8 +190,8 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         if (! (Modifier.isInterface(modifiers) ||
                Modifier.isAbstract(modifiers)))
         {
-            MemberBox[] ctors = members.ctors;
-            int index = NativeJavaMethod.findFunction(cx, ctors, args);
+            NativeJavaMethod ctors = members.ctors;
+            int index = ctors.findCachedFunction(cx, args);
             if (index < 0) {
                 String sig = NativeJavaMethod.scriptSignature(args);
                 throw Context.reportRuntimeError2(
@@ -199,7 +199,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             }
 
             // Found the constructor, so try invoking it.
-            return constructSpecific(cx, scope, args, ctors[index]);
+            return constructSpecific(cx, scope, args, ctors.methods[index]);
         } else {
             Scriptable topLevel = ScriptableObject.getTopLevelScope(this);
             String msg = "";

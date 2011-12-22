@@ -115,7 +115,6 @@ public class FunctionNode extends ScriptNode {
     // codegen variables
     private int functionType;
     private boolean needsActivation;
-    private boolean ignoreDynamicScope;
     private boolean isGenerator;
     private List<Node> generatorResumePoints;
     private Map<Node,int[]> liveLocals;
@@ -303,8 +302,7 @@ public class FunctionNode extends ScriptNode {
      * call frame instead.
      *
      * @return true if this function needs activation.  It could be needed
-     * if there is a lexical closure, or dynamic scope, or in a number of
-     * other situations.
+     * if there is a lexical closure, or in a number of other situations.
      */
     public boolean requiresActivation() {
         return needsActivation;
@@ -312,14 +310,6 @@ public class FunctionNode extends ScriptNode {
 
     public void setRequiresActivation() {
         needsActivation = true;
-    }
-
-    public boolean getIgnoreDynamicScope() {
-        return ignoreDynamicScope;
-    }
-
-    public void setIgnoreDynamicScope() {
-        ignoreDynamicScope = true;
     }
 
     public boolean isGenerator() {

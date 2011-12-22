@@ -255,7 +255,7 @@ class JavaMembers
 
         if (isCtor) {
             // Explicit request for an overloaded constructor
-            methodsOrCtors = ctors;
+            methodsOrCtors = ctors.methods;
         } else {
             // Explicit request for an overloaded method
             String trueName = name.substring(0,sigStart);
@@ -667,10 +667,11 @@ class JavaMembers
 
         // Reflect constructors
         Constructor<?>[] constructors = getAccessibleConstructors();
-        ctors = new MemberBox[constructors.length];
+        MemberBox[] ctorMembers = new MemberBox[constructors.length];
         for (int i = 0; i != constructors.length; ++i) {
-            ctors[i] = new MemberBox(constructors[i]);
+            ctorMembers[i] = new MemberBox(constructors[i]);
         }
+        ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
     }
 
     private Constructor<?>[] getAccessibleConstructors()
@@ -892,7 +893,7 @@ class JavaMembers
     private Map<String,FieldAndMethods> fieldAndMethods;
     private Map<String,Object> staticMembers;
     private Map<String,FieldAndMethods> staticFieldAndMethods;
-    MemberBox[] ctors;
+    NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
     private boolean includePrivate;
 }
 
