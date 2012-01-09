@@ -41,6 +41,7 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
@@ -210,14 +211,27 @@ public class Node implements Iterable<Node>
      *     this node
      */
     public String getJsDoc() {
-        return (String) getProp(JSDOC_PROP);
+        Comment comment = getJsDocNode();
+        if (comment != null) {
+          return comment.getValue();
+        }
+        return null;
+    }
+
+    /**
+     * Gets the JsDoc Comment object attached to this node.
+     * @return the Comment or {@code null} if no JsDoc is attached to
+     *     this node
+     */
+    public Comment getJsDocNode() {
+        return (Comment) getProp(JSDOC_PROP);
     }
 
     /**
      * Sets the JsDoc comment string attached to this node.
      */
-    public void setJsDoc(String jsdoc) {
-        putProp(JSDOC_PROP, jsdoc);
+    public void setJsDocNode(Comment jsdocNode) {
+        putProp(JSDOC_PROP, jsdocNode);
     }
 
     public boolean hasChildren() {

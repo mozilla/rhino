@@ -136,7 +136,7 @@ class TokenStream
             Id_function      = Token.FUNCTION,
             Id_if            = Token.IF,
             Id_in            = Token.IN,
-            Id_let           = Token.LET,
+            Id_let           = Token.LET,  // reserved ES5 strict
             Id_new           = Token.NEW,
             Id_null          = Token.NULL,
             Id_return        = Token.RETURN,
@@ -148,44 +148,44 @@ class TokenStream
             Id_void          = Token.VOID,
             Id_while         = Token.WHILE,
             Id_with          = Token.WITH,
-            Id_yield         = Token.YIELD,
+            Id_yield         = Token.YIELD,  // reserved ES5 strict
 
             // the following are #ifdef RESERVE_JAVA_KEYWORDS in jsscan.c
-            Id_abstract      = Token.RESERVED,
-            Id_boolean       = Token.RESERVED,
-            Id_byte          = Token.RESERVED,
+            Id_abstract      = Token.RESERVED,  // ES3 only
+            Id_boolean       = Token.RESERVED,  // ES3 only
+            Id_byte          = Token.RESERVED,  // ES3 only
             Id_catch         = Token.CATCH,
-            Id_char          = Token.RESERVED,
+            Id_char          = Token.RESERVED,  // ES3 only
             Id_class         = Token.RESERVED,
-            Id_const         = Token.CONST,
+            Id_const         = Token.CONST,     // reserved
             Id_debugger      = Token.DEBUGGER,
-            Id_double        = Token.RESERVED,
+            Id_double        = Token.RESERVED,  // ES3 only
             Id_enum          = Token.RESERVED,
             Id_extends       = Token.RESERVED,
-            Id_final         = Token.RESERVED,
+            Id_final         = Token.RESERVED,  // ES3 only
             Id_finally       = Token.FINALLY,
-            Id_float         = Token.RESERVED,
-            Id_goto          = Token.RESERVED,
-            Id_implements    = Token.RESERVED,
+            Id_float         = Token.RESERVED,  // ES3 only
+            Id_goto          = Token.RESERVED,  // ES3 only
+            Id_implements    = Token.RESERVED,  // ES3, ES5 strict
             Id_import        = Token.RESERVED,
             Id_instanceof    = Token.INSTANCEOF,
-            Id_int           = Token.RESERVED,
-            Id_interface     = Token.RESERVED,
-            Id_long          = Token.RESERVED,
-            Id_native        = Token.RESERVED,
-            Id_package       = Token.RESERVED,
-            Id_private       = Token.RESERVED,
-            Id_protected     = Token.RESERVED,
-            Id_public        = Token.RESERVED,
-            Id_short         = Token.RESERVED,
-            Id_static        = Token.RESERVED,
+            Id_int           = Token.RESERVED,  // ES3
+            Id_interface     = Token.RESERVED,  // ES3, ES5 strict
+            Id_long          = Token.RESERVED,  // ES3 only
+            Id_native        = Token.RESERVED,  // ES3 only
+            Id_package       = Token.RESERVED,  // ES3, ES5 strict
+            Id_private       = Token.RESERVED,  // ES3, ES5 strict
+            Id_protected     = Token.RESERVED,  // ES3, ES5 strict
+            Id_public        = Token.RESERVED,  // ES3, ES5 strict
+            Id_short         = Token.RESERVED,  // ES3 only
+            Id_static        = Token.RESERVED,  // ES3, ES5 strict
             Id_super         = Token.RESERVED,
-            Id_synchronized  = Token.RESERVED,
+            Id_synchronized  = Token.RESERVED,  // ES3 only
             Id_throw         = Token.THROW,
-            Id_throws        = Token.RESERVED,
-            Id_transient     = Token.RESERVED,
+            Id_throws        = Token.RESERVED,  // ES3 only
+            Id_transient     = Token.RESERVED,  // ES3 only
             Id_try           = Token.TRY,
-            Id_volatile      = Token.RESERVED;
+            Id_volatile      = Token.RESERVED;  // ES3 only
 
         int id;
         String s = name;
@@ -426,6 +426,9 @@ class TokenStream
                             string = result == Token.LET ? "let" : "yield";
                             result = Token.NAME;
                         }
+                        // Save the string in case we need to use in
+                        // object literal definitions.
+                        this.string = (String)allStrings.intern(str);
                         if (result != Token.RESERVED) {
                             return result;
                         } else if (!parser.compilerEnv.
@@ -434,6 +437,10 @@ class TokenStream
                             return result;
                         }
                     }
+                } else if (isKeyword(str)) {
+                    // If a string contains unicodes, and converted to a keyword,
+                    // we convert the last character back to unicode
+                    str = convertLastCharToHex(str);
                 }
                 this.string = (String)allStrings.intern(str);
                 return Token.NAME;
@@ -540,7 +547,7 @@ class TokenStream
                 quoteChar = c;
                 stringBufferTop = 0;
 
-                c = getChar();
+                c = getChar(false);
             strLoop: while (c != quoteChar) {
                     if (c == '\n' || c == EOF_CHAR) {
                         ungetChar(c);
@@ -634,7 +641,7 @@ class TokenStream
                         }
                     }
                     addToString(c);
-                    c = getChar();
+                    c = getChar(false);
                 }
 
                 String str = getStringFromBuffer();
@@ -1299,6 +1306,11 @@ class TokenStream
 
     private int getChar() throws IOException
     {
+        return getChar(true);
+    }
+
+    private int getChar(boolean skipFormattingChars) throws IOException
+    {
         if (ungetCursor != 0) {
             cursor++;
             return ungetBuffer[--ungetCursor];
@@ -1341,7 +1353,7 @@ class TokenStream
                 }
             } else {
                 if (c == BYTE_ORDER_MARK) return c; // BOM is considered whitespace
-                if (isJSFormatChar(c)) {
+                if (skipFormattingChars && isJSFormatChar(c)) {
                     continue;
                 }
                 if (ScriptRuntime.isJSLineTerminator(c)) {
@@ -1558,6 +1570,19 @@ class TokenStream
             commentCursor = -1;
             return comment.toString();
         }
+    }
+
+    private String convertLastCharToHex(String str) {
+      int lastIndex = str.length()-1;
+      StringBuffer buf = new StringBuffer(
+          str.substring(0, lastIndex));
+      buf.append("\\u");
+      String hexCode = Integer.toHexString(str.charAt(lastIndex));
+      for (int i = 0; i < 4-hexCode.length(); ++i) {
+        buf.append('0');
+      }
+      buf.append(hexCode);
+      return buf.toString();
     }
 
     // stuff other than whitespace since start of line

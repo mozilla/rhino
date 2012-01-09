@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import org.mozilla.javascript.ast.*;
 
 import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.testing.TestErrorReporter;
@@ -14,6 +15,13 @@ import java.io.StringReader;
 import java.util.List;
 
 public class ParserTest extends TestCase {
+    boolean allowKeywordsAsObjectLiteralsKeys = false;
+
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      allowKeywordsAsObjectLiteralsKeys = false;
+    }
 
     public void testAutoSemiColonBetweenNames() {
         AstRoot root = parse("\nx\ny\nz\n");
@@ -36,6 +44,18 @@ public class ParserTest extends TestCase {
         assertEquals(1, root.getComments().size());
 
         assertEquals("var s = 3;\nvar t = 1;\n", root.toSource());
+    }
+
+    public void testAutoSemiBeforeComment1() {
+        parse("var a = 1\n/** a */ var b = 2");
+    }
+
+    public void testAutoSemiBeforeComment2() {
+        parse("var a = 1\n/** a */\n var b = 2");
+    }
+
+    public void testAutoSemiBeforeComment3() {
+        parse("var a = 1\n/** a */\n /** b */ var b = 2");
     }
 
     public void testLinenoAssign() {
@@ -347,7 +367,7 @@ public class ParserTest extends TestCase {
 
         assertEquals(1, var1.getLineno());
         assertEquals(1, firstVarName.getLineno());
-        assertEquals(2, var1Add.getLineno());
+        assertEquals(1, var1Add.getLineno());
         assertEquals(1, var1Add.getLeft().getLineno());
         assertEquals(3, var1Add.getRight().getLineno());
 
@@ -361,7 +381,7 @@ public class ParserTest extends TestCase {
 
         assertEquals(8, var3.getLineno());
         assertEquals(8, thirdVarName.getLineno());
-        assertEquals(9, thirdVarDiv.getLineno());
+        assertEquals(8, thirdVarDiv.getLineno());
         assertEquals(8, thirdVarDiv.getLeft().getLineno());
         assertEquals(9, thirdVarDiv.getRight().getLineno());
     }
@@ -484,7 +504,7 @@ public class ParserTest extends TestCase {
         AstNode rhs = compare.getRight();
 
         assertEquals(1, lhs.getLineno());
-        assertEquals(2, compare.getLineno());
+        assertEquals(1, compare.getLineno());
         assertEquals(3, rhs.getLineno());
     }
 
@@ -499,7 +519,7 @@ public class ParserTest extends TestCase {
         AstNode rhs = compare.getRight();
 
         assertEquals(1, lhs.getLineno());
-        assertEquals(2, compare.getLineno());
+        assertEquals(1, compare.getLineno());
         assertEquals(3, rhs.getLineno());
     }
 
@@ -514,7 +534,7 @@ public class ParserTest extends TestCase {
         AstNode rhs = assign.getRight();
 
         assertEquals(1, lhs.getLineno());
-        assertEquals(2, assign.getLineno());
+        assertEquals(1, assign.getLineno());
         assertEquals(3, rhs.getLineno());
     }
 
@@ -531,7 +551,7 @@ public class ParserTest extends TestCase {
         AstNode aRef = comma2.getLeft();
         AstNode bRef = comma2.getRight();
 
-        assertEquals(2, comma1.getLineno());
+        assertEquals(1, comma1.getLineno());
         assertEquals(1, comma2.getLineno());
         assertEquals(1, aRef.getLineno());
         assertEquals(2, bRef.getLineno());
@@ -579,10 +599,21 @@ public class ParserTest extends TestCase {
       AstNode cName = orClause.getRight();
 
       assertEquals(1, ifStmt.getLineno());
-      assertEquals(2, orClause.getLineno());
+      assertEquals(1, orClause.getLineno());
       assertEquals(1, andClause.getLineno());
       assertEquals(4, cName.getLineno());
 
+    }
+
+    public void testObjectLitGetterAndSetter() {
+        AstNode root = parse(
+            "'use strict';\n" +
+            "function App() {}\n" +
+            "App.prototype = {\n" +
+            "  get appData() { return this.appData_; },\n" +
+            "  set appData(data) { this.appData_ = data; }\n" +
+            "};");
+        assertNotNull(root);
     }
 
     public void testObjectLitLocation() {
@@ -616,7 +647,8 @@ public class ParserTest extends TestCase {
       AstNode thirdValue = thirdObjectLit.getRight();
 
       assertEquals(1, firstVarName.getLineno());
-      assertEquals(2, firstObjectLit.getLineno());
+      assertEquals(2, objectLiteral.getLineno());
+      assertEquals(3, firstObjectLit.getLineno());
       assertEquals(3, firstKey.getLineno());
       assertEquals(3, firstValue.getLineno());
 
@@ -691,8 +723,8 @@ public class ParserTest extends TestCase {
       AstNode bTest = andTest.getRight();
 
       assertEquals(1, ifStmt.getLineno());
-      assertEquals(4, orTest.getLineno());
-      assertEquals(3, andTest.getLineno());
+      assertEquals(2, orTest.getLineno());
+      assertEquals(2, andTest.getLineno());
       assertEquals(2, aTest.getLineno());
       assertEquals(4, bTest.getLineno());
       assertEquals(5, cTest.getLineno());
@@ -744,18 +776,18 @@ public class ParserTest extends TestCase {
 
       assertEquals(2, bigLHSExpr.getLineno());
       assertEquals(7, bigRHSExpr.getLineno());
-      assertEquals(4, eqTest.getLineno());
-      assertEquals(9, notEqTest.getLineno());
+      assertEquals(2, eqTest.getLineno());
+      assertEquals(7, notEqTest.getLineno());
 
       assertEquals(2, test1Expr.getLineno());
       assertEquals(5, test2Expr.getLineno());
       assertEquals(7, test3Expr.getLineno());
       assertEquals(10, test4Expr.getLineno());
 
-      assertEquals(3, bitOrTest.getLineno());
-      assertEquals(6, bitAndTest.getLineno());
-      assertEquals(8, bitXorTest.getLineno());
-      assertEquals(11, bitShiftTest.getLineno());
+      assertEquals(2, bitOrTest.getLineno());
+      assertEquals(5, bitAndTest.getLineno());
+      assertEquals(7, bitXorTest.getLineno());
+      assertEquals(10, bitShiftTest.getLineno());
     }
 
     public void testLinenoFunctionCall() {
@@ -798,7 +830,7 @@ public class ParserTest extends TestCase {
       AstNode bName = aDotbName.getRight();
       FunctionNode fnNode = (FunctionNode) fnAssignment.getRight();
 
-      assertEquals(2, fnAssignment.getLineno());
+      assertEquals(1, fnAssignment.getLineno());
       assertEquals(1, aDotbName.getLineno());
       assertEquals(1, aName.getLineno());
       assertEquals(2, bName.getLineno());
@@ -907,6 +939,99 @@ public class ParserTest extends TestCase {
         assertNotNull(parens.getJsDoc());
     }
 
+    public void testJSDocAttachment9() {
+        AstRoot root = parse("({/** attach me */ foo: 2});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+        ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+        Name objLitKey =
+            (Name) lit.getElements().get(0).getLeft();
+        assertNotNull(objLitKey.getJsDoc());
+    }
+
+    public void testJSDocAttachment10() {
+        AstRoot root = parse("({foo: /** attach me */ (bar)});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+        ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+        ParenthesizedExpression parens =
+            (ParenthesizedExpression) lit.getElements().get(0).getRight();
+        assertNotNull(parens.getJsDoc());
+    }
+
+    public void testJSDocAttachment11() {
+      AstRoot root = parse("({/** attach me */ get foo() {}});");
+      assertNotNull(root.getComments());
+      assertEquals(1, root.getComments().size());
+      ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+      ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+      ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+      Name objLitKey =
+          (Name) lit.getElements().get(0).getLeft();
+      assertNotNull(objLitKey.getJsDoc());
+  }
+
+    public void testJSDocAttachment12() {
+      AstRoot root = parse("({/** attach me */ get 1() {}});");
+      assertNotNull(root.getComments());
+      assertEquals(1, root.getComments().size());
+      ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+      ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+      ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+      NumberLiteral number =
+          (NumberLiteral) lit.getElements().get(0).getLeft();
+      assertNotNull(number.getJsDoc());
+  }
+
+  public void testJSDocAttachment13() {
+      AstRoot root = parse("({/** attach me */ get 'foo'() {}});");
+      assertNotNull(root.getComments());
+      assertEquals(1, root.getComments().size());
+      ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+      ParenthesizedExpression pt = (ParenthesizedExpression) st.getExpression();
+      ObjectLiteral lit = (ObjectLiteral) pt.getExpression();
+      StringLiteral stringLit =
+          (StringLiteral) lit.getElements().get(0).getLeft();
+      assertNotNull(stringLit.getJsDoc());
+  }
+
+    public void testJSDocAttachment14() {
+        AstRoot root = parse("var a = (/** @type {!Foo} */ {});");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals("/** @type {!Foo} */",
+                     root.getComments().first().getValue());
+        VariableDeclaration vd = (VariableDeclaration) root.getFirstChild();
+        VariableInitializer vi = vd.getVariables().get(0);
+        assertNotNull(((ParenthesizedExpression)vi.getInitializer())
+                       .getExpression().getJsDoc());
+    }
+
+    public void testJSDocAttachment15() {
+        AstRoot root = parse("/** @private */ x(); function f() {}");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        assertNotNull(st.getExpression().getJsDoc());
+    }
+
+    public void testJSDocAttachment16() {
+        AstRoot root = parse(
+        "/** @suppress {with} */ with (context) {\n" +
+        "  eval('[' + expr + ']');\n" +
+        "}\n");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+
+        WithStatement st = (WithStatement) root.getFirstChild();
+        assertNotNull(st.getJsDoc());
+    }
+
     public void testParsingWithoutJSDoc() {
         AstRoot root = parse("var a = /** @type number */(x);", false);
         assertNotNull(root.getComments());
@@ -940,21 +1065,155 @@ public class ParserTest extends TestCase {
         AstRoot root = parseAsReader(js);
     }
 
+    public void testLinenoCommentsWithJSDoc() throws IOException {
+        AstRoot root = parseAsReader(
+            "/* foo \n" +
+            " bar \n" +
+            "*/\n" +
+            "/** @param {string} x */\n" +
+            "function a(x) {};\n");
+        assertNotNull(root.getComments());
+        assertEquals(2, root.getComments().size());
+        Comment[] comments = new Comment[2];
+        comments = root.getComments().toArray(comments);
+        assertEquals(0, comments[0].getLineno());
+        assertEquals(3, comments[1].getLineno());
+    }
+
+    public void testParseUnicodeFormatStringLiteral() {
+        AstRoot root = parse("'A\u200DB'");
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        StringLiteral stringLit = (StringLiteral) st.getExpression();
+        assertEquals("A\u200DB", stringLit.getValue());
+    }
+
+    public void testParseUnicodeFormatName() {
+        AstRoot root = parse("A\u200DB");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        assertEquals("AB", first.getString());
+    }
+
+    public void testParseUnicodeReservedKeywords1() {
+        AstRoot root = parse("\\u0069\\u0066");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        assertEquals("i\\u0066", first.getString());
+    }
+
+    public void testParseUnicodeReservedKeywords2() {
+        AstRoot root = parse("v\\u0061\\u0072");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        assertEquals("va\\u0072", first.getString());
+    }
+
+    public void testParseUnicodeReservedKeywords3() {
+        // All are keyword "while"
+        AstRoot root = parse("w\\u0068\\u0069\\u006C\\u0065;" +
+            "\\u0077\\u0068il\\u0065; \\u0077h\\u0069le;");
+        AstNode first = ((ExpressionStatement)
+            root.getFirstChild()).getExpression();
+        AstNode second = ((ExpressionStatement)
+            root.getFirstChild().getNext()).getExpression();
+        AstNode third = ((ExpressionStatement)
+            root.getFirstChild().getNext().getNext()).getExpression();
+        assertEquals("whil\\u0065", first.getString());
+        assertEquals("whil\\u0065", second.getString());
+        assertEquals("whil\\u0065", third.getString());
+    }
+
+    public void testParseObjectLiteral1() {
+      allowKeywordsAsObjectLiteralsKeys = true;
+
+      parse("({a:1});");
+      parse("({'a':1});");
+      parse("({0:1});");
+
+      // property getter and setter definitions accept string and number
+      parse("({get a() {return 1}});");
+      parse("({get 'a'() {return 1}});");
+      parse("({get 0() {return 1}});");
+
+      parse("({set a(a) {return 1}});");
+      parse("({set 'a'(a) {return 1}});");
+      parse("({set 0(a) {return 1}});");
+
+      // keywords ok
+      parse("({function:1});");
+      // reserved words ok
+      parse("({float:1});");
+    }
+
+    public void testParseObjectLiteral2() {
+      // keywords, fail
+      expectParseErrors("({function:1});",
+          new String[] { "invalid property id" });
+
+      allowKeywordsAsObjectLiteralsKeys = true;
+
+      // keywords ok
+      parse("({function:1});");
+    }
+
+    public void testParseKeywordPropertyAccess() {
+      allowKeywordsAsObjectLiteralsKeys = true;
+
+      // keywords ok
+      parse("({function:1}).function;");
+
+      // reserved words ok.
+      parse("({import:1}).import;");
+    }
+
+    private void expectParseErrors(String string, String [] errors) {
+      parse(string, errors, null, false);
+    }
+
     private AstRoot parse(String string) {
         return parse(string, true);
     }
 
     private AstRoot parse(String string, boolean jsdoc) {
-        CompilerEnvirons environment = new CompilerEnvirons();
+       return parse(string, null, null, jsdoc);
+    }
 
-        TestErrorReporter testErrorReporter = new TestErrorReporter(null, null);
+    private AstRoot parse(
+        String string, final String [] errors, final String [] warnings,
+        boolean jsdoc) {
+        CompilerEnvirons environment = new CompilerEnvirons();
+        environment.setReservedKeywordAsIdentifier(
+            allowKeywordsAsObjectLiteralsKeys);
+
+        TestErrorReporter testErrorReporter =
+            new TestErrorReporter(errors, warnings) {
+          @Override
+          public EvaluatorException runtimeError(
+               String message, String sourceName, int line, String lineSource,
+               int lineOffset) {
+             if (errors == null) {
+               throw new UnsupportedOperationException();
+             }
+             return new EvaluatorException(
+               message, sourceName, line, lineSource, lineOffset);
+           }
+        };
         environment.setErrorReporter(testErrorReporter);
 
         environment.setRecordingComments(true);
         environment.setRecordingLocalJsDocComments(jsdoc);
 
         Parser p = new Parser(environment, testErrorReporter);
-        AstRoot script = p.parse(string, null, 0);
+        AstRoot script = null;
+        try {
+          script = p.parse(string, null, 0);
+        } catch (EvaluatorException e) {
+          if (errors == null) {
+            // EvaluationExceptions should not occur when we aren't expecting
+            // errors.
+            throw e;
+          }
+        }
 
         assertTrue(testErrorReporter.hasEncounteredAllErrors());
         assertTrue(testErrorReporter.hasEncounteredAllWarnings());

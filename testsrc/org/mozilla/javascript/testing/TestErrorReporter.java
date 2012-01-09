@@ -19,7 +19,7 @@ import junit.framework.Assert;
  *
  * @author Pascal-Louis Perez
  */
-public final class TestErrorReporter extends Assert implements ErrorReporter {
+public class TestErrorReporter extends Assert implements ErrorReporter {
     private final String[] errors;
     private final String[] warnings;
     private int errorsIndex = 0;
