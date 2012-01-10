@@ -3507,6 +3507,12 @@ public class Parser
               break;
           case Token.GETPROP:
           case Token.GETELEM:
+              switch (variableType) {
+                  case Token.CONST:
+                  case Token.LET:
+                  case Token.VAR:
+                      reportError("msg.bad.assign.left");
+              }
               comma.addChildToBack(simpleAssignment(left, createName(tempName)));
               break;
           default:
