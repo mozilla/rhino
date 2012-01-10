@@ -2951,6 +2951,7 @@ public class Parser
                 return arrayComprehension(elements.get(0), pos);
             } else if (tt == Token.EOF) {
                 reportError("msg.no.bracket.arg");
+                break;
             } else {
                 if (!after_lb_or_comma) {
                     reportError("msg.no.bracket.arg");
