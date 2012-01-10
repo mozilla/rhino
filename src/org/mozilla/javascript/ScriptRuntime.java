@@ -1322,6 +1322,7 @@ public class ScriptRuntime {
             if (c == '-') {
                 if (len > 1) {
                     c = str.charAt(1);
+                    if (c == '0') return -1L; // "-0" is not an index
                     i = 1;
                     negate = true;
                 }
