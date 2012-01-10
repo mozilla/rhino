@@ -2182,6 +2182,9 @@ public final class IRFactory extends Parser
           case Token.GETELEM:
               decompileElementGet((ElementGet) node);
               break;
+          case Token.THIS:
+              decompiler.addToken(node.getType());
+              break;
           default:
               Kit.codeBug("unexpected token: "
                           + Token.typeToName(node.getType()));
