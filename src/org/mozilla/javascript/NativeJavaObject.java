@@ -381,14 +381,14 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                     // This is a native array conversion to a java array
                     // Array conversions are all equal, and preferable to object
                     // and string conversion, per LC3.
-                    return 1;
+                    return 2;
                 }
             }
             else if (to == ScriptRuntime.ObjectClass) {
-                return 2;
+                return 3;
             }
             else if (to == ScriptRuntime.StringClass) {
-                return 3;
+                return 4;
             }
             else if (to == ScriptRuntime.DateClass) {
                 if (fromObj instanceof NativeDate) {
@@ -403,10 +403,10 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                         return 1;
                     }
                 }
-                return 11;
+                return 12;
             }
             else if (to.isPrimitive() && to != Boolean.TYPE) {
-                return 3 + getSizeRank(to);
+                return 4 + getSizeRank(to);
             }
             break;
         }
