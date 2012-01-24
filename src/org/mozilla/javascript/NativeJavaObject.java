@@ -397,11 +397,9 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 }
             }
             else if (to.isInterface()) {
-                if (fromObj instanceof Function) {
-                    // See comments in coerceType
-                    if (to.getMethods().length == 1) {
-                        return 1;
-                    }
+                if (fromObj instanceof NativeObject || fromObj instanceof NativeFunction) {
+                    // See comments in createInterfaceAdapter
+                    return 1;
                 }
                 return 12;
             }
@@ -659,8 +657,8 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 Object Result = Array.newInstance(arrayType, (int)length);
                 for (int i = 0 ; i < length ; ++i) {
                     try  {
-                        Array.set(Result, i, coerceType(arrayType,
-                                                        array.get(i, array)));
+                        Array.set(Result, i, coerceTypeImpl(
+                                arrayType, array.get(i, array)));
                     }
                     catch (EvaluatorException ee) {
                         reportConversionError(value, type);
@@ -675,31 +673,10 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                     return value;
                 reportConversionError(value, type);
             }
-            else if (type.isInterface() && value instanceof Callable) {
-                // Try to use function as implementation of Java interface.
-                //
-                // XXX: Currently only instances of ScriptableObject are
-                // supported since the resulting interface proxies should
-                // be reused next time conversion is made and generic
-                // Callable has no storage for it. Weak references can
-                // address it but for now use this restriction.
-                if (value instanceof ScriptableObject) {
-                    ScriptableObject so = (ScriptableObject)value;
-                    Object key = Kit.makeHashKeyFromPair(
-                        COERCED_INTERFACE_KEY, type);
-                    Object old = so.getAssociatedValue(key);
-                    if (old != null) {
-                        // Function was already wrapped
-                        return old;
-                    }
-                    Context cx = Context.getContext();
-                    Object glue
-                        = InterfaceAdapter.create(cx, type, (Callable)value);
-                    // Store for later retrival
-                    glue = so.associateValue(key, glue);
-                    return glue;
-                }
-                reportConversionError(value, type);
+            else if (type.isInterface() && (value instanceof NativeObject
+                    || value instanceof NativeFunction)) {
+                // Try to use function/object as implementation of Java interface.
+                return createInterfaceAdapter(type, (ScriptableObject) value);
             } else {
                 reportConversionError(value, type);
             }
@@ -707,6 +684,26 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
         }
 
         return value;
+    }
+
+    protected static Object createInterfaceAdapter(Class<?>type, ScriptableObject so) {
+        // XXX: Currently only instances of ScriptableObject are
+        // supported since the resulting interface proxies should
+        // be reused next time conversion is made and generic
+        // Callable has no storage for it. Weak references can
+        // address it but for now use this restriction.
+
+        Object key = Kit.makeHashKeyFromPair(COERCED_INTERFACE_KEY, type);
+        Object old = so.getAssociatedValue(key);
+        if (old != null) {
+            // Function was already wrapped
+            return old;
+        }
+        Context cx = Context.getContext();
+        Object glue = InterfaceAdapter.create(cx, type, so);
+        // Store for later retrieval
+        glue = so.associateValue(key, glue);
+        return glue;
     }
 
     private static Object coerceToNumber(Class<?> type, Object value)
