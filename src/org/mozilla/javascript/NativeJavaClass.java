@@ -210,12 +210,8 @@ public class NativeJavaClass extends NativeJavaObject implements Function
                 // bytecode generation won't work on Dalvik VM.
                 if ("Dalvik".equals(System.getProperty("java.vm.name"))
                         && classObject.isInterface()) {
-                    if (!(args[0] instanceof ScriptableObject)) {
-                        throw ScriptRuntime.typeError1("msg.arg.not.object",
-                                ScriptRuntime.typeof(args[0]));
-                    }
-                    Object obj = createInterfaceAdapter(
-                            classObject, (ScriptableObject)args[0]);
+                    Object obj = createInterfaceAdapter(classObject,
+                            ScriptableObject.ensureScriptableObject(args[0]));
                     return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
                 }
                 // use JavaAdapter to construct a new class on the fly that
