@@ -237,7 +237,15 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     static Scriptable constructSpecific(Context cx, Scriptable scope,
                                         Object[] args, MemberBox ctor)
     {
+        Object instance = constructInternal(args, ctor);
+        // we need to force this to be wrapped, because construct _has_
+        // to return a scriptable
         Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
+        return cx.getWrapFactory().wrapNewObject(cx, topLevel, instance);
+    }
+
+    static Object constructInternal(Object[] args, MemberBox ctor)
+    {
         Class<?>[] argTypes = ctor.argTypes;
 
         if (ctor.vararg) {
@@ -290,10 +298,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             }
         }
 
-        Object instance = ctor.newInstance(args);
-        // we need to force this to be wrapped, because construct _has_
-        // to return a scriptable
-        return cx.getWrapFactory().wrapNewObject(cx, topLevel, instance);
+        return ctor.newInstance(args);
     }
 
     @Override
