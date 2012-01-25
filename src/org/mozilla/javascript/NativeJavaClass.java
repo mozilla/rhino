@@ -82,8 +82,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     protected void initMembers() {
         Class<?> cl = (Class<?>)javaObject;
         members = JavaMembers.lookupClass(parent, cl, cl, false);
-        staticFieldAndMethods
-            = members.getFieldAndMethodsObjects(this, cl, true);
+        staticFieldAndMethods = members.getFieldAndMethodsObjects(this, cl, true);
     }
 
     @Override
@@ -201,12 +200,26 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             // Found the constructor, so try invoking it.
             return constructSpecific(cx, scope, args, ctors.methods[index]);
         } else {
+            if (args.length == 0) {
+                throw Context.reportRuntimeError0("msg.adapter.zero.args");
+            }
             Scriptable topLevel = ScriptableObject.getTopLevelScope(this);
             String msg = "";
             try {
-                // trying to construct an interface; use JavaAdapter to
-                // construct a new class on the fly that implements this
-                // interface.
+                // When running on Android create an InterfaceAdapter since our
+                // bytecode generation won't work on Dalvik VM.
+                if ("Dalvik".equals(System.getProperty("java.vm.name"))
+                        && classObject.isInterface()) {
+                    if (!(args[0] instanceof ScriptableObject)) {
+                        throw ScriptRuntime.typeError1("msg.arg.not.object",
+                                ScriptRuntime.typeof(args[0]));
+                    }
+                    Object obj = createInterfaceAdapter(
+                            classObject, (ScriptableObject)args[0]);
+                    return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
+                }
+                // use JavaAdapter to construct a new class on the fly that
+                // implements/extends this interface/abstract class.
                 Object v = topLevel.get("JavaAdapter", topLevel);
                 if (v != NOT_FOUND) {
                     Function f = (Function) v;
