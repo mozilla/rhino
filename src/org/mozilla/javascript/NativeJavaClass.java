@@ -82,8 +82,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     protected void initMembers() {
         Class<?> cl = (Class<?>)javaObject;
         members = JavaMembers.lookupClass(parent, cl, cl, false);
-        staticFieldAndMethods
-            = members.getFieldAndMethodsObjects(this, cl, true);
+        staticFieldAndMethods = members.getFieldAndMethodsObjects(this, cl, true);
     }
 
     @Override
@@ -201,12 +200,22 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             // Found the constructor, so try invoking it.
             return constructSpecific(cx, scope, args, ctors.methods[index]);
         } else {
+            if (args.length == 0) {
+                throw Context.reportRuntimeError0("msg.adapter.zero.args");
+            }
             Scriptable topLevel = ScriptableObject.getTopLevelScope(this);
             String msg = "";
             try {
-                // trying to construct an interface; use JavaAdapter to
-                // construct a new class on the fly that implements this
-                // interface.
+                // When running on Android create an InterfaceAdapter since our
+                // bytecode generation won't work on Dalvik VM.
+                if ("Dalvik".equals(System.getProperty("java.vm.name"))
+                        && classObject.isInterface()) {
+                    Object obj = createInterfaceAdapter(classObject,
+                            ScriptableObject.ensureScriptableObject(args[0]));
+                    return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
+                }
+                // use JavaAdapter to construct a new class on the fly that
+                // implements/extends this interface/abstract class.
                 Object v = topLevel.get("JavaAdapter", topLevel);
                 if (v != NOT_FOUND) {
                     Function f = (Function) v;
@@ -228,7 +237,15 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     static Scriptable constructSpecific(Context cx, Scriptable scope,
                                         Object[] args, MemberBox ctor)
     {
+        Object instance = constructInternal(args, ctor);
+        // we need to force this to be wrapped, because construct _has_
+        // to return a scriptable
         Scriptable topLevel = ScriptableObject.getTopLevelScope(scope);
+        return cx.getWrapFactory().wrapNewObject(cx, topLevel, instance);
+    }
+
+    static Object constructInternal(Object[] args, MemberBox ctor)
+    {
         Class<?>[] argTypes = ctor.argTypes;
 
         if (ctor.vararg) {
@@ -281,10 +298,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             }
         }
 
-        Object instance = ctor.newInstance(args);
-        // we need to force this to be wrapped, because construct _has_
-        // to return a scriptable
-        return cx.getWrapFactory().wrapNewObject(cx, topLevel, instance);
+        return ctor.newInstance(args);
     }
 
     @Override

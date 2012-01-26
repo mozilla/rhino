@@ -348,7 +348,7 @@ public class NativeObject extends IdScriptableObject implements Map
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 ScriptableObject obj = ensureScriptableObject(arg);
-                return obj.isExtensible();
+                return Boolean.valueOf(obj.isExtensible());
               }
           case ConstructorId_preventExtensions:
               {
@@ -388,32 +388,32 @@ public class NativeObject extends IdScriptableObject implements Map
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 ScriptableObject obj = ensureScriptableObject(arg);
 
-                if (obj.isExtensible()) return false;
+                if (obj.isExtensible()) return Boolean.FALSE;
 
                 for (Object name: obj.getAllIds()) {
                   Object configurable = obj.getOwnPropertyDescriptor(cx, name).get("configurable");
                   if (Boolean.TRUE.equals(configurable))
-                    return false;
+                    return Boolean.FALSE;
                 }
 
-                return true;
+                return Boolean.TRUE;
               }
           case ConstructorId_isFrozen:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 ScriptableObject obj = ensureScriptableObject(arg);
 
-                if (obj.isExtensible()) return false;
+                if (obj.isExtensible()) return Boolean.FALSE;
 
                 for (Object name: obj.getAllIds()) {
                   ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
                   if (Boolean.TRUE.equals(desc.get("configurable")))
-                    return false;
+                    return Boolean.FALSE;
                   if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
-                    return false;
+                    return Boolean.FALSE;
                 }
 
-                return true;
+                return Boolean.TRUE;
               }
           case ConstructorId_seal:
               {
@@ -423,7 +423,7 @@ public class NativeObject extends IdScriptableObject implements Map
                 for (Object name: obj.getAllIds()) {
                   ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
                   if (Boolean.TRUE.equals(desc.get("configurable"))) {
-                    desc.put("configurable", desc, false);
+                    desc.put("configurable", desc, Boolean.FALSE);
                     obj.defineOwnProperty(cx, name, desc, false);
                   }
                 }
@@ -439,9 +439,9 @@ public class NativeObject extends IdScriptableObject implements Map
                 for (Object name: obj.getAllIds()) {
                   ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
                   if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
-                    desc.put("writable", desc, false);
+                    desc.put("writable", desc, Boolean.FALSE);
                   if (Boolean.TRUE.equals(desc.get("configurable")))
-                    desc.put("configurable", desc, false);
+                    desc.put("configurable", desc, Boolean.FALSE);
                   obj.defineOwnProperty(cx, name, desc, false);
                 }
                 obj.preventExtensions();
