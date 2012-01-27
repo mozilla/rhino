@@ -105,13 +105,14 @@ public class InterfaceAdapter
     public Object invoke(ContextFactory cf,
                          final Object target,
                          final Scriptable topScope,
+                         final Object thisObject,
                          final Method method,
                          final Object[] args)
     {
         ContextAction action = new ContextAction() {
                 public Object run(Context cx)
                 {
-                    return invokeImpl(cx, target, topScope, method, args);
+                    return invokeImpl(cx, target, topScope, thisObject, method, args);
                 }
             };
         return cf.call(action);
@@ -120,11 +121,10 @@ public class InterfaceAdapter
     Object invokeImpl(Context cx,
                       Object target,
                       Scriptable topScope,
+                      Object thisObject,
                       Method method,
                       Object[] args)
     {
-        int N = (args == null) ? 0 : args.length;
-
         Callable function;
         if (target instanceof Callable) {
             function = (Callable)target;
@@ -151,16 +151,17 @@ public class InterfaceAdapter
             }
             function = (Callable)value;
         }
-        Object[] jsargs = new Object[N + 1];
-        jsargs[N] = method.getName();
-        if (N != 0) {
-            WrapFactory wf = cx.getWrapFactory();
-            for (int i = 0; i != N; ++i) {
-                jsargs[i] = wf.wrap(cx, topScope, args[i], null);
+        WrapFactory wf = cx.getWrapFactory();
+        if (args == null) {
+            args = ScriptRuntime.emptyArgs;
+        } else {
+            for (int i = 0, N = args.length; i != N; ++i) {
+                args[i] = wf.wrap(cx, topScope, args[i], null);
             }
         }
+        Scriptable thisObj = wf.wrapAsJavaObject(cx, topScope, thisObject, null);
 
-        Object result = function.call(cx, topScope, topScope, jsargs);
+        Object result = function.call(cx, topScope, thisObj, args);
         Class<?> javaResultType = method.getReturnType();
         if (javaResultType == Void.TYPE) {
             result = null;

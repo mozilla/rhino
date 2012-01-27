@@ -160,7 +160,7 @@ public class VMBridge_jdk13 extends VMBridge
                             return "Proxy[" + target.toString() + "]";
                         }
                     }
-                    return adapter.invoke(cf, target, topScope, method, args);
+                    return adapter.invoke(cf, target, topScope, proxy, method, args);
                 }
             };
         Object proxy;
