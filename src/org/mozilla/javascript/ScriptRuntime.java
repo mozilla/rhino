@@ -82,11 +82,9 @@ public class ScriptRuntime {
     public static BaseFunction typeErrorThrower() {
       if (THROW_TYPE_ERROR == null) {
         BaseFunction thrower = new BaseFunction() {
-          
           static final long serialVersionUID = -5891740962154902286L;
-          
-            
-            @Override
+
+          @Override
           public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             throw typeError0("msg.op.not.allowed");
           }

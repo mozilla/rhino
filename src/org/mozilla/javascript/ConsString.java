@@ -38,9 +38,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
@@ -63,7 +60,7 @@ public class ConsString implements CharSequence, Serializable {
 
     private static final long serialVersionUID = -8432806714471372570L;
 
-    private transient CharSequence s1, s2;
+    private CharSequence s1, s2;
     private final int length;
     private int depth;
 
@@ -83,7 +80,8 @@ public class ConsString implements CharSequence, Serializable {
             flatten();
         }
     }
-    
+
+    // Replace with string representation when serializing
     private Object writeReplace() {
         return this.toString();
     }
