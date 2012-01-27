@@ -156,7 +156,12 @@ public class InterfaceAdapter
             args = ScriptRuntime.emptyArgs;
         } else {
             for (int i = 0, N = args.length; i != N; ++i) {
-                args[i] = wf.wrap(cx, topScope, args[i], null);
+                Object arg = args[i];
+                // neutralize wrap factory java primitive wrap feature
+                if (!(arg instanceof String || arg instanceof Number
+                        || arg instanceof Boolean)) {
+                    args[i] = wf.wrap(cx, topScope, arg, null);
+                }
             }
         }
         Scriptable thisObj = wf.wrapAsJavaObject(cx, topScope, thisObject, null);
