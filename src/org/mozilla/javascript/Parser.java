@@ -685,7 +685,7 @@ public class Parser
         return null;
     }
 
-    private void parseFunctionParams(FunctionNode fnNode)
+    private void  parseFunctionParams(FunctionNode fnNode)
         throws IOException
     {
         if (matchToken(Token.RP)) {
@@ -2868,7 +2868,11 @@ public class Parser
         try {
             String jsdoc = getAndResetJsDoc();
             int lineno = ts.lineno;
+            int begin = ts.tokenBeg;
             AstNode e = expr();
+            if (peekToken() == Token.FOR) {
+                return generatorExpression(e, begin);
+            }            
             ParenthesizedExpression pn = new ParenthesizedExpression(e);
             if (jsdoc == null) {
                 jsdoc = getAndResetJsDoc();
@@ -3063,6 +3067,88 @@ public class Parser
             popScope();
         }
     }
+    
+    private AstNode generatorExpression(AstNode result, int pos)
+        throws IOException
+    {
+        
+        List<GeneratorExpressionLoop> loops =
+                new ArrayList<GeneratorExpressionLoop>();
+        while (peekToken() == Token.FOR) {
+            loops.add(generatorExpressionLoop());
+        }
+        int ifPos = -1;
+        ConditionData data = null;
+        if (peekToken() == Token.IF) {
+            consumeToken();
+            ifPos = ts.tokenBeg - pos;
+            data = condition();
+        }
+        mustMatchToken(Token.RP, "msg.no.paren.let");
+        GeneratorExpression pn = new GeneratorExpression(pos, ts.tokenEnd - pos);
+        pn.setResult(result);
+        pn.setLoops(loops);
+        if (data != null) {
+            pn.setIfPosition(ifPos);
+            pn.setFilter(data.condition);
+            pn.setFilterLp(data.lp - pos);
+            pn.setFilterRp(data.rp - pos);
+        }
+        return pn;
+    }
+        
+    private GeneratorExpressionLoop generatorExpressionLoop()
+        throws IOException
+    {
+        if (nextToken() != Token.FOR) codeBug();
+        int pos = ts.tokenBeg;
+        int lp = -1, rp = -1, inPos = -1;
+        GeneratorExpressionLoop pn = new GeneratorExpressionLoop(pos);
+
+        pushScope(pn);
+        try {
+            if (mustMatchToken(Token.LP, "msg.no.paren.for")) {
+                lp = ts.tokenBeg - pos;
+            }
+
+            AstNode iter = null;
+            switch (peekToken()) {
+              case Token.LB:
+              case Token.LC:
+                  // handle destructuring assignment
+                  iter = destructuringPrimaryExpr();
+                  markDestructuring(iter);
+                  break;
+              case Token.NAME:
+                  consumeToken();
+                  iter = createNameNode();
+                  break;
+              default:
+                  reportError("msg.bad.var");
+            }
+
+            // Define as a let since we want the scope of the variable to
+            // be restricted to the array comprehension
+            if (iter.getType() == Token.NAME) {
+                defineSymbol(Token.LET, ts.getString(), true);
+            }
+
+            if (mustMatchToken(Token.IN, "msg.in.after.for.name"))
+                inPos = ts.tokenBeg - pos;
+            AstNode obj = expr();
+            if (mustMatchToken(Token.RP, "msg.no.paren.for.ctrl"))
+                rp = ts.tokenBeg - pos;
+
+            pn.setLength(ts.tokenEnd - pos);
+            pn.setIterator(iter);
+            pn.setIteratedObject(obj);
+            pn.setInPosition(inPos);
+            pn.setParens(lp, rp);
+            return pn;
+        } finally {
+            popScope();
+        }
+    }        
 
     private ObjectLiteral objectLiteral()
         throws IOException

@@ -263,7 +263,8 @@ public class Token
         WITHEXPR       = 159,
         DEBUGGER       = 160,
         COMMENT        = 161,
-        LAST_TOKEN     = 162;
+        GENEXPR        = 162,            
+        LAST_TOKEN     = 163;
 
     /**
      * Returns a name for the token.  If Rhino is compiled with certain
@@ -447,6 +448,7 @@ public class Token
           case LETEXPR:         return "LETEXPR";
           case DEBUGGER:        return "DEBUGGER";
           case COMMENT:         return "COMMENT";
+          case GENEXPR:         return "GENEXPR";
         }
 
         // Token without name
