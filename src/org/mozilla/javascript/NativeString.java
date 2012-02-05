@@ -198,6 +198,7 @@ final class NativeString extends IdScriptableObject
           case Id_trim:              arity=0; s="trim";              break;
           case Id_trimLeft:          arity=0; s="trimLeft";          break;              
           case Id_trimRight:         arity=0; s="trimRight";         break;                            
+          case Id_startsWith:        arity=1; s="startsWith";        break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -457,7 +458,14 @@ final class NativeString extends IdScriptableObject
                     }
 
                     return str.substring(start, end);
-                }                  
+                }
+              case Id_startsWith:
+                {
+                    String str = ScriptRuntime.toString(thisObj);   
+                    String arg = ScriptRuntime.toString(args[0]);
+                    return str.startsWith(arg);
+                }
+                                  
             }
             throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -749,7 +757,10 @@ final class NativeString extends IdScriptableObject
                 else if (c=='s') { X="substring";id=Id_substring; }
                 else if (c=='t'){X="trimRight";id=Id_trimRight;}
                 break L;
-            case 10: X="charCodeAt";id=Id_charCodeAt; break L;
+            case 10: switch (s.charAt(0)) {
+                case 'c': X="charCodeAt";id=Id_charCodeAt; break L;              
+                case 's': X="startsWith";id=Id_startsWith; break L;
+                } break L; 
             case 11: switch (s.charAt(2)) {
                 case 'L': X="toLowerCase";id=Id_toLowerCase; break L;
                 case 'U': X="toUpperCase";id=Id_toUpperCase; break L;
@@ -812,7 +823,8 @@ final class NativeString extends IdScriptableObject
         Id_trim                      = 37,
         Id_trimLeft                  = 38,
         Id_trimRight                 = 39,
-        MAX_PROTOTYPE_ID             = Id_trimRight;
+        Id_startsWith                = 40,
+        MAX_PROTOTYPE_ID             = Id_startsWith;
 
 // #/string_id_map#
 
