@@ -2418,9 +2418,21 @@ public class Parser
         inForInit = false;
         try {
             do {
-                if (peekToken() == Token.YIELD)
+                if (peekToken() == Token.YIELD) {
                     reportError("msg.yield.parenthesized");
-                result.add(assignExpr());
+                }
+                AstNode en = assignExpr();
+                if (peekToken() == Token.FOR) {
+                    try {
+                        result.add(generatorExpression(en, 0, true));
+                    }
+                    catch(IOException ex) {
+                        // #TODO
+                    }
+                }
+                else {                           
+                    result.add(en);
+                }
             } while (matchToken(Token.COMMA));
         } finally {
             inForInit = wasInForInit;
@@ -3067,8 +3079,14 @@ public class Parser
             popScope();
         }
     }
+
+    private AstNode generatorExpression(AstNode result, int pos) 
+        throws IOException
+    {
+        return generatorExpression(result, pos, false);
+    }
     
-    private AstNode generatorExpression(AstNode result, int pos)
+    private AstNode generatorExpression(AstNode result, int pos, boolean inFunctionParams)
         throws IOException
     {
         
@@ -3084,7 +3102,9 @@ public class Parser
             ifPos = ts.tokenBeg - pos;
             data = condition();
         }
-        mustMatchToken(Token.RP, "msg.no.paren.let");
+        if(!inFunctionParams) {
+            mustMatchToken(Token.RP, "msg.no.paren.let");
+        }
         GeneratorExpression pn = new GeneratorExpression(pos, ts.tokenEnd - pos);
         pn.setResult(result);
         pn.setLoops(loops);
