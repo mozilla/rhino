@@ -263,7 +263,7 @@ public class Token
         WITHEXPR       = 159,
         DEBUGGER       = 160,
         COMMENT        = 161,
-        GENEXPR        = 162,            
+        GENEXPR        = 162,
         LAST_TOKEN     = 163;
 
     /**

@@ -67,7 +67,7 @@ public class GeneratorExpressionLoop extends ForInLoop {
     @Override
     public void setIsForEach(boolean isForEach) {
         throw new UnsupportedOperationException("this node type does not support for each");
-    }    
+    }
 
     @Override
     public String toSource(int depth) {
@@ -91,5 +91,5 @@ public class GeneratorExpressionLoop extends ForInLoop {
             iterator.visit(v);
             iteratedObject.visit(v);
         }
-    }    
+    }
 }
