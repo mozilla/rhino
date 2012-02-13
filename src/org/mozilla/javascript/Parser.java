@@ -2884,7 +2884,7 @@ public class Parser
             AstNode e = expr();
             if (peekToken() == Token.FOR) {
                 return generatorExpression(e, begin);
-            }            
+            }
             ParenthesizedExpression pn = new ParenthesizedExpression(e);
             if (jsdoc == null) {
                 jsdoc = getAndResetJsDoc();
@@ -3168,7 +3168,7 @@ public class Parser
         } finally {
             popScope();
         }
-    }        
+    }
 
     private ObjectLiteral objectLiteral()
         throws IOException

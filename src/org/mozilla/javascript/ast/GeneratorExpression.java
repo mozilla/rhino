@@ -52,7 +52,7 @@ public class GeneratorExpression extends Scope {
     private AstNode filter;
     private int ifPosition = -1;
     private int lp = -1;
-    private int rp = -1;    
+    private int rp = -1;
     
     {
         type = Token.GENEXPR;
@@ -207,5 +207,5 @@ public class GeneratorExpression extends Scope {
         if (filter != null) {
             filter.visit(v);
         }
-    }    
+    }
 }

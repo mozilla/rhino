@@ -137,7 +137,7 @@ public final class IRFactory extends Parser
           case Token.FUNCTION:
               return transformFunction((FunctionNode)node);
           case Token.GENEXPR:
-              return transformGenExpr((GeneratorExpression)node);              
+              return transformGenExpr((GeneratorExpression)node);
           case Token.GETELEM:
               return transformElementGet((ElementGet)node);
           case Token.GETPROP:
@@ -615,7 +615,7 @@ public final class IRFactory extends Parser
         fn.setSourceName(currentScriptOrFn.getNextTempName());
         fn.setIsGenerator();
         fn.setFunctionType(FunctionNode.FUNCTION_EXPRESSION);
-        fn.setRequiresActivation();        
+        fn.setRequiresActivation();
       
         int functionType = fn.getFunctionType();
         int start = decompiler.markFunctionStart(functionType);
@@ -752,7 +752,7 @@ public final class IRFactory extends Parser
         decompiler.addToken(Token.RP);
 
         return body;
-    }    
+    }
 
     private Node transformIf(IfStatement n) {
         decompiler.addToken(Token.IF);
