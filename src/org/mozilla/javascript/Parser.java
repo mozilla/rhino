@@ -23,14 +23,16 @@
  *
  * Contributor(s):
  *   Mike Ang
+ *   Norris Boyd
  *   Igor Bukanov
  *   Yuh-Ruey Chen
+ *   Travis Ennis
  *   Ethan Hugg
  *   Bob Jervis
  *   Terry Lucas
  *   Mike McCabe
  *   Milen Nankov
- *   Norris Boyd
+ *   Hannes Wallnoefer
  *   Steve Yegge
  *
  * Alternatively, the contents of this file may be used under the terms of
