@@ -2990,7 +2990,7 @@ public class ScriptRuntime {
     public static boolean in(Object a, Object b, Context cx)
     {
         if (!(b instanceof Scriptable)) {
-            throw typeError0("msg.instanceof.not.object");
+            throw typeError0("msg.in.not.object");
         }
 
         return hasObjectElem((Scriptable)b, a, cx);
