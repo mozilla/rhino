@@ -1865,10 +1865,9 @@ public final class IRFactory extends Parser
                 Node ref = child.getFirstChild();
                 child.removeChild(ref);
                 n = new Node(Token.DEL_REF, ref);
-            } else if (childType == Token.CALL) {
-                n = new Node(nodeType, new Node(Token.TRUE), child);
             } else {
-                n = new Node(Token.TRUE);
+                // Always evaluate delete operand, see ES5 11.4.1 & bug #726121
+                n = new Node(nodeType, new Node(Token.TRUE), child);
             }
             return n;
           }
