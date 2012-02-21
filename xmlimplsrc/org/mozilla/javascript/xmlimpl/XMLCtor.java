@@ -283,7 +283,7 @@ class XMLCtor extends IdFunctionObject
         hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10.
      */
     @Override
-    public boolean hasInstance(Scriptable instance) {
+    public boolean hasInstance(Object instance) {
         return (instance instanceof XML || instance instanceof XMLList);
     }
 }

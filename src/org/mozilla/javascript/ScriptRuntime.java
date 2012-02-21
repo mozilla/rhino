@@ -2994,11 +2994,7 @@ public class ScriptRuntime {
             throw typeError0("msg.instanceof.not.object");
         }
 
-        // for primitive values on LHS, return false
-        if (! (a instanceof Scriptable))
-            return false;
-
-        return ((Scriptable)b).hasInstance((Scriptable)a);
+        return ((Scriptable)b).hasInstance(a);
     }
 
     /**
@@ -3006,8 +3002,11 @@ public class ScriptRuntime {
      *
      * @return true iff rhs appears in lhs' proto chain
      */
-    public static boolean jsDelegatesTo(Scriptable lhs, Scriptable rhs) {
-        Scriptable proto = lhs.getPrototype();
+    public static boolean jsDelegatesTo(Object lhs, Scriptable rhs) {
+        // for primitive values on LHS, return false
+        if (! (lhs instanceof Scriptable))
+            return false;
+        Scriptable proto = ((Scriptable) lhs).getPrototype();
 
         while (proto != null) {
             if (proto.equals(rhs)) return true;
@@ -3040,6 +3039,50 @@ public class ScriptRuntime {
         return hasObjectElem((Scriptable)b, a, cx);
     }
 
+    /**
+     * 11.8.5 The Abstract Relational Comparison Algorithm
+     * 
+     * @param val1 left operand
+     * @param val2 right operand
+     * @param leftFirst evaluation order flag
+     * @param undef return value if either operand is NaN
+     * @return {@code val1 < val2}
+     */
+    public static boolean cmp_LT(Object val1, Object val2, boolean leftFirst, boolean undef)
+    {
+        double d1, d2;
+        if (val1 instanceof Number && val2 instanceof Number) {
+            d1 = ((Number)val1).doubleValue();
+            d2 = ((Number)val2).doubleValue();
+        } else {
+            if (leftFirst) {
+                if (val1 instanceof Scriptable)
+                    val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
+                if (val2 instanceof Scriptable)
+                    val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
+            } else {
+                if (val2 instanceof Scriptable)
+                    val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
+                if (val1 instanceof Scriptable)
+                    val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
+            }
+            if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
+                return val1.toString().compareTo(val2.toString()) < 0;
+            }
+            d1 = toNumber(val1);
+            d2 = toNumber(val2);
+        }
+        if (d1 != d1 || d2 != d2) {
+            // if either value is NaN return the default value for undefined
+            return undef;
+        }
+        return d1 < d2;
+    }
+
+    /**
+     * @deprecated {@link #cmp_LT(Object, Object, boolean, boolean)}
+     */
+    @Deprecated
     public static boolean cmp_LT(Object val1, Object val2)
     {
         double d1, d2;
@@ -3060,6 +3103,10 @@ public class ScriptRuntime {
         return d1 < d2;
     }
 
+    /**
+     * @deprecated {@link #cmp_LT(Object, Object, boolean, boolean)}
+     */
+    @Deprecated
     public static boolean cmp_LE(Object val1, Object val2)
     {
         double d1, d2;

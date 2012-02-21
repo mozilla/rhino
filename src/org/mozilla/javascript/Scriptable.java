@@ -330,13 +330,13 @@ public interface Scriptable {
      * return an appropriate value.  See the JS 1.3 language documentation for more
      * detail.
      *
-     * <p>This operator corresponds to the proposed EMCA [[HasInstance]] operator.
+     * <p>This operator corresponds to the EMCA [[HasInstance]] operator.
      *
      * @param instance The value that appeared on the LHS of the instanceof
      *              operator
      *
      * @return an implementation dependent value
      */
-    public boolean hasInstance(Scriptable instance);
+    public boolean hasInstance(Object instance);
 }
 
