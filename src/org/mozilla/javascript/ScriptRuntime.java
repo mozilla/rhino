@@ -166,27 +166,6 @@ public class ScriptRuntime {
     public static final Class<Scriptable> ScriptableClass =
         Scriptable.class;
 
-    private static final String[] lazilyNames = {
-        "RegExp",        "org.mozilla.javascript.regexp.NativeRegExp",
-        "Packages",      "org.mozilla.javascript.NativeJavaTopPackage",
-        "java",          "org.mozilla.javascript.NativeJavaTopPackage",
-        "javax",         "org.mozilla.javascript.NativeJavaTopPackage",
-        "org",           "org.mozilla.javascript.NativeJavaTopPackage",
-        "com",           "org.mozilla.javascript.NativeJavaTopPackage",
-        "edu",           "org.mozilla.javascript.NativeJavaTopPackage",
-        "net",           "org.mozilla.javascript.NativeJavaTopPackage",
-        "getClass",      "org.mozilla.javascript.NativeJavaTopPackage",
-        "JavaAdapter",   "org.mozilla.javascript.JavaAdapter",
-        "JavaImporter",  "org.mozilla.javascript.ImporterTopLevel",
-        "Continuation",  "org.mozilla.javascript.NativeContinuation",
-        //	TODO	Grotesque hack using literal string (xml) just to minimize
-		//			changes for now
-        "XML",           "(xml)",
-        "XMLList",       "(xml)",
-        "Namespace",     "(xml)",
-        "QName",         "(xml)",
-    };
-
     // Locale object used to request locale-neutral operations.
     public static Locale ROOT_LOCALE = new Locale("");
 
@@ -253,23 +232,45 @@ public class ScriptRuntime {
         boolean withXml = cx.hasFeature(Context.FEATURE_E4X) &&
                           cx.getE4xImplementationFactory() != null;
 
-        for (int i = 0; i != lazilyNames.length; i += 2) {
-            String topProperty = lazilyNames[i];
-            String className = lazilyNames[i + 1];
-            if (!withXml && className.equals("(xml)")) {
-                continue;
-            } else if (withXml && className.equals("(xml)")) {
-				className = cx.getE4xImplementationFactory().
-                               getImplementationClassName();
-			}
-            new LazilyLoadedCtor(scope, topProperty, className, sealed, true);
+        // define lazy-loaded properties using their class name
+        new LazilyLoadedCtor(scope, "RegExp",
+                "org.mozilla.javascript.regexp.NativeRegExp", sealed, true);
+        new LazilyLoadedCtor(scope, "Packages",
+                "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+        new LazilyLoadedCtor(scope, "getClass",
+                "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+        new LazilyLoadedCtor(scope, "JavaAdapter",
+                "org.mozilla.javascript.JavaAdapter", sealed, true);
+        new LazilyLoadedCtor(scope, "JavaImporter",
+                "org.mozilla.javascript.ImporterTopLevel", sealed, true);
+        new LazilyLoadedCtor(scope, "Continuation",
+                "org.mozilla.javascript.NativeContinuation", sealed, true);
+
+        for (String packageName : getTopPackageNames()) {
+            new LazilyLoadedCtor(scope, packageName,
+                    "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
         }
 
+        if (withXml) {
+            String xmlImpl = cx.getE4xImplementationFactory().getImplementationClassName();
+            new LazilyLoadedCtor(scope, "XML", xmlImpl, sealed, true);
+            new LazilyLoadedCtor(scope, "XMLList", xmlImpl, sealed, true);
+            new LazilyLoadedCtor(scope, "Namespace", xmlImpl, sealed, true);
+            new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
+        }
+     
         if (scope instanceof TopLevel) {
             ((TopLevel)scope).cacheBuiltins();
         }
 
         return scope;
+    }
+    
+    static String[] getTopPackageNames() {
+        // Include "android" top package if running on Android
+        return "Dalvik".equals(System.getProperty("java.vm.name")) ?
+            new String[] { "java", "javax", "org", "com", "edu", "net", "android" } :
+            new String[] { "java", "javax", "org", "com", "edu", "net" };
     }
 
     public static ScriptableObject getLibraryScopeOrNull(Scriptable scope)
