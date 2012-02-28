@@ -936,7 +936,7 @@ public class Parser
                 if (compilerEnv.isStrictMode() && !pn.hasSideEffects()) {
                     int beg = pn.getPosition();
                     beg = Math.max(beg, lineBeginningFor(beg));
-                    addStrictWarning(pn instanceof EmptyExpression
+                    addStrictWarning(pn instanceof EmptyStatement
                                      ? "msg.extra.trailing.semi"
                                      : "msg.no.side.effects",
                                      "", beg, nodeEnd(pn) - beg);
@@ -962,7 +962,7 @@ public class Parser
         // We don't make error nodes explicitly part of the tree;
         // they get added to the ErrorReporter.  May need to do
         // something different here.
-        return new EmptyExpression(pos, ts.tokenBeg - pos);
+        return new EmptyStatement(pos, ts.tokenBeg - pos);
     }
 
     private AstNode statementHelper()
@@ -1049,7 +1049,7 @@ public class Parser
           case Token.SEMI:
               consumeToken();
               pos = ts.tokenBeg;
-              pn = new EmptyExpression(pos, ts.tokenEnd - pos);
+              pn = new EmptyStatement(pos, ts.tokenEnd - pos);
               pn.setLineno(ts.lineno);
               return pn;
 
