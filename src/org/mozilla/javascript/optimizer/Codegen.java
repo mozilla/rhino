@@ -507,10 +507,38 @@ public class Codegen implements Evaluator
         cfw.startMethod("call",
                         "(Lorg/mozilla/javascript/Context;" +
                         "Lorg/mozilla/javascript/Scriptable;" +
-                        "Lorg/mozilla/javascript/Scriptable;" +
+                        "Ljava/lang/Object;" +
                         "[Ljava/lang/Object;)Ljava/lang/Object;",
                         (short)(ClassFileWriter.ACC_PUBLIC
                                 | ClassFileWriter.ACC_FINAL));
+
+        // Generate code for:
+        // Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, thisObject, scope);
+        // if (thisObj == null) {
+        //     thisObj = ScriptRuntime.getTopCallScope(cx);
+        // }
+        int thisObjNull = cfw.acquireLabel();
+        cfw.addALoad(1);
+        cfw.addALoad(3);
+        cfw.addALoad(2);
+        cfw.addInvoke(ByteCode.INVOKESTATIC,
+                      "org/mozilla/javascript/ScriptRuntime",
+                      "toObjectOrNull",
+                      "(Lorg/mozilla/javascript/Context;"
+                      +"Ljava/lang/Object;"
+                      +"Lorg/mozilla/javascript/Scriptable;"
+                      +")Lorg/mozilla/javascript/Scriptable;");
+        cfw.addAStore(5);
+        cfw.addALoad(5);
+        cfw.add(ByteCode.IFNONNULL, thisObjNull);
+        cfw.addALoad(1);
+        cfw.addInvoke(ByteCode.INVOKESTATIC,
+                      "org/mozilla/javascript/ScriptRuntime",
+                      "getTopCallScope",
+                      "(Lorg/mozilla/javascript/Context;"
+                      +")Lorg/mozilla/javascript/Scriptable;");
+        cfw.addAStore(5);
+        cfw.markLabel(thisObjNull);
 
         // Generate code for:
         // if (!ScriptRuntime.hasTopCall(cx)) {
@@ -528,7 +556,7 @@ public class Codegen implements Evaluator
         cfw.addALoad(0);
         cfw.addALoad(1);
         cfw.addALoad(2);
-        cfw.addALoad(3);
+        cfw.addALoad(5);
         cfw.addALoad(4);
         cfw.addInvoke(ByteCode.INVOKESTATIC,
                       "org/mozilla/javascript/ScriptRuntime",
@@ -546,7 +574,7 @@ public class Codegen implements Evaluator
         cfw.addALoad(0);
         cfw.addALoad(1);
         cfw.addALoad(2);
-        cfw.addALoad(3);
+        cfw.addALoad(5);
         cfw.addALoad(4);
 
         int end = scriptOrFnNodes.length;
@@ -609,8 +637,8 @@ public class Codegen implements Evaluator
                           getBodyMethodSignature(n));
             cfw.add(ByteCode.ARETURN);
         }
-        cfw.stopMethod((short)5);
-        // 5: this, cx, scope, js this, args[]
+        cfw.stopMethod((short)6);
+        // 5: this, cx, scope, js this, args[], js this'
     }
 
     private void generateMain(ClassFileWriter cfw)
@@ -658,7 +686,7 @@ public class Codegen implements Evaluator
                       "call",
                       "(Lorg/mozilla/javascript/Context;"
                       +"Lorg/mozilla/javascript/Scriptable;"
-                      +"Lorg/mozilla/javascript/Scriptable;"
+                      +"Ljava/lang/Object;"
                       +"[Ljava/lang/Object;"
                       +")Ljava/lang/Object;");
 
@@ -3489,7 +3517,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 "call",
                 "(Lorg/mozilla/javascript/Context;"
                 +"Lorg/mozilla/javascript/Scriptable;"
-                +"Lorg/mozilla/javascript/Scriptable;"
+                +"Ljava/lang/Object;"
                 +"[Ljava/lang/Object;"
                 +")Ljava/lang/Object;");
         }

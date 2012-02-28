@@ -107,7 +107,7 @@ public final class NativeGenerator extends IdScriptableObject {
             Scriptable scope = ScriptableObject.getTopLevelScope(generator);
             Callable closeGenerator = new Callable() {
                 public Object call(Context cx, Scriptable scope,
-                                   Scriptable thisObj, Object[] args) {
+                                   Object thisObj, Object[] args) {
                      return ((NativeGenerator)thisObj).resume(cx, scope,
                              GENERATOR_CLOSE, new GeneratorClosedException());
                 }
@@ -134,7 +134,7 @@ public final class NativeGenerator extends IdScriptableObject {
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(GENERATOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);

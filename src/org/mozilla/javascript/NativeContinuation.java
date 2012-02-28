@@ -74,7 +74,7 @@ public final class NativeContinuation extends IdScriptableObject
         throw Context.reportRuntimeError("Direct call is not supported");
     }
 
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
         return Interpreter.restartContinuation(this, cx, scope, args);
@@ -102,7 +102,7 @@ public final class NativeContinuation extends IdScriptableObject
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(FTAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);

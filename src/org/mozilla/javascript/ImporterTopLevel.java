@@ -257,7 +257,7 @@ public class ImporterTopLevel extends TopLevel {
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(IMPORTER_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -276,7 +276,7 @@ public class ImporterTopLevel extends TopLevel {
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private ImporterTopLevel realThis(Scriptable thisObj, IdFunctionObject f)
+    private ImporterTopLevel realThis(Object thisObj, IdFunctionObject f)
     {
         if (topScopeFlag) {
             // when used as top scope importPackage and importClass are global

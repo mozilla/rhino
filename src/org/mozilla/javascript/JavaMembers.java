@@ -167,7 +167,7 @@ class JavaMembers
                 Object[] args = { value };
                 bp.setters.call(Context.getContext(),
                                 ScriptableObject.getTopLevelScope(scope),
-                                scope, args);
+                                (Object) scope, args);
             }
         }
         else {

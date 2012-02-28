@@ -66,7 +66,7 @@ public class NativeJavaConstructor extends BaseFunction
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
         return NativeJavaClass.constructSpecific(cx, scope, args, ctor);

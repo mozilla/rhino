@@ -233,8 +233,9 @@ class XMLCtor extends IdFunctionObject
         initPrototypeMethod(XMLCTOR_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(XMLCTOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);

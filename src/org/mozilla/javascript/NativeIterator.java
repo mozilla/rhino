@@ -126,7 +126,7 @@ public final class NativeIterator extends IdScriptableObject {
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(ITERATOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -158,7 +158,7 @@ public final class NativeIterator extends IdScriptableObject {
 
     /* The JavaScript constructor */
     private static Object jsConstructor(Context cx, Scriptable scope,
-                                        Scriptable thisObj, Object[] args)
+                                        Object thisObj, Object[] args)
     {
         if (args.length == 0 || args[0] == null ||
             args[0] == Undefined.instance)
