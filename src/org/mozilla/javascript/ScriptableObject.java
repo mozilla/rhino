@@ -31,6 +31,7 @@
  *   Steve Weiss
  *   Hannes Wallnoefer
  *   Travis Ennis
+ *   André Bargull
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -987,9 +988,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 args[0] = hint;
             }
             Object v = getProperty(object, methodName);
-            if(v instanceof UniqueTag && object instanceof NativeObject) {
-              return ScriptRuntime.defaultObjectToString(object);
-            }
             if (!(v instanceof Function))
                 continue;
             Function fun = (Function) v;

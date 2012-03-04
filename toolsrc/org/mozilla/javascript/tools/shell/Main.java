@@ -28,6 +28,7 @@
  *   Rob Ginda
  *   Kurt Westerfeld
  *   Hannes Wallnoefer
+ *   André Bargull
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -506,7 +507,7 @@ public class Main
                           source.trim().startsWith("function")))
                     {
                         try {
-                            ps.println(Context.toString(result));
+                            ps.println(Context.valueToSource(result));
                         } catch (RhinoException rex) {
                             ToolErrorReporter.reportException(
                                 cx.getErrorReporter(), rex);
