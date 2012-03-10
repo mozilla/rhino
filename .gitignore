@@ -1,0 +1,8 @@
+/nbproject/
+/nbproject/private/
+/build/
+/lib/
+/nbbuild.xml
+/manifest.mf
+/dist/
+*.bak
