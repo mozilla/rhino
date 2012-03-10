@@ -901,6 +901,13 @@ public class ScriptRuntime {
             Scriptable obj = (Scriptable)value;
             // Wrapped Java objects won't have "toSource" and will report
             // errors for get()s of nonexistent name, so use has() first
+            // this is true except of java.lang.String which has a prototype of NativeString
+            if(obj instanceof NativeJavaObject) {
+                Object str = ((NativeJavaObject)obj).getUnderlyingObject();
+                if(str instanceof String ) {
+                    return "\"" + (String)str + "\"";
+                }
+            }
             if (ScriptableObject.hasProperty(obj, "toSource")) {
                 Object v = ScriptableObject.getProperty(obj, "toSource");
                 if (v instanceof Function) {
@@ -912,7 +919,7 @@ public class ScriptRuntime {
                     return toString(f.call(cx, scope, obj, emptyArgs));
                 }
             }
-            return "{}";
+            return toString(value);
         }
         warnAboutNonJSObject(value);
         return value.toString();
