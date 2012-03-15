@@ -1012,10 +1012,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 }
             }
         }
-        //if we have fallen this far and we have a native object, then return {}
-        if(object instanceof NativeObject) {
-            return "{}";
-        }
         // fall through to error
         String arg = (typeHint == null) ? "undefined" : typeHint.getName();
         throw ScriptRuntime.typeError1("msg.default.value", arg);
