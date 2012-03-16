@@ -882,8 +882,8 @@ public class ScriptRuntime {
         }
         // Wrapped CharSequences, Numbers and Booleans share their source
         // representation with the internal types
-        if (value instanceof NativeJavaObject) {
-            Object obj = ((NativeJavaObject)value).javaObject;
+        if (value instanceof Wrapper) {
+            Object obj = ((Wrapper)value).unwrap();
             if (obj instanceof CharSequence || obj instanceof Number
                 || obj instanceof Boolean) {
                 value = obj;
