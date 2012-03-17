@@ -197,8 +197,8 @@ final class NativeString extends IdScriptableObject
           case Id_toLocaleLowerCase: arity=0; s="toLocaleLowerCase"; break;
           case Id_toLocaleUpperCase: arity=0; s="toLocaleUpperCase"; break;
           case Id_trim:              arity=0; s="trim";              break;
-          case Id_trimLeft:          arity=0; s="trimLeft";          break;              
-          case Id_trimRight:         arity=0; s="trimRight";         break; 
+          case Id_trimLeft:          arity=0; s="trimLeft";          break;
+          case Id_trimRight:         arity=0; s="trimRight";         break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);

@@ -1749,11 +1749,11 @@ public class Context
             throw ex2;
         }
     }
-    
+
     /**
-     * Imlementation of JS_ValueToSource
+     * Implementation of JS_ValueToSource
      */
-    public static String valueToSource(Object value) 
+    public static String valueToSource(Object value)
     {
         return ScriptRuntime.valueToSource(value);
     }
