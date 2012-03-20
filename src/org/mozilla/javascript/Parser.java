@@ -619,11 +619,13 @@ public class Parser
     private AstNode parseFunctionBody()
         throws IOException
     {
+        boolean isExpressionClosure = false;
         if (!matchToken(Token.LC)) {
             if (compilerEnv.getLanguageVersion() < Context.VERSION_1_8) {
                 reportError("msg.no.brace.body");
+            } else {
+                isExpressionClosure = true;
             }
-            return parseFunctionBodyExpr();
         }
         ++nestingOfFunction;
         int pos = ts.tokenBeg;
@@ -635,32 +637,41 @@ public class Parser
 
         pn.setLineno(ts.lineno);
         try {
-            bodyLoop: for (;;) {
-                AstNode n;
-                int tt = peekToken();
-                switch (tt) {
-                  case Token.ERROR:
-                  case Token.EOF:
-                  case Token.RC:
-                    break bodyLoop;
-
-                  case Token.FUNCTION:
-                    consumeToken();
-                    n = function(FunctionNode.FUNCTION_STATEMENT);
-                    break;
-                  default:
-                    n = statement();
-                    if (inDirectivePrologue) {
-                        String directive = getDirective(n);
-                        if (directive == null) {
-                            inDirectivePrologue = false;
-                        } else if (directive.equals("use strict")) {
-                            inUseStrictDirective = true;
-                        }
-                    }
-                    break;
-                }
+            if (isExpressionClosure) {
+                ReturnStatement n = new ReturnStatement(ts.lineno);
+                n.setReturnValue(assignExpr());
+                // expression closure flag is required on both nodes
+                n.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
+                pn.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
                 pn.addStatement(n);
+            } else {
+                bodyLoop: for (;;) {
+                    AstNode n;
+                    int tt = peekToken();
+                    switch (tt) {
+                        case Token.ERROR:
+                        case Token.EOF:
+                        case Token.RC:
+                            break bodyLoop;
+
+                        case Token.FUNCTION:
+                            consumeToken();
+                            n = function(FunctionNode.FUNCTION_STATEMENT);
+                            break;
+                        default:
+                            n = statement();
+                            if (inDirectivePrologue) {
+                                String directive = getDirective(n);
+                                if (directive == null) {
+                                    inDirectivePrologue = false;
+                                } else if (directive.equals("use strict")) {
+                                    inUseStrictDirective = true;
+                                }
+                            }
+                            break;
+                    }
+                    pn.addStatement(n);
+                }
             }
         } catch (ParserException e) {
             // Ignore it
@@ -671,7 +682,7 @@ public class Parser
 
         int end = ts.tokenEnd;
         getAndResetJsDoc();
-        if (mustMatchToken(Token.RC, "msg.no.brace.after.body"))
+        if (!isExpressionClosure && mustMatchToken(Token.RC, "msg.no.brace.after.body"))
             end = ts.tokenEnd;
         pn.setLength(end - pos);
         return pn;
@@ -749,22 +760,6 @@ public class Parser
         if (mustMatchToken(Token.RP, "msg.no.paren.after.parms")) {
             fnNode.setRp(ts.tokenBeg - fnNode.getPosition());
         }
-    }
-
-
-    private AstNode parseFunctionBodyExpr()
-        throws IOException
-    {
-        ++nestingOfFunction;
-        int lineno = ts.getLineno();
-        ReturnStatement n = new ReturnStatement(lineno);
-        n.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
-        try {
-            n.setReturnValue(assignExpr());
-        } finally {
-            --nestingOfFunction;
-        }
-        return n;
     }
 
     private FunctionNode function(int type)
