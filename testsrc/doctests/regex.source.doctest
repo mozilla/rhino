@@ -1,0 +1,46 @@
+js> var sourceIsValid = function(re) {
+  >   var literal = '/'+re.source+'/';
+  >   try {
+  >     if (eval('('+literal+') instanceof RegExp'))
+  >       return true;
+  >   } catch (e) {}
+  >   return "The value of the source property was "+literal+" which is not a valid regexp literal value";
+  > }
+
+js> sourceIsValid(RegExp(''))
+true
+js> sourceIsValid(RegExp('a'))
+true
+js> sourceIsValid(RegExp('\\\\'))
+true
+js> sourceIsValid(RegExp('\\\\\\\\'))
+true
+js> sourceIsValid(RegExp(''))
+true
+js> sourceIsValid(RegExp('/'))
+true
+js> sourceIsValid(RegExp('//'))
+true
+js> sourceIsValid(RegExp('\/'))
+true
+
+js> sourceIsValid(/./.compile('a'))
+true
+js> sourceIsValid(/./.compile('\\\\'))
+true
+js> sourceIsValid(/./.compile('\\\\\\\\'))
+true
+js> sourceIsValid(/./.compile(''))
+true
+js> sourceIsValid(/./.compile('/'))
+true
+js> sourceIsValid(/./.compile('//'))
+true
+js> sourceIsValid(/./.compile('\/'))
+true
+
+js> sourceIsValid(RegExp('[^/]*'))
+true
+js> sourceIsValid(RegExp('[^\/]*'))
+true
+
