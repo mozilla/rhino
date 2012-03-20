@@ -418,9 +418,9 @@ public class FunctionNode extends ScriptNode {
         }
         if (isExpressionClosure) {
             AstNode body = getBody();
-            if (body instanceof ReturnStatement) {
+            if (body.getLastChild() instanceof ReturnStatement) {
                 // omit "return" keyword, just print the expression
-                body = ((ReturnStatement) body).getReturnValue();
+                body = ((ReturnStatement) body.getLastChild()).getReturnValue();
                 sb.append(body.toSource(0));
                 if (functionType == FUNCTION_STATEMENT) {
                     sb.append(";");
