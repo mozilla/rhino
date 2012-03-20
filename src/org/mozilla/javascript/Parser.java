@@ -1011,7 +1011,7 @@ public class Parser
           case Token.VAR:
               consumeToken();
               int lineno = ts.lineno;
-              pn = variables(currentToken, ts.tokenBeg);
+              pn = variables(currentToken, ts.tokenBeg, true);
               pn.setLineno(lineno);
               break;
 
@@ -1365,7 +1365,7 @@ public class Parser
                 init.setLineno(ts.lineno);
             } else if (tt == Token.VAR || tt == Token.LET) {
                 consumeToken();
-                init = variables(tt, ts.tokenBeg);
+                init = variables(tt, ts.tokenBeg, false);
             } else {
                 init = expr();
                 markDestructuring(init);
@@ -1623,7 +1623,7 @@ public class Parser
         if (peekToken() == Token.LP) {
             pn = let(true, pos);
         } else {
-            pn = variables(Token.LET, pos);  // else, e.g.: let x=6, y=7;
+            pn = variables(Token.LET, pos, true);  // else, e.g.: let x=6, y=7;
         }
         pn.setLineno(lineno);
         return pn;
@@ -1844,7 +1844,7 @@ public class Parser
      * token in the first variable declaration.
      * @return the parsed variable list
      */
-    private VariableDeclaration variables(int declType, int pos)
+    private VariableDeclaration variables(int declType, int pos, boolean isStatement)
         throws IOException
     {
         int end;
@@ -1915,6 +1915,7 @@ public class Parser
                 break;
         }
         pn.setLength(end - pos);
+        pn.setIsStatement(isStatement);
         return pn;
     }
 
@@ -1928,7 +1929,7 @@ public class Parser
             pn.setLp(ts.tokenBeg - pos);
         pushScope(pn);
         try {
-            VariableDeclaration vars = variables(Token.LET, ts.tokenBeg);
+            VariableDeclaration vars = variables(Token.LET, ts.tokenBeg, isStatement);
             pn.setVariables(vars);
             if (mustMatchToken(Token.RP, "msg.no.paren.let")) {
                 pn.setRp(ts.tokenBeg - pos);
