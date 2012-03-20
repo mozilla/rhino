@@ -155,9 +155,13 @@ final class InterpretedFunction extends NativeFunction implements Script
      * @return the result of the function call.
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObject,
                        Object[] args)
     {
+        Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, thisObject, scope);
+        if (thisObj == null) {
+            thisObj = ScriptRuntime.getTopCallScope(cx);
+        }
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args);
         }

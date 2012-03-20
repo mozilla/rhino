@@ -130,7 +130,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall
             READONLY|DONTENUM|PERMANENT);
 
         String[] errorMethods = {
-                "ConversionError",
                 "EvalError",
                 "RangeError",
                 "ReferenceError",
@@ -167,7 +166,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     }
 
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (f.hasTag(FTAG)) {
             int methodId = f.methodId();
@@ -719,8 +718,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     if (ucs4Char < minUcs4Char
                             || (ucs4Char >= 0xD800 && ucs4Char <= 0xDFFF)) {
                         ucs4Char = INVALID_UTF8;
-                    } else if (ucs4Char == 0xFFFE || ucs4Char == 0xFFFF) {
-                        ucs4Char = 0xFFFD;
                     }
                     if (ucs4Char >= 0x10000) {
                         ucs4Char -= 0x10000;

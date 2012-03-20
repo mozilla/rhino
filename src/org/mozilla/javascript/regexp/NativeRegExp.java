@@ -44,7 +44,6 @@ package org.mozilla.javascript.regexp;
 import java.io.Serializable;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.Kit;
@@ -70,7 +69,7 @@ import org.mozilla.javascript.Undefined;
 
 
 
-public class NativeRegExp extends IdScriptableObject implements Function
+public class NativeRegExp extends IdScriptableObject
 {
     static final long serialVersionUID = 4965263491464903264L;
 
@@ -173,7 +172,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     NativeRegExp(Scriptable scope, Object regexpCompiled)
     {
         this.re = (RECompiled)regexpCompiled;
-        this.lastIndex = 0;
+        this.lastIndex = 0d;
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
     }
 
@@ -194,17 +193,6 @@ public class NativeRegExp extends IdScriptableObject implements Function
     	return "object";
     }
 
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                       Object[] args)
-    {
-        return execSub(cx, scope, args, MATCH);
-    }
-
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args)
-    {
-        return (Scriptable)execSub(cx, scope, args, MATCH);
-    }
-
     Scriptable compile(Context cx, Scriptable scope, Object[] args)
     {
         if (args.length > 0 && args[0] instanceof NativeRegExp) {
@@ -217,12 +205,14 @@ public class NativeRegExp extends IdScriptableObject implements Function
             this.lastIndex = thatObj.lastIndex;
             return this;
         }
-        String s = args.length == 0 ? "" : ScriptRuntime.toString(args[0]);
+        String s = args.length == 0 || args[0] == Undefined.instance 
+            ? ""
+            : ScriptRuntime.toString(args[0]);
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;
         this.re = (RECompiled)compileRE(cx, s, global, false);
-        this.lastIndex = 0;
+        this.lastIndex = 0d;
         return this;
     }
 
@@ -262,16 +252,19 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (args.length == 0) {
             str = reImpl.input;
             if (str == null) {
-                reportError("msg.no.re.input.for", toString());
+                str = ScriptRuntime.toString(Undefined.instance);
             }
         } else {
             str = ScriptRuntime.toString(args[0]);
         }
-        double d = ((re.flags & JSREG_GLOB) != 0) ? lastIndex : 0;
+        double d = 0;
+        if ((re.flags & JSREG_GLOB) != 0) {
+            d = ScriptRuntime.toInteger(lastIndex);
+        }
 
         Object rval;
         if (d < 0 || str.length() < d) {
-            lastIndex = 0;
+            lastIndex = 0d;
             rval = null;
         }
         else {
@@ -295,15 +288,20 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (global != null) {
             for (int i = 0; i < global.length(); i++) {
                 char c = global.charAt(i);
+                int f = 0;
                 if (c == 'g') {
-                    flags |= JSREG_GLOB;
+                    f = JSREG_GLOB;
                 } else if (c == 'i') {
-                    flags |= JSREG_FOLD;
+                    f = JSREG_FOLD;
                 } else if (c == 'm') {
-                    flags |= JSREG_MULTILINE;
+                    f = JSREG_MULTILINE;
                 } else {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
+                if ((flags & f) != 0) {
+                    reportError("msg.invalid.re.flag", String.valueOf(c));
+                }
+                flags |= f;
             }
         }
         regexp.flags = flags;
@@ -1032,6 +1030,7 @@ if (regexp.anchorCh >= 0) {
             state.result = new RENode(REOP_DOT);
             state.progLength++;
             break;
+        case '{':
         case '*':
         case '+':
         case '?':
@@ -2494,7 +2493,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     {
         switch (id) {
           case Id_lastIndex:
-            return ScriptRuntime.wrapNumber(lastIndex);
+            return lastIndex;
           case Id_source:
             return new String(re.source);
           case Id_global:
@@ -2512,7 +2511,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     {
         switch (id) {
           case Id_lastIndex:
-            lastIndex = ScriptRuntime.toNumber(value);
+            lastIndex = value;
             return;
           case Id_source:
           case Id_global:
@@ -2529,7 +2528,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
         String s;
         int arity;
         switch (id) {
-          case Id_compile:  arity=1; s="compile";  break;
+          case Id_compile:  arity=2; s="compile";  break;
           case Id_toString: arity=0; s="toString"; break;
           case Id_toSource: arity=0; s="toSource"; break;
           case Id_exec:     arity=1; s="exec";     break;
@@ -2542,7 +2541,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(REGEXP_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -2570,7 +2569,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f)
+    private static NativeRegExp realThis(Object thisObj, IdFunctionObject f)
     {
         if (!(thisObj instanceof NativeRegExp))
             throw incompatibleCallError(f);
@@ -2616,8 +2615,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 // #/string_id_map#
 
     private RECompiled re;
-    double lastIndex;          /* index after last match, for //g iterator */
-
+    Object lastIndex = 0d;        /* index after last match, for //g iterator */
 }       // class NativeRegExp
 
 class RECompiled implements Serializable
