@@ -151,7 +151,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         return prototype.getDefaultValue(typeHint);
     }
 
-    public boolean hasInstance(Scriptable value) {
+    public boolean hasInstance(Object value) {
         return prototype.hasInstance(value);
     }
 

@@ -146,7 +146,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public final boolean hasInstance(Scriptable scriptable) {
+    public final boolean hasInstance(Object scriptable) {
         return super.hasInstance(scriptable);
     }
 

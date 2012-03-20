@@ -3178,11 +3178,13 @@ public class Parser
         int pos = ts.tokenBeg, lineno = ts.lineno;
         int afterComma = -1;
         List<ObjectProperty> elems = new ArrayList<ObjectProperty>();
-        Set<String> propertyNames = new HashSet<String>();
+        Map<String, Integer> propertyNames = new HashMap<String, Integer>();
+        final int GET = 0x1, SET = 0x2, VALUE = 0x4 | GET | SET;
 
       commaLoop:
         for (;;) {
             String propertyName = null;
+            int propertyType = VALUE;
             int tt = peekToken();
             String jsdoc = getAndResetJsDoc();
             switch(tt) {
@@ -3205,10 +3207,12 @@ public class Parser
                       consumeToken();
                       name = createNameNode();
                       name.setJsDoc(jsdoc);
+                      boolean isGetter = "get".equals(propertyName);
+                      propertyType = (isGetter ? GET : SET);
                       ObjectProperty objectProp = getterSetterProperty(ppos, name,
-                                                     "get".equals(propertyName));
+                                                     isGetter);
                       elems.add(objectProp);
-                      propertyName = objectProp.getLeft().getString();
+                      propertyName = name.getIdentifier();
                   } else {
                       AstNode pname = stringProp != null ? stringProp : name;
                       pname.setJsDoc(jsdoc);
@@ -3234,8 +3238,9 @@ public class Parser
               default:
                   if (convertToName(tt)) {
                       consumeToken();
-                      AstNode pname = createNameNode();
+                      Name pname = createNameNode();
                       pname.setJsDoc(jsdoc);
+                      propertyName = pname.getIdentifier();
                       elems.add(plainProperty(pname, tt));
                       break;
                   }
@@ -3243,11 +3248,17 @@ public class Parser
                   break;
             }
 
-            if (this.inUseStrictDirective) {
-                if (propertyNames.contains(propertyName)) {
+            Integer oldType = propertyNames.get(propertyName);
+            if (oldType != null) {
+                int old = oldType.intValue();
+                if ((old & propertyType) != 0
+                        && (old != VALUE || propertyType != VALUE
+                            || this.inUseStrictDirective)) {
                     addError("msg.dup.obj.lit.prop.strict", propertyName);
                 }
-                propertyNames.add(propertyName);
+                propertyNames.put(propertyName, propertyType | old);
+            } else {
+                propertyNames.put(propertyName, propertyType);
             }
 
             // Eat any dangling jsdoc in the property.
@@ -3299,6 +3310,9 @@ public class Parser
         // We've already parsed the function name, so fn should be anonymous.
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {
+            reportError("msg.bad.prop");
+        }
+        if (fn.getParams().size() != (isGetter ? 0 : 1)) {
             reportError("msg.bad.prop");
         }
         ObjectProperty pn = new ObjectProperty(pos);

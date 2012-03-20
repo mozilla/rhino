@@ -1016,21 +1016,21 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
-     * Implements the instanceof operator.
+     * <p>Implements the instanceof operator.</p>
      *
-     * <p>This operator has been proposed to ECMA.
+     * <p>Sub-classes should override this method to provide custom 'instanceof'
+     * functionality. {@link ScriptRuntime#jsDelegatesTo(Scriptable, Scriptable)}
+     * provides a useful default implementation. The implementation in this
+     * class just throws a 'TypeError' exception.</p>
      *
      * @param instance The value that appeared on the LHS of the instanceof
      *              operator
      * @return true if "this" appears in value's prototype chain
-     *
+     * @see ScriptRuntime#jsDelegatesTo(Scriptable, Scriptable)
      */
-    public boolean hasInstance(Scriptable instance) {
-        // Default for JS objects (other than Function) is to do prototype
-        // chasing.  This will be overridden in NativeFunction and non-JS
-        // objects.
-
-        return ScriptRuntime.jsDelegatesTo(instance, this);
+    public boolean hasInstance(Object instance) {
+        // Default for JS objects (other than Function) is to throw a TypeError
+        throw ScriptRuntime.typeError0("msg.instanceof.not.object");
     }
 
     /**

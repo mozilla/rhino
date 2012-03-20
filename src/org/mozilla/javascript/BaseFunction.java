@@ -101,7 +101,7 @@ public class BaseFunction extends IdScriptableObject implements Function
      *
      */
     @Override
-    public boolean hasInstance(Scriptable instance)
+    public boolean hasInstance(Object instance)
     {
         Object protoProp = ScriptableObject.getProperty(this, "prototype");
         if (protoProp instanceof Scriptable) {

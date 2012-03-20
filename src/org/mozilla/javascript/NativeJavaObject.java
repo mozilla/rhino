@@ -131,7 +131,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
-    public boolean hasInstance(Scriptable value) {
+    public boolean hasInstance(Object value) {
         // This is an instance of a Java class, so always return false
         return false;
     }
