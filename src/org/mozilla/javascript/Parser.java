@@ -57,6 +57,7 @@ import java.io.Reader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -719,13 +720,13 @@ public class Parser
         //     "use strict"; // retroactively makes "\145" a syntax error
         //   }
         if (ts.hasOctalCharacterEscape()) {
-            addError("msg.no.octal.strict");
+            reportError("msg.no.octal.strict");
         }
         inUseStrictDirective = true;
         script.setInStrictMode(true);
     }
 
-    private void  parseFunctionParams(FunctionNode fnNode)
+    private void parseFunctionParams(FunctionNode fnNode)
         throws IOException
     {
         if (matchToken(Token.RP)) {
@@ -789,8 +790,7 @@ public class Parser
 
         // We forbid function statements in strict mode code.
         if (type == FunctionNode.FUNCTION_EXPRESSION_STATEMENT && inUseStrictDirective) {
-            // TODO: "in strict mode code, functions may be declared only at top level or immediately within another function"
-            // addError();
+            reportError("msg.strict.function.stmt");
         }
 
         if (matchToken(Token.NAME)) {
@@ -806,8 +806,7 @@ public class Parser
         } else if (matchToken(Token.LP)) {
             // Anonymous function:  leave name as null
             if (type != FunctionNode.FUNCTION_EXPRESSION) {
-                // TODO: Unnamed function expressions are forbidden in statement context.
-                // addError("function statement requires a name");
+                reportError("msg.unnamed.function.stmt");
             }
         } else {
             if (compilerEnv.isAllowMemberExprAsFunctionName()) {
@@ -904,7 +903,7 @@ public class Parser
                 "arguments".equals(id) ||
                 TokenStream.isKeyword(id))
             {
-                addError("msg.bad.id.strict", id);
+                reportError("msg.bad.id.strict", id);
             }
         }
 
@@ -912,21 +911,50 @@ public class Parser
         Set<String> paramNames = new HashSet<String>();
         for (AstNode param : fnNode.getParams()) {
             if (param instanceof Name) {
-                String paramName = param.getString();
-                if ("eval".equals(paramName) ||
-                    "arguments".equals(paramName) ||
-                    TokenStream.isKeyword(paramName))
-                {
-                    addError("msg.bad.id.strict", paramName);
-                }
-                if (paramNames.contains(paramName)) {
-                    addError("msg.dup.param.strict", paramName);
-                }
-                paramNames.add(paramName);
+                checkStrictFunctionParam(paramNames, param);
             } else if (hasDestruct && param instanceof DestructuringForm) {
-                // TODO: check duplicate arguments in destructuring params
+                List<AstNode> workQueue = new LinkedList<AstNode>();
+                workQueue.add(param);
+                while (!workQueue.isEmpty()) {
+                    AstNode node = workQueue.remove(0);
+                    assert ((DestructuringForm)node).isDestructuring();
+                    if (node instanceof ObjectLiteral) {
+                        for (ObjectProperty p : ((ObjectLiteral)node).getElements()) {
+                            AstNode right = p.getRight();
+                            if (right instanceof Name) {
+                                checkStrictFunctionParam(paramNames, right);
+                            } else if (right instanceof DestructuringForm) {
+                                workQueue.add(right);
+                            }
+                        }
+                    } else {
+                        assert (node instanceof ArrayLiteral);
+                        for (AstNode p : ((ArrayLiteral)node).getElements()) {
+                            if (p instanceof Name) {
+                                checkStrictFunctionParam(paramNames, p);
+                            } else if (p instanceof DestructuringForm) {
+                                workQueue.add(p);
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+
+    private void checkStrictFunctionParam(Set<String> paramNames, AstNode param) {
+        assert (param instanceof Name);
+        String paramName = param.getString();
+        if ("eval".equals(paramName) ||
+            "arguments".equals(paramName) ||
+            TokenStream.isKeyword(paramName))
+        {
+            reportError("msg.bad.id.strict", paramName);
+        }
+        if (paramNames.contains(paramName)) {
+            reportError("msg.dup.param.strict", paramName);
+        }
+        paramNames.add(paramName);
     }
 
     private boolean checkStrictAssignment(AstNode node) {
@@ -935,7 +963,7 @@ public class Parser
             String name = node.getString();
             // strict mode doesn't allow eval/arguments for lhs
             if ("eval".equals(name) || "arguments".equals(name)) {
-                addError("msg.bad.id.strict", name);
+                reportError("msg.bad.id.strict", name);
                 return false;
             }
         }
@@ -945,7 +973,7 @@ public class Parser
     private boolean checkStrictDelete(UnaryExpression expr) {
         AstNode op = removeParens(expr.getOperand());
         if (op instanceof Name) {
-            addError("msg.bad.id.strict", op.getString());
+            reportError("msg.bad.id.strict", op.getString());
             return false;
         }
         return true;
@@ -1969,7 +1997,7 @@ public class Parser
                         "arguments".equals(ts.getString()) ||
                         TokenStream.isKeyword(id))
                     {
-                        addError("msg.bad.id.strict", id);
+                        reportError("msg.bad.id.strict", id);
                     }
                 }
                 defineSymbol(declType, ts.getString(), inForInit);
@@ -3339,7 +3367,7 @@ public class Parser
                 if ((old & propertyType) != 0
                         && (old != VALUE || propertyType != VALUE
                             || this.inUseStrictDirective)) {
-                    addError("msg.dup.obj.lit.prop.strict", propertyName);
+                    reportError("msg.dup.obj.lit.prop.strict", propertyName);
                 }
                 propertyNames.put(propertyName, propertyType | old);
             } else {
