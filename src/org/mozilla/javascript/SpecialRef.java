@@ -49,9 +49,9 @@ class SpecialRef extends Ref
     {
         static final long serialVersionUID = -6410092416752016016L;
 
-        private ProtoSpecialRef(Scriptable target, String name)
+        private ProtoSpecialRef(Scriptable target, String name, boolean strict)
         {
-            super(target, name);
+            super(target, name, strict);
         }
 
         @Override
@@ -112,15 +112,17 @@ class SpecialRef extends Ref
 
     protected final Scriptable target;
     protected final String name;
+    protected final boolean strict;
 
-    private SpecialRef(Scriptable target, String name)
+    private SpecialRef(Scriptable target, String name, boolean strict)
     {
         this.target = target;
         this.name = name;
+        this.strict = strict;
     }
 
     static Ref createSpecial(Context cx, Scriptable scope, Object object,
-                             String name)
+                             String name, boolean strict)
     {
         Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
         if (target == null) {
@@ -129,9 +131,9 @@ class SpecialRef extends Ref
 
         if ("__proto__".equals(name)) {
             if (cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
-                return new ProtoSpecialRef(target, name);
+                return new ProtoSpecialRef(target, name, strict);
             }
-            return new SpecialRef(target, name);
+            return new SpecialRef(target, name, strict);
         }
 
         throw new IllegalArgumentException(name);
@@ -146,8 +148,7 @@ class SpecialRef extends Ref
     @Override
     public Object set(Context cx, Object value)
     {
-        // TODO: default for 'checked' set to 'false' for now
-        return ScriptRuntime.setObjectProp(target, name, value, false, cx);
+        return ScriptRuntime.setObjectProp(target, name, value, strict, cx);
     }
 
     @Override
@@ -159,8 +160,7 @@ class SpecialRef extends Ref
     @Override
     public boolean delete(Context cx)
     {
-        // TODO: default for 'checked' set to 'false' for now
-        return ScriptRuntime.deleteObjectElem(target, name, cx, false);
+        return ScriptRuntime.deleteObjectElem(target, name, cx, strict);
     }
 }
 

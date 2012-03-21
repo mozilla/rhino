@@ -2812,12 +2812,14 @@ class BodyCodegen
                     String special = (String)node.getProp(Node.NAME_PROP);
                     generateExpression(child, node);
                     cfw.addPush(special);
+                    cfw.addPush(scriptOrFn.isInStrictMode());
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
                     addScriptRuntimeInvoke(
                         "specialRef",
                         "(Ljava/lang/Object;"
                         +"Ljava/lang/String;"
+                        +"Z"
                         +"Lorg/mozilla/javascript/Context;"
                         +"Lorg/mozilla/javascript/Scriptable;"
                         +")Lorg/mozilla/javascript/Ref;");

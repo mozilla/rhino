@@ -2010,7 +2010,8 @@ switch (op) {
         //stringReg: name of special property
         Object obj = stack[stackTop];
         if (obj == DBL_MRK) obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.specialRef(obj, stringReg, cx,
+        stack[stackTop] = ScriptRuntime.specialRef(obj, stringReg,
+                                                   frame.idata.isStrict, cx,
                                                    frame.scope);
         continue Loop;
     }
