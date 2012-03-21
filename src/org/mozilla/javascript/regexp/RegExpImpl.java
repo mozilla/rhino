@@ -367,7 +367,8 @@ public class RegExpImpl implements RegExpProxy {
             ScriptRuntime.setRegExpProxy(cx, re2);
             try {
                 Scriptable parent = ScriptableObject.getTopLevelScope(scope);
-                Object result = rdata.lambda.call(cx, parent, parent, args);
+                Object thisObj = Undefined.instance;
+                Object result = rdata.lambda.call(cx, parent, thisObj, args);
                 lambdaStr = ScriptRuntime.toString(result);
             } finally {
                 ScriptRuntime.setRegExpProxy(cx, reImpl);
