@@ -148,13 +148,13 @@ public class NativeObject extends IdScriptableObject implements Map
         int id = f.methodId();
         switch (id) {
           case Id_constructor: {
-            if (thisObj != null) {
-                // BaseFunction.construct will set up parent, proto
-                return f.construct(cx, scope, args);
-            }
             if (args.length == 0 || args[0] == null
                 || args[0] == Undefined.instance)
             {
+                if (thisObj != null) {
+                    // BaseFunction.construct will set up parent, proto
+                    return f.construct(cx, scope, args);
+                }
                 return new NativeObject();
             }
             return ScriptRuntime.toObject(cx, scope, args[0]);
