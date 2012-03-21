@@ -117,7 +117,7 @@ public class IdFunctionObject extends BaseFunction
         Scriptable proto = super.getPrototype();
         if (proto == null) {
             proto = getFunctionPrototype(getParentScope());
-            setPrototype(proto);
+            setPrototype(proto, false);
         }
         return proto;
     }

@@ -911,7 +911,21 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void setPrototype(Scriptable m)
     {
-        if (!isExtensible()) throw ScriptRuntime.typeError0("msg.not.extensible");
+        setPrototype(m, true);
+    }
+
+    /**
+     * package-private interface to set the prototype property without
+     * performing the [[Extensible]] check
+     * 
+     * @see IdFunctionObject#getPrototype()
+     */
+    final void setPrototype(Scriptable m, boolean check)
+    {
+        assert m != this;
+        if (check && !isExtensible()) {
+            throw ScriptRuntime.typeError0("msg.not.extensible");
+        }
         prototypeObject = m;
     }
 
