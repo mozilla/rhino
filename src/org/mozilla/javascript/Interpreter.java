@@ -1403,7 +1403,9 @@ switch (op) {
         --stackTop;
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.delete(lhs, rhs, cx, op == Icode_DELNAME);
+        stack[stackTop] = ScriptRuntime.delete(lhs, rhs, cx,
+                                               op == Icode_DELNAME,
+                                               frame.idata.isStrict);
         continue Loop;
     }
     case Token.GETPROPNOWARN : {
@@ -1527,14 +1529,16 @@ switch (op) {
         indexReg += frame.localShift;
         stack[indexReg] = null;
         continue Loop;
-    case Icode_NAME_AND_THIS :
+    case Icode_NAME_AND_THIS : {
         // stringReg: name
         ++stackTop;
         stack[stackTop] = ScriptRuntime.getNameObjectAndThis(stringReg,
                                                              cx, frame.scope);
         ++stackTop;
-        stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+        Scriptable thisObj = ScriptRuntime.lastStoredScriptable(cx);
+        stack[stackTop] = (thisObj != null ? thisObj : Undefined.instance);
         continue Loop;
+    }
     case Icode_PROP_AND_THIS: {
         Object obj = stack[stackTop];
         if (obj == DBL_MRK) obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
@@ -1559,7 +1563,9 @@ switch (op) {
         if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         stack[stackTop] = ScriptRuntime.getValueObjectAndThis(value, cx);
         ++stackTop;
-        stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+        // ignore stored scriptable
+        ScriptRuntime.lastStoredScriptable(cx);
+        stack[stackTop] = Undefined.instance;
         continue Loop;
     }
     case Icode_CALLSPECIAL : {
@@ -1586,9 +1592,10 @@ switch (op) {
             // stack change: function thisObj arg0 .. argN -> result
             stackTop -= 1 + indexReg;
 
+            // FIXME: here!
             // Call code generation ensure that stack here
             // is ... Callable Scriptable
-            Scriptable functionThis = (Scriptable)stack[stackTop + 1];
+            Object functionThis = stack[stackTop + 1];
             Callable function = ScriptRuntime.ensureCallable(stack[stackTop]);
             Object[] outArgs = getArgsArray(
                                    stack, sDbl, stackTop + 2, indexReg);
@@ -1614,17 +1621,17 @@ switch (op) {
         // CALL generation ensures that fun and funThisObj
         // are already Scriptable and Callable objects respectively
         Callable fun = ScriptRuntime.ensureCallable(stack[stackTop]);
-        Scriptable funThisObj = (Scriptable)stack[stackTop + 1];
-        if (op == Token.REF_CALL) {
-            Object[] outArgs = getArgsArray(stack, sDbl, stackTop + 2,
-                                            indexReg);
-            stack[stackTop] = ScriptRuntime.callRef(fun, funThisObj,
-                                                    outArgs, cx);
-            continue Loop;
-        }
+        Object funThisObj = stack[stackTop + 1];
         Scriptable calleeScope = frame.scope;
         if (frame.useActivation) {
             calleeScope = ScriptableObject.getTopLevelScope(frame.scope);
+        }
+        if (op == Token.REF_CALL) {
+            Object[] outArgs = getArgsArray(stack, sDbl, stackTop + 2,
+                                            indexReg);
+            stack[stackTop] = ScriptRuntime.callRef(fun, calleeScope,
+                                                    funThisObj, outArgs, cx);
+            continue Loop;
         }
         if (fun instanceof InterpretedFunction) {
             InterpretedFunction ifun = (InterpretedFunction)fun;
@@ -1651,6 +1658,14 @@ switch (op) {
                     // Release the current frame. See Bug #344501 to see why
                     // it is being done here.
                     exitFrame(cx, frame, null);
+                }
+                if (!ifun.idata.isStrict) {
+                    // TODO: move into initFrame()?
+                    funThisObj = ScriptRuntime.toObjectOrNull(cx, funThisObj);
+                    if (funThisObj == null) {
+                        // This covers the case of args[0] == (null|undefined) as well.
+                        funThisObj = ScriptRuntime.getTopCallScope(cx);
+                    }
                 }
                 initFrame(cx, calleeScope, funThisObj, stack, sDbl,
                           stackTop + 2, indexReg, ifun, callParentFrame,
@@ -2417,7 +2432,7 @@ switch (op) {
      */
     private static CallFrame initFrameForNoSuchMethod(Context cx,
             CallFrame frame, int indexReg, Object[] stack, double[] sDbl,
-            int stackTop, int op, Scriptable funThisObj, Scriptable calleeScope,
+            int stackTop, int op, Object funThisObj, Scriptable calleeScope,
             NoSuchMethodShim noSuchMethodShim, InterpretedFunction ifun)
     {
         // create an args array from the stack
@@ -2639,12 +2654,10 @@ switch (op) {
             applyThis = obj;
         }
         else {
-            applyThis = null;
+            applyThis = Undefined.instance;
         }
         if (!iApplyCallable.idata.isStrict) {
-            if (applyThis != null) {
-                applyThis = ScriptRuntime.toObjectOrNull(cx, applyThis);
-            }
+            applyThis = ScriptRuntime.toObjectOrNull(cx, applyThis);
             if (applyThis == null) {
                 // This covers the case of args[0] == (null|undefined) as well.
                 applyThis = ScriptRuntime.getTopCallScope(cx);
