@@ -659,7 +659,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     public void putConst(String name, Scriptable start, Object value,
                          boolean checked)
     {
-        if (putConstImpl(name, 0, start, value, READONLY))
+        if (putConstImpl(name, 0, start, value, READONLY, checked))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -677,7 +677,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     public void defineConst(String name, Scriptable start, boolean checked)
     {
-        if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST))
+        if (putConstImpl(name, 0, start, Undefined.instance,
+                         UNINITIALIZED_CONST, checked))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -2718,7 +2719,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * or this != start and a READONLY slot was found.
      */
     private boolean putConstImpl(String name, int index, Scriptable start,
-                                 Object value, int constFlag)
+                                 Object value, int constFlag, boolean checked)
     {
         assert (constFlag != EMPTY);
         Slot slot;
@@ -2730,6 +2731,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         } else if (!isExtensible()) {
             slot = getSlot(name, index, SLOT_QUERY);
             if (slot == null) {
+                // TODO: error message
+                if (checked) { throw ScriptRuntime.typeError("[[Extensible]]"); }
                 return true;
             }
         } else {
@@ -2747,8 +2750,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
             return true;
         }
-        // TODO: strict flag?
-        return slot.setValue(value, this, start, false);
+        return slot.setValue(value, this, start, checked);
     }
 
     private Slot findAttributeSlot(String name, int index, int accessType)
