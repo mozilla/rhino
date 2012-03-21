@@ -67,11 +67,61 @@ public class BoundFunction extends BaseFunction {
 
     ScriptRuntime.setFunctionProtoAndParent(this, scope);
 
-    Function thrower = ScriptRuntime.typeErrorThrower();
-    PropertyDescriptor throwing = new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
-    this.defineOwnProperty("caller", throwing, false);
-    // this.defineOwnProperty("arguments", throwing, false);
-    this.updateOwnProperty("arguments", throwing, null);
+    Function thrower = ScriptRuntime.typeErrorThrower(cx);
+    PropertyDescriptor desc = new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
+    defineOwnProperty("caller", desc, false);
+    // TODO: this doesn't work properly see BaseFunction+IdScriptableObject,
+    // just place the required checks in the overridden methods below
+    // defineOwnProperty("arguments", desc, false);
+  }
+
+  @Override
+  public boolean has(String name, Scriptable start) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      return true;
+    }
+    return super.has(name, start);
+  }
+
+  @Override
+  public Object get(String name, Scriptable start) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      throw ScriptRuntime.typeError0("msg.op.not.allowed");
+    }
+    return super.get(name, start);
+  }
+
+  @Override
+  public void put(String name, Scriptable start, Object value, boolean checked) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      throw ScriptRuntime.typeError0("msg.op.not.allowed");
+    }
+    super.put(name, start, value, checked);
+  }
+
+  @Override
+  public void delete(String name, boolean checked) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      if (checked) {
+        throw ScriptRuntime.typeError0("[[Permanent]]");
+      }
+      return;
+    }
+    super.delete(name, checked);
+  }
+
+  @Override
+  protected PropertyDescriptor getOwnProperty(String name) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      Function thrower = ScriptRuntime.typeErrorThrower();
+      return new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
+    }
+    return super.getOwnProperty(name);
   }
 
   @Override
