@@ -2665,7 +2665,7 @@ public class Context
     long scratchUint32;
 
     // It can be used to return the second Scriptable result from function
-    Scriptable scratchScriptable;
+    Object scratchThis;
 
     // Generate an observer count on compiled code
     public boolean generateObserverCount = false;

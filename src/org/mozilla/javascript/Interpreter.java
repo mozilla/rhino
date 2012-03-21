@@ -1540,7 +1540,7 @@ switch (op) {
         stack[stackTop] = ScriptRuntime.getNameObjectAndThis(stringReg,
                                                              cx, frame.scope);
         ++stackTop;
-        Scriptable thisObj = ScriptRuntime.lastStoredScriptable(cx);
+        Object thisObj = ScriptRuntime.lastStoredThis(cx);
         stack[stackTop] = (thisObj != null ? thisObj : Undefined.instance);
         continue Loop;
     }
@@ -1551,7 +1551,9 @@ switch (op) {
         stack[stackTop] = ScriptRuntime.getPropObjectAndThis(obj, stringReg,
                                                              cx, frame.scope);
         ++stackTop;
-        stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+        // ignore stored this
+        ScriptRuntime.lastStoredThis(cx);
+        stack[stackTop] = obj;
         continue Loop;
     }
     case Icode_ELEM_AND_THIS: {
@@ -1559,8 +1561,11 @@ switch (op) {
         if (obj == DBL_MRK) obj = ScriptRuntime.wrapNumber(sDbl[stackTop - 1]);
         Object id = stack[stackTop];
         if (id == DBL_MRK) id = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop - 1] = ScriptRuntime.getElemObjectAndThis(obj, id, cx);
-        stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
+        stack[stackTop - 1] = ScriptRuntime.getElemObjectAndThis(obj, id, cx,
+                                                                 frame.scope);
+        // ignore stored this
+        ScriptRuntime.lastStoredThis(cx);
+        stack[stackTop] = obj;
         continue Loop;
     }
     case Icode_VALUE_AND_THIS : {
@@ -1568,8 +1573,8 @@ switch (op) {
         if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         stack[stackTop] = ScriptRuntime.getValueObjectAndThis(value, cx);
         ++stackTop;
-        // ignore stored scriptable
-        ScriptRuntime.lastStoredScriptable(cx);
+        // ignore stored this
+        ScriptRuntime.lastStoredThis(cx);
         stack[stackTop] = Undefined.instance;
         continue Loop;
     }

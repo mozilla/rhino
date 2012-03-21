@@ -97,7 +97,7 @@ public final class OptRuntime extends ScriptRuntime
                                   Context cx, Scriptable scope)
     {
         Object f = getNameObjectAndThis(name, cx, scope);
-        Object thisObj = lastStoredScriptable(cx);
+        Object thisObj = lastStoredThis(cx);
         thisObj = (thisObj != null ? thisObj : Undefined.instance);
         Callable c = ensureCallable(f);
         return c.call(cx, scope, thisObj, args);
@@ -110,7 +110,7 @@ public final class OptRuntime extends ScriptRuntime
                                    Context cx, Scriptable scope)
     {
         Object f = getNameObjectAndThis(name, cx, scope);
-        Object thisObj = lastStoredScriptable(cx);
+        Object thisObj = lastStoredThis(cx);
         thisObj = (thisObj != null ? thisObj : Undefined.instance);
         Callable c = ensureCallable(f);
         return c.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
@@ -123,7 +123,9 @@ public final class OptRuntime extends ScriptRuntime
                                    Context cx, Scriptable scope)
     {
         Object f = getPropObjectAndThis(value, property, cx, scope);
-        Scriptable thisObj = lastStoredScriptable(cx);
+        // ignore stored this
+        Object thisObj = lastStoredThis(cx);
+        thisObj = value;
         Callable c = ensureCallable(f);
         return c.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }

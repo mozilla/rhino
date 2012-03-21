@@ -272,11 +272,11 @@ final class NativeString extends IdScriptableObject
               case Id_toString:
               case Id_valueOf:
                 // ECMA 15.5.4.2: 'the toString function is not generic.
-                CharSequence cs = realThis(thisObj, f).string;
+                CharSequence cs = realThis(thisObj, f);
                 return cs instanceof String ? cs : cs.toString();
 
               case Id_toSource: {
-                CharSequence s = realThis(thisObj, f).string;
+                CharSequence s = realThis(thisObj, f);
                 return "(new String(\""+ScriptRuntime.escapeString(s.toString())+"\"))";
               }
 
@@ -452,11 +452,14 @@ final class NativeString extends IdScriptableObject
         }
     }
 
-    private static NativeString realThis(Object thisObj, IdFunctionObject f)
+    private static CharSequence realThis(Object thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeString))
-            throw incompatibleCallError(f);
-        return (NativeString)thisObj;
+        if (thisObj instanceof CharSequence) {
+            return (CharSequence)thisObj;
+        } else if (thisObj instanceof NativeString) {
+            return ((NativeString)thisObj).string;
+        }
+        throw incompatibleCallError(f);
     }
 
     /*

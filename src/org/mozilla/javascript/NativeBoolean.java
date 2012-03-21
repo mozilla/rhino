@@ -121,9 +121,14 @@ final class NativeBoolean extends IdScriptableObject
 
         // The rest of Boolean.prototype methods require thisObj to be Boolean
 
-        if (!(thisObj instanceof NativeBoolean))
+        boolean value;
+        if (thisObj instanceof Boolean) {
+            value = ((Boolean)thisObj).booleanValue();
+        } else if (thisObj instanceof NativeBoolean) {
+            value = ((NativeBoolean)thisObj).booleanValue;
+        } else {
             throw incompatibleCallError(f);
-        boolean value = ((NativeBoolean)thisObj).booleanValue;
+        }
 
         switch (id) {
 

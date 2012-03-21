@@ -1513,7 +1513,9 @@ public class ScriptRuntime {
                                             String property, Context cx,
                                             Scriptable scope) {
         // TODO: could need some optimization
-        assert obj instanceof ScriptableObject;
+        assert obj instanceof NativeString
+            || obj instanceof NativeNumber
+            || obj instanceof NativeBoolean;
         ScriptableObject sobj = (ScriptableObject) obj;
         PropertyDescriptor desc = sobj.$getProperty(property);
         if (desc == null) {
@@ -1537,7 +1539,9 @@ public class ScriptRuntime {
                                             Object value, Context cx,
                                             Scriptable scope) {
         // TODO: could need some optimization
-        assert obj instanceof ScriptableObject;
+        assert obj instanceof NativeString
+            || obj instanceof NativeNumber
+            || obj instanceof NativeBoolean;
         ScriptableObject sobj = (ScriptableObject) obj;
         if (!sobj.$canPut(property)) {
             if (checked) {
@@ -1563,6 +1567,7 @@ public class ScriptRuntime {
             return;
         }
         Object setter = desc.getSetter();
+        assert setter instanceof Callable;
         ((Callable) setter).call(cx, scope, base, new Object[]{ value });
     }
 
@@ -2154,7 +2159,7 @@ public class ScriptRuntime {
                 result = topScopeName(cx, scope, name);
                 if (result == Scriptable.NOT_FOUND) {
                     if (asFunctionCall) {
-                        storeScriptable(cx, BAD_SCRIPTABLE);
+                        storeThis(cx, BAD_SCRIPTABLE);
                         return createNotFoundError(scope, name);
                     } else if (firstXMLObject == null) {
                         throw notFoundError(scope, name);
@@ -2173,10 +2178,10 @@ public class ScriptRuntime {
 
         if (asFunctionCall) {
             if (!(result instanceof Callable)) {
-                storeScriptable(cx, BAD_SCRIPTABLE);
+                storeThis(cx, BAD_SCRIPTABLE);
                 return notFunctionError(result, name);
             }
-            storeScriptable(cx, thisObj);
+            storeThis(cx, thisObj);
         }
 
         return result;
@@ -2547,8 +2552,8 @@ public class ScriptRuntime {
      */
     private static Callable ensureCallable(Context cx, Object value) {
         if (!(value instanceof Callable)) {
-            // clear stored scriptable before throwing
-            lastStoredScriptable(cx);
+            // clear stored this before throwing
+            lastStoredThis(cx);
             throw (RuntimeException)value;
         }
         return (Callable)value;
@@ -2567,11 +2572,11 @@ public class ScriptRuntime {
     {
         Object value = getNameObjectAndThis(name, cx, scope);
         // restore old behaviour
-        scope = lastStoredScriptable(cx);
-        if (scope == null) {
-            scope = cx.topCallScope;
+        Object thisObj = lastStoredThis(cx);
+        if (thisObj == null) {
+            thisObj = cx.topCallScope;
         }
-        storeScriptable(cx, scope);
+        storeThis(cx, thisObj);
         return ensureCallable(cx, value);
     }
 
@@ -2586,7 +2591,7 @@ public class ScriptRuntime {
                                                   Object elem,
                                                   Context cx)
     {
-        Object value = getElemObjectAndThis(obj, elem, cx);
+        Object value = getElemObjectAndThis(obj, elem, cx, getTopCallScope(cx));
         return ensureCallable(cx, value);
     }
 
@@ -2603,7 +2608,7 @@ public class ScriptRuntime {
                                                   String property,
                                                   Context cx)
     {
-        Object value = getPropObjectAndThis(obj, property, cx);
+        Object value = getPropObjectAndThis(obj, property, cx, getTopCallScope(cx));
         return ensureCallable(cx, value);
     }
 
@@ -2616,7 +2621,7 @@ public class ScriptRuntime {
      */
     public static Callable getPropFunctionAndThis(Object obj,
                                                   String property,
-                                                  Context cx, final Scriptable scope)
+                                                  Context cx, Scriptable scope)
     {
         Object value = getPropObjectAndThis(obj, property, cx, scope);
         return ensureCallable(cx, value);
@@ -2676,7 +2681,7 @@ public class ScriptRuntime {
         if (parent == null) {
             Object result = topScopeName(cx, scope, name);
             if (!(result instanceof Callable)) {
-                storeScriptable(cx, BAD_SCRIPTABLE);
+                storeThis(cx, BAD_SCRIPTABLE);
                 if (result == Scriptable.NOT_FOUND) {
                     return createNotFoundError(scope, name);
                 } else {
@@ -2684,7 +2689,7 @@ public class ScriptRuntime {
                 }
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
-            storeScriptable(cx, null);
+            storeThis(cx, null);
             return result;
         }
 
@@ -2701,44 +2706,15 @@ public class ScriptRuntime {
      */
     public static Object getElemObjectAndThis(Object obj,
                                               Object elem,
-                                              Context cx)
+                                              Context cx, Scriptable scope)
     {
         String str = toStringIdOrIndex(cx, elem);
         if (str != null) {
-            return getPropObjectAndThis(obj, str, cx);
+            return getObjectAndThisHelper(obj, str, -1, cx, scope);
+        } else {
+            int index = lastIndexResult(cx);
+            return getObjectAndThisHelper(obj, null, index, cx, scope);
         }
-        int index = lastIndexResult(cx);
-
-        Scriptable thisObj = toObjectOrNull(cx, obj);
-        if (thisObj == null) {
-            throw undefCallError(obj, String.valueOf(index));
-        }
-
-        Object value = ScriptableObject.getProperty(thisObj, index);
-        if (!(value instanceof Callable)) {
-            storeScriptable(cx, BAD_SCRIPTABLE);
-            return notFunctionError(value, elem);
-        }
-
-        storeScriptable(cx, thisObj);
-        return value;
-    }
-
-    /**
-     * Prepare for calling obj.property(...): return function corresponding to
-     * obj.property and make obj properly converted to Scriptable available
-     * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
-     * The caller must call ScriptRuntime.lastStoredScriptable() immediately
-     * after calling this method.
-     * Warning: this doesn't allow to resolve primitive prototype properly when
-     * many top scopes are involved.
-     */
-    public static Object getPropObjectAndThis(Object obj,
-                                              String property,
-                                              Context cx)
-    {
-        Scriptable thisObj = toObjectOrNull(cx, obj);
-        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
     }
 
     /**
@@ -2750,32 +2726,60 @@ public class ScriptRuntime {
      */
     public static Object getPropObjectAndThis(Object obj,
                                               String property,
-                                              Context cx, final Scriptable scope)
+                                              Context cx, Scriptable scope)
     {
-        Scriptable thisObj = toObjectOrNull(cx, obj, scope);
-        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
+        assert property != null;
+        return getObjectAndThisHelper(obj, property, -1, cx, scope);
     }
 
-    private static Object getPropFunctionAndThisHelper(Object obj,
-          String property, Context cx, Scriptable thisObj)
-    {
-        if (thisObj == null) {
+    private static Object getObjectAndThisHelper(Object obj, String property,
+                                                 int index, Context cx,
+                                                 Scriptable scope) {
+        Scriptable sobj;
+        Object value;
+        // spidermonkey also tries noSuchMethod for index properties, rhino bug?
+        boolean tryNoSuchMethod = property != null;
+        if (obj == null || obj == Undefined.instance) {
             throw undefCallError(obj, property);
+        } else if (obj instanceof Scriptable) {
+            sobj = (Scriptable) obj;
+            if (property == null) {
+                value = ScriptableObject.getProperty(sobj, index);
+            } else {
+                value = ScriptableObject.getProperty(sobj, property);
+            }
+        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+            // follow spidermonkey (possible bug?)
+            tryNoSuchMethod = false;
+            if (property == null) { property = toString(index); }
+            value = getPrimitiveValue(obj, sobj, property, cx, scope);
+        } else if ((sobj = tryWrap(cx, scope, obj)) != null) {
+            if (property == null) {
+                value = ScriptableObject.getProperty(sobj, index);
+            } else {
+                value = ScriptableObject.getProperty(sobj, property);
+            }
+        } else {
+            throw errorWithClassName("msg.invalid.type", obj);
         }
 
-        Object value = ScriptableObject.getProperty(thisObj, property);
-        if (!(value instanceof Callable)) {
-            Object noSuchMethod = ScriptableObject.getProperty(thisObj, "__noSuchMethod__");
-            if (noSuchMethod instanceof Callable)
-                value = new NoSuchMethodShim((Callable)noSuchMethod, property);
+        boolean valueCallable = value instanceof Callable;
+        if (tryNoSuchMethod && !valueCallable) {
+            Object noSuchMethod = ScriptableObject.getProperty(sobj, "__noSuchMethod__");
+            if (noSuchMethod instanceof Callable) {
+                if (property == null) { property = toString(index); }
+                valueCallable = true;
+                value = new NoSuchMethodShim((Callable) noSuchMethod, property);
+            }
         }
 
-        if (!(value instanceof Callable)) {
-            storeScriptable(cx, BAD_SCRIPTABLE);
-            return notFunctionError(thisObj, value, property);
+        if (!valueCallable) {
+            if (property == null) { property = toString(index); }
+            storeThis(cx, BAD_SCRIPTABLE);
+            return notFunctionError(sobj, value, property);
         }
 
-        storeScriptable(cx, thisObj);
+        storeThis(cx, sobj);
         return value;
     }
 
@@ -2789,7 +2793,7 @@ public class ScriptRuntime {
     public static Object getValueObjectAndThis(Object value, Context cx)
     {
         if (!(value instanceof Callable)) {
-            storeScriptable(cx, BAD_SCRIPTABLE);
+            storeThis(cx, BAD_SCRIPTABLE);
             return notFunctionError(value);
         }
         Scriptable thisObj = null;
@@ -2809,7 +2813,7 @@ public class ScriptRuntime {
                 thisObj = ScriptableObject.getTopLevelScope(thisObj);
             }
         }
-        storeScriptable(cx, thisObj);
+        storeThis(cx, thisObj);
         return value;
     }
 
@@ -4555,19 +4559,25 @@ public class ScriptRuntime {
         return value;
     }
 
-    private static void storeScriptable(Context cx, Scriptable value)
+    private static void storeThis(Context cx, Object value)
     {
-        // The previously stored scratchScriptable should be consumed
-        if (cx.scratchScriptable != null)
+        // The previously stored scratchThis should be consumed
+        if (cx.scratchThis != null)
             throw new IllegalStateException();
-        cx.scratchScriptable = value;
+        cx.scratchThis = value;
     }
 
+    public static Object lastStoredThis(Context cx)
+    {
+        Object result = cx.scratchThis;
+        cx.scratchThis = null;
+        return result;
+    }
+
+    @Deprecated
     public static Scriptable lastStoredScriptable(Context cx)
     {
-        Scriptable result = cx.scratchScriptable;
-        cx.scratchScriptable = null;
-        return result;
+        return toObjectOrNull(cx, lastStoredThis(cx));
     }
 
     static String makeUrlForGeneratedScript

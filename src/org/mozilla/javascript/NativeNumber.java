@@ -136,9 +136,14 @@ final class NativeNumber extends IdScriptableObject
 
         // The rest of Number.prototype methods require thisObj to be Number
 
-        if (!(thisObj instanceof NativeNumber))
+        double value;
+        if (thisObj instanceof Number) {
+            value = ((Number)thisObj).doubleValue();
+        } else if (thisObj instanceof NativeNumber) {
+            value = ((NativeNumber)thisObj).doubleValue;
+        } else {
             throw incompatibleCallError(f);
-        double value = ((NativeNumber)thisObj).doubleValue;
+        }
 
         switch (id) {
 

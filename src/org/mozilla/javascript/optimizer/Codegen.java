@@ -3645,6 +3645,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
           case Token.GETELEM: {
             Node target = node.getFirstChild();
             generateExpression(target, node);
+            cfw.add(ByteCode.DUP); // dup b/c we ignore lastStoredThis
             Node id = target.getNext();
             if (type == Token.GETPROP) {
                 String property = id.getString();
@@ -3664,11 +3665,13 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                     throw Codegen.badTree();
                 generateExpression(id, node);  // id
                 cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
                 addScriptRuntimeInvoke(
                     "getElemObjectAndThis",
                     "(Ljava/lang/Object;"
                     +"Ljava/lang/Object;"
                     +"Lorg/mozilla/javascript/Context;"
+                    +"Lorg/mozilla/javascript/Scriptable;"
                     +")Ljava/lang/Object;");
             }
             break;
@@ -3701,13 +3704,17 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         // Get thisObj prepared by get(Name|Prop|Elem|Value)ObjectAndThis
         cfw.addALoad(contextLocal);
         addScriptRuntimeInvoke(
-            "lastStoredScriptable",
+            "lastStoredThis",
             "(Lorg/mozilla/javascript/Context;"
-            +")Lorg/mozilla/javascript/Scriptable;");
+            +")Ljava/lang/Object;");
         switch (type) {
           case Token.GETPROP:
           case Token.GETELEM:
-              // no further changes needed
+              // ignore stored scriptable, obj is still on stack (see DUP above)
+              // stack: ... obj value stored -> ... obj value
+              cfw.add(ByteCode.POP);
+              // stack: ... obj value -> ... value obj
+              cfw.add(ByteCode.SWAP);
               break;
           case Token.NAME: {
             // replace null with undefined
