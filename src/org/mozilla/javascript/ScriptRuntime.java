@@ -52,9 +52,7 @@ package org.mozilla.javascript;
 import java.io.Serializable;
 import java.lang.reflect.*;
 import java.text.MessageFormat;
-import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.mozilla.javascript.ast.FunctionNode;
@@ -1862,7 +1860,10 @@ public class ScriptRuntime {
             if (parentScope == null) {
                 result = topScopeName(cx, scope, name);
                 if (result == Scriptable.NOT_FOUND) {
-                    if (firstXMLObject == null || asFunctionCall) {
+                    if (asFunctionCall) {
+                        storeScriptable(cx, BAD_SCRIPTABLE);
+                        return createNotFoundError(scope, name);
+                    } else if (firstXMLObject == null) {
                         throw notFoundError(scope, name);
                     }
                     // The name was not found, but we did find an XML
@@ -1879,7 +1880,8 @@ public class ScriptRuntime {
 
         if (asFunctionCall) {
             if (!(result instanceof Callable)) {
-                throw notFunctionError(result, name);
+                storeScriptable(cx, BAD_SCRIPTABLE);
+                return notFunctionError(result, name);
             }
             storeScriptable(cx, thisObj);
         }
@@ -2230,6 +2232,35 @@ public class ScriptRuntime {
     }
 
     /**
+     * {@code value} is either instanceof {@link Callable} or instanceof
+     * {@link RuntimeException}. If the former, the method only returns the
+     * input. If the latter, the method throws {@code value}.
+     * 
+     * @param value object to inspect
+     * @return {@code value} if instanceof {@link Callable}
+     * @throws RuntimeException if {@code value} instanceof {@link RuntimeException}
+     */
+    public static Callable ensureCallable(Object value) throws RuntimeException {
+        if (!(value instanceof Callable)) {
+            throw (RuntimeException)value;
+        }
+        return (Callable)value;
+    }
+
+    /**
+     * Internal helper function for exclusive use within the more or less
+     * superseded getXXXFunctionAndThis() methods
+     */
+    private static Callable ensureCallable(Context cx, Object value) {
+        if (!(value instanceof Callable)) {
+            // clear stored scriptable before throwing
+            lastStoredScriptable(cx);
+            throw (RuntimeException)value;
+        }
+        return (Callable)value;
+    }
+
+    /**
      * Prepare for calling name(...): return function corresponding to
      * name and make current top scope available
      * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
@@ -2240,24 +2271,8 @@ public class ScriptRuntime {
                                                   Context cx,
                                                   Scriptable scope)
     {
-        Scriptable parent = scope.getParentScope();
-        if (parent == null) {
-            Object result = topScopeName(cx, scope, name);
-            if (!(result instanceof Callable)) {
-                if (result == Scriptable.NOT_FOUND) {
-                    throw notFoundError(scope, name);
-                } else {
-                    throw notFunctionError(result, name);
-                }
-            }
-            // Top scope is not NativeWith or NativeCall => thisObj == scope
-            Scriptable thisObj = scope;
-            storeScriptable(cx, thisObj);
-            return (Callable)result;
-        }
-
-        // name will call storeScriptable(cx, thisObj);
-        return (Callable)nameOrFunction(cx, scope, parent, name, true);
+        Object value = getNameObjectAndThis(name, cx, scope);
+        return ensureCallable(cx, value);
     }
 
     /**
@@ -2271,24 +2286,8 @@ public class ScriptRuntime {
                                                   Object elem,
                                                   Context cx)
     {
-        String str = toStringIdOrIndex(cx, elem);
-        if (str != null) {
-            return getPropFunctionAndThis(obj, str, cx);
-        }
-        int index = lastIndexResult(cx);
-
-        Scriptable thisObj = toObjectOrNull(cx, obj);
-        if (thisObj == null) {
-            throw undefCallError(obj, String.valueOf(index));
-        }
-
-        Object value = ScriptableObject.getProperty(thisObj, index);
-        if (!(value instanceof Callable)) {
-            throw notFunctionError(value, elem);
-        }
-
-        storeScriptable(cx, thisObj);
-        return (Callable)value;
+        Object value = getElemObjectAndThis(obj, elem, cx);
+        return ensureCallable(cx, value);
     }
 
     /**
@@ -2304,8 +2303,8 @@ public class ScriptRuntime {
                                                   String property,
                                                   Context cx)
     {
-        Scriptable thisObj = toObjectOrNull(cx, obj);
-        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
+        Object value = getPropObjectAndThis(obj, property, cx);
+        return ensureCallable(cx, value);
     }
 
     /**
@@ -2319,11 +2318,146 @@ public class ScriptRuntime {
                                                   String property,
                                                   Context cx, final Scriptable scope)
     {
+        Object value = getPropObjectAndThis(obj, property, cx, scope);
+        return ensureCallable(cx, value);
+    }
+
+    /**
+     * Prepare for calling <expression>(...): return function corresponding to
+     * <expression> and make parent scope of the function available
+     * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
+     * The caller must call ScriptRuntime.lastStoredScriptable() immediately
+     * after calling this method.
+     */
+    public static Callable getValueFunctionAndThis(Object value, Context cx)
+    {
+        value = getValueObjectAndThis(value, cx);
+        return ensureCallable(cx, value);
+    }
+
+    /**
+     * Internal sentinel object
+     */
+    private static final Scriptable BAD_SCRIPTABLE = new Scriptable() {
+        private IllegalStateException error() {
+            return new IllegalStateException();
+        }
+
+        public String getClassName() { throw error(); }
+        public Object get(String name, Scriptable start) { throw error(); }
+        public Object get(int index, Scriptable start) { throw error(); }
+        public boolean has(String name, Scriptable start) { throw error(); }
+        public boolean has(int index, Scriptable start) { throw error(); }
+        public void put(String name, Scriptable start, Object value) { throw error(); }
+        public void put(int index, Scriptable start, Object value) { throw error(); }
+        public void delete(String name) { throw error(); }
+        public void delete(int index) { throw error(); }
+        public Scriptable getPrototype() { throw error(); }
+        public void setPrototype(Scriptable prototype) { throw error(); }
+        public Scriptable getParentScope() { throw error(); }
+        public void setParentScope(Scriptable parent) { throw error(); }
+        public Object[] getIds() { throw error(); }
+        public Object getDefaultValue(Class<?> hint) { throw error(); }
+        public boolean hasInstance(Object instance) { throw error(); }
+    };
+
+    /**
+     * Prepare for calling name(...): return function corresponding to
+     * name and make current top scope available
+     * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
+     * The caller must call ScriptRuntime.lastStoredScriptable() immediately
+     * after calling this method.
+     */
+    public static Object getNameObjectAndThis(String name,
+                                              Context cx,
+                                              Scriptable scope)
+    {
+        Scriptable parent = scope.getParentScope();
+        if (parent == null) {
+            Object result = topScopeName(cx, scope, name);
+            if (!(result instanceof Callable)) {
+                storeScriptable(cx, BAD_SCRIPTABLE);
+                if (result == Scriptable.NOT_FOUND) {
+                    return createNotFoundError(scope, name);
+                } else {
+                    return notFunctionError(result, name);
+                }
+            }
+            // Top scope is not NativeWith or NativeCall => thisObj == scope
+            Scriptable thisObj = scope;
+            storeScriptable(cx, thisObj);
+            return result;
+        }
+
+        // name will call storeScriptable(cx, thisObj);
+        return nameOrFunction(cx, scope, parent, name, true);
+    }
+
+    /**
+     * Prepare for calling obj[id](...): return function corresponding to
+     * obj[id] and make obj properly converted to Scriptable available
+     * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
+     * The caller must call ScriptRuntime.lastStoredScriptable() immediately
+     * after calling this method.
+     */
+    public static Object getElemObjectAndThis(Object obj,
+                                              Object elem,
+                                              Context cx)
+    {
+        String str = toStringIdOrIndex(cx, elem);
+        if (str != null) {
+            return getPropObjectAndThis(obj, str, cx);
+        }
+        int index = lastIndexResult(cx);
+
+        Scriptable thisObj = toObjectOrNull(cx, obj);
+        if (thisObj == null) {
+            throw undefCallError(obj, String.valueOf(index));
+        }
+
+        Object value = ScriptableObject.getProperty(thisObj, index);
+        if (!(value instanceof Callable)) {
+            storeScriptable(cx, BAD_SCRIPTABLE);
+            return notFunctionError(value, elem);
+        }
+
+        storeScriptable(cx, thisObj);
+        return value;
+    }
+
+    /**
+     * Prepare for calling obj.property(...): return function corresponding to
+     * obj.property and make obj properly converted to Scriptable available
+     * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
+     * The caller must call ScriptRuntime.lastStoredScriptable() immediately
+     * after calling this method.
+     * Warning: this doesn't allow to resolve primitive prototype properly when
+     * many top scopes are involved.
+     */
+    public static Object getPropObjectAndThis(Object obj,
+                                              String property,
+                                              Context cx)
+    {
+        Scriptable thisObj = toObjectOrNull(cx, obj);
+        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
+    }
+
+    /**
+     * Prepare for calling obj.property(...): return function corresponding to
+     * obj.property and make obj properly converted to Scriptable available
+     * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
+     * The caller must call ScriptRuntime.lastStoredScriptable() immediately
+     * after calling this method.
+     */
+    public static Object getPropObjectAndThis(Object obj,
+                                              String property,
+                                              Context cx, final Scriptable scope)
+    {
         Scriptable thisObj = toObjectOrNull(cx, obj, scope);
         return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
     }
 
-    private static Callable getPropFunctionAndThisHelper(Object obj,
+    private static Object getPropFunctionAndThisHelper(Object obj,
           String property, Context cx, Scriptable thisObj)
     {
         if (thisObj == null) {
@@ -2338,11 +2472,12 @@ public class ScriptRuntime {
         }
 
         if (!(value instanceof Callable)) {
-            throw notFunctionError(thisObj, value, property);
+            storeScriptable(cx, BAD_SCRIPTABLE);
+            return notFunctionError(thisObj, value, property);
         }
 
         storeScriptable(cx, thisObj);
-        return (Callable)value;
+        return value;
     }
 
     /**
@@ -2352,15 +2487,15 @@ public class ScriptRuntime {
      * The caller must call ScriptRuntime.lastStoredScriptable() immediately
      * after calling this method.
      */
-    public static Callable getValueFunctionAndThis(Object value, Context cx)
+    public static Object getValueObjectAndThis(Object value, Context cx)
     {
         if (!(value instanceof Callable)) {
-            throw notFunctionError(value);
+            storeScriptable(cx, BAD_SCRIPTABLE);
+            return notFunctionError(value);
         }
-        Callable f = (Callable)value;
         Scriptable thisObj = null;
-        if (f instanceof Scriptable) {
-            thisObj = ((Scriptable)f).getParentScope();
+        if (value instanceof Scriptable) {
+            thisObj = ((Scriptable)value).getParentScope();
         }
         if (thisObj == null) {
             if (cx.topCallScope == null) throw new IllegalStateException();
@@ -2376,7 +2511,7 @@ public class ScriptRuntime {
             }
         }
         storeScriptable(cx, thisObj);
-        return f;
+        return value;
     }
 
     /**
@@ -3913,6 +4048,18 @@ public class ScriptRuntime {
         }
         return typeError3("msg.isnt.function.in", propertyName, objString,
                           typeof(value));
+    }
+
+    /**
+     * Same method as {@link #notFoundError(Scriptable, String)}, but returns
+     * the exception object instead of throwing it
+     */
+    private static RuntimeException createNotFoundError(Scriptable object,
+                                                        String property)
+    {
+        // XXX: use object to improve the error message
+        String msg = getMessage1("msg.is.not.defined", property);
+        return constructError("ReferenceError", msg);
     }
 
     private static RuntimeException notXmlError(Object value)

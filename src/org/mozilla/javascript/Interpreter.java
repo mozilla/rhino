@@ -1502,8 +1502,8 @@ switch (op) {
     case Icode_NAME_AND_THIS :
         // stringReg: name
         ++stackTop;
-        stack[stackTop] = ScriptRuntime.getNameFunctionAndThis(stringReg,
-                                                               cx, frame.scope);
+        stack[stackTop] = ScriptRuntime.getNameObjectAndThis(stringReg,
+                                                             cx, frame.scope);
         ++stackTop;
         stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
         continue Loop;
@@ -1511,8 +1511,8 @@ switch (op) {
         Object obj = stack[stackTop];
         if (obj == DBL_MRK) obj = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         // stringReg: property
-        stack[stackTop] = ScriptRuntime.getPropFunctionAndThis(obj, stringReg,
-                                                               cx, frame.scope);
+        stack[stackTop] = ScriptRuntime.getPropObjectAndThis(obj, stringReg,
+                                                             cx, frame.scope);
         ++stackTop;
         stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
         continue Loop;
@@ -1522,14 +1522,14 @@ switch (op) {
         if (obj == DBL_MRK) obj = ScriptRuntime.wrapNumber(sDbl[stackTop - 1]);
         Object id = stack[stackTop];
         if (id == DBL_MRK) id = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop - 1] = ScriptRuntime.getElemFunctionAndThis(obj, id, cx);
+        stack[stackTop - 1] = ScriptRuntime.getElemObjectAndThis(obj, id, cx);
         stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
         continue Loop;
     }
     case Icode_VALUE_AND_THIS : {
         Object value = stack[stackTop];
         if (value == DBL_MRK) value = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.getValueFunctionAndThis(value, cx);
+        stack[stackTop] = ScriptRuntime.getValueObjectAndThis(value, cx);
         ++stackTop;
         stack[stackTop] = ScriptRuntime.lastStoredScriptable(cx);
         continue Loop;
@@ -1561,7 +1561,7 @@ switch (op) {
             // Call code generation ensure that stack here
             // is ... Callable Scriptable
             Scriptable functionThis = (Scriptable)stack[stackTop + 1];
-            Callable function = (Callable)stack[stackTop];
+            Callable function = ScriptRuntime.ensureCallable(stack[stackTop]);
             Object[] outArgs = getArgsArray(
                                    stack, sDbl, stackTop + 2, indexReg);
             stack[stackTop] = ScriptRuntime.callSpecial(
@@ -1584,7 +1584,7 @@ switch (op) {
 
         // CALL generation ensures that fun and funThisObj
         // are already Scriptable and Callable objects respectively
-        Callable fun = (Callable)stack[stackTop];
+        Callable fun = ScriptRuntime.ensureCallable(stack[stackTop]);
         Scriptable funThisObj = (Scriptable)stack[stackTop + 1];
         if (op == Token.REF_CALL) {
             Object[] outArgs = getArgsArray(stack, sDbl, stackTop + 2,
