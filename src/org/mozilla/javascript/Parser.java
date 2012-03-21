@@ -263,7 +263,7 @@ public class Parser
     void reportError(String messageId, String messageArg, int position,
                      int length)
     {
-        addError(messageId, position, length);
+        addError(messageId, messageArg, position, length);
 
         if (!compilerEnv.recoverFromErrors()) {
             throw new ParserException();
@@ -1937,7 +1937,9 @@ public class Parser
                 name.setLineno(ts.getLineno());
                 if (inUseStrictDirective) {
                     String id = ts.getString();
-                    if ("eval".equals(id) || "arguments".equals(ts.getString()))
+                    if ("eval".equals(id) ||
+                        "arguments".equals(ts.getString()) ||
+                        TokenStream.isKeyword(id))
                     {
                         reportError("msg.bad.id.strict", id);
                     }
