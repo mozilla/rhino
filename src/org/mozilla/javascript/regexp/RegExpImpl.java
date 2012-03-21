@@ -85,11 +85,12 @@ public class RegExpImpl implements RegExpProxy {
 
           case RA_REPLACE:
             {
-                boolean useRE = args.length != 0 && (args[0] instanceof NativeRegExp);
+                boolean useRE = (args.length > 0 && args[0] instanceof NativeRegExp)
+                                || args.length > 2;
                 NativeRegExp re = null;
                 String search = null;
                 if (useRE) {
-                    re = createRegExp(cx, scope, args, 2, false);
+                    re = createRegExp(cx, scope, args, 2, true);
                 } else {
                     Object arg0 = args.length < 1 ? Undefined.instance : args[0];
                     search = ScriptRuntime.toString(arg0);
