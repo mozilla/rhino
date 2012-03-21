@@ -644,7 +644,6 @@ public class Parser
 
         pn.setLineno(ts.lineno);
         try {
-<<<<<<< HEAD
             if (isExpressionClosure) {
                 ReturnStatement n = new ReturnStatement(ts.lineno);
                 n.setReturnValue(assignExpr());

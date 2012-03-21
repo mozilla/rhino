@@ -1921,11 +1921,6 @@ public final class IRFactory extends Parser
             } else if (name.equals("With")) {
                 type = Node.SPECIALCALL_WITH;
             }
-        } else if (child.getType() == Token.GETPROP) {
-            String name = child.getLastChild().getString();
-            if (name.equals("eval")) {
-                type = Node.SPECIALCALL_EVAL;
-            }
         }
         Node node = new Node(nodeType, child);
         if (type != Node.NON_SPECIALCALL) {
