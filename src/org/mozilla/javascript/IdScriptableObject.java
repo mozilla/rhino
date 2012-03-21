@@ -820,6 +820,30 @@ public abstract class IdScriptableObject extends ScriptableObject
         super.updateOwnProperty(name, desc, current);
     }
 
+    /**
+     * Internal helper method, should only be called on prototype objects
+     * 
+     * @see NativeString#getPrimitiveValue(CharSequence, String, int, Context, Scriptable)
+     * @see NativeBoolean#getPrimitiveValue(Boolean, String, int, Context, Scriptable)
+     * @see NativeString#getPrimitiveValue(CharSequence, String, int, Context, Scriptable)
+     */
+    final Object getSlotOrProtoValue(String name, int index, Object base,
+                                     Context cx, Scriptable scope) {
+        // search slot properties first, cf. get()
+        Object value = getSlotValue(name, index, base, cx, scope);
+        if (value == NOT_FOUND && name != null) {
+            // no slot property found, proceed with prototype properties
+            PrototypeValues pv = prototypeValues;
+            assert pv != null;
+            int id = pv.findId(name);
+            if (id != 0) {
+                // found prototype property (but may be deleted!)
+                value = pv.get(id);
+            }
+        }
+        return value;
+    }
+
     private void readObject(ObjectInputStream stream)
         throws IOException, ClassNotFoundException
     {

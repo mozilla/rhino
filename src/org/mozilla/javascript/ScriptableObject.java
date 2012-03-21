@@ -3155,6 +3155,30 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
+     * Internal helper method
+     * 
+     * @see IdScriptableObject#getSlotOrProtoValue(String, int, Object, Context, Scriptable)
+     */
+    final Object getSlotValue(String name, int index, Object base,
+                              Context cx, Scriptable scope) {
+        Slot slot = getSlot(name, index, SLOT_QUERY);
+        if (slot == null) {
+            return NOT_FOUND;
+        }
+        slot = unwrapSlot(slot);
+        if (slot instanceof GetterSlot) {
+            Object getter = ((GetterSlot) slot).getter;
+            if (getter == null || getter == Undefined.instance) {
+                return Undefined.instance;
+            }
+            assert getter instanceof Callable;
+            return ((Callable) getter).call(cx, scope, base, ScriptRuntime.emptyArgs);
+        } else {
+            return slot.value;
+        }
+    }
+
+    /**
      * ECMAScript 5
      * 
      * 8.12.1 [[GetOwnProperty]] (P)
