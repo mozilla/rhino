@@ -402,6 +402,7 @@ final class Arguments extends IdScriptableObject
         boolean allowed = super.defineOwnProperty(name, desc, false);
         if (!allowed) {
             if (checked) {
+                // TODO: error message
                 throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
             }
             return false;
