@@ -53,6 +53,8 @@ final class NativeNumber extends IdScriptableObject
 
     private static final Object NUMBER_TAG = "Number";
 
+    private static final int MAX_PRECISION = 100;
+
     static void init(Scriptable scope, boolean sealed)
     {
         NativeNumber obj = new NativeNumber(0.0);
@@ -157,7 +159,7 @@ final class NativeNumber extends IdScriptableObject
 
           case Id_toFixed:
             return num_to(value, args, DToA.DTOSTR_FIXED,
-                          DToA.DTOSTR_FIXED, 0, 20, 0);
+                          DToA.DTOSTR_FIXED, 0, 0);
 
           case Id_toExponential: {
               // Handle special values before range check
@@ -174,7 +176,7 @@ final class NativeNumber extends IdScriptableObject
               }
               // General case
               return num_to(value, args, DToA.DTOSTR_STANDARD_EXPONENTIAL,
-                      DToA.DTOSTR_EXPONENTIAL, 0, 20, 1);
+                      DToA.DTOSTR_EXPONENTIAL, 0, 1);
           }
 
           case Id_toPrecision: {
@@ -195,7 +197,7 @@ final class NativeNumber extends IdScriptableObject
                   }
               }
               return num_to(value, args, DToA.DTOSTR_STANDARD,
-                      DToA.DTOSTR_PRECISION, 1, 21, 0);
+                      DToA.DTOSTR_PRECISION, 1, 0);
           }
 
           default: throw new IllegalArgumentException(String.valueOf(id));
@@ -210,16 +212,17 @@ final class NativeNumber extends IdScriptableObject
     private static String num_to(double val,
                                  Object[] args,
                                  int zeroArgMode, int oneArgMode,
-                                 int precisionMin, int precisionMax,
-                                 int precisionOffset)
+                                 int precisionMin, int precisionOffset)
     {
         int precision;
         if (args.length == 0) {
             precision = 0;
             oneArgMode = zeroArgMode;
         } else {
+            /* We allow a larger range of precision than ECMA requires;
+               this is permitted by ECMA. [ES5.1, ch. 16 Errors] */
             double p = ScriptRuntime.toInteger(args[0]);
-            if (p < precisionMin || p > precisionMax) {
+            if (p < precisionMin || p > MAX_PRECISION) {
                 String msg = ScriptRuntime.getMessage1(
                     "msg.bad.precision", ScriptRuntime.toString(args[0]));
                 throw ScriptRuntime.constructError("RangeError", msg);
