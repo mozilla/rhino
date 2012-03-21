@@ -42,7 +42,6 @@ package org.mozilla.javascript;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -2489,39 +2488,15 @@ public class Context
          * A bit of a hack, but the only way to get filename and line
          * number from an enclosing frame.
          */
-        CharArrayWriter writer = new CharArrayWriter();
-        RuntimeException re = new RuntimeException();
-        re.printStackTrace(new PrintWriter(writer));
-        String s = writer.toString();
-        int open = -1;
-        int close = -1;
-        int colon = -1;
-        for (int i=0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == ':')
-                colon = i;
-            else if (c == '(')
-                open = i;
-            else if (c == ')')
-                close = i;
-            else if (c == '\n' && open != -1 && close != -1 && colon != -1 &&
-                     open < colon && colon < close)
-            {
-                String fileStr = s.substring(open + 1, colon);
-                if (!fileStr.endsWith(".java")) {
-                    String lineStr = s.substring(colon + 1, close);
-                    try {
-                        linep[0] = Integer.parseInt(lineStr);
-                        if (linep[0] < 0) {
-                            linep[0] = 0;
-                        }
-                        return fileStr;
-                    }
-                    catch (NumberFormatException e) {
-                        // fall through
-                    }
+        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+        for (StackTraceElement st : stackTrace) {
+            String file = st.getFileName();
+            if (!(file == null || file.endsWith(".java"))) {
+                int line = st.getLineNumber();
+                if (line >= 0) {
+                    linep[0] = line;
+                    return file;
                 }
-                open = close = colon = -1;
             }
         }
 
