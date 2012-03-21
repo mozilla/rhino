@@ -1510,12 +1510,13 @@ public class ScriptRuntime {
      * Special [[Get]] if reference base value is primitive, see ES5.1 [8.7.1]
      */
     private static Object getPrimitiveValue(Object base, Scriptable obj,
-                                            String property, Context cx,
-                                            Scriptable scope) {
+                                            String property, int index,
+                                            Context cx, Scriptable scope) {
         // TODO: could need some optimization
         assert obj instanceof NativeString
             || obj instanceof NativeNumber
             || obj instanceof NativeBoolean;
+        if (property == null) { property = toString(index); }
         ScriptableObject sobj = (ScriptableObject) obj;
         PropertyDescriptor desc = sobj.$getProperty(property);
         if (desc == null) {
@@ -1592,7 +1593,13 @@ public class ScriptRuntime {
         } else if (obj instanceof Scriptable) {
             sobj = (Scriptable) obj;
         } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
-            return getPrimitiveValue(obj, sobj, toString(elem), cx, scope);
+            String s = toStringIdOrIndex(cx, elem);
+            if (s != null) {
+                return getPrimitiveValue(obj, sobj, s, -1, cx, scope);
+            } else {
+                int index = lastIndexResult(cx);
+                return getPrimitiveValue(obj, sobj, null, index, cx, scope);
+            }
         } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
             throw errorWithClassName("msg.invalid.type", obj);
         }
@@ -1620,7 +1627,8 @@ public class ScriptRuntime {
         } else if (obj instanceof Scriptable) {
             sobj = (Scriptable) obj;
         } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
-            return getPrimitiveValue(obj, sobj, property, cx, scope);
+            assert property != null;
+            return getPrimitiveValue(obj, sobj, property, -1, cx, scope);
         } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
             throw errorWithClassName("msg.invalid.type", obj);
         }
@@ -1648,7 +1656,13 @@ public class ScriptRuntime {
         } else if (obj instanceof Scriptable) {
             sobj = (Scriptable) obj;
         } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
-            return getPrimitiveValue(obj, sobj, toString(dblIndex), cx, scope);
+            int index = (int) dblIndex;
+            if (index == dblIndex) {
+                return getPrimitiveValue(obj, sobj, null, index, cx, scope);
+            } else {
+                String s = toString(dblIndex);
+                return getPrimitiveValue(obj, sobj, s, -1, cx, scope);
+            }
         } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
             throw errorWithClassName("msg.invalid.type", obj);
         }
@@ -2751,8 +2765,7 @@ public class ScriptRuntime {
         } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
             // follow spidermonkey (possible bug?)
             tryNoSuchMethod = false;
-            if (property == null) { property = toString(index); }
-            value = getPrimitiveValue(obj, sobj, property, cx, scope);
+            value = getPrimitiveValue(obj, sobj, property, index, cx, scope);
         } else if ((sobj = tryWrap(cx, scope, obj)) != null) {
             if (property == null) {
                 value = ScriptableObject.getProperty(sobj, index);
