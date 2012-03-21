@@ -3919,15 +3919,16 @@ public class Parser
     protected Node simpleAssignment(Node left, Node right) {
         int nodeType = left.getType();
         switch (nodeType) {
-          case Token.NAME:
+          case Token.NAME: {
+              String name = left.getString();
               if (inUseStrictDirective &&
-                  "eval".equals(((Name) left).getIdentifier()))
+                  ("eval".equals(name) || "arguments".equals(name)))
               {
-                  reportError("msg.bad.id.strict",
-                              ((Name) left).getIdentifier());
+                  reportError("msg.bad.id.strict", name);
               }
               left.setType(Token.BINDNAME);
               return new Node(Token.SETNAME, left, right);
+          }
 
           case Token.GETPROP:
           case Token.GETELEM: {
