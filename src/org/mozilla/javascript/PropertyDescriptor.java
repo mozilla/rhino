@@ -22,6 +22,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * André Bargull
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -37,16 +38,14 @@
 
 package org.mozilla.javascript;
 
-import static org.mozilla.javascript.Scriptable.NOT_FOUND;
 import static org.mozilla.javascript.ScriptableObject.DONTENUM;
-import static org.mozilla.javascript.ScriptableObject.EMPTY;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
-import static org.mozilla.javascript.ScriptableObject.ensureScriptableObject;
+import static org.mozilla.javascript.ScriptableObject.ensureScriptable;
 import static org.mozilla.javascript.ScriptableObject.getProperty;
 
 /**
- * 
+ * Property Descriptor per ECMAScript 5 [8.10]
  *
  */
 class PropertyDescriptor {
@@ -63,6 +62,7 @@ class PropertyDescriptor {
             | ENUMERABLE | CONFIGURABLE;
 
     private int present = 0;
+    // default attribute values per 8.6.1, table 7
     private Object value = Undefined.instance;
     private Object getter = Undefined.instance;
     private Object setter = Undefined.instance;
@@ -71,6 +71,9 @@ class PropertyDescriptor {
     private PropertyDescriptor() {
     }
 
+    /**
+     * Creates a shallow copy of the supplied property descriptor
+     */
     PropertyDescriptor(PropertyDescriptor desc) {
         this.present = desc.present;
         this.value = desc.value;
@@ -79,23 +82,44 @@ class PropertyDescriptor {
         this.attributes = desc.attributes;
     }
 
+    /**
+     * Creates a new data property descriptor with an initial value:<br>
+     * <code>{[[Value]]: ?}</code>
+     */
     PropertyDescriptor(Object value) {
         this.value = value;
         this.present = VALUE;
     }
 
+    /**
+     * Creates a new data property descriptor with an initial value and initial
+     * attributes:<br>
+     * <code>{[[Value]]: ?, [[Writable]]: ?, [[Enumerable]]: ?,
+     * [[Configurable]]: ?}</code>
+     */
     PropertyDescriptor(Object value, int attributes) {
         this.value = value;
         this.attributes = attributes;
         this.present = VALUE | WRITABLE | ENUMERABLE | CONFIGURABLE;
     }
 
+    /**
+     * Creates a new accessor property descriptor with initial getter and
+     * setter:<br>
+     * <code>{[[Get]]: ?, [[Set]]: ?}</code>
+     */
     PropertyDescriptor(Object getter, Object setter) {
         this.getter = getter;
         this.setter = setter;
         this.present = GET | SET;
     }
 
+    /**
+     * Creates a new accessor property descriptor with initial getter and setter
+     * and initial attributes:<br>
+     * <code>{[[Get]]: ?, [[Set]]: ?, [[Enumerable]]: ?, [[Configurable]]: ?}
+     * </code>
+     */
     PropertyDescriptor(Object getter, Object setter, int attributes) {
         this.getter = getter;
         this.setter = setter;
@@ -103,8 +127,15 @@ class PropertyDescriptor {
         this.present = GET | SET | ENUMERABLE | CONFIGURABLE;
     }
 
+    /**
+     * ECMAScript 5: 8.10.4 FromPropertyDescriptor (Desc)<br>
+     * Returns {@code undefined} if the input property descriptor is
+     * {@code null}, otherwise returns a {@link Scriptable} representing the
+     * fields of this property descriptor.
+     */
     static Object fromPropertyDescriptor(Context cx, Scriptable scope,
-            PropertyDescriptor desc) {
+            PropertyDescriptor desc) throws IllegalArgumentException {
+        /* 8.10.4, step 1. */
         if (desc == null) {
             return Undefined.instance;
         }
@@ -115,45 +146,51 @@ class PropertyDescriptor {
             throw new IllegalArgumentException(String.valueOf(present));
         }
 
-        ScriptableObject obj = ensureScriptableObject(cx.newObject(scope));
+        /* 8.10.4, step 2. */
+        Scriptable obj = ensureScriptable(cx.newObject(scope));
+        /* 8.10.4, step 3-6. */
         if (desc.isDataDescriptor()) {
-            obj.defineProperty("value", desc.getValue(), EMPTY, false);
-            obj.defineProperty("writable", desc.isWritable(), EMPTY, false);
+            obj.put("value", obj, desc.getValue(), false);
+            obj.put("writable", obj, desc.isWritable(), false);
         } else {
-            obj.defineProperty("get", desc.getGetter(), EMPTY, false);
-            obj.defineProperty("set", desc.getSetter(), EMPTY, false);
+            obj.put("get", obj, desc.getGetter(), false);
+            obj.put("set", obj, desc.getSetter(), false);
         }
-        obj.defineProperty("enumerable", desc.isEnumerable(), EMPTY, false);
-        obj.defineProperty("configurable", desc.isConfigurable(), EMPTY, false);
+        obj.put("enumerable", obj, desc.isEnumerable(), false);
+        obj.put("configurable", obj, desc.isConfigurable(), false);
+        /* 8.10.4, step 7. */
         return obj;
     }
 
+    /**
+     * ECMAScript 5: 8.10.5 ToPropertyDescriptor (Desc)<br>
+     * Returns a new property descriptor from the input argument {@code object},
+     * if {@code object} is not an instance of {@link Scriptable}, a TypeError
+     * is thrown.
+     */
     static PropertyDescriptor toPropertyDescriptor(Object object) {
-        ScriptableObject obj = ensureScriptableObject(object);
+        /* 8.10.5, step 1. */
+        Scriptable obj = ensureScriptable(object);
+        /* 8.10.5, step 2-8. */
         PropertyDescriptor desc = new PropertyDescriptor();
         if (ScriptableObject.hasProperty(obj, "enumerable")) {
             Object enumerable = getProperty(obj, "enumerable");
-            if (enumerable == NOT_FOUND) enumerable = Boolean.FALSE;
             desc.setEnumerable(ScriptRuntime.toBoolean(enumerable));
         }
         if (ScriptableObject.hasProperty(obj, "configurable")) {
             Object configurable = getProperty(obj, "configurable");
-            if (configurable == NOT_FOUND) configurable = Boolean.FALSE;
             desc.setConfigurable(ScriptRuntime.toBoolean(configurable));
         }
         if (ScriptableObject.hasProperty(obj, "value")) {
             Object value = ScriptableObject.getProperty(obj, "value");
-            if (value == NOT_FOUND) value = Undefined.instance;
             desc.setValue(value);
         }
         if (ScriptableObject.hasProperty(obj, "writable")) {
             Object writable = getProperty(obj, "writable");
-            if (writable == NOT_FOUND) writable = Boolean.FALSE;
             desc.setWritable(ScriptRuntime.toBoolean(writable));
         }
         if (ScriptableObject.hasProperty(obj, "get")) {
             Object getter = ScriptableObject.getProperty(obj, "get");
-            if (getter == NOT_FOUND) getter = Undefined.instance;
             if (getter != Undefined.instance && !(getter instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(getter);
             }
@@ -161,36 +198,63 @@ class PropertyDescriptor {
         }
         if (ScriptableObject.hasProperty(obj, "set")) {
             Object setter = ScriptableObject.getProperty(obj, "set");
-            if (setter == NOT_FOUND) setter = Undefined.instance;
             if (setter != Undefined.instance && !(setter instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(setter);
             }
             desc.setSetter(setter);
         }
+        /* 8.10.5, step 9. */
         if ((desc.present & (GET | SET)) != 0
                 && (desc.present & (VALUE | WRITABLE)) != 0) {
             throw ScriptRuntime.typeError0("msg.both.data.and.accessor.desc");
         }
+        /* 8.10.5, step 10. */
         return desc;
     }
 
-    public boolean isAccessorDescriptor() {
+    /**
+     * ECMAScript 5: 8.10.1 IsAccessorDescriptor (Desc)<br>
+     * Returns {@code true} if this object is an accessor property descriptor
+     */
+    public final boolean isAccessorDescriptor() {
         return (present & (GET | SET)) != 0;
     }
 
-    public boolean isDataDescriptor() {
+    /**
+     * ECMAScript 5: 8.10.2 IsDataDescriptor (Desc)<br>
+     * Returns {@code true} if this object is a data property descriptor
+     */
+    public final boolean isDataDescriptor() {
         return (present & (VALUE | WRITABLE)) != 0;
     }
 
-    public boolean isGenericDescriptor() {
+    /**
+     * ECMAScript 5: 8.10.3 IsGenericDescriptor (Desc)<br>
+     * Returns {@code true} if this object is a generic property descriptor
+     */
+    public final boolean isGenericDescriptor() {
         return (present & (GET | SET | VALUE | WRITABLE)) == 0;
     }
 
-    public int getAttributes() {
+    /**
+     * Returns the attribute set of this property descriptor
+     *
+     * @see ScriptableObject#READONLY
+     * @see ScriptableObject#DONTENUM
+     * @see ScriptableObject#PERMANENT
+     */
+    public final int getAttributes() {
         return attributes;
     }
 
-    public int getAttributeMask() {
+    /**
+     * Returns a bit mask of the currently set attributes
+     *
+     * @see ScriptableObject#READONLY
+     * @see ScriptableObject#DONTENUM
+     * @see ScriptableObject#PERMANENT
+     */
+    public final int getAttributeMask() {
         int mask = 0;
         if ((present & WRITABLE) != 0) {
             mask |= READONLY;
@@ -204,127 +268,143 @@ class PropertyDescriptor {
         return mask;
     }
 
-    public int getPresent() {
+    /**
+     * Returns a bit mask of the currently set fields of this property
+     * descriptor
+     */
+    public final int getPresent() {
         return present;
     }
 
-    public boolean hasValue() {
+    /**
+     * Returns {@code true} if the <tt>[[Value]]</tt> field is present
+     */
+    public final boolean hasValue() {
         return (present & VALUE) != 0;
     }
 
-    public boolean hasGetter() {
+    /**
+     * Returns {@code true} if the <tt>[[Get]]</tt> field is present
+     */
+    public final boolean hasGetter() {
         return (present & GET) != 0;
     }
 
-    public boolean hasSetter() {
+    /**
+     * Returns {@code true} if the <tt>[[Set]]</tt> field is present
+     */
+    public final boolean hasSetter() {
         return (present & SET) != 0;
     }
 
-    public boolean hasWritable() {
+    /**
+     * Returns {@code true} if the <tt>[[Writable]]</tt> field is present
+     */
+    public final boolean hasWritable() {
         return (present & WRITABLE) != 0;
     }
 
-    public boolean hasEnumerable() {
+    /**
+     * Returns {@code true} if the <tt>[[Enumerable]]</tt> field is present
+     */
+    public final boolean hasEnumerable() {
         return (present & ENUMERABLE) != 0;
     }
 
-    public boolean hasConfigurable() {
+    /**
+     * Returns {@code true} if the <tt>[[Configurable]]</tt> field is present
+     */
+    public final boolean hasConfigurable() {
         return (present & CONFIGURABLE) != 0;
     }
 
     /**
-     * @return the value
+     * Returns the <tt>[[Value]]</tt> field or its default value
      */
-    public Object getValue() {
+    public final Object getValue() {
         return value;
     }
 
     /**
-     * @param value
-     *            the value to set
+     * Sets the <tt>[[Value]]</tt> field to the argument value
      */
-    public void setValue(Object value) {
+    public final void setValue(Object value) {
         present |= VALUE;
         this.value = value;
     }
 
     /**
-     * @return the getter
+     * Returns the <tt>[[Get]]</tt> field or its default value
      */
-    public Object getGetter() {
+    public final Object getGetter() {
         return getter;
     }
 
     /**
-     * @param getter
-     *            the getter to set
+     * Sets the <tt>[[Get]]</tt> field to the argument value
      */
-    public void setGetter(Object getter) {
+    public final void setGetter(Object getter) {
         present |= GET;
         this.getter = getter;
     }
 
     /**
-     * @return the setter
+     * Returns the <tt>[[Set]]</tt> field or its default value
      */
-    public Object getSetter() {
+    public final Object getSetter() {
         return setter;
     }
 
     /**
-     * @param setter
-     *            the setter to set
+     * Sets the <tt>[[Set]]</tt> field to the argument value
      */
-    public void setSetter(Object setter) {
+    public final void setSetter(Object setter) {
         present |= SET;
         this.setter = setter;
     }
 
     /**
-     * @return the writable
+     * Returns the <tt>[[Writable]]</tt> field or its default value
      */
-    public boolean isWritable() {
+    public final boolean isWritable() {
         return (attributes & READONLY) == 0;
     }
 
     /**
-     * @param writable
-     *            the writable to set
+     * Sets the <tt>[[Writable]]</tt> field to the argument value
      */
-    public void setWritable(boolean writable) {
+    public final void setWritable(boolean writable) {
         present |= WRITABLE;
         attributes = (writable ? attributes & ~READONLY : attributes | READONLY);
     }
 
     /**
-     * @return the enumerable
+     * Returns the <tt>[[Enumerable]]</tt> field or its default value
      */
-    public boolean isEnumerable() {
+    public final boolean isEnumerable() {
         return (attributes & DONTENUM) == 0;
     }
 
     /**
-     * @param enumerable
-     *            the enumerable to set
+     * Sets the <tt>[[Enumerable]]</tt> field to the argument value
      */
-    public void setEnumerable(boolean enumerable) {
+    public final void setEnumerable(boolean enumerable) {
         present |= ENUMERABLE;
         attributes = (enumerable ? attributes & ~DONTENUM : attributes
                 | DONTENUM);
     }
 
     /**
-     * @return the configurable
+     * Returns the <tt>[[Configurable]]</tt> field or its default value
      */
-    public boolean isConfigurable() {
+    public final boolean isConfigurable() {
         return (attributes & PERMANENT) == 0;
     }
 
     /**
-     * @param configurable
-     *            the configurable to set
+     * Sets the <tt>[[Configurable]]</tt> field to the argument value
      */
-    public void setConfigurable(boolean configurable) {
+    public final void setConfigurable(boolean configurable) {
         present |= CONFIGURABLE;
         attributes = (configurable ? attributes & ~PERMANENT : attributes
                 | PERMANENT);
