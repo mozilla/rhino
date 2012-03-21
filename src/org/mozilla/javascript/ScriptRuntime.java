@@ -2707,12 +2707,13 @@ public class ScriptRuntime {
         if (parent == null) {
             Object result = topScopeName(cx, scope, name);
             if (!(result instanceof Callable)) {
-                storeThis(cx, BAD_SCRIPTABLE);
                 if (result == Scriptable.NOT_FOUND) {
-                    return createNotFoundError(scope, name);
+                    result = createNotFoundError(scope, name);
                 } else {
-                    return notFunctionError(result, name);
+                    result = notFunctionError(result, name);
                 }
+                storeThis(cx, BAD_SCRIPTABLE);
+                return result;
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
             storeThis(cx, null);
@@ -2802,8 +2803,9 @@ public class ScriptRuntime {
 
         if (!valueCallable) {
             if (property == null) { property = toString(index); }
+            Object result = notFunctionError(obj, value, property);
             storeThis(cx, BAD_SCRIPTABLE);
-            return notFunctionError(obj, value, property);
+            return result;
         }
 
         storeThis(cx, sobj);
@@ -2820,8 +2822,9 @@ public class ScriptRuntime {
     public static Object getValueObjectAndThis(Object value, Context cx)
     {
         if (!(value instanceof Callable)) {
+            Object result = notFunctionError(value);
             storeThis(cx, BAD_SCRIPTABLE);
-            return notFunctionError(value);
+            return result;
         }
         Scriptable thisObj = null;
         if (value instanceof Scriptable) {
