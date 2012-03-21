@@ -819,6 +819,77 @@ public abstract class IdScriptableObject extends ScriptableObject
       return null;
     }
 
+    private static class IdPropertyDescriptor extends PropertyDescriptor {
+        final int id;
+        final boolean proto;
+
+        public IdPropertyDescriptor(Object value, int attributes, int id,
+                boolean proto) {
+            super(value, attributes);
+            this.id = id;
+            this.proto = proto;
+        }
+    }
+
+    @Override
+    protected PropertyDescriptor getOwnProperty(String name) {
+        PropertyDescriptor desc = super.getOwnProperty(name);
+        if (desc == null) {
+            int info = findInstanceIdInfo(name);
+            if (info != 0) {
+                int id = (info & 0xFFFF);
+                Object value = getInstanceIdValue(id);
+                int attr = (info >>> 16);
+                desc = new IdPropertyDescriptor(value, attr, id, false);
+            } else if (prototypeValues != null) {
+                int id = prototypeValues.findId(name);
+                if (id != 0) {
+                    Object value = prototypeValues.get(id);
+                    int attr = prototypeValues.getAttributes(id);
+                    desc = new IdPropertyDescriptor(value, attr, id, true);
+                }
+            }
+        }
+        return desc;
+    }
+
+    @Override
+    protected void updateOwnProperty(String name, PropertyDescriptor desc,
+            PropertyDescriptor current) {
+        if (current instanceof IdPropertyDescriptor) {
+            IdPropertyDescriptor iddesc = (IdPropertyDescriptor) current;
+            int id = iddesc.id;
+            int baseAttrs = iddesc.getAttributes();
+            int mask = desc.getAttributeMask();
+            int attributes = (baseAttrs & ~mask)
+                    | (desc.getAttributes() & mask);
+            if (!iddesc.proto) {
+                if (desc.isAccessorDescriptor()) {
+                    delete(id); // it will be replaced with a slot
+                } else {
+                    if (desc.hasValue()) {
+                        setInstanceIdValue(id, desc.getValue());
+                    }
+                    if (attributes != baseAttrs) {
+                        setInstanceIdAttributes(id, attributes);
+                    }
+                    return;
+                }
+            } else {
+                if (desc.isAccessorDescriptor()) {
+                    prototypeValues.delete(id); // it will be replaced with a slot
+                } else {
+                    if (desc.hasValue()) {
+                        prototypeValues.set(id, this, desc.getValue());
+                    }
+                    prototypeValues.setAttributes(id, attributes);
+                    return;
+                }
+            }
+        }
+        super.updateOwnProperty(name, desc, current);
+    }
+
     private void readObject(ObjectInputStream stream)
         throws IOException, ClassNotFoundException
     {
