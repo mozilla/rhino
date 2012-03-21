@@ -164,7 +164,7 @@ public class NativeObject extends IdScriptableObject implements Map
               Scriptable thisObject = ScriptRuntime.toObject(cx, scope, thisObj);
               Object toString = ScriptableObject.getProperty(thisObject, "toString");
               if (!(toString instanceof Callable)) {
-                  ScriptRuntime.notFunctionError(toString);
+                  throw ScriptRuntime.notFunctionError(toString);
               }
               Callable fun = (Callable) toString;
               return fun.call(cx, scope, thisObject, ScriptRuntime.emptyArgs);
