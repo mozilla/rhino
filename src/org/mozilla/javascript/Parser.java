@@ -734,7 +734,6 @@ public class Parser
         // Would prefer not to call createDestructuringAssignment until codegen,
         // but the symbol definitions have to happen now, before body is parsed.
         Map<String, Node> destructuring = null;
-        Set<String> paramNames = new HashSet<String>();
         do {
             int tt = peekToken();
             if (tt == Token.LB || tt == Token.LC) {
@@ -755,16 +754,6 @@ public class Parser
                     fnNode.addParam(createNameNode());
                     String paramName = ts.getString();
                     defineSymbol(Token.LP, paramName);
-                    if (this.inUseStrictDirective) {
-                        if ("eval".equals(paramName) ||
-                            "arguments".equals(paramName))
-                        {
-                            reportError("msg.bad.id.strict", paramName);
-                        }
-                        if (paramNames.contains(paramName))
-                            addError("msg.dup.param.strict", paramName);
-                        paramNames.add(paramName);
-                    }
                 } else {
                     fnNode.addParam(makeErrorNode());
                 }
@@ -797,14 +786,14 @@ public class Parser
         Name name = null;
         AstNode memberExprNode = null;
 
+        // We forbid function statements in strict mode code.
+        if (type == FunctionNode.FUNCTION_EXPRESSION_STATEMENT && inUseStrictDirective) {
+            // TODO: "in strict mode code, functions may be declared only at top level or immediately within another function"
+            // addError();
+        }
+
         if (matchToken(Token.NAME)) {
             name = createNameNode(true, Token.NAME);
-            if (inUseStrictDirective) {
-                String id = name.getIdentifier();
-                if ("eval".equals(id)|| "arguments".equals(id)) {
-                    reportError("msg.bad.id.strict", id);
-                }
-            }
             if (!matchToken(Token.LP)) {
                 if (compilerEnv.isAllowMemberExprAsFunctionName()) {
                     AstNode memberExprHead = name;
@@ -815,6 +804,10 @@ public class Parser
             }
         } else if (matchToken(Token.LP)) {
             // Anonymous function:  leave name as null
+            if (type != FunctionNode.FUNCTION_EXPRESSION) {
+                // TODO: Unnamed function expressions are forbidden in statement context.
+                // addError("function statement requires a name");
+            }
         } else {
             if (compilerEnv.isAllowMemberExprAsFunctionName()) {
                 // Note that memberExpr can not start with '(' like
@@ -857,6 +850,9 @@ public class Parser
                            : "msg.anon.no.return.value";
                 addStrictWarning(msg, name == null ? "" : name.getIdentifier());
             }
+            if (inUseStrictDirective) {
+                checkStrictFunction(fnNode);
+            }
         } finally {
             savedVars.restore();
         }
@@ -888,6 +884,45 @@ public class Parser
             fnNode.setParentScope(currentScope);
         }
         return fnNode;
+    }
+
+    /**
+     * In strict mode code, all parameter names must be distinct, must not be
+     * strict mode reserved keywords, and must not be 'eval' or 'arguments'.  We
+     * must perform these checks here, and not eagerly during parsing, because a
+     * function's body may turn on strict mode for the function head.
+     */
+    private void checkStrictFunction(FunctionNode fnNode) {
+        Name name = fnNode.getFunctionName();
+        if (name != null) {
+            String id = name.getIdentifier();
+            if ("eval".equals(id) ||
+                "arguments".equals(id) ||
+                TokenStream.isKeyword(id))
+            {
+                reportError("msg.bad.id.strict", id);
+            }
+        }
+
+        boolean hasDestruct = fnNode.getProp(Node.DESTRUCTURING_PARAMS) != null;
+        Set<String> paramNames = new HashSet<String>();
+        for (AstNode param : fnNode.getParams()) {
+            if (param instanceof Name) {
+                String paramName = param.getString();
+                if ("eval".equals(paramName) ||
+                    "arguments".equals(paramName) ||
+                    TokenStream.isKeyword(paramName))
+                {
+                    reportError("msg.bad.id.strict", paramName);
+                }
+                if (paramNames.contains(paramName)) {
+                    addError("msg.dup.param.strict", paramName);
+                }
+                paramNames.add(paramName);
+            } else if (hasDestruct && param instanceof DestructuringForm) {
+                // TODO: check duplicate arguments in destructuring params
+            }
+        }
     }
 
     // This function does not match the closing RC: the caller matches
