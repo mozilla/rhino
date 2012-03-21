@@ -329,4 +329,37 @@ class PropertyDescriptor {
         attributes = (configurable ? attributes & ~PERMANENT : attributes
                 | PERMANENT);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        if (hasValue()) {
+            String value = ScriptRuntime.toString(getValue()).trim();
+            sb.append("[[Value]]: ").append(value).append(", ");
+        }
+        if (hasGetter()) {
+            String getter = ScriptRuntime.toString(getGetter()).trim();
+            sb.append("[[Get]]: ").append(getter).append(", ");
+        }
+        if (hasSetter()) {
+            String setter = ScriptRuntime.toString(getSetter()).trim();
+            sb.append("[[Set]]: ").append(setter).append(", ");
+        }
+        if (hasWritable()) {
+            sb.append("[[Writable]]: ").append(isWritable()).append(", ");
+        }
+        if (hasEnumerable()) {
+            sb.append("[[Enumerable]]: ").append(isEnumerable()).append(", ");
+        }
+        if (hasConfigurable()) {
+            sb.append("[[Configurable]]: ").append(isConfigurable()).append(", ");
+        }
+        if (sb.length() != 1) {
+            // if not only initial '{', remove trailing ", "
+            sb.setLength(sb.length() - 2);
+        }
+        sb.append('}');
+        return sb.toString();
+    }
 }
