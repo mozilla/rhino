@@ -89,8 +89,7 @@ public class NodeTransformer
 
         //uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
-        boolean inStrictMode = tree instanceof AstRoot &&
-                               ((AstRoot)tree).isInStrictMode();
+        boolean inStrictMode = tree.isInStrictMode();
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects,
                                    inStrictMode);
     }
