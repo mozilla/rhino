@@ -2461,7 +2461,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
         int attr;
         switch (id) {
           case Id_lastIndex:
-            attr = PERMANENT | DONTENUM;
+            attr = lastIndexAttr;
             break;
           case Id_source:
           case Id_global:
@@ -2520,6 +2520,17 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
             return;
         }
         super.setInstanceIdValue(id, value);
+    }
+
+    @Override
+    protected void setInstanceIdAttributes(int id, int attr)
+    {
+        switch (id) {
+          case Id_lastIndex:
+            lastIndexAttr = attr;
+            return;
+        }
+        super.setInstanceIdAttributes(id, attr);
     }
 
     @Override
@@ -2616,6 +2627,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 
     private RECompiled re;
     Object lastIndex = 0d;        /* index after last match, for //g iterator */
+    private int lastIndexAttr = DONTENUM | PERMANENT;
 }       // class NativeRegExp
 
 class RECompiled implements Serializable
