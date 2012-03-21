@@ -3063,7 +3063,7 @@ switch (op) {
             if (leftRightOrder) {
                 stack[stackTop] = ScriptRuntime.add(lstr, rstr);
             } else {
-                stack[stackTop] = ScriptRuntime.add(lstr, rstr);
+                stack[stackTop] = ScriptRuntime.add(rstr, lstr);
             }
         } else {
             double lDbl = (lhs instanceof Number)
