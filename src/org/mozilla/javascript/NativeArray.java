@@ -1192,9 +1192,11 @@ public class NativeArray extends IdScriptableObject implements List
         Scriptable thisObj = ScriptRuntime.toObject(cx, scope, thisObject);
         final Comparator<Object> comparator;
         if (args.length > 0 && Undefined.instance != args[0]) {
-            final Callable jsCompareFunction = ScriptRuntime
-                    .getValueFunctionAndThis(args[0], cx);
-            final Scriptable funThis = ScriptRuntime.lastStoredScriptable(cx);
+            if (!(args[0] instanceof Callable)) {
+                throw ScriptRuntime.notFunctionError(args[0]);
+            }
+            final Callable jsCompareFunction = (Callable)args[0];
+            final Object funThis = Undefined.instance;
             final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
             comparator = new Comparator<Object>() {
                 public int compare(final Object x, final Object y) {
@@ -1814,13 +1816,7 @@ public class NativeArray extends IdScriptableObject implements List
         }
         Function f = (Function) callbackArg;
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
-        Object thisArg;
-        if (args.length < 2 || args[1] == null || args[1] == Undefined.instance)
-        {
-            thisArg = parent;
-        } else {
-            thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
-        }
+        Object thisArg = args.length < 2 ? Undefined.instance : args[1];
         int resultLength = id == Id_map ? (int) length : 0;
         Scriptable array = id != Id_every ? cx.newArray(scope, resultLength) : null;
         long j=0;
@@ -1882,6 +1878,7 @@ public class NativeArray extends IdScriptableObject implements List
         }
         Function f = (Function) callbackArg;
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
+        Object thisArg = Undefined.instance;
         // hack to serve both reduce and reduceRight with the same loop
         boolean movingLeft = id == Id_reduce;
         Object value = args.length > 1 ? args[1] : Scriptable.NOT_FOUND;
@@ -1896,7 +1893,7 @@ public class NativeArray extends IdScriptableObject implements List
                 value = elem;
             } else {
                 Object[] innerArgs = { value, elem, index, thisObj };
-                value = f.call(cx, parent, parent, innerArgs);
+                value = f.call(cx, parent, thisArg, innerArgs);
             }
         }
         if (value == Scriptable.NOT_FOUND) {
