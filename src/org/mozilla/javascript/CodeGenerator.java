@@ -114,7 +114,7 @@ class CodeGenerator extends Icode {
         itsData = new InterpreterData(compilerEnv.getLanguageVersion(),
                                       scriptOrFn.getSourceName(),
                                       encodedSource,
-                                      tree.isInStrictMode());
+                                      scriptOrFn.isInStrictMode());
         itsData.topLevel = true;
 
         if (returnFunction) {
