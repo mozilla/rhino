@@ -591,15 +591,16 @@ public class BaseFunction extends IdScriptableObject implements Function
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
 
+        // Compile with explicit interpreter instance to force interpreter
+        // mode.
         Evaluator evaluator = Context.createInterpreter();
         if (evaluator == null) {
             throw new JavaScriptException("Interpreter not present",
                     filename, linep[0]);
         }
 
-        // Compile with explicit interpreter instance to force interpreter
-        // mode.
-        // TODO: inherit strictMode from environment
+        // Functions created through the built-in Function constructor do not
+        // inherit strict mode from environment [ES5.1, 10.1.1 Strict Mode Code]
         boolean strictMode = false;
         return cx.compileFunction(global, source, evaluator, reporter,
                                   sourceURI, 1, null, strictMode);
