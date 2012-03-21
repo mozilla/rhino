@@ -1602,7 +1602,6 @@ switch (op) {
             // stack change: function thisObj arg0 .. argN -> result
             stackTop -= 1 + indexReg;
 
-            // FIXME: here!
             // Call code generation ensure that stack here
             // is ... Callable Scriptable
             Object functionThis = stack[stackTop + 1];

@@ -2894,18 +2894,22 @@ public class ScriptRuntime {
                                      boolean strictMode)
     {
         if (callType == Node.SPECIALCALL_EVAL) {
-            assert thisObj == Undefined.instance || thisObj instanceof Scriptable;
-            // FIXME: This really needs be to checked with spec!
-            if (thisObj == Undefined.instance) {
+            // Direct Eval [ES5.1 - 15.1.2.1.1] needs to meet two conditions:
+            // 1) reference base value is an environment record and reference
+            //    name is "eval"
+            // 2) reference value is the built-in eval function
+            // Code generation takes care of the first condition, so we only
+            // need to test for the second one
+            assert thisObj == Undefined.instance
+                    || (thisObj instanceof Scriptable
+                            && ScriptableObject.hasProperty((Scriptable)thisObj,
+                                                            "eval"));
+            if (NativeGlobal.isEvalFunction(fun)) {
+                // Entering (Direct) Eval Code [ES5.1 - 10.4.2 step 2]:
+                // Direct eval uses the ThisBinding, LexicalEnvironment and
+                // VariableEnvironment of the calling execution context
                 return evalSpecial(cx, scope, callerThis, args,
                                    filename, lineNumber, strictMode);
-            } else {
-                if (! (thisObj instanceof Scriptable)) Kit.codeBug();
-                if (((Scriptable) thisObj).getParentScope() == null
-                        && NativeGlobal.isEvalFunction(fun)) {
-                    return evalSpecial(cx, scope, callerThis, args,
-                                       filename, lineNumber, strictMode);
-                }
             }
         } else if (callType == Node.SPECIALCALL_WITH) {
             if (NativeWith.isWithFunction(fun)) {
@@ -3061,9 +3065,11 @@ public class ScriptRuntime {
         evaluator.setEvalScriptFlag(script);
         if (script instanceof InterpretedFunction) {
             // TODO: extend Script interface to make this less voodoo
-            strictMode |= ((InterpretedFunction) script).idata.isStrict;
+            strictMode |= ((InterpretedFunction) script).isStrict();
         }
         if (strictMode) {
+            // Entering Eval Code [ES5.1 - 10.4.2 step 3]:
+            // strict eval code uses a new Lexical- and VariableEnvironment
             NativeObject newScope = new NativeObject();
             newScope.setParentScope(scope);
             scope = newScope;
