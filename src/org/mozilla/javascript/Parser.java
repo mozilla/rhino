@@ -930,6 +930,7 @@ public class Parser
     }
 
     private boolean checkStrictAssignment(AstNode node) {
+        node = removeParens(node);
         if (node instanceof Name) {
             String name = node.getString();
             // strict mode doesn't allow eval/arguments for lhs
