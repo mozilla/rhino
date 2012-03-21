@@ -147,7 +147,8 @@ public class NativeGlobal implements Serializable, IdFunctionCall
         for (int i = 0; i < errorMethods.length; i++) {
             String name = errorMethods[i];
             ScriptableObject errorProto =
-              (ScriptableObject) ScriptRuntime.newObject(cx, scope, "Error",
+              (ScriptableObject) ScriptRuntime.newBuiltinObject(cx, scope,
+                                                  TopLevel.Builtins.Error,
                                                   ScriptRuntime.emptyArgs);
             errorProto.put("name", errorProto, name, false);
             errorProto.put("message", errorProto, "", false);

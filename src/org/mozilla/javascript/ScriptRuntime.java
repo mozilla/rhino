@@ -3950,7 +3950,8 @@ public class ScriptRuntime {
                 args = new Object[] { errorMsg, sourceUri };
             }
 
-            Scriptable errorObject = cx.newObject(scope, errorName, args);
+            // FIXME: This must resolve the original error object!
+            Scriptable errorObject = newObject(cx, scope, errorName, args);
             // set "name" unless already present with the same value
             Object oldName = ScriptableObject.getProperty(errorObject, "name");
             if (oldName == ScriptableObject.NOT_FOUND
