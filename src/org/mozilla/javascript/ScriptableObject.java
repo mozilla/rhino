@@ -198,8 +198,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
         }
 
-        boolean setValue(Object value, Scriptable owner, Scriptable start) {
+        boolean setValue(Object value, Scriptable owner, Scriptable start,
+                         boolean checked) {
             if ((attributes & READONLY) != 0) {
+                // TODO: proper error message
+                if (checked) { throw ScriptRuntime.typeError("[[ReadOnly]]"); }
                 return true;
             }
             if (owner == start) {
@@ -245,7 +248,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
 
         @Override
-        boolean setValue(Object value, Scriptable owner, Scriptable start) {
+        boolean setValue(Object value, Scriptable owner, Scriptable start,
+                         boolean checked) {
             if (setter == null) {
                 if (getter != null) {
                     if (Context.getContext().hasFeature(Context.FEATURE_STRICT_MODE)) {
@@ -282,10 +286,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     Function f = (Function)setter;
                     f.call(cx, f.getParentScope(), start,
                            new Object[] { value });
+                } else {
+                    // ES5 setters are defaulted to 'Undefined.instance' instead
+                    // of 'null', so test here for non-existent setter
+                    // TODO: proper error message
+                    if (checked) { throw ScriptRuntime.typeError("[[Setter]]"); }
                 }
                 return true;
             }
-            return super.setValue(value, owner, start);
+            return super.setValue(value, owner, start, checked);
         }
 
         @Override
@@ -348,8 +357,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
 
         @Override
-        boolean setValue(Object value, Scriptable owner, Scriptable start) {
-            return slot.setValue(value, owner, start);
+        boolean setValue(Object value, Scriptable owner, Scriptable start,
+                         boolean checked) {
+            return slot.setValue(value, owner, start, checked);
         }
 
         @Override
@@ -516,7 +526,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void put(String name, Scriptable start, Object value, boolean checked)
     {
-        if (putImpl(name, 0, start, value))
+        if (putImpl(name, 0, start, value, checked))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -546,7 +556,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void put(int index, Scriptable start, Object value, boolean checked)
     {
-        if (putImpl(null, index, start, value))
+        if (putImpl(null, index, start, value, checked))
             return;
 
         if (start == this) throw Kit.codeBug();
@@ -2586,7 +2596,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * or this != start and a READONLY slot was found.
      */
     private boolean putImpl(String name, int index, Scriptable start,
-                            Object value)
+                            Object value, boolean checked)
     {
         // This method is very hot (basically called on each assignment)
         // so we inline the extensible/sealed checks below.
@@ -2599,13 +2609,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         } else if (!isExtensible) {
             slot = getSlot(name, index, SLOT_QUERY);
             if (slot == null) {
+                if (checked) { throw ScriptRuntime.typeError("[[Extensible]]"); }
                 return true;
             }
         } else {
             if (count < 0) checkNotSealed(name, index);
             slot = getSlot(name, index, SLOT_MODIFY);
         }
-        return slot.setValue(value, this, start);
+        return slot.setValue(value, this, start, checked);
     }
 
 
@@ -2650,7 +2661,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
             return true;
         }
-        return slot.setValue(value, this, start);
+        // TODO: strict flag?
+        return slot.setValue(value, this, start, false);
     }
 
     private Slot findAttributeSlot(String name, int index, int accessType)

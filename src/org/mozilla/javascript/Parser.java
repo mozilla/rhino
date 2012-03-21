@@ -546,6 +546,11 @@ public class Parser
         boolean savedStrictMode = inUseStrictDirective;
         ts.setOctalCharacterEscape(false);
 
+        if (savedStrictMode) {
+            // in case parser was initialized in strict-mode
+            root.setInStrictMode(true);
+        }
+
         try {
             for (;;) {
                 int tt = peekToken();
