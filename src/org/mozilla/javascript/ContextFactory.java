@@ -421,7 +421,7 @@ public class ContextFactory
      */
     protected Object doTopCall(Callable callable,
                                Context cx, Scriptable scope,
-                               Scriptable thisObj, Object[] args)
+                               Object thisObj, Object[] args)
     {
         Object result = callable.call(cx, scope, thisObj, args);
         return result instanceof ConsString ? result.toString() : result;

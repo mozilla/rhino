@@ -2546,7 +2546,7 @@ public class ScriptRuntime {
     public static Object callSpecial(Context cx, Callable fun,
                                      Scriptable thisObj,
                                      Object[] args, Scriptable scope,
-                                     Scriptable callerThis, int callType,
+                                     Object callerThis, int callType,
                                      String filename, int lineNumber,
                                      boolean strictMode)
     {
@@ -3361,7 +3361,7 @@ public class ScriptRuntime {
 
     public static Object doTopCall(Callable callable,
                                    Context cx, Scriptable scope,
-                                   Scriptable thisObj, Object[] args)
+                                   Object thisObj, Object[] args)
     {
         if (scope == null)
             throw new IllegalArgumentException();
@@ -3422,7 +3422,7 @@ public class ScriptRuntime {
         }
     }
 
-    public static void initScript(NativeFunction funObj, Scriptable thisObj,
+    public static void initScript(NativeFunction funObj, Object thisObj,
                                   Context cx, Scriptable scope,
                                   boolean evalScript)
     {

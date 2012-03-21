@@ -564,7 +564,7 @@ public class Codegen implements Evaluator
                       "(Lorg/mozilla/javascript/Callable;"
                       +"Lorg/mozilla/javascript/Context;"
                       +"Lorg/mozilla/javascript/Scriptable;"
-                      +"Lorg/mozilla/javascript/Scriptable;"
+                      +"Ljava/lang/Object;"
                       +"[Ljava/lang/Object;"
                       +")Ljava/lang/Object;");
         cfw.add(ByteCode.ARETURN);

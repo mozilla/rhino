@@ -63,7 +63,7 @@ public class ObserveInstructionCountTest extends TestCase {
         @Override
         protected Object doTopCall(Callable callable,
                                    Context cx, Scriptable scope,
-                                   Scriptable thisObj, Object[] args)
+                                   Object thisObj, Object[] args)
         {
             MyContext mcx = (MyContext)cx;
             mcx.quota = 2000;

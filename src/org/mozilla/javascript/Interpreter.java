@@ -104,7 +104,7 @@ public final class Interpreter extends Icode implements Evaluator
         boolean useActivation;
         boolean isContinuationsTopFrame;
 
-        Scriptable thisObj;
+        Object thisObj;
         Scriptable[] scriptRegExps;
 
 // The values that change during interpretation
@@ -850,7 +850,7 @@ public final class Interpreter extends Icode implements Evaluator
 
     static Object interpret(InterpretedFunction ifun,
                             Context cx, Scriptable scope,
-                            Scriptable thisObj, Object[] args)
+                            Object thisObj, Object[] args)
     {
         if (!ScriptRuntime.hasTopCall(cx)) Kit.codeBug();
 
@@ -2631,19 +2631,24 @@ switch (op) {
             Scriptable calleeScope, IdFunctionObject ifun,
             InterpretedFunction iApplyCallable)
     {
-        Scriptable applyThis;
+        Object applyThis;
         if (indexReg != 0) {
             Object obj = stack[stackTop + 2];
             if (obj == UniqueTag.DOUBLE_MARK)
                 obj = ScriptRuntime.wrapNumber(sDbl[stackTop + 2]);
-            applyThis = ScriptRuntime.toObjectOrNull(cx, obj);
+            applyThis = obj;
         }
         else {
             applyThis = null;
         }
-        if (applyThis == null) {
-            // This covers the case of args[0] == (null|undefined) as well.
-            applyThis = ScriptRuntime.getTopCallScope(cx);
+        if (!iApplyCallable.idata.isStrict) {
+            if (applyThis != null) {
+                applyThis = ScriptRuntime.toObjectOrNull(cx, applyThis);
+            }
+            if (applyThis == null) {
+                // This covers the case of args[0] == (null|undefined) as well.
+                applyThis = ScriptRuntime.getTopCallScope(cx);
+            }
         }
         if(op == Icode_TAIL_CALL) {
             exitFrame(cx, frame, null);
@@ -2676,7 +2681,7 @@ switch (op) {
     }
 
     private static void initFrame(Context cx, Scriptable callerScope,
-                                  Scriptable thisObj,
+                                  Object thisObj,
                                   Object[] args, double[] argsDbl,
                                   int argShift, int argCount,
                                   InterpretedFunction fnOrScript,

@@ -219,7 +219,7 @@ public class JavaPolicySecurity extends SecurityProxy
                                  final Context cx,
                                  final Callable callable,
                                  final Scriptable scope,
-                                 final Scriptable thisObj,
+                                 final Object thisObj,
                                  final Object[] args)
     {
         ProtectionDomain staticDomain = (ProtectionDomain)securityDomain;
