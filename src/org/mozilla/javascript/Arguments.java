@@ -222,12 +222,12 @@ final class Arguments extends IdScriptableObject
     }
 
     @Override
-    public void delete(int index)
+    public void delete(int index, boolean checked)
     {
         if (0 <= index && index < args.length) {
           removeArg(index);
         }
-        super.delete(index);
+        super.delete(index, checked);
     }
 
 // #string_id_map#
@@ -390,36 +390,6 @@ final class Arguments extends IdScriptableObject
             }
         }
         return ids;
-    }
-
-    @Override
-    protected Object get(String name) {
-        double d = ScriptRuntime.toNumber(name);
-        int index = (int) d;
-        if (d == index) {
-            Object value = arg(index);
-            if (value != NOT_FOUND) {
-                if (sharedWithActivation(index)) {
-                    return getFromActivation(index);
-                } else {
-                    return value;
-                }
-            }
-        }
-        return super.get(name);
-    }
-
-    @Override
-    protected boolean delete(String name, boolean checked) {
-        double d = ScriptRuntime.toNumber(name);
-        int index = (int) d;
-        boolean result = super.delete(name, checked);
-        if (result && d == index) {
-            if (0 <= index && index < args.length) {
-                removeArg(index);
-            }
-        }
-        return result;
     }
 
     @Override

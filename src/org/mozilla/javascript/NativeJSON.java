@@ -173,7 +173,7 @@ final class NativeJSON extends IdScriptableObject
                 for (int i = 0; i < len; i++) {
                     Object newElement = walk(cx, scope, reviver, val, i);
                     if (newElement == Undefined.instance) {
-                      val.delete(i);
+                      val.delete(i, false);
                     } else {
                       val.put(i, val, newElement, false);
                     }
@@ -184,9 +184,9 @@ final class NativeJSON extends IdScriptableObject
                     Object newElement = walk(cx, scope, reviver, val, p);
                     if (newElement == Undefined.instance) {
                         if (p instanceof Number)
-                          val.delete(((Number) p).intValue());
+                          val.delete(((Number) p).intValue(), false);
                         else
-                          val.delete((String) p);
+                          val.delete((String) p, false);
                     } else {
                         if (p instanceof Number)
                           val.put(((Number) p).intValue(), val, newElement, false);

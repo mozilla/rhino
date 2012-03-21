@@ -152,7 +152,8 @@ class SpecialRef extends Ref
     public boolean delete(Context cx)
     {
         if (type == SPECIAL_NONE) {
-            return ScriptRuntime.deleteObjectElem(target, name, cx);
+            // TODO: default for 'checked' set to 'false' for now
+            return ScriptRuntime.deleteObjectElem(target, name, cx, false);
         }
         return false;
     }

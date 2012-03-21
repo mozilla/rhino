@@ -172,7 +172,7 @@ final class NativeError extends IdScriptableObject
     public void setStack(Object value) {
         if (stackProvider != null) {
             stackProvider = null;
-            delete("stack");
+            delete("stack", false);
         }
         put("stack", this, value, false);
     }

@@ -521,11 +521,11 @@ final class NativeString extends IdScriptableObject
     }
 
     @Override
-    public void delete(int index) {
+    public void delete(int index, boolean checked) {
         if (0 <= index && index < string.length()) {
             return;
         }
-        super.delete(index);
+        super.delete(index, checked);
     }
 
     @Override

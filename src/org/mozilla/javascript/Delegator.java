@@ -157,14 +157,14 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#delete(String)
      */
-    public void delete(String name) {
-        obj.delete(name);
+    public void delete(String name, boolean checked) {
+        obj.delete(name,checked);
     }
     /**
      * @see org.mozilla.javascript.Scriptable#delete(int)
      */
-    public void delete(int index) {
-        obj.delete(index);
+    public void delete(int index, boolean checked) {
+        obj.delete(index,checked);
     }
     /**
      * @see org.mozilla.javascript.Scriptable#getPrototype

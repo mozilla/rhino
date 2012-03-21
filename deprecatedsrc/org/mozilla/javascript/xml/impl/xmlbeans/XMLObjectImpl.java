@@ -151,7 +151,7 @@ abstract class XMLObjectImpl extends XMLObject
     //
 
     @Override
-    public final Object getDefaultValue(Class hint)
+    public final Object getDefaultValue(Class<?> hint)
     {
         return toString();
     }
@@ -259,7 +259,7 @@ abstract class XMLObjectImpl extends XMLObject
         if (xmlName == null) {
             long index = ScriptRuntime.lastUint32Result(cx);
             // XXX Fix this
-            delete((int)index);
+            delete((int)index, false);
             return true;
         }
         deleteXMLProperty(xmlName);
@@ -267,7 +267,7 @@ abstract class XMLObjectImpl extends XMLObject
     }
 
     @Override
-    public void delete(String name) {
+    public void delete(String name, boolean checked) {
         Context cx = Context.getCurrentContext();
         deleteXMLProperty(lib.toXMLNameFromString(cx, name));
     }

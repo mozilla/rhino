@@ -117,14 +117,14 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         prototype.put(index, start, value, checked);
     }
 
-    public void delete(String id)
+    public void delete(String id, boolean checked)
     {
-        prototype.delete(id);
+        prototype.delete(id, checked);
     }
 
-    public void delete(int index)
+    public void delete(int index, boolean checked)
     {
-        prototype.delete(index);
+        prototype.delete(index, checked);
     }
 
     public Scriptable getPrototype() {

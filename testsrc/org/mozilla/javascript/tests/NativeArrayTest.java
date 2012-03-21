@@ -27,14 +27,14 @@ public class NativeArrayTest {
   @Test
   public void deleteShouldRemoveIndexProperties() {
     array.put(0, array, "a", false);
-    array.delete(0);
+    array.delete(0, false);
     assertThat(array.has(0, array), is(false));
   }
 
   @Test
   public void deleteShouldRemoveNormalProperties() {
     array.put("p", array, "a", false);
-    array.delete("p");
+    array.delete("p", false);
     assertThat(array.has("p", array), is(false));
   }
 

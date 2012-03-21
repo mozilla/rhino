@@ -480,14 +480,14 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
-    public void delete(int index)
+    public void delete(int index, boolean checked)
     {
         if (dense != null && 0 <= index && index < dense.length &&
             !isSealed() && (denseOnly || !isGetterOrSetter(null, index, true)))
         {
             dense[index] = NOT_FOUND;
         } else {
-            super.delete(index);
+            super.delete(index, checked);
         }
     }
 
@@ -801,13 +801,13 @@ public class NativeArray extends IdScriptableObject implements List
                     long id = ids[i];
                     int index = (int) id;
                     if (id == index) {
-                        delete(index);
+                        delete(index, false);
                         if (has(index, this)) {
                             return index;
                         }
                     } else {
                         String strId = Long.toString(index);
-                        delete(strId);
+                        delete(strId, false);
                         if (has(strId, this)) {
                             return index;
                         }
@@ -819,13 +819,13 @@ public class NativeArray extends IdScriptableObject implements List
                 for (long i = oldLength - 1; i >= newLength; --i) {
                     int index = (int) i;
                     if (i == index) {
-                        delete(index);
+                        delete(index, false);
                         if (has(index, this)) {
                             return i;
                         }
                     } else {
                         String strId = Long.toString(i);
-                        delete(strId);
+                        delete(strId, false);
                         if (has(strId, this)) {
                             return i;
                         }
@@ -882,11 +882,11 @@ public class NativeArray extends IdScriptableObject implements List
                         String strId = (String)id;
                         long index = toArrayIndex(strId);
                         if (index >= longVal)
-                            delete(strId);
+                            delete(strId, false);
                     } else {
                         int index = ((Integer)id).intValue();
                         if (index >= longVal)
-                            delete(index);
+                            delete(index, false);
                     }
                 }
             } else {
@@ -931,8 +931,8 @@ public class NativeArray extends IdScriptableObject implements List
      */
     private static void deleteElem(Scriptable target, long index) {
         int i = (int)index;
-        if (i == index) { target.delete(i); }
-        else { target.delete(Long.toString(index)); }
+        if (i == index) { target.delete(i, false); }
+        else { target.delete(Long.toString(index), false); }
     }
 
     private static Object getElem(Context cx, Scriptable target, long index)

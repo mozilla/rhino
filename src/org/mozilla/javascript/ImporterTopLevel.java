@@ -116,7 +116,7 @@ public class ImporterTopLevel extends TopLevel {
         // delete "constructor" defined by exportAsJSClass so "constructor"
         // name would refer to Object.constructor
         // and not to JavaImporter.prototype.constructor.
-        delete("constructor");
+        delete("constructor", false);
     }
 
     @Override

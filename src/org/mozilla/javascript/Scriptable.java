@@ -247,10 +247,11 @@ public interface Scriptable {
      * To delete properties defined in a prototype chain,
      * see deleteProperty in ScriptableObject.
      * @param name the identifier for the property
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
      */
-    public void delete(String name);
+    public void delete(String name, boolean checked);
 
     /**
      * Removes a property from this object.
@@ -265,10 +266,11 @@ public interface Scriptable {
      * an integral index is used to select the property.
      *
      * @param index the numeric index for the property
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, int)
      */
-    public void delete(int index);
+    public void delete(int index, boolean checked);
 
     /**
      * Get the prototype of the object.

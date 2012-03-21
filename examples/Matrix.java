@@ -194,7 +194,7 @@ public class Matrix implements Scriptable {
      * This method shouldn't even be called since we define all properties
      * as PERMANENT.
      */
-    public void delete(String id) {
+    public void delete(String id, boolean checked) {
     }
 
     /**
@@ -203,7 +203,7 @@ public class Matrix implements Scriptable {
      * This method shouldn't even be called since we define all properties
      * as PERMANENT.
      */
-    public void delete(int index) {
+    public void delete(int index, boolean checked) {
     }
 
     /**

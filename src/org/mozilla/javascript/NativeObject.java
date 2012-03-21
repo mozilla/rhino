@@ -518,9 +518,9 @@ public class NativeObject extends IdScriptableObject implements Map
     public Object remove(Object key) {
         Object value = get(key);
         if (key instanceof String) {
-            delete((String) key);
+            delete((String) key, false);
         } else if (key instanceof Number) {
-            delete(((Number) key).intValue());
+            delete(((Number) key).intValue(), false);
         }
         return value;
     }

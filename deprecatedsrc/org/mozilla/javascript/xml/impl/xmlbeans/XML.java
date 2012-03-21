@@ -1375,7 +1375,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param index
      */
     @Override
-    public void delete(int index)
+    public void delete(int index, boolean checked)
     {
         if (index == 0)
         {

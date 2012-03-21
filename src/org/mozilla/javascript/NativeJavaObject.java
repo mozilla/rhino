@@ -136,10 +136,10 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         return false;
     }
 
-    public void delete(String name) {
+    public void delete(String name, boolean checked) {
     }
 
-    public void delete(int index) {
+    public void delete(int index, boolean checked) {
     }
 
     public Scriptable getPrototype() {

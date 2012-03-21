@@ -571,7 +571,21 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *
      * @param name the name of the property
      */
-    public void delete(String name)
+    @Deprecated
+    public final void delete(String name)
+    {
+        delete(name, false);
+    }
+
+    /**
+     * Removes a named property from the object.
+     *
+     * If the property is not found, or it has the PERMANENT attribute,
+     * no action is taken.
+     *
+     * @param name the name of the property
+     */
+    public void delete(String name, boolean checked)
     {
         checkNotSealed(name, 0);
         removeSlot(name, 0);
@@ -585,7 +599,21 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *
      * @param index the numeric index for the property
      */
-    public void delete(int index)
+    @Deprecated
+    public final void delete(int index)
+    {
+        delete(index, false);
+    }
+
+    /**
+     * Removes the indexed property from the object.
+     *
+     * If the property is not found, or it has the PERMANENT attribute,
+     * no action is taken.
+     *
+     * @param index the numeric index for the property
+     */
+    public void delete(int index, boolean checked)
     {
         checkNotSealed(null, index);
         removeSlot(null, index);
@@ -2380,13 +2408,33 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param name a property name
      * @return true if the property doesn't exist or was successfully removed
      * @since 1.5R2
+     * @deprecated use {@link #deleteProperty(Scriptable, String, boolean)} instead
      */
+    @Deprecated
     public static boolean deleteProperty(Scriptable obj, String name)
+    {
+        return deleteProperty(obj, name, false);
+    }
+
+    /**
+     * Removes the property from an object or its prototype chain.
+     * <p>
+     * Searches for a property with <code>name</code> in obj or
+     * its prototype chain. If it is found, the object's delete
+     * method is called.
+     * @param obj a JavaScript object
+     * @param name a property name
+     * @param checked controls whether to throw an error if the attribute is [[Permanent]]
+     * @return true if the property doesn't exist or was successfully removed
+     * @since 1.7R4
+     */
+    public static boolean deleteProperty(Scriptable obj, String name,
+                                         boolean checked)
     {
         Scriptable base = getBase(obj, name);
         if (base == null)
             return true;
-        base.delete(name);
+        base.delete(name, checked);
         return !base.has(name, obj);
     }
 
@@ -2400,13 +2448,33 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param index a property index
      * @return true if the property doesn't exist or was successfully removed
      * @since 1.5R2
+     * @deprecated use {@link #deleteProperty(Scriptable, int, boolean)} instead
      */
+    @Deprecated
     public static boolean deleteProperty(Scriptable obj, int index)
+    {
+        return deleteProperty(obj, index, false);
+    }
+
+    /**
+     * Removes the property from an object or its prototype chain.
+     * <p>
+     * Searches for a property with <code>index</code> in obj or
+     * its prototype chain. If it is found, the object's delete
+     * method is called.
+     * @param obj a JavaScript object
+     * @param index a property index
+     * @param checked controls whether to throw an error if the attribute is [[Permanent]]
+     * @return true if the property doesn't exist or was successfully removed
+     * @since 1.7R4
+     */
+    public static boolean deleteProperty(Scriptable obj, int index,
+                                         boolean checked)
     {
         Scriptable base = getBase(obj, index);
         if (base == null)
             return true;
-        base.delete(index);
+        base.delete(index, checked);
         return !base.has(index, obj);
     }
 
@@ -3111,7 +3179,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * 8.12.2 [[GetProperty]] (P)
      * 
      */
-    protected PropertyDescriptor getProperty(String name) {
+    protected final PropertyDescriptor $getProperty(String name) {
         PropertyDescriptor prop = getOwnProperty(name);
         if (prop != null) {
             return prop;
@@ -3120,7 +3188,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (proto == null || !(proto instanceof ScriptableObject)) {
             return null;
         }
-        return ((ScriptableObject) proto).getProperty(name);
+        return ((ScriptableObject) proto).$getProperty(name);
     }
 
     /**
@@ -3129,8 +3197,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * 8.12.3 [[Get]] (P)
      * 
      */
-    protected Object get(String name) {
-        PropertyDescriptor desc = getProperty(name);
+    protected final Object $get(String name) {
+        PropertyDescriptor desc = $getProperty(name);
         if (desc == null) {
             return Undefined.instance;
         } else if (desc.isDataDescriptor()) {
@@ -3150,7 +3218,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * 8.12.4 [[CanPut]] (P)
      * 
      */
-    protected boolean canPut(String name) {
+    protected final boolean $canPut(String name) {
         PropertyDescriptor desc = getOwnProperty(name);
         if (desc != null) {
             if (desc.isAccessorDescriptor()) {
@@ -3163,8 +3231,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (proto == null || !(proto instanceof ScriptableObject)) {
             return isExtensible();
         }
-        PropertyDescriptor inherited = ((ScriptableObject) proto)
-                .getProperty(name);
+        PropertyDescriptor inherited = ((ScriptableObject) proto).$getProperty(name);
         if (inherited == null) {
             return isExtensible();
         }
@@ -3181,8 +3248,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * 8.12.5 [[Put]] (P, V, Throw)
      * 
      */
-    protected void put(String name, Object value, boolean checked) {
-        if (!canPut(name)) {
+    protected final void $put(String name, Object value, boolean checked) {
+        if (!$canPut(name)) {
             if (checked) {
                 throw ScriptRuntime.typeError("cannot [[Put]]:" + name);
             }
@@ -3194,7 +3261,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             defineOwnProperty(name, valueDesc, checked);
             return;
         }
-        PropertyDescriptor desc = getProperty(name);
+        PropertyDescriptor desc = $getProperty(name);
         if (desc != null && desc.isAccessorDescriptor()) {
             Object setter = desc.getSetter();
             call((Callable) setter, this, new Object[] { value });
@@ -3210,8 +3277,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * 8.12.6 [[HasProperty]] (P)
      * 
      */
-    protected boolean hasProperty(String name) {
-        return getProperty(name) != null;
+    protected final boolean $hasProperty(String name) {
+        return $getProperty(name) != null;
     }
 
     /**
@@ -3220,7 +3287,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * 8.12.7 [[Delete]] (P, Throw)
      * 
      */
-    protected boolean delete(String name, boolean checked) {
+    protected final boolean $delete(String name, boolean checked) {
         PropertyDescriptor desc = getOwnProperty(name);
         if (desc == null) {
             return true;
@@ -3243,7 +3310,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * 
      * 8.12.8 [[DefaultValue]] (hint)
      */
-    protected Object defaultValue(String hint) {
+    protected final Object $defaultValue(String hint) {
         if (hint == null) {
             hint = "Number";
         }

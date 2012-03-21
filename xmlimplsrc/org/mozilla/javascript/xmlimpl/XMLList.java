@@ -331,7 +331,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public void delete(int index) {
+    public void delete(int index, boolean checked) {
         if (index >= 0 && index < length()) {
             XML xml = getXmlFromAnnotation(index);
 

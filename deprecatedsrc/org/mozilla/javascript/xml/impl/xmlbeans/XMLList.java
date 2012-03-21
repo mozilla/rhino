@@ -580,7 +580,7 @@ class XMLList extends XMLObjectImpl implements Function
      * @param index
      */
     @Override
-    public void delete(int index)
+    public void delete(int index, boolean checked)
     {
         if (index >= 0 && index < length())
         {

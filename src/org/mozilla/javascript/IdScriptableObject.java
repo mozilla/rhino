@@ -419,7 +419,7 @@ public abstract class IdScriptableObject extends ScriptableObject
     }
 
     @Override
-    public void delete(String name)
+    public void delete(String name, boolean checked)
     {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
@@ -442,7 +442,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                 return;
             }
         }
-        super.delete(name);
+        super.delete(name, checked);
     }
 
     @Override
@@ -782,7 +782,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                     | (desc.getAttributes() & mask);
             if (!iddesc.proto) {
                 if (desc.isAccessorDescriptor()) {
-                    delete(id); // it will be replaced with a slot
+                    delete(id, false); // it will be replaced with a slot
                 } else {
                     if (desc.hasValue()) {
                         setInstanceIdValue(id, desc.getValue());

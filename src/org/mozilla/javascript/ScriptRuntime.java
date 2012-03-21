@@ -1683,16 +1683,23 @@ public class ScriptRuntime {
         return value;
     }
 
+    @Deprecated
     public static boolean deleteObjectElem(Scriptable target, Object elem,
                                            Context cx)
+    {
+        return deleteObjectElem(target, elem, cx, false);
+    }
+
+    public static boolean deleteObjectElem(Scriptable target, Object elem,
+                                           Context cx, boolean strict)
     {
         String s = toStringIdOrIndex(cx, elem);
         if (s == null) {
             int index = lastIndexResult(cx);
-            target.delete(index);
+            target.delete(index, strict);
             return !target.has(index, target);
         } else {
-            target.delete(s);
+            target.delete(s, strict);
             return !target.has(s, target);
         }
     }
@@ -1759,7 +1766,19 @@ public class ScriptRuntime {
      * define a return value. Here we assume that the [[Delete]]
      * method doesn't return a value.
      */
+    @Deprecated
     public static Object delete(Object obj, Object id, Context cx, boolean isName)
+    {
+        return delete(obj, id, cx, isName, false);
+    }
+
+    /**
+     * The delete operator
+     *
+     * See ECMA 11.4.1
+     */
+    public static Boolean delete(Object obj, Object id, Context cx,
+                                 boolean isName, boolean strict)
     {
         Scriptable sobj = toObjectOrNull(cx, obj);
         if (sobj == null) {
@@ -1769,7 +1788,7 @@ public class ScriptRuntime {
             String idStr = (id == null) ? "null" : id.toString();
             throw typeError2("msg.undef.prop.delete", toString(obj), idStr);
         }
-        boolean result = deleteObjectElem(sobj, id, cx);
+        boolean result = deleteObjectElem(sobj, id, cx, strict);
         return wrapBoolean(result);
     }
 
@@ -2338,8 +2357,8 @@ public class ScriptRuntime {
         public boolean has(int index, Scriptable start) { throw error(); }
         public void put(String name, Scriptable start, Object value, boolean checked) { throw error(); }
         public void put(int index, Scriptable start, Object value, boolean checked) { throw error(); }
-        public void delete(String name) { throw error(); }
-        public void delete(int index) { throw error(); }
+        public void delete(String name, boolean checked) { throw error(); }
+        public void delete(int index, boolean checked) { throw error(); }
         public Scriptable getPrototype() { throw error(); }
         public void setPrototype(Scriptable prototype) { throw error(); }
         public Scriptable getParentScope() { throw error(); }
@@ -2717,7 +2736,7 @@ public class ScriptRuntime {
             scope = newScope;
         }
         Callable c = (Callable)script;
-        return c.call(cx, scope, (Scriptable)thisArg, ScriptRuntime.emptyArgs);
+        return c.call(cx, scope, thisArg, ScriptRuntime.emptyArgs);
     }
 
     /**
