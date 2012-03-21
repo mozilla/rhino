@@ -49,9 +49,10 @@ class SpecialRef extends Ref
     {
         static final long serialVersionUID = -6410092416752016016L;
 
-        private ProtoSpecialRef(Scriptable target, String name, boolean strict)
+        private ProtoSpecialRef(Object object, Scriptable target, String name,
+                                boolean strict, Scriptable scope)
         {
-            super(target, name, strict);
+            super(object, target, name, strict, scope);
         }
 
         @Override
@@ -110,15 +111,20 @@ class SpecialRef extends Ref
         }
     }
 
+    protected final Object object;
     protected final Scriptable target;
     protected final String name;
     protected final boolean strict;
+    protected final Scriptable scope;
 
-    private SpecialRef(Scriptable target, String name, boolean strict)
+    private SpecialRef(Object object, Scriptable target, String name,
+                       boolean strict, Scriptable scope)
     {
+        this.object = object;
         this.target = target;
         this.name = name;
         this.strict = strict;
+        this.scope = scope;
     }
 
     static Ref createSpecial(Context cx, Scriptable scope, Object object,
@@ -131,9 +137,9 @@ class SpecialRef extends Ref
 
         if ("__proto__".equals(name)) {
             if (cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
-                return new ProtoSpecialRef(target, name, strict);
+                return new ProtoSpecialRef(object, target, name, strict, scope);
             }
-            return new SpecialRef(target, name, strict);
+            return new SpecialRef(object, target, name, strict, scope);
         }
 
         throw new IllegalArgumentException(name);
@@ -142,13 +148,14 @@ class SpecialRef extends Ref
     @Override
     public Object get(Context cx)
     {
-        return ScriptRuntime.getObjectProp(target, name, cx);
+        return ScriptRuntime.getObjectValue(object, name, strict, cx, scope);
     }
 
     @Override
     public Object set(Context cx, Object value)
     {
-        return ScriptRuntime.setObjectProp(target, name, value, strict, cx);
+        ScriptRuntime.putObjectValue(object, name, strict, value, cx, scope);
+        return value;
     }
 
     @Override
