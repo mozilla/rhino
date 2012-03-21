@@ -1461,6 +1461,14 @@ final class NativeDate extends IdScriptableObject
 
     private static double makeTime(double date, Object[] args, int methodId)
     {
+        if (args.length == 0) {
+            /* Seems like all the Date.setWhatever functions in ECMA are only
+             * varargs beyond the first argument; This means that
+             * "d = new Date(); d.setMilliseconds()" returns NaN.  Blech.
+             */
+            return ScriptRuntime.NaN;
+        }
+
         int maxargs;
         boolean local = true;
         switch (methodId) {
@@ -1468,108 +1476,91 @@ final class NativeDate extends IdScriptableObject
               local = false;
             // fallthrough
           case Id_setMilliseconds:
-            maxargs = 1;
+              maxargs = 1;
             break;
 
           case Id_setUTCSeconds:
               local = false;
             // fallthrough
           case Id_setSeconds:
-            maxargs = 2;
+              maxargs = 2;
             break;
 
           case Id_setUTCMinutes:
               local = false;
             // fallthrough
           case Id_setMinutes:
-            maxargs = 3;
+              maxargs = 3;
             break;
 
           case Id_setUTCHours:
               local = false;
             // fallthrough
           case Id_setHours:
-            maxargs = 4;
+              maxargs = 4;
             break;
 
           default:
-              Kit.codeBug();
-            maxargs = 0;
+              throw Kit.codeBug();
         }
 
-        int i;
-        double conv[] = new double[4];
-        double hour, min, sec, msec;
-        double lorutime; /* Local or UTC version of date */
+        // [0: hour, 1: minute, 2: second, 3: millisecond]
+        double[] conv = new double[4];
+        for (int i = 0; i < args.length && i < maxargs; ++i) {
+            // derive conv-index from args-index
+            int k = i + 4 - maxargs;
+            conv[k] = ScriptRuntime.toNumber(args[i]);
+        }
 
-        double time;
-        double result;
+        if (date != date) {
+            // if base date is invalid, return NaN; must happen after arguments
+            // have been evaluated
+            return ScriptRuntime.NaN;
+        }
+        double t = local ? LocalTime(date) : date;
 
-        /* just return NaN if the date is already NaN */
-        if (date != date)
-            return date;
-
-        /* Satisfy the ECMA rule that if a function is called with
-         * fewer arguments than the specified formal arguments, the
-         * remaining arguments are set to undefined.  Seems like all
-         * the Date.setWhatever functions in ECMA are only varargs
-         * beyond the first argument; this should be set to undefined
-         * if it's not given.  This means that "d = new Date();
-         * d.setMilliseconds()" returns NaN.  Blech.
-         */
-        if (args.length == 0)
-            args = ScriptRuntime.padArguments(args, 1);
-
-        for (i = 0; i < args.length && i < maxargs; i++) {
-            conv[i] = ScriptRuntime.toNumber(args[i]);
-
-            // limit checks that happen in MakeTime in ECMA.
-            if (conv[i] != conv[i] || Double.isInfinite(conv[i])) {
-                return ScriptRuntime.NaN;
+        for (int i = 0; i < 4; ++i) {
+            // derive args-index from conv-index
+            int k = i - 4 + maxargs;
+            if (k < 0 || k >= args.length) {
+                // if argument not supplied, use default
+                if (i == 0) {
+                    conv[0] = HourFromTime(t);
+                } else if (i == 1) {
+                    conv[1] = MinFromTime(t);
+                } else if (i == 2) {
+                    conv[2] = SecFromTime(t);
+                } else {
+                    conv[3] = msFromTime(t);
+                }
+            } else {
+                // limit checks that happen in MakeTime in ECMA.
+                double x = conv[i];
+                if (x != x || Double.isInfinite(x)) {
+                    return ScriptRuntime.NaN;
+                }
+                conv[i] = ScriptRuntime.toInteger(x);
             }
-            conv[i] = ScriptRuntime.toInteger(conv[i]);
         }
 
-        if (local)
-            lorutime = LocalTime(date);
-        else
-            lorutime = date;
-
-        i = 0;
-        int stop = args.length;
-
-        if (maxargs >= 4 && i < stop)
-            hour = conv[i++];
-        else
-            hour = HourFromTime(lorutime);
-
-        if (maxargs >= 3 && i < stop)
-            min = conv[i++];
-        else
-            min = MinFromTime(lorutime);
-
-        if (maxargs >= 2 && i < stop)
-            sec = conv[i++];
-        else
-            sec = SecFromTime(lorutime);
-
-        if (maxargs >= 1 && i < stop)
-            msec = conv[i++];
-        else
-            msec = msFromTime(lorutime);
-
-        time = MakeTime(hour, min, sec, msec);
-        result = MakeDate(Day(lorutime), time);
-
-        if (local)
-            result = internalUTC(result);
-        date = TimeClip(result);
-
-        return date;
+        date = MakeDate(Day(t), MakeTime(conv[0], conv[1], conv[2], conv[3]));
+        if (local) {
+            return TimeClip(internalUTC(date));
+        } else {
+            return TimeClip(date);
+        }
     }
 
     private static double makeDate(double date, Object[] args, int methodId)
     {
+        if (args.length == 0) {
+            /* Seems like all the Date.setWhatever functions in ECMA are only
+             * varargs beyond the first argument; This means that
+             * "d = new Date(); d.setMilliseconds()" returns NaN.  Blech.
+             */
+            return ScriptRuntime.NaN;
+        }
+
         int maxargs;
         boolean local = true;
         switch (methodId) {
@@ -1595,72 +1586,65 @@ final class NativeDate extends IdScriptableObject
             break;
 
           default:
-              Kit.codeBug();
-            maxargs = 0;
+              throw Kit.codeBug();
         }
 
-        int i;
-        double conv[] = new double[3];
-        double year, month, day;
-        double lorutime; /* local or UTC version of date */
-        double result;
-
-        /* See arg padding comment in makeTime.*/
-        if (args.length == 0)
-            args = ScriptRuntime.padArguments(args, 1);
-
-        for (i = 0; i < args.length && i < maxargs; i++) {
-            conv[i] = ScriptRuntime.toNumber(args[i]);
-
-            // limit checks that happen in MakeDate in ECMA.
-            if (conv[i] != conv[i] || Double.isInfinite(conv[i])) {
-                return ScriptRuntime.NaN;
-            }
-            conv[i] = ScriptRuntime.toInteger(conv[i]);
+        // [0: year, 1: month, 2: day]
+        double[] conv = new double[3];
+        for (int i = 0; i < args.length && i < maxargs; ++i) {
+            // derive conv-index from args-index
+            int k = i + 3 - maxargs;
+            conv[k] = ScriptRuntime.toNumber(args[i]);
         }
 
-        /* return NaN if date is NaN and we're not setting the year,
-         * If we are, use 0 as the time. */
-        if (date != date) {
-            if (args.length < 3) {
-                return ScriptRuntime.NaN;
+        double t;
+        switch (methodId) {
+          case Id_setUTCFullYear:
+          case Id_setFullYear:
+              if (date != date) {
+                  // if base date is NaN, use 0 for set[UTC]Years()
+                  t = 0;
+                  break;
+              }
+            // fallthrough
+
+        default:
+              if (date != date) {
+                  // if base date is invalid, return NaN; must happen after
+                  // arguments have been evaluated
+                  return ScriptRuntime.NaN;
+              }
+              t = local ? LocalTime(date) : date;
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            // derive args-index from conv-index
+            int k = i - 3 + maxargs;
+            if (k < 0 || k >= args.length) {
+                // if argument not supplied, use default
+                if (i == 0) {
+                    conv[0] = YearFromTime(t);
+                } else if (i == 1) {
+                    conv[1] = MonthFromTime(t);
+                } else {
+                    conv[2] = DateFromTime(t);
+                }
             } else {
-                lorutime = 0;
+                // limit checks that happen in MakeDate in ECMA.
+                double x = conv[i];
+                if (x != x || Double.isInfinite(x)) {
+                    return ScriptRuntime.NaN;
+                }
+                conv[i] = ScriptRuntime.toInteger(x);
             }
-        } else {
-            if (local)
-                lorutime = LocalTime(date);
-            else
-                lorutime = date;
         }
 
-        i = 0;
-        int stop = args.length;
-
-        if (maxargs >= 3 && i < stop)
-            year = conv[i++];
-        else
-            year = YearFromTime(lorutime);
-
-        if (maxargs >= 2 && i < stop)
-            month = conv[i++];
-        else
-            month = MonthFromTime(lorutime);
-
-        if (maxargs >= 1 && i < stop)
-            day = conv[i++];
-        else
-            day = DateFromTime(lorutime);
-
-        day = MakeDay(year, month, day); /* day within year */
-        result = MakeDate(day, TimeWithinDay(lorutime));
-
-        if (local)
-            result = internalUTC(result);
-
-        date = TimeClip(result);
-
-        return date;
+        date = MakeDate(MakeDay(conv[0], conv[1], conv[2]), TimeWithinDay(t));
+        if (local) {
+            return TimeClip(internalUTC(date));
+        } else {
+            return TimeClip(date);
+        }
     }
 
 // #string_id_map#
