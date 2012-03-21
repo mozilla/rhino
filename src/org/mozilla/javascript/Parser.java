@@ -941,6 +941,15 @@ public class Parser
         return true;
     }
 
+    private boolean checkStrictDelete(UnaryExpression expr) {
+        AstNode op = removeParens(expr.getOperand());
+        if (op instanceof Name) {
+            addError("msg.bad.id.strict", op.getString());
+            return false;
+        }
+        return true;
+    }
+
     // This function does not match the closing RC: the caller matches
     // the RC so it can provide a suitable error message if not matched.
     // This means it's up to the caller to set the length of the node to
@@ -2376,7 +2385,7 @@ public class Parser
     private AstNode unaryExpr()
         throws IOException
     {
-        AstNode node;
+        UnaryExpression node;
         int tt = peekToken();
         int line = ts.lineno;
 
@@ -2407,16 +2416,18 @@ public class Parser
           case Token.INC:
           case Token.DEC:
               consumeToken();
-              UnaryExpression expr = new UnaryExpression(tt, ts.tokenBeg,
-                                                         memberExpr(true));
-              expr.setLineno(line);
-              checkBadIncDec(expr);
-              return expr;
+              node = new UnaryExpression(tt, ts.tokenBeg, memberExpr(true));
+              node.setLineno(line);
+              checkBadIncDec(node);
+              return node;
 
           case Token.DELPROP:
               consumeToken();
               node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
               node.setLineno(line);
+              if (inUseStrictDirective) {
+                  checkStrictDelete(node);
+              }
               return node;
 
           case Token.ERROR:
@@ -2439,11 +2450,10 @@ public class Parser
                   return pn;
               }
               consumeToken();
-              UnaryExpression uexpr =
-                      new UnaryExpression(tt, ts.tokenBeg, pn, true);
-              uexpr.setLineno(line);
-              checkBadIncDec(uexpr);
-              return uexpr;
+              node = new UnaryExpression(tt, ts.tokenBeg, pn, true);
+              node.setLineno(line);
+              checkBadIncDec(node);
+              return node;
         }
     }
 
