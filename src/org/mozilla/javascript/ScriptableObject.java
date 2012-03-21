@@ -1812,6 +1812,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param cx the current Context
      * @param props a map of property ids to property descriptors
      */
+    @Deprecated
     public void defineOwnProperties(Context cx, ScriptableObject props) {
         Object[] ids = props.getIds();
         for (Object id : ids) {
@@ -1832,6 +1833,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param id the name/index of the property
      * @param desc the new property descriptor, as described in 8.6.1
      */
+    @Deprecated
     public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
         checkPropertyDefinition(desc);
         defineOwnProperty(cx, id, desc, true);
@@ -1847,6 +1849,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param desc the new property descriptor, as described in 8.6.1
      * @param checkValid whether to perform validity checks
      */
+    @Deprecated
     protected void defineOwnProperty(Context cx, Object id, ScriptableObject desc,
                                      boolean checkValid) {
         String name = ScriptRuntime.toString(id);
@@ -3403,8 +3406,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
         Slot slot = getSlot(name, (int) index, SLOT_QUERY);
         boolean isAccessor = desc.isAccessorDescriptor();
-        boolean isNew = slot == null;
+        boolean isNew = current == null;
         if (slot == null) {
+            // caution: slot may be null even if current != null
             slot = getSlot(name, (int) index,
                     isAccessor ? SLOT_MODIFY_GETTER_SETTER : SLOT_MODIFY);
         }
@@ -3429,7 +3433,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 slot = getSlot(name, (int) index, SLOT_MODIFY_GETTER_SETTER);
             }
             GetterSlot gslot = (GetterSlot) slot;
-            gslot.value = null;
+            gslot.value = Undefined.instance;
             if (hasGetter) {
                 gslot.getter = desc.getGetter();
             }
