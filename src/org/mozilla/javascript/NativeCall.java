@@ -70,7 +70,7 @@ public final class NativeCall extends IdScriptableObject
 
         this.originalArgs = (args == null) ? ScriptRuntime.emptyArgs : args;
         // TODO: which strict-mode setting is required here?
-        boolean strict = false;
+        boolean strict = function.isStrict();
 
         // initialize values of arguments
         int paramAndVarCount = function.getParamAndVarCount();
@@ -87,7 +87,7 @@ public final class NativeCall extends IdScriptableObject
         // initialize "arguments" property but only if it was not overridden by
         // the parameter with the same name
         if (!super.has("arguments", this)) {
-            defineProperty("arguments", new Arguments(this), PERMANENT, strict);
+            defineProperty("arguments", new Arguments(this, strict), PERMANENT, strict);
         }
 
         if (paramAndVarCount != 0) {

@@ -171,5 +171,10 @@ public abstract class NativeFunction extends BaseFunction
         // from earlier Rhino versions. See Bugzilla #396117.
         return false;
     }
+
+    /**
+     * Returns the function's strictness
+     */
+    protected abstract boolean isStrict();
 }
 

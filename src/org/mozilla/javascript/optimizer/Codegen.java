@@ -827,7 +827,8 @@ public class Codegen implements Evaluator
         final int Do_getParamOrVarName    = 3;
         final int Do_getEncodedSource     = 4;
         final int Do_getParamOrVarConst   = 5;
-        final int SWITCH_COUNT            = 6;
+        final int Do_isStrict             = 6;
+        final int SWITCH_COUNT            = 7;
 
         for (int methodIndex = 0; methodIndex != SWITCH_COUNT; ++methodIndex) {
             if (methodIndex == Do_getEncodedSource && encodedSource == null) {
@@ -872,6 +873,10 @@ public class Codegen implements Evaluator
                                 ClassFileWriter.ACC_PUBLIC);
                 cfw.addPush(encodedSource);
                 break;
+              case Do_isStrict:
+                methodLocals = 1; // Only this
+                cfw.startMethod("getParamOrVarConst", "()Z",
+                                ClassFileWriter.ACC_PUBLIC);
               default:
                 throw Kit.codeBug();
             }
@@ -903,7 +908,7 @@ public class Codegen implements Evaluator
                                             switchStackTop);
                 }
 
-                // Impelemnet method-specific switch code
+                // Implement method-specific switch code
                 switch (methodIndex) {
                   case Do_getFunctionName:
                     // Push function name
@@ -1012,6 +1017,11 @@ public class Codegen implements Evaluator
                                   "substring",
                                   "(II)Ljava/lang/String;");
                     cfw.add(ByteCode.ARETURN);
+                    break;
+
+                  case Do_isStrict:
+                    cfw.add(n.isInStrictMode() ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
+                    cfw.add(ByteCode.IRETURN);
                     break;
 
                   default:

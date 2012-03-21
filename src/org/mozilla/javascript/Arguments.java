@@ -53,9 +53,10 @@ final class Arguments extends IdScriptableObject
 
     private static final String FTAG = "Arguments";
 
-    public Arguments(NativeCall activation)
+    public Arguments(NativeCall activation, boolean strict)
     {
         this.activation = activation;
+        this.strict = strict;
 
         Scriptable parent = activation.getParentScope();
         setParentScope(parent);
@@ -130,6 +131,39 @@ final class Arguments extends IdScriptableObject
     // end helpers
 
     @Override
+    public boolean has(String name, Scriptable start) {
+        if (strict) {
+            // must place check here instead of getInstanceIdValue()
+            if ("callee".equals(name) || "caller".equals(name)) {
+                return true;
+            }
+        }
+        return super.has(name, start);
+    }
+
+    @Override
+    public Object get(String name, Scriptable start) {
+        if (strict) {
+            // must place check here instead of getInstanceIdValue()
+            if ("callee".equals(name) || "caller".equals(name)) {
+                throw ScriptRuntime.typeError0("msg.op.not.allowed");
+            }
+        }
+        return super.get(name, start);
+    }
+
+    @Override
+    public void put(String name, Scriptable start, Object value, boolean checked) {
+        if (strict) {
+            // must place check here instead of setInstanceIdValue()
+            if ("callee".equals(name) || "caller".equals(name)) {
+                throw ScriptRuntime.typeError0("msg.op.not.allowed");
+            }
+        }
+        super.put(name, start, value, checked);
+    }
+
+    @Override
     public boolean has(int index, Scriptable start)
     {
         if (arg(index) != NOT_FOUND) {
@@ -155,6 +189,10 @@ final class Arguments extends IdScriptableObject
 
     private boolean sharedWithActivation(int index)
     {
+        if (strict) {
+            // arguments are not shared with activation in strict mode
+            return false;
+        }
         NativeFunction f = activation.function;
         int definedCount = f.getParamCount();
         if (index < definedCount) {
@@ -416,6 +454,12 @@ final class Arguments extends IdScriptableObject
 
     @Override
     protected PropertyDescriptor getOwnProperty(String name) {
+        if (strict) {
+            if ("callee".equals(name) || "caller".equals(name)) {
+                Function thrower = ScriptRuntime.typeErrorThrower();
+                return new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
+            }
+        }
         PropertyDescriptor desc = super.getOwnProperty(name);
         double d = ScriptRuntime.toNumber(name);
         int index = (int) d;
@@ -452,7 +496,8 @@ final class Arguments extends IdScriptableObject
     private int lengthAttr = DONTENUM;
     private int constructorAttr = DONTENUM;
 
-    private NativeCall activation;
+    private final NativeCall activation;
+    private final boolean strict;
 
 // Initially args holds activation.getOriginalArgs(), but any modification
 // of its elements triggers creation of a copy. If its element holds NOT_FOUND,

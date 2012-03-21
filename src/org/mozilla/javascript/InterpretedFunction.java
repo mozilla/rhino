@@ -237,5 +237,11 @@ final class InterpretedFunction extends NativeFunction implements Script
     {
         return idata.argIsConst[index];
     }
+
+    @Override
+    protected boolean isStrict()
+    {
+        return idata.isStrict;
+    }
 }
 
