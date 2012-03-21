@@ -1749,7 +1749,7 @@ class BodyCodegen
             cfw.addPush(0); // false to indicate it is not eval script
             addScriptRuntimeInvoke("initScript",
                                    "(Lorg/mozilla/javascript/NativeFunction;"
-                                   +"Lorg/mozilla/javascript/Scriptable;"
+                                   +"Ljava/lang/Object;"
                                    +"Lorg/mozilla/javascript/Context;"
                                    +"Lorg/mozilla/javascript/Scriptable;"
                                    +"Z"
