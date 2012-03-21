@@ -57,6 +57,15 @@ public abstract class NativeFunction extends BaseFunction
     public final void initScriptFunction(Context cx, Scriptable scope)
     {
         ScriptRuntime.setFunctionProtoAndParent(this, scope);
+        if (isStrict()) {
+            Function thrower = ScriptRuntime.typeErrorThrower(cx);
+            PropertyDescriptor desc = new PropertyDescriptor(thrower, thrower,
+                                                             DONTENUM | PERMANENT);
+            defineOwnProperty("caller", desc, false);
+            // TODO: this doesn't work properly see BaseFunction+IdScriptableObject,
+            // just place the required checks in the overridden methods below
+            // defineOwnProperty("arguments", desc, false);
+        }
     }
 
     /**
@@ -75,6 +84,55 @@ public abstract class NativeFunction extends BaseFunction
             properties.put(Decompiler.INITIAL_INDENT_PROP, indent);
             return Decompiler.decompile(encodedSource, flags, properties);
         }
+    }
+
+    @Override
+    public boolean has(String name, Scriptable start) {
+        // see comment in constructor
+        if ("arguments".equals(name) && isStrict()) {
+            return true;
+        }
+        return super.has(name, start);
+    }
+
+    @Override
+    public Object get(String name, Scriptable start) {
+        // see comment in constructor
+        if ("arguments".equals(name) && isStrict()) {
+            throw ScriptRuntime.typeError0("msg.op.not.allowed");
+        }
+        return super.get(name, start);
+    }
+
+    @Override
+    public void put(String name, Scriptable start, Object value, boolean checked) {
+        // see comment in constructor
+        if ("arguments".equals(name) && isStrict()) {
+            throw ScriptRuntime.typeError0("msg.op.not.allowed");
+        }
+        super.put(name, start, value, checked);
+    }
+
+    @Override
+    public void delete(String name, boolean checked) {
+        // see comment in constructor
+        if ("arguments".equals(name) && isStrict()) {
+            if (checked) {
+                throw ScriptRuntime.typeError1("msg.delete.permanent", name);
+            }
+            return;
+        }
+        super.delete(name, checked);
+    }
+
+    @Override
+    protected PropertyDescriptor getOwnProperty(String name) {
+        // see comment in constructor
+        if ("arguments".equals(name) && isStrict()) {
+            Function thrower = ScriptRuntime.typeErrorThrower();
+            return new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
+        }
+        return super.getOwnProperty(name);
     }
 
     @Override
@@ -103,6 +161,7 @@ public abstract class NativeFunction extends BaseFunction
      * For backwards compatibility keep an old method name used by
      * Batik and possibly others.
      */
+    @Deprecated
     public String jsGet_name()
     {
         return getFunctionName();
@@ -170,5 +229,10 @@ public abstract class NativeFunction extends BaseFunction
         // from earlier Rhino versions. See Bugzilla #396117.
         return false;
     }
+
+    /**
+     * Returns the function's strictness
+     */
+    protected abstract boolean isStrict();
 }
 

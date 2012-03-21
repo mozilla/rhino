@@ -177,7 +177,7 @@ public class Matrix implements Scriptable {
      *
      * We do nothing here, so all properties are effectively read-only.
      */
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, Scriptable start, Object value, boolean checked) {
     }
 
     /**
@@ -185,7 +185,7 @@ public class Matrix implements Scriptable {
      *
      * We do nothing here, so all properties are effectively read-only.
      */
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
     }
 
     /**
@@ -194,7 +194,7 @@ public class Matrix implements Scriptable {
      * This method shouldn't even be called since we define all properties
      * as PERMANENT.
      */
-    public void delete(String id) {
+    public void delete(String id, boolean checked) {
     }
 
     /**
@@ -203,7 +203,7 @@ public class Matrix implements Scriptable {
      * This method shouldn't even be called since we define all properties
      * as PERMANENT.
      */
-    public void delete(int index) {
+    public void delete(int index, boolean checked) {
     }
 
     /**
@@ -260,8 +260,11 @@ public class Matrix implements Scriptable {
      * true if <code>this</code> appears in <code>value</code>'s prototype
      * chain.
      */
-    public boolean hasInstance(Scriptable value) {
-        Scriptable proto = value.getPrototype();
+    public boolean hasInstance(Object value) {
+        if (! (value instanceof Scriptable)) {
+            return false;
+        }
+        Scriptable proto = ((Scriptable) value).getPrototype();
         while (proto != null) {
             if (proto.equals(this))
                 return true;

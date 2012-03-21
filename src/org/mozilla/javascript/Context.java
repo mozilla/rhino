@@ -42,7 +42,6 @@ package org.mozilla.javascript;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -194,19 +193,20 @@ public class Context
     public static final int FEATURE_TO_STRING_AS_SOURCE = 4;
 
     /**
-     * Control if properties <tt>__proto__</tt> and <tt>__parent__</tt>
-     * are treated specially.
+     * Control if property <tt>__proto__</tt> is treated specially.
      * If <tt>hasFeature(FEATURE_PARENT_PROTO_PROPERTIES)</tt> returns true,
-     * treat <tt>__parent__</tt> and <tt>__proto__</tt> as special properties.
+     * treat <tt>__proto__</tt> as a special property.
      * <p>
-     * The properties allow to query and set scope and prototype chains for the
-     * objects. The special meaning of the properties is available
-     * only when they are used as the right hand side of the dot operator.
+     * The property allows to query and set prototype chains for the
+     * objects. The special meaning of the property is available
+     * only when it is used as the right hand side of the dot operator.
      * For example, while <tt>x.__proto__ = y</tt> changes the prototype
      * chain of the object <tt>x</tt> to point to <tt>y</tt>,
      * <tt>x["__proto__"] = y</tt> simply assigns a new value to the property
      * <tt>__proto__</tt> in <tt>x</tt> even when the feature is on.
-     *
+     * <p>
+     * This feature no longer applies to the non-standard <tt>__parent__</tt>
+     * property which has been removed completely.
      * By default {@link #hasFeature(int)} returns true.
      */
     public static final int FEATURE_PARENT_PROTO_PROPERTIES = 5;
@@ -215,6 +215,7 @@ public class Context
          * @deprecated In previous releases, this name was given to
          * FEATURE_PARENT_PROTO_PROPERTIES.
          */
+    @Deprecated
     public static final int FEATURE_PARENT_PROTO_PROPRTIES = 5;
 
     /**
@@ -336,6 +337,7 @@ public class Context
      * this class, consider using {@link #Context(ContextFactory)} constructor
      * instead in the subclasses' constructors.
      */
+    @Deprecated
     public Context()
     {
         this(ContextFactory.getGlobal());
@@ -407,6 +409,7 @@ public class Context
      * @see ContextFactory#enterContext(Context)
      * @see ContextFactory#call(ContextAction)
      */
+    @Deprecated
     public static Context enter(Context cx)
     {
         return enter(cx, ContextFactory.getGlobal());
@@ -478,6 +481,7 @@ public class Context
      * ContextFactory.
      * @return The result of {@link ContextAction#run(Context)}.
      */
+    @Deprecated
     public static Object call(ContextAction action)
     {
         return call(ContextFactory.getGlobal(), action);
@@ -530,6 +534,7 @@ public class Context
      * @see ContextFactory#addListener(org.mozilla.javascript.ContextFactory.Listener)
      * @see ContextFactory#getGlobal()
      */
+    @Deprecated
     public static void addContextListener(ContextListener listener)
     {
         // Special workaround for the debugger
@@ -559,6 +564,7 @@ public class Context
      * @see ContextFactory#removeListener(org.mozilla.javascript.ContextFactory.Listener)
      * @see ContextFactory#getGlobal()
      */
+    @Deprecated
     public static void removeContextListener(ContextListener listener)
     {
         ContextFactory.getGlobal().addListener(listener);
@@ -1292,6 +1298,7 @@ public class Context
      * @see #compileReader(Reader in, String sourceName, int lineno,
      *                     Object securityDomain)
      */
+    @Deprecated
     public final Script compileReader(Scriptable scope, Reader in,
                                       String sourceName, int lineno,
                                       Object securityDomain)
@@ -1326,7 +1333,8 @@ public class Context
             lineno = 0;
         }
         return (Script) compileImpl(null, in, null, sourceName, lineno,
-                                    securityDomain, false, null, null);
+                                    securityDomain, false, null, null,
+                                    false);
     }
 
     /**
@@ -1354,19 +1362,20 @@ public class Context
             lineno = 0;
         }
         return compileString(source, null, null, sourceName, lineno,
-                             securityDomain);
+                             securityDomain, false);
     }
 
     final Script compileString(String source,
                                Evaluator compiler,
                                ErrorReporter compilationErrorReporter,
                                String sourceName, int lineno,
-                               Object securityDomain)
+                               Object securityDomain, boolean strictMode)
     {
         try {
             return (Script) compileImpl(null, null, source, sourceName, lineno,
                                         securityDomain, false,
-                                        compiler, compilationErrorReporter);
+                                        compiler, compilationErrorReporter,
+                                        strictMode);
         } catch (IOException ex) {
             // Should not happen when dealing with source as string
             throw new RuntimeException();
@@ -1395,19 +1404,20 @@ public class Context
                                           Object securityDomain)
     {
         return compileFunction(scope, source, null, null, sourceName, lineno,
-                               securityDomain);
+                               securityDomain, false);
     }
 
     final Function compileFunction(Scriptable scope, String source,
                                    Evaluator compiler,
                                    ErrorReporter compilationErrorReporter,
                                    String sourceName, int lineno,
-                                   Object securityDomain)
+                                   Object securityDomain, boolean strictMode)
     {
         try {
             return (Function) compileImpl(scope, null, source, sourceName,
                                           lineno, securityDomain, true,
-                                          compiler, compilationErrorReporter);
+                                          compiler, compilationErrorReporter,
+                                          strictMode);
         }
         catch (IOException ioe) {
             // Should never happen because we just made the reader
@@ -1529,11 +1539,7 @@ public class Context
     public Scriptable newObject(Scriptable scope, String constructorName,
                                 Object[] args)
     {
-        scope = ScriptableObject.getTopLevelScope(scope);
-        Function ctor = ScriptRuntime.getExistingCtor(this, scope,
-                                                      constructorName);
-        if (args == null) { args = ScriptRuntime.emptyArgs; }
-        return ctor.construct(this, scope, args);
+        return ScriptRuntime.newObject(this, scope, constructorName, args);
     }
 
     /**
@@ -1664,6 +1670,7 @@ public class Context
      * @deprecated
      * @see #toObject(Object, Scriptable)
      */
+    @Deprecated
     public static Scriptable toObject(Object value, Scriptable scope,
                                       Class<?> staticType)
     {
@@ -1736,6 +1743,7 @@ public class Context
      *         Note that {@link #jsToJava(Object, Class)} throws
      *         {@link EvaluatorException} instead.
      */
+    @Deprecated
     public static Object toType(Object value, Class<?> desiredType)
         throws IllegalArgumentException
     {
@@ -2063,6 +2071,7 @@ public class Context
      * @see ClassCache#get(Scriptable)
      * @see ClassCache#setCachingEnabled(boolean)
      */
+    @Deprecated
     public static void setCachingEnabled(boolean cachingEnabled)
     {
     }
@@ -2342,7 +2351,8 @@ public class Context
                                String sourceName, int lineno,
                                Object securityDomain, boolean returnFunction,
                                Evaluator compiler,
-                               ErrorReporter compilationErrorReporter)
+                               ErrorReporter compilationErrorReporter,
+                               boolean strictMode)
         throws IOException
     {
         if(sourceName == null) {
@@ -2372,6 +2382,7 @@ public class Context
         }
 
         Parser p = new Parser(compilerEnv, compilationErrorReporter);
+        p.inUseStrictDirective = strictMode;
         if (returnFunction) {
             p.calledByCompileFunction = true;
         }
@@ -2474,39 +2485,15 @@ public class Context
          * A bit of a hack, but the only way to get filename and line
          * number from an enclosing frame.
          */
-        CharArrayWriter writer = new CharArrayWriter();
-        RuntimeException re = new RuntimeException();
-        re.printStackTrace(new PrintWriter(writer));
-        String s = writer.toString();
-        int open = -1;
-        int close = -1;
-        int colon = -1;
-        for (int i=0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == ':')
-                colon = i;
-            else if (c == '(')
-                open = i;
-            else if (c == ')')
-                close = i;
-            else if (c == '\n' && open != -1 && close != -1 && colon != -1 &&
-                     open < colon && colon < close)
-            {
-                String fileStr = s.substring(open + 1, colon);
-                if (!fileStr.endsWith(".java")) {
-                    String lineStr = s.substring(colon + 1, close);
-                    try {
-                        linep[0] = Integer.parseInt(lineStr);
-                        if (linep[0] < 0) {
-                            linep[0] = 0;
-                        }
-                        return fileStr;
-                    }
-                    catch (NumberFormatException e) {
-                        // fall through
-                    }
+        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+        for (StackTraceElement st : stackTrace) {
+            String file = st.getFileName();
+            if (!(file == null || file.endsWith(".java"))) {
+                int line = st.getLineNumber();
+                if (line >= 0) {
+                    linep[0] = line;
+                    return file;
                 }
-                open = close = colon = -1;
             }
         }
 
@@ -2595,6 +2582,7 @@ public class Context
     boolean isContinuationsTopCall;
     NativeCall currentActivationCall;
     XMLLib cachedXMLLib;
+    BaseFunction typeErrorThrower;
 
     // for Objects, Arrays to tag themselves as being printed out,
     // so they don't print themselves out recursively.
@@ -2649,7 +2637,7 @@ public class Context
     long scratchUint32;
 
     // It can be used to return the second Scriptable result from function
-    Scriptable scratchScriptable;
+    Object scratchThis;
 
     // Generate an observer count on compiled code
     public boolean generateObserverCount = false;

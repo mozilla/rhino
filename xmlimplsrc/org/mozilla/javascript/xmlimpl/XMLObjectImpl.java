@@ -146,7 +146,7 @@ abstract class XMLObjectImpl extends XMLObject {
     }
 
     @Override
-    public final boolean hasInstance(Scriptable scriptable) {
+    public final boolean hasInstance(Object scriptable) {
         return super.hasInstance(scriptable);
     }
 
@@ -291,14 +291,14 @@ abstract class XMLObjectImpl extends XMLObject {
         if (xmlName == null) {
             long index = ScriptRuntime.lastUint32Result(cx);
             // XXX Fix this cast
-            put((int)index, this, value);
+            put((int)index, this, value, false);
             return;
         }
         putXMLProperty(xmlName, value);
     }
 
    @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, Scriptable start, Object value, boolean checked) {
         Context cx = Context.getCurrentContext();
         putXMLProperty(lib.toXMLNameFromString(cx, name), value);
     }
@@ -312,7 +312,7 @@ abstract class XMLObjectImpl extends XMLObject {
         if (xmlName == null) {
             long index = ScriptRuntime.lastUint32Result(cx);
             // XXX Fix this
-            delete((int)index);
+            delete((int)index, false);
             return true;
         }
         deleteXMLProperty(xmlName);
@@ -321,7 +321,7 @@ abstract class XMLObjectImpl extends XMLObject {
 
 
     @Override
-    public void delete(String name) {
+    public void delete(String name, boolean checked) {
         Context cx = Context.getCurrentContext();
         deleteXMLProperty(lib.toXMLNameFromString(cx, name));
     }
@@ -636,7 +636,7 @@ abstract class XMLObjectImpl extends XMLObject {
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(XMLOBJECT_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);

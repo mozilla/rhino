@@ -19,6 +19,7 @@ import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
  */
 public class RequireJarTest extends RequireTest
 {
+    @Override
     public void testSandboxed() throws Exception
     {
         final Context cx = createContext();
@@ -43,20 +44,23 @@ public class RequireJarTest extends RequireTest
         return cx;
     }
 
+    @Override
     public void testNonSandboxed() throws Exception
     {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
         final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
-        ScriptableObject.putProperty(scope, "moduleUri", jsFile);
+        ScriptableObject.putProperty(scope, "moduleUri", jsFile, false);
         require.requireMain(cx, "testNonSandboxed");
     }
 
+    @Override
     public void testVariousUsageErrors() throws Exception {
         testWithSandboxedRequire("testNoArgsRequire");
     }
 
+    @Override
     public void testRelativeId() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
@@ -66,6 +70,7 @@ public class RequireJarTest extends RequireTest
                 "testRelativeId.js", 1, null);
     }
 
+    @Override
     public void testSetMainForAlreadyLoadedModule() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();

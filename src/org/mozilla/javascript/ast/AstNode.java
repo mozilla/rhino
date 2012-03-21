@@ -386,6 +386,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
     public abstract void visit(NodeVisitor visitor);
 
     // subclasses with potential side effects should override this
+    @Override
     public boolean hasSideEffects()
     {
         switch (getType()) {
@@ -580,6 +581,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         public DebugPrintVisitor(StringBuilder buf) {
             buffer = buf;
         }
+        @Override
         public String toString() {
             return buffer.toString();
         }

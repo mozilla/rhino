@@ -111,9 +111,9 @@ public class Environment extends ScriptableObject
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, Scriptable start, Object value, boolean checked) {
         if (this == thePrototypeInstance)
-            super.put(name, start, value);
+            super.put(name, start, value, checked);
         else
             System.getProperties().put(name, ScriptRuntime.toString(value));
     }

@@ -57,6 +57,7 @@ import java.io.Reader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -263,7 +264,7 @@ public class Parser
     void reportError(String messageId, String messageArg, int position,
                      int length)
     {
-        addError(messageId, position, length);
+        addError(messageId, messageArg, position, length);
 
         if (!compilerEnv.recoverFromErrors()) {
             throw new ParserException();
@@ -418,6 +419,9 @@ public class Parser
     }
 
     private void mustHaveXML() {
+        if (inUseStrictDirective) {
+            reportError("msg.XML.not.available.strict");
+        }
         if (!compilerEnv.isXmlAvailable()) {
             reportError("msg.XML.not.available");
         }
@@ -544,8 +548,8 @@ public class Parser
 
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
-        // TODO: eval code should get strict mode from invoking code
-        inUseStrictDirective = false;
+        root.setInStrictMode(savedStrictMode);
+        ts.setOctalCharacterEscape(false);
 
         try {
             for (;;) {
@@ -564,18 +568,19 @@ public class Parser
                     } catch (ParserException e) {
                         break;
                     }
+                    inDirectivePrologue = false;
                 } else {
                     n = statement();
                     if (inDirectivePrologue) {
-                        String directive = getDirective(n);
+                        StringLiteral directive = getDirective(n);
                         if (directive == null) {
                             inDirectivePrologue = false;
-                        } else if (directive.equals("use strict")) {
-                            inUseStrictDirective = true;
-                            root.setInStrictMode(true);
+                        } else if (directive.isEscapeFreeStringLiteral()){
+                            if ("use strict".equals(directive.getValue())) {
+                                setStrictMode(root);
+                            }
                         }
                     }
-
                 }
                 end = getNodeEnd(n);
                 root.addChildToBack(n);
@@ -616,7 +621,7 @@ public class Parser
         return root;
     }
 
-    private AstNode parseFunctionBody()
+    private AstNode parseFunctionBody(FunctionNode fnNode)
         throws IOException
     {
         boolean isExpressionClosure = false;
@@ -633,7 +638,9 @@ public class Parser
 
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
+        ts.setOctalCharacterEscape(false);
         // Don't set 'inUseStrictDirective' to false: inherit strict mode.
+        fnNode.setInStrictMode(savedStrictMode);
 
         pn.setLineno(ts.lineno);
         try {
@@ -657,15 +664,18 @@ public class Parser
                         case Token.FUNCTION:
                             consumeToken();
                             n = function(FunctionNode.FUNCTION_STATEMENT);
+                            inDirectivePrologue = false;
                             break;
                         default:
                             n = statement();
                             if (inDirectivePrologue) {
-                                String directive = getDirective(n);
+                                StringLiteral directive = getDirective(n);
                                 if (directive == null) {
                                     inDirectivePrologue = false;
-                                } else if (directive.equals("use strict")) {
-                                    inUseStrictDirective = true;
+                                } else if (directive.isEscapeFreeStringLiteral()){
+                                    if ("use strict".equals(directive.getValue())) {
+                                        setStrictMode(fnNode);
+                                    }
                                 }
                             }
                             break;
@@ -688,17 +698,37 @@ public class Parser
         return pn;
     }
 
-    private String getDirective(AstNode n) {
+    private StringLiteral getDirective(AstNode n) {
         if (n instanceof ExpressionStatement) {
             AstNode e = ((ExpressionStatement) n).getExpression();
             if (e instanceof StringLiteral) {
-                return ((StringLiteral) e).getValue();
+                return (StringLiteral) e;
             }
         }
         return null;
     }
 
-    private void  parseFunctionParams(FunctionNode fnNode)
+    private void setStrictMode(ScriptNode script) {
+        // Unfortunately, Directive Prologue members in general may contain
+        // escapes, even while "use strict" directives may not.  Therefore
+        // we must check whether an octal character escape has been seen in
+        // any previous directives whenever we encounter a "use strict"
+        // directive, so that the octal escape is properly treated as a
+        // syntax error.  An example of this case:
+        //
+        //   function error()
+        //   {
+        //     "\145"; // octal escape
+        //     "use strict"; // retroactively makes "\145" a syntax error
+        //   }
+        if (ts.hasOctalCharacterEscape()) {
+            reportError("msg.no.octal.strict");
+        }
+        inUseStrictDirective = true;
+        script.setInStrictMode(true);
+    }
+
+    private void parseFunctionParams(FunctionNode fnNode)
         throws IOException
     {
         if (matchToken(Token.RP)) {
@@ -708,7 +738,6 @@ public class Parser
         // Would prefer not to call createDestructuringAssignment until codegen,
         // but the symbol definitions have to happen now, before body is parsed.
         Map<String, Node> destructuring = null;
-        Set<String> paramNames = new HashSet<String>();
         do {
             int tt = peekToken();
             if (tt == Token.LB || tt == Token.LC) {
@@ -729,16 +758,6 @@ public class Parser
                     fnNode.addParam(createNameNode());
                     String paramName = ts.getString();
                     defineSymbol(Token.LP, paramName);
-                    if (this.inUseStrictDirective) {
-                        if ("eval".equals(paramName) ||
-                            "arguments".equals(paramName))
-                        {
-                            reportError("msg.bad.id.strict", paramName);
-                        }
-                        if (paramNames.contains(paramName))
-                            addError("msg.dup.param.strict", paramName);
-                        paramNames.add(paramName);
-                    }
                 } else {
                     fnNode.addParam(makeErrorNode());
                 }
@@ -771,14 +790,13 @@ public class Parser
         Name name = null;
         AstNode memberExprNode = null;
 
+        // We forbid function statements in strict mode code.
+        if (type == FunctionNode.FUNCTION_EXPRESSION_STATEMENT && inUseStrictDirective) {
+            reportError("msg.strict.function.stmt");
+        }
+
         if (matchToken(Token.NAME)) {
             name = createNameNode(true, Token.NAME);
-            if (inUseStrictDirective) {
-                String id = name.getIdentifier();
-                if ("eval".equals(id)|| "arguments".equals(id)) {
-                    reportError("msg.bad.id.strict", id);
-                }
-            }
             if (!matchToken(Token.LP)) {
                 if (compilerEnv.isAllowMemberExprAsFunctionName()) {
                     AstNode memberExprHead = name;
@@ -789,6 +807,9 @@ public class Parser
             }
         } else if (matchToken(Token.LP)) {
             // Anonymous function:  leave name as null
+            if (type != FunctionNode.FUNCTION_EXPRESSION) {
+                reportError("msg.unnamed.function.stmt");
+            }
         } else {
             if (compilerEnv.isAllowMemberExprAsFunctionName()) {
                 // Note that memberExpr can not start with '(' like
@@ -820,7 +841,7 @@ public class Parser
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         try {
             parseFunctionParams(fnNode);
-            fnNode.setBody(parseFunctionBody());
+            fnNode.setBody(parseFunctionBody(fnNode));
             fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
             fnNode.setLength(ts.tokenEnd - functionSourceStart);
 
@@ -830,6 +851,12 @@ public class Parser
                            ? "msg.no.return.value"
                            : "msg.anon.no.return.value";
                 addStrictWarning(msg, name == null ? "" : name.getIdentifier());
+            }
+
+            // must use function's strictness here, 'inUseStrictDirective' from
+            // environment may already be reverted, cf. parseFunctionBody()
+            if (fnNode.isInStrictMode()) {
+                checkStrictFunction(fnNode);
             }
         } finally {
             savedVars.restore();
@@ -862,6 +889,96 @@ public class Parser
             fnNode.setParentScope(currentScope);
         }
         return fnNode;
+    }
+
+    /**
+     * In strict mode code, all parameter names must be distinct, must not be
+     * strict mode reserved keywords, and must not be 'eval' or 'arguments'.  We
+     * must perform these checks here, and not eagerly during parsing, because a
+     * function's body may turn on strict mode for the function head.
+     */
+    private void checkStrictFunction(FunctionNode fnNode) {
+        Name name = fnNode.getFunctionName();
+        if (name != null) {
+            String id = name.getIdentifier();
+            if ("eval".equals(id) ||
+                "arguments".equals(id) ||
+                TokenStream.isKeyword(id))
+            {
+                reportError("msg.bad.id.strict", id);
+            }
+        }
+
+        boolean hasDestruct = fnNode.getProp(Node.DESTRUCTURING_PARAMS) != null;
+        Set<String> paramNames = new HashSet<String>();
+        for (AstNode param : fnNode.getParams()) {
+            if (param instanceof Name) {
+                checkStrictFunctionParam(paramNames, param);
+            } else if (hasDestruct && param instanceof DestructuringForm) {
+                List<AstNode> workQueue = new LinkedList<AstNode>();
+                workQueue.add(param);
+                while (!workQueue.isEmpty()) {
+                    AstNode node = workQueue.remove(0);
+                    assert ((DestructuringForm)node).isDestructuring();
+                    if (node instanceof ObjectLiteral) {
+                        for (ObjectProperty p : ((ObjectLiteral)node).getElements()) {
+                            AstNode right = p.getRight();
+                            if (right instanceof Name) {
+                                checkStrictFunctionParam(paramNames, right);
+                            } else if (right instanceof DestructuringForm) {
+                                workQueue.add(right);
+                            }
+                        }
+                    } else {
+                        assert (node instanceof ArrayLiteral);
+                        for (AstNode p : ((ArrayLiteral)node).getElements()) {
+                            if (p instanceof Name) {
+                                checkStrictFunctionParam(paramNames, p);
+                            } else if (p instanceof DestructuringForm) {
+                                workQueue.add(p);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void checkStrictFunctionParam(Set<String> paramNames, AstNode param) {
+        assert (param instanceof Name);
+        String paramName = param.getString();
+        if ("eval".equals(paramName) ||
+            "arguments".equals(paramName) ||
+            TokenStream.isKeyword(paramName))
+        {
+            reportError("msg.bad.id.strict", paramName);
+        }
+        if (paramNames.contains(paramName)) {
+            reportError("msg.dup.param.strict", paramName);
+        }
+        paramNames.add(paramName);
+    }
+
+    private boolean checkStrictAssignment(AstNode node) {
+        node = removeParens(node);
+        if (node instanceof Name) {
+            String name = node.getString();
+            // strict mode doesn't allow eval/arguments for lhs
+            if ("eval".equals(name) || "arguments".equals(name)) {
+                reportError("msg.bad.id.strict", name);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean checkStrictDelete(UnaryExpression expr) {
+        AstNode op = removeParens(expr.getOperand());
+        if (op instanceof Name) {
+            reportError("msg.unqualified.delete.strict", op.getString());
+            return false;
+        }
+        return true;
     }
 
     // This function does not match the closing RC: the caller matches
@@ -1878,7 +1995,9 @@ public class Parser
                 name.setLineno(ts.getLineno());
                 if (inUseStrictDirective) {
                     String id = ts.getString();
-                    if ("eval".equals(id) || "arguments".equals(ts.getString()))
+                    if ("eval".equals(id) ||
+                        "arguments".equals(ts.getString()) ||
+                        TokenStream.isKeyword(id))
                     {
                         reportError("msg.bad.id.strict", id);
                     }
@@ -2061,6 +2180,9 @@ public class Parser
         tt = peekToken();
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
             consumeToken();
+            if (inUseStrictDirective) {
+                checkStrictAssignment(pn);
+            }
 
             // Pull out JSDoc info and reset it before recursing.
             String jsdoc = getAndResetJsDoc();
@@ -2294,7 +2416,7 @@ public class Parser
     private AstNode unaryExpr()
         throws IOException
     {
-        AstNode node;
+        UnaryExpression node;
         int tt = peekToken();
         int line = ts.lineno;
 
@@ -2325,16 +2447,18 @@ public class Parser
           case Token.INC:
           case Token.DEC:
               consumeToken();
-              UnaryExpression expr = new UnaryExpression(tt, ts.tokenBeg,
-                                                         memberExpr(true));
-              expr.setLineno(line);
-              checkBadIncDec(expr);
-              return expr;
+              node = new UnaryExpression(tt, ts.tokenBeg, memberExpr(true));
+              node.setLineno(line);
+              checkBadIncDec(node);
+              return node;
 
           case Token.DELPROP:
               consumeToken();
               node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
               node.setLineno(line);
+              if (inUseStrictDirective) {
+                  checkStrictDelete(node);
+              }
               return node;
 
           case Token.ERROR:
@@ -2343,7 +2467,7 @@ public class Parser
 
           case Token.LT:
               // XML stream encountered in expression.
-              if (compilerEnv.isXmlAvailable()) {
+              if (!inUseStrictDirective && compilerEnv.isXmlAvailable()) {
                   consumeToken();
                   return memberExprTail(true, xmlInitializer());
               }
@@ -2357,11 +2481,10 @@ public class Parser
                   return pn;
               }
               consumeToken();
-              UnaryExpression uexpr =
-                      new UnaryExpression(tt, ts.tokenBeg, pn, true);
-              uexpr.setLineno(line);
-              checkBadIncDec(uexpr);
-              return uexpr;
+              node = new UnaryExpression(tt, ts.tokenBeg, pn, true);
+              node.setLineno(line);
+              checkBadIncDec(node);
+              return node;
         }
     }
 
@@ -2602,7 +2725,7 @@ public class Parser
             memberTypeFlags = Node.DESCENDANTS_FLAG;
         }
 
-        if (!compilerEnv.isXmlAvailable()) {
+        if (inUseStrictDirective || !compilerEnv.isXmlAvailable()) {
             mustMatchToken(Token.NAME, "msg.no.name.after.dot");
             Name name = createNameNode(true, Token.GETPROP);
             PropertyGet pg = new PropertyGet(pn, name, dotPos);
@@ -2617,18 +2740,18 @@ public class Parser
           case Token.THROW:
               // needed for generator.throw();
               saveNameTokenData(ts.tokenBeg, "throw", ts.lineno);
-              ref = propertyName(-1, "throw", memberTypeFlags);
+              ref = propertyName(-1, memberTypeFlags);
               break;
 
           case Token.NAME:
               // handles: name, ns::name, ns::*, ns::[expr]
-              ref = propertyName(-1, ts.getString(), memberTypeFlags);
+              ref = propertyName(-1, memberTypeFlags);
               break;
 
           case Token.MUL:
               // handles: *, *::name, *::*, *::[expr]
               saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
-              ref = propertyName(-1, "*", memberTypeFlags);
+              ref = propertyName(-1, memberTypeFlags);
               break;
 
           case Token.XMLATTR:
@@ -2638,14 +2761,10 @@ public class Parser
               break;
 
           default:
-              if (compilerEnv.isReservedKeywordAsIdentifier()) {
+              if (convertToName(token)) {
                   // allow keywords as property names, e.g. ({if: 1})
-                  String name = Token.keywordToName(token);
-                  if (name != null) {
-                      saveNameTokenData(ts.tokenBeg, name, ts.lineno);
-                      ref = propertyName(-1, name, memberTypeFlags);
-                      break;
-                  }
+                  ref = propertyName(-1, memberTypeFlags);
+                  break;
               }
               reportError("msg.no.name.after.dot");
               return makeErrorNode();
@@ -2680,12 +2799,12 @@ public class Parser
         switch (tt) {
           // handles: @name, @ns::name, @ns::*, @ns::[expr]
           case Token.NAME:
-              return propertyName(atPos, ts.getString(), 0);
+              return propertyName(atPos, 0);
 
           // handles: @*, @*::name, @*::*, @*::[expr]
           case Token.MUL:
               saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
-              return propertyName(atPos, "*", 0);
+              return propertyName(atPos, 0);
 
           // handles @[expr]
           case Token.LB:
@@ -2712,7 +2831,7 @@ public class Parser
      * returns a Name node.  Returns an ErrorNode for malformed XML
      * expressions.  (For now - might change to return a partial XmlRef.)
      */
-    private AstNode propertyName(int atPos, String s, int memberTypeFlags)
+    private AstNode propertyName(int atPos, int memberTypeFlags)
         throws IOException
     {
         int pos = atPos != -1 ? atPos : ts.tokenBeg, lineno = ts.lineno;
@@ -2915,8 +3034,8 @@ public class Parser
         // bounds in instance vars and createNameNode uses them.
         saveNameTokenData(namePos, nameString, nameLineno);
 
-        if (compilerEnv.isXmlAvailable()) {
-            return propertyName(-1, nameString, 0);
+        if (!inUseStrictDirective && compilerEnv.isXmlAvailable()) {
+            return propertyName(-1, 0);
         } else {
             return createNameNode(true, Token.NAME);
         }
@@ -3174,11 +3293,13 @@ public class Parser
         int pos = ts.tokenBeg, lineno = ts.lineno;
         int afterComma = -1;
         List<ObjectProperty> elems = new ArrayList<ObjectProperty>();
-        Set<String> propertyNames = new HashSet<String>();
+        Map<String, Integer> propertyNames = new HashMap<String, Integer>();
+        final int GET = 0x1, SET = 0x2, VALUE = 0x4 | GET | SET;
 
       commaLoop:
         for (;;) {
             String propertyName = null;
+            int propertyType = VALUE;
             int tt = peekToken();
             String jsdoc = getAndResetJsDoc();
             switch(tt) {
@@ -3201,10 +3322,12 @@ public class Parser
                       consumeToken();
                       name = createNameNode();
                       name.setJsDoc(jsdoc);
+                      boolean isGetter = "get".equals(propertyName);
+                      propertyType = (isGetter ? GET : SET);
                       ObjectProperty objectProp = getterSetterProperty(ppos, name,
-                                                     "get".equals(propertyName));
+                                                     isGetter);
                       elems.add(objectProp);
-                      propertyName = objectProp.getLeft().getString();
+                      propertyName = name.getIdentifier();
                   } else {
                       AstNode pname = stringProp != null ? stringProp : name;
                       pname.setJsDoc(jsdoc);
@@ -3230,8 +3353,9 @@ public class Parser
               default:
                   if (convertToName(tt)) {
                       consumeToken();
-                      AstNode pname = createNameNode();
+                      Name pname = createNameNode();
                       pname.setJsDoc(jsdoc);
+                      propertyName = pname.getIdentifier();
                       elems.add(plainProperty(pname, tt));
                       break;
                   }
@@ -3239,11 +3363,17 @@ public class Parser
                   break;
             }
 
-            if (this.inUseStrictDirective) {
-                if (propertyNames.contains(propertyName)) {
-                    addError("msg.dup.obj.lit.prop.strict", propertyName);
+            Integer oldType = propertyNames.get(propertyName);
+            if (oldType != null) {
+                int old = oldType.intValue();
+                if ((old & propertyType) != 0
+                        && (old != VALUE || propertyType != VALUE
+                            || this.inUseStrictDirective)) {
+                    reportError("msg.dup.obj.lit.prop.strict", propertyName);
                 }
-                propertyNames.add(propertyName);
+                propertyNames.put(propertyName, propertyType | old);
+            } else {
+                propertyNames.put(propertyName, propertyType);
             }
 
             // Eat any dangling jsdoc in the property.
@@ -3296,6 +3426,9 @@ public class Parser
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {
             reportError("msg.bad.prop");
+        }
+        if (fn.getParams().size() != (isGetter ? 0 : 1)) {
+            reportError(isGetter ? "msg.bad.getter.arg" : "msg.bad.setter.arg");
         }
         ObjectProperty pn = new ObjectProperty(pos);
         if (isGetter) {
@@ -3411,6 +3544,9 @@ public class Parser
             reportError(expr.getType() == Token.INC
                         ? "msg.bad.incr"
                         : "msg.bad.decr");
+        if (inUseStrictDirective) {
+            checkStrictAssignment(op);
+        }
     }
 
     private ErrorNode makeErrorNode() {
@@ -3432,12 +3568,14 @@ public class Parser
 
     // Check whether token is a reserved keyword that is allowed as property id.
     private boolean convertToName(int token) {
-        if (compilerEnv.isReservedKeywordAsIdentifier()) {
-            String conv = Token.keywordToName(token);
-            if (conv != null) {
-                saveNameTokenData(ts.tokenBeg, conv, ts.lineno);
-                return true;
-            }
+        if (token == Token.RESERVED) {
+            saveNameTokenData(ts.tokenBeg, ts.getString(), ts.lineno);
+            return true;
+        }
+        String conv = Token.keywordToName(token);
+        if (conv != null) {
+            saveNameTokenData(ts.tokenBeg, conv, ts.lineno);
+            return true;
         }
         return false;
     }
@@ -3783,15 +3921,16 @@ public class Parser
     protected Node simpleAssignment(Node left, Node right) {
         int nodeType = left.getType();
         switch (nodeType) {
-          case Token.NAME:
+          case Token.NAME: {
+              String name = left.getString();
               if (inUseStrictDirective &&
-                  "eval".equals(((Name) left).getIdentifier()))
+                  ("eval".equals(name) || "arguments".equals(name)))
               {
-                  reportError("msg.bad.id.strict",
-                              ((Name) left).getIdentifier());
+                  reportError("msg.bad.id.strict", name);
               }
               left.setType(Token.BINDNAME);
               return new Node(Token.SETNAME, left, right);
+          }
 
           case Token.GETPROP:
           case Token.GETELEM: {
@@ -3813,7 +3952,7 @@ public class Parser
               }
               int type;
               if (nodeType == Token.GETPROP) {
-                  type = Token.SETPROP;
+                  type = inUseStrictDirective ? Token.STRICT_SETPROP : Token.SETPROP;
                   // TODO(stevey) - see https://bugzilla.mozilla.org/show_bug.cgi?id=492036
                   // The new AST code generates NAME tokens for GETPROP ids where the old parser
                   // generated STRING nodes. If we don't set the type to STRING below, this will
@@ -3821,7 +3960,7 @@ public class Parser
                   // "var obj={p:3};[obj.p]=[9];"
                   id.setType(Token.STRING);
               } else {
-                  type = Token.SETELEM;
+                  type = inUseStrictDirective ? Token.STRICT_SETELEM : Token.SETELEM;
               }
               return new Node(type, obj, id, right);
           }

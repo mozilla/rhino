@@ -86,7 +86,7 @@ public class DefineClassTest {
 
         @JSConstructor
         public void jsConstructorMethod() {
-            put("initialized", this, Boolean.TRUE);
+            put("initialized", this, Boolean.TRUE, false);
         }
 
         @JSFunction
@@ -141,7 +141,7 @@ public class DefineClassTest {
         }
 
         public void jsConstructor() {
-            put("initialized", this, Boolean.TRUE);
+            put("initialized", this, Boolean.TRUE, false);
         }
 
         public Object jsFunction_instanceFunction() {

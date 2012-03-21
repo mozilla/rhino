@@ -62,13 +62,13 @@ final class InterpreterData implements Serializable, DebuggableScript
         init();
     }
 
-    InterpreterData(InterpreterData parent)
+    InterpreterData(InterpreterData parent, boolean isStrict)
     {
         this.parentData = parent;
         this.languageVersion = parent.languageVersion;
         this.itsSourceFile = parent.itsSourceFile;
         this.encodedSource = parent.encodedSource;
-
+        this.isStrict = isStrict;
         init();
     }
 

@@ -2872,6 +2872,16 @@ public class ClassFileWriter {
         throw new IllegalStateException(s);
     }
 
+    private int sizeOfParameters(String pString)
+    {
+        int size = paramSizeCache.get(pString, -1);
+        if (size == -1) {
+            size = sizeOfParameters0(pString);
+            paramSizeCache.put(pString, size);
+        }
+        return size;
+    }
+
     /*
         Really weird. Returns an int with # parameters in hi 16 bits, and
         stack difference removal of parameters from stack and pushing the
@@ -2880,7 +2890,7 @@ public class ClassFileWriter {
         If Java really supported references we wouldn't have to be this
         perverted.
     */
-    private static int sizeOfParameters(String pString)
+    private static int sizeOfParameters0(String pString)
     {
         int length = pString.length();
         int rightParenthesis = pString.lastIndexOf(')');
@@ -4297,6 +4307,8 @@ public class ClassFileWriter {
     private ObjArray itsVarDescriptors;
 
     private char[] tmpCharBuffer = new char[64];
+
+    private ObjToIntMap paramSizeCache = new ObjToIntMap(100);
 }
 
 final class ExceptionTableEntry
@@ -4755,16 +4767,18 @@ final class ConstantPool
 
     private static final int MAX_UTF_ENCODING_SIZE = 65535;
 
-    private UintMap itsStringConstHash = new UintMap();
-    private ObjToIntMap itsUtf8Hash = new ObjToIntMap();
-    private ObjToIntMap itsFieldRefHash = new ObjToIntMap();
-    private ObjToIntMap itsMethodRefHash = new ObjToIntMap();
-    private ObjToIntMap itsClassHash = new ObjToIntMap();
+    // TODO: initialize maps with reasonable default size
+    private UintMap itsStringConstHash = new UintMap(100);
+    private ObjToIntMap itsUtf8Hash = new ObjToIntMap(200);
+    private ObjToIntMap itsFieldRefHash = new ObjToIntMap(20);
+    private ObjToIntMap itsMethodRefHash = new ObjToIntMap(100);
+    private ObjToIntMap itsClassHash = new ObjToIntMap(20);
 
     private int itsTop;
     private int itsTopIndex;
-    private UintMap itsConstantData = new UintMap();
-    private UintMap itsPoolTypes = new UintMap();
+    // TODO: initialize maps with reasonable default size
+    private UintMap itsConstantData = new UintMap(100);
+    private UintMap itsPoolTypes = new UintMap(100);
     private byte itsPool[];
 }
 

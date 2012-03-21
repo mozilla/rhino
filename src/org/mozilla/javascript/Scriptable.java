@@ -202,12 +202,13 @@ public interface Scriptable {
      * @param name the name of the property
      * @param start the object whose property is being set
      * @param value value to set the property to
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void put(String name, Scriptable start, Object value);
+    public void put(String name, Scriptable start, Object value, boolean checked);
 
     /**
      * Sets an indexed property in this object.
@@ -221,12 +222,13 @@ public interface Scriptable {
      * @param index the numeric index for the property
      * @param start the object whose property is being set
      * @param value value to set the property to
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#has(int, Scriptable)
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, int, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void put(int index, Scriptable start, Object value);
+    public void put(int index, Scriptable start, Object value, boolean checked);
 
     /**
      * Removes a property from this object.
@@ -245,10 +247,11 @@ public interface Scriptable {
      * To delete properties defined in a prototype chain,
      * see deleteProperty in ScriptableObject.
      * @param name the identifier for the property
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, String)
      */
-    public void delete(String name);
+    public void delete(String name, boolean checked);
 
     /**
      * Removes a property from this object.
@@ -263,10 +266,11 @@ public interface Scriptable {
      * an integral index is used to select the property.
      *
      * @param index the numeric index for the property
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#deleteProperty(Scriptable, int)
      */
-    public void delete(int index);
+    public void delete(int index, boolean checked);
 
     /**
      * Get the prototype of the object.
@@ -330,13 +334,13 @@ public interface Scriptable {
      * return an appropriate value.  See the JS 1.3 language documentation for more
      * detail.
      *
-     * <p>This operator corresponds to the proposed EMCA [[HasInstance]] operator.
+     * <p>This operator corresponds to the EMCA [[HasInstance]] operator.
      *
      * @param instance The value that appeared on the LHS of the instanceof
      *              operator
      *
      * @return an implementation dependent value
      */
-    public boolean hasInstance(Scriptable instance);
+    public boolean hasInstance(Object instance);
 }
 

@@ -76,7 +76,7 @@ public class NativeJavaTopPackage
         super(true, "", loader);
     }
 
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
         return construct(cx, scope, args);
@@ -138,15 +138,15 @@ public class NativeJavaTopPackage
             getClass.sealObject();
         }
         getClass.exportAsScopeProperty();
-        global.defineProperty("Packages", top, ScriptableObject.DONTENUM);
+        global.defineProperty("Packages", top, ScriptableObject.DONTENUM, false);
         for (int i=0; i < topNames.length; i++) {
             global.defineProperty(topNames[i], topPackages[i],
-                                  ScriptableObject.DONTENUM);
+                                  ScriptableObject.DONTENUM, false);
         }
     }
 
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_getClass) {

@@ -58,7 +58,7 @@ Called when execution is ready to start bytecode interpretation for entered a pa
 @param args the array of arguments
 */
     public void onEnter(Context cx, Scriptable activation,
-                        Scriptable thisObj, Object[] args);
+                        Object thisObj, Object[] args);
 /**
 Called when executed code reaches new line in the source.
 @param cx current Context for this thread

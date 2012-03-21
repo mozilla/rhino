@@ -16,8 +16,8 @@ public class RhinoSecurityManager extends SecurityManager {
      *         or null if no script is currently running
      */
     protected Class getCurrentScriptClass() {
-        Class[] context = getClassContext();
-        for (Class c : context) {
+        Class<?>[] context = getClassContext();
+        for (Class<?> c : context) {
             if (c != InterpretedFunction.class && NativeFunction.class.isAssignableFrom(c) ||
                     PolicySecurityController.SecureCaller.class.isAssignableFrom(c)) {
                 return c;

@@ -193,7 +193,7 @@ public abstract class IdScriptableObject extends ScriptableObject
             return value;
         }
 
-        final void set(int id, Scriptable start, Object value)
+        final void set(int id, Scriptable start, Object value, boolean checked)
         {
             if (value == NOT_FOUND) throw new IllegalArgumentException();
             ensureId(id);
@@ -211,12 +211,16 @@ public abstract class IdScriptableObject extends ScriptableObject
                 else {
                     int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
                     String name = (String)valueArray[nameSlot];
-                    start.put(name, start, value);
+                    start.put(name, start, value, checked);
                 }
+            } else if (checked) {
+                int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
+                String name = (String)valueArray[nameSlot];
+                throw ScriptRuntime.typeError1("msg.modify.readonly", name);
             }
         }
 
-        final void delete(int id)
+        final void delete(int id, boolean checked)
         {
             ensureId(id);
             int attr = attributeArray[id - 1];
@@ -226,6 +230,10 @@ public abstract class IdScriptableObject extends ScriptableObject
                     valueArray[valueSlot] = NOT_FOUND;
                     attributeArray[id - 1] = EMPTY;
                 }
+            } else if (checked) {
+                int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
+                String name = (String)valueArray[nameSlot];
+                throw ScriptRuntime.typeError1("msg.delete.permanent", name);
             }
         }
 
@@ -322,14 +330,19 @@ public abstract class IdScriptableObject extends ScriptableObject
         super(scope, prototype);
     }
 
+    protected final boolean defaultHas(String name)
+    {
+        return super.has(name, this);
+    }
+
     protected final Object defaultGet(String name)
     {
         return super.get(name, this);
     }
 
-    protected final void defaultPut(String name, Object value)
+    protected final void defaultPut(String name, Object value, boolean checked)
     {
-        super.put(name, this, value);
+        super.put(name, this, value, checked);
     }
 
     @Override
@@ -379,7 +392,7 @@ public abstract class IdScriptableObject extends ScriptableObject
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value)
+    public void put(String name, Scriptable start, Object value, boolean checked)
     {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
@@ -394,8 +407,10 @@ public abstract class IdScriptableObject extends ScriptableObject
                     setInstanceIdValue(id, value);
                 }
                 else {
-                    start.put(name, start, value);
+                    start.put(name, start, value, checked);
                 }
+            } else if (checked) {
+                throw ScriptRuntime.typeError1("msg.modify.readonly", name);
             }
             return;
         }
@@ -406,15 +421,15 @@ public abstract class IdScriptableObject extends ScriptableObject
                     throw Context.reportRuntimeError1("msg.modify.sealed",
                                                       name);
                 }
-                prototypeValues.set(id, start, value);
+                prototypeValues.set(id, start, value, checked);
                 return;
             }
         }
-        super.put(name, start, value);
+        super.put(name, start, value, checked);
     }
 
     @Override
-    public void delete(String name)
+    public void delete(String name, boolean checked)
     {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
@@ -424,6 +439,8 @@ public abstract class IdScriptableObject extends ScriptableObject
                 if ((attr & PERMANENT) == 0) {
                     int id = (info & 0xFFFF);
                     setInstanceIdValue(id, NOT_FOUND);
+                } else if (checked) {
+                    throw ScriptRuntime.typeError1("msg.delete.permanent", name);
                 }
                 return;
             }
@@ -432,12 +449,12 @@ public abstract class IdScriptableObject extends ScriptableObject
             int id = prototypeValues.findId(name);
             if (id != 0) {
                 if (!isSealed()) {
-                    prototypeValues.delete(id);
+                    prototypeValues.delete(id, checked);
                 }
                 return;
             }
         }
-        super.delete(name);
+        super.delete(name, checked);
     }
 
     @Override
@@ -595,9 +612,19 @@ public abstract class IdScriptableObject extends ScriptableObject
     /** 'thisObj' will be null if invoked as constructor, in which case
      ** instance of Scriptable should be returned. */
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         throw f.unknown();
+    }
+
+    /**
+     * @deprecated {@link #execIdCall(IdFunctionObject, Context, Scriptable, Object, Object[])}
+     */
+    @Deprecated
+    public final Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
+            Scriptable thisObj, Object[] args)
+    {
+        return execIdCall(f, cx, scope, (Object) thisObj, args);
     }
 
     public final IdFunctionObject exportAsJSClass(int maxPrototypeId,
@@ -721,92 +748,100 @@ public abstract class IdScriptableObject extends ScriptableObject
         return f;
     }
 
+    private static class IdPropertyDescriptor extends PropertyDescriptor {
+        final int id;
+        final boolean proto;
+
+        public IdPropertyDescriptor(Object value, int attributes, int id,
+                boolean proto) {
+            super(value, attributes);
+            this.id = id;
+            this.proto = proto;
+        }
+    }
+
     @Override
-    public void defineOwnProperty(Context cx, Object key, ScriptableObject desc) {
-      if (key instanceof String) {
-        String name = (String) key;
-        int info = findInstanceIdInfo(name);
-        if (info != 0) {
-            int id = (info & 0xFFFF);
-            if (isAccessorDescriptor(desc)) {
-              delete(id); // it will be replaced with a slot
+    protected PropertyDescriptor getOwnProperty(String name) {
+        PropertyDescriptor desc = super.getOwnProperty(name);
+        if (desc == null) {
+            int info = findInstanceIdInfo(name);
+            if (info != 0) {
+                int id = (info & 0xFFFF);
+                Object value = getInstanceIdValue(id);
+                int attr = (info >>> 16);
+                desc = new IdPropertyDescriptor(value, attr, id, false);
+            } else if (prototypeValues != null) {
+                int id = prototypeValues.findId(name);
+                if (id != 0) {
+                    Object value = prototypeValues.get(id);
+                    int attr = prototypeValues.getAttributes(id);
+                    desc = new IdPropertyDescriptor(value, attr, id, true);
+                }
+            }
+        }
+        return desc;
+    }
+
+    @Override
+    protected void updateOwnProperty(String name, PropertyDescriptor desc,
+            PropertyDescriptor current) {
+        if (current instanceof IdPropertyDescriptor) {
+            IdPropertyDescriptor iddesc = (IdPropertyDescriptor) current;
+            int id = iddesc.id;
+            int baseAttrs = iddesc.getAttributes();
+            int mask = desc.getAttributeMask();
+            int attributes = (baseAttrs & ~mask)
+                    | (desc.getAttributes() & mask);
+            if (!iddesc.proto) {
+                if (desc.isAccessorDescriptor()) {
+                    delete(id, false); // it will be replaced with a slot
+                } else {
+                    if (desc.hasValue()) {
+                        setInstanceIdValue(id, desc.getValue());
+                    }
+                    if (attributes != baseAttrs) {
+                        setInstanceIdAttributes(id, attributes);
+                    }
+                    return;
+                }
             } else {
-              checkPropertyDefinition(desc);
-              ScriptableObject current = getOwnPropertyDescriptor(cx, key);
-              checkPropertyChange(name, current, desc);
-              int attr = (info >>> 16);
-              Object value = getProperty(desc, "value");
-              if (value != NOT_FOUND && (attr & READONLY) == 0) {
-                Object currentValue = getInstanceIdValue(id);
-                if (!sameValue(value, currentValue)) {
-                  setInstanceIdValue(id, value);
+                if (desc.isAccessorDescriptor()) {
+                    prototypeValues.delete(id, false); // it will be replaced with a slot
+                } else {
+                    if (desc.hasValue()) {
+                        // save to pass 'false' b/c read-only check already passed
+                        prototypeValues.set(id, this, desc.getValue(), false);
+                    }
+                    prototypeValues.setAttributes(id, attributes);
+                    return;
                 }
-              }
-              setAttributes(name, applyDescriptorToAttributeBitset(attr, desc));
-              return;
             }
         }
-        if (prototypeValues != null) {
-            int id = prototypeValues.findId(name);
+        super.updateOwnProperty(name, desc, current);
+    }
+
+    /**
+     * Internal helper method, should only be called on prototype objects
+     * 
+     * @see NativeString#getPrimitiveValue(CharSequence, String, int, Context, Scriptable)
+     * @see NativeBoolean#getPrimitiveValue(Boolean, String, int, Context, Scriptable)
+     * @see NativeString#getPrimitiveValue(CharSequence, String, int, Context, Scriptable)
+     */
+    final Object getSlotOrProtoValue(String name, int index, Object base,
+                                     Context cx, Scriptable scope) {
+        // search slot properties first, cf. get()
+        Object value = getSlotValue(name, index, base, cx, scope);
+        if (value == NOT_FOUND && name != null) {
+            // no slot property found, proceed with prototype properties
+            PrototypeValues pv = prototypeValues;
+            assert pv != null;
+            int id = pv.findId(name);
             if (id != 0) {
-              if (isAccessorDescriptor(desc)) {
-                prototypeValues.delete(id); // it will be replaced with a slot
-              } else {
-                checkPropertyDefinition(desc);
-                ScriptableObject current = getOwnPropertyDescriptor(cx, key);
-                checkPropertyChange(name, current, desc);
-                int attr = prototypeValues.getAttributes(id);
-                Object value = getProperty(desc, "value");
-                if (value != NOT_FOUND && (attr & READONLY) == 0) {
-                  Object currentValue = prototypeValues.get(id);
-                  if (!sameValue(value, currentValue)) {
-                    prototypeValues.set(id, this, value);
-                  }
-                }
-                prototypeValues.setAttributes(id, applyDescriptorToAttributeBitset(attr, desc));
-                return;
-              }
+                // found prototype property (but may be deleted!)
+                value = pv.get(id);
             }
         }
-      }
-      super.defineOwnProperty(cx, key, desc);
-    }
-
-
-    @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-      ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
-      if (desc == null && id instanceof String) {
-        desc = getBuiltInDescriptor((String) id);
-      }
-      return desc;
-    }
-
-    private ScriptableObject getBuiltInDescriptor(String name) {
-      Object value = null;
-      int attr = EMPTY;
-
-      Scriptable scope = getParentScope();
-      if (scope == null) {
-        scope = this;
-      }
-
-      int info = findInstanceIdInfo(name);
-      if (info != 0) {
-        int id = (info & 0xFFFF);
-        value = getInstanceIdValue(id);
-        attr = (info >>> 16);
-        return buildDataDescriptor(scope, value, attr);
-      }
-      if (prototypeValues != null) {
-        int id = prototypeValues.findId(name);
-        if (id != 0) {
-          value = prototypeValues.get(id);
-          attr = prototypeValues.getAttributes(id);
-          return buildDataDescriptor(scope, value, attr);
-        }
-      }
-      return null;
+        return value;
     }
 
     private void readObject(ObjectInputStream stream)

@@ -57,10 +57,12 @@ final class NativeError extends IdScriptableObject
     static void init(Scriptable scope, boolean sealed)
     {
         NativeError obj = new NativeError();
-        ScriptableObject.putProperty(obj, "name", "Error");
-        ScriptableObject.putProperty(obj, "message", "");
-        ScriptableObject.putProperty(obj, "fileName", "");
-        ScriptableObject.putProperty(obj, "lineNumber", Integer.valueOf(0));
+        ScriptableObject.putProperty(obj, "name", "Error", false);
+        ScriptableObject.putProperty(obj, "message", "", false);
+        ScriptableObject.putProperty(obj, "fileName", "", false);
+        ScriptableObject.putProperty(obj, "lineNumber", Integer.valueOf(0), false);
+        obj.setAttributes("name", ScriptableObject.DONTENUM);
+        obj.setAttributes("message", ScriptableObject.DONTENUM);
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
@@ -75,14 +77,16 @@ final class NativeError extends IdScriptableObject
 
         int arglen = args.length;
         if (arglen >= 1) {
-            ScriptableObject.putProperty(obj, "message",
-                    ScriptRuntime.toString(args[0]));
+            if (args[0] != Undefined.instance) {
+                ScriptableObject.putProperty(obj, "message",
+                        ScriptRuntime.toString(args[0]), false);
+            }
             if (arglen >= 2) {
-                ScriptableObject.putProperty(obj, "fileName", args[1]);
+                ScriptableObject.putProperty(obj, "fileName", args[1], false);
                 if (arglen >= 3) {
                     int line = ScriptRuntime.toInt32(args[2]);
                     ScriptableObject.putProperty(obj, "lineNumber",
-                            Integer.valueOf(line));
+                            Integer.valueOf(line), false);
                 }
             }
         }
@@ -99,7 +103,7 @@ final class NativeError extends IdScriptableObject
     public String toString()
     {
         // According to spec, Error.prototype.toString() may return undefined.
-        Object toString =  js_toString(this);
+        Object toString = js_toString(this);
         return toString instanceof String ? (String) toString : super.toString();
     }
 
@@ -119,7 +123,7 @@ final class NativeError extends IdScriptableObject
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(ERROR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -130,7 +134,7 @@ final class NativeError extends IdScriptableObject
             return make(cx, scope, f, args);
 
           case Id_toString:
-            return js_toString(thisObj);
+            return js_toString(cx, scope, thisObj);
 
           case Id_toSource:
             return js_toSource(cx, scope, thisObj);
@@ -168,9 +172,15 @@ final class NativeError extends IdScriptableObject
     public void setStack(Object value) {
         if (stackProvider != null) {
             stackProvider = null;
-            delete("stack");
+            delete("stack", false);
         }
-        put("stack", this, value);
+        put("stack", this, value, false);
+    }
+
+    private static Object js_toString(Context cx, Scriptable scope,
+                                      Object thisObject) {
+        Scriptable thisObj = ScriptRuntime.toObject(cx, scope, thisObject);
+        return js_toString(thisObj);
     }
 
     private static Object js_toString(Scriptable thisObj) {
@@ -181,19 +191,25 @@ final class NativeError extends IdScriptableObject
             name = ScriptRuntime.toString(name);
         }
         Object msg = ScriptableObject.getProperty(thisObj, "message");
-        final Object result;
         if (msg == NOT_FOUND || msg == Undefined.instance) {
-            result = Undefined.instance;
+            msg = "";
         } else {
-            result = ((String) name) + ": " + ScriptRuntime.toString(msg);
+            msg = ScriptRuntime.toString(msg); 
         }
-        return result;
+        if (name.toString().length() == 0) {
+            return msg;
+        } else if (msg.toString().length() == 0) {
+            return name;
+        } else {
+            return ((String) name) + ": " + ScriptRuntime.toString(msg);
+        }
     }
 
     private static String js_toSource(Context cx, Scriptable scope,
-                                      Scriptable thisObj)
+                                      Object thisObject)
     {
         // Emulation of SpiderMonkey behavior
+        Scriptable thisObj = ScriptRuntime.toObject(cx, scope, thisObject);
         Object name = ScriptableObject.getProperty(thisObj, "name");
         Object message = ScriptableObject.getProperty(thisObj, "message");
         Object fileName = ScriptableObject.getProperty(thisObj, "fileName");

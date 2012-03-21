@@ -12,8 +12,8 @@ public class ObjectGetOwnPropertyNamesTest {
   @Test
   public void testShouldReturnAllPropertiesOfArg() {
     NativeObject object = new NativeObject();
-    object.defineProperty("a", "1", ScriptableObject.EMPTY);
-    object.defineProperty("b", "2", ScriptableObject.DONTENUM);
+    object.defineProperty("a", "1", ScriptableObject.EMPTY, false);
+    object.defineProperty("b", "2", ScriptableObject.DONTENUM, false);
 
     Object result = eval("Object.getOwnPropertyNames(obj)", "obj", object);
 

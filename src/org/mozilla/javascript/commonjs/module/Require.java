@@ -166,10 +166,11 @@ public class Require extends BaseFunction
      * @param scope the scope where the require() function is to be installed.
      */
     public void install(Scriptable scope) {
-        ScriptableObject.putProperty(scope, "require", this);
+        ScriptableObject.putProperty(scope, "require", this, false);
     }
 
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    @Override
+    public Object call(Context cx, Scriptable scope, Object thisObj,
             Object[] args)
     {
         if(args == null || args.length < 1) {
@@ -213,6 +214,7 @@ public class Require extends BaseFunction
         return getExportedModuleInterface(cx, id, uri, false);
     }
 
+    @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
         throw ScriptRuntime.throwError(cx, scope,
                 "require() can not be invoked as a constructor");
@@ -324,9 +326,9 @@ public class Require extends BaseFunction
         // This means we're currently using the "MGN" approach (ModuleScript
         // with Global Natives) as specified here:
         // <http://wiki.commonjs.org/wiki/Modules/ProposalForNativeExtension>
-        executionScope.put("exports", executionScope, exports);
-        executionScope.put("module", executionScope, moduleObject);
-        moduleObject.put("exports", moduleObject, exports);
+        executionScope.put("exports", executionScope, exports, false);
+        executionScope.put("module", executionScope, moduleObject, false);
+        moduleObject.put("exports", moduleObject, exports, false);
         install(executionScope);
         if(isMain) {
             defineReadOnlyProperty(this, "main", moduleObject);
@@ -348,7 +350,7 @@ public class Require extends BaseFunction
 
     private static void defineReadOnlyProperty(ScriptableObject obj,
             String name, Object value) {
-        ScriptableObject.putProperty(obj, name, value);
+        ScriptableObject.putProperty(obj, name, value, false);
         obj.setAttributes(name, ScriptableObject.READONLY |
                 ScriptableObject.PERMANENT);
     }

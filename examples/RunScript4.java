@@ -61,7 +61,7 @@ public class RunScript4 {
             //    myCounter = new Counter(7);
             Object[] arg = { new Integer(7) };
             Scriptable myCounter = cx.newObject(scope, "Counter", arg);
-            scope.put("myCounter", scope, myCounter);
+            scope.put("myCounter", scope, myCounter, false);
 
             String s = "";
             for (int i=0; i < args.length; i++) {

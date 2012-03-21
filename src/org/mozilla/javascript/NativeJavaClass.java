@@ -137,7 +137,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, Scriptable start, Object value, boolean checked) {
         members.put(this, name, javaObject, value, true);
     }
 
@@ -161,7 +161,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         return this;
     }
 
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
         // If it looks like a "cast" of an object to this class type,
@@ -315,7 +315,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
      * static methods exposed by a JavaNativeClass.
      */
     @Override
-    public boolean hasInstance(Scriptable value) {
+    public boolean hasInstance(Object value) {
 
         if (value instanceof Wrapper &&
             !(value instanceof NativeJavaClass)) {

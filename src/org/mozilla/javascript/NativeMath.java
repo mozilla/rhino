@@ -59,7 +59,7 @@ final class NativeMath extends IdScriptableObject
         obj.setParentScope(scope);
         if (sealed) { obj.sealObject(); }
         ScriptableObject.defineProperty(scope, "Math", obj,
-                                        ScriptableObject.DONTENUM);
+                                        ScriptableObject.DONTENUM, false);
     }
 
     private NativeMath()
@@ -119,7 +119,7 @@ final class NativeMath extends IdScriptableObject
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(MATH_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);

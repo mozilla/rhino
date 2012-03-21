@@ -61,7 +61,7 @@ class XMLCtor extends IdFunctionObject
             int id = super.getMaxInstanceId() + i;
             String name = getInstanceIdName(id);
             Object value = getInstanceIdValue(id);
-            ScriptableObject.putProperty(target, name, value);
+            ScriptableObject.putProperty(target, name, value, false);
         }
     }
 
@@ -106,11 +106,13 @@ class XMLCtor extends IdFunctionObject
 
         MAX_INSTANCE_ID                 = 5;
 
+    @Override
     protected int getMaxInstanceId()
     {
         return super.getMaxInstanceId() + MAX_INSTANCE_ID;
     }
 
+    @Override
     protected int findInstanceIdInfo(String s) {
         int id;
 // #generated# Last update: 2004-07-19 13:03:52 CEST
@@ -146,6 +148,7 @@ class XMLCtor extends IdFunctionObject
 
 // #/string_id_map#
 
+    @Override
     protected String getInstanceIdName(int id)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -158,6 +161,7 @@ class XMLCtor extends IdFunctionObject
         return super.getInstanceIdName(id);
     }
 
+    @Override
     protected Object getInstanceIdValue(int id)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -175,6 +179,7 @@ class XMLCtor extends IdFunctionObject
         return super.getInstanceIdValue(id);
     }
 
+    @Override
     protected void setInstanceIdValue(int id, Object value)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -204,6 +209,7 @@ class XMLCtor extends IdFunctionObject
         Id_setSettings                  = 3,
         MAX_FUNCTION_ID                 = 3;
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;
@@ -220,6 +226,7 @@ class XMLCtor extends IdFunctionObject
     }
 // #/string_id_map#
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -233,8 +240,9 @@ class XMLCtor extends IdFunctionObject
         initPrototypeMethod(XMLCTOR_TAG, id, s, arity);
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(XMLCTOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);

@@ -568,6 +568,8 @@ class Block
                 break;
             case Token.SETPROP :
             case Token.SETPROP_OP :
+            case Token.STRICT_SETPROP :
+            case Token.STRICT_SETPROP_OP :
                 if (child.getType() == Token.GETVAR) {
                     int i = fn.getVarIndex(child);
                     assignType(varTypes, i, Optimizer.AnyType);

@@ -137,6 +137,7 @@ class DiyFp implements Cloneable {
     void setF(long new_value) { f = new_value; }
     void setE(int new_value) { e = new_value; }
 
+    @Override
     public DiyFp clone() {
         try {
             return (DiyFp) super.clone();

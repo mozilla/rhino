@@ -49,12 +49,12 @@ public class BoundFunction extends BaseFunction {
   static final long serialVersionUID = 2118137342826470729L;
     
   private final Callable targetFunction;
-  private final Scriptable boundThis;
+  private final Object boundThis;
   private final Object[] boundArgs;
   private final int length;
 
-  public BoundFunction(Context cx, Scriptable scope, Callable targetFunction, Scriptable boundThis,
-                       Object[] boundArgs)
+  public BoundFunction(Context cx, Scriptable scope, Callable targetFunction,
+                       Object boundThis, Object[] boundArgs)
   {
     this.targetFunction = targetFunction;
     this.boundThis = boundThis;
@@ -67,23 +67,67 @@ public class BoundFunction extends BaseFunction {
 
     ScriptRuntime.setFunctionProtoAndParent(this, scope);
 
-    Function thrower = ScriptRuntime.typeErrorThrower();
-    NativeObject throwing = new NativeObject();
-    throwing.put("get", throwing, thrower);
-    throwing.put("set", throwing, thrower);
-    throwing.put("enumerable", throwing, false);
-    throwing.put("configurable", throwing, false);
-    throwing.preventExtensions();
-
-    this.defineOwnProperty(cx, "caller", throwing, false);
-    this.defineOwnProperty(cx, "arguments", throwing, false);
+    Function thrower = ScriptRuntime.typeErrorThrower(cx);
+    PropertyDescriptor desc = new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
+    defineOwnProperty("caller", desc, false);
+    // TODO: this doesn't work properly see BaseFunction+IdScriptableObject,
+    // just place the required checks in the overridden methods below
+    // defineOwnProperty("arguments", desc, false);
   }
 
   @Override
-  public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] extraArgs)
+  public boolean has(String name, Scriptable start) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      return true;
+    }
+    return super.has(name, start);
+  }
+
+  @Override
+  public Object get(String name, Scriptable start) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      throw ScriptRuntime.typeError0("msg.op.not.allowed");
+    }
+    return super.get(name, start);
+  }
+
+  @Override
+  public void put(String name, Scriptable start, Object value, boolean checked) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      throw ScriptRuntime.typeError0("msg.op.not.allowed");
+    }
+    super.put(name, start, value, checked);
+  }
+
+  @Override
+  public void delete(String name, boolean checked) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      if (checked) {
+        throw ScriptRuntime.typeError1("msg.delete.permanent", name);
+      }
+      return;
+    }
+    super.delete(name, checked);
+  }
+
+  @Override
+  protected PropertyDescriptor getOwnProperty(String name) {
+    // see comment in constructor
+    if ("arguments".equals(name)) {
+      Function thrower = ScriptRuntime.typeErrorThrower();
+      return new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
+    }
+    return super.getOwnProperty(name);
+  }
+
+  @Override
+  public Object call(Context cx, Scriptable scope, Object thisObj, Object[] extraArgs)
   {
-    Scriptable callThis = boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
-    return targetFunction.call(cx, scope, callThis, concat(boundArgs, extraArgs));
+    return targetFunction.call(cx, scope, boundThis, concat(boundArgs, extraArgs));
   }
 
   @Override
@@ -95,7 +139,7 @@ public class BoundFunction extends BaseFunction {
   }
 
   @Override
-  public boolean hasInstance(Scriptable instance) {
+  public boolean hasInstance(Object instance) {
     if (targetFunction instanceof Function) {
       return ((Function) targetFunction).hasInstance(instance);
     }

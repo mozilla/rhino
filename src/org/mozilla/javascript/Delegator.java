@@ -143,28 +143,28 @@ public class Delegator implements Function {
         return obj.has(index,start);
         }
     /**
-     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
+     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object, boolean)
      */
-    public void put(String name, Scriptable start, Object value) {
-        obj.put(name,start,value);
+    public void put(String name, Scriptable start, Object value, boolean checked) {
+        obj.put(name,start,value,checked);
     }
     /**
-     * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object)
+     * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object, boolean)
      */
-    public void put(int index, Scriptable start, Object value) {
-        obj.put(index,start,value);
+    public void put(int index, Scriptable start, Object value, boolean checked) {
+        obj.put(index,start,value,checked);
     }
     /**
      * @see org.mozilla.javascript.Scriptable#delete(String)
      */
-    public void delete(String name) {
-        obj.delete(name);
+    public void delete(String name, boolean checked) {
+        obj.delete(name,checked);
     }
     /**
      * @see org.mozilla.javascript.Scriptable#delete(int)
      */
-    public void delete(int index) {
-        obj.delete(index);
+    public void delete(int index, boolean checked) {
+        obj.delete(index,checked);
     }
     /**
      * @see org.mozilla.javascript.Scriptable#getPrototype
@@ -217,13 +217,13 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#hasInstance
      */
-    public boolean hasInstance(Scriptable instance) {
+    public boolean hasInstance(Object instance) {
         return obj.hasInstance(instance);
     }
     /**
      * @see org.mozilla.javascript.Function#call
      */
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
         return ((Function)obj).call(cx,scope,thisObj,args);

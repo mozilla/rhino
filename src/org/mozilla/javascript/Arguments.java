@@ -53,9 +53,10 @@ final class Arguments extends IdScriptableObject
 
     private static final String FTAG = "Arguments";
 
-    public Arguments(NativeCall activation)
+    public Arguments(NativeCall activation, boolean strict)
     {
         this.activation = activation;
+        this.strict = strict;
 
         Scriptable parent = activation.getParentScope();
         setParentScope(parent);
@@ -66,9 +67,6 @@ final class Arguments extends IdScriptableObject
 
         NativeFunction f = activation.function;
         calleeObj = f;
-
-        Scriptable topLevel = getTopLevelScope(parent);
-        constructor = getProperty(topLevel, "Object");
 
         int version = f.getLanguageVersion();
         if (version <= Context.VERSION_1_3
@@ -95,7 +93,8 @@ final class Arguments extends IdScriptableObject
 
     private void putIntoActivation(int index, Object value) {
         String argName = activation.function.getParamOrVarName(index);
-        activation.put(argName, activation, value);
+        // checked = false because we're never in strict-mode for this call
+        activation.put(argName, activation, value, false);
     }
 
     private Object getFromActivation(int index) {
@@ -129,6 +128,39 @@ final class Arguments extends IdScriptableObject
     // end helpers
 
     @Override
+    public boolean has(String name, Scriptable start) {
+        if (strict) {
+            // must place check here instead of getInstanceIdValue()
+            if ("callee".equals(name) || "caller".equals(name)) {
+                return true;
+            }
+        }
+        return super.has(name, start);
+    }
+
+    @Override
+    public Object get(String name, Scriptable start) {
+        if (strict) {
+            // must place check here instead of getInstanceIdValue()
+            if ("callee".equals(name) || "caller".equals(name)) {
+                throw ScriptRuntime.typeError0("msg.op.not.allowed");
+            }
+        }
+        return super.get(name, start);
+    }
+
+    @Override
+    public void put(String name, Scriptable start, Object value, boolean checked) {
+        if (strict) {
+            // must place check here instead of setInstanceIdValue()
+            if ("callee".equals(name) || "caller".equals(name)) {
+                throw ScriptRuntime.typeError0("msg.op.not.allowed");
+            }
+        }
+        super.put(name, start, value, checked);
+    }
+
+    @Override
     public boolean has(int index, Scriptable start)
     {
         if (arg(index) != NOT_FOUND) {
@@ -154,6 +186,10 @@ final class Arguments extends IdScriptableObject
 
     private boolean sharedWithActivation(int index)
     {
+        if (strict) {
+            // arguments are not shared with activation in strict mode
+            return false;
+        }
         NativeFunction f = activation.function;
         int definedCount = f.getParamCount();
         if (index < definedCount) {
@@ -173,22 +209,22 @@ final class Arguments extends IdScriptableObject
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value)
+    public void put(int index, Scriptable start, Object value, boolean checked)
     {
         if (arg(index) == NOT_FOUND) {
-          super.put(index, start, value);
+          super.put(index, start, value, checked);
         } else {
           replaceArg(index, value);
         }
     }
 
     @Override
-    public void delete(int index)
+    public void delete(int index, boolean checked)
     {
         if (0 <= index && index < args.length) {
           removeArg(index);
         }
-        super.delete(index);
+        super.delete(index, checked);
     }
 
 // #string_id_map#
@@ -197,9 +233,8 @@ final class Arguments extends IdScriptableObject
         Id_callee           = 1,
         Id_length           = 2,
         Id_caller           = 3,
-        Id_constructor      = 4,
 
-        MAX_INSTANCE_ID     = Id_constructor;
+        MAX_INSTANCE_ID     = Id_caller;
 
     @Override
     protected int getMaxInstanceId()
@@ -220,7 +255,6 @@ final class Arguments extends IdScriptableObject
                 else if (c=='h') { X="length";id=Id_length; }
                 else if (c=='r') { X="caller";id=Id_caller; }
             }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
         }
@@ -231,10 +265,13 @@ final class Arguments extends IdScriptableObject
         int attr;
         switch (id) {
           case Id_callee:
+            attr = calleeAttr;
+            break;
           case Id_caller:
+            attr = callerAttr;
+            break;
           case Id_length:
-          case Id_constructor:
-            attr = DONTENUM;
+            attr = lengthAttr;
             break;
           default: throw new IllegalStateException();
         }
@@ -250,7 +287,6 @@ final class Arguments extends IdScriptableObject
             case Id_callee: return "callee";
             case Id_length: return "length";
             case Id_caller: return "caller";
-            case Id_constructor: return "constructor";
         }
         return null;
     }
@@ -272,8 +308,6 @@ final class Arguments extends IdScriptableObject
                 }
                 return value;
             }
-            case Id_constructor:
-                return constructor;
         }
         return super.getInstanceIdValue(id);
     }
@@ -287,9 +321,18 @@ final class Arguments extends IdScriptableObject
             case Id_caller:
                 callerObj = (value != null) ? value : UniqueTag.NULL_VALUE;
                 return;
-            case Id_constructor: constructor = value; return;
         }
         super.setInstanceIdValue(id, value);
+    }
+
+    @Override
+    protected void setInstanceIdAttributes(int id, int attr) {
+        switch (id) {
+            case Id_callee: calleeAttr = attr; return;
+            case Id_length: lengthAttr = attr; return;
+            case Id_caller: callerAttr = attr; return;
+        }
+        super.setInstanceIdAttributes(id, attr);
     }
 
     @Override
@@ -337,56 +380,59 @@ final class Arguments extends IdScriptableObject
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-      double d = ScriptRuntime.toNumber(id);
-      int index = (int) d;
-      if (d != index) {
-        return super.getOwnPropertyDescriptor(cx, id);
-      }
-      Object value = arg(index);
-      if (value == NOT_FOUND) {
-        return super.getOwnPropertyDescriptor(cx, id);
-      }
-      if (sharedWithActivation(index)) {
-        value = getFromActivation(index);
-      }
-      if (super.has(index, this)) { // the descriptor has been redefined
-        ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
-        desc.put("value", desc, value);
-        return desc;
-      } else {
-        Scriptable scope = getParentScope();
-        if (scope == null) scope = this;
-        return buildDataDescriptor(scope, value, EMPTY);
-      }
+    protected boolean defineOwnProperty(String name, PropertyDescriptor desc,
+            boolean checked) {
+        double d = ScriptRuntime.toNumber(name);
+        int index = (int) d;
+        boolean isMapped = (d == index && arg(index) != NOT_FOUND);
+
+        boolean allowed = super.defineOwnProperty(name, desc, checked);
+        if (!allowed) {
+            return false;
+        }
+
+        if (isMapped) {
+            if (desc.isAccessorDescriptor()) {
+                removeArg(index);
+            } else {
+                if (desc.hasValue()) {
+                    replaceArg(index, desc.getValue());
+                }
+                if (desc.hasWritable() && !desc.isWritable()) {
+                    removeArg(index);
+                }
+            }
+        }
+        return true;
     }
 
     @Override
-    protected void defineOwnProperty(Context cx, Object id,
-                                     ScriptableObject desc,
-                                     boolean checkValid) {
-      super.defineOwnProperty(cx, id, desc, checkValid);
-
-      double d = ScriptRuntime.toNumber(id);
-      int index = (int) d;
-      if (d != index) return;
-
-      Object value = arg(index);
-      if (value == NOT_FOUND) return;
-
-      if (isAccessorDescriptor(desc)) {
-        removeArg(index);
-        return;
-      }
-
-      Object newValue = getProperty(desc, "value");
-      if (newValue == NOT_FOUND) return;
-
-      replaceArg(index, newValue);
-
-      if (isFalse(getProperty(desc, "writable"))) {
-        removeArg(index);
-      }
+    protected PropertyDescriptor getOwnProperty(String name) {
+        if (strict) {
+            if ("callee".equals(name) || "caller".equals(name)) {
+                Function thrower = ScriptRuntime.typeErrorThrower();
+                return new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
+            }
+        }
+        PropertyDescriptor desc = super.getOwnProperty(name);
+        double d = ScriptRuntime.toNumber(name);
+        int index = (int) d;
+        if (d != index) {
+            return desc;
+        }
+        Object value = arg(index);
+        if (value == NOT_FOUND) {
+            return desc;
+        }
+        if (sharedWithActivation(index)) {
+            value = getFromActivation(index);
+        }
+        if (desc != null) { // the descriptor has been redefined
+            desc.setValue(value);
+        } else {
+            desc = new PropertyDescriptor(value, EMPTY);
+        }
+        return desc;
     }
 
 // Fields to hold caller, callee and length properties,
@@ -397,9 +443,13 @@ final class Arguments extends IdScriptableObject
     private Object callerObj;
     private Object calleeObj;
     private Object lengthObj;
-    private Object constructor;
 
-    private NativeCall activation;
+    private int callerAttr = DONTENUM;
+    private int calleeAttr = DONTENUM;
+    private int lengthAttr = DONTENUM;
+
+    private final NativeCall activation;
+    private final boolean strict;
 
 // Initially args holds activation.getOriginalArgs(), but any modification
 // of its elements triggers creation of a copy. If its element holds NOT_FOUND,

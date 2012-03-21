@@ -209,7 +209,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
         Object parent = Undefined.instance;
         // Convert text into XML if needed.
         XMLObject xmlValue;
@@ -331,7 +331,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     @Override
-    public void delete(int index) {
+    public void delete(int index, boolean checked) {
         if (index >= 0 && index < length()) {
             XML xml = getXmlFromAnnotation(index);
 
@@ -744,7 +744,7 @@ class XMLList extends XMLObjectImpl implements Function {
 
     private Object applyOrCall(boolean isApply,
         Context cx, Scriptable scope,
-        Scriptable thisObj, Object[] args) {
+        Object thisObj, Object[] args) {
         String methodName = isApply ? "apply" : "call";
         if(!(thisObj instanceof XMLList) ||
             ((XMLList)thisObj).targetProperty == null)
@@ -781,7 +781,7 @@ class XMLList extends XMLObjectImpl implements Function {
         return null;
     }
 
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
         Object[] args) {
         // This XMLList is being called as a Function.
         // Let's find the real Function object.
@@ -798,7 +798,7 @@ class XMLList extends XMLObjectImpl implements Function {
             throw ScriptRuntime.typeError1("msg.incompat.call", methodName);
         }
         Object func = null;
-        Scriptable sobj = thisObj;
+        Scriptable sobj = (XMLObject) thisObj;
 
         while (sobj instanceof XMLObject) {
             XMLObject xmlObject = (XMLObject) sobj;

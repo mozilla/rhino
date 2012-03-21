@@ -25,7 +25,7 @@ true
 js> desc.configurable
 true
 
-js> var desc = Object.getOwnPropertyDescriptor({ get p() {}, set p() {} }, 'p');
+js> var desc = Object.getOwnPropertyDescriptor({ get p() {}, set p(x) {} }, 'p');
 js> desc.value === undefined;
 true
 js> desc.writable === undefined;
@@ -33,7 +33,7 @@ true
 js> desc.get.toSource()
 (function () {})
 js> desc.set.toSource()
-(function () {})
+(function (x) {})
 js> desc.enumerable
 true
 js> desc.configurable
@@ -41,8 +41,6 @@ true
 
 js> desc.__proto__ === Object.prototype
 true
-js> desc.__parent__;
-[object global]
 
 js> var func = function(){}
 js> func.a = 1; Object.getOwnPropertyDescriptor(func, 'a').toSource()

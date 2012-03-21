@@ -56,7 +56,7 @@ public final class NativeIterator extends IdScriptableObject {
         obj.setParentScope(scope);
         if (sealed) { obj.sealObject(); }
         ScriptableObject.defineProperty(scope, STOP_ITERATION, obj,
-                                        ScriptableObject.DONTENUM);
+                                        ScriptableObject.DONTENUM, false);
         // Use "associateValue" so that generators can continue to
         // throw StopIteration even if the property of the global
         // scope is replaced or deleted.
@@ -101,7 +101,7 @@ public final class NativeIterator extends IdScriptableObject {
          * doesn't have a constructor.
          */
         @Override
-        public boolean hasInstance(Scriptable instance) {
+        public boolean hasInstance(Object instance) {
             return instance instanceof StopIteration;
         }
     }
@@ -126,7 +126,7 @@ public final class NativeIterator extends IdScriptableObject {
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(ITERATOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -158,7 +158,7 @@ public final class NativeIterator extends IdScriptableObject {
 
     /* The JavaScript constructor */
     private static Object jsConstructor(Context cx, Scriptable scope,
-                                        Scriptable thisObj, Object[] args)
+                                        Object thisObj, Object[] args)
     {
         if (args.length == 0 || args[0] == null ||
             args[0] == Undefined.instance)

@@ -41,7 +41,13 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.TopLevel.getBuiltinPrototype;
+import static org.mozilla.javascript.TopLevel.Builtins;
+
 import java.text.Collator;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * This class implements the String native object.
@@ -191,7 +197,7 @@ final class NativeString extends IdScriptableObject
           case Id_equalsIgnoreCase:  arity=1; s="equalsIgnoreCase";  break;
           case Id_match:             arity=1; s="match";             break;
           case Id_search:            arity=1; s="search";            break;
-          case Id_replace:           arity=1; s="replace";           break;
+          case Id_replace:           arity=2; s="replace";           break;
           case Id_localeCompare:     arity=1; s="localeCompare";     break;
           case Id_toLocaleLowerCase: arity=0; s="toLocaleLowerCase"; break;
           case Id_toLocaleUpperCase: arity=0; s="toLocaleUpperCase"; break;
@@ -203,7 +209,7 @@ final class NativeString extends IdScriptableObject
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(STRING_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -269,17 +275,18 @@ final class NativeString extends IdScriptableObject
               case Id_toString:
               case Id_valueOf:
                 // ECMA 15.5.4.2: 'the toString function is not generic.
-                CharSequence cs = realThis(thisObj, f).string;
+                CharSequence cs = realThis(thisObj, f);
                 return cs instanceof String ? cs : cs.toString();
 
               case Id_toSource: {
-                CharSequence s = realThis(thisObj, f).string;
+                CharSequence s = realThis(thisObj, f);
                 return "(new String(\""+ScriptRuntime.escapeString(s.toString())+"\"))";
               }
 
               case Id_charAt:
               case Id_charCodeAt: {
                  // See ECMA 15.5.4.[4,5]
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 CharSequence target = ScriptRuntime.toCharSequence(thisObj);
                 double pos = ScriptRuntime.toInteger(args, 0);
                 if (pos < 0 || pos >= target.length()) {
@@ -292,38 +299,47 @@ final class NativeString extends IdScriptableObject
               }
 
               case Id_indexOf:
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return ScriptRuntime.wrapInt(js_indexOf(
                     ScriptRuntime.toString(thisObj), args));
 
               case Id_lastIndexOf:
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return ScriptRuntime.wrapInt(js_lastIndexOf(
                     ScriptRuntime.toString(thisObj), args));
 
               case Id_split:
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return ScriptRuntime.checkRegExpProxy(cx).
                   js_split(cx, scope, ScriptRuntime.toString(thisObj),
                         args);
 
               case Id_substring:
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return js_substring(cx, ScriptRuntime.toCharSequence(thisObj), args);
 
               case Id_toLowerCase:
                 // See ECMA 15.5.4.11
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return ScriptRuntime.toString(thisObj).toLowerCase(
                          ScriptRuntime.ROOT_LOCALE);
 
               case Id_toUpperCase:
                 // See ECMA 15.5.4.12
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return ScriptRuntime.toString(thisObj).toUpperCase(
                          ScriptRuntime.ROOT_LOCALE);
 
               case Id_substr:
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return js_substr(ScriptRuntime.toCharSequence(thisObj), args);
 
               case Id_concat:
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return js_concat(ScriptRuntime.toString(thisObj), args);
 
               case Id_slice:
+                ScriptRuntime.checkObjectCoercible(thisObj);
                 return js_slice(ScriptRuntime.toCharSequence(thisObj), args);
 
               case Id_bold:
@@ -386,8 +402,9 @@ final class NativeString extends IdScriptableObject
                     } else {
                         actionType = RegExpProxy.RA_REPLACE;
                     }
+                    Scriptable thisObject = ScriptRuntime.toObject(cx, scope, thisObj);
                     return ScriptRuntime.checkRegExpProxy(cx).
-                        action(cx, scope, thisObj, args, actionType);
+                        action(cx, scope, thisObject, args, actionType);
                 }
                 // ECMA-262 1 5.5.4.9
               case Id_localeCompare:
@@ -396,6 +413,7 @@ final class NativeString extends IdScriptableObject
                     // actually imagine that this'd be slower than caching them
                     // a la ClassCache, so we aren't trying to outsmart ourselves
                     // with a caching mechanism for now.
+                    ScriptRuntime.checkObjectCoercible(thisObj);
                     Collator collator = Collator.getInstance(cx.getLocale());
                     collator.setStrength(Collator.IDENTICAL);
                     collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
@@ -405,16 +423,19 @@ final class NativeString extends IdScriptableObject
                 }
               case Id_toLocaleLowerCase:
                 {
+                    ScriptRuntime.checkObjectCoercible(thisObj);
                     return ScriptRuntime.toString(thisObj)
                             .toLowerCase(cx.getLocale());
                 }
               case Id_toLocaleUpperCase:
                 {
+                    ScriptRuntime.checkObjectCoercible(thisObj);
                     return ScriptRuntime.toString(thisObj)
                             .toUpperCase(cx.getLocale());
                 }
               case Id_trim:
                 {
+                    ScriptRuntime.checkObjectCoercible(thisObj);
                     String str = ScriptRuntime.toString(thisObj);
                     char[] chars = str.toCharArray();
 
@@ -434,11 +455,14 @@ final class NativeString extends IdScriptableObject
         }
     }
 
-    private static NativeString realThis(Scriptable thisObj, IdFunctionObject f)
+    private static CharSequence realThis(Object thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeString))
-            throw incompatibleCallError(f);
-        return (NativeString)thisObj;
+        if (thisObj instanceof CharSequence) {
+            return (CharSequence)thisObj;
+        } else if (thisObj instanceof NativeString) {
+            return ((NativeString)thisObj).string;
+        }
+        throw incompatibleCallError(f);
     }
 
     /*
@@ -447,6 +471,7 @@ final class NativeString extends IdScriptableObject
     private static String tagify(Object thisObj, String tag,
                                  String attribute, Object[] args)
     {
+        ScriptRuntime.checkObjectCoercible(thisObj);
         String str = ScriptRuntime.toString(thisObj);
         StringBuffer result = new StringBuffer();
         result.append('<');
@@ -476,7 +501,6 @@ final class NativeString extends IdScriptableObject
     }
 
     /* Make array-style property lookup work for strings.
-     * XXX is this ECMA?  A version check is probably needed. In js too.
      */
     @Override
     public Object get(int index, Scriptable start) {
@@ -487,11 +511,96 @@ final class NativeString extends IdScriptableObject
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
         if (0 <= index && index < string.length()) {
             return;
         }
-        super.put(index, start, value);
+        super.put(index, start, value, checked);
+    }
+
+    @Override
+    public boolean has(int index, Scriptable start) {
+        if (0 <= index && index < string.length()) {
+            return true;
+        }
+        return super.has(index, start);
+    }
+
+    @Override
+    public void delete(int index, boolean checked) {
+        if (0 <= index && index < string.length()) {
+            if (checked) {
+                throw ScriptRuntime.typeError1("msg.delete.permanent",
+                                               ScriptRuntime.toString(index));
+            }
+            return;
+        }
+        super.delete(index, checked);
+    }
+
+    @Override
+    public int getAttributes(int index) {
+        if (0 <= index && index < string.length()) {
+            return READONLY & PERMANENT;
+        }
+        return super.getAttributes(index);
+    }
+
+    @Override
+    public Object[] getIds() {
+        Object[] superIds = super.getIds();
+        int length = string.length();
+        if (length == 0) {
+            return superIds;
+        }
+        int superLength = superIds.length;
+        Object[] ids = new Object[length + superLength];
+        for (int i = 0; i < length; ++i) {
+            ids[i] = Integer.valueOf(i);
+        }
+        System.arraycopy(superIds, 0, ids, length, superLength);
+        return ids;
+    }
+
+    @Override
+    public Object[] getAllIds() {
+        Set<Object> allIds = new LinkedHashSet<Object>(Arrays.asList(this
+                .getIds()));
+        allIds.addAll(Arrays.asList(super.getAllIds()));
+        return allIds.toArray();
+    }
+
+    private static int toStringIndex(Object id) {
+        String name = ScriptRuntime.toString(id);
+        double index = ScriptRuntime.toInteger(id);
+        if ((int) index != index) {
+            return -1;
+        }
+        if (! name.equals(ScriptRuntime.toString(Math.abs(index)))) {
+            return -1;
+        }
+        return (int) index;
+    }
+
+    @Override
+    protected PropertyDescriptor getOwnProperty(String name) {
+        int index = toStringIndex(name);
+        if (0 <= index && index < string.length()) {
+            String value = String.valueOf(string.charAt(index));
+            return new PropertyDescriptor(value, READONLY | PERMANENT);
+        }
+        return super.getOwnProperty(name);
+    }
+
+    @Override
+    protected void updateOwnProperty(String name, PropertyDescriptor desc,
+            PropertyDescriptor current) {
+        int index = toStringIndex(name);
+        if (0 <= index && index < string.length()) {
+            // nothing to change
+            return;
+        }
+        super.updateOwnProperty(name, desc, current);
     }
 
     /*
@@ -636,35 +745,66 @@ final class NativeString extends IdScriptableObject
     }
 
     private static CharSequence js_slice(CharSequence target, Object[] args) {
-        if (args.length != 0) {
-            double begin = ScriptRuntime.toInteger(args[0]);
-            double end;
-            int length = target.length();
-            if (begin < 0) {
-                begin += length;
-                if (begin < 0)
-                    begin = 0;
-            } else if (begin > length) {
-                begin = length;
-            }
-
-            if (args.length == 1) {
-                end = length;
-            } else {
-                end = ScriptRuntime.toInteger(args[1]);
-                if (end < 0) {
-                    end += length;
-                    if (end < 0)
-                        end = 0;
-                } else if (end > length) {
-                    end = length;
-                }
-                if (end < begin)
-                    end = begin;
-            }
-            return target.subSequence((int) begin, (int) end);
+        double begin = args.length < 1 ? 0 : ScriptRuntime.toInteger(args[0]);
+        double end;
+        int length = target.length();
+        if (begin < 0) {
+            begin += length;
+            if (begin < 0)
+                begin = 0;
+        } else if (begin > length) {
+            begin = length;
         }
-        return target;
+
+        if (args.length < 2 || args[1] == Undefined.instance) {
+            end = length;
+        } else {
+            end = ScriptRuntime.toInteger(args[1]);
+            if (end < 0) {
+                end += length;
+                if (end < 0)
+                    end = 0;
+            } else if (end > length) {
+                end = length;
+            }
+            if (end < begin)
+                end = begin;
+        }
+        return target.subSequence((int) begin, (int) end);
+    }
+
+    /**
+     * Special [[Get]] if reference base value is primitive, see ES5.1 [8.7.1]:
+     * - Support for the String type
+     * @see ScriptRuntime#getPrimitiveValue(Object, Scriptable, String, int, Context, Scriptable)
+     */
+    static Object getPrimitiveValue(CharSequence base, String property, int index,
+                                    Context cx, Scriptable scope) {
+        // search in instance properties
+        if (property == null) {
+            if (0 <= index && index < base.length()) {
+                return String.valueOf(base.charAt(index));
+            }
+        } else if ("length".equals(property)) {
+            return base.length();
+        }
+        Object value = NOT_FOUND;
+        // search in string prototype
+        NativeString stringProto = getStringPrototype(scope);
+        value = stringProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        if (value != NOT_FOUND) return value;
+        // search in object prototype
+        NativeObject objectProto = (NativeObject)stringProto.getPrototype();
+        value = objectProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        // object prototype has no other prototype
+        assert objectProto.getPrototype() == null;
+        return value;
+    }
+
+    private static NativeString getStringPrototype(Scriptable scope) {
+        Scriptable proto = getBuiltinPrototype(getTopLevelScope(scope), Builtins.String);
+        assert proto instanceof NativeString;
+        return (NativeString) proto;
     }
 
 // #string_id_map#

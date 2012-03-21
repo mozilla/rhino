@@ -70,7 +70,7 @@ final class NativeJSON extends IdScriptableObject
         obj.setParentScope(scope);
         if (sealed) { obj.sealObject(); }
         ScriptableObject.defineProperty(scope, "JSON", obj,
-                                        ScriptableObject.DONTENUM);
+                                        ScriptableObject.DONTENUM, false);
     }
 
     private NativeJSON()
@@ -100,7 +100,7 @@ final class NativeJSON extends IdScriptableObject
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(JSON_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -152,7 +152,7 @@ final class NativeJSON extends IdScriptableObject
     {
       Object unfiltered = parse(cx, scope, jtext);
       Scriptable root = cx.newObject(scope);
-      root.put("", root, unfiltered);
+      root.put("", root, unfiltered, false);
       return walk(cx, scope, reviver, root, "");
     }
 
@@ -173,9 +173,9 @@ final class NativeJSON extends IdScriptableObject
                 for (int i = 0; i < len; i++) {
                     Object newElement = walk(cx, scope, reviver, val, i);
                     if (newElement == Undefined.instance) {
-                      val.delete(i);
+                      val.delete(i, false);
                     } else {
-                      val.put(i, val, newElement);
+                      val.put(i, val, newElement, false);
                     }
                 }
             } else {
@@ -184,14 +184,14 @@ final class NativeJSON extends IdScriptableObject
                     Object newElement = walk(cx, scope, reviver, val, p);
                     if (newElement == Undefined.instance) {
                         if (p instanceof Number)
-                          val.delete(((Number) p).intValue());
+                          val.delete(((Number) p).intValue(), false);
                         else
-                          val.delete((String) p);
+                          val.delete((String) p, false);
                     } else {
                         if (p instanceof Number)
-                          val.put(((Number) p).intValue(), val, newElement);
+                          val.put(((Number) p).intValue(), val, newElement, false);
                         else
-                          val.put((String) p, val, newElement);
+                          val.put((String) p, val, newElement, false);
                     }
                 }
             }
@@ -284,7 +284,7 @@ final class NativeJSON extends IdScriptableObject
         ScriptableObject wrapper = new NativeObject();
         wrapper.setParentScope(scope);
         wrapper.setPrototype(ScriptableObject.getObjectPrototype(scope));
-        wrapper.defineProperty("", value, 0);
+        wrapper.defineProperty("", value, 0, false);
         return str("", wrapper, state);
     }
 

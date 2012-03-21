@@ -73,6 +73,7 @@ public class NativeJavaPackage extends ScriptableObject
      * @deprecated NativeJavaPackage is an internal class, do not use
      * it directly.
      */
+    @Deprecated
     public NativeJavaPackage(String packageName, ClassLoader classLoader) {
         this(false, packageName, classLoader);
     }
@@ -81,6 +82,7 @@ public class NativeJavaPackage extends ScriptableObject
      * @deprecated NativeJavaPackage is an internal class, do not use
      * it directly.
      */
+    @Deprecated
     public NativeJavaPackage(String packageName) {
         this(false, packageName,
              Context.getCurrentContext().getApplicationClassLoader());
@@ -102,12 +104,12 @@ public class NativeJavaPackage extends ScriptableObject
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value) {
+    public void put(String id, Scriptable start, Object value, boolean checked) {
         // Can't add properties to Java packages.  Sorry.
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
         throw Context.reportRuntimeError0("msg.pkg.int");
     }
 
@@ -134,7 +136,7 @@ public class NativeJavaPackage extends ScriptableObject
                                 : packageName + "." + name;
             NativeJavaPackage pkg = new NativeJavaPackage(true, newPackage, classLoader);
             ScriptRuntime.setObjectProtoAndParent(pkg, scope);
-            super.put(name, this, pkg);
+            super.put(name, this, pkg, false);
             return pkg;
         }
     }
@@ -184,7 +186,7 @@ public class NativeJavaPackage extends ScriptableObject
         if (newValue != null) {
             // Make it available for fast lookup and sharing of
             // lazily-reflected constructors and static members.
-            super.put(name, start, newValue);
+            super.put(name, start, newValue, false);
         }
         return newValue;
     }

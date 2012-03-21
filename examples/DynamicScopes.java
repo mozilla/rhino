@@ -190,7 +190,7 @@ public class DynamicScopes {
 
                 // Create a JavaScript property of the thread scope named
                 // 'x' and save a value for it.
-                threadScope.put("x", threadScope, x);
+                threadScope.put("x", threadScope, x, false);
                 cx.evaluateString(threadScope, source, "threadScript", 1, null);
             } finally {
                 Context.exit();

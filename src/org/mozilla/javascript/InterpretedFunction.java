@@ -155,9 +155,15 @@ final class InterpretedFunction extends NativeFunction implements Script
      * @return the result of the function call.
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
+        if (!idata.isStrict) {
+            thisObj = ScriptRuntime.toObjectOrNull(cx, thisObj, scope);
+            if (thisObj == null) {
+                thisObj = ScriptRuntime.getTopCallScope(cx);
+            }
+        }
         if (!ScriptRuntime.hasTopCall(cx)) {
             return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args);
         }
@@ -230,6 +236,12 @@ final class InterpretedFunction extends NativeFunction implements Script
     protected boolean getParamOrVarConst(int index)
     {
         return idata.argIsConst[index];
+    }
+
+    @Override
+    protected boolean isStrict()
+    {
+        return idata.isStrict;
     }
 }
 

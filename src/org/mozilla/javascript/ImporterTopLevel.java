@@ -116,7 +116,7 @@ public class ImporterTopLevel extends TopLevel {
         // delete "constructor" defined by exportAsJSClass so "constructor"
         // name would refer to Object.constructor
         // and not to JavaImporter.prototype.constructor.
-        delete("constructor");
+        delete("constructor", false);
     }
 
     @Override
@@ -158,6 +158,7 @@ public class ImporterTopLevel extends TopLevel {
     /**
      * @deprecated Kept only for compatibility.
      */
+    @Deprecated
     public void importPackage(Context cx, Scriptable thisObj, Object[] args,
                               Function funObj)
     {
@@ -238,7 +239,7 @@ public class ImporterTopLevel extends TopLevel {
             throw Context.reportRuntimeError1("msg.prop.defined", n);
         }
         //defineProperty(n, cl, DONTENUM);
-        put(n, this, cl);
+        put(n, this, cl, false);
     }
 
     @Override
@@ -257,7 +258,7 @@ public class ImporterTopLevel extends TopLevel {
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(IMPORTER_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -276,7 +277,7 @@ public class ImporterTopLevel extends TopLevel {
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private ImporterTopLevel realThis(Scriptable thisObj, IdFunctionObject f)
+    private ImporterTopLevel realThis(Object thisObj, IdFunctionObject f)
     {
         if (topScopeFlag) {
             // when used as top scope importPackage and importClass are global

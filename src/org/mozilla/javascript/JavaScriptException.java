@@ -57,6 +57,7 @@ public class JavaScriptException extends RhinoException
      * Use {@link WrappedException#WrappedException(Throwable)} to report
      * exceptions in Java code.
      */
+    @Deprecated
     public JavaScriptException(Object value)
     {
         this(value, "", 0);
@@ -77,10 +78,10 @@ public class JavaScriptException extends RhinoException
                 .hasFeature(Context.FEATURE_LOCATION_INFORMATION_IN_ERROR)) {
             NativeError error = (NativeError) value;
             if (!error.has("fileName", error)) {
-                error.put("fileName", error, sourceName);
+                error.put("fileName", error, sourceName, false);
             }
             if (!error.has("lineNumber", error)) {
-                error.put("lineNumber", error, Integer.valueOf(lineNumber));
+                error.put("lineNumber", error, Integer.valueOf(lineNumber), false);
             }
             // set stack property, see bug #549604
             error.setStackProvider(this);
@@ -118,6 +119,7 @@ public class JavaScriptException extends RhinoException
     /**
      * @deprecated Use {@link RhinoException#sourceName()} from the super class.
      */
+    @Deprecated
     public String getSourceName()
     {
         return sourceName();
@@ -126,6 +128,7 @@ public class JavaScriptException extends RhinoException
     /**
      * @deprecated Use {@link RhinoException#lineNumber()} from the super class.
      */
+    @Deprecated
     public int getLineNumber()
     {
         return lineNumber();

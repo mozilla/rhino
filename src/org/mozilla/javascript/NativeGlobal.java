@@ -120,43 +120,32 @@ public class NativeGlobal implements Serializable, IdFunctionCall
 
         ScriptableObject.defineProperty(
             scope, "NaN", ScriptRuntime.NaNobj,
-            READONLY|DONTENUM|PERMANENT);
+            READONLY|DONTENUM|PERMANENT, false);
         ScriptableObject.defineProperty(
             scope, "Infinity",
             ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY),
-            READONLY|DONTENUM|PERMANENT);
+            READONLY|DONTENUM|PERMANENT, false);
         ScriptableObject.defineProperty(
             scope, "undefined", Undefined.instance,
-            READONLY|DONTENUM|PERMANENT);
-
-        String[] errorMethods = {
-                "ConversionError",
-                "EvalError",
-                "RangeError",
-                "ReferenceError",
-                "SyntaxError",
-                "TypeError",
-                "URIError",
-                "InternalError",
-                "JavaException"
-        };
+            READONLY|DONTENUM|PERMANENT, false);
 
         /*
             Each error constructor gets its own Error object as a prototype,
             with the 'name' property set to the name of the error.
         */
-        for (int i = 0; i < errorMethods.length; i++) {
-            String name = errorMethods[i];
+        for (TopLevel.NativeErrors error : TopLevel.NativeErrors.values()) {
+            String name = error.name();
             ScriptableObject errorProto =
-              (ScriptableObject) ScriptRuntime.newObject(cx, scope, "Error",
+              (ScriptableObject) ScriptRuntime.newBuiltinObject(cx, scope,
+                                                  TopLevel.Builtins.Error,
                                                   ScriptRuntime.emptyArgs);
-            errorProto.put("name", errorProto, name);
-            errorProto.put("message", errorProto, "");
+            errorProto.put("name", errorProto, name, false);
+            errorProto.put("message", errorProto, "", false);
             IdFunctionObject ctor = new IdFunctionObject(obj, FTAG,
                                                          Id_new_CommonError,
                                                          name, 1, scope);
             ctor.markAsConstructor(errorProto);
-            errorProto.put("constructor", errorProto, ctor);
+            errorProto.put("constructor", errorProto, ctor, false);
             errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
             if (sealed) {
                 errorProto.sealObject();
@@ -167,7 +156,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     }
 
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (f.hasTag(FTAG)) {
             int methodId = f.methodId();
@@ -527,7 +516,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     private Object js_eval(Context cx, Scriptable scope, Object[] args)
     {
         Scriptable global = ScriptableObject.getTopLevelScope(scope);
-        return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
+        return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1, false);
     }
 
     static boolean isEvalFunction(Object functionObj)
@@ -545,6 +534,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      * @deprecated Use {@link ScriptRuntime#constructError(String,String)}
      * instead.
      */
+    @Deprecated
     public static EcmaError constructError(Context cx,
                                            String error,
                                            String message,
@@ -558,6 +548,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      * {@link ScriptRuntime#constructError(String,String,String,int,String,int)}
      * instead.
      */
+    @Deprecated
     public static EcmaError constructError(Context cx,
                                            String error,
                                            String message,
@@ -719,8 +710,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     if (ucs4Char < minUcs4Char
                             || (ucs4Char >= 0xD800 && ucs4Char <= 0xDFFF)) {
                         ucs4Char = INVALID_UTF8;
-                    } else if (ucs4Char == 0xFFFE || ucs4Char == 0xFFFF) {
-                        ucs4Char = 0xFFFD;
                     }
                     if (ucs4Char >= 0x10000) {
                         ucs4Char -= 0x10000;

@@ -57,7 +57,7 @@ public class TypeOfTest extends TestCase
         final Function f = new BaseFunction()
         {
         	@Override
-        	public Object call(Context _cx, Scriptable _scope, Scriptable _thisObj,
+        	public Object call(Context _cx, Scriptable _scope, Object _thisObj,
         			Object[] _args)
         	{
         		return _args[0].getClass().getName();
@@ -68,7 +68,7 @@ public class TypeOfTest extends TestCase
 			public Object run(final Context context)
 			{
 				final Scriptable scope = context.initStandardObjects();
-				scope.put("myObj", scope, f);
+				scope.put("myObj", scope, f, false);
 				return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
 			}
 		};
@@ -82,7 +82,7 @@ public class TypeOfTest extends TestCase
 			public Object run(final Context context)
 			{
 				final Scriptable scope = context.initStandardObjects();
-				scope.put("myObj", scope, obj);
+				scope.put("myObj", scope, obj, false);
 				return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
 			}
 		};

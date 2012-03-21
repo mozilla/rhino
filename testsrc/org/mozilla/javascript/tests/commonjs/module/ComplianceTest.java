@@ -62,7 +62,7 @@ public class ComplianceTest extends TestCase
                 try {
                     cx.setOptimizationLevel(-1);
                     final Scriptable scope = cx.initStandardObjects();
-                    ScriptableObject.putProperty(scope, "print", new Print(scope));
+                    ScriptableObject.putProperty(scope, "print", new Print(scope), false);
                     createRequire(testDir, cx, scope).requireMain(cx, "program");
                 }
                 finally {
@@ -88,7 +88,7 @@ public class ComplianceTest extends TestCase
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
 
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+        public Object call(Context cx, Scriptable scope, Object thisObj,
                 Object[] args)
         {
             if(args.length > 1 && "fail".equals(args[1])) {

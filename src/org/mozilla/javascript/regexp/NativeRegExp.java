@@ -44,7 +44,6 @@ package org.mozilla.javascript.regexp;
 import java.io.Serializable;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.Kit;
@@ -70,7 +69,7 @@ import org.mozilla.javascript.Undefined;
 
 
 
-public class NativeRegExp extends IdScriptableObject implements Function
+public class NativeRegExp extends IdScriptableObject
 {
     static final long serialVersionUID = 4965263491464903264L;
 
@@ -156,7 +155,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         NativeRegExpCtor ctor = new NativeRegExpCtor();
         // Bug #324006: ECMA-262 15.10.6.1 says "The initial value of
         // RegExp.prototype.constructor is the builtin RegExp constructor."
-        proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM);
+        proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM, false);
 
         ScriptRuntime.setFunctionProtoAndParent(ctor, scope);
 
@@ -167,13 +166,13 @@ public class NativeRegExp extends IdScriptableObject implements Function
             ctor.sealObject();
         }
 
-        defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
+        defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM, false);
     }
 
     NativeRegExp(Scriptable scope, Object regexpCompiled)
     {
         this.re = (RECompiled)regexpCompiled;
-        this.lastIndex = 0;
+        this.lastIndex = 0d;
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
     }
 
@@ -194,17 +193,6 @@ public class NativeRegExp extends IdScriptableObject implements Function
     	return "object";
     }
 
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                       Object[] args)
-    {
-        return execSub(cx, scope, args, MATCH);
-    }
-
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args)
-    {
-        return (Scriptable)execSub(cx, scope, args, MATCH);
-    }
-
     Scriptable compile(Context cx, Scriptable scope, Object[] args)
     {
         if (args.length > 0 && args[0] instanceof NativeRegExp) {
@@ -217,12 +205,14 @@ public class NativeRegExp extends IdScriptableObject implements Function
             this.lastIndex = thatObj.lastIndex;
             return this;
         }
-        String s = args.length == 0 ? "" : ScriptRuntime.toString(args[0]);
+        String s = args.length == 0 || args[0] == Undefined.instance 
+            ? ""
+            : ScriptRuntime.toString(args[0]);
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;
         this.re = (RECompiled)compileRE(cx, s, global, false);
-        this.lastIndex = 0;
+        this.lastIndex = 0d;
         return this;
     }
 
@@ -262,16 +252,19 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (args.length == 0) {
             str = reImpl.input;
             if (str == null) {
-                reportError("msg.no.re.input.for", toString());
+                str = ScriptRuntime.toString(Undefined.instance);
             }
         } else {
             str = ScriptRuntime.toString(args[0]);
         }
-        double d = ((re.flags & JSREG_GLOB) != 0) ? lastIndex : 0;
+        double d = 0;
+        if ((re.flags & JSREG_GLOB) != 0) {
+            d = ScriptRuntime.toInteger(lastIndex);
+        }
 
         Object rval;
         if (d < 0 || str.length() < d) {
-            lastIndex = 0;
+            lastIndex = 0d;
             rval = null;
         }
         else {
@@ -295,15 +288,20 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (global != null) {
             for (int i = 0; i < global.length(); i++) {
                 char c = global.charAt(i);
+                int f = 0;
                 if (c == 'g') {
-                    flags |= JSREG_GLOB;
+                    f = JSREG_GLOB;
                 } else if (c == 'i') {
-                    flags |= JSREG_FOLD;
+                    f = JSREG_FOLD;
                 } else if (c == 'm') {
-                    flags |= JSREG_MULTILINE;
+                    f = JSREG_MULTILINE;
                 } else {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
+                if ((flags & f) != 0) {
+                    reportError("msg.invalid.re.flag", String.valueOf(c));
+                }
+                flags |= f;
             }
         }
         regexp.flags = flags;
@@ -318,10 +316,19 @@ System.out.println("flat = \"" + str + "\"");
             state.result.length = length;
             state.result.flatIndex = 0;
             state.progLength += 5;
-        }
-        else
+        } else {
             if (!parseDisjunction(state))
                 return null;
+            // Need to reparse if pattern contains invalid backreferences:
+            // "Note: if the number of left parentheses is less than the number
+            // specified in \#, the \# is taken as an octal escape"
+            if (state.maxBackReference > state.parenCount) {
+                state = new CompilerState(cx, regexp.source, length, flags);
+                state.backReferenceLimit = state.parenCount;
+                if (!parseDisjunction(state))
+                    return null;
+            }
+        }
 
         regexp.program = new byte[state.progLength + 1];
         if (state.classCount != 0) {
@@ -741,9 +748,9 @@ if (regexp.anchorCh >= 0) {
                 break;
             }
             if (!overflow) {
-                int digit = c - '0';
-                if (value < (maxValue - digit) / 10) {
-                    value = value * 10 + digit;
+                int v = value * 10 + (c - '0');
+                if (v < maxValue) {
+                    value = v;
                 } else {
                     overflow = true;
                     value = maxValue;
@@ -794,23 +801,21 @@ if (regexp.anchorCh >= 0) {
                 /* Decimal escape */
                 case '0':
 /*
- * Under 'strict' ECMA 3, we interpret \0 as NUL and don't accept octal.
- * However, (XXX and since Rhino doesn't have a 'strict' mode) we'll just
- * behave the old way for compatibility reasons.
- * (see http://bugzilla.mozilla.org/show_bug.cgi?id=141078)
- *
+ * We're deliberately violating the ECMA 5.1 specification and allow octal
+ * escapes to follow spidermonkey and general 'web reality':
+ * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
+ * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
  */
                     reportWarning(state.cx, "msg.bad.backref", "");
                     /* octal escape */
                     num = 0;
-                    while (state.cp < state.cpend) {
+                    // follow spidermonkey and allow multiple leading zeros,
+                    // e.g. let /\0000/ match the string "\0"
+                    while (num < 040 && state.cp < state.cpend) {
                         c = src[state.cp];
                         if ((c >= '0') && (c <= '7')) {
                             state.cp++;
-                            tmp = 8 * num + (c - '0');
-                            if (tmp > 0377)
-                                break;
-                            num = tmp;
+                            num = 8 * num + (c - '0');
                         }
                         else
                             break;
@@ -830,23 +835,28 @@ if (regexp.anchorCh >= 0) {
                     termStart = state.cp - 1;
                     num = getDecimalValue(c, state, 0xFFFF,
                                           "msg.overlarge.backref");
-                    if (num > state.parenCount)
+                    if (num > state.backReferenceLimit)
                         reportWarning(state.cx, "msg.bad.backref", "");
                     /*
-                     * n > 9 or > count of parentheses,
-                     * then treat as octal instead.
+                     * n > count of parentheses, then treat as octal instead.
+                     * Also see note above concerning 'web reality'
                      */
-                    if ((num > 9) && (num > state.parenCount)) {
+                    if (num > state.backReferenceLimit) {
                         state.cp = termStart;
-                        num = 0;
-                        while (state.cp < state.cpend) {
+                        if (c >= '8') {
+                            // invalid octal escape, follow spidermonkey and
+                            // treat as \\8 resp. \\9
+                            c = '\\';
+                            doFlat(state, c);
+                            break;
+                        }
+                        state.cp++;
+                        num = c - '0';
+                        while (num < 040 && state.cp < state.cpend) {
                             c = src[state.cp];
                             if ((c >= '0') && (c <= '7')) {
                                 state.cp++;
-                                tmp = 8 * num + (c - '0');
-                                if (tmp > 0377)
-                                    break;
-                                num = tmp;
+                                num = 8 * num + (c - '0');
                             }
                             else
                                 break;
@@ -859,6 +869,9 @@ if (regexp.anchorCh >= 0) {
                     state.result = new RENode(REOP_BACKREF);
                     state.result.parenIndex = num - 1;
                     state.progLength += 3;
+                    if (state.maxBackReference < num) {
+                        state.maxBackReference = num;
+                    }
                     break;
                 /* Control escape */
                 case 'f':
@@ -1032,6 +1045,7 @@ if (regexp.anchorCh >= 0) {
             state.result = new RENode(REOP_DOT);
             state.progLength++;
             break;
+        case '{':
         case '*':
         case '+':
         case '?':
@@ -2316,7 +2330,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
             obj = (Scriptable) result;
 
             String matchstr = str.substring(index, index + matchlen);
-            obj.put(0, obj, matchstr);
+            obj.put(0, obj, matchstr, true);
         }
 
         if (re.parenCount == 0) {
@@ -2335,11 +2349,11 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
                     res.parens[num] = parsub;
                     if (matchType == TEST) continue;
                     parstr = parsub.toString();
-                    obj.put(num+1, obj, parstr);
+                    obj.put(num+1, obj, parstr, true);
                 }
                 else {
                     if (matchType != TEST)
-                        obj.put(num+1, obj, Undefined.instance);
+                        obj.put(num+1, obj, Undefined.instance, true);
                 }
             }
             res.lastParen = parsub;
@@ -2350,8 +2364,8 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
              * Define the index and input properties last for better for/in loop
              * order (so they come after the elements).
              */
-            obj.put("index", obj, Integer.valueOf(start + gData.skipped));
-            obj.put("input", obj, str);
+            obj.put("index", obj, Integer.valueOf(start + gData.skipped), true);
+            obj.put("input", obj, str, true);
         }
 
         if (res.lastMatch == null) {
@@ -2462,7 +2476,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
         int attr;
         switch (id) {
           case Id_lastIndex:
-            attr = PERMANENT | DONTENUM;
+            attr = lastIndexAttr;
             break;
           case Id_source:
           case Id_global:
@@ -2494,7 +2508,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     {
         switch (id) {
           case Id_lastIndex:
-            return ScriptRuntime.wrapNumber(lastIndex);
+            return lastIndex;
           case Id_source:
             return new String(re.source);
           case Id_global:
@@ -2512,7 +2526,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     {
         switch (id) {
           case Id_lastIndex:
-            lastIndex = ScriptRuntime.toNumber(value);
+            lastIndex = value;
             return;
           case Id_source:
           case Id_global:
@@ -2524,12 +2538,23 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
     }
 
     @Override
+    protected void setInstanceIdAttributes(int id, int attr)
+    {
+        switch (id) {
+          case Id_lastIndex:
+            lastIndexAttr = attr;
+            return;
+        }
+        super.setInstanceIdAttributes(id, attr);
+    }
+
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
         int arity;
         switch (id) {
-          case Id_compile:  arity=1; s="compile";  break;
+          case Id_compile:  arity=2; s="compile";  break;
           case Id_toString: arity=0; s="toString"; break;
           case Id_toSource: arity=0; s="toSource"; break;
           case Id_exec:     arity=1; s="exec";     break;
@@ -2542,7 +2567,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(REGEXP_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -2570,7 +2595,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f)
+    private static NativeRegExp realThis(Object thisObj, IdFunctionObject f)
     {
         if (!(thisObj instanceof NativeRegExp))
             throw incompatibleCallError(f);
@@ -2616,8 +2641,8 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
 // #/string_id_map#
 
     private RECompiled re;
-    double lastIndex;          /* index after last match, for //g iterator */
-
+    Object lastIndex = 0d;        /* index after last match, for //g iterator */
+    private int lastIndexAttr = DONTENUM | PERMANENT;
 }       // class NativeRegExp
 
 class RECompiled implements Serializable
@@ -2675,6 +2700,8 @@ class CompilerState {
         this.cp = 0;
         this.cpend = length;
         this.flags = flags;
+        this.backReferenceLimit = Integer.MAX_VALUE;
+        this.maxBackReference = 0;
         this.parenCount = 0;
         this.classCount = 0;
         this.progLength = 0;
@@ -2685,6 +2712,8 @@ class CompilerState {
     int         cpend;
     int         cp;
     int         flags;
+    int         backReferenceLimit;
+    int         maxBackReference;
     int         parenCount;
     int         parenNesting;
     int         classCount;   /* number of [] encountered */

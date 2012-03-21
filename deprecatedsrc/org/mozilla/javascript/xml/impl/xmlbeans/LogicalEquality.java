@@ -172,8 +172,8 @@ public class LogicalEquality
     private static boolean attributeListsEqual(XmlCursor xmlOne, XmlCursor xmlTwo)
     {
         boolean result = true;
-        TreeMap mapOne = loadAttributeMap(xmlOne);
-        TreeMap mapTwo = loadAttributeMap(xmlTwo);
+        TreeMap<?, ?> mapOne = loadAttributeMap(xmlOne);
+        TreeMap<?, ?> mapTwo = loadAttributeMap(xmlTwo);
 
         if (mapOne.size() != mapTwo.size())
         {
@@ -181,10 +181,10 @@ public class LogicalEquality
         }
         else
         {
-            Set keysOne = mapOne.keySet();
-            Set keysTwo = mapTwo.keySet();
-            Iterator itOne = keysOne.iterator();
-            Iterator itTwo = keysTwo.iterator();
+            Set<?> keysOne = mapOne.keySet();
+            Set<?> keysTwo = mapTwo.keySet();
+            Iterator<?> itOne = keysOne.iterator();
+            Iterator<?> itTwo = keysTwo.iterator();
 
             while (result && itOne.hasNext())
             {

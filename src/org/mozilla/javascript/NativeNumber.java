@@ -40,6 +40,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.TopLevel.getBuiltinPrototype;
+import org.mozilla.javascript.TopLevel.Builtins;
+
 /**
  * This class implements the Number native object.
  *
@@ -79,19 +82,19 @@ final class NativeNumber extends IdScriptableObject
                          ScriptableObject.PERMANENT |
                          ScriptableObject.READONLY;
 
-        ctor.defineProperty("NaN", ScriptRuntime.NaNobj, attr);
+        ctor.defineProperty("NaN", ScriptRuntime.NaNobj, attr, false);
         ctor.defineProperty("POSITIVE_INFINITY",
                             ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY),
-                            attr);
+                            attr, false);
         ctor.defineProperty("NEGATIVE_INFINITY",
                             ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY),
-                            attr);
+                            attr, false);
         ctor.defineProperty("MAX_VALUE",
                             ScriptRuntime.wrapNumber(Double.MAX_VALUE),
-                            attr);
+                            attr, false);
         ctor.defineProperty("MIN_VALUE",
                             ScriptRuntime.wrapNumber(Double.MIN_VALUE),
-                            attr);
+                            attr, false);
 
         super.fillConstructorProperties(ctor);
     }
@@ -117,7 +120,7 @@ final class NativeNumber extends IdScriptableObject
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(NUMBER_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -136,9 +139,14 @@ final class NativeNumber extends IdScriptableObject
 
         // The rest of Number.prototype methods require thisObj to be Number
 
-        if (!(thisObj instanceof NativeNumber))
+        double value;
+        if (thisObj instanceof Number) {
+            value = ((Number)thisObj).doubleValue();
+        } else if (thisObj instanceof NativeNumber) {
+            value = ((NativeNumber)thisObj).doubleValue;
+        } else {
             throw incompatibleCallError(f);
-        double value = ((NativeNumber)thisObj).doubleValue;
+        }
 
         switch (id) {
 
@@ -159,7 +167,7 @@ final class NativeNumber extends IdScriptableObject
 
           case Id_toFixed:
             return num_to(value, args, DToA.DTOSTR_FIXED,
-                          DToA.DTOSTR_FIXED, -20, 0);
+                          DToA.DTOSTR_FIXED, 0, 0);
 
           case Id_toExponential: {
               // Handle special values before range check
@@ -219,18 +227,45 @@ final class NativeNumber extends IdScriptableObject
             precision = 0;
             oneArgMode = zeroArgMode;
         } else {
-            /* We allow a larger range of precision than
-               ECMA requires; this is permitted by ECMA. */
-            precision = ScriptRuntime.toInt32(args[0]);
-            if (precision < precisionMin || precision > MAX_PRECISION) {
+            /* We allow a larger range of precision than ECMA requires;
+               this is permitted by ECMA. [ES5.1, ch. 16 Errors] */
+            double p = ScriptRuntime.toInteger(args[0]);
+            if (p < precisionMin || p > MAX_PRECISION) {
                 String msg = ScriptRuntime.getMessage1(
                     "msg.bad.precision", ScriptRuntime.toString(args[0]));
                 throw ScriptRuntime.constructError("RangeError", msg);
             }
+            precision = ScriptRuntime.toInt32(p);
         }
         StringBuilder sb = new StringBuilder();
         DToA.JS_dtostr(sb, oneArgMode, precision + precisionOffset, val);
         return sb.toString();
+    }
+
+    /**
+     * Special [[Get]] if reference base value is primitive, see ES5.1 [8.7.1]:
+     * - Support for the Number type
+     * @see ScriptRuntime#getPrimitiveValue(Object, Scriptable, String, int, Context, Scriptable)
+     */
+    static Object getPrimitiveValue(Number base, String property, int index,
+                                    Context cx, Scriptable scope) {
+        Object value = NOT_FOUND;
+        // search in number prototype
+        NativeNumber numberProto = getNumberPrototype(scope);
+        value = numberProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        if (value != NOT_FOUND) return value;
+        // search in object prototype
+        NativeObject objectProto = (NativeObject)numberProto.getPrototype();
+        value = objectProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        // object prototype has no other prototype
+        assert objectProto.getPrototype() == null;
+        return value;
+    }
+
+    private static NativeNumber getNumberPrototype(Scriptable scope) {
+        Scriptable proto = getBuiltinPrototype(getTopLevelScope(scope), Builtins.Number);
+        assert proto instanceof NativeNumber;
+        return (NativeNumber) proto;
     }
 
 // #string_id_map#

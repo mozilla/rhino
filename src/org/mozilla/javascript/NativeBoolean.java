@@ -40,6 +40,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.TopLevel.getBuiltinPrototype;
+import org.mozilla.javascript.TopLevel.Builtins;
+
 /**
  * This class implements the Boolean native object.
  * See ECMA 15.6.
@@ -94,7 +97,7 @@ final class NativeBoolean extends IdScriptableObject
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(BOOLEAN_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -121,9 +124,14 @@ final class NativeBoolean extends IdScriptableObject
 
         // The rest of Boolean.prototype methods require thisObj to be Boolean
 
-        if (!(thisObj instanceof NativeBoolean))
+        boolean value;
+        if (thisObj instanceof Boolean) {
+            value = ((Boolean)thisObj).booleanValue();
+        } else if (thisObj instanceof NativeBoolean) {
+            value = ((NativeBoolean)thisObj).booleanValue;
+        } else {
             throw incompatibleCallError(f);
-        boolean value = ((NativeBoolean)thisObj).booleanValue;
+        }
 
         switch (id) {
 
@@ -137,6 +145,32 @@ final class NativeBoolean extends IdScriptableObject
             return ScriptRuntime.wrapBoolean(value);
         }
         throw new IllegalArgumentException(String.valueOf(id));
+    }
+
+    /**
+     * Special [[Get]] if reference base value is primitive, see ES5.1 [8.7.1]:
+     * - Support for the Boolean type
+     * @see ScriptRuntime#getPrimitiveValue(Object, Scriptable, String, int, Context, Scriptable)
+     */
+    static Object getPrimitiveValue(Boolean base, String property, int index,
+                                    Context cx, Scriptable scope) {
+        Object value = NOT_FOUND;
+        // search in boolean prototype
+        NativeBoolean booleanProto = getBooleanPrototype(scope);
+        value = booleanProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        if (value != NOT_FOUND) return value;
+        // search in object prototype
+        NativeObject objectProto = (NativeObject)booleanProto.getPrototype();
+        value = objectProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        // object prototype has no other prototype
+        assert objectProto.getPrototype() == null;
+        return value;
+    }
+
+    private static NativeBoolean getBooleanPrototype(Scriptable scope) {
+        Scriptable proto = getBuiltinPrototype(getTopLevelScope(scope), Builtins.Boolean);
+        assert proto instanceof NativeBoolean;
+        return (NativeBoolean) proto;
     }
 
 // #string_id_map#

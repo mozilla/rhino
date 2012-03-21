@@ -93,7 +93,30 @@ public class TopLevel extends IdScriptableObject {
         Error
     }
 
+    /**
+     * An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6]
+     */
+    public enum NativeErrors {
+        /** The native EvalError. */
+        EvalError,
+        /** The native RangeError. */
+        RangeError,
+        /** The native ReferenceError. */
+        ReferenceError,
+        /** The native SyntaxError. */
+        SyntaxError,
+        /** The native TypeError. */
+        TypeError,
+        /** The native URIError. */
+        URIError,
+        /** The native InternalError (non-standard). */
+        InternalError,
+        /** The native JavaException (non-standard). */
+        JavaException
+    }
+
     private EnumMap<Builtins, BaseFunction> ctors;
+    private EnumMap<NativeErrors, BaseFunction> errors;
 
     @Override
     public String getClassName() {
@@ -116,6 +139,13 @@ public class TopLevel extends IdScriptableObject {
                 ctors.put(builtin, (BaseFunction)value);
             }
         }
+        errors = new EnumMap<NativeErrors, BaseFunction>(NativeErrors.class);
+        for (NativeErrors error : NativeErrors.values()) {
+            Object value = ScriptableObject.getProperty(this, error.name());
+            if (value instanceof BaseFunction) {
+                errors.put(error, (BaseFunction)value);
+            }
+        }
     }
 
     /**
@@ -136,6 +166,32 @@ public class TopLevel extends IdScriptableObject {
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
             Function result = ((TopLevel)scope).getBuiltinCtor(type);
+            if (result != null) {
+                return result;
+            }
+        }
+        // fall back to normal constructor lookup
+        return ScriptRuntime.getExistingCtor(cx, scope, type.name());
+    }
+
+    /**
+     * Static helper method to get a native error constructor with the given
+     * <code>type</code> from the given <code>scope</code>. If the scope is not
+     * an instance of this class or does have a cache of native errors,
+     * the constructor is looked up via normal property lookup.
+     *
+     * @param cx the current Context
+     * @param scope the top-level scope
+     * @param type the native error type
+     * @return the native error constructor
+     */
+    public static Function getNativeErrorCtor(Context cx,
+                                              Scriptable scope,
+                                              NativeErrors type) {
+        // must be called with top level scope
+        assert scope.getParentScope() == null;
+        if (scope instanceof TopLevel) {
+            Function result = ((TopLevel)scope).getNativeErrorCtor(type);
             if (result != null) {
                 return result;
             }
@@ -178,6 +234,17 @@ public class TopLevel extends IdScriptableObject {
      */
     public BaseFunction getBuiltinCtor(Builtins type) {
         return ctors != null ? ctors.get(type) : null;
+    }
+
+    /**
+     * Get the cached native error constructor from this scope with the
+     * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
+     * been called on this object.
+     * @param type the native error type
+     * @return the native error constructor
+     */
+    public BaseFunction getNativeErrorCtor(NativeErrors type) {
+        return errors != null ? errors.get(type) : null;
     }
 
     /**

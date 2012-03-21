@@ -117,29 +117,29 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, Scriptable start, Object value, boolean checked) {
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
         if (prototype == null || members.has(name, false))
             members.put(this, name, javaObject, value, false);
         else
-            prototype.put(name, prototype, value);
+            prototype.put(name, prototype, value, checked);
     }
 
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
-    public boolean hasInstance(Scriptable value) {
+    public boolean hasInstance(Object value) {
         // This is an instance of a Java class, so always return false
         return false;
     }
 
-    public void delete(String name) {
+    public void delete(String name, boolean checked) {
     }
 
-    public void delete(int index) {
+    public void delete(int index, boolean checked) {
     }
 
     public Scriptable getPrototype() {
@@ -180,6 +180,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
 @deprecated Use {@link Context#getWrapFactory()} together with calling {@link
 WrapFactory#wrap(Context, Scriptable, Object, Class)}
 */
+    @Deprecated
     public static Object wrap(Scriptable scope, Object obj, Class<?> staticType) {
 
         Context cx = Context.getContext();
@@ -492,6 +493,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
      * @deprecated as of 1.5 Release 4
      * @see org.mozilla.javascript.Context#jsToJava(Object, Class)
      */
+    @Deprecated
     public static Object coerceType(Class<?> type, Object value)
     {
         return coerceTypeImpl(type, value);

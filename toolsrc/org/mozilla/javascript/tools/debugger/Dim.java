@@ -1178,7 +1178,7 @@ interruptedCheck:
         /**
          * The 'this' object.
          */
-        private Scriptable thisObj;
+        private Object thisObj;
 
         /**
          * Information about the function.
@@ -1210,7 +1210,7 @@ interruptedCheck:
          * Called when the stack frame is entered.
          */
         public void onEnter(Context cx, Scriptable scope,
-                            Scriptable thisObj, Object[] args) {
+                            Object thisObj, Object[] args) {
             contextData.pushFrame(this);
             this.scope = scope;
             this.thisObj = thisObj;

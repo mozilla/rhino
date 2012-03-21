@@ -65,24 +65,37 @@ public class RegExpImpl implements RegExpProxy {
     {
         GlobData data = new GlobData();
         data.mode = actionType;
+        data.str = ScriptRuntime.toString(thisObj);
 
         switch (actionType) {
           case RA_MATCH:
             {
-                Object rval;
-                data.optarg = 1;
-                rval = matchOrReplace(cx, scope, thisObj, args,
-                                      this, data, false);
+                NativeRegExp re = createRegExp(cx, scope, args, 1, false);
+                Object rval = matchOrReplace(cx, scope, thisObj, args,
+                                             this, data, re);
                 return data.arrayobj == null ? rval : data.arrayobj;
             }
 
           case RA_SEARCH:
-            data.optarg = 1;
-            return matchOrReplace(cx, scope, thisObj, args,
-                                  this, data, false);
+            {
+                NativeRegExp re = createRegExp(cx, scope, args, 1, false);
+                return matchOrReplace(cx, scope, thisObj, args,
+                                      this, data, re);
+            }
 
           case RA_REPLACE:
             {
+                boolean useRE = (args.length > 0 && args[0] instanceof NativeRegExp)
+                                || args.length > 2;
+                NativeRegExp re = null;
+                String search = null;
+                if (useRE) {
+                    re = createRegExp(cx, scope, args, 2, true);
+                } else {
+                    Object arg0 = args.length < 1 ? Undefined.instance : args[0];
+                    search = ScriptRuntime.toString(arg0);
+                }
+
                 Object arg1 = args.length < 2 ? Undefined.instance : args[1];
                 String repstr = null;
                 Function lambda = null;
@@ -91,15 +104,30 @@ public class RegExpImpl implements RegExpProxy {
                 } else {
                     repstr = ScriptRuntime.toString(arg1);
                 }
-
-                data.optarg = 2;
                 data.lambda = lambda;
                 data.repstr = repstr;
                 data.dollar = repstr == null ? -1 : repstr.indexOf('$');
                 data.charBuf = null;
                 data.leftIndex = 0;
-                Object val = matchOrReplace(cx, scope, thisObj, args,
-                                            this, data, true);
+
+                Object val;
+                if (useRE) {
+                    val = matchOrReplace(cx, scope, thisObj, args,
+                                         this, data, re);
+                } else {
+                    String str = data.str;
+                    int index = str.indexOf(search);
+                    if (index >= 0) {
+                        int slen = search.length();
+                        this.lastParen = null;
+                        this.leftContext = new SubString(str, 0, index);
+                        this.lastMatch = new SubString(str, index, slen);
+                        this.rightContext = new SubString(str, index + slen, str.length() - index - slen);
+                        val = Boolean.TRUE;
+                    } else {
+                        val = Boolean.FALSE;
+                    }
+                }
 
                 if (data.charBuf == null) {
                     if (data.global || val == null
@@ -121,21 +149,13 @@ public class RegExpImpl implements RegExpProxy {
         }
     }
 
-    /**
-     * Analog of C match_or_replace.
-     */
-    private static Object matchOrReplace(Context cx, Scriptable scope,
-                                         Scriptable thisObj, Object[] args,
-                                         RegExpImpl reImpl,
-                                         GlobData data, boolean forceFlat)
+    private static NativeRegExp createRegExp(Context cx, Scriptable scope,
+                                             Object[] args, int optarg,
+                                             boolean forceFlat)
     {
         NativeRegExp re;
-
-        String str = ScriptRuntime.toString(thisObj);
-        data.str = str;
         Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
-
-        if (args.length == 0) {
+        if (args.length == 0 || args[0] == Undefined.instance) {
             Object compiled = NativeRegExp.compileRE(cx, "", "", false);
             re = new NativeRegExp(topScope, compiled);
         } else if (args[0] instanceof NativeRegExp) {
@@ -143,16 +163,27 @@ public class RegExpImpl implements RegExpProxy {
         } else {
             String src = ScriptRuntime.toString(args[0]);
             String opt;
-            if (data.optarg < args.length) {
+            if (optarg < args.length) {
                 args[0] = src;
-                opt = ScriptRuntime.toString(args[data.optarg]);
+                opt = ScriptRuntime.toString(args[optarg]);
             } else {
                 opt = null;
             }
             Object compiled = NativeRegExp.compileRE(cx, src, opt, forceFlat);
             re = new NativeRegExp(topScope, compiled);
         }
+        return re;
+    }
 
+    /**
+     * Analog of C match_or_replace.
+     */
+    private static Object matchOrReplace(Context cx, Scriptable scope,
+                                         Scriptable thisObj, Object[] args,
+                                         RegExpImpl reImpl,
+                                         GlobData data, NativeRegExp re)
+    {
+        String str = data.str;
         data.global = (re.getFlags() & NativeRegExp.JSREG_GLOB) != 0;
         int[] indexp = { 0 };
         Object result = null;
@@ -164,7 +195,7 @@ public class RegExpImpl implements RegExpProxy {
             else
                 result = Integer.valueOf(-1);
         } else if (data.global) {
-            re.lastIndex = 0;
+            re.lastIndex = 0d;
             for (int count = 0; indexp[0] <= str.length(); count++) {
                 result = re.executeRegExp(cx, scope, reImpl,
                                           str, indexp, NativeRegExp.TEST);
@@ -296,7 +327,7 @@ public class RegExpImpl implements RegExpProxy {
         }
         SubString matchsub = reImpl.lastMatch;
         String matchstr = matchsub.toString();
-        mdata.arrayobj.put(count, mdata.arrayobj, matchstr);
+        mdata.arrayobj.put(count, mdata.arrayobj, matchstr, false);
     }
 
     /*
@@ -336,7 +367,8 @@ public class RegExpImpl implements RegExpProxy {
             ScriptRuntime.setRegExpProxy(cx, re2);
             try {
                 Scriptable parent = ScriptableObject.getTopLevelScope(scope);
-                Object result = rdata.lambda.call(cx, parent, parent, args);
+                Object thisObj = Undefined.instance;
+                Object result = rdata.lambda.call(cx, parent, thisObj, args);
                 lambdaStr = ScriptRuntime.toString(result);
             } finally {
                 ScriptRuntime.setRegExpProxy(cx, reImpl);
@@ -517,14 +549,6 @@ public class RegExpImpl implements RegExpProxy {
         // create an empty Array to return;
         Scriptable result = cx.newArray(scope, 0);
 
-        // return an array consisting of the target if no separator given
-        // don't check against undefined, because we want
-        // 'fooundefinedbar'.split(void 0) to split to ['foo', 'bar']
-        if (args.length < 1) {
-            result.put(0, result, target);
-            return result;
-        }
-
         // Use the second argument as the split limit, if given.
         boolean limited = (args.length > 1) && (args[1] != Undefined.instance);
         long limit = 0;  // Initialize to avoid warning.
@@ -533,6 +557,12 @@ public class RegExpImpl implements RegExpProxy {
             limit = ScriptRuntime.toUint32(args[1]);
             if (limit > target.length())
                 limit = 1 + target.length();
+        }
+
+        // return an array consisting of the target if no separator given
+        if (args.length < 1 || args[0] == Undefined.instance) {
+            result.put(0, result, target, false);
+            return result;
         }
 
         String separator = null;
@@ -573,7 +603,7 @@ public class RegExpImpl implements RegExpProxy {
             else
                 substr = target.substring(ip[0], match);
 
-            result.put(len, result, substr);
+            result.put(len, result, substr, false);
             len++;
         /*
          * Imitate perl's feature of including parenthesized substrings
@@ -585,7 +615,7 @@ public class RegExpImpl implements RegExpProxy {
                 for (int num = 0; num < size; num++) {
                     if (limited && len >= limit)
                         break;
-                    result.put(len, result, parens[0][num]);
+                    result.put(len, result, parens[0][num], false);
                     len++;
                 }
                 matched[0] = false;
@@ -739,7 +769,6 @@ public class RegExpImpl implements RegExpProxy {
 final class GlobData
 {
     int      mode;      /* input: return index, match object, or void */
-    int      optarg;    /* input: index of optional flags argument */
     boolean  global;    /* output: whether regexp was global */
     String   str;       /* output: 'this' parameter object as string */
 

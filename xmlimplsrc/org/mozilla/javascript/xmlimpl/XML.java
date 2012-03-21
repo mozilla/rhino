@@ -110,7 +110,7 @@ class XML extends XMLObjectImpl {
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
         //    TODO    Clarify the following comment and add a reference to the spec
         //    The comment: Spec says assignment to indexed XML object should return type error
         throw ScriptRuntime.typeError("Assignment to indexed XML is not allowed");
@@ -127,7 +127,7 @@ class XML extends XMLObjectImpl {
 
     //    TODO    This is how I found it but I am not sure it makes sense
     @Override
-    public void delete(int index) {
+    public void delete(int index, boolean checked) {
         if (index == 0) {
             this.remove();
         }

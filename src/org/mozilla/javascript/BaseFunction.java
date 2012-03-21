@@ -101,7 +101,7 @@ public class BaseFunction extends IdScriptableObject implements Function
      *
      */
     @Override
-    public boolean hasInstance(Scriptable instance)
+    public boolean hasInstance(Object instance)
     {
         Object protoProp = ScriptableObject.getProperty(this, "prototype");
         if (protoProp instanceof Scriptable) {
@@ -166,7 +166,7 @@ public class BaseFunction extends IdScriptableObject implements Function
             attr = prototypePropertyAttributes;
             break;
           case Id_arguments:
-            attr = DONTENUM | PERMANENT;
+            attr = argumentsAttributes;
             break;
           default: throw new IllegalStateException();
         }
@@ -214,7 +214,12 @@ public class BaseFunction extends IdScriptableObject implements Function
                     // This should not be called since "arguments" is PERMANENT
                     Kit.codeBug();
                 }
-                defaultPut("arguments", value);
+                if (defaultHas("arguments")) {
+                    // check=false since we cannot reach this code in strict-mode
+                    defaultPut("arguments", value, false);
+                } else if ((argumentsAttributes & READONLY) == 0) {
+                    argumentsObj = value;
+                }
                 return;
             case Id_name:
             case Id_arity:
@@ -222,6 +227,19 @@ public class BaseFunction extends IdScriptableObject implements Function
                 return;
         }
         super.setInstanceIdValue(id, value);
+    }
+
+    @Override
+    protected void setInstanceIdAttributes(int id, int attr) {
+        switch (id) {
+            case Id_prototype:
+                prototypePropertyAttributes = attr;
+                return;
+            case Id_arguments:
+                argumentsAttributes = attr;
+                return;
+        }
+        super.setInstanceIdAttributes(id, attr);
     }
 
     @Override
@@ -241,7 +259,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         int arity;
         switch (id) {
           case Id_constructor: arity=1; s="constructor"; break;
-          case Id_toString:    arity=1; s="toString";    break;
+          case Id_toString:    arity=0; s="toString";    break;
           case Id_toSource:    arity=1; s="toSource";    break;
           case Id_apply:       arity=2; s="apply";       break;
           case Id_call:        arity=1; s="call";        break;
@@ -268,7 +286,7 @@ public class BaseFunction extends IdScriptableObject implements Function
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(FUNCTION_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -279,13 +297,13 @@ public class BaseFunction extends IdScriptableObject implements Function
             return jsConstructor(cx, scope, args);
 
           case Id_toString: {
-            BaseFunction realf = realFunction(thisObj, f);
+            BaseFunction realf = realFunction(cx, scope, thisObj, f);
             int indent = ScriptRuntime.toInt32(args, 0);
             return realf.decompile(indent, 0);
           }
 
           case Id_toSource: {
-            BaseFunction realf = realFunction(thisObj, f);
+            BaseFunction realf = realFunction(cx, scope, thisObj, f);
             int indent = 0;
             int flags = Decompiler.TO_SOURCE_FLAG;
             if (args.length != 0) {
@@ -310,26 +328,30 @@ public class BaseFunction extends IdScriptableObject implements Function
             }
             Callable targetFunction = (Callable) thisObj;
             int argc = args.length;
-            final Scriptable boundThis;
+            final Object boundThis;
             final Object[] boundArgs;
-            if (argc > 0) {
-              boundThis = ScriptRuntime.toObjectOrNull(cx, args[0], scope);
+            if (argc <= 1) {
+              boundThis = argc < 1 ? Undefined.instance : args[0];
+              boundArgs = ScriptRuntime.emptyArgs;
+            } else {
+              boundThis = args[0];
               boundArgs = new Object[argc-1];
               System.arraycopy(args, 1, boundArgs, 0, argc-1);
-            } else {
-              boundThis = null;
-              boundArgs = ScriptRuntime.emptyArgs;
             }
             return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f)
+    private BaseFunction realFunction(Context cx, Scriptable scope,
+                                      Object thisObject, IdFunctionObject f)
     {
+        Scriptable thisObj = ScriptRuntime.toObject(cx, scope, thisObject);
         Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
         if (x instanceof BaseFunction) {
             return (BaseFunction)x;
+        } else if (thisObj instanceof BaseFunction) {
+            return (BaseFunction)thisObj;
         }
         throw ScriptRuntime.typeError1("msg.incompat.call",
                                        f.getFunctionName());
@@ -360,6 +382,17 @@ public class BaseFunction extends IdScriptableObject implements Function
     /**
      * Should be overridden.
      */
+    public Object call(Context cx, Scriptable scope, Object thisObject,
+                       Object[] args)
+    {
+        Scriptable thisObj = ScriptRuntime.toObject(cx, scope, thisObject);
+        return call(cx, scope, thisObj, args);
+    }
+
+    /**
+     * @deprecated {@link #call(Context, Scriptable, Object, Object[])}
+     */
+    @Deprecated
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
@@ -370,12 +403,12 @@ public class BaseFunction extends IdScriptableObject implements Function
     {
         Scriptable result = createObject(cx, scope);
         if (result != null) {
-            Object val = call(cx, scope, result, args);
+            Object val = call(cx, scope, (Object) result, args);
             if (val instanceof Scriptable) {
                 result = (Scriptable)val;
             }
         } else {
-            Object val = call(cx, scope, null, args);
+            Object val = call(cx, scope, (Object) null, args);
             if (!(val instanceof Scriptable)) {
                 // It is program error not to return Scriptable from
                 // the call method if createObject returns null.
@@ -475,7 +508,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         }
         NativeObject obj = new NativeObject();
         final int attr = ScriptableObject.DONTENUM;
-        obj.defineProperty("constructor", this, attr);
+        obj.defineProperty("constructor", this, attr, false);
         // put the prototype property into the object now, then in the
         // wacky case of a user defining a function Object(), we don't
         // get an infinite loop trying to find the prototype.
@@ -493,7 +526,7 @@ public class BaseFunction extends IdScriptableObject implements Function
       // <Function name>.arguments is deprecated, so we use a slow
       // way of getting it that doesn't add to the invocation cost.
       // TODO: add warning, error based on version
-      Object value = defaultGet("arguments");
+      Object value = defaultHas("arguments") ? defaultGet("arguments") : argumentsObj;
       if (value != NOT_FOUND) {
           // Should after changing <Function name>.arguments its
           // activation still be available during Function call?
@@ -558,16 +591,19 @@ public class BaseFunction extends IdScriptableObject implements Function
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
 
+        // Compile with explicit interpreter instance to force interpreter
+        // mode.
         Evaluator evaluator = Context.createInterpreter();
         if (evaluator == null) {
             throw new JavaScriptException("Interpreter not present",
                     filename, linep[0]);
         }
 
-        // Compile with explicit interpreter instance to force interpreter
-        // mode.
+        // Functions created through the built-in Function constructor do not
+        // inherit strict mode from environment [ES5.1, 10.1.1 Strict Mode Code]
+        boolean strictMode = false;
         return cx.compileFunction(global, source, evaluator, reporter,
-                                  sourceURI, 1, null);
+                                  sourceURI, 1, null, strictMode);
     }
 
     @Override
@@ -613,5 +649,7 @@ public class BaseFunction extends IdScriptableObject implements Function
     //  {configurable:false, enumerable:false};
     // see ECMA 15.3.5.2
     private int prototypePropertyAttributes = PERMANENT|DONTENUM;
+    private int argumentsAttributes = PERMANENT|DONTENUM;
+    private Object argumentsObj = NOT_FOUND;
 }
 

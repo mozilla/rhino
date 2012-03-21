@@ -103,28 +103,28 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         return prototype.get(index, start);
     }
 
-    public void put(String id, Scriptable start, Object value)
+    public void put(String id, Scriptable start, Object value, boolean checked)
     {
         if (start == this)
             start = prototype;
-        prototype.put(id, start, value);
+        prototype.put(id, start, value, checked);
     }
 
-    public void put(int index, Scriptable start, Object value)
+    public void put(int index, Scriptable start, Object value, boolean checked)
     {
         if (start == this)
             start = prototype;
-        prototype.put(index, start, value);
+        prototype.put(index, start, value, checked);
     }
 
-    public void delete(String id)
+    public void delete(String id, boolean checked)
     {
-        prototype.delete(id);
+        prototype.delete(id, checked);
     }
 
-    public void delete(int index)
+    public void delete(int index, boolean checked)
     {
-        prototype.delete(index);
+        prototype.delete(index, checked);
     }
 
     public Scriptable getPrototype() {
@@ -151,7 +151,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         return prototype.getDefaultValue(typeHint);
     }
 
-    public boolean hasInstance(Scriptable value) {
+    public boolean hasInstance(Object value) {
         return prototype.hasInstance(value);
     }
 
@@ -165,7 +165,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     }
 
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_constructor) {

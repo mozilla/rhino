@@ -117,7 +117,7 @@ public class NativeJavaArray extends NativeJavaObject
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value) {
+    public void put(String id, Scriptable start, Object value, boolean checked) {
         // Ignore assignments to "length"--it's readonly.
         if (!id.equals("length"))
             throw Context.reportRuntimeError1(
@@ -125,7 +125,7 @@ public class NativeJavaArray extends NativeJavaObject
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
         if (0 <= index && index < length) {
             Array.set(array, index, Context.jsToJava(value, cls));
         }
@@ -157,7 +157,7 @@ public class NativeJavaArray extends NativeJavaObject
     }
 
     @Override
-    public boolean hasInstance(Scriptable value) {
+    public boolean hasInstance(Object value) {
         if (!(value instanceof Wrapper))
             return false;
         Object instance = ((Wrapper)value).unwrap();

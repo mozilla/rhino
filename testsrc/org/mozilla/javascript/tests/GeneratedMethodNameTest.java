@@ -70,7 +70,7 @@ public class GeneratedMethodNameTest extends TestCase
 		final Context cx = ContextFactory.getGlobal().enterContext();
 		try {
             Scriptable topScope = cx.initStandardObjects();
-    		topScope.put("javaNameGetter", topScope, new JavaNameGetter());
+    		topScope.put("javaNameGetter", topScope, new JavaNameGetter(), false);
     		Script script = cx.compileString(scriptCode, "myScript", 1, null);
     		script.exec(cx, topScope);
 		} finally {

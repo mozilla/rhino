@@ -64,7 +64,7 @@ class XMLCtor extends IdFunctionObject
             int id = super.getMaxInstanceId() + i;
             String name = getInstanceIdName(id);
             Object value = getInstanceIdValue(id);
-            ScriptableObject.putProperty(target, name, value);
+            ScriptableObject.putProperty(target, name, value, false);
         }
     }
 
@@ -246,7 +246,7 @@ class XMLCtor extends IdFunctionObject
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(XMLCTOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -283,7 +283,7 @@ class XMLCtor extends IdFunctionObject
         hasInstance for XML objects works differently than other objects; see ECMA357 13.4.3.10.
      */
     @Override
-    public boolean hasInstance(Scriptable instance) {
+    public boolean hasInstance(Object instance) {
         return (instance instanceof XML || instance instanceof XMLList);
     }
 }

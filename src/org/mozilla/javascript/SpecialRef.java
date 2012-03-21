@@ -42,70 +42,39 @@ class SpecialRef extends Ref
 {
     static final long serialVersionUID = -7521596632456797847L;
 
-    private static final int SPECIAL_NONE = 0;
-    private static final int SPECIAL_PROTO = 1;
-    private static final int SPECIAL_PARENT = 2;
-
-    private Scriptable target;
-    private int type;
-    private String name;
-
-    private SpecialRef(Scriptable target, int type, String name)
+    /**
+     * Helper class for the __proto__ special property
+     */
+    private static class ProtoSpecialRef extends SpecialRef
     {
-        this.target = target;
-        this.type = type;
-        this.name = name;
-    }
+        static final long serialVersionUID = -6410092416752016016L;
 
-    static Ref createSpecial(Context cx, Object object, String name)
-    {
-        Scriptable target = ScriptRuntime.toObjectOrNull(cx, object);
-        if (target == null) {
-            throw ScriptRuntime.undefReadError(object, name);
+        private ProtoSpecialRef(Object object, Scriptable target, String name,
+                                boolean strict, Scriptable scope)
+        {
+            super(object, target, name, strict, scope);
         }
 
-        int type;
-        if (name.equals("__proto__")) {
-            type = SPECIAL_PROTO;
-        } else if (name.equals("__parent__")) {
-            type = SPECIAL_PARENT;
-        } else {
-            throw new IllegalArgumentException(name);
+        @Override
+        public Object get(Context cx)
+        {
+            if (!ScriptRuntime.hasObjectElem(target, name, cx)) {
+                // 'null' prototype is reported as 'undefined'
+                Object proto = target.getPrototype();
+                return (proto != null ? proto : Undefined.instance);
+            }
+            return super.get(cx);
         }
 
-        if (!cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
-            // Clear special after checking for valid name!
-            type = SPECIAL_NONE;
-        }
-
-        return new SpecialRef(target, type, name);
-    }
-
-    @Override
-    public Object get(Context cx)
-    {
-        switch (type) {
-          case SPECIAL_NONE:
-            return ScriptRuntime.getObjectProp(target, name, cx);
-          case SPECIAL_PROTO:
-            return target.getPrototype();
-          case SPECIAL_PARENT:
-            return target.getParentScope();
-          default:
-            throw Kit.codeBug();
-        }
-    }
-
-    @Override
-    public Object set(Context cx, Object value)
-    {
-        switch (type) {
-          case SPECIAL_NONE:
-            return ScriptRuntime.setObjectProp(target, name, value, cx);
-          case SPECIAL_PROTO:
-          case SPECIAL_PARENT:
-            {
-                Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value);
+        @Override
+        public Object set(Context cx, Object value)
+        {
+            if (!ScriptRuntime.hasObjectElem(target, name, cx)) {
+                // ignore unless value is 'null' or Scriptable
+                if (!(value == null || value instanceof Scriptable)) {
+                    return value;
+                }
+                Scriptable obj = (Scriptable) value;
                 if (obj != null) {
                     // Check that obj does not contain on its prototype/scope
                     // chain to prevent cycles
@@ -115,41 +84,90 @@ class SpecialRef extends Ref
                             throw Context.reportRuntimeError1(
                                 "msg.cyclic.value", name);
                         }
-                        if (type == SPECIAL_PROTO) {
-                            search = search.getPrototype();
-                        } else {
-                            search = search.getParentScope();
-                        }
+                        search = search.getPrototype();
                     } while (search != null);
                 }
-                if (type == SPECIAL_PROTO) {
-                    target.setPrototype(obj);
-                } else {
-                    target.setParentScope(obj);
-                }
-                return obj;
+                target.setPrototype(obj);
+                return value;
             }
-          default:
-            throw Kit.codeBug();
+            return super.set(cx, value);
         }
+
+        @Override
+        public boolean has(Context cx)
+        {
+            // always return true to follow spidermonkey
+            return true;
+        }
+
+        @Override
+        public boolean delete(Context cx)
+        {
+            if (!ScriptRuntime.hasObjectElem(target, name, cx)) {
+                // always return true to follow spidermonkey
+                return true;
+            }
+            return super.delete(cx);
+        }
+    }
+
+    protected final Object object;
+    protected final Scriptable target;
+    protected final String name;
+    protected final boolean strict;
+    protected final Scriptable scope;
+
+    private SpecialRef(Object object, Scriptable target, String name,
+                       boolean strict, Scriptable scope)
+    {
+        this.object = object;
+        this.target = target;
+        this.name = name;
+        this.strict = strict;
+        this.scope = scope;
+    }
+
+    static Ref createSpecial(Context cx, Scriptable scope, Object object,
+                             String name, boolean strict)
+    {
+        Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
+        if (target == null) {
+            throw ScriptRuntime.undefReadError(object, name);
+        }
+
+        if ("__proto__".equals(name)) {
+            if (cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
+                return new ProtoSpecialRef(object, target, name, strict, scope);
+            }
+            return new SpecialRef(object, target, name, strict, scope);
+        }
+
+        throw new IllegalArgumentException(name);
+    }
+
+    @Override
+    public Object get(Context cx)
+    {
+        return ScriptRuntime.getObjectValue(object, name, strict, cx, scope);
+    }
+
+    @Override
+    public Object set(Context cx, Object value)
+    {
+        ScriptRuntime.putObjectValue(object, name, strict, value, cx, scope);
+        return value;
     }
 
     @Override
     public boolean has(Context cx)
     {
-        if (type == SPECIAL_NONE) {
-            return ScriptRuntime.hasObjectElem(target, name, cx);
-        }
-        return true;
+        return ScriptRuntime.hasObjectElem(target, name, cx);
     }
 
     @Override
     public boolean delete(Context cx)
     {
-        if (type == SPECIAL_NONE) {
-            return ScriptRuntime.deleteObjectElem(target, name, cx);
-        }
-        return false;
+        return ScriptRuntime.deleteObjectElem(target, name, cx, strict);
     }
 }
 

@@ -93,7 +93,7 @@ public class Shell extends ScriptableObject
             }
             Scriptable argsObj = cx.newArray(shell, array);
             shell.defineProperty("arguments", argsObj,
-                                 ScriptableObject.DONTENUM);
+                                 ScriptableObject.DONTENUM, false);
 
             shell.processSource(cx, args.length == 0 ? null : args[0]);
         } finally {

@@ -234,7 +234,7 @@ class Namespace extends IdScriptableObject
     public Object execIdCall(IdFunctionObject f,
                              Context cx,
                              Scriptable scope,
-                             Scriptable thisObj,
+                             Object thisObj,
                              Object[] args)
     {
         if (!f.hasTag(NAMESPACE_TAG)) {
@@ -252,7 +252,7 @@ class Namespace extends IdScriptableObject
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private Namespace realThis(Scriptable thisObj, IdFunctionObject f) {
+    private Namespace realThis(Object thisObj, IdFunctionObject f) {
         if(!(thisObj instanceof Namespace))
             throw incompatibleCallError(f);
         return (Namespace)thisObj;

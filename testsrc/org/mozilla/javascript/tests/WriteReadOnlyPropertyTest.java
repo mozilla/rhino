@@ -52,7 +52,7 @@ public class WriteReadOnlyPropertyTest {
 			public Object run(final Context cx) {
 
 				final ScriptableObject top = cx.initStandardObjects();
-				ScriptableObject.putProperty(top, "foo", foo);
+				ScriptableObject.putProperty(top, "foo", foo, false);
 
 				cx.evaluateString(top, script, "script", 0, null);
 				return null;

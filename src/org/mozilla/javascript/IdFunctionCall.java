@@ -49,7 +49,7 @@ public interface IdFunctionCall
      * instance of Scriptable should be returned
      */
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args);
+                             Object thisObj, Object[] args);
 
 }
 

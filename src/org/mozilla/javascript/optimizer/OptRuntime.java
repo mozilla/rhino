@@ -51,39 +51,43 @@ public final class OptRuntime extends ScriptRuntime
     /**
      * Implement ....() call shrinking optimizer code.
      */
-    public static Object call0(Callable fun, Scriptable thisObj,
+    public static Object call0(Object fun, Object thisObj,
                                Context cx, Scriptable scope)
     {
-        return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+        Callable c = ensureCallable(fun);
+        return c.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     /**
      * Implement ....(arg) call shrinking optimizer code.
      */
-    public static Object call1(Callable fun, Scriptable thisObj, Object arg0,
+    public static Object call1(Object fun, Object thisObj, Object arg0,
                                Context cx, Scriptable scope)
     {
-        return fun.call(cx, scope, thisObj, new Object[] { arg0 } );
+        Callable c = ensureCallable(fun);
+        return c.call(cx, scope, thisObj, new Object[] { arg0 } );
     }
 
     /**
      * Implement ....(arg0, arg1) call shrinking optimizer code.
      */
-    public static Object call2(Callable fun, Scriptable thisObj,
+    public static Object call2(Object fun, Object thisObj,
                                Object arg0, Object arg1,
                                Context cx, Scriptable scope)
     {
-        return fun.call(cx, scope, thisObj, new Object[] { arg0, arg1 });
+        Callable c = ensureCallable(fun);
+        return c.call(cx, scope, thisObj, new Object[] { arg0, arg1 });
     }
 
     /**
      * Implement ....(arg0, arg1, ...) call shrinking optimizer code.
      */
-    public static Object callN(Callable fun, Scriptable thisObj,
+    public static Object callN(Object fun, Object thisObj,
                                Object[] args,
                                Context cx, Scriptable scope)
     {
-        return fun.call(cx, scope, thisObj, args);
+        Callable c = ensureCallable(fun);
+        return c.call(cx, scope, thisObj, args);
     }
 
     /**
@@ -92,9 +96,11 @@ public final class OptRuntime extends ScriptRuntime
     public static Object callName(Object[] args, String name,
                                   Context cx, Scriptable scope)
     {
-        Callable f = getNameFunctionAndThis(name, cx, scope);
-        Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, thisObj, args);
+        Object f = getNameObjectAndThis(name, cx, scope);
+        Object thisObj = lastStoredThis(cx);
+        thisObj = (thisObj != null ? thisObj : Undefined.instance);
+        Callable c = ensureCallable(f);
+        return c.call(cx, scope, thisObj, args);
     }
 
     /**
@@ -103,9 +109,11 @@ public final class OptRuntime extends ScriptRuntime
     public static Object callName0(String name,
                                    Context cx, Scriptable scope)
     {
-        Callable f = getNameFunctionAndThis(name, cx, scope);
-        Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+        Object f = getNameObjectAndThis(name, cx, scope);
+        Object thisObj = lastStoredThis(cx);
+        thisObj = (thisObj != null ? thisObj : Undefined.instance);
+        Callable c = ensureCallable(f);
+        return c.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
     /**
@@ -114,9 +122,22 @@ public final class OptRuntime extends ScriptRuntime
     public static Object callProp0(Object value, String property,
                                    Context cx, Scriptable scope)
     {
-        Callable f = getPropFunctionAndThis(value, property, cx, scope);
-        Scriptable thisObj = lastStoredScriptable(cx);
-        return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+        Object f = getPropObjectAndThis(value, property, cx, scope);
+        // ignore stored this
+        Object thisObj = lastStoredThis(cx);
+        thisObj = value;
+        Callable c = ensureCallable(f);
+        return c.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+    }
+
+    /**
+     * Implement ....(arg0, arg1, ...) call-ref shrinking optimizer code.
+     */
+    public static Ref callRef(Object fun, Scriptable thisObj,
+                              Object[] args, Context cx, Scriptable scope)
+    {
+        Callable c = ensureCallable(fun);
+        return callRef(c, scope, thisObj, args, cx);
     }
 
     public static Object add(Object val1, double val2)
@@ -137,11 +158,12 @@ public final class OptRuntime extends ScriptRuntime
         return new ConsString(toString(val1), (CharSequence)val2);
     }
 
-    public static Object elemIncrDecr(Object obj, double index,
-                                      Context cx, int incrDecrMask)
+    public static Object elemIncrDecr(Object obj, double index, boolean strict,
+                                      Context cx, Scriptable scope,
+                                      int incrDecrMask)
     {
-        return ScriptRuntime.elemIncrDecr(obj, new Double(index), cx,
-                                          incrDecrMask);
+        return ScriptRuntime.elemIncrDecr(obj, new Double(index), strict,
+                                          cx, scope, incrDecrMask);
     }
 
     public static Object[] padStart(Object[] currentArgs, int count) {
@@ -151,25 +173,28 @@ public final class OptRuntime extends ScriptRuntime
     }
 
     public static void initFunction(NativeFunction fn, int functionType,
-                                    Scriptable scope, Context cx)
+                                    Scriptable scope, Context cx,
+                                    boolean strict)
     {
-        ScriptRuntime.initFunction(cx, scope, fn, functionType, false);
+        ScriptRuntime.initFunction(cx, scope, fn, functionType, false, strict);
     }
 
-    public static Object callSpecial(Context cx, Callable fun,
-                                     Scriptable thisObj, Object[] args,
+    public static Object callSpecial(Context cx, Object fun,
+                                     Object thisObj, Object[] args,
                                      Scriptable scope,
-                                     Scriptable callerThis, int callType,
-                                     String fileName, int lineNumber)
+                                     Object callerThis, int callType,
+                                     String fileName, int lineNumber,
+                                     boolean strictMode)
     {
-        return ScriptRuntime.callSpecial(cx, fun, thisObj, args, scope,
+        Callable c = ensureCallable(fun);
+        return ScriptRuntime.callSpecial(cx, c, thisObj, args, scope,
                                          callerThis, callType,
-                                         fileName, lineNumber);
+                                         fileName, lineNumber, strictMode);
     }
 
     public static Object newObjectSpecial(Context cx, Object fun,
                                           Object[] args, Scriptable scope,
-                                          Scriptable callerThis, int callType)
+                                          Object callerThis, int callType)
     {
         return ScriptRuntime.newSpecial(cx, fun, args, scope, callType);
     }
@@ -248,7 +273,7 @@ public final class OptRuntime extends ScriptRuntime
                 System.arraycopy(args, 0, argsCopy, 0, args.length);
                 Scriptable argsObj = cx.newArray(global, argsCopy);
                 global.defineProperty("arguments", argsObj,
-                                      ScriptableObject.DONTENUM);
+                                      ScriptableObject.DONTENUM, false);
                 script.exec(cx, global);
                 return null;
             }
@@ -262,7 +287,7 @@ public final class OptRuntime extends ScriptRuntime
 
     public static Scriptable createNativeGenerator(NativeFunction funObj,
                                                    Scriptable scope,
-                                                   Scriptable thisObj,
+                                                   Object thisObj,
                                                    int maxLocals,
                                                    int maxStack)
     {
@@ -292,17 +317,16 @@ public final class OptRuntime extends ScriptRuntime
         static final String resumptionPoint_NAME = "resumptionPoint";
         static final String resumptionPoint_TYPE = "I";
 
-        public Scriptable thisObj;
+        public Object thisObj;
         static final String thisObj_NAME = "thisObj";
-        static final String thisObj_TYPE =
-            "Lorg/mozilla/javascript/Scriptable;";
+        static final String thisObj_TYPE = "Ljava/lang/Object;";
 
         Object[] stackState;
         Object[] localsState;
         int maxLocals;
         int maxStack;
 
-        GeneratorState(Scriptable thisObj, int maxLocals, int maxStack) {
+        GeneratorState(Object thisObj, int maxLocals, int maxStack) {
             this.thisObj = thisObj;
             this.maxLocals = maxLocals;
             this.maxStack = maxStack;

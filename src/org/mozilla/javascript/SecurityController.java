@@ -184,7 +184,7 @@ public abstract class SecurityController
      */
     public Object callWithDomain(Object securityDomain, Context cx,
                                  final Callable callable, Scriptable scope,
-                                 final Scriptable thisObj, final Object[] args)
+                                 final Object thisObj, final Object[] args)
     {
         return execWithDomain(cx, scope, new Script()
         {
@@ -201,6 +201,7 @@ public abstract class SecurityController
      * override
      * {@link #callWithDomain(Object securityDomain, Context cx, Callable callable, Scriptable scope, Scriptable thisObj, Object[] args)}.
      */
+    @Deprecated
     public Object execWithDomain(Context cx, Scriptable scope,
                                  Script script, Object securityDomain)
     {

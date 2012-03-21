@@ -123,73 +123,59 @@ class TokenStream
 // #string_id_map#
 // The following assumes that Token.EOF == 0
         final int
+            // NullLiteral, BooleanLiteral
+            Id_null          = Token.NULL,
+            Id_false         = Token.FALSE,
+            Id_true          = Token.TRUE,
+            // Keyword
             Id_break         = Token.BREAK,
             Id_case          = Token.CASE,
+            Id_catch         = Token.CATCH,
             Id_continue      = Token.CONTINUE,
+            Id_debugger      = Token.DEBUGGER,
             Id_default       = Token.DEFAULT,
             Id_delete        = Token.DELPROP,
             Id_do            = Token.DO,
             Id_else          = Token.ELSE,
-            Id_export        = Token.RESERVED,
-            Id_false         = Token.FALSE,
+            Id_finally       = Token.FINALLY,
             Id_for           = Token.FOR,
             Id_function      = Token.FUNCTION,
             Id_if            = Token.IF,
             Id_in            = Token.IN,
-            Id_let           = Token.LET,
+            Id_instanceof    = Token.INSTANCEOF,
             Id_new           = Token.NEW,
-            Id_null          = Token.NULL,
             Id_return        = Token.RETURN,
             Id_switch        = Token.SWITCH,
             Id_this          = Token.THIS,
-            Id_true          = Token.TRUE,
+            Id_throw         = Token.THROW,
+            Id_try           = Token.TRY,
             Id_typeof        = Token.TYPEOF,
             Id_var           = Token.VAR,
             Id_void          = Token.VOID,
             Id_while         = Token.WHILE,
             Id_with          = Token.WITH,
-            Id_yield         = Token.YIELD,
-
-            // the following are #ifdef RESERVE_JAVA_KEYWORDS in jsscan.c
-            Id_abstract      = Token.RESERVED,
-            Id_boolean       = Token.RESERVED,
-            Id_byte          = Token.RESERVED,
-            Id_catch         = Token.CATCH,
-            Id_char          = Token.RESERVED,
+            // FutureReservedWord
             Id_class         = Token.RESERVED,
             Id_const         = Token.CONST,
-            Id_debugger      = Token.DEBUGGER,
-            Id_double        = Token.RESERVED,
             Id_enum          = Token.RESERVED,
+            Id_export        = Token.RESERVED,
             Id_extends       = Token.RESERVED,
-            Id_final         = Token.RESERVED,
-            Id_finally       = Token.FINALLY,
-            Id_float         = Token.RESERVED,
-            Id_goto          = Token.RESERVED,
-            Id_implements    = Token.RESERVED,
             Id_import        = Token.RESERVED,
-            Id_instanceof    = Token.INSTANCEOF,
-            Id_int           = Token.RESERVED,
-            Id_interface     = Token.RESERVED,
-            Id_long          = Token.RESERVED,
-            Id_native        = Token.RESERVED,
-            Id_package       = Token.RESERVED,
-            Id_private       = Token.RESERVED,
-            Id_protected     = Token.RESERVED,
-            Id_public        = Token.RESERVED,
-            Id_short         = Token.RESERVED,
-            Id_static        = Token.RESERVED,
             Id_super         = Token.RESERVED,
-            Id_synchronized  = Token.RESERVED,
-            Id_throw         = Token.THROW,
-            Id_throws        = Token.RESERVED,
-            Id_transient     = Token.RESERVED,
-            Id_try           = Token.TRY,
-            Id_volatile      = Token.RESERVED;
+            // FutureReservedWord (strict-mode)
+            Id_implements    = Token.STRICT_RESERVED,
+            Id_interface     = Token.STRICT_RESERVED,
+            Id_let           = Token.LET,
+            Id_package       = Token.STRICT_RESERVED,
+            Id_private       = Token.STRICT_RESERVED,
+            Id_protected     = Token.STRICT_RESERVED,
+            Id_public        = Token.STRICT_RESERVED,
+            Id_static        = Token.STRICT_RESERVED,
+            Id_yield         = Token.YIELD;
 
         int id;
         String s = name;
-// #generated# Last update: 2007-04-18 13:53:30 PDT
+// #generated# Last update: 2012-02-20 23:50:10 MEZ
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 2: c=s.charAt(1);
@@ -199,31 +185,20 @@ class TokenStream
                 break L;
             case 3: switch (s.charAt(0)) {
                 case 'f': if (s.charAt(2)=='r' && s.charAt(1)=='o') {id=Id_for; break L0;} break L;
-                case 'i': if (s.charAt(2)=='t' && s.charAt(1)=='n') {id=Id_int; break L0;} break L;
                 case 'l': if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_let; break L0;} break L;
                 case 'n': if (s.charAt(2)=='w' && s.charAt(1)=='e') {id=Id_new; break L0;} break L;
                 case 't': if (s.charAt(2)=='y' && s.charAt(1)=='r') {id=Id_try; break L0;} break L;
                 case 'v': if (s.charAt(2)=='r' && s.charAt(1)=='a') {id=Id_var; break L0;} break L;
                 } break L;
-            case 4: switch (s.charAt(0)) {
-                case 'b': X="byte";id=Id_byte; break L;
-                case 'c': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='s' && s.charAt(1)=='a') {id=Id_case; break L0;} }
-                    else if (c=='r') { if (s.charAt(2)=='a' && s.charAt(1)=='h') {id=Id_char; break L0;} }
-                    break L;
-                case 'e': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='s' && s.charAt(1)=='l') {id=Id_else; break L0;} }
-                    else if (c=='m') { if (s.charAt(2)=='u' && s.charAt(1)=='n') {id=Id_enum; break L0;} }
-                    break L;
-                case 'g': X="goto";id=Id_goto; break L;
-                case 'l': X="long";id=Id_long; break L;
-                case 'n': X="null";id=Id_null; break L;
-                case 't': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='u' && s.charAt(1)=='r') {id=Id_true; break L0;} }
-                    else if (c=='s') { if (s.charAt(2)=='i' && s.charAt(1)=='h') {id=Id_this; break L0;} }
-                    break L;
-                case 'v': X="void";id=Id_void; break L;
-                case 'w': X="with";id=Id_with; break L;
+            case 4: switch (s.charAt(1)) {
+                case 'a': X="case";id=Id_case; break L;
+                case 'h': X="this";id=Id_this; break L;
+                case 'i': X="with";id=Id_with; break L;
+                case 'l': X="else";id=Id_else; break L;
+                case 'n': X="enum";id=Id_enum; break L;
+                case 'o': X="void";id=Id_void; break L;
+                case 'r': X="true";id=Id_true; break L;
+                case 'u': X="null";id=Id_null; break L;
                 } break L;
             case 5: switch (s.charAt(2)) {
                 case 'a': X="class";id=Id_class; break L;
@@ -233,60 +208,46 @@ class TokenStream
                     break L;
                 case 'i': X="while";id=Id_while; break L;
                 case 'l': X="false";id=Id_false; break L;
-                case 'n': c=s.charAt(0);
-                    if (c=='c') { X="const";id=Id_const; }
-                    else if (c=='f') { X="final";id=Id_final; }
-                    break L;
-                case 'o': c=s.charAt(0);
-                    if (c=='f') { X="float";id=Id_float; }
-                    else if (c=='s') { X="short";id=Id_short; }
-                    break L;
+                case 'n': X="const";id=Id_const; break L;
                 case 'p': X="super";id=Id_super; break L;
                 case 'r': X="throw";id=Id_throw; break L;
                 case 't': X="catch";id=Id_catch; break L;
                 } break L;
-            case 6: switch (s.charAt(1)) {
-                case 'a': X="native";id=Id_native; break L;
-                case 'e': c=s.charAt(0);
-                    if (c=='d') { X="delete";id=Id_delete; }
-                    else if (c=='r') { X="return";id=Id_return; }
+            case 6: switch (s.charAt(0)) {
+                case 'd': X="delete";id=Id_delete; break L;
+                case 'e': X="export";id=Id_export; break L;
+                case 'i': X="import";id=Id_import; break L;
+                case 'p': X="public";id=Id_public; break L;
+                case 'r': X="return";id=Id_return; break L;
+                case 's': c=s.charAt(5);
+                    if (c=='c') { X="static";id=Id_static; }
+                    else if (c=='h') { X="switch";id=Id_switch; }
                     break L;
-                case 'h': X="throws";id=Id_throws; break L;
-                case 'm': X="import";id=Id_import; break L;
-                case 'o': X="double";id=Id_double; break L;
-                case 't': X="static";id=Id_static; break L;
-                case 'u': X="public";id=Id_public; break L;
-                case 'w': X="switch";id=Id_switch; break L;
-                case 'x': X="export";id=Id_export; break L;
-                case 'y': X="typeof";id=Id_typeof; break L;
+                case 't': X="typeof";id=Id_typeof; break L;
                 } break L;
             case 7: switch (s.charAt(1)) {
                 case 'a': X="package";id=Id_package; break L;
                 case 'e': X="default";id=Id_default; break L;
                 case 'i': X="finally";id=Id_finally; break L;
-                case 'o': X="boolean";id=Id_boolean; break L;
                 case 'r': X="private";id=Id_private; break L;
                 case 'x': X="extends";id=Id_extends; break L;
                 } break L;
-            case 8: switch (s.charAt(0)) {
-                case 'a': X="abstract";id=Id_abstract; break L;
-                case 'c': X="continue";id=Id_continue; break L;
-                case 'd': X="debugger";id=Id_debugger; break L;
-                case 'f': X="function";id=Id_function; break L;
-                case 'v': X="volatile";id=Id_volatile; break L;
-                } break L;
+            case 8: c=s.charAt(0);
+                if (c=='c') { X="continue";id=Id_continue; }
+                else if (c=='d') { X="debugger";id=Id_debugger; }
+                else if (c=='f') { X="function";id=Id_function; }
+                break L;
             case 9: c=s.charAt(0);
                 if (c=='i') { X="interface";id=Id_interface; }
                 else if (c=='p') { X="protected";id=Id_protected; }
-                else if (c=='t') { X="transient";id=Id_transient; }
                 break L;
             case 10: c=s.charAt(1);
                 if (c=='m') { X="implements";id=Id_implements; }
                 else if (c=='n') { X="instanceof";id=Id_instanceof; }
                 break L;
-            case 12: X="synchronized";id=Id_synchronized; break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
 // #/string_id_map#
@@ -306,6 +267,8 @@ class TokenStream
 
     final double getNumber() { return number; }
     final boolean isNumberOctal() { return isOctal; }
+    final boolean hasOctalCharacterEscape() { return octalChar; }
+    final void setOctalCharacterEscape(boolean b) { octalChar = b; }
 
     final boolean eof() { return hitEOF; }
 
@@ -365,6 +328,7 @@ class TokenStream
             }
 
             if (identifierStart) {
+                boolean checkIdentifierStart = isUnicodeEscapeStart;
                 boolean containsEscape = isUnicodeEscapeStart;
                 for (;;) {
                     if (isUnicodeEscapeStart) {
@@ -384,6 +348,18 @@ class TokenStream
                         if (escapeVal < 0) {
                             parser.addError("msg.invalid.escape");
                             return Token.ERROR;
+                        }
+                        if (checkIdentifierStart) {
+                            checkIdentifierStart = false;
+                            if (! Character.isJavaIdentifierStart((char)escapeVal)) {
+                                parser.addError("msg.invalid.escape");
+                                return Token.ERROR;
+                            }
+                        } else {
+                            if (! Character.isJavaIdentifierPart((char)escapeVal)) {
+                                parser.addError("msg.invalid.escape");
+                                return Token.ERROR;
+                            }
                         }
                         addToString(escapeVal);
                         isUnicodeEscapeStart = false;
@@ -423,14 +399,23 @@ class TokenStream
                                < Context.VERSION_1_7)
                         {
                             // LET and YIELD are tokens only in 1.7 and later
-                            string = result == Token.LET ? "let" : "yield";
-                            result = Token.NAME;
+                            this.string = result == Token.LET ? "let" : "yield";
+                            result = Token.STRICT_RESERVED;
                         }
-                        if (result != Token.RESERVED) {
+                        if (result == Token.STRICT_RESERVED) {
+                            result = parser.inUseStrictDirective
+                                        ? Token.RESERVED
+                                        : Token.NAME;
+                        }
+                        if (result == Token.NAME) {
+                            this.string = (String)allStrings.intern(str);
+                            return result;
+                        } else if (result != Token.RESERVED) {
                             return result;
                         } else if (!parser.compilerEnv.
                                         isReservedKeywordAsIdentifier())
                         {
+                            this.string = (String)allStrings.intern(str);
                             return result;
                         }
                     }
@@ -459,10 +444,14 @@ class TokenStream
                 }
 
                 if (base == 16) {
-                    while (0 <= Kit.xDigitToInt(c, 0)) {
+                    if (0 > Kit.xDigitToInt(c, 0)) {
+                        parser.addError("msg.caught.nfe");
+                        return Token.ERROR;
+                    }
+                    do {
                         addToString(c);
                         c = getChar();
-                    }
+                    } while (0 <= Kit.xDigitToInt(c, 0));
                 } else {
                     while ('0' <= c && c <= '9') {
                         /*
@@ -566,41 +555,31 @@ class TokenStream
                         case 'v': c = 0xb; break;
 
                         case 'u':
-                            // Get 4 hex digits; if the u escape is not
-                            // followed by 4 hex digits, use 'u' + the
-                            // literal character sequence that follows.
-                            int escapeStart = stringBufferTop;
-                            addToString('u');
+                            // Get 4 hex digits
                             escapeVal = 0;
                             for (int i = 0; i != 4; ++i) {
                                 c = getChar();
                                 escapeVal = Kit.xDigitToInt(c, escapeVal);
                                 if (escapeVal < 0) {
-                                    continue strLoop;
+                                    parser.addError("msg.unterminated.string.lit");
+                                    return Token.ERROR;
                                 }
-                                addToString(c);
                             }
-                            // prepare for replace of stored 'u' sequence
-                            // by escape value
-                            stringBufferTop = escapeStart;
                             c = escapeVal;
                             break;
                         case 'x':
-                            // Get 2 hex digits, defaulting to 'x'+literal
-                            // sequence, as above.
+                            // Get 2 hex digits
                             c = getChar();
                             escapeVal = Kit.xDigitToInt(c, 0);
                             if (escapeVal < 0) {
-                                addToString('x');
-                                continue strLoop;
+                                parser.addError("msg.unterminated.string.lit");
+                                return Token.ERROR;
                             } else {
-                                int c1 = c;
                                 c = getChar();
                                 escapeVal = Kit.xDigitToInt(c, escapeVal);
                                 if (escapeVal < 0) {
-                                    addToString('x');
-                                    addToString(c1);
-                                    continue strLoop;
+                                    parser.addError("msg.unterminated.string.lit");
+                                    return Token.ERROR;
                                 } else {
                                     // got 2 hex digits
                                     c = escapeVal;
@@ -618,6 +597,13 @@ class TokenStream
                             if ('0' <= c && c < '8') {
                                 int val = c - '0';
                                 c = getChar();
+                                // Strict mode code allows only \0, then a non-digit.
+                                if (c != 0 || (c >= '0' && c <= '9')) {
+                                    if (parser.inUseStrictDirective) {
+                                        parser.addError("msg.no.octal.strict");
+                                    }
+                                    octalChar = true;
+                                }
                                 if ('0' <= c && c < '8') {
                                     val = 8 * val + c - '0';
                                     c = getChar();
@@ -893,11 +879,6 @@ class TokenStream
         }
     }
 
-    private static boolean isJSFormatChar(int c)
-    {
-        return c > 127 && Character.getType((char)c) == Character.FORMAT;
-    }
-
     /**
      * Parser calls the method when it gets / or /= in literal context.
      */
@@ -911,6 +892,12 @@ class TokenStream
             addToString('=');
         } else {
             if (startToken != Token.DIV) Kit.codeBug();
+            if (peekChar() == '*') {
+                tokenEnd = cursor - 1;
+                this.string = new String(stringBuffer, 0, stringBufferTop);
+                parser.reportError("msg.unterminated.re.lit");
+                return;
+            }
         }
 
         boolean inCharSet = false; // true if inside a '['..']' pair
@@ -926,6 +913,13 @@ class TokenStream
             if (c == '\\') {
                 addToString(c);
                 c = getChar();
+                if (c == '\n' || c == EOF_CHAR) {
+                    ungetChar(c);
+                    tokenEnd = cursor - 1;
+                    this.string = new String(stringBuffer, 0, stringBufferTop);
+                    parser.reportError("msg.unterminated.re.lit");
+                    return;
+                }
             } else if (c == '[') {
                 inCharSet = true;
             } else if (c == ']') {
@@ -1341,9 +1335,6 @@ class TokenStream
                 }
             } else {
                 if (c == BYTE_ORDER_MARK) return c; // BOM is considered whitespace
-                if (isJSFormatChar(c)) {
-                    continue;
-                }
                 if (ScriptRuntime.isJSLineTerminator(c)) {
                     lineEndChar = c;
                     c = '\n';
@@ -1387,9 +1378,6 @@ class TokenStream
                 }
             } else {
                 if (c == BYTE_ORDER_MARK) return c; // BOM is considered whitespace
-                if (isJSFormatChar(c)) {
-                    continue;
-                }
                 if (ScriptRuntime.isJSLineTerminator(c)) {
                     lineEndChar = c;
                     c = '\n';
@@ -1572,6 +1560,7 @@ class TokenStream
     private String string = "";
     private double number;
     private boolean isOctal;
+    private boolean octalChar = false;
 
     // delimiter for last string literal scanned
     private int quoteChar;

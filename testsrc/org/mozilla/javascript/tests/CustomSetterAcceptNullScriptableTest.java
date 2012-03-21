@@ -55,7 +55,7 @@ public class CustomSetterAcceptNullScriptableTest extends TestCase
 	        final Method setMyPropMethod = Foo.class.getMethod("setMyProp", Foo2.class);
 	        foo.defineProperty("myProp", null, null, setMyPropMethod, ScriptableObject.EMPTY);
 
-	        topScope.put("foo", topScope, foo);
+	        topScope.put("foo", topScope, foo, false);
 
 	        ScriptableObject.defineClass(topScope, Foo2.class);
 

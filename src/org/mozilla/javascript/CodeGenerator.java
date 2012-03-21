@@ -47,7 +47,6 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.FunctionNode;
@@ -115,7 +114,7 @@ class CodeGenerator extends Icode {
         itsData = new InterpreterData(compilerEnv.getLanguageVersion(),
                                       scriptOrFn.getSourceName(),
                                       encodedSource,
-                                      ((AstRoot)tree).isInStrictMode());
+                                      scriptOrFn.isInStrictMode());
         itsData.topLevel = true;
 
         if (returnFunction) {
@@ -226,7 +225,7 @@ class CodeGenerator extends Icode {
             CodeGenerator gen = new CodeGenerator();
             gen.compilerEnv = compilerEnv;
             gen.scriptOrFn = fn;
-            gen.itsData = new InterpreterData(itsData);
+            gen.itsData = new InterpreterData(itsData, fn.isInStrictMode());
             gen.generateFunctionICode();
             array[i] = gen.itsData;
         }
@@ -741,12 +740,14 @@ class CodeGenerator extends Icode {
 
           case Token.SETPROP:
           case Token.SETPROP_OP:
+          case Token.STRICT_SETPROP:
+          case Token.STRICT_SETPROP_OP:
             {
                 visitExpression(child, 0);
                 child = child.getNext();
                 String property = child.getString();
                 child = child.getNext();
-                if (type == Token.SETPROP_OP) {
+                if (type == Token.SETPROP_OP || type == Token.STRICT_SETPROP_OP) {
                     addIcode(Icode_DUP);
                     stackChange(1);
                     addStringOp(Token.GETPROP, property);
@@ -754,18 +755,23 @@ class CodeGenerator extends Icode {
                     stackChange(-1);
                 }
                 visitExpression(child, 0);
-                addStringOp(Token.SETPROP, property);
+                int op = (type == Token.SETPROP || type == Token.SETPROP_OP)
+                         ? Token.SETPROP
+                         : Token.STRICT_SETPROP;
+                addStringOp(op, property);
                 stackChange(-1);
             }
             break;
 
           case Token.SETELEM:
           case Token.SETELEM_OP:
+          case Token.STRICT_SETELEM:
+          case Token.STRICT_SETELEM_OP:
             visitExpression(child, 0);
             child = child.getNext();
             visitExpression(child, 0);
             child = child.getNext();
-            if (type == Token.SETELEM_OP) {
+            if (type == Token.SETELEM_OP || type == Token.STRICT_SETELEM_OP) {
                 addIcode(Icode_DUP2);
                 stackChange(2);
                 addToken(Token.GETELEM);
@@ -774,7 +780,10 @@ class CodeGenerator extends Icode {
                 stackChange(-1);
             }
             visitExpression(child, 0);
-            addToken(Token.SETELEM);
+            int op = (type == Token.SETELEM || type == Token.SETELEM_OP)
+                    ? Token.SETELEM
+                    : Token.STRICT_SETELEM;
+            addToken(op);
             stackChange(-2);
             break;
 
