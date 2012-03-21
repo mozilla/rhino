@@ -41,6 +41,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.TopLevel.getBuiltinPrototype;
+import static org.mozilla.javascript.TopLevel.Builtins;
+
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -768,6 +771,40 @@ final class NativeString extends IdScriptableObject
                 end = begin;
         }
         return target.subSequence((int) begin, (int) end);
+    }
+
+    /**
+     * Special [[Get]] if reference base value is primitive, see ES5.1 [8.7.1]:
+     * - Support for the String type
+     * @see ScriptRuntime#getPrimitiveValue(Object, Scriptable, String, int, Context, Scriptable)
+     */
+    static Object getPrimitiveValue(CharSequence base, String property, int index,
+                                    Context cx, Scriptable scope) {
+        // search in instance properties
+        if (property == null) {
+            if (0 <= index && index < base.length()) {
+                return String.valueOf(base.charAt(index));
+            }
+        } else if ("length".equals(property)) {
+            return base.length();
+        }
+        Object value = NOT_FOUND;
+        // search in string prototype
+        NativeString stringProto = getStringPrototype(scope);
+        value = stringProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        if (value != NOT_FOUND) return value;
+        // search in object prototype
+        NativeObject objectProto = (NativeObject)stringProto.getPrototype();
+        value = objectProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        // object prototype has no other prototype
+        assert objectProto.getPrototype() == null;
+        return value;
+    }
+
+    private static NativeString getStringPrototype(Scriptable scope) {
+        Scriptable proto = getBuiltinPrototype(getTopLevelScope(scope), Builtins.String);
+        assert proto instanceof NativeString;
+        return (NativeString) proto;
     }
 
 // #string_id_map#

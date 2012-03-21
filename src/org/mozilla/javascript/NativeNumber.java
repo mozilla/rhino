@@ -40,6 +40,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.TopLevel.getBuiltinPrototype;
+import org.mozilla.javascript.TopLevel.Builtins;
+
 /**
  * This class implements the Number native object.
  *
@@ -237,6 +240,32 @@ final class NativeNumber extends IdScriptableObject
         StringBuilder sb = new StringBuilder();
         DToA.JS_dtostr(sb, oneArgMode, precision + precisionOffset, val);
         return sb.toString();
+    }
+
+    /**
+     * Special [[Get]] if reference base value is primitive, see ES5.1 [8.7.1]:
+     * - Support for the Number type
+     * @see ScriptRuntime#getPrimitiveValue(Object, Scriptable, String, int, Context, Scriptable)
+     */
+    static Object getPrimitiveValue(Number base, String property, int index,
+                                    Context cx, Scriptable scope) {
+        Object value = NOT_FOUND;
+        // search in number prototype
+        NativeNumber numberProto = getNumberPrototype(scope);
+        value = numberProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        if (value != NOT_FOUND) return value;
+        // search in object prototype
+        NativeObject objectProto = (NativeObject)numberProto.getPrototype();
+        value = objectProto.getSlotOrProtoValue(property, index, base, cx, scope);
+        // object prototype has no other prototype
+        assert objectProto.getPrototype() == null;
+        return value;
+    }
+
+    private static NativeNumber getNumberPrototype(Scriptable scope) {
+        Scriptable proto = getBuiltinPrototype(getTopLevelScope(scope), Builtins.Number);
+        assert proto instanceof NativeNumber;
+        return (NativeNumber) proto;
     }
 
 // #string_id_map#
