@@ -43,6 +43,7 @@ import static org.mozilla.javascript.ScriptableObject.EMPTY;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.ScriptableObject.ensureScriptableObject;
+import static org.mozilla.javascript.ScriptableObject.getProperty;
 
 import java.util.Map;
 
@@ -116,7 +117,7 @@ class PropertyDescriptor {
         // FromPropertyDescriptor expects a fully populated descriptor
         int present = desc.getPresent();
         if ((present & ~POPULATED_ACCESSOR_DESC) != 0
-                || (present & ~POPULATED_DATA_DESC) != 0) {
+                && (present & ~POPULATED_DATA_DESC) != 0) {
             throw new IllegalArgumentException(String.valueOf(present));
         }
 
@@ -175,31 +176,37 @@ class PropertyDescriptor {
     static PropertyDescriptor toPropertyDescriptor(Object object) {
         ScriptableObject obj = ensureScriptableObject(object);
         PropertyDescriptor desc = new PropertyDescriptor();
-        Object enumerable = ScriptableObject.getProperty(obj, "enumerable");
-        if (enumerable != NOT_FOUND) {
+        if (ScriptableObject.hasProperty(obj, "enumerable")) {
+            Object enumerable = getProperty(obj, "enumerable");
+            if (enumerable == NOT_FOUND) enumerable = Boolean.FALSE;
             desc.setEnumerable(ScriptRuntime.toBoolean(enumerable));
         }
-        Object configurable = ScriptableObject.getProperty(obj, "configurable");
-        if (configurable != NOT_FOUND) {
+        if (ScriptableObject.hasProperty(obj, "configurable")) {
+            Object configurable = getProperty(obj, "configurable");
+            if (configurable == NOT_FOUND) configurable = Boolean.FALSE;
             desc.setConfigurable(ScriptRuntime.toBoolean(configurable));
         }
-        Object value = ScriptableObject.getProperty(obj, "value");
-        if (value != NOT_FOUND) {
+        if (ScriptableObject.hasProperty(obj, "value")) {
+            Object value = ScriptableObject.getProperty(obj, "value");
+            if (value == NOT_FOUND) value = Undefined.instance;
             desc.setValue(value);
         }
-        Object writable = ScriptableObject.getProperty(obj, "writable");
-        if (writable != NOT_FOUND) {
+        if (ScriptableObject.hasProperty(obj, "writable")) {
+            Object writable = getProperty(obj, "writable");
+            if (writable == NOT_FOUND) writable = Boolean.FALSE;
             desc.setWritable(ScriptRuntime.toBoolean(writable));
         }
-        Object getter = ScriptableObject.getProperty(obj, "get");
-        if (getter != NOT_FOUND) {
+        if (ScriptableObject.hasProperty(obj, "get")) {
+            Object getter = ScriptableObject.getProperty(obj, "get");
+            if (getter == NOT_FOUND) getter = Undefined.instance;
             if (getter != Undefined.instance && !(getter instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(getter);
             }
             desc.setGetter(getter);
         }
-        Object setter = ScriptableObject.getProperty(obj, "set");
-        if (setter != NOT_FOUND) {
+        if (ScriptableObject.hasProperty(obj, "set")) {
+            Object setter = ScriptableObject.getProperty(obj, "set");
+            if (setter == NOT_FOUND) setter = Undefined.instance;
             if (setter != Undefined.instance && !(setter instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(setter);
             }
