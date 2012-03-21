@@ -638,6 +638,27 @@ final class NativeString extends IdScriptableObject
         return desc;
     }
 
+    @Override
+    protected PropertyDescriptor getOwnProperty(String name) {
+        int index = toStringIndex(name);
+        if (0 <= index && index < string.length()) {
+            String value = String.valueOf(string.charAt(index));
+            return new PropertyDescriptor(value, READONLY | PERMANENT);
+        }
+        return super.getOwnProperty(name);
+    }
+
+    @Override
+    protected void updateOwnProperty(String name, PropertyDescriptor desc,
+            PropertyDescriptor current) {
+        int index = toStringIndex(name);
+        if (0 <= index && index < string.length()) {
+            // nothing to change
+            return;
+        }
+        super.updateOwnProperty(name, desc, current);
+    }
+
     /*
      *
      * See ECMA 15.5.4.6.  Uses Java String.indexOf()
