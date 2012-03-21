@@ -3951,7 +3951,12 @@ public class ScriptRuntime {
             }
 
             Scriptable errorObject = cx.newObject(scope, errorName, args);
-            ScriptableObject.putProperty(errorObject, "name", errorName, false);
+            // set "name" unless already present with the same value
+            Object oldName = ScriptableObject.getProperty(errorObject, "name");
+            if (oldName == ScriptableObject.NOT_FOUND
+                    || !errorName.equals(toString(oldName))) {
+                ScriptableObject.putProperty(errorObject, "name", errorName, false);
+            }
             // set exception in Error objects to enable non-ECMA "stack" property
             if (errorObject instanceof NativeError) {
                 ((NativeError) errorObject).setStackProvider(re);
