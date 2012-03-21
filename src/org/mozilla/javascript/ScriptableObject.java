@@ -3272,6 +3272,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             } else {
                 removeSlot(name, 0);
             }
+            return true;
         } else if (checked) {
             throw ScriptRuntime.typeError("cannot [[Delete]]: " + name);
         }

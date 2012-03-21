@@ -231,10 +231,16 @@ final class Arguments extends IdScriptableObject
         int attr;
         switch (id) {
           case Id_callee:
+            attr = calleeAttr;
+            break;
           case Id_caller:
+            attr = callerAttr;
+            break;
           case Id_length:
+            attr = lengthAttr;
+            break;
           case Id_constructor:
-            attr = DONTENUM;
+            attr = constructorAttr;
             break;
           default: throw new IllegalStateException();
         }
@@ -290,6 +296,17 @@ final class Arguments extends IdScriptableObject
             case Id_constructor: constructor = value; return;
         }
         super.setInstanceIdValue(id, value);
+    }
+
+    @Override
+    protected void setInstanceIdAttributes(int id, int attr) {
+        switch (id) {
+            case Id_callee: calleeAttr = attr; return;
+            case Id_length: lengthAttr = attr; return;
+            case Id_caller: callerAttr = attr; return;
+            case Id_constructor: constructorAttr = attr; return;
+        }
+        super.setInstanceIdAttributes(id, attr);
     }
 
     @Override
@@ -405,6 +422,89 @@ final class Arguments extends IdScriptableObject
       }
     }
 
+    @Override
+    protected Object get(String name) {
+        double d = ScriptRuntime.toNumber(name);
+        int index = (int) d;
+        if (d == index) {
+            Object value = arg(index);
+            if (value != NOT_FOUND) {
+                if (sharedWithActivation(index)) {
+                    return getFromActivation(index);
+                } else {
+                    return value;
+                }
+            }
+        }
+        return super.get(name);
+    }
+
+    @Override
+    protected boolean delete(String name, boolean checked) {
+        double d = ScriptRuntime.toNumber(name);
+        int index = (int) d;
+        boolean result = super.delete(name, checked);
+        if (result && d == index) {
+            if (0 <= index && index < args.length) {
+                removeArg(index);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    protected boolean defineOwnProperty(String name, PropertyDescriptor desc,
+            boolean checked) {
+        double d = ScriptRuntime.toNumber(name);
+        int index = (int) d;
+        boolean isMapped = (d == index && arg(index) != NOT_FOUND);
+
+        boolean allowed = super.defineOwnProperty(name, desc, false);
+        if (!allowed) {
+            if (checked) {
+                throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
+            }
+            return false;
+        }
+
+        if (isMapped) {
+            if (desc.isAccessorDescriptor()) {
+                removeArg(index);
+            } else {
+                if (desc.hasValue()) {
+                    replaceArg(index, desc.getValue());
+                }
+                if (desc.hasWritable() && !desc.isWritable()) {
+                    removeArg(index);
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    protected PropertyDescriptor getOwnProperty(String name) {
+        PropertyDescriptor desc = super.getOwnProperty(name);
+        double d = ScriptRuntime.toNumber(name);
+        int index = (int) d;
+        if (d != index) {
+            return desc;
+        }
+        Object value = arg(index);
+        if (value == NOT_FOUND) {
+            return desc;
+        }
+        if (sharedWithActivation(index)) {
+            value = getFromActivation(index);
+        }
+        if (desc != null) { // the descriptor has been redefined
+            desc.setValue(value);
+        } else {
+            desc = new PropertyDescriptor(value, EMPTY);
+        }
+        return desc;
+    }
+
 // Fields to hold caller, callee and length properties,
 // where NOT_FOUND value tags deleted properties.
 // In addition if callerObj == NULL_VALUE, it tags null for scripts, as
@@ -414,6 +514,11 @@ final class Arguments extends IdScriptableObject
     private Object calleeObj;
     private Object lengthObj;
     private Object constructor;
+
+    private int callerAttr = DONTENUM;
+    private int calleeAttr = DONTENUM;
+    private int lengthAttr = DONTENUM;
+    private int constructorAttr = DONTENUM;
 
     private NativeCall activation;
 
