@@ -3067,7 +3067,7 @@ public class ScriptRuntime {
                                          reporter, sourceName, 1, null, strictMode);
         evaluator.setEvalScriptFlag(script);
         if (script instanceof InterpretedFunction) {
-            // TODO: extend Script interface to make this less voodoo
+            // TODO: extend Script interface to make this less voodoo?
             strictMode |= ((InterpretedFunction) script).isStrict();
         }
         if (strictMode) {
@@ -4178,8 +4178,7 @@ public class ScriptRuntime {
                 ++skip;
                 continue;
             }
-            ScriptableObject.defineProperty(array, i, objects[j],
-                                            ScriptableObject.EMPTY, false);
+            array.put(i, array, objects[j], false);
             ++j;
         }
         return array;
