@@ -129,23 +129,12 @@ public class NativeGlobal implements Serializable, IdFunctionCall
             scope, "undefined", Undefined.instance,
             READONLY|DONTENUM|PERMANENT, false);
 
-        String[] errorMethods = {
-                "EvalError",
-                "RangeError",
-                "ReferenceError",
-                "SyntaxError",
-                "TypeError",
-                "URIError",
-                "InternalError",
-                "JavaException"
-        };
-
         /*
             Each error constructor gets its own Error object as a prototype,
             with the 'name' property set to the name of the error.
         */
-        for (int i = 0; i < errorMethods.length; i++) {
-            String name = errorMethods[i];
+        for (TopLevel.NativeErrors error : TopLevel.NativeErrors.values()) {
+            String name = error.name();
             ScriptableObject errorProto =
               (ScriptableObject) ScriptRuntime.newBuiltinObject(cx, scope,
                                                   TopLevel.Builtins.Error,
