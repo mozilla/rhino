@@ -1477,6 +1477,16 @@ public class ScriptRuntime {
      * <b>8.7 The Reference Specification Type:</b> HasPrimitiveBase(V)<br>
      * Returns true if the base value is a Boolean, String, or Number.
      */
+    private static boolean hasPrimitiveBase(Object val) {
+         return val instanceof CharSequence
+                 || val instanceof Number
+                 || val instanceof Boolean;
+    }
+
+    /**
+     * <b>8.7 The Reference Specification Type:</b> HasPrimitiveBase(V)<br>
+     * Returns true if the base value is a Boolean, String, or Number.
+     */
     private static Scriptable tryPrimitive(Context cx, Scriptable scope, Object val) {
         if (val instanceof CharSequence) {
             NativeString result = new NativeString((CharSequence)val);
@@ -1509,27 +1519,29 @@ public class ScriptRuntime {
     /**
      * Special [[Get]] if reference base value is primitive, see ES5.1 [8.7.1]
      */
-    private static Object getPrimitiveValue(Object base, Scriptable obj,
+    private static Object getPrimitiveValue(Object base,
                                             String property, int index,
                                             Context cx, Scriptable scope) {
-        // TODO: could need some optimization
-        assert obj instanceof NativeString
-            || obj instanceof NativeNumber
-            || obj instanceof NativeBoolean;
-        if (property == null) { property = toString(index); }
-        ScriptableObject sobj = (ScriptableObject) obj;
-        PropertyDescriptor desc = sobj.$getProperty(property);
-        if (desc == null) {
-            return Undefined.instance;
-        } else if (desc.isDataDescriptor()) {
-            return desc.getValue();
-        }
-        Object getter = desc.getGetter();
-        if (getter == Undefined.instance) {
-            return Undefined.instance;
+        assert base instanceof CharSequence
+            || base instanceof Number
+            || base instanceof Boolean;
+        Object value;
+        if (base instanceof CharSequence) {
+            value = NativeString.getPrimitiveValue((CharSequence)base,
+                                                   property, index, cx, scope);
+        } else if (base instanceof Number) {
+            value = NativeNumber.getPrimitiveValue((Number)base,
+                                                   property, index, cx, scope);
+        } else if (base instanceof Boolean) {
+            value = NativeBoolean.getPrimitiveValue((Boolean)base,
+                                                    property, index, cx, scope);
         } else {
-            return ((Callable) getter).call(cx, scope, base, emptyArgs);
+            throw Kit.codeBug();
         }
+        if (value == ScriptableObject.NOT_FOUND) {
+            return Undefined.instance;
+        }
+        return value;
     }
 
     /**
@@ -1592,13 +1604,13 @@ public class ScriptRuntime {
             throw undefReadError(obj, elem);
         } else if (obj instanceof Scriptable) {
             sobj = (Scriptable) obj;
-        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+        } else if (hasPrimitiveBase(obj)) {
             String s = toStringIdOrIndex(cx, elem);
             if (s != null) {
-                return getPrimitiveValue(obj, sobj, s, -1, cx, scope);
+                return getPrimitiveValue(obj, s, -1, cx, scope);
             } else {
                 int index = lastIndexResult(cx);
-                return getPrimitiveValue(obj, sobj, null, index, cx, scope);
+                return getPrimitiveValue(obj, null, index, cx, scope);
             }
         } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
             throw errorWithClassName("msg.invalid.type", obj);
@@ -1626,9 +1638,9 @@ public class ScriptRuntime {
             throw undefReadError(obj, property);
         } else if (obj instanceof Scriptable) {
             sobj = (Scriptable) obj;
-        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+        } else if (hasPrimitiveBase(obj)) {
             assert property != null;
-            return getPrimitiveValue(obj, sobj, property, -1, cx, scope);
+            return getPrimitiveValue(obj, property, -1, cx, scope);
         } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
             throw errorWithClassName("msg.invalid.type", obj);
         }
@@ -1655,13 +1667,13 @@ public class ScriptRuntime {
             throw undefReadError(obj, toString(dblIndex));
         } else if (obj instanceof Scriptable) {
             sobj = (Scriptable) obj;
-        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+        } else if (hasPrimitiveBase(obj)) {
             int index = (int) dblIndex;
             if (index == dblIndex) {
-                return getPrimitiveValue(obj, sobj, null, index, cx, scope);
+                return getPrimitiveValue(obj, null, index, cx, scope);
             } else {
                 String s = toString(dblIndex);
-                return getPrimitiveValue(obj, sobj, s, -1, cx, scope);
+                return getPrimitiveValue(obj, s, -1, cx, scope);
             }
         } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
             throw errorWithClassName("msg.invalid.type", obj);
@@ -2762,10 +2774,11 @@ public class ScriptRuntime {
             } else {
                 value = ScriptableObject.getProperty(sobj, property);
             }
-        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+        } else if (hasPrimitiveBase(obj)) {
             // follow spidermonkey (possible bug?)
             tryNoSuchMethod = false;
-            value = getPrimitiveValue(obj, sobj, property, index, cx, scope);
+            sobj = null;
+            value = getPrimitiveValue(obj, property, index, cx, scope);
         } else if ((sobj = tryWrap(cx, scope, obj)) != null) {
             if (property == null) {
                 value = ScriptableObject.getProperty(sobj, index);
@@ -2778,6 +2791,7 @@ public class ScriptRuntime {
 
         boolean valueCallable = value instanceof Callable;
         if (tryNoSuchMethod && !valueCallable) {
+            assert sobj != null;
             Object noSuchMethod = ScriptableObject.getProperty(sobj, "__noSuchMethod__");
             if (noSuchMethod instanceof Callable) {
                 if (property == null) { property = toString(index); }
@@ -2789,7 +2803,7 @@ public class ScriptRuntime {
         if (!valueCallable) {
             if (property == null) { property = toString(index); }
             storeThis(cx, BAD_SCRIPTABLE);
-            return notFunctionError(sobj, value, property);
+            return notFunctionError(obj, value, property);
         }
 
         storeThis(cx, sobj);
@@ -3213,7 +3227,7 @@ public class ScriptRuntime {
             throw undefReadError(obj, id);
         } else if (obj instanceof Scriptable) {
             start = (Scriptable) obj;
-        } else if ((start = tryPrimitive(cx, scope, obj)) != null) {
+        } else if (hasPrimitiveBase(obj)) {
             // use elemIncDecr() for primitives
             return elemIncrDecr(obj, id, strict, cx, scope, incrDecrMask);
         } else if ((start = tryWrap(cx, scope, obj)) == null) {
