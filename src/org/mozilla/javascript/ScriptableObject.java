@@ -1849,64 +1849,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     protected void defineOwnProperty(Context cx, Object id, ScriptableObject desc,
                                      boolean checkValid) {
-
-        Slot slot = getSlot(cx, id, SLOT_QUERY);
-        boolean isNew = slot == null;
-
-        if (checkValid) {
-            ScriptableObject current = slot == null ?
-                    null : slot.getPropertyDescriptor(cx, this);
-            String name = ScriptRuntime.toString(id);
-            checkPropertyChange(name, current, desc);
-        }
-
-        boolean isAccessor = isAccessorDescriptor(desc);
-        final int attributes;
-
-        if (slot == null) { // new slot
-            slot = getSlot(cx, id, isAccessor ? SLOT_MODIFY_GETTER_SETTER : SLOT_MODIFY);
-            attributes = applyDescriptorToAttributeBitset(DONTENUM|READONLY|PERMANENT, desc);
-        } else {
-            attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
-        }
-
-        slot = unwrapSlot(slot);
-
-        if (isAccessor) {
-            if ( !(slot instanceof GetterSlot) ) {
-                slot = getSlot(cx, id, SLOT_MODIFY_GETTER_SETTER);
-            }
-
-            GetterSlot gslot = (GetterSlot) slot;
-
-            Object getter = getProperty(desc, "get");
-            if (getter != NOT_FOUND) {
-                gslot.getter = getter;
-            } else if (isNew) {
-                gslot.getter = Undefined.instance;
-            }
-            Object setter = getProperty(desc, "set");
-            if (setter != NOT_FOUND) {
-                gslot.setter = setter;
-            } else if (isNew) {
-                gslot.setter = Undefined.instance;
-            }
-
-            gslot.value = Undefined.instance;
-            gslot.setAttributes(attributes);
-        } else {
-            if (slot instanceof GetterSlot && isDataDescriptor(desc)) {
-                slot = getSlot(cx, id, SLOT_CONVERT_ACCESSOR_TO_DATA);
-            }
-
-            Object value = getProperty(desc, "value");
-            if (value != NOT_FOUND) {
-                slot.value = value;
-            } else if (isNew) {
-                slot.value = Undefined.instance;
-            }
-            slot.setAttributes(attributes);
-        }
+        String name = ScriptRuntime.toString(id);
+        PropertyDescriptor d = PropertyDescriptor.toPropertyDescriptor(desc);
+        defineOwnProperty(name, d, checkValid);
     }
 
     protected void checkPropertyDefinition(ScriptableObject desc) {
@@ -3447,7 +3392,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return false;
     }
 
-    private void updateOwnProperty(String name, PropertyDescriptor desc,
+    protected void updateOwnProperty(String name, PropertyDescriptor desc,
             PropertyDescriptor current) {
         long index = ScriptRuntime.indexFromString(name);
         if (index >= 0) {
