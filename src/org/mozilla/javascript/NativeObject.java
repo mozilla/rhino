@@ -140,7 +140,7 @@ public class NativeObject extends IdScriptableObject implements Map
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(OBJECT_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -160,7 +160,16 @@ public class NativeObject extends IdScriptableObject implements Map
             return ScriptRuntime.toObject(cx, scope, args[0]);
           }
 
-          case Id_toLocaleString: // For now just alias toString
+          case Id_toLocaleString: {
+              Scriptable thisObject = ScriptRuntime.toObject(cx, scope, thisObj);
+              Object toString = ScriptableObject.getProperty(thisObject, "toString");
+              if (!(toString instanceof Callable)) {
+                  ScriptRuntime.notFunctionError(toString);
+              }
+              Callable fun = (Callable) toString;
+              return fun.call(cx, scope, thisObject, ScriptRuntime.emptyArgs);
+          }
+
           case Id_toString: {
             if (cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE)) {
                 String s = ScriptRuntime.defaultObjectToSource(cx, scope,
@@ -172,49 +181,45 @@ public class NativeObject extends IdScriptableObject implements Map
                 }
                 return s;
             }
-            return ScriptRuntime.defaultObjectToString(thisObj);
+            return ScriptRuntime.defaultObjectToString(cx, scope, thisObj);
           }
 
           case Id_valueOf:
-            return thisObj;
+            return ScriptRuntime.toObject(cx, scope, thisObj);
 
           case Id_hasOwnProperty: {
             boolean result;
-            if (args.length == 0) {
-                result = false;
+            Object arg = args.length < 1 ? Undefined.instance : args[0];
+            String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
+            Scriptable thisObject = ScriptRuntime.toObject(cx, scope, thisObj);
+            if (s == null) {
+                int index = ScriptRuntime.lastIndexResult(cx);
+                result = thisObject.has(index, thisObject);
             } else {
-                String s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
-                if (s == null) {
-                    int index = ScriptRuntime.lastIndexResult(cx);
-                    result = thisObj.has(index, thisObj);
-                } else {
-                    result = thisObj.has(s, thisObj);
-                }
+                result = thisObject.has(s, thisObject);
             }
             return ScriptRuntime.wrapBoolean(result);
           }
 
           case Id_propertyIsEnumerable: {
             boolean result;
-            if (args.length == 0) {
-                result = false;
+            Object arg = args.length < 1 ? Undefined.instance : args[0];
+            String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
+            Scriptable thisObject = ScriptRuntime.toObject(cx, scope, thisObj);
+            if (s == null) {
+                int index = ScriptRuntime.lastIndexResult(cx);
+                result = thisObject.has(index, thisObject);
+                if (result && thisObject instanceof ScriptableObject) {
+                    ScriptableObject so = (ScriptableObject)thisObject;
+                    int attrs = so.getAttributes(index);
+                    result = ((attrs & ScriptableObject.DONTENUM) == 0);
+                }
             } else {
-                String s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
-                if (s == null) {
-                    int index = ScriptRuntime.lastIndexResult(cx);
-                    result = thisObj.has(index, thisObj);
-                    if (result && thisObj instanceof ScriptableObject) {
-                        ScriptableObject so = (ScriptableObject)thisObj;
-                        int attrs = so.getAttributes(index);
-                        result = ((attrs & ScriptableObject.DONTENUM) == 0);
-                    }
-                } else {
-                    result = thisObj.has(s, thisObj);
-                    if (result && thisObj instanceof ScriptableObject) {
-                        ScriptableObject so = (ScriptableObject)thisObj;
-                        int attrs = so.getAttributes(s);
-                        result = ((attrs & ScriptableObject.DONTENUM) == 0);
-                    }
+                result = thisObject.has(s, thisObject);
+                if (result && thisObject instanceof ScriptableObject) {
+                    ScriptableObject so = (ScriptableObject)thisObject;
+                    int attrs = so.getAttributes(s);
+                    result = ((attrs & ScriptableObject.DONTENUM) == 0);
                 }
             }
             return ScriptRuntime.wrapBoolean(result);
@@ -223,10 +228,11 @@ public class NativeObject extends IdScriptableObject implements Map
           case Id_isPrototypeOf: {
             boolean result = false;
             if (args.length != 0 && args[0] instanceof Scriptable) {
+                Scriptable thisObject = ScriptRuntime.toObject(cx, scope, thisObj);
                 Scriptable v = (Scriptable) args[0];
                 do {
                     v = v.getPrototype();
-                    if (v == thisObj) {
+                    if (v == thisObject) {
                         result = true;
                         break;
                     }

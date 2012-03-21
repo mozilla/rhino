@@ -365,10 +365,25 @@ final class Arguments extends IdScriptableObject
     protected void defineOwnProperty(Context cx, Object id,
                                      ScriptableObject desc,
                                      boolean checkValid) {
-      super.defineOwnProperty(cx, id, desc, checkValid);
-
       double d = ScriptRuntime.toNumber(id);
       int index = (int) d;
+      if (d == index) {
+        Object value = arg(index);
+        if (value != NOT_FOUND && !super.has(index, this)) {
+          // set-up default descriptor
+          if (sharedWithActivation(index)) {
+            value = getFromActivation(index);
+          }
+          Scriptable scope = getParentScope();
+          if (scope == null) scope = this;
+          // descriptor with {configurable: true, enumerable: true, writable: true}
+          ScriptableObject def = buildDataDescriptor(scope, value, EMPTY);
+          super.defineOwnProperty(cx, id, def, checkValid);
+        }
+      }
+
+      super.defineOwnProperty(cx, id, desc, checkValid);
+
       if (d != index) return;
 
       Object value = arg(index);
@@ -380,11 +395,12 @@ final class Arguments extends IdScriptableObject
       }
 
       Object newValue = getProperty(desc, "value");
-      if (newValue == NOT_FOUND) return;
+      if (newValue != NOT_FOUND) {
+        replaceArg(index, newValue);
+      }
 
-      replaceArg(index, newValue);
-
-      if (isFalse(getProperty(desc, "writable"))) {
+      Object writable = getProperty(desc, "writable");
+      if (!(writable == NOT_FOUND || ScriptRuntime.toBoolean(writable))) {
         removeArg(index);
       }
     }

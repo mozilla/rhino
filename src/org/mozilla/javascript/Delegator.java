@@ -223,7 +223,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Function#call
      */
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
         return ((Function)obj).call(cx,scope,thisObj,args);

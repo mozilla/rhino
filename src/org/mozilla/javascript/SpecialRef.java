@@ -88,6 +88,10 @@ class SpecialRef extends Ref
           case SPECIAL_NONE:
             return ScriptRuntime.getObjectProp(target, name, cx);
           case SPECIAL_PROTO:
+            Object proto = target.get("__proto__", target);
+            if (proto != ScriptableObject.NOT_FOUND) {
+                return proto;
+            }
             return target.getPrototype();
           case SPECIAL_PARENT:
             return target.getParentScope();

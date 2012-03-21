@@ -161,7 +161,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         return this;
     }
 
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
         // If it looks like a "cast" of an object to this class type,

@@ -85,7 +85,7 @@ public class ScriptRuntime {
           static final long serialVersionUID = -5891740962154902286L;
 
           @Override
-          public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+          public Object call(Context cx, Scriptable scope, Object thisObj, Object[] args) {
             throw typeError0("msg.op.not.allowed");
           }
           @Override
@@ -118,7 +118,7 @@ public class ScriptRuntime {
          * @param args the array of arguments
          * @return the result of the call
          */
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+        public Object call(Context cx, Scriptable scope, Object thisObj,
                            Object[] args)
         {
             Object[] nestedArgs = new Object[2];
@@ -811,6 +811,17 @@ public class ScriptRuntime {
         }
     }
 
+    static String defaultObjectToString(Context cx, Scriptable scope, Object obj)
+    {
+        if (obj == null) {
+            return "[object Null]";
+        } else if (obj == Undefined.instance) {
+            return "[object Undefined]";
+        }
+        Scriptable val = toObject(cx, scope, obj);
+        return "[object " + val.getClassName() + ']';
+    }
+
     static String defaultObjectToString(Scriptable obj)
     {
         return "[object " + obj.getClassName() + ']';
@@ -829,6 +840,11 @@ public class ScriptRuntime {
     }
 
     public static String numberToString(double d, int base) {
+        if ((base < 2) || (base > 36)) {
+            throw Context.reportRuntimeError1(
+                "msg.bad.radix", Integer.toString(base));
+        }
+
         if (d != d)
             return "NaN";
         if (d == Double.POSITIVE_INFINITY)
@@ -837,11 +853,6 @@ public class ScriptRuntime {
             return "-Infinity";
         if (d == 0.0)
             return "0";
-
-        if ((base < 2) || (base > 36)) {
-            throw Context.reportRuntimeError1(
-                "msg.bad.radix", Integer.toString(base));
-        }
 
         if (base != 10) {
             return DToA.JS_dtobasestr(base, d);
@@ -903,8 +914,9 @@ public class ScriptRuntime {
     }
 
     static String defaultObjectToSource(Context cx, Scriptable scope,
-                                        Scriptable thisObj, Object[] args)
+                                        Object thisObject, Object[] args)
     {
+        Scriptable thisObj = toObject(cx, scope, thisObject);
         boolean toplevel, iterating;
         if (cx.iterating == null) {
             toplevel = true;
@@ -1065,6 +1077,21 @@ public class ScriptRuntime {
                                       Class<?> staticClass)
     {
         return toObject(cx, scope, val);
+    }
+
+    /**
+     * <h1>[<i>ECMA 5.1</i>] 9.10 CheckObjectCoercible</h1>
+     * <p>Checks whether {@code val} is convertible by ToObject.</p>
+     * 
+     * @see #toObject(Context, Scriptable, Object)
+     */
+    public static void checkObjectCoercible(Object val) {
+        if (val == null) {
+            throw typeError0("msg.null.to.object");
+        }
+        if (val == Undefined.instance) {
+            throw typeError0("msg.undef.to.object");
+        }
     }
 
     /**
@@ -2328,7 +2355,6 @@ public class ScriptRuntime {
         if (!(value instanceof Callable)) {
             throw notFunctionError(value);
         }
-
         Callable f = (Callable)value;
         Scriptable thisObj = null;
         if (f instanceof Scriptable) {
@@ -2441,20 +2467,12 @@ public class ScriptRuntime {
      */
     public static Object applyOrCall(boolean isApply,
                                      Context cx, Scriptable scope,
-                                     Scriptable thisObj, Object[] args)
+                                     Object thisObj, Object[] args)
     {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Scriptable callThis = null;
-        if (L != 0) {
-            callThis = toObjectOrNull(cx, args[0]);
-        }
-        if (callThis == null) {
-            // This covers the case of args[0] == (null|undefined) as well.
-            callThis = getTopCallScope(cx);
-        }
-
+        Object callThis = (L != 0 ? args[0] : null);
         Object[] callArgs;
         if (isApply) {
             // Follow Ecma 15.3.4.3
@@ -2484,17 +2502,19 @@ public class ScriptRuntime {
         }
     }
 
-    static Callable getCallable(Scriptable thisObj)
+    static Callable getCallable(Object thisObj)
     {
         Callable function;
         if (thisObj instanceof Callable) {
             function = (Callable)thisObj;
-        } else {
-            Object value = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+        } else if (thisObj instanceof Scriptable) {
+            Object value = ((ScriptableObject) thisObj).getDefaultValue(ScriptRuntime.FunctionClass);
             if (!(value instanceof Callable)) {
                 throw ScriptRuntime.notFunctionError(value, thisObj);
             }
             function = (Callable)value;
+        } else {
+            throw ScriptRuntime.notFunctionError(thisObj);
         }
         return function;
     }
@@ -3568,7 +3588,7 @@ public class ScriptRuntime {
                 ++skip;
                 continue;
             }
-            ScriptableObject.putProperty(array, i, objects[j]);
+            ScriptableObject.defineProperty(array, i, objects[j], ScriptableObject.EMPTY);
             ++j;
         }
         return array;

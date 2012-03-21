@@ -165,7 +165,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     }
 
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_constructor) {

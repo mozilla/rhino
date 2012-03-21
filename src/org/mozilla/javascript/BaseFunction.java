@@ -241,7 +241,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         int arity;
         switch (id) {
           case Id_constructor: arity=1; s="constructor"; break;
-          case Id_toString:    arity=1; s="toString";    break;
+          case Id_toString:    arity=0; s="toString";    break;
           case Id_toSource:    arity=1; s="toSource";    break;
           case Id_apply:       arity=2; s="apply";       break;
           case Id_call:        arity=1; s="call";        break;
@@ -268,7 +268,7 @@ public class BaseFunction extends IdScriptableObject implements Function
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(FUNCTION_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -279,13 +279,13 @@ public class BaseFunction extends IdScriptableObject implements Function
             return jsConstructor(cx, scope, args);
 
           case Id_toString: {
-            BaseFunction realf = realFunction(thisObj, f);
+            BaseFunction realf = realFunction(cx, scope, thisObj, f);
             int indent = ScriptRuntime.toInt32(args, 0);
             return realf.decompile(indent, 0);
           }
 
           case Id_toSource: {
-            BaseFunction realf = realFunction(thisObj, f);
+            BaseFunction realf = realFunction(cx, scope, thisObj, f);
             int indent = 0;
             int flags = Decompiler.TO_SOURCE_FLAG;
             if (args.length != 0) {
@@ -325,11 +325,15 @@ public class BaseFunction extends IdScriptableObject implements Function
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f)
+    private BaseFunction realFunction(Context cx, Scriptable scope,
+                                      Object thisObject, IdFunctionObject f)
     {
+        Scriptable thisObj = ScriptRuntime.toObject(cx, scope, thisObject);
         Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
         if (x instanceof BaseFunction) {
             return (BaseFunction)x;
+        } else if (thisObj instanceof BaseFunction) {
+            return (BaseFunction)thisObj;
         }
         throw ScriptRuntime.typeError1("msg.incompat.call",
                                        f.getFunctionName());
@@ -360,6 +364,17 @@ public class BaseFunction extends IdScriptableObject implements Function
     /**
      * Should be overridden.
      */
+    public Object call(Context cx, Scriptable scope, Object thisObject,
+                       Object[] args)
+    {
+        Scriptable thisObj = ScriptRuntime.toObject(cx, scope, thisObject);
+        return call(cx, scope, thisObj, args);
+    }
+
+    /**
+     * @deprecated {@link #call(Context, Scriptable, Object, Object[])}
+     */
+    @Deprecated
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
@@ -370,12 +385,12 @@ public class BaseFunction extends IdScriptableObject implements Function
     {
         Scriptable result = createObject(cx, scope);
         if (result != null) {
-            Object val = call(cx, scope, result, args);
+            Object val = call(cx, scope, (Object) result, args);
             if (val instanceof Scriptable) {
                 result = (Scriptable)val;
             }
         } else {
-            Object val = call(cx, scope, null, args);
+            Object val = call(cx, scope, (Object) null, args);
             if (!(val instanceof Scriptable)) {
                 // It is program error not to return Scriptable from
                 // the call method if createObject returns null.

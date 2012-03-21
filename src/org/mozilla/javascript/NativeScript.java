@@ -82,7 +82,7 @@ class NativeScript extends BaseFunction
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
         if (script != null) {
@@ -135,7 +135,7 @@ class NativeScript extends BaseFunction
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
+                             Object thisObj, Object[] args)
     {
         if (!f.hasTag(SCRIPT_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -174,7 +174,7 @@ class NativeScript extends BaseFunction
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private static NativeScript realThis(Scriptable thisObj, IdFunctionObject f)
+    private static NativeScript realThis(Object thisObj, IdFunctionObject f)
     {
         if (!(thisObj instanceof NativeScript))
             throw incompatibleCallError(f);

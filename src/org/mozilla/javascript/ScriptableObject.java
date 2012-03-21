@@ -1553,6 +1553,42 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param attributes the attributes of the JavaScript property
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
+    public void defineProperty(int index, Object value,
+                               int attributes)
+    {
+        checkNotSealed(null, index);
+        put(index, this, value);
+        setAttributes(index, attributes);
+    }
+
+    /**
+     * Utility method to add properties to arbitrary Scriptable object.
+     * If destination is instance of ScriptableObject, calls
+     * defineProperty there, otherwise calls put in destination
+     * ignoring attributes
+     */
+    public static void defineProperty(Scriptable destination,
+                                      int index, Object value,
+                                      int attributes)
+    {
+        if (!(destination instanceof ScriptableObject)) {
+            destination.put(index, destination, value);
+            return;
+        }
+        ScriptableObject so = (ScriptableObject)destination;
+        so.defineProperty(index, value, attributes);
+    }
+
+    /**
+     * Define a JavaScript property.
+     *
+     * Creates the property with an initial value and sets its attributes.
+     *
+     * @param propertyName the name of the property to define.
+     * @param value the initial value of the property
+     * @param attributes the attributes of the JavaScript property
+     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
+     */
     public void defineProperty(String propertyName, Object value,
                                int attributes)
     {
@@ -1846,10 +1882,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             Object getter = getProperty(desc, "get");
             if (getter != NOT_FOUND) {
                 gslot.getter = getter;
+            } else if (isNew) {
+                gslot.getter = Undefined.instance;
             }
             Object setter = getProperty(desc, "set");
             if (setter != NOT_FOUND) {
                 gslot.setter = setter;
+            } else if (isNew) {
+                gslot.setter = Undefined.instance;
             }
 
             gslot.value = Undefined.instance;
@@ -1894,9 +1934,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 if (isTrue(getProperty(desc, "configurable")))
                     throw ScriptRuntime.typeError1(
                         "msg.change.configurable.false.to.true", id);
-                if (isTrue(current.get("enumerable", current)) != isTrue(getProperty(desc, "enumerable")))
-                    throw ScriptRuntime.typeError1(
-                        "msg.change.enumerable.with.configurable.false", id);
+                if (hasProperty(desc, "enumerable")) {
+                    // only reject if 'enumerable' is present in desc
+                    if (isTrue(current.get("enumerable", current)) != isTrue(getProperty(desc, "enumerable")))
+                        throw ScriptRuntime.typeError1(
+                            "msg.change.enumerable.with.configurable.false", id);
+                }
                 boolean isData = isDataDescriptor(desc);
                 boolean isAccessor = isAccessorDescriptor(desc);
                 if (!isData && !isAccessor) {
