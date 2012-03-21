@@ -588,7 +588,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     public void delete(String name, boolean checked)
     {
         checkNotSealed(name, 0);
-        removeSlot(name, 0);
+        removeSlot(name, 0, checked);
     }
 
     /**
@@ -616,7 +616,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     public void delete(int index, boolean checked)
     {
         checkNotSealed(null, index);
-        removeSlot(null, index);
+        removeSlot(null, index, checked);
     }
 
     /**
@@ -2896,7 +2896,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return newSlot;
     }
 
-    private synchronized void removeSlot(String name, int index) {
+    private synchronized void removeSlot(String name, int index, boolean checked) {
         int indexOrHash = (name != null ? name.hashCode() : index);
 
         Slot[] slotsLocalRef = slots;
@@ -2915,7 +2915,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 prev = slot;
                 slot = slot.next;
             }
-            if (slot != null && (slot.getAttributes() & PERMANENT) == 0) {
+            if (slot == null) {
+                return;
+            } else if ((slot.getAttributes() & PERMANENT) != 0) {
+                if (checked) {
+                    // TODO: proper error message
+                    throw ScriptRuntime.typeError("[[Permanent]]");
+                }
+                return;
+            } else {
                 count--;
                 // remove slot from hash table
                 if (prev == slot) {
@@ -3294,9 +3302,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         } else if (desc.isConfigurable()) {
             long index = ScriptRuntime.indexFromString(name);
             if (index >= 0) {
-                removeSlot(null, (int) index);
+                removeSlot(null, (int) index, checked);
             } else {
-                removeSlot(name, 0);
+                removeSlot(name, 0, checked);
             }
             return true;
         } else if (checked) {

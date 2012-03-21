@@ -523,6 +523,10 @@ final class NativeString extends IdScriptableObject
     @Override
     public void delete(int index, boolean checked) {
         if (0 <= index && index < string.length()) {
+            if (checked) {
+                // TODO: error message
+                throw ScriptRuntime.typeError("[[Permanent]]");
+            }
             return;
         }
         super.delete(index, checked);

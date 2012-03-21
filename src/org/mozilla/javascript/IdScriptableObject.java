@@ -213,10 +213,13 @@ public abstract class IdScriptableObject extends ScriptableObject
                     String name = (String)valueArray[nameSlot];
                     start.put(name, start, value, checked);
                 }
+            } else if (checked) {
+                // TODO: error message
+                throw ScriptRuntime.typeError("[[ReadOnly]]");
             }
         }
 
-        final void delete(int id)
+        final void delete(int id, boolean checked)
         {
             ensureId(id);
             int attr = attributeArray[id - 1];
@@ -226,6 +229,9 @@ public abstract class IdScriptableObject extends ScriptableObject
                     valueArray[valueSlot] = NOT_FOUND;
                     attributeArray[id - 1] = EMPTY;
                 }
+            } else if (checked) {
+                // TODO: error message
+                throw ScriptRuntime.typeError("[[Permanent]]");
             }
         }
 
@@ -401,6 +407,9 @@ public abstract class IdScriptableObject extends ScriptableObject
                 else {
                     start.put(name, start, value, checked);
                 }
+            } else if (checked) {
+                // TODO: error message
+                throw ScriptRuntime.typeError("[[ReadOnly]]");
             }
             return;
         }
@@ -429,6 +438,9 @@ public abstract class IdScriptableObject extends ScriptableObject
                 if ((attr & PERMANENT) == 0) {
                     int id = (info & 0xFFFF);
                     setInstanceIdValue(id, NOT_FOUND);
+                } else if (checked) {
+                    // TODO: error message
+                    throw ScriptRuntime.typeError("[[Permanent]]");
                 }
                 return;
             }
@@ -437,7 +449,7 @@ public abstract class IdScriptableObject extends ScriptableObject
             int id = prototypeValues.findId(name);
             if (id != 0) {
                 if (!isSealed()) {
-                    prototypeValues.delete(id);
+                    prototypeValues.delete(id, checked);
                 }
                 return;
             }
@@ -794,7 +806,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                 }
             } else {
                 if (desc.isAccessorDescriptor()) {
-                    prototypeValues.delete(id); // it will be replaced with a slot
+                    prototypeValues.delete(id, false); // it will be replaced with a slot
                 } else {
                     if (desc.hasValue()) {
                         // save to pass 'false' b/c read-only check already passed
