@@ -74,13 +74,20 @@ public class ScriptRuntime {
     protected ScriptRuntime() {
     }
 
-
     /**
      * Returns representation of the [[ThrowTypeError]] object.
      * See ECMA 5 spec, 13.2.3
      */
     public static BaseFunction typeErrorThrower() {
-      if (THROW_TYPE_ERROR == null) {
+      return typeErrorThrower(Context.getCurrentContext());
+    }
+
+    /**
+     * Returns representation of the [[ThrowTypeError]] object.
+     * See ECMA 5 spec, 13.2.3
+     */
+    public static BaseFunction typeErrorThrower(Context cx) {
+      if (cx.typeErrorThrower == null) {
         BaseFunction thrower = new BaseFunction() {
           static final long serialVersionUID = -5891740962154902286L;
 
@@ -93,12 +100,12 @@ public class ScriptRuntime {
             return 0;
           }
         };
+        ScriptRuntime.setFunctionProtoAndParent(thrower, cx.topCallScope);
         thrower.preventExtensions();
-        THROW_TYPE_ERROR = thrower;
+        cx.typeErrorThrower = thrower;
       }
-      return THROW_TYPE_ERROR;
+      return cx.typeErrorThrower;
     }
-    private static BaseFunction THROW_TYPE_ERROR = null;
 
     static class NoSuchMethodShim implements Callable {
         String methodName;
@@ -1780,6 +1787,10 @@ public class ScriptRuntime {
     public static Boolean delete(Object obj, Object id, Context cx,
                                  boolean isName, boolean strict)
     {
+        if (isName && strict) {
+            // TODO: error message
+            throw constructError("SyntaxError", "<missing error-message>");
+        }
         Scriptable sobj = toObjectOrNull(cx, obj);
         if (sobj == null) {
             if (isName) {
@@ -2563,16 +2574,25 @@ public class ScriptRuntime {
     }
 
     public static Object callSpecial(Context cx, Callable fun,
-                                     Scriptable thisObj,
+                                     Object thisObj,
                                      Object[] args, Scriptable scope,
                                      Object callerThis, int callType,
                                      String filename, int lineNumber,
                                      boolean strictMode)
     {
         if (callType == Node.SPECIALCALL_EVAL) {
-            if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
+            assert thisObj == Undefined.instance || thisObj instanceof Scriptable;
+            // FIXME: This really needs be to checked with spec!
+            if (thisObj == Undefined.instance) {
                 return evalSpecial(cx, scope, callerThis, args,
                                    filename, lineNumber, strictMode);
+            } else {
+                if (! (thisObj instanceof Scriptable)) Kit.codeBug();
+                if (((Scriptable) thisObj).getParentScope() == null
+                        && NativeGlobal.isEvalFunction(fun)) {
+                    return evalSpecial(cx, scope, callerThis, args,
+                                       filename, lineNumber, strictMode);
+                }
             }
         } else if (callType == Node.SPECIALCALL_WITH) {
             if (NativeWith.isWithFunction(fun)) {
@@ -2640,7 +2660,7 @@ public class ScriptRuntime {
     {
         if (arg1 == null || arg1 == Undefined.instance) {
             return ScriptRuntime.emptyArgs;
-        } else if (arg1 instanceof NativeArray || arg1 instanceof Arguments) {
+        } else if (arg1 instanceof Scriptable) {
             return cx.getElements((Scriptable) arg1);
         } else {
             throw ScriptRuntime.typeError0("msg.arg.isnt.array");
