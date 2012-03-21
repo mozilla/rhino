@@ -402,9 +402,15 @@ public class FunctionObject extends BaseFunction
      *          Context, Scriptable, Scriptable, Object[])
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Object thisObj,
+    public Object call(Context cx, Scriptable scope, Object thisObject,
                        Object[] args)
     {
+        Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, thisObject);
+        if (thisObj == null) {
+            // This covers the case of args[0] == (null|undefined) as well.
+            thisObj = ScriptRuntime.getTopCallScope(cx);
+        }
+        assert thisObj != null;
         Object result;
         boolean checkMethodResult = false;
         int argsLength = args.length;
