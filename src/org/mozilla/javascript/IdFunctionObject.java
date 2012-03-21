@@ -126,20 +126,47 @@ public class IdFunctionObject extends BaseFunction
     public Object call(Context cx, Scriptable scope, Object thisObj,
                        Object[] args)
     {
+        if (thisObj == null && useCallAsConstructor) {
+            // thisObj == null is a special marker for constructor functions
+            thisObj = Undefined.instance;
+        }
         return idcall.execIdCall(this, cx, scope, thisObj, args);
+    }
+
+    @Override
+    public Scriptable construct(Context cx, Scriptable scope, Object[] args)
+    {
+        if (!useCallAsConstructor) {
+            // Throw error if not explicitly coded to be used as constructor,
+            // to satisfy ECMAScript standard (see bugzilla 202019).
+            throw ScriptRuntime.typeError1("msg.not.ctor", functionName);
+        }
+        Object val = idcall.execIdCall(this, cx, scope, null, args);
+        if (!(val instanceof Scriptable)) {
+            // It is program error not to return Scriptable from
+            // the call method of constructor functions.
+            throw new IllegalStateException(
+                "Bad implementaion of call as constructor, name="
+                +getFunctionName()+" in "+getClass().getName());
+        }
+        Scriptable result = (Scriptable)val;
+        if (result.getPrototype() == null) {
+            result.setPrototype(getClassPrototype());
+        }
+        if (result.getParentScope() == null) {
+            Scriptable parent = getParentScope();
+            if (result != parent) {
+                result.setParentScope(parent);
+            }
+        }
+        return result;
     }
 
     @Override
     public Scriptable createObject(Context cx, Scriptable scope)
     {
-        if (useCallAsConstructor) {
-            return null;
-        }
-        // Throw error if not explicitly coded to be used as constructor,
-        // to satisfy ECMAScript standard (see bugzilla 202019).
-        // To follow current (2003-05-01) SpiderMonkey behavior, change it to:
-        // return super.createObject(cx, scope);
-        throw ScriptRuntime.typeError1("msg.not.ctor", functionName);
+        // should no longer be called now that construct() is overridden as well
+        throw Kit.codeBug();
     }
 
     @Override
