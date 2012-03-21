@@ -513,14 +513,23 @@ public class Codegen implements Evaluator
                                 | ClassFileWriter.ACC_FINAL));
 
         // Generate code for:
-        // Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, thisObject, scope);
-        // if (thisObj == null) {
-        //     thisObj = ScriptRuntime.getTopCallScope(cx);
+        // if (!isStrict()) {
+        //     thisObj = ScriptRuntime.toObjectOrNull(cx, thisObj, scope);
+        //     if (thisObj == null) {
+        //         thisObj = ScriptRuntime.getTopCallScope(cx);
+        //     }
         // }
+        int notStrict = cfw.acquireLabel();
         int thisObjNull = cfw.acquireLabel();
-        cfw.addALoad(1);
-        cfw.addALoad(3);
-        cfw.addALoad(2);
+        cfw.addALoad(0); // <this>
+        cfw.addInvoke(ByteCode.INVOKEVIRTUAL,
+                      cfw.getClassName(),
+                      "isStrict",
+                      "()Z");
+        cfw.add(ByteCode.IFNE, notStrict);
+        cfw.addALoad(1); // context
+        cfw.addALoad(3); // thisObj
+        cfw.addALoad(2); // scope
         cfw.addInvoke(ByteCode.INVOKESTATIC,
                       "org/mozilla/javascript/ScriptRuntime",
                       "toObjectOrNull",
@@ -528,17 +537,19 @@ public class Codegen implements Evaluator
                       +"Ljava/lang/Object;"
                       +"Lorg/mozilla/javascript/Scriptable;"
                       +")Lorg/mozilla/javascript/Scriptable;");
-        cfw.addAStore(5);
-        cfw.addALoad(5);
+        cfw.add(ByteCode.DUP);
+        // stack: ... thisObj thisObj
         cfw.add(ByteCode.IFNONNULL, thisObjNull);
-        cfw.addALoad(1);
+        cfw.add(ByteCode.POP);
+        cfw.addALoad(1);  // context
         cfw.addInvoke(ByteCode.INVOKESTATIC,
                       "org/mozilla/javascript/ScriptRuntime",
                       "getTopCallScope",
                       "(Lorg/mozilla/javascript/Context;"
                       +")Lorg/mozilla/javascript/Scriptable;");
-        cfw.addAStore(5);
         cfw.markLabel(thisObjNull);
+        cfw.addAStore(3); // thisObj
+        cfw.markLabel(notStrict);
 
         // Generate code for:
         // if (!ScriptRuntime.hasTopCall(cx)) {
@@ -556,7 +567,7 @@ public class Codegen implements Evaluator
         cfw.addALoad(0);
         cfw.addALoad(1);
         cfw.addALoad(2);
-        cfw.addALoad(5);
+        cfw.addALoad(3);
         cfw.addALoad(4);
         cfw.addInvoke(ByteCode.INVOKESTATIC,
                       "org/mozilla/javascript/ScriptRuntime",
@@ -574,7 +585,7 @@ public class Codegen implements Evaluator
         cfw.addALoad(0);
         cfw.addALoad(1);
         cfw.addALoad(2);
-        cfw.addALoad(5);
+        cfw.addALoad(3);
         cfw.addALoad(4);
 
         int end = scriptOrFnNodes.length;
@@ -637,8 +648,8 @@ public class Codegen implements Evaluator
                           getBodyMethodSignature(n));
             cfw.add(ByteCode.ARETURN);
         }
-        cfw.stopMethod((short)6);
-        // 5: this, cx, scope, js this, args[], js this'
+        cfw.stopMethod((short)5);
+        // 5: this, cx, scope, js this, args[]
     }
 
     private void generateMain(ClassFileWriter cfw)
@@ -875,8 +886,9 @@ public class Codegen implements Evaluator
                 break;
               case Do_isStrict:
                 methodLocals = 1; // Only this
-                cfw.startMethod("getParamOrVarConst", "()Z",
+                cfw.startMethod("isStrict", "()Z",
                                 ClassFileWriter.ACC_PUBLIC);
+                break;
               default:
                 throw Kit.codeBug();
             }
@@ -1020,7 +1032,7 @@ public class Codegen implements Evaluator
                     break;
 
                   case Do_isStrict:
-                    cfw.add(n.isInStrictMode() ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
+                    cfw.addPush(n.isInStrictMode());
                     cfw.add(ByteCode.IRETURN);
                     break;
 
@@ -1301,7 +1313,7 @@ public class Codegen implements Evaluator
         sb.append(mainClassSignature);
         sb.append("Lorg/mozilla/javascript/Context;"
                   +"Lorg/mozilla/javascript/Scriptable;"
-                  +"Lorg/mozilla/javascript/Scriptable;");
+                  +"Ljava/lang/Object;");
         if (n.getType() == Token.FUNCTION) {
             OptFunctionNode ofn = OptFunctionNode.get(n);
             if (ofn.isTargetOfDirectCall()) {
@@ -2333,6 +2345,7 @@ class BodyCodegen
                 child = child.getNext();
                 generateCallArgArray(node, child, false);
                 cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
                 addOptRuntimeInvoke(
                     "callRef",
                     "(Ljava/lang/Object;"
@@ -2757,11 +2770,12 @@ class BodyCodegen
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 cfw.addPush(isName);
+                cfw.addPush(scriptOrFn.isInStrictMode());
                 addScriptRuntimeInvoke("delete",
                                        "(Ljava/lang/Object;"
                                        +"Ljava/lang/Object;"
                                        +"Lorg/mozilla/javascript/Context;"
-                                       +"Z)Ljava/lang/Object;");
+                                       +"ZZ)Ljava/lang/Boolean;");
                 break;
 
               case Token.BINDNAME:
@@ -3288,6 +3302,7 @@ class BodyCodegen
                             +"Lorg/mozilla/javascript/Scriptable;"
                             +"I" // call type
                             +"Ljava/lang/String;I"  // filename, linenumber
+                            +"Z" // strict flag
                             +")Ljava/lang/Object;";
             cfw.addALoad(variableObjectLocal);
             cfw.addALoad(thisObjLocal);
@@ -3295,6 +3310,7 @@ class BodyCodegen
             String sourceName = scriptOrFn.getSourceName();
             cfw.addPush(sourceName == null ? "" : sourceName);
             cfw.addPush(itsLineNumber);
+            cfw.addPush(scriptOrFn.isInStrictMode());
         }
 
         addOptRuntimeInvoke(methodName, callSignature);
@@ -3339,7 +3355,7 @@ class BodyCodegen
                 generateObjectAndThisObj(child, node);
                 methodName = "call0";
                 signature = "(Ljava/lang/Object;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
+                            +"Ljava/lang/Object;"
                             +"Lorg/mozilla/javascript/Context;"
                             +"Lorg/mozilla/javascript/Scriptable;"
                             +")Ljava/lang/Object;";
@@ -3370,7 +3386,7 @@ class BodyCodegen
                 generateExpression(firstArgChild, node);
                 methodName = "call1";
                 signature = "(Ljava/lang/Object;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
+                            +"Ljava/lang/Object;"
                             +"Ljava/lang/Object;"
                             +"Lorg/mozilla/javascript/Context;"
                             +"Lorg/mozilla/javascript/Scriptable;"
@@ -3380,7 +3396,7 @@ class BodyCodegen
                 generateExpression(firstArgChild.getNext(), node);
                 methodName = "call2";
                 signature = "(Ljava/lang/Object;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
+                            +"Ljava/lang/Object;"
                             +"Ljava/lang/Object;"
                             +"Ljava/lang/Object;"
                             +"Lorg/mozilla/javascript/Context;"
@@ -3390,7 +3406,7 @@ class BodyCodegen
                 generateCallArgArray(node, firstArgChild, false);
                 methodName = "callN";
                 signature = "(Ljava/lang/Object;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
+                            +"Ljava/lang/Object;"
                             +"[Ljava/lang/Object;"
                             +"Lorg/mozilla/javascript/Context;"
                             +"Lorg/mozilla/javascript/Scriptable;"
@@ -3618,7 +3634,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     {
         // Place on stack (function object, function this) pair
         int type = node.getType();
-        switch (node.getType()) {
+        switch (type) {
           case Token.GETPROPNOWARN:
             throw Kit.codeBug();
 
@@ -3685,6 +3701,29 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             "lastStoredScriptable",
             "(Lorg/mozilla/javascript/Context;"
             +")Lorg/mozilla/javascript/Scriptable;");
+        switch (type) {
+          case Token.GETPROP:
+          case Token.GETELEM:
+              // no further changes needed
+              break;
+          case Token.NAME: {
+            // replace null with undefined
+            int undefCheckLabel = cfw.acquireLabel();
+            // stack: ... thisObj
+            cfw.add(ByteCode.DUP);
+            cfw.add(ByteCode.IFNONNULL, undefCheckLabel);
+            cfw.add(ByteCode.POP);
+            Codegen.pushUndefined(cfw);
+            cfw.markLabel(undefCheckLabel);
+            // stack: ... [thisObj | undefined]
+            break;
+          }
+          default: // including GETVAR
+            // ignore stored scriptable
+            cfw.add(ByteCode.POP);
+            Codegen.pushUndefined(cfw);
+            break;
+        }
     }
 
     private void updateLineNumber(Node node)
@@ -5109,7 +5148,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         generateExpression(child, node);
         assert (type == Token.STRICT_SETPROP || type == Token.STRICT_SETPROP_OP)
                == scriptOrFn.isInStrictMode();
-        cfw.add(scriptOrFn.isInStrictMode() ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
+        cfw.addPush(scriptOrFn.isInStrictMode());
         cfw.addALoad(contextLocal);
         addScriptRuntimeInvoke(
             "setObjectProp",
@@ -5158,7 +5197,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         generateExpression(child, node);
         assert (type == Token.STRICT_SETELEM || type == Token.STRICT_SETELEM_OP)
                 == scriptOrFn.isInStrictMode();
-        cfw.add(scriptOrFn.isInStrictMode() ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
+        cfw.addPush(scriptOrFn.isInStrictMode());
         cfw.addALoad(contextLocal);
         if (indexIsNumber) {
             addScriptRuntimeInvoke(
