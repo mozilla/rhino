@@ -45,17 +45,11 @@ import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.ScriptableObject.ensureScriptableObject;
 import static org.mozilla.javascript.ScriptableObject.getProperty;
 
-import java.util.Map;
-
 /**
  * 
  *
  */
 class PropertyDescriptor {
-    public static enum Field {
-        Value, Get, Set, Writable, Enumerable, Configurable;
-    }
-
     private static final int VALUE = 0x01;
     private static final int GET = 0x02;
     private static final int SET = 0x04;
@@ -132,45 +126,6 @@ class PropertyDescriptor {
         obj.defineProperty("enumerable", desc.isEnumerable(), EMPTY);
         obj.defineProperty("configurable", desc.isConfigurable(), EMPTY);
         return obj;
-    }
-
-    static PropertyDescriptor toPropertyDescriptor(Map<Field, Object> map) {
-        PropertyDescriptor desc = new PropertyDescriptor();
-        for (Map.Entry<Field, Object> entry : map.entrySet()) {
-            Field field = entry.getKey();
-            Object value = entry.getValue();
-            switch (field) {
-            case Writable:
-                desc.setWritable(ScriptRuntime.toBoolean(value));
-                break;
-            case Enumerable:
-                desc.setEnumerable(ScriptRuntime.toBoolean(value));
-                break;
-            case Configurable:
-                desc.setConfigurable(ScriptRuntime.toBoolean(value));
-                break;
-            case Value:
-                desc.setValue(value);
-                break;
-            case Get:
-                if (value != Undefined.instance && !(value instanceof Callable)) {
-                    throw ScriptRuntime.notFunctionError(value);
-                }
-                desc.setGetter(value);
-                break;
-            case Set:
-                if (value != Undefined.instance && !(value instanceof Callable)) {
-                    throw ScriptRuntime.notFunctionError(value);
-                }
-                desc.setSetter(value);
-                break;
-            }
-        }
-        if ((desc.present & (GET | SET)) != 0
-                && (desc.present & (VALUE | WRITABLE)) != 0) {
-            throw ScriptRuntime.typeError0("msg.both.data.and.accessor.desc");
-        }
-        return desc;
     }
 
     static PropertyDescriptor toPropertyDescriptor(Object object) {
