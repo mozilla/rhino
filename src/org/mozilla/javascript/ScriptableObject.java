@@ -1296,7 +1296,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (ctor == null)
             return null;
         String name = ctor.getClassPrototype().getClassName();
-        defineProperty(scope, name, ctor, ScriptableObject.DONTENUM);
+        defineProperty(scope, name, ctor, ScriptableObject.DONTENUM, false);
         return name;
     }
 
@@ -1504,7 +1504,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 throw Context.reportRuntimeError1
                     ("msg.varargs.fun", ctorMember.getName());
             }
-            defineProperty(isStatic ? ctor : proto, name, f, DONTENUM);
+            defineProperty(isStatic ? ctor : proto, name, f, DONTENUM, false);
             if (sealed) {
                 f.sealObject();
             }
@@ -1683,6 +1683,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             ConstProperties cp = (ConstProperties)destination;
             cp.defineConst(propertyName, destination);
         } else
+            // TODO: strict flag!
             defineProperty(destination, propertyName, Undefined.instance, CONST);
     }
 

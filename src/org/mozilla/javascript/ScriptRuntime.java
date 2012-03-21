@@ -3827,13 +3827,13 @@ public class ScriptRuntime {
             // 10.5 Declaration Binding Instantiation, step 8
             //  -> 10.2.1.1.2 CreateMutableBinding (N, D)
             //  -> 10.2.1.2.2 CreateMutableBinding (N, D)
-            boolean strict = true;
             for (int i = varCount; i-- != 0;) {
                 String name = funObj.getParamOrVarName(i);
                 boolean isConst = funObj.getParamOrVarConst(i);
                 // Don't overwrite existing def if already defined in object
-                // or prototypes of object.
-                if (!ScriptableObject.hasProperty(scope, name)) {
+                // or prototypes of object. Except for global, cf. ES5.1 errata
+                if (!ScriptableObject.hasProperty(scope, name) ||
+                    (scope.getParentScope() == null && !scope.has(name, scope))) {
                     if (!evalScript) {
                         // Global var definitions are supposed to be DONTDELETE
                         if (isConst)
@@ -3841,9 +3841,9 @@ public class ScriptRuntime {
                         else
                             ScriptableObject.defineProperty(
                                 varScope, name, Undefined.instance,
-                                ScriptableObject.PERMANENT, strict);
+                                ScriptableObject.PERMANENT, true);
                     } else {
-                        varScope.put(name, varScope, Undefined.instance, strict);
+                        varScope.put(name, varScope, Undefined.instance, true);
                     }
                 } else {
                     ScriptableObject.redefineProperty(scope, name, isConst);
@@ -4114,8 +4114,9 @@ public class ScriptRuntime {
             } else if (scope.getParentScope() == null) {
                 // 10.5, step 5e: env is the environment record component of the global environment
                 ScriptableObject global = ScriptableObject.ensureScriptableObject(scope);
-                PropertyDescriptor desc = global.$getProperty(name);
-                if (desc.isConfigurable()) {
+                // ES5.1 errata: [[GetProperty]] -> [[GetOwnProperty]]
+                PropertyDescriptor desc = global.getOwnProperty(name);
+                if (desc == null || desc.isConfigurable()) {
                     int attrs = fromEvalCode ? ScriptableObject.EMPTY : ScriptableObject.PERMANENT;
                     desc = new PropertyDescriptor(Undefined.instance, attrs);
                     global.defineOwnProperty(name, desc, true);
