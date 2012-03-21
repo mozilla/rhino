@@ -2272,8 +2272,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (base instanceof ConstProperties) {
             ConstProperties cp = (ConstProperties)base;
 
-            if (cp.isConst(name))
-                throw Context.reportRuntimeError1("msg.const.redecl", name);
+            if (cp.isConst(name)) {
+                if (isConst)
+                    throw Context.reportRuntimeError1("msg.const.redecl", name);
+                return;
+            }
         }
         if (isConst)
             throw Context.reportRuntimeError1("msg.var.redecl", name);
