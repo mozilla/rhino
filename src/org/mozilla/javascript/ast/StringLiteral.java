@@ -108,6 +108,18 @@ public class StringLiteral extends AstNode {
         quoteChar = c;
     }
 
+    /**
+     * Return true if this node, known to be an unparenthesized string literal,
+     * could be the string of a directive in a Directive Prologue. Directive
+     * strings never contain escape sequences or line continuations.
+     */
+    public boolean isEscapeFreeStringLiteral() {
+        // If the string's length in the source code is its length as a value,
+        // accounting for the quotes, then it must not contain any escape
+        // sequences or line continuations.
+        return value.length() + 2 == getLength();
+    }
+
     @Override
     public String toSource(int depth) {
         return new StringBuilder(makeIndent(depth))

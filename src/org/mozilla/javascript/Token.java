@@ -218,7 +218,7 @@ public class Token
         FINALLY        = 125, // finally keyword
         VOID           = 126, // void keyword
         RESERVED       = 127, // reserved keywords
-        RESERVED_STRICT= 128, // reserved keywords (strict mode)
+        STRICT_RESERVED= 128, // reserved keywords in strict mode
 
         EMPTY          = 129,
 
@@ -415,7 +415,7 @@ public class Token
           case FINALLY:         return "FINALLY";
           case VOID:            return "VOID";
           case RESERVED:        return "RESERVED";
-          case RESERVED_STRICT: return "RESERVED_STRICT";
+          case STRICT_RESERVED: return "STRICT_RESERVED";
           case EMPTY:           return "EMPTY";
           case BLOCK:           return "BLOCK";
           case LABEL:           return "LABEL";

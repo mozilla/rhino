@@ -59,6 +59,7 @@ public class ScriptNode extends Scope {
     private String sourceName;
     private String encodedSource;
     private int endLineno = -1;
+    private boolean inStrictMode;
 
     private List<FunctionNode> functions;
     private List<RegExpLiteral> regexps;
@@ -191,6 +192,14 @@ public class ScriptNode extends Scope {
         // One time action
         if (lineno < 0 || endLineno >= 0) codeBug();
         endLineno = lineno;
+    }
+
+    public void setInStrictMode(boolean inStrictMode) {
+        this.inStrictMode = inStrictMode;
+    }
+
+    public boolean isInStrictMode() {
+        return inStrictMode;
     }
 
     public int getFunctionCount() {

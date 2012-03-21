@@ -158,14 +158,14 @@ class TokenStream
             Id_import        = Token.RESERVED,
             Id_super         = Token.RESERVED,
             // FutureReservedWord (strict-mode)
-            Id_implements    = Token.RESERVED_STRICT,
-            Id_interface     = Token.RESERVED_STRICT,
+            Id_implements    = Token.STRICT_RESERVED,
+            Id_interface     = Token.STRICT_RESERVED,
             Id_let           = Token.LET,
-            Id_package       = Token.RESERVED_STRICT,
-            Id_private       = Token.RESERVED_STRICT,
-            Id_protected     = Token.RESERVED_STRICT,
-            Id_public        = Token.RESERVED_STRICT,
-            Id_static        = Token.RESERVED_STRICT,
+            Id_package       = Token.STRICT_RESERVED,
+            Id_private       = Token.STRICT_RESERVED,
+            Id_protected     = Token.STRICT_RESERVED,
+            Id_public        = Token.STRICT_RESERVED,
+            Id_static        = Token.STRICT_RESERVED,
             Id_yield         = Token.YIELD;
 
         int id;
@@ -262,6 +262,8 @@ class TokenStream
 
     final double getNumber() { return number; }
     final boolean isNumberOctal() { return isOctal; }
+    final boolean hasOctalCharacterEscape() { return octalChar; }
+    final void setOctalCharacterEscape(boolean b) { octalChar = b; }
 
     final boolean eof() { return hitEOF; }
 
@@ -393,9 +395,9 @@ class TokenStream
                         {
                             // LET and YIELD are tokens only in 1.7 and later
                             this.string = result == Token.LET ? "let" : "yield";
-                            result = Token.RESERVED_STRICT;
+                            result = Token.STRICT_RESERVED;
                         }
-                        if (result == Token.RESERVED_STRICT) {
+                        if (result == Token.STRICT_RESERVED) {
                             result = parser.inUseStrictDirective
                                         ? Token.RESERVED
                                         : Token.NAME;
@@ -587,6 +589,13 @@ class TokenStream
                             if ('0' <= c && c < '8') {
                                 int val = c - '0';
                                 c = getChar();
+                                // Strict mode code allows only \0, then a non-digit.
+                                if (c != 0 || (c >= '0' && c <= '9')) {
+                                    if (parser.inUseStrictDirective) {
+                                        parser.reportError("msg.no.octal.strict");
+                                    }
+                                    octalChar = true;
+                                }
                                 if ('0' <= c && c < '8') {
                                     val = 8 * val + c - '0';
                                     c = getChar();
@@ -1543,6 +1552,7 @@ class TokenStream
     private String string = "";
     private double number;
     private boolean isOctal;
+    private boolean octalChar = false;
 
     // delimiter for last string literal scanned
     private int quoteChar;

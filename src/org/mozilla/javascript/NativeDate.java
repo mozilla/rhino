@@ -1383,9 +1383,8 @@ final class NativeDate extends IdScriptableObject
         int year = YearFromTime(t);
         if (year < 0) {
             result.append('-');
-            year = -year;
-        }
-        if (year > 9999) {
+            append0PaddedUint(result, -year, 6);
+        } else if (year > 9999) {
             append0PaddedUint(result, year, 6);
         } else {
             append0PaddedUint(result, year, 4);

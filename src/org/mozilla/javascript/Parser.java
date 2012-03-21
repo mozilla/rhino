@@ -546,6 +546,7 @@ public class Parser
         boolean savedStrictMode = inUseStrictDirective;
         // TODO: eval code should get strict mode from invoking code
         inUseStrictDirective = false;
+        ts.setOctalCharacterEscape(false);
 
         try {
             for (;;) {
@@ -564,6 +565,7 @@ public class Parser
                     } catch (ParserException e) {
                         break;
                     }
+                    inDirectivePrologue = false;
                 } else {
                     n = statement();
                     if (inDirectivePrologue) {
@@ -571,11 +573,9 @@ public class Parser
                         if (directive == null) {
                             inDirectivePrologue = false;
                         } else if (directive.equals("use strict")) {
-                            inUseStrictDirective = true;
-                            root.setInStrictMode(true);
+                            setStrictMode(root);
                         }
                     }
-
                 }
                 end = getNodeEnd(n);
                 root.addChildToBack(n);
@@ -616,7 +616,7 @@ public class Parser
         return root;
     }
 
-    private AstNode parseFunctionBody()
+    private AstNode parseFunctionBody(FunctionNode fnNode)
         throws IOException
     {
         boolean isExpressionClosure = false;
@@ -633,10 +633,12 @@ public class Parser
 
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
+        ts.setOctalCharacterEscape(false);
         // Don't set 'inUseStrictDirective' to false: inherit strict mode.
 
         pn.setLineno(ts.lineno);
         try {
+<<<<<<< HEAD
             if (isExpressionClosure) {
                 ReturnStatement n = new ReturnStatement(ts.lineno);
                 n.setReturnValue(assignExpr());
@@ -657,6 +659,7 @@ public class Parser
                         case Token.FUNCTION:
                             consumeToken();
                             n = function(FunctionNode.FUNCTION_STATEMENT);
+                            inDirectivePrologue = false;
                             break;
                         default:
                             n = statement();
@@ -665,7 +668,7 @@ public class Parser
                                 if (directive == null) {
                                     inDirectivePrologue = false;
                                 } else if (directive.equals("use strict")) {
-                                    inUseStrictDirective = true;
+                                    setStrictMode(fnNode);
                                 }
                             }
                             break;
@@ -692,10 +695,33 @@ public class Parser
         if (n instanceof ExpressionStatement) {
             AstNode e = ((ExpressionStatement) n).getExpression();
             if (e instanceof StringLiteral) {
-                return ((StringLiteral) e).getValue();
+                StringLiteral s = (StringLiteral) e;
+                if (s.isEscapeFreeStringLiteral()) {
+                    return s.getValue();
+                }
             }
         }
         return null;
+    }
+
+    private void setStrictMode(ScriptNode script) {
+        // Unfortunately, Directive Prologue members in general may contain
+        // escapes, even while "use strict" directives may not.  Therefore
+        // we must check whether an octal character escape has been seen in
+        // any previous directives whenever we encounter a "use strict"
+        // directive, so that the octal escape is properly treated as a
+        // syntax error.  An example of this case:
+        //
+        //   function error()
+        //   {
+        //     "\145"; // octal escape
+        //     "use strict"; // retroactively makes "\145" a syntax error
+        //   }
+        if (ts.hasOctalCharacterEscape()) {
+            addError("msg.no.octal.strict");
+        }
+        inUseStrictDirective = true;
+        script.setInStrictMode(true);
     }
 
     private void  parseFunctionParams(FunctionNode fnNode)
@@ -820,7 +846,7 @@ public class Parser
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         try {
             parseFunctionParams(fnNode);
-            fnNode.setBody(parseFunctionBody());
+            fnNode.setBody(parseFunctionBody(fnNode));
             fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
             fnNode.setLength(ts.tokenEnd - functionSourceStart);
 
