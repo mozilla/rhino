@@ -2617,18 +2617,18 @@ public class Parser
           case Token.THROW:
               // needed for generator.throw();
               saveNameTokenData(ts.tokenBeg, "throw", ts.lineno);
-              ref = propertyName(-1, "throw", memberTypeFlags);
+              ref = propertyName(-1, memberTypeFlags);
               break;
 
           case Token.NAME:
               // handles: name, ns::name, ns::*, ns::[expr]
-              ref = propertyName(-1, ts.getString(), memberTypeFlags);
+              ref = propertyName(-1, memberTypeFlags);
               break;
 
           case Token.MUL:
               // handles: *, *::name, *::*, *::[expr]
               saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
-              ref = propertyName(-1, "*", memberTypeFlags);
+              ref = propertyName(-1, memberTypeFlags);
               break;
 
           case Token.XMLATTR:
@@ -2638,14 +2638,10 @@ public class Parser
               break;
 
           default:
-              if (compilerEnv.isReservedKeywordAsIdentifier()) {
+              if (convertToName(token)) {
                   // allow keywords as property names, e.g. ({if: 1})
-                  String name = Token.keywordToName(token);
-                  if (name != null) {
-                      saveNameTokenData(ts.tokenBeg, name, ts.lineno);
-                      ref = propertyName(-1, name, memberTypeFlags);
-                      break;
-                  }
+                  ref = propertyName(-1, memberTypeFlags);
+                  break;
               }
               reportError("msg.no.name.after.dot");
               return makeErrorNode();
@@ -2680,12 +2676,12 @@ public class Parser
         switch (tt) {
           // handles: @name, @ns::name, @ns::*, @ns::[expr]
           case Token.NAME:
-              return propertyName(atPos, ts.getString(), 0);
+              return propertyName(atPos, 0);
 
           // handles: @*, @*::name, @*::*, @*::[expr]
           case Token.MUL:
               saveNameTokenData(ts.tokenBeg, "*", ts.lineno);
-              return propertyName(atPos, "*", 0);
+              return propertyName(atPos, 0);
 
           // handles @[expr]
           case Token.LB:
@@ -2712,7 +2708,7 @@ public class Parser
      * returns a Name node.  Returns an ErrorNode for malformed XML
      * expressions.  (For now - might change to return a partial XmlRef.)
      */
-    private AstNode propertyName(int atPos, String s, int memberTypeFlags)
+    private AstNode propertyName(int atPos, int memberTypeFlags)
         throws IOException
     {
         int pos = atPos != -1 ? atPos : ts.tokenBeg, lineno = ts.lineno;
@@ -2916,7 +2912,7 @@ public class Parser
         saveNameTokenData(namePos, nameString, nameLineno);
 
         if (compilerEnv.isXmlAvailable()) {
-            return propertyName(-1, nameString, 0);
+            return propertyName(-1, 0);
         } else {
             return createNameNode(true, Token.NAME);
         }
@@ -3432,12 +3428,14 @@ public class Parser
 
     // Check whether token is a reserved keyword that is allowed as property id.
     private boolean convertToName(int token) {
-        if (compilerEnv.isReservedKeywordAsIdentifier()) {
-            String conv = Token.keywordToName(token);
-            if (conv != null) {
-                saveNameTokenData(ts.tokenBeg, conv, ts.lineno);
-                return true;
-            }
+        if (token == Token.RESERVED) {
+            saveNameTokenData(ts.tokenBeg, ts.getString(), ts.lineno);
+            return true;
+        }
+        String conv = Token.keywordToName(token);
+        if (conv != null) {
+            saveNameTokenData(ts.tokenBeg, conv, ts.lineno);
+            return true;
         }
         return false;
     }
