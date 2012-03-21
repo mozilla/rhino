@@ -91,14 +91,14 @@ public class Bug466207Test extends TestCase {
         compareListIterators(list.listIterator(5), reference.listIterator(5));
     }
 
-    private void compareIterators(Iterator it1, Iterator it2) {
+    private void compareIterators(Iterator<?> it1, Iterator<?> it2) {
         while (it1.hasNext()) {
             assertEquals(it1.next(), it2.next());
         }
         assertFalse(it2.hasNext());
     }
 
-    private void compareListIterators(ListIterator it1, ListIterator it2) {
+    private void compareListIterators(ListIterator<?> it1, ListIterator<?> it2) {
         while (it1.hasPrevious()) {
             assertEquals(it1.previous(), it2.previous());
         }

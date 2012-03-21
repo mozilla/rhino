@@ -579,6 +579,7 @@ public class NativeObject extends IdScriptableObject implements Map
                             throw new UnsupportedOperationException();
                         }
 
+                        @Override
                         public boolean equals(Object other) {
                             if (!(other instanceof Map.Entry)) {
                                 return false;
@@ -588,11 +589,13 @@ public class NativeObject extends IdScriptableObject implements Map
                                 && (value == null ? e.getValue() == null : value.equals(e.getValue()));
                         }
 
+                        @Override
                         public int hashCode() {
                             return (ekey == null ? 0 : ekey.hashCode()) ^
                                    (value == null ? 0 : value.hashCode());
                         }
 
+                        @Override
                         public String toString() {
                             return ekey + "=" + value;
                         }

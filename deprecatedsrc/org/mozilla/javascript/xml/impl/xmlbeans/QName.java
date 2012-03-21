@@ -76,6 +76,7 @@ final class QName extends IdScriptableObject
      *
      * @return
      */
+    @Override
     public String toString()
     {
         String result;
@@ -111,17 +112,20 @@ final class QName extends IdScriptableObject
         return uri;
     }
 
+    @Override
     public boolean equals(Object obj)
     {
         if(!(obj instanceof QName)) return false;
         return equals((QName)obj);
     }
 
+    @Override
     public int hashCode()
     {
         return localName.hashCode() ^ (uri == null ? 0 : uri.hashCode());
     }
 
+    @Override
     protected Object equivalentValues(Object value)
     {
         if(!(value instanceof QName)) return Scriptable.NOT_FOUND;
@@ -146,6 +150,7 @@ final class QName extends IdScriptableObject
      *
      * @return
      */
+    @Override
     public String getClassName ()
     {
         return "QName";
@@ -156,6 +161,7 @@ final class QName extends IdScriptableObject
      * @param hint
      * @return
      */
+    @Override
     public Object getDefaultValue (Class hint)
     {
         return toString();
@@ -167,11 +173,13 @@ final class QName extends IdScriptableObject
         Id_uri                  = 2,
         MAX_INSTANCE_ID         = 2;
 
+    @Override
     protected int getMaxInstanceId()
     {
         return super.getMaxInstanceId() + MAX_INSTANCE_ID;
     }
 
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         int id;
@@ -198,6 +206,7 @@ final class QName extends IdScriptableObject
     }
 // #/string_id_map#
 
+    @Override
     protected String getInstanceIdName(int id)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -207,6 +216,7 @@ final class QName extends IdScriptableObject
         return super.getInstanceIdName(id);
     }
 
+    @Override
     protected Object getInstanceIdValue(int id)
     {
         switch (id - super.getMaxInstanceId()) {
@@ -223,6 +233,7 @@ final class QName extends IdScriptableObject
         Id_toSource             = 3,
         MAX_PROTOTYPE_ID        = 3;
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;
@@ -242,6 +253,7 @@ final class QName extends IdScriptableObject
     }
 // #/string_id_map#
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;

@@ -82,6 +82,7 @@ final class XMLWithScope extends NativeWith
         _xmlList = new XMLList(lib);
     }
 
+    @Override
     protected Object updateDotQuery(boolean value)
     {
         // Return null to continue looping
