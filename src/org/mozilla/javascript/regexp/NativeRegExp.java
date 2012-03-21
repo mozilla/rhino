@@ -316,10 +316,19 @@ System.out.println("flat = \"" + str + "\"");
             state.result.length = length;
             state.result.flatIndex = 0;
             state.progLength += 5;
-        }
-        else
+        } else {
             if (!parseDisjunction(state))
                 return null;
+            // Need to reparse if pattern contains invalid backreferences:
+            // "Note: if the number of left parentheses is less than the number
+            // specified in \#, the \# is taken as an octal escape"
+            if (state.maxBackReference > state.parenCount) {
+                state = new CompilerState(cx, regexp.source, length, flags);
+                state.backReferenceLimit = state.parenCount;
+                if (!parseDisjunction(state))
+                    return null;
+            }
+        }
 
         regexp.program = new byte[state.progLength + 1];
         if (state.classCount != 0) {
@@ -800,7 +809,9 @@ if (regexp.anchorCh >= 0) {
                     reportWarning(state.cx, "msg.bad.backref", "");
                     /* octal escape */
                     num = 0;
-                    for (int i = 0; i < 2 && state.cp < state.cpend; ++i) {
+                    // follow spidermonkey and allow multiple leading zeros,
+                    // e.g. let /\0000/ match the string "\0"
+                    while (num < 040 && state.cp < state.cpend) {
                         c = src[state.cp];
                         if ((c >= '0') && (c <= '7')) {
                             state.cp++;
@@ -824,15 +835,15 @@ if (regexp.anchorCh >= 0) {
                     termStart = state.cp - 1;
                     num = getDecimalValue(c, state, 0xFFFF,
                                           "msg.overlarge.backref");
-                    if (num > state.parenCount)
+                    if (num > state.backReferenceLimit)
                         reportWarning(state.cx, "msg.bad.backref", "");
                     /*
                      * n > count of parentheses, then treat as octal instead.
                      * Also see note above concerning 'web reality'
                      */
-                    if (num > state.parenCount) {
+                    if (num > state.backReferenceLimit) {
                         state.cp = termStart;
-                        if (c > '7') {
+                        if (c >= '8') {
                             // invalid octal escape, follow spidermonkey and
                             // treat as \\8 resp. \\9
                             c = '\\';
@@ -841,14 +852,11 @@ if (regexp.anchorCh >= 0) {
                         }
                         state.cp++;
                         num = c - '0';
-                        for (int i = 0; i < 2 && state.cp < state.cpend; ++i) {
+                        while (num < 040 && state.cp < state.cpend) {
                             c = src[state.cp];
                             if ((c >= '0') && (c <= '7')) {
-                                tmp = 8 * num + (c - '0');
-                                if (tmp > 0377)
-                                    break;
                                 state.cp++;
-                                num = tmp;
+                                num = 8 * num + (c - '0');
                             }
                             else
                                 break;
@@ -861,6 +869,9 @@ if (regexp.anchorCh >= 0) {
                     state.result = new RENode(REOP_BACKREF);
                     state.result.parenIndex = num - 1;
                     state.progLength += 3;
+                    if (state.maxBackReference < num) {
+                        state.maxBackReference = num;
+                    }
                     break;
                 /* Control escape */
                 case 'f':
@@ -2689,6 +2700,8 @@ class CompilerState {
         this.cp = 0;
         this.cpend = length;
         this.flags = flags;
+        this.backReferenceLimit = Integer.MAX_VALUE;
+        this.maxBackReference = 0;
         this.parenCount = 0;
         this.classCount = 0;
         this.progLength = 0;
@@ -2699,6 +2712,8 @@ class CompilerState {
     int         cpend;
     int         cp;
     int         flags;
+    int         backReferenceLimit;
+    int         maxBackReference;
     int         parenCount;
     int         parenNesting;
     int         classCount;   /* number of [] encountered */
