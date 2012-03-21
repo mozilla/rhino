@@ -52,7 +52,9 @@ package org.mozilla.javascript;
 import java.io.Serializable;
 import java.lang.reflect.*;
 import java.text.MessageFormat;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.mozilla.javascript.ast.FunctionNode;
@@ -2645,15 +2647,31 @@ public class ScriptRuntime {
                                   ((Number)val2).doubleValue());
             else
                 return wrapNumber(toNumber(val1) + toNumber(val2));
-        return new ConsString(toCharSequence(val1), toCharSequence(val2));
+        return newConsString(toCharSequence(val1), toCharSequence(val2));
     }
 
     public static CharSequence add(CharSequence val1, Object val2) {
-        return new ConsString(val1, toCharSequence(val2));
+        return newConsString(val1, toCharSequence(val2));
     }
 
     public static CharSequence add(Object val1, CharSequence val2) {
-        return new ConsString(toCharSequence(val1), val2);
+        return newConsString(toCharSequence(val1), val2);
+    }
+
+    public static CharSequence add(CharSequence val1, CharSequence val2) {
+        return newConsString(val1, val2);
+    }
+
+    private static CharSequence newConsString(CharSequence val1, CharSequence val2) {
+        int len1 = val1.length();
+        if (len1 == 0) {
+            return val2;
+        }
+        int len2 = val2.length();
+        if (len2 == 0) {
+            return val1;
+        }
+        return new ConsString(val1, val2);
     }
 
     /**

@@ -3036,7 +3036,7 @@ switch (op) {
             } else if (lhs instanceof CharSequence || rhs instanceof CharSequence) {
                 CharSequence lstr = ScriptRuntime.toCharSequence(lhs);
                 CharSequence rstr = ScriptRuntime.toCharSequence(rhs);
-                stack[stackTop] = new ConsString(lstr, rstr);
+                stack[stackTop] = ScriptRuntime.add(lstr, rstr);
             } else {
                 double lDbl = (lhs instanceof Number)
                     ? ((Number)lhs).doubleValue() : ScriptRuntime.toNumber(lhs);
@@ -3061,9 +3061,9 @@ switch (op) {
             CharSequence lstr = (CharSequence)lhs;
             CharSequence rstr = ScriptRuntime.toCharSequence(d);
             if (leftRightOrder) {
-                stack[stackTop] = new ConsString(lstr, rstr);
+                stack[stackTop] = ScriptRuntime.add(lstr, rstr);
             } else {
-                stack[stackTop] = new ConsString(rstr, lstr);
+                stack[stackTop] = ScriptRuntime.add(lstr, rstr);
             }
         } else {
             double lDbl = (lhs instanceof Number)
