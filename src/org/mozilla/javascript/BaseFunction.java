@@ -328,15 +328,15 @@ public class BaseFunction extends IdScriptableObject implements Function
             }
             Callable targetFunction = (Callable) thisObj;
             int argc = args.length;
-            final Scriptable boundThis;
+            final Object boundThis;
             final Object[] boundArgs;
-            if (argc > 0) {
-              boundThis = ScriptRuntime.toObjectOrNull(cx, args[0], scope);
+            if (argc <= 1) {
+              boundThis = argc < 1 ? Undefined.instance : args[0];
+              boundArgs = ScriptRuntime.emptyArgs;
+            } else {
+              boundThis = args[0];
               boundArgs = new Object[argc-1];
               System.arraycopy(args, 1, boundArgs, 0, argc-1);
-            } else {
-              boundThis = null;
-              boundArgs = ScriptRuntime.emptyArgs;
             }
             return new BoundFunction(cx, scope, targetFunction, boundThis, boundArgs);
         }

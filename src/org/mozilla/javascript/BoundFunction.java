@@ -49,12 +49,12 @@ public class BoundFunction extends BaseFunction {
   static final long serialVersionUID = 2118137342826470729L;
     
   private final Callable targetFunction;
-  private final Scriptable boundThis;
+  private final Object boundThis;
   private final Object[] boundArgs;
   private final int length;
 
-  public BoundFunction(Context cx, Scriptable scope, Callable targetFunction, Scriptable boundThis,
-                       Object[] boundArgs)
+  public BoundFunction(Context cx, Scriptable scope, Callable targetFunction,
+                       Object boundThis, Object[] boundArgs)
   {
     this.targetFunction = targetFunction;
     this.boundThis = boundThis;
@@ -77,8 +77,7 @@ public class BoundFunction extends BaseFunction {
   @Override
   public Object call(Context cx, Scriptable scope, Object thisObj, Object[] extraArgs)
   {
-    Scriptable callThis = boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
-    return targetFunction.call(cx, scope, callThis, concat(boundArgs, extraArgs));
+    return targetFunction.call(cx, scope, boundThis, concat(boundArgs, extraArgs));
   }
 
   @Override
