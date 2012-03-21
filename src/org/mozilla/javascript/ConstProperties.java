@@ -83,12 +83,14 @@ public interface ConstProperties {
      * @param name the name of the property
      * @param start the object whose property is being set
      * @param value value to set the property to
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void putConst(String name, Scriptable start, Object value);
+    public void putConst(String name, Scriptable start, Object value,
+                         boolean checked);
 
     /**
      * Reserves a definition spot for a const.  This will set up a definition
@@ -96,8 +98,9 @@ public interface ConstProperties {
      * the start parameter is the same as for putConst.
      * @param name The name of the property.
      * @param start The object whose property is being reserved.
+     * @param checked controls error handling
      */
-    public void defineConst(String name, Scriptable start);
+    public void defineConst(String name, Scriptable start, boolean checked);
 
     /**
      * Returns true if the named property is defined as a const on this object.

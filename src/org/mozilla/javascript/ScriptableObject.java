@@ -634,28 +634,57 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param start the object whose property is being set
      * @param value value to set the property to
      */
+    @Deprecated
     public void putConst(String name, Scriptable start, Object value)
+    {
+        putConst(name, start, value);
+    }
+
+    /**
+     * Sets the value of the named const property, creating it if need be.
+     *
+     * If the property was created using defineProperty, the
+     * appropriate setter method is called. <p>
+     *
+     * If the property's attributes include READONLY, no action is
+     * taken.
+     * This method will actually set the property in the start
+     * object.
+     *
+     * @param name the name of the property
+     * @param start the object whose property is being set
+     * @param value value to set the property to
+     * @param checked controls error handling
+     */
+    public void putConst(String name, Scriptable start, Object value,
+                         boolean checked)
     {
         if (putConstImpl(name, 0, start, value, READONLY))
             return;
 
         if (start == this) throw Kit.codeBug();
         if (start instanceof ConstProperties)
-            ((ConstProperties)start).putConst(name, start, value);
+            ((ConstProperties)start).putConst(name, start, value, checked);
         else
-            // TODO: 'throw' flag?
-            start.put(name, start, value, false);
+            start.put(name, start, value, checked);
     }
 
+    @Deprecated
     public void defineConst(String name, Scriptable start)
+    {
+        defineConst(name, start, false);
+    }
+
+    public void defineConst(String name, Scriptable start, boolean checked)
     {
         if (putConstImpl(name, 0, start, Undefined.instance, UNINITIALIZED_CONST))
             return;
 
         if (start == this) throw Kit.codeBug();
         if (start instanceof ConstProperties)
-            ((ConstProperties)start).defineConst(name, start);
+            ((ConstProperties)start).defineConst(name, start, checked);
     }
+
     /**
      * Returns true if the named property is defined as a const on this object.
      * @param name
@@ -1676,15 +1705,29 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * defineProperty there, otherwise calls put in destination
      * ignoring attributes
      */
+    @Deprecated
     public static void defineConstProperty(Scriptable destination,
                                            String propertyName)
     {
+        defineConstProperty(destination, propertyName, false);
+    }
+
+    /**
+     * Utility method to add properties to arbitrary Scriptable object.
+     * If destination is instance of ScriptableObject, calls
+     * defineProperty there, otherwise calls put in destination
+     * ignoring attributes
+     */
+    public static void defineConstProperty(Scriptable destination,
+                                           String propertyName,
+                                           boolean checked)
+    {
         if (destination instanceof ConstProperties) {
             ConstProperties cp = (ConstProperties)destination;
-            cp.defineConst(propertyName, destination);
+            cp.defineConst(propertyName, destination, checked);
         } else
-            // TODO: strict flag!
-            defineProperty(destination, propertyName, Undefined.instance, CONST);
+            defineProperty(destination, propertyName, Undefined.instance, CONST,
+                           checked);
     }
 
     /**
@@ -2292,13 +2335,36 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
      */
+    @Deprecated
     public static void putConstProperty(Scriptable obj, String name, Object value)
+    {
+        putConstProperty(obj, name, value, false);
+    }
+
+    /**
+     * Puts a named property in an object or in an object in its prototype chain.
+     * <p>
+     * Searches for the named property in the prototype chain. If it is found,
+     * the value of the property in <code>obj</code> is changed through a call
+     * to {@link Scriptable#put(String, Scriptable, Object)} on the
+     * prototype passing <code>obj</code> as the <code>start</code> argument.
+     * This allows the prototype to veto the property setting in case the
+     * prototype defines the property with [[ReadOnly]] attribute. If the
+     * property is not found, it is added in <code>obj</code>.
+     * @param obj a JavaScript object
+     * @param name a property name
+     * @param value any JavaScript value accepted by Scriptable.put
+     * @param checked controls error handling
+     * @since 1.7R4
+     */
+    public static void putConstProperty(Scriptable obj, String name,
+                                        Object value, boolean checked)
     {
         Scriptable base = getBase(obj, name);
         if (base == null)
             base = obj;
         if (base instanceof ConstProperties)
-            ((ConstProperties)base).putConst(name, obj, value);
+            ((ConstProperties)base).putConst(name, obj, value, checked);
     }
 
     /**

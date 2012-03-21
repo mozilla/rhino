@@ -1861,7 +1861,7 @@ switch (op) {
             stringReg = frame.idata.argNames[indexReg];
             if (frame.scope instanceof ConstProperties) {
                 ConstProperties cp = (ConstProperties)frame.scope;
-                cp.putConst(stringReg, frame.scope, val);
+                cp.putConst(stringReg, frame.scope, val, frame.idata.isStrict);
             } else
                 throw Kit.codeBug();
         }
