@@ -755,7 +755,10 @@ class CodeGenerator extends Icode {
                     stackChange(-1);
                 }
                 visitExpression(child, 0);
-                addStringOp(Token.SETPROP, property);
+                int op = (type == Token.SETPROP || type == Token.SETPROP_OP)
+                         ? Token.SETPROP
+                         : Token.STRICT_SETPROP;
+                addStringOp(op, property);
                 stackChange(-1);
             }
             break;
@@ -777,7 +780,10 @@ class CodeGenerator extends Icode {
                 stackChange(-1);
             }
             visitExpression(child, 0);
-            addToken(Token.SETELEM);
+            int op = (type == Token.SETELEM || type == Token.SETELEM_OP)
+                    ? Token.SETELEM
+                    : Token.STRICT_SETELEM;
+            addToken(op);
             stackChange(-2);
             break;
 

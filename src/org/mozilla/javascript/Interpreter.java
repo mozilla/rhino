@@ -1418,7 +1418,9 @@ switch (op) {
         stack[stackTop] = ScriptRuntime.getObjectProp(lhs, stringReg, cx, frame.scope);
         continue Loop;
     }
+    case Token.STRICT_SETPROP :
     case Token.SETPROP : {
+        assert (op == Token.STRICT_SETPROP) == frame.idata.isStrict;
         Object rhs = stack[stackTop];
         if (rhs == DBL_MRK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         --stackTop;
@@ -1453,7 +1455,9 @@ switch (op) {
         stack[stackTop] = value;
         continue Loop;
     }
+    case Token.STRICT_SETELEM :
     case Token.SETELEM : {
+        assert (op == Token.STRICT_SETELEM) == frame.idata.isStrict;
         stackTop -= 2;
         Object rhs = stack[stackTop + 2];
         if (rhs == DBL_MRK) {
