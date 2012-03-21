@@ -230,23 +230,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             value = null;
             name = null;
         }
-
-        ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-            return buildDataDescriptor(scope, value, attributes);
-        }
-
-    }
-
-    protected static ScriptableObject buildDataDescriptor(Scriptable scope,
-                                                          Object value,
-                                                          int attributes) {
-        ScriptableObject desc = new NativeObject();
-        ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-        desc.defineProperty("value", value, EMPTY);
-        desc.defineProperty("writable", (attributes & READONLY) == 0, EMPTY);
-        desc.defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY);
-        desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
-        return desc;
     }
 
     private static final class GetterSlot extends Slot
@@ -259,18 +242,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         GetterSlot(String name, int indexOrHash, int attributes)
         {
             super(name, indexOrHash, attributes);
-        }
-
-        @Override
-        ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-            int attr = getAttributes();
-            ScriptableObject desc = new NativeObject();
-            ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-            desc.defineProperty("enumerable", (attr & DONTENUM) == 0, EMPTY);
-            desc.defineProperty("configurable", (attr & PERMANENT) == 0, EMPTY);
-            if (getter != null) desc.defineProperty("get", getter, EMPTY);
-            if (setter != null) desc.defineProperty("set", setter, EMPTY);
-            return desc;
         }
 
         @Override
@@ -384,11 +355,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         @Override
         Object getValue(Scriptable start) {
             return slot.getValue(start);
-        }
-
-        @Override
-        ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-            return slot.getPropertyDescriptor(cx, scope);
         }
 
         @Override
@@ -1807,130 +1773,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
-     * Defines one or more properties on this object.
-     *
-     * @param cx the current Context
-     * @param props a map of property ids to property descriptors
-     */
-    @Deprecated
-    public void defineOwnProperties(Context cx, ScriptableObject props) {
-        Object[] ids = props.getIds();
-        for (Object id : ids) {
-            Object descObj = props.get(id);
-            ScriptableObject desc = ensureScriptableObject(descObj);
-            checkPropertyDefinition(desc);
-        }
-        for (Object id : ids) {
-            ScriptableObject desc = (ScriptableObject)props.get(id);
-            defineOwnProperty(cx, id, desc);
-        }
-    }
-
-    /**
-     * Defines a property on an object.
-     *
-     * @param cx the current Context
-     * @param id the name/index of the property
-     * @param desc the new property descriptor, as described in 8.6.1
-     */
-    @Deprecated
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
-        checkPropertyDefinition(desc);
-        defineOwnProperty(cx, id, desc, true);
-    }
-
-    /**
-     * Defines a property on an object.
-     *
-     * Based on [[DefineOwnProperty]] from 8.12.10 of the spec.
-     *
-     * @param cx the current Context
-     * @param id the name/index of the property
-     * @param desc the new property descriptor, as described in 8.6.1
-     * @param checkValid whether to perform validity checks
-     */
-    @Deprecated
-    protected void defineOwnProperty(Context cx, Object id, ScriptableObject desc,
-                                     boolean checkValid) {
-        String name = ScriptRuntime.toString(id);
-        PropertyDescriptor d = PropertyDescriptor.toPropertyDescriptor(desc);
-        defineOwnProperty(name, d, checkValid);
-    }
-
-    protected void checkPropertyDefinition(ScriptableObject desc) {
-        Object getter = getProperty(desc, "get");
-        if (getter != NOT_FOUND && getter != Undefined.instance
-                && !(getter instanceof Callable)) {
-            throw ScriptRuntime.notFunctionError(getter);
-        }
-        Object setter = getProperty(desc, "set");
-        if (setter != NOT_FOUND && setter != Undefined.instance
-                && !(setter instanceof Callable)) {
-            throw ScriptRuntime.notFunctionError(setter);
-        }
-        if (isDataDescriptor(desc) && isAccessorDescriptor(desc)) {
-            throw ScriptRuntime.typeError0("msg.both.data.and.accessor.desc");
-        }
-    }
-
-    protected void checkPropertyChange(String id, ScriptableObject current,
-                                       ScriptableObject desc) {
-        if (current == null) { // new property
-            if (!isExtensible()) throw ScriptRuntime.typeError0("msg.not.extensible");
-        } else {
-            if (isFalse(current.get("configurable", current))) {
-                if (isTrue(getProperty(desc, "configurable")))
-                    throw ScriptRuntime.typeError1(
-                        "msg.change.configurable.false.to.true", id);
-                if (hasProperty(desc, "enumerable")) {
-                    // only reject if 'enumerable' is present in desc
-                    if (isTrue(current.get("enumerable", current)) != isTrue(getProperty(desc, "enumerable")))
-                        throw ScriptRuntime.typeError1(
-                            "msg.change.enumerable.with.configurable.false", id);
-                }
-                boolean isData = isDataDescriptor(desc);
-                boolean isAccessor = isAccessorDescriptor(desc);
-                if (!isData && !isAccessor) {
-                    // no further validation required for generic descriptor
-                } else if (isData && isDataDescriptor(current)) {
-                    if (isFalse(current.get("writable", current))) {
-                        if (isTrue(getProperty(desc, "writable")))
-                            throw ScriptRuntime.typeError1(
-                                "msg.change.writable.false.to.true.with.configurable.false", id);
-
-                        if (!sameValue(getProperty(desc, "value"), current.get("value", current)))
-                            throw ScriptRuntime.typeError1(
-                                "msg.change.value.with.writable.false", id);
-                    }
-                } else if (isAccessor && isAccessorDescriptor(current)) {
-                    if (!sameValue(getProperty(desc, "set"), current.get("set", current)))
-                        throw ScriptRuntime.typeError1(
-                            "msg.change.setter.with.configurable.false", id);
-
-                    if (!sameValue(getProperty(desc, "get"), current.get("get", current)))
-                        throw ScriptRuntime.typeError1(
-                            "msg.change.getter.with.configurable.false", id);
-                } else {
-                    if (isDataDescriptor(current))
-                        throw ScriptRuntime.typeError1(
-                            "msg.change.property.data.to.accessor.with.configurable.false", id);
-                    else
-                        throw ScriptRuntime.typeError1(
-                            "msg.change.property.accessor.to.data.with.configurable.false", id);
-                }
-            }
-        }
-    }
-
-    protected static boolean isTrue(Object value) {
-        return (value != NOT_FOUND) && ScriptRuntime.toBoolean(value);
-    }
-
-    protected static boolean isFalse(Object value) {
-        return !isTrue(value);
-    }
-
-    /**
      * Implements SameValue as described in ES5 9.12, additionally checking
      * if new value is defined.
      * @param newValue the new value
@@ -1957,57 +1799,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
         }
         return ScriptRuntime.shallowEq(currentValue, newValue);
-    }
-
-    protected int applyDescriptorToAttributeBitset(int attributes,
-                                                   ScriptableObject desc)
-    {
-        Object enumerable = getProperty(desc, "enumerable");
-        if (enumerable != NOT_FOUND) {
-            attributes = ScriptRuntime.toBoolean(enumerable)
-                    ? attributes & ~DONTENUM : attributes | DONTENUM;
-        }
-
-        Object writable = getProperty(desc, "writable");
-        if (writable != NOT_FOUND) {
-            attributes = ScriptRuntime.toBoolean(writable)
-                    ? attributes & ~READONLY : attributes | READONLY;
-        }
-
-        Object configurable = getProperty(desc, "configurable");
-        if (configurable != NOT_FOUND) {
-            attributes = ScriptRuntime.toBoolean(configurable)
-                    ? attributes & ~PERMANENT : attributes | PERMANENT;
-        }
-
-        return attributes;
-    }
-
-    /**
-     * Implements IsDataDescriptor as described in ES5 8.10.2
-     * @param desc a property descriptor
-     * @return true if this is a data descriptor.
-     */
-    protected boolean isDataDescriptor(ScriptableObject desc) {
-        return hasProperty(desc, "value") || hasProperty(desc, "writable");
-    }
-
-    /**
-     * Implements IsAccessorDescriptor as described in ES5 8.10.1
-     * @param desc a property descriptor
-     * @return true if this is an accessor descriptor.
-     */
-    protected boolean isAccessorDescriptor(ScriptableObject desc) {
-        return hasProperty(desc, "get") || hasProperty(desc, "set");
-    }
-
-    /**
-     * Implements IsGenericDescriptor as described in ES5 8.10.3
-     * @param desc a property descriptor
-     * @return true if this is a generic descriptor.
-     */
-    protected boolean isGenericDescriptor(ScriptableObject desc) {
-        return !isDataDescriptor(desc) && !isAccessorDescriptor(desc);
     }
 
     protected static Scriptable ensureScriptable(Object arg) {
@@ -3080,13 +2871,6 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 prev = lastAdded;
             }
         }
-    }
-
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-        Slot slot = getSlot(cx, id, SLOT_QUERY);
-        if (slot == null) return null;
-        Scriptable scope = getParentScope();
-        return slot.getPropertyDescriptor(cx, (scope == null ? this : scope));
     }
 
     protected Slot getSlot(Context cx, Object id, int accessType) {

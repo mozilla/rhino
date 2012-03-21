@@ -42,13 +42,11 @@ package org.mozilla.javascript;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -557,18 +555,6 @@ public class NativeArray extends IdScriptableObject implements List
         return super.getDefaultValue(hint);
     }
 
-    private ScriptableObject defaultIndexPropertyDescriptor(Object value) {
-      Scriptable scope = getParentScope();
-      if (scope == null) scope = this;
-      ScriptableObject desc = new NativeObject();
-      ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-      desc.defineProperty("value", value, EMPTY);
-      desc.defineProperty("writable", true, EMPTY);
-      desc.defineProperty("enumerable", true, EMPTY);
-      desc.defineProperty("configurable", true, EMPTY);
-      return desc;
-    }
-
     @Override
     public int getAttributes(int index) {
         if (dense != null && index >= 0 && index < dense.length
@@ -576,149 +562,6 @@ public class NativeArray extends IdScriptableObject implements List
             return EMPTY;
         }
         return super.getAttributes(index);
-    }
-
-    @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-      if (dense != null) {
-        int index = toDenseIndex(id);
-        if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
-          Object value = dense[index];
-          return defaultIndexPropertyDescriptor(value);
-        }
-      }
-      return super.getOwnPropertyDescriptor(cx, id);
-    }
-
-    /**
-     * 15.4.5.1 [[DefineOwnProperty]] for Array 'length'
-     */
-    private void defineOwnPropertyLength(ScriptableObject desc,
-            boolean checkValid) {
-        checkPropertyDefinition(desc);
-        Object value = getProperty(desc, "value");
-        Object configurable = getProperty(desc, "configurable");
-        Object enumerable = getProperty(desc, "enumerable");
-        Object writable = getProperty(desc, "writable");
-
-        // 8.12.9 [[DefineOwnProperty]] checks for non-configurable properties, cf.
-        // 15.4.5.2 'length' has attributes {writable: true, enumerable: false, configurable: false}
-        if (isTrue(configurable)) {
-            if (! checkValid) return;
-            throw ScriptRuntime.typeError1(
-                "msg.change.configurable.false.to.true", "length");
-        } else if (isTrue(enumerable)) {
-            if (! checkValid) return;
-            throw ScriptRuntime.typeError1(
-                "msg.change.enumerable.with.configurable.false", "length");
-        } else if (isAccessorDescriptor(desc)) {
-            if (! checkValid) return;
-            throw ScriptRuntime.typeError1(
-                "msg.change.property.data.to.accessor.with.configurable.false", "length");
-        }
-
-        long newLen, oldLen = length;
-        if (value == NOT_FOUND) {
-            // generic-descriptor or data-descriptor with 'writable'
-            newLen = oldLen;
-        } else {
-            // data-descriptor with 'value' and possibly 'writable'
-            newLen = ScriptRuntime.toUint32(value);
-            if (newLen != ScriptRuntime.toNumber(value)) {
-                String msg = ScriptRuntime.getMessage0("msg.arraylength.bad");
-                throw ScriptRuntime.constructError("RangeError", msg);
-            }
-        }
-
-        if (newLen == oldLen) {
-            if (writable != NOT_FOUND) {
-                boolean w = ScriptRuntime.toBoolean(writable);
-                if ((lengthAttr & READONLY) != 0 && w) {
-                    if (! checkValid) return;
-                    throw ScriptRuntime.typeError1(
-                        "msg.change.writable.false.to.true.with.configurable.false", "length");
-                }
-                lengthAttr = w
-                      ? lengthAttr & ~READONLY
-                      : lengthAttr | READONLY;
-            }
-        } else {
-            if ((lengthAttr & READONLY) != 0) {
-                if (! checkValid) return;
-                throw ScriptRuntime.typeError1(
-                    "msg.change.value.with.writable.false", "length");
-            }
-            long entry = updateEntries(oldLen, newLen);
-            if (entry != -1) {
-                newLen = entry + 1;
-            }
-            length = newLen;
-            if (!(writable == NOT_FOUND || ScriptRuntime.toBoolean(writable))) {
-                lengthAttr = lengthAttr | READONLY;
-            }
-            if (entry != -1 && checkValid) {
-                throw ScriptRuntime.typeError("'missing error description'");
-            }
-        }
-    }
-
-    /**
-     * 15.4.5.1 [[DefineOwnProperty]] for Array 'index'
-     */
-    private void defineOwnPropertyIndex(Context cx, Object id,
-            ScriptableObject desc, boolean checkValid, long index) {
-        // 15.4.5.1 - step 4 => property is array index
-        long oldLen = length;
-        if (index >= oldLen) {
-            if ((lengthAttr & READONLY) != 0) {
-                if (!checkValid) return;
-                throw ScriptRuntime.typeError1(
-                    "msg.change.value.with.writable.false", "length");
-            }
-        }
-        if (dense != null) {
-            Object[] values = dense;
-            dense = null;
-            denseOnly = false;
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] != NOT_FOUND) {
-                    put(i, this, values[i]);
-                }
-            }
-        }
-        if (index >= oldLen) {
-            length = index + 1;
-        }
-        checkPropertyDefinition(desc);
-        super.defineOwnProperty(cx, id, desc, checkValid);
-    }
-
-    @Override
-    public void defineOwnProperty(Context cx, Object key, ScriptableObject desc) {
-        if ("length".equals(ScriptRuntime.toString(key))) {
-            // intercept 'length' property
-            defineOwnPropertyLength(desc, true);
-            return;
-        }
-        super.defineOwnProperty(cx, key, desc);
-    }
-
-    @Override
-    protected void defineOwnProperty(Context cx, Object id,
-                                     ScriptableObject desc,
-                                     boolean checkValid) {
-        if ("length".equals(ScriptRuntime.toString(id))) {
-            // intercept 'length' property
-            defineOwnPropertyLength(desc, checkValid);
-            return;
-        }
-        long index = toArrayIndex(id);
-        if (index >= 0) {
-            // intercept index properties
-            defineOwnPropertyIndex(cx, id, desc, checkValid, index);
-            return;
-        }
-        super.defineOwnProperty(cx, id, desc, checkValid);
     }
 
     @Override
