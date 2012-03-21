@@ -42,11 +42,13 @@ package org.mozilla.javascript;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -717,6 +719,144 @@ public class NativeArray extends IdScriptableObject implements List
             return;
         }
         super.defineOwnProperty(cx, id, desc, checkValid);
+    }
+
+    @Override
+    protected PropertyDescriptor getOwnProperty(String name) {
+        if (dense != null) {
+            int index = toDenseIndex(name);
+            if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
+                return new PropertyDescriptor(dense[index], EMPTY);
+            }
+        }
+        return super.getOwnProperty(name);
+    }
+
+    /**
+     * 15.4.5.1 [[DefineOwnProperty]] for Array 'length'
+     */
+    private boolean defineOwnPropertyLength(PropertyDescriptor desc,
+            boolean checked) {
+        reject: {
+            if (!desc.hasValue()) {
+                return super.defineOwnProperty("length", desc, checked);
+            }
+
+            long newLen = ScriptRuntime.toUint32(desc.getValue());
+            if (newLen != ScriptRuntime.toNumber(desc.getValue())) {
+                String msg = ScriptRuntime.getMessage0("msg.arraylength.bad");
+                throw ScriptRuntime.constructError("RangeError", msg);
+            }
+            PropertyDescriptor newLenDesc = new PropertyDescriptor(desc);
+            newLenDesc.setValue(newLen);
+
+            if (newLen >= length) {
+                return super.defineOwnProperty("length", newLenDesc, checked);
+            }
+            if ((lengthAttr & READONLY) != 0) {
+                break reject;
+            }
+            boolean readonly = newLenDesc.hasWritable()
+                    && !newLenDesc.isWritable();
+            if (readonly) {
+                newLenDesc.setWritable(true);
+            }
+            boolean succeeded = super.defineOwnProperty("length", newLenDesc,
+                    checked);
+            if (!succeeded) {
+                return false;
+            }
+            // length updated to expected value?
+            succeeded = (length == newLen);
+
+            if (readonly) {
+                // short cut: set length to read-only
+                // super.defineOwnProperty("length", {writable: false}, false);
+                lengthAttr = lengthAttr | READONLY;
+            }
+
+            if (!succeeded) {
+                break reject;
+            }
+            return true;
+        }
+        if (checked) {
+            throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
+        }
+        return false;
+    }
+
+    /**
+     * 15.4.5.1 [[DefineOwnProperty]] for Array 'index'
+     */
+    private boolean defineOwnPropertyIndex(String name,
+            PropertyDescriptor desc, boolean checked, long index) {
+        reject: {
+            long oldLen = length;
+            if (index >= oldLen && (lengthAttr & READONLY) != 0) {
+                break reject;
+            }
+            if (dense != null) {
+                // convert all dense entries to slots
+                Object[] values = dense;
+                dense = null;
+                denseOnly = false;
+                for (int i = 0; i < values.length; i++) {
+                    if (values[i] != NOT_FOUND) {
+                        put(i, this, values[i]);
+                    }
+                }
+            }
+            boolean succeeded = super.defineOwnProperty(name, desc, false);
+            if (!succeeded) {
+                break reject;
+            }
+            if (index >= oldLen) {
+                // short cut: update length
+                // super.defineOwnProperty("length", {value: index + 1}, false);
+                length = index + 1;
+            }
+            return true;
+        }
+        if (checked) {
+            throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
+        }
+        return false;
+    }
+
+    @Override
+    protected boolean defineOwnProperty(String name, PropertyDescriptor desc,
+            boolean checked) {
+        if ("length".equals(name)) {
+            // intercept 'length' property
+            return defineOwnPropertyLength(desc, checked);
+        }
+        long index = toArrayIndex(name);
+        if (index >= 0) {
+            // intercept index properties
+            return defineOwnPropertyIndex(name, desc, checked, index);
+        }
+        return super.defineOwnProperty(name, desc, checked);
+    }
+
+    @Override
+    protected void updateOwnProperty(String name, PropertyDescriptor desc,
+            PropertyDescriptor current) {
+        if ("length".equals(name)) {
+            int mask = desc.getAttributeMask();
+            lengthAttr = (lengthAttr & ~mask) | (desc.getAttributes() & mask);
+            if (desc.hasValue()) {
+                long newLen = ((Number) desc.getValue()).longValue();
+                long entry = updateEntries(length, newLen);
+                if (entry != -1) {
+                    // account for undeletable entries
+                    newLen = entry + 1;
+                }
+                length = newLen;
+            }
+            return;
+        }
+        super.updateOwnProperty(name, desc, current);
     }
 
     /**
