@@ -851,7 +851,10 @@ public class Parser
                            : "msg.anon.no.return.value";
                 addStrictWarning(msg, name == null ? "" : name.getIdentifier());
             }
-            if (inUseStrictDirective) {
+
+            // must use function's strictness here, 'inUseStrictDirective' from
+            // environment may already be reverted, cf. parseFunctionBody()
+            if (fnNode.isInStrictMode()) {
                 checkStrictFunction(fnNode);
             }
         } finally {
@@ -924,6 +927,18 @@ public class Parser
                 // TODO: check duplicate arguments in destructuring params
             }
         }
+    }
+
+    private boolean checkStrictAssignment(AstNode node) {
+        if (node instanceof Name) {
+            String name = node.getString();
+            // strict mode doesn't allow eval/arguments for lhs
+            if ("eval".equals(name) || "arguments".equals(name)) {
+                addError("msg.bad.id.strict", name);
+                return false;
+            }
+        }
+        return true;
     }
 
     // This function does not match the closing RC: the caller matches
@@ -2125,6 +2140,9 @@ public class Parser
         tt = peekToken();
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
             consumeToken();
+            if (inUseStrictDirective) {
+                checkStrictAssignment(pn);
+            }
 
             // Pull out JSDoc info and reset it before recursing.
             String jsdoc = getAndResetJsDoc();
@@ -3485,6 +3503,9 @@ public class Parser
             reportError(expr.getType() == Token.INC
                         ? "msg.bad.incr"
                         : "msg.bad.decr");
+        if (inUseStrictDirective) {
+            checkStrictAssignment(op);
+        }
     }
 
     private ErrorNode makeErrorNode() {
