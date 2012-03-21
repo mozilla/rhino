@@ -419,6 +419,9 @@ public class Parser
     }
 
     private void mustHaveXML() {
+        if (inUseStrictDirective) {
+            reportError("msg.XML.not.available.strict");
+        }
         if (!compilerEnv.isXmlAvailable()) {
             reportError("msg.XML.not.available");
         }
@@ -2465,7 +2468,7 @@ public class Parser
 
           case Token.LT:
               // XML stream encountered in expression.
-              if (compilerEnv.isXmlAvailable()) {
+              if (!inUseStrictDirective && compilerEnv.isXmlAvailable()) {
                   consumeToken();
                   return memberExprTail(true, xmlInitializer());
               }
@@ -2723,7 +2726,7 @@ public class Parser
             memberTypeFlags = Node.DESCENDANTS_FLAG;
         }
 
-        if (!compilerEnv.isXmlAvailable()) {
+        if (inUseStrictDirective || !compilerEnv.isXmlAvailable()) {
             mustMatchToken(Token.NAME, "msg.no.name.after.dot");
             Name name = createNameNode(true, Token.GETPROP);
             PropertyGet pg = new PropertyGet(pn, name, dotPos);
@@ -3032,7 +3035,7 @@ public class Parser
         // bounds in instance vars and createNameNode uses them.
         saveNameTokenData(namePos, nameString, nameLineno);
 
-        if (compilerEnv.isXmlAvailable()) {
+        if (!inUseStrictDirective && compilerEnv.isXmlAvailable()) {
             return propertyName(-1, 0);
         } else {
             return createNameNode(true, Token.NAME);
