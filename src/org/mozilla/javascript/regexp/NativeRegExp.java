@@ -739,9 +739,9 @@ if (regexp.anchorCh >= 0) {
                 break;
             }
             if (!overflow) {
-                int digit = c - '0';
-                if (value < (maxValue - digit) / 10) {
-                    value = value * 10 + digit;
+                int v = value * 10 + (c - '0');
+                if (v < maxValue) {
+                    value = v;
                 } else {
                     overflow = true;
                     value = maxValue;
@@ -792,23 +792,19 @@ if (regexp.anchorCh >= 0) {
                 /* Decimal escape */
                 case '0':
 /*
- * Under 'strict' ECMA 3, we interpret \0 as NUL and don't accept octal.
- * However, (XXX and since Rhino doesn't have a 'strict' mode) we'll just
- * behave the old way for compatibility reasons.
- * (see http://bugzilla.mozilla.org/show_bug.cgi?id=141078)
- *
+ * We're deliberately violating the ECMA 5.1 specification and allow octal
+ * escapes to follow spidermonkey and general 'web reality':
+ * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
+ * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
  */
                     reportWarning(state.cx, "msg.bad.backref", "");
                     /* octal escape */
                     num = 0;
-                    while (state.cp < state.cpend) {
+                    for (int i = 0; i < 2 && state.cp < state.cpend; ++i) {
                         c = src[state.cp];
                         if ((c >= '0') && (c <= '7')) {
                             state.cp++;
-                            tmp = 8 * num + (c - '0');
-                            if (tmp > 0377)
-                                break;
-                            num = tmp;
+                            num = 8 * num + (c - '0');
                         }
                         else
                             break;
@@ -831,19 +827,27 @@ if (regexp.anchorCh >= 0) {
                     if (num > state.parenCount)
                         reportWarning(state.cx, "msg.bad.backref", "");
                     /*
-                     * n > 9 or > count of parentheses,
-                     * then treat as octal instead.
+                     * n > count of parentheses, then treat as octal instead.
+                     * Also see note above concerning 'web reality'
                      */
-                    if ((num > 9) && (num > state.parenCount)) {
+                    if (num > state.parenCount) {
                         state.cp = termStart;
-                        num = 0;
-                        while (state.cp < state.cpend) {
+                        if (c > '7') {
+                            // invalid octal escape, follow spidermonkey and
+                            // treat as \\8 resp. \\9
+                            c = '\\';
+                            doFlat(state, c);
+                            break;
+                        }
+                        state.cp++;
+                        num = c - '0';
+                        for (int i = 0; i < 2 && state.cp < state.cpend; ++i) {
                             c = src[state.cp];
                             if ((c >= '0') && (c <= '7')) {
-                                state.cp++;
                                 tmp = 8 * num + (c - '0');
                                 if (tmp > 0377)
                                     break;
+                                state.cp++;
                                 num = tmp;
                             }
                             else
