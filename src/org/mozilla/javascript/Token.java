@@ -361,6 +361,8 @@ public class Token
           case DEL_REF:         return "DEL_REF";
           case REF_CALL:        return "REF_CALL";
           case REF_SPECIAL:     return "REF_SPECIAL";
+          case YIELD:           return "YIELD";
+          case STRICT_SETNAME:  return "STRICT_SETNAME";
           case DEFAULTNAMESPACE:return "DEFAULTNAMESPACE";
           case ESCXMLTEXT:      return "ESCXMLTEXT";
           case ESCXMLATTR:      return "ESCXMLATTR";
@@ -442,7 +444,6 @@ public class Token
           case GET:             return "GET";
           case SET:             return "SET";
           case LET:             return "LET";
-          case YIELD:           return "YIELD";
           case CONST:           return "CONST";
           case SETCONST:        return "SETCONST";
           case ARRAYCOMP:       return "ARRAYCOMP";
