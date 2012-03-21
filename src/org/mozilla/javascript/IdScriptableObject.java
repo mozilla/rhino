@@ -322,6 +322,11 @@ public abstract class IdScriptableObject extends ScriptableObject
         super(scope, prototype);
     }
 
+    protected final boolean defaultHas(String name)
+    {
+        return super.has(name, this);
+    }
+
     protected final Object defaultGet(String name)
     {
         return super.get(name, this);
@@ -732,6 +737,7 @@ public abstract class IdScriptableObject extends ScriptableObject
     }
 
     @Override
+    @Deprecated
     public void defineOwnProperty(Context cx, Object key, ScriptableObject desc) {
       if (key instanceof String) {
         String name = (String) key;

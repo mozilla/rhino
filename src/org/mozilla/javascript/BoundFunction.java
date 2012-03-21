@@ -70,7 +70,8 @@ public class BoundFunction extends BaseFunction {
     Function thrower = ScriptRuntime.typeErrorThrower();
     PropertyDescriptor throwing = new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
     this.defineOwnProperty("caller", throwing, false);
-    this.defineOwnProperty("arguments", throwing, false);
+    // this.defineOwnProperty("arguments", throwing, false);
+    this.updateOwnProperty("arguments", throwing, null);
   }
 
   @Override
