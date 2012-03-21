@@ -3113,6 +3113,22 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 || value instanceof CharSequence || value instanceof Number || value instanceof Boolean);
     }
 
+    private static class SlotPropertyDescriptor extends PropertyDescriptor {
+        private final Slot slot;
+
+        SlotPropertyDescriptor(Slot slot) {
+            super(slot.value, slot.attributes);
+            this.slot = slot;
+        }
+
+        SlotPropertyDescriptor(GetterSlot slot) {
+            super(slot.getter == null ? Undefined.instance : slot.getter,
+                    slot.setter == null ? Undefined.instance : slot.setter,
+                    ((Slot) slot).attributes);
+            this.slot = slot;
+        }
+    }
+
     /**
      * ECMAScript 5
      * 
@@ -3133,18 +3149,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         slot = unwrapSlot(slot);
         PropertyDescriptor desc;
         if (slot instanceof GetterSlot) {
-            GetterSlot gslot = (GetterSlot) slot;
-            Object getter = gslot.getter;
-            Object setter = gslot.setter;
-            if (getter == null) {
-                getter = Undefined.instance;
-            }
-            if (setter == null) {
-                setter = Undefined.instance;
-            }
-            desc = new PropertyDescriptor(getter, setter, slot.attributes);
+            desc = new SlotPropertyDescriptor((GetterSlot) slot);
         } else {
-            desc = new PropertyDescriptor(slot.value, slot.attributes);
+            desc = new SlotPropertyDescriptor(slot);
         }
         return desc;
     }
@@ -3398,21 +3405,29 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     protected void updateOwnProperty(String name, PropertyDescriptor desc,
             PropertyDescriptor current) {
-        long index = ScriptRuntime.indexFromString(name);
-        if (index >= 0) {
-            name = null;
-        } else {
-            index = 0;
-        }
-        Slot slot = getSlot(name, (int) index, SLOT_QUERY);
         boolean isAccessor = desc.isAccessorDescriptor();
         boolean isNew = current == null;
-        if (slot == null) {
-            // caution: slot may be null even if current != null
-            slot = getSlot(name, (int) index,
-                    isAccessor ? SLOT_MODIFY_GETTER_SETTER : SLOT_MODIFY);
+        long index;
+        Slot slot;
+        if (desc instanceof SlotPropertyDescriptor) {
+            slot = ((SlotPropertyDescriptor) desc).slot;
+            name = slot.name;
+            index = slot.indexOrHash;
+        } else {
+            index = ScriptRuntime.indexFromString(name);
+            if (index >= 0) {
+                name = null;
+            } else {
+                index = 0;
+            }
+            slot = getSlot(name, (int) index, SLOT_QUERY);
+            if (slot == null) {
+                // caution: slot may be null even if current != null
+                slot = getSlot(name, (int) index,
+                        isAccessor ? SLOT_MODIFY_GETTER_SETTER : SLOT_MODIFY);
+            }
+            slot = unwrapSlot(slot);
         }
-        slot = unwrapSlot(slot);
 
         int baseAttrs, mask;
         if (isNew) {
