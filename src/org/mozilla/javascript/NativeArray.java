@@ -1820,8 +1820,12 @@ public class NativeArray extends IdScriptableObject implements List
         Function f = (Function) callbackArg;
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
         Object thisArg = args.length < 2 ? Undefined.instance : args[1];
-        int resultLength = id == Id_map ? (int) length : 0;
-        Scriptable array = id != Id_every ? cx.newArray(scope, resultLength) : null;
+        Scriptable array;
+        if (id == Id_filter || id == Id_map) {
+            array = cx.newArray(scope, id == Id_map ? (int) length : 0);
+        } else {
+            array = null;
+        }
         long j=0;
         for (long i=0; i < length; i++) {
             Object[] innerArgs = new Object[3];
