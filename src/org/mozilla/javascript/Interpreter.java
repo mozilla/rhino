@@ -1567,7 +1567,8 @@ switch (op) {
             stack[stackTop] = ScriptRuntime.callSpecial(
                                   cx, function, functionThis, outArgs,
                                   frame.scope, frame.thisObj, callType,
-                                  frame.idata.itsSourceFile, sourceLine);
+                                  frame.idata.itsSourceFile, sourceLine,
+                                  frame.idata.isStrict);
         }
         frame.pc += 4;
         continue Loop;

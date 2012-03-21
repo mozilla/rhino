@@ -179,7 +179,7 @@ public final class OptRuntime extends ScriptRuntime
         Callable c = ensureCallable(fun);
         return ScriptRuntime.callSpecial(cx, c, thisObj, args, scope,
                                          callerThis, callType,
-                                         fileName, lineNumber);
+                                         fileName, lineNumber, false);
     }
 
     public static Object newObjectSpecial(Context cx, Object fun,

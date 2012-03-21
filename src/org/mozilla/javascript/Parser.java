@@ -544,8 +544,6 @@ public class Parser
 
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
-        // TODO: eval code should get strict mode from invoking code
-        inUseStrictDirective = false;
         ts.setOctalCharacterEscape(false);
 
         try {

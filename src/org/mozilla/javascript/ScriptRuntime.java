@@ -2538,12 +2538,13 @@ public class ScriptRuntime {
                                      Scriptable thisObj,
                                      Object[] args, Scriptable scope,
                                      Scriptable callerThis, int callType,
-                                     String filename, int lineNumber)
+                                     String filename, int lineNumber,
+                                     boolean strictMode)
     {
         if (callType == Node.SPECIALCALL_EVAL) {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
                 return evalSpecial(cx, scope, callerThis, args,
-                                   filename, lineNumber);
+                                   filename, lineNumber, strictMode);
             }
         } else if (callType == Node.SPECIALCALL_WITH) {
             if (NativeWith.isWithFunction(fun)) {
@@ -2640,9 +2641,23 @@ public class ScriptRuntime {
      *
      * See ECMA 15.1.2.1
      */
+    @Deprecated
     public static Object evalSpecial(Context cx, Scriptable scope,
                                      Object thisArg, Object[] args,
                                      String filename, int lineNumber)
+    {
+        return evalSpecial(cx, scope, thisArg, args, filename, lineNumber, false);
+    }
+
+    /**
+     * The eval function property of the global object.
+     *
+     * See ECMA 15.1.2.1
+     */
+    public static Object evalSpecial(Context cx, Scriptable scope,
+                                     Object thisArg, Object[] args,
+                                     String filename, int lineNumber,
+                                     boolean strictMode)
     {
         if (args.length < 1)
             return Undefined.instance;
@@ -2681,7 +2696,7 @@ public class ScriptRuntime {
         // Compile with explicit interpreter instance to force interpreter
         // mode.
         Script script = cx.compileString(x.toString(), evaluator,
-                                         reporter, sourceName, 1, null);
+                                         reporter, sourceName, 1, null, strictMode);
         evaluator.setEvalScriptFlag(script);
         Callable c = (Callable)script;
         return c.call(cx, scope, (Scriptable)thisArg, ScriptRuntime.emptyArgs);

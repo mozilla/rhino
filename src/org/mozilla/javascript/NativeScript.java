@@ -191,8 +191,10 @@ class NativeScript extends BaseFunction
         }
         ErrorReporter reporter;
         reporter = DefaultErrorReporter.forEval(cx.getErrorReporter());
+        // TODO: which strict-mode setting needs to be applied here?
+        boolean strictMode = false;
         return cx.compileString(source, null, reporter, filename,
-                                linep[0], null);
+                                linep[0], null, strictMode);
     }
 
 // #string_id_map#

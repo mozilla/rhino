@@ -526,7 +526,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     private Object js_eval(Context cx, Scriptable scope, Object[] args)
     {
         Scriptable global = ScriptableObject.getTopLevelScope(scope);
-        return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);
+        return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1, false);
     }
 
     static boolean isEvalFunction(Object functionObj)
