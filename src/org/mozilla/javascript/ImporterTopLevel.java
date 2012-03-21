@@ -238,7 +238,7 @@ public class ImporterTopLevel extends TopLevel {
             throw Context.reportRuntimeError1("msg.prop.defined", n);
         }
         //defineProperty(n, cl, DONTENUM);
-        put(n, this, cl);
+        put(n, this, cl, false);
     }
 
     @Override

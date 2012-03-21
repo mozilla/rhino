@@ -13,8 +13,8 @@ public class ObjectGetOwnPropertyDescriptorTest {
   public void testContentsOfPropertyDescriptorShouldReflectAttributesOfProperty() {
     NativeObject descriptor;
     NativeObject object = new NativeObject();
-    object.defineProperty("a", "1", ScriptableObject.EMPTY);
-    object.defineProperty("b", "2", ScriptableObject.DONTENUM | ScriptableObject.READONLY | ScriptableObject.PERMANENT);
+    object.defineProperty("a", "1", ScriptableObject.EMPTY, false);
+    object.defineProperty("b", "2", ScriptableObject.DONTENUM | ScriptableObject.READONLY | ScriptableObject.PERMANENT, false);
 
     descriptor = (NativeObject) eval("Object.getOwnPropertyDescriptor(obj, 'a')", "obj", object);
     assertEquals("1",  descriptor.get("value"));

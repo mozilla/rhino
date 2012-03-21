@@ -59,7 +59,7 @@ final class NativeMath extends IdScriptableObject
         obj.setParentScope(scope);
         if (sealed) { obj.sealObject(); }
         ScriptableObject.defineProperty(scope, "Math", obj,
-                                        ScriptableObject.DONTENUM);
+                                        ScriptableObject.DONTENUM, false);
     }
 
     private NativeMath()

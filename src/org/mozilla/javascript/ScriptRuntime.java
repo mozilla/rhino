@@ -1258,9 +1258,9 @@ public class ScriptRuntime {
             // XXX: this is racy of cause
             ScriptableObject.defineProperty(scope, DEFAULT_NS_TAG, ns,
                                             ScriptableObject.PERMANENT
-                                            | ScriptableObject.DONTENUM);
+                                            | ScriptableObject.DONTENUM, false);
         } else {
-            scope.put(DEFAULT_NS_TAG, scope, ns);
+            scope.put(DEFAULT_NS_TAG, scope, ns, false);
         }
 
         return Undefined.instance;
@@ -1967,7 +1967,7 @@ public class ScriptRuntime {
             if (cx.useDynamicScope) {
                 bound = checkDynamicScope(cx.topCallScope, bound);
             }
-            bound.put(id, bound, value);
+            bound.put(id, bound, value, false);
         }
         return value;
     }
@@ -1995,8 +1995,9 @@ public class ScriptRuntime {
     public static Object setConst(Scriptable bound, Object value,
                                  Context cx, String id)
     {
+        // TODO: strict mode flag?
         if (bound instanceof XMLObject) {
-            bound.put(id, bound, value);
+            bound.put(id, bound, value, false);
         } else {
             ScriptableObject.putConstProperty(bound, id, value);
         }
@@ -2331,8 +2332,8 @@ public class ScriptRuntime {
         public Object get(int index, Scriptable start) { throw error(); }
         public boolean has(String name, Scriptable start) { throw error(); }
         public boolean has(int index, Scriptable start) { throw error(); }
-        public void put(String name, Scriptable start, Object value) { throw error(); }
-        public void put(int index, Scriptable start, Object value) { throw error(); }
+        public void put(String name, Scriptable start, Object value, boolean checked) { throw error(); }
+        public void put(int index, Scriptable start, Object value, boolean checked) { throw error(); }
         public void delete(String name) { throw error(); }
         public void delete(int index) { throw error(); }
         public Scriptable getPrototype() { throw error(); }
@@ -2868,7 +2869,8 @@ public class ScriptRuntime {
                 }
                 target = target.getPrototype();
             } while (target != null);
-            start.put(id, start, NaNobj);
+            // TODO: strict mode flag?
+            start.put(id, start, NaNobj, false);
             return NaNobj;
         }
         return doScriptableIncrDecr(target, id, start, value,
@@ -2898,7 +2900,8 @@ public class ScriptRuntime {
             --number;
         }
         Number result = wrapNumber(number);
-        target.put(id, protoChainStart, result);
+        // TODO: strict mode flag?
+        target.put(id, protoChainStart, result, false);
         if (post) {
             return value;
         } else {
@@ -3422,6 +3425,8 @@ public class ScriptRuntime {
                 varScope = varScope.getParentScope();
             }
 
+            // TODO: strict mode flag?
+            boolean strict = false;
             for (int i = varCount; i-- != 0;) {
                 String name = funObj.getParamOrVarName(i);
                 boolean isConst = funObj.getParamOrVarConst(i);
@@ -3435,9 +3440,9 @@ public class ScriptRuntime {
                         else
                             ScriptableObject.defineProperty(
                                 varScope, name, Undefined.instance,
-                                ScriptableObject.PERMANENT);
+                                ScriptableObject.PERMANENT, strict);
                     } else {
-                        varScope.put(name, varScope, Undefined.instance);
+                        varScope.put(name, varScope, Undefined.instance, strict);
                     }
                 } else {
                     ScriptableObject.redefineProperty(scope, name, isConst);
@@ -3566,13 +3571,15 @@ public class ScriptRuntime {
                                                        null);
                 ScriptableObject.defineProperty(
                     errorObject, "javaException", wrap,
-                    ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                    ScriptableObject.PERMANENT | ScriptableObject.READONLY,
+                    false);
             }
             if (isVisible(cx, re)) {
                 Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
                 ScriptableObject.defineProperty(
                         errorObject, "rhinoException", wrap,
-                        ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                        ScriptableObject.PERMANENT | ScriptableObject.READONLY,
+                        false);
             }
             obj = errorObject;
         }
@@ -3580,7 +3587,7 @@ public class ScriptRuntime {
         NativeObject catchScopeObject = new NativeObject();
         // See ECMA 12.4
         catchScopeObject.defineProperty(
-            exceptionName, obj, ScriptableObject.PERMANENT);
+            exceptionName, obj, ScriptableObject.PERMANENT, false);
 
         if (isVisible(cx, t)) {
             // Add special Rhino object __exception__ defined in the catch
@@ -3588,7 +3595,7 @@ public class ScriptRuntime {
             // with the JavaScript exception (to get stack trace info, etc.)
             catchScopeObject.defineProperty(
                 "__exception__", Context.javaToJS(t, scope),
-                ScriptableObject.PERMANENT|ScriptableObject.DONTENUM);
+                ScriptableObject.PERMANENT|ScriptableObject.DONTENUM, false);
         }
 
         if (cacheObj) {
@@ -3677,16 +3684,19 @@ public class ScriptRuntime {
                                     NativeFunction function, int type,
                                     boolean fromEvalCode)
     {
+        // TODO: strict mode flag?
+        boolean strict = false;
         if (type == FunctionNode.FUNCTION_STATEMENT) {
             String name = function.getFunctionName();
             if (name != null && name.length() != 0) {
                 if (!fromEvalCode) {
                     // ECMA specifies that functions defined in global and
                     // function scope outside eval should have DONTDELETE set.
-                    ScriptableObject.defineProperty
-                        (scope, name, function, ScriptableObject.PERMANENT);
+                    ScriptableObject.defineProperty(scope, name, function,
+                                                    ScriptableObject.PERMANENT,
+                                                    strict);
                 } else {
-                    scope.put(name, scope, function);
+                    scope.put(name, scope, function, strict);
                 }
             }
         } else if (type == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
@@ -3698,7 +3708,7 @@ public class ScriptRuntime {
                 while (scope instanceof NativeWith) {
                     scope = scope.getParentScope();
                 }
-                scope.put(name, scope, function);
+                scope.put(name, scope, function, strict);
             }
         } else {
             throw Kit.codeBug();
@@ -3745,7 +3755,8 @@ public class ScriptRuntime {
                 ++skip;
                 continue;
             }
-            ScriptableObject.defineProperty(array, i, objects[j], ScriptableObject.EMPTY);
+            ScriptableObject.defineProperty(array, i, objects[j],
+                                            ScriptableObject.EMPTY, false);
             ++j;
         }
         return array;
@@ -3781,7 +3792,7 @@ public class ScriptRuntime {
                     if (isSpecialProperty((String)id)) {
                         specialRef(object, (String)id, cx).set(cx, value);
                     } else {
-                        object.put((String)id, object, value);
+                        object.put((String)id, object, value, false);
                     }
                 } else {
                     ScriptableObject so = (ScriptableObject)object;
@@ -3791,7 +3802,7 @@ public class ScriptRuntime {
                 }
             } else {
                 int index = ((Integer)id).intValue();
-                object.put(index, object, value);
+                object.put(index, object, value, false);
             }
         }
         return object;

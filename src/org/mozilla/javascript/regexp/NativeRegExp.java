@@ -155,7 +155,7 @@ public class NativeRegExp extends IdScriptableObject
         NativeRegExpCtor ctor = new NativeRegExpCtor();
         // Bug #324006: ECMA-262 15.10.6.1 says "The initial value of
         // RegExp.prototype.constructor is the builtin RegExp constructor."
-        proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM);
+        proto.defineProperty("constructor", ctor, ScriptableObject.DONTENUM, false);
 
         ScriptRuntime.setFunctionProtoAndParent(ctor, scope);
 
@@ -166,7 +166,7 @@ public class NativeRegExp extends IdScriptableObject
             ctor.sealObject();
         }
 
-        defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
+        defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM, false);
     }
 
     NativeRegExp(Scriptable scope, Object regexpCompiled)
@@ -2315,7 +2315,7 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
             obj = (Scriptable) result;
 
             String matchstr = str.substring(index, index + matchlen);
-            obj.put(0, obj, matchstr);
+            obj.put(0, obj, matchstr, true);
         }
 
         if (re.parenCount == 0) {
@@ -2334,11 +2334,11 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
                     res.parens[num] = parsub;
                     if (matchType == TEST) continue;
                     parstr = parsub.toString();
-                    obj.put(num+1, obj, parstr);
+                    obj.put(num+1, obj, parstr, true);
                 }
                 else {
                     if (matchType != TEST)
-                        obj.put(num+1, obj, Undefined.instance);
+                        obj.put(num+1, obj, Undefined.instance, true);
                 }
             }
             res.lastParen = parsub;
@@ -2349,8 +2349,8 @@ System.out.println("Testing at " + gData.cp + ", op = " + op);
              * Define the index and input properties last for better for/in loop
              * order (so they come after the elements).
              */
-            obj.put("index", obj, Integer.valueOf(start + gData.skipped));
-            obj.put("input", obj, str);
+            obj.put("index", obj, Integer.valueOf(start + gData.skipped), true);
+            obj.put("input", obj, str, true);
         }
 
         if (res.lastMatch == null) {

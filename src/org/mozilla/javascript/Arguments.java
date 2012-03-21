@@ -95,7 +95,8 @@ final class Arguments extends IdScriptableObject
 
     private void putIntoActivation(int index, Object value) {
         String argName = activation.function.getParamOrVarName(index);
-        activation.put(argName, activation, value);
+        // checked = false because we're never in strict-mode for this call
+        activation.put(argName, activation, value, false);
     }
 
     private Object getFromActivation(int index) {
@@ -173,10 +174,10 @@ final class Arguments extends IdScriptableObject
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value)
+    public void put(int index, Scriptable start, Object value, boolean checked)
     {
         if (arg(index) == NOT_FOUND) {
-          super.put(index, start, value);
+          super.put(index, start, value, checked);
         } else {
           replaceArg(index, value);
         }

@@ -101,7 +101,7 @@ public class IdFunctionObject extends BaseFunction
     public final void addAsProperty(Scriptable target)
     {
         ScriptableObject.defineProperty(target, functionName, this,
-                                        ScriptableObject.DONTENUM);
+                                        ScriptableObject.DONTENUM, false);
     }
 
     public void exportAsScopeProperty()

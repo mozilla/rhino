@@ -202,12 +202,13 @@ public interface Scriptable {
      * @param name the name of the property
      * @param start the object whose property is being set
      * @param value value to set the property to
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, String, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void put(String name, Scriptable start, Object value);
+    public void put(String name, Scriptable start, Object value, boolean checked);
 
     /**
      * Sets an indexed property in this object.
@@ -221,12 +222,13 @@ public interface Scriptable {
      * @param index the numeric index for the property
      * @param start the object whose property is being set
      * @param value value to set the property to
+     * @param checked controls error handling
      * @see org.mozilla.javascript.Scriptable#has(int, Scriptable)
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      * @see org.mozilla.javascript.ScriptableObject#putProperty(Scriptable, int, Object)
      * @see org.mozilla.javascript.Context#toObject(Object, Scriptable)
      */
-    public void put(int index, Scriptable start, Object value);
+    public void put(int index, Scriptable start, Object value, boolean checked);
 
     /**
      * Removes a property from this object.

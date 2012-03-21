@@ -177,7 +177,7 @@ public class Matrix implements Scriptable {
      *
      * We do nothing here, so all properties are effectively read-only.
      */
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, Scriptable start, Object value, boolean checked) {
     }
 
     /**
@@ -185,7 +185,7 @@ public class Matrix implements Scriptable {
      *
      * We do nothing here, so all properties are effectively read-only.
      */
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
     }
 
     /**

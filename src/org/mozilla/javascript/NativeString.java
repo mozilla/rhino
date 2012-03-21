@@ -505,11 +505,11 @@ final class NativeString extends IdScriptableObject
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value) {
+    public void put(int index, Scriptable start, Object value, boolean checked) {
         if (0 <= index && index < string.length()) {
             return;
         }
-        super.put(index, start, value);
+        super.put(index, start, value, checked);
     }
 
     @Override

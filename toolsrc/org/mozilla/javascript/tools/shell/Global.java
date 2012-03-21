@@ -151,10 +151,10 @@ public class Global extends ImporterTopLevel
         Environment.defineClass(this);
         Environment environment = new Environment(this);
         defineProperty("environment", environment,
-                       ScriptableObject.DONTENUM);
+                       ScriptableObject.DONTENUM, false);
 
         history = (NativeArray) cx.newArray(this, 0);
-        defineProperty("history", history, ScriptableObject.DONTENUM);
+        defineProperty("history", history, ScriptableObject.DONTENUM, false);
 
         initialized = true;
     }

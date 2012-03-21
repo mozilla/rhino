@@ -428,7 +428,7 @@ class XMLList extends XMLObjectImpl implements Function
      * @param index
      * @param value
      */
-    public void put(int index, Scriptable start, Object value)
+    public void put(int index, Scriptable start, Object value, boolean checked)
     {
         Object parent = Undefined.instance;
         // Convert text into XML if needed.

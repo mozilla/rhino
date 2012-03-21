@@ -68,7 +68,7 @@ public class TypeOfTest extends TestCase
 			public Object run(final Context context)
 			{
 				final Scriptable scope = context.initStandardObjects();
-				scope.put("myObj", scope, f);
+				scope.put("myObj", scope, f, false);
 				return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
 			}
 		};
@@ -82,7 +82,7 @@ public class TypeOfTest extends TestCase
 			public Object run(final Context context)
 			{
 				final Scriptable scope = context.initStandardObjects();
-				scope.put("myObj", scope, obj);
+				scope.put("myObj", scope, obj, false);
 				return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
 			}
 		};

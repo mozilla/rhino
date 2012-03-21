@@ -21,7 +21,7 @@ public class Evaluator {
           for (Map.Entry<String, Scriptable> entry : bindings.entrySet()) {
             final Scriptable object = entry.getValue();
             object.setParentScope(scope);
-            scope.put(entry.getKey(), scope, object);
+            scope.put(entry.getKey(), scope, object, false);
           }
       }
       return cx.evaluateString(scope, source, "source", 1, null);

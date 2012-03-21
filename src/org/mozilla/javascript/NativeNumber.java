@@ -77,19 +77,19 @@ final class NativeNumber extends IdScriptableObject
                          ScriptableObject.PERMANENT |
                          ScriptableObject.READONLY;
 
-        ctor.defineProperty("NaN", ScriptRuntime.NaNobj, attr);
+        ctor.defineProperty("NaN", ScriptRuntime.NaNobj, attr, false);
         ctor.defineProperty("POSITIVE_INFINITY",
                             ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY),
-                            attr);
+                            attr, false);
         ctor.defineProperty("NEGATIVE_INFINITY",
                             ScriptRuntime.wrapNumber(Double.NEGATIVE_INFINITY),
-                            attr);
+                            attr, false);
         ctor.defineProperty("MAX_VALUE",
                             ScriptRuntime.wrapNumber(Double.MAX_VALUE),
-                            attr);
+                            attr, false);
         ctor.defineProperty("MIN_VALUE",
                             ScriptRuntime.wrapNumber(Double.MIN_VALUE),
-                            attr);
+                            attr, false);
 
         super.fillConstructorProperties(ctor);
     }

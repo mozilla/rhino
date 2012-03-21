@@ -358,7 +358,7 @@ public class FunctionObject extends BaseFunction
     {
         initAsConstructor(scope, prototype);
         defineProperty(scope, prototype.getClassName(),
-                       this, ScriptableObject.DONTENUM);
+                       this, ScriptableObject.DONTENUM, false);
     }
 
     void initAsConstructor(Scriptable scope, Scriptable prototype)
@@ -371,7 +371,7 @@ public class FunctionObject extends BaseFunction
         defineProperty(prototype, "constructor", this,
                        ScriptableObject.DONTENUM  |
                        ScriptableObject.PERMANENT |
-                       ScriptableObject.READONLY);
+                       ScriptableObject.READONLY, false);
         setParentScope(scope);
     }
 

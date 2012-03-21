@@ -174,7 +174,7 @@ final class NativeError extends IdScriptableObject
             stackProvider = null;
             delete("stack");
         }
-        put("stack", this, value);
+        put("stack", this, value, false);
     }
 
     private static Object js_toString(Context cx, Scriptable scope,

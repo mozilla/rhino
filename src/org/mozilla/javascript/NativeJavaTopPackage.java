@@ -138,10 +138,10 @@ public class NativeJavaTopPackage
             getClass.sealObject();
         }
         getClass.exportAsScopeProperty();
-        global.defineProperty("Packages", top, ScriptableObject.DONTENUM);
+        global.defineProperty("Packages", top, ScriptableObject.DONTENUM, false);
         for (int i=0; i < topNames.length; i++) {
             global.defineProperty(topNames[i], topPackages[i],
-                                  ScriptableObject.DONTENUM);
+                                  ScriptableObject.DONTENUM, false);
         }
     }
 

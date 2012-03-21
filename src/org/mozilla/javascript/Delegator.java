@@ -143,16 +143,16 @@ public class Delegator implements Function {
         return obj.has(index,start);
         }
     /**
-     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
+     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object, boolean)
      */
-    public void put(String name, Scriptable start, Object value) {
-        obj.put(name,start,value);
+    public void put(String name, Scriptable start, Object value, boolean checked) {
+        obj.put(name,start,value,checked);
     }
     /**
-     * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object)
+     * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object, boolean)
      */
-    public void put(int index, Scriptable start, Object value) {
-        obj.put(index,start,value);
+    public void put(int index, Scriptable start, Object value, boolean checked) {
+        obj.put(index,start,value,checked);
     }
     /**
      * @see org.mozilla.javascript.Scriptable#delete(String)

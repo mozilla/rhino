@@ -117,14 +117,14 @@ class PropertyDescriptor {
 
         ScriptableObject obj = ensureScriptableObject(cx.newObject(scope));
         if (desc.isDataDescriptor()) {
-            obj.defineProperty("value", desc.getValue(), EMPTY);
-            obj.defineProperty("writable", desc.isWritable(), EMPTY);
+            obj.defineProperty("value", desc.getValue(), EMPTY, false);
+            obj.defineProperty("writable", desc.isWritable(), EMPTY, false);
         } else {
-            obj.defineProperty("get", desc.getGetter(), EMPTY);
-            obj.defineProperty("set", desc.getSetter(), EMPTY);
+            obj.defineProperty("get", desc.getGetter(), EMPTY, false);
+            obj.defineProperty("set", desc.getSetter(), EMPTY, false);
         }
-        obj.defineProperty("enumerable", desc.isEnumerable(), EMPTY);
-        obj.defineProperty("configurable", desc.isConfigurable(), EMPTY);
+        obj.defineProperty("enumerable", desc.isEnumerable(), EMPTY, false);
+        obj.defineProperty("configurable", desc.isConfigurable(), EMPTY, false);
         return obj;
     }
 

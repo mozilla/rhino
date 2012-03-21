@@ -1853,7 +1853,8 @@ switch (op) {
             Object val = stack[stackTop];
             if (val == DBL_MRK) val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
             stringReg = frame.idata.argNames[indexReg];
-            frame.scope.put(stringReg, frame.scope, val);
+            // TODO: check -> 'false'?
+            frame.scope.put(stringReg, frame.scope, val, false);
         }
         continue Loop;
     case Icode_GETVAR1:

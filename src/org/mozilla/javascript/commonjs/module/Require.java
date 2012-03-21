@@ -326,9 +326,9 @@ public class Require extends BaseFunction
         // This means we're currently using the "MGN" approach (ModuleScript
         // with Global Natives) as specified here:
         // <http://wiki.commonjs.org/wiki/Modules/ProposalForNativeExtension>
-        executionScope.put("exports", executionScope, exports);
-        executionScope.put("module", executionScope, moduleObject);
-        moduleObject.put("exports", moduleObject, exports);
+        executionScope.put("exports", executionScope, exports, false);
+        executionScope.put("module", executionScope, moduleObject, false);
+        moduleObject.put("exports", moduleObject, exports, false);
         install(executionScope);
         if(isMain) {
             defineReadOnlyProperty(this, "main", moduleObject);

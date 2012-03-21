@@ -265,7 +265,7 @@ public final class OptRuntime extends ScriptRuntime
                 System.arraycopy(args, 0, argsCopy, 0, args.length);
                 Scriptable argsObj = cx.newArray(global, argsCopy);
                 global.defineProperty("arguments", argsObj,
-                                      ScriptableObject.DONTENUM);
+                                      ScriptableObject.DONTENUM, false);
                 script.exec(cx, global);
                 return null;
             }

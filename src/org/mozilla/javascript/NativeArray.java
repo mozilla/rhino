@@ -416,9 +416,9 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
-    public void put(String id, Scriptable start, Object value)
+    public void put(String id, Scriptable start, Object value, boolean checked)
     {
-        super.put(id, start, value);
+        super.put(id, start, value, checked);
         if (start == this) {
             // If the object is sealed, super will throw exception
             long index = toArrayIndex(id);
@@ -447,7 +447,7 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value)
+    public void put(int index, Scriptable start, Object value, boolean checked)
     {
         if (start == this && !isSealed() && dense != null && 0 <= index &&
             (denseOnly || !isGetterOrSetter(null, index, true)))
@@ -469,7 +469,7 @@ public class NativeArray extends IdScriptableObject implements List
                 denseOnly = false;
             }
         }
-        super.put(index, start, value);
+        super.put(index, start, value, checked);
         if (start == this && (lengthAttr & READONLY) == 0) {
             // only set the array length if given an array index (ECMA 15.4.0)
             if (this.length <= index) {
@@ -646,7 +646,7 @@ public class NativeArray extends IdScriptableObject implements List
                 denseOnly = false;
                 for (int i = 0; i < values.length; i++) {
                     if (values[i] != NOT_FOUND) {
-                        put(i, this, values[i]);
+                        put(i, this, values[i], checked);
                     }
                 }
             }
@@ -956,11 +956,15 @@ public class NativeArray extends IdScriptableObject implements List
     private static void defineElem(Context cx, Scriptable target, long index,
                                    Object value)
     {
+        // [[DefineOwnProperty]](_, _, false) -> always ignore error for
+        // invalid [[DefineOwnProperty]]
         if (index > Integer.MAX_VALUE) {
             String id = Long.toString(index);
-            ScriptableObject.defineProperty(target, id, value, ScriptableObject.EMPTY);
+            ScriptableObject.defineProperty(target, id, value,
+                                            ScriptableObject.EMPTY, false);
         } else {
-            ScriptableObject.defineProperty(target, (int)index, value, ScriptableObject.EMPTY);
+            ScriptableObject.defineProperty(target, (int)index, value,
+                                            ScriptableObject.EMPTY, false);
         }
     }
 

@@ -120,14 +120,14 @@ public class NativeGlobal implements Serializable, IdFunctionCall
 
         ScriptableObject.defineProperty(
             scope, "NaN", ScriptRuntime.NaNobj,
-            READONLY|DONTENUM|PERMANENT);
+            READONLY|DONTENUM|PERMANENT, false);
         ScriptableObject.defineProperty(
             scope, "Infinity",
             ScriptRuntime.wrapNumber(Double.POSITIVE_INFINITY),
-            READONLY|DONTENUM|PERMANENT);
+            READONLY|DONTENUM|PERMANENT, false);
         ScriptableObject.defineProperty(
             scope, "undefined", Undefined.instance,
-            READONLY|DONTENUM|PERMANENT);
+            READONLY|DONTENUM|PERMANENT, false);
 
         String[] errorMethods = {
                 "EvalError",
@@ -149,13 +149,13 @@ public class NativeGlobal implements Serializable, IdFunctionCall
             ScriptableObject errorProto =
               (ScriptableObject) ScriptRuntime.newObject(cx, scope, "Error",
                                                   ScriptRuntime.emptyArgs);
-            errorProto.put("name", errorProto, name);
-            errorProto.put("message", errorProto, "");
+            errorProto.put("name", errorProto, name, false);
+            errorProto.put("message", errorProto, "", false);
             IdFunctionObject ctor = new IdFunctionObject(obj, FTAG,
                                                          Id_new_CommonError,
                                                          name, 1, scope);
             ctor.markAsConstructor(errorProto);
-            errorProto.put("constructor", errorProto, ctor);
+            errorProto.put("constructor", errorProto, ctor, false);
             errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
             if (sealed) {
                 errorProto.sealObject();

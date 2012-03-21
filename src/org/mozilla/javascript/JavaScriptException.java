@@ -77,10 +77,10 @@ public class JavaScriptException extends RhinoException
                 .hasFeature(Context.FEATURE_LOCATION_INFORMATION_IN_ERROR)) {
             NativeError error = (NativeError) value;
             if (!error.has("fileName", error)) {
-                error.put("fileName", error, sourceName);
+                error.put("fileName", error, sourceName, false);
             }
             if (!error.has("lineNumber", error)) {
-                error.put("lineNumber", error, Integer.valueOf(lineNumber));
+                error.put("lineNumber", error, Integer.valueOf(lineNumber), false);
             }
             // set stack property, see bug #549604
             error.setStackProvider(this);

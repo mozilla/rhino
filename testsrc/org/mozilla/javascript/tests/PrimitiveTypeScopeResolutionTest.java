@@ -70,7 +70,7 @@ public class PrimitiveTypeScopeResolutionTest
     	            new MySimpleScriptableObject("scope2"));
     	        cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
 
-    	        scope1.put("scope2", scope1, scope2);
+    	        scope1.put("scope2", scope1, scope2, false);
 
     	        return cx.evaluateString(scope1, scriptScope1, "source1", 1,
     	                                 null);
@@ -149,10 +149,10 @@ public class PrimitiveTypeScopeResolutionTest
               final Scriptable scope2 = cx.initStandardObjects(
                   new MySimpleScriptableObject("scope2"));
 
-              scope2.put("myObject", scope2, myObject);
+              scope2.put("myObject", scope2, myObject, false);
               cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
 
-              scope1.put("scope2", scope1, scope2);
+              scope1.put("scope2", scope1, scope2, false);
 
               return cx.evaluateString(scope1, scriptScope1, "source1", 1, null);
           }

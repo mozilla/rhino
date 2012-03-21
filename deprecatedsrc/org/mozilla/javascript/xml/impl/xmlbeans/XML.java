@@ -1313,7 +1313,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param start
      * @param value
      */
-    public void put(int index, Scriptable start, Object value)
+    public void put(int index, Scriptable start, Object value, boolean checked)
     {
         // Spec says assignment to indexed XML object should return type error
         throw ScriptRuntime.typeError("Assignment to indexed XML is not allowed");

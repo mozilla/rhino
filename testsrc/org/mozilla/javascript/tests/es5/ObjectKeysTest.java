@@ -12,9 +12,9 @@ public class ObjectKeysTest {
   @Test
   public void shouldReturnOnlyEnumerablePropertiesOfArg() {
     NativeObject object = new NativeObject();
-    object.defineProperty("a", "1", ScriptableObject.EMPTY);
-    object.defineProperty("b", "2", ScriptableObject.EMPTY);
-    object.defineProperty("c", "3", ScriptableObject.DONTENUM);
+    object.defineProperty("a", "1", ScriptableObject.EMPTY, false);
+    object.defineProperty("b", "2", ScriptableObject.EMPTY, false);
+    object.defineProperty("c", "3", ScriptableObject.DONTENUM, false);
 
     Object result = eval("Object.keys(obj)", "obj", object);
 

@@ -193,7 +193,7 @@ public abstract class IdScriptableObject extends ScriptableObject
             return value;
         }
 
-        final void set(int id, Scriptable start, Object value)
+        final void set(int id, Scriptable start, Object value, boolean checked)
         {
             if (value == NOT_FOUND) throw new IllegalArgumentException();
             ensureId(id);
@@ -211,7 +211,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                 else {
                     int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
                     String name = (String)valueArray[nameSlot];
-                    start.put(name, start, value);
+                    start.put(name, start, value, checked);
                 }
             }
         }
@@ -332,9 +332,9 @@ public abstract class IdScriptableObject extends ScriptableObject
         return super.get(name, this);
     }
 
-    protected final void defaultPut(String name, Object value)
+    protected final void defaultPut(String name, Object value, boolean checked)
     {
-        super.put(name, this, value);
+        super.put(name, this, value, checked);
     }
 
     @Override
@@ -384,7 +384,7 @@ public abstract class IdScriptableObject extends ScriptableObject
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value)
+    public void put(String name, Scriptable start, Object value, boolean checked)
     {
         int info = findInstanceIdInfo(name);
         if (info != 0) {
@@ -399,7 +399,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                     setInstanceIdValue(id, value);
                 }
                 else {
-                    start.put(name, start, value);
+                    start.put(name, start, value, checked);
                 }
             }
             return;
@@ -411,11 +411,11 @@ public abstract class IdScriptableObject extends ScriptableObject
                     throw Context.reportRuntimeError1("msg.modify.sealed",
                                                       name);
                 }
-                prototypeValues.set(id, start, value);
+                prototypeValues.set(id, start, value, checked);
                 return;
             }
         }
-        super.put(name, start, value);
+        super.put(name, start, value, checked);
     }
 
     @Override
@@ -797,7 +797,8 @@ public abstract class IdScriptableObject extends ScriptableObject
                     prototypeValues.delete(id); // it will be replaced with a slot
                 } else {
                     if (desc.hasValue()) {
-                        prototypeValues.set(id, this, desc.getValue());
+                        // save to pass 'false' b/c read-only check already passed
+                        prototypeValues.set(id, this, desc.getValue(), false);
                     }
                     prototypeValues.setAttributes(id, attributes);
                     return;

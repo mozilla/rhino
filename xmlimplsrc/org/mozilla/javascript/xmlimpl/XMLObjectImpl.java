@@ -291,14 +291,14 @@ abstract class XMLObjectImpl extends XMLObject {
         if (xmlName == null) {
             long index = ScriptRuntime.lastUint32Result(cx);
             // XXX Fix this cast
-            put((int)index, this, value);
+            put((int)index, this, value, false);
             return;
         }
         putXMLProperty(xmlName, value);
     }
 
    @Override
-    public void put(String name, Scriptable start, Object value) {
+    public void put(String name, Scriptable start, Object value, boolean checked) {
         Context cx = Context.getCurrentContext();
         putXMLProperty(lib.toXMLNameFromString(cx, name), value);
     }

@@ -215,7 +215,8 @@ public class BaseFunction extends IdScriptableObject implements Function
                     Kit.codeBug();
                 }
                 if (defaultHas("arguments")) {
-                    defaultPut("arguments", value);
+                    // check=false since we cannot reach this code in strict-mode
+                    defaultPut("arguments", value, false);
                 } else if ((argumentsAttributes & READONLY) == 0) {
                     argumentsObj = value;
                 }
@@ -507,7 +508,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         }
         NativeObject obj = new NativeObject();
         final int attr = ScriptableObject.DONTENUM;
-        obj.defineProperty("constructor", this, attr);
+        obj.defineProperty("constructor", this, attr, false);
         // put the prototype property into the object now, then in the
         // wacky case of a user defining a function Object(), we don't
         // get an infinite loop trying to find the prototype.

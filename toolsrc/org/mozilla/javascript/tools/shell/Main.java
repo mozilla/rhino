@@ -211,7 +211,7 @@ public class Main
         System.arraycopy(args, 0, array, 0, args.length);
         Scriptable argsObj = cx.newArray(global, array);
         global.defineProperty("arguments", argsObj,
-                              ScriptableObject.DONTENUM);
+                              ScriptableObject.DONTENUM, false);
 
         for (String file: fileList) {
             processSource(cx, file);
@@ -513,7 +513,7 @@ public class Main
                         }
                     }
                     NativeArray h = global.history;
-                    h.put((int)h.getLength(), h, source);
+                    h.put((int)h.getLength(), h, source, false);
                 }
             }
             ps.println();

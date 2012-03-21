@@ -492,13 +492,35 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param start the object whose property is being set
      * @param value value to set the property to
      */
-    public void put(String name, Scriptable start, Object value)
+    @Deprecated
+    public final void put(String name, Scriptable start, Object value)
+    {
+        put(name, start, value, false);
+    }
+
+    /**
+     * Sets the value of the named property, creating it if need be.
+     *
+     * If the property was created using defineProperty, the
+     * appropriate setter method is called. <p>
+     *
+     * If the property's attributes include READONLY, no action is
+     * taken.
+     * This method will actually set the property in the start
+     * object.
+     *
+     * @param name the name of the property
+     * @param start the object whose property is being set
+     * @param value value to set the property to
+     * @param checked controls error handling
+     */
+    public void put(String name, Scriptable start, Object value, boolean checked)
     {
         if (putImpl(name, 0, start, value))
             return;
 
         if (start == this) throw Kit.codeBug();
-        start.put(name, start, value);
+        start.put(name, start, value, checked);
     }
 
     /**
@@ -508,13 +530,27 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param start the object whose property is being set
      * @param value value to set the property to
      */
-    public void put(int index, Scriptable start, Object value)
+    @Deprecated
+    public final void put(int index, Scriptable start, Object value)
+    {
+        put(index, start, value, false);
+    }
+
+    /**
+     * Sets the value of the indexed property, creating it if need be.
+     *
+     * @param index the numeric index for the property
+     * @param start the object whose property is being set
+     * @param value value to set the property to
+     * @param checked controls error handling
+     */
+    public void put(int index, Scriptable start, Object value, boolean checked)
     {
         if (putImpl(null, index, start, value))
             return;
 
         if (start == this) throw Kit.codeBug();
-        start.put(index, start, value);
+        start.put(index, start, value, checked);
     }
 
     /**
@@ -569,7 +605,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (start instanceof ConstProperties)
             ((ConstProperties)start).putConst(name, start, value);
         else
-            start.put(name, start, value);
+            // TODO: 'throw' flag?
+            start.put(name, start, value, false);
     }
 
     public void defineConst(String name, Scriptable start)
@@ -1519,12 +1556,44 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param attributes the attributes of the JavaScript property
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
+    @Deprecated
+    public final void defineProperty(int index, Object value,
+                                     int attributes)
+    {
+        defineProperty(index, value, attributes, false);
+    }
+
+    /**
+     * Define a JavaScript property.
+     *
+     * Creates the property with an initial value and sets its attributes.
+     *
+     * @param propertyName the name of the property to define.
+     * @param value the initial value of the property
+     * @param attributes the attributes of the JavaScript property
+     * @param checked controls error handling
+     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
+     */
     public void defineProperty(int index, Object value,
-                               int attributes)
+                               int attributes, boolean checked)
     {
         checkNotSealed(null, index);
-        put(index, this, value);
+        put(index, this, value, checked);
         setAttributes(index, attributes);
+    }
+
+    /**
+     * Utility method to add properties to arbitrary Scriptable object.
+     * If destination is instance of ScriptableObject, calls
+     * defineProperty there, otherwise calls put in destination
+     * ignoring attributes
+     */
+    @Deprecated
+    public static void defineProperty(Scriptable destination,
+                                      int index, Object value,
+                                      int attributes)
+    {
+        defineProperty(destination, index, value, attributes, false);
     }
 
     /**
@@ -1535,14 +1604,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public static void defineProperty(Scriptable destination,
                                       int index, Object value,
-                                      int attributes)
+                                      int attributes, boolean checked)
     {
         if (!(destination instanceof ScriptableObject)) {
-            destination.put(index, destination, value);
+            destination.put(index, destination, value, checked);
             return;
         }
         ScriptableObject so = (ScriptableObject)destination;
-        so.defineProperty(index, value, attributes);
+        so.defineProperty(index, value, attributes, checked);
     }
 
     /**
@@ -1555,12 +1624,44 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param attributes the attributes of the JavaScript property
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
+    @Deprecated
+    public final void defineProperty(String propertyName, Object value,
+                                     int attributes)
+    {
+        defineProperty(propertyName, value, attributes, false);
+    }
+
+    /**
+     * Define a JavaScript property.
+     *
+     * Creates the property with an initial value and sets its attributes.
+     *
+     * @param propertyName the name of the property to define.
+     * @param value the initial value of the property
+     * @param attributes the attributes of the JavaScript property
+     * @param checked controls error handling
+     * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
+     */
     public void defineProperty(String propertyName, Object value,
-                               int attributes)
+                               int attributes, boolean checked)
     {
         checkNotSealed(propertyName, 0);
-        put(propertyName, this, value);
+        put(propertyName, this, value, checked);
         setAttributes(propertyName, attributes);
+    }
+
+    /**
+     * Utility method to add properties to arbitrary Scriptable object.
+     * If destination is instance of ScriptableObject, calls
+     * defineProperty there, otherwise calls put in destination
+     * ignoring attributes
+     */
+    @Deprecated
+    public static void defineProperty(Scriptable destination,
+                                      String propertyName, Object value,
+                                      int attributes)
+    {
+        defineProperty(destination, propertyName, value, attributes, false);
     }
 
     /**
@@ -1571,14 +1672,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public static void defineProperty(Scriptable destination,
                                       String propertyName, Object value,
-                                      int attributes)
+                                      int attributes, boolean checked)
     {
         if (!(destination instanceof ScriptableObject)) {
-            destination.put(propertyName, destination, value);
+            destination.put(propertyName, destination, value, checked);
             return;
         }
         ScriptableObject so = (ScriptableObject)destination;
-        so.defineProperty(propertyName, value, attributes);
+        so.defineProperty(propertyName, value, attributes, checked);
     }
 
     /**
@@ -2181,7 +2282,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Scriptable base = getBase(obj, name);
         if (base == null)
             base = obj;
-        base.put(name, obj, value);
+        base.put(name, obj, value, checked);
     }
 
     /**
@@ -2252,7 +2353,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Scriptable base = getBase(obj, index);
         if (base == null)
             base = obj;
-        base.put(index, obj, value);
+        base.put(index, obj, value, checked);
     }
 
     /**

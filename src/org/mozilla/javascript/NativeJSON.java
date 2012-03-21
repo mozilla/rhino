@@ -70,7 +70,7 @@ final class NativeJSON extends IdScriptableObject
         obj.setParentScope(scope);
         if (sealed) { obj.sealObject(); }
         ScriptableObject.defineProperty(scope, "JSON", obj,
-                                        ScriptableObject.DONTENUM);
+                                        ScriptableObject.DONTENUM, false);
     }
 
     private NativeJSON()
@@ -152,7 +152,7 @@ final class NativeJSON extends IdScriptableObject
     {
       Object unfiltered = parse(cx, scope, jtext);
       Scriptable root = cx.newObject(scope);
-      root.put("", root, unfiltered);
+      root.put("", root, unfiltered, false);
       return walk(cx, scope, reviver, root, "");
     }
 
@@ -175,7 +175,7 @@ final class NativeJSON extends IdScriptableObject
                     if (newElement == Undefined.instance) {
                       val.delete(i);
                     } else {
-                      val.put(i, val, newElement);
+                      val.put(i, val, newElement, false);
                     }
                 }
             } else {
@@ -189,9 +189,9 @@ final class NativeJSON extends IdScriptableObject
                           val.delete((String) p);
                     } else {
                         if (p instanceof Number)
-                          val.put(((Number) p).intValue(), val, newElement);
+                          val.put(((Number) p).intValue(), val, newElement, false);
                         else
-                          val.put((String) p, val, newElement);
+                          val.put((String) p, val, newElement, false);
                     }
                 }
             }
@@ -284,7 +284,7 @@ final class NativeJSON extends IdScriptableObject
         ScriptableObject wrapper = new NativeObject();
         wrapper.setParentScope(scope);
         wrapper.setPrototype(ScriptableObject.getObjectPrototype(scope));
-        wrapper.defineProperty("", value, 0);
+        wrapper.defineProperty("", value, 0, false);
         return str("", wrapper, state);
     }
 
