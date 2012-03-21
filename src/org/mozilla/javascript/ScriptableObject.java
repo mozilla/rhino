@@ -637,7 +637,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     @Deprecated
     public void putConst(String name, Scriptable start, Object value)
     {
-        putConst(name, start, value);
+        putConst(name, start, value, false);
     }
 
     /**
@@ -1970,6 +1970,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 throw Context.reportRuntimeError2(
                     "msg.method.not.found", name, clazz.getName());
             }
+            // TODO: deprecated!
             FunctionObject f = new FunctionObject(name, m, this);
             defineProperty(name, f, attributes);
         }

@@ -1394,7 +1394,8 @@ switch (op) {
         if (rhs == DBL_MRK) rhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         --stackTop;
         Scriptable lhs = (Scriptable)stack[stackTop];
-        stack[stackTop] = ScriptRuntime.setConst(lhs, rhs, cx, stringReg);
+        stack[stackTop] = ScriptRuntime.setConst(lhs, rhs, cx, stringReg,
+                                                 frame.idata.isStrict);
         continue Loop;
     }
     case Token.DELPROP :

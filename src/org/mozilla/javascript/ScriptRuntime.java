@@ -2326,31 +2326,32 @@ public class ScriptRuntime {
     public static Object strictSetName(Scriptable bound, Object value,
             Context cx, Scriptable scope, String id) {
         if (bound != null) {
-            // TODO: The LeftHandSide also may not be a reference to a
-            // data property with the attribute value {[[Writable]]:false},
-            // to an accessor property with the attribute value
-            // {[[Put]]:undefined}, nor to a non-existent property of an
-            // object whose [[Extensible]] internal property has the value
-            // false. In these cases a TypeError exception is thrown (11.13.1).
             // TODO: we used to special-case XMLObject here, but putProperty
             // seems to work for E4X and we should optimize  the common case
             ScriptableObject.putProperty(bound, id, value, true);
             return value;
         } else {
+            // TODO: error message!
             // See ES5 8.7.2
             String msg = "Assignment to undefined \"" + id + "\" in strict mode";
             throw constructError("ReferenceError", msg);
         }
     }
 
+    @Deprecated
     public static Object setConst(Scriptable bound, Object value,
-                                 Context cx, String id)
+            Context cx, String id)
     {
-        // TODO: strict mode flag?
+        return setConst(bound, value, cx, id, false);
+    }
+
+    public static Object setConst(Scriptable bound, Object value,
+                                 Context cx, String id, boolean strict)
+    {
         if (bound instanceof XMLObject) {
-            bound.put(id, bound, value, false);
+            bound.put(id, bound, value, strict);
         } else {
-            ScriptableObject.putConstProperty(bound, id, value);
+            ScriptableObject.putConstProperty(bound, id, value, strict);
         }
         return value;
     }
@@ -3837,7 +3838,8 @@ public class ScriptRuntime {
                     if (!evalScript) {
                         // Global var definitions are supposed to be DONTDELETE
                         if (isConst)
-                            ScriptableObject.defineConstProperty(varScope, name);
+                            ScriptableObject.defineConstProperty(varScope, name,
+                                                                 true);
                         else
                             ScriptableObject.defineProperty(
                                 varScope, name, Undefined.instance,
