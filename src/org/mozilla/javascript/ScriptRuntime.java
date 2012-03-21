@@ -1825,7 +1825,7 @@ public class ScriptRuntime {
                                          boolean asFunctionCall)
     {
         Object result;
-        Scriptable thisObj = scope; // It is used only if asFunctionCall==true.
+        Scriptable thisObj = null; // It is used only if asFunctionCall==true.
 
         XMLObject firstXMLObject = null;
         for (;;) {
@@ -1858,8 +1858,7 @@ public class ScriptRuntime {
                     if (asFunctionCall) {
                         // ECMA 262 requires that this for nested funtions
                         // should be top scope
-                        thisObj = ScriptableObject.
-                                      getTopLevelScope(parentScope);
+                        thisObj = null;
                     }
                     break;
                 }
@@ -1890,7 +1889,7 @@ public class ScriptRuntime {
                     result = firstXMLObject.get(name, firstXMLObject);
                 }
                 // For top scope thisObj for functions is always scope itself.
-                thisObj = scope;
+                thisObj = null;
                 break;
             }
         }
@@ -2290,6 +2289,12 @@ public class ScriptRuntime {
                                                   Scriptable scope)
     {
         Object value = getNameObjectAndThis(name, cx, scope);
+        // restore old behaviour
+        scope = lastStoredScriptable(cx);
+        if (scope == null) {
+            scope = cx.topCallScope;
+        }
+        storeScriptable(cx, scope);
         return ensureCallable(cx, value);
     }
 
@@ -2402,8 +2407,7 @@ public class ScriptRuntime {
                 }
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
-            Scriptable thisObj = scope;
-            storeScriptable(cx, thisObj);
+            storeScriptable(cx, null);
             return result;
         }
 
@@ -2541,8 +2545,8 @@ public class ScriptRuntime {
      * can be GC-reachable after this method returns. If this is necessary,
      * store args.clone(), not args array itself.
      */
-    public static Ref callRef(Callable function, Scriptable thisObj,
-                              Object[] args, Context cx)
+    public static Ref callRef(Callable function, Scriptable scope,
+                              Object thisObj, Object[] args, Context cx)
     {
         if (function instanceof RefCallable) {
             RefCallable rfunction = (RefCallable)function;
@@ -2552,7 +2556,8 @@ public class ScriptRuntime {
             }
             return ref;
         }
-        // No runtime support for now
+        // No runtime support for now, but need to call function nonetheless
+        function.call(cx, scope, thisObj, args);
         String msg = getMessage1("msg.no.ref.from.function",
                                  toString(function));
         throw constructError("ReferenceError", msg);
@@ -2637,7 +2642,7 @@ public class ScriptRuntime {
         int L = args.length;
         Callable function = getCallable(thisObj);
 
-        Object callThis = (L != 0 ? args[0] : null);
+        Object callThis = (L != 0 ? args[0] : Undefined.instance);
         Object[] callArgs;
         if (isApply) {
             // Follow Ecma 15.3.4.3
