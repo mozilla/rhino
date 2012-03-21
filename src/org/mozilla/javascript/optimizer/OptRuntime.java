@@ -156,13 +156,12 @@ public final class OptRuntime extends ScriptRuntime
         return new ConsString(toString(val1), (CharSequence)val2);
     }
 
-    // TODO: argument position for 'checked'
-    public static Object elemIncrDecr(Object obj, double index,
-                                      Context cx, int incrDecrMask,
-                                      boolean checked)
+    public static Object elemIncrDecr(Object obj, double index, boolean strict,
+                                      Context cx, Scriptable scope,
+                                      int incrDecrMask)
     {
-        return ScriptRuntime.elemIncrDecr(obj, new Double(index), cx,
-                                          incrDecrMask, checked);
+        return ScriptRuntime.elemIncrDecr(obj, new Double(index), strict,
+                                          cx, scope, incrDecrMask);
     }
 
     public static Object[] padStart(Object[] currentArgs, int count) {
@@ -178,9 +177,9 @@ public final class OptRuntime extends ScriptRuntime
     }
 
     public static Object callSpecial(Context cx, Object fun,
-                                     Scriptable thisObj, Object[] args,
+                                     Object thisObj, Object[] args,
                                      Scriptable scope,
-                                     Scriptable callerThis, int callType,
+                                     Object callerThis, int callType,
                                      String fileName, int lineNumber,
                                      boolean strictMode)
     {
@@ -192,7 +191,7 @@ public final class OptRuntime extends ScriptRuntime
 
     public static Object newObjectSpecial(Context cx, Object fun,
                                           Object[] args, Scriptable scope,
-                                          Scriptable callerThis, int callType)
+                                          Object callerThis, int callType)
     {
         return ScriptRuntime.newSpecial(cx, fun, args, scope, callType);
     }
@@ -285,7 +284,7 @@ public final class OptRuntime extends ScriptRuntime
 
     public static Scriptable createNativeGenerator(NativeFunction funObj,
                                                    Scriptable scope,
-                                                   Scriptable thisObj,
+                                                   Object thisObj,
                                                    int maxLocals,
                                                    int maxStack)
     {
@@ -315,17 +314,16 @@ public final class OptRuntime extends ScriptRuntime
         static final String resumptionPoint_NAME = "resumptionPoint";
         static final String resumptionPoint_TYPE = "I";
 
-        public Scriptable thisObj;
+        public Object thisObj;
         static final String thisObj_NAME = "thisObj";
-        static final String thisObj_TYPE =
-            "Lorg/mozilla/javascript/Scriptable;";
+        static final String thisObj_TYPE = "Ljava/lang/Object;";
 
         Object[] stackState;
         Object[] localsState;
         int maxLocals;
         int maxStack;
 
-        GeneratorState(Scriptable thisObj, int maxLocals, int maxStack) {
+        GeneratorState(Object thisObj, int maxLocals, int maxStack) {
             this.thisObj = thisObj;
             this.maxLocals = maxLocals;
             this.maxStack = maxStack;

@@ -1474,6 +1474,283 @@ public class ScriptRuntime {
     }
 
     /**
+     * <b>8.7 The Reference Specification Type:</b> HasPrimitiveBase(V)<br>
+     * Returns true if the base value is a Boolean, String, or Number.
+     */
+    private static Scriptable tryPrimitive(Context cx, Scriptable scope, Object val) {
+        if (val instanceof CharSequence) {
+            NativeString result = new NativeString((CharSequence)val);
+            setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.String);
+            return result;
+        }
+        if (val instanceof Number) {
+            NativeNumber result = new NativeNumber(((Number)val).doubleValue());
+            setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Number);
+            return result;
+        }
+        if (val instanceof Boolean) {
+            NativeBoolean result = new NativeBoolean(((Boolean)val).booleanValue());
+            setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Boolean);
+            return result;
+        }
+        return null;
+    }
+
+    /**
+     * 8.7 Extension: Wrap as a LiveConnect object.
+     */
+    private static Scriptable tryWrap(Context cx, Scriptable scope, Object val) {
+        Object wrapped = cx.getWrapFactory().wrap(cx, scope, val, null);
+        if (wrapped instanceof Scriptable)
+            return (Scriptable) wrapped;
+        return null;
+    }
+
+    /**
+     * Special [[Get]] if reference base value is primitive, see ES5.1 [8.7.1]
+     */
+    private static Object getPrimitiveValue(Object base, Scriptable obj,
+                                            String property, Context cx,
+                                            Scriptable scope) {
+        // TODO: could need some optimization
+        assert obj instanceof ScriptableObject;
+        ScriptableObject sobj = (ScriptableObject) obj;
+        PropertyDescriptor desc = sobj.$getProperty(property);
+        if (desc == null) {
+            return Undefined.instance;
+        } else if (desc.isDataDescriptor()) {
+            return desc.getValue();
+        }
+        Object getter = desc.getGetter();
+        if (getter == Undefined.instance) {
+            return Undefined.instance;
+        } else {
+            return ((Callable) getter).call(cx, scope, base, emptyArgs);
+        }
+    }
+
+    /**
+     * Special [[Put]] if reference base value is primitive, see ES5.1 [8.7.2]
+     */
+    private static void putPrimitiveValue(Object base, Scriptable obj,
+                                            String property, boolean checked,
+                                            Object value, Context cx,
+                                            Scriptable scope) {
+        // TODO: could need some optimization
+        assert obj instanceof ScriptableObject;
+        ScriptableObject sobj = (ScriptableObject) obj;
+        if (!sobj.$canPut(property)) {
+            if (checked) {
+                // TODO: error message
+                throw typeError("[[ReadOnly]]");
+            }
+            return;
+        }
+        PropertyDescriptor ownDesc = sobj.getOwnProperty(property);
+        if (ownDesc != null && ownDesc.isDataDescriptor()) {
+            if (checked) {
+                // TODO: error message
+                throw typeError("[[ReadOnly]]");
+            }
+            return;
+        }
+        PropertyDescriptor desc = sobj.$getProperty(property);
+        if (desc == null || !desc.isAccessorDescriptor()) {
+            if (checked) {
+                // TODO: error message
+                throw typeError("[[ReadOnly]]");
+            }
+            return;
+        }
+        Object setter = desc.getSetter();
+        ((Callable) setter).call(cx, scope, base, new Object[]{ value });
+    }
+
+    /**
+     * ES5.1 [8.7.1 GetValue (V)]<br>
+     * 
+     * Precondition: The reference V={obj, elem, strict} is either an
+     * unresolvable reference or a property reference.
+     * 
+     * @param obj The base value component
+     * @param elem The referenced name component
+     * @param strict The strict reference component
+     * @param cx The current context
+     * @param scope The current scope
+     */
+    public static Object getObjectValue(Object obj, Object elem, boolean strict,
+                                        Context cx, Scriptable scope)
+    {
+        Scriptable sobj;
+        if (obj == null || obj == Undefined.instance) {
+            throw undefReadError(obj, elem);
+        } else if (obj instanceof Scriptable) {
+            sobj = (Scriptable) obj;
+        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+            return getPrimitiveValue(obj, sobj, toString(elem), cx, scope);
+        } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
+            throw errorWithClassName("msg.invalid.type", obj);
+        }
+        return getObjectElem(sobj, elem, cx);
+    }
+
+    /**
+     * ES5.1 [8.7.1 GetValue (V)]
+     * 
+     * Precondition: The reference V={obj, property, strict} is either an
+     * unresolvable reference or a property reference.
+     * 
+     * @param obj The base value component
+     * @param property The referenced name component
+     * @param strict The strict reference component
+     * @param cx The current context
+     * @param scope The current scope
+     */
+    public static Object getObjectValue(Object obj, String property, boolean strict,
+                                        Context cx, Scriptable scope)
+    {
+        Scriptable sobj;
+        if (obj == null || obj == Undefined.instance) {
+            throw undefReadError(obj, property);
+        } else if (obj instanceof Scriptable) {
+            sobj = (Scriptable) obj;
+        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+            return getPrimitiveValue(obj, sobj, property, cx, scope);
+        } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
+            throw errorWithClassName("msg.invalid.type", obj);
+        }
+        return getObjectProp(sobj, property, cx);
+    }
+
+    /**
+     * ES5.1 [8.7.1 GetValue (V)]
+     * 
+     * Precondition: The reference V={obj, dblIndex, strict} is either an
+     * unresolvable reference or a property reference.
+     * 
+     * @param obj The base value component
+     * @param dblIndex The referenced name component
+     * @param strict The strict reference component
+     * @param cx The current context
+     * @param scope The current scope
+     */
+    public static Object getObjectValue(Object obj, double dblIndex, boolean strict,
+                                        Context cx, Scriptable scope)
+    {
+        Scriptable sobj;
+        if (obj == null || obj == Undefined.instance) {
+            throw undefReadError(obj, toString(dblIndex));
+        } else if (obj instanceof Scriptable) {
+            sobj = (Scriptable) obj;
+        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+            return getPrimitiveValue(obj, sobj, toString(dblIndex), cx, scope);
+        } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
+            throw errorWithClassName("msg.invalid.type", obj);
+        }
+        int index = (int) dblIndex;
+        if (index == dblIndex) {
+            return getObjectIndex(sobj, index, cx);
+        } else {
+            return getObjectProp(sobj, toString(dblIndex), cx);
+        }
+    }
+
+    /**
+     * ES5.1 [8.7.2 PutValue (V, W)]
+     * 
+     * Precondition: The reference V={obj, elem, strict} is either an
+     * unresolvable reference or a property reference.
+     * 
+     * @param obj The base value component
+     * @param elem The referenced name component
+     * @param strict The strict reference component
+     * @param value The value to set the reference to
+     * @param cx The current context
+     * @param scope The current scope
+     */
+    public static void putObjectValue(Object obj, Object elem, boolean strict,
+                                      Object value, Context cx, Scriptable scope)
+    {
+        Scriptable sobj;
+        if (obj == null || obj == Undefined.instance) {
+            throw undefWriteError(obj, elem, value);
+        } else if (obj instanceof Scriptable) {
+            sobj = (Scriptable) obj;
+        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+            putPrimitiveValue(obj, sobj, toString(elem), strict, value, cx, scope);
+            return;
+        } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
+            throw errorWithClassName("msg.invalid.type", obj);
+        }
+        setObjectElem(sobj, elem, value, strict, cx);
+    }
+
+    /**
+     * ES5.1 [8.7.2 PutValue (V, W)]
+     * 
+     * Precondition: The reference V={obj, property, strict} is either an
+     * unresolvable reference or a property reference.
+     * 
+     * @param obj The base value component
+     * @param property The referenced name component
+     * @param strict The strict reference component
+     * @param value The value to set the reference to
+     * @param cx The current context
+     * @param scope The current scope
+     */
+    public static void putObjectValue(Object obj, String property, boolean strict,
+                                      Object value, Context cx, Scriptable scope)
+    {
+        Scriptable sobj;
+        if (obj == null || obj == Undefined.instance) {
+            throw undefWriteError(obj, property, value);
+        } else if (obj instanceof Scriptable) {
+            sobj = (Scriptable) obj;
+        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+            putPrimitiveValue(obj, sobj, property, strict, value, cx, scope);
+            return;
+        } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
+            throw errorWithClassName("msg.invalid.type", obj);
+        }
+        ScriptableObject.putProperty(sobj, property, value, strict);
+    }
+
+    /**
+     * ES5.1 [8.7.2 PutValue (V, W)]
+     * 
+     * Precondition: The reference V={obj, dblIndex, strict} is either an
+     * unresolvable reference or a property reference.
+     * 
+     * @param obj The base value component
+     * @param dblIndex The referenced name component
+     * @param strict The strict reference component
+     * @param value The value to set the reference to
+     * @param cx The current context
+     * @param scope The current scope
+     */
+    public static void putObjectValue(Object obj, double dblIndex, boolean strict,
+                                      Object value, Context cx, Scriptable scope)
+    {
+        Scriptable sobj;
+        if (obj == null || obj == Undefined.instance) {
+            throw undefWriteError(obj, toString(dblIndex), value);
+        } else if (obj instanceof Scriptable) {
+            sobj = (Scriptable) obj;
+        } else if ((sobj = tryPrimitive(cx, scope, obj)) != null) {
+            putPrimitiveValue(obj, sobj, toString(dblIndex), strict, value, cx, scope);
+            return;
+        } else if ((sobj = tryWrap(cx, scope, obj)) == null) {
+            throw errorWithClassName("msg.invalid.type", obj);
+        }
+        int index = (int) dblIndex;
+        if (index == dblIndex) {
+            ScriptableObject.putProperty(sobj, index, value, strict);
+        } else {
+            ScriptableObject.putProperty(sobj, toString(dblIndex), value, strict);
+        }
+    }
+
+    /**
      * Call obj.[[Get]](id)
      */
     public static Object getObjectElem(Object obj, Object elem, Context cx)
@@ -2876,15 +3153,16 @@ public class ScriptRuntime {
     public static Object nameIncrDecr(Scriptable scopeChain, String id,
                                       int incrDecrMask)
     {
-        return nameIncrDecr(scopeChain, id, Context.getContext(), incrDecrMask);
+        return nameIncrDecr(scopeChain, id, false, Context.getContext(), incrDecrMask);
     }
 
     public static Object nameIncrDecr(Scriptable scopeChain, String id,
-                                      Context cx, int incrDecrMask)
+                                      boolean strict, Context cx,
+                                      int incrDecrMask)
     {
         Scriptable target;
         Object value;
-      search: {
+        search: {
             do {
                 if (cx.useDynamicScope && scopeChain.getParentScope() == null) {
                     scopeChain = checkDynamicScope(cx.topCallScope, scopeChain);
@@ -2905,21 +3183,29 @@ public class ScriptRuntime {
             } while (scopeChain != null);
             throw notFoundError(scopeChain, id);
         }
-        return doScriptableIncrDecr(target, id, scopeChain, value,
+        return doScriptableIncrDecr(target, id, scopeChain, strict, value,
                                     incrDecrMask);
     }
 
-    public static Object propIncrDecr(Object obj, String id,
-                                      Context cx, int incrDecrMask)
+    public static Object propIncrDecr(Object obj, String id, boolean strict,
+                                      Context cx, Scriptable scope,
+                                      int incrDecrMask)
     {
-        Scriptable start = toObjectOrNull(cx, obj);
-        if (start == null) {
+        Scriptable start;
+        if (obj == null || obj == Undefined.instance) {
             throw undefReadError(obj, id);
+        } else if (obj instanceof Scriptable) {
+            start = (Scriptable) obj;
+        } else if ((start = tryPrimitive(cx, scope, obj)) != null) {
+            // use elemIncDecr() for primitives
+            return elemIncrDecr(obj, id, strict, cx, scope, incrDecrMask);
+        } else if ((start = tryWrap(cx, scope, obj)) == null) {
+            throw errorWithClassName("msg.invalid.type", obj);
         }
 
         Scriptable target = start;
         Object value;
-      search: {
+        search: {
             do {
                 value = target.get(id, start);
                 if (value != Scriptable.NOT_FOUND) {
@@ -2927,17 +3213,17 @@ public class ScriptRuntime {
                 }
                 target = target.getPrototype();
             } while (target != null);
-            // TODO: strict mode flag?
-            start.put(id, start, NaNobj, false);
+            start.put(id, start, NaNobj, strict);
             return NaNobj;
         }
-        return doScriptableIncrDecr(target, id, start, value,
+        return doScriptableIncrDecr(target, id, start, strict, value,
                                     incrDecrMask);
     }
 
     private static Object doScriptableIncrDecr(Scriptable target,
                                                String id,
                                                Scriptable protoChainStart,
+                                               boolean strict,
                                                Object value,
                                                int incrDecrMask)
     {
@@ -2958,8 +3244,7 @@ public class ScriptRuntime {
             --number;
         }
         Number result = wrapNumber(number);
-        // TODO: strict mode flag?
-        target.put(id, protoChainStart, result, false);
+        target.put(id, protoChainStart, result, strict);
         if (post) {
             return value;
         } else {
@@ -2967,12 +3252,11 @@ public class ScriptRuntime {
         }
     }
 
-    // TODO: argument position for 'checked'
-    public static Object elemIncrDecr(Object obj, Object index,
-                                      Context cx, int incrDecrMask,
-                                      boolean checked)
+    public static Object elemIncrDecr(Object obj, Object index, boolean strict,
+                                      Context cx, Scriptable scope,
+                                      int incrDecrMask)
     {
-        Object value = getObjectElem(obj, index, cx);
+        Object value = getObjectValue(obj, index, strict, cx, scope);
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
         double number;
         if (value instanceof Number) {
@@ -2990,7 +3274,7 @@ public class ScriptRuntime {
             --number;
         }
         Number result = wrapNumber(number);
-        setObjectElem(obj, index, result, checked, cx);
+        putObjectValue(obj, index, strict, result, cx, scope);
         if (post) {
             return value;
         } else {

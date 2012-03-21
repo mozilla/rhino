@@ -1417,7 +1417,9 @@ switch (op) {
     case Token.GETPROP : {
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.getObjectProp(lhs, stringReg, cx, frame.scope);
+        stack[stackTop] = ScriptRuntime.getObjectValue(lhs, stringReg,
+                                                       frame.idata.isStrict,
+                                                       cx, frame.scope);
         continue Loop;
     }
     case Token.STRICT_SETPROP :
@@ -1428,15 +1430,18 @@ switch (op) {
         --stackTop;
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        stack[stackTop] = ScriptRuntime.setObjectProp(lhs, stringReg, rhs,
-                                                      frame.idata.isStrict, cx);
+        ScriptRuntime.putObjectValue(lhs, stringReg, frame.idata.isStrict,
+                                     rhs, cx, frame.scope);
+        stack[stackTop] = rhs;
         continue Loop;
     }
     case Icode_PROP_INC_DEC : {
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         stack[stackTop] = ScriptRuntime.propIncrDecr(lhs, stringReg,
-                                                     cx, iCode[frame.pc]);
+                                                     frame.idata.isStrict,
+                                                     cx, frame.scope,
+                                                     iCode[frame.pc]);
         ++frame.pc;
         continue Loop;
     }
@@ -1449,10 +1454,12 @@ switch (op) {
         Object value;
         Object id = stack[stackTop + 1];
         if (id != DBL_MRK) {
-            value = ScriptRuntime.getObjectElem(lhs, id, cx, frame.scope);
+            value = ScriptRuntime.getObjectValue(lhs, id, frame.idata.isStrict,
+                                                 cx, frame.scope);
         } else {
             double d = sDbl[stackTop + 1];
-            value = ScriptRuntime.getObjectIndex(lhs, d, cx);
+            value = ScriptRuntime.getObjectValue(lhs, d, frame.idata.isStrict,
+                                                 cx, frame.scope);
         }
         stack[stackTop] = value;
         continue Loop;
@@ -1469,17 +1476,16 @@ switch (op) {
         if (lhs == DBL_MRK) {
             lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         }
-        Object value;
         Object id = stack[stackTop + 1];
         if (id != DBL_MRK) {
-            value = ScriptRuntime.setObjectElem(lhs, id, rhs,
-                                                frame.idata.isStrict, cx);
+            ScriptRuntime.putObjectValue(lhs, id, frame.idata.isStrict,
+                                         rhs, cx, frame.scope);
         } else {
             double d = sDbl[stackTop + 1];
-            value = ScriptRuntime.setObjectIndex(lhs, d, rhs,
-                                                 frame.idata.isStrict, cx);
+            ScriptRuntime.putObjectValue(lhs, d, frame.idata.isStrict,
+                                         rhs, cx, frame.scope);
         }
-        stack[stackTop] = value;
+        stack[stackTop] = rhs;
         continue Loop;
     }
     case Icode_ELEM_INC_DEC: {
@@ -1488,10 +1494,9 @@ switch (op) {
         --stackTop;
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
-        // TODO: checked flag!
-        stack[stackTop] = ScriptRuntime.elemIncrDecr(lhs, rhs, cx,
-                                                     iCode[frame.pc],
-                                                     false);
+        stack[stackTop] = ScriptRuntime.elemIncrDecr(lhs, rhs, frame.idata.isStrict,
+                                                     cx, frame.scope,
+                                                     iCode[frame.pc]);
         ++frame.pc;
         continue Loop;
     }
@@ -1825,6 +1830,7 @@ switch (op) {
         continue Loop;
     case Icode_NAME_INC_DEC :
         stack[++stackTop] = ScriptRuntime.nameIncrDecr(frame.scope, stringReg,
+                                                       frame.idata.isStrict,
                                                        cx, iCode[frame.pc]);
         ++frame.pc;
         continue Loop;
@@ -1868,8 +1874,7 @@ switch (op) {
             Object val = stack[stackTop];
             if (val == DBL_MRK) val = ScriptRuntime.wrapNumber(sDbl[stackTop]);
             stringReg = frame.idata.argNames[indexReg];
-            // TODO: check -> 'false'?
-            frame.scope.put(stringReg, frame.scope, val, false);
+            frame.scope.put(stringReg, frame.scope, val, frame.idata.isStrict);
         }
         continue Loop;
     case Icode_GETVAR1:
@@ -1906,6 +1911,7 @@ switch (op) {
         } else {
             String varName = frame.idata.argNames[indexReg];
             stack[stackTop] = ScriptRuntime.nameIncrDecr(frame.scope, varName,
+                                                         frame.idata.isStrict,
                                                          cx, incrDecrMask);
         }
         ++frame.pc;
