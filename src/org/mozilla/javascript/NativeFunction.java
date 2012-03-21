@@ -118,7 +118,7 @@ public abstract class NativeFunction extends BaseFunction
         // see comment in constructor
         if ("arguments".equals(name) && isStrict()) {
             if (checked) {
-                throw ScriptRuntime.typeError("[[Permanent]]");
+                throw ScriptRuntime.typeError1("msg.delete.permanent", name);
             }
             return;
         }

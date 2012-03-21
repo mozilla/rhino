@@ -107,7 +107,7 @@ public class BoundFunction extends BaseFunction {
     // see comment in constructor
     if ("arguments".equals(name)) {
       if (checked) {
-        throw ScriptRuntime.typeError0("[[Permanent]]");
+        throw ScriptRuntime.typeError1("msg.delete.permanent", name);
       }
       return;
     }

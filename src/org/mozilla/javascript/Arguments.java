@@ -386,12 +386,8 @@ final class Arguments extends IdScriptableObject
         int index = (int) d;
         boolean isMapped = (d == index && arg(index) != NOT_FOUND);
 
-        boolean allowed = super.defineOwnProperty(name, desc, false);
+        boolean allowed = super.defineOwnProperty(name, desc, checked);
         if (!allowed) {
-            if (checked) {
-                // TODO: error message
-                throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
-            }
             return false;
         }
 

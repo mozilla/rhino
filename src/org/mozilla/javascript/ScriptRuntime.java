@@ -1568,24 +1568,21 @@ public class ScriptRuntime {
         ScriptableObject sobj = (ScriptableObject) obj;
         if (!sobj.$canPut(property)) {
             if (checked) {
-                // TODO: error message
-                throw typeError("[[ReadOnly]]");
+                throw typeError1("msg.modify.readonly", property);
             }
             return;
         }
         PropertyDescriptor ownDesc = sobj.getOwnProperty(property);
         if (ownDesc != null && ownDesc.isDataDescriptor()) {
             if (checked) {
-                // TODO: error message
-                throw typeError("[[ReadOnly]]");
+                throw typeError1("msg.modify.readonly", property);
             }
             return;
         }
         PropertyDescriptor desc = sobj.$getProperty(property);
         if (desc == null || !desc.isAccessorDescriptor()) {
             if (checked) {
-                // TODO: error message
-                throw typeError("[[ReadOnly]]");
+                throw typeError1("msg.modify.readonly", property);
             }
             return;
         }
@@ -2106,8 +2103,8 @@ public class ScriptRuntime {
                                  boolean isName, boolean strict)
     {
         if (isName && strict) {
-            // TODO: error message
-            throw constructError("SyntaxError", "<missing error-message>");
+            throw constructError("SyntaxError",
+                                 getMessage0("msg.unqualified.delete.strict"));
         }
         Scriptable sobj = toObjectOrNull(cx, obj);
         if (sobj == null) {
@@ -2331,9 +2328,8 @@ public class ScriptRuntime {
             ScriptableObject.putProperty(bound, id, value, true);
             return value;
         } else {
-            // TODO: error message!
             // See ES5 8.7.2
-            String msg = "Assignment to undefined \"" + id + "\" in strict mode";
+            String msg = getMessage1("msg.assign.undefined.strict", id);
             throw constructError("ReferenceError", msg);
         }
     }
@@ -4124,8 +4120,7 @@ public class ScriptRuntime {
                     global.defineOwnProperty(name, desc, true);
                 } else if (desc.isAccessorDescriptor() || !desc.isEnumerable()
                            || !desc.isWritable()) {
-                    // TODO: error message
-                    throw typeError("[[Bad Function Binding]]");
+                    throw typeError1("msg.redefine.permanent", name);
                 }
             }
             // 10.5, step 5f: SetMutableBinding

@@ -69,7 +69,6 @@ public final class NativeCall extends IdScriptableObject
         // leave prototype null
 
         this.originalArgs = (args == null) ? ScriptRuntime.emptyArgs : args;
-        // TODO: which strict-mode setting is required here?
         boolean strict = function.isStrict();
 
         // initialize values of arguments

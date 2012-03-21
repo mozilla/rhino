@@ -976,7 +976,7 @@ public class Parser
     private boolean checkStrictDelete(UnaryExpression expr) {
         AstNode op = removeParens(expr.getOperand());
         if (op instanceof Name) {
-            reportError("msg.bad.id.strict", op.getString());
+            reportError("msg.unqualified.delete.strict", op.getString());
             return false;
         }
         return true;
@@ -3429,7 +3429,7 @@ public class Parser
             reportError("msg.bad.prop");
         }
         if (fn.getParams().size() != (isGetter ? 0 : 1)) {
-            reportError("msg.bad.prop");
+            reportError(isGetter ? "msg.bad.getter.arg" : "msg.bad.setter.arg");
         }
         ObjectProperty pn = new ObjectProperty(pos);
         if (isGetter) {

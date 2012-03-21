@@ -201,8 +201,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         boolean setValue(Object value, Scriptable owner, Scriptable start,
                          boolean checked) {
             if ((attributes & READONLY) != 0) {
-                // TODO: proper error message
-                if (checked) { throw ScriptRuntime.typeError("[[ReadOnly]]"); }
+                if (checked) { throw ScriptRuntime.typeError1("msg.modify.readonly", name); }
                 return true;
             }
             if (owner == start) {
@@ -289,8 +288,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 } else {
                     // ES5 setters are defaulted to 'Undefined.instance' instead
                     // of 'null', so test here for non-existent setter
-                    // TODO: proper error message
-                    if (checked) { throw ScriptRuntime.typeError("[[Setter]]"); }
+                    if (checked) { throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name); }
                 }
                 return true;
             }
@@ -2695,8 +2693,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         } else if (!isExtensible) {
             slot = getSlot(name, index, SLOT_QUERY);
             if (slot == null) {
-                // TODO: error message
-                if (checked) { throw ScriptRuntime.typeError("[[Extensible]]"); }
+                if (checked) { throw ScriptRuntime.typeError0("msg.not.extensible"); }
                 return true;
             }
         } else {
@@ -2731,8 +2728,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         } else if (!isExtensible()) {
             slot = getSlot(name, index, SLOT_QUERY);
             if (slot == null) {
-                // TODO: error message
-                if (checked) { throw ScriptRuntime.typeError("[[Extensible]]"); }
+                if (checked) { throw ScriptRuntime.typeError0("msg.not.extensible"); }
                 return true;
             }
         } else {
@@ -2939,8 +2935,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 return;
             } else if ((slot.getAttributes() & PERMANENT) != 0) {
                 if (checked) {
-                    // TODO: proper error message
-                    throw ScriptRuntime.typeError("[[Permanent]]");
+                    name = (name != null ? name : Integer.toString(index));
+                    throw ScriptRuntime.typeError1("msg.delete.permanent", name);
                 }
                 return;
             } else {
@@ -3331,7 +3327,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         /* 8.12.5, step 1. */
         if (!$canPut(name)) {
             if (checked) {
-                throw ScriptRuntime.typeError("cannot [[Put]]:" + name);
+                throw ScriptRuntime.typeError1("msg.modify.readonly", name);
             }
             return;
         }
@@ -3392,7 +3388,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
         /* 8.12.7, step 4. */
         if (checked) {
-            throw ScriptRuntime.typeError("cannot [[Delete]]: " + name);
+            throw ScriptRuntime.typeError1("msg.delete.permanent", name);
         }
         /* 8.12.7, step 5. */
         return false;
@@ -3453,6 +3449,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     protected boolean defineOwnProperty(String name, PropertyDescriptor desc,
             boolean checked) {
+        String msg;
+        boolean useName = true;
         /* 8.12.9, step 1. */
         PropertyDescriptor current = getOwnProperty(name);
         reject: {
@@ -3462,6 +3460,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     updateOwnProperty(name, desc, current);
                     return true;
                 } else {
+                    useName = false;
+                    msg = "msg.not.extensible";
                     break reject;
                 }
             }
@@ -3487,11 +3487,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             if (!current.isConfigurable()) {
                 /* 8.12.9, step 7a. */
                 if (desc.isConfigurable()) {
+                    msg = "msg.change.configurable.false.to.true";
                     break reject;
                 }
                 /* 8.12.9, step 7b. */
                 if (desc.hasEnumerable()
                         && desc.isEnumerable() != current.isEnumerable()) {
+                    msg = "msg.change.enumerable.with.configurable.false";
                     break reject;
                 }
             }
@@ -3501,17 +3503,24 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             } else if (current.isDataDescriptor() != desc.isDataDescriptor()) {
                 /* 8.12.9, step 8a. */
                 if (!current.isConfigurable()) {
+                    if (current.isDataDescriptor()) {
+                        msg = "msg.change.property.data.to.accessor.with.configurable.false";
+                    } else {
+                        msg = "msg.change.property.accessor.to.data.with.configurable.false";
+                    }
                     break reject;
                 }
             } else if (current.isDataDescriptor() && desc.isDataDescriptor()) {
                 if (!current.isConfigurable() && !current.isWritable()) {
                     /* 8.12.9, step 10a i. */
                     if (desc.isWritable()) {
+                        msg = "msg.change.writable.false.to.true.with.configurable.false";
                         break reject;
                     }
                     /* 8.12.9, step 10a ii. */
                     if (desc.hasValue()
                             && !sameValue(desc.getValue(), current.getValue())) {
+                        msg = "msg.change.value.with.writable.false";
                         break reject;
                     }
                 }
@@ -3520,11 +3529,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     /* 8.12.9, step 11a i. */
                     if (desc.hasSetter()
                             && !sameValue(desc.getSetter(), current.getSetter())) {
+                        msg = "msg.change.setter.with.configurable.false";
                         break reject;
                     }
                     /* 8.12.9, step 11a ii. */
                     if (desc.hasGetter()
                             && !sameValue(desc.getGetter(), current.getGetter())) {
+                        msg = "msg.change.getter.with.configurable.false";
                         break reject;
                     }
                 }
@@ -3534,9 +3545,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             /* 8.12.9, step 13. */
             return true;
         }
-        /* 8.12.9, introductionary text */
+        /* 8.12.9, introductory text */
         if (checked) {
-            throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
+            if (useName) {
+                msg = ScriptRuntime.getMessage1(msg, name);
+            } else {
+                msg = ScriptRuntime.getMessage0(msg);
+            }
+            throw ScriptRuntime.typeError(msg);
         }
         return false;
     }

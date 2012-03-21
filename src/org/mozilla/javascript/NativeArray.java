@@ -605,9 +605,9 @@ public class NativeArray extends IdScriptableObject implements List
                 newLenDesc.setWritable(true);
             }
             boolean succeeded = super.defineOwnProperty("length", newLenDesc,
-                    checked);
+                                                        checked);
             if (!succeeded) {
-                return false;
+                break reject;
             }
             // length updated to expected value?
             succeeded = (length == newLen);
@@ -624,7 +624,7 @@ public class NativeArray extends IdScriptableObject implements List
             return true;
         }
         if (checked) {
-            throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
+            throw ScriptRuntime.typeError1("msg.modify.readonly", "length");
         }
         return false;
     }
@@ -650,7 +650,7 @@ public class NativeArray extends IdScriptableObject implements List
                     }
                 }
             }
-            boolean succeeded = super.defineOwnProperty(name, desc, false);
+            boolean succeeded = super.defineOwnProperty(name, desc, checked);
             if (!succeeded) {
                 break reject;
             }
@@ -662,7 +662,7 @@ public class NativeArray extends IdScriptableObject implements List
             return true;
         }
         if (checked) {
-            throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
+            throw ScriptRuntime.typeError1("msg.modify.readonly", "length");
         }
         return false;
     }

@@ -214,8 +214,9 @@ public abstract class IdScriptableObject extends ScriptableObject
                     start.put(name, start, value, checked);
                 }
             } else if (checked) {
-                // TODO: error message
-                throw ScriptRuntime.typeError("[[ReadOnly]]");
+                int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
+                String name = (String)valueArray[nameSlot];
+                throw ScriptRuntime.typeError1("msg.modify.readonly", name);
             }
         }
 
@@ -230,8 +231,9 @@ public abstract class IdScriptableObject extends ScriptableObject
                     attributeArray[id - 1] = EMPTY;
                 }
             } else if (checked) {
-                // TODO: error message
-                throw ScriptRuntime.typeError("[[Permanent]]");
+                int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
+                String name = (String)valueArray[nameSlot];
+                throw ScriptRuntime.typeError1("msg.delete.permanent", name);
             }
         }
 
@@ -408,8 +410,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                     start.put(name, start, value, checked);
                 }
             } else if (checked) {
-                // TODO: error message
-                throw ScriptRuntime.typeError("[[ReadOnly]]");
+                throw ScriptRuntime.typeError1("msg.modify.readonly", name);
             }
             return;
         }
@@ -439,8 +440,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                     int id = (info & 0xFFFF);
                     setInstanceIdValue(id, NOT_FOUND);
                 } else if (checked) {
-                    // TODO: error message
-                    throw ScriptRuntime.typeError("[[Permanent]]");
+                    throw ScriptRuntime.typeError1("msg.delete.permanent", name);
                 }
                 return;
             }
