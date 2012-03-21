@@ -218,53 +218,54 @@ public class Token
         FINALLY        = 125, // finally keyword
         VOID           = 126, // void keyword
         RESERVED       = 127, // reserved keywords
+        RESERVED_STRICT= 128, // reserved keywords (strict mode)
 
-        EMPTY          = 128,
+        EMPTY          = 129,
 
         /* types used for the parse tree - these never get returned
          * by the scanner.
          */
 
-        BLOCK          = 129, // statement block
-        LABEL          = 130, // label
-        TARGET         = 131,
-        LOOP           = 132,
-        EXPR_VOID      = 133, // expression statement in functions
-        EXPR_RESULT    = 134, // expression statement in scripts
-        JSR            = 135,
-        SCRIPT         = 136, // top-level node for entire script
-        TYPEOFNAME     = 137, // for typeof(simple-name)
-        USE_STACK      = 138,
-        SETPROP_OP     = 139, // x.y op= something
-        SETELEM_OP     = 140, // x[y] op= something
-        LOCAL_BLOCK    = 141,
-        SET_REF_OP     = 142, // *reference op= something
+        BLOCK          = 130, // statement block
+        LABEL          = 131, // label
+        TARGET         = 132,
+        LOOP           = 133,
+        EXPR_VOID      = 134, // expression statement in functions
+        EXPR_RESULT    = 135, // expression statement in scripts
+        JSR            = 136,
+        SCRIPT         = 137, // top-level node for entire script
+        TYPEOFNAME     = 138, // for typeof(simple-name)
+        USE_STACK      = 139,
+        SETPROP_OP     = 140, // x.y op= something
+        SETELEM_OP     = 141, // x[y] op= something
+        LOCAL_BLOCK    = 142,
+        SET_REF_OP     = 143, // *reference op= something
 
         // For XML support:
-        DOTDOT         = 143,  // member operator (..)
-        COLONCOLON     = 144,  // namespace::name
-        XML            = 145,  // XML type
-        DOTQUERY       = 146,  // .() -- e.g., x.emps.emp.(name == "terry")
-        XMLATTR        = 147,  // @
-        XMLEND         = 148,
+        DOTDOT         = 144,  // member operator (..)
+        COLONCOLON     = 145,  // namespace::name
+        XML            = 146,  // XML type
+        DOTQUERY       = 147,  // .() -- e.g., x.emps.emp.(name == "terry")
+        XMLATTR        = 148,  // @
+        XMLEND         = 149,
 
         // Optimizer-only-tokens
-        TO_OBJECT      = 149,
-        TO_DOUBLE      = 150,
+        TO_OBJECT      = 150,
+        TO_DOUBLE      = 151,
 
-        GET            = 151,  // JS 1.5 get pseudo keyword
-        SET            = 152,  // JS 1.5 set pseudo keyword
-        LET            = 153,  // JS 1.7 let pseudo keyword
-        CONST          = 154,
-        SETCONST       = 155,
-        SETCONSTVAR    = 156,
-        ARRAYCOMP      = 157,  // array comprehension
-        LETEXPR        = 158,
-        WITHEXPR       = 159,
-        DEBUGGER       = 160,
-        COMMENT        = 161,
-        GENEXPR        = 162,
-        LAST_TOKEN     = 163;
+        GET            = 152,  // JS 1.5 get pseudo keyword
+        SET            = 153,  // JS 1.5 set pseudo keyword
+        LET            = 154,  // JS 1.7 let pseudo keyword
+        CONST          = 155,
+        SETCONST       = 156,
+        SETCONSTVAR    = 157,
+        ARRAYCOMP      = 158,  // array comprehension
+        LETEXPR        = 159,
+        WITHEXPR       = 160,
+        DEBUGGER       = 161,
+        COMMENT        = 162,
+        GENEXPR        = 163,
+        LAST_TOKEN     = 164;
 
     /**
      * Returns a name for the token.  If Rhino is compiled with certain
@@ -414,6 +415,7 @@ public class Token
           case FINALLY:         return "FINALLY";
           case VOID:            return "VOID";
           case RESERVED:        return "RESERVED";
+          case RESERVED_STRICT: return "RESERVED_STRICT";
           case EMPTY:           return "EMPTY";
           case BLOCK:           return "BLOCK";
           case LABEL:           return "LABEL";

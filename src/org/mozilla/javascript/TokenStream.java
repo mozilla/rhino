@@ -158,14 +158,14 @@ class TokenStream
             Id_import        = Token.RESERVED,
             Id_super         = Token.RESERVED,
             // FutureReservedWord (strict-mode)
-            Id_implements    = Token.RESERVED,
-            Id_interface     = Token.RESERVED,
+            Id_implements    = Token.RESERVED_STRICT,
+            Id_interface     = Token.RESERVED_STRICT,
             Id_let           = Token.LET,
-            Id_package       = Token.RESERVED,
-            Id_private       = Token.RESERVED,
-            Id_protected     = Token.RESERVED,
-            Id_public        = Token.RESERVED,
-            Id_static        = Token.RESERVED,
+            Id_package       = Token.RESERVED_STRICT,
+            Id_private       = Token.RESERVED_STRICT,
+            Id_protected     = Token.RESERVED_STRICT,
+            Id_public        = Token.RESERVED_STRICT,
+            Id_static        = Token.RESERVED_STRICT,
             Id_yield         = Token.YIELD;
 
         int id;
@@ -392,8 +392,13 @@ class TokenStream
                                < Context.VERSION_1_7)
                         {
                             // LET and YIELD are tokens only in 1.7 and later
-                            string = result == Token.LET ? "let" : "yield";
-                            result = Token.NAME;
+                            this.string = result == Token.LET ? "let" : "yield";
+                            result = Token.RESERVED_STRICT;
+                        }
+                        if (result == Token.RESERVED_STRICT) {
+                            result = parser.inUseStrictDirective
+                                        ? Token.RESERVED
+                                        : Token.NAME;
                         }
                         if (result != Token.RESERVED) {
                             return result;
