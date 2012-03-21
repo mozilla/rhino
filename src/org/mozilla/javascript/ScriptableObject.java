@@ -3150,6 +3150,362 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
     }
 
+    // ECMAScript 5 compliant methods
+
+    private static Object call(Callable call, ScriptableObject thisObject,
+            Object[] args) {
+        Context cx = Context.getContext();
+        Scriptable scope = (call instanceof Function ? (Function) call
+                : thisObject).getParentScope();
+        return call.call(cx, scope, thisObject, args);
+    }
+
+    private static boolean isPrimitive(Object value) {
+        return (value == null || value == Undefined.instance
+                || value instanceof CharSequence || value instanceof Number || value instanceof Boolean);
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.1 [[GetOwnProperty]] (P)
+     * 
+     */
+    protected PropertyDescriptor getOwnProperty(String name) {
+        Slot slot;
+        long index = ScriptRuntime.indexFromString(name);
+        if (index >= 0) {
+            slot = getSlot(null, (int) index, SLOT_QUERY);
+        } else {
+            slot = getSlot(name, 0, SLOT_QUERY);
+        }
+        if (slot == null) {
+            return null;
+        }
+        slot = unwrapSlot(slot);
+        PropertyDescriptor desc;
+        if (slot instanceof GetterSlot) {
+            GetterSlot gslot = (GetterSlot) slot;
+            Object getter = gslot.getter;
+            Object setter = gslot.setter;
+            if (getter == null) {
+                getter = Undefined.instance;
+            }
+            if (setter == null) {
+                setter = Undefined.instance;
+            }
+            desc = new PropertyDescriptor(getter, setter, slot.attributes);
+        } else {
+            desc = new PropertyDescriptor(slot.value, slot.attributes);
+        }
+        return desc;
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.2 [[GetProperty]] (P)
+     * 
+     */
+    protected PropertyDescriptor getProperty(String name) {
+        PropertyDescriptor prop = getOwnProperty(name);
+        if (prop != null) {
+            return prop;
+        }
+        Scriptable proto = getPrototype();
+        if (proto == null || !(proto instanceof ScriptableObject)) {
+            return null;
+        }
+        return ((ScriptableObject) proto).getProperty(name);
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.3 [[Get]] (P)
+     * 
+     */
+    protected Object get(String name) {
+        PropertyDescriptor desc = getProperty(name);
+        if (desc == null) {
+            return Undefined.instance;
+        } else if (desc.isDataDescriptor()) {
+            return desc.getValue();
+        } else {
+            Object getter = desc.getGetter();
+            if (getter == Undefined.instance) {
+                return Undefined.instance;
+            }
+            return call((Callable) getter, this, ScriptRuntime.emptyArgs);
+        }
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.4 [[CanPut]] (P)
+     * 
+     */
+    protected boolean canPut(String name) {
+        PropertyDescriptor desc = getOwnProperty(name);
+        if (desc != null) {
+            if (desc.isAccessorDescriptor()) {
+                return desc.getSetter() != Undefined.instance;
+            } else {
+                return desc.isWritable();
+            }
+        }
+        Scriptable proto = getPrototype();
+        if (proto == null || !(proto instanceof ScriptableObject)) {
+            return isExtensible();
+        }
+        PropertyDescriptor inherited = ((ScriptableObject) proto)
+                .getProperty(name);
+        if (inherited == null) {
+            return isExtensible();
+        }
+        if (inherited.isAccessorDescriptor()) {
+            return inherited.getSetter() != Undefined.instance;
+        } else {
+            return isExtensible() && inherited.isWritable();
+        }
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.5 [[Put]] (P, V, Throw)
+     * 
+     */
+    protected void put(String name, Object value, boolean checked) {
+        if (!canPut(name)) {
+            if (checked) {
+                throw ScriptRuntime.typeError("cannot [[Put]]:" + name);
+            }
+            return;
+        }
+        PropertyDescriptor ownDesc = getOwnProperty(name);
+        if (ownDesc != null && ownDesc.isDataDescriptor()) {
+            PropertyDescriptor valueDesc = new PropertyDescriptor(value);
+            defineOwnProperty(name, valueDesc, checked);
+            return;
+        }
+        PropertyDescriptor desc = getProperty(name);
+        if (desc != null && desc.isAccessorDescriptor()) {
+            Object setter = desc.getSetter();
+            call((Callable) setter, this, new Object[] { value });
+        } else {
+            PropertyDescriptor newDesc = new PropertyDescriptor(value, EMPTY);
+            defineOwnProperty(name, newDesc, checked);
+        }
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.6 [[HasProperty]] (P)
+     * 
+     */
+    protected boolean hasProperty(String name) {
+        return getProperty(name) != null;
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.7 [[Delete]] (P, Throw)
+     * 
+     */
+    protected boolean delete(String name, boolean checked) {
+        PropertyDescriptor desc = getOwnProperty(name);
+        if (desc == null) {
+            return true;
+        } else if (desc.isConfigurable()) {
+            long index = ScriptRuntime.indexFromString(name);
+            if (index >= 0) {
+                removeSlot(null, (int) index);
+            } else {
+                removeSlot(name, 0);
+            }
+        } else if (checked) {
+            throw ScriptRuntime.typeError("cannot [[Delete]]: " + name);
+        }
+        return false;
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.8 [[DefaultValue]] (hint)
+     */
+    protected Object defaultValue(String hint) {
+        if (hint == null) {
+            hint = "Number";
+        }
+        String tryFirst, trySecond;
+        if ("String".equals(hint)) {
+            tryFirst = "toString";
+            trySecond = "valueOf";
+        } else if ("Number".equals(hint)) {
+            tryFirst = "valueOf";
+            trySecond = "toString";
+        } else {
+            throw Context.reportRuntimeError1("msg.invalid.type", hint);
+        }
+        Object o = get(tryFirst);
+        if (o instanceof Callable) {
+            Object val = call((Callable) o, this, ScriptRuntime.emptyArgs);
+            if (isPrimitive(val)) {
+                return val;
+            }
+        }
+        o = get(trySecond);
+        if (o instanceof Callable) {
+            Object val = call((Callable) o, this, ScriptRuntime.emptyArgs);
+            if (isPrimitive(val)) {
+                return val;
+            }
+        }
+        throw ScriptRuntime.typeError1("msg.default.value", hint);
+    }
+
+    /**
+     * ECMAScript 5
+     * 
+     * 8.12.9 [[DefineOwnProperty]] (P, Desc, Throw)
+     * 
+     */
+    protected boolean defineOwnProperty(String name, PropertyDescriptor desc,
+            boolean checked) {
+        PropertyDescriptor current = getOwnProperty(name);
+        reject: {
+            if (current == null) {
+                if (isExtensible()) {
+                    updateOwnProperty(name, desc, current);
+                    return true;
+                } else {
+                    break reject;
+                }
+            }
+            if (desc.getPresent() == 0) {
+                return true;
+            }
+            if (desc.getPresent() == current.getPresent()) {
+                int mask = desc.getAttributeMask();
+                if ((desc.getAttributes() & mask) == (current.getAttributes() & mask)
+                        && (!desc.hasValue() || sameValue(desc.getValue(),
+                                current.getValue()))
+                        && (!desc.hasGetter() || sameValue(desc.getGetter(),
+                                current.getGetter()))
+                        && (!desc.hasSetter() || sameValue(desc.getSetter(),
+                                current.getSetter()))) {
+                    return true;
+                }
+            }
+            if (!current.isConfigurable()) {
+                if (desc.isConfigurable()) {
+                    break reject;
+                }
+                if (desc.hasEnumerable()
+                        && desc.isEnumerable() != current.isEnumerable()) {
+                    break reject;
+                }
+            }
+            if (desc.isGenericDescriptor()) {
+                // no further validation required
+            } else if (current.isDataDescriptor() != desc.isDataDescriptor()) {
+                if (!current.isConfigurable()) {
+                    break reject;
+                }
+            } else if (current.isDataDescriptor() && desc.isDataDescriptor()) {
+                if (!current.isConfigurable() && !current.isWritable()) {
+                    if (desc.isWritable()) {
+                        break reject;
+                    } else if (desc.hasValue()
+                            && !sameValue(desc.getValue(), current.getValue())) {
+                        break reject;
+                    }
+                }
+            } else {
+                if (!current.isConfigurable()) {
+                    if (desc.hasSetter()
+                            && !sameValue(desc.getSetter(), current.getSetter())) {
+                        break reject;
+                    } else if (desc.hasGetter()
+                            && !sameValue(desc.getGetter(), current.getGetter())) {
+                        break reject;
+                    }
+                }
+            }
+            // update
+            updateOwnProperty(name, desc, current);
+            return true;
+        }
+        if (checked) {
+            throw ScriptRuntime.typeError("[[DefineOwnProperty]]");
+        }
+        return false;
+    }
+
+    private void updateOwnProperty(String name, PropertyDescriptor desc,
+            PropertyDescriptor current) {
+        long index = ScriptRuntime.indexFromString(name);
+        if (index >= 0) {
+            name = null;
+        } else {
+            index = 0;
+        }
+        Slot slot = getSlot(name, (int) index, SLOT_QUERY);
+        boolean isAccessor = desc.isAccessorDescriptor();
+        boolean isNew = slot == null;
+        if (slot == null) {
+            slot = getSlot(name, (int) index,
+                    isAccessor ? SLOT_MODIFY_GETTER_SETTER : SLOT_MODIFY);
+        }
+        slot = unwrapSlot(slot);
+
+        int baseAttrs, mask;
+        if (isNew) {
+            baseAttrs = 0;
+            mask = isAccessor ? (DONTENUM | PERMANENT)
+                    : (READONLY | DONTENUM | PERMANENT);
+        } else {
+            baseAttrs = slot.getAttributes();
+            mask = desc.getAttributeMask();
+        }
+
+        if (isAccessor) {
+            boolean hasGetter = isNew || desc.hasGetter();
+            boolean hasSetter = isNew || desc.hasSetter();
+            if (!(slot instanceof GetterSlot)) {
+                hasGetter = hasSetter = true;
+                baseAttrs = (baseAttrs & (DONTENUM | PERMANENT));
+                slot = getSlot(name, (int) index, SLOT_MODIFY_GETTER_SETTER);
+            }
+            GetterSlot gslot = (GetterSlot) slot;
+            gslot.value = null;
+            if (hasGetter) {
+                gslot.getter = desc.getGetter();
+            }
+            if (hasSetter) {
+                gslot.setter = desc.getSetter();
+            }
+        } else {
+            boolean hasValue = isNew || desc.hasValue();
+            if (slot instanceof GetterSlot && desc.isDataDescriptor()) {
+                hasValue = true;
+                mask |= READONLY;
+                baseAttrs = (baseAttrs & (DONTENUM | PERMANENT));
+                slot = getSlot(name, (int) index, SLOT_CONVERT_ACCESSOR_TO_DATA);
+            }
+            if (hasValue) {
+                slot.value = desc.getValue();
+            }
+        }
+        int attributes = (baseAttrs & ~mask) | (desc.getAttributes() & mask);
+        slot.attributes = (short) attributes;
+    }
+
     // Partial implementation of java.util.Map. See NativeObject for
     // a subclass that implements java.util.Map.
 
