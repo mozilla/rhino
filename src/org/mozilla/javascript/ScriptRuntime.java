@@ -755,20 +755,6 @@ public class ScriptRuntime {
         return (sb == null) ? s : sb.toString();
     }
 
-    static boolean isValidIdentifierName(String s)
-    {
-        int L = s.length();
-        if (L == 0)
-            return false;
-        if (!Character.isJavaIdentifierStart(s.charAt(0)))
-            return false;
-        for (int i = 1; i != L; ++i) {
-            if (!Character.isJavaIdentifierPart(s.charAt(i)))
-                return false;
-        }
-        return !TokenStream.isKeyword(s);
-    }
-
     public static CharSequence toCharSequence(Object val) {
         if (val instanceof NativeString) {
             return ((NativeString)val).toCharSequence();
@@ -957,14 +943,7 @@ public class ScriptRuntime {
                             continue;   // a property has been removed
                         if (i > 0)
                             result.append(", ");
-                        if (ScriptRuntime.isValidIdentifierName(strId)) {
-                            result.append(strId);
-                        } else {
-                            result.append('\'');
-                            result.append(
-                                ScriptRuntime.escapeString(strId, '\''));
-                            result.append('\'');
-                        }
+                        result.append(strId);
                     }
                     result.append(':');
                     result.append(ScriptRuntime.uneval(cx, scope, value));
