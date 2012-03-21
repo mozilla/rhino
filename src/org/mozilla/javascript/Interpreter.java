@@ -1105,16 +1105,16 @@ switch (op) {
             }
             switch (op) {
               case Token.GE:
-                valBln = ScriptRuntime.cmp_LE(rhs, lhs);
+                valBln = !ScriptRuntime.cmp_LT(lhs, rhs, true, true);
                 break;
               case Token.LE:
-                valBln = ScriptRuntime.cmp_LE(lhs, rhs);
+                valBln = !ScriptRuntime.cmp_LT(rhs, lhs, false, true);
                 break;
               case Token.GT:
-                valBln = ScriptRuntime.cmp_LT(rhs, lhs);
+                valBln = ScriptRuntime.cmp_LT(rhs, lhs, false, false);
                 break;
               case Token.LT:
-                valBln = ScriptRuntime.cmp_LT(lhs, rhs);
+                valBln = ScriptRuntime.cmp_LT(lhs, rhs, true, false);
                 break;
               default:
                 throw Kit.codeBug();
@@ -1328,10 +1328,9 @@ switch (op) {
     case Token.MUL :
     case Token.DIV :
     case Token.MOD : {
+        double lDbl = stack_double(frame, stackTop-1);
         double rDbl = stack_double(frame, stackTop);
-        --stackTop;
-        double lDbl = stack_double(frame, stackTop);
-        stack[stackTop] = DBL_MRK;
+        stack[--stackTop] = DBL_MRK;
         switch (op) {
           case Token.SUB:
             lDbl -= rDbl;

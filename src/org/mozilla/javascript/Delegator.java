@@ -217,7 +217,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#hasInstance
      */
-    public boolean hasInstance(Scriptable instance) {
+    public boolean hasInstance(Object instance) {
         return obj.hasInstance(instance);
     }
     /**

@@ -260,8 +260,11 @@ public class Matrix implements Scriptable {
      * true if <code>this</code> appears in <code>value</code>'s prototype
      * chain.
      */
-    public boolean hasInstance(Scriptable value) {
-        Scriptable proto = value.getPrototype();
+    public boolean hasInstance(Object value) {
+        if (! (value instanceof Scriptable)) {
+            return false;
+        }
+        Scriptable proto = ((Scriptable) value).getPrototype();
         while (proto != null) {
             if (proto.equals(this))
                 return true;

@@ -95,7 +95,7 @@ public class BoundFunction extends BaseFunction {
   }
 
   @Override
-  public boolean hasInstance(Scriptable instance) {
+  public boolean hasInstance(Object instance) {
     if (targetFunction instanceof Function) {
       return ((Function) targetFunction).hasInstance(instance);
     }

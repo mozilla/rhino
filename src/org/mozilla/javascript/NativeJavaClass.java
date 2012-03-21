@@ -315,7 +315,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
      * static methods exposed by a JavaNativeClass.
      */
     @Override
-    public boolean hasInstance(Scriptable value) {
+    public boolean hasInstance(Object value) {
 
         if (value instanceof Wrapper &&
             !(value instanceof NativeJavaClass)) {
