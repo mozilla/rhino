@@ -105,7 +105,8 @@ class SpecialRef extends Ref
     {
         switch (type) {
           case SPECIAL_NONE:
-            return ScriptRuntime.setObjectProp(target, name, value, cx);
+            // TODO: default for 'checked' set to 'false' for now
+            return ScriptRuntime.setObjectProp(target, name, value, false, cx);
           case SPECIAL_PROTO:
           case SPECIAL_PARENT:
             {

@@ -4431,12 +4431,15 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             generateExpression(elemChild.getNext(), node);
             cfw.addALoad(contextLocal);
             cfw.addPush(incrDecrMask);
+            // TODO: checked flag!
+            cfw.add(ByteCode.ICONST_0);
             if (elemChild.getNext().getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
               addOptRuntimeInvoke("elemIncrDecr",
                   "(Ljava/lang/Object;"
                   +"D"
                   +"Lorg/mozilla/javascript/Context;"
                   +"I"
+                  +"Z"
                   +")Ljava/lang/Object;");
             } else {
               addScriptRuntimeInvoke("elemIncrDecr",
@@ -4444,6 +4447,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                   +"Ljava/lang/Object;"
                   +"Lorg/mozilla/javascript/Context;"
                   +"I"
+                  +"Z"
                   +")Ljava/lang/Object;");
             }
             break;
@@ -5067,7 +5071,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         Node nameChild = child;
         generateExpression(child, node);
         child = child.getNext();
-        if (type == Token.SETPROP_OP || type == Token.STRICT_SETPROP) {
+        if (type == Token.SETPROP_OP || type == Token.STRICT_SETPROP_OP) {
             // stack: ... object object name -> ... object name object name
             cfw.add(ByteCode.DUP_X1);
             //for 'this.foo += ...' we call thisGet which can skip some
@@ -5093,12 +5097,16 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             }
         }
         generateExpression(child, node);
+        assert (type == Token.STRICT_SETPROP || type == Token.STRICT_SETPROP_OP)
+               == scriptOrFn.isInStrictMode();
+        cfw.add(scriptOrFn.isInStrictMode() ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.addALoad(contextLocal);
         addScriptRuntimeInvoke(
             "setObjectProp",
             "(Ljava/lang/Object;"
             +"Ljava/lang/String;"
             +"Ljava/lang/Object;"
+            +"Z"
             +"Lorg/mozilla/javascript/Context;"
             +")Ljava/lang/Object;");
     }
@@ -5138,6 +5146,9 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             }
         }
         generateExpression(child, node);
+        assert (type == Token.STRICT_SETELEM || type == Token.STRICT_SETELEM_OP)
+                == scriptOrFn.isInStrictMode();
+        cfw.add(scriptOrFn.isInStrictMode() ? ByteCode.ICONST_1 : ByteCode.ICONST_0);
         cfw.addALoad(contextLocal);
         if (indexIsNumber) {
             addScriptRuntimeInvoke(
@@ -5145,6 +5156,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 "(Ljava/lang/Object;"
                 +"D"
                 +"Ljava/lang/Object;"
+                +"Z"
                 +"Lorg/mozilla/javascript/Context;"
                 +")Ljava/lang/Object;");
         } else {
@@ -5153,6 +5165,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 "(Ljava/lang/Object;"
                 +"Ljava/lang/Object;"
                 +"Ljava/lang/Object;"
+                +"Z"
                 +"Lorg/mozilla/javascript/Context;"
                 +")Ljava/lang/Object;");
         }

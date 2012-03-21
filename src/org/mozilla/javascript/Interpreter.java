@@ -1427,7 +1427,7 @@ switch (op) {
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         stack[stackTop] = ScriptRuntime.setObjectProp(lhs, stringReg, rhs,
-                                                      cx);
+                                                      frame.idata.isStrict, cx);
         continue Loop;
     }
     case Icode_PROP_INC_DEC : {
@@ -1470,10 +1470,12 @@ switch (op) {
         Object value;
         Object id = stack[stackTop + 1];
         if (id != DBL_MRK) {
-            value = ScriptRuntime.setObjectElem(lhs, id, rhs, cx);
+            value = ScriptRuntime.setObjectElem(lhs, id, rhs,
+                                                frame.idata.isStrict, cx);
         } else {
             double d = sDbl[stackTop + 1];
-            value = ScriptRuntime.setObjectIndex(lhs, d, rhs, cx);
+            value = ScriptRuntime.setObjectIndex(lhs, d, rhs,
+                                                 frame.idata.isStrict, cx);
         }
         stack[stackTop] = value;
         continue Loop;
@@ -1484,8 +1486,10 @@ switch (op) {
         --stackTop;
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
+        // TODO: checked flag!
         stack[stackTop] = ScriptRuntime.elemIncrDecr(lhs, rhs, cx,
-                                                     iCode[frame.pc]);
+                                                     iCode[frame.pc],
+                                                     false);
         ++frame.pc;
         continue Loop;
     }

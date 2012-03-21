@@ -1598,20 +1598,21 @@ public class ScriptRuntime {
     }
 
     /*
-     * Call obj.[[Put]](id, value)
+     * Call obj.[[Put]](id, value, throw)
      */
     public static Object setObjectElem(Object obj, Object elem, Object value,
-                                       Context cx)
+                                       boolean checked, Context cx)
     {
         Scriptable sobj = toObjectOrNull(cx, obj);
         if (sobj == null) {
             throw undefWriteError(obj, elem, value);
         }
-        return setObjectElem(sobj, elem, value, cx);
+        return setObjectElem(sobj, elem, value, checked, cx);
     }
 
     public static Object setObjectElem(Scriptable obj, Object elem,
-                                       Object value, Context cx)
+                                       Object value, boolean checked,
+                                       Context cx)
     {
         if (obj instanceof XMLObject) {
             ((XMLObject)obj).put(cx, elem, value);
@@ -1632,17 +1633,19 @@ public class ScriptRuntime {
      * Version of setObjectElem when elem is a valid JS identifier name.
      */
     public static Object setObjectProp(Object obj, String property,
-                                       Object value, Context cx)
+                                       Object value, boolean checked,
+                                       Context cx)
     {
         Scriptable sobj = toObjectOrNull(cx, obj);
         if (sobj == null) {
             throw undefWriteError(obj, property, value);
         }
-        return setObjectProp(sobj, property, value, cx);
+        return setObjectProp(sobj, property, value, checked, cx);
     }
 
     public static Object setObjectProp(Scriptable obj, String property,
-                                       Object value, Context cx)
+                                       Object value, boolean checked,
+                                       Context cx)
     {
         ScriptableObject.putProperty(obj, property, value);
         return value;
@@ -1653,7 +1656,8 @@ public class ScriptRuntime {
      * types.
      */
     public static Object setObjectIndex(Object obj, double dblIndex,
-                                        Object value, Context cx)
+                                        Object value, boolean checked,
+                                        Context cx)
     {
         Scriptable sobj = toObjectOrNull(cx, obj);
         if (sobj == null) {
@@ -1662,15 +1666,15 @@ public class ScriptRuntime {
 
         int index = (int)dblIndex;
         if (index == dblIndex) {
-            return setObjectIndex(sobj, index, value, cx);
+            return setObjectIndex(sobj, index, value, checked, cx);
         } else {
             String s = toString(dblIndex);
-            return setObjectProp(sobj, s, value, cx);
+            return setObjectProp(sobj, s, value, checked, cx);
         }
     }
 
     public static Object setObjectIndex(Scriptable obj, int index, Object value,
-                                        Context cx)
+                                        boolean checked, Context cx)
     {
         ScriptableObject.putProperty(obj, index, value);
         return value;
@@ -2902,8 +2906,10 @@ public class ScriptRuntime {
         }
     }
 
+    // TODO: argument position for 'checked'
     public static Object elemIncrDecr(Object obj, Object index,
-                                      Context cx, int incrDecrMask)
+                                      Context cx, int incrDecrMask,
+                                      boolean checked)
     {
         Object value = getObjectElem(obj, index, cx);
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
@@ -2923,7 +2929,7 @@ public class ScriptRuntime {
             --number;
         }
         Number result = wrapNumber(number);
-        setObjectElem(obj, index, result, cx);
+        setObjectElem(obj, index, result, checked, cx);
         if (post) {
             return value;
         } else {

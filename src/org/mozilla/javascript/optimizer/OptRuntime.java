@@ -151,11 +151,13 @@ public final class OptRuntime extends ScriptRuntime
         return new ConsString(toString(val1), (CharSequence)val2);
     }
 
+    // TODO: argument position for 'checked'
     public static Object elemIncrDecr(Object obj, double index,
-                                      Context cx, int incrDecrMask)
+                                      Context cx, int incrDecrMask,
+                                      boolean checked)
     {
         return ScriptRuntime.elemIncrDecr(obj, new Double(index), cx,
-                                          incrDecrMask);
+                                          incrDecrMask, checked);
     }
 
     public static Object[] padStart(Object[] currentArgs, int count) {

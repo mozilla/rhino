@@ -918,8 +918,9 @@ public class NativeArray extends IdScriptableObject implements List
     private static Object setLengthProperty(Context cx, Scriptable target,
                                             long length)
     {
+        // [[Put]](_, _, true) -> always throw error for invalid [[Put]]
         return ScriptRuntime.setObjectProp(
-                   target, "length", ScriptRuntime.wrapNumber(length), cx);
+                   target, "length", ScriptRuntime.wrapNumber(length), true, cx);
     }
 
     /* Utility functions to encapsulate index > Integer.MAX_VALUE
@@ -966,11 +967,12 @@ public class NativeArray extends IdScriptableObject implements List
     private static void setElem(Context cx, Scriptable target, long index,
                                 Object value)
     {
+        // [[Put]](_, _, true) -> always throw error for invalid [[Put]]
         if (index > Integer.MAX_VALUE) {
             String id = Long.toString(index);
-            ScriptRuntime.setObjectProp(target, id, value, cx);
+            ScriptRuntime.setObjectProp(target, id, value, true, cx);
         } else {
-            ScriptRuntime.setObjectIndex(target, (int)index, value, cx);
+            ScriptRuntime.setObjectIndex(target, (int)index, value, true, cx);
         }
     }
 
