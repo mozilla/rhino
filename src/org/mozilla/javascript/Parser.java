@@ -567,11 +567,13 @@ public class Parser
                 } else {
                     n = statement();
                     if (inDirectivePrologue) {
-                        String directive = getDirective(n);
+                        StringLiteral directive = getDirective(n);
                         if (directive == null) {
                             inDirectivePrologue = false;
-                        } else if (directive.equals("use strict")) {
-                            setStrictMode(root);
+                        } else if (directive.isEscapeFreeStringLiteral()){
+                            if ("use strict".equals(directive.getValue())) {
+                                setStrictMode(root);
+                            }
                         }
                     }
                 }
@@ -662,11 +664,13 @@ public class Parser
                         default:
                             n = statement();
                             if (inDirectivePrologue) {
-                                String directive = getDirective(n);
+                                StringLiteral directive = getDirective(n);
                                 if (directive == null) {
                                     inDirectivePrologue = false;
-                                } else if (directive.equals("use strict")) {
-                                    setStrictMode(fnNode);
+                                } else if (directive.isEscapeFreeStringLiteral()){
+                                    if ("use strict".equals(directive.getValue())) {
+                                        setStrictMode(fnNode);
+                                    }
                                 }
                             }
                             break;
@@ -689,14 +693,11 @@ public class Parser
         return pn;
     }
 
-    private String getDirective(AstNode n) {
+    private StringLiteral getDirective(AstNode n) {
         if (n instanceof ExpressionStatement) {
             AstNode e = ((ExpressionStatement) n).getExpression();
             if (e instanceof StringLiteral) {
-                StringLiteral s = (StringLiteral) e;
-                if (s.isEscapeFreeStringLiteral()) {
-                    return s.getValue();
-                }
+                return (StringLiteral) e;
             }
         }
         return null;
@@ -898,7 +899,7 @@ public class Parser
                 "arguments".equals(id) ||
                 TokenStream.isKeyword(id))
             {
-                reportError("msg.bad.id.strict", id);
+                addError("msg.bad.id.strict", id);
             }
         }
 
@@ -911,7 +912,7 @@ public class Parser
                     "arguments".equals(paramName) ||
                     TokenStream.isKeyword(paramName))
                 {
-                    reportError("msg.bad.id.strict", paramName);
+                    addError("msg.bad.id.strict", paramName);
                 }
                 if (paramNames.contains(paramName)) {
                     addError("msg.dup.param.strict", paramName);
@@ -1941,7 +1942,7 @@ public class Parser
                         "arguments".equals(ts.getString()) ||
                         TokenStream.isKeyword(id))
                     {
-                        reportError("msg.bad.id.strict", id);
+                        addError("msg.bad.id.strict", id);
                     }
                 }
                 defineSymbol(declType, ts.getString(), inForInit);

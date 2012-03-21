@@ -407,7 +407,10 @@ class TokenStream
                                         ? Token.RESERVED
                                         : Token.NAME;
                         }
-                        if (result != Token.RESERVED) {
+                        if (result == Token.NAME) {
+                            this.string = (String)allStrings.intern(str);
+                            return result;
+                        } else if (result != Token.RESERVED) {
                             return result;
                         } else if (!parser.compilerEnv.
                                         isReservedKeywordAsIdentifier())
@@ -597,7 +600,7 @@ class TokenStream
                                 // Strict mode code allows only \0, then a non-digit.
                                 if (c != 0 || (c >= '0' && c <= '9')) {
                                     if (parser.inUseStrictDirective) {
-                                        parser.reportError("msg.no.octal.strict");
+                                        parser.addError("msg.no.octal.strict");
                                     }
                                     octalChar = true;
                                 }
