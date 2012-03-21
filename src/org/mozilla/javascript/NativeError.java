@@ -57,10 +57,10 @@ final class NativeError extends IdScriptableObject
     static void init(Scriptable scope, boolean sealed)
     {
         NativeError obj = new NativeError();
-        ScriptableObject.putProperty(obj, "name", "Error");
-        ScriptableObject.putProperty(obj, "message", "");
-        ScriptableObject.putProperty(obj, "fileName", "");
-        ScriptableObject.putProperty(obj, "lineNumber", Integer.valueOf(0));
+        ScriptableObject.putProperty(obj, "name", "Error", false);
+        ScriptableObject.putProperty(obj, "message", "", false);
+        ScriptableObject.putProperty(obj, "fileName", "", false);
+        ScriptableObject.putProperty(obj, "lineNumber", Integer.valueOf(0), false);
         obj.setAttributes("name", ScriptableObject.DONTENUM);
         obj.setAttributes("message", ScriptableObject.DONTENUM);
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
@@ -79,14 +79,14 @@ final class NativeError extends IdScriptableObject
         if (arglen >= 1) {
             if (args[0] != Undefined.instance) {
                 ScriptableObject.putProperty(obj, "message",
-                        ScriptRuntime.toString(args[0]));
+                        ScriptRuntime.toString(args[0]), false);
             }
             if (arglen >= 2) {
-                ScriptableObject.putProperty(obj, "fileName", args[1]);
+                ScriptableObject.putProperty(obj, "fileName", args[1], false);
                 if (arglen >= 3) {
                     int line = ScriptRuntime.toInt32(args[2]);
                     ScriptableObject.putProperty(obj, "lineNumber",
-                            Integer.valueOf(line));
+                            Integer.valueOf(line), false);
                 }
             }
         }

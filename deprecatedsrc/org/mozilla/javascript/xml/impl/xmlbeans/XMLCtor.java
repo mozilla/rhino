@@ -61,7 +61,7 @@ class XMLCtor extends IdFunctionObject
             int id = super.getMaxInstanceId() + i;
             String name = getInstanceIdName(id);
             Object value = getInstanceIdValue(id);
-            ScriptableObject.putProperty(target, name, value);
+            ScriptableObject.putProperty(target, name, value, false);
         }
     }
 

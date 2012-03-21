@@ -49,7 +49,7 @@ public class RequireJarTest extends RequireTest
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
         final String jsFile = getClass().getResource("testNonSandboxed.js").toExternalForm();
-        ScriptableObject.putProperty(scope, "moduleUri", jsFile);
+        ScriptableObject.putProperty(scope, "moduleUri", jsFile, false);
         require.requireMain(cx, "testNonSandboxed");
     }
 

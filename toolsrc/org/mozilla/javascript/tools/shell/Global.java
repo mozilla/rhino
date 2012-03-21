@@ -761,11 +761,11 @@ public class Global extends ImporterTopLevel
         int exitCode = runProcess(cmd, environment, in, out, err);
         if (outBytes != null) {
             String s = ScriptRuntime.toString(outObj) + outBytes.toString();
-            ScriptableObject.putProperty(params, "output", s);
+            ScriptableObject.putProperty(params, "output", s, false);
         }
         if (errBytes != null) {
             String s = ScriptRuntime.toString(errObj) + errBytes.toString();
-            ScriptableObject.putProperty(params, "err", s);
+            ScriptableObject.putProperty(params, "err", s, false);
         }
 
         return new Integer(exitCode);

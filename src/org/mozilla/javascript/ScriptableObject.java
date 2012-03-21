@@ -2151,8 +2151,32 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param name a property name
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
+     * @deprecated use {@link #putProperty(Scriptable, String, Object, boolean)} instead
      */
+    @Deprecated
     public static void putProperty(Scriptable obj, String name, Object value)
+    {
+        putProperty(obj, name, value, false);
+    }
+
+    /**
+     * Puts a named property in an object or in an object in its prototype chain.
+     * <p>
+     * Searches for the named property in the prototype chain. If it is found,
+     * the value of the property in <code>obj</code> is changed through a call
+     * to {@link Scriptable#put(String, Scriptable, Object)} on the
+     * prototype passing <code>obj</code> as the <code>start</code> argument.
+     * This allows the prototype to veto the property setting in case the
+     * prototype defines the property with [[ReadOnly]] attribute. If the
+     * property is not found, it is added in <code>obj</code>.
+     * @param obj a JavaScript object
+     * @param name a property name
+     * @param value any JavaScript value accepted by Scriptable.put
+     * @param checked controls whether to throw an error if the attribute is [[ReadOnly]]
+     * @since 1.7R4
+     */
+    public static void putProperty(Scriptable obj, String name, Object value,
+                                   boolean checked)
     {
         Scriptable base = getBase(obj, name);
         if (base == null)
@@ -2198,8 +2222,32 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param index a property index
      * @param value any JavaScript value accepted by Scriptable.put
      * @since 1.5R2
+     * @deprecated use {@link #putProperty(Scriptable, int, Object, boolean)} instead
      */
+    @Deprecated
     public static void putProperty(Scriptable obj, int index, Object value)
+    {
+        putProperty(obj, index, value, false);
+    }
+
+    /**
+     * Puts an indexed property in an object or in an object in its prototype chain.
+     * <p>
+     * Searches for the indexed property in the prototype chain. If it is found,
+     * the value of the property in <code>obj</code> is changed through a call
+     * to {@link Scriptable#put(int, Scriptable, Object)} on the prototype
+     * passing <code>obj</code> as the <code>start</code> argument. This allows
+     * the prototype to veto the property setting in case the prototype defines
+     * the property with [[ReadOnly]] attribute. If the property is not found,
+     * it is added in <code>obj</code>.
+     * @param obj a JavaScript object
+     * @param index a property index
+     * @param value any JavaScript value accepted by Scriptable.put
+     * @param checked controls whether to throw an error if the attribute is [[ReadOnly]]
+     * @since 1.7R4
+     */
+    public static void putProperty(Scriptable obj, int index, Object value,
+                                   boolean checked)
     {
         Scriptable base = getBase(obj, index);
         if (base == null)

@@ -1620,9 +1620,9 @@ public class ScriptRuntime {
             String s = toStringIdOrIndex(cx, elem);
             if (s == null) {
                 int index = lastIndexResult(cx);
-                ScriptableObject.putProperty(obj, index, value);
+                ScriptableObject.putProperty(obj, index, value, checked);
             } else {
-                ScriptableObject.putProperty(obj, s, value);
+                ScriptableObject.putProperty(obj, s, value, checked);
             }
         }
 
@@ -1647,7 +1647,7 @@ public class ScriptRuntime {
                                        Object value, boolean checked,
                                        Context cx)
     {
-        ScriptableObject.putProperty(obj, property, value);
+        ScriptableObject.putProperty(obj, property, value, checked);
         return value;
     }
 
@@ -1676,7 +1676,7 @@ public class ScriptRuntime {
     public static Object setObjectIndex(Scriptable obj, int index, Object value,
                                         boolean checked, Context cx)
     {
-        ScriptableObject.putProperty(obj, index, value);
+        ScriptableObject.putProperty(obj, index, value, checked);
         return value;
     }
 
@@ -1951,7 +1951,7 @@ public class ScriptRuntime {
         if (bound != null) {
             // TODO: we used to special-case XMLObject here, but putProperty
             // seems to work for E4X and it's better to optimize  the common case
-            ScriptableObject.putProperty(bound, id, value);
+            ScriptableObject.putProperty(bound, id, value, false);
         } else {
             // "newname = 7;", where 'newname' has not yet
             // been defined, creates a new property in the
@@ -1983,7 +1983,7 @@ public class ScriptRuntime {
             // false. In these cases a TypeError exception is thrown (11.13.1).
             // TODO: we used to special-case XMLObject here, but putProperty
             // seems to work for E4X and we should optimize  the common case
-            ScriptableObject.putProperty(bound, id, value);
+            ScriptableObject.putProperty(bound, id, value, true);
             return value;
         } else {
             // See ES5 8.7.2
@@ -3555,7 +3555,7 @@ public class ScriptRuntime {
             }
 
             Scriptable errorObject = cx.newObject(scope, errorName, args);
-            ScriptableObject.putProperty(errorObject, "name", errorName);
+            ScriptableObject.putProperty(errorObject, "name", errorName, false);
             // set exception in Error objects to enable non-ECMA "stack" property
             if (errorObject instanceof NativeError) {
                 ((NativeError) errorObject).setStackProvider(re);

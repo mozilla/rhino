@@ -166,7 +166,7 @@ public class Require extends BaseFunction
      * @param scope the scope where the require() function is to be installed.
      */
     public void install(Scriptable scope) {
-        ScriptableObject.putProperty(scope, "require", this);
+        ScriptableObject.putProperty(scope, "require", this, false);
     }
 
     @Override
@@ -350,7 +350,7 @@ public class Require extends BaseFunction
 
     private static void defineReadOnlyProperty(ScriptableObject obj,
             String name, Object value) {
-        ScriptableObject.putProperty(obj, name, value);
+        ScriptableObject.putProperty(obj, name, value, false);
         obj.setAttributes(name, ScriptableObject.READONLY |
                 ScriptableObject.PERMANENT);
     }

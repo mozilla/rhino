@@ -62,7 +62,7 @@ public class ComplianceTest extends TestCase
                 try {
                     cx.setOptimizationLevel(-1);
                     final Scriptable scope = cx.initStandardObjects();
-                    ScriptableObject.putProperty(scope, "print", new Print(scope));
+                    ScriptableObject.putProperty(scope, "print", new Print(scope), false);
                     createRequire(testDir, cx, scope).requireMain(cx, "program");
                 }
                 finally {
