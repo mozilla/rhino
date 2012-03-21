@@ -3787,6 +3787,12 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * ES5.1: 10.5 Declaration Binding Instantiation, step 8<br>
+     * 
+     * Create bindings for all variable declarations in {@code funObj} and
+     * initializes them to {@link Undefined.instance}.
+     */
     public static void initScript(NativeFunction funObj, Object thisObj,
                                   Context cx, Scriptable scope,
                                   boolean evalScript)
@@ -3804,8 +3810,11 @@ public class ScriptRuntime {
                 varScope = varScope.getParentScope();
             }
 
-            // TODO: strict mode flag?
-            boolean strict = false;
+            // strict mode flag is always true, cf.
+            // 10.5 Declaration Binding Instantiation, step 8
+            //  -> 10.2.1.1.2 CreateMutableBinding (N, D)
+            //  -> 10.2.1.2.2 CreateMutableBinding (N, D)
+            boolean strict = true;
             for (int i = varCount; i-- != 0;) {
                 String name = funObj.getParamOrVarName(i);
                 boolean isConst = funObj.getParamOrVarConst(i);
@@ -4058,37 +4067,64 @@ public class ScriptRuntime {
         object.setPrototype(TopLevel.getBuiltinPrototype(scope, type));
     }
 
+    @Deprecated
+    public static void initFunction(Context cx, Scriptable scope,
+            NativeFunction function, int type,
+            boolean fromEvalCode)
+    {
+        initFunction(cx, scope, function, type, fromEvalCode, false);
+    }
 
+    /**
+     * ES5.1: 10.5 Declaration Binding Instantiation, step 5<br>
+     * 
+     * Create bindings for all function declarations in {@code funObj} and
+     * initializes them accordingly.
+     */
     public static void initFunction(Context cx, Scriptable scope,
                                     NativeFunction function, int type,
-                                    boolean fromEvalCode)
+                                    boolean fromEvalCode, boolean strict)
     {
-        // TODO: strict mode flag?
-        boolean strict = false;
         if (type == FunctionNode.FUNCTION_STATEMENT) {
             String name = function.getFunctionName();
-            if (name != null && name.length() != 0) {
+            assert name != null && name.length() > 0;
+            if (!ScriptableObject.hasProperty(scope, name)) {
+                // 10.5, step 5d: CreateMutableBinding
                 if (!fromEvalCode) {
                     // ECMA specifies that functions defined in global and
                     // function scope outside eval should have DONTDELETE set.
-                    ScriptableObject.defineProperty(scope, name, function,
+                    ScriptableObject.defineProperty(scope, name, Undefined.instance,
                                                     ScriptableObject.PERMANENT,
-                                                    strict);
+                                                    true);
                 } else {
-                    scope.put(name, scope, function, strict);
+                    scope.put(name, scope, Undefined.instance, true);
+                }
+            } else if (scope.getParentScope() == null) {
+                // 10.5, step 5e: env is the environment record component of the global environment
+                ScriptableObject global = ScriptableObject.ensureScriptableObject(scope);
+                PropertyDescriptor desc = global.$getProperty(name);
+                if (desc.isConfigurable()) {
+                    int attrs = fromEvalCode ? ScriptableObject.EMPTY : ScriptableObject.PERMANENT;
+                    desc = new PropertyDescriptor(Undefined.instance, attrs);
+                    global.defineOwnProperty(name, desc, true);
+                } else if (desc.isAccessorDescriptor() || !desc.isEnumerable()
+                           || !desc.isWritable()) {
+                    // TODO: error message
+                    throw typeError("[[Bad Function Binding]]");
                 }
             }
+            // 10.5, step 5f: SetMutableBinding
+            scope.put(name, scope, function, strict);
         } else if (type == FunctionNode.FUNCTION_EXPRESSION_STATEMENT) {
             String name = function.getFunctionName();
-            if (name != null && name.length() != 0) {
-                // Always put function expression statements into initial
-                // activation object ignoring the with statement to follow
-                // SpiderMonkey
-                while (scope instanceof NativeWith) {
-                    scope = scope.getParentScope();
-                }
-                scope.put(name, scope, function, strict);
+            assert name != null && name.length() > 0;
+            // Always put function expression statements into initial
+            // activation object ignoring the with statement to follow
+            // SpiderMonkey
+            while (scope instanceof NativeWith) {
+                scope = scope.getParentScope();
             }
+            scope.put(name, scope, function, strict);
         } else {
             throw Kit.codeBug();
         }

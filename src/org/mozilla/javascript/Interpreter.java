@@ -845,7 +845,8 @@ public final class Interpreter extends Icode implements Evaluator
         InterpretedFunction fn;
         fn = InterpretedFunction.createFunction(cx, scope, parent, index);
         ScriptRuntime.initFunction(cx, scope, fn, fn.idata.itsFunctionType,
-                                   parent.idata.evalScriptFlag);
+                                   parent.idata.evalScriptFlag,
+                                   parent.isStrict());
     }
 
     static Object interpret(InterpretedFunction ifun,
@@ -2741,8 +2742,6 @@ switch (op) {
             }
         } else {
             scope = callerScope;
-            ScriptRuntime.initScript(fnOrScript, thisObj, cx, scope,
-                                     fnOrScript.idata.evalScriptFlag);
         }
 
         if (idata.itsNestedFunctions != null) {
@@ -2754,6 +2753,11 @@ switch (op) {
                     initFunction(cx, scope, fnOrScript, i);
                 }
             }
+        }
+
+        if (idata.itsFunctionType == 0) {
+            ScriptRuntime.initScript(fnOrScript, thisObj, cx, scope,
+                                     fnOrScript.idata.evalScriptFlag);
         }
 
         Scriptable[] scriptRegExps = null;

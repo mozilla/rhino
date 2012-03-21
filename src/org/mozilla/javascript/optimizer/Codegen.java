@@ -1764,6 +1764,15 @@ class BodyCodegen
                                    +")V");
         } else {
             debugVariableName = "global";
+        }
+
+        enterAreaStartLabel = cfw.acquireLabel();
+        epilogueLabel = cfw.acquireLabel();
+        cfw.markLabel(enterAreaStartLabel);
+
+        generateNestedFunctionInits();
+
+        if (fnCurrent == null) {
             cfw.addALoad(funObjLocal);
             cfw.addALoad(thisObjLocal);
             cfw.addALoad(contextLocal);
@@ -1777,12 +1786,6 @@ class BodyCodegen
                                    +"Z"
                                    +")V");
         }
-
-        enterAreaStartLabel = cfw.acquireLabel();
-        epilogueLabel = cfw.acquireLabel();
-        cfw.markLabel(enterAreaStartLabel);
-
-        generateNestedFunctionInits();
 
         // default is to generate debug info
         if (compilerEnv.isGenerateDebugInfo()) {
@@ -3098,11 +3101,13 @@ class BodyCodegen
         cfw.addPush(functionType);
         cfw.addALoad(variableObjectLocal);
         cfw.addALoad(contextLocal);           // load 'cx'
+        cfw.addPush(scriptOrFn.isInStrictMode());
         addOptRuntimeInvoke("initFunction",
                             "(Lorg/mozilla/javascript/NativeFunction;"
                             +"I"
                             +"Lorg/mozilla/javascript/Scriptable;"
                             +"Lorg/mozilla/javascript/Context;"
+                            +"Z"
                             +")V");
     }
 
