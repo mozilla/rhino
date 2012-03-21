@@ -484,9 +484,8 @@ public class NativeObject extends IdScriptableObject implements Map
         for (int i = 0, len = ids.length; i < len; ++i) {
             Object name = ids[i];
             descs[i << 1] = ScriptRuntime.toString(name);
-            Object descObj = props.get(name);
-            descs[(i << 1) + 1] = PropertyDescriptor
-                    .toPropertyDescriptor(descObj);
+            Object descObj = ScriptRuntime.getObjectElem(props, name, cx);
+            descs[(i << 1) + 1] = PropertyDescriptor.toPropertyDescriptor(descObj);
         }
         for (int i = 0, len = ids.length; i < len; ++i) {
             String name = (String) descs[i << 1];
