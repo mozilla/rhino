@@ -42,7 +42,6 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
@@ -429,6 +428,27 @@ public class NodeTransformer
                 }
                 break;
               }
+
+              case Token.SETPROP:
+                  if (inStrictMode) {
+                      node.setType(Token.STRICT_SETPROP);
+                  }
+                  break;
+              case Token.SETPROP_OP:
+                  if (inStrictMode) {
+                      node.setType(Token.STRICT_SETPROP_OP);
+                  }
+                  break;
+              case Token.SETELEM:
+                  if (inStrictMode) {
+                      node.setType(Token.STRICT_SETELEM);
+                  }
+                  break;
+              case Token.SETELEM_OP:
+                  if (inStrictMode) {
+                      node.setType(Token.STRICT_SETELEM_OP);
+                  }
+                  break;
             }
 
             transformCompilationUnit_r(tree, node,

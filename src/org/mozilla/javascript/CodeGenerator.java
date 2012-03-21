@@ -740,12 +740,14 @@ class CodeGenerator extends Icode {
 
           case Token.SETPROP:
           case Token.SETPROP_OP:
+          case Token.STRICT_SETPROP:
+          case Token.STRICT_SETPROP_OP:
             {
                 visitExpression(child, 0);
                 child = child.getNext();
                 String property = child.getString();
                 child = child.getNext();
-                if (type == Token.SETPROP_OP) {
+                if (type == Token.SETPROP_OP || type == Token.STRICT_SETPROP_OP) {
                     addIcode(Icode_DUP);
                     stackChange(1);
                     addStringOp(Token.GETPROP, property);
@@ -760,11 +762,13 @@ class CodeGenerator extends Icode {
 
           case Token.SETELEM:
           case Token.SETELEM_OP:
+          case Token.STRICT_SETELEM:
+          case Token.STRICT_SETELEM_OP:
             visitExpression(child, 0);
             child = child.getNext();
             visitExpression(child, 0);
             child = child.getNext();
-            if (type == Token.SETELEM_OP) {
+            if (type == Token.SETELEM_OP || type == Token.STRICT_SETELEM_OP) {
                 addIcode(Icode_DUP2);
                 stackChange(2);
                 addToken(Token.GETELEM);

@@ -2694,11 +2694,15 @@ class BodyCodegen
 
               case Token.SETPROP:
               case Token.SETPROP_OP:
+              case Token.STRICT_SETPROP:
+              case Token.STRICT_SETPROP_OP:
                 visitSetProp(type, node, child);
                 break;
 
               case Token.SETELEM:
               case Token.SETELEM_OP:
+              case Token.STRICT_SETELEM:
+              case Token.STRICT_SETELEM_OP:
                 visitSetElem(type, node, child);
                 break;
 
@@ -5057,13 +5061,13 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         Node objectChild = child;
         generateExpression(child, node);
         child = child.getNext();
-        if (type == Token.SETPROP_OP) {
+        if (type == Token.SETPROP_OP || type == Token.STRICT_SETPROP_OP) {
             cfw.add(ByteCode.DUP);
         }
         Node nameChild = child;
         generateExpression(child, node);
         child = child.getNext();
-        if (type == Token.SETPROP_OP) {
+        if (type == Token.SETPROP_OP || type == Token.STRICT_SETPROP) {
             // stack: ... object object name -> ... object name object name
             cfw.add(ByteCode.DUP_X1);
             //for 'this.foo += ...' we call thisGet which can skip some
@@ -5103,13 +5107,13 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     {
         generateExpression(child, node);
         child = child.getNext();
-        if (type == Token.SETELEM_OP) {
+        if (type == Token.SETELEM_OP || type == Token.STRICT_SETELEM_OP) {
             cfw.add(ByteCode.DUP);
         }
         generateExpression(child, node);
         child = child.getNext();
         boolean indexIsNumber = (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1);
-        if (type == Token.SETELEM_OP) {
+        if (type == Token.SETELEM_OP || type == Token.STRICT_SETELEM_OP) {
             if (indexIsNumber) {
                 // stack: ... object object number
                 //        -> ... object number object number
