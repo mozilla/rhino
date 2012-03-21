@@ -2707,6 +2707,15 @@ public class ScriptRuntime {
         Script script = cx.compileString(x.toString(), evaluator,
                                          reporter, sourceName, 1, null, strictMode);
         evaluator.setEvalScriptFlag(script);
+        if (script instanceof InterpretedFunction) {
+            // TODO: extend Script interface to make this less voodoo
+            strictMode |= ((InterpretedFunction) script).idata.isStrict;
+        }
+        if (strictMode) {
+            NativeObject newScope = new NativeObject();
+            newScope.setParentScope(scope);
+            scope = newScope;
+        }
         Callable c = (Callable)script;
         return c.call(cx, scope, (Scriptable)thisArg, ScriptRuntime.emptyArgs);
     }
