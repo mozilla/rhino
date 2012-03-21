@@ -2066,9 +2066,9 @@ public class ScriptRuntime {
     }
 
     public static Ref specialRef(Object obj, String specialProperty,
-                                 Context cx)
+                                 Context cx, Scriptable scope)
     {
-        return SpecialRef.createSpecial(cx, obj, specialProperty);
+        return SpecialRef.createSpecial(cx, scope, obj, specialProperty);
     }
 
     /**
@@ -4218,7 +4218,7 @@ public class ScriptRuntime {
             if (id instanceof String) {
                 if (getterSetter == 0) {
                     if (isSpecialProperty((String)id)) {
-                        specialRef(object, (String)id, cx).set(cx, value);
+                        specialRef(object, (String)id, cx, scope).set(cx, value);
                     } else {
                         object.put((String)id, object, value, false);
                     }

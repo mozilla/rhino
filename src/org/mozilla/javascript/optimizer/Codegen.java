@@ -2813,11 +2813,13 @@ class BodyCodegen
                     generateExpression(child, node);
                     cfw.addPush(special);
                     cfw.addALoad(contextLocal);
+                    cfw.addALoad(variableObjectLocal);
                     addScriptRuntimeInvoke(
                         "specialRef",
                         "(Ljava/lang/Object;"
                         +"Ljava/lang/String;"
                         +"Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
                         +")Lorg/mozilla/javascript/Ref;");
                 }
                 break;

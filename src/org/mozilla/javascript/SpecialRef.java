@@ -42,70 +42,33 @@ class SpecialRef extends Ref
 {
     static final long serialVersionUID = -7521596632456797847L;
 
-    private static final int SPECIAL_NONE = 0;
-    private static final int SPECIAL_PROTO = 1;
-
-    private Scriptable target;
-    private int type;
-    private String name;
-
-    private SpecialRef(Scriptable target, int type, String name)
+    /**
+     * Helper class for the __proto__ special property
+     */
+    private static class ProtoSpecialRef extends SpecialRef
     {
-        this.target = target;
-        this.type = type;
-        this.name = name;
-    }
+        static final long serialVersionUID = -6410092416752016016L;
 
-    static Ref createSpecial(Context cx, Object object, String name)
-    {
-        Scriptable target = ScriptRuntime.toObjectOrNull(cx, object);
-        if (target == null) {
-            throw ScriptRuntime.undefReadError(object, name);
+        private ProtoSpecialRef(Scriptable target, String name)
+        {
+            super(target, name);
         }
 
-        int type;
-        if (name.equals("__proto__")) {
-            type = SPECIAL_PROTO;
-        } else {
-            throw new IllegalArgumentException(name);
-        }
-
-        if (!cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
-            // Clear special after checking for valid name!
-            type = SPECIAL_NONE;
-        }
-
-        return new SpecialRef(target, type, name);
-    }
-
-    @Override
-    public Object get(Context cx)
-    {
-        switch (type) {
-          case SPECIAL_NONE:
-            return ScriptRuntime.getObjectProp(target, name, cx);
-          case SPECIAL_PROTO:
-            Object proto = target.get("__proto__", target);
-            if (proto != ScriptableObject.NOT_FOUND) {
-                return proto;
+        @Override
+        public Object get(Context cx)
+        {
+            if (!ScriptRuntime.hasObjectElem(target, name, cx)) {
+                // 'null' prototype is reported as 'undefined'
+                Object proto = target.getPrototype();
+                return (proto != null ? proto : Undefined.instance);
             }
-            // 'null' prototype is reported as 'undefined' to follow spidermonkey
-            proto = target.getPrototype();
-            return (proto != null ? proto : Undefined.instance);
-          default:
-            throw Kit.codeBug();
+            return super.get(cx);
         }
-    }
 
-    @Override
-    public Object set(Context cx, Object value)
-    {
-        switch (type) {
-          case SPECIAL_NONE:
-            // TODO: default for 'checked' set to 'false' for now
-            return ScriptRuntime.setObjectProp(target, name, value, false, cx);
-          case SPECIAL_PROTO:
-            {
+        @Override
+        public Object set(Context cx, Object value)
+        {
+            if (!ScriptRuntime.hasObjectElem(target, name, cx)) {
                 // ignore unless value is 'null' or Scriptable
                 if (!(value == null || value instanceof Scriptable)) {
                     return value;
@@ -126,29 +89,78 @@ class SpecialRef extends Ref
                 target.setPrototype(obj);
                 return value;
             }
-          default:
-            throw Kit.codeBug();
+            return super.set(cx, value);
         }
+
+        @Override
+        public boolean has(Context cx)
+        {
+            // always return true to follow spidermonkey
+            return true;
+        }
+
+        @Override
+        public boolean delete(Context cx)
+        {
+            if (!ScriptRuntime.hasObjectElem(target, name, cx)) {
+                // always return true to follow spidermonkey
+                return true;
+            }
+            return super.delete(cx);
+        }
+    }
+
+    protected final Scriptable target;
+    protected final String name;
+
+    private SpecialRef(Scriptable target, String name)
+    {
+        this.target = target;
+        this.name = name;
+    }
+
+    static Ref createSpecial(Context cx, Scriptable scope, Object object,
+                             String name)
+    {
+        Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
+        if (target == null) {
+            throw ScriptRuntime.undefReadError(object, name);
+        }
+
+        if ("__proto__".equals(name)) {
+            if (cx.hasFeature(Context.FEATURE_PARENT_PROTO_PROPERTIES)) {
+                return new ProtoSpecialRef(target, name);
+            }
+            return new SpecialRef(target, name);
+        }
+
+        throw new IllegalArgumentException(name);
+    }
+
+    @Override
+    public Object get(Context cx)
+    {
+        return ScriptRuntime.getObjectProp(target, name, cx);
+    }
+
+    @Override
+    public Object set(Context cx, Object value)
+    {
+        // TODO: default for 'checked' set to 'false' for now
+        return ScriptRuntime.setObjectProp(target, name, value, false, cx);
     }
 
     @Override
     public boolean has(Context cx)
     {
-        if (type == SPECIAL_NONE) {
-            return ScriptRuntime.hasObjectElem(target, name, cx);
-        }
-        return true;
+        return ScriptRuntime.hasObjectElem(target, name, cx);
     }
 
     @Override
     public boolean delete(Context cx)
     {
-        if (type == SPECIAL_NONE) {
-            // TODO: default for 'checked' set to 'false' for now
-            return ScriptRuntime.deleteObjectElem(target, name, cx, false);
-        }
-        // always report true to follow spidermonkey
-        return true;
+        // TODO: default for 'checked' set to 'false' for now
+        return ScriptRuntime.deleteObjectElem(target, name, cx, false);
     }
 }
 
