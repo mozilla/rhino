@@ -337,17 +337,18 @@ public class NativeObject extends IdScriptableObject implements Map
                 ScriptableObject obj = ensureScriptableObject(arg);
                 Object nameArg = args.length < 2 ? Undefined.instance : args[1];
                 String name = ScriptRuntime.toString(nameArg);
-                Scriptable desc = obj.getOwnPropertyDescriptor(cx, name);
-                return desc == null ? Undefined.instance : desc;
+                PropertyDescriptor desc = obj.getOwnProperty(name);
+                return PropertyDescriptor.fromPropertyDescriptor(cx, scope, desc);
               }
           case ConstructorId_defineProperty:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 ScriptableObject obj = ensureScriptableObject(arg);
-                Object name = args.length < 2 ? Undefined.instance : args[1];
+                Object nameArg = args.length < 2 ? Undefined.instance : args[1];
+                String name = ScriptRuntime.toString(nameArg);
                 Object descArg = args.length < 3 ? Undefined.instance : args[2];
-                ScriptableObject desc = ensureScriptableObject(descArg);
-                obj.defineOwnProperty(cx, name, desc);
+                PropertyDescriptor desc = PropertyDescriptor.toPropertyDescriptor(descArg);
+                obj.defineOwnProperty(name, desc, true);
                 return obj;
               }
           case ConstructorId_isExtensible:
@@ -368,27 +369,24 @@ public class NativeObject extends IdScriptableObject implements Map
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 ScriptableObject obj = ensureScriptableObject(arg);
                 Object propsObj = args.length < 2 ? Undefined.instance : args[1];
-                Scriptable props = Context.toObject(propsObj, getParentScope());
-                obj.defineOwnProperties(cx, ensureScriptableObject(props));
+                js_defineProperties(cx, getParentScope(), obj, propsObj);
                 return obj;
-        }
+              }
           case ConstructorId_create:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 Scriptable obj = (arg == null) ? null : ensureScriptable(arg);
 
                 ScriptableObject newObject = new NativeObject();
-                newObject.setParentScope(this.getParentScope());
+                newObject.setParentScope(getParentScope());
                 newObject.setPrototype(obj);
 
                 if (args.length > 1 && args[1] != Undefined.instance) {
-                  Scriptable props = Context.toObject(args[1], getParentScope());
-                  newObject.defineOwnProperties(cx, ensureScriptableObject(props));
+                  js_defineProperties(cx, getParentScope(), newObject, args[1]);
                 }
 
                 return newObject;
               }
-
           case ConstructorId_isSealed:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
@@ -396,10 +394,14 @@ public class NativeObject extends IdScriptableObject implements Map
 
                 if (obj.isExtensible()) return Boolean.FALSE;
 
-                for (Object name: obj.getAllIds()) {
-                  Object configurable = obj.getOwnPropertyDescriptor(cx, name).get("configurable");
-                  if (Boolean.TRUE.equals(configurable))
+                for (Object name : obj.getAllIds()) {
+                  String sname = ScriptRuntime.toString(name);
+                  PropertyDescriptor desc = obj.getOwnProperty(sname);
+                  if (desc == null) {
+                    continue;
+                  } else if (desc.isConfigurable()) {
                     return Boolean.FALSE;
+                  }
                 }
 
                 return Boolean.TRUE;
@@ -411,12 +413,15 @@ public class NativeObject extends IdScriptableObject implements Map
 
                 if (obj.isExtensible()) return Boolean.FALSE;
 
-                for (Object name: obj.getAllIds()) {
-                  ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-                  if (Boolean.TRUE.equals(desc.get("configurable")))
+                for (Object name : obj.getAllIds()) {
+                  String sname = ScriptRuntime.toString(name);
+                  PropertyDescriptor desc = obj.getOwnProperty(sname);
+                  if (desc == null) {
+                    continue;
+                  } else if ((desc.isDataDescriptor() && desc.isWritable())
+                          || desc.isConfigurable()) {
                     return Boolean.FALSE;
-                  if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
-                    return Boolean.FALSE;
+                  }
                 }
 
                 return Boolean.TRUE;
@@ -427,10 +432,11 @@ public class NativeObject extends IdScriptableObject implements Map
                 ScriptableObject obj = ensureScriptableObject(arg);
 
                 for (Object name: obj.getAllIds()) {
-                  ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-                  if (Boolean.TRUE.equals(desc.get("configurable"))) {
-                    desc.put("configurable", desc, Boolean.FALSE);
-                    obj.defineOwnProperty(cx, name, desc, false);
+                  String sname = ScriptRuntime.toString(name);
+                  PropertyDescriptor desc = obj.getOwnProperty(sname);
+                  if (desc != null && desc.isConfigurable()) {
+                    desc.setConfigurable(false);
+                    obj.defineOwnProperty(sname, desc, true);
                   }
                 }
                 obj.preventExtensions();
@@ -443,12 +449,20 @@ public class NativeObject extends IdScriptableObject implements Map
                 ScriptableObject obj = ensureScriptableObject(arg);
 
                 for (Object name: obj.getAllIds()) {
-                  ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-                  if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
-                    desc.put("writable", desc, Boolean.FALSE);
-                  if (Boolean.TRUE.equals(desc.get("configurable")))
-                    desc.put("configurable", desc, Boolean.FALSE);
-                  obj.defineOwnProperty(cx, name, desc, false);
+                  String sname = ScriptRuntime.toString(name);
+                  PropertyDescriptor desc = obj.getOwnProperty(sname);
+                  if (desc == null) {
+                    continue;
+                  } else if (desc.isDataDescriptor() && desc.isWritable()) {
+                    desc.setWritable(false);
+                    if (desc.isConfigurable()) {
+                      desc.setConfigurable(false);
+                    }
+                    obj.defineOwnProperty(sname, desc, true);
+                  } else if (desc.isConfigurable()) {
+                    desc.setConfigurable(false);
+                    obj.defineOwnProperty(sname, desc, true);
+                  }
                 }
                 obj.preventExtensions();
 
@@ -458,6 +472,26 @@ public class NativeObject extends IdScriptableObject implements Map
 
           default:
             throw new IllegalArgumentException(String.valueOf(id));
+        }
+    }
+
+    private static void js_defineProperties(Context cx, Scriptable scope,
+                                            ScriptableObject obj, Object propsObj) {
+        ScriptableObject props = ensureScriptableObject(ScriptRuntime.toObject(
+                cx, scope, propsObj));
+        Object[] ids = props.getIds();
+        Object[] descs = new Object[ids.length * 2];
+        for (int i = 0, len = ids.length; i < len; ++i) {
+            Object name = ids[i];
+            descs[i << 1] = ScriptRuntime.toString(name);
+            Object descObj = props.get(name);
+            descs[(i << 1) + 1] = PropertyDescriptor
+                    .toPropertyDescriptor(descObj);
+        }
+        for (int i = 0, len = ids.length; i < len; ++i) {
+            String name = (String) descs[i << 1];
+            PropertyDescriptor desc = (PropertyDescriptor) descs[(i << 1) + 1];
+            obj.defineOwnProperty(name, desc, true);
         }
     }
 
