@@ -544,12 +544,8 @@ public class Parser
 
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
+        root.setInStrictMode(savedStrictMode);
         ts.setOctalCharacterEscape(false);
-
-        if (savedStrictMode) {
-            // in case parser was initialized in strict-mode
-            root.setInStrictMode(true);
-        }
 
         try {
             for (;;) {
@@ -640,6 +636,7 @@ public class Parser
         boolean savedStrictMode = inUseStrictDirective;
         ts.setOctalCharacterEscape(false);
         // Don't set 'inUseStrictDirective' to false: inherit strict mode.
+        fnNode.setInStrictMode(savedStrictMode);
 
         pn.setLineno(ts.lineno);
         try {
