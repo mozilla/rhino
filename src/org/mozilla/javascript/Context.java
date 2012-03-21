@@ -193,19 +193,20 @@ public class Context
     public static final int FEATURE_TO_STRING_AS_SOURCE = 4;
 
     /**
-     * Control if properties <tt>__proto__</tt> and <tt>__parent__</tt>
-     * are treated specially.
+     * Control if property <tt>__proto__</tt> is treated specially.
      * If <tt>hasFeature(FEATURE_PARENT_PROTO_PROPERTIES)</tt> returns true,
-     * treat <tt>__parent__</tt> and <tt>__proto__</tt> as special properties.
+     * treat <tt>__proto__</tt> as a special property.
      * <p>
-     * The properties allow to query and set scope and prototype chains for the
-     * objects. The special meaning of the properties is available
-     * only when they are used as the right hand side of the dot operator.
+     * The property allows to query and set prototype chains for the
+     * objects. The special meaning of the property is available
+     * only when it is used as the right hand side of the dot operator.
      * For example, while <tt>x.__proto__ = y</tt> changes the prototype
      * chain of the object <tt>x</tt> to point to <tt>y</tt>,
      * <tt>x["__proto__"] = y</tt> simply assigns a new value to the property
      * <tt>__proto__</tt> in <tt>x</tt> even when the feature is on.
-     *
+     * <p>
+     * This feature no longer applies to the non-standard <tt>__parent__</tt>
+     * property which has been removed completely.
      * By default {@link #hasFeature(int)} returns true.
      */
     public static final int FEATURE_PARENT_PROTO_PROPERTIES = 5;

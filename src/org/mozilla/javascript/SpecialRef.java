@@ -44,7 +44,6 @@ class SpecialRef extends Ref
 
     private static final int SPECIAL_NONE = 0;
     private static final int SPECIAL_PROTO = 1;
-    private static final int SPECIAL_PARENT = 2;
 
     private Scriptable target;
     private int type;
@@ -67,8 +66,6 @@ class SpecialRef extends Ref
         int type;
         if (name.equals("__proto__")) {
             type = SPECIAL_PROTO;
-        } else if (name.equals("__parent__")) {
-            type = SPECIAL_PARENT;
         } else {
             throw new IllegalArgumentException(name);
         }
@@ -92,9 +89,9 @@ class SpecialRef extends Ref
             if (proto != ScriptableObject.NOT_FOUND) {
                 return proto;
             }
-            return target.getPrototype();
-          case SPECIAL_PARENT:
-            return target.getParentScope();
+            // 'null' prototype is reported as 'undefined' to follow spidermonkey
+            proto = target.getPrototype();
+            return (proto != null ? proto : Undefined.instance);
           default:
             throw Kit.codeBug();
         }
@@ -108,9 +105,12 @@ class SpecialRef extends Ref
             // TODO: default for 'checked' set to 'false' for now
             return ScriptRuntime.setObjectProp(target, name, value, false, cx);
           case SPECIAL_PROTO:
-          case SPECIAL_PARENT:
             {
-                Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value);
+                // ignore unless value is 'null' or Scriptable
+                if (!(value == null || value instanceof Scriptable)) {
+                    return value;
+                }
+                Scriptable obj = (Scriptable) value;
                 if (obj != null) {
                     // Check that obj does not contain on its prototype/scope
                     // chain to prevent cycles
@@ -120,19 +120,11 @@ class SpecialRef extends Ref
                             throw Context.reportRuntimeError1(
                                 "msg.cyclic.value", name);
                         }
-                        if (type == SPECIAL_PROTO) {
-                            search = search.getPrototype();
-                        } else {
-                            search = search.getParentScope();
-                        }
+                        search = search.getPrototype();
                     } while (search != null);
                 }
-                if (type == SPECIAL_PROTO) {
-                    target.setPrototype(obj);
-                } else {
-                    target.setParentScope(obj);
-                }
-                return obj;
+                target.setPrototype(obj);
+                return value;
             }
           default:
             throw Kit.codeBug();
@@ -155,7 +147,8 @@ class SpecialRef extends Ref
             // TODO: default for 'checked' set to 'false' for now
             return ScriptRuntime.deleteObjectElem(target, name, cx, false);
         }
-        return false;
+        // always report true to follow spidermonkey
+        return true;
     }
 }
 
