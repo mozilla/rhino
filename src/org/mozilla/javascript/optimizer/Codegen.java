@@ -4646,14 +4646,39 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 generateExpression(rChild, node);
             }
 
-            if (type == Token.GE || type == Token.GT) {
+            if (type == Token.GE) {
+                // result = !cmp_LT(lhs, rhs, true, true)
+                cfw.add(ByteCode.ICONST_1);
+                cfw.add(ByteCode.ICONST_1);
+                // negate result of cmp_LT
+                int tmp = trueGOTO;
+                trueGOTO = falseGOTO;
+                falseGOTO = tmp;
+            } else if (type == Token.LE) {
+                // result = !cmp_LT(rhs, lhs, false, true)
                 cfw.add(ByteCode.SWAP);
+                cfw.add(ByteCode.ICONST_0);
+                cfw.add(ByteCode.ICONST_1);
+                // negate result of cmp_LT
+                int tmp = trueGOTO;
+                trueGOTO = falseGOTO;
+                falseGOTO = tmp;
+            } else if (type == Token.GT) {
+                // result = cmp_LT(rhs, lhs, false, false)
+                cfw.add(ByteCode.SWAP);
+                cfw.add(ByteCode.ICONST_0);
+                cfw.add(ByteCode.ICONST_0);
+            } else if (type == Token.LT) {
+                // result = cmp_LT(lhs, rhs, true, false)
+                cfw.add(ByteCode.ICONST_1);
+                cfw.add(ByteCode.ICONST_0);
+            } else {
+                throw Codegen.badTree();
             }
-            String routine = ((type == Token.LT)
-                      || (type == Token.GT)) ? "cmp_LT" : "cmp_LE";
-            addScriptRuntimeInvoke(routine,
+            addScriptRuntimeInvoke("cmp_LT",
                                    "(Ljava/lang/Object;"
                                    +"Ljava/lang/Object;"
+                                   +"ZZ"
                                    +")Z");
             cfw.add(ByteCode.IFNE, trueGOTO);
             cfw.add(ByteCode.GOTO, falseGOTO);
