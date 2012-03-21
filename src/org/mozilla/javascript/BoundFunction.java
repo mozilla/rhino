@@ -68,15 +68,9 @@ public class BoundFunction extends BaseFunction {
     ScriptRuntime.setFunctionProtoAndParent(this, scope);
 
     Function thrower = ScriptRuntime.typeErrorThrower();
-    NativeObject throwing = new NativeObject();
-    throwing.put("get", throwing, thrower);
-    throwing.put("set", throwing, thrower);
-    throwing.put("enumerable", throwing, false);
-    throwing.put("configurable", throwing, false);
-    throwing.preventExtensions();
-
-    this.defineOwnProperty(cx, "caller", throwing, false);
-    this.defineOwnProperty(cx, "arguments", throwing, false);
+    PropertyDescriptor throwing = new PropertyDescriptor(thrower, thrower, DONTENUM | PERMANENT);
+    this.defineOwnProperty("caller", throwing, false);
+    this.defineOwnProperty("arguments", throwing, false);
   }
 
   @Override
