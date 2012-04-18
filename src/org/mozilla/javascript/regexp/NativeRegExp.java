@@ -1353,12 +1353,11 @@ public class NativeRegExp extends IdScriptableObject implements Function
     private static void
     pushProgState(REGlobalData gData, int min, int max, int cp,
                   REBackTrackData backTrackLastToSave,
-                  int continuation_pc, int continuation_op)
+                  int continuationOp, int continuationPc)
     {
         gData.stateStackTop = new REProgState(gData.stateStackTop, min, max,
                                               cp, backTrackLastToSave,
-                                              continuation_pc,
-                                              continuation_op);
+                                              continuationOp, continuationPc);
     }
 
     private static REProgState
@@ -1372,13 +1371,17 @@ public class NativeRegExp extends IdScriptableObject implements Function
     private static void
     pushBackTrackState(REGlobalData gData, byte op, int pc)
     {
-        gData.backTrackStackTop = new REBackTrackData(gData, op, pc, gData.cp);
+        REProgState state = gData.stateStackTop;
+        gData.backTrackStackTop = new REBackTrackData(gData, op, pc,
+                gData.cp, state.continuationOp, state.continuationPc);
     }
 
     private static void
-    pushBackTrackState(REGlobalData gData, byte op, int pc, int cp)
+    pushBackTrackState(REGlobalData gData, byte op, int pc,
+                       int cp, int continuationOp, int continuationPc)
     {
-        gData.backTrackStackTop = new REBackTrackData(gData, op, pc, cp);
+        gData.backTrackStackTop = new REBackTrackData(gData, op, pc,
+                cp, continuationOp, continuationPc);
     }
 
     /*
@@ -1923,12 +1926,10 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
         int pc = 0;
         byte program[] = gData.regexp.program;
-        int currentContinuation_op;
-        int currentContinuation_pc;
+        int continuationOp = REOP_END;
+        int continuationPc = 0;
         boolean result = false;
 
-        currentContinuation_pc = 0;
-        currentContinuation_op = REOP_END;
         int op = program[pc++];
 
         /*
@@ -1998,8 +1999,6 @@ public class NativeRegExp extends IdScriptableObject implements Function
                         pc += INDEX_LEN;
                         op = program[pc++];
                         int startcp = gData.cp;
-                        pushProgState(gData, 0, 0, gData.cp, null,
-                                currentContinuation_pc, currentContinuation_op);
                         if (reopIsSimple(op)) {
                             int match = simpleMatch(gData, input, op, program, pc, end, true);
                             if (match < 0) {
@@ -2012,15 +2011,13 @@ public class NativeRegExp extends IdScriptableObject implements Function
                             op = program[pc++];
                         }
                         byte nextop = program[nextpc++];
-                        pushBackTrackState(gData, nextop, nextpc, startcp);
+                        pushBackTrackState(gData, nextop, nextpc, startcp,
+                                continuationOp, continuationPc);
                     }
                     continue;
 
                     case REOP_JUMP:
                     {
-                        REProgState state = popProgState(gData);
-                        currentContinuation_pc = state.continuation_pc;
-                        currentContinuation_op = state.continuation_op;
                         int offset = getOffset(program, pc);
                         pc += offset;
                         op = program[pc++];
@@ -2057,7 +2054,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                             break;
                         }
                         pushProgState(gData, 0, 0, gData.cp, gData.backTrackStackTop,
-                                currentContinuation_pc, currentContinuation_op);
+                                continuationOp, continuationPc);
                         pushBackTrackState(gData, REOP_ASSERTTEST, nextpc);
                     }
                     continue;
@@ -2074,7 +2071,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                             }
                         }
                         pushProgState(gData, 0, 0, gData.cp, gData.backTrackStackTop,
-                                currentContinuation_pc, currentContinuation_op);
+                                continuationOp, continuationPc);
                         pushBackTrackState(gData, REOP_ASSERTNOTTEST, nextpc);
                     }
                     continue;
@@ -2085,20 +2082,10 @@ public class NativeRegExp extends IdScriptableObject implements Function
                         REProgState state = popProgState(gData);
                         gData.cp = state.index;
                         gData.backTrackStackTop = state.backTrack;
-                        currentContinuation_pc = state.continuation_pc;
-                        currentContinuation_op = state.continuation_op;
-                        if (result) {
-                            if (op == REOP_ASSERTTEST) {
-                                result = true;
-                            } else {
-                                result = false;
-                            }
-                        } else {
-                            if (op == REOP_ASSERTTEST) {
-                                // Do nothing
-                            } else {
-                                result = true;
-                            }
+                        continuationPc = state.continuationPc;
+                        continuationOp = state.continuationOp;
+                        if (op == REOP_ASSERTNOTTEST) {
+                            result = !result;
                         }
                     }
                     break;
@@ -2150,18 +2137,18 @@ public class NativeRegExp extends IdScriptableObject implements Function
                                 throw Kit.codeBug();
                         }
                         pushProgState(gData, min, max, gData.cp, null,
-                                currentContinuation_pc, currentContinuation_op);
+                                continuationOp, continuationPc);
                         if (greedy) {
-                            currentContinuation_op = REOP_REPEAT;
-                            currentContinuation_pc = pc;
                             pushBackTrackState(gData, REOP_REPEAT, pc);
+                            continuationOp = REOP_REPEAT;
+                            continuationPc = pc;
                             /* Step over <parencount>, <parenindex> & <next> */
                             pc += 3 * INDEX_LEN;
                             op = program[pc++];
                         } else {
                             if (min != 0) {
-                                currentContinuation_op = REOP_MINIMALREPEAT;
-                                currentContinuation_pc = pc;
+                                continuationOp = REOP_MINIMALREPEAT;
+                                continuationPc = pc;
                                 /* <parencount> <parenindex> & <next> */
                                 pc += 3 * INDEX_LEN;
                                 op = program[pc++];
@@ -2181,8 +2168,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
                         // empty match.  Do the same thing REOP_EMPTY would do.
                         result = true;
                         // Use the current continuation.
-                        pc = currentContinuation_pc;
-                        op = currentContinuation_op;
+                        pc = continuationPc;
+                        op = continuationOp;
                         continue;
 
                     case REOP_REPEAT:
@@ -2194,8 +2181,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
                                 // Failed, see if we have enough children.
                                 if (state.min == 0)
                                     result = true;
-                                currentContinuation_pc = state.continuation_pc;
-                                currentContinuation_op = state.continuation_op;
+                                continuationPc = state.continuationPc;
+                                continuationOp = state.continuationOp;
                                 pc += 2 * INDEX_LEN;  /* <parencount> & <parenindex> */
                                 pc += getOffset(program, pc);
                                 break switchStatement;
@@ -2203,8 +2190,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
                             if (state.min == 0 && gData.cp == state.index) {
                                 // matched an empty string, that'll get us nowhere
                                 result = false;
-                                currentContinuation_pc = state.continuation_pc;
-                                currentContinuation_op = state.continuation_op;
+                                continuationPc = state.continuationPc;
+                                continuationOp = state.continuationOp;
                                 pc += 2 * INDEX_LEN;
                                 pc += getOffset(program, pc);
                                 break switchStatement;
@@ -2214,8 +2201,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
                             if (new_max != -1) new_max--;
                             if (new_max == 0) {
                                 result = true;
-                                currentContinuation_pc = state.continuation_pc;
-                                currentContinuation_op = state.continuation_op;
+                                continuationPc = state.continuationPc;
+                                continuationOp = state.continuationOp;
                                 pc += 2 * INDEX_LEN;
                                 pc += getOffset(program, pc);
                                 break switchStatement;
@@ -2228,8 +2215,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
                                 int match = simpleMatch(gData, input, nextop, program, nextpc, end, true);
                                 if (match < 0) {
                                     result = (new_min == 0);
-                                    currentContinuation_pc = state.continuation_pc;
-                                    currentContinuation_op = state.continuation_op;
+                                    continuationPc = state.continuationPc;
+                                    continuationOp = state.continuationOp;
                                     pc += 2 * INDEX_LEN;  /* <parencount> & <parenindex> */
                                     pc += getOffset(program, pc);
                                     break switchStatement;
@@ -2237,12 +2224,13 @@ public class NativeRegExp extends IdScriptableObject implements Function
                                 result = true;
                                 nextpc = match;
                             }
-                            currentContinuation_op = REOP_REPEAT;
-                            currentContinuation_pc = pc;
+                            continuationOp = REOP_REPEAT;
+                            continuationPc = pc;
                             pushProgState(gData, new_min, new_max, startcp, null,
-                                    state.continuation_pc, state.continuation_op);
+                                    state.continuationOp, state.continuationPc);
                             if (new_min == 0) {
-                                pushBackTrackState(gData, REOP_REPEAT, pc, startcp);
+                                pushBackTrackState(gData, REOP_REPEAT, pc, startcp,
+                                        state.continuationOp, state.continuationPc);
                                 int parenCount = getIndex(program, pc);
                                 int parenIndex = getIndex(program, pc + INDEX_LEN);
                                 for (int k = 0; k < parenCount; k++) {
@@ -2265,9 +2253,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
                             //
                             if (state.max == -1 || state.max > 0) {
                                 pushProgState(gData, state.min, state.max, gData.cp, null,
-                                        state.continuation_pc, state.continuation_op);
-                                currentContinuation_op = REOP_MINIMALREPEAT;
-                                currentContinuation_pc = pc;
+                                        state.continuationOp, state.continuationPc);
+                                continuationOp = REOP_MINIMALREPEAT;
+                                continuationPc = pc;
                                 int parenCount = getIndex(program, pc);
                                 pc += INDEX_LEN;
                                 int parenIndex = getIndex(program, pc);
@@ -2279,26 +2267,26 @@ public class NativeRegExp extends IdScriptableObject implements Function
                                 continue;
                             } else {
                                 // Don't need to adjust pc since we're going to pop.
-                                currentContinuation_pc = state.continuation_pc;
-                                currentContinuation_op = state.continuation_op;
+                                continuationPc = state.continuationPc;
+                                continuationOp = state.continuationOp;
                                 break;
                             }
                         } else {
                             if (state.min == 0 && gData.cp == state.index) {
                                 // Matched an empty string, that'll get us nowhere.
                                 result = false;
-                                currentContinuation_pc = state.continuation_pc;
-                                currentContinuation_op = state.continuation_op;
+                                continuationPc = state.continuationPc;
+                                continuationOp = state.continuationOp;
                                 break;
                             }
                             int new_min = state.min, new_max = state.max;
                             if (new_min != 0) new_min--;
                             if (new_max != -1) new_max--;
                             pushProgState(gData, new_min, new_max, gData.cp, null,
-                                    state.continuation_pc, state.continuation_op);
+                                    state.continuationOp, state.continuationPc);
                             if (new_min != 0) {
-                                currentContinuation_op = REOP_MINIMALREPEAT;
-                                currentContinuation_pc = pc;
+                                continuationOp = REOP_MINIMALREPEAT;
+                                continuationPc = pc;
                                 int parenCount = getIndex(program, pc);
                                 pc += INDEX_LEN;
                                 int parenIndex = getIndex(program, pc);
@@ -2308,8 +2296,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
                                 }
                                 op = program[pc++];
                             } else {
-                                currentContinuation_pc = state.continuation_pc;
-                                currentContinuation_op = state.continuation_op;
+                                continuationPc = state.continuationPc;
+                                continuationOp = state.continuationOp;
                                 pushBackTrackState(gData, REOP_MINIMALREPEAT, pc);
                                 popProgState(gData);
                                 pc += 2 * INDEX_LEN;
@@ -2339,13 +2327,10 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     gData.parens = backTrackData.parens;
                     gData.cp = backTrackData.cp;
                     gData.stateStackTop = backTrackData.stateStackTop;
-
-                    currentContinuation_op
-                        = gData.stateStackTop.continuation_op;
-                    currentContinuation_pc
-                        = gData.stateStackTop.continuation_pc;
-                    pc = backTrackData.continuation_pc;
-                    op = backTrackData.continuation_op;
+                    continuationOp = backTrackData.continuationOp;
+                    continuationPc = backTrackData.continuationPc;
+                    pc = backTrackData.pc;
+                    op = backTrackData.op;
                     continue;
                 }
                 else
@@ -2865,14 +2850,14 @@ class REProgState
 {
     REProgState(REProgState previous, int min, int max, int index,
                 REBackTrackData backTrack,
-                int continuation_pc, int continuation_op)
+                int continuationOp, int continuationPc)
     {
         this.previous = previous;
         this.min = min;
         this.max = max;
         this.index = index;
-        this.continuation_op = continuation_op;
-        this.continuation_pc = continuation_pc;
+        this.continuationOp = continuationOp;
+        this.continuationPc = continuationPc;
         this.backTrack = backTrack;
     }
 
@@ -2881,29 +2866,34 @@ class REProgState
     final int min;                      /* current quantifier min */
     final int max;                      /* current quantifier max */
     final int index;                    /* progress in text */
-    final int continuation_op;
-    final int continuation_pc;
+    final int continuationOp;
+    final int continuationPc;
     final REBackTrackData backTrack; // used by ASSERT_  to recover state
 }
 
 class REBackTrackData {
 
-    REBackTrackData(REGlobalData gData, int op, int pc, int cp)
+    REBackTrackData(REGlobalData gData, int op, int pc, int cp,
+                    int continuationOp, int continuationPc)
     {
         previous = gData.backTrackStackTop;
-        continuation_op = op;
-        continuation_pc = pc;
-        parens = gData.parens;
+        this.op = op;
+        this.pc = pc;
         this.cp = cp;
+        this.continuationOp = continuationOp;
+        this.continuationPc = continuationPc;
+        parens = gData.parens;
         stateStackTop = gData.stateStackTop;
     }
 
     final REBackTrackData previous;
 
-    final int continuation_op;                /* where to backtrack to */
-    final int continuation_pc;
-    final long[] parens;                      /* parenthesis captures */
+    final int op;                             /* operator */
+    final int pc;                             /* bytecode pointer */
     final int cp;                             /* char buffer index */
+    final int continuationOp;                 /* continuation op */
+    final int continuationPc;                 /* continuation pc */
+    final long[] parens;                      /* parenthesis captures */
     final REProgState stateStackTop;          /* state of op that backtracked */
 }
 
