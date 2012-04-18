@@ -1394,14 +1394,11 @@ public class NativeRegExp extends ScriptableObject implements Function, IdFuncti
     {
         if ((gData.cp + length) > end)
             return false;
-        char[] source = gData.regexp.source;
-        for (int i = 0; i < length; i++) {
-            if (source[matchChars + i] != input.charAt(gData.cp + i)) {
-                return false;
-            }
+        if (input.regionMatches(gData.cp, gData.regexp.sourceString, matchChars, length)) {
+            gData.cp += length;
+            return true;
         }
-        gData.cp += length;
-        return true;
+        return false;
     }
 
     private static boolean
@@ -1412,8 +1409,9 @@ public class NativeRegExp extends ScriptableObject implements Function, IdFuncti
             return false;
         char[] source = gData.regexp.source;
         for (int i = 0; i < length; i++) {
-            if (upcase(source[matchChars + i])
-                    != upcase(input.charAt(gData.cp + i))) {
+            char c1 = source[matchChars + i];
+            char c2 = input.charAt(gData.cp + i);
+            if (c1 != c2 && upcase(c1) != upcase(c2)) {
                 return false;
             }
         }
@@ -1462,15 +1460,14 @@ public class NativeRegExp extends ScriptableObject implements Function, IdFuncti
 
         if ((gData.regexp.flags & JSREG_FOLD) != 0) {
             for (i = 0; i < len; i++) {
-                if (upcase(input.charAt(parenContent + i)) != upcase(input.charAt(gData.cp + i)))
+                char c1 = input.charAt(parenContent + i);
+                char c2 = input.charAt(gData.cp + i);
+                if (c1 != c2 && upcase(c1) != upcase(c2))
                     return false;
             }
         }
-        else {
-            for (i = 0; i < len; i++) {
-                if (input.charAt(parenContent + i) != input.charAt(gData.cp + i))
-                    return false;
-            }
+        else if (!input.regionMatches(parenContent, input, gData.cp, len)) {
+            return false;
         }
         gData.cp += len;
         return true;
@@ -1862,10 +1859,12 @@ public class NativeRegExp extends ScriptableObject implements Function, IdFuncti
             case REOP_FLAT1i:
             {
                 matchCh = (char)(program[pc++] & 0xFF);
-                if (gData.cp != end
-                        && upcase(input.charAt(gData.cp)) == upcase(matchCh)) {
-                    result = true;
-                    gData.cp++;
+                if (gData.cp != end) {
+                    char c = input.charAt(gData.cp);
+                    if (matchCh == c || upcase(matchCh) == upcase(c)) {
+                        result = true;
+                        gData.cp++;
+                    }
                 }
             }
             break;
@@ -1883,10 +1882,12 @@ public class NativeRegExp extends ScriptableObject implements Function, IdFuncti
             {
                 matchCh = (char)getIndex(program, pc);
                 pc += INDEX_LEN;
-                if (gData.cp != end
-                        && upcase(input.charAt(gData.cp)) == upcase(matchCh)) {
-                    result = true;
-                    gData.cp++;
+                if (gData.cp != end) {
+                    char c = input.charAt(gData.cp);
+                    if (matchCh == c || upcase(matchCh) == upcase(c)) {
+                        result = true;
+                        gData.cp++;
+                    }
                 }
             }
             break;
