@@ -1209,7 +1209,6 @@ public class NativeRegExp extends IdScriptableObject implements Function
         return ((array[pc] & 0xFF) << 8) | (array[pc + 1] & 0xFF);
     }
 
-    private static final int OFFSET_LEN = 2;
     private static final int INDEX_LEN  = 2;
 
     private static int
@@ -1230,24 +1229,24 @@ public class NativeRegExp extends IdScriptableObject implements Function
             case REOP_ALTPREREQ2:
                 boolean ignoreCase = t.op == REOP_ALTPREREQi;
                 addIndex(program, pc, ignoreCase ? upcase(t.chr) : t.chr);
-                pc += OFFSET_LEN;
+                pc += INDEX_LEN;
                 addIndex(program, pc, ignoreCase ? upcase((char)t.index) : t.index);
-                pc += OFFSET_LEN;
+                pc += INDEX_LEN;
                 // fall through to REOP_ALT
             case REOP_ALT:
                 nextAlt = t.kid2;
                 nextAltFixup = pc;    /* address of next alternate */
-                pc += OFFSET_LEN;
+                pc += INDEX_LEN;
                 pc = emitREBytecode(state, re, pc, t.kid);
                 program[pc++] = REOP_JUMP;
                 nextTermFixup = pc;    /* address of following term */
-                pc += OFFSET_LEN;
+                pc += INDEX_LEN;
                 resolveForwardJump(program, nextAltFixup, pc);
                 pc = emitREBytecode(state, re, pc, nextAlt);
 
                 program[pc++] = REOP_JUMP;
                 nextAltFixup = pc;
-                pc += OFFSET_LEN;
+                pc += INDEX_LEN;
 
                 resolveForwardJump(program, nextTermFixup, pc);
                 resolveForwardJump(program, nextAltFixup, pc);
@@ -1300,14 +1299,14 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 break;
             case REOP_ASSERT:
                 nextTermFixup = pc;
-                pc += OFFSET_LEN;
+                pc += INDEX_LEN;
                 pc = emitREBytecode(state, re, pc, t.kid);
                 program[pc++] = REOP_ASSERTTEST;
                 resolveForwardJump(program, nextTermFixup, pc);
                 break;
             case REOP_ASSERT_NOT:
                 nextTermFixup = pc;
-                pc += OFFSET_LEN;
+                pc += INDEX_LEN;
                 pc = emitREBytecode(state, re, pc, t.kid);
                 program[pc++] = REOP_ASSERTNOTTEST;
                 resolveForwardJump(program, nextTermFixup, pc);
@@ -1330,7 +1329,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 pc = addIndex(program, pc, t.parenCount);
                 pc = addIndex(program, pc, t.parenIndex);
                 nextTermFixup = pc;
-                pc += OFFSET_LEN;
+                pc += INDEX_LEN;
                 pc = emitREBytecode(state, re, pc, t.kid);
                 program[pc++] = REOP_ENDCHILD;
                 resolveForwardJump(program, nextTermFixup, pc);
