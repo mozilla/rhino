@@ -137,20 +137,26 @@ public abstract class NativeFunction extends BaseFunction
     /**
      * Get number of declared parameters. It should be 0 for scripts.
      */
-    public abstract int getParamCount();
+    public int getParamCount() {
+        return 0;
+    }
 
     /**
      * Get number of declared parameters and variables defined through var
      * statements.
      */
-    public abstract int getParamAndVarCount();
+    public int getParamAndVarCount() {
+        return 0;
+    }
 
     /**
      * Get parameter or variable name.
      * If <tt>index < {@link #getParamCount()}</tt>, then return the name of the
      * corresponding parameter. Otherwise return the name of variable.
      */
-    public abstract String getParamOrVarName(int index);
+    public String getParamOrVarName(int index) {
+        return null;
+    }
 
     /**
      * Get parameter or variable const-ness.

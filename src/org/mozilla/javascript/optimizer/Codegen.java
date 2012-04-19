@@ -778,105 +778,82 @@ class BodyCodegen
         cfw.stopMethod((short)1); // 1: this and no argument or locals
 
         // NativeFunction.getFunctionName
-        cfw.startMethod("getFunctionName", "()Ljava/lang/String;", ACC_PUBLIC);
-        // Push function name
-        if (scriptOrFn.getType() == Token.SCRIPT) {
-            cfw.addPush("");
-        } else {
+        if (scriptOrFn.getType() != Token.SCRIPT) {
             String name = ((FunctionNode)scriptOrFn).getName();
-            cfw.addPush(name);
-        }
-        cfw.add(ByteCode.ARETURN);
-        cfw.stopMethod((short)1);  // Only this
-
-        // NativeFunction.getParamCount
-        cfw.startMethod("getParamCount", "()I", ACC_PUBLIC);
-        // Push number of defined parameters
-        cfw.addPush(scriptOrFn.getParamCount());
-        cfw.add(ByteCode.IRETURN);
-        cfw.stopMethod((short)1);  // Only this
-
-        // NativeFunction.getParamAndVarCount
-        cfw.startMethod("getParamAndVarCount", "()I", ACC_PUBLIC);
-        // Push number of defined parameters and declared variables
-        cfw.addPush(scriptOrFn.getParamAndVarCount());
-        cfw.add(ByteCode.IRETURN);
-        cfw.stopMethod((short)1);  // Only this
-
-
-        // NativeFunction.getParamOrVarName
-        cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;", ACC_PUBLIC);
-        // Push name of parameter using another switch
-        // over paramAndVarCount
-        int paramAndVarCount = scriptOrFn.getParamAndVarCount();
-        if (paramAndVarCount == 0) {
-            // The runtime should never call the method in this
-            // case but to make bytecode verifier happy return null
-            // as throwing execption takes more code
-            cfw.add(ByteCode.ACONST_NULL);
-            cfw.add(ByteCode.ARETURN);
-        } else if (paramAndVarCount == 1) {
-            // As above do not check for valid index but always
-            // return the name of the first param
-            cfw.addPush(scriptOrFn.getParamOrVarName(0));
-            cfw.add(ByteCode.ARETURN);
-        } else {
-            // Do switch over getParamOrVarName
-            cfw.addILoad(1); // param or var index
-            // do switch from 1 .. paramAndVarCount - 1 mapping 0
-            // to the default case
-            int paramSwitchStart = cfw.addTableSwitch(
-                    1, paramAndVarCount - 1);
-            for (int j = 0; j != paramAndVarCount; ++j) {
-                if (cfw.getStackTop() != 0) Kit.codeBug();
-                String s = scriptOrFn.getParamOrVarName(j);
-                if (j == 0) {
-                    cfw.markTableSwitchDefault(paramSwitchStart);
-                } else {
-                    cfw.markTableSwitchCase(paramSwitchStart, j - 1,
-                            0);
-                }
-                cfw.addPush(s);
+            if (name != null && name.length() != 0) {
+                cfw.startMethod("getFunctionName", "()Ljava/lang/String;", ACC_PUBLIC);
+                // Push function name
+                cfw.addPush(name);
                 cfw.add(ByteCode.ARETURN);
+                cfw.stopMethod((short)1);  // Only this
             }
         }
-        cfw.stopMethod((short)2);  // this + paramOrVarIndex
+
+        int paramCount = scriptOrFn.getParamCount();
+        int paramAndVarCount = scriptOrFn.getParamAndVarCount();
+
+        if (paramCount > 0) {
+            // NativeFunction.getParamCount
+            cfw.startMethod("getParamCount", "()I", ACC_PUBLIC);
+            // Push number of defined parameters
+            cfw.addPush(paramCount);
+            cfw.add(ByteCode.IRETURN);
+            cfw.stopMethod((short)1);  // Only this
+        }
+
+        if (paramAndVarCount > 0) {
+            // NativeFunction.getParamAndVarCount
+            cfw.startMethod("getParamAndVarCount", "()I", ACC_PUBLIC);
+            // Push number of defined parameters and declared variables
+            cfw.addPush(paramAndVarCount);
+            cfw.add(ByteCode.IRETURN);
+            cfw.stopMethod((short)1);  // Only this
 
 
-        // NativeFunction.getParamOrVarConst
-        cfw.startMethod("getParamOrVarConst", "(I)Z", ACC_PUBLIC);
-        // We look for const declarations. If we find any
-        // minimize the scope of the switch statement and use
-        // the default case for non-const.
-        paramAndVarCount = scriptOrFn.getParamAndVarCount();
-        boolean [] constness = scriptOrFn.getParamAndVarConst();
-        if (paramAndVarCount == 0) {
-            // The runtime should never call the method in this
-            // case but to make bytecode verifier happy return null
-            // as throwing execption takes more code
-            cfw.add(ByteCode.ICONST_0);
-            cfw.add(ByteCode.IRETURN);
-        } else if (paramAndVarCount == 1) {
-            // As above do not check for valid index but always
-            // return the name of the first param
-            cfw.addPush(constness[0]);
-            cfw.add(ByteCode.IRETURN);
-        } else {
-            // Search for first const index
+            // NativeFunction.getParamOrVarName
+            cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;", ACC_PUBLIC);
+            if (paramAndVarCount == 1) {
+                // Just a single param or var - omit switch statement
+                cfw.addPush(scriptOrFn.getParamOrVarName(0));
+                cfw.add(ByteCode.ARETURN);
+            } else {
+                // Do switch over getParamOrVarName
+                cfw.addILoad(1); // param or var index
+                // do switch from 1 .. paramAndVarCount - 1 mapping 0
+                // to the default case
+                int paramSwitchStart = cfw.addTableSwitch(1, paramAndVarCount - 1);
+                for (int j = 0; j != paramAndVarCount; ++j) {
+                    if (cfw.getStackTop() != 0) Kit.codeBug();
+                    String s = scriptOrFn.getParamOrVarName(j);
+                    if (j == 0) {
+                        cfw.markTableSwitchDefault(paramSwitchStart);
+                    } else {
+                        cfw.markTableSwitchCase(paramSwitchStart, j - 1, 0);
+                    }
+                    cfw.addPush(s);
+                    cfw.add(ByteCode.ARETURN);
+                }
+            }
+            cfw.stopMethod((short)2);  // this + paramOrVarIndex
+
+
+            // NativeFunction.getParamOrVarConst
             int first = 0;
+            boolean [] constness = scriptOrFn.getParamAndVarConst();
+
+            // We look for const declarations. If we find any
+            // minimize the scope of the switch statement and use
+            // the default case for non-const.
             while (first < paramAndVarCount && !constness[first]) {
                 ++first;
             }
-            if (first == paramAndVarCount) {
-                // No const, no need to do a switch statement
-                cfw.add(ByteCode.ICONST_0);
-                cfw.add(ByteCode.IRETURN);
-            } else {
+            if (first < paramAndVarCount) {
                 int last = paramAndVarCount - 1;
                 while (last > first && !constness[last]) {
                     --last;
                 }
                 // Do switch over paramOrVarIndex
+                cfw.startMethod("getParamOrVarConst", "(I)Z", ACC_PUBLIC);
                 cfw.addILoad(1); // param or var index
                 // do switch from first .. last mapping default
                 // case to false
@@ -886,8 +863,7 @@ class BodyCodegen
                 for (int j = first; j <= last; ++j) {
                     if (cfw.getStackTop() != 0) Kit.codeBug();
                     if (!constness[j]) {
-                        cfw.markTableSwitchCase(paramSwitchStart,
-                                j - first);
+                        cfw.markTableSwitchCase(paramSwitchStart, j - first);
                     }
                 }
                 cfw.add(ByteCode.ICONST_0);
@@ -896,15 +872,14 @@ class BodyCodegen
                 for (int j = first; j <= last; ++j) {
                     if (cfw.getStackTop() != 0) Kit.codeBug();
                     if (constness[j]) {
-                        cfw.markTableSwitchCase(paramSwitchStart,
-                                j - first);
+                        cfw.markTableSwitchCase(paramSwitchStart, j - first);
                     }
                 }
                 cfw.addPush(ByteCode.ICONST_1);
                 cfw.add(ByteCode.IRETURN);
+                cfw.stopMethod((short)2);  // this + paramOrVarIndex
             }
         }
-        cfw.stopMethod((short)2);  // this + paramOrVarIndex
 
 
         // NativeFunction.getEncodedSource
