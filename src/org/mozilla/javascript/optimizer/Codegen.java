@@ -170,11 +170,11 @@ public class Codegen implements Evaluator
         throw new RuntimeException("Malformed optimizer package " + e);
     }
 
-    byte[] compileToClassFile(CompilerEnvirons compilerEnv,
-                              String mainClassName,
-                              ScriptNode scriptOrFn,
-                              String encodedSource,
-                              boolean returnFunction)
+    public byte[] compileToClassFile(CompilerEnvirons compilerEnv,
+                                     String mainClassName,
+                                     ScriptNode scriptOrFn,
+                                     String encodedSource,
+                                     boolean returnFunction)
     {
         this.compilerEnv = compilerEnv;
 
@@ -1292,7 +1292,7 @@ public class Codegen implements Evaluator
         throw new RuntimeException("Bad tree in codegen");
     }
 
-     void setMainMethodClass(String className)
+     public void setMainMethodClass(String className)
      {
          mainMethodClass = className;
      }
