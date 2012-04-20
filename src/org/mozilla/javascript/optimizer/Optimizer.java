@@ -84,8 +84,8 @@ class Optimizer
              * generate non-object code.
              */
             parameterUsedInNumberContext = false;
-            for (int i = 0; i < theStatementNodes.length; i++) {
-                rewriteForNumberVariables(theStatementNodes[i], NumberType);
+            for (Node theStatementNode : theStatementNodes) {
+                rewriteForNumberVariables(theStatementNode, NumberType);
             }
             theFunction.setParameterNumberContext(parameterUsedInNumberContext);
         }
@@ -182,16 +182,17 @@ class Optimizer
                     Node child = n.getFirstChild();
                     // "child" will be GETVAR or GETPROP or GETELEM
                     if (child.getType() == Token.GETVAR) {
-                        if (rewriteForNumberVariables(child, NumberType) == NumberType &&
-                            !convertParameter(child))
+                        if (rewriteForNumberVariables(child, NumberType) == NumberType
+                                && !convertParameter(child))
                         {
                             n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
                             markDCPNumberContext(child);
                             return NumberType;
                         }
-                      return NoType;
+                        return NoType;
                     }
-                    else if (child.getType() == Token.GETELEM) {
+                    else if (child.getType() == Token.GETELEM
+                            || child.getType() == Token.GETPROP) {
                         return rewriteForNumberVariables(child, NumberType);
                     }
                     return NoType;
@@ -384,7 +385,7 @@ class Optimizer
                     Node arrayIndex = arrayBase.getNext();
                     Node rValue = arrayIndex.getNext();
                     int baseType = rewriteForNumberVariables(arrayBase, NumberType);
-                    if (baseType == NumberType) {// can never happen ???
+                    if (baseType == NumberType) {
                         if (!convertParameter(arrayBase)) {
                             n.removeChild(arrayBase);
                             n.addChildToFront(
@@ -414,7 +415,7 @@ class Optimizer
                     Node arrayBase = n.getFirstChild();
                     Node arrayIndex = arrayBase.getNext();
                     int baseType = rewriteForNumberVariables(arrayBase, NumberType);
-                    if (baseType == NumberType) {// can never happen ???
+                    if (baseType == NumberType) {
                         if (!convertParameter(arrayBase)) {
                             n.removeChild(arrayBase);
                             n.addChildToFront(
