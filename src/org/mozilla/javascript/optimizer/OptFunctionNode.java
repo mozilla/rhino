@@ -43,7 +43,7 @@ import org.mozilla.javascript.*;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 
-final class OptFunctionNode
+public final class OptFunctionNode
 {
     OptFunctionNode(FunctionNode fnode)
     {
@@ -51,23 +51,23 @@ final class OptFunctionNode
         fnode.setCompilerData(this);
     }
 
-    static OptFunctionNode get(ScriptNode scriptOrFn, int i)
+    public static OptFunctionNode get(ScriptNode scriptOrFn, int i)
     {
         FunctionNode fnode = scriptOrFn.getFunctionNode(i);
         return (OptFunctionNode)fnode.getCompilerData();
     }
 
-    static OptFunctionNode get(ScriptNode scriptOrFn)
+    public static OptFunctionNode get(ScriptNode scriptOrFn)
     {
         return (OptFunctionNode)scriptOrFn.getCompilerData();
     }
 
-    boolean isTargetOfDirectCall()
+    public boolean isTargetOfDirectCall()
     {
         return directTargetIndex >= 0;
     }
 
-    int getDirectTargetIndex()
+    public int getDirectTargetIndex()
     {
         return directTargetIndex;
     }
@@ -85,22 +85,22 @@ final class OptFunctionNode
         itsParameterNumberContext = b;
     }
 
-    boolean getParameterNumberContext()
+    public boolean getParameterNumberContext()
     {
         return itsParameterNumberContext;
     }
 
-    int getVarCount()
+    public int getVarCount()
     {
         return fnode.getParamAndVarCount();
     }
 
-    boolean isParameter(int varIndex)
+    public boolean isParameter(int varIndex)
     {
         return varIndex < fnode.getParamCount();
     }
 
-    boolean isNumberVar(int varIndex)
+    public boolean isNumberVar(int varIndex)
     {
         varIndex -= fnode.getParamCount();
         if (varIndex >= 0 && numberVarFlags != null) {
@@ -121,7 +121,7 @@ final class OptFunctionNode
         numberVarFlags[varIndex] = true;
     }
 
-    int getVarIndex(Node n)
+    public int getVarIndex(Node n)
     {
         int index = n.getIntProp(Node.VARIABLE_PROP, -1);
         if (index == -1) {
@@ -142,7 +142,8 @@ final class OptFunctionNode
         return index;
     }
 
-    FunctionNode fnode;
+    public final FunctionNode fnode;
+
     String className;
     String classSignature;
     private boolean[] numberVarFlags;
