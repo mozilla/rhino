@@ -620,14 +620,6 @@ final class NativeDate extends IdScriptableObject
         return System.currentTimeMillis();
     }
 
-    /* Should be possible to determine the need for this dynamically
-     * if we go with the workaround... I'm not using it now, because I
-     * can't think of any clean way to make toLocaleString() and the
-     * time zone (comment) in toString match the generated string
-     * values.  Currently it's wrong-but-consistent in all but the
-     * most recent betas of the JRE - seems to work in 1.1.7.
-     */
-    private final static boolean TZO_WORKAROUND = false;
     private static double DaylightSavingTA(double t)
     {
         // Another workaround!  The JRE doesn't seem to know about DST
@@ -639,38 +631,11 @@ final class NativeDate extends IdScriptableObject
             double day = MakeDay(year, MonthFromTime(t), DateFromTime(t));
             t = MakeDate(day, TimeWithinDay(t));
         }
-        if (!TZO_WORKAROUND) {
-            Date date = new Date((long) t);
-            if (thisTimeZone.inDaylightTime(date))
-                return msPerHour;
-            else
-                return 0;
-        } else {
-            /* Use getOffset if inDaylightTime() is broken, because it
-             * seems to work acceptably.  We don't switch over to it
-             * entirely, because it requires (expensive) exploded date arguments,
-             * and the api makes it impossible to handle dst
-             * changeovers cleanly.
-             */
-
-            // Hardcode the assumption that the changeover always
-            // happens at 2:00 AM:
-            t += LocalTZA + (HourFromTime(t) <= 2 ? msPerHour : 0);
-
-            int year = YearFromTime(t);
-            double offset = thisTimeZone.getOffset(year > 0 ? 1 : 0,
-                                                   year,
-                                                   MonthFromTime(t),
-                                                   DateFromTime(t),
-                                                   WeekDay(t),
-                                                   (int)TimeWithinDay(t));
-
-            if ((offset - LocalTZA) != 0)
-                return msPerHour;
-            else
-                return 0;
-            //         return offset - LocalTZA;
-        }
+        Date date = new Date((long) t);
+        if (thisTimeZone.inDaylightTime(date))
+            return msPerHour;
+        else
+            return 0;
     }
 
     /*
