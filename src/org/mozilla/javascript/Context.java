@@ -360,7 +360,7 @@ public class Context
             throw new IllegalArgumentException("factory == null");
         }
         this.factory = factory;
-        setLanguageVersion(VERSION_DEFAULT);
+        version = VERSION_DEFAULT;
         optimizationLevel = codegenClass != null ? 0 : -1;
         maximumInterpreterStackDepth = Integer.MAX_VALUE;
     }
