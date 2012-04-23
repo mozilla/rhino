@@ -624,9 +624,9 @@ final class NativeDate extends IdScriptableObject
     {
         // Another workaround!  The JRE doesn't seem to know about DST
         // before year 1 AD, so we map to equivalent dates for the
-        // purposes of finding dst.  To be safe, we do this for years
-        // outside 1970-2038.
-        if (t < 0.0 || t > 2145916800000.0) {
+        // purposes of finding DST. To be safe, we do this for years
+        // before 1970.
+        if (t < 0.0) {
             int year = EquivalentYear(YearFromTime(t));
             double day = MakeDay(year, MonthFromTime(t), DateFromTime(t));
             t = MakeDate(day, TimeWithinDay(t));
@@ -666,8 +666,8 @@ final class NativeDate extends IdScriptableObject
             switch (day) {
                 case 0: return 1978;
                 case 1: return 1973;
-                case 2: return 1974;
-                case 3: return 1975;
+                case 2: return 1985;
+                case 3: return 1986;
                 case 4: return 1981;
                 case 5: return 1971;
                 case 6: return 1977;
@@ -1089,11 +1089,11 @@ final class NativeDate extends IdScriptableObject
 
             // Find an equivalent year before getting the timezone
             // comment.  See DaylightSavingTA.
-            if (t < 0.0 || t > 2145916800000.0) {
+            if (t < 0.0) {
                 int equiv = EquivalentYear(YearFromTime(local));
                 double day = MakeDay(equiv, MonthFromTime(t), DateFromTime(t));
                 t = MakeDate(day, TimeWithinDay(t));
-             }
+            }
             result.append(" (");
             Date date = new Date((long) t);
             synchronized (timeZoneFormatter) {
