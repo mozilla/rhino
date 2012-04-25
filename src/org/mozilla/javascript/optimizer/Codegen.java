@@ -55,6 +55,12 @@ import org.mozilla.classfile.*;
 import java.util.*;
 import java.lang.reflect.Constructor;
 
+import static org.mozilla.classfile.ClassFileWriter.ACC_FINAL;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
+import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
+import static org.mozilla.classfile.ClassFileWriter.ACC_SYNCHRONIZED;
+
 /**
  * This class generates code for a given IR tree.
  *
@@ -305,10 +311,9 @@ public class Codegen implements Evaluator
         ClassFileWriter cfw = new ClassFileWriter(mainClassName,
                                                   SUPER_CLASS_NAME,
                                                   sourceFile);
-        cfw.addField(ID_FIELD_NAME, "I",
-                     ClassFileWriter.ACC_PRIVATE);
+        cfw.addField(ID_FIELD_NAME, "I", ACC_PRIVATE);
         cfw.addField(REGEXP_ARRAY_FIELD_NAME, REGEXP_ARRAY_FIELD_TYPE,
-                     ClassFileWriter.ACC_PRIVATE);
+                     ACC_PRIVATE);
 
         if (hasFunctions) {
             generateFunctionConstructor(cfw);
@@ -374,8 +379,7 @@ public class Codegen implements Evaluator
 */
         cfw.startMethod(getDirectCtorName(ofn.fnode),
                         getBodyMethodSignature(ofn.fnode),
-                        (short)(ClassFileWriter.ACC_STATIC
-                                | ClassFileWriter.ACC_PRIVATE));
+                        (short)(ACC_STATIC | ACC_PRIVATE));
 
         int argCount = ofn.fnode.getParamCount();
         int firstLocal = (4 + argCount * 3) + 1;
@@ -455,8 +459,7 @@ public class Codegen implements Evaluator
                         "Lorg/mozilla/javascript/Scriptable;" +
                         "ILjava/lang/Object;" +
                         "Ljava/lang/Object;)Ljava/lang/Object;",
-                        (short)(ClassFileWriter.ACC_PUBLIC
-                                | ClassFileWriter.ACC_FINAL));
+                        (short)(ACC_PUBLIC | ACC_FINAL));
 
         // load arguments for dispatch to the corresponding *_gen method
         cfw.addALoad(0);
@@ -509,8 +512,7 @@ public class Codegen implements Evaluator
                         "Lorg/mozilla/javascript/Scriptable;" +
                         "Lorg/mozilla/javascript/Scriptable;" +
                         "[Ljava/lang/Object;)Ljava/lang/Object;",
-                        (short)(ClassFileWriter.ACC_PUBLIC
-                                | ClassFileWriter.ACC_FINAL));
+                        (short)(ACC_PUBLIC | ACC_FINAL));
 
         // Generate code for:
         // if (!ScriptRuntime.hasTopCall(cx)) {
@@ -616,8 +618,7 @@ public class Codegen implements Evaluator
     private void generateMain(ClassFileWriter cfw)
     {
         cfw.startMethod("main", "([Ljava/lang/String;)V",
-                        (short)(ClassFileWriter.ACC_PUBLIC
-                                | ClassFileWriter.ACC_STATIC));
+                        (short)(ACC_PUBLIC | ACC_STATIC));
 
         // load new ScriptImpl()
         cfw.add(ByteCode.NEW, cfw.getClassName());
@@ -642,8 +643,7 @@ public class Codegen implements Evaluator
                         "(Lorg/mozilla/javascript/Context;"
                         +"Lorg/mozilla/javascript/Scriptable;"
                         +")Ljava/lang/Object;",
-                        (short)(ClassFileWriter.ACC_PUBLIC
-                                | ClassFileWriter.ACC_FINAL));
+                        (short)(ACC_PUBLIC | ACC_FINAL));
 
         final int CONTEXT_ARG = 1;
         final int SCOPE_ARG = 2;
@@ -669,7 +669,7 @@ public class Codegen implements Evaluator
 
     private void generateScriptCtor(ClassFileWriter cfw)
     {
-        cfw.startMethod("<init>", "()V", ClassFileWriter.ACC_PUBLIC);
+        cfw.startMethod("<init>", "()V", ACC_PUBLIC);
 
         cfw.addLoadThis();
         cfw.addInvoke(ByteCode.INVOKESPECIAL, SUPER_CLASS_NAME,
@@ -690,8 +690,7 @@ public class Codegen implements Evaluator
         final int CONTEXT_ARG = 2;
         final int ID_ARG = 3;
 
-        cfw.startMethod("<init>", FUNCTION_CONSTRUCTOR_SIGNATURE,
-                        ClassFileWriter.ACC_PUBLIC);
+        cfw.startMethod("<init>", FUNCTION_CONSTRUCTOR_SIGNATURE, ACC_PUBLIC);
         cfw.addALoad(0);
         cfw.addInvoke(ByteCode.INVOKESPECIAL, SUPER_CLASS_NAME,
                       "<init>", "()V");
@@ -747,8 +746,7 @@ public class Codegen implements Evaluator
         final int SCOPE_ARG = 2;
         cfw.startMethod(getFunctionInitMethodName(ofn),
                         FUNCTION_INIT_SIGNATURE,
-                        (short)(ClassFileWriter.ACC_PRIVATE
-                                | ClassFileWriter.ACC_FINAL));
+                        (short)(ACC_PRIVATE | ACC_FINAL));
 
         // Call NativeFunction.initScriptFunction
         cfw.addLoadThis();
@@ -781,8 +779,7 @@ public class Codegen implements Evaluator
         // Override NativeFunction.getLanguageVersion() with
         // public int getLanguageVersion() { return <version-constant>; }
 
-        cfw.startMethod("getLanguageVersion", "()I",
-                        ClassFileWriter.ACC_PUBLIC);
+        cfw.startMethod("getLanguageVersion", "()I", ACC_PUBLIC);
 
         cfw.addPush(compilerEnv.getLanguageVersion());
         cfw.add(ByteCode.IRETURN);
@@ -816,32 +813,32 @@ public class Codegen implements Evaluator
               case Do_getFunctionName:
                 methodLocals = 1; // Only this
                 cfw.startMethod("getFunctionName", "()Ljava/lang/String;",
-                                ClassFileWriter.ACC_PUBLIC);
+                                ACC_PUBLIC);
                 break;
               case Do_getParamCount:
                 methodLocals = 1; // Only this
                 cfw.startMethod("getParamCount", "()I",
-                                ClassFileWriter.ACC_PUBLIC);
+                                ACC_PUBLIC);
                 break;
               case Do_getParamAndVarCount:
                 methodLocals = 1; // Only this
                 cfw.startMethod("getParamAndVarCount", "()I",
-                                ClassFileWriter.ACC_PUBLIC);
+                                ACC_PUBLIC);
                 break;
               case Do_getParamOrVarName:
                 methodLocals = 1 + 1; // this + paramOrVarIndex
                 cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;",
-                                ClassFileWriter.ACC_PUBLIC);
+                                ACC_PUBLIC);
                 break;
               case Do_getParamOrVarConst:
                 methodLocals = 1 + 1 + 1; // this + paramOrVarName
                 cfw.startMethod("getParamOrVarConst", "(I)Z",
-                                ClassFileWriter.ACC_PUBLIC);
+                                ACC_PUBLIC);
                 break;
               case Do_getEncodedSource:
                 methodLocals = 1; // Only this
                 cfw.startMethod("getEncodedSource", "()Ljava/lang/String;",
-                                ClassFileWriter.ACC_PUBLIC);
+                                ACC_PUBLIC);
                 cfw.addPush(encodedSource);
                 break;
               default:
@@ -1008,11 +1005,9 @@ public class Codegen implements Evaluator
         }
 
         cfw.startMethod(REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE,
-            (short)(ClassFileWriter.ACC_STATIC | ClassFileWriter.ACC_PRIVATE
-                    | ClassFileWriter.ACC_SYNCHRONIZED));
+            (short)(ACC_STATIC | ACC_PRIVATE | ACC_SYNCHRONIZED));
         cfw.addField("_reInitDone", "Z",
-                     (short)(ClassFileWriter.ACC_STATIC
-                             | ClassFileWriter.ACC_PRIVATE));
+                     (short)(ACC_STATIC | ACC_PRIVATE));
         cfw.add(ByteCode.GETSTATIC, mainClassName, "_reInitDone", "Z");
         int doInit = cfw.acquireLabel();
         cfw.add(ByteCode.IFEQ, doInit);
@@ -1028,8 +1023,7 @@ public class Codegen implements Evaluator
                 String reString = n.getRegexpString(j);
                 String reFlags = n.getRegexpFlags(j);
                 cfw.addField(reFieldName, reFieldType,
-                             (short)(ClassFileWriter.ACC_STATIC
-                                     | ClassFileWriter.ACC_PRIVATE));
+                             (short)(ACC_STATIC | ACC_PRIVATE));
                 cfw.addALoad(0); // proxy
                 cfw.addALoad(1); // context
                 cfw.addPush(reString);
@@ -1061,8 +1055,7 @@ public class Codegen implements Evaluator
         if (N == 0)
             return;
 
-        cfw.startMethod("<clinit>", "()V",
-            (short)(ClassFileWriter.ACC_STATIC | ClassFileWriter.ACC_FINAL));
+        cfw.startMethod("<clinit>", "()V", (short)(ACC_STATIC | ACC_FINAL));
 
         double[] array = itsConstantList;
         for (int i = 0; i != N; ++i) {
@@ -1070,8 +1063,7 @@ public class Codegen implements Evaluator
             String constantName = "_k" + i;
             String constantType = getStaticConstantWrapperType(num);
             cfw.addField(constantName, constantType,
-                         (short)(ClassFileWriter.ACC_STATIC
-                                 | ClassFileWriter.ACC_PRIVATE));
+                        (short)(ACC_STATIC | ACC_PRIVATE));
             int inum = (int)num;
             if (inum == num) {
                 cfw.add(ByteCode.NEW, "java/lang/Integer");
@@ -1362,13 +1354,11 @@ class BodyCodegen
                           "Ljava/lang/Object;I)Ljava/lang/Object;";
             cfw.startMethod(codegen.getBodyMethodName(scriptOrFn) + "_gen",
                     type,
-                    (short)(ClassFileWriter.ACC_STATIC
-                            | ClassFileWriter.ACC_PRIVATE));
+                    (short)(ACC_STATIC | ACC_PRIVATE));
         } else {
             cfw.startMethod(codegen.getBodyMethodName(scriptOrFn),
                     codegen.getBodyMethodSignature(scriptOrFn),
-                    (short)(ClassFileWriter.ACC_STATIC
-                            | ClassFileWriter.ACC_PRIVATE));
+                    (short)(ACC_STATIC | ACC_PRIVATE));
         }
 
         generatePrologue();
@@ -1415,8 +1405,7 @@ class BodyCodegen
     {
         cfw.startMethod(codegen.getBodyMethodName(scriptOrFn),
                         codegen.getBodyMethodSignature(scriptOrFn),
-                        (short)(ClassFileWriter.ACC_STATIC
-                                | ClassFileWriter.ACC_PRIVATE));
+                        (short)(ACC_STATIC | ACC_PRIVATE));
 
         initBodyGeneration();
         argsLocal = firstFreeLocal++;
@@ -3122,7 +3111,7 @@ class BodyCodegen
                 +"Lorg/mozilla/javascript/Scriptable;"
                 +"[Ljava/lang/Object;"
                 +")Lorg/mozilla/javascript/Scriptable;",
-                ClassFileWriter.ACC_PRIVATE);
+                ACC_PRIVATE);
         visitArrayLiteral(node, node.getFirstChild(), true);
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short)(localsMax + 1));
@@ -3138,7 +3127,7 @@ class BodyCodegen
                 +"Lorg/mozilla/javascript/Scriptable;"
                 +"[Ljava/lang/Object;"
                 +")Lorg/mozilla/javascript/Scriptable;",
-                ClassFileWriter.ACC_PRIVATE);
+                ACC_PRIVATE);
         visitObjectLiteral(node, node.getFirstChild(), true);
         cfw.add(ByteCode.ARETURN);
         cfw.stopMethod((short)(localsMax + 1));
