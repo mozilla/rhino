@@ -1128,8 +1128,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 * atom next time instead.
                 */
 
-                c = src[++state.cp];
-                if (isDigit(c)) {
+                if (++state.cp < src.length && isDigit(c = src[state.cp])) {
                     ++state.cp;
                     min = getDecimalValue(c, state, 0xFFFF,
                                           "msg.overlarge.min");
