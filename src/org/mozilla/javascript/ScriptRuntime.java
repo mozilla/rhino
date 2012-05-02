@@ -3824,6 +3824,11 @@ public class ScriptRuntime {
         return result;
     }
 
+    public static Scriptable wrapRegExp(Context cx, Scriptable scope,
+                                        Object compiled) {
+        return cx.getRegExpProxy().wrapRegExp(cx, scope, compiled);
+    }
+
     private static XMLLib currentXMLLib(Context cx)
     {
         // Scripts should be running to access this

@@ -49,7 +49,6 @@ final class InterpretedFunction extends NativeFunction implements Script
     InterpreterData idata;
     SecurityController securityController;
     Object securityDomain;
-    Scriptable[] functionRegExps;
 
     private InterpretedFunction(InterpreterData idata,
                                 Object staticSecurityDomain)
@@ -102,7 +101,7 @@ final class InterpretedFunction extends NativeFunction implements Script
     {
         InterpretedFunction f;
         f = new InterpretedFunction(idata, staticSecurityDomain);
-        f.initInterpretedFunction(cx, scope);
+        ScriptRuntime.setFunctionProtoAndParent(f, scope);
         return f;
     }
 
@@ -114,29 +113,8 @@ final class InterpretedFunction extends NativeFunction implements Script
                                               int index)
     {
         InterpretedFunction f = new InterpretedFunction(parent, index);
-        f.initInterpretedFunction(cx, scope);
+        ScriptRuntime.setFunctionProtoAndParent(f, scope);
         return f;
-    }
-
-    Scriptable[] createRegExpWraps(Context cx, Scriptable scope)
-    {
-        if (idata.itsRegExpLiterals == null) Kit.codeBug();
-
-        RegExpProxy rep = ScriptRuntime.checkRegExpProxy(cx);
-        int N = idata.itsRegExpLiterals.length;
-        Scriptable[] array = new Scriptable[N];
-        for (int i = 0; i != N; ++i) {
-            array[i] = rep.wrapRegExp(cx, scope, idata.itsRegExpLiterals[i]);
-        }
-        return array;
-    }
-
-    private void initInterpretedFunction(Context cx, Scriptable scope)
-    {
-        ScriptRuntime.setFunctionProtoAndParent(this, scope);
-        if (idata.itsRegExpLiterals != null) {
-            functionRegExps = createRegExpWraps(cx, scope);
-        }
     }
 
     @Override
