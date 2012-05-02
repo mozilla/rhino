@@ -107,7 +107,6 @@ public final class Interpreter extends Icode implements Evaluator
         boolean isContinuationsTopFrame;
 
         Scriptable thisObj;
-        Scriptable[] scriptRegExps;
 
 // The values that change during interpretation
 
@@ -1753,7 +1752,8 @@ switch (op) {
         initFunction(cx, frame.scope, frame.fnOrScript, indexReg);
         continue Loop;
     case Token.REGEXP :
-        stack[++stackTop] = frame.scriptRegExps[indexReg];
+        Object re = frame.idata.itsRegExpLiterals[indexReg];
+        stack[++stackTop] = ScriptRuntime.wrapRegExp(cx, frame.scope, re);
         continue Loop;
     case Icode_LITERAL_NEW :
         // indexReg: number of values in the literal
@@ -2787,19 +2787,6 @@ switch (op) {
             }
         }
 
-        Scriptable[] scriptRegExps = null;
-        if (idata.itsRegExpLiterals != null) {
-            // Wrapped regexps for functions are stored in
-            // InterpretedFunction
-            // but for script which should not contain references to scope
-            // the regexps re-wrapped during each script execution
-            if (idata.itsFunctionType != 0) {
-                scriptRegExps = fnOrScript.functionRegExps;
-            } else {
-                scriptRegExps = fnOrScript.createRegExpWraps(cx, scope);
-            }
-        }
-
         // Initialize args, vars, locals and stack
 
         int emptyStackTop = idata.itsMaxVars + idata.itsMaxLocals - 1;
@@ -2857,7 +2844,6 @@ switch (op) {
         frame.useActivation = useActivation;
 
         frame.thisObj = thisObj;
-        frame.scriptRegExps = scriptRegExps;
 
         // Initialize initial values of variables that change during
         // interpretation.

@@ -59,7 +59,7 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_FINAL;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
-import static org.mozilla.classfile.ClassFileWriter.ACC_SYNCHRONIZED;
+import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 
 /**
  * This class generates code for a given IR tree.
@@ -312,8 +312,6 @@ public class Codegen implements Evaluator
                                                   SUPER_CLASS_NAME,
                                                   sourceFile);
         cfw.addField(ID_FIELD_NAME, "I", ACC_PRIVATE);
-        cfw.addField(REGEXP_ARRAY_FIELD_NAME, REGEXP_ARRAY_FIELD_TYPE,
-                     ACC_PRIVATE);
 
         if (hasFunctions) {
             generateFunctionConstructor(cfw);
@@ -760,12 +758,10 @@ public class Codegen implements Evaluator
                       +")V");
 
         // precompile all regexp literals
-        int regexpCount = ofn.fnode.getRegexpCount();
-        if (regexpCount != 0) {
-            cfw.addLoadThis();
-            pushRegExpArray(cfw, ofn.fnode, CONTEXT_ARG, SCOPE_ARG);
-            cfw.add(ByteCode.PUTFIELD, mainClassName,
-                    REGEXP_ARRAY_FIELD_NAME, REGEXP_ARRAY_FIELD_TYPE);
+        if (ofn.fnode.getRegexpCount() != 0) {
+            cfw.addALoad(CONTEXT_ARG);
+            cfw.addInvoke(ByteCode.INVOKESTATIC, mainClassName,
+                          REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE);
         }
 
         cfw.add(ByteCode.RETURN);
@@ -1005,15 +1001,26 @@ public class Codegen implements Evaluator
         }
 
         cfw.startMethod(REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE,
-            (short)(ACC_STATIC | ACC_PRIVATE | ACC_SYNCHRONIZED));
+                (short)(ACC_STATIC | ACC_PRIVATE));
         cfw.addField("_reInitDone", "Z",
-                     (short)(ACC_STATIC | ACC_PRIVATE));
+                     (short)(ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
         cfw.add(ByteCode.GETSTATIC, mainClassName, "_reInitDone", "Z");
         int doInit = cfw.acquireLabel();
         cfw.add(ByteCode.IFEQ, doInit);
         cfw.add(ByteCode.RETURN);
         cfw.markLabel(doInit);
 
+        // get regexp proxy and store it in local slot 1
+        cfw.addALoad(0); // context
+        cfw.addInvoke(ByteCode.INVOKESTATIC,
+                      "org/mozilla/javascript/ScriptRuntime",
+                      "checkRegExpProxy",
+                      "(Lorg/mozilla/javascript/Context;"
+                      +")Lorg/mozilla/javascript/RegExpProxy;");
+        cfw.addAStore(1); // proxy
+
+        // We could apply double-checked locking here but concurrency
+        // shouldn't be a problem in practice
         for (int i = 0; i != scriptOrFnNodes.length; ++i) {
             ScriptNode n = scriptOrFnNodes[i];
             int regCount = n.getRegexpCount();
@@ -1024,8 +1031,8 @@ public class Codegen implements Evaluator
                 String reFlags = n.getRegexpFlags(j);
                 cfw.addField(reFieldName, reFieldType,
                              (short)(ACC_STATIC | ACC_PRIVATE));
-                cfw.addALoad(0); // proxy
-                cfw.addALoad(1); // context
+                cfw.addALoad(1); // proxy
+                cfw.addALoad(0); // context
                 cfw.addPush(reString);
                 if (reFlags == null) {
                     cfw.add(ByteCode.ACONST_NULL);
@@ -1066,11 +1073,9 @@ public class Codegen implements Evaluator
                         (short)(ACC_STATIC | ACC_PRIVATE));
             int inum = (int)num;
             if (inum == num) {
-                cfw.add(ByteCode.NEW, "java/lang/Integer");
-                cfw.add(ByteCode.DUP);
                 cfw.addPush(inum);
-                cfw.addInvoke(ByteCode.INVOKESPECIAL, "java/lang/Integer",
-                              "<init>", "(I)V");
+                cfw.addInvoke(ByteCode.INVOKESTATIC, "java/lang/Integer",
+                              "valueOf", "(I)Ljava/lang/Integer;");
             } else {
                 cfw.addPush(num);
                 addDoubleWrap(cfw);
@@ -1081,51 +1086,6 @@ public class Codegen implements Evaluator
 
         cfw.add(ByteCode.RETURN);
         cfw.stopMethod((short)0);
-    }
-
-    void pushRegExpArray(ClassFileWriter cfw, ScriptNode n,
-                         int contextArg, int scopeArg)
-    {
-        int regexpCount = n.getRegexpCount();
-        if (regexpCount == 0) throw badTree();
-
-        cfw.addPush(regexpCount);
-        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
-
-        cfw.addALoad(contextArg);
-        cfw.addInvoke(ByteCode.INVOKESTATIC,
-                      "org/mozilla/javascript/ScriptRuntime",
-                      "checkRegExpProxy",
-                      "(Lorg/mozilla/javascript/Context;"
-                      +")Lorg/mozilla/javascript/RegExpProxy;");
-        // Stack: proxy, array
-        cfw.add(ByteCode.DUP);
-        cfw.addALoad(contextArg);
-        cfw.addInvoke(ByteCode.INVOKESTATIC, mainClassName,
-                      REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE);
-        for (int i = 0; i != regexpCount; ++i) {
-            // Stack: proxy, array
-            cfw.add(ByteCode.DUP2);
-            cfw.addALoad(contextArg);
-            cfw.addALoad(scopeArg);
-            cfw.add(ByteCode.GETSTATIC, mainClassName,
-                    getCompiledRegexpName(n, i), "Ljava/lang/Object;");
-            // Stack: compiledRegExp, scope, cx, proxy, array, proxy, array
-            cfw.addInvoke(ByteCode.INVOKEINTERFACE,
-                          "org/mozilla/javascript/RegExpProxy",
-                          "wrapRegExp",
-                          "(Lorg/mozilla/javascript/Context;"
-                          +"Lorg/mozilla/javascript/Scriptable;"
-                          +"Ljava/lang/Object;"
-                          +")Lorg/mozilla/javascript/Scriptable;");
-            // Stack: wrappedRegExp, array, proxy, array
-            cfw.addPush(i);
-            cfw.add(ByteCode.SWAP);
-            cfw.add(ByteCode.AASTORE);
-            // Stack: proxy, array
-        }
-        // remove proxy
-        cfw.add(ByteCode.POP);
     }
 
     void pushNumberAsObject(ClassFileWriter cfw, double num)
@@ -1297,13 +1257,9 @@ public class Codegen implements Evaluator
 
     static final String ID_FIELD_NAME = "_id";
 
-    private static final String REGEXP_INIT_METHOD_NAME = "_reInit";
-    private static final String REGEXP_INIT_METHOD_SIGNATURE
-        =  "(Lorg/mozilla/javascript/RegExpProxy;"
-           +"Lorg/mozilla/javascript/Context;"
-           +")V";
-    static final String REGEXP_ARRAY_FIELD_NAME = "_re";
-    static final String REGEXP_ARRAY_FIELD_TYPE = "[Ljava/lang/Object;";
+    static final String REGEXP_INIT_METHOD_NAME = "_reInit";
+    static final String REGEXP_INIT_METHOD_SIGNATURE
+        =  "(Lorg/mozilla/javascript/Context;)V";
 
     static final String FUNCTION_INIT_SIGNATURE
         =  "(Lorg/mozilla/javascript/Context;"
@@ -1508,7 +1464,6 @@ class BodyCodegen
         argsLocal = -1;
         itsZeroArgArray = -1;
         itsOneArgArray = -1;
-        scriptRegexpLocal = -1;
         epilogueLabel = -1;
         enterAreaStartLabel = -1;
         generatorStateLocal = -1;
@@ -1604,14 +1559,13 @@ class BodyCodegen
             }
         }
 
-        if (fnCurrent == null) {
-            // See comments in case Token.REGEXP
-            if (scriptOrFn.getRegexpCount() != 0) {
-                scriptRegexpLocal = getNewWordLocal();
-                codegen.pushRegExpArray(cfw, scriptOrFn, contextLocal,
-                                        variableObjectLocal);
-                cfw.addAStore(scriptRegexpLocal);
-            }
+        // Compile RegExp literals if this is a script. For functions
+        // this is performed during instantiation in functionInit
+        if (fnCurrent == null && scriptOrFn.getRegexpCount() != 0) {
+            cfw.addALoad(contextLocal);
+            cfw.addInvoke(ByteCode.INVOKESTATIC, codegen.mainClassName,
+                          Codegen.REGEXP_INIT_METHOD_NAME,
+                          Codegen.REGEXP_INIT_METHOD_SIGNATURE);
         }
 
         if (compilerEnv.isGenerateObserverCount())
@@ -2352,22 +2306,20 @@ class BodyCodegen
 
               case Token.REGEXP:
                 {
+                    // Create a new wrapper around precompiled regexp
+                    cfw.addALoad(contextLocal);
+                    cfw.addALoad(variableObjectLocal);
                     int i = node.getExistingIntProp(Node.REGEXP_PROP);
-                    // Scripts can not use REGEXP_ARRAY_FIELD_NAME since
-                    // it it will make script.exec non-reentrant so they
-                    // store regexp array in a local variable while
-                    // functions always access precomputed
-                    // REGEXP_ARRAY_FIELD_NAME not to consume locals
-                    if (fnCurrent == null) {
-                        cfw.addALoad(scriptRegexpLocal);
-                    } else {
-                        cfw.addALoad(funObjLocal);
-                        cfw.add(ByteCode.GETFIELD, codegen.mainClassName,
-                                Codegen.REGEXP_ARRAY_FIELD_NAME,
-                                Codegen.REGEXP_ARRAY_FIELD_TYPE);
-                    }
-                    cfw.addPush(i);
-                    cfw.add(ByteCode.AALOAD);
+                    cfw.add(ByteCode.GETSTATIC, codegen.mainClassName,
+                            codegen.getCompiledRegexpName(scriptOrFn, i),
+                            "Ljava/lang/Object;");
+                    cfw.addInvoke(ByteCode.INVOKESTATIC,
+                                  "org/mozilla/javascript/ScriptRuntime",
+                                  "wrapRegExp",
+                                  "(Lorg/mozilla/javascript/Context;"
+                                  +"Lorg/mozilla/javascript/Scriptable;"
+                                  +"Ljava/lang/Object;"
+                                  +")Lorg/mozilla/javascript/Scriptable;");
                 }
                 break;
 
@@ -5470,7 +5422,6 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private short funObjLocal;
     private short itsZeroArgArray;
     private short itsOneArgArray;
-    private short scriptRegexpLocal;
     private short generatorStateLocal;
 
     private boolean isGenerator;
