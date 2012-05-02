@@ -223,7 +223,8 @@ public final class JavaAdapter implements IdFunctionCall
                 ctorArgs[1] = cx.getFactory();
                 System.arraycopy(args, classCount + 1, ctorArgs, 2, argsCount);
                 // TODO: cache class wrapper?
-                NativeJavaClass classWrapper = new NativeJavaClass(scope, adapterClass);
+                NativeJavaClass classWrapper = new NativeJavaClass(scope,
+                        adapterClass, true);
                 NativeJavaMethod ctors = classWrapper.members.ctors;
                 int index = ctors.findCachedFunction(cx, ctorArgs);
                 if (index < 0) {
@@ -440,8 +441,8 @@ public final class JavaAdapter implements IdFunctionCall
                 String methodSignature = getMethodSignature(method, argTypes);
                 String methodKey = methodName + methodSignature;
                 if (! generatedOverrides.has(methodKey)) {
-                    generateMethod(cfw, adapterName, methodName,
-                                   argTypes, method.getReturnType());
+                    generateMethod(cfw, adapterName, methodName, argTypes,
+                                   method.getReturnType(), true);
                     generatedOverrides.put(methodKey, 0);
                     generatedMethods.put(methodName, 0);
                 }
@@ -468,8 +469,8 @@ public final class JavaAdapter implements IdFunctionCall
                 String methodSignature = getMethodSignature(method, argTypes);
                 String methodKey = methodName + methodSignature;
                 if (! generatedOverrides.has(methodKey)) {
-                    generateMethod(cfw, adapterName, methodName,
-                                   argTypes, method.getReturnType());
+                    generateMethod(cfw, adapterName, methodName, argTypes,
+                                   method.getReturnType(), true);
                     generatedOverrides.put(methodKey, 0);
                     generatedMethods.put(methodName, 0);
 
@@ -496,7 +497,7 @@ public final class JavaAdapter implements IdFunctionCall
             for (int k=0; k < length; k++)
                 parms[k] = ScriptRuntime.ObjectClass;
             generateMethod(cfw, adapterName, functionName, parms,
-                           ScriptRuntime.ObjectClass);
+                           ScriptRuntime.ObjectClass, false);
         }
         return cfw.toByteArray();
     }
@@ -978,7 +979,7 @@ public final class JavaAdapter implements IdFunctionCall
 
     private static void generateMethod(ClassFileWriter cfw, String genName,
                                        String methodName, Class<?>[] parms,
-                                       Class<?> returnType)
+                                       Class<?> returnType, boolean convertResult)
     {
         StringBuilder sb = new StringBuilder();
         int paramsEnd = appendMethodSignature(parms, returnType, sb);
@@ -1041,7 +1042,7 @@ public final class JavaAdapter implements IdFunctionCall
                       +"J"
                       +")Ljava/lang/Object;");
 
-        generateReturnResult(cfw, returnType, true);
+        generateReturnResult(cfw, returnType, convertResult);
 
         cfw.stopMethod((short)paramsEnd);
     }

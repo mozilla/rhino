@@ -73,15 +73,17 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     }
 
     public NativeJavaClass(Scriptable scope, Class<?> cl) {
-        this.parent = scope;
-        this.javaObject = cl;
-        initMembers();
+        this(scope, cl, false);
+    }
+
+    public NativeJavaClass(Scriptable scope, Class<?> cl, boolean isAdapter) {
+        super(scope, cl, null, isAdapter);
     }
 
     @Override
     protected void initMembers() {
         Class<?> cl = (Class<?>)javaObject;
-        members = JavaMembers.lookupClass(parent, cl, cl, false);
+        members = JavaMembers.lookupClass(parent, cl, cl, isAdapter);
         staticFieldAndMethods = members.getFieldAndMethodsObjects(this, cl, true);
     }
 
