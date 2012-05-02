@@ -71,12 +71,12 @@ class JavaMembers
                 throw Context.reportRuntimeError1("msg.access.prohibited",
                                                   cl.getName());
             }
-            this.includePrivate = cx.hasFeature(
-                Context.FEATURE_ENHANCED_JAVA_ACCESS);
             this.members = new HashMap<String,Object>();
             this.staticMembers = new HashMap<String,Object>();
             this.cl = cl;
-            reflect(scope, includeProtected);
+            boolean includePrivate = cx.hasFeature(
+                    Context.FEATURE_ENHANCED_JAVA_ACCESS);
+            reflect(scope, includeProtected, includePrivate);
         } finally {
             Context.exit();
         }
@@ -444,7 +444,9 @@ class JavaMembers
         }
     }
 
-    private void reflect(Scriptable scope, boolean includeProtected)
+    private void reflect(Scriptable scope,
+                         boolean includeProtected,
+                         boolean includePrivate)
     {
         // We reflect methods first, because we want overloaded field/method
         // names to be allocated to the NativeJavaMethod before the field
@@ -506,13 +508,10 @@ class JavaMembers
         }
 
         // Reflect fields.
-        Field[] fields = getAccessibleFields();
+        Field[] fields = getAccessibleFields(includeProtected, includePrivate);
         for (Field field : fields) {
             String name = field.getName();
             int mods = field.getModifiers();
-            if (!includePrivate && !Modifier.isPublic(mods)) {
-                continue;
-            }
             try {
                 boolean isStatic = Modifier.isStatic(mods);
                 Map<String,Object> ht = isStatic ? staticMembers : members;
@@ -662,7 +661,7 @@ class JavaMembers
         }
 
         // Reflect constructors
-        Constructor<?>[] constructors = getAccessibleConstructors();
+        Constructor<?>[] constructors = getAccessibleConstructors(includePrivate);
         MemberBox[] ctorMembers = new MemberBox[constructors.length];
         for (int i = 0; i != constructors.length; ++i) {
             ctorMembers[i] = new MemberBox(constructors[i]);
@@ -670,7 +669,7 @@ class JavaMembers
         ctors = new NativeJavaMethod(ctorMembers, cl.getSimpleName());
     }
 
-    private Constructor<?>[] getAccessibleConstructors()
+    private Constructor<?>[] getAccessibleConstructors(boolean includePrivate)
     {
       // The JVM currently doesn't allow changing access on java.lang.Class
       // constructors, so don't try
@@ -690,8 +689,9 @@ class JavaMembers
       return cl.getConstructors();
     }
 
-    private Field[] getAccessibleFields() {
-        if (includePrivate) {
+    private Field[] getAccessibleFields(boolean includeProtected,
+                                        boolean includePrivate) {
+        if (includePrivate || includeProtected) {
             try {
                 List<Field> fieldsList = new ArrayList<Field>();
                 Class<?> currentClass = cl;
@@ -701,8 +701,12 @@ class JavaMembers
                     // accessible, and save
                     Field[] declared = currentClass.getDeclaredFields();
                     for (Field field : declared) {
-                        field.setAccessible(true);
-                        fieldsList.add(field);
+                        int mod = field.getModifiers();
+                        if (includePrivate || isPublic(mod) || isProtected(mod)) {
+                            if (!field.isAccessible())
+                                field.setAccessible(true);
+                            fieldsList.add(field);
+                        }
                     }
                     // walk up superclass chain.  no need to deal specially with
                     // interfaces, since they can't have fields
@@ -885,7 +889,6 @@ class JavaMembers
     private Map<String,Object> staticMembers;
     private Map<String,FieldAndMethods> staticFieldAndMethods;
     NativeJavaMethod ctors; // we use NativeJavaMethod for ctor overload resolution
-    private boolean includePrivate;
 }
 
 class BeanProperty

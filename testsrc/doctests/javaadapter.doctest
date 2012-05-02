@@ -45,5 +45,21 @@ true
 js> x.append("foo") === x
 true
 js> x.run()
-js>
-
+js> // test access to protected methods
+js> x = JavaAdapter(java.util.Hashtable, {test: function() {this.rehash();}});
+{}
+js> x.test()
+js> // test access to protected fields
+js> x = JavaAdapter(java.util.Vector, {test: function() {return this.elementCount;}});
+[]
+js> x.test()
+0
+js> x.add(1)
+true
+js> x.test()
+1
+js> // test non-empty constructor with protected field
+js> x = JavaAdapter(java.util.Vector, {test: function() {return this.elementData.length;}}, 20);
+[]
+js> x.test()
+20

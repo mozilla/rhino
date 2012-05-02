@@ -969,7 +969,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
     protected transient Class<?> staticType;
     protected transient JavaMembers members;
     private transient Map<String,FieldAndMethods> fieldAndMethods;
-    private transient boolean isAdapter;
+    protected transient boolean isAdapter;
 
     private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
     private static Method adapter_writeAdapterObject;
