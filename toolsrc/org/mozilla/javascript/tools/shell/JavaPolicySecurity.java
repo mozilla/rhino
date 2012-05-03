@@ -38,6 +38,7 @@
 
 package org.mozilla.javascript.tools.shell;
 
+import java.io.IOException;
 import java.security.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -149,8 +150,12 @@ public class JavaPolicySecurity extends SecurityProxy
             public Object run() {
                 URL url = getUrlObj(filename);
                 ProtectionDomain staticDomain = getUrlDomain(url);
-                Main.processFileSecure(cx, scope, url.toExternalForm(),
-                                       staticDomain);
+                try {
+                    Main.processFileSecure(cx, scope, url.toExternalForm(),
+                                           staticDomain);
+                } catch (IOException ioex) {
+                    throw new RuntimeException(ioex);
+                }
                 return null;
             }
         });
