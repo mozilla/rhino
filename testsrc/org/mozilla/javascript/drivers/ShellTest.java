@@ -77,16 +77,13 @@ public class ShellTest {
         return new String(bytes.toByteArray());
     }
 
-    private static void runFileIfExists(Context cx, Scriptable global, File f)
-    {
-        if(f.isFile())
-        {
-            Main.processFile(cx, global, f.getPath());
+    private static void runFileIfExists(Context cx, Scriptable global, File f) {
+        if(f.isFile()) {
+            Main.processFileNoThrow(cx, global, f.getPath());
         }
     }
 
-    private static class TestState
-    {
+    private static class TestState {
         boolean finished;
         ErrorReporterWrapper errors;
         int exitCode = 0;
