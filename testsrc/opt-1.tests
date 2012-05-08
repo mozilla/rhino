@@ -995,7 +995,6 @@ ecma_3/String/regress-189898.js
 ecma_3/String/regress-313567.js
 ecma_3/String/regress-83293.js
 ecma_3/Unicode/uc-001-n.js
-ecma_3/Unicode/uc-001.js
 ecma_3/Unicode/uc-002-n.js
 ecma_3/Unicode/uc-002.js
 ecma_3/Unicode/uc-003.js
