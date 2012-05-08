@@ -3228,18 +3228,12 @@ public class Parser
                   break commaLoop;
 
               default:
-                  if (compilerEnv.isReservedKeywordAsIdentifier()) {
-                      // convert keyword to property name, e.g. ({if: 1})
-                      propertyName = Token.keywordToName(tt);
-                      if (propertyName != null) {
-                          afterComma = -1;
-                          saveNameTokenData(ts.tokenBeg, propertyName, ts.lineno);
-                          consumeToken();
-                          AstNode pname = createNameNode();
-                          pname.setJsDocNode(jsdocNode);
-                          elems.add(plainProperty(pname, tt));
-                          break;
-                      }
+                  if (convertToName(tt)) {
+                      consumeToken();
+                      AstNode pname = createNameNode();
+                      pname.setJsDocNode(jsdocNode);
+                      elems.add(plainProperty(pname, tt));
+                      break;
                   }
                   reportError("msg.bad.prop");
                   break;
