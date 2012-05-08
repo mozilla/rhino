@@ -486,6 +486,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             sb.append(item.toSource(0));
             if (count++ < max-1) {
                 sb.append(", ");
+            } else if (item instanceof EmptyExpression) {
+                sb.append(",");
             }
         }
     }

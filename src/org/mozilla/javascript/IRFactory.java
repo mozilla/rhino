@@ -962,14 +962,15 @@ public final class IRFactory extends Parser
     }
 
     private Node transformReturn(ReturnStatement node) {
-        if (Boolean.TRUE.equals(node.getProp(Node.EXPRESSION_CLOSURE_PROP))) {
+        boolean expClosure = Boolean.TRUE.equals(node.getProp(Node.EXPRESSION_CLOSURE_PROP));
+        if (expClosure) {
             decompiler.addName(" ");
         } else {
             decompiler.addToken(Token.RETURN);
         }
         AstNode rv = node.getReturnValue();
         Node value = rv == null ? null : transform(rv);
-        decompiler.addEOL(Token.SEMI);
+        if (!expClosure) decompiler.addEOL(Token.SEMI);
         return rv == null
             ? new Node(Token.RETURN, node.getLineno())
             : new Node(Token.RETURN, value, node.getLineno());

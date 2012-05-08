@@ -619,11 +619,13 @@ public class Parser
     private AstNode parseFunctionBody()
         throws IOException
     {
+        boolean isExpressionClosure = false;
         if (!matchToken(Token.LC)) {
             if (compilerEnv.getLanguageVersion() < Context.VERSION_1_8) {
                 reportError("msg.no.brace.body");
+            } else {
+                isExpressionClosure = true;
             }
-            return parseFunctionBodyExpr();
         }
         ++nestingOfFunction;
         int pos = ts.tokenBeg;
@@ -635,32 +637,41 @@ public class Parser
 
         pn.setLineno(ts.lineno);
         try {
-            bodyLoop: for (;;) {
-                AstNode n;
-                int tt = peekToken();
-                switch (tt) {
-                  case Token.ERROR:
-                  case Token.EOF:
-                  case Token.RC:
-                    break bodyLoop;
-
-                  case Token.FUNCTION:
-                    consumeToken();
-                    n = function(FunctionNode.FUNCTION_STATEMENT);
-                    break;
-                  default:
-                    n = statement();
-                    if (inDirectivePrologue) {
-                        String directive = getDirective(n);
-                        if (directive == null) {
-                            inDirectivePrologue = false;
-                        } else if (directive.equals("use strict")) {
-                            inUseStrictDirective = true;
-                        }
-                    }
-                    break;
-                }
+            if (isExpressionClosure) {
+                ReturnStatement n = new ReturnStatement(ts.lineno);
+                n.setReturnValue(assignExpr());
+                // expression closure flag is required on both nodes
+                n.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
+                pn.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
                 pn.addStatement(n);
+            } else {
+                bodyLoop: for (;;) {
+                    AstNode n;
+                    int tt = peekToken();
+                    switch (tt) {
+                        case Token.ERROR:
+                        case Token.EOF:
+                        case Token.RC:
+                            break bodyLoop;
+
+                        case Token.FUNCTION:
+                            consumeToken();
+                            n = function(FunctionNode.FUNCTION_STATEMENT);
+                            break;
+                        default:
+                            n = statement();
+                            if (inDirectivePrologue) {
+                                String directive = getDirective(n);
+                                if (directive == null) {
+                                    inDirectivePrologue = false;
+                                } else if (directive.equals("use strict")) {
+                                    inUseStrictDirective = true;
+                                }
+                            }
+                            break;
+                    }
+                    pn.addStatement(n);
+                }
             }
         } catch (ParserException e) {
             // Ignore it
@@ -671,7 +682,7 @@ public class Parser
 
         int end = ts.tokenEnd;
         getAndResetJsDoc();
-        if (mustMatchToken(Token.RC, "msg.no.brace.after.body"))
+        if (!isExpressionClosure && mustMatchToken(Token.RC, "msg.no.brace.after.body"))
             end = ts.tokenEnd;
         pn.setLength(end - pos);
         return pn;
@@ -749,22 +760,6 @@ public class Parser
         if (mustMatchToken(Token.RP, "msg.no.paren.after.parms")) {
             fnNode.setRp(ts.tokenBeg - fnNode.getPosition());
         }
-    }
-
-
-    private AstNode parseFunctionBodyExpr()
-        throws IOException
-    {
-        ++nestingOfFunction;
-        int lineno = ts.getLineno();
-        ReturnStatement n = new ReturnStatement(lineno);
-        n.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
-        try {
-            n.setReturnValue(assignExpr());
-        } finally {
-            --nestingOfFunction;
-        }
-        return n;
     }
 
     private FunctionNode function(int type)
@@ -936,7 +931,7 @@ public class Parser
                 if (compilerEnv.isStrictMode() && !pn.hasSideEffects()) {
                     int beg = pn.getPosition();
                     beg = Math.max(beg, lineBeginningFor(beg));
-                    addStrictWarning(pn instanceof EmptyExpression
+                    addStrictWarning(pn instanceof EmptyStatement
                                      ? "msg.extra.trailing.semi"
                                      : "msg.no.side.effects",
                                      "", beg, nodeEnd(pn) - beg);
@@ -962,7 +957,7 @@ public class Parser
         // We don't make error nodes explicitly part of the tree;
         // they get added to the ErrorReporter.  May need to do
         // something different here.
-        return new EmptyExpression(pos, ts.tokenBeg - pos);
+        return new EmptyStatement(pos, ts.tokenBeg - pos);
     }
 
     private AstNode statementHelper()
@@ -1016,7 +1011,7 @@ public class Parser
           case Token.VAR:
               consumeToken();
               int lineno = ts.lineno;
-              pn = variables(currentToken, ts.tokenBeg);
+              pn = variables(currentToken, ts.tokenBeg, true);
               pn.setLineno(lineno);
               break;
 
@@ -1049,7 +1044,7 @@ public class Parser
           case Token.SEMI:
               consumeToken();
               pos = ts.tokenBeg;
-              pn = new EmptyExpression(pos, ts.tokenEnd - pos);
+              pn = new EmptyStatement(pos, ts.tokenEnd - pos);
               pn.setLineno(ts.lineno);
               return pn;
 
@@ -1370,7 +1365,7 @@ public class Parser
                 init.setLineno(ts.lineno);
             } else if (tt == Token.VAR || tt == Token.LET) {
                 consumeToken();
-                init = variables(tt, ts.tokenBeg);
+                init = variables(tt, ts.tokenBeg, false);
             } else {
                 init = expr();
                 markDestructuring(init);
@@ -1628,7 +1623,7 @@ public class Parser
         if (peekToken() == Token.LP) {
             pn = let(true, pos);
         } else {
-            pn = variables(Token.LET, pos);  // else, e.g.: let x=6, y=7;
+            pn = variables(Token.LET, pos, true);  // else, e.g.: let x=6, y=7;
         }
         pn.setLineno(lineno);
         return pn;
@@ -1849,7 +1844,7 @@ public class Parser
      * token in the first variable declaration.
      * @return the parsed variable list
      */
-    private VariableDeclaration variables(int declType, int pos)
+    private VariableDeclaration variables(int declType, int pos, boolean isStatement)
         throws IOException
     {
         int end;
@@ -1920,6 +1915,7 @@ public class Parser
                 break;
         }
         pn.setLength(end - pos);
+        pn.setIsStatement(isStatement);
         return pn;
     }
 
@@ -1933,7 +1929,7 @@ public class Parser
             pn.setLp(ts.tokenBeg - pos);
         pushScope(pn);
         try {
-            VariableDeclaration vars = variables(Token.LET, ts.tokenBeg);
+            VariableDeclaration vars = variables(Token.LET, ts.tokenBeg, isStatement);
             pn.setVariables(vars);
             if (mustMatchToken(Token.RP, "msg.no.paren.let")) {
                 pn.setRp(ts.tokenBeg - pos);

@@ -278,8 +278,21 @@ public class Global extends ImporterTopLevel
     public static void load(Context cx, Scriptable thisObj,
                             Object[] args, Function funObj)
     {
-        for (int i = 0; i < args.length; i++) {
-            Main.processFile(cx, thisObj, Context.toString(args[i]));
+        for (Object arg : args) {
+            String file = Context.toString(arg);
+            try {
+                Main.processFile(cx, thisObj, file);
+            } catch (IOException ioex) {
+                String msg = ToolErrorReporter.getMessage(
+                        "msg.couldnt.read.source", file, ioex.getMessage());
+                throw Context.reportRuntimeError(msg);
+            } catch (VirtualMachineError ex) {
+                // Treat StackOverflow and OutOfMemory as runtime errors
+                ex.printStackTrace();
+                String msg = ToolErrorReporter.getMessage(
+                        "msg.uncaughtJSException", ex.toString());
+                throw Context.reportRuntimeError(msg);
+            }
         }
     }
 

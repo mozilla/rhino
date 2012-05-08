@@ -1,0 +1,11 @@
+js> for (var i = 0; i < 4; i++) print(/a/g.exec("a"));
+a
+a
+a
+a
+js> var r = /a/g; for (var i = 0; i < 4; i++) print(r.exec("a"));
+a
+null
+a
+null
+

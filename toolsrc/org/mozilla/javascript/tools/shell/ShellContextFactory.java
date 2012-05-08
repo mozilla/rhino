@@ -45,7 +45,7 @@ public class ShellContextFactory extends ContextFactory
 {
     private boolean strictMode;
     private boolean warningAsError;
-    private int languageVersion;
+    private int languageVersion = Context.VERSION_1_7;
     private int optimizationLevel;
     private boolean generatingDebug;
     private boolean allowReservedKeywords = true;
