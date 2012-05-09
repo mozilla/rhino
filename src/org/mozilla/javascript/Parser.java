@@ -2055,7 +2055,6 @@ public class Parser
         AstNode pn = assignExpr();
         int pos = pn.getPosition();
         while (matchToken(Token.COMMA)) {
-            int lineno = ts.lineno;
             int opPos = ts.tokenBeg;
             if (compilerEnv.isStrictMode() && !pn.hasSideEffects())
                 addStrictWarning("msg.no.side.effects", "",
@@ -2084,7 +2083,6 @@ public class Parser
 
             markDestructuring(pn);
             int opPos = ts.tokenBeg;
-            int opLineno = ts.getLineno();
 
             pn = new Assignment(tt, pn, assignExpr(), opPos);
 
@@ -2131,7 +2129,6 @@ public class Parser
         AstNode pn = andExpr();
         if (matchToken(Token.OR)) {
             int opPos = ts.tokenBeg;
-            int lineno = ts.lineno;
             pn = new InfixExpression(Token.OR, pn, orExpr(), opPos);
         }
         return pn;
@@ -2143,7 +2140,6 @@ public class Parser
         AstNode pn = bitOrExpr();
         if (matchToken(Token.AND)) {
             int opPos = ts.tokenBeg;
-            int lineno = ts.lineno;
             pn = new InfixExpression(Token.AND, pn, andExpr(), opPos);
         }
         return pn;
@@ -2155,7 +2151,6 @@ public class Parser
         AstNode pn = bitXorExpr();
         while (matchToken(Token.BITOR)) {
             int opPos = ts.tokenBeg;
-            int lineno = ts.lineno;
             pn = new InfixExpression(Token.BITOR, pn, bitXorExpr(), opPos);
         }
         return pn;
@@ -2167,7 +2162,6 @@ public class Parser
         AstNode pn = bitAndExpr();
         while (matchToken(Token.BITXOR)) {
             int opPos = ts.tokenBeg;
-            int lineno = ts.lineno;
             pn = new InfixExpression(Token.BITXOR, pn, bitAndExpr(), opPos);
         }
         return pn;
@@ -2179,7 +2173,6 @@ public class Parser
         AstNode pn = eqExpr();
         while (matchToken(Token.BITAND)) {
             int opPos = ts.tokenBeg;
-            int lineno = ts.lineno;
             pn = new InfixExpression(Token.BITAND, pn, eqExpr(), opPos);
         }
         return pn;
@@ -2191,7 +2184,6 @@ public class Parser
         AstNode pn = relExpr();
         for (;;) {
             int tt = peekToken(), opPos = ts.tokenBeg;
-            int lineno = ts.lineno;
             switch (tt) {
               case Token.EQ:
               case Token.NE:
@@ -2220,7 +2212,6 @@ public class Parser
         AstNode pn = shiftExpr();
         for (;;) {
             int tt = peekToken(), opPos = ts.tokenBeg;
-            int line = ts.lineno;
             switch (tt) {
               case Token.IN:
                 if (inForInit)
@@ -2246,7 +2237,6 @@ public class Parser
         AstNode pn = addExpr();
         for (;;) {
             int tt = peekToken(), opPos = ts.tokenBeg;
-            int lineno = ts.lineno;
             switch (tt) {
               case Token.LSH:
               case Token.URSH:
@@ -2268,7 +2258,6 @@ public class Parser
             int tt = peekToken(), opPos = ts.tokenBeg;
             if (tt == Token.ADD || tt == Token.SUB) {
                 consumeToken();
-                int lineno = ts.lineno;
                 pn = new InfixExpression(tt, pn, mulExpr(), opPos);
                 continue;
             }
@@ -2288,7 +2277,6 @@ public class Parser
               case Token.DIV:
               case Token.MOD:
                 consumeToken();
-                int line = ts.lineno;
                 pn = new InfixExpression(tt, pn, unaryExpr(), opPos);
                 continue;
             }
@@ -2311,6 +2299,7 @@ public class Parser
           case Token.TYPEOF:
               consumeToken();
               node = new UnaryExpression(tt, ts.tokenBeg, unaryExpr());
+              node.setLineno(line);
               return node;
 
           case Token.ADD:
