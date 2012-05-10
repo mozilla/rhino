@@ -34,6 +34,8 @@
  *   Milen Nankov
  *   Hannes Wallnoefer
  *   Andrew Wason
+ *   André Bargull
+ *   Travis Ennis
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -859,7 +861,18 @@ public class ScriptRuntime {
 
     }
 
+    static String valueToSource(Object value)
+    {
+        return uneval(null, null, value, true);
+    }
+
     static String uneval(Context cx, Scriptable scope, Object value)
+    {
+        return uneval(cx, scope, value, false);
+    }
+
+    private static String uneval(Context cx, Scriptable scope, Object value,
+                                 boolean valueToSource)
     {
         if (value == null) {
             return "null";
@@ -867,6 +880,15 @@ public class ScriptRuntime {
         if (value == Undefined.instance) {
             return "undefined";
         }
+        // Wrapped CharSequences, Numbers and Booleans share their source
+        // representation with the internal types
+        if (value instanceof Wrapper) {
+            Object obj = ((Wrapper)value).unwrap();
+            if (obj instanceof CharSequence || obj instanceof Number
+                || obj instanceof Boolean) {
+                value = obj;
+            }
+        }        
         if (value instanceof CharSequence) {
             String escaped = escapeString(value.toString());
             StringBuffer sb = new StringBuffer(escaped.length() + 2);
@@ -889,14 +911,25 @@ public class ScriptRuntime {
             Scriptable obj = (Scriptable)value;
             // Wrapped Java objects won't have "toSource" and will report
             // errors for get()s of nonexistent name, so use has() first
+            // this is true except of java.lang.String which has a prototype of NativeString
             if (ScriptableObject.hasProperty(obj, "toSource")) {
                 Object v = ScriptableObject.getProperty(obj, "toSource");
                 if (v instanceof Function) {
                     Function f = (Function)v;
+                    if (valueToSource) {
+                        cx = Context.getContext();
+                        scope = f.getParentScope();
+                    }
                     return toString(f.call(cx, scope, obj, emptyArgs));
                 }
             }
-            return toString(value);
+            // Use the toString representation for wrapped Java object since
+            // this is likely to give a more useful result.
+            if (value instanceof NativeJavaObject) {
+                return toString(value);
+            } else {
+                return "{}";
+            }
         }
         warnAboutNonJSObject(value);
         return value.toString();

@@ -30,6 +30,8 @@
  *   Cameron McCormack
  *   Steve Weiss
  *   Hannes Wallnoefer
+ *   Travis Ennis
+ *   André Bargull
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which

@@ -23,6 +23,7 @@
  *
  * Contributor(s):
  *   Igor Bukanov, igor@fastmail.fm
+ *   Travis Ennis
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 or later (the "GPL"), in which
@@ -281,7 +282,7 @@ public class ContextFactory
 
           case Context.FEATURE_TO_STRING_AS_SOURCE:
             version = cx.getLanguageVersion();
-            return version == Context.VERSION_1_2;
+            return version >= Context.VERSION_1_2;
 
           case Context.FEATURE_PARENT_PROTO_PROPERTIES:
             return true;
