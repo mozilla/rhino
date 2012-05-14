@@ -2598,9 +2598,9 @@ public class Parser
 
         if (!compilerEnv.isXmlAvailable()) {
             int maybeName = nextToken();
-            if (maybeName != Token.NAME &&
-                !(compilerEnv.isReservedKeywordAsIdentifier()
-                && TokenStream.isKeyword(ts.getString()))) {
+            if (maybeName != Token.NAME
+                    && !(compilerEnv.isReservedKeywordAsIdentifier()
+                    && TokenStream.isKeyword(ts.getString()))) {
               reportError("msg.no.name.after.dot");
             }
 
@@ -3194,7 +3194,6 @@ public class Parser
             Comment jsdocNode = getAndResetJsDoc();
             switch(tt) {
               case Token.NAME:
-                  afterComma = -1;
                   Name name = createNameNode();
                   propertyName = ts.getString();
                   int ppos = ts.tokenBeg;
@@ -3210,27 +3209,28 @@ public class Parser
                   // many tokens.)
                   int peeked = peekToken();
                   boolean maybeGetterOrSetter =
-                      "get".equals(propertyName)
-                      || "set".equals(propertyName);
+                          "get".equals(propertyName)
+                          || "set".equals(propertyName);
                   if (maybeGetterOrSetter
-                      && peeked != Token.COMMA && peeked != Token.COLON && peeked != Token.RC)
+                          && peeked != Token.COMMA
+                          && peeked != Token.COLON
+                          && peeked != Token.RC)
                   {
                       boolean isGet = "get".equals(propertyName);
                       entryKind = isGet ? GET_ENTRY : SET_ENTRY;
                       AstNode pname = objliteralProperty();
                       if (pname == null) {
-                        propertyName = null;
+                          propertyName = null;
                       } else {
-                        propertyName = ts.getString();
-                        ObjectProperty objectProp = getterSetterProperty(
-                              ppos, pname, isGet);
-                        pname.setJsDocNode(jsdocNode);
-                        elems.add(objectProp);
+                          propertyName = ts.getString();
+                          ObjectProperty objectProp = getterSetterProperty(
+                                  ppos, pname, isGet);
+                          pname.setJsDocNode(jsdocNode);
+                          elems.add(objectProp);
                       }
                   } else {
-                      AstNode pname = name;
-                      pname.setJsDocNode(jsdocNode);
-                      elems.add(plainProperty(pname, tt));
+                      name.setJsDocNode(jsdocNode);
+                      elems.add(plainProperty(name, tt));
                   }
                   break;
 
@@ -3242,12 +3242,11 @@ public class Parser
               default:
                   AstNode pname = objliteralProperty();
                   if (pname == null) {
-                    propertyName = null;
+                      propertyName = null;
                   } else {
-                    afterComma = -1;
-                    propertyName = ts.getString();
-                    pname.setJsDocNode(jsdocNode);
-                    elems.add(plainProperty(pname, tt));
+                      propertyName = ts.getString();
+                      pname.setJsDocNode(jsdocNode);
+                      elems.add(plainProperty(pname, tt));
                   }
                   break;
             }
@@ -3256,7 +3255,7 @@ public class Parser
                 switch (entryKind) {
                 case PROP_ENTRY:
                     if (getterNames.contains(propertyName)
-                        || setterNames.contains(propertyName)) {
+                            || setterNames.contains(propertyName)) {
                         addError("msg.dup.obj.lit.prop.strict", propertyName);
                     }
                     getterNames.add(propertyName);
@@ -3264,13 +3263,13 @@ public class Parser
                     break;
                 case GET_ENTRY:
                     if (getterNames.contains(propertyName)) {
-                      addError("msg.dup.obj.lit.prop.strict", propertyName);
+                        addError("msg.dup.obj.lit.prop.strict", propertyName);
                     }
                     getterNames.add(propertyName);
                     break;
                 case SET_ENTRY:
                     if (setterNames.contains(propertyName)) {
-                      addError("msg.dup.obj.lit.prop.strict", propertyName);
+                        addError("msg.dup.obj.lit.prop.strict", propertyName);
                     }
                     setterNames.add(propertyName);
                     break;
@@ -3279,7 +3278,6 @@ public class Parser
 
             // Eat any dangling jsdoc in the property.
             getAndResetJsDoc();
-            jsdocNode = null;
 
             if (matchToken(Token.COMMA)) {
                 afterComma = ts.tokenEnd;
@@ -3312,12 +3310,12 @@ public class Parser
 
           case Token.NUMBER:
               pname = new NumberLiteral(
-                  ts.tokenBeg, ts.getString(), ts.getNumber());
+                      ts.tokenBeg, ts.getString(), ts.getNumber());
               break;
 
           default:
               if (compilerEnv.isReservedKeywordAsIdentifier()
-                  && TokenStream.isKeyword(ts.getString())) {
+                      && TokenStream.isKeyword(ts.getString())) {
                   // convert keyword to property name, e.g. ({if: 1})
                   pname = createNameNode();
                   break;
@@ -3495,18 +3493,6 @@ public class Parser
         prevNameTokenStart = pos;
         prevNameTokenString = name;
         prevNameTokenLineno = lineno;
-    }
-
-    // Check whether token is a reserved keyword that is allowed as property id.
-    private boolean convertToName(int token) {
-        if (compilerEnv.isReservedKeywordAsIdentifier()) {
-            String conv = Token.keywordToName(token);
-            if (conv != null) {
-                saveNameTokenData(ts.tokenBeg, conv, ts.lineno);
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
