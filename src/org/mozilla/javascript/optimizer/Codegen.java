@@ -3078,13 +3078,30 @@ class BodyCodegen
         }
 
         // load array to store array literal objects
-        addNewObjectArray(count);
-        for (int i = 0; i != count; ++i) {
-            cfw.add(ByteCode.DUP);
-            cfw.addPush(i);
-            generateExpression(child, node);
-            cfw.add(ByteCode.AASTORE);
-            child = child.getNext();
+        if (isGenerator) {
+            // TODO: this is actually only necessary if the yield operation is
+            // a child of this array or its children (bug xxxxxx)
+            for (int i = 0; i != count; ++i) {
+                generateExpression(child, node);
+                child = child.getNext();
+            }
+            addNewObjectArray(count);
+            for (int i = 0; i != count; ++i) {
+                cfw.add(ByteCode.DUP_X1);
+                cfw.add(ByteCode.SWAP);
+                cfw.addPush(count - i - 1);
+                cfw.add(ByteCode.SWAP);
+                cfw.add(ByteCode.AASTORE);
+            }
+        } else {
+            addNewObjectArray(count);
+            for (int i = 0; i != count; ++i) {
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(i);
+                generateExpression(child, node);
+                cfw.add(ByteCode.AASTORE);
+                child = child.getNext();
+            }
         }
         int[] skipIndexes = (int[])node.getProp(Node.SKIP_INDEXES_PROP);
         if (skipIndexes == null) {
@@ -3103,6 +3120,62 @@ class BodyCodegen
              +"Lorg/mozilla/javascript/Context;"
              +"Lorg/mozilla/javascript/Scriptable;"
              +")Lorg/mozilla/javascript/Scriptable;");
+    }
+
+    /** load array with property ids */
+    private void addLoadPropertyIds(Object[] properties, int count) {
+        addNewObjectArray(count);
+        for (int i = 0; i != count; ++i) {
+            cfw.add(ByteCode.DUP);
+            cfw.addPush(i);
+            Object id = properties[i];
+            if (id instanceof String) {
+                cfw.addPush((String)id);
+            } else {
+                cfw.addPush(((Integer)id).intValue());
+                addScriptRuntimeInvoke("wrapInt", "(I)Ljava/lang/Integer;");
+            }
+            cfw.add(ByteCode.AASTORE);
+        }
+    }
+
+    /** load array with property values */
+    private void addLoadPropertyValues(Node node, Node child, int count) {
+        if (isGenerator) {
+            // see bug xxxxxx for explanation why we need to split this
+            for (int i = 0; i != count; ++i) {
+                int childType = child.getType();
+                if (childType == Token.GET || childType == Token.SET) {
+                    generateExpression(child.getFirstChild(), node);
+                } else {
+                    generateExpression(child, node);
+                }
+                child = child.getNext();
+            }
+            addNewObjectArray(count);
+            for (int i = 0; i != count; ++i) {
+                cfw.add(ByteCode.DUP_X1);
+                cfw.add(ByteCode.SWAP);
+                cfw.addPush(count - i - 1);
+                cfw.add(ByteCode.SWAP);
+                cfw.add(ByteCode.AASTORE);
+            }
+        } else {
+            addNewObjectArray(count);
+            Node child2 = child;
+            for (int i = 0; i != count; ++i) {
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(i);
+                int childType = child2.getType();
+                if (childType == Token.GET || childType == Token.SET) {
+                    generateExpression(child2.getFirstChild(), node);
+                } else {
+                    generateExpression(child2, node);
+                }
+                cfw.add(ByteCode.AASTORE);
+                child2 = child2.getNext();
+            }
+        }
     }
 
     private void visitObjectLiteral(Node node, Node child, boolean topLevel)
@@ -3132,38 +3205,21 @@ class BodyCodegen
             return;
         }
 
-        // load array with property ids
-        addNewObjectArray(count);
-        for (int i = 0; i != count; ++i) {
-            cfw.add(ByteCode.DUP);
-            cfw.addPush(i);
-            Object id = properties[i];
-            if (id instanceof String) {
-                cfw.addPush((String)id);
-            } else {
-                cfw.addPush(((Integer)id).intValue());
-                addScriptRuntimeInvoke("wrapInt", "(I)Ljava/lang/Integer;");
-            }
-            cfw.add(ByteCode.AASTORE);
+        if (isGenerator) {
+            // TODO: this is actually only necessary if the yield operation is
+            // a child of this object or its children (bug xxxxxx)
+            addLoadPropertyValues(node, child, count);
+            addLoadPropertyIds(properties, count);
+            // swap property-values and property-ids arrays
+            cfw.add(ByteCode.SWAP);
+        } else {
+            addLoadPropertyIds(properties, count);
+            addLoadPropertyValues(node, child, count);
         }
-        // load array with property values
-        addNewObjectArray(count);
-        Node child2 = child;
-        for (int i = 0; i != count; ++i) {
-            cfw.add(ByteCode.DUP);
-            cfw.addPush(i);
-            int childType = child2.getType();
-            if (childType == Token.GET || childType == Token.SET) {
-                generateExpression(child2.getFirstChild(), node);
-            } else {
-                generateExpression(child2, node);
-            }
-            cfw.add(ByteCode.AASTORE);
-            child2 = child2.getNext();
-        }
+
         // check if object literal actually has any getters or setters
         boolean hasGetterSetters = false;
-        child2 = child;
+        Node child2 = child;
         for (int i = 0; i != count; ++i) {
             int childType = child2.getType();
             if (childType == Token.GET || childType == Token.SET) {
