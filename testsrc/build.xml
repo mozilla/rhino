@@ -133,6 +133,9 @@
         <fileset dir="${test.classes}" includes="**/StandardTests.class"/>
       </batchtest>
       <formatter type="xml"/>
+      <assertions>
+        <enable/>
+      </assertions>
     </junit>
     <mkdir dir="build/test/report"/>
     <junitreport todir="build/test/report">
