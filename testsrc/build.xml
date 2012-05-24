@@ -3,7 +3,7 @@
   <!--
     Location of mozilla/js/tests directory
   -->
-  <property name="test.library.dir" location="../tests" />
+  <property name="test.library.dir" location="${build.dir}/tests" />
   <property name="test.jstests.jar" location="${test.library.dir}/src/jstests.jar" />
 
   <!--
@@ -89,6 +89,8 @@
          <exclude name="**/*.java build.xml"/>
        </fileset>
     </copy>
+    <gunzip src="testsrc/tests.tar.gz" dest="${build.dir}/tests.tar"/>
+    <untar src="${build.dir}/tests.tar" dest="build"/>
   </target>
   	
   <target name="clean">
@@ -128,6 +130,10 @@
       <sysproperty key="mozilla.js.tests" value="${test.library.dir}" />
       <sysproperty key="mozilla.js.tests.timeout" value="${test.timeout}" />
       <sysproperty key="emma.coverage.out.file" value="${coverage.outfile}"/>
+      <!-- mozilla test cases are locale dependent! -->
+      <sysproperty key="user.language" value="en"/>
+      <sysproperty key="user.country" value="US"/>
+      <sysproperty key="user.timezone" value="America/Los_Angeles"/>
       <classpath>
         <pathelement location="${xbean.jar}"/>
         <pathelement location="${jsr173.jar}"/>
