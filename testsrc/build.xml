@@ -9,7 +9,17 @@
   <!--
     URL from which junit.jar can be retrieved
   -->
-  <property name="test.junit.url" value="http://mirrors.ibiblio.org/pub/mirrors/maven2/junit/junit/4.5/junit-4.5.jar"/>
+  <property name="test.junit.url" value="http://mirrors.ibiblio.org/pub/mirrors/maven2/junit/junit/4.10/junit-4.10.jar"/>
+
+  <!--
+    URL from which emma.jar can be retrieved
+  -->
+  <property name="test.emma.url" value="http://mirrors.ibiblio.org/pub/mirrors/maven2/emma/emma/2.1.5320/emma-2.1.5320.jar"/>
+
+  <!--
+    URL from which emma_ant.jar can be retrieved
+  -->
+  <property name="test.emma_ant.url" value="http://mirrors.ibiblio.org/pub/mirrors/maven2/emma/emma_ant/2.1.5320/emma_ant-2.1.5320.jar"/>
 
   <!--
     Destination to which testing classes should be built
@@ -32,13 +42,13 @@
   <property name="test.vm.mx" value="256m" />
 
   <target name="get-junit">
-	<mkdir dir="lib"/>
-	<get src="${test.junit.url}" dest="lib/junit.jar" usetimestamp="true"/>
+    <mkdir dir="lib"/>
+    <get src="${test.junit.url}" dest="lib/junit.jar" usetimestamp="true" skipexisting="true"/>
   </target>
 
   <target name="junit-compile">
     <mkdir dir="${test.classes}" />
-	<antcall target="get-junit"/>
+    <antcall target="get-junit"/>
     <javac
       destdir="${test.classes}" debug="true"
       target="${target-jvm}"
@@ -86,8 +96,8 @@
   </target>
 
   <target name="coverage-instrument">
-    <get src="http://mirrors.ibiblio.org/pub/mirrors/maven2/emma/emma/2.0.5312/emma-2.0.5312.jar" dest="lib/emma.jar" usetimestamp="true"/>
-    <get src="http://mirrors.ibiblio.org/pub/mirrors/maven2/emma/emma_ant/2.0.5312/emma_ant-2.0.5312.jar" dest="lib/emma_ant.jar" usetimestamp="true"/>
+    <get src="${test.emma.url}" dest="lib/emma.jar" usetimestamp="true" skipexisting="true"/>
+    <get src="${test.emma_ant.url}" dest="lib/emma_ant.jar" usetimestamp="true" skipexisting="true"/>
     <property name="coverage.dir" location="${build.dir}/coverage"/>
     <property name="coverage.classes.dir" location="${build.dir}/coverage/classes"/>
     <mkdir dir="${coverage.classes.dir}"/>
