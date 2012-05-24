@@ -240,6 +240,12 @@
     </javadoc>
   </target>
 
+  <!--
+    Compiles and tests all sources and then creates the distribution file
+  -->
+  <target name="all" depends="deepclean,compile-all,junit-all,dist">
+  </target>
+
   <target name="dist" depends="deepclean,jar,retrojar,copy-all,javadoc">
     <delete file="${dist.file}" />
     <zip destfile="${dist.file}">
