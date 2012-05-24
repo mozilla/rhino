@@ -171,9 +171,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
         defineProperty(scope, "RegExp", ctor, ScriptableObject.DONTENUM);
     }
 
-    NativeRegExp(Scriptable scope, Object regexpCompiled)
+    NativeRegExp(Scriptable scope, RECompiled regexpCompiled)
     {
-        this.re = (RECompiled)regexpCompiled;
+        this.re = regexpCompiled;
         this.lastIndex = 0;
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
     }
@@ -218,7 +218,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
             this.lastIndex = thatObj.lastIndex;
             return this;
         }
-        String s = args.length == 0 ? "" : ScriptRuntime.toString(args[0]);
+        String s = args.length == 0 ? "" : escapeRegExp(args[0]);
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;
@@ -230,7 +230,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     @Override
     public String toString()
     {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append('/');
         if (re.source.length != 0) {
             buf.append(re.source);
@@ -253,6 +253,30 @@ public class NativeRegExp extends IdScriptableObject implements Function
     private static RegExpImpl getImpl(Context cx)
     {
         return (RegExpImpl) ScriptRuntime.getRegExpProxy(cx);
+    }
+
+    private static String escapeRegExp(Object src) {
+        String s = ScriptRuntime.toString(src);
+        // Escape any naked slashes in regexp source, see bug #510265
+        StringBuilder sb = null; // instantiated only if necessary
+        int start = 0;
+        int slash = s.indexOf('/');
+        while (slash > -1) {
+            if (slash == start || s.charAt(slash - 1) != '\\') {
+                if (sb == null) {
+                    sb = new StringBuilder();
+                }
+                sb.append(s, start, slash);
+                sb.append("\\/");
+                start = slash + 1;
+            }
+            slash = s.indexOf('/', slash + 1);
+        }
+        if (sb != null) {
+            sb.append(s, start, s.length());
+            s = sb.toString();
+        }
+        return s;
     }
 
     private Object execSub(Context cx, Scriptable scopeObj,
