@@ -1391,11 +1391,13 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
         if ((gData.cp + length) > end)
             return false;
-        if (input.regionMatches(gData.cp, gData.regexp.sourceString, matchChars, length)) {
-            gData.cp += length;
-            return true;
+        for (int i = 0; i < length; i++) {
+            if (gData.regexp.source[matchChars + i] != input.charAt(gData.cp + i)) {
+                return false;
+            }
         }
-        return false;
+        gData.cp += length;
+        return true;
     }
 
     private static boolean
@@ -2758,7 +2760,6 @@ class RECompiled implements Serializable
     static final long serialVersionUID = -6144956577595844213L;
 
     final char[] source;    /* locked source string, sans // */
-    final String sourceString;
     int parenCount;         /* number of parenthesized submatches */
     int flags;              /* flags  */
     byte[] program;         /* regular expression bytecode */
@@ -2767,20 +2768,7 @@ class RECompiled implements Serializable
     int anchorCh = -1;      /* if >= 0, then re starts with this literal char */
 
     RECompiled(String str) {
-        this.sourceString = str;
         this.source = str.toCharArray();
-    }
-
-    public int flags() {
-        return flags;
-    }
-
-    public String source() {
-        return sourceString;
-    }
-
-    public int parenCount() {
-        return parenCount;
     }
 }
 
