@@ -43,7 +43,7 @@
 
   <target name="get-junit">
     <mkdir dir="lib"/>
-    <get src="${test.junit.url}" dest="lib/junit.jar" usetimestamp="true" skipexisting="true"/>
+    <get src="${test.junit.url}" dest="lib/junit.jar" usetimestamp="true"/>
   </target>
 
   <target name="junit-compile">
@@ -98,8 +98,8 @@
   </target>
 
   <target name="coverage-instrument">
-    <get src="${test.emma.url}" dest="lib/emma.jar" usetimestamp="true" skipexisting="true"/>
-    <get src="${test.emma_ant.url}" dest="lib/emma_ant.jar" usetimestamp="true" skipexisting="true"/>
+    <get src="${test.emma.url}" dest="lib/emma.jar" usetimestamp="true"/>
+    <get src="${test.emma_ant.url}" dest="lib/emma_ant.jar" usetimestamp="true"/>
     <property name="coverage.dir" location="${build.dir}/coverage"/>
     <property name="coverage.classes.dir" location="${build.dir}/coverage/classes"/>
     <mkdir dir="${coverage.classes.dir}"/>
