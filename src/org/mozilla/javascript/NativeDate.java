@@ -47,7 +47,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import java.util.TimeZone;
-import java.util.SimpleTimeZone;
 
 /**
  * This class implements the Date native object.
@@ -61,13 +60,6 @@ final class NativeDate extends IdScriptableObject
     private static final Object DATE_TAG = "Date";
 
     private static final String js_NaN_date_str = "Invalid Date";
-
-    private static final DateFormat isoFormat;
-    static {
-      isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-      isoFormat.setTimeZone(new SimpleTimeZone(0, "UTC"));
-      isoFormat.setLenient(false);
-    }
 
     static void init(Scriptable scope, boolean sealed)
     {
@@ -517,6 +509,16 @@ final class NativeDate extends IdScriptableObject
         return day;
     }
 
+    private static int DaysInMonth(int year, int month)
+    {
+        // month is 1-based for DaysInMonth!
+        if (month == 2)
+            return IsLeapYear(year) ? 29 : 28;
+        return month >= 8
+               ? 31 - (month & 1)
+               : 30 + (month & 1);
+    }
+
     private static int MonthFromTime(double t)
     {
         int year = YearFromTime(t);
@@ -809,17 +811,165 @@ final class NativeDate extends IdScriptableObject
         return TimeClip(date_msecFromArgs(args));
     }
 
+    /**
+    * 15.9.1.15 Date Time String Format<br>
+    * Parse input string according to simplified ISO-8601 Extended Format:
+    * <ul>
+    * <li><code>YYYY-MM-DD'T'HH:mm:ss.sss'Z'</code></li>
+    * <li>or <code>YYYY-MM-DD'T'HH:mm:ss.sss[+-]hh:mm</code></li>
+    * </ul>
+    */
+    private static double parseISOString(String s) {
+        // we use a simple state machine to parse the input string
+        final int ERROR = -1;
+        final int YEAR = 0, MONTH = 1, DAY = 2;
+        final int HOUR = 3, MIN = 4, SEC = 5, MSEC = 6;
+        final int TZHOUR = 7, TZMIN = 8;
+        int state = YEAR;
+        // default values per [15.9.1.15 Date Time String Format]
+        int[] values = { 1970, 1, 1, 0, 0, 0, 0, -1, -1 };
+        int yearlen = 4, yearmod = 1, tzmod = 1;
+        int i = 0, len = s.length();
+        if (len != 0) {
+            char c = s.charAt(0);
+            if (c == '+' || c == '-') {
+                // 15.9.1.15.1 Extended years
+                i += 1;
+                yearlen = 6;
+                yearmod = (c == '-') ? -1 : 1;
+            } else if (c == 'T') {
+                // time-only forms no longer in spec, but follow spidermonkey here
+                i += 1;
+                state = HOUR;
+            }
+        }
+        loop: while (state != ERROR) {
+            int m = i + (state == YEAR ? yearlen : state == MSEC ? 3 : 2);
+            if (m > len) {
+                state = ERROR;
+                break;
+            }
+
+            int value = 0;
+            for (; i < m; ++i) {
+                char c = s.charAt(i);
+                if (c < '0' || c > '9') { state = ERROR; break loop; }
+                value = 10 * value + (c - '0');
+            }
+            values[state] = value;
+
+            if (i == len) {
+                // reached EOF, check for end state
+                switch (state) {
+                case HOUR:
+                case TZHOUR:
+                    state = ERROR;
+                }
+                break;
+            }
+
+            char c = s.charAt(i++);
+            if (c == 'Z') {
+                // handle abbrevation for UTC timezone
+                values[TZHOUR] = 0;
+                values[TZMIN] = 0;
+                switch (state) {
+                case MIN:
+                case SEC:
+                case MSEC:
+                    break;
+                default:
+                    state = ERROR;
+                }
+                break;
+            }
+
+            // state transition
+            switch (state) {
+            case YEAR:
+            case MONTH:
+                state = (c == '-' ? state + 1 : c == 'T' ? HOUR : ERROR);
+                break;
+            case DAY:
+                state = (c == 'T' ? HOUR : ERROR);
+                break;
+            case HOUR:
+                state = (c == ':' ? MIN : ERROR);
+                break;
+            case TZHOUR:
+                // state = (c == ':' ? state + 1 : ERROR);
+                // Non-standard extension, https://bugzilla.mozilla.org/show_bug.cgi?id=682754
+                if (c != ':') {
+                    // back off by one and try to read without ':' separator
+                    i -= 1;
+                }
+                state = TZMIN;
+                break;
+            case MIN:
+                state = (c == ':' ? SEC : c == '+' || c == '-' ? TZHOUR : ERROR);
+                break;
+            case SEC:
+                state = (c == '.' ? MSEC : c == '+' || c == '-' ? TZHOUR : ERROR);
+                break;
+            case MSEC:
+                state = (c == '+' || c == '-' ? TZHOUR : ERROR);
+                break;
+            case TZMIN:
+                state = ERROR;
+                break;
+            }
+            if (state == TZHOUR) {
+                // save timezone modificator
+                tzmod = (c == '-') ? -1 : 1;
+            }
+        }
+
+        syntax: {
+            // error or unparsed characters
+            if (state == ERROR || i != len) break syntax;
+
+            // check values
+            int year = values[YEAR], month = values[MONTH], day = values[DAY];
+            int hour = values[HOUR], min = values[MIN], sec = values[SEC], msec = values[MSEC];
+            int tzhour = values[TZHOUR], tzmin = values[TZMIN];
+            if (year > 275943 // ceil(1e8/365) + 1970 = 275943
+                || (month < 1 || month > 12)
+                || (day < 1 || day > DaysInMonth(year, month))
+                || hour > 24
+                || (hour == 24 && (min > 0 || sec > 0 || msec > 0))
+                || min > 59
+                || sec > 59
+                || tzhour > 23
+                || tzmin > 59
+               ) {
+                break syntax;
+            }
+            // valid ISO-8601 format, compute date in milliseconds
+            double date = date_msecFromDate(year * yearmod, month - 1, day,
+                                            hour, min, sec, msec);
+            if (tzhour == -1) {
+                // Spec says to use UTC timezone, the following bug report says
+                // that local timezone was meant to be used. Stick with spec for now.
+                // https://bugs.ecmascript.org/show_bug.cgi?id=112
+                // date = internalUTC(date);
+            } else {
+                date -= (tzhour * 60 + tzmin) * msPerMinute * tzmod;
+            }
+
+            if (date < -HalfTimeDomain || date > HalfTimeDomain) break syntax;
+            return date;
+        }
+
+        // invalid ISO-8601 format, return NaN
+        return ScriptRuntime.NaN;
+    }
+
     private static double date_parseString(String s)
     {
-        try {
-          if (s.length() == 24) {
-              final Date d;
-              synchronized(isoFormat) {
-                  d = isoFormat.parse(s);
-              }
-              return d.getTime();
-          }
-        } catch (java.text.ParseException ex) {}
+        double d = parseISOString(s);
+        if (d == d) {
+            return d;
+        }
 
         int year = -1;
         int mon = -1;
