@@ -457,7 +457,7 @@ public class Token
 
     /**
      * Convert a keyword token to a name string for use with the
-     * {@link Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER} feature.
+     * {@link Context#FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER} feature.
      * @param token A token
      * @return the corresponding name string
      */
