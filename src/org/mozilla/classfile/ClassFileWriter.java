@@ -3909,6 +3909,8 @@ public class ClassFileWriter {
         throw new IllegalArgumentException("Bad opcode: "+opcode);
     }
 */
+
+    @SuppressWarnings("unused")
     private static String bytecodeStr(int code)
     {
         if (DEBUGSTACK || DEBUGCODE) {
@@ -5176,7 +5178,7 @@ final class TypeInfo {
      * For example, given "java/lang/Object", returns the equivalent of
      * Class.forName("java.lang.Object"), but also handles exceptions.
      */
-    static Class getClassFromInternalName(String internalName) {
+    static Class<?> getClassFromInternalName(String internalName) {
         try {
             return Class.forName(internalName.replace('/', '.'));
         } catch (ClassNotFoundException e) {
