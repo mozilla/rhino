@@ -1083,6 +1083,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
     //
     //
 
+    @Override
     public String getClassName ()
     {
         return "XML";
@@ -1101,6 +1102,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param start
      * @return
      */
+    @Override
     public Object get(int index, Scriptable start)
     {
         //Log("get index: " + index);
@@ -1121,6 +1123,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param xmlName
      * @return
      */
+    @Override
     boolean hasXMLProperty(XMLName xmlName)
     {
         // Has now should return true if the property would have results > 0
@@ -1134,6 +1137,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param start
      * @return
      */
+    @Override
     public boolean has(int index, Scriptable start)
     {
         return (index == 0);
@@ -1143,6 +1147,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     public Object[] getIds()
     {
         Object[] enumObjs;
@@ -1176,6 +1181,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param xmlName
      * @return
      */
+    @Override
     Object getXMLProperty(XMLName xmlName)
     {
         return getPropertyList(xmlName);
@@ -1186,6 +1192,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param xmlName
      * @param value
      */
+    @Override
     void putXMLProperty(XMLName xmlName, Object value)
     {
         //Log("put property: " + name + " value: " + value.getClass());
@@ -1279,6 +1286,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param start
      * @param value
      */
+    @Override
     public void put(int index, Scriptable start, Object value)
     {
         // Spec says assignment to indexed XML object should return type error
@@ -1290,6 +1298,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @param name
      */
+    @Override
     void deleteXMLProperty(XMLName name)
     {
         if (!name.isDescendants() && name.isAttributeName())
@@ -1331,6 +1340,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @param index
      */
+    @Override
     public void delete(int index)
     {
         if (index == 0)
@@ -1799,6 +1809,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @param toAdd
      */
+    @Override
     XML addNamespace(Namespace ns)
     {
         // When a namespace is used it will be added automatically
@@ -1865,6 +1876,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param xml
      * @return
      */
+    @Override
     XML appendChild(Object xml)
     {
         XmlCursor curs = newCursor();
@@ -1892,6 +1904,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param name
      * @return
      */
+    @Override
     XMLList attribute(XMLName xmlName)
     {
         return matchAttributes(xmlName);
@@ -1901,12 +1914,14 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     XMLList attributes()
     {
         XMLName xmlName = XMLName.formStar();
         return matchAttributes(xmlName);
     }
 
+    @Override
     XMLList child(long index)
     {
         XMLList result = new XMLList(lib);
@@ -1915,6 +1930,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
         return result;
     }
 
+    @Override
     XMLList child(XMLName xmlName)
     {
         if (xmlName == null)
@@ -1957,6 +1973,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     int childIndex()
     {
         int index = 0;
@@ -2016,6 +2033,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     XMLList children()
     {
         return allChildNodes(null);
@@ -2025,6 +2043,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     XMLList comments()
     {
         return matchChildren(XmlCursor.TokenType.COMMENT);
@@ -2035,6 +2054,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param xml
      * @return
      */
+    @Override
     boolean contains(Object xml)
     {
         boolean result = false;
@@ -2051,6 +2071,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     Object copy()
     {
         XmlCursor srcCurs = newCursor();
@@ -2078,6 +2099,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param name
      * @return
      */
+    @Override
     XMLList descendants(XMLName xmlName)
     {
         XMLList result;
@@ -2100,6 +2122,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return Array of all Namespaces in scope for this XML Object.
      */
+    @Override
     Object[] inScopeNamespaces()
     {
         XmlCursor cursor = newCursor();
@@ -2113,6 +2136,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param child
      * @param xml
      */
+    @Override
     XML insertChildAfter(Object child, Object xml)
     {
         if (child == null)
@@ -2133,6 +2157,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param child
      * @param xml
      */
+    @Override
     XML insertChildBefore(Object child, Object xml)
     {
         if (child == null)
@@ -2152,6 +2177,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     boolean hasOwnProperty(XMLName xmlName)
     {
         boolean hasProperty = false;
@@ -2173,6 +2199,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     boolean hasComplexContent()
     {
         return !hasSimpleContent();
@@ -2182,6 +2209,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     boolean hasSimpleContent()
     {
         boolean simpleContent = false;
@@ -2209,6 +2237,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     int length()
     {
         return 1;
@@ -2218,6 +2247,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     String localName()
     {
         XmlCursor cursor = newCursor();
@@ -2243,6 +2273,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return The qualified name associated with this XML object.
      */
+    @Override
     QName name()
     {
         XmlCursor cursor = newCursor();
@@ -2278,6 +2309,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param prefix
      * @return
      */
+    @Override
     Object namespace(String prefix)
     {
         XmlCursor cursor = newCursor();
@@ -2320,6 +2352,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     Object[] namespaceDeclarations()
     {
         XmlCursor cursor = newCursor();
@@ -2332,6 +2365,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     Object nodeKind()
     {
         String result;
@@ -2369,6 +2403,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
     /**
      *
      */
+    @Override
     void normalize()
     {
         XmlCursor curs = newCursor();
@@ -2445,6 +2480,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     Object parent()
     {
         Object parent;
@@ -2487,6 +2523,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param xml
      * @return
      */
+    @Override
     XML prependChild (Object xml)
     {
         XmlCursor curs = newCursor();
@@ -2510,6 +2547,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     Object processingInstructions(XMLName xmlName)
     {
         return matchChildren(XmlCursor.TokenType.PROCINST, xmlName);
@@ -2520,6 +2558,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param name
      * @return
      */
+    @Override
     boolean propertyIsEnumerable(Object name)
     {
         boolean result;
@@ -2539,6 +2578,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @param namespace
      */
+    @Override
     XML removeNamespace(Namespace ns)
     {
         XmlCursor cursor = newCursor();
@@ -2645,6 +2685,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
         return this;
     }
 
+    @Override
     XML replace(long index, Object xml)
     {
         XMLList xlChildToReplace = child(index);
@@ -2664,6 +2705,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param xml
      * @return
      */
+    @Override
     XML replace(XMLName xmlName, Object xml)
     {
         putXMLProperty(xmlName, xml);
@@ -2674,6 +2716,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @param xml
      */
+    @Override
     XML setChildren(Object xml)
     {
         // remove all children
@@ -2691,6 +2734,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @param name
      */
+    @Override
     void setLocalName(String localName)
     {
         XmlCursor cursor = newCursor();
@@ -2717,6 +2761,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @param name
      */
+    @Override
     void setName(QName qname)
     {
         XmlCursor cursor = newCursor();
@@ -2751,6 +2796,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @param ns
      */
+    @Override
     void setNamespace(Namespace ns)
     {
         XmlCursor cursor = newCursor();
@@ -2781,6 +2827,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     XMLList text()
     {
         return matchChildren(XmlCursor.TokenType.TEXT);
@@ -2790,6 +2837,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     public String toString()
     {
         String result;
@@ -2816,6 +2864,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
         return result;
     }
 
+    @Override
     String toSource(int indent)
     {
         // XXX Does toXMLString always return valid XML literal?
@@ -2826,6 +2875,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     String toXMLString(int indent)
     {
         // XXX indent is ignored
@@ -2885,6 +2935,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      *
      * @return
      */
+    @Override
     Object valueOf()
     {
         return this;
@@ -2899,6 +2950,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
      * @param target
      * @return
      */
+    @Override
     boolean equivalentXml(Object target)
     {
         boolean result = false;
@@ -2979,6 +3031,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
         return result;
     }
 
+    @Override
     protected Object jsConstructor(Context cx, boolean inNewExpr,
                                    Object[] args)
     {
@@ -2997,6 +3050,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
     /**
      * See ECMA 357, 11_2_2_1, Semantics, 3_f.
      */
+    @Override
     public Scriptable getExtraMethodSource(Context cx)
     {
         if (hasSimpleContent()) {
@@ -3006,6 +3060,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
         return null;
     }
 
+    @Override
     XmlObject getXmlObject()
     {
         XmlObject xo;

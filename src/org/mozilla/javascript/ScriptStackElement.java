@@ -26,6 +26,7 @@ public final class ScriptStackElement implements Serializable {
         this.lineNumber = lineNumber;
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         renderMozillaStyle(sb);

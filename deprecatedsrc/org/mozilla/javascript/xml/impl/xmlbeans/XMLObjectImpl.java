@@ -94,6 +94,7 @@ abstract class XMLObjectImpl extends XMLObject
     abstract void setName(QName xmlName);
     abstract void setNamespace(Namespace ns);
     abstract XMLList text();
+    @Override
     public abstract String toString();
     abstract String toSource(int indent);
     abstract String toXMLString(int indent);
@@ -114,6 +115,7 @@ abstract class XMLObjectImpl extends XMLObject
     //
     //
 
+    @Override
     public final Object getDefaultValue(Class hint)
     {
         return toString();
@@ -125,6 +127,7 @@ abstract class XMLObjectImpl extends XMLObject
      * never returns {@link Scriptable#NOT_FOUND} for them but rather
      * calls equivalentXml(value) and wrap the result as Boolean.
      */
+    @Override
     protected final Object equivalentValues(Object value)
     {
         boolean result = equivalentXml(value);
@@ -145,6 +148,7 @@ abstract class XMLObjectImpl extends XMLObject
     /**
      * Implementation of ECMAScript [[Has]]
      */
+    @Override
     public final boolean has(Context cx, Object id)
     {
         if (cx == null) cx = Context.getCurrentContext();
@@ -259,6 +263,7 @@ abstract class XMLObjectImpl extends XMLObject
         return NOT_FOUND;
     }
 
+    @Override
     public Ref memberRef(Context cx, Object elem, int memberTypeFlags)
     {
         XMLName xmlName;
@@ -283,6 +288,7 @@ abstract class XMLObjectImpl extends XMLObject
     /**
      * Generic reference to implement x::ns, x.@ns::y, x..@ns::y etc.
      */
+    @Override
     public Ref memberRef(Context cx, Object namespace, Object elem,
                          int memberTypeFlags)
     {
@@ -299,11 +305,13 @@ abstract class XMLObjectImpl extends XMLObject
         return xmlName;
     }
 
+    @Override
     public NativeWith enterWith(Scriptable scope)
     {
         return new XMLWithScope(lib, scope, this);
     }
 
+    @Override
     public NativeWith enterDotQuery(Scriptable scope)
     {
         XMLWithScope xws = new XMLWithScope(lib, scope, this);
@@ -311,6 +319,7 @@ abstract class XMLObjectImpl extends XMLObject
         return xws;
     }
 
+    @Override
     public final Object addValues(Context cx, boolean thisIsLeft,
                                      Object value)
     {
@@ -393,6 +402,7 @@ abstract class XMLObjectImpl extends XMLObject
 
         MAX_PROTOTYPE_ID           = 41;
 
+    @Override
     protected int findPrototypeId(String s)
     {
         int id;
@@ -470,6 +480,7 @@ abstract class XMLObjectImpl extends XMLObject
     }
 // #/string_id_map#
 
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
@@ -544,6 +555,7 @@ abstract class XMLObjectImpl extends XMLObject
      * @param args
      * @return
      */
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {

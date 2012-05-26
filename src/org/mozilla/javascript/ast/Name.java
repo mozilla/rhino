@@ -81,6 +81,7 @@ public class Name extends AstNode {
      * @param s the scope.  Can be null.  Doesn't set any fields in the
      * scope.
      */
+    @Override
     public void setScope(Scope s) {
         scope = s;
     }
@@ -92,6 +93,7 @@ public class Name extends AstNode {
      * to find the lexical {@code Scope} in which this {@code Name} is defined,
      * if any.
      */
+    @Override
     public Scope getScope() {
         return scope;
     }

@@ -77,6 +77,7 @@ class XMLName extends Ref
         isDescendants = true;
     }
 
+    @Override
     public boolean has(Context cx)
     {
         if (xmlObject == null) {
@@ -85,6 +86,7 @@ class XMLName extends Ref
         return xmlObject.hasXMLProperty(this);
     }
 
+    @Override
     public Object get(Context cx)
     {
         if (xmlObject == null) {
@@ -94,6 +96,7 @@ class XMLName extends Ref
         return xmlObject.getXMLProperty(this);
     }
 
+    @Override
     public Object set(Context cx, Object value)
     {
         if (xmlObject == null) {
@@ -108,6 +111,7 @@ class XMLName extends Ref
         return value;
     }
 
+    @Override
     public boolean delete(Context cx)
     {
         if (xmlObject == null) {
@@ -117,6 +121,7 @@ class XMLName extends Ref
         return !xmlObject.hasXMLProperty(this);
     }
 
+    @Override
     public String toString()
     {
         //return qname.localName();

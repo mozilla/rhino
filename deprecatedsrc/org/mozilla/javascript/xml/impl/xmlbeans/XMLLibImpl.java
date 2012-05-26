@@ -485,6 +485,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable
     /**
      * See E4X 13.1.2.1.
      */
+    @Override
     public boolean isXMLName(Context cx, Object nameObj)
     {
         String name;
@@ -604,6 +605,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable
         return XMLName.formProperty(uri, localName);
     }
 
+    @Override
     public Ref nameRef(Context cx, Object name,
                        Scriptable scope, int memberTypeFlags)
     {
@@ -615,6 +617,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable
         return xmlPrimaryReference(cx, xmlName, scope);
     }
 
+    @Override
     public Ref nameRef(Context cx, Object namespace, Object name,
                        Scriptable scope, int memberTypeFlags)
     {
@@ -665,6 +668,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable
      * @param value Unescaped text
      * @return The escaped text
      */
+    @Override
     public String escapeAttributeValue(Object value)
     {
         String text = ScriptRuntime.toString(value);
@@ -691,6 +695,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable
      * @param value Unescaped text
      * @return The escaped text
      */
+    @Override
     public String escapeTextValue(Object value)
     {
         if (value instanceof XMLObjectImpl) {
@@ -715,6 +720,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable
         return (begin < end) ? elementText.substring(begin, end) : "";
     }
 
+    @Override
     public Object toDefaultXmlNamespace(Context cx, Object uriValue)
     {
         return constructNamespace(cx, uriValue);
