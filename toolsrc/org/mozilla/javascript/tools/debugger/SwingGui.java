@@ -73,7 +73,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EventListener;
 import java.util.EventObject;
 import java.util.Map;
 import java.util.HashMap;
@@ -630,7 +629,7 @@ public class SwingGui extends JFrame implements GuiCallback {
 
         Dim.ContextData contextData = lastFrame.contextData();
 
-        JComboBox ctx = context.context;
+        JComboBox<String> ctx = context.context;
         List<String> toolTips = context.toolTips;
         context.disableUpdate();
         int frameCount = contextData.frameCount();
@@ -1628,7 +1627,7 @@ class MoreWindows extends JDialog implements ActionListener {
     /**
      * The list component.
      */
-    private JList list;
+    private JList<String> list;
 
     /**
      * Our parent frame.
@@ -1660,8 +1659,8 @@ class MoreWindows extends JDialog implements ActionListener {
         getRootPane().setDefaultButton(setButton);
 
         //dim part of the dialog
-        list = new JList(new DefaultListModel());
-        DefaultListModel model = (DefaultListModel)list.getModel();
+        list = new JList<String>(new DefaultListModel<String>());
+        DefaultListModel<String> model = (DefaultListModel<String>)list.getModel();
         model.clear();
         //model.fireIntervalRemoved(model, 0, size);
         for (String data: fileWindows.keySet()) {
@@ -1740,7 +1739,7 @@ class MoreWindows extends JDialog implements ActionListener {
             setVisible(false);
             value = null;
         } else if (cmd.equals("Select")) {
-            value = (String)list.getSelectedValue();
+            value = list.getSelectedValue();
             setVisible(false);
             swingGui.showFileWindow(value, -1);
         }
@@ -1777,7 +1776,7 @@ class FindFunction extends JDialog implements ActionListener {
     /**
      * List of functions.
      */
-    private JList list;
+    private JList<String> list;
 
     /**
      * The debug GUI frame.
@@ -1807,8 +1806,8 @@ class FindFunction extends JDialog implements ActionListener {
         setButton.addActionListener(this);
         getRootPane().setDefaultButton(setButton);
 
-        list = new JList(new DefaultListModel());
-        DefaultListModel model = (DefaultListModel)list.getModel();
+        list = new JList<String>(new DefaultListModel<String>());
+        DefaultListModel<String> model = (DefaultListModel<String>)list.getModel();
         model.clear();
 
         String[] a = debugGui.dim.functionNames();
@@ -1891,7 +1890,7 @@ class FindFunction extends JDialog implements ActionListener {
                 return;
             }
             try {
-                value = (String)list.getSelectedValue();
+                value = list.getSelectedValue();
             } catch (ArrayIndexOutOfBoundsException exc) {
                 return;
             }
@@ -2863,7 +2862,7 @@ class ContextWindow extends JPanel implements ActionListener {
     /**
      * The combo box that holds the stack frames.
      */
-    JComboBox context;
+    JComboBox<String> context;
 
     /**
      * Tool tips for the stack frames.
@@ -2932,7 +2931,7 @@ class ContextWindow extends JPanel implements ActionListener {
         p2.setLayout(new GridLayout());
         p1.add(t1);
         JLabel label = new JLabel("Context:");
-        context = new JComboBox();
+        context = new JComboBox<String>();
         context.setLightWeightPopupEnabled(false);
         toolTips = Collections.synchronizedList(new java.util.ArrayList<String>());
         label.setBorder(context.getBorder());
@@ -3033,14 +3032,14 @@ class ContextWindow extends JPanel implements ActionListener {
                             if (!frame.isResizable()) {
                                 frame.setResizable(true);
                                 frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                                final EventListener[] l =
+                                final WindowListener[] l =
                                     frame.getListeners(WindowListener.class);
-                                frame.removeWindowListener((WindowListener)l[0]);
+                                frame.removeWindowListener(l[0]);
                                 frame.addWindowListener(new WindowAdapter() {
                                         @Override
                                         public void windowClosing(WindowEvent e) {
                                             context.hidePopup();
-                                            ((WindowListener)l[0]).windowClosing(e);
+                                            l[0].windowClosing(e);
                                         }
                                     });
                                 //adjustVerticalSplit = true;
