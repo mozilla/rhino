@@ -14,17 +14,17 @@ import org.mozilla.javascript.*;
 class NamespaceHelper
 {
     private XMLLibImpl lib;
-    private final Map prefixToURI = new HashMap();
-    private final Map uriToPrefix = new HashMap();
+    private final Map<String, String> prefixToURI = new HashMap<String, String>();
+    private final Map<String, Set<String>> uriToPrefix = new HashMap<String, Set<String>>();
     // A set of URIs that are used without explicit namespace declaration in scope.
-    private final Set undeclared = new HashSet();
+    private final Set<String> undeclared = new HashSet<String>();
 
     private NamespaceHelper(XMLLibImpl lib)
     {
         this.lib = lib;
         // Insert the default namespace
         prefixToURI.put("", "");
-        Set prefixes = new HashSet();
+        Set<String> prefixes = new HashSet<String>();
         prefixes.add("");
         uriToPrefix.put("", prefixes);
     }
@@ -38,16 +38,16 @@ class NamespaceHelper
      */
     private void declareNamespace(String prefix, String uri, ObjArray declarations)
     {
-        Set prefixes = (Set)uriToPrefix.get(uri);
+        Set<String> prefixes = uriToPrefix.get(uri);
         if(prefixes == null)
         {
-            prefixes = new HashSet();
+            prefixes = new HashSet<String>();
             uriToPrefix.put(uri, prefixes);
         }
 
         if(!prefixes.contains(prefix))
         {
-            String oldURI = (String)prefixToURI.get(prefix);
+            String oldURI = prefixToURI.get(prefix);
 
             // Add the new mapping
             prefixes.add(prefix);
@@ -58,7 +58,7 @@ class NamespaceHelper
             if(oldURI != null)
             {
                 // Update the existing mapping
-                prefixes = (Set)uriToPrefix.get(oldURI);
+                prefixes = uriToPrefix.get(oldURI);
                 prefixes.remove(prefix);
             }
         }
@@ -72,7 +72,7 @@ class NamespaceHelper
     {
         javax.xml.namespace.QName qname = cursor.getName();
         String uri = qname.getNamespaceURI();
-        Set prefixes = (Set)uriToPrefix.get(uri);
+        Set<String> prefixes = uriToPrefix.get(uri);
         if(prefixes == null || prefixes.size() == 0)
         {
             undeclared.add(uri);
@@ -144,19 +144,19 @@ class NamespaceHelper
             helper.update(cursor, null);
         }
 
-        Iterator i = helper.prefixToURI.entrySet().iterator();
+        Iterator<Map.Entry<String, String>> i = helper.prefixToURI.entrySet().iterator();
         while(i.hasNext())
         {
-            Map.Entry entry = (Map.Entry)i.next();
+            Map.Entry<String, String> entry = i.next();
             Namespace ns = new Namespace(lib, (String)entry.getKey(),
                                             (String)entry.getValue());
             namespaces.add(ns);
         }
 
-        i = helper.undeclared.iterator();
-        while(i.hasNext())
+        Iterator<String> i2 = helper.undeclared.iterator();
+        while(i2.hasNext())
         {
-            Namespace ns = new Namespace(lib, (String)i.next());
+            Namespace ns = new Namespace(lib, i2.next());
             namespaces.add(ns);
         }
 
@@ -252,7 +252,7 @@ class NamespaceHelper
     /**
      * @return Prefix to URI map of all namespaces in scope at the cursor.
      */
-    public static Map getAllNamespaces(XMLLibImpl lib, XmlCursor cursor)
+    public static Map<String, String> getAllNamespaces(XMLLibImpl lib, XmlCursor cursor)
     {
         NamespaceHelper helper = new NamespaceHelper(lib);
 
@@ -281,7 +281,7 @@ class NamespaceHelper
         return helper.prefixToURI;
     }
 
-    public static void getNamespaces(XmlCursor cursor, Map prefixToURI)
+    public static void getNamespaces(XmlCursor cursor, Map<String, String> prefixToURI)
     {
         cursor.push();
         while(cursor.toNextToken().isAnyAttr())

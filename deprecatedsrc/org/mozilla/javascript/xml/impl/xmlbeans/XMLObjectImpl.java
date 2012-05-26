@@ -116,7 +116,7 @@ abstract class XMLObjectImpl extends XMLObject
     //
 
     @Override
-    public final Object getDefaultValue(Class hint)
+    public final Object getDefaultValue(Class<?> hint)
     {
         return toString();
     }

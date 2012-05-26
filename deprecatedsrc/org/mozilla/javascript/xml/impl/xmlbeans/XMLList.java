@@ -19,12 +19,12 @@ class XMLList extends XMLObjectImpl implements Function
 
     static class AnnotationList
     {
-        private Vector v;
+        private Vector<XML.XScriptAnnotation> v;
 
 
         AnnotationList ()
         {
-            v = new Vector();
+            v = new Vector<XML.XScriptAnnotation>();
         }
 
 
@@ -36,7 +36,7 @@ class XMLList extends XMLObjectImpl implements Function
 
         XML.XScriptAnnotation item(int index)
         {
-            return (XML.XScriptAnnotation)(v.get(index));
+            return v.get(index);
         }
 
 
@@ -795,7 +795,7 @@ class XMLList extends XMLObjectImpl implements Function
     @Override
     XMLList children()
     {
-        Vector v = new Vector();
+        Vector<XML> v = new Vector<XML>();
 
         for (int i = 0; i < length(); i++)
         {
