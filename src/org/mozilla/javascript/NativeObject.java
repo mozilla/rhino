@@ -559,7 +559,7 @@ public class NativeObject extends IdScriptableObject implements Map
                             if (!(other instanceof Map.Entry)) {
                                 return false;
                             }
-                            Map.Entry e = (Map.Entry) other;
+                            Map.Entry<?, ?> e = (Map.Entry<?, ?>) other;
                             return (ekey == null ? e.getKey() == null : ekey.equals(e.getKey()))
                                 && (value == null ? e.getValue() == null : value.equals(e.getValue()));
                         }
