@@ -88,7 +88,7 @@ public class Bug448816Test extends TestCase {
         compareIterators(map.values().iterator(), reference.values().iterator());
     }
 
-    private void compareIterators(Iterator it1, Iterator it2) {
+    private void compareIterators(Iterator<?> it1, Iterator<?> it2) {
         assertTrue(map.size() == 4);
         while (it1.hasNext()) {
             assertEquals(it1.next(), it2.next());
