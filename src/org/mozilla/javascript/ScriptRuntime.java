@@ -966,6 +966,7 @@ public class ScriptRuntime {
     /**
      * @deprecated Use {@link #toObject(Scriptable, Object)} instead.
      */
+    @Deprecated
     public static Scriptable toObject(Scriptable scope, Object val,
                                       Class<?> staticClass)
     {
@@ -1018,6 +1019,7 @@ public class ScriptRuntime {
     /**
      * @deprecated Use {@link #toObject(Context, Scriptable, Object)} instead.
      */
+    @Deprecated
     public static Scriptable toObject(Context cx, Scriptable scope, Object val,
                                       Class<?> staticClass)
     {
@@ -1027,6 +1029,7 @@ public class ScriptRuntime {
     /**
      * @deprecated The method is only present for compatibility.
      */
+    @Deprecated
     public static Object call(Context cx, Object fun, Object thisArg,
                               Object[] args, Scriptable scope)
     {
@@ -1686,6 +1689,7 @@ public class ScriptRuntime {
     /**
      * @deprecated
      */
+    @Deprecated
     public static Object delete(Object obj, Object id, Context cx)
     {
         return delete(obj, id, cx, false);
@@ -2595,6 +2599,7 @@ public class ScriptRuntime {
     /**
      * @deprecated The method is only present for compatibility.
      */
+    @Deprecated
     public static Object nameIncrDecr(Scriptable scopeChain, String id,
                                       int incrDecrMask)
     {
@@ -3492,6 +3497,7 @@ public class ScriptRuntime {
    * the version called from new code.
    * @deprecated This method only present for compatibility.
    */
+    @Deprecated
     public static Scriptable newObjectLiteral(Object[] propertyIds,
                                               Object[] propertyValues,
                                               Context cx, Scriptable scope)

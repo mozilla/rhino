@@ -52,6 +52,7 @@ public class WrappedException extends EvaluatorException
     /**
      * @deprecated Use {@link #getWrappedException()} instead.
      */
+    @Deprecated
     public Object unwrap()
     {
         return getWrappedException();

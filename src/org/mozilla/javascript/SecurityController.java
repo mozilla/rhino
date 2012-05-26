@@ -168,11 +168,11 @@ public abstract class SecurityController
      * override
      * {@link #callWithDomain(Object securityDomain, Context cx, Callable callable, Scriptable scope, Scriptable thisObj, Object[] args)}.
      */
+    @Deprecated
     public Object execWithDomain(Context cx, Scriptable scope,
                                  Script script, Object securityDomain)
     {
         throw new IllegalStateException("callWithDomain should be overridden");
     }
-
 
 }

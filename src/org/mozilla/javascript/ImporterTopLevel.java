@@ -124,6 +124,7 @@ public class ImporterTopLevel extends TopLevel {
     /**
      * @deprecated Kept only for compatibility.
      */
+    @Deprecated
     public void importPackage(Context cx, Scriptable thisObj, Object[] args,
                               Function funObj)
     {

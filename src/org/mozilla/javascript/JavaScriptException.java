@@ -23,6 +23,7 @@ public class JavaScriptException extends RhinoException
      * Use {@link WrappedException#WrappedException(Throwable)} to report
      * exceptions in Java code.
      */
+    @Deprecated
     public JavaScriptException(Object value)
     {
         this(value, "", 0);
@@ -84,6 +85,7 @@ public class JavaScriptException extends RhinoException
     /**
      * @deprecated Use {@link RhinoException#sourceName()} from the super class.
      */
+    @Deprecated
     public String getSourceName()
     {
         return sourceName();
@@ -92,6 +94,7 @@ public class JavaScriptException extends RhinoException
     /**
      * @deprecated Use {@link RhinoException#lineNumber()} from the super class.
      */
+    @Deprecated
     public int getLineNumber()
     {
         return lineNumber();

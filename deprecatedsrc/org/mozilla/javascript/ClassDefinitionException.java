@@ -12,6 +12,7 @@ package org.mozilla.javascript;
  * @deprecated The exception is no longer thrown by Rhino runtime as
  * {@link EvaluatorException} is used instead.
  */
+@Deprecated
 public class ClassDefinitionException extends RuntimeException
 {
     static final long serialVersionUID = -5637830967241712746L;

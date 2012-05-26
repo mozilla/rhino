@@ -11,6 +11,7 @@ package org.mozilla.javascript;
 /**
  * @deprecated This exception is no longer thrown by Rhino runtime.
  */
+@Deprecated
 public class PropertyException extends RuntimeException
 {
     static final long serialVersionUID = -8221564865490676219L;
