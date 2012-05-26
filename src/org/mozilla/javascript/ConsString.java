@@ -86,6 +86,7 @@ public class ConsString implements CharSequence, Serializable {
         return this.toString();
     }
     
+    @Override
     public String toString() {
         return depth == 0 ? (String)s1 : flatten();
     }

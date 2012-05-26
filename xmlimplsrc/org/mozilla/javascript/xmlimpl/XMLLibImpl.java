@@ -74,42 +74,52 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
         }
     }
 
+    @Override
     public void setIgnoreComments(boolean b) {
         options.setIgnoreComments(b);
     }
 
+    @Override
     public void setIgnoreWhitespace(boolean b) {
         options.setIgnoreWhitespace(b);
     }
 
+    @Override
     public void setIgnoreProcessingInstructions(boolean b) {
         options.setIgnoreProcessingInstructions(b);
     }
 
+    @Override
     public void setPrettyPrinting(boolean b) {
         options.setPrettyPrinting(b);
     }
 
+    @Override
     public void setPrettyIndent(int i) {
         options.setPrettyIndent(i);
     }
 
+    @Override
     public boolean isIgnoreComments() {
         return options.isIgnoreComments();
     }
 
+    @Override
     public boolean isIgnoreProcessingInstructions() {
         return options.isIgnoreProcessingInstructions();
     }
 
+    @Override
     public boolean isIgnoreWhitespace() {
         return options.isIgnoreWhitespace();
     }
 
+    @Override
     public  boolean isPrettyPrinting() {
         return options.isPrettyPrinting();
     }
 
+    @Override
     public int getPrettyIndent() {
         return options.getPrettyIndent();
     }

@@ -1720,6 +1720,7 @@ public class NativeArray extends IdScriptableObject implements List
         return true;
     }
 
+    @Override
     public int size() {
         long longLen = length;
         if (longLen > Integer.MAX_VALUE) {

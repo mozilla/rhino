@@ -63,6 +63,7 @@ public class ArrayComprehensionLoop extends ForInLoop {
      * Returns {@code null} for loop body
      * @return loop body (always {@code null} for this node type)
      */
+    @Override
     public AstNode getBody() {
         return null;
     }
@@ -72,6 +73,7 @@ public class ArrayComprehensionLoop extends ForInLoop {
      * @param body loop body
      * @throws UnsupportedOperationException
      */
+    @Override
     public void setBody(AstNode body) {
         throw new UnsupportedOperationException("this node type has no body");
     }
