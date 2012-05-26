@@ -129,7 +129,7 @@ public class WrapFactory
      * @since 1.7R3
      */
     public Scriptable wrapJavaClass(Context cx, Scriptable scope,
-                                    Class javaClass)
+                                    Class<?> javaClass)
     {
         return new NativeJavaClass(scope, javaClass);
     }

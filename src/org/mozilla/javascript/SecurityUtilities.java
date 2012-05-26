@@ -58,7 +58,7 @@ public class SecurityUtilities
             return AccessController.doPrivileged(
                 new PrivilegedAction<ProtectionDomain>() {
                     public ProtectionDomain run() {
-                        Class c = ((RhinoSecurityManager) securityManager)
+                        Class<?> c = ((RhinoSecurityManager) securityManager)
                                     .getCurrentScriptClass();
                         return c == null ? null : c.getProtectionDomain();
                     }
