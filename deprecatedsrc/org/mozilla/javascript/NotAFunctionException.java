@@ -44,6 +44,7 @@ package org.mozilla.javascript;
  * @deprecated The exception is no longer thrown by Rhino runtime as
  * {@link EvaluatorException} is used instead.
  */
+@Deprecated
 public class NotAFunctionException extends RuntimeException
 {
     static final long serialVersionUID = 6461524852170711724L;

@@ -335,6 +335,7 @@ public class Main {
     /**
      * @deprecated Use {@link #setSize(int, int)} instead.
      */
+    @Deprecated
     public void setSize(java.awt.Dimension dimension) {
         debugGui.setSize(dimension.width, dimension.height);
     }
@@ -343,6 +344,7 @@ public class Main {
      * @deprecated
      * The method does nothing and is only present for compatibility.
      */
+    @Deprecated
     public void setOptimizationLevel(int level) {
     }
 
@@ -350,6 +352,7 @@ public class Main {
      * @deprecated
      * The method is only present for compatibility and should not be called.
      */
+    @Deprecated
     public void contextEntered(Context cx) {
         throw new IllegalStateException();
     }
@@ -358,6 +361,7 @@ public class Main {
      * @deprecated
      * The method is only present for compatibility and should not be called.
      */
+    @Deprecated
     public void contextExited(Context cx) {
         throw new IllegalStateException();
     }
@@ -366,6 +370,7 @@ public class Main {
      * @deprecated
      * The method is only present for compatibility and should not be called.
      */
+    @Deprecated
     public void contextCreated(Context cx) {
         throw new IllegalStateException();
     }
@@ -374,6 +379,7 @@ public class Main {
      * @deprecated
      * The method is only present for compatibility and should not be called.
      */
+    @Deprecated
     public void contextReleased(Context cx)
     {
         throw new IllegalStateException();

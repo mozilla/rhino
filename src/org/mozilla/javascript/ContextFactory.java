@@ -584,6 +584,7 @@ public class ContextFactory
      * @deprecated use {@link #enterContext()} instead
      * @return a Context associated with the current thread
      */
+    @Deprecated
     public final Context enter()
     {
         return enterContext(null);
@@ -592,6 +593,7 @@ public class ContextFactory
     /**
      * @deprecated Use {@link Context#exit()} instead.
      */
+    @Deprecated
     public final void exit()
     {
         Context.exit();

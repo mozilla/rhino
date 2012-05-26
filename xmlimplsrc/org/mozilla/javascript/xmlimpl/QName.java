@@ -113,6 +113,7 @@ final class QName extends IdScriptableObject
     }
 
     /** @deprecated */
+    @Deprecated
     final XmlNode.QName toNodeQname() {
         return delegate;
     }

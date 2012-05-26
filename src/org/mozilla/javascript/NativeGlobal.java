@@ -545,6 +545,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      * @deprecated Use {@link ScriptRuntime#constructError(String,String)}
      * instead.
      */
+    @Deprecated
     public static EcmaError constructError(Context cx,
                                            String error,
                                            String message,
@@ -558,6 +559,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      * {@link ScriptRuntime#constructError(String,String,String,int,String,int)}
      * instead.
      */
+    @Deprecated
     public static EcmaError constructError(Context cx,
                                            String error,
                                            String message,

@@ -129,11 +129,13 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     }
 
     /** @deprecated */
+    @Deprecated
     QName qnamePrototype() {
         return qnamePrototype;
     }
 
     /** @deprecated */
+    @Deprecated
     Scriptable globalScope() {
         return globalScope;
     }
@@ -157,6 +159,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     }
 
     /** @deprecated */
+    @Deprecated
     XMLName toAttributeName(Context cx, Object nameValue) {
         if (nameValue instanceof XMLName) {
             //    TODO    Will this always be an XMLName of type attribute name?

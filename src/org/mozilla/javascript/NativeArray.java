@@ -641,6 +641,7 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     /** @deprecated Use {@link #getLength()} instead. */
+    @Deprecated
     public long jsGet_length() {
         return getLength();
     }
