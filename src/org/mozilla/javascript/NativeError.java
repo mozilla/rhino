@@ -61,6 +61,8 @@ final class NativeError extends IdScriptableObject
         ScriptableObject.putProperty(obj, "message", "");
         ScriptableObject.putProperty(obj, "fileName", "");
         ScriptableObject.putProperty(obj, "lineNumber", Integer.valueOf(0));
+        obj.setAttributes("name", ScriptableObject.DONTENUM);
+        obj.setAttributes("message", ScriptableObject.DONTENUM);
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
