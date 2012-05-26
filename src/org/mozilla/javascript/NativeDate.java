@@ -413,21 +413,15 @@ final class NativeDate extends IdScriptableObject
             return ScriptRuntime.wrapNumber(t);
 
           case Id_toISOString:
-            return realThis.toISOString();
+              if (t == t) {
+                  return js_toISOString(t);
+              }
+              String msg = ScriptRuntime.getMessage0("msg.invalid.date");
+              throw ScriptRuntime.constructError("RangeError", msg);
 
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
 
-    }
-
-    private String toISOString() {
-        if (date == date) {
-            synchronized (isoFormat) {
-                return isoFormat.format(new Date((long) date));
-            }
-        }
-        String msg = ScriptRuntime.getMessage0("msg.invalid.date");
-        throw ScriptRuntime.constructError("RangeError", msg);
     }
 
     /* ECMA helper functions */
@@ -1035,7 +1029,7 @@ final class NativeDate extends IdScriptableObject
 
     private static String date_format(double t, int methodId)
     {
-        StringBuffer result = new StringBuffer(60);
+        StringBuilder result = new StringBuilder(60);
         double local = LocalTime(t);
 
         /* Tue Oct 31 09:41:40 GMT-0800 (PST) 2000 */
@@ -1175,7 +1169,7 @@ final class NativeDate extends IdScriptableObject
 
     private static String js_toUTCString(double date)
     {
-        StringBuffer result = new StringBuffer(60);
+        StringBuilder result = new StringBuilder(60);
 
         appendWeekDayName(result, WeekDay(date));
         result.append(", ");
@@ -1198,7 +1192,35 @@ final class NativeDate extends IdScriptableObject
         return result.toString();
     }
 
-    private static void append0PaddedUint(StringBuffer sb, int i, int minWidth)
+    private static String js_toISOString(double t) {
+        StringBuilder result = new StringBuilder(27);
+
+        int year = YearFromTime(t);
+        if (year < 0) {
+            result.append('-');
+            append0PaddedUint(result, -year, 6);
+        } else if (year > 9999) {
+            append0PaddedUint(result, year, 6);
+        } else {
+            append0PaddedUint(result, year, 4);
+        }
+        result.append('-');
+        append0PaddedUint(result, MonthFromTime(t) + 1, 2);
+        result.append('-');
+        append0PaddedUint(result, DateFromTime(t), 2);
+        result.append('T');
+        append0PaddedUint(result, HourFromTime(t), 2);
+        result.append(':');
+        append0PaddedUint(result, MinFromTime(t), 2);
+        result.append(':');
+        append0PaddedUint(result, SecFromTime(t), 2);
+        result.append('.');
+        append0PaddedUint(result, msFromTime(t), 3);
+        result.append('Z');
+        return result.toString();
+    }
+
+    private static void append0PaddedUint(StringBuilder sb, int i, int minWidth)
     {
         if (i < 0) Kit.codeBug();
         int scale = 1;
@@ -1229,7 +1251,7 @@ final class NativeDate extends IdScriptableObject
         sb.append((char)('0' + i));
     }
 
-    private static void appendMonthName(StringBuffer sb, int index)
+    private static void appendMonthName(StringBuilder sb, int index)
     {
         // Take advantage of the fact that all month abbreviations
         // have the same length to minimize amount of strings runtime has
@@ -1242,7 +1264,7 @@ final class NativeDate extends IdScriptableObject
         }
     }
 
-    private static void appendWeekDayName(StringBuffer sb, int index)
+    private static void appendWeekDayName(StringBuilder sb, int index)
     {
         String days = "Sun"+"Mon"+"Tue"+"Wed"+"Thu"+"Fri"+"Sat";
         index *= 3;
