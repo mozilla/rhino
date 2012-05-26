@@ -105,11 +105,8 @@ public abstract class VMBridge
 
     /**
      * Create proxy object for {@link InterfaceAdapter}. The proxy should call
-     * {@link InterfaceAdapter#invoke(ContextFactory cf,
-     *                                Object target,
-     *                                Scriptable topScope,
-     *                                Method method,
-     *                                Object[] args)}
+     * {@link InterfaceAdapter#invoke(ContextFactory, Object, Scriptable,
+     *                                Method, Object[])}
      * as implementation of interface methods associated with
      * <tt>proxyHelper</tt>.
      *
