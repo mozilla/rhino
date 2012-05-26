@@ -114,7 +114,7 @@ final class NativeDate extends IdScriptableObject
         addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_parse,
                               "parse", 1);
         addIdFunctionProperty(ctor, DATE_TAG, ConstructorId_UTC,
-                              "UTC", 1);
+                              "UTC", 7);
         super.fillConstructorProperties(ctor);
     }
 
@@ -124,7 +124,7 @@ final class NativeDate extends IdScriptableObject
         String s;
         int arity;
         switch (id) {
-          case Id_constructor:        arity=1; s="constructor";        break;
+          case Id_constructor:        arity=7; s="constructor";        break;
           case Id_toString:           arity=0; s="toString";           break;
           case Id_toTimeString:       arity=0; s="toTimeString";       break;
           case Id_toDateString:       arity=0; s="toDateString";       break;
