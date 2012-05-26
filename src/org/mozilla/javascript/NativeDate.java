@@ -208,10 +208,6 @@ final class NativeDate extends IdScriptableObject
 
           case Id_toJSON:
             {
-                if (thisObj instanceof NativeDate) {
-                    return ((NativeDate) thisObj).toISOString();
-                }
-
                 final String toISOString = "toISOString";
 
                 Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
@@ -222,7 +218,7 @@ final class NativeDate extends IdScriptableObject
                         return null;
                     }
                 }
-                Object toISO = o.get(toISOString, o);
+                Object toISO = ScriptableObject.getProperty(o, toISOString);
                 if (toISO == NOT_FOUND) {
                     throw ScriptRuntime.typeError2("msg.function.not.found.in",
                             toISOString,
