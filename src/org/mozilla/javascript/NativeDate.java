@@ -405,11 +405,11 @@ final class NativeDate extends IdScriptableObject
             return ScriptRuntime.wrapNumber(t);
 
           case Id_toISOString:
-              if (t == t) {
-                  return js_toISOString(t);
-              }
-              String msg = ScriptRuntime.getMessage0("msg.invalid.date");
-              throw ScriptRuntime.constructError("RangeError", msg);
+            if (t == t) {
+                return js_toISOString(t);
+            }
+            String msg = ScriptRuntime.getMessage0("msg.invalid.date");
+            throw ScriptRuntime.constructError("RangeError", msg);
 
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -812,13 +812,13 @@ final class NativeDate extends IdScriptableObject
     }
 
     /**
-    * 15.9.1.15 Date Time String Format<br>
-    * Parse input string according to simplified ISO-8601 Extended Format:
-    * <ul>
-    * <li><code>YYYY-MM-DD'T'HH:mm:ss.sss'Z'</code></li>
-    * <li>or <code>YYYY-MM-DD'T'HH:mm:ss.sss[+-]hh:mm</code></li>
-    * </ul>
-    */
+     * 15.9.1.15 Date Time String Format<br>
+     * Parse input string according to simplified ISO-8601 Extended Format:
+     * <ul>
+     * <li><code>YYYY-MM-DD'T'HH:mm:ss.sss'Z'</code></li>
+     * <li>or <code>YYYY-MM-DD'T'HH:mm:ss.sss[+-]hh:mm</code></li>
+     * </ul>
+     */
     private static double parseISOString(String s) {
         // we use a simple state machine to parse the input string
         final int ERROR = -1;
