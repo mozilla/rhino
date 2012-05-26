@@ -172,8 +172,8 @@ public class LogicalEquality
     private static boolean attributeListsEqual(XmlCursor xmlOne, XmlCursor xmlTwo)
     {
         boolean result = true;
-        TreeMap mapOne = loadAttributeMap(xmlOne);
-        TreeMap mapTwo = loadAttributeMap(xmlTwo);
+        TreeMap<String, javax.xml.namespace.QName> mapOne = loadAttributeMap(xmlOne);
+        TreeMap<String, javax.xml.namespace.QName> mapTwo = loadAttributeMap(xmlTwo);
 
         if (mapOne.size() != mapTwo.size())
         {
@@ -181,10 +181,10 @@ public class LogicalEquality
         }
         else
         {
-            Set keysOne = mapOne.keySet();
-            Set keysTwo = mapTwo.keySet();
-            Iterator itOne = keysOne.iterator();
-            Iterator itTwo = keysTwo.iterator();
+            Set<String> keysOne = mapOne.keySet();
+            Set<String> keysTwo = mapTwo.keySet();
+            Iterator<String> itOne = keysOne.iterator();
+            Iterator<String> itTwo = keysTwo.iterator();
 
             while (result && itOne.hasNext())
             {
@@ -197,8 +197,8 @@ public class LogicalEquality
                 }
                 else
                 {
-                    javax.xml.namespace.QName qnameOne = (javax.xml.namespace.QName) mapOne.get(valueOne);
-                    javax.xml.namespace.QName qnameTwo = (javax.xml.namespace.QName) mapTwo.get(valueTwo);
+                    javax.xml.namespace.QName qnameOne = mapOne.get(valueOne);
+                    javax.xml.namespace.QName qnameTwo = mapTwo.get(valueTwo);
 
                     if (!qnamesEqual(qnameOne, qnameTwo))
                     {
@@ -216,9 +216,9 @@ public class LogicalEquality
      * @param xml
      * @return
      */
-    private static TreeMap loadAttributeMap(XmlCursor xml)
+    private static TreeMap<String, javax.xml.namespace.QName> loadAttributeMap(XmlCursor xml)
     {
-        TreeMap result = new TreeMap();
+        TreeMap<String, javax.xml.namespace.QName> result = new TreeMap<String, javax.xml.namespace.QName>();
 
         while (xml.isAttr())
         {

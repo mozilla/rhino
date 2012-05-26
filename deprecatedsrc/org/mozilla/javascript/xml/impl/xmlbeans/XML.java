@@ -1865,9 +1865,9 @@ todo need to handle namespace prefix not found in XML look for namespace type in
                nsPrefix.equals("")) return this;
 
             // Get all declared namespaces that are in scope
-            Map prefixToURI = NamespaceHelper.getAllNamespaces(lib, cursor);
+            Map<String, String> prefixToURI = NamespaceHelper.getAllNamespaces(lib, cursor);
 
-            String uri = (String)prefixToURI.get(nsPrefix);
+            String uri = prefixToURI.get(nsPrefix);
             if(uri != null)
             {
                 // Check if the Namespace is not already in scope
@@ -2372,8 +2372,8 @@ todo need to handle namespace prefix not found in XML look for namespace type in
         }
         else
         {
-            Map prefixToURI = NamespaceHelper.getAllNamespaces(lib, cursor);
-            String uri = (String)prefixToURI.get(prefix);
+            Map<String, String> prefixToURI = NamespaceHelper.getAllNamespaces(lib, cursor);
+            String uri = prefixToURI.get(prefix);
             result = (uri == null) ? Undefined.instance : new Namespace(lib, prefix, uri);
         }
 
@@ -2625,7 +2625,7 @@ todo need to handle namespace prefix not found in XML look for namespace type in
 
             String nsPrefix = ns.prefix();
             String nsURI = ns.uri();
-            Map prefixToURI = new HashMap();
+            Map<String, String> prefixToURI = new HashMap<String, String>();
             int depth = 1;
 
             while(!(cursor.isEnd() && depth == 0))
@@ -2638,11 +2638,11 @@ todo need to handle namespace prefix not found in XML look for namespace type in
                     prefixToURI.clear();
                     NamespaceHelper.getNamespaces(cursor, prefixToURI);
                     ObjArray inScopeNSBag = new ObjArray();
-                    Iterator i = prefixToURI.entrySet().iterator();
+                    Iterator<Map.Entry<String, String>> i = prefixToURI.entrySet().iterator();
                     while(i.hasNext())
                     {
-                        Map.Entry entry = (Map.Entry)i.next();
-                        ns = new Namespace(lib, (String)entry.getKey(), (String)entry.getValue());
+                        Map.Entry<String, String> entry = i.next();
+                        ns = new Namespace(lib, entry.getKey(), entry.getValue());
                         inScopeNSBag.add(ns);
                     }
 
@@ -2688,9 +2688,9 @@ todo need to handle namespace prefix not found in XML look for namespace type in
                         i = prefixToURI.entrySet().iterator();
                         while(i.hasNext())
                         {
-                            Map.Entry entry = (Map.Entry)i.next();
+                            Map.Entry<String, String> entry = i.next();
                             if(entry.getValue().equals(nsURI))
-                                NamespaceHelper.removeNamespace(cursor, (String)entry.getKey());
+                                NamespaceHelper.removeNamespace(cursor, entry.getKey());
                         }
                     }
                     else if(nsURI.equals(prefixToURI.get(nsPrefix)))

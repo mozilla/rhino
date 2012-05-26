@@ -172,7 +172,7 @@ class Namespace extends IdScriptableObject
      * @return
      */
     @Override
-    public Object getDefaultValue (Class hint)
+    public Object getDefaultValue (Class<?> hint)
     {
         return uri();
     }
