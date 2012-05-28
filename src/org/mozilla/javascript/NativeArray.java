@@ -1006,14 +1006,14 @@ public class NativeArray extends IdScriptableObject implements List
             comparator = new Comparator<Object>() {
                 public int compare(final Object x, final Object y) {
                     // sort undefined to end
-                    if (x == y) {
-                        return 0;
-                    } else if (y == Undefined.instance
-                            || y == Scriptable.NOT_FOUND) {
+                    if (x == NOT_FOUND) {
+                        return y == NOT_FOUND ? 0 : 1;
+                    } else if (y == NOT_FOUND) {
                         return -1;
-                    } else if (x == Undefined.instance
-                            || x == Scriptable.NOT_FOUND) {
-                        return 1;
+                    } else if (x == Undefined.instance) {
+                        return y == Undefined.instance ? 0 : 1;
+                    } else if (y == Undefined.instance) {
+                        return -1;
                     }
 
                     cmpBuf[0] = x;
@@ -1033,14 +1033,14 @@ public class NativeArray extends IdScriptableObject implements List
             comparator = new Comparator<Object>() {
                 public int compare(final Object x, final Object y) {
                     // sort undefined to end
-                    if (x == y)
-                        return 0;
-                    else if (y == Undefined.instance
-                            || y == Scriptable.NOT_FOUND) {
+                    if (x == NOT_FOUND) {
+                        return y == NOT_FOUND ? 0 : 1;
+                    } else if (y == NOT_FOUND) {
                         return -1;
-                    } else if (x == Undefined.instance
-                            || x == Scriptable.NOT_FOUND) {
-                        return 1;
+                    } else if (x == Undefined.instance) {
+                        return y == Undefined.instance ? 0 : 1;
+                    } else if (y == Undefined.instance) {
+                        return -1;
                     }
 
                     final String a = ScriptRuntime.toString(x);
@@ -1067,10 +1067,6 @@ public class NativeArray extends IdScriptableObject implements List
 
         return thisObj;
     }
-
-    /**
-     * Non-ECMA methods.
-     */
 
     private static Object js_push(Context cx, Scriptable thisObj,
                                   Object[] args)
