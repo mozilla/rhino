@@ -738,15 +738,20 @@ public class NativeArray extends IdScriptableObject implements List
         } else if (obj instanceof NativeArray) {
             return ((NativeArray)obj).getLength();
         }
-        return ScriptRuntime.toUint32(
-            ScriptRuntime.getObjectProp(obj, "length", cx));
+        Object len = ScriptableObject.getProperty(obj, "length");
+        if (len == Scriptable.NOT_FOUND) {
+            // toUint32(undefined) == 0
+            return 0;
+        }
+        return ScriptRuntime.toUint32(len);
     }
 
     private static Object setLengthProperty(Context cx, Scriptable target,
                                             long length)
     {
-        return ScriptRuntime.setObjectProp(
-                   target, "length", ScriptRuntime.wrapNumber(length), cx);
+        Object len = ScriptRuntime.wrapNumber(length);
+        ScriptableObject.putProperty(target, "length", len);
+        return len;
     }
 
     /* Utility functions to encapsulate index > Integer.MAX_VALUE
@@ -762,12 +767,8 @@ public class NativeArray extends IdScriptableObject implements List
 
     private static Object getElem(Context cx, Scriptable target, long index)
     {
-        if (index > Integer.MAX_VALUE) {
-            String id = Long.toString(index);
-            return ScriptRuntime.getObjectProp(target, id, cx);
-        } else {
-            return ScriptRuntime.getObjectIndex(target, (int)index, cx);
-        }
+        Object elem = getRawElem(target, index);
+        return (elem != Scriptable.NOT_FOUND ? elem : Undefined.instance);
     }
 
     // same as getElem, but without converting NOT_FOUND to undefined
@@ -784,9 +785,9 @@ public class NativeArray extends IdScriptableObject implements List
     {
         if (index > Integer.MAX_VALUE) {
             String id = Long.toString(index);
-            ScriptRuntime.setObjectProp(target, id, value, cx);
+            ScriptableObject.putProperty(target, id, value);
         } else {
-            ScriptRuntime.setObjectIndex(target, (int)index, value, cx);
+            ScriptableObject.putProperty(target, (int)index, value);
         }
     }
 
