@@ -161,7 +161,7 @@ class XmlProcessor implements Serializable {
     }
 
     private String toXmlNewlines(String rv) {
-        StringBuffer nl = new StringBuffer();
+        StringBuilder nl = new StringBuilder();
         for (int i=0; i<rv.length(); i++) {
             if (rv.charAt(i) == '\r') {
                 if (rv.charAt(i+1) == '\n') {
@@ -387,7 +387,7 @@ class XmlProcessor implements Serializable {
 
     final String ecmaToXmlString(Node node) {
         //    See ECMA 357 Section 10.2.1
-        StringBuffer s = new StringBuffer();
+        StringBuilder s = new StringBuilder();
         int indentLevel = 0;
         if (prettyPrint) {
             for (int i=0; i<indentLevel; i++) {
@@ -420,7 +420,7 @@ class XmlProcessor implements Serializable {
     }
 
     private void beautifyElement(Element e, int indent) {
-        StringBuffer s = new StringBuffer();
+        StringBuilder s = new StringBuilder();
         s.append('\n');
         for (int i=0; i<indent; i++) {
             s.append(' ');

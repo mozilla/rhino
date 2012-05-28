@@ -248,7 +248,7 @@ final class NativeString extends IdScriptableObject
                 int N = args.length;
                 if (N < 1)
                     return "";
-                StringBuffer sb = new StringBuffer(N);
+                StringBuilder sb = new StringBuilder(N);
                 for (int i = 0; i != N; ++i) {
                     sb.append(ScriptRuntime.toUint16(args[i]));
                 }
@@ -448,7 +448,7 @@ final class NativeString extends IdScriptableObject
                                  String attribute, Object[] args)
     {
         String str = ScriptRuntime.toString(thisObj);
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append('<');
         result.append(tag);
         if (attribute != null) {
@@ -618,7 +618,7 @@ final class NativeString extends IdScriptableObject
         }
 
         // Find total capacity for the final string to avoid unnecessary
-        // re-allocations in StringBuffer
+        // re-allocations in StringBuilder
         int size = target.length();
         String[] argsAsStrings = new String[N];
         for (int i = 0; i != N; ++i) {
@@ -627,7 +627,7 @@ final class NativeString extends IdScriptableObject
             size += s.length();
         }
 
-        StringBuffer result = new StringBuffer(size);
+        StringBuilder result = new StringBuilder(size);
         result.append(target);
         for (int i = 0; i != N; ++i) {
             result.append(argsAsStrings[i]);

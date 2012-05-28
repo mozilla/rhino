@@ -650,7 +650,7 @@ class XMLList extends XMLObjectImpl implements Function {
     public String toString() {
         //    ECMA357 10.1.2
         if (hasSimpleContent()) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
 
             for(int i = 0; i < length(); i++) {
                 XML next = getXmlFromAnnotation(i);
@@ -675,7 +675,7 @@ class XMLList extends XMLObjectImpl implements Function {
     @Override
     String toXMLString() {
         //    See ECMA 10.2.1
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (int i=0; i<length(); i++) {
             if (getProcessor().isPrettyPrinting() && i != 0) {

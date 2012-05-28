@@ -145,7 +145,7 @@ public class IdFunctionObject extends BaseFunction
     @Override
     String decompile(int indent, int flags)
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         boolean justbody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
         if (!justbody) {
             sb.append("function ");

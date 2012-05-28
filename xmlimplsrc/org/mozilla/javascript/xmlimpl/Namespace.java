@@ -358,14 +358,14 @@ class Namespace extends IdScriptableObject
 
     private String js_toSource()
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append('(');
         toSourceImpl(ns.getPrefix(), ns.getUri(), sb);
         sb.append(')');
         return sb.toString();
     }
 
-    static void toSourceImpl(String prefix, String uri, StringBuffer sb)
+    static void toSourceImpl(String prefix, String uri, StringBuilder sb)
     {
         sb.append("new Namespace(");
         if (uri.length() == 0) {

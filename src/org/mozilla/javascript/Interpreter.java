@@ -702,7 +702,7 @@ public final class Interpreter extends Icode implements Evaluator
                                   String nativeStackTrace)
     {
         String tag = "org.mozilla.javascript.Interpreter.interpretLoop";
-        StringBuffer sb = new StringBuffer(nativeStackTrace.length() + 1000);
+        StringBuilder sb = new StringBuilder(nativeStackTrace.length() + 1000);
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
 
         CallFrame[] array = (CallFrame[])ex.interpreterStackInfo;

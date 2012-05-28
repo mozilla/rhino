@@ -90,7 +90,7 @@ public class NativeJavaMethod extends BaseFunction
 
     static String scriptSignature(Object[] values)
     {
-        StringBuffer sig = new StringBuffer();
+        StringBuilder sig = new StringBuilder();
         for (int i = 0; i != values.length; ++i) {
             Object value = values[i];
 
@@ -129,7 +129,7 @@ public class NativeJavaMethod extends BaseFunction
     @Override
     String decompile(int indent, int flags)
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         boolean justbody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
         if (!justbody) {
             sb.append("function ");
@@ -145,7 +145,7 @@ public class NativeJavaMethod extends BaseFunction
     @Override
     public String toString()
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0, N = methods.length; i != N; ++i) {
             // Check member type, we also use this for overloaded constructors
             if (methods[i].isMethod()) {
@@ -479,7 +479,7 @@ public class NativeJavaMethod extends BaseFunction
         }
 
         // report remaining ambiguity
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int j = -1; j != extraBestFitsCount; ++j) {
             int bestFitIndex;
             if (j == -1) {
@@ -574,7 +574,7 @@ public class NativeJavaMethod extends BaseFunction
                                    Object[] args)
     {
         if (debug) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append(" ----- ");
             sb.append(msg);
             sb.append(member.getDeclaringClass().getName());

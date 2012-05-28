@@ -389,7 +389,7 @@ class XMLName extends Ref {
     @Override
     public String toString() {
         //return qname.localName();
-        StringBuffer buff = new StringBuffer();
+        StringBuilder buff = new StringBuilder();
         if (isDescendants) buff.append("..");
         if (isAttributeName) buff.append('@');
         if (uri() == null) {

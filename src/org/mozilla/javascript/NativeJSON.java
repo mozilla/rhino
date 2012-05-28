@@ -451,7 +451,7 @@ final class NativeJSON extends IdScriptableObject
     }
 
     private static String quote(String string) {
-        StringBuffer product = new StringBuffer(string.length()+2); // two extra chars for " on either side
+        StringBuilder product = new StringBuilder(string.length()+2); // two extra chars for " on either side
         product.append('"');
         int length = string.length();
         for (int i = 0; i < length; i++) {

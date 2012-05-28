@@ -155,7 +155,7 @@ public class Foo extends ScriptableObject {
     public static Object varargs(Context cx, Scriptable thisObj,
                                             Object[] args, Function funObj)
     {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("this = ");
         buf.append(Context.toString(thisObj));
         buf.append("; args = [");

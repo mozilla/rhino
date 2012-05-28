@@ -373,14 +373,14 @@ final class QName extends IdScriptableObject
     }
 
     private String js_toSource() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append('(');
         toSourceImpl(uri(), localName(), prefix(), sb);
         sb.append(')');
         return sb.toString();
     }
 
-    private static void toSourceImpl(String uri, String localName, String prefix, StringBuffer sb) {
+    private static void toSourceImpl(String uri, String localName, String prefix, StringBuilder sb) {
         sb.append("new QName(");
         if (uri == null && prefix == null) {
             if (!"*".equals(localName)) {
