@@ -241,7 +241,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         int arity;
         switch (id) {
           case Id_constructor: arity=1; s="constructor"; break;
-          case Id_toString:    arity=1; s="toString";    break;
+          case Id_toString:    arity=0; s="toString";    break;
           case Id_toSource:    arity=1; s="toSource";    break;
           case Id_apply:       arity=2; s="apply";       break;
           case Id_call:        arity=1; s="call";        break;
