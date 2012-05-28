@@ -405,7 +405,7 @@ public class Dim {
             // (eval)
             // Option: similar teatment for Function?
             char evalSeparator = '#';
-            StringBuffer sb = null;
+            StringBuilder sb = null;
             int urlLength = url.length();
             int cursor = 0;
             for (;;) {
@@ -433,7 +433,7 @@ public class Dim {
                     break;
                 }
                 if (sb == null) {
-                    sb = new StringBuffer();
+                    sb = new StringBuilder();
                     sb.append(url.substring(0, searchStart));
                 }
                 sb.append(replace);

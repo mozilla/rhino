@@ -1045,14 +1045,14 @@ public class Node implements Iterable<Node>
     public String toString()
     {
         if (Token.printTrees) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             toString(new ObjToIntMap(), sb);
             return sb.toString();
         }
         return String.valueOf(type);
     }
 
-    private void toString(ObjToIntMap printIds, StringBuffer sb)
+    private void toString(ObjToIntMap printIds, StringBuilder sb)
     {
         if (Token.printTrees) {
             sb.append(Token.name(type));
@@ -1212,7 +1212,7 @@ public class Node implements Iterable<Node>
 
     public String toStringTree(ScriptNode treeTop) {
         if (Token.printTrees) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             toStringTreeHelper(treeTop, this, null, 0, sb);
             return sb.toString();
         }
@@ -1221,7 +1221,7 @@ public class Node implements Iterable<Node>
 
     private static void toStringTreeHelper(ScriptNode treeTop, Node n,
                                            ObjToIntMap printIds,
-                                           int level, StringBuffer sb)
+                                           int level, StringBuilder sb)
     {
         if (Token.printTrees) {
             if (printIds == null) {
@@ -1260,7 +1260,7 @@ public class Node implements Iterable<Node>
     }
 
     private static void appendPrintId(Node n, ObjToIntMap printIds,
-                                      StringBuffer sb)
+                                      StringBuilder sb)
     {
         if (Token.printTrees) {
             if (n != null) {

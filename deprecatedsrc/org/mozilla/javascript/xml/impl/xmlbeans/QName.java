@@ -278,7 +278,7 @@ final class QName extends IdScriptableObject
 
     private String js_toSource()
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append('(');
         toSourceImpl(uri, localName, prefix, sb);
         sb.append(')');
@@ -286,7 +286,7 @@ final class QName extends IdScriptableObject
     }
 
     private static void toSourceImpl(String uri, String localName,
-                                     String prefix, StringBuffer sb)
+                                     String prefix, StringBuilder sb)
     {
         sb.append("new QName(");
         if (uri == null && prefix == null) {

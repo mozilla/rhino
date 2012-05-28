@@ -677,7 +677,7 @@ class XML extends XMLObjectImpl {
             return ecmaValue();
         }
         if (this.hasSimpleContent()) {
-            StringBuffer rv = new StringBuffer();
+            StringBuilder rv = new StringBuilder();
             for (int i=0; i < this.node.getChildCount(); i++) {
                 XmlNode child = this.node.getChild(i);
                 if (!child.isProcessingInstructionType() &&

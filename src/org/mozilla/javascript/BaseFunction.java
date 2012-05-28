@@ -396,7 +396,7 @@ public class BaseFunction extends IdScriptableObject implements Function
      */
     String decompile(int indent, int flags)
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         boolean justbody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
         if (!justbody) {
             sb.append("function ");
@@ -484,7 +484,7 @@ public class BaseFunction extends IdScriptableObject implements Function
                                         Object[] args)
     {
         int arglen = args.length;
-        StringBuffer sourceBuf = new StringBuffer();
+        StringBuilder sourceBuf = new StringBuilder();
 
         sourceBuf.append("function ");
         /* version != 1.2 Function constructor behavior -

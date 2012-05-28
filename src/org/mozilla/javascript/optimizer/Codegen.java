@@ -1172,7 +1172,7 @@ public class Codegen implements Evaluator
 
     String getBodyMethodSignature(ScriptNode n)
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append('(');
         sb.append(mainClassSignature);
         sb.append("Lorg/mozilla/javascript/Context;"

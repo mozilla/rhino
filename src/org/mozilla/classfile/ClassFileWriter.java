@@ -944,12 +944,12 @@ public class ClassFileWriter {
             return;
         }
         // Split string into picies fitting the UTF limit and generate code for
-        // StringBuffer sb = new StringBuffer(length);
+        // StringBuilder sb = new StringBuilder(length);
         // sb.append(loadConstant(piece_1));
         // ...
         // sb.append(loadConstant(piece_N));
         // sb.toString();
-        final String SB = "java/lang/StringBuffer";
+        final String SB = "java/lang/StringBuilder";
         add(ByteCode.NEW, SB);
         add(ByteCode.DUP);
         addPush(length);
@@ -960,7 +960,7 @@ public class ClassFileWriter {
             String s = k.substring(cursor, limit);
             addLoadConstant(s);
             addInvoke(ByteCode.INVOKEVIRTUAL, SB, "append",
-                      "(Ljava/lang/String;)Ljava/lang/StringBuffer;");
+                      "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
             add(ByteCode.POP);
             if (limit == length) {
                 break;

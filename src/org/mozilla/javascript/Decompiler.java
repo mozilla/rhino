@@ -266,7 +266,7 @@ public class Decompiler
         int caseGap = properties.getInt(CASE_GAP_PROP, 2);
         if (caseGap < 0) throw new IllegalArgumentException();
 
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         boolean justFunctionBody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
         boolean toSource = (0 != (flags & Decompiler.TO_SOURCE_FLAG));
 
@@ -820,7 +820,7 @@ public class Decompiler
 
     private static int printSourceString(String source, int offset,
                                          boolean asQuotedString,
-                                         StringBuffer sb)
+                                         StringBuilder sb)
     {
         int length = source.charAt(offset);
         ++offset;
@@ -842,7 +842,7 @@ public class Decompiler
     }
 
     private static int printSourceNumber(String source, int offset,
-                                         StringBuffer sb)
+                                         StringBuilder sb)
     {
         double number = 0.0;
         char type = source.charAt(offset);

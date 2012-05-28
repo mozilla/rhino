@@ -200,22 +200,22 @@ public class JsDriver {
         return null;
     }
 
-	private static String newlineLineEndings(String s) {
-		StringBuffer rv = new StringBuffer();
-		for (int i=0; i<s.length(); i++) {
-			if (s.charAt(i) == '\r') {
-				if (i+1<s.length() && s.charAt(i+1) == '\n') {
-					//    just skip \r
-				} else {
-					//    Macintosh, substitute \n
-					rv.append('\n');
-				}
-			} else {
-				rv.append(s.charAt(i));
-			}
-		}
-		return rv.toString();
-	}
+    private static String newlineLineEndings(String s) {
+        StringBuilder rv = new StringBuilder();
+        for (int i=0; i<s.length(); i++) {
+            if (s.charAt(i) == '\r') {
+                if (i+1<s.length() && s.charAt(i+1) == '\n') {
+                    //    just skip \r
+                } else {
+                    //    Macintosh, substitute \n
+                    rv.append('\n');
+                }
+            } else {
+                rv.append(s.charAt(i));
+            }
+        }
+        return rv.toString();
+    }
 
     private static class HtmlStatus extends ShellTest.Status {
         private String testPath;

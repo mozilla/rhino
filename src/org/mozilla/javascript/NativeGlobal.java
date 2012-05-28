@@ -398,7 +398,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
             }
         }
 
-        StringBuffer sb = null;
+        StringBuilder sb = null;
         for (int k = 0, L = s.length(); k != L; ++k) {
             int c = s.charAt(k);
             if (mask != 0
@@ -412,7 +412,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                 }
             } else {
                 if (sb == null) {
-                    sb = new StringBuffer(L + 3);
+                    sb = new StringBuilder(L + 3);
                     sb.append(s);
                     sb.setLength(k);
                 }
@@ -549,7 +549,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     */
     private static String encode(String str, boolean fullUri) {
         byte[] utf8buf = null;
-        StringBuffer sb = null;
+        StringBuilder sb = null;
 
         for (int k = 0, length = str.length(); k != length; ++k) {
             char C = str.charAt(k);
@@ -559,7 +559,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                 }
             } else {
                 if (sb == null) {
-                    sb = new StringBuffer(length + 3);
+                    sb = new StringBuilder(length + 3);
                     sb.append(str);
                     sb.setLength(k);
                     utf8buf = new byte[6];

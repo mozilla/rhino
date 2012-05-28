@@ -166,7 +166,7 @@ final class NativeError extends IdScriptableObject
         Object fileName = ScriptableObject.getProperty(thisObj, "fileName");
         Object lineNumber = ScriptableObject.getProperty(thisObj, "lineNumber");
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("(new ");
         if (name == NOT_FOUND) {
             name = Undefined.instance;

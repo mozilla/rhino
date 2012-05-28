@@ -93,7 +93,7 @@ final class MemberBox implements Serializable
 
     String toJavaDeclaration()
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (isMethod()) {
             Method method = method();
             sb.append(method.getReturnType());

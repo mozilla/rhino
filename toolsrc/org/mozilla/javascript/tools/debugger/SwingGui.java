@@ -949,7 +949,7 @@ class MessageDialogWrapper {
     public static void showMessageDialog(Component parent, String msg,
                                          String title, int flags) {
         if (msg.length() > 60) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             int len = msg.length();
             int j = 0;
             int i;
@@ -2595,7 +2595,7 @@ class VariableModel implements TreeTableModel {
             } catch (RuntimeException exc) {
                 result = exc.getMessage();
             }
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             int len = result.length();
             for (int i = 0; i < len; i++) {
                 char ch = result.charAt(i);

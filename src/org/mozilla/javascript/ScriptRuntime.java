@@ -653,7 +653,7 @@ public class ScriptRuntime {
     public static String escapeString(String s, char escapeQuote)
     {
         if (!(escapeQuote == '"' || escapeQuote == '\'')) Kit.codeBug();
-        StringBuffer sb = null;
+        StringBuilder sb = null;
 
         for(int i = 0, L = s.length(); i != L; ++i) {
             int c = s.charAt(i);
@@ -667,7 +667,7 @@ public class ScriptRuntime {
                 continue;
             }
             if (sb == null) {
-                sb = new StringBuffer(L + 3);
+                sb = new StringBuilder(L + 3);
                 sb.append(s);
                 sb.setLength(i);
             }
@@ -826,7 +826,7 @@ public class ScriptRuntime {
         }
         if (value instanceof CharSequence) {
             String escaped = escapeString(value.toString());
-            StringBuffer sb = new StringBuffer(escaped.length() + 2);
+            StringBuilder sb = new StringBuilder(escaped.length() + 2);
             sb.append('\"');
             sb.append(escaped);
             sb.append('\"');
@@ -872,7 +872,7 @@ public class ScriptRuntime {
             iterating = cx.iterating.has(thisObj);
         }
 
-        StringBuffer result = new StringBuffer(128);
+        StringBuilder result = new StringBuilder(128);
         if (toplevel) {
             result.append("(");
         }

@@ -1003,7 +1003,7 @@ final class NativeDate extends IdScriptableObject
 
     private static String date_format(double t, int methodId)
     {
-        StringBuffer result = new StringBuffer(60);
+        StringBuilder result = new StringBuilder(60);
         double local = LocalTime(t);
 
         /* Tue Oct 31 09:41:40 GMT-0800 (PST) 2000 */
@@ -1143,7 +1143,7 @@ final class NativeDate extends IdScriptableObject
 
     private static String js_toUTCString(double date)
     {
-        StringBuffer result = new StringBuffer(60);
+        StringBuilder result = new StringBuilder(60);
 
         appendWeekDayName(result, WeekDay(date));
         result.append(", ");
@@ -1166,7 +1166,7 @@ final class NativeDate extends IdScriptableObject
         return result.toString();
     }
 
-    private static void append0PaddedUint(StringBuffer sb, int i, int minWidth)
+    private static void append0PaddedUint(StringBuilder sb, int i, int minWidth)
     {
         if (i < 0) Kit.codeBug();
         int scale = 1;
@@ -1197,7 +1197,7 @@ final class NativeDate extends IdScriptableObject
         sb.append((char)('0' + i));
     }
 
-    private static void appendMonthName(StringBuffer sb, int index)
+    private static void appendMonthName(StringBuilder sb, int index)
     {
         // Take advantage of the fact that all month abbreviations
         // have the same length to minimize amount of strings runtime has
@@ -1210,7 +1210,7 @@ final class NativeDate extends IdScriptableObject
         }
     }
 
-    private static void appendWeekDayName(StringBuffer sb, int index)
+    private static void appendWeekDayName(StringBuilder sb, int index)
     {
         String days = "Sun"+"Mon"+"Tue"+"Wed"+"Thu"+"Fri"+"Sat";
         index *= 3;
