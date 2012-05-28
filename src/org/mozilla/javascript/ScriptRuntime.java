@@ -1103,6 +1103,15 @@ public class ScriptRuntime {
         return ctor.construct(cx, scope, args);
     }
 
+    static Scriptable newNativeError(Context cx, Scriptable scope,
+                                     TopLevel.NativeErrors type, Object[] args)
+    {
+        scope = ScriptableObject.getTopLevelScope(scope);
+        Function ctor = TopLevel.getNativeErrorCtor(cx, scope, type);
+        if (args == null) { args = ScriptRuntime.emptyArgs; }
+        return ctor.construct(cx, scope, args);
+    }
+
     /**
      *
      * See ECMA 9.4.
@@ -3284,33 +3293,33 @@ public class ScriptRuntime {
             }
 
             RhinoException re;
-            String errorName;
+            TopLevel.NativeErrors type;
             String errorMsg;
             Throwable javaException = null;
 
             if (t instanceof EcmaError) {
                 EcmaError ee = (EcmaError)t;
                 re = ee;
-                errorName = ee.getName();
+                type = TopLevel.NativeErrors.valueOf(ee.getName());
                 errorMsg = ee.getErrorMessage();
             } else if (t instanceof WrappedException) {
                 WrappedException we = (WrappedException)t;
                 re = we;
                 javaException = we.getWrappedException();
-                errorName = "JavaException";
+                type = TopLevel.NativeErrors.JavaException;
                 errorMsg = javaException.getClass().getName()
                            +": "+javaException.getMessage();
             } else if (t instanceof EvaluatorException) {
                 // Pure evaluator exception, nor WrappedException instance
                 EvaluatorException ee = (EvaluatorException)t;
                 re = ee;
-                errorName = "InternalError";
+                type = TopLevel.NativeErrors.InternalError;
                 errorMsg = ee.getMessage();
             } else if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
                 // With FEATURE_ENHANCED_JAVA_ACCESS, scripts can catch
                 // all exception types
                 re = new WrappedException(t);
-                errorName = "JavaException";
+                type = TopLevel.NativeErrors.JavaException;
                 errorMsg = t.toString();
             } else {
                 // Script can catch only instances of JavaScriptException,
@@ -3330,8 +3339,7 @@ public class ScriptRuntime {
                 args = new Object[] { errorMsg, sourceUri };
             }
 
-            Scriptable errorObject = cx.newObject(scope, errorName, args);
-            ScriptableObject.putProperty(errorObject, "name", errorName);
+            Scriptable errorObject = newNativeError(cx, scope, type, args);
             // set exception in Error objects to enable non-ECMA "stack" property
             if (errorObject instanceof NativeError) {
                 ((NativeError) errorObject).setStackProvider(re);
