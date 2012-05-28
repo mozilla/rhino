@@ -452,7 +452,9 @@ public class NativeArray extends IdScriptableObject implements List
         if (start == this && !isSealed() && dense != null && 0 <= index &&
             (denseOnly || !isGetterOrSetter(null, index, true)))
         {
-            if (index < dense.length) {
+            if (!isExtensible() && this.length <= index) {
+                return;
+            } else if (index < dense.length) {
                 dense[index] = value;
                 if (this.length <= index)
                     this.length = (long)index + 1;
