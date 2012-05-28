@@ -221,12 +221,13 @@ final class NativeNumber extends IdScriptableObject
         } else {
             /* We allow a larger range of precision than
                ECMA requires; this is permitted by ECMA. */
-            precision = ScriptRuntime.toInt32(args[0]);
-            if (precision < precisionMin || precision > MAX_PRECISION) {
+            double p = ScriptRuntime.toInteger(args[0]);
+            if (p < precisionMin || p > MAX_PRECISION) {
                 String msg = ScriptRuntime.getMessage1(
                     "msg.bad.precision", ScriptRuntime.toString(args[0]));
                 throw ScriptRuntime.constructError("RangeError", msg);
             }
+            precision = ScriptRuntime.toInt32(p);
         }
         StringBuilder sb = new StringBuilder();
         DToA.JS_dtostr(sb, oneArgMode, precision + precisionOffset, val);
