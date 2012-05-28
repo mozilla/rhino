@@ -287,7 +287,7 @@ public class NativeArray extends IdScriptableObject implements List
               }
 
               case ConstructorId_isArray:
-                return args.length > 0 && (args[0] instanceof NativeArray);
+                return args.length > 0 && js_isArray(args[0]);
 
               case Id_constructor: {
                 boolean inNewExpr = (thisObj == null);
@@ -1356,8 +1356,7 @@ public class NativeArray extends IdScriptableObject implements List
     {
         // create an empty Array to return.
         scope = getTopLevelScope(scope);
-        Function ctor = ScriptRuntime.getExistingCtor(cx, scope, "Array");
-        Scriptable result = ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
+        Scriptable result = cx.newArray(scope, 0);
         if (thisObj instanceof NativeArray && result instanceof NativeArray) {
             NativeArray denseThis = (NativeArray) thisObj;
             NativeArray denseResult = (NativeArray) result;
@@ -1403,7 +1402,7 @@ public class NativeArray extends IdScriptableObject implements List
         /* Put the target in the result array; only add it as an array
          * if it looks like one.
          */
-        if (ScriptRuntime.instanceOf(thisObj, ctor, cx)) {
+        if (js_isArray(thisObj)) {
             length = getLengthProperty(cx, thisObj);
 
             // Copy from the target object into the result
@@ -1422,8 +1421,8 @@ public class NativeArray extends IdScriptableObject implements List
          * elements separately; otherwise, just copy the argument.
          */
         for (int i = 0; i < args.length; i++) {
-            if (ScriptRuntime.instanceOf(args[i], ctor, cx)) {
-                // ScriptRuntime.instanceOf => instanceof Scriptable
+            if (js_isArray(args[i])) {
+                // js_isArray => instanceof Scriptable
                 Scriptable arg = (Scriptable)args[i];
                 length = getLengthProperty(cx, arg);
                 for (long j = 0; j < length; j++, slot++) {
@@ -1688,6 +1687,13 @@ public class NativeArray extends IdScriptableObject implements List
             throw ScriptRuntime.typeError0("msg.empty.array.reduce");
         }
         return value;
+    }
+
+    private static boolean js_isArray(Object o) {
+        if (!(o instanceof Scriptable)) {
+            return false;
+        }
+        return "Array".equals(((Scriptable)o).getClassName());
     }
 
     // methods to implement java.util.List
