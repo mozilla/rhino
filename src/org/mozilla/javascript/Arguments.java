@@ -226,9 +226,13 @@ final class Arguments extends IdScriptableObject
         int attr;
         switch (id) {
           case Id_callee:
+            attr = calleeAttr;
+            break;
           case Id_caller:
+            attr = callerAttr;
+            break;
           case Id_length:
-            attr = DONTENUM;
+            attr = lengthAttr;
             break;
           default: throw new IllegalStateException();
         }
@@ -280,6 +284,17 @@ final class Arguments extends IdScriptableObject
                 return;
         }
         super.setInstanceIdValue(id, value);
+    }
+
+    @Override
+    protected void setInstanceIdAttributes(int id, int attr)
+    {
+        switch (id) {
+            case Id_callee: calleeAttr = attr; return;
+            case Id_length: lengthAttr = attr; return;
+            case Id_caller: callerAttr = attr; return;
+        }
+        super.setInstanceIdAttributes(id, attr);
     }
 
     @Override
@@ -387,6 +402,10 @@ final class Arguments extends IdScriptableObject
     private Object callerObj;
     private Object calleeObj;
     private Object lengthObj;
+
+    private int callerAttr = DONTENUM;
+    private int calleeAttr = DONTENUM;
+    private int lengthAttr = DONTENUM;
 
     private NativeCall activation;
 
