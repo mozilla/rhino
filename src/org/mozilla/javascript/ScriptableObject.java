@@ -1777,14 +1777,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void defineOwnProperties(Context cx, ScriptableObject props) {
         Object[] ids = props.getIds();
-        for (Object id : ids) {
-            Object descObj = props.get(id);
+        ScriptableObject[] descs = new ScriptableObject[ids.length];
+        for (int i = 0, len = ids.length; i < len; ++i) {
+            Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
             ScriptableObject desc = ensureScriptableObject(descObj);
             checkPropertyDefinition(desc);
+            descs[i] = desc;
         }
-        for (Object id : ids) {
-            ScriptableObject desc = (ScriptableObject)props.get(id);
-            defineOwnProperty(cx, id, desc);
+        for (int i = 0, len = ids.length; i < len; ++i) {
+            defineOwnProperty(cx, ids[i], descs[i]);
         }
     }
 
