@@ -351,10 +351,19 @@ public class NativeRegExp extends IdScriptableObject implements Function
             state.result.length = length;
             state.result.flatIndex = 0;
             state.progLength += 5;
-        }
-        else
+        } else {
             if (!parseDisjunction(state))
                 return null;
+            // Need to reparse if pattern contains invalid backreferences:
+            // "Note: if the number of left parentheses is less than the number
+            // specified in \#, the \# is taken as an octal escape"
+            if (state.maxBackReference > state.parenCount) {
+                state = new CompilerState(cx, regexp.source, length, flags);
+                state.backReferenceLimit = state.parenCount;
+                if (!parseDisjunction(state))
+                    return null;
+            }
+        }
 
         regexp.program = new byte[state.progLength + 1];
         if (state.classCount != 0) {
@@ -815,9 +824,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 break;
             }
             if (!overflow) {
-                int digit = c - '0';
-                if (value < (maxValue - digit) / 10) {
-                    value = value * 10 + digit;
+                int v = value * 10 + (c - '0');
+                if (v < maxValue) {
+                    value = v;
                 } else {
                     overflow = true;
                     value = maxValue;
@@ -838,7 +847,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         char c = src[state.cp++];
         int nDigits = 2;
         int parenBaseCount = state.parenCount;
-        int num, tmp;
+        int num;
         RENode term;
         int termStart;
 
@@ -868,23 +877,21 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 /* Decimal escape */
                 case '0':
 /*
- * Under 'strict' ECMA 3, we interpret \0 as NUL and don't accept octal.
- * However, (XXX and since Rhino doesn't have a 'strict' mode) we'll just
- * behave the old way for compatibility reasons.
- * (see http://bugzilla.mozilla.org/show_bug.cgi?id=141078)
- *
- */
+* We're deliberately violating the ECMA 5.1 specification and allow octal
+* escapes to follow spidermonkey and general 'web reality':
+* http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
+* http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
+*/
                     reportWarning(state.cx, "msg.bad.backref", "");
                     /* octal escape */
                     num = 0;
-                    while (state.cp < state.cpend) {
+                    // follow spidermonkey and allow multiple leading zeros,
+                    // e.g. let /\0000/ match the string "\0"
+                    while (num < 040 && state.cp < state.cpend) {
                         c = src[state.cp];
                         if ((c >= '0') && (c <= '7')) {
                             state.cp++;
-                            tmp = 8 * num + (c - '0');
-                            if (tmp > 0377)
-                                break;
-                            num = tmp;
+                            num = 8 * num + (c - '0');
                         }
                         else
                             break;
@@ -904,23 +911,28 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     termStart = state.cp - 1;
                     num = getDecimalValue(c, state, 0xFFFF,
                                           "msg.overlarge.backref");
-                    if (num > state.parenCount)
+                    if (num > state.backReferenceLimit)
                         reportWarning(state.cx, "msg.bad.backref", "");
                     /*
-                     * n > 9 or > count of parentheses,
-                     * then treat as octal instead.
+                     * n > count of parentheses, then treat as octal instead.
+                     * Also see note above concerning 'web reality'
                      */
-                    if ((num > 9) && (num > state.parenCount)) {
+                    if (num > state.backReferenceLimit) {
                         state.cp = termStart;
-                        num = 0;
-                        while (state.cp < state.cpend) {
+                        if (c >= '8') {
+                            // invalid octal escape, follow spidermonkey and
+                            // treat as \\8 resp. \\9
+                            c = '\\';
+                            doFlat(state, c);
+                            break;
+                        }
+                        state.cp++;
+                        num = c - '0';
+                        while (num < 040 && state.cp < state.cpend) {
                             c = src[state.cp];
                             if ((c >= '0') && (c <= '7')) {
                                 state.cp++;
-                                tmp = 8 * num + (c - '0');
-                                if (tmp > 0377)
-                                    break;
-                                num = tmp;
+                                num = 8 * num + (c - '0');
                             }
                             else
                                 break;
@@ -933,6 +945,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     state.result = new RENode(REOP_BACKREF);
                     state.result.parenIndex = num - 1;
                     state.progLength += 3;
+                    if (state.maxBackReference < num) {
+                        state.maxBackReference = num;
+                    }
                     break;
                 /* Control escape */
                 case 'f':
@@ -2860,6 +2875,8 @@ class CompilerState {
         this.cp = 0;
         this.cpend = length;
         this.flags = flags;
+        this.backReferenceLimit = Integer.MAX_VALUE;
+        this.maxBackReference = 0;
         this.parenCount = 0;
         this.classCount = 0;
         this.progLength = 0;
@@ -2870,6 +2887,8 @@ class CompilerState {
     int         cpend;
     int         cp;
     int         flags;
+    int         backReferenceLimit;
+    int         maxBackReference;
     int         parenCount;
     int         parenNesting;
     int         classCount;   /* number of [] encountered */
