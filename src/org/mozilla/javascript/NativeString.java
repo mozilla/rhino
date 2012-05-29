@@ -191,7 +191,7 @@ final class NativeString extends IdScriptableObject
           case Id_equalsIgnoreCase:  arity=1; s="equalsIgnoreCase";  break;
           case Id_match:             arity=1; s="match";             break;
           case Id_search:            arity=1; s="search";            break;
-          case Id_replace:           arity=1; s="replace";           break;
+          case Id_replace:           arity=2; s="replace";           break;
           case Id_localeCompare:     arity=1; s="localeCompare";     break;
           case Id_toLocaleLowerCase: arity=0; s="toLocaleLowerCase"; break;
           case Id_toLocaleUpperCase: arity=0; s="toLocaleUpperCase"; break;
