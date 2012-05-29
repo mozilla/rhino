@@ -560,9 +560,7 @@ public class RegExpImpl implements RegExpProxy {
         }
 
         // return an array consisting of the target if no separator given
-        // don't check against undefined, because we want
-        // 'fooundefinedbar'.split(void 0) to split to ['foo', 'bar']
-        if (args.length < 1) {
+        if (args.length < 1 || args[0] == Undefined.instance) {
             result.put(0, result, target);
             return result;
         }
