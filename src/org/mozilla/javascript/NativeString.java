@@ -636,35 +636,32 @@ final class NativeString extends IdScriptableObject
     }
 
     private static CharSequence js_slice(CharSequence target, Object[] args) {
-        if (args.length != 0) {
-            double begin = ScriptRuntime.toInteger(args[0]);
-            double end;
-            int length = target.length();
-            if (begin < 0) {
-                begin += length;
-                if (begin < 0)
-                    begin = 0;
-            } else if (begin > length) {
-                begin = length;
-            }
-
-            if (args.length == 1) {
-                end = length;
-            } else {
-                end = ScriptRuntime.toInteger(args[1]);
-                if (end < 0) {
-                    end += length;
-                    if (end < 0)
-                        end = 0;
-                } else if (end > length) {
-                    end = length;
-                }
-                if (end < begin)
-                    end = begin;
-            }
-            return target.subSequence((int) begin, (int) end);
+        double begin = args.length < 1 ? 0 : ScriptRuntime.toInteger(args[0]);
+        double end;
+        int length = target.length();
+        if (begin < 0) {
+            begin += length;
+            if (begin < 0)
+                begin = 0;
+        } else if (begin > length) {
+            begin = length;
         }
-        return target;
+
+        if (args.length < 2 || args[1] == Undefined.instance) {
+            end = length;
+        } else {
+            end = ScriptRuntime.toInteger(args[1]);
+            if (end < 0) {
+                end += length;
+                if (end < 0)
+                    end = 0;
+            } else if (end > length) {
+                end = length;
+            }
+            if (end < begin)
+                end = begin;
+        }
+        return target.subSequence((int) begin, (int) end);
     }
 
 // #string_id_map#
