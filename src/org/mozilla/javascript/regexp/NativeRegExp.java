@@ -320,15 +320,20 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (global != null) {
             for (int i = 0; i < global.length(); i++) {
                 char c = global.charAt(i);
+                int f = 0;
                 if (c == 'g') {
-                    flags |= JSREG_GLOB;
+                    f = JSREG_GLOB;
                 } else if (c == 'i') {
-                    flags |= JSREG_FOLD;
+                    f = JSREG_FOLD;
                 } else if (c == 'm') {
-                    flags |= JSREG_MULTILINE;
+                    f = JSREG_MULTILINE;
                 } else {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
+                if ((flags & f) != 0) {
+                    reportError("msg.invalid.re.flag", String.valueOf(c));
+                }
+                flags |= f;
             }
         }
         regexp.flags = flags;
