@@ -78,9 +78,20 @@ public class ScriptRuntime {
     /**
      * Returns representation of the [[ThrowTypeError]] object.
      * See ECMA 5 spec, 13.2.3
+     *
+     * @deprecated {@link #typeErrorThrower(Context)}
      */
+    @Deprecated
     public static BaseFunction typeErrorThrower() {
-      if (THROW_TYPE_ERROR == null) {
+      return typeErrorThrower(Context.getCurrentContext());
+    }
+
+    /**
+     * Returns representation of the [[ThrowTypeError]] object.
+     * See ECMA 5 spec, 13.2.3
+     */
+    public static BaseFunction typeErrorThrower(Context cx) {
+      if (cx.typeErrorThrower == null) {
         BaseFunction thrower = new BaseFunction() {
           static final long serialVersionUID = -5891740962154902286L;
 
@@ -93,12 +104,12 @@ public class ScriptRuntime {
             return 0;
           }
         };
+        ScriptRuntime.setFunctionProtoAndParent(thrower, cx.topCallScope);
         thrower.preventExtensions();
-        THROW_TYPE_ERROR = thrower;
+        cx.typeErrorThrower = thrower;
       }
-      return THROW_TYPE_ERROR;
+      return cx.typeErrorThrower;
     }
-    private static BaseFunction THROW_TYPE_ERROR = null;
 
     static class NoSuchMethodShim implements Callable {
         String methodName;
