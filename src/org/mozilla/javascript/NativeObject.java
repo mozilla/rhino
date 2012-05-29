@@ -160,7 +160,15 @@ public class NativeObject extends IdScriptableObject implements Map
             return ScriptRuntime.toObject(cx, scope, args[0]);
           }
 
-          case Id_toLocaleString: // For now just alias toString
+          case Id_toLocaleString: {
+            Object toString = ScriptableObject.getProperty(thisObj, "toString");
+            if(!(toString instanceof Callable)) {
+                throw ScriptRuntime.notFunctionError(toString);
+            }
+            Callable fun = (Callable)toString;
+            return fun.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+          }
+
           case Id_toString: {
             if (cx.hasFeature(Context.FEATURE_TO_STRING_AS_SOURCE)) {
                 String s = ScriptRuntime.defaultObjectToSource(cx, scope,
