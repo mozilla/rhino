@@ -218,7 +218,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
             this.lastIndex = thatObj.lastIndex;
             return this;
         }
-        String s = args.length == 0 ? "" : escapeRegExp(args[0]);
+        String s = args.length == 0 || args[0] == Undefined.instance
+            ? ""
+            : escapeRegExp(args[0]);
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;
@@ -287,7 +289,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (args.length == 0) {
             str = reImpl.input;
             if (str == null) {
-                reportError("msg.no.re.input.for", toString());
+                str = ScriptRuntime.toString(Undefined.instance);
             }
         } else {
             str = ScriptRuntime.toString(args[0]);
