@@ -829,6 +829,11 @@ public class ScriptRuntime {
     }
 
     public static String numberToString(double d, int base) {
+        if ((base < 2) || (base > 36)) {
+            throw Context.reportRuntimeError1(
+                "msg.bad.radix", Integer.toString(base));
+        }
+
         if (d != d)
             return "NaN";
         if (d == Double.POSITIVE_INFINITY)
@@ -837,11 +842,6 @@ public class ScriptRuntime {
             return "-Infinity";
         if (d == 0.0)
             return "0";
-
-        if ((base < 2) || (base > 36)) {
-            throw Context.reportRuntimeError1(
-                "msg.bad.radix", Integer.toString(base));
-        }
 
         if (base != 10) {
             return DToA.JS_dtobasestr(base, d);
