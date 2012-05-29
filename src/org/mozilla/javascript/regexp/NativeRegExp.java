@@ -877,11 +877,11 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 /* Decimal escape */
                 case '0':
 /*
-* We're deliberately violating the ECMA 5.1 specification and allow octal
-* escapes to follow spidermonkey and general 'web reality':
-* http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
-* http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
-*/
+ * We're deliberately violating the ECMA 5.1 specification and allow octal
+ * escapes to follow spidermonkey and general 'web reality':
+ * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
+ * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
+ */
                     reportWarning(state.cx, "msg.bad.backref", "");
                     /* octal escape */
                     num = 0;
@@ -1786,11 +1786,11 @@ public class NativeRegExp extends IdScriptableObject implements Function
     }
 
     /*
-    *   Apply the current op against the given input to see if
-    *   it's going to match or fail. Return false if we don't
-    *   get a match, true if we do and update the state of the
-    *   input and pc if the update flag is true.
-    */
+     *   Apply the current op against the given input to see if
+     *   it's going to match or fail. Return false if we don't
+     *   get a match, true if we do and update the state of the
+     *   input and pc if the update flag is true.
+     */
     private static int simpleMatch(REGlobalData gData, String input, int op,
                                    byte[] program, int pc, int end, boolean updatecp)
     {
