@@ -70,6 +70,16 @@ class NativeRegExpCtor extends BaseFunction
     }
 
     @Override
+    public int getLength() {
+        return 2;
+    }
+
+    @Override
+    public int getArity() {
+        return 2;
+    }
+
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
