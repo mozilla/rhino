@@ -2695,7 +2695,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         String s;
         int arity;
         switch (id) {
-          case Id_compile:  arity=1; s="compile";  break;
+          case Id_compile:  arity=2; s="compile";  break;
           case Id_toString: arity=0; s="toString"; break;
           case Id_toSource: arity=0; s="toSource"; break;
           case Id_exec:     arity=1; s="exec";     break;
