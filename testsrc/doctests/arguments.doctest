@@ -3,10 +3,8 @@ js> Object.getPrototypeOf(args) === Object.prototype
 true
 js> args.constructor === Object.prototype.constructor
 true
-js> Object.getOwnPropertyDescriptor(args, 'constructor').toSource();
-({value:function Object() { [native code for Object.Object, arity=1] }
-, writable:true, enumerable:false, configurable:true})
-
+js> Object.getOwnPropertyDescriptor(args, "constructor") === void 0
+true
 js> args.toString()
 [object Arguments]
 
