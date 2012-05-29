@@ -1026,7 +1026,6 @@ js1_2/function/definition-1.js
 js1_2/function/length.js
 js1_2/function/nesting-1.js
 js1_2/function/nesting.js
-js1_2/function/regexparg-2-n.js
 js1_2/jsref.js
 js1_2/operator/strictEquality.js
 js1_2/regexp/RegExp_dollar_number.js
