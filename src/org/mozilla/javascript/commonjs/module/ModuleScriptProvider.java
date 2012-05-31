@@ -24,6 +24,8 @@ public interface ModuleScriptProvider
      * @param moduleUri the URI of the module. If this is not null, resolution
      * of <code>moduleId</code> is bypassed and the script is directly loaded
      * from <code>moduleUri</code>
+     * @param baseUri the module path base URI from which <code>moduleUri</code>
+     * was derived.
      * @param paths the value of the require() function's "paths" attribute. If
      * the require() function is sandboxed, it will be null, otherwise it will
      * be a JavaScript Array object. It is up to the provider implementation
@@ -36,7 +38,7 @@ public interface ModuleScriptProvider
      * valid absolute module identifier.
      */
     public ModuleScript getModuleScript(Context cx, String moduleId,
-            URI moduleUri, Scriptable paths)
+            URI moduleUri, URI baseUri, Scriptable paths)
             throws Exception;
 
 }

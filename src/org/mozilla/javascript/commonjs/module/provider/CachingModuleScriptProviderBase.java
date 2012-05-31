@@ -58,13 +58,13 @@ implements ModuleScriptProvider, Serializable
     }
 
     public ModuleScript getModuleScript(Context cx, String moduleId,
-            URI moduleUri, Scriptable paths) throws Exception
+            URI moduleUri, URI baseUri, Scriptable paths) throws Exception
     {
         final CachedModuleScript cachedModule1 = getLoadedModule(moduleId);
         final Object validator1 = getValidator(cachedModule1);
         final ModuleSource moduleSource = (moduleUri == null)
                 ? moduleSourceProvider.loadSource(moduleId, paths, validator1)
-                : moduleSourceProvider.loadSource(moduleUri, validator1);
+                : moduleSourceProvider.loadSource(moduleUri, baseUri, validator1);
         if(moduleSource == ModuleSourceProvider.NOT_MODIFIED) {
             return cachedModule1.getModule();
         }

@@ -49,9 +49,9 @@ public abstract class ModuleSourceProviderBase implements
         return loadFromFallbackLocations(moduleId, validator);
     }
 
-    public ModuleSource loadSource(URI uri, Object validator)
+    public ModuleSource loadSource(URI uri, URI base, Object validator)
             throws IOException, URISyntaxException {
-        return loadFromUri(uri, null, validator);
+        return loadFromUri(uri, base, validator);
     }
 
     private ModuleSource loadFromPathArray(String moduleId,

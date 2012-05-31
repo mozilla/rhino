@@ -48,7 +48,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
 
     @Override
     public ModuleScript getModuleScript(Context cx, String moduleId,
-            URI uri, Scriptable paths)
+            URI uri, URI base, Scriptable paths)
             throws Exception
     {
         // Overridden to clear the reference queue before retrieving the
@@ -60,7 +60,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
             }
             scripts.remove(ref.getModuleId(), ref);
         }
-        return super.getModuleScript(cx, moduleId, uri, paths);
+        return super.getModuleScript(cx, moduleId, uri, base, paths);
     }
 
     @Override

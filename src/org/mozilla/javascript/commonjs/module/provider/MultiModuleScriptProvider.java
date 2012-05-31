@@ -32,10 +32,10 @@ public class MultiModuleScriptProvider implements ModuleScriptProvider
     }
 
     public ModuleScript getModuleScript(Context cx, String moduleId, URI uri,
-                                        Scriptable paths) throws Exception {
+                                        URI base, Scriptable paths) throws Exception {
         for (ModuleScriptProvider provider : providers) {
             final ModuleScript script = provider.getModuleScript(cx, moduleId,
-                    uri, paths);
+                    uri, base, paths);
             if(script != null) {
                 return script;
             }
