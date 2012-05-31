@@ -1589,7 +1589,7 @@ public class NativeArray extends IdScriptableObject implements List
                         val = ScriptableObject.getProperty(proto, i);
                     }
                     if (val != NOT_FOUND &&
-                        ScriptRuntime.shallowEq(na.dense[i], compareTo))
+                        ScriptRuntime.shallowEq(val, compareTo))
                     {
                         return Long.valueOf(i);
                     }
