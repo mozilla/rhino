@@ -457,7 +457,6 @@ public class NativeObject extends IdScriptableObject implements Map
 
     // methods implementing java.util.Map
 
-    @Override
     public boolean containsKey(Object key) {
         if (key instanceof String) {
             return has((String) key, this);
@@ -467,7 +466,6 @@ public class NativeObject extends IdScriptableObject implements Map
         return false;
     }
 
-    @Override
     public boolean containsValue(Object value) {
         for (Object obj : values()) {
             if (value == obj ||
@@ -478,7 +476,6 @@ public class NativeObject extends IdScriptableObject implements Map
         return false;
     }
 
-    @Override
     public Object remove(Object key) {
         Object value = get(key);
         if (key instanceof String) {
@@ -490,32 +487,26 @@ public class NativeObject extends IdScriptableObject implements Map
     }
 
 
-    @Override
     public Set<Object> keySet() {
         return new KeySet();
     }
 
-    @Override
     public Collection<Object> values() {
         return new ValueCollection();
     }
 
-    @Override
     public Set<Map.Entry<Object, Object>> entrySet() {
         return new EntrySet();
     }
 
-    @Override
     public Object put(Object key, Object value) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void putAll(Map m) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void clear() {
         throw new UnsupportedOperationException();
     }
@@ -529,27 +520,22 @@ public class NativeObject extends IdScriptableObject implements Map
                 Object key = null;
                 int index = 0;
 
-                @Override
                 public boolean hasNext() {
                     return index < ids.length;
                 }
 
-                @Override
                 public Map.Entry<Object, Object> next() {
                     final Object ekey = key = ids[index++];
                     final Object value = get(key);
                     return new Map.Entry<Object, Object>() {
-                        @Override
                         public Object getKey() {
                             return ekey;
                         }
 
-                        @Override
                         public Object getValue() {
                             return value;
                         }
 
-                        @Override
                         public Object setValue(Object value) {
                             throw new UnsupportedOperationException();
                         }
@@ -577,7 +563,6 @@ public class NativeObject extends IdScriptableObject implements Map
                     };
                 }
 
-                @Override
                 public void remove() {
                     if (key == null) {
                         throw new IllegalStateException();
@@ -608,12 +593,10 @@ public class NativeObject extends IdScriptableObject implements Map
                 Object key;
                 int index = 0;
 
-                @Override
                 public boolean hasNext() {
                     return index < ids.length;
                 }
 
-                @Override
                 public Object next() {
                     try {
                         return (key = ids[index++]);
@@ -623,7 +606,6 @@ public class NativeObject extends IdScriptableObject implements Map
                     }
                 }
 
-                @Override
                 public void remove() {
                     if (key == null) {
                         throw new IllegalStateException();
@@ -649,17 +631,14 @@ public class NativeObject extends IdScriptableObject implements Map
                 Object key;
                 int index = 0;
 
-                @Override
                 public boolean hasNext() {
                     return index < ids.length;
                 }
 
-                @Override
                 public Object next() {
                     return get((key = ids[index++]));
                 }
 
-                @Override
                 public void remove() {
                     if (key == null) {
                         throw new IllegalStateException();

@@ -159,7 +159,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
          * relative to their parent, so this comparator is only meaningful for
          * comparing siblings.
          */
-        @Override
         public int compare(AstNode n1, AstNode n2) {
             return n1.position - n2.position;
         }
@@ -554,7 +553,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * {@code other}'s length.  If the lengths are equal, sorts abitrarily
      * on hashcode unless the nodes are the same per {@link #equals}.
      */
-    @Override
     public int compareTo(AstNode other) {
         if (this.equals(other)) return 0;
         int abs1 = this.getAbsolutePosition();
@@ -594,7 +592,6 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             }
             return sb.toString();
         }
-        @Override
         public boolean visit(AstNode node) {
             int tt = node.getType();
             String name = Token.typeToName(tt);
