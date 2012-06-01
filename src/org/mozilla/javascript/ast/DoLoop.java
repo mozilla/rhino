@@ -100,6 +100,7 @@ public class DoLoop extends Loop {
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
+        sb.append(makeIndent(depth));
         sb.append("do ");
         sb.append(body.toSource(depth).trim());
         sb.append(" while (");
