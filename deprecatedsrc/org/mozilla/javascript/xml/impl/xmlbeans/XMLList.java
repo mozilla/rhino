@@ -1595,7 +1595,6 @@ class XMLList extends XMLObjectImpl implements Function
         return null;
     }
 
-    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
@@ -1637,7 +1636,6 @@ class XMLList extends XMLObjectImpl implements Function
         return ((Callable)func).call(cx, scope, thisObj, args);
     }
 
-    @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     {
         throw ScriptRuntime.typeError1("msg.not.ctor", "XMLList");
