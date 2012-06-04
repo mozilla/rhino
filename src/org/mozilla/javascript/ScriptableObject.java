@@ -1294,6 +1294,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Scriptable proto = (Scriptable) protoCtor.newInstance(ScriptRuntime.emptyArgs);
         String className = proto.getClassName();
 
+        // check for possible redefinition
+        Object existing = getProperty(getTopLevelScope(scope), className);
+        if (existing instanceof BaseFunction) {
+            Object existingProto = ((BaseFunction)existing).getPrototypeProperty();
+            if (clazz.isInstance(existingProto)) {
+                return (BaseFunction)existing;
+            }
+        }
+
         // Set the prototype's prototype, trying to map Java inheritance to JS
         // prototype-based inheritance if requested to do so.
         Scriptable superProto = null;
