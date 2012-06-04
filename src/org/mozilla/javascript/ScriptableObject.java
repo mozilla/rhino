@@ -1298,7 +1298,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Object existing = getProperty(getTopLevelScope(scope), className);
         if (existing instanceof BaseFunction) {
             Object existingProto = ((BaseFunction)existing).getPrototypeProperty();
-            if (clazz.isInstance(existingProto)) {
+            if (clazz.equals(existingProto.getClass())) {
                 return (BaseFunction)existing;
             }
         }
