@@ -385,7 +385,10 @@ public class BaseFunction extends IdScriptableObject implements Function
             }
             result = (Scriptable)val;
             if (result.getPrototype() == null) {
-                result.setPrototype(getClassPrototype());
+                Scriptable proto = getClassPrototype();
+                if (result != proto) {
+                    result.setPrototype(proto);
+                }
             }
             if (result.getParentScope() == null) {
                 Scriptable parent = getParentScope();
