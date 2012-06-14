@@ -13,17 +13,17 @@
   <!--
     URL from which junit.jar can be retrieved
   -->
-  <property name="test.junit.url" value="http://mirrors.ibiblio.org/pub/mirrors/maven2/junit/junit/4.10/junit-4.10.jar"/>
+  <property name="test.junit.url" value="http://repo1.maven.org/maven2/junit/junit/4.10/junit-4.10.jar"/>
 
   <!--
     URL from which emma.jar can be retrieved
   -->
-  <property name="test.emma.url" value="http://mirrors.ibiblio.org/pub/mirrors/maven2/emma/emma/2.1.5320/emma-2.1.5320.jar"/>
+  <property name="test.emma.url" value="http://repo1.maven.org/maven2/emma/emma/2.1.5320/emma-2.1.5320.jar"/>
 
   <!--
     URL from which emma_ant.jar can be retrieved
   -->
-  <property name="test.emma_ant.url" value="http://mirrors.ibiblio.org/pub/mirrors/maven2/emma/emma_ant/2.1.5320/emma_ant-2.1.5320.jar"/>
+  <property name="test.emma_ant.url" value="http://repo1.maven.org/maven2/emma/emma_ant/2.1.5320/emma_ant-2.1.5320.jar"/>
 
   <!--
     Destination to which testing classes should be built
