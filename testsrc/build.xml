@@ -215,8 +215,19 @@
   <target name="copy-source">
     <mkdir dir="${dist.dir}/testsrc"/>
     <copy todir="${dist.dir}/testsrc">
-      <fileset dir="testsrc"
-        includes="**/*.java,**/*.js,**/*.jstest,**/*.properties,**/*.xml,**/*.html,**/*.jar,*.skip,*.tests,tests.tar.gz" />
+      <fileset dir="testsrc">
+        <include name="**/*.java"/>
+        <include name="**/*.js"/>
+        <include name="**/*.jstest"/>
+        <include name="**/*.doctest"/>
+        <include name="**/*.properties"/>
+        <include name="**/*.xml"/>
+        <include name="**/*.html"/>
+        <include name="**/*.jar"/>
+        <include name="*.skip"/>
+        <include name="*.tests"/>
+        <include name="tests.tar.gz"/>
+      </fileset>
     </copy>
   </target>
 </project>
