@@ -84,6 +84,7 @@
   </target>
 
   <target name="jar" depends="compile-all">
+    <copy todir="${classes}" file="LICENSE.txt"/>
     <property name="jarfile" location="${dist.dir}/${rhino.jar}"/>
     <jar jarfile="${jarfile}"
          basedir="${classes}"
