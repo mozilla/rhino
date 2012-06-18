@@ -4188,8 +4188,7 @@ public class ClassFileWriter {
         InputStream is = null;
         int major = 48, minor = 0;
         try {
-            is = ClassFileWriter.class.getResourceAsStream(
-                "org/mozilla/classfile/ClassFileWriter.class");
+            is = ClassFileWriter.class.getResourceAsStream("ClassFileWriter.class");
             if (is == null) {
                 is = ClassLoader.getSystemResourceAsStream(
                     "org/mozilla/classfile/ClassFileWriter.class");
