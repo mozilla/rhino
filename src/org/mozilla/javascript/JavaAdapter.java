@@ -562,7 +562,7 @@ public final class JavaAdapter implements IdFunctionCall
     {
         if (f == null) {
             // See comments in getFunction
-            return Undefined.instance;
+            return null;
         }
         if (factory == null) {
             factory = ContextFactory.getGlobal();
