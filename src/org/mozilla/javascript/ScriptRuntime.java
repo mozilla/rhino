@@ -3223,7 +3223,6 @@ public class ScriptRuntime {
         Object obj;
         boolean cacheObj;
 
-      getObj:
         if (t instanceof JavaScriptException) {
             cacheObj = false;
             obj = ((JavaScriptException)t).getValue();
@@ -3237,77 +3236,9 @@ public class ScriptRuntime {
                 NativeObject last = (NativeObject)lastCatchScope;
                 obj = last.getAssociatedValue(t);
                 if (obj == null) Kit.codeBug();
-                break getObj;
-            }
-
-            RhinoException re;
-            String errorName;
-            String errorMsg;
-            Throwable javaException = null;
-
-            if (t instanceof EcmaError) {
-                EcmaError ee = (EcmaError)t;
-                re = ee;
-                errorName = ee.getName();
-                errorMsg = ee.getErrorMessage();
-            } else if (t instanceof WrappedException) {
-                WrappedException we = (WrappedException)t;
-                re = we;
-                javaException = we.getWrappedException();
-                errorName = "JavaException";
-                errorMsg = javaException.getClass().getName()
-                           +": "+javaException.getMessage();
-            } else if (t instanceof EvaluatorException) {
-                // Pure evaluator exception, nor WrappedException instance
-                EvaluatorException ee = (EvaluatorException)t;
-                re = ee;
-                errorName = "InternalError";
-                errorMsg = ee.getMessage();
-            } else if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
-                // With FEATURE_ENHANCED_JAVA_ACCESS, scripts can catch
-                // all exception types
-                re = new WrappedException(t);
-                errorName = "JavaException";
-                errorMsg = t.toString();
             } else {
-                // Script can catch only instances of JavaScriptException,
-                // EcmaError and EvaluatorException
-                throw Kit.codeBug();
+                obj = wrapException(t, scope, cx);
             }
-
-            String sourceUri = re.sourceName();
-            if (sourceUri == null) {
-                sourceUri = "";
-            }
-            int line = re.lineNumber();
-            Object args[];
-            if (line > 0) {
-                args = new Object[] { errorMsg, sourceUri, Integer.valueOf(line) };
-            } else {
-                args = new Object[] { errorMsg, sourceUri };
-            }
-
-            Scriptable errorObject = cx.newObject(scope, errorName, args);
-            ScriptableObject.putProperty(errorObject, "name", errorName);
-            // set exception in Error objects to enable non-ECMA "stack" property
-            if (errorObject instanceof NativeError) {
-                ((NativeError) errorObject).setStackProvider(re);
-            }
-
-            if (javaException != null && isVisible(cx, javaException)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException,
-                                                       null);
-                ScriptableObject.defineProperty(
-                    errorObject, "javaException", wrap,
-                    ScriptableObject.PERMANENT | ScriptableObject.READONLY);
-            }
-            if (isVisible(cx, re)) {
-                Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
-                ScriptableObject.defineProperty(
-                        errorObject, "rhinoException", wrap,
-                        ScriptableObject.PERMANENT | ScriptableObject.READONLY);
-            }
-            obj = errorObject;
         }
 
         NativeObject catchScopeObject = new NativeObject();
@@ -3328,6 +3259,79 @@ public class ScriptRuntime {
             catchScopeObject.associateValue(t, obj);
         }
         return catchScopeObject;
+    }
+
+    public static Scriptable wrapException(Throwable t,
+                                           Scriptable scope,
+                                           Context cx) {
+        RhinoException re;
+        String errorName;
+        String errorMsg;
+        Throwable javaException = null;
+
+        if (t instanceof EcmaError) {
+            EcmaError ee = (EcmaError)t;
+            re = ee;
+            errorName = ee.getName();
+            errorMsg = ee.getErrorMessage();
+        } else if (t instanceof WrappedException) {
+            WrappedException we = (WrappedException)t;
+            re = we;
+            javaException = we.getWrappedException();
+            errorName = "JavaException";
+            errorMsg = javaException.getClass().getName()
+                       +": "+javaException.getMessage();
+        } else if (t instanceof EvaluatorException) {
+            // Pure evaluator exception, nor WrappedException instance
+            EvaluatorException ee = (EvaluatorException)t;
+            re = ee;
+            errorName = "InternalError";
+            errorMsg = ee.getMessage();
+        } else if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)) {
+            // With FEATURE_ENHANCED_JAVA_ACCESS, scripts can catch
+            // all exception types
+            re = new WrappedException(t);
+            errorName = "JavaException";
+            errorMsg = t.toString();
+        } else {
+            // Script can catch only instances of JavaScriptException,
+            // EcmaError and EvaluatorException
+            throw Kit.codeBug();
+        }
+
+        String sourceUri = re.sourceName();
+        if (sourceUri == null) {
+            sourceUri = "";
+        }
+        int line = re.lineNumber();
+        Object args[];
+        if (line > 0) {
+            args = new Object[] { errorMsg, sourceUri, Integer.valueOf(line) };
+        } else {
+            args = new Object[] { errorMsg, sourceUri };
+        }
+
+        Scriptable errorObject = cx.newObject(scope, errorName, args);
+        ScriptableObject.putProperty(errorObject, "name", errorName);
+        // set exception in Error objects to enable non-ECMA "stack" property
+        if (errorObject instanceof NativeError) {
+            ((NativeError) errorObject).setStackProvider(re);
+        }
+
+        if (javaException != null && isVisible(cx, javaException)) {
+            Object wrap = cx.getWrapFactory().wrap(cx, scope, javaException,
+                                                   null);
+            ScriptableObject.defineProperty(
+                errorObject, "javaException", wrap,
+                ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+        }
+        if (isVisible(cx, re)) {
+            Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
+            ScriptableObject.defineProperty(
+                    errorObject, "rhinoException", wrap,
+                    ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+        }
+        return errorObject;
     }
 
     private static boolean isVisible(Context cx, Object obj) {
