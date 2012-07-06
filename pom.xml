@@ -759,7 +759,7 @@
           <displayChangeSetDetailUrl>${project.scm.url}/commit/%REV%</displayChangeSetDetailUrl>
           <displayFileDetailUrl>${project.scm.url}/tree/${next.release.tag}/%FILE%</displayFileDetailUrl>
           <displayFileRevDetailUrl>${project.scm.url}/blob/%REV%/%FILE%</displayFileRevDetailUrl>
-          <issueIDRegexPattern>(?&lt;=[Bb]ug )\d+</issueIDRegexPattern>
+          <issueIDRegexPattern>(?&lt;=[Bb]ug(?: #?)?)\d{5,}</issueIDRegexPattern>
           <issueLinkUrl>${project.issueManagement.url}/show_bug.cgi?id=%ISSUE%</issueLinkUrl>
         </configuration>
       </plugin>
