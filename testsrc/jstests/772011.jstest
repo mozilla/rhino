@@ -1,0 +1,51 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// https://bugzilla.mozilla.org/show_bug.cgi?id=772011
+
+function assertEquals(expected, actual) {
+  if (expected != actual) {
+    throw "Expected '" + expected + "' but was '" + actual + "'";
+  }
+}
+
+function label_no_block() {
+  foo:
+    break foo;
+  return "pass";
+}
+
+function label_block() {
+  foo: {
+    break foo;
+    return "fail";
+  }
+  return "pass";
+}
+
+function multi_label_no_block() {
+  foo: bar: baz:
+    break foo;
+  return "pass";
+}
+
+function multi_label_block() {
+  foo: bar: baz: {
+    break foo;
+    return "fail";
+  }
+  return "pass";
+}
+
+assertEquals("pass", label_no_block());
+assertEquals("pass", label_block());
+assertEquals("pass", multi_label_no_block());
+assertEquals("pass", multi_label_block());
+
+assertEquals("pass", eval(label_no_block.toString())());
+assertEquals("pass", eval(label_block.toString())());
+assertEquals("pass", eval(multi_label_no_block.toString())());
+assertEquals("pass", eval(multi_label_block.toString())());
+
+"success";
