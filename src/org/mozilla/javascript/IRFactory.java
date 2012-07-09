@@ -745,12 +745,27 @@ public final class IRFactory extends Parser
     }
 
     private Node transformLabeledStatement(LabeledStatement ls) {
-        for (Label lb : ls.getLabels()) {
-            decompiler.addName(lb.getName());
+        Label label = ls.getFirstLabel();
+        List<Label> labels = ls.getLabels();
+        decompiler.addName(label.getName());
+        if (labels.size() > 1) {
+            // more than one label
+            for (Label lb : labels.subList(1, labels.size())) {
+                decompiler.addEOL(Token.COLON);
+                decompiler.addName(lb.getName());
+            }
+        }
+        if (ls.getStatement().getType() == Token.BLOCK) {
+            // reuse OBJECTLIT for ':' workaround, cf. transformObjectLiteral()
+            decompiler.addToken(Token.OBJECTLIT);
+            decompiler.addEOL(Token.LC);
+        } else {
             decompiler.addEOL(Token.COLON);
         }
-        Label label = ls.getFirstLabel();
         Node statement = transform(ls.getStatement());
+        if (ls.getStatement().getType() == Token.BLOCK) {
+            decompiler.addEOL(Token.RC);
+        }
 
         // Make a target and put it _after_ the statement node.  Add in the
         // LABEL node, so breaks get the right target.
