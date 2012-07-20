@@ -196,6 +196,66 @@ public class JsonParserTest {
         parser.parseValue("[1 ");
     }
 
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseIllegalUnicodeEscapeSeq() throws Exception {
+        parser.parseValue("\"\\u-123\"");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseIllegalUnicodeEscapeSeq2() throws Exception {
+        parser.parseValue("\"\\u006\u0661\"");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseIllegalUnicodeEscapeSeq3() throws Exception {
+        parser.parseValue("\"\\u006١\"");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseTrailingCommaInObject1() throws Exception {
+        parser.parseValue("{\"a\": 1,}");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseTrailingCommaInObject2() throws Exception {
+        parser.parseValue("{,\"a\": 1}");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseTrailingCommaInObject3() throws Exception {
+        parser.parseValue("{,}");
+    }
+
+    @Test
+    public void shouldParseEmptyObject() throws Exception {
+        parser.parseValue("{}");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseTrailingCommaInArray1() throws Exception {
+        parser.parseValue("[1,]");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseTrailingCommaInArray2() throws Exception {
+        parser.parseValue("[,1]");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseTrailingCommaInArray3() throws Exception {
+        parser.parseValue("[,]");
+    }
+
+    @Test
+    public void shouldParseEmptyArray() throws Exception {
+        parser.parseValue("[]");
+    }
+
+    @Test(expected = ParseException.class)
+    public void shouldFailToParseIllegalNumber() throws Exception {
+        parser.parseValue("1.");
+    }
+
     private String str(char... chars) {
         return new String(chars);
     }
