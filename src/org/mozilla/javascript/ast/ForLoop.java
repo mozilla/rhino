@@ -110,7 +110,7 @@ public class ForLoop extends Loop {
         sb.append("; ");
         sb.append(increment.toSource(0));
         sb.append(") ");
-        if (body instanceof Block) {
+        if (body.getType() == Token.BLOCK) {
             sb.append(body.toSource(depth).trim()).append("\n");
         } else {
             sb.append("\n").append(body.toSource(depth+1));

@@ -149,15 +149,20 @@ public class IfStatement extends AstNode {
         sb.append("if (");
         sb.append(condition.toSource(0));
         sb.append(") ");
-        if (!(thenPart instanceof Block)) {
-            sb.append("\n").append(makeIndent(depth));
+        if (thenPart.getType() != Token.BLOCK) {
+            sb.append("\n").append(makeIndent(depth + 1));
         }
         sb.append(thenPart.toSource(depth).trim());
-        if (elsePart instanceof IfStatement) {
-            sb.append(" else ");
-            sb.append(elsePart.toSource(depth).trim());
-        } else if (elsePart != null) {
-            sb.append(" else ");
+        if (elsePart != null) {
+            if (thenPart.getType() != Token.BLOCK) {
+                sb.append("\n").append(pad).append("else ");
+            } else {
+                sb.append(" else ");
+            }
+            if (elsePart.getType() != Token.BLOCK
+                    && elsePart.getType() != Token.IF) {
+                sb.append("\n").append(makeIndent(depth + 1));
+            }
             sb.append(elsePart.toSource(depth).trim());
         }
         sb.append("\n");
