@@ -3080,7 +3080,7 @@ class BodyCodegen
         // load array to store array literal objects
         if (isGenerator) {
             // TODO: this is actually only necessary if the yield operation is
-            // a child of this array or its children (bug xxxxxx)
+            // a child of this array or its children (bug 757410)
             for (int i = 0; i != count; ++i) {
                 generateExpression(child, node);
                 child = child.getNext();
@@ -3142,7 +3142,7 @@ class BodyCodegen
     /** load array with property values */
     private void addLoadPropertyValues(Node node, Node child, int count) {
         if (isGenerator) {
-            // see bug xxxxxx for explanation why we need to split this
+            // see bug 757410 for an explanation why we need to split this
             for (int i = 0; i != count; ++i) {
                 int childType = child.getType();
                 if (childType == Token.GET || childType == Token.SET) {
@@ -3207,7 +3207,7 @@ class BodyCodegen
 
         if (isGenerator) {
             // TODO: this is actually only necessary if the yield operation is
-            // a child of this object or its children (bug xxxxxx)
+            // a child of this object or its children (bug 757410)
             addLoadPropertyValues(node, child, count);
             addLoadPropertyIds(properties, count);
             // swap property-values and property-ids arrays
