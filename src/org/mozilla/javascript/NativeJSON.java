@@ -405,7 +405,7 @@ public final class NativeJSON extends IdScriptableObject
             if (index > Integer.MAX_VALUE) {
                 strP = str(Long.toString(index), value, state);
             } else {
-                strP = str(index, value, state);
+                strP = str((int) index, value, state);
             }
             if (strP == Undefined.instance) {
                 partial.add("null");

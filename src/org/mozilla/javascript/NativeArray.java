@@ -1014,7 +1014,7 @@ public class NativeArray extends IdScriptableObject implements List
         }
 
         long llength = getLengthProperty(cx, thisObj);
-        final int length = (int)llength;
+        final int length = (int) llength;
         if (llength != length) {
             throw Context.reportRuntimeError1(
                 "msg.arraylength.too.big", String.valueOf(llength));
