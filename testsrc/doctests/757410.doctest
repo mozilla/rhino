@@ -1,0 +1,17 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// https://bugzilla.mozilla.org/show_bug.cgi?id=757410
+
+js> version(180)
+0
+js> function gen() {
+  > [yield 1];
+  > ({x: yield 2});
+  > }
+js> var g = gen()
+js> g.next() == 1 && g.next() == 2
+true
+js> try {g.next()} catch(e) {e instanceof StopIteration}
+true
