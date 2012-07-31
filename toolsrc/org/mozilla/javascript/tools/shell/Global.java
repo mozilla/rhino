@@ -8,6 +8,7 @@ package org.mozilla.javascript.tools.shell;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.Charset;
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ public class Global extends ImporterTopLevel
 
     NativeArray history;
     boolean attemptedJLineLoad;
+    private ShellConsole console;
     private InputStream inStream;
     private PrintStream outStream;
     private PrintStream errStream;
@@ -843,13 +845,27 @@ public class Global extends ImporterTopLevel
         return ScriptRuntime.wrapInt(ScriptRuntime.toInt32(arg));
     }
 
+    private boolean loadJLine(Charset cs) {
+        if (!attemptedJLineLoad) {
+            // Check if we can use JLine for better command line handling
+            attemptedJLineLoad = true;
+            console = ShellConsole.getConsole(this, cs);
+        }
+        return console != null;
+    }
+
+    public ShellConsole getConsole(Charset cs) {
+        if (!loadJLine(cs)) {
+            console = ShellConsole.getConsole(getIn(), getErr(), cs);
+        }
+        return console;
+    }
+
     public InputStream getIn() {
         if (inStream == null && !attemptedJLineLoad) {
-            // Check if we can use JLine for better command line handling
-            InputStream jlineStream = ShellLine.getStream(this);
-            if (jlineStream != null)
-                inStream = jlineStream;
-            attemptedJLineLoad = true;
+            if (loadJLine(Charset.defaultCharset())) {
+                inStream = console.getIn();
+            }
         }
         return inStream == null ? System.in : inStream;
     }

@@ -6,19 +6,17 @@
 
 package org.mozilla.javascript.tools.shell;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -446,44 +444,37 @@ public class Main
     {
         if (filename == null || filename.equals("-")) {
             Scriptable scope = getShellScope();
-            PrintStream ps = global.getErr();
+            Charset cs;
+            String charEnc = shellContextFactory.getCharacterEncoding();
+            if (charEnc != null) {
+                cs = Charset.forName(charEnc);
+            } else {
+                cs = Charset.defaultCharset();
+            }
+            ShellConsole console = global.getConsole(cs);
             if (filename == null) {
                 // print implementation version
-                ps.println(cx.getImplementationVersion());
+                console.println(cx.getImplementationVersion());
             }
 
-            String charEnc = shellContextFactory.getCharacterEncoding();
-            if(charEnc == null)
-            {
-                charEnc = System.getProperty("file.encoding");
-            }
-            BufferedReader in;
-            try
-            {
-                in = new BufferedReader(new InputStreamReader(global.getIn(),
-                        charEnc));
-            }
-            catch(UnsupportedEncodingException e)
-            {
-                throw new UndeclaredThrowableException(e);
-            }
             int lineno = 1;
             boolean hitEOF = false;
             while (!hitEOF) {
-            	String[] prompts = global.getPrompts(cx);
+                String[] prompts = global.getPrompts(cx);
+                String prompt = null;
                 if (filename == null)
-                    ps.print(prompts[0]);
-                ps.flush();
+                    prompt = prompts[0];
+                console.flush();
                 String source = "";
 
                 // Collect lines of source to compile.
                 while (true) {
                     String newline;
                     try {
-                        newline = in.readLine();
+                        newline = console.readLine(prompt);
                     }
                     catch (IOException ioe) {
-                        ps.println(ioe.toString());
+                        console.println(ioe.toString());
                         break;
                     }
                     if (newline == null) {
@@ -494,7 +485,7 @@ public class Main
                     lineno++;
                     if (cx.stringIsCompilableUnit(source))
                         break;
-                    ps.print(prompts[1]);
+                    prompt = prompts[1];
                 }
                 try {
                     Script script = cx.compileString(source, "<stdin>", lineno, null);
@@ -506,7 +497,7 @@ public class Main
                                         source.trim().startsWith("function")))
                         {
                             try {
-                                ps.println(Context.toString(result));
+                                console.println(Context.toString(result));
                             } catch (RhinoException rex) {
                                 ToolErrorReporter.reportException(
                                         cx.getErrorReporter(), rex);
@@ -528,7 +519,8 @@ public class Main
                     exitCode = EXITCODE_RUNTIME_ERROR;
                 }
             }
-            ps.println();
+            console.println();
+            console.flush();
         } else if (useRequire && filename.equals(mainModule)) {
             require.requireMain(cx, filename);
         } else {
