@@ -72,44 +72,59 @@ public class Codegen implements Evaluator
 
         String mainClassName = "org.mozilla.javascript.gen." + baseName + "_" + serial;
 
-        byte[] mainClassBytes = compileToClassFile(compilerEnv, mainClassName,
-                                                   tree, encodedSource,
-                                                   returnFunction);
+        try {
+            byte[] mainClassBytes = compileToClassFile(compilerEnv, mainClassName,
+                                                       tree, encodedSource,
+                                                       returnFunction);
 
-        return new Object[] { mainClassName, mainClassBytes };
+            return new Object[] { mainClassName, mainClassBytes };
+        } catch (Exception e) {
+            // fall back to interpreter
+            return fallbackInterpreter.compile(compilerEnv, tree, encodedSource, returnFunction);
+        }
     }
 
     public Script createScriptObject(Object bytecode,
                                      Object staticSecurityDomain)
     {
-        Class<?> cl = defineClass(bytecode, staticSecurityDomain);
-
-        Script script;
         try {
-            script = (Script)cl.newInstance();
-        } catch (Exception ex) {
-            throw new RuntimeException
-                ("Unable to instantiate compiled class:" + ex.toString());
+            Class<?> cl = defineClass(bytecode, staticSecurityDomain);
+
+            Script script;
+            try {
+                script = (Script)cl.newInstance();
+            } catch (Exception ex) {
+                throw new RuntimeException
+                    ("Unable to instantiate compiled class:" + ex.toString());
+            }
+            return script;
+        } catch (Exception e) {
+            // fall back to interpreter
+            return fallbackInterpreter.createScriptObject(bytecode, staticSecurityDomain);
         }
-        return script;
     }
 
     public Function createFunctionObject(Context cx, Scriptable scope,
                                          Object bytecode,
                                          Object staticSecurityDomain)
     {
-        Class<?> cl = defineClass(bytecode, staticSecurityDomain);
-
-        NativeFunction f;
         try {
-            Constructor<?>ctor = cl.getConstructors()[0];
-            Object[] initArgs = { scope, cx, Integer.valueOf(0) };
-            f = (NativeFunction)ctor.newInstance(initArgs);
-        } catch (Exception ex) {
-            throw new RuntimeException
-                ("Unable to instantiate compiled class:"+ex.toString());
+            Class<?> cl = defineClass(bytecode, staticSecurityDomain);
+
+            NativeFunction f;
+            try {
+                Constructor<?>ctor = cl.getConstructors()[0];
+                Object[] initArgs = { scope, cx, Integer.valueOf(0) };
+                f = (NativeFunction)ctor.newInstance(initArgs);
+            } catch (Exception ex) {
+                throw new RuntimeException
+                    ("Unable to instantiate compiled class:"+ex.toString());
+            }
+            return f;
+        } catch (Exception e) {
+            // fall back to interpreter
+            return fallbackInterpreter.createFunctionObject(cx, scope, bytecode, staticSecurityDomain);
         }
-        return f;
     }
 
     private Class<?> defineClass(Object bytecode,
@@ -1248,6 +1263,8 @@ public class Codegen implements Evaluator
 
     private double[] itsConstantList;
     private int itsConstantListSize;
+
+    private final Interpreter fallbackInterpreter = new Interpreter();
 }
 
 
