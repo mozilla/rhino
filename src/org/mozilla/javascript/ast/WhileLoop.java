@@ -57,7 +57,7 @@ public class WhileLoop extends Loop {
         sb.append("while (");
         sb.append(condition.toSource(0));
         sb.append(") ");
-        if (body instanceof Block) {
+        if (body.getType() == Token.BLOCK) {
             sb.append(body.toSource(depth).trim());
             sb.append("\n");
         } else {
