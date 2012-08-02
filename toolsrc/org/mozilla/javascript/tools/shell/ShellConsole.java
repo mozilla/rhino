@@ -15,7 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
-import java.util.EnumMap;
 import java.util.List;
 
 import org.mozilla.javascript.Function;
@@ -28,6 +27,12 @@ import org.mozilla.javascript.ScriptableObject;
  * @author André Bargull
  */
 public abstract class ShellConsole {
+
+    private final static Class[] NO_ARG = {};
+    private final static Class[] BOOLEAN_ARG = {Boolean.TYPE};
+    private final static Class[] STRING_ARG = {String.class};
+    private final static Class[] CHARSEQ_ARG = {CharSequence.class};
+
     protected ShellConsole() {
     }
 
@@ -67,146 +72,31 @@ public abstract class ShellConsole {
      */
     public abstract void println(String s) throws IOException;
 
-    private static interface MethodDecl {
-        static final Class<?> UNRESOLVED = new Object(){}.getClass();
 
-        String methodName();
-
-        Class<?>[] parameters();
-    }
-
-    private static class Instance<METHOD extends Enum<METHOD> & MethodDecl> {
-        private final Object instance;
-        private final Class<?> clazz;
-        private final EnumMap<METHOD, Method> cache;
-
-        Instance(Object instance, Class<METHOD> methods) {
-            this.instance = instance;
-            this.clazz = instance.getClass();
-            this.cache = new EnumMap<METHOD, Method>(methods);
-        }
-
-        private static Method methodOrNull(Class<?> clazz, String name,
-                Class<?>... parameterTypes) {
-            try {
-                return clazz.getDeclaredMethod(name, parameterTypes);
-            } catch (NoSuchMethodException e) {
+    private static Object tryInvoke(Object obj, String method,
+                                    Class[] paramTypes, Object... args) {
+        try {
+            Method m = obj.getClass().getDeclaredMethod(method, paramTypes);
+            if (m != null) {
+                return m.invoke(obj, args);
             }
-            return null;
+        } catch (NoSuchMethodException e) {
+        } catch (IllegalArgumentException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
         }
-
-        @SuppressWarnings("unchecked")
-        private static <T> T tryInvoke(Method m, Object obj, Object... args) {
-            try {
-                if (m != null) {
-                    return (T) m.invoke(obj, args);
-                }
-            } catch (IllegalArgumentException e) {
-            } catch (IllegalAccessException e) {
-            } catch (InvocationTargetException e) {
-            }
-            return null;
-        }
-
-        private Method get(METHOD method) {
-            if (!cache.containsKey(method)) {
-                String name = method.methodName();
-                Class<?>[] parameters = method.parameters();
-                synchronized (cache) {
-                    cache.put(method, methodOrNull(clazz, name, parameters));
-                }
-            }
-            return cache.get(method);
-        }
-
-        void resolve(METHOD method, Class<?>... parameters) {
-            Class<?>[] p = method.parameters();
-            for (int i = 0, j = 0; i < parameters.length && j < p.length; ++j) {
-                if (p[j] == MethodDecl.UNRESOLVED) {
-                    p[j] = parameters[i++];
-                }
-            }
-        }
-
-        <T> T invoke(METHOD method, Object... args) {
-            return tryInvoke(get(method), instance, args);
-        }
-    }
-
-    /**
-     * JLine ConsoleReader API v1
-     */
-    private enum ConsoleReaderMethodsV1 implements MethodDecl {
-        readLine("readLine"),
-        readLine_String("readLine", String.class),
-        flushConsole("flushConsole"),
-        printString("printString", String.class),
-        printNewline("printNewline"),
-        setBellEnabled("setBellEnabled", Boolean.TYPE),
-        addCompletor("addCompletor", UNRESOLVED);
-
-        private final String name;
-        private final Class<?>[] parameters;
-
-        private ConsoleReaderMethodsV1(String name, Class<?>... parameters) {
-            this.name = name;
-            this.parameters = parameters;
-        }
-
-        @Override
-        public String methodName() {
-            return name;
-        }
-
-        @Override
-        public Class<?>[] parameters() {
-            return parameters;
-        }
-    }
-
-    /**
-     * JLine ConsoleReader API v2
-     */
-    private enum ConsoleReaderMethodsV2 implements MethodDecl {
-        readLine("readLine"),
-        readLine_String("readLine", String.class),
-        flush("flush"),
-        print("print", CharSequence.class),
-        println("println"),
-        println_CharSequence("println", CharSequence.class),
-        getOutput("getOutput"),
-        setBellEnabled("setBellEnabled", Boolean.TYPE),
-        addCompleter("addCompleter", UNRESOLVED);
-
-        private final String name;
-        private final Class<?>[] parameters;
-
-        private ConsoleReaderMethodsV2(String name, Class<?>... parameters) {
-            this.name = name;
-            this.parameters = parameters;
-        }
-
-        @Override
-        public String methodName() {
-            return name;
-        }
-
-        @Override
-        public Class<?>[] parameters() {
-            return parameters;
-        }
+        return null;
     }
 
     /**
      * {@link ShellConsole} implementation for JLine v1
      */
     private static class JLineShellConsoleV1 extends ShellConsole {
-        private final Instance<ConsoleReaderMethodsV1> instance;
+        private final Object reader;
         private final InputStream in;
 
-        JLineShellConsoleV1(Instance<ConsoleReaderMethodsV1> instance,
-                Charset cs) {
-            this.instance = instance;
+        JLineShellConsoleV1(Object reader, Charset cs) {
+            this.reader = reader;
             this.in = new ConsoleInputStream(this, cs);
         }
 
@@ -217,34 +107,33 @@ public abstract class ShellConsole {
 
         @Override
         public String readLine() throws IOException {
-            return instance.invoke(ConsoleReaderMethodsV1.readLine);
+            return (String) tryInvoke(reader, "readLine", NO_ARG);
         }
 
         @Override
         public String readLine(String prompt) throws IOException {
-            return instance.invoke(ConsoleReaderMethodsV1.readLine_String,
-                    prompt);
+            return (String) tryInvoke(reader, "readLine", STRING_ARG, prompt);
         }
 
         @Override
         public void flush() throws IOException {
-            instance.invoke(ConsoleReaderMethodsV1.flushConsole);
+            tryInvoke(reader, "flushConsole", NO_ARG);
         }
 
         @Override
         public void print(String s) throws IOException {
-            instance.invoke(ConsoleReaderMethodsV1.printString, s);
+            tryInvoke(reader, "printString", STRING_ARG, s);
         }
 
         @Override
         public void println() throws IOException {
-            instance.invoke(ConsoleReaderMethodsV1.printNewline);
+            tryInvoke(reader, "printNewline", NO_ARG);
         }
 
         @Override
         public void println(String s) throws IOException {
-            instance.invoke(ConsoleReaderMethodsV1.printString, s);
-            instance.invoke(ConsoleReaderMethodsV1.printNewline);
+            tryInvoke(reader, "printString", STRING_ARG, s);
+            tryInvoke(reader, "printNewline", NO_ARG);
         }
     }
 
@@ -252,12 +141,11 @@ public abstract class ShellConsole {
      * {@link ShellConsole} implementation for JLine v2
      */
     private static class JLineShellConsoleV2 extends ShellConsole {
-        private final Instance<ConsoleReaderMethodsV2> instance;
+        private final Object reader;
         private final InputStream in;
 
-        JLineShellConsoleV2(Instance<ConsoleReaderMethodsV2> instance,
-                Charset cs) {
-            this.instance = instance;
+        JLineShellConsoleV2(Object reader, Charset cs) {
+            this.reader = reader;
             this.in = new ConsoleInputStream(this, cs);
         }
 
@@ -268,33 +156,32 @@ public abstract class ShellConsole {
 
         @Override
         public String readLine() throws IOException {
-            return instance.invoke(ConsoleReaderMethodsV2.readLine);
+            return (String) tryInvoke(reader, "readLine", NO_ARG);
         }
 
         @Override
         public String readLine(String prompt) throws IOException {
-            return instance.invoke(ConsoleReaderMethodsV2.readLine_String,
-                    prompt);
+            return (String) tryInvoke(reader, "readLine", STRING_ARG, prompt);
         }
 
         @Override
         public void flush() throws IOException {
-            instance.invoke(ConsoleReaderMethodsV2.flush);
+            tryInvoke(reader, "flush", NO_ARG);
         }
 
         @Override
         public void print(String s) throws IOException {
-            instance.invoke(ConsoleReaderMethodsV2.print, s);
+            tryInvoke(reader, "print", CHARSEQ_ARG, s);
         }
 
         @Override
         public void println() throws IOException {
-            instance.invoke(ConsoleReaderMethodsV2.println);
+            tryInvoke(reader, "println", NO_ARG);
         }
 
         @Override
         public void println(String s) throws IOException {
-            instance.invoke(ConsoleReaderMethodsV2.println_CharSequence, s);
+            tryInvoke(reader, "println", CHARSEQ_ARG, s);
         }
     }
 
@@ -483,11 +370,9 @@ public abstract class ShellConsole {
         // ConsoleReader reader = new ConsoleReader();
         Constructor<?> c = readerClass.getConstructor();
         Object reader = c.newInstance();
-        Instance<ConsoleReaderMethodsV1> instance = new Instance<ConsoleReaderMethodsV1>(
-                reader, ConsoleReaderMethodsV1.class);
 
         // reader.setBellEnabled(false);
-        instance.invoke(ConsoleReaderMethodsV1.setBellEnabled, false);
+        tryInvoke(reader, "setBellEnabled", BOOLEAN_ARG, Boolean.FALSE);
 
         // reader.addCompletor(new FlexibleCompletor(prefixes));
         Class<?> completorClass = Kit.classOrNull(classLoader,
@@ -495,10 +380,9 @@ public abstract class ShellConsole {
         Object completor = Proxy.newProxyInstance(classLoader,
                 new Class[] { completorClass },
                 new FlexibleCompletor(completorClass, scope));
-        instance.resolve(ConsoleReaderMethodsV1.addCompletor, completorClass);
-        instance.invoke(ConsoleReaderMethodsV1.addCompletor, completor);
+        tryInvoke(reader, "addCompletor", new Class[] {completorClass}, completor);
 
-        return new JLineShellConsoleV1(instance, cs);
+        return new JLineShellConsoleV1(reader, cs);
     }
 
     private static JLineShellConsoleV2 getJLineShellConsoleV2(
@@ -508,11 +392,9 @@ public abstract class ShellConsole {
         // ConsoleReader reader = new ConsoleReader();
         Constructor<?> c = readerClass.getConstructor();
         Object reader = c.newInstance();
-        Instance<ConsoleReaderMethodsV2> instance = new Instance<ConsoleReaderMethodsV2>(
-                reader, ConsoleReaderMethodsV2.class);
 
         // reader.setBellEnabled(false);
-        instance.invoke(ConsoleReaderMethodsV2.setBellEnabled, false);
+        tryInvoke(reader, "setBellEnabled", BOOLEAN_ARG, Boolean.FALSE);
 
         // reader.addCompleter(new FlexibleCompletor(prefixes));
         Class<?> completorClass = Kit.classOrNull(classLoader,
@@ -520,10 +402,9 @@ public abstract class ShellConsole {
         Object completor = Proxy.newProxyInstance(classLoader,
                 new Class[] { completorClass },
                 new FlexibleCompletor(completorClass, scope));
-        instance.resolve(ConsoleReaderMethodsV2.addCompleter, completorClass);
-        instance.invoke(ConsoleReaderMethodsV2.addCompleter, completor);
+        tryInvoke(reader, "addCompleter", new Class[] {completorClass}, completor);
 
-        return new JLineShellConsoleV2(instance, cs);
+        return new JLineShellConsoleV2(reader, cs);
     }
 }
 
