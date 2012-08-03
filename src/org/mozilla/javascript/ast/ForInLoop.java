@@ -131,7 +131,7 @@ public class ForInLoop extends Loop {
         sb.append(" in ");
         sb.append(iteratedObject.toSource(0));
         sb.append(") ");
-        if (body instanceof Block) {
+        if (body.getType() == Token.BLOCK) {
             sb.append(body.toSource(depth).trim()).append("\n");
         } else {
             sb.append("\n").append(body.toSource(depth+1));
