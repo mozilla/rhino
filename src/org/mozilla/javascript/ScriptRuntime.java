@@ -3778,7 +3778,8 @@ public class ScriptRuntime {
         String objString = toString(obj);
         if (obj instanceof NativeFunction) {
             // Omit function body in string representations of functions
-            int curly = objString.indexOf('{');
+            int paren = objString.indexOf(')');
+            int curly = objString.indexOf('{', paren);
             if (curly > -1) {
                 objString = objString.substring(0, curly + 1) + "...}";
             }
