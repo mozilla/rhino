@@ -3586,10 +3586,9 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                     +"Lorg/mozilla/javascript/Scriptable;"
                     +")Lorg/mozilla/javascript/Callable;");
             } else {
-                // Optimizer do not optimize this case for now
-                if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1)
-                    throw Codegen.badTree();
                 generateExpression(id, node);  // id
+                if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1)
+                    addDoubleWrap();
                 cfw.addALoad(contextLocal);
                 addScriptRuntimeInvoke(
                     "getElemFunctionAndThis",
