@@ -1671,7 +1671,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
             if (inRange) {
                 if ((gData.regexp.flags & JSREG_FOLD) != 0) {
                     assert(rangeStart <= thisCh);
-                    for (c = rangeStart; c <= thisCh; c++) {
+                    for (c = rangeStart; c <= thisCh;) {
                         addCharacterToCharSet(charSet, c);
                         char uch = upcase(c);
                         char dch = downcase(c);
@@ -1679,6 +1679,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
                             addCharacterToCharSet(charSet, uch);
                         if (c != dch)
                             addCharacterToCharSet(charSet, dch);
+                        if (++c == 0)
+                            break; // overflow
                     }
                 } else {
                     addCharacterRangeToCharSet(charSet, rangeStart, thisCh);
