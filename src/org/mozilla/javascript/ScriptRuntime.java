@@ -1106,6 +1106,111 @@ public class ScriptRuntime {
         return (index < args.length) ? toInt32(args[index]) : 0;
     }
 
+    private static final int HI_DWORD(long qword) {
+        return (int) (qword >>> 32);
+    }
+
+    private static final int LO_DWORD(long qword) {
+        return (int) qword;
+    }
+
+    private static final long QWORD(int hi, int lo) {
+        return (hi & 0xFFFFFFFFL) << 32 | (lo & 0xFFFFFFFFL);
+    }
+
+    private static boolean uint32_lt(int a, int b) {
+        return ((a < b) ^ (a < 0) ^ (b < 0));
+    }
+
+    private static boolean uint32_gt(int a, int b) {
+        return ((a > b) ^ (a < 0) ^ (b < 0));
+    }
+
+    private static boolean uint32_gte(int a, int b) {
+        return (a == b) || ((a > b) ^ (a < 0) ^ (b < 0));
+    }
+
+    /**
+     * Shouldn't be called directly because the method size is too big to be
+     * inlined by the JVM, use {@link #toInt32(double)} instead which is
+     * optimized for the common case
+     */
+    private static int toInt32_Slow(double d) {
+        /* see vm/NumericConversions.h for original source code */
+
+        /*
+         * Algorithm Outline
+         *  Step 1. If d is NaN, +/-Inf or |d|>=2^84 or |d|<1, then return 0
+         *          All of this is implemented based on an exponent comparison.
+         *  Step 2. If |d|<2^31, then return (int)d
+         *          The cast to integer (conversion in RZ mode) returns the correct result.
+         *  Step 3. If |d|>=2^32, d:=fmod(d, 2^32) is taken  -- but without a call
+         *  Step 4. If |d|>=2^31, then the fractional bits are cleared before
+         *          applying the correction by 2^32:  d - sign(d)*2^32
+         *  Step 5. Return (int)d
+         */
+        long bits = Double.doubleToLongBits(d);
+        /*uint32_t*/int hi = HI_DWORD(bits);
+        /*uint32_t*/int lo = LO_DWORD(bits);
+        /*uint32_t*/int tmp = (hi & 0x7ff00000) - 0x3ff00000;
+
+        if (uint32_gte(tmp, (0x45300000 - 0x3ff00000))) {
+            // d is Nan, +/-Inf or +/-0, or |d|>=2^(32+52) or |d|<1,
+            // in which case result=0
+            return 0;
+        }
+
+        if (uint32_lt(tmp, 0x01f00000)) {
+            // |d|<2^31
+            return (int) d;
+        }
+
+        if (uint32_gt(tmp, 0x01f00000)) {
+            // |d|>=2^32
+            int expon = tmp >>> 20;
+            int shift_amount = expon - 21;
+            int mask32 = 0x80000000;
+            if (shift_amount < 32) {
+                mask32 >>= shift_amount;
+                hi &= mask32;
+                lo = 0;
+            } else {
+                mask32 >>= (shift_amount - 32);
+                lo &= mask32;
+            }
+            d -= Double.longBitsToDouble(QWORD(hi, lo));
+            bits = Double.doubleToLongBits(d);
+            hi = HI_DWORD(bits);
+            lo = LO_DWORD(bits);
+        }
+
+        // eliminate fractional bits
+        tmp = (hi & 0x7ff00000);
+        if (tmp >= 0x41e00000) {
+            // |d|>=2^31
+            int expon = tmp >>> 20;
+            int shift_amount = expon - (0x3ff - 11);
+            int mask32 = 0x80000000;
+            if (shift_amount < 32) {
+                mask32 >>= shift_amount;
+                hi &= mask32;
+                lo = 0;
+            } else {
+                mask32 >>= (shift_amount - 32);
+                lo &= mask32;
+            }
+            int two32_hi = 0x41f00000 ^ (hi & 0x80000000);
+            int two32_lo = 0;
+            double two32 = Double.longBitsToDouble(QWORD(two32_hi, two32_lo));
+            d = Double.longBitsToDouble(QWORD(hi, lo));
+            d -= two32;
+        }
+
+        // returning (int)d does not work as d can be outside int range
+        // but the result must always be 32 lower bits of (long)d
+        return (int) (long) d;
+    }
+
     public static int toInt32(double d) {
         int id = (int)d;
         if (id == d) {
@@ -1120,16 +1225,7 @@ public class ScriptRuntime {
             return 0;
         }
 
-        d = (d >= 0) ? Math.floor(d) : Math.ceil(d);
-
-        double two32 = 4294967296.0;
-        d = Math.IEEEremainder(d, two32);
-        // (double)(long)d == d should hold here
-
-        long l = (long)d;
-        // returning (int)d does not work as d can be outside int range
-        // but the result must always be 32 lower bits of l
-        return (int)l;
+        return toInt32_Slow(d);
     }
 
     /**
@@ -1150,13 +1246,7 @@ public class ScriptRuntime {
             return 0;
         }
 
-        d = (d >= 0) ? Math.floor(d) : Math.ceil(d);
-
-        // 0x100000000 gives me a numeric overflow...
-        double two32 = 4294967296.0;
-        l = (long)Math.IEEEremainder(d, two32);
-
-        return l & 0xffffffffL;
+        return toInt32_Slow(d) & 0xffffffffL;
     }
 
     public static long toUint32(Object val) {
@@ -1182,12 +1272,7 @@ public class ScriptRuntime {
             return 0;
         }
 
-        d = (d >= 0) ? Math.floor(d) : Math.ceil(d);
-
-        int int16 = 0x10000;
-        i = (int)Math.IEEEremainder(d, int16);
-
-        return (char)i;
+        return (char)toInt32_Slow(d);
     }
 
     // XXX: this is until setDefaultNamespace will learn how to store NS
