@@ -135,13 +135,25 @@ public final class NativeJSON extends IdScriptableObject
         if (property instanceof Scriptable) {
             Scriptable val = ((Scriptable) property);
             if (val instanceof NativeArray) {
-                int len = (int) ((NativeArray) val).getLength();
-                for (int i = 0; i < len; i++) {
-                    Object newElement = walk(cx, scope, reviver, val, i);
-                    if (newElement == Undefined.instance) {
-                      val.delete(i);
+                long len = ((NativeArray) val).getLength();
+                for (long i = 0; i < len; i++) {
+                    // indices greater than MAX_INT are represented as strings
+                    if (i > Integer.MAX_VALUE) {
+                        String id = Long.toString(i);
+                        Object newElement = walk(cx, scope, reviver, val, id);
+                        if (newElement == Undefined.instance) {
+                            val.delete(id);
+                        } else {
+                            val.put(id, val, newElement);
+                        }
                     } else {
-                      val.put(i, val, newElement);
+                        int idx = (int) i;
+                        Object newElement = walk(cx, scope, reviver, val, idx);
+                        if (newElement == Undefined.instance) {
+                            val.delete(idx);
+                        } else {
+                            val.put(idx, val, newElement);
+                        }
                     }
                 }
             } else {
@@ -387,9 +399,14 @@ public final class NativeJSON extends IdScriptableObject
         state.indent = state.indent + state.gap;
         List<Object> partial = new LinkedList<Object>();
 
-        int len = (int) value.getLength();
-        for (int index = 0; index < len; index++) {
-            Object strP = str(index, value, state);
+        long len = value.getLength();
+        for (long index = 0; index < len; index++) {
+            Object strP;
+            if (index > Integer.MAX_VALUE) {
+                strP = str(Long.toString(index), value, state);
+            } else {
+                strP = str((int) index, value, state);
+            }
             if (strP == Undefined.instance) {
                 partial.add("null");
             } else {

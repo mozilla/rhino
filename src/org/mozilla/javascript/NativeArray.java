@@ -1013,7 +1013,12 @@ public class NativeArray extends IdScriptableObject implements List
             };
         }
 
-        final int length = (int) getLengthProperty(cx, thisObj);
+        long llength = getLengthProperty(cx, thisObj);
+        final int length = (int) llength;
+        if (llength != length) {
+            throw Context.reportRuntimeError1(
+                "msg.arraylength.too.big", String.valueOf(llength));
+        }
         // copy the JS array into a working array, so it can be
         // sorted cheaply.
         final Object[] working = new Object[length];
