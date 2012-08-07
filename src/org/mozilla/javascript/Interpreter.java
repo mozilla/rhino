@@ -1957,6 +1957,8 @@ switch (op) {
                 exState = EX_CATCH_STATE;
             } else if (throwable instanceof EvaluatorException) {
                 exState = EX_CATCH_STATE;
+            } else if (throwable instanceof ContinuationPending) {
+                exState = EX_NO_JS_STATE;
             } else if (throwable instanceof RuntimeException) {
                 exState = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS)
                           ? EX_CATCH_STATE
