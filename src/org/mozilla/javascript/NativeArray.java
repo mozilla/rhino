@@ -1023,14 +1023,14 @@ public class NativeArray extends IdScriptableObject implements List
         // sorted cheaply.
         final Object[] working = new Object[length];
         for (int i = 0; i != length; ++i) {
-            working[i] = getElem(cx, thisObj, i);
+            working[i] = getRawElem(thisObj, i);
         }
 
         Arrays.sort(working, comparator);
 
         // copy the working array back into thisObj
         for (int i = 0; i < length; ++i) {
-            setElem(cx, thisObj, i, working[i]);
+            setRawElem(cx, thisObj, i, working[i]);
         }
 
         return thisObj;

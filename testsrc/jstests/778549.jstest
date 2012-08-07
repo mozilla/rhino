@@ -1,0 +1,36 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// https://bugzilla.mozilla.org/show_bug.cgi?id=778549
+
+function assertSame(expected, actual) {
+  if (expected !== actual) {
+    throw "Expected '" + expected + "' but was '" + actual + "'";
+  }
+}
+
+function assertTrue(actual) {
+  assertSame(true, actual);
+}
+
+function assertFalse(actual) {
+  assertSame(false, actual);
+}
+
+
+var array = ['a',,void 0];
+
+assertSame(3, array.length);
+assertTrue(array.hasOwnProperty('0'));
+assertFalse(array.hasOwnProperty('1'));
+assertTrue(array.hasOwnProperty('2'));
+
+array.sort();
+
+assertSame(3, array.length);
+assertTrue(array.hasOwnProperty('0'));
+assertTrue(array.hasOwnProperty('1'));
+assertFalse(array.hasOwnProperty('2'));
+
+"success";
