@@ -556,7 +556,7 @@ class CodeGenerator extends Icode {
                 }
                 int callType = node.getIntProp(Node.SPECIALCALL_PROP,
                                                Node.NON_SPECIALCALL);
-                if (callType != Node.NON_SPECIALCALL) {
+                if (type != Token.REF_CALL && callType != Node.NON_SPECIALCALL) {
                     // embed line number and source filename
                     addIndexOp(Icode_CALLSPECIAL, argCount);
                     addUint8(callType);
