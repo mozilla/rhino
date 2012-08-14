@@ -1578,7 +1578,7 @@ switch (op) {
         continue Loop;
     case Icode_VAR_INC_DEC : {
         stackTop = doVarIncDec(cx, frame, stack, sDbl, stackTop,
-                               vars, varDbls, indexReg);
+                               vars, varDbls, varAttributes, indexReg);
         continue Loop;
     }
     case Icode_ZERO :
@@ -2352,24 +2352,37 @@ switch (op) {
     private static int doVarIncDec(Context cx, CallFrame frame,
                                    Object[] stack, double[] sDbl,
                                    int stackTop, Object[] vars,
-                                   double[] varDbls, int indexReg) {
+                                   double[] varDbls, int[] varAttributes,
+                                   int indexReg) {
         // indexReg : varindex
         ++stackTop;
         int incrDecrMask = frame.idata.itsICode[frame.pc];
         if (!frame.useActivation) {
-            stack[stackTop] = DOUBLE_MARK;
             Object varValue = vars[indexReg];
             double d;
             if (varValue == DOUBLE_MARK) {
                 d = varDbls[indexReg];
             } else {
                 d = ScriptRuntime.toNumber(varValue);
-                vars[indexReg] = DOUBLE_MARK;
             }
             double d2 = ((incrDecrMask & Node.DECR_FLAG) == 0)
                         ? d + 1.0 : d - 1.0;
-            varDbls[indexReg] = d2;
-            sDbl[stackTop] = ((incrDecrMask & Node.POST_FLAG) == 0) ? d2 : d;
+            boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+            if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
+                if (varValue != DOUBLE_MARK) {
+                    vars[indexReg] = DOUBLE_MARK;
+                }
+                varDbls[indexReg] = d2;
+                stack[stackTop] = DOUBLE_MARK;
+                sDbl[stackTop] = post ? d : d2;
+            } else {
+                if (post && varValue != DOUBLE_MARK) {
+                    stack[stackTop] = varValue;
+                } else {
+                    stack[stackTop] = DOUBLE_MARK;
+                    sDbl[stackTop] = post ? d : d2;
+                }
+            }
         } else {
             String varName = frame.idata.argNames[indexReg];
             stack[stackTop] = ScriptRuntime.nameIncrDecr(frame.scope, varName,

@@ -4370,6 +4370,42 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
             int varIndex = fnCurrent.getVarIndex(child);
             short reg = varRegisters[varIndex];
+            boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
+            if (constDeclarations[varIndex]) {
+                if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+                    int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
+                    cfw.addDLoad(reg + offset);
+                    if (!post) {
+                        cfw.addPush(1.0);
+                        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                            cfw.add(ByteCode.DADD);
+                        } else {
+                            cfw.add(ByteCode.DSUB);
+                        }
+                    }
+                } else {
+                    if (varIsDirectCallParameter(varIndex)) {
+                        dcpLoadAsObject(reg);
+                    } else {
+                        cfw.addALoad(reg);
+                    }
+                    if (post) {
+                        cfw.add(ByteCode.DUP);
+                        addObjectToDouble();
+                        cfw.add(ByteCode.POP2);
+                    } else {
+                        addObjectToDouble();
+                        cfw.addPush(1.0);
+                        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                            cfw.add(ByteCode.DADD);
+                        } else {
+                            cfw.add(ByteCode.DSUB);
+                        }
+                        addDoubleWrap();
+                    }
+                }
+                break;
+            }
             if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
                 int offset = varIsDirectCallParameter(varIndex) ? 1 : 0;
                 cfw.addDLoad(reg + offset);
@@ -4407,7 +4443,6 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                     cfw.add(ByteCode.DUP);
                 }
                 cfw.addAStore(reg);
-                break;
             }
             break;
           case Token.NAME:
@@ -5297,87 +5332,63 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
      */
     private short getNewWordPairLocal(boolean isConst)
     {
-        short result = getConsecutiveSlots(2, isConst);
-        if (result < (MAX_LOCALS - 1)) {
-            locals[result] = 1;
-            locals[result + 1] = 1;
-            if (isConst)
-                locals[result + 2] = 1;
-            if (result == firstFreeLocal) {
-                for (int i = firstFreeLocal + 2; i < MAX_LOCALS; i++) {
-                    if (locals[i] == 0) {
-                        firstFreeLocal = (short) i;
-                        if (localsMax < firstFreeLocal)
-                            localsMax = firstFreeLocal;
-                        return result;
-                    }
-                }
-            }
-            else {
-                return result;
-            }
-        }
-        throw Context.reportRuntimeError("Program too complex " +
-                                         "(out of locals)");
+        return getNewWordIntern(isConst ? 3 : 2);
     }
 
     private short getNewWordLocal(boolean isConst)
     {
-        short result = getConsecutiveSlots(1, isConst);
-        if (result < (MAX_LOCALS - 1)) {
-            locals[result] = 1;
-            if (isConst)
-                locals[result + 1] = 1;
-            if (result == firstFreeLocal) {
-                for (int i = firstFreeLocal + 2; i < MAX_LOCALS; i++) {
-                    if (locals[i] == 0) {
-                        firstFreeLocal = (short) i;
-                        if (localsMax < firstFreeLocal)
-                            localsMax = firstFreeLocal;
-                        return result;
-                    }
-                }
-            }
-            else {
-                return result;
-            }
-        }
-        throw Context.reportRuntimeError("Program too complex " +
-                                         "(out of locals)");
+        return getNewWordIntern(isConst ? 2 : 1);
     }
 
     private short getNewWordLocal()
     {
-        short result = firstFreeLocal;
-        locals[result] = 1;
-        for (int i = firstFreeLocal + 1; i < MAX_LOCALS; i++) {
-            if (locals[i] == 0) {
-                firstFreeLocal = (short) i;
-                if (localsMax < firstFreeLocal)
-                    localsMax = firstFreeLocal;
-                return result;
-            }
-        }
-        throw Context.reportRuntimeError("Program too complex " +
-                                         "(out of locals)");
+        return getNewWordIntern(1);
     }
 
-    private short getConsecutiveSlots(int count, boolean isConst) {
-        if (isConst)
-            count++;
-        short result = firstFreeLocal;
-        while (true) {
-            if (result >= (MAX_LOCALS - 1))
+    private short getNewWordIntern(int count)
+    {
+        assert count >= 1 && count <= 3;
+
+        int[] locals = this.locals;
+        int result = -1;
+        if (count > 1) {
+            // we need 'count' consecutive free slots
+            OUTER: for (int i = firstFreeLocal; i + count <= MAX_LOCALS;) {
+                for (int j = 0; j < count; ++j) {
+                    if (locals[i + j] != 0) {
+                        i += j + 1;
+                        continue OUTER;
+                    }
+                }
+                result = i;
                 break;
-            int i;
-            for (i = 0; i < count; i++)
-                if (locals[result + i] != 0)
-                    break;
-            if (i >= count)
-                break;
-            result++;
+            }
+        } else {
+            result = firstFreeLocal;
         }
-        return result;
+
+        if (result != -1) {
+            locals[result] = 1;
+            if (count > 1)
+                locals[result + 1] = 1;
+            if (count > 2)
+                locals[result + 2] = 1;
+
+            if (result == firstFreeLocal) {
+                for (int i = result + count; i < MAX_LOCALS; i++) {
+                    if (locals[i] == 0) {
+                        firstFreeLocal = (short) i;
+                        if (localsMax < firstFreeLocal)
+                            localsMax = firstFreeLocal;
+                        return (short) result;
+                    }
+                }
+            } else {
+                return (short) result;
+            }
+        }
+
+        throw Context.reportRuntimeError("Program too complex (out of locals)");
     }
 
     // This is a valid call only for a local that is allocated by default.

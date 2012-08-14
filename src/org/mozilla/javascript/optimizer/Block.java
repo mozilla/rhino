@@ -379,6 +379,7 @@ class Block
             }
             break;
             case Token.SETVAR :
+            case Token.SETCONSTVAR :
             {
                 Node lhs = n.getFirstChild();
                 Node rhs = lhs.getNext();
@@ -548,6 +549,7 @@ class Block
 
             case Token.COMMA:
             case Token.SETVAR:
+            case Token.SETCONSTVAR:
             case Token.SETNAME:
             case Token.SETPROP:
             case Token.SETELEM:
@@ -579,14 +581,20 @@ class Block
                 if (first.getType() == Token.GETVAR) {
                     // theVar is a Number now
                     int i = fn.getVarIndex(first);
-                    result |= assignType(varTypes, i, Optimizer.NumberType);
+                    if (!fn.fnode.getParamAndVarConst()[i]) {
+                        result |= assignType(varTypes, i, Optimizer.NumberType);
+                    }
                 }
                 break;
-            case Token.SETVAR : {
+            case Token.SETVAR :
+            case Token.SETCONSTVAR : {
                 Node rValue = first.getNext();
                 int theType = findExpressionType(fn, rValue, varTypes);
                 int i = fn.getVarIndex(n);
-                result |= assignType(varTypes, i, theType);
+                if (!(n.getType() == Token.SETVAR
+                        && fn.fnode.getParamAndVarConst()[i])) {
+                    result |= assignType(varTypes, i, theType);
+                }
                 break;
             }
         }

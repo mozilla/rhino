@@ -1,0 +1,53 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// https://bugzilla.mozilla.org/show_bug.cgi?id=782363
+
+function assertSame(expected, actual) {
+  if (expected !== actual) {
+    throw "Expected '" + expected + "' but was '" + actual + "'";
+  }
+}
+
+function f1() { const a = 0; a++; return a; }
+function f2() { const a = 0; ++a; return a; }
+function f3() { const a = 0; return a++; }
+function f4() { const a = 0; return ++a; }
+function f5() { const a = 0; a--; return a; }
+function f6() { const a = 0; --a; return a; }
+function f7() { const a = 0; return a--; }
+function f8() { const a = 0; return --a; }
+
+var called = 0;
+var obj = {valueOf: function(){ called += 1; return 0 }};
+function g1() { const a = obj; a++; return a; }
+function g2() { const a = obj; ++a; return a; }
+function g3() { const a = obj; return a++; }
+function g4() { const a = obj; return ++a; }
+function g5() { const a = obj; a--; return a; }
+function g6() { const a = obj; --a; return a; }
+function g7() { const a = obj; return a--; }
+function g8() { const a = obj; return --a; }
+
+assertSame(0, f1());
+assertSame(0, f2());
+assertSame(0, f3());
+assertSame(1, f4());
+assertSame(0, f5());
+assertSame(0, f6());
+assertSame(0, f7());
+assertSame(-1, f8());
+
+assertSame(obj, g1());
+assertSame(obj, g2());
+assertSame(obj, g3());
+assertSame(1, g4());
+assertSame(obj, g5());
+assertSame(obj, g6());
+assertSame(obj, g7());
+assertSame(-1, g8());
+
+assertSame(8, called);
+
+"success";
