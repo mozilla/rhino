@@ -163,7 +163,8 @@ class Optimizer
                     }
                     return NoType;
                 }
-            case Token.SETVAR : {
+            case Token.SETVAR :
+            case Token.SETCONSTVAR : {
                     Node lChild = n.getFirstChild();
                     Node rChild = lChild.getNext();
                     int rType = rewriteForNumberVariables(rChild, NumberType);
