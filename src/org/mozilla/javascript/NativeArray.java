@@ -344,6 +344,26 @@ public class NativeArray extends IdScriptableObject implements List
         return super.has(index, start);
     }
 
+    @Override
+    public void setAttributes(int index, int attributes) {
+        if (attributes != EMPTY && dense != null) {
+            toSparse();
+        }
+        super.setAttributes(index, attributes);
+    }
+
+    private void toSparse() {
+        assert dense != null;
+        Object[] values = dense;
+        dense = null;
+        denseOnly = false;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] != NOT_FOUND) {
+                put(i, this, values[i]);
+            }
+        }
+    }
+
     private static long toArrayIndex(Object id) {
         if (id instanceof String) {
             return toArrayIndex((String)id);
@@ -557,14 +577,7 @@ public class NativeArray extends IdScriptableObject implements List
                                      ScriptableObject desc,
                                      boolean checkValid) {
       if (dense != null) {
-        Object[] values = dense;
-        dense = null;
-        denseOnly = false;
-        for (int i = 0; i < values.length; i++) {
-          if (values[i] != NOT_FOUND) {
-            put(i, this, values[i]);
-          }
-        }
+        toSparse();
       }
       long index = toArrayIndex(id);
       if (index >= length) {

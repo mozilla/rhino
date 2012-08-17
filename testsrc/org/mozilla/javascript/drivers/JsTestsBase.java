@@ -48,7 +48,12 @@ public class JsTestsBase extends TestCase {
                 int length = (int) f.length(); // don't worry about very long
                                                // files
                 char[] buf = new char[length];
-                new FileReader(f).read(buf, 0, length);
+                FileReader reader = new FileReader(f);
+                try {
+                    reader.read(buf, 0, length);
+                } finally {
+                    reader.close();
+                }
                 String session = new String(buf);
                 runJsTest(cx, shared, f.getName(), session);
             }

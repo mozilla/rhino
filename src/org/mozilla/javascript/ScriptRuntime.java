@@ -2586,10 +2586,14 @@ public class ScriptRuntime {
     }
 
     public static CharSequence add(CharSequence val1, Object val2) {
+        if (val2 instanceof Scriptable)
+            val2 = ((Scriptable) val2).getDefaultValue(null);
         return new ConsString(val1, toCharSequence(val2));
     }
 
     public static CharSequence add(Object val1, CharSequence val2) {
+        if (val1 instanceof Scriptable)
+            val1 = ((Scriptable) val1).getDefaultValue(null);
         return new ConsString(toCharSequence(val1), val2);
     }
 
