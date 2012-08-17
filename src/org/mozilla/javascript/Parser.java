@@ -2541,11 +2541,25 @@ public class Parser
                   pn = f;
                   break;
 
+              case Token.QUASI:
+                  consumeToken();
+                  pn = taggedQuasi(pn);
+                  break;
+
               default:
                   break tailLoop;
             }
         }
         return pn;
+    }
+
+    private AstNode taggedQuasi(AstNode pn) throws IOException
+    {
+        AstNode quasi = quasiLiteral();
+        QuasiCall tagged = new QuasiCall();
+        tagged.setTarget(pn);
+        tagged.setQuasi(quasi);
+        return tagged;
     }
 
     /**
@@ -2820,6 +2834,9 @@ public class Parser
           case Token.TRUE:
               pos = ts.tokenBeg; end = ts.tokenEnd;
               return new KeywordLiteral(pos, end - pos, tt);
+
+          case Token.QUASI:
+              return quasiLiteral();
 
           case Token.RESERVED:
               reportError("msg.reserved.id");
@@ -3389,6 +3406,69 @@ public class Parser
         s.setValue(ts.getString());
         s.setQuoteCharacter(ts.getQuoteChar());
         return s;
+    }
+
+    private AstNode quasiLiteral() throws IOException {
+        // QuasiLiteral ::
+        //   FullQuasi
+        //   QuasiHead Expression QuasiMiddleList[opt] [goal=InputElementQuasiTail] QuasiTail
+        // QuasiMiddleList ::
+        //   [goal=InputElementQuasiTail] QuasiMiddle Expression
+        //   QuasiMiddleList [goal=InputElementQuasiTail] QuasiMiddle Expression
+
+        // Quasi ::
+        //   FullQuasi
+        //   QuasiHead
+        // FullQuasi ::
+        //   `QuasiCharacters[opt]`
+        // QuasiHead ::
+        //   `QuasiCharacters[opt]${
+        // QuasiSubstitutionTail ::
+        //   QuasiMiddle
+        //   QuasiTail
+        // QuasiMiddle ::
+        //   }QuasiCharacters[opt]${
+        // QuasiTail ::
+        //   }QuasiCharacters[opt]`
+        // QuasiCharacters ::
+        //   QuasiCharacter QuasiCharacters[opt]
+        // QuasiCharacter ::
+        //   SourceCharacter except ` or \ or $
+        //   $ [LA not {]
+        //   \ EscapeSequence
+        //   LineContinuation
+
+        if (currentToken != Token.QUASI) codeBug();
+        int pos = ts.tokenBeg, end = ts.tokenEnd;
+        List<AstNode> elements = new ArrayList<AstNode>();
+        QuasiLiteral pn = new QuasiLiteral(pos);
+
+        int posChars = ts.tokenBeg + 1;
+        int tt = ts.readQuasi();
+        while (tt == Token.QUASI_SUBST) {
+            elements.add(createQuasiCharacters(posChars));
+            elements.add(expr());
+            mustMatchToken(Token.RC, "msg.syntax");
+            posChars = ts.tokenBeg + 1;
+            tt = ts.readQuasi();
+        }
+        if (tt == Token.ERROR) {
+             return makeErrorNode();
+        }
+        assert tt == Token.QUASI;
+        elements.add(createQuasiCharacters(posChars));
+        end = ts.tokenEnd;
+        pn.setElements(elements);
+        pn.setLength(end - pos);
+
+        return pn;
+    }
+
+    private QuasiCharacters createQuasiCharacters(int pos) {
+        QuasiCharacters chars = new QuasiCharacters(pos, ts.tokenEnd - pos - 1);
+        chars.setValue(ts.getString());
+        chars.setRawValue(ts.getRawString());
+        return chars;
     }
 
     protected void checkActivationName(String name, int token) {

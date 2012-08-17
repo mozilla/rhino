@@ -127,6 +127,12 @@ public class Decompiler
         appendString(str);
     }
 
+    void addQuasi(String str)
+    {
+        addToken(Token.QUASI_CHARS);
+        appendString(str);
+    }
+
     void addRegexp(String regexp, String flags)
     {
         addToken(Token.REGEXP);
@@ -766,6 +772,18 @@ public class Decompiler
             case Token.MOD:
                 result.append(" % ");
                 break;
+
+            case Token.QUASI:
+                result.append("`");
+                break;
+
+            case Token.QUASI_SUBST:
+                result.append("${");
+                break;
+
+            case Token.QUASI_CHARS:
+                i = printSourceString(source, i + 1, false, result);
+                continue;
 
             case Token.COLONCOLON:
                 result.append("::");

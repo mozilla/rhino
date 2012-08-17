@@ -228,7 +228,11 @@ public class Token
         DEBUGGER       = 160,
         COMMENT        = 161,
         GENEXPR        = 162,
-        LAST_TOKEN     = 163;
+        QUASI          = 163,  // quasi literal
+        QUASI_CHARS    = 164,  // quasi - literal section
+        QUASI_SUBST    = 165,  // quasi - substitution
+        QUASI_CALL     = 166,  // quasi - tagged/handler
+        LAST_TOKEN     = 167;
 
     /**
      * Returns a name for the token.  If Rhino is compiled with certain
@@ -413,6 +417,10 @@ public class Token
           case DEBUGGER:        return "DEBUGGER";
           case COMMENT:         return "COMMENT";
           case GENEXPR:         return "GENEXPR";
+          case QUASI:           return "QUASI";
+          case QUASI_CHARS:     return "QUASI_CHARS";
+          case QUASI_SUBST:     return "QUASI_SUBST";
+          case QUASI_CALL:      return "QUASI_CALL";
         }
 
         // Token without name
