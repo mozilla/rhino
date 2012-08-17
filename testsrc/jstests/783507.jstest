@@ -1,0 +1,632 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// https://bugzilla.mozilla.org/show_bug.cgi?id=783507
+
+function assertEquals(expected, actual) {
+  if (expected != actual) {
+    throw "Expected '" + expected + "' but was '" + actual + "'";
+  }
+}
+
+function assertSame(expected, actual) {
+  if (expected !== actual) {
+    throw "Expected '" + expected + "' but was '" + actual + "'";
+  }
+}
+
+function assertNotSame(expected, actual) {
+  if (expected === actual) {
+    throw "Expected not same but was '" + actual + "'";
+  }
+}
+
+function assertTrue(actual) {
+  assertSame(true, actual);
+}
+
+function assertFalse(actual) {
+  assertSame(false, actual);
+}
+
+function assertDescriptor(expected, actual) {
+  assertTrue("value" in actual);
+  assertTrue("writable" in actual);
+  assertTrue("enumerable" in actual);
+  assertTrue("configurable" in actual);
+  assertSame(expected.value, actual.value);
+  assertSame(expected.writable, actual.writable);
+  assertSame(expected.enumerable, actual.enumerable);
+  assertSame(expected.configurable, actual.configurable);
+}
+
+function assertNonEnumerable(object, key) {
+  for (var k in object) {
+    if (k === key) {
+      assertFalse(true);
+    }
+  }
+}
+
+function assertWritable(object, key) {
+  var oldValue = object[key];
+  var newValue = "test-writable";
+  try {
+    object[key] = newValue;
+    assertSame(newValue, object[key]);
+  } finally {
+    object[key] = oldValue;
+  }
+}
+
+function thrower(proto, key, value) {
+  var o = Object.create(proto);
+  Object.defineProperty(o, key, {get: function(){ throw value }});
+  return o;
+}
+
+function syntaxError(script) {
+  try {
+    eval(script);
+  } catch (e) {
+    if (e.name === "SyntaxError") {
+      return;
+    }
+  }
+  throw "Expected syntax error";
+}
+
+function Try(expected, fn) {
+  try {
+    var result = fn();
+  } catch (e) {
+    result = e;
+  }
+  assertSame(expected, result);
+}
+
+function _Try(error, fn) {
+  try {
+    fn();
+  } catch (e) {
+    var result = e instanceof error;
+  }
+  assertTrue(result);
+}
+
+// jstests run in a shared environment
+function _eval(script, o) {
+  try {
+    for (var name in o) {
+      eval("this")[name] = o[name];
+    }
+    return eval(script);
+  } finally {
+    for (var name in o) {
+      eval("delete this['" + name + "']");
+    }
+  }
+}
+
+function hex(i) {
+  return (i <= 0xF ? "0" : "") + i.toString(16);
+}
+
+function unicode(i) {
+  return (i <= 0xF ? "000" : i <= 0xFF ? "00" : i <= 0xFFF ? "0" : "") + i.toString(16);
+}
+
+function surrogate(i) {
+  var hi = ((i - 0x10000) >>> 10) + 0xD800;
+  var lo = ((i - 0x10000) & 0x3FF) + 0xDC00;
+  return String.fromCharCode(hi) + String.fromCharCode(lo);
+}
+
+/* TEST BEGIN */
+
+
+// unterminated quasi literal
+syntaxError("`");
+syntaxError("`${");
+syntaxError("`${}");
+syntaxError("`${1}");
+syntaxError("`${1 + 2}");
+
+
+// invalid quasi substitution
+syntaxError("`${`");
+syntaxError("`${}`");
+
+
+// character escape sequence (single escape character)
+assertSame("\'", `\'`);
+assertSame("\"", `\"`);
+assertSame("\\", `\\`);
+assertSame("\b", `\b`);
+assertSame("\f", `\f`);
+assertSame("\n", `\n`);
+assertSame("\r", `\r`);
+assertSame("\t", `\t`);
+assertSame("\v", `\v`);
+assertSame("\r\n", `\r\n`);
+
+
+// character escape sequence (non escape character)
+var escapeCharacters = {
+  "'": 0, '"': 0, "\\": 0, "b": 0, "f": 0,
+  "n": 0, "r": 0, "t": 0, "v": 0,
+  "0": 0, "1": 0, "2": 0, "3": 0, "4": 0,
+  "5": 0, "6": 0, "7": 0, "8": 0, "9": 0,
+  "x": 0, "u": 0,
+};
+var lineTerminator = {
+  "\n": 0, "\r": 0, "\u2028": 0, "\u2029": 0
+};
+
+/*
+var acc0 = "", acc1 = "";
+for (var i = 0; i <= 0xFFFF; ++i) {
+  var c = String.fromCharCode(i);
+  if (c in escapeCharacters) continue;
+  if (c in lineTerminator) continue;
+  // assertSame(c, eval("`\\" + c + "`"));
+  acc0 += c;
+  acc1 += "\\" + c;
+}
+assertSame(acc0, eval("`" + acc1 + "`"));
+*/
+
+assertSame("\0", eval("`\\" + String.fromCharCode(0) + "`"));
+assertSame("$", `\$`);
+assertSame(".", `\.`);
+assertSame("A", `\A`);
+assertSame("a", `\a`);
+
+
+// digit escape sequence
+assertSame("\0", `\0`);
+syntaxError("`\\1`");
+syntaxError("`\\2`");
+syntaxError("`\\3`");
+syntaxError("`\\4`");
+syntaxError("`\\5`");
+syntaxError("`\\6`");
+syntaxError("`\\7`");
+syntaxError("`\\8`");
+syntaxError("`\\9`");
+
+
+// hex escape sequence
+syntaxError("`\\x`");
+syntaxError("`\\x0`");
+syntaxError("`\\x0Z`");
+syntaxError("`\\xZ`");
+
+/*
+var acc0 = "", acc1 = "";
+for (var i = 0; i <= 0xFF; ++i) {
+  // assertSame(String.fromCharCode(i), eval("`\\x" + hex(i) + "`"));
+  acc0 += String.fromCharCode(i);
+  acc1 += "\\x" + hex(i);
+}
+assertSame(acc0, eval("`" + acc1 + "`"));
+*/
+
+assertSame("\0", `\x00`);
+assertSame("$", `\x24`);
+assertSame(".", `\x2E`);
+assertSame("A", `\x41`);
+assertSame("a", `\x61`);
+assertSame("AB", `\x41B`);
+assertSame(String.fromCharCode(0xFF), `\xFF`);
+
+
+// unicode escape sequence
+/*
+var acc0 = "", acc1 = "";
+for (var i = 0; i <= 0xFFFF; ++i) {
+  // assertSame(String.fromCharCode(i), eval("`\\u" + unicode(i) + "`"));
+  acc0 += String.fromCharCode(i);
+  acc1 += "\\u" + unicode(i);
+}
+assertSame(acc0, eval("`" + acc1 + "`"));
+*/
+
+assertSame("\0", `\u0000`);
+assertSame("$", `\u0024`);
+assertSame(".", `\u002E`);
+assertSame("A", `\u0041`);
+assertSame("a", `\u0061`);
+assertSame("AB", `\u0041B`);
+assertSame(String.fromCharCode(0xFFFF), `\uFFFF`);
+
+
+/*
+var acc0 = "", acc1 = "";
+for (var i = 0; i <= 0xFFFF; ++i) {
+  // assertSame(String.fromCharCode(i), eval("`\\u{" + unicode(i) + "}`"));
+  acc0 += String.fromCharCode(i);
+  acc1 += "\\u{" + unicode(i) + "}";
+}
+assertSame(acc0, eval("`" + acc1 + "`"));
+*/
+
+assertSame("\0", `\u{0000}`);
+assertSame("$", `\u{0024}`);
+assertSame(".", `\u{002E}`);
+assertSame("A", `\u{0041}`);
+assertSame("a", `\u{0061}`);
+assertSame("AB", `\u{0041}B`);
+assertSame(String.fromCharCode(0xFFFF), `\u{FFFF}`);
+
+
+/*
+var acc0 = "", acc1 = "";
+for (var i = 0; i <= 0xFFFF; ++i) {
+  // assertSame(String.fromCharCode(i), eval("`\\u{" + i.toString(16) + "}`"));
+  acc0 += String.fromCharCode(i);
+  acc1 += "\\u{" + i.toString(16) + "}";
+}
+assertSame(acc0, eval("`" + acc1 + "`"));
+*/
+
+assertSame("\0", `\u{0}`);
+assertSame("$", `\u{24}`);
+assertSame(".", `\u{2E}`);
+assertSame("A", `\u{41}`);
+assertSame("a", `\u{61}`);
+assertSame(String.fromCharCode(0x41B), `\u{41B}`);
+
+
+/*
+for (var start = 0x10000, end = 0x10FFFF + 1, step = 0xFFFF; start < end; start += step) {
+  var acc0 = "", acc1 = "";
+  for (var i = start, j = Math.min(start + step, end); i < j; ++i) {
+    var hi = ((i - 0x10000) >>> 10) + 0xD800;
+    var lo = ((i - 0x10000) & 0x3FF) + 0xDC00;
+    var c = String.fromCharCode(hi) + String.fromCharCode(lo);
+    // assertSame(c, eval("`\\u{" + i.toString(16) + "}`"));
+    acc0 += c;
+    acc1 += "\\u{" + i.toString(16) + "}";
+  }
+  assertSame(acc0, eval("`" + acc1 + "`"));
+}
+*/
+
+assertSame(surrogate(0x10000), `\u{10000}`);
+assertSame(surrogate(0x10FFFF), `\u{10FFFF}`);
+syntaxError("`\\u{110000}`");
+
+
+// line continuation
+assertSame("", eval("`\\\n`"))
+assertSame("", eval("`\\\r`"))
+assertSame("", eval("`\\\u2028`"))
+assertSame("", eval("`\\\u2029`"))
+
+
+// source character
+for (var i = 0; i < 0xFFFF; ++i) {
+  var c = String.fromCharCode(i);
+  if (c == "`" || c == "\\") continue;
+  assertSame(c, eval("`" + c + "`"));
+}
+
+assertSame("", ``);
+assertSame("`", `\``);
+assertSame("$", `$`);
+assertSame("$$", `$$`);
+assertSame("$$}", `$$}`);
+
+
+// simple variable substitution
+var foo = "FOO", bar = "BAR";
+assertSame("baz", `baz`);
+assertSame(foo, `${foo}`);
+assertSame("pre" + foo, `pre${foo}`);
+assertSame(foo + "post", `${foo}post`);
+assertSame("pre" + foo + "post", `pre${foo}post`);
+assertSame(foo + bar, `${foo}${bar}`);
+assertSame(foo + "-" + bar, `${foo}-${bar}`);
+
+
+// expression substitution
+assertSame("1", `${1}`);
+assertSame("12", `${1}${2}`);
+assertSame("3", `${1 + 2}`);
+assertSame("2", `${1, 2}`);
+
+
+// default quasis perform ToString() for each substitution
+assertSame("ToString-ValueOf", `\
+${{toString: function(){ return "ToString" }}}\
+-\
+${{valueOf: function(){ return "ValueOf" }}}\
+`);
+Try("ValueOf", function(){ return `\
+${{toString: function(){ throw "toString" }, valueOf: function() { return "ValueOf" }}}\
+`});
+Try("ToString", function() {
+  `${{toString: function(){ throw "ToString" }}}${{toString: function(){ throw "bad" }}}`
+});
+Try("ToString", function() {
+  `${{toString: function(){ return "bad" }}}${{toString: function(){ throw "ToString" }}}`
+});
+
+
+
+// 11.2.6 Tagged Quasis
+// 11.1.9 Quasi Literals [Runtime Semantics: ArgumentListEvaluation]
+// 11.1.9 Quasi Literals [Abstract Operation GetQuasiCallSite]
+
+var records = [];
+function recordingHandler(siteObj) {
+  var subs = [].splice.call(arguments, 1);
+  records.push({siteObj: siteObj, subs: subs});
+  return recordingHandler;
+}
+
+function cooked(siteObj) {
+  return siteObj[0];
+}
+
+function raw(siteObj) {
+  return siteObj.raw[0];
+}
+
+recordingHandler``;
+for (var i = 0; i < 2; ++i)
+  recordingHandler``;
+assertSame(3, records.length);
+
+// GetQuasiCallSite - step 1/12
+assertNotSame(records[0].siteObj, records[1].siteObj);
+assertSame(records[1].siteObj, records[2].siteObj);
+
+// GetQuasiCallSite - step 10
+assertTrue("raw" in records[0].siteObj);
+
+// GetQuasiCallSite - step 5
+assertTrue(Array.isArray(records[0].siteObj));
+
+// GetQuasiCallSite - step 6
+assertTrue(Array.isArray(records[0].siteObj.raw));
+
+// GetQuasiCallSite - step 8b/c
+assertSame(1, records[0].siteObj.length);
+assertSame("", records[0].siteObj[0]);
+
+// GetQuasiCallSite - step 8d/e
+assertSame(1, records[0].siteObj.raw.length);
+assertSame("", records[0].siteObj.raw[0]);
+
+// GetQuasiCallSite - step 9
+assertTrue(Object.isFrozen(records[0].siteObj.raw));
+
+// GetQuasiCallSite - step 11
+assertTrue(Object.isFrozen(records[0].siteObj));
+
+// Runtime Semantics: ArgumentListEvaluation
+assertSame(0, records[0].subs.length);
+
+
+// same call-site object for different handlers
+var a = [
+  function(siteObj){ return siteObj },
+  function(siteObj){ return siteObj }
+].map(function(fn) {
+  return fn``;
+});
+assertSame(a[0], a[1]);
+
+
+records.length = 0;
+recordingHandler`${foo}`;
+
+assertSame(1, records[0].subs.length);
+assertSame(foo, records[0].subs[0]);
+assertSame(2, records[0].siteObj.length);
+assertSame("", records[0].siteObj[0]);
+assertSame("", records[0].siteObj[1]);
+assertSame(2, records[0].siteObj.raw.length);
+assertSame("", records[0].siteObj.raw[0]);
+assertSame("", records[0].siteObj.raw[1]);
+
+
+records.length = 0;
+recordingHandler`a${foo}`;
+
+assertSame(1, records[0].subs.length);
+assertSame(foo, records[0].subs[0]);
+assertSame(2, records[0].siteObj.length);
+assertSame("a", records[0].siteObj[0]);
+assertSame("", records[0].siteObj[1]);
+assertSame(2, records[0].siteObj.raw.length);
+assertSame("a", records[0].siteObj.raw[0]);
+assertSame("", records[0].siteObj.raw[1]);
+
+
+records.length = 0;
+recordingHandler`${foo}b`;
+
+assertSame(1, records[0].subs.length);
+assertSame(foo, records[0].subs[0]);
+assertSame(2, records[0].siteObj.length);
+assertSame("", records[0].siteObj[0]);
+assertSame("b", records[0].siteObj[1]);
+assertSame(2, records[0].siteObj.raw.length);
+assertSame("", records[0].siteObj.raw[0]);
+assertSame("b", records[0].siteObj.raw[1]);
+
+
+records.length = 0;
+recordingHandler`a${foo}b`;
+
+assertSame(1, records[0].subs.length);
+assertSame(foo, records[0].subs[0]);
+assertSame(2, records[0].siteObj.length);
+assertSame("a", records[0].siteObj[0]);
+assertSame("b", records[0].siteObj[1]);
+assertSame(2, records[0].siteObj.raw.length);
+assertSame("a", records[0].siteObj.raw[0]);
+assertSame("b", records[0].siteObj.raw[1]);
+
+
+// LineTerminatorSequence
+assertSame("\n\r\u2028\u2029", _eval("cooked`\n\r\u2028\u2029`", {cooked: cooked}));
+assertSame("\n\r\u2028\u2029", _eval("raw`\n\r\u2028\u2029`", {raw: raw}));
+
+// LineContinuation
+assertSame("", _eval("cooked`\\\n\\\r\\\u2028\\\u2029`", {cooked: cooked}));
+assertSame("\\\n\\\r\\\u2028\\\u2029", _eval("raw`\\\n\\\r\\\u2028\\\u2029`", {raw: raw}));
+
+// Escape Sequences
+assertSame("\n\r\u2028\u2029", cooked`\n\r\u2028\u2029`);
+assertSame("\\n\\r\\u2028\\u2029", raw`\n\r\u2028\u2029`);
+
+assertSame("\0", cooked`\0`);
+assertSame("\\0", raw`\0`);
+
+assertSame("\0", cooked`\x00`);
+assertSame("\\x00", raw`\x00`);
+
+assertSame("\0", cooked`\u0000`);
+assertSame("\\u0000", raw`\u0000`);
+
+assertSame("\0", cooked`\u{0}`);
+assertSame("\\u{0}", raw`\u{0}`);
+
+assertSame("\'\"\\\b\f\n\r\t\v", cooked`\'\"\\\b\f\n\r\t\v`);
+assertSame("\\'\\\"\\\\\\b\\f\\n\\r\\t\\v", raw`\'\"\\\b\f\n\r\t\v`);
+
+assertSame("\r\n", cooked`\r\n`);
+assertSame("\\r\\n", raw`\r\n`);
+
+
+// MemberExpression, CallExpression, NewExpression
+
+var handler = {rec: recordingHandler, get: function(){ return recordingHandler }};
+handler.self = handler;
+
+records.length = 0;
+var nums = 0;
+nums += 1; handler.rec``;
+nums += 1; handler['rec']``;
+nums += 1; handler.get()``;
+nums += 1; handler['get']()``;
+nums += 1; handler.self.rec``;
+nums += 1; handler.self['rec']``;
+nums += 1; handler.self.get()``;
+nums += 1; handler.self['get']()``;
+nums += 1; (1,handler.rec)``;
+nums += 2; recordingHandler````;
+nums += 2; handler.rec````;
+assertSame(nums, records.length);
+
+
+assertTrue(new (function(){ return Object })`` instanceof Object);
+assertSame("A", (function(){ return {a: "A"} })``['a']);
+assertSame("A", (function(){ return {a: "A"} })``.a);
+assertSame("A", (function(){ return function(){ return "A" } })``());
+
+
+// nested quasi
+assertSame("baz", `${`baz`}`);
+assertSame(foo, `${`${foo}`}`);
+assertSame("<[" + foo + "]>", `<${`[${foo}]`}>`);
+
+
+
+
+// 15.5.3.4 String.raw
+
+assertTrue("raw" in String);
+assertSame("function", typeof String.raw);
+assertSame(1, String.raw.length);
+_Try(TypeError, function(){ new String.raw });
+assertDescriptor({
+  enumerable: false, configurable: true, writable: true, value: String.raw
+}, Object.getOwnPropertyDescriptor(String, "raw"));
+assertNonEnumerable(String, "raw");
+assertWritable(String, "raw");
+
+// 15.5.3.4 - step 1-3
+_Try(TypeError, function(){ String.raw() });
+_Try(TypeError, function(){ String.raw(null) });
+
+// 15.5.3.4 - step 4-6
+_Try(TypeError, function(){ String.raw({}) });
+Try("raw", function(){ String.raw(thrower(null, "raw", "raw")) });
+
+// 15.5.3.4 - step 7
+Try("raw-length", function(){ String.raw({raw: thrower(null, "length", "raw-length")}) });
+
+// 15.5.3.4 - step 8-9
+Try("raw-length-ToUint32", function(){
+  String.raw({raw: {length: {valueOf: function() { throw "raw-length-ToUint32" }}}})
+});
+
+// 15.5.3.4 - step 10
+assertSame("", String.raw({raw: {length: 0}}));
+assertSame("", String.raw({raw: {length: 0/0}}));
+assertSame("", String.raw({raw: {length: +1/0}}));
+assertSame("", String.raw({raw: {length: -1/0}}));
+
+// 15.5.3.4 - step 11-13
+assertSame("A", String.raw({raw: {length: 1, '0': "A"}}));
+assertSame("A", String.raw({raw: {length: 1, '0': "A"}}, "-"));
+assertSame("A", String.raw({raw: {length: 1, '0': "A", '1': "B"}}, "-"));
+assertSame("A-B", String.raw({raw: {length: 2, '0': "A", '1': "B"}}, "-"));
+assertSame("A-B_C", String.raw({raw: {length: 3, '0': "A", '1': "B", '2': "C"}}, "-", "_"));
+
+// 15.5.3.4 - step 13c
+assertSame("undefined", String.raw({raw: {length: 1}}));
+assertSame("undefined-undefined", String.raw({raw: {length: 2}}, "-"));
+assertSame("A-undefined", String.raw({raw: {length: 2, '0': "A"}}, "-"));
+assertSame("undefined-B", String.raw({raw: {length: 2, '1': "B"}}, "-"));
+
+// 15.5.3.4 - step 13h
+assertSame("AundefinedB", String.raw({raw: {length: 2, '0': "A", '1': "B"}}));
+
+// 15.5.3.4 - step 13c
+Try("ToString", function() {
+  String.raw({raw: {
+    length: 1,
+    '0': {
+      toString: function(){ throw "ToString" },
+      valueOf: function() { throw "ValueOf" }
+    }
+  }})
+});
+
+// 15.5.3.4 - step 13h
+Try("ToString", function() {
+  String.raw({raw: {length: 2, '0': 'A', '1': 'B'}}, {
+    toString: function(){ throw "ToString" },
+    valueOf: function() { throw "ValueOf" }
+  })
+});
+
+// 15.5.3.4 - step 13c
+Try("A", function() {
+  String.raw({raw: {
+    length: 2,
+    '0': {toString: function(){ throw "A" }},
+    '1': {toString: function(){ throw "B" }}
+  }}, {toString: function(){ throw "-" }})
+});
+
+// 15.5.3.4 - step 13h
+Try("-", function() {
+  String.raw({raw: {
+    length: 2,
+    '0': {toString: function(){ return "A" }},
+    '1': {toString: function(){ throw "B" }}
+  }}, {toString: function(){ throw "-" }})
+});
+
+
+/* TEST END */
+
+"success";
