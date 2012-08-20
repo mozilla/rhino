@@ -103,10 +103,21 @@ public final class OptRuntime extends ScriptRuntime
         return new ConsString(toString(val1), (CharSequence)val2);
     }
 
+    /**
+     * @deprecated Use {@link #elemIncrDecr(Object, double, Context, Scriptable, int)} instead
+     */
+    @Deprecated
     public static Object elemIncrDecr(Object obj, double index,
                                       Context cx, int incrDecrMask)
     {
-        return ScriptRuntime.elemIncrDecr(obj, new Double(index), cx,
+        return elemIncrDecr(obj, index, cx, getTopCallScope(cx), incrDecrMask);
+    }
+
+    public static Object elemIncrDecr(Object obj, double index,
+                                      Context cx, Scriptable scope,
+                                      int incrDecrMask)
+    {
+        return ScriptRuntime.elemIncrDecr(obj, new Double(index), cx, scope,
                                           incrDecrMask);
     }
 

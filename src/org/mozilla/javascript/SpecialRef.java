@@ -25,9 +25,10 @@ class SpecialRef extends Ref
         this.name = name;
     }
 
-    static Ref createSpecial(Context cx, Object object, String name)
+    static Ref createSpecial(Context cx, Scriptable scope, Object object,
+                             String name)
     {
-        Scriptable target = ScriptRuntime.toObjectOrNull(cx, object);
+        Scriptable target = ScriptRuntime.toObjectOrNull(cx, object, scope);
         if (target == null) {
             throw ScriptRuntime.undefReadError(object, name);
         }
@@ -65,7 +66,13 @@ class SpecialRef extends Ref
     }
 
     @Override
-    public Object set(Context cx, Object value)
+    @Deprecated
+    public Object set(Context cx, Object value) {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public Object set(Context cx, Scriptable scope, Object value)
     {
         switch (type) {
           case SPECIAL_NONE:
@@ -73,7 +80,7 @@ class SpecialRef extends Ref
           case SPECIAL_PROTO:
           case SPECIAL_PARENT:
             {
-                Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value);
+                Scriptable obj = ScriptRuntime.toObjectOrNull(cx, value, scope);
                 if (obj != null) {
                     // Check that obj does not contain on its prototype/scope
                     // chain to prevent cycles

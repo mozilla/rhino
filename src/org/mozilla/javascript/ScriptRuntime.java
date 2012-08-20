@@ -937,8 +937,12 @@ public class ScriptRuntime {
     }
 
     /**
-     * Warning: this doesn't allow to resolve primitive prototype properly when many top scopes are involved
+     * <strong>Warning</strong>: This doesn't allow to resolve primitive
+     * prototype properly when many top scopes are involved
+     *
+     * @deprecated Use {@link #toObjectOrNull(Context, Object, Scriptable)} instead
      */
+    @Deprecated
     public static Scriptable toObjectOrNull(Context cx, Object obj)
     {
         if (obj instanceof Scriptable) {
@@ -953,7 +957,7 @@ public class ScriptRuntime {
      * @param scope the scope that should be used to resolve primitive prototype
      */
     public static Scriptable toObjectOrNull(Context cx, Object obj,
-                                            final Scriptable scope)
+                                            Scriptable scope)
     {
         if (obj instanceof Scriptable) {
             return (Scriptable)obj;
@@ -966,6 +970,7 @@ public class ScriptRuntime {
     /**
      * @deprecated Use {@link #toObject(Scriptable, Object)} instead.
      */
+    @Deprecated
     public static Scriptable toObject(Scriptable scope, Object val,
                                       Class<?> staticClass)
     {
@@ -1018,6 +1023,7 @@ public class ScriptRuntime {
     /**
      * @deprecated Use {@link #toObject(Context, Scriptable, Object)} instead.
      */
+    @Deprecated
     public static Scriptable toObject(Context cx, Scriptable scope, Object val,
                                       Class<?> staticClass)
     {
@@ -1027,6 +1033,7 @@ public class ScriptRuntime {
     /**
      * @deprecated The method is only present for compatibility.
      */
+    @Deprecated
     public static Object call(Context cx, Object fun, Object thisArg,
                               Object[] args, Scriptable scope)
     {
@@ -1034,7 +1041,7 @@ public class ScriptRuntime {
             throw notFunctionError(toString(fun));
         }
         Function function = (Function)fun;
-        Scriptable thisObj = toObjectOrNull(cx, thisArg);
+        Scriptable thisObj = toObjectOrNull(cx, thisArg, scope);
         if (thisObj == null) {
             throw undefCallError(thisObj, "function");
         }
@@ -1416,7 +1423,10 @@ public class ScriptRuntime {
 
     /**
      * Call obj.[[Get]](id)
+     *
+     * @deprecated Use {@link #getObjectElem(Object, Object, Context, Scriptable)} instead
      */
+    @Deprecated
     public static Object getObjectElem(Object obj, Object elem, Context cx)
     {
     	return getObjectElem(obj, elem, cx, getTopCallScope(cx));
@@ -1425,7 +1435,7 @@ public class ScriptRuntime {
     /**
      * Call obj.[[Get]](id)
      */
-    public static Object getObjectElem(Object obj, Object elem, Context cx, final Scriptable scope)
+    public static Object getObjectElem(Object obj, Object elem, Context cx, Scriptable scope)
     {
         Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
@@ -1461,22 +1471,23 @@ public class ScriptRuntime {
 
     /**
      * Version of getObjectElem when elem is a valid JS identifier name.
+     *
+     * @deprecated Use {@link #getObjectProp(Object, String, Context, Scriptable)} instead
      */
+    @Deprecated
     public static Object getObjectProp(Object obj, String property,
                                        Context cx)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
-        if (sobj == null) {
-            throw undefReadError(obj, property);
-        }
-        return getObjectProp(sobj, property, cx);
+        return getObjectProp(obj, property, cx, getTopCallScope(cx));
     }
 
     /**
+     * Version of getObjectElem when elem is a valid JS identifier name.
+     *
      * @param scope the scope that should be used to resolve primitive prototype
      */
     public static Object getObjectProp(Object obj, String property,
-                                       Context cx, final Scriptable scope)
+                                       Context cx, Scriptable scope)
     {
         Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
@@ -1501,10 +1512,20 @@ public class ScriptRuntime {
         return result;
     }
 
+    /**
+     * @deprecated Use {@link #getObjectPropNoWarn(Object, String, Context, Scriptable)} instead
+     */
+    @Deprecated
     public static Object getObjectPropNoWarn(Object obj, String property,
                                              Context cx)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
+        return getObjectPropNoWarn(obj, property, cx, getTopCallScope(cx));
+    }
+
+    public static Object getObjectPropNoWarn(Object obj, String property,
+                                             Context cx, Scriptable scope)
+    {
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             throw undefReadError(obj, property);
         }
@@ -1515,14 +1536,27 @@ public class ScriptRuntime {
         return result;
     }
 
-    /*
+    /**
+     * A cheaper and less general version of the above for well-known argument
+     * types.
+     *
+     * @deprecated Use {@link #getObjectIndex(Object, double, Context, Scriptable)} instead
+     */
+    @Deprecated
+    public static Object getObjectIndex(Object obj, double dblIndex,
+                                        Context cx)
+    {
+        return getObjectIndex(obj, dblIndex, cx, getTopCallScope(cx));
+    }
+
+    /**
      * A cheaper and less general version of the above for well-known argument
      * types.
      */
     public static Object getObjectIndex(Object obj, double dblIndex,
-                                        Context cx)
+                                        Context cx, Scriptable scope)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             throw undefReadError(obj, toString(dblIndex));
         }
@@ -1539,7 +1573,6 @@ public class ScriptRuntime {
     public static Object getObjectIndex(Scriptable obj, int index,
                                         Context cx)
     {
-
         Object result = ScriptableObject.getProperty(obj, index);
         if (result == Scriptable.NOT_FOUND) {
             result = Undefined.instance;
@@ -1548,13 +1581,25 @@ public class ScriptRuntime {
         return result;
     }
 
-    /*
+    /**
      * Call obj.[[Put]](id, value)
+     *
+     * @deprecated Use {@link #setObjectElem(Object, Object, Object, Context, Scriptable)} instead
      */
+    @Deprecated
     public static Object setObjectElem(Object obj, Object elem, Object value,
                                        Context cx)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
+        return setObjectElem(obj, elem, value, cx, getTopCallScope(cx));
+    }
+
+    /**
+     * Call obj.[[Put]](id, value)
+     */
+    public static Object setObjectElem(Object obj, Object elem, Object value,
+                                       Context cx, Scriptable scope)
+    {
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             throw undefWriteError(obj, elem, value);
         }
@@ -1581,11 +1626,24 @@ public class ScriptRuntime {
 
     /**
      * Version of setObjectElem when elem is a valid JS identifier name.
+     *
+     * @deprecated Use {@link #setObjectProp(Object, String, Object, Context, Scriptable)} instead
      */
+    @Deprecated
     public static Object setObjectProp(Object obj, String property,
                                        Object value, Context cx)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
+        return setObjectProp(obj, property, value, cx, getTopCallScope(cx));
+    }
+
+    /**
+     * Version of setObjectElem when elem is a valid JS identifier name.
+     */
+    public static Object setObjectProp(Object obj, String property,
+                                       Object value, Context cx,
+                                       Scriptable scope)
+    {
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             throw undefWriteError(obj, property, value);
         }
@@ -1599,14 +1657,28 @@ public class ScriptRuntime {
         return value;
     }
 
-    /*
+    /**
+     * A cheaper and less general version of the above for well-known argument
+     * types.
+     *
+     * @deprecated Use {@link #setObjectIndex(Object, double, Object, Context, Scriptable)} instead
+     */
+    @Deprecated
+    public static Object setObjectIndex(Object obj, double dblIndex,
+                                        Object value, Context cx)
+    {
+        return setObjectIndex(obj, dblIndex, value, cx, getTopCallScope(cx));
+    }
+
+    /**
      * A cheaper and less general version of the above for well-known argument
      * types.
      */
     public static Object setObjectIndex(Object obj, double dblIndex,
-                                        Object value, Context cx)
+                                        Object value, Context cx,
+                                        Scriptable scope)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             throw undefWriteError(obj, String.valueOf(dblIndex), value);
         }
@@ -1662,9 +1734,19 @@ public class ScriptRuntime {
         return ref.get(cx);
     }
 
+    /**
+     * @deprecated Use {@link #refSet(Ref, Object, Context, Scriptable)} instead
+     */
+    @Deprecated
     public static Object refSet(Ref ref, Object value, Context cx)
     {
-        return ref.set(cx, value);
+        return refSet(ref, value, cx, getTopCallScope(cx));
+    }
+
+    public static Object refSet(Ref ref, Object value, Context cx,
+                                Scriptable scope)
+    {
+        return ref.set(cx, scope, value);
     }
 
     public static Object refDel(Ref ref, Context cx)
@@ -1677,15 +1759,26 @@ public class ScriptRuntime {
         return s.equals("__proto__") || s.equals("__parent__");
     }
 
+    /**
+     * @deprecated Use {@link #specialRef(Object, String, Context, Scriptable)} instead
+     */
+    @Deprecated
     public static Ref specialRef(Object obj, String specialProperty,
                                  Context cx)
     {
-        return SpecialRef.createSpecial(cx, obj, specialProperty);
+        return specialRef(obj, specialProperty, cx, getTopCallScope(cx));
+    }
+
+    public static Ref specialRef(Object obj, String specialProperty,
+                                 Context cx, Scriptable scope)
+    {
+        return SpecialRef.createSpecial(cx, scope, obj, specialProperty);
     }
 
     /**
-     * @deprecated
+     * @deprecated Use {@link #delete(Object, Object, Context, Scriptable, boolean)} instead
      */
+    @Deprecated
     public static Object delete(Object obj, Object id, Context cx)
     {
         return delete(obj, id, cx, false);
@@ -1701,10 +1794,30 @@ public class ScriptRuntime {
      * the definition of the [[Delete]] operator (8.6.2.5) does not
      * define a return value. Here we assume that the [[Delete]]
      * method doesn't return a value.
+     *
+     * @deprecated Use {@link #delete(Object, Object, Context, Scriptable, boolean)} instead
      */
+    @Deprecated
     public static Object delete(Object obj, Object id, Context cx, boolean isName)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
+        return delete(obj, id, cx, getTopCallScope(cx), isName);
+    }
+
+    /**
+     * The delete operator
+     *
+     * See ECMA 11.4.1
+     *
+     * In ECMA 0.19, the description of the delete operator (11.4.1)
+     * assumes that the [[Delete]] method returns a value. However,
+     * the definition of the [[Delete]] operator (8.6.2.5) does not
+     * define a return value. Here we assume that the [[Delete]]
+     * method doesn't return a value.
+     */
+    public static Object delete(Object obj, Object id, Context cx,
+                                Scriptable scope, boolean isName)
+    {
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             if (isName) {
                 return Boolean.TRUE;
@@ -2001,7 +2114,12 @@ public class ScriptRuntime {
         return null;
     }
 
-    // for backwards compatibility with generated class files
+    /**
+     * For backwards compatibility with generated class files
+     *
+     * @deprecated Use {@link #enumInit(Object, Context, Scriptable, int)} instead
+     */
+    @Deprecated
     public static Object enumInit(Object value, Context cx, boolean enumValues)
     {
         return enumInit(value, cx, enumValues ? ENUMERATE_VALUES
@@ -2015,10 +2133,20 @@ public class ScriptRuntime {
     public static final int ENUMERATE_VALUES_NO_ITERATOR = 4;
     public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
 
+    /**
+     * @deprecated Use {@link #enumInit(Object, Context, Scriptable, int)} instead
+     */
+    @Deprecated
     public static Object enumInit(Object value, Context cx, int enumType)
     {
+        return enumInit(value, cx, getTopCallScope(cx), enumType);
+    }
+
+    public static Object enumInit(Object value, Context cx, Scriptable scope,
+                                  int enumType)
+    {
         IdEnumeration x = new IdEnumeration();
-        x.obj = toObjectOrNull(cx, value);
+        x.obj = toObjectOrNull(cx, value, scope);
         if (x.obj == null) {
             // null or undefined do not cause errors but rather lead to empty
             // "for in" loop
@@ -2194,18 +2322,34 @@ public class ScriptRuntime {
      * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
      * The caller must call ScriptRuntime.lastStoredScriptable() immediately
      * after calling this method.
+     *
+     * @deprecated Use {@link #getElemFunctionAndThis(Object, Object, Context, Scriptable)} instead
      */
+    @Deprecated
     public static Callable getElemFunctionAndThis(Object obj,
                                                   Object elem,
                                                   Context cx)
     {
+        return getElemFunctionAndThis(obj, elem, cx, getTopCallScope(cx));
+    }
+
+    /**
+     * Prepare for calling obj[id](...): return function corresponding to
+     * obj[id] and make obj properly converted to Scriptable available
+     * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
+     * The caller must call ScriptRuntime.lastStoredScriptable() immediately
+     * after calling this method.
+     */
+    public static Callable getElemFunctionAndThis(Object obj, Object elem,
+                                                  Context cx, Scriptable scope)
+    {
         String str = toStringIdOrIndex(cx, elem);
         if (str != null) {
-            return getPropFunctionAndThis(obj, str, cx);
+            return getPropFunctionAndThis(obj, str, cx, scope);
         }
         int index = lastIndexResult(cx);
 
-        Scriptable thisObj = toObjectOrNull(cx, obj);
+        Scriptable thisObj = toObjectOrNull(cx, obj, scope);
         if (thisObj == null) {
             throw undefCallError(obj, String.valueOf(index));
         }
@@ -2227,13 +2371,15 @@ public class ScriptRuntime {
      * after calling this method.
      * Warning: this doesn't allow to resolve primitive prototype properly when
      * many top scopes are involved.
+     *
+     * @deprecated Use {@link #getPropFunctionAndThis(Object, String, Context, Scriptable)} instead
      */
+    @Deprecated
     public static Callable getPropFunctionAndThis(Object obj,
                                                   String property,
                                                   Context cx)
     {
-        Scriptable thisObj = toObjectOrNull(cx, obj);
-        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
+        return getPropFunctionAndThis(obj, property, cx, getTopCallScope(cx));
     }
 
     /**
@@ -2245,7 +2391,7 @@ public class ScriptRuntime {
      */
     public static Callable getPropFunctionAndThis(Object obj,
                                                   String property,
-                                                  Context cx, final Scriptable scope)
+                                                  Context cx, Scriptable scope)
     {
         Scriptable thisObj = toObjectOrNull(cx, obj, scope);
         return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
@@ -2405,7 +2551,7 @@ public class ScriptRuntime {
 
         Scriptable callThis = null;
         if (L != 0) {
-            callThis = toObjectOrNull(cx, args[0]);
+            callThis = toObjectOrNull(cx, args[0], scope);
         }
         if (callThis == null) {
             // This covers the case of args[0] == (null|undefined) as well.
@@ -2594,8 +2740,11 @@ public class ScriptRuntime {
     }
 
     /**
-     * @deprecated The method is only present for compatibility.
+     * The method is only present for compatibility.
+     *
+     * @deprecated Use {@link #nameIncrDecr(Scriptable, String, Context, int)} instead
      */
+    @Deprecated
     public static Object nameIncrDecr(Scriptable scopeChain, String id,
                                       int incrDecrMask)
     {
@@ -2632,10 +2781,21 @@ public class ScriptRuntime {
                                     incrDecrMask);
     }
 
+    /**
+     * @deprecated Use {@link #propIncrDecr(Object, String, Context, Scriptable, int)} instead
+     */
+    @Deprecated
     public static Object propIncrDecr(Object obj, String id,
                                       Context cx, int incrDecrMask)
     {
-        Scriptable start = toObjectOrNull(cx, obj);
+        return propIncrDecr(obj, id, cx, getTopCallScope(cx), incrDecrMask);
+    }
+
+    public static Object propIncrDecr(Object obj, String id,
+                                      Context cx, Scriptable scope,
+                                      int incrDecrMask)
+    {
+        Scriptable start = toObjectOrNull(cx, obj, scope);
         if (start == null) {
             throw undefReadError(obj, id);
         }
@@ -2688,10 +2848,21 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * @deprecated Use {@link #elemIncrDecr(Object, Object, Context, Scriptable, int)} instead
+     */
+    @Deprecated
     public static Object elemIncrDecr(Object obj, Object index,
                                       Context cx, int incrDecrMask)
     {
-        Object value = getObjectElem(obj, index, cx);
+        return elemIncrDecr(obj, index, cx, getTopCallScope(cx), incrDecrMask);
+    }
+
+    public static Object elemIncrDecr(Object obj, Object index,
+                                      Context cx, Scriptable scope,
+                                      int incrDecrMask)
+    {
+        Object value = getObjectElem(obj, index, cx, scope);
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
         double number;
         if (value instanceof Number) {
@@ -2709,7 +2880,7 @@ public class ScriptRuntime {
             --number;
         }
         Number result = wrapNumber(number);
-        setObjectElem(obj, index, result, cx);
+        setObjectElem(obj, index, result, cx, scope);
         if (post) {
             return value;
         } else {
@@ -2717,7 +2888,17 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * @deprecated Use {@link #refIncrDecr(Ref, Context, Scriptable, int)} instead
+     */
+    @Deprecated
     public static Object refIncrDecr(Ref ref, Context cx, int incrDecrMask)
+    {
+        return refIncrDecr(ref, cx, getTopCallScope(cx), incrDecrMask);
+    }
+
+    public static Object refIncrDecr(Ref ref, Context cx, Scriptable scope,
+                                     int incrDecrMask)
     {
         Object value = ref.get(cx);
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
@@ -2737,7 +2918,7 @@ public class ScriptRuntime {
             --number;
         }
         Number result = wrapNumber(number);
-        ref.set(cx, result);
+        ref.set(cx, scope, result);
         if (post) {
             return value;
         } else {
@@ -3343,7 +3524,7 @@ public class ScriptRuntime {
     public static Scriptable enterWith(Object obj, Context cx,
                                        Scriptable scope)
     {
-        Scriptable sobj = toObjectOrNull(cx, obj);
+        Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
             throw typeError1("msg.undef.with", toString(obj));
         }
@@ -3488,19 +3669,20 @@ public class ScriptRuntime {
         return array;
     }
 
-  /**
-   * This method is here for backward compat with existing compiled code.  It
-   * is called when an object literal is compiled.  The next instance will be
-   * the version called from new code.
-   * @deprecated This method only present for compatibility.
-   */
+    /**
+     * This method is here for backward compat with existing compiled code.  It
+     * is called when an object literal is compiled.  The next instance will be
+     * the version called from new code.
+     * <strong>This method only present for compatibility.</strong>
+     * @deprecated Use {@link #newObjectLiteral(Object[], Object[], int[], Context, Scriptable)} instead
+     */
+    @Deprecated
     public static Scriptable newObjectLiteral(Object[] propertyIds,
                                               Object[] propertyValues,
                                               Context cx, Scriptable scope)
     {
         // Passing null for getterSetters means no getters or setters
         return newObjectLiteral(propertyIds, propertyValues, null, cx, scope);
-
     }
 
     public static Scriptable newObjectLiteral(Object[] propertyIds,
@@ -3516,7 +3698,8 @@ public class ScriptRuntime {
             if (id instanceof String) {
                 if (getterSetter == 0) {
                     if (isSpecialProperty((String)id)) {
-                        specialRef(object, (String)id, cx).set(cx, value);
+                        Ref ref = specialRef(object, (String)id, cx, scope);
+                        ref.set(cx, scope, value);
                     } else {
                         object.put((String)id, object, value);
                     }
