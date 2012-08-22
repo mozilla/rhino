@@ -24,7 +24,7 @@ public class ModuleScope extends TopLevel {
     public ModuleScope(Scriptable prototype, URI uri, URI base) {
         this.uri = uri;
         this.base = base;
-        setPrototype(prototype);
+        setParentScope(prototype);
         cacheBuiltins();
     }
 
