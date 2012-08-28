@@ -1140,41 +1140,57 @@ public class ScriptRuntime {
 
         /*
          * Algorithm Outline
-         *  Step 1. If d is NaN, +/-Inf or |d|>=2^84 or |d|<1, then return 0
-         *          All of this is implemented based on an exponent comparison.
-         *  Step 2. If |d|<2^31, then return (int)d
+         *  Step 1. If d is NaN, +/-Inf or |d|>=2^(width + 52) or |d|<1, then return 0
+         *          All of this is implemented based on an exponent comparison,
+         *          since anything with a higher exponent is either not finite, or
+         *          going to round to 0..
+         *  Step 2. If |d|<2^(width - 1), then return (int)d
          *          The cast to integer (conversion in RZ mode) returns the correct result.
-         *  Step 3. If |d|>=2^32, d:=fmod(d, 2^32) is taken  -- but without a call
-         *  Step 4. If |d|>=2^31, then the fractional bits are cleared before
-         *          applying the correction by 2^32:  d - sign(d)*2^32
+         *  Step 3. If |d|>=2^width, d:=fmod(d, 2^width) is taken  -- but without a call
+         *  Step 4. If |d|>=2^(width - 1), then the fractional bits are cleared before
+         *          applying the correction by 2^width:  d - sign(d)*2^width
          *  Step 5. Return (int)d
          */
+        final int width = 32;
         long bits = Double.doubleToLongBits(d);
         /*uint32_t*/int hi = HI_DWORD(bits);
         /*uint32_t*/int lo = LO_DWORD(bits);
         /*uint32_t*/int tmp = (hi & 0x7ff00000) - 0x3ff00000;
 
-        if (uint32_gte(tmp, (0x45300000 - 0x3ff00000))) {
-            // d is Nan, +/-Inf or +/-0, or |d|>=2^(32+52) or |d|<1,
-            // in which case result=0
+        if (uint32_gte(tmp, (width + 52) << 20)) {
+            // d is Nan, +/-Inf or +/-0, or |d|>=2^(width+52) or |d|<1, in which case result=0
+            // If we need to shift by more than (width + 52), there are no data bits
+            // to preserve, and the mod will turn out 0.
             return 0;
         }
 
-        if (uint32_lt(tmp, 0x01f00000)) {
-            // |d|<2^31
+        if (uint32_lt(tmp, (width - 1) << 20)) {
+            // |d|<2^(width - 1)
             return (int) d;
         }
 
-        if (uint32_gt(tmp, 0x01f00000)) {
-            // |d|>=2^32
+        if (uint32_gt(tmp, (width - 1) << 20)) {
+            // |d|>=2^width
+            // Throw away multiples of 2^width.
+            //
+            // That is, compute du.d = the value in (-2^width, 2^width)
+            // that has the same sign as d and is equal to d modulo 2^width.
+            //
+            // This can't be done simply by masking away bits of du because
+            // the implicit one-bit of the mantissa is one of the ones we want to
+            // eliminate. So instead we compute duh.d = the appropriate multiple
+            // of 2^width, which *can* be computed by masking, and then we
+            // subtract that from du.d.
             int expon = tmp >>> 20;
-            int shift_amount = expon - 21;
+            int shift_amount = expon - (width - 11);
             int mask32 = 0x80000000;
             if (shift_amount < 32) {
+                // Shift only affects top word.
                 mask32 >>= shift_amount;
                 hi &= mask32;
                 lo = 0;
             } else {
+                // Top word all 1s, shift affects bottom word.
                 mask32 >>= (shift_amount - 32);
                 lo &= mask32;
             }
@@ -1184,22 +1200,27 @@ public class ScriptRuntime {
             lo = LO_DWORD(bits);
         }
 
-        // eliminate fractional bits
+        // Eliminate fractional bits
         tmp = (hi & 0x7ff00000);
-        if (tmp >= 0x41e00000) {
-            // |d|>=2^31
+        if (tmp >= (0x3ff00000 + ((width - 1) << 20))) {
+            // |d|>=2^(width - 1)
             int expon = tmp >>> 20;
+
+            // Same idea as before, except save everything non-fractional.
             int shift_amount = expon - (0x3ff - 11);
             int mask32 = 0x80000000;
             if (shift_amount < 32) {
+                // Top word only
                 mask32 >>= shift_amount;
                 hi &= mask32;
                 lo = 0;
             } else {
+                // Bottom word. Top word all 1s.
                 mask32 >>= (shift_amount - 32);
                 lo &= mask32;
             }
-            int two32_hi = 0x41f00000 ^ (hi & 0x80000000);
+            // Apply step 4's 2^width correction.
+            int two32_hi = (0x3ff00000 + (width << 20)) ^ (hi & 0x80000000);
             int two32_lo = 0;
             double two32 = Double.longBitsToDouble(QWORD(two32_hi, two32_lo));
             d = Double.longBitsToDouble(QWORD(hi, lo));
