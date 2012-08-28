@@ -1130,29 +1130,7 @@ public class ScriptRuntime {
     }
 
     public static int toInt32(double d) {
-        int id = (int)d;
-        if (id == d) {
-            // This covers -0.0 as well
-            return id;
-        }
-
-        if (d != d
-            || d == Double.POSITIVE_INFINITY
-            || d == Double.NEGATIVE_INFINITY)
-        {
-            return 0;
-        }
-
-        d = (d >= 0) ? Math.floor(d) : Math.ceil(d);
-
-        double two32 = 4294967296.0;
-        d = Math.IEEEremainder(d, two32);
-        // (double)(long)d == d should hold here
-
-        long l = (long)d;
-        // returning (int)d does not work as d can be outside int range
-        // but the result must always be 32 lower bits of l
-        return (int)l;
+        return DoubleConversion.doubleToInt32(d);
     }
 
     /**
@@ -1160,26 +1138,7 @@ public class ScriptRuntime {
      * @return long value representing 32 bits unsigned integer
      */
     public static long toUint32(double d) {
-        long l = (long)d;
-        if (l == d) {
-            // This covers -0.0 as well
-            return l & 0xffffffffL;
-        }
-
-        if (d != d
-            || d == Double.POSITIVE_INFINITY
-            || d == Double.NEGATIVE_INFINITY)
-        {
-            return 0;
-        }
-
-        d = (d >= 0) ? Math.floor(d) : Math.ceil(d);
-
-        // 0x100000000 gives me a numeric overflow...
-        double two32 = 4294967296.0;
-        l = (long)Math.IEEEremainder(d, two32);
-
-        return l & 0xffffffffL;
+        return DoubleConversion.doubleToInt32(d) & 0xffffffffL;
     }
 
     public static long toUint32(Object val) {
@@ -1192,25 +1151,7 @@ public class ScriptRuntime {
      */
     public static char toUint16(Object val) {
         double d = toNumber(val);
-
-        int i = (int)d;
-        if (i == d) {
-            return (char)i;
-        }
-
-        if (d != d
-            || d == Double.POSITIVE_INFINITY
-            || d == Double.NEGATIVE_INFINITY)
-        {
-            return 0;
-        }
-
-        d = (d >= 0) ? Math.floor(d) : Math.ceil(d);
-
-        int int16 = 0x10000;
-        i = (int)Math.IEEEremainder(d, int16);
-
-        return (char)i;
+        return (char)DoubleConversion.doubleToInt32(d);
     }
 
     // XXX: this is until setDefaultNamespace will learn how to store NS
