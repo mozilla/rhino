@@ -1397,49 +1397,102 @@ class TokenStream
         return n;
     }
 
-    final String getLine()
-    {
+    private final int charAt(int index) {
+        if (index < 0) {
+            return EOF_CHAR;
+        }
         if (sourceString != null) {
-            // String case
-            int lineEnd = sourceCursor;
-            if (lineEndChar >= 0) {
-                --lineEnd;
-            } else {
-                for (; lineEnd != sourceEnd; ++lineEnd) {
-                    int c = sourceString.charAt(lineEnd);
-                    if (ScriptRuntime.isJSLineTerminator(c)) {
-                        break;
-                    }
-                }
+            if (index >= sourceEnd) {
+                return EOF_CHAR;
             }
-            return sourceString.substring(lineStart, lineEnd);
+            return sourceString.charAt(index);
         } else {
-            // Reader case
-            int lineLength = sourceCursor - lineStart;
-            if (lineEndChar >= 0) {
-                --lineLength;
-            } else {
-                // Read until the end of line
-                for (;; ++lineLength) {
-                    int i = lineStart + lineLength;
-                    if (i == sourceEnd) {
-                        try {
-                            if (!fillSourceBuffer()) { break; }
-                        } catch (IOException ioe) {
-                            // ignore it, we're already displaying an error...
-                            break;
-                        }
-                        // i recalculuation as fillSourceBuffer can move saved
-                        // line buffer and change lineStart
-                        i = lineStart + lineLength;
-                    }
-                    int c = sourceBuffer[i];
-                    if (ScriptRuntime.isJSLineTerminator(c)) {
-                        break;
-                    }
+            if (index >= sourceEnd) {
+                int oldSourceCursor = sourceCursor;
+                try {
+                    if (!fillSourceBuffer()) { return EOF_CHAR; }
+                } catch (IOException ioe) {
+                    // ignore it, we're already displaying an error...
+                    return EOF_CHAR;
+                }
+                // index recalculuation as fillSourceBuffer can move saved
+                // line buffer and change sourceCursor
+                index -= (oldSourceCursor - sourceCursor);
+            }
+            return sourceBuffer[index];
+        }
+    }
+
+    private final String substring(int beginIndex, int endIndex) {
+        if (sourceString != null) {
+            return sourceString.substring(beginIndex, endIndex);
+        } else {
+            int count = endIndex - beginIndex;
+            return new String(sourceBuffer, beginIndex, count);
+        }
+    }
+
+    final String getLine() {
+        int lineEnd = sourceCursor;
+        if (lineEndChar >= 0) {
+            // move cursor before newline sequence
+            lineEnd -= 1;
+            if (lineEndChar == '\n' && charAt(lineEnd - 1) == '\r') {
+                lineEnd -= 1;
+            }
+        } else {
+            // Read until the end of line
+            int lineLength = lineEnd - lineStart;
+            for (;; ++lineLength) {
+                int c = charAt(lineStart + lineLength);
+                if (c == EOF_CHAR || ScriptRuntime.isJSLineTerminator(c)) {
+                    break;
                 }
             }
-            return new String(sourceBuffer, lineStart, lineLength);
+            lineEnd = lineStart + lineLength;
+        }
+        return substring(lineStart, lineEnd);
+    }
+
+    final String getLine(int position, int[] linep) {
+        assert position >= 0 && position <= cursor;
+        assert linep.length == 2;
+        int delta = (cursor + ungetCursor) - position;
+        int cur = sourceCursor;
+        if (delta > cur) {
+            // requested line outside of source buffer
+            return null;
+        }
+        // read back until position
+        int end = 0, lines = 0;
+        for (; delta > 0; --delta, --cur) {
+            assert cur > 0;
+            int c = charAt(cur - 1);
+            if (ScriptRuntime.isJSLineTerminator(c)) {
+                if (c == '\n' && charAt(cur - 2) == '\r') {
+                    // \r\n sequence
+                    delta -= 1;
+                    cur -= 1;
+                }
+                lines += 1;
+                end = cur - 1;
+            }
+        }
+        // read back until line start
+        int start = 0, offset = 0;
+        for (; cur > 0; --cur, ++offset) {
+            int c = charAt(cur - 1);
+            if (ScriptRuntime.isJSLineTerminator(c)) {
+                start = cur;
+                break;
+            }
+        }
+        linep[0] = lineno - lines + (lineEndChar >= 0 ? 1 : 0);
+        linep[1] = offset;
+        if (lines == 0) {
+            return getLine();
+        } else {
+            return substring(start, end);
         }
     }
 
