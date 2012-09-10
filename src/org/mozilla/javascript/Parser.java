@@ -189,6 +189,39 @@ public class Parser
         }
     }
 
+    private void addStrictWarning(String messageId, String messageArg,
+                                  int position, int length,
+                                  int line, String lineSource, int lineOffset) {
+        if (compilerEnv.isStrictMode()) {
+            addWarning(messageId, messageArg, position, length, line, lineSource, lineOffset);
+        }
+    }
+
+    private void addWarning(String messageId, String messageArg,
+                            int position, int length,
+                            int line, String lineSource, int lineOffset) {
+        String message = lookupMessage(messageId, messageArg);
+        if (compilerEnv.reportWarningAsError()) {
+            addError(messageId, messageArg, position, length, line, lineSource, lineOffset);
+        } else if (errorCollector != null) {
+            errorCollector.warning(message, sourceURI, position, length);
+        } else {
+            errorReporter.warning(message, sourceURI, line, lineSource, lineOffset);
+        }
+    }
+
+    private void addError(String messageId, String messageArg,
+                          int position, int length,
+                          int line, String lineSource, int lineOffset) {
+        ++syntaxErrorCount;
+        String message = lookupMessage(messageId, messageArg);
+        if (errorCollector != null) {
+            errorCollector.error(message, sourceURI, position, length);
+        } else {
+            errorReporter.error(message, sourceURI, line, lineSource, lineOffset);
+        }
+    }
+
     String lookupMessage(String messageId) {
         return lookupMessage(messageId, null);
     }
@@ -3490,7 +3523,7 @@ public class Parser
         }
         while (--pos >= 0) {
             char c = buf[pos];
-            if (c == '\n' || c == '\r') {
+            if (ScriptRuntime.isJSLineTerminator(c)) {
                 return pos + 1; // want position after the newline
             }
         }
@@ -3502,11 +3535,21 @@ public class Parser
         // with an enum Never, Always, Permissive, where Permissive means
         // don't warn for 1-line functions like function (s) {return x+2}
         if (compilerEnv.isStrictMode()) {
-            int beg = Math.max(pos, lineBeginningFor(end));
-            if (end == -1)
-                end = ts.cursor;
-            addStrictWarning("msg.missing.semi", "",
-                             beg, end - beg);
+            int[] linep = new int[2];
+            String line = ts.getLine(end, linep);
+            // this code originally called lineBeginningFor() and in order to
+            // preserve its different line-offset handling, we need to special
+            // case ide-mode here
+            int beg = compilerEnv.isIdeMode()
+                      ? Math.max(pos, end - linep[1])
+                      : pos;
+            if (line != null) {
+                addStrictWarning("msg.missing.semi", "", beg, end - beg,
+                                 linep[0], line, linep[1]);
+            } else {
+                // no line information available, report warning at current line
+                addStrictWarning("msg.missing.semi", "", beg, end - beg);
+            }
         }
     }
 
