@@ -412,17 +412,20 @@ class TokenStream
                 isOctal = false;
                 stringBufferTop = 0;
                 int base = 10;
+                int start = 0;
 
                 if (c == '0') {
+                    addToString('0');
                     c = getChar();
                     if (c == 'x' || c == 'X') {
+                        addToString(c);
+                        start = 2;
                         base = 16;
                         c = getChar();
                     } else if (isDigit(c)) {
                         base = 8;
                         isOctal = true;
-                    } else {
-                        addToString('0');
+                        start = 1;
                     }
                 }
 
@@ -491,7 +494,7 @@ class TokenStream
                         return Token.ERROR;
                     }
                 } else {
-                    dval = ScriptRuntime.stringToNumber(numString, 0, base);
+                    dval = ScriptRuntime.stringToNumber(numString, start, base);
                 }
 
                 this.number = dval;
