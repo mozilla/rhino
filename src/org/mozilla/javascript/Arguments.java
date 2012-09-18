@@ -50,7 +50,7 @@ final class Arguments extends IdScriptableObject
     @Override
     public String getClassName()
     {
-        return FTAG;
+        return "Object";
     }
 
     private Object arg(int index) {

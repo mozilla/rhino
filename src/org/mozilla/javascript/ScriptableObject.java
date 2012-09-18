@@ -241,11 +241,18 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     if (Context.getContext().hasFeature(Context.FEATURE_STRICT_MODE)) {
                         // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
                         // we should throw a TypeError in this case.
-                        throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
+                        throw ScriptRuntime.typeError3("msg.set.prop.no.setter", name, start.getClassName(), Context.toString(value));
                     }
-                    // Assignment to a property with only a getter defined. The
-                    // assignment is ignored. See bug 478047.
-                    return true;
+                	if (Context.getContext().hasFeature(Context.FEATURE_HTMLUNIT_WRITE_READONLY_PROPERTIES)) {
+                        // Odd case: Assignment to a property with only a getter 
+                        // defined. The assignment cancels out the getter.
+                        getter = null;
+                	}
+                	else {
+                		// Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
+                		// we should throw a TypeError in this case.
+                        throw ScriptRuntime.typeError3("msg.set.prop.no.setter", name, start.getClassName(), Context.toString(value));
+                	}
                 }
             } else {
                 Context cx = Context.getContext();

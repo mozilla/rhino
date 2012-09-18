@@ -124,8 +124,10 @@ final class NativeError extends IdScriptableObject
     }
 
     public Object getStack() {
+    	RhinoException.useMozillaStackStyle(true);
         Object value =  stackProvider == null ?
                 NOT_FOUND : stackProvider.getScriptStackTrace();
+    	RhinoException.useMozillaStackStyle(false);
         // We store the stack as local property both to cache it
         // and to make the property writable
         setStack(value);
