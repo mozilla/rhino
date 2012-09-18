@@ -363,9 +363,12 @@ public final class JavaAdapter implements IdFunctionCall
         }
 
         String superName = superClass.getName().replace('.', '/');
-        Constructor<?>[] ctors = superClass.getConstructors();
+        Constructor<?>[] ctors = superClass.getDeclaredConstructors();
         for (Constructor<?> ctor : ctors) {
-            generateCtor(cfw, adapterName, superName, ctor);
+            int mod = ctor.getModifiers();
+            if (Modifier.isPublic(mod) || Modifier.isProtected(mod)) {
+                generateCtor(cfw, adapterName, superName, ctor);
+            }
         }
         generateSerialCtor(cfw, adapterName, superName);
         if (scriptClassName != null) {
@@ -562,7 +565,7 @@ public final class JavaAdapter implements IdFunctionCall
     {
         if (f == null) {
             // See comments in getFunction
-            return Undefined.instance;
+            return null;
         }
         if (factory == null) {
             factory = ContextFactory.getGlobal();

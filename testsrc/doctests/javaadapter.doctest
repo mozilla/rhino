@@ -67,3 +67,21 @@ js> x = JavaAdapter(java.util.Vector, {test: function() {return this.elementData
 []
 js> x.test()
 20
+js> // test extending abstract base class
+js> x = new java.util.AbstractList({get: function(i) { return i + 1; }})
+[]
+js> x.get(0)
+1.0
+js> x.get(1)
+2.0
+js> x.get(2)
+3.0
+js> // test implementing an interface
+js> x = new java.util.List({get: function(i) { return i + 1; }, toString: function() { return "[]"; }})
+[]
+js> x.get(0)
+1.0
+js> x.get(1)
+2.0
+js> x.get(2)
+3.0

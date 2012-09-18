@@ -2063,7 +2063,19 @@ public class Parser
         if (matchToken(Token.HOOK)) {
             int line = ts.lineno;
             int qmarkPos = ts.tokenBeg, colonPos = -1;
-            AstNode ifTrue = assignExpr();
+            /*
+             * Always accept the 'in' operator in the middle clause of a ternary,
+             * where it's unambiguous, even if we might be parsing the init of a
+             * for statement.
+             */
+            boolean wasInForInit = inForInit;
+            inForInit = false;
+            AstNode ifTrue;
+            try {
+                ifTrue = assignExpr();
+            } finally {
+                inForInit = wasInForInit;
+            }
             if (mustMatchToken(Token.COLON, "msg.no.colon.cond"))
                 colonPos = ts.tokenBeg;
             AstNode ifFalse = assignExpr();

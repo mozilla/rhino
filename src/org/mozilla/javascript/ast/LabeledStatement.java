@@ -105,6 +105,12 @@ public class LabeledStatement extends AstNode {
     }
 
     @Override
+    public boolean hasSideEffects() {
+        // just to avoid the default case for EXPR_VOID in AstNode
+        return true;
+    }
+
+    @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
         for (Label label : labels) {

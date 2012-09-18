@@ -113,9 +113,11 @@ public class WithStatement extends AstNode {
         sb.append("with (");
         sb.append(expression.toSource(0));
         sb.append(") ");
-        sb.append(statement.toSource(depth+1));
-        if (!(statement instanceof Block)) {
-            sb.append(";\n");
+        if (statement.getType() == Token.BLOCK) {
+            sb.append(statement.toSource(depth).trim());
+            sb.append("\n");
+        } else {
+            sb.append("\n").append(statement.toSource(depth + 1));
         }
         return sb.toString();
     }

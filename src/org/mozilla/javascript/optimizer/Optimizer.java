@@ -147,10 +147,9 @@ class Optimizer
             case Token.INC :
             case Token.DEC : {
                     Node child = n.getFirstChild();
-                    // "child" will be GETVAR or GETPROP or GETELEM
+                    int type = rewriteForNumberVariables(child, NumberType);
                     if (child.getType() == Token.GETVAR) {
-                        if (rewriteForNumberVariables(child, NumberType) == NumberType
-                                && !convertParameter(child))
+                        if (type == NumberType && !convertParameter(child))
                         {
                             n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
                             markDCPNumberContext(child);
@@ -160,7 +159,7 @@ class Optimizer
                     }
                     else if (child.getType() == Token.GETELEM
                             || child.getType() == Token.GETPROP) {
-                        return rewriteForNumberVariables(child, NumberType);
+                        return type;
                     }
                     return NoType;
                 }

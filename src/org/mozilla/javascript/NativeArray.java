@@ -969,14 +969,14 @@ public class NativeArray extends IdScriptableObject implements List
             comparator = new Comparator<Object>() {
                 public int compare(final Object x, final Object y) {
                     // sort undefined to end
-                    if (x == y) {
-                        return 0;
-                    } else if (y == Undefined.instance
-                            || y == Scriptable.NOT_FOUND) {
+                    if (x == NOT_FOUND) {
+                        return y == NOT_FOUND ? 0 : 1;
+                    } else if (y == NOT_FOUND) {
                         return -1;
-                    } else if (x == Undefined.instance
-                            || x == Scriptable.NOT_FOUND) {
-                        return 1;
+                    } else if (x == Undefined.instance) {
+                        return y == Undefined.instance ? 0 : 1;
+                    } else if (y == Undefined.instance) {
+                        return -1;
                     }
 
                     cmpBuf[0] = x;
@@ -996,14 +996,14 @@ public class NativeArray extends IdScriptableObject implements List
             comparator = new Comparator<Object>() {
                 public int compare(final Object x, final Object y) {
                     // sort undefined to end
-                    if (x == y)
-                        return 0;
-                    else if (y == Undefined.instance
-                            || y == Scriptable.NOT_FOUND) {
+                    if (x == NOT_FOUND) {
+                        return y == NOT_FOUND ? 0 : 1;
+                    } else if (y == NOT_FOUND) {
                         return -1;
-                    } else if (x == Undefined.instance
-                            || x == Scriptable.NOT_FOUND) {
-                        return 1;
+                    } else if (x == Undefined.instance) {
+                        return y == Undefined.instance ? 0 : 1;
+                    } else if (y == Undefined.instance) {
+                        return -1;
                     }
 
                     final String a = ScriptRuntime.toString(x);
@@ -1013,19 +1013,24 @@ public class NativeArray extends IdScriptableObject implements List
             };
         }
 
-        final int length = (int) getLengthProperty(cx, thisObj);
+        long llength = getLengthProperty(cx, thisObj);
+        final int length = (int) llength;
+        if (llength != length) {
+            throw Context.reportRuntimeError1(
+                "msg.arraylength.too.big", String.valueOf(llength));
+        }
         // copy the JS array into a working array, so it can be
         // sorted cheaply.
         final Object[] working = new Object[length];
         for (int i = 0; i != length; ++i) {
-            working[i] = getElem(cx, thisObj, i);
+            working[i] = getRawElem(thisObj, i);
         }
 
         Arrays.sort(working, comparator);
 
         // copy the working array back into thisObj
         for (int i = 0; i < length; ++i) {
-            setElem(cx, thisObj, i, working[i]);
+            setRawElem(cx, thisObj, i, working[i]);
         }
 
         return thisObj;

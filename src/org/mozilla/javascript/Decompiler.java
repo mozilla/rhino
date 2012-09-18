@@ -627,7 +627,7 @@ public class Decompiler
                 // This needs to be distinct from COLON in the general case
                 // to distinguish from the colon in a ternary... which needs
                 // different spacing.
-                result.append(':');
+                result.append(": ");
                 break;
 
             case Token.COLON:
