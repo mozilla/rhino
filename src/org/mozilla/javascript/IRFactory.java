@@ -356,6 +356,7 @@ public final class IRFactory extends Parser
 
     private Node transformAssignment(Assignment node) {
         AstNode left = removeParens(node.getLeft());
+        left = transformAssignmentLeft(node, left);
         Node target = null;
         if (isDestructuring(left)) {
             decompile(left);
@@ -367,6 +368,32 @@ public final class IRFactory extends Parser
         return createAssignment(node.getType(),
                                 target,
                                 transform(node.getRight()));
+    }
+
+    private AstNode transformAssignmentLeft(Assignment node, AstNode left) {
+        AstNode right = node.getRight();
+
+        if (right.getType() == Token.NULL && node.getType() == Token.ASSIGN
+                && left instanceof Name && right instanceof KeywordLiteral
+                && Context.getCurrentContext().hasFeature(Context.FEATURE_HTMLUNIT_FUNCTION_NULL_SETTER)) {
+
+            final String identifier = ((Name) left).getIdentifier();
+            for (AstNode p = node.getParent(); p != null; p = p.getParent()) {
+                if (p instanceof FunctionNode) {
+                    final Name functionName = ((FunctionNode) p).getFunctionName();
+                    if (functionName != null && functionName.getIdentifier().equals(identifier)) {
+                        final PropertyGet propertyGet = new PropertyGet();
+                        final KeywordLiteral thisKeyword = new KeywordLiteral();
+                        thisKeyword.setType(Token.THIS);
+                        propertyGet.setLeft(thisKeyword);
+                        propertyGet.setRight(left);
+                        node.setLeft(propertyGet);
+                        return propertyGet;
+                    }
+                }
+            }
+        }
+        return left;
     }
 
     private Node transformBlock(AstNode node) {
@@ -438,6 +465,16 @@ public final class IRFactory extends Parser
     }
 
     private Node transformElementGet(ElementGet node) {
+        //Ensure "function['eval']" is transformed into "function.eval"
+        if (node.getElement().type == Token.STRING
+                && "eval".equals(((StringLiteral) node.getElement()).getValue())) {
+            final PropertyGet propertyGet = new PropertyGet();
+            propertyGet.setLeft(node.getTarget());
+            final Name name = new Name();
+            name.setIdentifier("eval");
+            propertyGet.setRight(name);
+            return transform(propertyGet);
+        }
         // OPT: could optimize to createPropertyGet
         // iff elem is string that can not be number
         Node target = transform(node.getTarget());

@@ -278,10 +278,25 @@ public class ContextFactory
             return false;
 
           case Context.FEATURE_ENHANCED_JAVA_ACCESS:
-          case Context.FEATURE_HTMLUNIT_WRITE_READONLY_PROPERTIES:
             return false;
+
+          case Context.FEATURE_HTMLUNIT_ASK_OBJECT_TO_WRITE_READONLY:
+            return false;
+
           case Context.FEATURE_HTMLUNIT_JS_CATCH_JAVA_EXCEPTION:
-              return true;
+            return true;
+
+          case Context.FEATURE_HTMLUNIT_ARGUMENTS_IS_OBJECT:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_FUNCTION_NULL_SETTER:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_ARGUMENTS_IS_READ_ONLY:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_EVAL_LOCAL_SCOPE:
+            return true;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));

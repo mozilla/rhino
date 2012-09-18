@@ -47,14 +47,27 @@ final class Arguments extends IdScriptableObject
         }
     }
 
+    Arguments(Object[] args) {
+        this.args = args;
+        if (args == null) {
+            lengthObj = 0;
+        }
+        else {
+            lengthObj = Integer.valueOf(args.length);
+        }
+    }
+
     @Override
     public String getClassName()
     {
-        return "Object";
+        if (Context.getContext().hasFeature(Context.FEATURE_HTMLUNIT_ARGUMENTS_IS_OBJECT)) {
+            return "Object";
+        }
+        return FTAG;
     }
 
     private Object arg(int index) {
-      if (index < 0 || args.length <= index) return NOT_FOUND;
+      if (index < 0 || args == null || args.length <= index) return NOT_FOUND;
       return args[index];
     }
 
@@ -75,7 +88,7 @@ final class Arguments extends IdScriptableObject
         putIntoActivation(index, value);
       }
       synchronized (this) {
-        if (args == activation.originalArgs) {
+        if (activation != null && args == activation.originalArgs) {
           args = args.clone();
         }
         args[index] = value;
@@ -121,6 +134,7 @@ final class Arguments extends IdScriptableObject
 
     private boolean sharedWithActivation(int index)
     {
+        if (activation == null) return false;
         NativeFunction f = activation.function;
         int definedCount = f.getParamCount();
         if (index < definedCount) {
@@ -142,6 +156,9 @@ final class Arguments extends IdScriptableObject
     @Override
     public void put(int index, Scriptable start, Object value)
     {
+        if (Context.getCurrentContext().hasFeature(Context.FEATURE_HTMLUNIT_ARGUMENTS_IS_READ_ONLY)) {
+            return;
+        }
         if (arg(index) == NOT_FOUND) {
           super.put(index, start, value);
         } else {
@@ -354,6 +371,11 @@ final class Arguments extends IdScriptableObject
       if (isFalse(getProperty(desc, "writable"))) {
         removeArg(index);
       }
+    }
+
+    @Override
+    public Object getDefaultValue(Class<?> typeHint) {
+        return "[object " + getClassName() + "]";
     }
 
 // Fields to hold caller, callee and length properties,

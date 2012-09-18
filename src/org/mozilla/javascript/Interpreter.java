@@ -2844,8 +2844,21 @@ switch (op) {
     private static void enterFrame(Context cx, CallFrame frame, Object[] args,
                                    boolean continuationRestart)
     {
-    	if (frame.parentFrame != null && !frame.parentFrame.fnOrScript.isScript())
-    		frame.fnOrScript.defaultPut("caller", frame.parentFrame.fnOrScript);
+       if (frame.parentFrame != null && !frame.parentFrame.fnOrScript.isScript()) {
+           frame.fnOrScript.defaultPut("caller", frame.parentFrame.fnOrScript);
+       }
+       Object[] parameters = null;
+       if (frame.scope instanceof NativeCall) {
+           parameters = args;
+       }
+       else {
+           int paramCount = frame.idata.getParamCount();
+           if (paramCount != 0 && paramCount <= args.length) {
+               parameters = new Object[paramCount];
+               System.arraycopy(args, args.length - parameters.length, parameters, 0, parameters.length);
+           }
+       }
+       frame.fnOrScript.defaultPut("arguments", new Arguments(parameters));
 
         boolean usesActivation = frame.idata.itsNeedsActivation;
         boolean isDebugged = frame.debuggerFrame != null;
@@ -2896,7 +2909,8 @@ switch (op) {
     private static void exitFrame(Context cx, CallFrame frame,
                                   Object throwable)
     {
-		frame.fnOrScript.delete("caller");
+        frame.fnOrScript.delete("caller");
+        frame.fnOrScript.delete("arguments");
 
         if (frame.idata.itsNeedsActivation) {
             ScriptRuntime.exitActivationFunction(cx);

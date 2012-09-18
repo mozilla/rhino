@@ -1144,15 +1144,6 @@ class DToA {
         decPt = JS_dtoa(d, dtoaModes[mode], mode >= DTOSTR_FIXED, precision, sign, buffer);
         nDigits = buffer.length();
 
-        // Hack to fix Rhino bug 538172: 2.274341322658976E-309 -> F.774341322658976E-309
-        if (mode == DToA.DTOSTR_STANDARD && buffer.charAt(0) > '9') {
-        	final char c0 = buffer.charAt(0);
-        	final char c1 = buffer.charAt(1);
-        	final int sum = (c0 - 'A' + 10) + (c1 - '0');
-        	buffer.replace(0, 1, Integer.toString(sum));
-        	decPt++;
-        }
-
         /* If Infinity, -Infinity, or NaN, return the string regardless of the mode. */
         if (decPt != 9999) {
             boolean exponentialNotation = false;
