@@ -2909,8 +2909,8 @@ switch (op) {
     private static void exitFrame(Context cx, CallFrame frame,
                                   Object throwable)
     {
-        frame.fnOrScript.delete("caller");
-        frame.fnOrScript.delete("arguments");
+        frame.fnOrScript.defaultPut("caller", null);
+        frame.fnOrScript.defaultPut("arguments", null);
 
         if (frame.idata.itsNeedsActivation) {
             ScriptRuntime.exitActivationFunction(cx);
