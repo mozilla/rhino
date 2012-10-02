@@ -344,6 +344,15 @@ public class Context
      */
     public static final int FEATURE_HTMLUNIT_EVAL_LOCAL_SCOPE = 19;
 
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that 'exception' (technically NativeError) exposes "stack" property.
+     *
+     * By default {@link #hasFeature(int)} returns true.
+     */
+    public static final int FEATURE_HTMLUNIT_ERROR_STACK= 20;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
