@@ -2964,6 +2964,12 @@ public class ScriptRuntime {
             if (x instanceof Wrapper && y instanceof Wrapper) {
                 return ((Wrapper)x).unwrap() == ((Wrapper)y).unwrap();
             }
+            if (x instanceof Delegator && ((Delegator)x).getDelegee() == y) {
+                return true;
+            }
+            if (y instanceof Delegator && ((Delegator)y).getDelegee() == x) {
+                return true;
+            }
         } else {
             warnAboutNonJSObject(x);
             return x == y;
