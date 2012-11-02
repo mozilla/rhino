@@ -2964,6 +2964,9 @@ public class ScriptRuntime {
             if (x instanceof Wrapper && y instanceof Wrapper) {
                 return ((Wrapper)x).unwrap() == ((Wrapper)y).unwrap();
             }
+            if (x instanceof Delegator && y instanceof Delegator) {
+                return shallowEq(((Delegator)x).getDelegee(), ((Delegator)y).getDelegee());
+            }
             if (x instanceof Delegator && ((Delegator)x).getDelegee() == y) {
                 return true;
             }
