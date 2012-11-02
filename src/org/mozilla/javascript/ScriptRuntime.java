@@ -18,7 +18,7 @@ import org.mozilla.javascript.xml.XMLObject;
 import org.mozilla.javascript.xml.XMLLib;
 
 /**
- * This is the class that implements the runtime
+ * This is the class that implements the runtime.
  *
  * @author Norris Boyd
  */
