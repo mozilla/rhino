@@ -300,6 +300,9 @@ public class ContextFactory
 
           case Context.FEATURE_HTMLUNIT_ERROR_STACK:
             return true;
+
+          case Context.FEATURE_HTMLUNIT_CONSTRUCTOR:
+            return true;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));

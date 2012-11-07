@@ -2195,6 +2195,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public static Object getProperty(Scriptable obj, String name)
     {
+        if ("constructor".equals(name) && !(obj instanceof NativeObject)
+                && !Context.getContext().hasFeature(Context.FEATURE_HTMLUNIT_CONSTRUCTOR)) {
+            return NOT_FOUND;
+        }
         Scriptable start = obj;
         Object result;
         do {

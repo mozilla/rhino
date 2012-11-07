@@ -351,7 +351,16 @@ public class Context
      *
      * By default {@link #hasFeature(int)} returns true.
      */
-    public static final int FEATURE_HTMLUNIT_ERROR_STACK= 20;
+    public static final int FEATURE_HTMLUNIT_ERROR_STACK = 20;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that ".constructor" property is defined for all {@link ScriptableObject}s.
+     *
+     * By default {@link #hasFeature(int)} returns true.
+     */
+    public static final int FEATURE_HTMLUNIT_CONSTRUCTOR = 21;
 
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
