@@ -30,6 +30,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
 import org.mozilla.javascript.debug.Debugger;
 import org.mozilla.javascript.xml.XMLLib;
 
+
 /**
  * This class represents the runtime context of an executing script.
  *
@@ -2621,4 +2622,20 @@ public class Context
 
     // Generate an observer count on compiled code
     public boolean generateObserverCount = false;
+    
+	public void registerConverter(Class<? extends IJsJavaConvertible> type, IJsJavaConverter converter) {
+		m_ConverterMap.put(type, converter);
+	}
+	
+	public IJsJavaConvertible convert(Scriptable s, Class<? extends IJsJavaConvertible> type) {
+		IJsJavaConverter converter = m_ConverterMap.get(type);
+		if (converter != null) {
+			return converter.convert(s);
+		}
+		return null;
+	}
+	
+	private Map<Class<? extends IJsJavaConvertible>, IJsJavaConverter> m_ConverterMap
+		= new HashMap<Class<? extends IJsJavaConvertible>, IJsJavaConverter>();
+    
 }

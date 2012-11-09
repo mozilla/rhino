@@ -119,7 +119,10 @@ public class ScriptRuntime {
         FunctionClass
             = Kit.classOrNull("org.mozilla.javascript.Function"),
         ScriptableObjectClass
-            = Kit.classOrNull("org.mozilla.javascript.ScriptableObject");
+            = Kit.classOrNull("org.mozilla.javascript.ScriptableObject"),
+	    WillBeScriptableClass
+	    	= Kit.classOrNull("org.mozilla.mod.javascript.IWillBeScriptable");
+    
     public static final Class<Scriptable> ScriptableClass =
         Scriptable.class;
 

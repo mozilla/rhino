@@ -11,6 +11,7 @@ package org.mozilla.javascript;
 import java.lang.reflect.*;
 import java.io.*;
 
+
 public class FunctionObject extends BaseFunction
 {
     static final long serialVersionUID = -5332312783643935019L;
@@ -171,7 +172,8 @@ public class FunctionObject extends BaseFunction
             return JAVA_SCRIPTABLE_TYPE;
         if (type == ScriptRuntime.ObjectClass)
             return JAVA_OBJECT_TYPE;
-
+        if (ScriptRuntime.WillBeScriptableClass.isAssignableFrom(type))
+            return JAVA_WILL_BE_SCRIPTABLE_TYPE;
         // Note that the long type is not supported; see the javadoc for
         // the constructor for this class
 
@@ -199,6 +201,7 @@ public class FunctionObject extends BaseFunction
             if (arg instanceof Double)
                 return arg;
             return new Double(ScriptRuntime.toNumber(arg));
+          case JAVA_WILL_BE_SCRIPTABLE_TYPE: // here is moment of truth
           case JAVA_SCRIPTABLE_TYPE:
               return ScriptRuntime.toObjectOrNull(cx, arg, scope);
           case JAVA_OBJECT_TYPE:
@@ -534,6 +537,7 @@ public class FunctionObject extends BaseFunction
     public static final int JAVA_DOUBLE_TYPE      = 4;
     public static final int JAVA_SCRIPTABLE_TYPE  = 5;
     public static final int JAVA_OBJECT_TYPE      = 6;
+    public static final int JAVA_WILL_BE_SCRIPTABLE_TYPE = 7;
 
     MemberBox member;
     private String functionName;

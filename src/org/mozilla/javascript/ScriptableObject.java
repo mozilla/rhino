@@ -23,12 +23,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.mozilla.javascript.debug.DebuggableObject;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
 import org.mozilla.javascript.annotations.JSGetter;
 import org.mozilla.javascript.annotations.JSSetter;
 import org.mozilla.javascript.annotations.JSStaticFunction;
+import org.mozilla.javascript.debug.DebuggableObject;
 
 /**
  * This is the default implementation of the Scriptable interface. This
@@ -449,6 +449,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public Object get(String name, Scriptable start)
     {
+    	if (IJsJavaProxy.JS_JAVA_PROXY.equals(name)) {
+    		return m_javaProxy;
+    	}
         Slot slot = getSlot(name, 0, SLOT_QUERY);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
@@ -489,6 +492,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void put(String name, Scriptable start, Object value)
     {
+    	if (IJsJavaProxy.JS_JAVA_PROXY.equals(name)
+        		&& value instanceof IJsJavaProxy) {
+        		m_javaProxy = (IJsJavaProxy)value;
+        		return;
+        	}
         if (putImpl(name, 0, start, value))
             return;
 
@@ -3103,5 +3111,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             return value;
         }
     }
+    
+    private IJsJavaProxy m_javaProxy = null;
 
 }
