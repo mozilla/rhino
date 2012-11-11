@@ -369,7 +369,8 @@ class TokenStream
                         }
                     }
                 }
-                ungetChar(c);
+                if (c != EOF_CHAR)
+                    ungetChar(c);
 
                 String str = getStringFromBuffer();
                 if (!containsEscape) {
