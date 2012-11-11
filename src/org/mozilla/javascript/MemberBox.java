@@ -161,6 +161,17 @@ final class MemberBox implements Serializable
                 throw Context.throwAsScriptRuntimeEx(e);            
             else
             	throw new RuntimeException("Exception invoking " + method.getName(), e);
+        } catch (IllegalArgumentException iae) {
+            StringBuilder builder = new StringBuilder();
+            for (Object arg : args) {
+                String type = arg == null ? "null" : arg.getClass().getSimpleName();
+                if (builder.length() != 0) {
+                    builder.append(", ");
+                }
+                builder.append(type);
+            }
+            throw new IllegalArgumentException("Exception invoking " + method.getDeclaringClass().getSimpleName()
+                    + '.' +  method.getName() + "() with arguments [" + builder + "]", iae);
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
