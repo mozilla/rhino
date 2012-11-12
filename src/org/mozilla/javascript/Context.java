@@ -362,6 +362,16 @@ public class Context
      */
     public static final int FEATURE_HTMLUNIT_CONSTRUCTOR = 21;
 
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that function can be defined as
+     * <code>function object.property() {}</code> instead of <code>object.property = function() {}</code>.
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_FUNCTION_OBJECT_METHOD = 22;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 

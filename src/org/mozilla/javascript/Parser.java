@@ -533,6 +533,17 @@ public class Parser
                         n = function(calledByCompileFunction
                                      ? FunctionNode.FUNCTION_EXPRESSION
                                      : FunctionNode.FUNCTION_STATEMENT);
+                        FunctionNode functionNode = (FunctionNode) n;
+                        if (functionNode.getName().indexOf('.') != -1) {
+                            String functionName = functionNode.getName();
+                            String left = functionName.substring(0,  functionName.indexOf('.'));
+                            String right = functionName.substring(functionName.indexOf('.') + 1);
+                            PropertyGet propertyGet = new PropertyGet(new Name(0, left), new Name(0, right));
+                            Assignment assignment = new Assignment(Token.ASSIGN, propertyGet, functionNode, -1);
+                            functionNode.setFunctionName(null);
+                            functionNode.setFunctionType(FunctionNode.FUNCTION_EXPRESSION);
+                            n = new ExpressionStatement(assignment, !insideFunction());
+                        }
                     } catch (ParserException e) {
                         break;
                     }
@@ -752,12 +763,19 @@ public class Parser
                 }
             }
             if (!matchToken(Token.LP)) {
-                if (compilerEnv.isAllowMemberExprAsFunctionName()) {
-                    AstNode memberExprHead = name;
-                    name = null;
-                    memberExprNode = memberExprTail(false, memberExprHead);
+                if (Context.getContext().hasFeature(Context.FEATURE_HTMLUNIT_FUNCTION_OBJECT_METHOD)
+                        && matchToken(Token.DOT) && matchToken(Token.NAME)) {
+                    name.setIdentifier(name.getIdentifier() + '.' + createNameNode(true, Token.NAME).getIdentifier());
+                    mustMatchToken(Token.LP, "msg.no.paren.parms");
                 }
-                mustMatchToken(Token.LP, "msg.no.paren.parms");
+                else {
+                    if (compilerEnv.isAllowMemberExprAsFunctionName()) {
+                        AstNode memberExprHead = name;
+                        name = null;
+                        memberExprNode = memberExprTail(false, memberExprHead);
+                    }
+                    mustMatchToken(Token.LP, "msg.no.paren.parms");
+                }
             }
         } else if (matchToken(Token.LP)) {
             // Anonymous function:  leave name as null
