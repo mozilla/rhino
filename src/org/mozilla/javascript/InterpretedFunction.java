@@ -16,6 +16,8 @@ final class InterpretedFunction extends NativeFunction implements Script
     SecurityController securityController;
     Object securityDomain;
 
+	private Arguments arguments;
+
     private InterpretedFunction(InterpreterData idata,
                                 Object staticSecurityDomain)
     {
@@ -185,5 +187,17 @@ final class InterpretedFunction extends NativeFunction implements Script
     public String toString() {
     	return decompile(2, 0);
     }
+
+	void setArguments(final Arguments arguments) {
+		this.arguments = arguments;
+	}
+	
+	@Override
+	public Object get(final String name, final Scriptable start) {
+		if (start == this && "arguments".equals(name)) {
+			return this.arguments;
+		}
+		return super.get(name, start);
+	}
 }
 

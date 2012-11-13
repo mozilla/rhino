@@ -2846,6 +2846,7 @@ switch (op) {
     {
        if (frame.parentFrame != null && !frame.parentFrame.fnOrScript.isScript()) {
            frame.fnOrScript.defaultPut("caller", frame.parentFrame.fnOrScript);
+           frame.fnOrScript.setAttributes("caller", ScriptableObject.DONTENUM);
        }
        Object[] parameters = null;
        if (frame.scope instanceof NativeCall) {
@@ -2858,7 +2859,7 @@ switch (op) {
                System.arraycopy(args, args.length - parameters.length, parameters, 0, parameters.length);
            }
        }
-       frame.fnOrScript.defaultPut("arguments", new Arguments(parameters));
+       frame.fnOrScript.setArguments(new Arguments(parameters));
 
         boolean usesActivation = frame.idata.itsNeedsActivation;
         boolean isDebugged = frame.debuggerFrame != null;
@@ -2910,7 +2911,7 @@ switch (op) {
                                   Object throwable)
     {
         frame.fnOrScript.defaultPut("caller", null);
-        frame.fnOrScript.defaultPut("arguments", null);
+        frame.fnOrScript.setArguments(null);
 
         if (frame.idata.itsNeedsActivation) {
             ScriptRuntime.exitActivationFunction(cx);
