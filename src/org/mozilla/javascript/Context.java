@@ -372,6 +372,15 @@ public class Context
      */
     public static final int FEATURE_HTMLUNIT_FUNCTION_OBJECT_METHOD = 22;
 
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that function is defined even before its declaration, inside a block.
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_FUNCTION_DECLARED_FORWARD_IN_BLOCK = 23;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 

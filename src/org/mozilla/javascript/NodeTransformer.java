@@ -6,14 +6,15 @@
 
 package org.mozilla.javascript;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
+import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class transforms a tree to a lower-level representation for codegen.
@@ -65,6 +66,33 @@ public class NodeTransformer
                                             boolean createScopeObjects,
                                             boolean inStrictMode)
     {
+        if (parent instanceof Scope
+                && Context.getContext().hasFeature(Context.FEATURE_HTMLUNIT_FUNCTION_DECLARED_FORWARD_IN_BLOCK)) {
+            // Make sure that all "Name" children are at the start of all siblings
+            Node lastInitialName = null;
+            boolean initial = true;
+            Node node = parent.getFirstChild();
+            while (node != null) {
+                if (node instanceof Name) {
+                    if (initial) {
+                        lastInitialName =  node;
+                    }
+                    else {
+                        parent.removeChild(node);
+                        if (lastInitialName == null)  {
+                            parent.addChildToFront(node);
+                        }
+                        else {
+                            parent.addChildAfter(node, lastInitialName);
+                        }
+                    }
+                }
+                else {
+                    initial = false;
+                }
+                node = node.getNext();
+            }
+        }
         Node node = null;
       siblingLoop:
         for (;;) {

@@ -61,8 +61,21 @@ public final class NativeCall extends IdScriptableObject
                 if (!super.has(name, this)) {
                     if (function.getParamOrVarConst(i))
                         defineProperty(name, Undefined.instance, CONST);
-                    else
-                        defineProperty(name, Undefined.instance, PERMANENT);
+                    else {
+                        boolean define = true;
+                        if (function instanceof InterpretedFunction) {
+                            InterpreterData idata = ((InterpretedFunction) function).idata;
+                            for (int f = 0; f < idata.getFunctionCount(); f++) {
+                                if (name.equals(idata.getFunction(f).getFunctionName())) {
+                                    define = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (define) {
+                            defineProperty(name, Undefined.instance, PERMANENT);
+                        }
+                    }
                 }
             }
         }
