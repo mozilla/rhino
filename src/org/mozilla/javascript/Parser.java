@@ -2796,6 +2796,12 @@ public class Parser
               if (this.inUseStrictDirective && ts.isNumberOctal()) {
                   reportError("msg.no.octal.strict");
               }
+              if (ts.isNumberOctal()) {
+                  s = "0"+s;
+              }
+              if (ts.isNumberHex()) {
+                  s = "0x"+s;
+              }
               return new NumberLiteral(ts.tokenBeg,
                                        s,
                                        ts.getNumber());
