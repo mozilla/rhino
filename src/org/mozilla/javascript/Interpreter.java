@@ -2848,18 +2848,9 @@ switch (op) {
            frame.fnOrScript.defaultPut("caller", frame.parentFrame.fnOrScript);
            frame.fnOrScript.setAttributes("caller", ScriptableObject.DONTENUM);
        }
-       Object[] parameters = null;
        if (frame.scope instanceof NativeCall) {
-           parameters = args;
+           frame.fnOrScript.setArguments((Arguments) ScriptableObject.getProperty(frame.scope, "arguments"));
        }
-       else {
-           int paramCount = frame.idata.getParamCount();
-           if (paramCount != 0 && paramCount <= args.length) {
-               parameters = new Object[paramCount];
-               System.arraycopy(args, args.length - parameters.length, parameters, 0, parameters.length);
-           }
-       }
-       frame.fnOrScript.setArguments(new Arguments(parameters));
 
         boolean usesActivation = frame.idata.itsNeedsActivation;
         boolean isDebugged = frame.debuggerFrame != null;

@@ -47,16 +47,6 @@ final class Arguments extends IdScriptableObject
         }
     }
 
-    Arguments(Object[] args) {
-        this.args = args;
-        if (args == null) {
-            lengthObj = 0;
-        }
-        else {
-            lengthObj = Integer.valueOf(args.length);
-        }
-    }
-
     @Override
     public String getClassName()
     {
@@ -67,7 +57,7 @@ final class Arguments extends IdScriptableObject
     }
 
     private Object arg(int index) {
-      if (index < 0 || args == null || args.length <= index) return NOT_FOUND;
+      if (index < 0 || args.length <= index) return NOT_FOUND;
       return args[index];
     }
 
@@ -134,7 +124,6 @@ final class Arguments extends IdScriptableObject
 
     private boolean sharedWithActivation(int index)
     {
-        if (activation == null) return false;
         NativeFunction f = activation.function;
         int definedCount = f.getParamCount();
         if (index < definedCount) {
