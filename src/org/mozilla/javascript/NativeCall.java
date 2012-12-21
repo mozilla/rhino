@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.debug.DebuggableScript;
+
 /**
  * This class implements the activation object.
  *
@@ -66,8 +68,9 @@ public final class NativeCall extends IdScriptableObject
                         if (function instanceof InterpretedFunction) {
                             InterpreterData idata = ((InterpretedFunction) function).idata;
                             for (int f = 0; f < idata.getFunctionCount(); f++) {
-                                if (name.equals(idata.getFunction(f).getFunctionName())) {
-                                    define = false;
+                                final InterpreterData functionData = (InterpreterData) idata.getFunction(f);
+								if (name.equals(functionData.getFunctionName())) {
+                                    define = functionData.declaredAsVar; // define local property only for inner functions declared with var
                                     break;
                                 }
                             }

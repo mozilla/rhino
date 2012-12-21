@@ -89,6 +89,8 @@ final class InterpreterData implements Serializable, DebuggableScript
 
     boolean evalScriptFlag; // true if script corresponds to eval() code
 
+	boolean declaredAsVar; // true if the function has been declared like "var foo = function() {...}"
+
     public boolean isTopLevel()
     {
         return topLevel;
