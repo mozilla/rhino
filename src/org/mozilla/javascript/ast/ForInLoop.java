@@ -9,10 +9,12 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * For-in or for-each-in statement.  Node type is {@link Token#FOR}.<p>
+ * For-in or for-each-in or for-of statement.  Node type is {@link Token#FOR}.<p>
  *
  * <pre><b>for</b> [<b>each</b>] ( LeftHandSideExpression <b>in</b> Expression ) Statement</pre>
  * <pre><b>for</b> [<b>each</b>] ( <b>var</b> VariableDeclarationNoIn <b>in</b> Expression ) Statement</pre>
+ * <pre><b>for</b> ( LeftHandSideExpression <b>of</b> Expression ) Statement</pre>
+ * <pre><b>for</b> ( ForDeclaration <b>of</b> Expression ) Statement</pre>
  */
 public class ForInLoop extends Loop {
 
@@ -21,6 +23,7 @@ public class ForInLoop extends Loop {
     protected int inPosition = -1;
     protected int eachPosition = -1;
     protected boolean isForEach;
+    protected boolean isForOf;
 
     {
         type = Token.FOR;
@@ -45,7 +48,7 @@ public class ForInLoop extends Loop {
     }
 
     /**
-     * Sets loop iterator expression:  the part before the "in" keyword.
+     * Sets loop iterator expression:  the part before the "in" or "of" keyword.
      * Also sets its parent to this node.
      * @throws IllegalArgumentException if {@code iterator} is {@code null}
      */
@@ -87,15 +90,29 @@ public class ForInLoop extends Loop {
     }
 
     /**
-     * Returns position of "in" keyword
+     * Returns whether the loop is a for-of loop
+     */
+    public boolean isForOf() {
+        return isForOf;
+    }
+
+    /**
+     * Sets whether the loop is a for-each loop
+     */
+    public void setIsForOf(boolean isForOf) {
+        this.isForOf = isForOf;
+    }
+
+    /**
+     * Returns position of "in" or "of" keyword
      */
     public int getInPosition() {
         return inPosition;
     }
 
     /**
-     * Sets position of "in" keyword
-     * @param inPosition position of "in" keyword,
+     * Sets position of "in" or "of" keyword
+     * @param inPosition position of "in" or "of" keyword,
      * or -1 if not present (e.g. in presence of a syntax error)
      */
     public void setInPosition(int inPosition) {
@@ -128,7 +145,11 @@ public class ForInLoop extends Loop {
         }
         sb.append("(");
         sb.append(iterator.toSource(0));
-        sb.append(" in ");
+        if (isForOf) {
+            sb.append(" of ");
+        } else {
+            sb.append(" in ");
+        }
         sb.append(iteratedObject.toSource(0));
         sb.append(") ");
         if (body.getType() == Token.BLOCK) {

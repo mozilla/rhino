@@ -175,6 +175,7 @@ final class NativeString extends IdScriptableObject
           case Id_normalize:         arity=0; s="normalize";         break;
           case Id_repeat:            arity=1; s="repeat";            break;
           case Id_codePointAt:       arity=1; s="codePointAt";       break;
+          case Id_iterator:          arity=0; s="iterator";          break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -447,6 +448,7 @@ final class NativeString extends IdScriptableObject
 
                     return str.substring(start, end);
                 }
+
                 case Id_normalize: {
                     String formStr = ScriptRuntime.toString(args, 0);
 
@@ -498,6 +500,10 @@ final class NativeString extends IdScriptableObject
                         ? Undefined.instance
                         : str.codePointAt((int) cnt);
                 }
+
+              case Id_iterator:
+                  return new NativeElementIterator(scope, thisObj);
+
             }
             throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
         }
@@ -793,6 +799,7 @@ final class NativeString extends IdScriptableObject
                 case 'n': X="toString";id=Id_toString; break L;
                 case 't': X="endsWith";id=Id_endsWith; break L;
                 case 'z': X="fontsize";id=Id_fontsize; break L;
+                case 'o': X="iterator";id=Id_iterator; break L;
                 } break L;
             case 9: switch (s.charAt(0)) {
                 case 'f': X="fontcolor";id=Id_fontcolor; break L;
@@ -873,7 +880,8 @@ final class NativeString extends IdScriptableObject
         Id_normalize                 = 43,
         Id_repeat                    = 44,
         Id_codePointAt               = 45,
-        MAX_PROTOTYPE_ID             = Id_codePointAt;
+        Id_iterator                  = 46,
+        MAX_PROTOTYPE_ID             = Id_iterator;
 
 // #/string_id_map#
 

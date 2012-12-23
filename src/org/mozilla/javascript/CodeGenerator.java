@@ -475,6 +475,7 @@ class CodeGenerator extends Icode {
           case Token.ENUM_INIT_KEYS:
           case Token.ENUM_INIT_VALUES:
           case Token.ENUM_INIT_ARRAY:
+          case Token.ENUM_INIT_VALUES_IN_ORDER:
             visitExpression(child, 0);
             addIndexOp(type, getLocalBlockRef(node));
             stackChange(-1);

@@ -1999,6 +1999,7 @@ class BodyCodegen
               case Token.ENUM_INIT_KEYS:
               case Token.ENUM_INIT_VALUES:
               case Token.ENUM_INIT_ARRAY:
+              case Token.ENUM_INIT_VALUES_IN_ORDER:
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 cfw.addALoad(variableObjectLocal);
@@ -2006,6 +2007,8 @@ class BodyCodegen
                                    ? ScriptRuntime.ENUMERATE_KEYS :
                                type == Token.ENUM_INIT_VALUES
                                    ? ScriptRuntime.ENUMERATE_VALUES :
+                               type == Token.ENUM_INIT_VALUES_IN_ORDER
+                                   ? ScriptRuntime.ENUMERATE_VALUES_IN_ORDER :
                                ScriptRuntime.ENUMERATE_ARRAY;
                 cfw.addPush(enumType);
                 addScriptRuntimeInvoke("enumInit",

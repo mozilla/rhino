@@ -1,0 +1,160 @@
+
+function assertEq(expected, actual) {
+  if (expected !== actual) {
+    throw "Expected '" + expected + "' but was '" + actual + "'";
+  }
+}
+
+function assertException(exception, fn) {
+  try {
+    fn();
+  } catch (e if e instanceof exception) {
+    return;
+  }
+  throw "Expected to throw '" + exception + "' but not thrown";
+}
+
+// Array
+var r = [];
+for (var n of [1, 2, 3]) {
+  r.push(n*2);
+}
+assertEq(r.join(), '2,4,6');
+
+var r = [];
+for (var n of [1, 2, 3]) {
+  for (var m of [4, 5, 6]) {
+    r.push(n + m);
+  }
+}
+assertEq(r.join(), '5,6,7,6,7,8,7,8,9');
+
+/*
+var a = {
+  iterator: function() {
+    for (var i = 0; i < 3; i++) {
+      yield i;
+    }
+  }
+};
+var r = [];
+for (var n of a) {
+  r.push(n);
+}
+assertEq(r.join(), '0,1,2');
+*/
+
+var a = [0];
+var r = [];
+var i = 0;
+for (var n of a) {
+  i++;
+  if (i < 3) {
+    a[i] = i;
+  }
+  r.push(n);
+}
+assertEq(r.join(), '0,1,2');
+
+var a = [0, 1, 2];
+var r = [];
+var i = 0;
+for (var n of a) {
+  a.length = 0;
+  r.push(n);
+}
+assertEq(r.join(), '0');
+
+// Array like
+var a = {
+  '0': 'foo',
+  '1': 'bar',
+  length: 2
+};
+var ite = Array.prototype.iterator.call(a);
+assertEq(ite.next(), 'foo');
+assertEq(ite.next(), 'bar');
+assertException(StopIteration, function() {
+  ite.next();
+});
+
+// Other
+var a = {
+  iterator: function() {
+    return {
+      n: 0,
+      next: function() {
+        if (this.n >= 3) {
+          throw StopIteration;
+        }
+        return this.n++;
+      }
+    };
+  }
+};
+var r = [];
+for (var n of a) {
+  r.push(n);
+}
+assertEq(r.join(), '0,1,2');
+
+var a = [12];
+Object.defineProperty(a, 0, {
+  enumerable: false
+});
+for (var n of a) {
+  assertEq(n, 12);
+}
+
+// String
+var a = 'abc';
+var r = '';
+for (var c of a) {
+  r += c.toUpperCase();
+}
+assertEq(r, 'ABC');
+
+// No iterable
+assertException(TypeError, function() {
+  for (var n of null) {}
+});
+
+assertException(TypeError, function() {
+  for (var n of 0) {}
+});
+
+assertException(TypeError, function() {
+  var a = {
+    iterator: function() {
+      return 0;
+    }
+  };
+  for (var n of 1) {}
+});
+
+// Array comprehension
+assertEq([n*n for (n of [1, 2, 3])].join(), '1,4,9');
+assertEq([n+m for (n of [1, 2, 3]) for (m of [4, 5, 6])].join(), '5,6,7,6,7,8,7,8,9');
+
+// 'of' is not ECMAScript keywords.
+var of = 10;
+assertEq(of, 10);
+
+(function() {
+  function of() { return 12; }
+  assertEq(of(), 12);
+})();
+
+function f(of) { return of*2; }
+assertEq(f(12), 24);
+
+// for each-of is SyntaxError
+assertException(SyntaxError, function() {
+  eval('for each (n of [1,2]) {}');
+});
+
+assertException(SyntaxError, function() {
+  eval('[n*n for each (n of [1,2])]');
+});
+
+"success"
