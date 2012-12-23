@@ -102,134 +102,135 @@ public class Token
         ENUM_INIT_KEYS = 58,
         ENUM_INIT_VALUES = 59,
         ENUM_INIT_ARRAY= 60,
-        ENUM_NEXT      = 61,
-        ENUM_ID        = 62,
-        THISFN         = 63,
-        RETURN_RESULT  = 64, // to return previously stored return result
-        ARRAYLIT       = 65, // array literal
-        OBJECTLIT      = 66, // object literal
-        GET_REF        = 67, // *reference
-        SET_REF        = 68, // *reference    = something
-        DEL_REF        = 69, // delete reference
-        REF_CALL       = 70, // f(args)    = something or f(args)++
-        REF_SPECIAL    = 71, // reference for special properties like __proto
-        YIELD          = 72,  // JS 1.7 yield pseudo keyword
-        STRICT_SETNAME = 73,
+        ENUM_INIT_VALUES_IN_ORDER = 61,
+        ENUM_NEXT      = 62,
+        ENUM_ID        = 63,
+        THISFN         = 64,
+        RETURN_RESULT  = 65, // to return previously stored return result
+        ARRAYLIT       = 66, // array literal
+        OBJECTLIT      = 67, // object literal
+        GET_REF        = 68, // *reference
+        SET_REF        = 69, // *reference    = something
+        DEL_REF        = 70, // delete reference
+        REF_CALL       = 71, // f(args)    = something or f(args)++
+        REF_SPECIAL    = 72, // reference for special properties like __proto
+        YIELD          = 73,  // JS 1.7 yield pseudo keyword
+        STRICT_SETNAME = 74,
 
         // For XML support:
-        DEFAULTNAMESPACE = 74, // default xml namespace =
-        ESCXMLATTR     = 75,
-        ESCXMLTEXT     = 76,
-        REF_MEMBER     = 77, // Reference for x.@y, x..y etc.
-        REF_NS_MEMBER  = 78, // Reference for x.ns::y, x..ns::y etc.
-        REF_NAME       = 79, // Reference for @y, @[y] etc.
-        REF_NS_NAME    = 80; // Reference for ns::y, @ns::y@[y] etc.
+        DEFAULTNAMESPACE = 75, // default xml namespace =
+        ESCXMLATTR     = 76,
+        ESCXMLTEXT     = 77,
+        REF_MEMBER     = 78, // Reference for x.@y, x..y etc.
+        REF_NS_MEMBER  = 79, // Reference for x.ns::y, x..ns::y etc.
+        REF_NAME       = 80, // Reference for @y, @[y] etc.
+        REF_NS_NAME    = 81; // Reference for ns::y, @ns::y@[y] etc.
 
         // End of interpreter bytecodes
     public final static int
         LAST_BYTECODE_TOKEN    = REF_NS_NAME,
 
-        TRY            = 81,
-        SEMI           = 82,  // semicolon
-        LB             = 83,  // left and right brackets
-        RB             = 84,
-        LC             = 85,  // left and right curlies (braces)
-        RC             = 86,
-        LP             = 87,  // left and right parentheses
-        RP             = 88,
-        COMMA          = 89,  // comma operator
+        TRY            = 82,
+        SEMI           = 83,  // semicolon
+        LB             = 84,  // left and right brackets
+        RB             = 85,
+        LC             = 86,  // left and right curlies (braces)
+        RC             = 87,
+        LP             = 88,  // left and right parentheses
+        RP             = 89,
+        COMMA          = 90,  // comma operator
 
-        ASSIGN         = 90,  // simple assignment  (=)
-        ASSIGN_BITOR   = 91,  // |=
-        ASSIGN_BITXOR  = 92,  // ^=
-        ASSIGN_BITAND  = 93,  // |=
-        ASSIGN_LSH     = 94,  // <<=
-        ASSIGN_RSH     = 95,  // >>=
-        ASSIGN_URSH    = 96,  // >>>=
-        ASSIGN_ADD     = 97,  // +=
-        ASSIGN_SUB     = 98,  // -=
-        ASSIGN_MUL     = 99,  // *=
-        ASSIGN_DIV     = 100,  // /=
-        ASSIGN_MOD     = 101;  // %=
+        ASSIGN         = 91,  // simple assignment  (=)
+        ASSIGN_BITOR   = 92,  // |=
+        ASSIGN_BITXOR  = 93,  // ^=
+        ASSIGN_BITAND  = 94,  // |=
+        ASSIGN_LSH     = 95,  // <<=
+        ASSIGN_RSH     = 96,  // >>=
+        ASSIGN_URSH    = 97,  // >>>=
+        ASSIGN_ADD     = 98,  // +=
+        ASSIGN_SUB     = 99,  // -=
+        ASSIGN_MUL     = 100,  // *=
+        ASSIGN_DIV     = 101,  // /=
+        ASSIGN_MOD     = 102;  // %=
 
     public final static int
         FIRST_ASSIGN   = ASSIGN,
         LAST_ASSIGN    = ASSIGN_MOD,
 
-        HOOK           = 102, // conditional (?:)
-        COLON          = 103,
-        OR             = 104, // logical or (||)
-        AND            = 105, // logical and (&&)
-        INC            = 106, // increment/decrement (++ --)
-        DEC            = 107,
-        DOT            = 108, // member operator (.)
-        FUNCTION       = 109, // function keyword
-        EXPORT         = 110, // export keyword
-        IMPORT         = 111, // import keyword
-        IF             = 112, // if keyword
-        ELSE           = 113, // else keyword
-        SWITCH         = 114, // switch keyword
-        CASE           = 115, // case keyword
-        DEFAULT        = 116, // default keyword
-        WHILE          = 117, // while keyword
-        DO             = 118, // do keyword
-        FOR            = 119, // for keyword
-        BREAK          = 120, // break keyword
-        CONTINUE       = 121, // continue keyword
-        VAR            = 122, // var keyword
-        WITH           = 123, // with keyword
-        CATCH          = 124, // catch keyword
-        FINALLY        = 125, // finally keyword
-        VOID           = 126, // void keyword
-        RESERVED       = 127, // reserved keywords
+        HOOK           = 103, // conditional (?:)
+        COLON          = 104,
+        OR             = 105, // logical or (||)
+        AND            = 106, // logical and (&&)
+        INC            = 107, // increment/decrement (++ --)
+        DEC            = 108,
+        DOT            = 109, // member operator (.)
+        FUNCTION       = 110, // function keyword
+        EXPORT         = 111, // export keyword
+        IMPORT         = 112, // import keyword
+        IF             = 113, // if keyword
+        ELSE           = 114, // else keyword
+        SWITCH         = 115, // switch keyword
+        CASE           = 116, // case keyword
+        DEFAULT        = 117, // default keyword
+        WHILE          = 118, // while keyword
+        DO             = 119, // do keyword
+        FOR            = 120, // for keyword
+        BREAK          = 121, // break keyword
+        CONTINUE       = 122, // continue keyword
+        VAR            = 123, // var keyword
+        WITH           = 124, // with keyword
+        CATCH          = 125, // catch keyword
+        FINALLY        = 126, // finally keyword
+        VOID           = 127, // void keyword
+        RESERVED       = 128, // reserved keywords
 
-        EMPTY          = 128,
+        EMPTY          = 129,
 
         /* types used for the parse tree - these never get returned
          * by the scanner.
          */
 
-        BLOCK          = 129, // statement block
-        LABEL          = 130, // label
-        TARGET         = 131,
-        LOOP           = 132,
-        EXPR_VOID      = 133, // expression statement in functions
-        EXPR_RESULT    = 134, // expression statement in scripts
-        JSR            = 135,
-        SCRIPT         = 136, // top-level node for entire script
-        TYPEOFNAME     = 137, // for typeof(simple-name)
-        USE_STACK      = 138,
-        SETPROP_OP     = 139, // x.y op= something
-        SETELEM_OP     = 140, // x[y] op= something
-        LOCAL_BLOCK    = 141,
-        SET_REF_OP     = 142, // *reference op= something
+        BLOCK          = 130, // statement block
+        LABEL          = 131, // label
+        TARGET         = 132,
+        LOOP           = 133,
+        EXPR_VOID      = 134, // expression statement in functions
+        EXPR_RESULT    = 135, // expression statement in scripts
+        JSR            = 136,
+        SCRIPT         = 137, // top-level node for entire script
+        TYPEOFNAME     = 138, // for typeof(simple-name)
+        USE_STACK      = 139,
+        SETPROP_OP     = 140, // x.y op= something
+        SETELEM_OP     = 141, // x[y] op= something
+        LOCAL_BLOCK    = 142,
+        SET_REF_OP     = 143, // *reference op= something
 
         // For XML support:
-        DOTDOT         = 143,  // member operator (..)
-        COLONCOLON     = 144,  // namespace::name
-        XML            = 145,  // XML type
-        DOTQUERY       = 146,  // .() -- e.g., x.emps.emp.(name == "terry")
-        XMLATTR        = 147,  // @
-        XMLEND         = 148,
+        DOTDOT         = 144,  // member operator (..)
+        COLONCOLON     = 145,  // namespace::name
+        XML            = 146,  // XML type
+        DOTQUERY       = 147,  // .() -- e.g., x.emps.emp.(name == "terry")
+        XMLATTR        = 148,  // @
+        XMLEND         = 149,
 
         // Optimizer-only-tokens
-        TO_OBJECT      = 149,
-        TO_DOUBLE      = 150,
+        TO_OBJECT      = 150,
+        TO_DOUBLE      = 151,
 
-        GET            = 151,  // JS 1.5 get pseudo keyword
-        SET            = 152,  // JS 1.5 set pseudo keyword
-        LET            = 153,  // JS 1.7 let pseudo keyword
-        CONST          = 154,
-        SETCONST       = 155,
-        SETCONSTVAR    = 156,
-        ARRAYCOMP      = 157,  // array comprehension
-        LETEXPR        = 158,
-        WITHEXPR       = 159,
-        DEBUGGER       = 160,
-        COMMENT        = 161,
-        GENEXPR        = 162,
-        METHOD         = 163,  // ES6 MethodDefinition
-        LAST_TOKEN     = 164;
+        GET            = 152,  // JS 1.5 get pseudo keyword
+        SET            = 153,  // JS 1.5 set pseudo keyword
+        LET            = 154,  // JS 1.7 let pseudo keyword
+        CONST          = 155,
+        SETCONST       = 156,
+        SETCONSTVAR    = 157,
+        ARRAYCOMP      = 158,  // array comprehension
+        LETEXPR        = 159,
+        WITHEXPR       = 160,
+        DEBUGGER       = 161,
+        COMMENT        = 162,
+        GENEXPR        = 163,
+        METHOD         = 164,  // ES6 MethodDefinition
+        LAST_TOKEN     = 165;
 
     /**
      * Returns a name for the token.  If Rhino is compiled with certain
@@ -314,6 +315,7 @@ public class Token
           case ENUM_INIT_KEYS:  return "ENUM_INIT_KEYS";
           case ENUM_INIT_VALUES:return "ENUM_INIT_VALUES";
           case ENUM_INIT_ARRAY: return "ENUM_INIT_ARRAY";
+          case ENUM_INIT_VALUES_IN_ORDER: return "ENUM_INIT_VALUES_IN_ORDER";
           case ENUM_NEXT:       return "ENUM_NEXT";
           case ENUM_ID:         return "ENUM_ID";
           case THISFN:          return "THISFN";

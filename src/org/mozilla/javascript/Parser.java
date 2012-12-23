@@ -1260,7 +1260,7 @@ public class Parser
         if (currentToken != Token.FOR) codeBug();
         consumeToken();
         int forPos = ts.tokenBeg, lineno = ts.lineno;
-        boolean isForEach = false, isForIn = false;
+        boolean isForEach = false, isForIn = false, isForOf = false;
         int eachPos = -1, inPos = -1, lp = -1, rp = -1;
         AstNode init = null;  // init is also foo in 'foo in object'
         AstNode cond = null;  // cond is also object in 'foo in object'
@@ -1285,9 +1285,12 @@ public class Parser
             int tt = peekToken();
 
             init = forLoopInit(tt);
-
             if (matchToken(Token.IN)) {
                 isForIn = true;
+                inPos = ts.tokenBeg - forPos;
+                cond = expr();  // object over which we're iterating
+            } else if (matchToken(Token.NAME) && "of".equals(ts.getString())) {
+                isForOf = true;
                 inPos = ts.tokenBeg - forPos;
                 cond = expr();  // object over which we're iterating
             } else {  // ordinary for-loop
@@ -1313,7 +1316,7 @@ public class Parser
             if (mustMatchToken(Token.RP, "msg.no.paren.for.ctrl"))
                 rp = ts.tokenBeg - forPos;
 
-            if (isForIn) {
+            if (isForIn || isForOf) {
                 ForInLoop fis = new ForInLoop(forPos);
                 if (init instanceof VariableDeclaration) {
                     // check that there was only one variable given
@@ -1321,11 +1324,15 @@ public class Parser
                         reportError("msg.mult.index");
                     }
                 }
+                if (isForOf && isForEach) {
+                    reportError("msg.invalid.for.each");
+                }
                 fis.setIterator(init);
                 fis.setIteratedObject(cond);
                 fis.setInPosition(inPos);
                 fis.setIsForEach(isForEach);
                 fis.setEachPosition(eachPos);
+                fis.setIsForOf(isForOf);
                 pn = fis;
             } else {
                 ForLoop fl = new ForLoop(forPos);
@@ -3030,6 +3037,7 @@ public class Parser
         if (nextToken() != Token.FOR) codeBug();
         int pos = ts.tokenBeg;
         int eachPos = -1, lp = -1, rp = -1, inPos = -1;
+        boolean isForIn = false, isForOf = false;
         ArrayComprehensionLoop pn = new ArrayComprehensionLoop(pos);
 
         pushScope(pn);
@@ -3067,8 +3075,23 @@ public class Parser
                 defineSymbol(Token.LET, ts.getString(), true);
             }
 
-            if (mustMatchToken(Token.IN, "msg.in.after.for.name"))
+            switch (nextToken()) {
+            case Token.IN:
                 inPos = ts.tokenBeg - pos;
+                isForIn = true;
+                break;
+            case Token.NAME:
+                if ("of".equals(ts.getString())) {
+                    if (eachPos != -1) {
+                        reportError("msg.invalid.for.each");
+                    }
+                    inPos = ts.tokenBeg - pos;
+                    isForOf = true;
+                    break;
+                }
+            default:
+                reportError("msg.in.after.for.name");
+            }
             AstNode obj = expr();
             if (mustMatchToken(Token.RP, "msg.no.paren.for.ctrl"))
                 rp = ts.tokenBeg - pos;
@@ -3080,6 +3103,7 @@ public class Parser
             pn.setEachPosition(eachPos);
             pn.setIsForEach(eachPos != -1);
             pn.setParens(lp, rp);
+            pn.setIsForOf(isForOf);
             return pn;
         } finally {
             popScope();

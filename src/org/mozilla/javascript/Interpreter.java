@@ -1648,7 +1648,8 @@ switch (op) {
     }
     case Token.ENUM_INIT_KEYS :
     case Token.ENUM_INIT_VALUES :
-    case Token.ENUM_INIT_ARRAY : {
+    case Token.ENUM_INIT_ARRAY :
+    case Token.ENUM_INIT_VALUES_IN_ORDER : {
         Object lhs = stack[stackTop];
         if (lhs == DBL_MRK) lhs = ScriptRuntime.wrapNumber(sDbl[stackTop]);
         --stackTop;
@@ -1657,6 +1658,8 @@ switch (op) {
                          ? ScriptRuntime.ENUMERATE_KEYS :
                        op == Token.ENUM_INIT_VALUES
                          ? ScriptRuntime.ENUMERATE_VALUES :
+                       op == Token.ENUM_INIT_VALUES_IN_ORDER
+                         ? ScriptRuntime.ENUMERATE_VALUES_IN_ORDER :
                        ScriptRuntime.ENUMERATE_ARRAY;
         stack[indexReg] = ScriptRuntime.enumInit(lhs, cx, frame.scope, enumType);
         continue Loop;

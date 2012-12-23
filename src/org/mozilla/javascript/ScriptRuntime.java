@@ -198,6 +198,8 @@ public class ScriptRuntime {
 
         NativeIterator.init(scope, sealed); // Also initializes NativeGenerator
 
+        NativeElementIterator.init(scope, sealed);
+
         boolean withXml = cx.hasFeature(Context.FEATURE_E4X) &&
                           cx.getE4xImplementationFactory() != null;
 
@@ -2101,7 +2103,7 @@ public class ScriptRuntime {
         ObjToIntMap used;
         Object currentId;
         int enumType; /* one of ENUM_INIT_KEYS, ENUM_INIT_VALUES,
-                         ENUM_INIT_ARRAY */
+                         ENUM_INIT_ARRAY, ENUMERATE_VALUES_IN_ORDER */
 
         // if true, integer ids will be returned as numbers rather than strings
         boolean enumNumbers;
@@ -2150,6 +2152,7 @@ public class ScriptRuntime {
     public static final int ENUMERATE_KEYS_NO_ITERATOR = 3;
     public static final int ENUMERATE_VALUES_NO_ITERATOR = 4;
     public static final int ENUMERATE_ARRAY_NO_ITERATOR = 5;
+    public static final int ENUMERATE_VALUES_IN_ORDER = 6;
 
     /**
      * @deprecated Use {@link #enumInit(Object, Context, Scriptable, int)} instead
@@ -2165,6 +2168,12 @@ public class ScriptRuntime {
     {
         IdEnumeration x = new IdEnumeration();
         x.obj = toObjectOrNull(cx, value, scope);
+        // "for of" loop
+        if (enumType == ENUMERATE_VALUES_IN_ORDER) {
+            x.enumType = enumType;
+            x.iterator = null;
+            return enumInitInOrder(cx, x);
+        }
         if (x.obj == null) {
             // null or undefined do not cause errors but rather lead to empty
             // "for in" loop
@@ -2185,6 +2194,25 @@ public class ScriptRuntime {
             enumChangeObject(x);
         }
 
+        return x;
+    }
+
+    private static Object enumInitInOrder(Context cx, IdEnumeration x) {
+        if (x.obj == null || !ScriptableObject.hasProperty(x.obj, NativeElementIterator.ITERATOR_FUNCTION_NAME)) {
+            throw typeError1("msg.not.iterable", toString(x.obj));
+        }
+        Object iterator = ScriptableObject.getProperty(x.obj, NativeElementIterator.ITERATOR_FUNCTION_NAME);
+        if (!(iterator instanceof Callable)) {
+            throw typeError1("msg.not.iterable", toString(x.obj));
+        }
+        Callable f = (Callable) iterator;
+        Scriptable scope = x.obj.getParentScope();
+        Object[] args = new Object[] {};
+        Object v = f.call(cx, scope, x.obj, args);
+        if (!(v instanceof Scriptable)) {
+            throw typeError1("msg.not.iterable", toString(x.obj));
+        }
+        x.iterator = (Scriptable) v;
         return x;
     }
 
