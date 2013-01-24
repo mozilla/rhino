@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 import java.util.Map;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.io.Serializable;
 
 /**
@@ -23,9 +23,9 @@ public class ClassCache implements Serializable
     private static final long serialVersionUID = -8866246036237312215L;
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
-    private transient HashMap<Class<?>,JavaMembers> classTable;
-    private transient HashMap<JavaAdapter.JavaAdapterSignature,Class<?>> classAdapterCache;
-    private transient HashMap<Class<?>,Object> interfaceAdapterCache;
+    private transient ConcurrentHashMap<Class<?>,JavaMembers> classTable;
+    private transient ConcurrentHashMap<JavaAdapter.JavaAdapterSignature,Class<?>> classAdapterCache;
+    private transient ConcurrentHashMap<Class<?>,Object> interfaceAdapterCache;
     private int generatedClassSerial;
     private Scriptable associatedScope;
 
@@ -128,7 +128,7 @@ public class ClassCache implements Serializable
      */
     Map<Class<?>,JavaMembers> getClassCacheMap() {
         if (classTable == null) {
-            classTable = new HashMap<Class<?>,JavaMembers>();
+            classTable = new ConcurrentHashMap<Class<?>,JavaMembers>();
         }
         return classTable;
     }
@@ -136,7 +136,7 @@ public class ClassCache implements Serializable
     Map<JavaAdapter.JavaAdapterSignature,Class<?>> getInterfaceAdapterCacheMap()
     {
         if (classAdapterCache == null) {
-            classAdapterCache = new HashMap<JavaAdapter.JavaAdapterSignature,Class<?>>();
+            classAdapterCache = new ConcurrentHashMap<JavaAdapter.JavaAdapterSignature,Class<?>>();
         }
         return classAdapterCache;
     }
@@ -184,7 +184,7 @@ public class ClassCache implements Serializable
     {
         if (cachingIsEnabled) {
             if (interfaceAdapterCache == null) {
-                interfaceAdapterCache = new HashMap<Class<?>,Object>();
+                interfaceAdapterCache = new ConcurrentHashMap<Class<?>,Object>();
             }
             interfaceAdapterCache.put(cl, iadapter);
         }
