@@ -147,6 +147,9 @@ public class Main
         errorReporter = new ToolErrorReporter(false, global.getErr());
         shellContextFactory.setErrorReporter(errorReporter);
         String[] args = processOptions(origArgs);
+        if (exitCode > 0) {
+            return exitCode;
+        }
         if (processStdin) {
             fileList.add(null);
         }
@@ -394,7 +397,8 @@ public class Main
                 // print usage message
                 global.getOut().println(
                     ToolErrorReporter.getMessage("msg.shell.usage", Main.class.getName()));
-                System.exit(1);
+                exitCode = 1;
+                return null;
             }
             usageError = arg;
             break goodUsage;
@@ -404,7 +408,7 @@ public class Main
             ToolErrorReporter.getMessage("msg.shell.invalid", usageError));
         global.getOut().println(
             ToolErrorReporter.getMessage("msg.shell.usage", Main.class.getName()));
-        System.exit(1);
+        exitCode = 1;
         return null;
     }
 
