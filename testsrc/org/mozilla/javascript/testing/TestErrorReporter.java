@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.javascript.testing;
 
 import org.mozilla.javascript.ErrorReporter;
@@ -19,7 +23,7 @@ import junit.framework.Assert;
  *
  * @author Pascal-Louis Perez
  */
-public final class TestErrorReporter extends Assert implements ErrorReporter {
+public class TestErrorReporter extends Assert implements ErrorReporter {
     private final String[] errors;
     private final String[] warnings;
     private int errorsIndex = 0;

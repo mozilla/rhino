@@ -1,42 +1,8 @@
 /* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-1999
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Norris Boyd
- *   Mike McCabe
- *   Igor Bukanov
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript;
 
@@ -125,10 +91,17 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
+    protected void setInstanceIdAttributes(int id, int attr) {
+        if (id == Id_length) {
+            lengthAttr = attr;
+        }
+    }
+
+    @Override
     protected int findInstanceIdInfo(String s)
     {
         if (s.equals("length")) {
-            return instanceIdInfo(DONTENUM | PERMANENT, Id_length);
+            return instanceIdInfo(lengthAttr, Id_length);
         }
         return super.findInstanceIdInfo(s);
     }
@@ -371,22 +344,41 @@ public class NativeArray extends IdScriptableObject implements List
         return super.has(index, start);
     }
 
+    private static long toArrayIndex(Object id) {
+        if (id instanceof String) {
+            return toArrayIndex((String)id);
+        } else if (id instanceof Number) {
+            return toArrayIndex(((Number)id).doubleValue());
+        }
+        return -1;
+    }
+
     // if id is an array index (ECMA 15.4.0), return the number,
     // otherwise return -1L
     private static long toArrayIndex(String id)
     {
-        double d = ScriptRuntime.toNumber(id);
+        long index = toArrayIndex(ScriptRuntime.toNumber(id));
+        // Assume that ScriptRuntime.toString(index) is the same
+        // as java.lang.Long.toString(index) for long
+        if (Long.toString(index).equals(id)) {
+            return index;
+        }
+        return -1;
+    }
+
+    private static long toArrayIndex(double d) {
         if (d == d) {
             long index = ScriptRuntime.toUint32(d);
             if (index == d && index != 4294967295L) {
-                // Assume that ScriptRuntime.toString(index) is the same
-                // as java.lang.Long.toString(index) for long
-                if (Long.toString(index).equals(id)) {
-                    return index;
-                }
+                return index;
             }
         }
         return -1;
+    }
+
+    private static int toDenseIndex(Object id) {
+      long index = toArrayIndex(id);
+      return 0 <= index && index < Integer.MAX_VALUE ? (int) index : -1;
     }
 
     @Override
@@ -442,7 +434,7 @@ public class NativeArray extends IdScriptableObject implements List
             }
         }
         super.put(index, start, value);
-        if (start == this) {
+        if (start == this && (lengthAttr & READONLY) == 0) {
             // only set the array length if given an array index (ECMA 15.4.0)
             if (this.length <= index) {
                 // avoid overflowing index!
@@ -540,10 +532,19 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
+    public int getAttributes(int index) {
+        if (dense != null && index >= 0 && index < dense.length
+                && dense[index] != NOT_FOUND) {
+            return EMPTY;
+        }
+        return super.getAttributes(index);
+    }
+
+    @Override
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
       if (dense != null) {
-        int index = toIndex(id);
-        if (0 <= index && index < length) {
+        int index = toDenseIndex(id);
+        if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
           Object value = dense[index];
           return defaultIndexPropertyDescriptor(value);
         }
@@ -552,7 +553,9 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+    protected void defineOwnProperty(Context cx, Object id,
+                                     ScriptableObject desc,
+                                     boolean checkValid) {
       if (dense != null) {
         Object[] values = dense;
         dense = null;
@@ -563,21 +566,11 @@ public class NativeArray extends IdScriptableObject implements List
           }
         }
       }
-      int index = toIndex(id);
+      long index = toArrayIndex(id);
       if (index >= length) {
         length = index + 1;
       }
-      super.defineOwnProperty(cx, id, desc);
-    }
-
-    private int toIndex(Object id) {
-      if (id instanceof String) {
-        return (int) toArrayIndex((String) id);
-      } else if (id instanceof Number) {
-        return ((Number) id).intValue();
-      } else {
-        return -1;
-      }
+      super.defineOwnProperty(cx, id, desc, checkValid);
     }
 
     /**
@@ -640,6 +633,9 @@ public class NativeArray extends IdScriptableObject implements List
          * 2. If Result(1) is false, return.
          * ?
          */
+        if ((lengthAttr & READONLY) != 0) {
+            return;
+        }
 
         double d = ScriptRuntime.toNumber(val);
         long longVal = ScriptRuntime.toUint32(d);
@@ -743,7 +739,7 @@ public class NativeArray extends IdScriptableObject implements List
         if (index > Integer.MAX_VALUE) {
             return ScriptableObject.getProperty(target, Long.toString(index));
         } else {
-            return ScriptableObject.getProperty(target, (int) index);
+            return ScriptableObject.getProperty(target, (int)index);
         }
     }
 
@@ -808,10 +804,14 @@ public class NativeArray extends IdScriptableObject implements List
         try {
             if (!iterating) {
                 cx.iterating.put(thisObj, 0); // stop recursion.
+                // make toSource print null and undefined values in recent versions
+                boolean skipUndefinedAndNull = !toSource
+                        || cx.getLanguageVersion() < Context.VERSION_1_5;
                 for (i = 0; i < length; i++) {
                     if (i > 0) result.append(separator);
-                    Object elem = getElem(cx, thisObj, i);
-                    if (elem == null || elem == Undefined.instance) {
+                    Object elem = getRawElem(thisObj, i);
+                    if (elem == NOT_FOUND || (skipUndefinedAndNull &&
+                            (elem == null || elem == Undefined.instance))) {
                         haslast = false;
                         continue;
                     }
@@ -831,8 +831,7 @@ public class NativeArray extends IdScriptableObject implements List
                         }
 
                     } else {
-                        if (toLocale)
-                        {
+                        if (toLocale) {
                             Callable fun;
                             Scriptable funThis;
                             fun = ScriptRuntime.getPropFunctionAndThis(
@@ -970,14 +969,14 @@ public class NativeArray extends IdScriptableObject implements List
             comparator = new Comparator<Object>() {
                 public int compare(final Object x, final Object y) {
                     // sort undefined to end
-                    if (x == y) {
-                        return 0;
-                    } else if (y == Undefined.instance
-                            || y == Scriptable.NOT_FOUND) {
+                    if (x == NOT_FOUND) {
+                        return y == NOT_FOUND ? 0 : 1;
+                    } else if (y == NOT_FOUND) {
                         return -1;
-                    } else if (x == Undefined.instance
-                            || x == Scriptable.NOT_FOUND) {
-                        return 1;
+                    } else if (x == Undefined.instance) {
+                        return y == Undefined.instance ? 0 : 1;
+                    } else if (y == Undefined.instance) {
+                        return -1;
                     }
 
                     cmpBuf[0] = x;
@@ -997,14 +996,14 @@ public class NativeArray extends IdScriptableObject implements List
             comparator = new Comparator<Object>() {
                 public int compare(final Object x, final Object y) {
                     // sort undefined to end
-                    if (x == y)
-                        return 0;
-                    else if (y == Undefined.instance
-                            || y == Scriptable.NOT_FOUND) {
+                    if (x == NOT_FOUND) {
+                        return y == NOT_FOUND ? 0 : 1;
+                    } else if (y == NOT_FOUND) {
                         return -1;
-                    } else if (x == Undefined.instance
-                            || x == Scriptable.NOT_FOUND) {
-                        return 1;
+                    } else if (x == Undefined.instance) {
+                        return y == Undefined.instance ? 0 : 1;
+                    } else if (y == Undefined.instance) {
+                        return -1;
                     }
 
                     final String a = ScriptRuntime.toString(x);
@@ -1014,19 +1013,24 @@ public class NativeArray extends IdScriptableObject implements List
             };
         }
 
-        final int length = (int) getLengthProperty(cx, thisObj);
+        long llength = getLengthProperty(cx, thisObj);
+        final int length = (int) llength;
+        if (llength != length) {
+            throw Context.reportRuntimeError1(
+                "msg.arraylength.too.big", String.valueOf(llength));
+        }
         // copy the JS array into a working array, so it can be
         // sorted cheaply.
         final Object[] working = new Object[length];
         for (int i = 0; i != length; ++i) {
-            working[i] = getElem(cx, thisObj, i);
+            working[i] = getRawElem(thisObj, i);
         }
 
         Arrays.sort(working, comparator);
 
         // copy the working array back into thisObj
         for (int i = 0; i < length; ++i) {
-            setElem(cx, thisObj, i, working[i]);
+            setRawElem(cx, thisObj, i, working[i]);
         }
 
         return thisObj;
@@ -1477,13 +1481,12 @@ public class NativeArray extends IdScriptableObject implements List
                 // default
                 start = length-1;
             } else {
-                start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
+                start = (long)ScriptRuntime.toInteger(args[1]);
                 if (start >= length)
                     start = length-1;
                 else if (start < 0)
                     start += length;
-                // Note that start may be negative, but that's okay
-                // as the result of -1 will fall out from the code below
+                if (start < 0) return NEGATIVE_ONE;
             }
         } else {
             // indexOf
@@ -1501,14 +1504,13 @@ public class NativeArray extends IdScriptableObject implements List
                 // default
                 start = 0;
             } else {
-                start = ScriptRuntime.toInt32(ScriptRuntime.toNumber(args[1]));
+                start = (long)ScriptRuntime.toInteger(args[1]);
                 if (start < 0) {
                     start += length;
                     if (start < 0)
                         start = 0;
                 }
-                // Note that start may be > length-1, but that's okay
-                // as the result of -1 will fall out from the code below
+                if (start > length - 1) return NEGATIVE_ONE;
             }
         }
         if (thisObj instanceof NativeArray) {
@@ -1536,13 +1538,15 @@ public class NativeArray extends IdScriptableObject implements List
         }
         if (isLast) {
           for (long i=start; i >= 0; i--) {
-              if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
+              Object val = getRawElem(thisObj, i);
+              if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
                   return Long.valueOf(i);
               }
           }
         } else {
           for (long i=start; i < length; i++) {
-              if (ScriptRuntime.shallowEq(getElem(cx, thisObj, i), compareTo)) {
+              Object val = getRawElem(thisObj, i);
+              if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
                   return Long.valueOf(i);
               }
           }
@@ -1975,6 +1979,11 @@ public class NativeArray extends IdScriptableObject implements List
      * Internal representation of the JavaScript array's length property.
      */
     private long length;
+
+    /**
+     * Attributes of the array's length property
+     */
+    private int lengthAttr = DONTENUM | PERMANENT;
 
     /**
      * Fast storage for dense arrays. Sparse arrays will use the superclass's

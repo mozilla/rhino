@@ -1,43 +1,8 @@
 /* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-2000
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Ethan Hugg
- *   Terry Lucas
- *   Milen Nankov
- *   David P. Caldwell <inonit@inonit.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript.xmlimpl;
 
@@ -133,17 +98,8 @@ class XMLList extends XMLObjectImpl implements Function {
 
     @Override
     boolean hasXMLProperty(XMLName xmlName) {
-        boolean result = false;
-
-        // Has now should return true if the property would have results > 0 or
-        // if it's a method name
-        String name = xmlName.localName();
-        if ((getPropertyList(xmlName).length() > 0) ||
-            (getMethod(name) != NOT_FOUND)) {
-            result = true;
-        }
-
-        return result;
+        // Has should return true if the property would have results > 0
+        return getPropertyList(xmlName).length() > 0;
     }
 
     @Override
@@ -192,6 +148,7 @@ class XMLList extends XMLObjectImpl implements Function {
                         targetProperty.getNamespace().getUri(),
                         targetProperty.getLocalName());
                 targetObject.putXMLProperty(name2, this);
+                replace(0, targetObject.getXML().getLastXmlChild());
             } else {
                 throw ScriptRuntime.typeError(
                   "Assignment to empty XMLList without targets not supported");
@@ -204,16 +161,6 @@ class XMLList extends XMLObjectImpl implements Function {
 
             // Update the list with the new item at location 0.
             replace(0, item(0));
-
-            if (targetObject != null && targetProperty != null &&
-                targetProperty.getLocalName() != null)
-            {
-                // Now add us to our parent
-                XMLName name2 = XMLName.formProperty(
-                        targetProperty.getNamespace().getUri(),
-                        targetProperty.getLocalName());
-                targetObject.putXMLProperty(name2, this);
-            }
         }
     }
 
@@ -300,7 +247,7 @@ class XMLList extends XMLObjectImpl implements Function {
             } else {
                 // Appending
                 xmlParent.appendChild(xmlValue);
-                addToList(xmlParent.getXmlChild(index));
+                addToList(xmlParent.getLastXmlChild());
             }
         } else {
             // Don't all have same parent, no underlying doc to alter
@@ -812,13 +759,31 @@ class XMLList extends XMLObjectImpl implements Function {
         if(isApply || methodName.equals("call"))
             return applyOrCall(isApply, cx, scope, thisObj, args);
 
-        Callable method = ScriptRuntime.getElemFunctionAndThis(
-            this, methodName, cx);
-        // Call lastStoredScriptable to clear stored thisObj
-        // but ignore the result as the method should use the supplied
-        // thisObj, not one from redirected call
-        ScriptRuntime.lastStoredScriptable(cx);
-        return method.call(cx, scope, thisObj, args);
+        if (!(thisObj instanceof XMLObject)) {
+            throw ScriptRuntime.typeError1("msg.incompat.call", methodName);
+        }
+        Object func = null;
+        Scriptable sobj = thisObj;
+
+        while (sobj instanceof XMLObject) {
+            XMLObject xmlObject = (XMLObject) sobj;
+            func = xmlObject.getFunctionProperty(cx, methodName);
+            if (func != Scriptable.NOT_FOUND) {
+                break;
+            }
+            sobj = xmlObject.getExtraMethodSource(cx);
+            if (sobj != null) {
+                thisObj = sobj;
+                if (!(sobj instanceof XMLObject)) {
+                    func = ScriptableObject.getProperty(sobj, methodName);
+                }
+            }
+        }
+
+        if (!(func instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(thisObj, func, methodName);
+        }
+        return ((Callable)func).call(cx, scope, thisObj, args);
     }
 
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {

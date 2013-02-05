@@ -24,6 +24,9 @@ js1_5/extensions/regress-367501-04.js
 # stress test that can potentially time out
 js1_5/Regress/regress-404755.js
 
+# uses deprecated way of doing dynamic scope
+tests/js1_5/Scope/regress-181834.js
+
 # should be investigated: semicolon insertion
 ecma_3/LexicalConventions/7.9.1.js
 ecma_3/extensions/7.9.1.js
@@ -41,6 +44,9 @@ js1_5/Regress/regress-98901.js
 # performance regression test
 js1_5/Array/regress-99120-01.js
 js1_5/extensions/regress-371636.js
+
+# ES5 requires decoder to throw URIError on overlong UTF-8 sequences
+js1_5/Regress/regress-172699.js
 
 # large concatenation of strings
 js1_5/Function/regress-338121-01.js
@@ -469,8 +475,6 @@ ecma_3/RegExp/regress-307456.js
 ecma_3/RegExp/regress-309840.js
 ecma_3/RegExp/regress-311414.js
 ecma_3/RegExp/regress-330684.js
-ecma_3/RegExp/regress-334158.js
-ecma_3/RegExp/regress-367888.js
 ecma_3/Statements/regress-121744.js
 ecma_3/String/15.5.4.14.js
 ecma_3/String/regress-304376.js
@@ -514,7 +518,6 @@ js1_5/Regress/regress-139316.js
 js1_5/Regress/regress-173067.js
 js1_5/Regress/regress-203278-1.js
 js1_5/Regress/regress-213482.js
-js1_5/Regress/regress-247179.js
 js1_5/Regress/regress-248444.js
 js1_5/Regress/regress-252892.js
 js1_5/Regress/regress-261886.js
@@ -626,7 +629,6 @@ e4x/Expressions/regress-366123.js
 e4x/decompilation/regress-352459.js
 ecma/Date/15.9.5.31-1.js
 ecma/Date/15.9.5.35-1.js
-ecma_3/RegExp/regress-375642.js
 js1_5/Regress/regress-306727.js
 js1_5/Regress/regress-308566.js
 js1_5/Regress/regress-312260.js

@@ -1,42 +1,8 @@
 /* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-1999
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Waldemar Horwat
- *   Roger Lawrence
- *   Attila Szegedi
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /****************************************************************
   *
@@ -63,12 +29,6 @@ import java.math.BigInteger;
 
 class DToA {
 
-
-/* "-0.0000...(1073 zeros after decimal point)...0001\0" is the longest string that we could produce,
- * which occurs when printing -5e-324 in binary.  We could compute a better estimate of the size of
- * the output string and malloc fewer bytes depending on d and base, but why bother? */
-
-    private static final int DTOBASESTR_BUFFER_SIZE = 1078;
 
     private static char BASEDIGIT(int digit) {
         return (char)((digit >= 10) ? 'a' - 10 + digit : '0' + digit);
@@ -303,14 +263,13 @@ class DToA {
         } else {
             /* We have a fraction. */
 
-            char[] buffer;       /* The output string */
-            int p;               /* index to current position in the buffer */
+            StringBuilder buffer;       /* The output string */
             int digit;
             double df;           /* The fractional part of d */
             BigInteger b;
 
-            buffer = new char[DTOBASESTR_BUFFER_SIZE];
-            p = 0;
+            buffer = new StringBuilder();
+            buffer.append(intDigits).append('.');
             df = d - dfloor;
 
             long dBits = Double.doubleToLongBits(d);
@@ -390,14 +349,10 @@ class DToA {
                     done = true;
                 }
 //                JS_ASSERT(digit < (uint32)base);
-                buffer[p++] = BASEDIGIT(digit);
+                buffer.append(BASEDIGIT(digit));
             } while (!done);
 
-            StringBuffer sb = new StringBuffer(intDigits.length() + 1 + p);
-            sb.append(intDigits);
-            sb.append('.');
-            sb.append(buffer, 0, p);
-            return sb.toString();
+            return buffer.toString();
         }
 
     }
@@ -462,7 +417,7 @@ class DToA {
         return b.multiply(BigInteger.valueOf(5).pow(k));
     }
 
-    static boolean roundOff(StringBuffer buf)
+    static boolean roundOff(StringBuilder buf)
     {
         int i = buf.length();
         while (i != 0) {
@@ -487,7 +442,7 @@ class DToA {
      * bufsize should be two greater than the maximum number of output characters expected. */
     static int
     JS_dtoa(double d, int mode, boolean biasUp, int ndigits,
-                    boolean[] sign, StringBuffer buf)
+                    boolean[] sign, StringBuilder buf)
     {
         /*  Arguments ndigits, decpt, sign are similar to those
             of ecvt and fcvt; trailing zeros are suppressed from
@@ -585,7 +540,9 @@ class DToA {
         else {
             /* d is denormalized */
             i = bbits[0] + be[0] + (Bias + (P-1) - 1);
-            x = (i > 32) ? word0(d) << (64 - i) | word1(d) >>> (i - 32) : word1(d) << (32 - i);
+            x = (i > 32)
+                    ? ((long) word0(d)) << (64 - i) | word1(d) >>> (i - 32)
+                    : ((long) word1(d)) << (32 - i);
 //            d2 = x;
 //            word0(d2) -= 31*Exp_msk1; /* adjust exponent */
             d2 = setWord0(x, word0(x) - 31*Exp_msk1);
@@ -1152,7 +1109,7 @@ class DToA {
     }
 
     private static void
-    stripTrailingZeroes(StringBuffer buf)
+    stripTrailingZeroes(StringBuilder buf)
     {
 //      while(*--s == '0') ;
 //      s++;
@@ -1172,7 +1129,7 @@ class DToA {
         2};  /* DTOSTR_PRECISION */
 
     static void
-    JS_dtostr(StringBuffer buffer, int mode, int precision, double d)
+    JS_dtostr(StringBuilder buffer, int mode, int precision, double d)
     {
         int decPt;                                    /* Position of decimal point relative to first digit returned by JS_dtoa */
         boolean[] sign = new boolean[1];            /* true if the sign bit was set in d */

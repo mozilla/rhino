@@ -1,40 +1,8 @@
 /* -*- Mode: java; tab-width: 4; indent-tabs-mode: 1; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-1999
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Igor Bukanov
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript;
 
@@ -62,21 +30,19 @@ may override scopeInit or fillConstructorProperties methods.
 public abstract class IdScriptableObject extends ScriptableObject
     implements IdFunctionCall
 {
-    private transient volatile PrototypeValues prototypeValues;
+    private transient PrototypeValues prototypeValues;
 
     private static final class PrototypeValues implements Serializable
     {
         static final long serialVersionUID = 3038645279153854371L;
 
-        private static final int VALUE_SLOT = 0;
         private static final int NAME_SLOT = 1;
         private static final int SLOT_SPAN = 2;
 
         private IdScriptableObject obj;
         private int maxId;
-        private volatile Object[] valueArray;
-        private volatile short[] attributeArray;
-        private volatile int lastFoundId = 1;
+        private Object[] valueArray;
+        private short[] attributeArray;
 
         // The following helps to avoid creation of valueArray during runtime
         // initialization for common case of "constructor" property
@@ -133,9 +99,9 @@ public abstract class IdScriptableObject extends ScriptableObject
             }
             int index = (id - 1) * SLOT_SPAN;
             synchronized (this) {
-                Object value2 = array[index + VALUE_SLOT];
+                Object value2 = array[index];
                 if (value2 == null) {
-                    array[index + VALUE_SLOT] = value;
+                    array[index] = value;
                     array[index + NAME_SLOT] = name;
                     attributeArray[id - 1] = (short)attributes;
                 } else {
@@ -167,22 +133,7 @@ public abstract class IdScriptableObject extends ScriptableObject
 
         final int findId(String name)
         {
-            Object[] array = valueArray;
-            if (array == null) {
-                return obj.findPrototypeId(name);
-            }
-            int id = lastFoundId;
-            if (name == array[(id - 1) * SLOT_SPAN + NAME_SLOT]) {
-                return id;
-            }
-            id = obj.findPrototypeId(name);
-            if (id != 0) {
-                int nameSlot = (id - 1) * SLOT_SPAN + NAME_SLOT;
-                // Make cache to work!
-                array[nameSlot] = name;
-                lastFoundId = id;
-            }
-            return id;
+            return obj.findPrototypeId(name);
         }
 
         final boolean has(int id)
@@ -192,7 +143,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                 // Not yet initialized, assume all exists
                 return true;
             }
-            int valueSlot = (id  - 1) * SLOT_SPAN + VALUE_SLOT;
+            int valueSlot = (id  - 1) * SLOT_SPAN;
             Object value = array[valueSlot];
             if (value == null) {
                 // The particular entry has not been yet initialized
@@ -220,7 +171,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                     if (value == null) {
                         value = UniqueTag.NULL_VALUE;
                     }
-                    int valueSlot = (id  - 1) * SLOT_SPAN + VALUE_SLOT;
+                    int valueSlot = (id  - 1) * SLOT_SPAN;
                     synchronized (this) {
                         valueArray[valueSlot] = value;
                     }
@@ -238,7 +189,7 @@ public abstract class IdScriptableObject extends ScriptableObject
             ensureId(id);
             int attr = attributeArray[id - 1];
             if ((attr & PERMANENT) == 0) {
-                int valueSlot = (id  - 1) * SLOT_SPAN + VALUE_SLOT;
+                int valueSlot = (id  - 1) * SLOT_SPAN;
                 synchronized (this) {
                     valueArray[valueSlot] = NOT_FOUND;
                     attributeArray[id - 1] = EMPTY;
@@ -309,7 +260,7 @@ public abstract class IdScriptableObject extends ScriptableObject
                     }
                 }
             }
-            int valueSlot = (id  - 1) * SLOT_SPAN + VALUE_SLOT;
+            int valueSlot = (id  - 1) * SLOT_SPAN;
             Object value = array[valueSlot];
             if (value == null) {
                 if (id == constructorId) {
@@ -373,20 +324,26 @@ public abstract class IdScriptableObject extends ScriptableObject
     @Override
     public Object get(String name, Scriptable start)
     {
+        // Check for slot first for performance. This is a very hot code
+        // path that should be further optimized.
+        Object value = super.get(name, start);
+        if (value != NOT_FOUND) {
+            return value;
+        }
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int id = (info & 0xFFFF);
-            Object value = getInstanceIdValue(id);
+            value = getInstanceIdValue(id);
             if (value != NOT_FOUND) return value;
         }
         if (prototypeValues != null) {
             int id = prototypeValues.findId(name);
             if (id != 0) {
-                Object value = prototypeValues.get(id);
+                value = prototypeValues.get(id);
                 if (value != NOT_FOUND) return value;
             }
         }
-        return super.get(name, start);
+        return NOT_FOUND;
     }
 
     @Override
@@ -474,10 +431,10 @@ public abstract class IdScriptableObject extends ScriptableObject
         ScriptableObject.checkValidAttributes(attributes);
         int info = findInstanceIdInfo(name);
         if (info != 0) {
+            int id = (info & 0xFFFF);
             int currentAttributes = (info >>> 16);
             if (attributes != currentAttributes) {
-                throw new RuntimeException(
-                    "Change of attributes for this id is not supported");
+                setInstanceIdAttributes(id, attributes);
             }
             return;
         }
@@ -587,6 +544,20 @@ public abstract class IdScriptableObject extends ScriptableObject
     protected void setInstanceIdValue(int id, Object value)
     {
         throw new IllegalStateException(String.valueOf(id));
+    }
+
+    /**
+     * Update the attributes of the given instance property. Classes which
+     * want to support changing property attributes via Object.defineProperty
+     * must override this method. The default implementation throws
+     * InternalError.
+     * @param id the instance property id
+     * @param attr the new attribute bitset
+     */
+    protected void setInstanceIdAttributes(int id, int attr) {
+        throw ScriptRuntime.constructError("InternalError",
+                "Changing attributes not supported for " + getClassName()
+                + " " + getInstanceIdName(id) + " property");
     }
 
     /** 'thisObj' will be null if invoked as constructor, in which case
@@ -728,10 +699,18 @@ public abstract class IdScriptableObject extends ScriptableObject
             if (isAccessorDescriptor(desc)) {
               delete(id); // it will be replaced with a slot
             } else {
+              checkPropertyDefinition(desc);
+              ScriptableObject current = getOwnPropertyDescriptor(cx, key);
+              checkPropertyChange(name, current, desc);
               int attr = (info >>> 16);
               Object value = getProperty(desc, "value");
-              setInstanceIdValue(id, value == NOT_FOUND ? Undefined.instance : value);
-              setAttributes(id, applyDescriptorToAttributeBitset(attr, desc));
+              if (value != NOT_FOUND && (attr & READONLY) == 0) {
+                Object currentValue = getInstanceIdValue(id);
+                if (!sameValue(value, currentValue)) {
+                  setInstanceIdValue(id, value);
+                }
+              }
+              setAttributes(name, applyDescriptorToAttributeBitset(attr, desc));
               return;
             }
         }
@@ -741,9 +720,17 @@ public abstract class IdScriptableObject extends ScriptableObject
               if (isAccessorDescriptor(desc)) {
                 prototypeValues.delete(id); // it will be replaced with a slot
               } else {
+                checkPropertyDefinition(desc);
+                ScriptableObject current = getOwnPropertyDescriptor(cx, key);
+                checkPropertyChange(name, current, desc);
                 int attr = prototypeValues.getAttributes(id);
                 Object value = getProperty(desc, "value");
-                prototypeValues.set(id, this, value == NOT_FOUND ? Undefined.instance : value);
+                if (value != NOT_FOUND && (attr & READONLY) == 0) {
+                  Object currentValue = prototypeValues.get(id);
+                  if (!sameValue(value, currentValue)) {
+                    prototypeValues.set(id, this, value);
+                  }
+                }
                 prototypeValues.setAttributes(id, applyDescriptorToAttributeBitset(attr, desc));
                 return;
               }

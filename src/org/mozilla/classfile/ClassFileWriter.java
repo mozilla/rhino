@@ -1,40 +1,8 @@
 /* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-1999
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Roger Lawrence
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.classfile;
 
@@ -1471,6 +1439,7 @@ public class ClassFileWriter {
             stackTop = 0;
             workListTop = 0;
             rawStackMapTop = 0;
+            wide = false;
         }
 
         void generate() {
@@ -2062,7 +2031,7 @@ public class ClassFileWriter {
                     push(TypeInfo.DOUBLE);
                     break;
                 case ByteCode.ISTORE:
-                    executeStore(getOperand(bci + 1), TypeInfo.INTEGER);
+                    executeStore(getOperand(bci + 1, wide ? 2 : 1), TypeInfo.INTEGER);
                     break;
                 case ByteCode.ISTORE_0:
                 case ByteCode.ISTORE_1:
@@ -2071,7 +2040,7 @@ public class ClassFileWriter {
                     executeStore(bc - ByteCode.ISTORE_0, TypeInfo.INTEGER);
                     break;
                 case ByteCode.LSTORE:
-                    executeStore(getOperand(bci + 1), TypeInfo.LONG);
+                    executeStore(getOperand(bci + 1, wide ? 2 : 1), TypeInfo.LONG);
                     break;
                 case ByteCode.LSTORE_0:
                 case ByteCode.LSTORE_1:
@@ -2080,16 +2049,16 @@ public class ClassFileWriter {
                     executeStore(bc - ByteCode.LSTORE_0, TypeInfo.LONG);
                     break;
                 case ByteCode.FSTORE:
-                    executeStore(getOperand(bci + 1), TypeInfo.FLOAT);
+                    executeStore(getOperand(bci + 1, wide ? 2 : 1), TypeInfo.FLOAT);
                     break;
                 case ByteCode.FSTORE_0:
                 case ByteCode.FSTORE_1:
                 case ByteCode.FSTORE_2:
                 case ByteCode.FSTORE_3:
-                    executeStore(getOperand(bci + 1), TypeInfo.FLOAT);
+                    executeStore(bc - ByteCode.FSTORE_0, TypeInfo.FLOAT);
                     break;
                 case ByteCode.DSTORE:
-                    executeStore(getOperand(bci + 1), TypeInfo.DOUBLE);
+                    executeStore(getOperand(bci + 1, wide ? 2 : 1), TypeInfo.DOUBLE);
                     break;
                 case ByteCode.DSTORE_0:
                 case ByteCode.DSTORE_1:
@@ -2098,7 +2067,7 @@ public class ClassFileWriter {
                     executeStore(bc - ByteCode.DSTORE_0, TypeInfo.DOUBLE);
                     break;
                 case ByteCode.ALOAD:
-                    executeALoad(getOperand(bci + 1));
+                    executeALoad(getOperand(bci + 1, wide ? 2 : 1));
                     break;
                 case ByteCode.ALOAD_0:
                 case ByteCode.ALOAD_1:
@@ -2107,7 +2076,7 @@ public class ClassFileWriter {
                     executeALoad(bc - ByteCode.ALOAD_0);
                     break;
                 case ByteCode.ASTORE:
-                    executeAStore(getOperand(bci + 1));
+                    executeAStore(getOperand(bci + 1, wide ? 2 : 1));
                     break;
                 case ByteCode.ASTORE_0:
                 case ByteCode.ASTORE_1:
@@ -2285,6 +2254,9 @@ public class ClassFileWriter {
                     push(TypeInfo.OBJECT(typeIndex));
                     break;
                 case ByteCode.WIDE:
+                    // Alters behaviour of next instruction
+                    wide = true;
+                    break;
                 case ByteCode.MULTIANEWARRAY:
                 case ByteCode.LOOKUPSWITCH:
                     // Currently not used in any part of Rhino, so ignore it
@@ -2292,11 +2264,14 @@ public class ClassFileWriter {
                 case ByteCode.RET:
                 case ByteCode.JSR_W:
                 default:
-                    throw new IllegalArgumentException("bad opcode");
+                    throw new IllegalArgumentException("bad opcode: " + bc);
             }
 
             if (length == 0) {
-                length = opcodeLength(bc);
+                length = opcodeLength(bc, wide);
+            }
+            if (wide && bc != ByteCode.WIDE) {
+                wide = false;
             }
             return length;
         }
@@ -2613,6 +2588,8 @@ public class ClassFileWriter {
 
         private byte[] rawStackMap;
         private int rawStackMapTop;
+
+        private boolean wide;
 
         static final boolean DEBUGSTACKMAP = false;
     }
@@ -2999,7 +2976,7 @@ public class ClassFileWriter {
      * This is different from opcodeCount, since opcodeCount counts logical
      * operands.
      */
-    static int opcodeLength(int opcode) {
+    static int opcodeLength(int opcode, boolean wide) {
         switch (opcode) {
             case ByteCode.AALOAD:
             case ByteCode.AASTORE:
@@ -3153,21 +3130,22 @@ public class ClassFileWriter {
             case ByteCode.SWAP:
             case ByteCode.WIDE:
                 return 1;
+            case ByteCode.BIPUSH:
+            case ByteCode.LDC:
+            case ByteCode.NEWARRAY:
+                return 2;
             case ByteCode.ALOAD:
             case ByteCode.ASTORE:
-            case ByteCode.BIPUSH:
             case ByteCode.DLOAD:
             case ByteCode.DSTORE:
             case ByteCode.FLOAD:
             case ByteCode.FSTORE:
             case ByteCode.ILOAD:
             case ByteCode.ISTORE:
-            case ByteCode.LDC:
             case ByteCode.LLOAD:
             case ByteCode.LSTORE:
-            case ByteCode.NEWARRAY:
             case ByteCode.RET:
-                return 2;
+                return wide ? 3 : 2;
 
             case ByteCode.ANEWARRAY:
             case ByteCode.CHECKCAST:
@@ -3190,7 +3168,6 @@ public class ClassFileWriter {
             case ByteCode.IF_ICMPLE:
             case ByteCode.IF_ICMPLT:
             case ByteCode.IF_ICMPNE:
-            case ByteCode.IINC:
             case ByteCode.INSTANCEOF:
             case ByteCode.INVOKESPECIAL:
             case ByteCode.INVOKESTATIC:
@@ -3203,6 +3180,9 @@ public class ClassFileWriter {
             case ByteCode.PUTSTATIC:
             case ByteCode.SIPUSH:
                 return 3;
+
+            case ByteCode.IINC:
+                return wide ? 5 : 3;
 
             case ByteCode.MULTIANEWARRAY:
                 return 4;
@@ -4208,8 +4188,7 @@ public class ClassFileWriter {
         InputStream is = null;
         int major = 48, minor = 0;
         try {
-            is = ClassFileWriter.class.getResourceAsStream(
-                "org/mozilla/classfile/ClassFileWriter.class");
+            is = ClassFileWriter.class.getResourceAsStream("ClassFileWriter.class");
             if (is == null) {
                 is = ClassLoader.getSystemResourceAsStream(
                     "org/mozilla/classfile/ClassFileWriter.class");

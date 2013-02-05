@@ -1,41 +1,8 @@
 /* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-1999
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Norris Boyd
- *   Igor Bukanov
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript;
 
@@ -68,9 +35,7 @@ final class Arguments extends IdScriptableObject
         calleeObj = f;
 
         Scriptable topLevel = getTopLevelScope(parent);
-        objectCtor = (BaseFunction) getProperty(topLevel, "Object");
-
-        constructor = objectCtor;
+        constructor = getProperty(topLevel, "Object");
 
         int version = f.getLanguageVersion();
         if (version <= Context.VERSION_1_3
@@ -364,8 +329,10 @@ final class Arguments extends IdScriptableObject
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
-      super.defineOwnProperty(cx, id, desc);
+    protected void defineOwnProperty(Context cx, Object id,
+                                     ScriptableObject desc,
+                                     boolean checkValid) {
+      super.defineOwnProperty(cx, id, desc, checkValid);
 
       double d = ScriptRuntime.toNumber(id);
       int index = (int) d;
@@ -400,8 +367,6 @@ final class Arguments extends IdScriptableObject
     private Object constructor;
 
     private NativeCall activation;
-
-    private BaseFunction objectCtor;
 
 // Initially args holds activation.getOriginalArgs(), but any modification
 // of its elements triggers creation of a copy. If its element holds NOT_FOUND,

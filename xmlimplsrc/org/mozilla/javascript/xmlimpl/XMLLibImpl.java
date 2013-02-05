@@ -1,41 +1,8 @@
 /* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-2000
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Igor Bukanov
- *   David P. Caldwell <inonit@inonit.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript.xmlimpl;
 
@@ -43,6 +10,7 @@ import java.io.Serializable;
 
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.xml.*;
+import org.xml.sax.SAXException;
 
 public final class XMLLibImpl extends XMLLib implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -144,8 +112,10 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     private void exportToScope(boolean sealed) {
         xmlPrototype = newXML(XmlNode.createText(options, ""));
         xmlListPrototype = newXMLList();
-        namespacePrototype = Namespace.create(this.globalScope, null, XmlNode.Namespace.GLOBAL);
-        qnamePrototype = QName.create(this, this.globalScope, null, XmlNode.QName.create(XmlNode.Namespace.create(""), ""));
+        namespacePrototype = Namespace.create(this.globalScope, null,
+                XmlNode.Namespace.GLOBAL);
+        qnamePrototype = QName.create(this, this.globalScope, null,
+                XmlNode.QName.create(XmlNode.Namespace.create(""), ""));
 
         xmlPrototype.exportAsJSClass(sealed);
         xmlListPrototype.exportAsJSClass(sealed);
@@ -174,7 +144,8 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
                 localName = ScriptRuntime.toString(nameValue);
             }
             if (localName != null && localName.equals("*")) localName = null;
-            return XMLName.create(XmlNode.QName.create(XmlNode.Namespace.create(""), localName), true, false);
+            return XMLName.create(XmlNode.QName.create(
+                    XmlNode.Namespace.create(""), localName), true, false);
         }
     }
 
@@ -383,7 +354,8 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     Namespace[] createNamespaces(XmlNode.Namespace[] declarations) {
         Namespace[] rv = new Namespace[declarations.length];
         for (int i=0; i<declarations.length; i++) {
-            rv[i] = this.namespacePrototype.newNamespace(declarations[i].getPrefix(), declarations[i].getUri());
+            rv[i] = this.namespacePrototype.newNamespace(
+                    declarations[i].getPrefix(), declarations[i].getUri());
         }
         return rv;
     }
@@ -441,15 +413,18 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
 
     private XML parse(String frag) {
         try {
-            return newXML(XmlNode.createElement(options, getDefaultNamespaceURI(Context.getCurrentContext()), frag));
-        } catch (org.xml.sax.SAXException e) {
+            return newXML(XmlNode.createElement(options,
+                    getDefaultNamespaceURI(Context.getCurrentContext()), frag));
+        } catch (SAXException e) {
             throw ScriptRuntime.typeError("Cannot parse XML: " + e.getMessage());
         }
     }
 
     final XML ecmaToXml(Object object) {
         //    See ECMA357 10.3
-        if (object == null || object == Undefined.instance) throw ScriptRuntime.typeError("Cannot convert " + object + " to XML");
+        if (object == null || object == Undefined.instance) {
+            throw ScriptRuntime.typeError("Cannot convert " + object + " to XML");
+        }
         if (object instanceof XML) return (XML)object;
         if (object instanceof XMLList) {
             XMLList list = (XMLList)object;

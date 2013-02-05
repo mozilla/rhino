@@ -1,0 +1,94 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+js> x = RegExp('')
+/(?:)/
+js> x.source
+
+js> RegExp('a').source
+a
+js> RegExp('\\\\').source
+\\
+js> RegExp('\\\\\\\\').source
+\\\\
+js> x = RegExp('/')
+/\//
+js> x.source
+\/
+js> x.test('/')
+true
+js> x = RegExp('//')
+/\/\//
+js> x.source
+\/\/
+js> x.test('//')
+true
+js> x = RegExp('\/')
+/\//
+js> x.source
+\/
+js> x.test('/')
+true
+js> x = RegExp('\\/')
+/\//
+js> x.source
+\/
+js> x.test('/')
+true
+js> x = RegExp('\\\/')
+/\//
+js> x.source
+\/
+js> x.test('/')
+true
+js> x = RegExp('\\\\/')
+/\\//
+js> x.source
+\\/
+js> x.test('/')
+false
+js> x.test('\\/')
+true
+js> x = RegExp('/abc\/foo\\/bar\\\/xyz/')
+/\/abc\/foo\/bar\/xyz\//
+js> x.source
+\/abc\/foo\/bar\/xyz\/
+js> x.test('/abc/foo/bar/xyz/')
+true
+js> RegExp('[^/]*')
+/[^\/]*/
+js> RegExp('[^\/]*')
+/[^\/]*/
+js> RegExp('[^\\/]*')
+/[^\/]*/
+
+js> /./.compile('')
+/(?:)/
+js> /./.compile('a')
+/a/
+js> /./.compile('\\\\')
+/\\/
+js> /./.compile('\\\\\\\\')
+/\\\\/
+js> /./.compile('/')
+/\//
+js> /./.compile('//')
+/\/\//
+js> /./.compile('\/')
+/\//
+js> /./.compile('\\/')
+/\//
+js> /./.compile('\\\/')
+/\//
+js> /./.compile('\\\\/')
+/\\//
+js> /./.compile('/abc\/foo\\/bar\\\/xyz/')
+/\/abc\/foo\/bar\/xyz\//
+js> /./.compile('[^/]*')
+/[^\/]*/
+js> /./.compile('[^\/]*')
+/[^\/]*/
+js> /./.compile('[^\\/]*')
+/[^\/]*/
+

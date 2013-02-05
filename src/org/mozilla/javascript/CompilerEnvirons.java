@@ -1,42 +1,8 @@
 /* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-1999
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Igor Bukanov, igor@fastmail.fm
- *   Bob Jervis
- *   Steve Yegge
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript;
 
@@ -51,7 +17,6 @@ public class CompilerEnvirons
         errorReporter = DefaultErrorReporter.instance;
         languageVersion = Context.VERSION_DEFAULT;
         generateDebugInfo = true;
-        useDynamicScope = false;
         reservedKeywordAsIdentifier = true;
         allowMemberExprAsFunctionName = false;
         xmlAvailable = true;
@@ -66,8 +31,7 @@ public class CompilerEnvirons
     public void initFromContext(Context cx)
     {
         setErrorReporter(cx.getErrorReporter());
-        this.languageVersion = cx.getLanguageVersion();
-        useDynamicScope = cx.compileFunctionsWithDynamicScopeFlag;
+        languageVersion = cx.getLanguageVersion();
         generateDebugInfo = (!cx.isGeneratingDebugChanged()
                              || cx.isGeneratingDebug());
         reservedKeywordAsIdentifier
@@ -119,11 +83,6 @@ public class CompilerEnvirons
     public void setGenerateDebugInfo(boolean flag)
     {
         this.generateDebugInfo = flag;
-    }
-
-    public final boolean isUseDynamicScope()
-    {
-        return useDynamicScope;
     }
 
     public final boolean isReservedKeywordAsIdentifier()
@@ -218,10 +177,10 @@ public class CompilerEnvirons
      * instruction thresholds
      */
     public boolean isGenerateObserverCount() {
-    	return generateObserverCount;
+        return generateObserverCount;
     }
 
-   /**
+    /**
      * Turn on or off generation of code with callbacks to
      * track the count of executed instructions.
      * Currently only affects JVM byte code generation: this slows down the
@@ -302,23 +261,22 @@ public class CompilerEnvirons
      * The {@link ErrorReporter} is set to an {@link ErrorCollector}.
      */
     public static CompilerEnvirons ideEnvirons() {
-      CompilerEnvirons env = new CompilerEnvirons();
-      env.setRecoverFromErrors(true);
-      env.setRecordingComments(true);
-      env.setStrictMode(true);
-      env.setWarnTrailingComma(true);
-      env.setLanguageVersion(170);
-      env.setReservedKeywordAsIdentifier(true);
-      env.setIdeMode(true);
-      env.setErrorReporter(new ErrorCollector());
-      return env;
+        CompilerEnvirons env = new CompilerEnvirons();
+        env.setRecoverFromErrors(true);
+        env.setRecordingComments(true);
+        env.setStrictMode(true);
+        env.setWarnTrailingComma(true);
+        env.setLanguageVersion(170);
+        env.setReservedKeywordAsIdentifier(true);
+        env.setIdeMode(true);
+        env.setErrorReporter(new ErrorCollector());
+        return env;
     }
 
     private ErrorReporter errorReporter;
 
     private int languageVersion;
     private boolean generateDebugInfo;
-    private boolean useDynamicScope;
     private boolean reservedKeywordAsIdentifier;
     private boolean allowMemberExprAsFunctionName;
     private boolean xmlAvailable;

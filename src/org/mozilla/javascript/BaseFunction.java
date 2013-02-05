@@ -1,43 +1,8 @@
 /* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Rhino code, released
- * May 6, 1999.
- *
- * The Initial Developer of the Original Code is
- * Netscape Communications Corporation.
- * Portions created by the Initial Developer are Copyright (C) 1997-1999
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Norris Boyd
- *   Igor Bukanov
- *   Roger Lawrence
- *   Mike McCabe
- *
- * Alternatively, the contents of this file may be used under the terms of
- * the GNU General Public License Version 2 or later (the "GPL"), in which
- * case the provisions of the GPL are applicable instead of those above. If
- * you wish to allow use of your version of this file only under the terms of
- * the GPL and not to allow others to use your version of this file under the
- * MPL, indicate your decision by deleting the provisions above and replacing
- * them with the notice and other provisions required by the GPL. If you do
- * not delete the provisions above, a recipient may use your version of this
- * file under either the MPL or the GPL.
- *
- * ***** END LICENSE BLOCK ***** */
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript;
 
@@ -159,6 +124,10 @@ public class BaseFunction extends IdScriptableObject implements Function
             attr = DONTENUM | READONLY | PERMANENT;
             break;
           case Id_prototype:
+            // some functions such as built-ins don't have a prototype property
+            if (!hasPrototypeProperty()) {
+                return 0;
+            }
             attr = prototypePropertyAttributes;
             break;
           case Id_arguments:
@@ -324,6 +293,9 @@ public class BaseFunction extends IdScriptableObject implements Function
     private BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f)
     {
         Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
+        if (x instanceof Delegator) {
+            x = ((Delegator)x).getDelegee();
+        }
         if (x instanceof BaseFunction) {
             return (BaseFunction)x;
         }
@@ -381,7 +353,10 @@ public class BaseFunction extends IdScriptableObject implements Function
             }
             result = (Scriptable)val;
             if (result.getPrototype() == null) {
-                result.setPrototype(getClassPrototype());
+                Scriptable proto = getClassPrototype();
+                if (result != proto) {
+                    result.setPrototype(proto);
+                }
             }
             if (result.getParentScope() == null) {
                 Scriptable parent = getParentScope();
@@ -441,28 +416,34 @@ public class BaseFunction extends IdScriptableObject implements Function
 
     public int getLength() { return 0; }
 
-    public String getFunctionName()
-    {
+    public String getFunctionName() {
         return "";
     }
 
-    final Object getPrototypeProperty() {
+    protected boolean hasPrototypeProperty() {
+        return prototypeProperty != null || this instanceof NativeFunction;
+    }
+
+    protected Object getPrototypeProperty() {
         Object result = prototypeProperty;
         if (result == null) {
-            synchronized (this) {
-                result = prototypeProperty;
-                if (result == null) {
-                    setupDefaultPrototype();
-                    result = prototypeProperty;
-                }
+            // only create default prototype on native JavaScript functions,
+            // not on built-in functions, java methods, host objects etc.
+            if (this instanceof NativeFunction) {
+                result = setupDefaultPrototype();
+            } else {
+                result = Undefined.instance;
             }
+        } else if (result == UniqueTag.NULL_VALUE) {
+            result = null;
         }
-        else if (result == UniqueTag.NULL_VALUE) { result = null; }
         return result;
     }
 
-    private void setupDefaultPrototype()
-    {
+    private synchronized Object setupDefaultPrototype() {
+        if (prototypeProperty != null) {
+            return prototypeProperty;
+        }
         NativeObject obj = new NativeObject();
         final int attr = ScriptableObject.DONTENUM;
         obj.defineProperty("constructor", this, attr);
@@ -475,6 +456,7 @@ public class BaseFunction extends IdScriptableObject implements Function
             // not the one we just made, it must remain grounded
             obj.setPrototype(proto);
         }
+        return obj;
     }
 
     private Object getArguments()
