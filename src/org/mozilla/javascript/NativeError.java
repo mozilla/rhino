@@ -40,10 +40,11 @@ final class NativeError extends IdScriptableObject
         obj.setPrototype(proto);
         obj.setParentScope(scope);
 
+        String message = null;
         int arglen = args.length;
         if (arglen >= 1) {
-            ScriptableObject.putProperty(obj, "message",
-                    ScriptRuntime.toString(args[0]));
+        	message = ScriptRuntime.toString(args[0]);
+            ScriptableObject.putProperty(obj, "message", message);
             if (arglen >= 2) {
                 ScriptableObject.putProperty(obj, "fileName", args[1]);
                 if (arglen >= 3) {
@@ -53,6 +54,9 @@ final class NativeError extends IdScriptableObject
                 }
             }
         }
+        final RhinoException rhinoException = ScriptRuntime.constructError("NativeError", message, 0);
+        obj.setStackProvider(rhinoException);
+
         return obj;
     }
 
@@ -111,7 +115,6 @@ final class NativeError extends IdScriptableObject
         // overwritable like an ordinary property. Hence this setup with
         // the getter and setter below.
         if (stackProvider == null) {
-            stackProvider = re;
             try {
                 defineProperty("stack", null,
                         NativeError.class.getMethod("getStack"),
@@ -121,6 +124,7 @@ final class NativeError extends IdScriptableObject
                 throw new RuntimeException(nsm);
             }
         }
+        stackProvider = re;
     }
 
     public Object getStack() {

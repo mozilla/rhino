@@ -65,13 +65,22 @@ public class ErrorPropertiesTest {
 
     @Test
     public void mozillaStack() {
+    	testMozillaStack("null.method()");
+    }
+
+    private void testMozillaStack(final String throwingCode) {
         RhinoException.useMozillaStackStyle(true);
-        testScriptStackTrace("null.method()", "@myScript.js:1" + LS);
-        final String script = "function f() \n{\n  null.method();\n}\nf();\n";
+        testScriptStackTrace(throwingCode, "@myScript.js:1" + LS);
+        final String script = "function f() \n{\n  " + throwingCode + ";\n}\nf();\n";
         testScriptStackTrace(script, "f()@myScript.js:3" + LS + "@myScript.js:5" + LS);
-        testIt("try { null.method() } catch (e) { e.stack }", "@myScript.js:1" + LS);
+        testIt("try { " + throwingCode + " } catch (e) { e.stack }", "@myScript.js:1" + LS);
         final String expectedStack = "f()@myScript.js:2" + LS + "@myScript.js:4" + LS;
-        testIt("function f() {\n null.method(); \n}\n try { f() } catch (e) { e.stack }", expectedStack);
+        testIt("function f() {\n " + throwingCode + " \n}\n try { f() } catch (e) { e.stack }", expectedStack);
+	}
+
+	@Test
+    public void mozillaStack_newError() {
+    	testMozillaStack("throw new Error()");
     }
 
     private void testIt(final String script, final Object expected) {
