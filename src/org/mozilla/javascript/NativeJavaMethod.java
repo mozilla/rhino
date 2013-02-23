@@ -8,7 +8,7 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * This class reflects Java methods into the JavaScript environment and
@@ -257,7 +257,7 @@ public class NativeJavaMethod extends BaseFunction
                     }
                 }
             } else {
-                overloadCache = new LinkedList<ResolvedOverload>();
+                overloadCache = new CopyOnWriteArrayList<ResolvedOverload>();
             }
             int index = findFunction(cx, methods, args);
             // As a sanity measure, don't let the lookup cache grow longer
@@ -266,7 +266,7 @@ public class NativeJavaMethod extends BaseFunction
                 synchronized (overloadCache) {
                     ResolvedOverload ovl = new ResolvedOverload(args, index);
                     if (!overloadCache.contains(ovl)) {
-                        overloadCache.addFirst(ovl);
+                        overloadCache.add(0, ovl);
                     }
                 }
             }
@@ -557,7 +557,7 @@ public class NativeJavaMethod extends BaseFunction
 
     MemberBox[] methods;
     private String functionName;
-    private transient LinkedList<ResolvedOverload> overloadCache;
+    private transient CopyOnWriteArrayList<ResolvedOverload> overloadCache;
 }
 
 class ResolvedOverload {
