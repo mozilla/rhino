@@ -1,0 +1,10 @@
+# os specific
+.DS_Store
+
+# build directories
+build/
+lib/
+
+# artifacts
+*.zip
+
