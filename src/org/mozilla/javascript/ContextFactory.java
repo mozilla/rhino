@@ -292,7 +292,7 @@ public class ContextFactory
           case Context.FEATURE_HTMLUNIT_FUNCTION_NULL_SETTER:
             return false;
 
-          case Context.FEATURE_HTMLUNIT_ARGUMENTS_IS_READ_ONLY:
+          case Context.FEATURE_HTMLUNIT_FN_ARGUMENTS_IS_RO_VIEW:
             return false;
 
           case Context.FEATURE_HTMLUNIT_EVAL_LOCAL_SCOPE:

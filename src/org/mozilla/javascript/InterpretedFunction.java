@@ -189,7 +189,38 @@ final class InterpretedFunction extends NativeFunction implements Script
     }
 
 	void setArguments(final Arguments arguments) {
-		this.arguments = arguments;
+		if (arguments == null) {
+			this.arguments = null;
+			return;
+		}
+
+		final Context currentContext = Context.getCurrentContext();
+		if (currentContext.hasFeature(Context.FEATURE_HTMLUNIT_FN_ARGUMENTS_IS_RO_VIEW)) {
+			this.arguments = new Arguments(arguments) {
+				@Override
+				public void put(int index, Scriptable start, Object value) {
+					// ignore
+				}
+				
+				@Override
+				public void put(String name, Scriptable start, Object value) {
+					// ignore
+				}
+
+				@Override
+				public void delete(int index) {
+					// ignore
+				}
+				
+				@Override
+				public void delete(String name) {
+					// ignore
+				}
+			};
+        }
+		else {
+			this.arguments = arguments;
+		}
 	}
 	
 	@Override

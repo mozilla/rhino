@@ -329,11 +329,12 @@ public class Context
     /**
      * Special to HtmlUnit's Rhino fork.
      *
-     * Whether the "arguments" object read-only or not.
+     * Whether the "someFunc.arguments" is a read-only view of the function argument
+     * or the real arguments.
      *
      * By default {@link #hasFeature(int)} returns false.
      */
-    public static final int FEATURE_HTMLUNIT_ARGUMENTS_IS_READ_ONLY = 18;
+    public static final int FEATURE_HTMLUNIT_FN_ARGUMENTS_IS_RO_VIEW = 18;
 
     /**
      * Special to HtmlUnit's Rhino fork.
