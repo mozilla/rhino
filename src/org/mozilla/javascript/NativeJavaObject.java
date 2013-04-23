@@ -361,7 +361,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 }
             }
             else if (to.isInterface()) {
-                if (fromObj instanceof NativeObject || fromObj instanceof NativeFunction) {
+                if (fromObj instanceof NativeObject || fromObj instanceof NativeFunction || fromObj instanceof BoundFunction) {
                     // See comments in createInterfaceAdapter
                     return 1;
                 }
@@ -638,7 +638,7 @@ WrapFactory#wrap(Context, Scriptable, Object, Class)}
                 reportConversionError(value, type);
             }
             else if (type.isInterface() && (value instanceof NativeObject
-                    || value instanceof NativeFunction)) {
+                    || value instanceof NativeFunction || value instanceof BoundFunction)) {
                 // Try to use function/object as implementation of Java interface.
                 return createInterfaceAdapter(type, (ScriptableObject) value);
             } else {
