@@ -42,6 +42,7 @@ import java.util.EventObject;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.io.*;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -123,7 +124,7 @@ public class SwingGui extends JFrame implements GuiCallback {
      * Hash table of script URLs to their internal frames.
      */
     private final Map<String,FileWindow> fileWindows =
-        Collections.synchronizedMap(new HashMap<String,FileWindow>());
+        Collections.synchronizedMap(new TreeMap<String,FileWindow>());
 
 
     /**
