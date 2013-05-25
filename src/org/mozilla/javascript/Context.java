@@ -1774,7 +1774,7 @@ public class Context
     {
         if (sealed) onSealedMutation();
         generatingDebugChanged = true;
-        if (generatingDebug && getOptimizationLevel() > 0)
+        if (generatingDebug && getOptimizationLevel() >= 0)
             setOptimizationLevel(-1);
         this.generatingDebug = generatingDebug;
     }
