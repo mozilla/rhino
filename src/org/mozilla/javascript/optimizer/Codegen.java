@@ -1617,12 +1617,17 @@ class BodyCodegen
 
 
         String debugVariableName;
+        boolean isArrow = false;
+        if (scriptOrFn instanceof FunctionNode) {
+            isArrow = ((FunctionNode)scriptOrFn).getFunctionType() == FunctionNode.ARROW_FUNCTION;
+        }
         if (fnCurrent != null) {
             debugVariableName = "activation";
             cfw.addALoad(funObjLocal);
             cfw.addALoad(variableObjectLocal);
             cfw.addALoad(argsLocal);
-            addScriptRuntimeInvoke("createFunctionActivation",
+            String methodName = isArrow ? "createArrowFunctionActivation" : "createFunctionActivation";
+            addScriptRuntimeInvoke(methodName,
                                    "(Lorg/mozilla/javascript/NativeFunction;"
                                    +"Lorg/mozilla/javascript/Scriptable;"
                                    +"[Ljava/lang/Object;"
@@ -2172,7 +2177,8 @@ class BodyCodegen
                     OptFunctionNode ofn = OptFunctionNode.get(scriptOrFn,
                                                              fnIndex);
                     int t = ofn.fnode.getFunctionType();
-                    if (t != FunctionNode.FUNCTION_EXPRESSION) {
+                    if (t != FunctionNode.FUNCTION_EXPRESSION &&
+                        t != FunctionNode.ARROW_FUNCTION) {
                         throw Codegen.badTree();
                     }
                     visitFunction(ofn, t);
@@ -2960,7 +2966,20 @@ class BodyCodegen
         cfw.addInvoke(ByteCode.INVOKESPECIAL, codegen.mainClassName,
                       "<init>", Codegen.FUNCTION_CONSTRUCTOR_SIGNATURE);
 
-        if (functionType == FunctionNode.FUNCTION_EXPRESSION) {
+        if (functionType == FunctionNode.ARROW_FUNCTION) {
+            cfw.addALoad(contextLocal);           // load 'cx'
+            cfw.addALoad(variableObjectLocal);
+            cfw.addALoad(thisObjLocal);
+            addOptRuntimeInvoke("bindThis",
+                                "(Lorg/mozilla/javascript/NativeFunction;"
+                                +"Lorg/mozilla/javascript/Context;"
+                                +"Lorg/mozilla/javascript/Scriptable;"
+                                +"Lorg/mozilla/javascript/Scriptable;"
+                                +")Lorg/mozilla/javascript/Function;");
+        }
+
+        if (functionType == FunctionNode.FUNCTION_EXPRESSION ||
+            functionType == FunctionNode.ARROW_FUNCTION) {
             // Leave closure object on stack and do not pass it to
             // initFunction which suppose to connect statements to scope
             return;

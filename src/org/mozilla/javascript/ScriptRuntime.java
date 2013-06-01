@@ -3376,6 +3376,12 @@ public class ScriptRuntime {
         return new NativeCall(funObj, scope, args);
     }
 
+    public static Scriptable createArrowFunctionActivation(NativeFunction funObj,
+                                                           Scriptable scope,
+                                                           Object[] args)
+    {
+        return new NativeCall(funObj, scope, args, true);
+    }
 
     public static void enterActivationFunction(Context cx,
                                                Scriptable scope)
