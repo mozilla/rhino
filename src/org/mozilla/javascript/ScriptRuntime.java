@@ -299,7 +299,7 @@ public class ScriptRuntime {
 
     public static Number wrapNumber(double x)
     {
-        if (x != x) {
+        if (Double.isNaN(x)) {
             return ScriptRuntime.NaNobj;
         }
         return new Double(x);
@@ -321,7 +321,7 @@ public class ScriptRuntime {
                 return ((CharSequence) val).length() != 0;
             if (val instanceof Number) {
                 double d = ((Number) val).doubleValue();
-                return (d == d && d != 0.0);
+                return (!Double.isNaN(d) && d != 0.0);
             }
             if (val instanceof Scriptable) {
                 if (val instanceof ScriptableObject &&
@@ -786,7 +786,7 @@ public class ScriptRuntime {
     }
 
     public static String numberToString(double d, int base) {
-        if (d != d)
+        if (Double.isNaN(d))
             return "NaN";
         if (d == Double.POSITIVE_INFINITY)
             return "Infinity";
@@ -1071,7 +1071,7 @@ public class ScriptRuntime {
     // convenience method
     public static double toInteger(double d) {
         // if it's NaN
-        if (d != d)
+        if (Double.isNaN(d))
             return +0.0;
 
         if (d == 0.0 ||
@@ -1113,7 +1113,7 @@ public class ScriptRuntime {
             return id;
         }
 
-        if (d != d
+        if (Double.isNaN(d)
             || d == Double.POSITIVE_INFINITY
             || d == Double.NEGATIVE_INFINITY)
         {
@@ -1143,7 +1143,7 @@ public class ScriptRuntime {
             return l & 0xffffffffL;
         }
 
-        if (d != d
+        if (Double.isNaN(d)
             || d == Double.POSITIVE_INFINITY
             || d == Double.NEGATIVE_INFINITY)
         {
@@ -1175,7 +1175,7 @@ public class ScriptRuntime {
             return (char)i;
         }
 
-        if (d != d
+        if (Double.isNaN(d)
             || d == Double.POSITIVE_INFINITY
             || d == Double.NEGATIVE_INFINITY)
         {
@@ -2911,7 +2911,7 @@ public class ScriptRuntime {
             }
             // NaN check
             double d = ((Number)x).doubleValue();
-            return d == d;
+            return !Double.isNaN(d);
         }
         if (x == null || x == Undefined.instance) {
             return false;
