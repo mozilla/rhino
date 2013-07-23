@@ -637,6 +637,7 @@ public class Global extends ImporterTopLevel
      *   the process error output is read, converted to a string, appended to
      *   the err property value converted to string and put as the new
      *   value of the err property.
+     * <li><tt>dir</tt> - the working direcotry to run the commands.
      * </ul>
      */
     public static Object runCommand(Context cx, Scriptable thisObj,
