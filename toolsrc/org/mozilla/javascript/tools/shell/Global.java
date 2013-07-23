@@ -637,6 +637,7 @@ public class Global extends ImporterTopLevel
      *   the process error output is read, converted to a string, appended to
      *   the err property value converted to string and put as the new
      *   value of the err property.
+     * <li><tt>dir</tt> - the working direcotry to run the commands.
      * </ul>
      */
     public static Object runCommand(Context cx, Scriptable thisObj,
@@ -647,7 +648,7 @@ public class Global extends ImporterTopLevel
         if (L == 0 || (L == 1 && args[0] instanceof Scriptable)) {
             throw reportRuntimeError("msg.runCommand.bad.args");
         }
-
+        File wd = null;
         InputStream in = null;
         OutputStream out = null, err = null;
         ByteArrayOutputStream outBytes = null, errBytes = null;
@@ -687,6 +688,11 @@ public class Global extends ImporterTopLevel
                     }
                 }
             }
+            Object wdObj = ScriptableObject.getProperty(params, "dir");
+            if(wdObj != Scriptable.NOT_FOUND){
+                wd = new File(ScriptRuntime.toString(wdObj));
+            }
+
             Object inObj = ScriptableObject.getProperty(params, "input");
             if (inObj != Scriptable.NOT_FOUND) {
                 in = toInputStream(inObj);
@@ -736,7 +742,7 @@ public class Global extends ImporterTopLevel
             }
         }
 
-        int exitCode = runProcess(cmd, environment, in, out, err);
+        int exitCode = runProcess(cmd, environment, wd, in, out, err);
         if (outBytes != null) {
             String s = ScriptRuntime.toString(outObj) + outBytes.toString();
             ScriptableObject.putProperty(params, "output", s);
@@ -914,15 +920,15 @@ public class Global extends ImporterTopLevel
      * @throws IOException If there was an error executing the process.
      */
     private static int runProcess(String[] cmd, String[] environment,
-                                  InputStream in, OutputStream out,
+                                  File wd, InputStream in, OutputStream out,
                                   OutputStream err)
         throws IOException
     {
         Process p;
         if (environment == null) {
-            p = Runtime.getRuntime().exec(cmd);
+            p = Runtime.getRuntime().exec(cmd,null,wd);
         } else {
-            p = Runtime.getRuntime().exec(cmd, environment);
+            p = Runtime.getRuntime().exec(cmd, environment,wd);
         }
 
         try {
