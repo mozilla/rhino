@@ -27,6 +27,8 @@ public class NativeArray extends IdScriptableObject implements List
 {
     static {
         try {
+            // A workaround to change the default sort logic, to allow non-conformant comparison method
+            // this starts to be observed since Java 7
             Class<?> klass = Class.forName("java.util.Arrays$LegacyMergeSort");
             Field field = klass.getDeclaredField("userRequested");
             field.setAccessible(true);
