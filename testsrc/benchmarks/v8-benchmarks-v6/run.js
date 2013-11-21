@@ -57,7 +57,7 @@ function PrintScore(score) {
 
 
 // Run more than once to warm up JVM
-var runs = parseInt(arguments[0]) || 5;
+var runs = 5;
 
 for (var i = 1; i <= runs; i++) {
   print('Run ' + i + ' out of ' + runs + ':');

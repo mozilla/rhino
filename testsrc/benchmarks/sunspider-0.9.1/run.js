@@ -31,7 +31,7 @@ for (var currentRepeat = -1; currentRepeat < repeatCount; currentRepeat++) {
         for (var q in category.tests) {
             if (!category.tests.hasOwnProperty(q)) continue;
             var test = category.tests[q];
-            print('iteration ' + lpad('' + currentRepeat, 2) + ' : loading ' + category.name + '-' + test.name + '.js')
+            //print('iteration ' + lpad('' + currentRepeat, 2) + ' : loading ' + category.name + '-' + test.name + '.js')
             var start = new Date();
             load(category.name + "-" + test.name + ".js");
             var time = new Date() - start;

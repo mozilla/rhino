@@ -163,6 +163,44 @@
     </junitreport>
   </target>
 
+  <target name="junit-benchmarks" depends="junit-compile">
+    <junit printsummary="on" fork="true" forkmode="perTest"
+           maxmemory="${test.vm.mx}" showoutput="true"
+           dir="testsrc/benchmarks/sunspider-0.9.1">
+      <classpath>
+        <pathelement path="${classes}" />
+        <pathelement path="${test.classes}" />
+        <pathelement path="lib/junit.jar" />
+        <pathelement location="${test.jstests.jar}"/>
+      </classpath>
+      <batchtest todir="build/test">
+        <fileset dir="${test.classes}" includes="**/benchmarks/SunSpiderBenchmark.class"/>
+      </batchtest>
+      <formatter type="xml"/>
+      <assertions>
+        <disable/>
+      </assertions>
+    </junit>
+
+    <junit printsummary="on" fork="true" forkmode="perTest"
+           maxmemory="${test.vm.mx}" showoutput="true"
+           dir="testsrc/benchmarks/v8-benchmarks-v6">
+      <classpath>
+        <pathelement path="${classes}" />
+        <pathelement path="${test.classes}" />
+        <pathelement path="lib/junit.jar" />
+        <pathelement location="${test.jstests.jar}"/>
+      </classpath>
+      <batchtest todir="build/test">
+        <fileset dir="${test.classes}" includes="**/benchmarks/V8Benchmark.class"/>
+      </batchtest>
+      <formatter type="xml"/>
+      <assertions>
+        <disable/>
+      </assertions>
+    </junit>
+  </target>
+
   <target name="junit-coveragereport" depends="junit">
     <property name="coverage.report.dir" location="${build.dir}/coverage/report"/>
     <mkdir dir="${coverage.report.dir}"/>
