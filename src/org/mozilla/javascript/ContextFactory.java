@@ -309,6 +309,9 @@ public class ContextFactory
 
           case Context.FEATURE_HTMLUNIT_FUNCTION_DECLARED_FORWARD_IN_BLOCK:
             return false;
+
+          case Context.FEATURE_HTMLUNIT_PARSE_INT_RADIX_10:
+            return true;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));

@@ -382,6 +382,15 @@ public class Context
      */
     public static final int FEATURE_HTMLUNIT_FUNCTION_DECLARED_FORWARD_IN_BLOCK = 23;
 
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that parseInt() should have radix 10 by default.
+     *
+     * By default {@link #hasFeature(int)} returns true.
+     */
+    public static final int FEATURE_HTMLUNIT_PARSE_INT_RADIX_10 = 24;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
