@@ -391,6 +391,15 @@ public class Context
      */
     public static final int FEATURE_HTMLUNIT_PARSE_INT_RADIX_10 = 24;
 
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that for(x in []) should enumerate the numbers first.
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_ENUM_NUMBERS_FIRST = 25;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
