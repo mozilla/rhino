@@ -11,9 +11,9 @@
     <version>7</version>
   </parent>
 
-  <groupId>org.mozilla</groupId>
+  <groupId>com.github.tntim96</groupId>
   <artifactId>rhino</artifactId>
-  <version>1.7R5pre</version>
+  <version>1.7R5pre01</version>
   <packaging>jar</packaging>
 
   <name>Mozilla Rhino</name>
@@ -37,9 +37,9 @@
   </licenses>
 
   <scm>
-    <url>https://github.com/mozilla/rhino</url>
-    <developerConnection>scm:git:git@github.com:mozilla/rhino.git</developerConnection>
-    <connection>scm:git:git://github.com/mozilla/rhino.git</connection>
+    <url>https://github.com/tntim96/rhino</url>
+    <developerConnection>scm:git:git@github.com:tntim96/rhino.git</developerConnection>
+    <connection>scm:git:git://github.com/tntim96/rhino.git</connection>
   </scm>
 
   <issueManagement>
