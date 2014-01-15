@@ -96,4 +96,22 @@ public class Bug491621Test {
         assertSource("if(c)const a=0;else a=1",
                 "if (c) \n  const a = 0;\nelse \n  a = 1;\n");
     }
+
+    @Test//Bug 800616
+    public void testOctLiteralToSource()
+    {
+        assertSource("010;", "010;\n");
+    }
+
+    @Test//Bug 800616
+    public void testHexLiteralToSource()
+    {
+        assertSource("0xff;", "0xff;\n");
+    }
+
+    @Test//Bug 800616
+    public void testHexOctDecLiteralToSource()
+    {
+        assertSource("0xff;\n9;\n07;\n1;", "0xff;\n9;\n07;\n1;\n");
+    }
 }
