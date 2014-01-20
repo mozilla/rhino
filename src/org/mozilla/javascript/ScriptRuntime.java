@@ -2172,8 +2172,10 @@ public class ScriptRuntime {
                     others.add(o);
                 }
             }
-            System.arraycopy(integers.toArray(), 0, newIds, 0, integers.size());
-            System.arraycopy(others.toArray(), 0, newIds, integers.size(), others.size());
+            if (!integers.isEmpty()) {
+                System.arraycopy(integers.toArray(), 0, newIds, 0, integers.size());
+                System.arraycopy(others.toArray(), 0, newIds, integers.size(), others.size());
+            }
             ids = newIds;
         }
         x.ids = ids;
