@@ -2849,7 +2849,10 @@ switch (op) {
            frame.fnOrScript.setAttributes("caller", ScriptableObject.DONTENUM);
        }
        if (frame.scope instanceof NativeCall) {
-           frame.fnOrScript.setArguments((Arguments) ScriptableObject.getProperty(frame.scope, "arguments"));
+           Object arguments = ScriptableObject.getProperty(frame.scope, "arguments");
+           if (arguments instanceof Arguments) {
+               frame.fnOrScript.setArguments((Arguments) arguments);
+           }
        }
 
         boolean usesActivation = frame.idata.itsNeedsActivation;
