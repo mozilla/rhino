@@ -2161,7 +2161,6 @@ public class ScriptRuntime {
             }
         }
         if (Context.getCurrentContext().hasFeature(Context.FEATURE_HTMLUNIT_ENUM_NUMBERS_FIRST)) {
-            Object[] newIds = new Object[ids.length];
             Set<Integer> integers = new TreeSet<Integer>();
             List<Object> others = new ArrayList<Object>();
             for (Object o : ids) {
@@ -2173,10 +2172,11 @@ public class ScriptRuntime {
                 }
             }
             if (!integers.isEmpty()) {
+                Object[] newIds = new Object[ids.length];
                 System.arraycopy(integers.toArray(), 0, newIds, 0, integers.size());
                 System.arraycopy(others.toArray(), 0, newIds, integers.size(), others.size());
+                ids = newIds;
             }
-            ids = newIds;
         }
         x.ids = ids;
         x.index = 0;
