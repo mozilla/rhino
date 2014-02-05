@@ -2160,7 +2160,7 @@ public class ScriptRuntime {
                 x.used.intern(previous[i]);
             }
         }
-        if (Context.getCurrentContext().hasFeature(Context.FEATURE_HTMLUNIT_ENUM_NUMBERS_FIRST)) {
+        if (ids != null && Context.getCurrentContext().hasFeature(Context.FEATURE_HTMLUNIT_ENUM_NUMBERS_FIRST)) {
             Set<Integer> integers = new TreeSet<Integer>();
             List<Object> others = new ArrayList<Object>();
             for (Object o : ids) {
