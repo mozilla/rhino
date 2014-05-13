@@ -10,6 +10,7 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.VariableInitializer;
 
 /**
  * Generates bytecode for the Interpreter.
@@ -100,6 +101,7 @@ class CodeGenerator extends Icode {
           addIcode(Icode_GENERATOR);
           addUint16(theFunction.getBaseLineno() & 0xFFFF);
         }
+        itsData.declaredAsVar = (theFunction.getParent() instanceof VariableInitializer);
 
         generateICodeFromTree(theFunction.getLastChild());
     }

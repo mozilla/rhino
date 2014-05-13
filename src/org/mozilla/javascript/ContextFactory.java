@@ -279,6 +279,42 @@ public class ContextFactory
 
           case Context.FEATURE_ENHANCED_JAVA_ACCESS:
             return false;
+
+          case Context.FEATURE_HTMLUNIT_ASK_OBJECT_TO_WRITE_READONLY:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_JS_CATCH_JAVA_EXCEPTION:
+            return true;
+
+          case Context.FEATURE_HTMLUNIT_ARGUMENTS_IS_OBJECT:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_FUNCTION_NULL_SETTER:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_FN_ARGUMENTS_IS_RO_VIEW:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_EVAL_LOCAL_SCOPE:
+            return true;
+
+          case Context.FEATURE_HTMLUNIT_ERROR_STACK:
+            return true;
+
+          case Context.FEATURE_HTMLUNIT_CONSTRUCTOR:
+            return true;
+
+          case Context.FEATURE_HTMLUNIT_FUNCTION_OBJECT_METHOD:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_FUNCTION_DECLARED_FORWARD_IN_BLOCK:
+            return false;
+
+          case Context.FEATURE_HTMLUNIT_PARSE_INT_RADIX_10:
+            return true;
+
+          case Context.FEATURE_HTMLUNIT_ENUM_NUMBERS_FIRST:
+              return false;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));

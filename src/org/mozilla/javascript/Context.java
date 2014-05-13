@@ -283,6 +283,123 @@ public class Context
      */
     public static final int FEATURE_ENHANCED_JAVA_ACCESS = 13;
 
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * The same web browser (e.g. FF) may allow setting read-only property, 
+     * ignores setting the read-only property, or even throw an exception.
+     *
+     * So, by having this feature, ScriptableObject itself is asked throw
+     * {@link ScriptableObject#isReadOnlySettable} whether to allow, ignore or throw an exception.
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_ASK_OBJECT_TO_WRITE_READONLY = 14;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     * Indicates if a JavaScript catch statement can catch Java exceptions
+     * (exceptions occurring in host objects).
+     * By default {@link #hasFeature(int)} returns true.
+     */
+    public static final int FEATURE_HTMLUNIT_JS_CATCH_JAVA_EXCEPTION = 15;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Is the default value of {@link Arguments} "Object" or "Arguments"
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_ARGUMENTS_IS_OBJECT = 16;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * When setting the function name to call, call thisObject.setter.
+     *
+     * This is needed for something like "function onclick() {onclick = null}"
+     *
+     * Implemented by transforming it into "function onclick() {<b>this.</b>onclick = null}"
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_FUNCTION_NULL_SETTER = 17;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Whether the "someFunc.arguments" is a read-only view of the function argument
+     * or the real arguments.
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_FN_ARGUMENTS_IS_RO_VIEW = 18;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that 'eval' function should have access to the local function scope.
+     *
+     * By default {@link #hasFeature(int)} returns true.
+     */
+    public static final int FEATURE_HTMLUNIT_EVAL_LOCAL_SCOPE = 19;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that 'exception' (technically NativeError) exposes "stack" property.
+     *
+     * By default {@link #hasFeature(int)} returns true.
+     */
+    public static final int FEATURE_HTMLUNIT_ERROR_STACK = 20;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that ".constructor" property is defined for all {@link ScriptableObject}s.
+     *
+     * By default {@link #hasFeature(int)} returns true.
+     */
+    public static final int FEATURE_HTMLUNIT_CONSTRUCTOR = 21;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that function can be defined as
+     * <code>function object.property() {}</code> instead of <code>object.property = function() {}</code>.
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_FUNCTION_OBJECT_METHOD = 22;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that function is defined even before its declaration, inside a block.
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_FUNCTION_DECLARED_FORWARD_IN_BLOCK = 23;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that parseInt() should have radix 10 by default.
+     *
+     * By default {@link #hasFeature(int)} returns true.
+     */
+    public static final int FEATURE_HTMLUNIT_PARSE_INT_RADIX_10 = 24;
+
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Indicates that for(x in []) should enumerate the numbers first.
+     *
+     * By default {@link #hasFeature(int)} returns false.
+     */
+    public static final int FEATURE_HTMLUNIT_ENUM_NUMBERS_FIRST = 25;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
@@ -1325,7 +1442,7 @@ public class Context
                              securityDomain);
     }
 
-    final Script compileString(String source,
+    protected Script compileString(String source,
                                Evaluator compiler,
                                ErrorReporter compilationErrorReporter,
                                String sourceName, int lineno,
@@ -1366,7 +1483,7 @@ public class Context
                                securityDomain);
     }
 
-    final Function compileFunction(Scriptable scope, String source,
+    protected Function compileFunction(Scriptable scope, String source,
                                    Evaluator compiler,
                                    ErrorReporter compilationErrorReporter,
                                    String sourceName, int lineno,

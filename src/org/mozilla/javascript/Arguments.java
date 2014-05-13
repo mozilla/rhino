@@ -14,7 +14,7 @@ package org.mozilla.javascript;
  * @see org.mozilla.javascript.NativeCall
  * @author Norris Boyd
  */
-final class Arguments extends IdScriptableObject
+class Arguments extends IdScriptableObject
 {
     static final long serialVersionUID = 4275508002492040609L;
 
@@ -47,9 +47,27 @@ final class Arguments extends IdScriptableObject
         }
     }
 
+    public Arguments(final Arguments original) {
+        this.activation = original.activation;
+
+        setParentScope(original.getParentScope());
+        setPrototype(original.getPrototype());
+
+        args = original.args;
+        lengthObj = original.lengthObj;
+        calleeObj = original.calleeObj;
+
+        constructor = original.constructor;
+        callerObj = original.callerObj;
+    }
+    
+    
     @Override
     public String getClassName()
     {
+        if (Context.getContext().hasFeature(Context.FEATURE_HTMLUNIT_ARGUMENTS_IS_OBJECT)) {
+            return "Object";
+        }
         return FTAG;
     }
 
@@ -75,7 +93,7 @@ final class Arguments extends IdScriptableObject
         putIntoActivation(index, value);
       }
       synchronized (this) {
-        if (args == activation.originalArgs) {
+        if (activation != null && args == activation.originalArgs) {
           args = args.clone();
         }
         args[index] = value;
@@ -354,6 +372,11 @@ final class Arguments extends IdScriptableObject
       if (isFalse(getProperty(desc, "writable"))) {
         removeArg(index);
       }
+    }
+
+    @Override
+    public Object getDefaultValue(Class<?> typeHint) {
+        return "[object " + getClassName() + "]";
     }
 
 // Fields to hold caller, callee and length properties,

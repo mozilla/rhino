@@ -121,6 +121,17 @@ final class MemberBox implements Serializable
     Object invoke(Object target, Object[] args)
     {
         Method method = method();
+        
+        // handle delegators
+        if (target instanceof Delegator) {
+        	target = ((Delegator) target).getDelegee();
+        }
+        for (int i=0; i<args.length; ++i) {
+        	if (args[i] instanceof Delegator) {
+        		args[i] = ((Delegator) args[i]).getDelegee();
+        	}
+        }
+        
         try {
             try {
                 return method.invoke(target, args);
@@ -145,7 +156,22 @@ final class MemberBox implements Serializable
             } while ((e instanceof InvocationTargetException));
             if (e instanceof ContinuationPending)
                 throw (ContinuationPending) e;
-            throw Context.throwAsScriptRuntimeEx(e);
+
+            if (e instanceof RhinoException || Context.getCurrentContext().hasFeature(Context.FEATURE_HTMLUNIT_JS_CATCH_JAVA_EXCEPTION))
+                throw Context.throwAsScriptRuntimeEx(e);            
+            else
+            	throw new RuntimeException("Exception invoking " + method.getName(), e);
+        } catch (IllegalArgumentException iae) {
+            StringBuilder builder = new StringBuilder();
+            for (Object arg : args) {
+                String type = arg == null ? "null" : arg.getClass().getSimpleName();
+                if (builder.length() != 0) {
+                    builder.append(", ");
+                }
+                builder.append(type);
+            }
+            throw new IllegalArgumentException("Exception invoking " + method.getDeclaringClass().getSimpleName()
+                    + '.' +  method.getName() + "() with arguments [" + builder + "]", iae);
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }

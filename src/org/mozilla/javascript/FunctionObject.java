@@ -397,6 +397,9 @@ public class FunctionObject extends BaseFunction
         } else {
             if (!isStatic) {
                 Class<?> clazz = member.getDeclaringClass();
+                if (thisObj instanceof Delegator) {
+                    thisObj = ((Delegator) thisObj).getDelegee();
+                }
                 if (!clazz.isInstance(thisObj)) {
                     boolean compatible = false;
                     if (thisObj == scope) {

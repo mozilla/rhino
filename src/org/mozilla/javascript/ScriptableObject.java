@@ -241,11 +241,28 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                     if (Context.getContext().hasFeature(Context.FEATURE_STRICT_MODE)) {
                         // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
                         // we should throw a TypeError in this case.
-                        throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
+                        throw ScriptRuntime.typeError3("msg.set.prop.no.setter", name, start.getClassName(), Context.toString(value));
                     }
-                    // Assignment to a property with only a getter defined. The
-                    // assignment is ignored. See bug 478047.
-                    return true;
+                    if (Context.getContext().hasFeature(Context.FEATURE_HTMLUNIT_ASK_OBJECT_TO_WRITE_READONLY)) {
+                        Scriptable scriptable = start;
+
+                        if (scriptable instanceof Delegator) {
+                            scriptable = ((Delegator) scriptable).getDelegee();
+                        }
+
+                        if (scriptable instanceof ScriptableObject) {
+                            boolean allowSetting = ((ScriptableObject) scriptable).isReadOnlySettable(name, value);
+                            if (!allowSetting) {
+                                return true;
+                            }
+                        }
+                        getter = null;
+                    }
+                    else {
+                        // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
+                        // we should throw a TypeError in this case.
+                        throw ScriptRuntime.typeError3("msg.set.prop.no.setter", name, start.getClassName(), Context.toString(value));
+                    }
                 }
             } else {
                 Context cx = Context.getContext();
@@ -2178,6 +2195,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public static Object getProperty(Scriptable obj, String name)
     {
+        if ("constructor".equals(name) && !(obj instanceof IdScriptableObject)
+                && !Context.getContext().hasFeature(Context.FEATURE_HTMLUNIT_CONSTRUCTOR)) {
+            return NOT_FOUND;
+        }
         Scriptable start = obj;
         Object result;
         do {
@@ -3104,4 +3125,20 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
     }
 
+    /**
+     * Special to HtmlUnit's Rhino fork.
+     *
+     * Decides what to do when setting a ReadOnly property.
+     * The SimpleScriptable can return <tt>true<tt> for allowing to value to be set, <tt>false<tt> for not allowing (ignoring),
+     * or can simply throw {@link ScriptRuntime#typeError3(String, String, String, String)} with
+     * "msg.set.prop.no.setter", name, this.getClassName() and Context.toString(value).
+     *
+     * By default, this method returns <tt>true</tt>
+     * @param name the property name
+     * @param value the value
+     * @return <tt>true<tt> for allowing setting the value, <tt>false</tt> for ignoring the setting, or we can throw an exception
+     */
+    protected boolean isReadOnlySettable(final String name, final Object value) {
+        return true;
+    }
 }

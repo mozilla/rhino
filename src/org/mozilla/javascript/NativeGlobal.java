@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.Serializable;
 
 import org.mozilla.javascript.xml.XMLLib;
+
 import static org.mozilla.javascript.ScriptableObject.DONTENUM;
 import static org.mozilla.javascript.ScriptableObject.READONLY;
 import static org.mozilla.javascript.ScriptableObject.PERMANENT;
@@ -256,8 +257,9 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     radix = 16;
                     start += 2;
                 } else if ('0' <= c && c <= '9') {
-                    radix = 8;
-                    start++;
+                    if (!Context.getCurrentContext().hasFeature(Context.FEATURE_HTMLUNIT_PARSE_INT_RADIX_10)) {
+                        radix = 8;
+                    }
                 }
             }
         }

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.debug.DebuggableScript;
+
 /**
  * This class implements the activation object.
  *
@@ -61,8 +63,22 @@ public final class NativeCall extends IdScriptableObject
                 if (!super.has(name, this)) {
                     if (function.getParamOrVarConst(i))
                         defineProperty(name, Undefined.instance, CONST);
-                    else
-                        defineProperty(name, Undefined.instance, PERMANENT);
+                    else {
+                        boolean define = true;
+                        if (function instanceof InterpretedFunction) {
+                            InterpreterData idata = ((InterpretedFunction) function).idata;
+                            for (int f = 0; f < idata.getFunctionCount(); f++) {
+                                final InterpreterData functionData = (InterpreterData) idata.getFunction(f);
+								if (name.equals(functionData.getFunctionName())) {
+                                    define = functionData.declaredAsVar; // define local property only for inner functions declared with var
+                                    break;
+                                }
+                            }
+                        }
+                        if (define) {
+                            defineProperty(name, Undefined.instance, PERMANENT);
+                        }
+                    }
                 }
             }
         }

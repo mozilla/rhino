@@ -7,15 +7,20 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
-import org.mozilla.javascript.xml.XMLObject;
 import org.mozilla.javascript.xml.XMLLib;
+import org.mozilla.javascript.xml.XMLObject;
 
 /**
  * This is the class that implements the runtime.
@@ -955,7 +960,10 @@ public class ScriptRuntime {
     public static Scriptable toObjectOrNull(Context cx, Object obj,
                                             final Scriptable scope)
     {
-        if (obj instanceof Scriptable) {
+    	if (obj instanceof Delegator) {
+    		return ((Delegator) obj).getDelegee();
+    	}
+    	else if (obj instanceof Scriptable) {
             return (Scriptable)obj;
         } else if (obj != null && obj != Undefined.instance) {
             return toObject(cx, scope, obj);
@@ -2152,6 +2160,24 @@ public class ScriptRuntime {
                 x.used.intern(previous[i]);
             }
         }
+        if (ids != null && Context.getCurrentContext().hasFeature(Context.FEATURE_HTMLUNIT_ENUM_NUMBERS_FIRST)) {
+            Set<Integer> integers = new TreeSet<Integer>();
+            List<Object> others = new ArrayList<Object>();
+            for (Object o : ids) {
+                if (o instanceof Integer) {
+                    integers.add((Integer) o);
+                }
+                else {
+                    others.add(o);
+                }
+            }
+            if (!integers.isEmpty()) {
+                Object[] newIds = new Object[ids.length];
+                System.arraycopy(integers.toArray(), 0, newIds, 0, integers.size());
+                System.arraycopy(others.toArray(), 0, newIds, integers.size(), others.size());
+                ids = newIds;
+            }
+        }
         x.ids = ids;
         x.index = 0;
     }
@@ -2167,6 +2193,9 @@ public class ScriptRuntime {
                                                   Context cx,
                                                   Scriptable scope)
     {
+        if ("eval".equals(name)) {
+            lastEvalTopCalled_ = true;
+        }
         Scriptable parent = scope.getParentScope();
         if (parent == null) {
             Object result = topScopeName(cx, scope, name);
@@ -2246,6 +2275,9 @@ public class ScriptRuntime {
                                                   String property,
                                                   Context cx, final Scriptable scope)
     {
+        if ("eval".equals(property)) {
+            lastEvalTopCalled_ = false;
+        }
         Scriptable thisObj = toObjectOrNull(cx, obj, scope);
         return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
     }
@@ -2348,6 +2380,18 @@ public class ScriptRuntime {
         return function.construct(cx, scope, args);
     }
 
+    /**
+     * This indicates whether last call of "eval" was at the top scope (i.e. "eval()")
+     * or not (i.e. "scope.eval()"), as each one has different behavior.
+     *
+     * Ideally, we should have "eval" at top scope and we use Context.FEATURE_DYNAMIC_SCOPE,
+     * but it will complex the code.
+     *
+     * The current implementation sets this value to true when "eval" is called, and
+     * false on "something.eval()"
+     */
+    private static boolean lastEvalTopCalled_;
+    
     public static Object callSpecial(Context cx, Callable fun,
                                      Scriptable thisObj,
                                      Object[] args, Scriptable scope,
@@ -2356,6 +2400,12 @@ public class ScriptRuntime {
     {
         if (callType == Node.SPECIALCALL_EVAL) {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
+                final boolean isNative = scope instanceof NativeCall;
+                final boolean hasFeature = cx.hasFeature(Context.FEATURE_HTMLUNIT_EVAL_LOCAL_SCOPE);
+
+                if (!lastEvalTopCalled_ && (!hasFeature || !isNative)) {
+                    scope = thisObj;
+                }
                 return evalSpecial(cx, scope, callerThis, args,
                                    filename, lineNumber);
             }
@@ -2518,6 +2568,8 @@ public class ScriptRuntime {
             return "undefined";
         if (value instanceof ScriptableObject)
         	return ((ScriptableObject) value).getTypeOf();
+        if (value instanceof Delegator)
+            return typeof(((Delegator) value).getDelegee());
         if (value instanceof Scriptable)
             return (value instanceof Callable) ? "function" : "object";
         if (value instanceof CharSequence)
@@ -2526,6 +2578,10 @@ public class ScriptRuntime {
             return "number";
         if (value instanceof Boolean)
             return "boolean";
+        if (value instanceof MemberBox)
+            return typeof(((MemberBox) value).member());
+        if (value instanceof Method)
+            return "function";
         throw errorWithClassName("msg.invalid.type", value);
     }
 
@@ -2931,6 +2987,15 @@ public class ScriptRuntime {
             if (x instanceof Wrapper && y instanceof Wrapper) {
                 return ((Wrapper)x).unwrap() == ((Wrapper)y).unwrap();
             }
+            if (x instanceof Delegator && y instanceof Delegator) {
+                return shallowEq(((Delegator)x).getDelegee(), ((Delegator)y).getDelegee());
+            }
+            if (x instanceof Delegator && ((Delegator)x).getDelegee() == y) {
+                return true;
+            }
+            if (y instanceof Delegator && ((Delegator)y).getDelegee() == x) {
+                return true;
+            }
         } else {
             warnAboutNonJSObject(x);
             return x == y;
@@ -3160,13 +3225,27 @@ public class ScriptRuntime {
                 // Don't overwrite existing def if already defined in object
                 // or prototypes of object.
                 if (!ScriptableObject.hasProperty(scope, name)) {
-                    if (isConst) {
-                        ScriptableObject.defineConstProperty(varScope, name);
-                    } else if (!evalScript) {
+                    if (!evalScript) {
                         // Global var definitions are supposed to be DONTDELETE
-                        ScriptableObject.defineProperty(
-                            varScope, name, Undefined.instance,
-                            ScriptableObject.PERMANENT);
+                        if (isConst)
+                            ScriptableObject.defineConstProperty(varScope, name);
+                        else {
+                            boolean define = true;
+                            if (funObj instanceof InterpretedFunction) {
+                                InterpreterData idata = ((InterpretedFunction) funObj).idata;
+                                for (int f = 0; f < idata.getFunctionCount(); f++) {
+                                    if (name.equals(idata.getFunction(f).getFunctionName())) {
+                                        define = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (define) {
+                                ScriptableObject.defineProperty(
+                                        varScope, name, Undefined.instance,
+                                        ScriptableObject.PERMANENT);
+                            }
+                        }
                     } else {
                         varScope.put(name, varScope, Undefined.instance);
                     }

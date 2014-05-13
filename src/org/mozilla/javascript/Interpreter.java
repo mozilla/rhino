@@ -2844,6 +2844,17 @@ switch (op) {
     private static void enterFrame(Context cx, CallFrame frame, Object[] args,
                                    boolean continuationRestart)
     {
+       if (frame.parentFrame != null && !frame.parentFrame.fnOrScript.isScript()) {
+           frame.fnOrScript.defaultPut("caller", frame.parentFrame.fnOrScript);
+           frame.fnOrScript.setAttributes("caller", ScriptableObject.DONTENUM);
+       }
+       if (frame.scope instanceof NativeCall) {
+           Object arguments = ScriptableObject.getProperty(frame.scope, "arguments");
+           if (arguments instanceof Arguments) {
+               frame.fnOrScript.setArguments((Arguments) arguments);
+           }
+       }
+
         boolean usesActivation = frame.idata.itsNeedsActivation;
         boolean isDebugged = frame.debuggerFrame != null;
         if(usesActivation || isDebugged) {
@@ -2893,6 +2904,9 @@ switch (op) {
     private static void exitFrame(Context cx, CallFrame frame,
                                   Object throwable)
     {
+        frame.fnOrScript.defaultPut("caller", null);
+        frame.fnOrScript.setArguments(null);
+
         if (frame.idata.itsNeedsActivation) {
             ScriptRuntime.exitActivationFunction(cx);
         }
