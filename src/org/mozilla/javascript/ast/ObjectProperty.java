@@ -92,17 +92,18 @@ public class ObjectProperty extends InfixExpression {
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
-        sb.append(makeIndent(depth));
+        sb.append("\n");
+        sb.append(makeIndent(depth+1));
         if (isGetter()) {
             sb.append("get ");
         } else if (isSetter()) {
             sb.append("set ");
         }
-        sb.append(left.toSource(0));
+        sb.append(left.toSource(getType()==Token.COLON ? 0 : depth));
         if (type == Token.COLON) {
             sb.append(": ");
         }
-        sb.append(right.toSource(0));
+        sb.append(right.toSource(getType()==Token.COLON ? 0 : depth+1));
         return sb.toString();
     }
 }
