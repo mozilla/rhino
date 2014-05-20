@@ -3334,8 +3334,10 @@ public class Parser
         ObjectProperty pn = new ObjectProperty(pos);
         if (isGetter) {
             pn.setIsGetter();
+            fn.setFunctionIsGetter();
         } else {
             pn.setIsSetter();
+            fn.setFunctionIsSetter();
         }
         int end = getNodeEnd(fn);
         pn.setLeft(propName);
