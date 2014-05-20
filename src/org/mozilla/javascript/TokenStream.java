@@ -267,6 +267,7 @@ class TokenStream
 
     final double getNumber() { return number; }
     final boolean isNumberOctal() { return isOctal; }
+    final boolean isNumberHex() { return isHex; }
 
     final boolean eof() { return hitEOF; }
 
@@ -412,11 +413,13 @@ class TokenStream
                 isOctal = false;
                 stringBufferTop = 0;
                 int base = 10;
+                isHex = isOctal = false;
 
                 if (c == '0') {
                     c = getChar();
                     if (c == 'x' || c == 'X') {
                         base = 16;
+                        isHex = true;
                         c = getChar();
                     } else if (isDigit(c)) {
                         base = 8;
@@ -1558,6 +1561,7 @@ class TokenStream
     private String string = "";
     private double number;
     private boolean isOctal;
+    private boolean isHex;
 
     // delimiter for last string literal scanned
     private int quoteChar;
