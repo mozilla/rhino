@@ -183,7 +183,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
             this.lastIndex = thatObj.lastIndex;
             return this;
         }
-        String s = args.length == 0 ? "" : escapeRegExp(args[0]);
+        String s = args.length == 0  || args[0] instanceof Undefined ? "" : escapeRegExp(args[0]);
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;

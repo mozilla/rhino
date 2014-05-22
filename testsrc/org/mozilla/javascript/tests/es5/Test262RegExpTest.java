@@ -14,6 +14,8 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author André Bargull
  */
@@ -99,5 +101,19 @@ public class Test262RegExpTest {
         String source = "(new RegExp('[\\\\Wb-G]').exec('a'))";
         String sourceName = "Conformance/15_Native/15.10_RegExp_Objects/15.10.2_Pattern_Semantics/15.10.2.15_NonemptyClassRanges/S15.10.2.15_A1_T8.js";
         cx.evaluateString(scope, source, sourceName, 0, null);
+    }
+
+    @Test
+    public void testS15_10_4_1_T1() {
+        String source = "new RegExp().test('AA');";
+        String sourceName = "Conformance/15_Native/15.10_RegExp_Objects/15.10.4_Pattern_Semantics/15.10.2.11_DecimalEscape/S15.10.2.11_A1_T3.js";
+        assertTrue((Boolean) cx.evaluateString(scope, source, sourceName, 0, null));
+    }
+
+    @Test
+    public void testS15_10_4_1_T2_Undefined() {
+        String source = "new RegExp(undefined).test('AA');";
+        String sourceName = "Conformance/15_Native/15.10_RegExp_Objects/15.10.4_Pattern_Semantics/15.10.2.11_DecimalEscape/S15.10.2.11_A1_T3.js";
+        assertTrue((Boolean) cx.evaluateString(scope, source, sourceName, 0, null));
     }
 }
