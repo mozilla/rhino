@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 /**
  * Adapter to use JS function as implementation of Java interfaces with
@@ -46,12 +47,20 @@ public class InterfaceAdapter
                         "msg.no.empty.interface.conversion", cl.getName());
                 }
                 if (length > 1) {
-                    String methodName = methods[0].getName();
-                    for (int i = 1; i < length; i++) {
-                        if (!methodName.equals(methods[i].getName())) {
-                            throw Context.reportRuntimeError1(
-                                    "msg.no.function.interface.conversion",
-                                    cl.getName());
+                    ArrayList<Method> abstractMethods = new ArrayList<Method>();
+                    for (Method m : methods) {
+                        if (!m.isDefault()) {
+                            abstractMethods.add(m);
+                        }
+                    }
+                    if (abstractMethods.size() > 1) {
+                        String methodName = abstractMethods.get(0).getName();
+                        for (int i = 1; i < abstractMethods.size(); i++) {
+                            if (!methodName.equals(abstractMethods.get(i).getName())) {
+                                throw Context.reportRuntimeError1(
+                                                                  "msg.no.function.interface.conversion",
+                                                                  cl.getName());
+                            }
                         }
                     }
                 }
