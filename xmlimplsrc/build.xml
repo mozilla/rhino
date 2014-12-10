@@ -117,7 +117,7 @@
   <target name="xmlbeans-get" unless="xmlbeans-zip-present?">
     <property
       name="xmlbeans.url"
-      value="http://www.apache.org/dist/xmlbeans/binaries/xmlbeans-2.5.0.zip"
+      value="http://archive.apache.org/dist/xmlbeans/binaries/xmlbeans-2.5.0.zip"
     />
 
     <mkdir dir="${xmlbeans.tmp}" />
