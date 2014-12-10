@@ -1,9 +1,16 @@
-.idea/
+# os specific
+.DS_Store
+
+# build directories
 build/
 lib/
 
 # artifacts
 *.zip
 
-# OS-specific
-.DS_Store
+*.iml
+.idea/
+out/
+target/
+
+

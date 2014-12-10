@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.regexp.NativeRegExp;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -168,6 +170,10 @@ public class NativeArray extends IdScriptableObject implements List
                 "map", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some,
                 "some", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_find,
+                "find", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findIndex,
+                "findIndex", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce,
                 "reduce", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight,
@@ -204,6 +210,8 @@ public class NativeArray extends IdScriptableObject implements List
           case Id_forEach:        arity=1; s="forEach";        break;
           case Id_map:            arity=1; s="map";            break;
           case Id_some:           arity=1; s="some";           break;
+          case Id_find:           arity=1; s="find";           break;
+          case Id_findIndex:      arity=1; s="findIndex";      break;
           case Id_reduce:         arity=1; s="reduce";         break;
           case Id_reduceRight:    arity=1; s="reduceRight";    break;
           default: throw new IllegalArgumentException(String.valueOf(id));
@@ -239,6 +247,8 @@ public class NativeArray extends IdScriptableObject implements List
               case ConstructorId_forEach:
               case ConstructorId_map:
               case ConstructorId_some:
+              case ConstructorId_find:
+              case ConstructorId_findIndex:
               case ConstructorId_reduce:
               case ConstructorId_reduceRight: {
                 if (args.length > 0) {
@@ -315,6 +325,8 @@ public class NativeArray extends IdScriptableObject implements List
               case Id_forEach:
               case Id_map:
               case Id_some:
+              case Id_find:
+              case Id_findIndex:
                 return iterativeMethod(cx, id, scope, thisObj, args);
               case Id_reduce:
               case Id_reduceRight:
@@ -1632,6 +1644,10 @@ public class NativeArray extends IdScriptableObject implements List
                 if (ScriptRuntime.toBoolean(result))
                     return Boolean.TRUE;
                 break;
+              case Id_find:
+                if (ScriptRuntime.toBoolean(result))
+                  return elem;
+                break;
             }
         }
         switch (id) {
@@ -1929,6 +1945,7 @@ public class NativeArray extends IdScriptableObject implements List
                 case 'm': X="some";id=Id_some; break L;
                 case 'r': X="sort";id=Id_sort; break L;
                 case 's': X="push";id=Id_push; break L;
+                case 'n': X="find";id=Id_find; break L;
                 } break L;
             case 5: c=s.charAt(1);
                 if (c=='h') { X="shift";id=Id_shift; }
@@ -1950,6 +1967,9 @@ public class NativeArray extends IdScriptableObject implements List
             case 8: c=s.charAt(3);
                 if (c=='o') { X="toSource";id=Id_toSource; }
                 else if (c=='t') { X="toString";id=Id_toString; }
+                break L;
+            case 9:
+                X="findIndex";id=Id_findIndex;
                 break L;
             case 11: c=s.charAt(0);
                 if (c=='c') { X="constructor";id=Id_constructor; }
@@ -1986,10 +2006,13 @@ public class NativeArray extends IdScriptableObject implements List
         Id_forEach              = 19,
         Id_map                  = 20,
         Id_some                 = 21,
-        Id_reduce               = 22,
-        Id_reduceRight          = 23,
+        Id_find                 = 22,
+        Id_findIndex            = 23,
+        Id_reduce               = 24,
+        Id_reduceRight          = 25,
 
-        MAX_PROTOTYPE_ID        = 23;
+
+        MAX_PROTOTYPE_ID        = 25;
 
 // #/string_id_map#
 
@@ -2011,9 +2034,11 @@ public class NativeArray extends IdScriptableObject implements List
         ConstructorId_forEach              = -Id_forEach,
         ConstructorId_map                  = -Id_map,
         ConstructorId_some                 = -Id_some,
+        ConstructorId_find                 = -Id_find,
+        ConstructorId_findIndex            = -Id_findIndex,
         ConstructorId_reduce               = -Id_reduce,
         ConstructorId_reduceRight          = -Id_reduceRight,
-        ConstructorId_isArray              = -24;
+        ConstructorId_isArray              = -26;
 
     /**
      * Internal representation of the JavaScript array's length property.
