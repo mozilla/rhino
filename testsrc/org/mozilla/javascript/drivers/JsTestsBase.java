@@ -30,6 +30,7 @@ public class JsTestsBase extends TestCase {
         try {
             result = cx.evaluateString(scope, source, "jstest input", 1, null);
         } catch (RuntimeException e) {
+            e.printStackTrace(System.err);
             System.out.println("FAILED");
             throw e;
         }

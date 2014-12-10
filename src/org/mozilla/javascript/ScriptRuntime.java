@@ -14,6 +14,17 @@ import java.util.ResourceBundle;
 
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
+import org.mozilla.javascript.typedarrays.Float32NativeArray;
+import org.mozilla.javascript.typedarrays.Float64NativeArray;
+import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
+import org.mozilla.javascript.typedarrays.NativeDataView;
+import org.mozilla.javascript.typedarrays.NativeInt16NativeArray;
+import org.mozilla.javascript.typedarrays.NativeInt32NativeArray;
+import org.mozilla.javascript.typedarrays.NativeInt8NativeArray;
+import org.mozilla.javascript.typedarrays.NativeUint16NativeArray;
+import org.mozilla.javascript.typedarrays.NativeUint32NativeArray;
+import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
+import org.mozilla.javascript.typedarrays.NativeUint8NativeArray;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLObject;
 import org.mozilla.javascript.xml.XMLLib;
@@ -226,6 +237,24 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "XMLList", xmlImpl, sealed, true);
             new LazilyLoadedCtor(scope, "Namespace", xmlImpl, sealed, true);
             new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
+        }
+
+        // Native arrays. Should we make it depend on language level?
+        //new LazilyLoadedCtor(scope, "ArrayBuffer",
+        //        "org.mozilla.javascript.nativearrays.NativeArrayBuffer", sealed, true);
+
+        if (cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) {
+            NativeArrayBuffer.init(scope, sealed);
+            NativeUint8NativeArray.init(scope, sealed);
+            NativeInt8NativeArray.init(scope, sealed);
+            NativeUint8ClampedArray.init(scope, sealed);
+            NativeUint16NativeArray.init(scope, sealed);
+            NativeInt16NativeArray.init(scope, sealed);
+            NativeUint32NativeArray.init(scope, sealed);
+            NativeInt32NativeArray.init(scope, sealed);
+            Float32NativeArray.init(scope, sealed);
+            Float64NativeArray.init(scope, sealed);
+            NativeDataView.init(scope, sealed);
         }
      
         if (scope instanceof TopLevel) {

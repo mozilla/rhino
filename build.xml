@@ -225,6 +225,9 @@
   <target name="junit-all" depends="compile">
     <ant antfile="testsrc/build.xml" target="junit-coveragereport"/>
   </target>
+  <target name="junit" depends="compile">
+    <ant antfile="testsrc/build.xml" target="junit"/>
+  </target>
 
    <target name="junit-benchmarks" depends="compile">
     <ant antfile="testsrc/build.xml" target="junit-benchmarks"/>

@@ -283,6 +283,14 @@ public class Context
      */
     public static final int FEATURE_ENHANCED_JAVA_ACCESS = 13;
 
+    /**
+     * Enables access to JavaScript features from ECMAscript 6 that are present in
+     * JavaScript engines that do not yet support version 6, such as V8.
+     * This includes support for typed arrays. Default is true.
+     * @since 1.7 Release 3
+     */
+    public static final int FEATURE_V8_EXTENSIONS = 14;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
