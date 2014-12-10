@@ -22,26 +22,27 @@ public class ByteIo
         buf[offset] = (byte)(val & 0xff);
     }
 
-    private static int doReadInt16(byte[] buf, int offset, boolean littleEndian)
+    private static short doReadInt16(byte[] buf, int offset, boolean littleEndian)
     {
+        // Need to coalesce to short here so that we stay in range
         if (littleEndian) {
             return
-                (buf[offset]     << 0) |
-                (buf[offset + 1] << 8);
+                (short)((buf[offset]      & 0xff) |
+                       ((buf[offset + 1] & 0xff) << 8));
         }
         return
-                (buf[offset]     << 8) |
-                (buf[offset + 1] << 0);
+            (short)(((buf[offset]    & 0xff) << 8) |
+                    (buf[offset + 1] & 0xff));
     }
 
     private static void doWriteInt16(byte[] buf, int offset, int val, boolean littleEndian)
     {
         if (littleEndian) {
-            buf[offset] =     (byte)(val >>> 0 & 0xff);
-            buf[offset + 1] = (byte)(val >>> 8 & 0xff);
+            buf[offset] =     (byte)(val & 0xff);
+            buf[offset + 1] = (byte)((val >>> 8) & 0xff);
         } else {
-            buf[offset]         =     (byte)(val >>> 8 & 0xff);
-            buf[offset + 1]     =     (byte)(val >>> 0 & 0xff);
+            buf[offset]         =     (byte)((val >>> 8) & 0xff);
+            buf[offset + 1]     =     (byte)(val & 0xff);
         }
     }
 
@@ -69,30 +70,30 @@ public class ByteIo
     {
         if (littleEndian) {
             return
-                (buf[offset]     << 0) |
-                (buf[offset + 1] << 8) |
-                (buf[offset + 2] << 16) |
-                (buf[offset + 3] << 24);
+                (buf[offset]      & 0xff) |
+                ((buf[offset + 1] & 0xff) << 8) |
+                ((buf[offset + 2] & 0xff) << 16) |
+                ((buf[offset + 3] & 0xff) << 24);
         }
         return
-            (buf[offset]     << 24) |
-            (buf[offset + 1] << 16) |
-            (buf[offset + 2] << 8) |
-            (buf[offset + 3] << 0);
+            ((buf[offset]     & 0xff) << 24) |
+            ((buf[offset + 1] & 0xff) << 16) |
+            ((buf[offset + 2] & 0xff) << 8) |
+            (buf[offset + 3]  & 0xff);
     }
 
     public static void writeInt32(byte[] buf, int offset, int val, boolean littleEndian)
     {
         if (littleEndian) {
-            buf[offset] =     (byte)(val >>> 0  & 0xff);
-            buf[offset + 1] = (byte)(val >>> 8  & 0xff);
-            buf[offset + 2] = (byte)(val >>> 16 & 0xff);
-            buf[offset + 3] = (byte)(val >>> 24 & 0xff);
+            buf[offset] =     (byte)(val & 0xff);
+            buf[offset + 1] = (byte)((val >>> 8)  & 0xff);
+            buf[offset + 2] = (byte)((val >>> 16) & 0xff);
+            buf[offset + 3] = (byte)((val >>> 24) & 0xff);
         } else {
-            buf[offset] =     (byte)(val >>> 24 & 0xff);
-            buf[offset + 1] = (byte)(val >>> 16 & 0xff);
-            buf[offset + 2] = (byte)(val >>> 8 & 0xff);
-            buf[offset + 3] = (byte)(val >>> 0 & 0xff);
+            buf[offset] =     (byte)((val >>> 24) & 0xff);
+            buf[offset + 1] = (byte)((val >>> 16) & 0xff);
+            buf[offset + 2] = (byte)((val >>> 8) & 0xff);
+            buf[offset + 3] = (byte)(val & 0xff);
         }
     }
 
@@ -100,7 +101,7 @@ public class ByteIo
     {
         if (littleEndian) {
             return
-                (((buf[offset]     & 0xffL) << 0L) |
+                ((buf[offset]      & 0xffL) |
                  ((buf[offset + 1] & 0xffL) << 8L) |
                  ((buf[offset + 2] & 0xffL) << 16L) |
                  ((buf[offset + 3] & 0xffL) << 24L)) &
@@ -110,22 +111,22 @@ public class ByteIo
             (((buf[offset]     & 0xffL) << 24L) |
              ((buf[offset + 1] & 0xffL) << 16L) |
              ((buf[offset + 2] & 0xffL) << 8L) |
-             ((buf[offset + 3] & 0xffL) << 0L)) &
+             (buf[offset + 3]  & 0xffL)) &
              0xffffffffL;
     }
 
     public static void writeUint32(byte[] buf, int offset, long val, boolean littleEndian)
     {
         if (littleEndian) {
-            buf[offset] = (byte)(val >>> 0L  & 0xffL);
-            buf[offset + 1] = (byte)(val >>> 8L  & 0xffL);
-            buf[offset + 2] = (byte)(val >>> 16L & 0xffL);
-            buf[offset + 3] = (byte)(val >>> 24L & 0xffL);
+            buf[offset] =     (byte)(val & 0xffL);
+            buf[offset + 1] = (byte)((val >>> 8L)  & 0xffL);
+            buf[offset + 2] = (byte)((val >>> 16L) & 0xffL);
+            buf[offset + 3] = (byte)((val >>> 24L) & 0xffL);
         } else {
-            buf[offset] =     (byte)(val >>> 24L & 0xffL);
-            buf[offset + 1] = (byte)(val >>> 16L & 0xffL);
-            buf[offset + 2] = (byte)(val >>> 8L & 0xffL);
-            buf[offset + 3] = (byte)(val >>> 0L & 0xffL);
+            buf[offset] =     (byte)((val >>> 24L) & 0xffL);
+            buf[offset + 1] = (byte)((val >>> 16L) & 0xffL);
+            buf[offset + 2] = (byte)((val >>> 8L)  & 0xffL);
+            buf[offset + 3] = (byte)(val & 0xffL);
         }
     }
 
@@ -138,7 +139,7 @@ public class ByteIo
     {
         if (littleEndian) {
             return
-                   (((buf[offset]     & 0xffL) << 0L) |
+                   ((buf[offset]     & 0xffL) |
                     ((buf[offset + 1] & 0xffL) << 8L) |
                     ((buf[offset + 2] & 0xffL) << 16L) |
                     ((buf[offset + 3] & 0xffL) << 24L) |
@@ -161,23 +162,23 @@ public class ByteIo
     public static void writeUint64(byte[] buf, int offset, long val, boolean littleEndian)
     {
         if (littleEndian) {
-            buf[offset] =     (byte)(val >>> 0L  & 0xffL);
-            buf[offset + 1] = (byte)(val >>> 8L  & 0xffL);
-            buf[offset + 2] = (byte)(val >>> 16L & 0xffL);
-            buf[offset + 3] = (byte)(val >>> 24L & 0xffL);
-            buf[offset + 4] = (byte)(val >>> 32L  & 0xffL);
-            buf[offset + 5] = (byte)(val >>> 40L  & 0xffL);
-            buf[offset + 6] = (byte)(val >>> 48L & 0xffL);
-            buf[offset + 7] = (byte)(val >>> 56L & 0xffL);
+            buf[offset] =     (byte)(val & 0xffL);
+            buf[offset + 1] = (byte)((val >>> 8L)  & 0xffL);
+            buf[offset + 2] = (byte)((val >>> 16L) & 0xffL);
+            buf[offset + 3] = (byte)((val >>> 24L) & 0xffL);
+            buf[offset + 4] = (byte)((val >>> 32L)  & 0xffL);
+            buf[offset + 5] = (byte)((val >>> 40L)  & 0xffL);
+            buf[offset + 6] = (byte)((val >>> 48L) & 0xffL);
+            buf[offset + 7] = (byte)((val >>> 56L) & 0xffL);
         } else {
-            buf[offset] =     (byte)(val >>> 56L & 0xffL);
-            buf[offset + 1] = (byte)(val >>> 48L & 0xffL);
-            buf[offset + 2] = (byte)(val >>> 40L & 0xffL);
-            buf[offset + 3] = (byte)(val >>> 32L & 0xffL);
-            buf[offset + 4] = (byte)(val >>> 24L & 0xffL);
-            buf[offset + 5] = (byte)(val >>> 16L & 0xffL);
-            buf[offset + 6] = (byte)(val >>> 8L  & 0xffL);
-            buf[offset + 7] = (byte)(val >>> 0L  & 0xffL);
+            buf[offset] =     (byte)((val >>> 56L) & 0xffL);
+            buf[offset + 1] = (byte)((val >>> 48L) & 0xffL);
+            buf[offset + 2] = (byte)((val >>> 40L) & 0xffL);
+            buf[offset + 3] = (byte)((val >>> 32L) & 0xffL);
+            buf[offset + 4] = (byte)((val >>> 24L) & 0xffL);
+            buf[offset + 5] = (byte)((val >>> 16L) & 0xffL);
+            buf[offset + 6] = (byte)((val >>> 8L)  & 0xffL);
+            buf[offset + 7] = (byte)(val & 0xffL);
         }
     }
 

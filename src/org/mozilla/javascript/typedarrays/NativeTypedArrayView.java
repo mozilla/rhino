@@ -189,7 +189,7 @@ public abstract class NativeTypedArrayView
         }
     }
 
-    private NativeTypedArrayView js_subarray(int s, int e)
+    private Object js_subarray(Context cx, Scriptable scope, int s, int e)
     {
         int start = (s < 0 ? length + s : s);
         int end = (e < 0 ? length + e : e);
@@ -198,8 +198,11 @@ public abstract class NativeTypedArrayView
         start = Math.max(0, start);
         end = Math.min(length, end);
         int len = Math.max(0, (end - start));
+        int byteOff = Math.min(start * getBytesPerElement(), arrayBuffer.getLength());
 
-        return construct(arrayBuffer, start * getBytesPerElement(), len);
+        return
+            cx.newObject(scope, getClassName(),
+                         new Object[] { arrayBuffer, byteOff, len });
     }
 
     // Dispatcher
@@ -229,16 +232,16 @@ public abstract class NativeTypedArrayView
                 if (args[0] instanceof NativeTypedArrayView) {
                     int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
                     self.setRange((NativeTypedArrayView)args[0], offset);
-                    return null;
+                    return Undefined.instance;
                 }
                 if (args[0] instanceof NativeArray) {
                     int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
                     self.setRange((NativeArray)args[0], offset);
-                    return null;
+                    return Undefined.instance;
                 }
                 if (args[0] instanceof Scriptable) {
                     // Tests show that we need to ignore a non-array object
-                    return null;
+                    return Undefined.instance;
                 }
                 if (isArg(args, 2)) {
                     return self.js_set(ScriptRuntime.toInt32(args[0]), args[1]);
@@ -251,7 +254,7 @@ public abstract class NativeTypedArrayView
                 NativeTypedArrayView self = realThis(thisObj, f);
                 int start = ScriptRuntime.toInt32(args[0]);
                 int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.length;
-                return self.js_subarray(start, end);
+                return self.js_subarray(cx, scope, start, end);
             } else {
                 throw ScriptRuntime.constructError("Error", "invalid arguments");
             }

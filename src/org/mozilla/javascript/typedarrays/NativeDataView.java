@@ -4,6 +4,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
 
 public class NativeDataView
     extends NativeArrayBufferView
@@ -36,9 +37,36 @@ public class NativeDataView
 
     private void rangeCheck(int offset, int len)
     {
-        if ((offset + len) > byteLength) {
+        if ((offset < 0) || ((offset + len) > byteLength)) {
             throw ScriptRuntime.constructError("RangeError", "offset out of range");
         }
+    }
+
+    private void checkOffset(Object[] args, int pos)
+    {
+        if (args.length <= pos) {
+            throw ScriptRuntime.constructError("TypeError", "missing required offset parameter");
+        }
+        if (Undefined.instance.equals(args[pos])) {
+            throw ScriptRuntime.constructError("RangeError", "invalid offset");
+        }
+    }
+
+    private void checkValue(Object[] args, int pos)
+    {
+        if (args.length <= pos) {
+            throw ScriptRuntime.constructError("TypeError", "missing required value parameter");
+        }
+        if (Undefined.instance.equals(args[pos])) {
+            throw ScriptRuntime.constructError("RangeError", "invalid value parameter");
+        }
+    }
+
+    private static NativeDataView realThis(Scriptable thisObj, IdFunctionObject f)
+    {
+        if (!(thisObj instanceof NativeDataView))
+            throw incompatibleCallError(f);
+        return (NativeDataView)thisObj;
     }
 
     private NativeDataView js_constructor(NativeArrayBuffer ab, int offset, int length)
@@ -54,9 +82,7 @@ public class NativeDataView
 
     private Object js_getInt(int bytes, boolean signed, Object[] args)
     {
-        if (!isArg(args, 0)) {
-            throw ScriptRuntime.constructError("Error", "missing required offset parameter");
-        }
+        checkOffset(args, 0);
 
         int offset = ScriptRuntime.toInt32(args[0]);
         rangeCheck(offset, bytes);
@@ -81,9 +107,7 @@ public class NativeDataView
 
     private Object js_getFloat(int bytes, Object[] args)
     {
-        if (!isArg(args, 0)) {
-            throw ScriptRuntime.constructError("Error", "missing required offset parameter");
-        }
+        checkOffset(args, 0);
 
         int offset = ScriptRuntime.toInt32(args[0]);
         rangeCheck(offset, bytes);
@@ -103,12 +127,8 @@ public class NativeDataView
 
     private void js_setInt(int bytes, boolean signed, Object[] args)
     {
-        if (!isArg(args, 0)) {
-            throw ScriptRuntime.constructError("Error", "missing required offset parameter");
-        }
-        if (!isArg(args, 1)) {
-            throw ScriptRuntime.constructError("Error", "missing required value parameter");
-        }
+        checkOffset(args, 0);
+        checkValue(args, 1);
 
         int offset = ScriptRuntime.toInt32(args[0]);
         rangeCheck(offset, bytes);
@@ -145,12 +165,8 @@ public class NativeDataView
 
     private void js_setFloat(int bytes, Object[] args)
     {
-        if (!isArg(args, 0)) {
-            throw ScriptRuntime.constructError("Error", "missing required offset parameter");
-        }
-        if (!isArg(args, 1)) {
-            throw ScriptRuntime.constructError("Error", "missing required value parameter");
-        }
+        checkOffset(args, 0);
+        checkValue(args, 1);
 
         int offset = ScriptRuntime.toInt32(args[0]);
         rangeCheck(offset, bytes);
@@ -192,45 +208,45 @@ public class NativeDataView
                 throw ScriptRuntime.constructError("TypeError", "Missing parameters");
             }
         case Id_getInt8:
-            return js_getInt(1, true, args);
+            return realThis(thisObj, f).js_getInt(1, true, args);
         case Id_getUint8:
-            return js_getInt(1, false, args);
+            return realThis(thisObj, f).js_getInt(1, false, args);
         case Id_getInt16:
-            return js_getInt(2, true, args);
+            return realThis(thisObj, f).js_getInt(2, true, args);
         case Id_getUint16:
-            return js_getInt(2, false, args);
+            return realThis(thisObj, f).js_getInt(2, false, args);
         case Id_getInt32:
-            return js_getInt(4, true, args);
+            return realThis(thisObj, f).js_getInt(4, true, args);
         case Id_getUint32:
-            return js_getInt(4, false, args);
+            return realThis(thisObj, f).js_getInt(4, false, args);
         case Id_getFloat32:
-            return js_getFloat(4, args);
+            return realThis(thisObj, f).js_getFloat(4, args);
         case Id_getFloat64:
-            return js_getFloat(8, args);
+            return realThis(thisObj, f).js_getFloat(8, args);
         case Id_setInt8:
-            js_setInt(1, true, args);
-            return null;
+            realThis(thisObj, f).js_setInt(1, true, args);
+            return Undefined.instance;
         case Id_setUint8:
-            js_setInt(1, false, args);
-            return null;
+            realThis(thisObj, f).js_setInt(1, false, args);
+            return Undefined.instance;
         case Id_setInt16:
-            js_setInt(2, true, args);
-            return null;
+            realThis(thisObj, f).js_setInt(2, true, args);
+            return Undefined.instance;
         case Id_setUint16:
-            js_setInt(2, false, args);
-            return null;
+            realThis(thisObj, f).js_setInt(2, false, args);
+            return Undefined.instance;
         case Id_setInt32:
-            js_setInt(4, true, args);
-            return null;
+            realThis(thisObj, f).js_setInt(4, true, args);
+            return Undefined.instance;
         case Id_setUint32:
-            js_setInt(4, false, args);
-            return null;
+            realThis(thisObj, f).js_setInt(4, false, args);
+            return Undefined.instance;
         case Id_setFloat32:
-            js_setFloat(4, args);
-            return null;
+            realThis(thisObj, f).js_setFloat(4, args);
+            return Undefined.instance;
         case Id_setFloat64:
-            js_setFloat(8, args);
-            return null;
+            realThis(thisObj, f).js_setFloat(8, args);
+            return Undefined.instance;
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -249,7 +265,7 @@ public class NativeDataView
         case Id_getInt32:       arity = 1; s = "getInt32"; break;
         case Id_getUint32:      arity = 1; s = "getUint32"; break;
         case Id_getFloat32:     arity = 1; s = "getFloat32"; break;
-        case Id_getFloat64:     arity = 1; s = "getFLoat64"; break;
+        case Id_getFloat64:     arity = 1; s = "getFloat64"; break;
         case Id_setInt8:        arity = 2; s = "setInt8"; break;
         case Id_setUint8:       arity = 2; s = "setUint8"; break;
         case Id_setInt16:       arity = 2; s = "setInt16"; break;
