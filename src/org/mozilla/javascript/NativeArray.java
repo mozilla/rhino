@@ -1648,6 +1648,10 @@ public class NativeArray extends IdScriptableObject implements List
                 if (ScriptRuntime.toBoolean(result))
                   return elem;
                 break;
+            case Id_findIndex:
+                if (ScriptRuntime.toBoolean(result))
+                    return ScriptRuntime.wrapNumber(i);
+                break;
             }
         }
         switch (id) {
@@ -1658,6 +1662,8 @@ public class NativeArray extends IdScriptableObject implements List
             return array;
           case Id_some:
             return Boolean.FALSE;
+          case Id_findIndex:
+            return ScriptRuntime.wrapNumber(-1);
           case Id_forEach:
           default:
             return Undefined.instance;

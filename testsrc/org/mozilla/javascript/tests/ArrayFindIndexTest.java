@@ -11,10 +11,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 
-public class ArrayFindTest extends JsTestsBase {
+public class ArrayFindIndexTest extends JsTestsBase {
     static final String baseDirectory = "testsrc" + File.separator + "jstests";
 
-    static final String jstestsExtension = "array-findIndex.js";
+    static final String jstestsExtension = "array-find.js";
 
     public void runJsTests() throws IOException {
         File[] tests = TestUtils.recursiveListFiles(new File(baseDirectory),
