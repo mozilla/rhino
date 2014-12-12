@@ -1600,16 +1600,23 @@ public class NativeArray extends IdScriptableObject implements List
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         if (callbackArg == null || !(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
+        } else if ((id == Id_find || id == Id_findIndex) && !(callbackArg instanceof NativeFunction)) {
+            throw ScriptRuntime.notFunctionError(callbackArg);
         }
+
         Function f = (Function) callbackArg;
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
         Scriptable thisArg;
-        if (args.length < 2 || args[1] == null || args[1] == Undefined.instance)
-        {
+        if (args.length < 2 || args[1] == null || args[1] == Undefined.instance) {
             thisArg = parent;
         } else {
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
+
+        if ((Id_find == id || Id_findIndex == id) && thisArg == thisObj) {
+            throw ScriptRuntime.typeError("Array.prototype method called on null or undefined");
+        }
+
         Scriptable array = null;
         if (id == Id_filter || id == Id_map) {
             int resultLength = id == Id_map ? (int) length : 0;

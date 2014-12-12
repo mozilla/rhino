@@ -213,10 +213,10 @@ assertEquals(3, a.findIndex(function(val) { return 24 === val; }));
 })();
 
 // Test exceptions
-//assertThrows('Array.prototype.findIndex.call(null, function() { })', TypeError);
-//assertThrows('Array.prototype.findIndex.call(undefined, function() { })', TypeError);
-//assertThrows('Array.prototype.findIndex.apply(null, function() { }, [])', TypeError);
-//assertThrows('Array.prototype.findIndex.apply(undefined, function() { }, [])', TypeError);
+assertThrows('Array.prototype.findIndex.call(null, function() { })', TypeError);
+assertThrows('Array.prototype.findIndex.call(undefined, function() { })', TypeError);
+assertThrows('Array.prototype.findIndex.apply(null, function() { }, [])', TypeError);
+assertThrows('Array.prototype.findIndex.apply(undefined, function() { }, [])', TypeError);
 
 assertThrows('[].findIndex(null)', TypeError);
 assertThrows('[].findIndex(undefined)', TypeError);
@@ -226,7 +226,7 @@ assertThrows('[].findIndex(false)', TypeError);
 assertThrows('[].findIndex("")', TypeError);
 assertThrows('[].findIndex({})', TypeError);
 assertThrows('[].findIndex([])', TypeError);
-//assertThrows('[].findIndex(/\d+/)', TypeError);
+assertThrows('[].findIndex(/\d+/)', TypeError);
 
 assertThrows('Array.prototype.findIndex.call({}, null)', TypeError);
 assertThrows('Array.prototype.findIndex.call({}, undefined)', TypeError);
@@ -236,7 +236,7 @@ assertThrows('Array.prototype.findIndex.call({}, false)', TypeError);
 assertThrows('Array.prototype.findIndex.call({}, "")', TypeError);
 assertThrows('Array.prototype.findIndex.call({}, {})', TypeError);
 assertThrows('Array.prototype.findIndex.call({}, [])', TypeError);
-//assertThrows('Array.prototype.findIndex.call({}, /\d+/)', TypeError);
+assertThrows('Array.prototype.findIndex.call({}, /\d+/)', TypeError);
 
 assertThrows('Array.prototype.findIndex.apply({}, null, [])', TypeError);
 assertThrows('Array.prototype.findIndex.apply({}, undefined, [])', TypeError);
@@ -246,6 +246,6 @@ assertThrows('Array.prototype.findIndex.apply({}, false, [])', TypeError);
 assertThrows('Array.prototype.findIndex.apply({}, "", [])', TypeError);
 assertThrows('Array.prototype.findIndex.apply({}, {}, [])', TypeError);
 assertThrows('Array.prototype.findIndex.apply({}, [], [])', TypeError);
-//assertThrows('Array.prototype.findIndex.apply({}, /\d+/, [])', TypeError);
+assertThrows('Array.prototype.findIndex.apply({}, /\d+/, [])', TypeError);
 
 "success";

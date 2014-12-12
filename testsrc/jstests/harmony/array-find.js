@@ -217,10 +217,10 @@ assertEquals(22, a.find(function(val) { return 22 === val; }), undefined);
 })();
 
 // Test exceptions
-//assertThrows('Array.prototype.find.call(null, function() { })', TypeError);
-//assertThrows('Array.prototype.find.call(undefined, function() { })', TypeError);
-//assertThrows('Array.prototype.find.apply(null, function() { }, [])', TypeError);
-//assertThrows('Array.prototype.find.apply(undefined, function() { }, [])', TypeError);
+assertThrows('Array.prototype.find.call(null, function() { })', TypeError);
+assertThrows('Array.prototype.find.call(undefined, function() { })', TypeError);
+assertThrows('Array.prototype.find.apply(null, function() { }, [])', TypeError);
+assertThrows('Array.prototype.find.apply(undefined, function() { }, [])', TypeError);
 
 assertThrows('[].find(null)', TypeError);
 assertThrows('[].find(undefined)', TypeError);
@@ -230,7 +230,7 @@ assertThrows('[].find(false)', TypeError);
 assertThrows('[].find("")', TypeError);
 assertThrows('[].find({})', TypeError);
 assertThrows('[].find([])', TypeError);
-//assertThrows('[].find(/\d+/)', TypeError);
+assertThrows('[].find(/\d+/)', TypeError);
 
 assertThrows('Array.prototype.find.call({}, null)', TypeError);
 assertThrows('Array.prototype.find.call({}, undefined)', TypeError);
@@ -240,7 +240,7 @@ assertThrows('Array.prototype.find.call({}, false)', TypeError);
 assertThrows('Array.prototype.find.call({}, "")', TypeError);
 assertThrows('Array.prototype.find.call({}, {})', TypeError);
 assertThrows('Array.prototype.find.call({}, [])', TypeError);
-//assertThrows('Array.prototype.find.call({}, /\d+/)', TypeError);
+assertThrows('Array.prototype.find.call({}, /\d+/)', TypeError);
 
 assertThrows('Array.prototype.find.apply({}, null, [])', TypeError);
 assertThrows('Array.prototype.find.apply({}, undefined, [])', TypeError);
@@ -250,6 +250,6 @@ assertThrows('Array.prototype.find.apply({}, false, [])', TypeError);
 assertThrows('Array.prototype.find.apply({}, "", [])', TypeError);
 assertThrows('Array.prototype.find.apply({}, {}, [])', TypeError);
 assertThrows('Array.prototype.find.apply({}, [], [])', TypeError);
-//assertThrows('Array.prototype.find.apply({}, /\d+/, [])', TypeError);
+assertThrows('Array.prototype.find.apply({}, /\d+/, [])', TypeError);
 
 "success";
