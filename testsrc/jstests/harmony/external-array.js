@@ -27,83 +27,9 @@
 
 /* Rhino: This test was copied from the V8 test suite, and is used as part of the Node.js build. */
 
+load("testsrc/assert.js");
+
 // Flags: --allow-natives-syntax --expose-gc
-
-function assertSame(expected, found, name_opt) {
-    if (found === expected) {
-      if (expected !== 0 || (1 / expected) == (1 / found)) return;
-    } else if ((expected !== expected) && (found !== found)) {
-      return;
-    }
-    throw new Error('expected ' + expected + ' != ' + found);
-}
-
-function assertEquals(expected, found, name_opt) {
-    assertSame(expected, found, name_opt);
-}
-
-function assertArrayEquals(expected, found, name_opt) {
-    var start = "";
-    if (name_opt) {
-      start = name_opt + " - ";
-    }
-    assertSame(expected.length, found.length, start + "array length");
-    if (expected.length == found.length) {
-      for (var i = 0; i < expected.length; ++i) {
-        assertSame(expected[i], found[i],
-                     start + "array element at index " + i);
-      }
-    }
-  }
-
-function assertThrows(code, type_opt, cause_opt) {
-    var threwException = true;
-    try {
-      if (typeof code == 'function') {
-        code();
-      } else {
-        eval(code);
-      }
-      threwException = false;
-    } catch (e) {
-      if (typeof type_opt == 'function') {
-        assertInstanceof(e, type_opt);
-      }
-      if (arguments.length >= 3) {
-        assertEquals(e.type, cause_opt);
-      }
-      // Success.
-      return;
-    }
-    throw new Error("Did not throw exception");
-  }
-function assertTrue(value, name_opt) {
-    assertSame(true, value, name_opt);
-}
-
-function assertFalse(value, name_opt) {
-    assertSame(false, value, name_opt);
-}
-
-function assertInstanceof(obj, type) {
-    if (!(obj instanceof type)) {
-      var actualTypeName = null;
-      var actualConstructor = Object.getPrototypeOf(obj).constructor;
-      if (typeof actualConstructor == "function") {
-        actualTypeName = actualConstructor.name || String(actualConstructor);
-      }
-      throw new Error("Object <" + PrettyPrint(obj) + "> is not an instance of <" +
-               (type.name || type) + ">" +
-               (actualTypeName ? " but of < " + actualTypeName + ">" : ""));
-    }
-}
-
-// Helper
-function assertInstance(o, f) {
-  //assertSame(o.constructor, f);
-  assertInstanceof(o, f);
-}
-
 // This is a regression test for overlapping key and value registers.
 function f(a) {
   a[0] = 0;
@@ -128,58 +54,58 @@ function abfunc1() {
 
 // Test derivation from an ArrayBuffer
 var ab = new ArrayBuffer(12);
-assertInstance(ab, ArrayBuffer);
+assertInstanceof(ab, ArrayBuffer);
 var derived_uint8 = new Uint8Array(ab);
-assertInstance(derived_uint8, Uint8Array);
+assertInstanceof(derived_uint8, Uint8Array);
 assertSame(ab, derived_uint8.buffer);
 assertEquals(12, derived_uint8.length);
 assertEquals(12, derived_uint8.byteLength);
 assertEquals(0, derived_uint8.byteOffset);
 assertEquals(1, derived_uint8.BYTES_PER_ELEMENT);
 var derived_uint8_2 = new Uint8Array(ab,7);
-assertInstance(derived_uint8_2, Uint8Array);
+assertInstanceof(derived_uint8_2, Uint8Array);
 assertSame(ab, derived_uint8_2.buffer);
 assertEquals(5, derived_uint8_2.length);
 assertEquals(5, derived_uint8_2.byteLength);
 assertEquals(7, derived_uint8_2.byteOffset);
 assertEquals(1, derived_uint8_2.BYTES_PER_ELEMENT);
 var derived_int16 = new Int16Array(ab);
-assertInstance(derived_int16, Int16Array);
+assertInstanceof(derived_int16, Int16Array);
 assertSame(ab, derived_int16.buffer);
 assertEquals(6, derived_int16.length);
 assertEquals(12, derived_int16.byteLength);
 assertEquals(0, derived_int16.byteOffset);
 assertEquals(2, derived_int16.BYTES_PER_ELEMENT);
 var derived_int16_2 = new Int16Array(ab,6);
-assertInstance(derived_int16_2, Int16Array);
+assertInstanceof(derived_int16_2, Int16Array);
 assertSame(ab, derived_int16_2.buffer);
 assertEquals(3, derived_int16_2.length);
 assertEquals(6, derived_int16_2.byteLength);
 assertEquals(6, derived_int16_2.byteOffset);
 assertEquals(2, derived_int16_2.BYTES_PER_ELEMENT);
 var derived_uint32 = new Uint32Array(ab);
-assertInstance(derived_uint32, Uint32Array);
+assertInstanceof(derived_uint32, Uint32Array);
 assertSame(ab, derived_uint32.buffer);
 assertEquals(3, derived_uint32.length);
 assertEquals(12, derived_uint32.byteLength);
 assertEquals(0, derived_uint32.byteOffset);
 assertEquals(4, derived_uint32.BYTES_PER_ELEMENT);
 var derived_uint32_2 = new Uint32Array(ab,4);
-assertInstance(derived_uint32_2, Uint32Array);
+assertInstanceof(derived_uint32_2, Uint32Array);
 assertSame(ab, derived_uint32_2.buffer);
 assertEquals(2, derived_uint32_2.length);
 assertEquals(8, derived_uint32_2.byteLength);
 assertEquals(4, derived_uint32_2.byteOffset);
 assertEquals(4, derived_uint32_2.BYTES_PER_ELEMENT);
 var derived_uint32_3 = new Uint32Array(ab,4,1);
-assertInstance(derived_uint32_3, Uint32Array);
+assertInstanceof(derived_uint32_3, Uint32Array);
 assertSame(ab, derived_uint32_3.buffer);
 assertEquals(1, derived_uint32_3.length);
 assertEquals(4, derived_uint32_3.byteLength);
 assertEquals(4, derived_uint32_3.byteOffset);
 assertEquals(4, derived_uint32_3.BYTES_PER_ELEMENT);
 var derived_float64 = new Float64Array(ab,0,1);
-assertInstance(derived_float64, Float64Array);
+assertInstanceof(derived_float64, Float64Array);
 assertSame(ab, derived_float64.buffer);
 assertEquals(1, derived_float64.length);
 assertEquals(8, derived_float64.byteLength);
@@ -230,7 +156,7 @@ a = new Float64Array(7);
 assertSame(a.buffer, (new Uint16Array(a.buffer)).buffer);
 assertSame(a.buffer, (new Float32Array(a.buffer,4)).buffer);
 assertSame(a.buffer, (new Int8Array(a.buffer,3,51)).buffer);
-assertInstance(a.buffer, ArrayBuffer);
+assertInstanceof(a.buffer, ArrayBuffer);
 assertTrue(a.buffer instanceof ArrayBuffer);
 
 // Test the correct behavior of the |BYTES_PER_ELEMENT| property (which is
@@ -504,24 +430,24 @@ assertTrue(isNaN(float64_array[0]));
 
 // Check handling of 0-sized buffers and arrays.
 ab = new ArrayBuffer(0);
-assertInstance(ab, ArrayBuffer);
+assertInstanceof(ab, ArrayBuffer);
 assertEquals(0, ab.byteLength);
 a = new Int8Array(ab);
-assertInstance(a, Int8Array);
+assertInstanceof(a, Int8Array);
 assertEquals(0, a.byteLength);
 assertEquals(0, a.length);
 a[0] = 1;
 assertEquals(undefined, a[0]);
 ab = new ArrayBuffer(16);
-assertInstance(ab, ArrayBuffer);
+assertInstanceof(ab, ArrayBuffer);
 a = new Float32Array(ab,4,0);
-assertInstance(a, Float32Array);
+assertInstanceof(a, Float32Array);
 assertEquals(0, a.byteLength);
 assertEquals(0, a.length);
 a[0] = 1;
 assertEquals(undefined, a[0]);
 a = new Uint16Array(0);
-assertInstance(a, Uint16Array);
+assertInstanceof(a, Uint16Array);
 assertEquals(0, a.byteLength);
 assertEquals(0, a.length);
 a[0] = 1;
@@ -530,83 +456,83 @@ assertEquals(undefined, a[0]);
 
 // Check construction from arrays.
 a = new Uint32Array([]);
-assertInstance(a, Uint32Array);
+assertInstanceof(a, Uint32Array);
 assertEquals(0, a.length);
 assertEquals(0, a.byteLength);
 assertEquals(0, a.buffer.byteLength);
 assertEquals(4, a.BYTES_PER_ELEMENT);
-assertInstance(a.buffer, ArrayBuffer);
+assertInstanceof(a.buffer, ArrayBuffer);
 a = new Uint16Array([1,2,3]);
-assertInstance(a, Uint16Array);
+assertInstanceof(a, Uint16Array);
 assertEquals(3, a.length);
 assertEquals(6, a.byteLength);
 assertEquals(6, a.buffer.byteLength);
 assertEquals(2, a.BYTES_PER_ELEMENT);
 assertEquals(1, a[0]);
 assertEquals(3, a[2]);
-assertInstance(a.buffer, ArrayBuffer);
+assertInstanceof(a.buffer, ArrayBuffer);
 a = new Uint32Array(a);
-assertInstance(a, Uint32Array);
+assertInstanceof(a, Uint32Array);
 assertEquals(3, a.length);
 assertEquals(12, a.byteLength);
 assertEquals(12, a.buffer.byteLength);
 assertEquals(4, a.BYTES_PER_ELEMENT);
 assertEquals(1, a[0]);
 assertEquals(3, a[2]);
-assertInstance(a.buffer, ArrayBuffer);
+assertInstanceof(a.buffer, ArrayBuffer);
 
 // Check subarrays.
 a = new Uint16Array([1,2,3,4,5,6]);
 aa = a.subarray(3);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(3, aa.length);
 assertEquals(6, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
 assertSame(a.buffer, aa.buffer);
 aa = a.subarray(3,5);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(2, aa.length);
 assertEquals(4, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
 assertSame(a.buffer, aa.buffer);
 aa = a.subarray(4,8);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(2, aa.length);
 assertEquals(4, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
 assertSame(a.buffer, aa.buffer);
 aa = a.subarray(9);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(0, aa.length);
 assertEquals(0, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
 assertSame(a.buffer, aa.buffer);
 aa = a.subarray(-4);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(4, aa.length);
 assertEquals(8, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
 assertSame(a.buffer, aa.buffer);
 aa = a.subarray(-3,-1);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(2, aa.length);
 assertEquals(4, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
 assertSame(a.buffer, aa.buffer);
 aa = a.subarray(3,2);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(0, aa.length);
 assertEquals(0, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
 assertSame(a.buffer, aa.buffer);
 aa = a.subarray(-3,-4);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(0, aa.length);
 assertEquals(0, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
 assertSame(a.buffer, aa.buffer);
 aa = a.subarray(0,-8);
-assertInstance(aa, Uint16Array);
+assertInstanceof(aa, Uint16Array);
 assertEquals(0, aa.length);
 assertEquals(0, aa.byteLength);
 assertEquals(2, aa.BYTES_PER_ELEMENT);
@@ -622,22 +548,22 @@ assertThrows(function(){ a.subarray.call([], 0) });
 b = ArrayBuffer(100)
 a = Int8Array(b, 5, 77)
 // Rhino: seems to work differently
-//assertInstance(b, ArrayBuffer)
-//assertInstance(a, Int8Array)
+//assertInstanceof(b, ArrayBuffer)
+//assertInstanceof(a, Int8Array)
 assertSame(b, a.buffer)
 assertEquals(5, a.byteOffset)
 assertEquals(77, a.byteLength)
 b = ArrayBuffer.call(null, 10)
 a = Uint16Array.call(null, b, 2, 4)
-//assertInstance(b, ArrayBuffer)
-//assertInstance(a, Uint16Array)
+//assertInstanceof(b, ArrayBuffer)
+//assertInstanceof(a, Uint16Array)
 assertSame(b, a.buffer)
 assertEquals(2, a.byteOffset)
 assertEquals(8, a.byteLength)
 b = ArrayBuffer.apply(null, [1000])
 a = Float32Array.apply(null, [b, 128, 1])
-//assertInstance(b, ArrayBuffer)
-//assertInstance(a, Float32Array)
+//assertInstanceof(b, ArrayBuffer)
+//assertInstanceof(a, Float32Array)
 assertSame(b, a.buffer)
 assertEquals(128, a.byteOffset)
 assertEquals(4, a.byteLength)

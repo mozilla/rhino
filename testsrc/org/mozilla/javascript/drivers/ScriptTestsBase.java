@@ -15,14 +15,21 @@ import org.mozilla.javascript.tools.shell.Global;
 import java.io.FileReader;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+
+/**
+ * This class is used for creating test scripts that are loaded from JS scripts. Each test must
+ * be represented by a class that extends this class, and has a "RhinoTest" annotation at the
+ * class level that returns the file name of the script to execute.
+ */
 
 @RunWith(BlockJUnit4ClassRunner.class)
-public abstract class JsTestsBase2 {
+public abstract class ScriptTestsBase {
 
   private Object executeRhinoScript(int optLevel) {
-    String suiteName = this.getClass().getAnnotation(RhinoTest.class).value();
+    RhinoTest anno = this.getClass().getAnnotation(RhinoTest.class);
+    assertNotNull(anno);
+    String suiteName = anno.value();
 
     FileReader script = null;
     Context cx = Context.enter();

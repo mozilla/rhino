@@ -29,6 +29,8 @@
 
 // This is a regression test for overlapping key and value registers.
 
+load("testsrc/assert.js");
+
 function assertSame(expected, found, name_opt) {
     if (found === expected) {
       if (expected !== 0 || (1 / expected) == (1 / found)) return;

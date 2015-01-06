@@ -25,82 +25,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-function assertSame(expected, found, name_opt) {
-    if (found === expected) {
-      if (expected !== 0 || (1 / expected) == (1 / found)) return;
-    } else if ((expected !== expected) && (found !== found)) {
-      return;
-    }
-    var msg = 'expected ' + expected + ' != ' + found;
-    if (name_opt) {
-        msg += ' ' + name_opt;
-    }
-    throw new Error(msg);
-}
-
-function assertEquals(expected, found, name_opt) {
-    assertSame(expected, found, name_opt);
-}
-
-function assertArrayEquals(expected, found, name_opt) {
-    var start = "";
-    if (name_opt) {
-      start = name_opt + " - ";
-    }
-    assertSame(expected.length, found.length, start + "array length");
-    if (expected.length == found.length) {
-      for (var i = 0; i < expected.length; ++i) {
-        assertSame(expected[i], found[i],
-                     start + "array element at index " + i);
-      }
-    }
-  }
-
-function assertThrows(code, type_opt, cause_opt) {
-    var threwException = true;
-    try {
-      if (typeof code == 'function') {
-        code();
-      } else {
-        eval(code);
-      }
-      threwException = false;
-    } catch (e) {
-      if (typeof type_opt == 'function') {
-        assertInstanceof(e, type_opt);
-      }
-      if (arguments.length >= 3) {
-        assertEquals(e.type, cause_opt);
-      }
-      // Success.
-      return;
-    }
-    throw new Error("Did not throw exception");
-  }
-function assertTrue(value, name_opt) {
-    assertSame(true, value, name_opt);
-}
-
-function assertFalse(value, name_opt) {
-    assertSame(false, value, name_opt);
-}
-
-function assertInstanceof(obj, type) {
-    if (!(obj instanceof type)) {
-      var actualTypeName = null;
-      var actualConstructor = Object.getPrototypeOf(obj).constructor;
-      if (typeof actualConstructor == "function") {
-        actualTypeName = actualConstructor.name || String(actualConstructor);
-      }
-      throw new Error("Object <" + obj + "> is not an instance of <" +
-               (type.name || type) + ">" +
-               (actualTypeName ? " but of < " + actualTypeName + ">" : ""));
-    }
-}
-
 // Flags: --harmony-tostring
 
 // ArrayBuffer
+
+load("testsrc/assert.js");
 
 function TestByteLength(param, expectedByteLength) {
   var ab = new ArrayBuffer(param);

@@ -7,7 +7,7 @@ package org.mozilla.javascript.tests.harmony;
 import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
-@RhinoTest("testsrc/jstests/harmony/array-findIndex.js")
-public class ArrayFindIndexTest extends ScriptTestsBase
+@RhinoTest("testsrc/jstests/harmony/typedarrays.js")
+public class TypedArraysTest extends ScriptTestsBase
 {
 }
