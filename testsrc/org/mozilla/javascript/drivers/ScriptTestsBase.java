@@ -31,11 +31,19 @@ public abstract class ScriptTestsBase {
     assertNotNull(anno);
     String suiteName = anno.value();
 
+    int jsVersion = Context.VERSION_1_8;
+    LanguageVersion jsVersionAnnotation = this.getClass().getAnnotation(LanguageVersion.class);
+    if (jsVersionAnnotation != null) {
+      jsVersion = jsVersionAnnotation.value();
+      Context.checkLanguageVersion(jsVersion);
+    }
+
     FileReader script = null;
     Context cx = Context.enter();
     try {
       script = new FileReader(suiteName);
       cx.setOptimizationLevel(optLevel);
+      cx.setLanguageVersion(jsVersion);
 
       Global global = new Global(cx);
 
