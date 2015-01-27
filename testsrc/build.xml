@@ -180,6 +180,7 @@
           </dirset>
         </sourcepath>
         <html outfile="${coverage.report.dir}/index.html"/>
+        <xml outfile="${coverage.report.dir}/emma.xml"/>
       </report>
     </emma>
   	<fail if="junitFailed" message="JUnit test(s) failed"/>
