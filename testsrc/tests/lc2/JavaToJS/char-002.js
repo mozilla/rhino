@@ -52,11 +52,7 @@ var v;
 if ( os.startsWith( "Windows" ) ) {
   v = 92;
 } else {
-  if ( os.startsWith( "Mac" ) ) {
-    v = 58;
-  } else {
-    v = 47;
-  }
+  v = 47;
 }
 
 java_array[i] = new JavaValue(  java.io.File.separatorChar   );
