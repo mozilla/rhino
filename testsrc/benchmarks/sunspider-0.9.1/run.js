@@ -52,14 +52,18 @@ function tDist(n) {
     return (n >= tDistribution.length) ? 1.96 : tDistribution[n];
 }
 
-function timeDisplay(times) {
+function timeMean(times) {
     // only consider last <count> iterations
     times = times.slice(-count);
     var sum = 0;
     for (var i = 0; i < count; i++) {
         sum += times[i];
     }
-    var mean = sum / count;
+    return sum / count;
+}
+
+function timeDisplay(times) {
+    var mean = timeMean(times);
     var deltaSquared = 0;
     for (var i = 0; i < count; i++) {
         deltaSquared += Math.pow(times[i] - mean, 2)
@@ -73,22 +77,35 @@ function timeDisplay(times) {
     return lpad(mean.toFixed(1), 8) + "ms +- " + lpad(percent, 4) + "%";
 }
 
+// Print a measurement for the Junit "Measurement Plots" Plugin
+
+function printMeasurement(name, value) {
+  print("<measurement><name>" + RUN_NAME + '-' + name +
+      "</name><value>" + timeMean(value) +
+      "</value></measurement>");
+}
+
 // calculate mean, variance and display 95% CI
 
+/*
 print("============================================");
 print("RESULTS (means and 95% confidence intervals)");
 print("--------------------------------------------");
 print(rpad("Total:", 22) + timeDisplay(results.times));
 print("--------------------------------------------");
+*/
+printMeasurement('total', results.times);
 
 for (var p in results.categories) {
     if (!results.categories.hasOwnProperty(p)) continue;
     var category = results.categories[p];
-    print(rpad("  " + category.name + ":", 22) + timeDisplay(category.times));
+    //print(rpad("  " + category.name + ":", 22) + timeDisplay(category.times));
+    printMeasurement(category.name, category.times);
     for (var q in category.tests) {
         if (!category.tests.hasOwnProperty(q)) continue;
         var test = category.tests[q];
-        print(rpad("    " + test.name + ":", 22) + timeDisplay(test.times));
+        //print(rpad("    " + test.name + ":", 22) + timeDisplay(test.times));
+        printMeasurement(test.name, test.times);
     }
 }
 

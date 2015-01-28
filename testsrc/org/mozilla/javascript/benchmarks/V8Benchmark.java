@@ -24,6 +24,7 @@ public class V8Benchmark
             cx.setLanguageVersion(Context.VERSION_1_8);
             cx.setOptimizationLevel(optLevel);
             Global root = new Global(cx);
+            root.put("RUN_NAME", root, "V8-Benchmark-" + optLevel);
             cx.evaluateReader(root, rdr, TEST_SRC, 1, null);
         } finally {
             rdr.close();

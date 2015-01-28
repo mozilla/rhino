@@ -195,14 +195,15 @@ BenchmarkSuite.prototype.NotifyError = function(error) {
   }
 }
 
+var MIN_TIME = 10000;
 
-// Runs a single benchmark for at least a second and computes the
+// Runs a single benchmark for at least MIN_TIME milliseconds and computes the
 // average time it takes to run a single iteration.
 BenchmarkSuite.prototype.RunSingleBenchmark = function(benchmark, data) {
   function Measure(data) {
     var elapsed = 0;
     var start = new Date();
-    for (var n = 0; elapsed < 1000; n++) {
+    for (var n = 0; elapsed < MIN_TIME; n++) {
       benchmark.run();
       elapsed = new Date() - start;
     }
@@ -221,7 +222,7 @@ BenchmarkSuite.prototype.RunSingleBenchmark = function(benchmark, data) {
     Measure(data);
     // If we've run too few iterations, we continue for another second.
     if (data.runs < 32) return data;
-    var usec = (data.elapsed * 1000) / data.runs;
+    var usec = (data.elapsed * MIN_TIME) / data.runs;
     this.NotifyStep(new BenchmarkResult(benchmark, usec));
     return null;
   }

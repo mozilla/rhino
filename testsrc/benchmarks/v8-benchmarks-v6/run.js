@@ -37,8 +37,15 @@ load('splay.js');
 
 var success = true;
 
+function printMeasurement(name, value) {
+  print("<measurement><name>" + name +
+      "</name><value>" + value +
+      "</value></measurement>");
+}
+
 function PrintResult(name, result) {
-  print(name + ': ' + result);
+  printMeasurement(RUN_NAME + ' ' + name, result);
+  //print(name + ': ' + result);
 }
 
 
@@ -50,20 +57,18 @@ function PrintError(name, error) {
 
 function PrintScore(score) {
   if (success) {
-    print('----');
-    print('Score (version ' + BenchmarkSuite.version + '): ' + score);
+    //print('Score (version ' + BenchmarkSuite.version + '): ' + score);
+    printMeasurement(RUN_NAME + ' Score', score);
   }
 }
 
 
 // Run more than once to warm up JVM
-var runs = 5;
+var runs = 1;
 
 for (var i = 1; i <= runs; i++) {
-  print('Run ' + i + ' out of ' + runs + ':');
   BenchmarkSuite.RunSuites({ NotifyResult: PrintResult,
                              NotifyError: PrintError,
                              NotifyScore: PrintScore });
-  print('');
   gc();
 }

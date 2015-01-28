@@ -164,6 +164,7 @@
   </target>
 
   <target name="junit-benchmarks" depends="junit-compile">
+    <mkdir dir="build/test/benchmark"/>
     <junit printsummary="on" fork="true" forkmode="perTest"
            maxmemory="${test.vm.mx}" showoutput="true"
            dir="testsrc/benchmarks/sunspider-0.9.1">
@@ -173,7 +174,8 @@
         <pathelement path="lib/junit.jar" />
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
-      <batchtest todir="build/test">
+
+      <batchtest todir="build/test/benchmark">
         <fileset dir="${test.classes}" includes="**/benchmarks/SunSpiderBenchmark.class"/>
       </batchtest>
       <formatter type="xml"/>
@@ -191,7 +193,7 @@
         <pathelement path="lib/junit.jar" />
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
-      <batchtest todir="build/test">
+      <batchtest todir="build/test/benchmark">
         <fileset dir="${test.classes}" includes="**/benchmarks/V8Benchmark.class"/>
       </batchtest>
       <formatter type="xml"/>
@@ -199,6 +201,12 @@
         <disable/>
       </assertions>
     </junit>
+
+    <mkdir dir="build/test/benchmark/report"/>
+    <junitreport todir="build/test/benchmark/report">
+       <fileset dir="build/test/benchmark" includes="*.xml"/>
+       <report todir="build/test/benchmark/report"/>
+    </junitreport>
   </target>
 
   <target name="junit-coveragereport" depends="junit">
