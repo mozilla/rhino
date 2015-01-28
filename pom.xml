@@ -74,8 +74,8 @@
     <assembly.jar>${rhino.jar}</assembly.jar>
     <assembly-14.jar>${rhino-14.jar}</assembly-14.jar>
     <!-- test configuration -->
-    <test.library.dir>${project.build.testOutputDirectory}/tests</test.library.dir>
-    <test.jstests.jar>${test.library.dir}/src/jstests.jar</test.jstests.jar>
+    <test.library.dir>${project.basedir}/testsrc/tests</test.library.dir>
+    <test.jstests.jar>${test.library.dir}/lib/jstests.jar</test.jstests.jar>
     <test.timeout>60000</test.timeout>
     <test.skip.mozsuite>false</test.skip.mozsuite>
     <test.excludes>nothing</test.excludes>
@@ -259,7 +259,6 @@
         <includes>
           <include>*.tests</include>
           <include>*.skip</include>
-          <include>tests.tar.gz</include>
           <include>doctests/*</include>
           <include>jstests/*</include>
           <include>org/mozilla/javascript/tests/**/*.js</include>
@@ -373,21 +372,6 @@
                   <fileset dir="${project.basedir}/deprecatedsrc"
                       includes="org/mozilla/javascript/xml/impl/xmlbeans/*.java"/>
                 </copy>
-              </target>
-            </configuration>
-          </execution>
-          <execution>
-            <id>antrun-unziptests</id>
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <target unless="${test.skip.mozsuite}">
-                <gunzip src="${project.build.testOutputDirectory}/tests.tar.gz"
-                    dest="${project.build.testOutputDirectory}/tests.tar"/>
-                <untar src="${project.build.testOutputDirectory}/tests.tar"
-                    dest="${project.build.testOutputDirectory}"/>
               </target>
             </configuration>
           </execution>
@@ -582,6 +566,7 @@
             <include>xmlimplsrc/**</include>
           </includes>
           <excludes>
+            <exclude>testsrc/tests/**</exclude>
             <!-- Files without license header -->
             <exclude>**/manifest</exclude>
             <exclude>testsrc/*.tests</exclude>
@@ -628,6 +613,7 @@
           <includes>
             <include>**/tests/**/*Test.java</include>
             <include>**/StandardTests.java</include>
+            <include>**/benchmarks/*</include>
           </includes>
           <excludes>
             <exclude>${test.excludes}</exclude>

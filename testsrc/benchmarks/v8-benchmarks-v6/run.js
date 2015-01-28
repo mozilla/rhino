@@ -25,15 +25,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+function loadFile(name) {
+  load(TEST_DIR + '/' + name);
+}
 
-load('base.js');
-load('richards.js');
-load('deltablue.js');
-load('crypto.js');
-load('raytrace.js');
-load('earley-boyer.js');
-load('regexp.js');
-load('splay.js');
+loadFile('base.js');
+loadFile('richards.js');
+loadFile('deltablue.js');
+loadFile('crypto.js');
+loadFile('raytrace.js');
+loadFile('earley-boyer.js');
+loadFile('regexp.js');
+loadFile('splay.js');
 
 var success = true;
 
