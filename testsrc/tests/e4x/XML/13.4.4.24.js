@@ -20,9 +20,19 @@ y = x.namespaceDeclarations();
 TEST(2, 2, y.length);
 TEST(3, "object", typeof(y[0]));
 TEST(4, "object", typeof(y[1]));
-TEST(5, "foo", y[0].prefix);
-TEST(6, Namespace("http://foo/"), y[0]);
-TEST(7, "bar", y[1].prefix);
-TEST(8, Namespace("http://bar/"), y[1]);
+
+// Spec section is silent on whether these declarations must go into the array in the order
+// in which they are in the file. We have to test differently here because some versions of Java
+// pick different versions.
+
+TEST(5, true, y.some(function(e) {
+  return ((e.prefix === 'foo') &&
+          (Namespace("http://foo/") == e));
+}));
+
+TEST(6, true, y.some(function(e) {
+  return ((e.prefix === 'bar') &&
+          (Namespace("http://bar/") == e));
+}));
 
 END();
