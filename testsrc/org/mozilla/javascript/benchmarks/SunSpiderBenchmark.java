@@ -6,6 +6,7 @@
 package org.mozilla.javascript.benchmarks;
 
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.tools.shell.Global;
@@ -26,7 +27,7 @@ public class SunSpiderBenchmark
 
     private static final HashMap<Integer, String> results = new HashMap<Integer, String>();
 
-    private void runTest(int optLevel)
+    private static void runTest(int optLevel)
         throws IOException
     {
         FileInputStream srcFile = new FileInputStream(TEST_SRC);
@@ -46,6 +47,13 @@ public class SunSpiderBenchmark
             rdr.close();
             srcFile.close();
         }
+    }
+
+    @BeforeClass
+    public static void warmUp()
+        throws IOException
+    {
+        runTest(1);
     }
 
     @Test
