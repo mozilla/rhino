@@ -39,6 +39,7 @@ loadFile('regexp.js');
 loadFile('splay.js');
 
 var success = true;
+var lastResult = 'error';
 
 function printMeasurement(name, value) {
   print("<measurement><name>" + name +
@@ -47,8 +48,8 @@ function printMeasurement(name, value) {
 }
 
 function PrintResult(name, result) {
-  printMeasurement(RUN_NAME + ' ' + name, result);
-  //print(name + ': ' + result);
+  //printMeasurement(RUN_NAME + ' ' + name, result);
+  print(name + ': ' + result);
 }
 
 
@@ -57,11 +58,11 @@ function PrintError(name, error) {
   success = false;
 }
 
-
 function PrintScore(score) {
   if (success) {
-    //print('Score (version ' + BenchmarkSuite.version + '): ' + score);
-    printMeasurement(RUN_NAME + ' Score', score);
+    lastResult = score;
+    print('Score (version ' + BenchmarkSuite.version + '): ' + score);
+    //printMeasurement(RUN_NAME + ' Score', score);
   }
 }
 
@@ -75,3 +76,6 @@ for (var i = 1; i <= runs; i++) {
                              NotifyScore: PrintScore });
   gc();
 }
+
+lastResult;
+

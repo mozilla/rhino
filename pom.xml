@@ -79,6 +79,7 @@
     <test.timeout>60000</test.timeout>
     <test.skip.mozsuite>false</test.skip.mozsuite>
     <test.excludes>nothing</test.excludes>
+    <test.benchmarks>nothing</test.benchmarks>
     <!-- -->
     <last.release.tag>Rhino1_7R4_RELEASE</last.release.tag>
     <next.release.tag>master</next.release.tag>
@@ -91,6 +92,19 @@
       <properties>
         <test.skip.mozsuite>true</test.skip.mozsuite>
         <test.excludes>**/MozillaSuiteTest.java</test.excludes>
+      </properties>
+    </profile>
+    <!-- Leave benchmarks out unless we ask for them -->
+    <profile>
+      <id>add-benchmarks</id>
+      <activation>
+        <property>
+          <name>run.benchmarks</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <test.benchmarks>**/benchmarks/*</test.benchmarks>
       </properties>
     </profile>
     <!-- Skip compilation of XMLBeans E4X implementation -->
@@ -613,7 +627,7 @@
           <includes>
             <include>**/tests/**/*Test.java</include>
             <include>**/StandardTests.java</include>
-            <include>**/benchmarks/*</include>
+            <include>${test.benchmarks}</include>
           </includes>
           <excludes>
             <exclude>${test.excludes}</exclude>
