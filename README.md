@@ -8,7 +8,24 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 ## Building
 
-[![Build Status](http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino)](http://ci.apigee.io/job/Mozilla%20Rhino)
+### Status of "master" branch
+
+<table>
+<tr><td><b>Java 6</b></td><td>
+  <a href="http://ci.apigee.io/job/Mozilla%20Rhino%20Java%206">
+    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino%20Java%206"/>
+  </a></td></tr>
+<tr><td><b>Java 7</b></td><td>
+  <a href="http://ci.apigee.io/job/Mozilla%20Rhino">
+    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino"/>
+  </a></td></tr>
+<tr><td><b>Java 8</b></td><td>
+  <a href="http://ci.apigee.io/job/Mozilla%20Rhino%20Java%208">
+    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino%20Java%208"/>
+  </a></td></tr>
+</table>
+
+### How to Build
 
 Rhino builds with Ant. Here are some useful tasks:
 
