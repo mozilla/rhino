@@ -8,7 +8,11 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 ## Releases
 
-See here for [Release Notes](./RELEASE-NOTES)
+<table>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7R5_RELEASE">Rhino 1.7R5</a></td><td>January 29, 2015</td></tr>
+</table>
+
+See here for [Release Notes](./RELEASE-NOTES.md)
 
 ## Building
 
