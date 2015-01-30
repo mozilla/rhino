@@ -193,6 +193,7 @@
              version="true"
              author="true"
              windowtitle="${Name}" />
+    <zip destfile="${dist.dir}/javadoc.zip" basedir="${dist.dir}/javadoc"/>
   </target>
 
   <target name="dev-javadoc" depends="init">

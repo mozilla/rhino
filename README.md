@@ -6,6 +6,10 @@ Rhino is an implementation of JavaScript in Java.
 
 Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
+## Releases
+
+See here for [Release Notes](./RELEASE-NOTES)
+
 ## Building
 
 ### Status of "master" branch
