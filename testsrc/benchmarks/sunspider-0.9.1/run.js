@@ -87,25 +87,21 @@ function printMeasurement(name, value) {
 
 // calculate mean, variance and display 95% CI
 
-/*
 print("============================================");
 print("RESULTS (means and 95% confidence intervals)");
 print("--------------------------------------------");
 print(rpad("Total:", 22) + timeDisplay(results.times));
 print("--------------------------------------------");
-*/
-printMeasurement('total', results.times);
 
 for (var p in results.categories) {
     if (!results.categories.hasOwnProperty(p)) continue;
     var category = results.categories[p];
-    //print(rpad("  " + category.name + ":", 22) + timeDisplay(category.times));
-    printMeasurement(category.name, category.times);
+    print(rpad("  " + category.name + ":", 22) + timeDisplay(category.times));
     for (var q in category.tests) {
         if (!category.tests.hasOwnProperty(q)) continue;
         var test = category.tests[q];
-        //print(rpad("    " + test.name + ":", 22) + timeDisplay(test.times));
-        printMeasurement(test.name, test.times);
+        print(rpad("    " + test.name + ":", 22) + timeDisplay(test.times));
     }
 }
 
+timeMean(results.times);

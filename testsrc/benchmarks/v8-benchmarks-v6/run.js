@@ -36,6 +36,7 @@ load('regexp.js');
 load('splay.js');
 
 var success = true;
+var lastScore;
 
 function printMeasurement(name, value) {
   print("<measurement><name>" + name +
@@ -44,8 +45,8 @@ function printMeasurement(name, value) {
 }
 
 function PrintResult(name, result) {
-  printMeasurement(RUN_NAME + ' ' + name, result);
-  //print(name + ': ' + result);
+  //printMeasurement(RUN_NAME + ' ' + name, result);
+  print(name + ': ' + result);
 }
 
 
@@ -54,17 +55,16 @@ function PrintError(name, error) {
   success = false;
 }
 
-
 function PrintScore(score) {
+  lastScore = score;
   if (success) {
-    //print('Score (version ' + BenchmarkSuite.version + '): ' + score);
-    printMeasurement(RUN_NAME + ' Score', score);
+    print('Score (version ' + BenchmarkSuite.version + '): ' + score);
   }
 }
 
-
 // Run more than once to warm up JVM
 var runs = 1;
+
 
 for (var i = 1; i <= runs; i++) {
   BenchmarkSuite.RunSuites({ NotifyResult: PrintResult,
@@ -72,3 +72,5 @@ for (var i = 1; i <= runs; i++) {
                              NotifyScore: PrintScore });
   gc();
 }
+
+lastScore;
