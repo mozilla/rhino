@@ -7,19 +7,19 @@ js> var str = Error.prototype.toString
 js> str.call(new TypeError("msg"))
 TypeError: msg
 js> str.call(new TypeError()) // message is initialised to ''
-TypeError: 
+TypeError
 js> str.call(new Error("msg"))
 Error: msg
 js> str.call(new Error()) // message is initialised to ''
-Error: 
+Error
 js> str.call({name:"my error", message:"my message"})
 my error: my message
-js> str.call({}) === undefined
-true
-js> str.call({name:"no message defined"}) === undefined
-true
-js> str.call({name:"message is undefined", message:undefined}) === undefined
-true
+js> str.call({})
+Error
+js> str.call({name:"no message defined"})
+no message defined
+js> str.call({name:"message is undefined", message:undefined})
+message is undefined
 js> str.call({name:"null message", message:null})
 null message: null
 js> str.call({message:"no name defined"})

@@ -156,7 +156,7 @@ final class NativeString extends IdScriptableObject
           case Id_equalsIgnoreCase:  arity=1; s="equalsIgnoreCase";  break;
           case Id_match:             arity=1; s="match";             break;
           case Id_search:            arity=1; s="search";            break;
-          case Id_replace:           arity=1; s="replace";           break;
+          case Id_replace:           arity=2; s="replace";           break;
           case Id_localeCompare:     arity=1; s="localeCompare";     break;
           case Id_toLocaleLowerCase: arity=0; s="toLocaleLowerCase"; break;
           case Id_toLocaleUpperCase: arity=0; s="toLocaleUpperCase"; break;
@@ -601,35 +601,32 @@ final class NativeString extends IdScriptableObject
     }
 
     private static CharSequence js_slice(CharSequence target, Object[] args) {
-        if (args.length != 0) {
-            double begin = ScriptRuntime.toInteger(args[0]);
-            double end;
-            int length = target.length();
-            if (begin < 0) {
-                begin += length;
-                if (begin < 0)
-                    begin = 0;
-            } else if (begin > length) {
-                begin = length;
-            }
-
-            if (args.length == 1) {
-                end = length;
-            } else {
-                end = ScriptRuntime.toInteger(args[1]);
-                if (end < 0) {
-                    end += length;
-                    if (end < 0)
-                        end = 0;
-                } else if (end > length) {
-                    end = length;
-                }
-                if (end < begin)
-                    end = begin;
-            }
-            return target.subSequence((int) begin, (int) end);
+        double begin = args.length < 1 ? 0 : ScriptRuntime.toInteger(args[0]);
+        double end;
+        int length = target.length();
+        if (begin < 0) {
+            begin += length;
+            if (begin < 0)
+                begin = 0;
+        } else if (begin > length) {
+            begin = length;
         }
-        return target;
+
+        if (args.length < 2 || args[1] == Undefined.instance) {
+            end = length;
+        } else {
+            end = ScriptRuntime.toInteger(args[1]);
+            if (end < 0) {
+                end += length;
+                if (end < 0)
+                    end = 0;
+            } else if (end > length) {
+                end = length;
+            }
+            if (end < begin)
+                end = begin;
+        }
+        return target.subSequence((int) begin, (int) end);
     }
 
 // #string_id_map#

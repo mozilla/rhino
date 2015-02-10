@@ -290,6 +290,11 @@ public abstract class IdScriptableObject extends ScriptableObject
         super(scope, prototype);
     }
 
+    protected final boolean defaultHas(String name)
+    {
+        return super.has(name, this);
+    }
+
     protected final Object defaultGet(String name)
     {
         return super.get(name, this);

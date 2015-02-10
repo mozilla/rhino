@@ -139,7 +139,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     NativeRegExp(Scriptable scope, RECompiled regexpCompiled)
     {
         this.re = regexpCompiled;
-        this.lastIndex = 0;
+        this.lastIndex = 0d;
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
     }
 
@@ -183,12 +183,14 @@ public class NativeRegExp extends IdScriptableObject implements Function
             this.lastIndex = thatObj.lastIndex;
             return this;
         }
-        String s = args.length == 0 ? "" : escapeRegExp(args[0]);
+        String s = args.length == 0 || args[0] == Undefined.instance
+            ? ""
+            : escapeRegExp(args[0]);
         String global = args.length > 1 && args[1] != Undefined.instance
             ? ScriptRuntime.toString(args[1])
             : null;
         this.re = compileRE(cx, s, global, false);
-        this.lastIndex = 0;
+        this.lastIndex = 0d;
         return this;
     }
 
@@ -252,16 +254,19 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (args.length == 0) {
             str = reImpl.input;
             if (str == null) {
-                reportError("msg.no.re.input.for", toString());
+                str = ScriptRuntime.toString(Undefined.instance);
             }
         } else {
             str = ScriptRuntime.toString(args[0]);
         }
-        double d = ((re.flags & JSREG_GLOB) != 0) ? lastIndex : 0;
+        double d = 0;
+        if ((re.flags & JSREG_GLOB) != 0) {
+            d = ScriptRuntime.toInteger(lastIndex);
+        }
 
         Object rval;
         if (d < 0 || str.length() < d) {
-            lastIndex = 0;
+            lastIndex = 0d;
             rval = null;
         }
         else {
@@ -269,7 +274,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
             rval = executeRegExp(cx, scopeObj, reImpl, str, indexp, matchType);
             if ((re.flags & JSREG_GLOB) != 0) {
                 lastIndex = (rval == null || rval == Undefined.instance)
-                            ? 0 : indexp[0];
+                            ? 0d : (double)indexp[0];
             }
         }
         return rval;
@@ -283,15 +288,20 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (global != null) {
             for (int i = 0; i < global.length(); i++) {
                 char c = global.charAt(i);
+                int f = 0;
                 if (c == 'g') {
-                    flags |= JSREG_GLOB;
+                    f = JSREG_GLOB;
                 } else if (c == 'i') {
-                    flags |= JSREG_FOLD;
+                    f = JSREG_FOLD;
                 } else if (c == 'm') {
-                    flags |= JSREG_MULTILINE;
+                    f = JSREG_MULTILINE;
                 } else {
                     reportError("msg.invalid.re.flag", String.valueOf(c));
                 }
+                if ((flags & f) != 0) {
+                    reportError("msg.invalid.re.flag", String.valueOf(c));
+                }
+                flags |= f;
             }
         }
         regexp.flags = flags;
@@ -306,10 +316,19 @@ public class NativeRegExp extends IdScriptableObject implements Function
             state.result.length = length;
             state.result.flatIndex = 0;
             state.progLength += 5;
-        }
-        else
+        } else {
             if (!parseDisjunction(state))
                 return null;
+            // Need to reparse if pattern contains invalid backreferences:
+            // "Note: if the number of left parentheses is less than the number
+            // specified in \#, the \# is taken as an octal escape"
+            if (state.maxBackReference > state.parenCount) {
+                state = new CompilerState(cx, regexp.source, length, flags);
+                state.backReferenceLimit = state.parenCount;
+                if (!parseDisjunction(state))
+                    return null;
+            }
+        }
 
         regexp.program = new byte[state.progLength + 1];
         if (state.classCount != 0) {
@@ -770,9 +789,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 break;
             }
             if (!overflow) {
-                int digit = c - '0';
-                if (value < (maxValue - digit) / 10) {
-                    value = value * 10 + digit;
+                int v = value * 10 + (c - '0');
+                if (v < maxValue) {
+                    value = v;
                 } else {
                     overflow = true;
                     value = maxValue;
@@ -793,7 +812,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         char c = src[state.cp++];
         int nDigits = 2;
         int parenBaseCount = state.parenCount;
-        int num, tmp;
+        int num;
         RENode term;
         int termStart;
 
@@ -823,23 +842,21 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 /* Decimal escape */
                 case '0':
 /*
- * Under 'strict' ECMA 3, we interpret \0 as NUL and don't accept octal.
- * However, (XXX and since Rhino doesn't have a 'strict' mode) we'll just
- * behave the old way for compatibility reasons.
- * (see http://bugzilla.mozilla.org/show_bug.cgi?id=141078)
- *
+ * We're deliberately violating the ECMA 5.1 specification and allow octal
+ * escapes to follow spidermonkey and general 'web reality':
+ * http://wiki.ecmascript.org/doku.php?id=harmony:regexp_match_web_reality
+ * http://wiki.ecmascript.org/doku.php?id=strawman:match_web_reality_spec
  */
                     reportWarning(state.cx, "msg.bad.backref", "");
                     /* octal escape */
                     num = 0;
-                    while (state.cp < state.cpend) {
+                    // follow spidermonkey and allow multiple leading zeros,
+                    // e.g. let /\0000/ match the string "\0"
+                    while (num < 040 && state.cp < state.cpend) {
                         c = src[state.cp];
                         if ((c >= '0') && (c <= '7')) {
                             state.cp++;
-                            tmp = 8 * num + (c - '0');
-                            if (tmp > 0377)
-                                break;
-                            num = tmp;
+                            num = 8 * num + (c - '0');
                         }
                         else
                             break;
@@ -859,23 +876,28 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     termStart = state.cp - 1;
                     num = getDecimalValue(c, state, 0xFFFF,
                                           "msg.overlarge.backref");
-                    if (num > state.parenCount)
+                    if (num > state.backReferenceLimit)
                         reportWarning(state.cx, "msg.bad.backref", "");
                     /*
-                     * n > 9 or > count of parentheses,
-                     * then treat as octal instead.
+                     * n > count of parentheses, then treat as octal instead.
+                     * Also see note above concerning 'web reality'
                      */
-                    if ((num > 9) && (num > state.parenCount)) {
+                    if (num > state.backReferenceLimit) {
                         state.cp = termStart;
-                        num = 0;
-                        while (state.cp < state.cpend) {
+                        if (c >= '8') {
+                            // invalid octal escape, follow spidermonkey and
+                            // treat as \\8 resp. \\9
+                            c = '\\';
+                            doFlat(state, c);
+                            break;
+                        }
+                        state.cp++;
+                        num = c - '0';
+                        while (num < 040 && state.cp < state.cpend) {
                             c = src[state.cp];
                             if ((c >= '0') && (c <= '7')) {
                                 state.cp++;
-                                tmp = 8 * num + (c - '0');
-                                if (tmp > 0377)
-                                    break;
-                                num = tmp;
+                                num = 8 * num + (c - '0');
                             }
                             else
                                 break;
@@ -888,6 +910,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     state.result = new RENode(REOP_BACKREF);
                     state.result.parenIndex = num - 1;
                     state.progLength += 3;
+                    if (state.maxBackReference < num) {
+                        state.maxBackReference = num;
+                    }
                     break;
                 /* Control escape */
                 case 'f':
@@ -1728,11 +1753,11 @@ public class NativeRegExp extends IdScriptableObject implements Function
     }
 
     /*
-    *   Apply the current op against the given input to see if
-    *   it's going to match or fail. Return false if we don't
-    *   get a match, true if we do and update the state of the
-    *   input and pc if the update flag is true.
-    */
+     *   Apply the current op against the given input to see if
+     *   it's going to match or fail. Return false if we don't
+     *   get a match, true if we do and update the state of the
+     *   input and pc if the update flag is true.
+     */
     private static int simpleMatch(REGlobalData gData, String input, int op,
                                    byte[] program, int pc, int end, boolean updatecp)
     {
@@ -2588,7 +2613,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
         int attr;
         switch (id) {
           case Id_lastIndex:
-            attr = PERMANENT | DONTENUM;
+            attr = lastIndexAttr;
             break;
           case Id_source:
           case Id_global:
@@ -2620,7 +2645,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
         switch (id) {
           case Id_lastIndex:
-            return ScriptRuntime.wrapNumber(lastIndex);
+            return lastIndex;
           case Id_source:
             return new String(re.source);
           case Id_global:
@@ -2638,7 +2663,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
         switch (id) {
           case Id_lastIndex:
-            lastIndex = ScriptRuntime.toNumber(value);
+            lastIndex = value;
             return;
           case Id_source:
           case Id_global:
@@ -2650,12 +2675,22 @@ public class NativeRegExp extends IdScriptableObject implements Function
     }
 
     @Override
+    protected void setInstanceIdAttributes(int id, int attr) {
+        switch (id) {
+          case Id_lastIndex:
+            lastIndexAttr = attr;
+            return;
+        }
+        super.setInstanceIdAttributes(id, attr);
+    }
+
+    @Override
     protected void initPrototypeId(int id)
     {
         String s;
         int arity;
         switch (id) {
-          case Id_compile:  arity=1; s="compile";  break;
+          case Id_compile:  arity=2; s="compile";  break;
           case Id_toString: arity=0; s="toString"; break;
           case Id_toSource: arity=0; s="toSource"; break;
           case Id_exec:     arity=1; s="exec";     break;
@@ -2742,7 +2777,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
 // #/string_id_map#
 
     private RECompiled re;
-    double lastIndex;          /* index after last match, for //g iterator */
+    Object lastIndex = 0d;     /* index after last match, for //g iterator */
+    private int lastIndexAttr = DONTENUM | PERMANENT;
 
 }       // class NativeRegExp
 
@@ -2806,6 +2842,8 @@ class CompilerState {
         this.cp = 0;
         this.cpend = length;
         this.flags = flags;
+        this.backReferenceLimit = Integer.MAX_VALUE;
+        this.maxBackReference = 0;
         this.parenCount = 0;
         this.classCount = 0;
         this.progLength = 0;
@@ -2816,6 +2854,8 @@ class CompilerState {
     int         cpend;
     int         cp;
     int         flags;
+    int         backReferenceLimit;
+    int         maxBackReference;
     int         parenCount;
     int         parenNesting;
     int         classCount;   /* number of [] encountered */

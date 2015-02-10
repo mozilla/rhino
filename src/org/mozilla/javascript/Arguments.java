@@ -34,9 +34,6 @@ final class Arguments extends IdScriptableObject
         NativeFunction f = activation.function;
         calleeObj = f;
 
-        Scriptable topLevel = getTopLevelScope(parent);
-        constructor = getProperty(topLevel, "Object");
-
         int version = f.getLanguageVersion();
         if (version <= Context.VERSION_1_3
             && version != Context.VERSION_DEFAULT)
@@ -164,9 +161,8 @@ final class Arguments extends IdScriptableObject
         Id_callee           = 1,
         Id_length           = 2,
         Id_caller           = 3,
-        Id_constructor      = 4,
 
-        MAX_INSTANCE_ID     = Id_constructor;
+        MAX_INSTANCE_ID     = Id_caller;
 
     @Override
     protected int getMaxInstanceId()
@@ -187,7 +183,6 @@ final class Arguments extends IdScriptableObject
                 else if (c=='h') { X="length";id=Id_length; }
                 else if (c=='r') { X="caller";id=Id_caller; }
             }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
         }
@@ -198,10 +193,13 @@ final class Arguments extends IdScriptableObject
         int attr;
         switch (id) {
           case Id_callee:
+            attr = calleeAttr;
+            break;
           case Id_caller:
+            attr = callerAttr;
+            break;
           case Id_length:
-          case Id_constructor:
-            attr = DONTENUM;
+            attr = lengthAttr;
             break;
           default: throw new IllegalStateException();
         }
@@ -217,7 +215,6 @@ final class Arguments extends IdScriptableObject
             case Id_callee: return "callee";
             case Id_length: return "length";
             case Id_caller: return "caller";
-            case Id_constructor: return "constructor";
         }
         return null;
     }
@@ -239,8 +236,6 @@ final class Arguments extends IdScriptableObject
                 }
                 return value;
             }
-            case Id_constructor:
-                return constructor;
         }
         return super.getInstanceIdValue(id);
     }
@@ -254,9 +249,19 @@ final class Arguments extends IdScriptableObject
             case Id_caller:
                 callerObj = (value != null) ? value : UniqueTag.NULL_VALUE;
                 return;
-            case Id_constructor: constructor = value; return;
         }
         super.setInstanceIdValue(id, value);
+    }
+
+    @Override
+    protected void setInstanceIdAttributes(int id, int attr)
+    {
+        switch (id) {
+            case Id_callee: calleeAttr = attr; return;
+            case Id_length: lengthAttr = attr; return;
+            case Id_caller: callerAttr = attr; return;
+        }
+        super.setInstanceIdAttributes(id, attr);
     }
 
     @Override
@@ -364,7 +369,10 @@ final class Arguments extends IdScriptableObject
     private Object callerObj;
     private Object calleeObj;
     private Object lengthObj;
-    private Object constructor;
+
+    private int callerAttr = DONTENUM;
+    private int calleeAttr = DONTENUM;
+    private int lengthAttr = DONTENUM;
 
     private NativeCall activation;
 

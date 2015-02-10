@@ -253,7 +253,7 @@ public class NativeArray extends IdScriptableObject implements List
               }
 
               case ConstructorId_isArray:
-                return args.length > 0 && (args[0] instanceof NativeArray);
+                return args.length > 0 && js_isArray(args[0]);
 
               case Id_constructor: {
                 boolean inNewExpr = (thisObj == null);
@@ -305,10 +305,10 @@ public class NativeArray extends IdScriptableObject implements List
                 return js_slice(cx, thisObj, args);
 
               case Id_indexOf:
-                return indexOfHelper(cx, thisObj, args, false);
+                return js_indexOf(cx, thisObj, args);
 
               case Id_lastIndexOf:
-                return indexOfHelper(cx, thisObj, args, true);
+                return js_lastIndexOf(cx, thisObj, args);
 
               case Id_every:
               case Id_filter:
@@ -418,7 +418,9 @@ public class NativeArray extends IdScriptableObject implements List
         if (start == this && !isSealed() && dense != null && 0 <= index &&
             (denseOnly || !isGetterOrSetter(null, index, true)))
         {
-            if (index < dense.length) {
+            if (!isExtensible() && this.length <= index) {
+                return;
+            } else if (index < dense.length) {
                 dense[index] = value;
                 if (this.length <= index)
                     this.length = (long)index + 1;
@@ -703,15 +705,20 @@ public class NativeArray extends IdScriptableObject implements List
         } else if (obj instanceof NativeArray) {
             return ((NativeArray)obj).getLength();
         }
-        return ScriptRuntime.toUint32(
-            ScriptRuntime.getObjectProp(obj, "length", cx));
+        Object len = ScriptableObject.getProperty(obj, "length");
+        if (len == Scriptable.NOT_FOUND) {
+            // toUint32(undefined) == 0
+            return 0;
+        }
+        return ScriptRuntime.toUint32(len);
     }
 
     private static Object setLengthProperty(Context cx, Scriptable target,
                                             long length)
     {
-        return ScriptRuntime.setObjectProp(
-                   target, "length", ScriptRuntime.wrapNumber(length), cx);
+        Object len = ScriptRuntime.wrapNumber(length);
+        ScriptableObject.putProperty(target, "length", len);
+        return len;
     }
 
     /* Utility functions to encapsulate index > Integer.MAX_VALUE
@@ -727,12 +734,8 @@ public class NativeArray extends IdScriptableObject implements List
 
     private static Object getElem(Context cx, Scriptable target, long index)
     {
-        if (index > Integer.MAX_VALUE) {
-            String id = Long.toString(index);
-            return ScriptRuntime.getObjectProp(target, id, cx);
-        } else {
-            return ScriptRuntime.getObjectIndex(target, (int)index, cx);
-        }
+        Object elem = getRawElem(target, index);
+        return (elem != Scriptable.NOT_FOUND ? elem : Undefined.instance);
     }
 
     // same as getElem, but without converting NOT_FOUND to undefined
@@ -744,14 +747,25 @@ public class NativeArray extends IdScriptableObject implements List
         }
     }
 
+    private static void defineElem(Context cx, Scriptable target, long index,
+                                   Object value)
+    {
+        if (index > Integer.MAX_VALUE) {
+            String id = Long.toString(index);
+            target.put(id, target, value);
+        } else {
+            target.put((int)index, target, value);
+        }
+    }
+
     private static void setElem(Context cx, Scriptable target, long index,
                                 Object value)
     {
         if (index > Integer.MAX_VALUE) {
             String id = Long.toString(index);
-            ScriptRuntime.setObjectProp(target, id, value, cx);
+            ScriptableObject.putProperty(target, id, value);
         } else {
-            ScriptRuntime.setObjectIndex(target, (int)index, value, cx);
+            ScriptableObject.putProperty(target, (int)index, value);
         }
     }
 
@@ -1037,10 +1051,6 @@ public class NativeArray extends IdScriptableObject implements List
         return thisObj;
     }
 
-    /**
-     * Non-ECMA methods.
-     */
-
     private static Object js_push(Context cx, Scriptable thisObj,
                                   Object[] args)
     {
@@ -1097,8 +1107,9 @@ public class NativeArray extends IdScriptableObject implements List
             // Get the to-be-deleted property's value.
             result = getElem(cx, thisObj, length);
 
-            // We don't need to delete the last property, because
-            // setLength does that for us.
+            // We need to delete the last property, because 'thisObj' may not
+            // have setLength which does that for us.
+            deleteElem(thisObj, length);
         } else {
             result = Undefined.instance;
         }
@@ -1141,8 +1152,9 @@ public class NativeArray extends IdScriptableObject implements List
                     setRawElem(cx, thisObj, i - 1, temp);
                 }
             }
-            // We don't need to delete the last property, because
-            // setLength does that for us.
+            // We need to delete the last property, because 'thisObj' may not
+            // have setLength which does that for us.
+            deleteElem(thisObj, length);
         } else {
             result = Undefined.instance;
         }
@@ -1183,12 +1195,10 @@ public class NativeArray extends IdScriptableObject implements List
             for (int i = 0; i < args.length; i++) {
                 setElem(cx, thisObj, i, args[i]);
             }
-
-            /* Follow Perl by returning the new array length. */
-            length += args.length;
-            return setLengthProperty(cx, thisObj, length);
         }
-        return ScriptRuntime.wrapNumber(length);
+        /* Follow Perl by returning the new array length. */
+        length += args.length;
+        return setLengthProperty(cx, thisObj, length);
     }
 
     private static Object js_splice(Context cx, Scriptable scope,
@@ -1304,6 +1314,9 @@ public class NativeArray extends IdScriptableObject implements List
                 Object temp = getRawElem(thisObj, last);
                 setRawElem(cx, thisObj, last + delta, temp);
             }
+            for (long k = length + delta; k < length; ++k) {
+                deleteElem(thisObj, k);
+            }
         }
 
         /* Copy from argv into the hole to complete the splice. */
@@ -1325,8 +1338,7 @@ public class NativeArray extends IdScriptableObject implements List
     {
         // create an empty Array to return.
         scope = getTopLevelScope(scope);
-        Function ctor = ScriptRuntime.getExistingCtor(cx, scope, "Array");
-        Scriptable result = ctor.construct(cx, scope, ScriptRuntime.emptyArgs);
+        Scriptable result = cx.newArray(scope, 0);
         if (thisObj instanceof NativeArray && result instanceof NativeArray) {
             NativeArray denseThis = (NativeArray) thisObj;
             NativeArray denseResult = (NativeArray) result;
@@ -1372,18 +1384,18 @@ public class NativeArray extends IdScriptableObject implements List
         /* Put the target in the result array; only add it as an array
          * if it looks like one.
          */
-        if (ScriptRuntime.instanceOf(thisObj, ctor, cx)) {
+        if (js_isArray(thisObj)) {
             length = getLengthProperty(cx, thisObj);
 
             // Copy from the target object into the result
             for (slot = 0; slot < length; slot++) {
                 Object temp = getRawElem(thisObj, slot);
                 if (temp != NOT_FOUND) {
-                    setElem(cx, result, slot, temp);
+                    defineElem(cx, result, slot, temp);
                 }
             }
         } else {
-            setElem(cx, result, slot++, thisObj);
+            defineElem(cx, result, slot++, thisObj);
         }
 
         /* Copy from the arguments into the result.  If any argument
@@ -1391,18 +1403,18 @@ public class NativeArray extends IdScriptableObject implements List
          * elements separately; otherwise, just copy the argument.
          */
         for (int i = 0; i < args.length; i++) {
-            if (ScriptRuntime.instanceOf(args[i], ctor, cx)) {
-                // ScriptRuntime.instanceOf => instanceof Scriptable
+            if (js_isArray(args[i])) {
+                // js_isArray => instanceof Scriptable
                 Scriptable arg = (Scriptable)args[i];
                 length = getLengthProperty(cx, arg);
                 for (long j = 0; j < length; j++, slot++) {
                     Object temp = getRawElem(arg, j);
                     if (temp != NOT_FOUND) {
-                        setElem(cx, result, slot, temp);
+                        defineElem(cx, result, slot, temp);
                     }
                 }
             } else {
-                setElem(cx, result, slot++, args[i]);
+                defineElem(cx, result, slot++, args[i]);
             }
         }
         setLengthProperty(cx, result, slot);
@@ -1422,7 +1434,7 @@ public class NativeArray extends IdScriptableObject implements List
             end = length;
         } else {
             begin = toSliceIndex(ScriptRuntime.toInteger(args[0]), length);
-            if (args.length == 1) {
+            if (args.length == 1 || args[1] == Undefined.instance) {
                 end = length;
             } else {
                 end = toSliceIndex(ScriptRuntime.toInteger(args[1]), length);
@@ -1432,7 +1444,7 @@ public class NativeArray extends IdScriptableObject implements List
         for (long slot = begin; slot < end; slot++) {
             Object temp = getRawElem(thisObj, slot);
             if (temp != NOT_FOUND) {
-                setElem(cx, result, slot - begin, temp);
+                defineElem(cx, result, slot - begin, temp);
             }
         }
         setLengthProperty(cx, result, Math.max(0, end - begin));
@@ -1456,101 +1468,112 @@ public class NativeArray extends IdScriptableObject implements List
         return result;
     }
 
-    /**
-     * Implements the methods "indexOf" and "lastIndexOf".
-     */
-    private Object indexOfHelper(Context cx, Scriptable thisObj,
-                                 Object[] args, boolean isLast)
+    private static Object js_indexOf(Context cx, Scriptable thisObj,
+                                     Object[] args)
     {
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
         long length = getLengthProperty(cx, thisObj);
+        /*
+         * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:indexOf
+         * The index at which to begin the search. Defaults to 0, i.e. the
+         * whole array will be searched. If the index is greater than or
+         * equal to the length of the array, -1 is returned, i.e. the array
+         * will not be searched. If negative, it is taken as the offset from
+         * the end of the array. Note that even when the index is negative,
+         * the array is still searched from front to back. If the calculated
+         * index is less than 0, the whole array will be searched.
+         */
         long start;
-        if (isLast) {
-            // lastIndexOf
-            /*
-             * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:lastIndexOf
-             * The index at which to start searching backwards. Defaults to the
-             * array's length, i.e. the whole array will be searched. If the
-             * index is greater than or equal to the length of the array, the
-             * whole array will be searched. If negative, it is taken as the
-             * offset from the end of the array. Note that even when the index
-             * is negative, the array is still searched from back to front. If
-             * the calculated index is less than 0, -1 is returned, i.e. the
-             * array will not be searched.
-             */
-            if (args.length < 2) {
-                // default
-                start = length-1;
-            } else {
-                start = (long)ScriptRuntime.toInteger(args[1]);
-                if (start >= length)
-                    start = length-1;
-                else if (start < 0)
-                    start += length;
-                if (start < 0) return NEGATIVE_ONE;
-            }
+        if (args.length < 2) {
+            // default
+            start = 0;
         } else {
-            // indexOf
-            /*
-             * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:indexOf
-             * The index at which to begin the search. Defaults to 0, i.e. the
-             * whole array will be searched. If the index is greater than or
-             * equal to the length of the array, -1 is returned, i.e. the array
-             * will not be searched. If negative, it is taken as the offset from
-             * the end of the array. Note that even when the index is negative,
-             * the array is still searched from front to back. If the calculated
-             * index is less than 0, the whole array will be searched.
-             */
-            if (args.length < 2) {
-                // default
-                start = 0;
-            } else {
-                start = (long)ScriptRuntime.toInteger(args[1]);
-                if (start < 0) {
-                    start += length;
-                    if (start < 0)
-                        start = 0;
-                }
-                if (start > length - 1) return NEGATIVE_ONE;
+            start = (long)ScriptRuntime.toInteger(args[1]);
+            if (start < 0) {
+                start += length;
+                if (start < 0)
+                    start = 0;
             }
+            if (start > length - 1) return NEGATIVE_ONE;
         }
         if (thisObj instanceof NativeArray) {
             NativeArray na = (NativeArray) thisObj;
             if (na.denseOnly) {
-                if (isLast) {
-                  for (int i=(int)start; i >= 0; i--) {
-                      if (na.dense[i] != Scriptable.NOT_FOUND &&
-                          ScriptRuntime.shallowEq(na.dense[i], compareTo))
-                      {
-                          return Long.valueOf(i);
-                      }
-                  }
-                } else {
-                  for (int i=(int)start; i < length; i++) {
-                      if (na.dense[i] != Scriptable.NOT_FOUND &&
-                          ScriptRuntime.shallowEq(na.dense[i], compareTo))
-                      {
-                          return Long.valueOf(i);
-                      }
-                  }
+                Scriptable proto = na.getPrototype();
+                for (int i=(int)start; i < length; i++) {
+                    Object val = na.dense[i];
+                    if (val == NOT_FOUND && proto != null) {
+                        val = ScriptableObject.getProperty(proto, i);
+                    }
+                    if (val != NOT_FOUND &&
+                        ScriptRuntime.shallowEq(val, compareTo))
+                    {
+                        return Long.valueOf(i);
+                    }
                 }
                 return NEGATIVE_ONE;
             }
         }
-        if (isLast) {
-          for (long i=start; i >= 0; i--) {
-              Object val = getRawElem(thisObj, i);
-              if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
-                  return Long.valueOf(i);
-              }
-          }
+        for (long i=start; i < length; i++) {
+            Object val = getRawElem(thisObj, i);
+            if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
+                return Long.valueOf(i);
+            }
+        }
+        return NEGATIVE_ONE;
+    }
+
+    private static Object js_lastIndexOf(Context cx, Scriptable thisObj,
+            Object[] args)
+    {
+        Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
+        long length = getLengthProperty(cx, thisObj);
+        /*
+         * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:lastIndexOf
+         * The index at which to start searching backwards. Defaults to the
+         * array's length, i.e. the whole array will be searched. If the
+         * index is greater than or equal to the length of the array, the
+         * whole array will be searched. If negative, it is taken as the
+         * offset from the end of the array. Note that even when the index
+         * is negative, the array is still searched from back to front. If
+         * the calculated index is less than 0, -1 is returned, i.e. the
+         * array will not be searched.
+         */
+        long start;
+        if (args.length < 2) {
+            // default
+            start = length-1;
         } else {
-          for (long i=start; i < length; i++) {
-              Object val = getRawElem(thisObj, i);
-              if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
-                  return Long.valueOf(i);
-              }
-          }
+            start = (long)ScriptRuntime.toInteger(args[1]);
+            if (start >= length)
+                start = length-1;
+            else if (start < 0)
+                start += length;
+            if (start < 0) return NEGATIVE_ONE;
+        }
+        if (thisObj instanceof NativeArray) {
+            NativeArray na = (NativeArray) thisObj;
+            if (na.denseOnly) {
+                Scriptable proto = na.getPrototype();
+                for (int i=(int)start; i >= 0; i--) {
+                    Object val = na.dense[i];
+                    if (val == NOT_FOUND && proto != null) {
+                        val = ScriptableObject.getProperty(proto, i);
+                    }
+                    if (val != NOT_FOUND &&
+                        ScriptRuntime.shallowEq(val, compareTo))
+                    {
+                        return Long.valueOf(i);
+                    }
+                }
+                return NEGATIVE_ONE;
+            }
+        }
+        for (long i=start; i >= 0; i--) {
+            Object val = getRawElem(thisObj, i);
+            if (val != NOT_FOUND && ScriptRuntime.shallowEq(val, compareTo)) {
+                return Long.valueOf(i);
+            }
         }
         return NEGATIVE_ONE;
     }
@@ -1558,9 +1581,10 @@ public class NativeArray extends IdScriptableObject implements List
     /**
      * Implements the methods "every", "filter", "forEach", "map", and "some".
      */
-    private Object iterativeMethod(Context cx, int id, Scriptable scope,
-                                   Scriptable thisObj, Object[] args)
+    private static Object iterativeMethod(Context cx, int id, Scriptable scope,
+                                          Scriptable thisObj, Object[] args)
     {
+        long length = getLengthProperty(cx, thisObj);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         if (callbackArg == null || !(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
@@ -1574,9 +1598,11 @@ public class NativeArray extends IdScriptableObject implements List
         } else {
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
         }
-        long length = getLengthProperty(cx, thisObj);
-        int resultLength = id == Id_map ? (int) length : 0;
-        Scriptable array = cx.newArray(scope, resultLength);
+        Scriptable array = null;
+        if (id == Id_filter || id == Id_map) {
+            int resultLength = id == Id_map ? (int) length : 0;
+            array = cx.newArray(scope, resultLength);
+        }
         long j=0;
         for (long i=0; i < length; i++) {
             Object[] innerArgs = new Object[3];
@@ -1595,12 +1621,12 @@ public class NativeArray extends IdScriptableObject implements List
                 break;
               case Id_filter:
                 if (ScriptRuntime.toBoolean(result))
-                  setElem(cx, array, j++, innerArgs[0]);
+                    defineElem(cx, array, j++, innerArgs[0]);
                 break;
               case Id_forEach:
                 break;
               case Id_map:
-                setElem(cx, array, i, result);
+                defineElem(cx, array, i, result);
                 break;
               case Id_some:
                 if (ScriptRuntime.toBoolean(result))
@@ -1625,16 +1651,16 @@ public class NativeArray extends IdScriptableObject implements List
     /**
      * Implements the methods "reduce" and "reduceRight".
      */
-    private Object reduceMethod(Context cx, int id, Scriptable scope,
-                                   Scriptable thisObj, Object[] args)
+    private static Object reduceMethod(Context cx, int id, Scriptable scope,
+                                       Scriptable thisObj, Object[] args)
     {
+        long length = getLengthProperty(cx, thisObj);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         if (callbackArg == null || !(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
         }
         Function f = (Function) callbackArg;
         Scriptable parent = ScriptableObject.getTopLevelScope(f);
-        long length = getLengthProperty(cx, thisObj);
         // hack to serve both reduce and reduceRight with the same loop
         boolean movingLeft = id == Id_reduce;
         Object value = args.length > 1 ? args[1] : Scriptable.NOT_FOUND;
@@ -1657,6 +1683,13 @@ public class NativeArray extends IdScriptableObject implements List
             throw ScriptRuntime.typeError0("msg.empty.array.reduce");
         }
         return value;
+    }
+
+    private static boolean js_isArray(Object o) {
+        if (!(o instanceof Scriptable)) {
+            return false;
+        }
+        return "Array".equals(((Scriptable)o).getClassName());
     }
 
     // methods to implement java.util.List

@@ -36,6 +36,16 @@ class NativeRegExpCtor extends BaseFunction
     }
 
     @Override
+    public int getLength() {
+        return 2;
+    }
+
+    @Override
+    public int getArity() {
+        return 2;
+    }
+
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
@@ -145,10 +155,16 @@ class NativeRegExpCtor extends BaseFunction
         int attr;
         switch (id) {
           case Id_multiline:
+            attr = multilineAttr;
+            break;
           case Id_STAR:
+            attr = starAttr;
+            break;
           case Id_input:
+            attr = inputAttr;
+            break;
           case Id_UNDERSCORE:
-            attr = PERMANENT;
+            attr = underscoreAttr;
             break;
           default:
             attr = PERMANENT | READONLY;
@@ -275,4 +291,45 @@ class NativeRegExpCtor extends BaseFunction
         super.setInstanceIdValue(id, value);
     }
 
+    @Override
+    protected void setInstanceIdAttributes(int id, int attr) {
+        int shifted = id - super.getMaxInstanceId();
+        switch (shifted) {
+            case Id_multiline:
+                multilineAttr = attr;
+                return;
+            case Id_STAR:
+                starAttr = attr;
+                return;
+            case Id_input:
+                inputAttr = attr;
+                return;
+            case Id_UNDERSCORE:
+                underscoreAttr = attr;
+                return;
+
+            case Id_lastMatch:
+            case Id_AMPERSAND:
+            case Id_lastParen:
+            case Id_PLUS:
+            case Id_leftContext:
+            case Id_BACK_QUOTE:
+            case Id_rightContext:
+            case Id_QUOTE:
+                // non-configurable + non-writable
+                return;
+            default:
+                int substring_number = shifted - DOLLAR_ID_BASE - 1;
+                if (0 <= substring_number && substring_number <= 8) {
+                  // non-configurable + non-writable
+                  return;
+                }
+        }
+        super.setInstanceIdAttributes(id, attr);
+    }
+
+    private int multilineAttr = PERMANENT;
+    private int starAttr = PERMANENT;
+    private int inputAttr = PERMANENT;
+    private int underscoreAttr = PERMANENT;
 }
