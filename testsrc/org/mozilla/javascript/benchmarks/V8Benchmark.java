@@ -1,10 +1,8 @@
 package org.mozilla.javascript.benchmarks;
 
 import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 import java.io.FileInputStream;
@@ -12,25 +10,24 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.HashMap;
 
 public class V8Benchmark
 {
     public static final String TEST_SRC = "run.js";
+    private static final String OUT_FILE = "../../../build/v8benchmark.csv";
 
-    private static PrintWriter output;
-
-    @BeforeClass
-    public static void openResults()
-        throws IOException
-    {
-        output = new PrintWriter(new FileWriter("../../../build/v8benchmark.csv"));
-    }
+    private static final HashMap<Integer, String> results = new HashMap<Integer, String>();
 
     @AfterClass
-    public static void closeResults()
+    public static void writeResults()
         throws IOException
     {
-        output.close();
+        PrintWriter out = new PrintWriter(new FileWriter(OUT_FILE));
+        // Hard code the opt levels for now -- we will make it more generic when we need to
+        out.println("Optimization 0,Optimization 9");
+        out.println(results.get(0) + ',' + results.get(9));
+        out.close();
     }
 
     private void runTest(int optLevel)
@@ -46,7 +43,7 @@ public class V8Benchmark
             Global root = new Global(cx);
             root.put("RUN_NAME", root, "V8-Benchmark-" + optLevel);
             Object result = cx.evaluateReader(root, rdr, TEST_SRC, 1, null);
-            output.println("V8 Benchmark Opt " + optLevel + ',' + result.toString());
+            results.put(optLevel, result.toString());
         } finally {
             rdr.close();
             srcFile.close();
