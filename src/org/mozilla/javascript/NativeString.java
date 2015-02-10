@@ -664,7 +664,7 @@ final class NativeString extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2009-07-23 07:32:39 EST
+// #generated# Last update: 2015-02-09 17:30:54 PST
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(2);
@@ -700,12 +700,12 @@ final class NativeString extends IdScriptableObject
                 case 'n': X="indexOf";id=Id_indexOf; break L;
                 case 't': X="italics";id=Id_italics; break L;
                 } break L;
-            case 8: c=s.charAt(4);
-                if (c=='r') { X="toString";id=Id_toString; }
-                else if (c=='s') { X="fontsize";id=Id_fontsize; }
-                else if (c=='u') { X="toSource";id=Id_toSource; }
-                else if (c=='L') { X="trimLeft";id=Id_trimLeft; }
-                break L;
+            case 8: switch (s.charAt(4)) {
+                case 'L': X="trimLeft";id=Id_trimLeft; break L;
+                case 'r': X="toString";id=Id_toString; break L;
+                case 's': X="fontsize";id=Id_fontsize; break L;
+                case 'u': X="toSource";id=Id_toSource; break L;
+                } break L;
             case 9: c=s.charAt(0);
                 if (c=='f') { X="fontcolor";id=Id_fontcolor; }
                 else if (c=='s') { X="substring";id=Id_substring; }
