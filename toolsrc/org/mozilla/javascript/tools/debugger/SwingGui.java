@@ -593,7 +593,7 @@ public class SwingGui extends JFrame implements GuiCallback {
 
         Dim.ContextData contextData = lastFrame.contextData();
 
-        JComboBox<String> ctx = context.context;
+        JComboBox ctx = context.context;
         List<String> toolTips = context.toolTips;
         context.disableUpdate();
         int frameCount = contextData.frameCount();
@@ -1591,7 +1591,7 @@ class MoreWindows extends JDialog implements ActionListener {
     /**
      * The list component.
      */
-    private JList<String> list;
+    private JList list;
 
     /**
      * Our parent frame.
@@ -1623,8 +1623,8 @@ class MoreWindows extends JDialog implements ActionListener {
         getRootPane().setDefaultButton(setButton);
 
         //dim part of the dialog
-        list = new JList<String>(new DefaultListModel<String>());
-        DefaultListModel<String> model = (DefaultListModel<String>)list.getModel();
+        list = new JList(new DefaultListModel());
+        DefaultListModel model = (DefaultListModel)list.getModel();
         model.clear();
         //model.fireIntervalRemoved(model, 0, size);
         for (String data: fileWindows.keySet()) {
@@ -1703,7 +1703,7 @@ class MoreWindows extends JDialog implements ActionListener {
             setVisible(false);
             value = null;
         } else if (cmd.equals("Select")) {
-            value = list.getSelectedValue();
+            value = (String)list.getSelectedValue();
             setVisible(false);
             swingGui.showFileWindow(value, -1);
         }
@@ -1740,7 +1740,7 @@ class FindFunction extends JDialog implements ActionListener {
     /**
      * List of functions.
      */
-    private JList<String> list;
+    private JList list;
 
     /**
      * The debug GUI frame.
@@ -1770,8 +1770,8 @@ class FindFunction extends JDialog implements ActionListener {
         setButton.addActionListener(this);
         getRootPane().setDefaultButton(setButton);
 
-        list = new JList<String>(new DefaultListModel<String>());
-        DefaultListModel<String> model = (DefaultListModel<String>)list.getModel();
+        list = new JList(new DefaultListModel());
+        DefaultListModel model = (DefaultListModel)list.getModel();
         model.clear();
 
         String[] a = debugGui.dim.functionNames();
@@ -1854,7 +1854,7 @@ class FindFunction extends JDialog implements ActionListener {
                 return;
             }
             try {
-                value = list.getSelectedValue();
+                value = (String)list.getSelectedValue();
             } catch (ArrayIndexOutOfBoundsException exc) {
                 return;
             }
@@ -2826,7 +2826,7 @@ class ContextWindow extends JPanel implements ActionListener {
     /**
      * The combo box that holds the stack frames.
      */
-    JComboBox<String> context;
+    JComboBox context;
 
     /**
      * Tool tips for the stack frames.
@@ -2895,7 +2895,7 @@ class ContextWindow extends JPanel implements ActionListener {
         p2.setLayout(new GridLayout());
         p1.add(t1);
         JLabel label = new JLabel("Context:");
-        context = new JComboBox<String>();
+        context = new JComboBox();
         context.setLightWeightPopupEnabled(false);
         toolTips = Collections.synchronizedList(new java.util.ArrayList<String>());
         label.setBorder(context.getBorder());
