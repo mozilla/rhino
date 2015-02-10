@@ -161,6 +161,8 @@ final class NativeString extends IdScriptableObject
           case Id_toLocaleLowerCase: arity=0; s="toLocaleLowerCase"; break;
           case Id_toLocaleUpperCase: arity=0; s="toLocaleUpperCase"; break;
           case Id_trim:              arity=0; s="trim";              break;
+          case Id_trimLeft:          arity=0; s="trimLeft";          break;
+          case Id_trimRight:         arity=0; s="trimRight";         break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -387,6 +389,33 @@ final class NativeString extends IdScriptableObject
                     while (start < chars.length && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[start])) {
                       start++;
                     }
+                    int end = chars.length;
+                    while (end > start && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[end-1])) {
+                      end--;
+                    }
+
+                    return str.substring(start, end);
+                }
+              case Id_trimLeft:
+                {
+                    String str = ScriptRuntime.toString(thisObj);
+                    char[] chars = str.toCharArray();
+
+                    int start = 0;
+                    while (start < chars.length && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[start])) {
+                      start++;
+                    }
+                    int end = chars.length;
+
+                    return str.substring(start, end);
+                }
+              case Id_trimRight:
+                {
+                    String str = ScriptRuntime.toString(thisObj);
+                    char[] chars = str.toCharArray();
+
+                    int start = 0;
+
                     int end = chars.length;
                     while (end > start && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[end-1])) {
                       end--;
@@ -675,10 +704,12 @@ final class NativeString extends IdScriptableObject
                 if (c=='r') { X="toString";id=Id_toString; }
                 else if (c=='s') { X="fontsize";id=Id_fontsize; }
                 else if (c=='u') { X="toSource";id=Id_toSource; }
+                else if (c=='L') { X="trimLeft";id=Id_trimLeft; }
                 break L;
             case 9: c=s.charAt(0);
                 if (c=='f') { X="fontcolor";id=Id_fontcolor; }
                 else if (c=='s') { X="substring";id=Id_substring; }
+                else if (c=='t') { X="trimRight";id=Id_trimRight; }
                 break L;
             case 10: X="charCodeAt";id=Id_charCodeAt; break L;
             case 11: switch (s.charAt(2)) {
@@ -741,7 +772,9 @@ final class NativeString extends IdScriptableObject
         Id_toLocaleLowerCase         = 35,
         Id_toLocaleUpperCase         = 36,
         Id_trim                      = 37,
-        MAX_PROTOTYPE_ID             = Id_trim;
+        Id_trimLeft                  = 38,
+        Id_trimRight                 = 39,
+        MAX_PROTOTYPE_ID             = Id_trimRight;
 
 // #/string_id_map#
 
