@@ -1,5 +1,7 @@
 # Rhino: JavaScript in Java
 
+![Rhino](https://developer.mozilla.org/@api/deki/files/832/=Rhino.jpg)
+
 Rhino is an implementation of JavaScript in Java.
 
 ## License
@@ -13,6 +15,16 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 </table>
 
 See here for [Release Notes](./RELEASE-NOTES.md)
+
+## Documentation
+
+Information for script builders and embedders:
+
+[https://developer.mozilla.org/en-US/docs/Rhino_documentation](https://developer.mozilla.org/en-US/docs/Rhino_documentation)
+
+More resources if you get stuck:
+
+[https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community)
 
 ## Building
 
@@ -66,12 +78,6 @@ You can also embed it, as most people do. See below for more docs.
 Most issues are managed on GitHub:
 
 [https://github.com/mozilla/rhino/issues](https://github.com/mozilla/rhino/issues)
-
-## Additional Documentation
-
-Additional Documentation may be found on the Mozilla site:
-
-[https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino)
 
 ## More Help
 
