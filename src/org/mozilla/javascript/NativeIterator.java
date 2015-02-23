@@ -143,7 +143,7 @@ public final class NativeIterator extends IdScriptableObject {
             throw ScriptRuntime.typeError1("msg.no.properties",
                                            ScriptRuntime.toString(argument));
         }
-        Scriptable obj = ScriptRuntime.toObject(scope, args[0]);
+        Scriptable obj = ScriptRuntime.toObject(cx, scope, args[0]);
         boolean keyOnly = args.length > 1 && ScriptRuntime.toBoolean(args[1]);
         if (thisObj != null) {
             // Called as a function. Convert to iterator if possible.
@@ -170,7 +170,7 @@ public final class NativeIterator extends IdScriptableObject {
 
         // Otherwise, just set up to iterate over the properties of the object.
         // Do not call __iterator__ method.
-        Object objectIterator = ScriptRuntime.enumInit(obj, cx,
+        Object objectIterator = ScriptRuntime.enumInit(obj, cx, scope,
             keyOnly ? ScriptRuntime.ENUMERATE_KEYS_NO_ITERATOR
                     : ScriptRuntime.ENUMERATE_ARRAY_NO_ITERATOR);
         ScriptRuntime.setEnumNumbers(objectIterator, true);

@@ -197,14 +197,14 @@ final class NativeString extends IdScriptableObject
               case ConstructorId_localeCompare:
               case ConstructorId_toLocaleLowerCase: {
                 if (args.length > 0) {
-                    thisObj = ScriptRuntime.toObject(scope,
+                    thisObj = ScriptRuntime.toObject(cx, scope,
                             ScriptRuntime.toCharSequence(args[0]));
                     Object[] newArgs = new Object[args.length-1];
                     for (int i=0; i < newArgs.length; i++)
                         newArgs[i] = args[i+1];
                     args = newArgs;
                 } else {
-                    thisObj = ScriptRuntime.toObject(scope,
+                    thisObj = ScriptRuntime.toObject(cx, scope,
                             ScriptRuntime.toCharSequence(thisObj));
                 }
                 id = -id;

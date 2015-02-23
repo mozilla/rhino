@@ -242,7 +242,7 @@ public class NativeArray extends IdScriptableObject implements List
               case ConstructorId_reduce:
               case ConstructorId_reduceRight: {
                 if (args.length > 0) {
-                    thisObj = ScriptRuntime.toObject(scope, args[0]);
+                    thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
                     Object[] newArgs = new Object[args.length-1];
                     for (int i=0; i < newArgs.length; i++)
                         newArgs[i] = args[i+1];
@@ -850,7 +850,7 @@ public class NativeArray extends IdScriptableObject implements List
                             Callable fun;
                             Scriptable funThis;
                             fun = ScriptRuntime.getPropFunctionAndThis(
-                                      elem, "toLocaleString", cx);
+                                      elem, "toLocaleString", cx, scope);
                             funThis = ScriptRuntime.lastStoredScriptable(cx);
                             elem = fun.call(cx, scope, funThis,
                                             ScriptRuntime.emptyArgs);
