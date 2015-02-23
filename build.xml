@@ -47,9 +47,7 @@
     <antcall target="xmlimplsrc-compile" />
   </target>
 
-  <target name="compile-all" depends="compile">
-    <ant antfile="deprecatedsrc/build.xml" target="compile"/>
-  </target>
+  <target name="compile-all" depends="compile"/>
 
   <target name="graph" depends="init">
     <ant antfile="src/build.xml" target="graph"/>
@@ -64,7 +62,6 @@
     <ant antfile="toolsrc/build.xml" target="copy-source"/>
     <ant antfile="testsrc/build.xml" target="copy-source"/>
     <antcall target="xmlimplsrc-copy-source" />
-    <ant antfile="deprecatedsrc/build.xml" target="copy-source"/>
     <copy todir="${dist.dir}" file="build.xml"/>
     <copy todir="${dist.dir}" file="build.properties"/>
     <copy todir="${dist.dir}" file="apiClasses.properties"/>
@@ -168,7 +165,7 @@
        <fileset
          dir="."
          includes="**/*.java"
-         excludes="**/deprecatedsrc/**/*.java,**/testsrc/**/*.java"
+         excludes="**/testsrc/**/*.java"
        />
     </javadoc>
   </target>
