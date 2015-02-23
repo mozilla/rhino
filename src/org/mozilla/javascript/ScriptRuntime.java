@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLObject;
 import org.mozilla.javascript.xml.XMLLib;

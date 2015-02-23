@@ -28,9 +28,9 @@
 // Ported to Java from V8's conversions-inl.h and double.h files.
 // The original revision was r12273 from the bleeding_edge branch.
 
-package org.mozilla.javascript;
+package org.mozilla.javascript.v8dtoa;
 
-final class DoubleConversion {
+public final class DoubleConversion {
     private static final long kSignMask = 0x8000000000000000L;
     private static final long kExponentMask = 0x7FF0000000000000L;
     private static final long kSignificandMask = 0x000FFFFFFFFFFFFFL;
@@ -69,7 +69,7 @@ final class DoubleConversion {
         return (d64 & kSignMask) == 0 ? 1 : -1;
     }
 
-    static int doubleToInt32(double x) {
+    public static int doubleToInt32(double x) {
         int i = (int) x;
         if ((double) i == x) {
             return i;
