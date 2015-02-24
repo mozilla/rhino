@@ -114,4 +114,10 @@ public class Bug491621Test {
     {
         assertSource("0xff;\n9;\n07;\n1;", "0xff;\n9;\n07;\n1;\n");
     }
+
+    @Test
+    public void testEmptySwitchToSource()
+    {
+        assertSource("switch(1){}", "switch (1) {\n}\n");
+    }
 }

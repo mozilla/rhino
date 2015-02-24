@@ -155,8 +155,10 @@ public class SwitchStatement extends Jump {
         sb.append("switch (");
         sb.append(expression.toSource(0));
         sb.append(") {\n");
-        for (SwitchCase sc : cases) {
-            sb.append(sc.toSource(depth + 1));
+        if (cases != null) {
+            for (SwitchCase sc : cases) {
+                sb.append(sc.toSource(depth + 1));
+            }
         }
         sb.append(pad);
         sb.append("}\n");
