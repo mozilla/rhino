@@ -1946,7 +1946,7 @@ public class NativeArray extends IdScriptableObject implements List
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2005-09-26 15:47:42 EDT
+// #generated# Last update: 2015-02-24 17:45:09 PST
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(0);
@@ -1956,21 +1956,21 @@ public class NativeArray extends IdScriptableObject implements List
             case 4: switch (s.charAt(2)) {
                 case 'i': X="join";id=Id_join; break L;
                 case 'm': X="some";id=Id_some; break L;
+                case 'n': X="find";id=Id_find; break L;
                 case 'r': X="sort";id=Id_sort; break L;
                 case 's': X="push";id=Id_push; break L;
-                case 'n': X="find";id=Id_find; break L;
                 } break L;
             case 5: c=s.charAt(1);
                 if (c=='h') { X="shift";id=Id_shift; }
                 else if (c=='l') { X="slice";id=Id_slice; }
                 else if (c=='v') { X="every";id=Id_every; }
                 break L;
-            case 6: c=s.charAt(0);
-                if (c=='c') { X="concat";id=Id_concat; }
-                else if (c=='f') { X="filter";id=Id_filter; }
-                else if (c=='s') { X="splice";id=Id_splice; }
-                else if (c=='r') { X="reduce";id=Id_reduce; }
-                break L;
+            case 6: switch (s.charAt(0)) {
+                case 'c': X="concat";id=Id_concat; break L;
+                case 'f': X="filter";id=Id_filter; break L;
+                case 'r': X="reduce";id=Id_reduce; break L;
+                case 's': X="splice";id=Id_splice; break L;
+                } break L;
             case 7: switch (s.charAt(0)) {
                 case 'f': X="forEach";id=Id_forEach; break L;
                 case 'i': X="indexOf";id=Id_indexOf; break L;
@@ -1981,9 +1981,7 @@ public class NativeArray extends IdScriptableObject implements List
                 if (c=='o') { X="toSource";id=Id_toSource; }
                 else if (c=='t') { X="toString";id=Id_toString; }
                 break L;
-            case 9:
-                X="findIndex";id=Id_findIndex;
-                break L;
+            case 9: X="findIndex";id=Id_findIndex; break L;
             case 11: c=s.charAt(0);
                 if (c=='c') { X="constructor";id=Id_constructor; }
                 else if (c=='l') { X="lastIndexOf";id=Id_lastIndexOf; }
@@ -1992,6 +1990,7 @@ public class NativeArray extends IdScriptableObject implements List
             case 14: X="toLocaleString";id=Id_toLocaleString; break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;
