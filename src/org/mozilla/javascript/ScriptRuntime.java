@@ -243,7 +243,8 @@ public class ScriptRuntime {
         //new LazilyLoadedCtor(scope, "ArrayBuffer",
         //        "org.mozilla.javascript.nativearrays.NativeArrayBuffer", sealed, true);
 
-        if (cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) {
+        if ((cx.getLanguageVersion() >= Context.VERSION_1_8) &&
+             cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) {
             NativeArrayBuffer.init(scope, sealed);
             NativeUint8NativeArray.init(scope, sealed);
             NativeInt8NativeArray.init(scope, sealed);
