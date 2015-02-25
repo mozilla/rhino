@@ -11,7 +11,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 public class NativeInt8NativeArray
-    extends NativeTypedArrayView
+    extends NativeTypedArrayView<Byte>
 {
     private static final long serialVersionUID = -3349419704390398895L;
 
@@ -77,5 +77,25 @@ public class NativeInt8NativeArray
         int val = Conversions.toInt8(c);
         ByteIo.writeInt8(arrayBuffer.buffer, index + offset, val);
         return null;
+    }
+
+    // List implementation (much of it handled by the superclass)
+
+    @Override
+    public Byte get(int i)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Byte)js_get(i);
+    }
+
+    @Override
+    public Byte set(int i, Byte aByte)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Byte)js_set(i, aByte);
     }
 }

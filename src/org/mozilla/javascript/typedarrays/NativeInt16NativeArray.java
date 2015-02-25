@@ -7,12 +7,11 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 public class NativeInt16NativeArray
-    extends NativeTypedArrayView
+    extends NativeTypedArrayView<Short>
 {
     private static final long serialVersionUID = -8592870435287581398L;
 
@@ -79,5 +78,23 @@ public class NativeInt16NativeArray
         int val = Conversions.toInt16(c);
         ByteIo.writeInt16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
         return null;
+    }
+
+    @Override
+    public Short get(int i)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Short)js_get(i);
+    }
+
+    @Override
+    public Short set(int i, Short aByte)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Short)js_set(i, aByte);
     }
 }

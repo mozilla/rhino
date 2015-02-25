@@ -12,7 +12,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 public class NativeInt32NativeArray
-    extends NativeTypedArrayView
+    extends NativeTypedArrayView<Integer>
 {
     private static final long serialVersionUID = -8963461831950499340L;
 
@@ -79,5 +79,23 @@ public class NativeInt32NativeArray
         int val = ScriptRuntime.toInt32(c);
         ByteIo.writeInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
         return null;
+    }
+
+    @Override
+    public Integer get(int i)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Integer)js_get(i);
+    }
+
+    @Override
+    public Integer set(int i, Integer aByte)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Integer)js_set(i, aByte);
     }
 }

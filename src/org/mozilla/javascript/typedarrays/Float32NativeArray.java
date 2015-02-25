@@ -12,7 +12,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 public class Float32NativeArray
-    extends NativeTypedArrayView
+    extends NativeTypedArrayView<Double>
 {
     private static final long serialVersionUID = -8963461831950499340L;
 
@@ -79,5 +79,23 @@ public class Float32NativeArray
         double val = ScriptRuntime.toNumber(c);
         ByteIo.writeFloat32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
         return null;
+    }
+
+    @Override
+    public Double get(int i)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Double)js_get(i);
+    }
+
+    @Override
+    public Double set(int i, Double aByte)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Double)js_set(i, aByte);
     }
 }

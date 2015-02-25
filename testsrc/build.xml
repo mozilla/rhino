@@ -45,7 +45,7 @@
   -->
   <property name="test.vm.mx" value="256m" />
 
-  <target name="get-junit">
+  <target name="get-junit" unless="offline">
     <mkdir dir="lib"/>
     <get src="${test.junit.url}" dest="lib/junit.jar" usetimestamp="true"/>
   </target>
@@ -101,9 +101,12 @@
     <delete dir="${test.classes}" />
   </target>
 
-  <target name="coverage-instrument">
+  <target name="get-emma" unless="offline">
     <get src="${test.emma.url}" dest="lib/emma.jar" usetimestamp="true"/>
     <get src="${test.emma_ant.url}" dest="lib/emma_ant.jar" usetimestamp="true"/>
+  </target>
+
+  <target name="coverage-instrument" depends="get-emma">
     <property name="coverage.dir" location="${build.dir}/coverage"/>
     <property name="coverage.classes.dir" location="${build.dir}/coverage/classes"/>
     <mkdir dir="${coverage.classes.dir}"/>

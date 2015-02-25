@@ -1,3 +1,9 @@
+/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
@@ -7,10 +13,16 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.RandomAccess;
 
-public abstract class NativeTypedArrayView
+public abstract class NativeTypedArrayView<T>
     extends NativeArrayBufferView
+    implements List<T>, RandomAccess
 {
     /** The length, in elements, of the array */
     protected final int length;
@@ -202,7 +214,7 @@ public abstract class NativeTypedArrayView
 
         return
             cx.newObject(scope, getClassName(),
-                         new Object[] { arrayBuffer, byteOff, len });
+                         new Object[]{arrayBuffer, byteOff, len});
     }
 
     // Dispatcher
@@ -381,4 +393,157 @@ public abstract class NativeTypedArrayView
         MAX_INSTANCE_ID         = Id_BYTES_PER_ELEMENT;
 
 // #/string_id_map#
+
+    // Abstract List implementation
+
+    @SuppressWarnings("unused")
+    public boolean contains(Object o)
+    {
+        return (indexOf(o) >= 0);
+    }
+
+    @SuppressWarnings("unused")
+    public boolean containsAll(Collection<?> objects)
+    {
+        for (Object o : objects) {
+            if (!contains(o)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @SuppressWarnings("unused")
+    public int indexOf(Object o)
+    {
+        for (int i = 0; i < length; i++) {
+            if (o.equals(js_get(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @SuppressWarnings("unused")
+    public int lastIndexOf(Object o)
+    {
+        for (int i = length - 1; i >= 0; i--) {
+            if (o.equals(js_get(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @SuppressWarnings("unused")
+    public Object[] toArray()
+    {
+        Object[] a = new Object[length];
+        for (int i = 0; i < length; i++) {
+            a[i] = js_get(i);
+        }
+        return a;
+    }
+
+    @SuppressWarnings("unused")
+    public <U> U[] toArray(U[] ts)
+    {
+        U[] a;
+
+        if (ts.length >= length) {
+            a = ts;
+        } else {
+            a = (U[])Array.newInstance(ts.getClass().getComponentType(), length);
+        }
+
+        for (int i = 0; i < length; i++) {
+            try {
+                a[i] = (U)js_get(i);
+            } catch (ClassCastException cce) {
+                throw new ArrayStoreException();
+            }
+        }
+        return a;
+    }
+
+    @SuppressWarnings("unused")
+    public Iterator<T> iterator()
+    {
+        return new NativeTypedArrayIterator<T>(this, 0);
+    }
+
+    @SuppressWarnings("unused")
+    public ListIterator<T> listIterator()
+    {
+        return new NativeTypedArrayIterator<T>(this, 0);
+    }
+
+    @SuppressWarnings("unused")
+    public ListIterator<T> listIterator(int start)
+    {
+        if (checkIndex(start)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return new NativeTypedArrayIterator<T>(this, start);
+    }
+
+    @SuppressWarnings("unused")
+    public List<T> subList(int i, int i2)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public boolean add(T aByte)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public void add(int i, T aByte)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public boolean addAll(Collection<? extends T> bytes)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public boolean addAll(int i, Collection<? extends T> bytes)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public void clear()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public T remove(int i)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public boolean remove(Object o)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public boolean removeAll(Collection<?> objects)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public boolean retainAll(Collection<?> objects)
+    {
+        throw new UnsupportedOperationException();
+    }
 }

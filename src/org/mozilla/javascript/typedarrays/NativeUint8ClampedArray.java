@@ -7,12 +7,11 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 public class NativeUint8ClampedArray
-    extends NativeTypedArrayView
+    extends NativeTypedArrayView<Short>
 {
     private static final long serialVersionUID = -3349419704390398895L;
 
@@ -78,5 +77,23 @@ public class NativeUint8ClampedArray
         int val = Conversions.toUint8Clamp(c);
         ByteIo.writeUint8(arrayBuffer.buffer, index + offset, val);
         return null;
+    }
+
+    @Override
+    public Short get(int i)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Short)js_get(i);
+    }
+
+    @Override
+    public Short set(int i, Short aByte)
+    {
+        if (checkIndex(i)) {
+            throw new IndexOutOfBoundsException();
+        }
+        return (Short)js_set(i, aByte);
     }
 }
