@@ -65,6 +65,8 @@ public class TopLevel extends IdScriptableObject {
      * An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6]
      */
     enum NativeErrors {
+        /** Basic Error */
+        Error,
         /** The native EvalError. */
         EvalError,
         /** The native RangeError. */
