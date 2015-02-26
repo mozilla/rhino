@@ -10,6 +10,11 @@ import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * An array view that stores 32-bit quantities and implements the JavaScript "Uint32Array" interface.
+ * It also implements List<Long> for direct manipulation in Java.
+ */
+
 public class NativeUint32NativeArray
     extends NativeTypedArrayView<Long>
 {
@@ -25,6 +30,11 @@ public class NativeUint32NativeArray
     public NativeUint32NativeArray(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
+    }
+
+    public NativeUint32NativeArray(int len)
+    {
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
@@ -46,7 +56,7 @@ public class NativeUint32NativeArray
     }
 
     @Override
-    protected int getBytesPerElement()
+    public int getBytesPerElement()
     {
         return BYTES_PER_ELEMENT;
     }

@@ -11,8 +11,13 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * An array view that stores 32-bit quantities and implements the JavaScript "loat32Array" interface.
+ * It also implements List<Float> for direct manipulation in Java.
+ */
+
 public class Float32NativeArray
-    extends NativeTypedArrayView<Double>
+    extends NativeTypedArrayView<Float>
 {
     private static final long serialVersionUID = -8963461831950499340L;
 
@@ -26,6 +31,11 @@ public class Float32NativeArray
     public Float32NativeArray(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
+    }
+
+    public Float32NativeArray(int len)
+    {
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
@@ -47,7 +57,7 @@ public class Float32NativeArray
     }
 
     @Override
-    protected int getBytesPerElement()
+    public int getBytesPerElement()
     {
         return BYTES_PER_ELEMENT;
     }
@@ -82,20 +92,20 @@ public class Float32NativeArray
     }
 
     @Override
-    public Double get(int i)
+    public Float get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Double)js_get(i);
+        return (Float)js_get(i);
     }
 
     @Override
-    public Double set(int i, Double aByte)
+    public Float set(int i, Float aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Double)js_set(i, aByte);
+        return (Float)js_set(i, aByte);
     }
 }

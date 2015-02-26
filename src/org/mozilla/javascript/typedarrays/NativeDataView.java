@@ -12,6 +12,12 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * This class represents the JavaScript "DataView" interface, which allows direct manipulations of the
+ * bytes in a NativeArrayBuffer. Java programmers would be best off getting the underling "byte[]" array
+ * from the NativeArrayBuffer and manipulating it directly, perhaps using the "ByteIo" class as a helper.
+ */
+
 public class NativeDataView
     extends NativeArrayBufferView
 {

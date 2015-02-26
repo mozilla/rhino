@@ -10,6 +10,11 @@ import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * An array view that stores 8-bit quantities and implements the JavaScript "Int8Array" interface.
+ * It also implements List<Byte> for direct manipulation in Java.
+ */
+
 public class NativeInt8NativeArray
     extends NativeTypedArrayView<Byte>
 {
@@ -24,6 +29,11 @@ public class NativeInt8NativeArray
     public NativeInt8NativeArray(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len);
+    }
+
+    public NativeInt8NativeArray(int len)
+    {
+        this(new NativeArrayBuffer(len), 0, len);
     }
 
     @Override
@@ -45,7 +55,7 @@ public class NativeInt8NativeArray
     }
 
     @Override
-    protected int getBytesPerElement()
+    public int getBytesPerElement()
     {
         return 1;
     }

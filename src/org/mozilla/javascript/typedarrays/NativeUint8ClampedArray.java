@@ -10,8 +10,14 @@ import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * An array view that stores 8-bit quantities and implements the JavaScript "Uint8ClampedArray" interface.
+ * It also implements List<Integer> for direct manipulation in Java. Bytes inserted that fall out of the range
+ * (0 <= X < 256) will be adjusted so that they match before insertion.
+ */
+
 public class NativeUint8ClampedArray
-    extends NativeTypedArrayView<Short>
+    extends NativeTypedArrayView<Integer>
 {
     private static final long serialVersionUID = -3349419704390398895L;
 
@@ -24,6 +30,11 @@ public class NativeUint8ClampedArray
     public NativeUint8ClampedArray(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len);
+    }
+
+    public NativeUint8ClampedArray(int len)
+    {
+        this(new NativeArrayBuffer(len), 0, len);
     }
 
     @Override
@@ -45,7 +56,7 @@ public class NativeUint8ClampedArray
     }
 
     @Override
-    protected int getBytesPerElement()
+    public int getBytesPerElement()
     {
         return 1;
     }
@@ -80,20 +91,20 @@ public class NativeUint8ClampedArray
     }
 
     @Override
-    public Short get(int i)
+    public Integer get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Short)js_get(i);
+        return (Integer)js_get(i);
     }
 
     @Override
-    public Short set(int i, Short aByte)
+    public Integer set(int i, Integer aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Short)js_set(i, aByte);
+        return (Integer)js_set(i, aByte);
     }
 }

@@ -64,8 +64,8 @@ public class NativeTypedArrayIterator<T>
     public T previous()
     {
         if (hasPrevious()) {
-            lastPosition = position;
             position--;
+            lastPosition = position;
             return (T)view.get(position);
         }
         throw new NoSuchElementException();

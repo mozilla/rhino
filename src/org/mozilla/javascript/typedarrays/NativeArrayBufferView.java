@@ -10,6 +10,11 @@ import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * This class is the abstract parent for all views of the array. It shows a view of the underlying
+ * NativeArrayBuffer. Many views may simultaneously share the same buffer, and changes to one will affect all.
+ */
+
 public abstract class NativeArrayBufferView
     extends IdScriptableObject
 {
@@ -34,6 +39,27 @@ public abstract class NativeArrayBufferView
         this.offset = offset;
         this.byteLength = byteLength;
         this.arrayBuffer = ab;
+    }
+
+    /**
+     * Return the buffer that backs this view.
+     */
+    public NativeArrayBuffer getBuffer() {
+        return arrayBuffer;
+    }
+
+    /**
+     * Return the offset in bytes from the start of the buffer that this view represents.
+     */
+    public int getByteOffset() {
+        return offset;
+    }
+
+    /**
+     * Return the length, in bytes, of the part of the buffer that this view represents.
+     */
+    public int getByteLength() {
+        return byteLength;
     }
 
     protected static boolean isArg(Object[] args, int i)

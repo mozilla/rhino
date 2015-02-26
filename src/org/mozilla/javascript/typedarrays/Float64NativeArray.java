@@ -11,6 +11,11 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * An array view that stores 64-bit quantities and implements the JavaScript "Float64Array" interface.
+ * It also implements List<Double> for direct manipulation in Java.
+ */
+
 public class Float64NativeArray
     extends NativeTypedArrayView<Double>
 {
@@ -26,6 +31,11 @@ public class Float64NativeArray
     public Float64NativeArray(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
+    }
+
+    public Float64NativeArray(int len)
+    {
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
@@ -47,7 +57,7 @@ public class Float64NativeArray
     }
 
     @Override
-    protected int getBytesPerElement()
+    public int getBytesPerElement()
     {
         return BYTES_PER_ELEMENT;
     }

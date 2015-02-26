@@ -10,6 +10,11 @@ import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * An array view that stores 16-bit quantities and implements the JavaScript "Uint16Array" interface.
+ * It also implements List<Integer> for direct manipulation in Java.
+ */
+
 public class NativeUint16NativeArray
     extends NativeTypedArrayView<Integer>
 {
@@ -25,6 +30,11 @@ public class NativeUint16NativeArray
     public NativeUint16NativeArray(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
+    }
+
+    public NativeUint16NativeArray(int len)
+    {
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
@@ -46,7 +56,7 @@ public class NativeUint16NativeArray
     }
 
     @Override
-    protected int getBytesPerElement()
+    public int getBytesPerElement()
     {
         return BYTES_PER_ELEMENT;
     }

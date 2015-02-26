@@ -13,6 +13,11 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * A NativeArrayBuffer is the backing buffer for a typed array. Used inside JavaScript code,
+ * it implements the ArrayBuffer interface. Used directly from Java, it simply holds a byte array.
+ */
+
 public class NativeArrayBuffer
     extends IdScriptableObject
 {
@@ -38,11 +43,17 @@ public class NativeArrayBuffer
         na.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
+    /**
+     * Create an empty buffer.
+     */
     public NativeArrayBuffer()
     {
         buffer = EMPTY_BUF;
     }
 
+    /**
+     * Create a buffer of the specified length in bytes.
+     */
     public NativeArrayBuffer(int len)
     {
         if (len < 0) {
@@ -55,13 +66,34 @@ public class NativeArrayBuffer
         }
     }
 
-    int getLength() {
+    /**
+     * Get the number of bytes in the buffer.
+     */
+    public int getLength() {
         return buffer.length;
+    }
+
+    /**
+     * Return the actual bytes that back the buffer. This is a reference to the real buffer,
+     * so changes to bytes here will be reflected in the actual object and all its views.
+     */
+    public byte[] getBuffer() {
+        return buffer;
     }
 
     // Actual implementations of actual code
 
-    NativeArrayBuffer slice(int s, int e)
+    /**
+     * Return a new buffer that represents a slice of this buffer's content, starting at position
+     * "start" and ending at position "end". Both values will be "clamped" as per the JavaScript
+     * spec so that invalid values may be passed and will be adjusted up or down accordingly.
+     * This method will return a new buffer that contains a copy of the original buffer. Changes
+     * there will not affect the content of the buffer.
+     *
+     * @param s the position where the new buffer will start
+     * @param e the position where it will end
+     */
+    public NativeArrayBuffer slice(int s, int e)
     {
         // Handle negative start and and as relative to start
         // Clamp as per the spec to between 0 and length

@@ -11,6 +11,11 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
+/**
+ * An array view that stores 32-bit quantities and implements the JavaScript "Int32Array" interface.
+ * It also implements List<Integer> for direct manipulation in Java.
+ */
+
 public class NativeInt32NativeArray
     extends NativeTypedArrayView<Integer>
 {
@@ -26,6 +31,11 @@ public class NativeInt32NativeArray
     public NativeInt32NativeArray(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
+    }
+
+    public NativeInt32NativeArray(int len)
+    {
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
@@ -47,7 +57,7 @@ public class NativeInt32NativeArray
     }
 
     @Override
-    protected int getBytesPerElement()
+    public int getBytesPerElement()
     {
         return BYTES_PER_ELEMENT;
     }

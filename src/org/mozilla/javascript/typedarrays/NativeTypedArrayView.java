@@ -20,6 +20,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
+/**
+ * This class is the abstract parent for all of the various typed arrays. Each one
+ * shows a view of a specific NativeArrayBuffer, and modifications here will affect the rest.
+ */
+
 public abstract class NativeTypedArrayView<T>
     extends NativeArrayBufferView
     implements List<T>, RandomAccess
@@ -81,10 +86,15 @@ public abstract class NativeTypedArrayView<T>
        return ((index < 0) || (index >= length));
     }
 
+    /**
+     * Return the number of bytes represented by each element in the array. This can be useful
+     * when wishing to manipulate the byte array directly from Java.
+     */
+    public abstract int getBytesPerElement();
+
     protected abstract NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len);
     protected abstract Object js_get(int index);
     protected abstract Object js_set(int index, Object c);
-    protected abstract int getBytesPerElement();
     protected abstract NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f);
 
     private NativeArrayBuffer makeArrayBuffer(Context cx, Scriptable scope, int length)
@@ -397,6 +407,18 @@ public abstract class NativeTypedArrayView<T>
     // Abstract List implementation
 
     @SuppressWarnings("unused")
+    public int size()
+    {
+        return length;
+    }
+
+    @SuppressWarnings("unused")
+    public boolean isEmpty()
+    {
+        return (length == 0);
+    }
+
+    @SuppressWarnings("unused")
     public boolean contains(Object o)
     {
         return (indexOf(o) >= 0);
@@ -464,6 +486,35 @@ public abstract class NativeTypedArrayView<T>
             }
         }
         return a;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        try {
+            NativeTypedArrayView<T> v = (NativeTypedArrayView<T>)o;
+            if (length != v.length) {
+                return false;
+            }
+            for (int i = 0; i < length; i++) {
+                if (!js_get(i).equals(v.js_get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (ClassCastException cce) {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int hc = 0;
+        for (int i = 0; i < length; i++) {
+            hc += js_get(i).hashCode();
+        }
+        return 0;
     }
 
     @SuppressWarnings("unused")
