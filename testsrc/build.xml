@@ -55,6 +55,7 @@
     <antcall target="get-junit"/>
     <javac
       destdir="${test.classes}" debug="true"
+      encoding="UTF-8"
       target="${target-jvm}"
       source="${source-level}"
     >

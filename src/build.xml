@@ -34,6 +34,7 @@ Requires Ant version 1.2
            deprecation="on"
            debug="${debug}"
            includeAntRuntime="false"
+           encoding="UTF-8"
            target="${target-jvm}"
            source="${source-level}" />
     <copy todir="${classes}">
@@ -52,6 +53,7 @@ Requires Ant version 1.2
            deprecation="on"
            debug="${debug}"
            includeAntRuntime="false"
+           encoding="UTF-8"
            target="${target-jvm}"
            source="${source-level}" />
   </target>
