@@ -6,33 +6,35 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 /**
- * An array view that stores 16-bit quantities and implements the JavaScript "Int16Array" interface.
- * It also implements List<Short> for direct manipulation in Java.
+ * An array view that stores 32-bit quantities and implements the JavaScript "loat32Array" interface.
+ * It also implements List<Float> for direct manipulation in Java.
  */
 
-public class NativeInt16NativeArray
-    extends NativeTypedArrayView<Short>
+public class NativeFloat32Array
+    extends NativeTypedArrayView<Float>
 {
-    private static final long serialVersionUID = -8592870435287581398L;
+    private static final long serialVersionUID = -8963461831950499340L;
 
-    private static final String CLASS_NAME = "Int16Array";
-    private static final int BYTES_PER_ELEMENT = 2;
+    private static final String CLASS_NAME = "Float32Array";
+    private static final int BYTES_PER_ELEMENT = 4;
 
-    public NativeInt16NativeArray()
+    public NativeFloat32Array()
     {
     }
 
-    public NativeInt16NativeArray(NativeArrayBuffer ab, int off, int len)
+    public NativeFloat32Array(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
     }
 
-    public NativeInt16NativeArray(int len)
+    public NativeFloat32Array(int len)
     {
         this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
@@ -43,16 +45,16 @@ public class NativeInt16NativeArray
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
-        NativeInt16NativeArray a = new NativeInt16NativeArray();
+        NativeFloat32Array a = new NativeFloat32Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
     protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
     {
-        return new NativeInt16NativeArray(ab, off, len);
+        return new NativeFloat32Array(ab, off, len);
     }
 
     @Override
@@ -64,10 +66,10 @@ public class NativeInt16NativeArray
     @Override
     protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeInt16NativeArray)) {
+        if (!(thisObj instanceof NativeFloat32Array)) {
             throw incompatibleCallError(f);
         }
-        return (NativeInt16NativeArray)thisObj;
+        return (NativeFloat32Array)thisObj;
     }
 
     @Override
@@ -76,7 +78,7 @@ public class NativeInt16NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readInt16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
+        return ByteIo.readFloat32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
     }
 
     @Override
@@ -85,26 +87,26 @@ public class NativeInt16NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        int val = Conversions.toInt16(c);
-        ByteIo.writeInt16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
+        double val = ScriptRuntime.toNumber(c);
+        ByteIo.writeFloat32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
         return null;
     }
 
     @Override
-    public Short get(int i)
+    public Float get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Short)js_get(i);
+        return (Float)js_get(i);
     }
 
     @Override
-    public Short set(int i, Short aByte)
+    public Float set(int i, Float aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Short)js_set(i, aByte);
+        return (Float)js_set(i, aByte);
     }
 }

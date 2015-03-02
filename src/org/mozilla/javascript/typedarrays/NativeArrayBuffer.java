@@ -37,7 +37,7 @@ public class NativeArrayBuffer
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
         NativeArrayBuffer na = new NativeArrayBuffer();
         na.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);

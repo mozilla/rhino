@@ -6,34 +6,34 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 /**
- * An array view that stores 32-bit quantities and implements the JavaScript "Int32Array" interface.
- * It also implements List<Integer> for direct manipulation in Java.
+ * An array view that stores 32-bit quantities and implements the JavaScript "Uint32Array" interface.
+ * It also implements List<Long> for direct manipulation in Java.
  */
 
-public class NativeInt32NativeArray
-    extends NativeTypedArrayView<Integer>
+public class NativeUint32Array
+    extends NativeTypedArrayView<Long>
 {
-    private static final long serialVersionUID = -8963461831950499340L;
+    private static final long serialVersionUID = -7987831421954144244L;
 
-    private static final String CLASS_NAME = "Int32Array";
+    private static final String CLASS_NAME = "Uint32Array";
     private static final int BYTES_PER_ELEMENT = 4;
 
-    public NativeInt32NativeArray()
+    public NativeUint32Array()
     {
     }
 
-    public NativeInt32NativeArray(NativeArrayBuffer ab, int off, int len)
+    public NativeUint32Array(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
     }
 
-    public NativeInt32NativeArray(int len)
+    public NativeUint32Array(int len)
     {
         this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
@@ -44,16 +44,16 @@ public class NativeInt32NativeArray
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
-        NativeInt32NativeArray a = new NativeInt32NativeArray();
+        NativeUint32Array a = new NativeUint32Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
     protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
     {
-        return new NativeInt32NativeArray(ab, off, len);
+        return new NativeUint32Array(ab, off, len);
     }
 
     @Override
@@ -65,10 +65,10 @@ public class NativeInt32NativeArray
     @Override
     protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeInt32NativeArray)) {
+        if (!(thisObj instanceof NativeUint32Array)) {
             throw incompatibleCallError(f);
         }
-        return (NativeInt32NativeArray)thisObj;
+        return (NativeUint32Array)thisObj;
     }
 
     @Override
@@ -77,7 +77,7 @@ public class NativeInt32NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
+        return ByteIo.readUint32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
     }
 
     @Override
@@ -86,26 +86,26 @@ public class NativeInt32NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        int val = ScriptRuntime.toInt32(c);
-        ByteIo.writeInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
+        long val = Conversions.toUint32(c);
+        ByteIo.writeUint32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
         return null;
     }
 
     @Override
-    public Integer get(int i)
+    public Long get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Integer)js_get(i);
+        return (Long)js_get(i);
     }
 
     @Override
-    public Integer set(int i, Integer aByte)
+    public Long set(int i, Long aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Integer)js_set(i, aByte);
+        return (Long)js_set(i, aByte);
     }
 }

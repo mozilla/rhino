@@ -6,35 +6,35 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 /**
- * An array view that stores 32-bit quantities and implements the JavaScript "Uint32Array" interface.
- * It also implements List<Long> for direct manipulation in Java.
+ * An array view that stores 8-bit quantities and implements the JavaScript "Uint8Array" interface.
+ * It also implements List<Integer> for direct manipulation in Java.
  */
 
-public class NativeUint32NativeArray
-    extends NativeTypedArrayView<Long>
+public class NativeUint8Array
+    extends NativeTypedArrayView<Integer>
 {
-    private static final long serialVersionUID = -7987831421954144244L;
+    private static final long serialVersionUID = -3349419704390398895L;
 
-    private static final String CLASS_NAME = "Uint32Array";
-    private static final int BYTES_PER_ELEMENT = 4;
+    private static final String CLASS_NAME = "Uint8Array";
 
-    public NativeUint32NativeArray()
+    public NativeUint8Array()
     {
     }
 
-    public NativeUint32NativeArray(NativeArrayBuffer ab, int off, int len)
+    public NativeUint8Array(NativeArrayBuffer ab, int off, int len)
     {
-        super(ab, off, len, len * BYTES_PER_ELEMENT);
+        super(ab, off, len, len);
     }
 
-    public NativeUint32NativeArray(int len)
+    public NativeUint8Array(int len)
     {
-        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
+        this(new NativeArrayBuffer(len), 0, len);
     }
 
     @Override
@@ -43,31 +43,31 @@ public class NativeUint32NativeArray
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
-        NativeUint32NativeArray a = new NativeUint32NativeArray();
+        NativeUint8Array a = new NativeUint8Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
     protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
     {
-        return new NativeUint32NativeArray(ab, off, len);
+        return new NativeUint8Array(ab, off, len);
     }
 
     @Override
     public int getBytesPerElement()
     {
-        return BYTES_PER_ELEMENT;
+        return 1;
     }
 
     @Override
     protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeUint32NativeArray)) {
+        if (!(thisObj instanceof NativeUint8Array)) {
             throw incompatibleCallError(f);
         }
-        return (NativeUint32NativeArray)thisObj;
+        return (NativeUint8Array)thisObj;
     }
 
     @Override
@@ -76,7 +76,7 @@ public class NativeUint32NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readUint32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
+        return ByteIo.readUint8(arrayBuffer.buffer, index + offset);
     }
 
     @Override
@@ -85,26 +85,26 @@ public class NativeUint32NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        long val = Conversions.toUint32(c);
-        ByteIo.writeUint32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
+        int val = Conversions.toUint8(c);
+        ByteIo.writeUint8(arrayBuffer.buffer, index + offset, val);
         return null;
     }
 
     @Override
-    public Long get(int i)
+    public Integer get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Long)js_get(i);
+        return (Integer)js_get(i);
     }
 
     @Override
-    public Long set(int i, Long aByte)
+    public Integer set(int i, Integer aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Long)js_set(i, aByte);
+        return (Integer)js_set(i, aByte);
     }
 }

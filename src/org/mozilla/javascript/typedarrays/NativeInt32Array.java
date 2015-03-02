@@ -6,34 +6,37 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 /**
- * An array view that stores 8-bit quantities and implements the JavaScript "Int8Array" interface.
- * It also implements List<Byte> for direct manipulation in Java.
+ * An array view that stores 32-bit quantities and implements the JavaScript "Int32Array" interface.
+ * It also implements List<Integer> for direct manipulation in Java.
  */
 
-public class NativeInt8NativeArray
-    extends NativeTypedArrayView<Byte>
+public class NativeInt32Array
+    extends NativeTypedArrayView<Integer>
 {
-    private static final long serialVersionUID = -3349419704390398895L;
+    private static final long serialVersionUID = -8963461831950499340L;
 
-    private static final String CLASS_NAME = "Int8Array";
+    private static final String CLASS_NAME = "Int32Array";
+    private static final int BYTES_PER_ELEMENT = 4;
 
-    public NativeInt8NativeArray()
+    public NativeInt32Array()
     {
     }
 
-    public NativeInt8NativeArray(NativeArrayBuffer ab, int off, int len)
+    public NativeInt32Array(NativeArrayBuffer ab, int off, int len)
     {
-        super(ab, off, len, len);
+        super(ab, off, len, len * BYTES_PER_ELEMENT);
     }
 
-    public NativeInt8NativeArray(int len)
+    public NativeInt32Array(int len)
     {
-        this(new NativeArrayBuffer(len), 0, len);
+        this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
@@ -42,31 +45,31 @@ public class NativeInt8NativeArray
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
-        NativeInt8NativeArray a = new NativeInt8NativeArray();
+        NativeInt32Array a = new NativeInt32Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
     protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
     {
-        return new NativeInt8NativeArray(ab, off, len);
+        return new NativeInt32Array(ab, off, len);
     }
 
     @Override
     public int getBytesPerElement()
     {
-        return 1;
+        return BYTES_PER_ELEMENT;
     }
 
     @Override
     protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeInt8NativeArray)) {
+        if (!(thisObj instanceof NativeInt32Array)) {
             throw incompatibleCallError(f);
         }
-        return (NativeInt8NativeArray)thisObj;
+        return (NativeInt32Array)thisObj;
     }
 
     @Override
@@ -75,7 +78,7 @@ public class NativeInt8NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readInt8(arrayBuffer.buffer, index + offset);
+        return ByteIo.readInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
     }
 
     @Override
@@ -84,28 +87,26 @@ public class NativeInt8NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        int val = Conversions.toInt8(c);
-        ByteIo.writeInt8(arrayBuffer.buffer, index + offset, val);
+        int val = ScriptRuntime.toInt32(c);
+        ByteIo.writeInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
         return null;
     }
 
-    // List implementation (much of it handled by the superclass)
-
     @Override
-    public Byte get(int i)
+    public Integer get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Byte)js_get(i);
+        return (Integer)js_get(i);
     }
 
     @Override
-    public Byte set(int i, Byte aByte)
+    public Integer set(int i, Integer aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Byte)js_set(i, aByte);
+        return (Integer)js_set(i, aByte);
     }
 }

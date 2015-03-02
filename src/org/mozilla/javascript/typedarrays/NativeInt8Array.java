@@ -6,32 +6,33 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 /**
- * An array view that stores 8-bit quantities and implements the JavaScript "Uint8Array" interface.
- * It also implements List<Integer> for direct manipulation in Java.
+ * An array view that stores 8-bit quantities and implements the JavaScript "Int8Array" interface.
+ * It also implements List<Byte> for direct manipulation in Java.
  */
 
-public class NativeUint8NativeArray
-    extends NativeTypedArrayView<Integer>
+public class NativeInt8Array
+    extends NativeTypedArrayView<Byte>
 {
     private static final long serialVersionUID = -3349419704390398895L;
 
-    private static final String CLASS_NAME = "Uint8Array";
+    private static final String CLASS_NAME = "Int8Array";
 
-    public NativeUint8NativeArray()
+    public NativeInt8Array()
     {
     }
 
-    public NativeUint8NativeArray(NativeArrayBuffer ab, int off, int len)
+    public NativeInt8Array(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len);
     }
 
-    public NativeUint8NativeArray(int len)
+    public NativeInt8Array(int len)
     {
         this(new NativeArrayBuffer(len), 0, len);
     }
@@ -42,16 +43,16 @@ public class NativeUint8NativeArray
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
-        NativeUint8NativeArray a = new NativeUint8NativeArray();
+        NativeInt8Array a = new NativeInt8Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
     protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
     {
-        return new NativeUint8NativeArray(ab, off, len);
+        return new NativeInt8Array(ab, off, len);
     }
 
     @Override
@@ -63,10 +64,10 @@ public class NativeUint8NativeArray
     @Override
     protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeUint8NativeArray)) {
+        if (!(thisObj instanceof NativeInt8Array)) {
             throw incompatibleCallError(f);
         }
-        return (NativeUint8NativeArray)thisObj;
+        return (NativeInt8Array)thisObj;
     }
 
     @Override
@@ -75,7 +76,7 @@ public class NativeUint8NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readUint8(arrayBuffer.buffer, index + offset);
+        return ByteIo.readInt8(arrayBuffer.buffer, index + offset);
     }
 
     @Override
@@ -84,26 +85,28 @@ public class NativeUint8NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        int val = Conversions.toUint8(c);
-        ByteIo.writeUint8(arrayBuffer.buffer, index + offset, val);
+        int val = Conversions.toInt8(c);
+        ByteIo.writeInt8(arrayBuffer.buffer, index + offset, val);
         return null;
     }
 
+    // List implementation (much of it handled by the superclass)
+
     @Override
-    public Integer get(int i)
+    public Byte get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Integer)js_get(i);
+        return (Byte)js_get(i);
     }
 
     @Override
-    public Integer set(int i, Integer aByte)
+    public Byte set(int i, Byte aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Integer)js_set(i, aByte);
+        return (Byte)js_set(i, aByte);
     }
 }

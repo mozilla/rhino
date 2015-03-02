@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
@@ -43,7 +44,7 @@ public class NativeUint8ClampedArray
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
         NativeUint8ClampedArray a = new NativeUint8ClampedArray();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);

@@ -1,16 +1,16 @@
 package org.mozilla.javascript.tests.harmony;
 
 import org.junit.Test;
-import org.mozilla.javascript.typedarrays.Float32NativeArray;
-import org.mozilla.javascript.typedarrays.Float64NativeArray;
+import org.mozilla.javascript.typedarrays.NativeFloat32Array;
+import org.mozilla.javascript.typedarrays.NativeFloat64Array;
 import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
-import org.mozilla.javascript.typedarrays.NativeInt16NativeArray;
-import org.mozilla.javascript.typedarrays.NativeInt32NativeArray;
-import org.mozilla.javascript.typedarrays.NativeInt8NativeArray;
-import org.mozilla.javascript.typedarrays.NativeUint16NativeArray;
-import org.mozilla.javascript.typedarrays.NativeUint32NativeArray;
+import org.mozilla.javascript.typedarrays.NativeInt16Array;
+import org.mozilla.javascript.typedarrays.NativeInt32Array;
+import org.mozilla.javascript.typedarrays.NativeInt8Array;
+import org.mozilla.javascript.typedarrays.NativeUint16Array;
+import org.mozilla.javascript.typedarrays.NativeUint32Array;
+import org.mozilla.javascript.typedarrays.NativeUint8Array;
 import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
-import org.mozilla.javascript.typedarrays.NativeUint8NativeArray;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,8 +29,8 @@ public class TypedArrayJavaTest
     @Test
     public void testInt8()
     {
-        NativeInt8NativeArray a =
-            new NativeInt8NativeArray(2);
+        NativeInt8Array a =
+            new NativeInt8Array(2);
         testTwoList(a, (byte)1, (byte)2, (byte)3);
     }
 
@@ -40,13 +40,13 @@ public class TypedArrayJavaTest
         byte a = 3;
         byte b = 4;
 
-        NativeInt8NativeArray list =
-            new NativeInt8NativeArray(new NativeArrayBuffer(2), 0, 2);
+        NativeInt8Array list =
+            new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
         list.set(0, a);
         list.set(1, b);
 
         List<Byte> gl =
-            new NativeInt8NativeArray(new NativeArrayBuffer(2), 0, 2);
+            new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
         gl.set(0, a);
         gl.set(1, b);
         assertTrue(gl.equals(list));
@@ -54,7 +54,7 @@ public class TypedArrayJavaTest
         assertFalse(gl.equals(a));
 
         List<Byte> bl =
-            new NativeInt8NativeArray(new NativeArrayBuffer(2), 0, 2);
+            new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
         bl.set(0, b);
         bl.set(1, a);
         assertFalse(bl.equals(list));
@@ -86,8 +86,8 @@ public class TypedArrayJavaTest
     @Test
     public void testUInt8()
     {
-        NativeUint8NativeArray a =
-            new NativeUint8NativeArray(2);
+        NativeUint8Array a =
+            new NativeUint8Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
@@ -102,48 +102,48 @@ public class TypedArrayJavaTest
     @Test
     public void testInt16()
     {
-        NativeInt16NativeArray a =
-            new NativeInt16NativeArray(2);
+        NativeInt16Array a =
+            new NativeInt16Array(2);
         testTwoList(a, (short)1, (short)2, (short)3);
     }
 
     @Test
     public void testUint16()
     {
-        NativeUint16NativeArray a =
-            new NativeUint16NativeArray(2);
+        NativeUint16Array a =
+            new NativeUint16Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
     public void testInt32()
     {
-        NativeInt32NativeArray a =
-            new NativeInt32NativeArray(2);
+        NativeInt32Array a =
+            new NativeInt32Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
     public void testUint32()
     {
-        NativeUint32NativeArray a =
-            new NativeUint32NativeArray(2);
+        NativeUint32Array a =
+            new NativeUint32Array(2);
         testTwoList(a, 1L, 2L, 3L);
     }
 
     @Test
     public void testFloat32()
     {
-        Float32NativeArray a =
-            new Float32NativeArray(2);
+        NativeFloat32Array a =
+            new NativeFloat32Array(2);
         testTwoList(a, 1.0f, 2.0f, 3.0F);
     }
 
     @Test
     public void testFloat64()
     {
-        Float64NativeArray a =
-            new Float64NativeArray(2);
+        NativeFloat64Array a =
+            new NativeFloat64Array(2);
         testTwoList(a, 1.0, 2.0, 3.0);
     }
 

@@ -6,34 +6,34 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 /**
- * An array view that stores 64-bit quantities and implements the JavaScript "Float64Array" interface.
- * It also implements List<Double> for direct manipulation in Java.
+ * An array view that stores 16-bit quantities and implements the JavaScript "Int16Array" interface.
+ * It also implements List<Short> for direct manipulation in Java.
  */
 
-public class Float64NativeArray
-    extends NativeTypedArrayView<Double>
+public class NativeInt16Array
+    extends NativeTypedArrayView<Short>
 {
-    private static final long serialVersionUID = -1255405650050639335L;
+    private static final long serialVersionUID = -8592870435287581398L;
 
-    private static final String CLASS_NAME = "Float64Array";
-    private static final int BYTES_PER_ELEMENT = 8;
+    private static final String CLASS_NAME = "Int16Array";
+    private static final int BYTES_PER_ELEMENT = 2;
 
-    public Float64NativeArray()
+    public NativeInt16Array()
     {
     }
 
-    public Float64NativeArray(NativeArrayBuffer ab, int off, int len)
+    public NativeInt16Array(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
     }
 
-    public Float64NativeArray(int len)
+    public NativeInt16Array(int len)
     {
         this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
@@ -44,16 +44,16 @@ public class Float64NativeArray
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
-        Float64NativeArray a = new Float64NativeArray();
+        NativeInt16Array a = new NativeInt16Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
     protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
     {
-        return new Float64NativeArray(ab, off, len);
+        return new NativeInt16Array(ab, off, len);
     }
 
     @Override
@@ -65,10 +65,10 @@ public class Float64NativeArray
     @Override
     protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof Float64NativeArray)) {
+        if (!(thisObj instanceof NativeInt16Array)) {
             throw incompatibleCallError(f);
         }
-        return (Float64NativeArray)thisObj;
+        return (NativeInt16Array)thisObj;
     }
 
     @Override
@@ -77,8 +77,7 @@ public class Float64NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        long base = ByteIo.readUint64Primitive(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
-        return Double.longBitsToDouble(base);
+        return ByteIo.readInt16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
     }
 
     @Override
@@ -87,27 +86,26 @@ public class Float64NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        double val = ScriptRuntime.toNumber(c);
-        long base = Double.doubleToLongBits(val);
-        ByteIo.writeUint64(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, base, false);
+        int val = Conversions.toInt16(c);
+        ByteIo.writeInt16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
         return null;
     }
 
     @Override
-    public Double get(int i)
+    public Short get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Double)js_get(i);
+        return (Short)js_get(i);
     }
 
     @Override
-    public Double set(int i, Double aByte)
+    public Short set(int i, Short aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Double)js_set(i, aByte);
+        return (Short)js_set(i, aByte);
     }
 }

@@ -6,34 +6,35 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 /**
- * An array view that stores 32-bit quantities and implements the JavaScript "loat32Array" interface.
- * It also implements List<Float> for direct manipulation in Java.
+ * An array view that stores 64-bit quantities and implements the JavaScript "Float64Array" interface.
+ * It also implements List<Double> for direct manipulation in Java.
  */
 
-public class Float32NativeArray
-    extends NativeTypedArrayView<Float>
+public class NativeFloat64Array
+    extends NativeTypedArrayView<Double>
 {
-    private static final long serialVersionUID = -8963461831950499340L;
+    private static final long serialVersionUID = -1255405650050639335L;
 
-    private static final String CLASS_NAME = "Float32Array";
-    private static final int BYTES_PER_ELEMENT = 4;
+    private static final String CLASS_NAME = "Float64Array";
+    private static final int BYTES_PER_ELEMENT = 8;
 
-    public Float32NativeArray()
+    public NativeFloat64Array()
     {
     }
 
-    public Float32NativeArray(NativeArrayBuffer ab, int off, int len)
+    public NativeFloat64Array(NativeArrayBuffer ab, int off, int len)
     {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
     }
 
-    public Float32NativeArray(int len)
+    public NativeFloat64Array(int len)
     {
         this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
@@ -44,16 +45,16 @@ public class Float32NativeArray
         return CLASS_NAME;
     }
 
-    public static void init(Scriptable scope, boolean sealed)
+    public static void init(Context cx, Scriptable scope, boolean sealed)
     {
-        Float32NativeArray a = new Float32NativeArray();
+        NativeFloat64Array a = new NativeFloat64Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
     protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
     {
-        return new Float32NativeArray(ab, off, len);
+        return new NativeFloat64Array(ab, off, len);
     }
 
     @Override
@@ -65,10 +66,10 @@ public class Float32NativeArray
     @Override
     protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof Float32NativeArray)) {
+        if (!(thisObj instanceof NativeFloat64Array)) {
             throw incompatibleCallError(f);
         }
-        return (Float32NativeArray)thisObj;
+        return (NativeFloat64Array)thisObj;
     }
 
     @Override
@@ -77,7 +78,8 @@ public class Float32NativeArray
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readFloat32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
+        long base = ByteIo.readUint64Primitive(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
+        return Double.longBitsToDouble(base);
     }
 
     @Override
@@ -87,25 +89,26 @@ public class Float32NativeArray
             return Undefined.instance;
         }
         double val = ScriptRuntime.toNumber(c);
-        ByteIo.writeFloat32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
+        long base = Double.doubleToLongBits(val);
+        ByteIo.writeUint64(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, base, false);
         return null;
     }
 
     @Override
-    public Float get(int i)
+    public Double get(int i)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Float)js_get(i);
+        return (Double)js_get(i);
     }
 
     @Override
-    public Float set(int i, Float aByte)
+    public Double set(int i, Double aByte)
     {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Float)js_set(i, aByte);
+        return (Double)js_set(i, aByte);
     }
 }

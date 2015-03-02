@@ -14,17 +14,6 @@ import java.util.ResourceBundle;
 
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
-import org.mozilla.javascript.typedarrays.Float32NativeArray;
-import org.mozilla.javascript.typedarrays.Float64NativeArray;
-import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
-import org.mozilla.javascript.typedarrays.NativeDataView;
-import org.mozilla.javascript.typedarrays.NativeInt16NativeArray;
-import org.mozilla.javascript.typedarrays.NativeInt32NativeArray;
-import org.mozilla.javascript.typedarrays.NativeInt8NativeArray;
-import org.mozilla.javascript.typedarrays.NativeUint16NativeArray;
-import org.mozilla.javascript.typedarrays.NativeUint32NativeArray;
-import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
-import org.mozilla.javascript.typedarrays.NativeUint8NativeArray;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
 import org.mozilla.javascript.xml.XMLObject;
 import org.mozilla.javascript.xml.XMLLib;
@@ -239,23 +228,41 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
         }
 
-        // Native arrays. Should we make it depend on language level?
-        //new LazilyLoadedCtor(scope, "ArrayBuffer",
-        //        "org.mozilla.javascript.nativearrays.NativeArrayBuffer", sealed, true);
-
         if ((cx.getLanguageVersion() >= Context.VERSION_1_8) &&
              cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) {
-            NativeArrayBuffer.init(scope, sealed);
-            NativeUint8NativeArray.init(scope, sealed);
-            NativeInt8NativeArray.init(scope, sealed);
-            NativeUint8ClampedArray.init(scope, sealed);
-            NativeUint16NativeArray.init(scope, sealed);
-            NativeInt16NativeArray.init(scope, sealed);
-            NativeUint32NativeArray.init(scope, sealed);
-            NativeInt32NativeArray.init(scope, sealed);
-            Float32NativeArray.init(scope, sealed);
-            Float64NativeArray.init(scope, sealed);
-            NativeDataView.init(scope, sealed);
+            new LazilyLoadedCtor(scope, "ArrayBuffer",
+                                 "org.mozilla.javascript.typedarrays.NativeArrayBuffer",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Int8Array",
+                                 "org.mozilla.javascript.typedarrays.NativeInt8Array",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Uint8Array",
+                                 "org.mozilla.javascript.typedarrays.NativeUint8Array",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Uint8ClampedArray",
+                                 "org.mozilla.javascript.typedarrays.NativeUint8ClampedArray",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Int16Array",
+                                 "org.mozilla.javascript.typedarrays.NativeInt16Array",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Uint16Array",
+                                 "org.mozilla.javascript.typedarrays.NativeUint16Array",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Int32Array",
+                                 "org.mozilla.javascript.typedarrays.NativeInt32Array",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Uint32Array",
+                                 "org.mozilla.javascript.typedarrays.NativeUint32Array",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Float32Array",
+                                 "org.mozilla.javascript.typedarrays.NativeFloat32Array",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "Float64Array",
+                                 "org.mozilla.javascript.typedarrays.NativeFloat64Array",
+                                 sealed, true);
+            new LazilyLoadedCtor(scope, "DataView",
+                                 "org.mozilla.javascript.typedarrays.NativeDataView",
+                                 sealed, true);
         }
      
         if (scope instanceof TopLevel) {
