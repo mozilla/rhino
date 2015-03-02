@@ -100,6 +100,10 @@ public class NativeGlobal implements Serializable, IdFunctionCall
             with the 'name' property set to the name of the error.
         */
         for (TopLevel.NativeErrors error : TopLevel.NativeErrors.values()) {
+            if (error == TopLevel.NativeErrors.Error) {
+                // Error is initialized elsewhere and we should not overwrite it.
+                continue;
+            }
             String name = error.name();
             ScriptableObject errorProto =
               (ScriptableObject) ScriptRuntime.newBuiltinObject(cx, scope,
