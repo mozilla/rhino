@@ -133,6 +133,10 @@
   <target name="junit" depends="junit-compile,coverage-instrument">
     <junit printsummary="on" fork="true" forkmode="once" maxmemory="${test.vm.mx}" showoutput="true"
     	failureproperty="junitFailed">
+      <!--
+      <jvmarg value="-Xdebug"/>
+      <jvmarg value="-Xrunjdwp:transport=dt_socket,suspend=y,server=y,address=localhost:14000"/>
+      -->
       <sysproperty key="java.awt.headless" value="true" />
       <sysproperty key="mozilla.js.tests" value="${test.library.dir}" />
       <sysproperty key="mozilla.js.tests.timeout" value="${test.timeout}" />
@@ -152,8 +156,11 @@
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
       <batchtest todir="build/test">
+        <!-- -->
         <fileset dir="${test.classes}" includes="**/tests/**/*Test.class"/>
         <fileset dir="${test.classes}" includes="**/StandardTests.class"/>
+        <!-- -->
+        <!-- <fileset dir="${test.classes}" includes="**/tests/**/*ExtensionTest.class"/> -->
       </batchtest>
       <formatter type="xml"/>
       <assertions>

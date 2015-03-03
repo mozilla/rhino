@@ -1,17 +1,4 @@
-// Let this run in Node if we want
-try {
-  var vm = require('vm');
-  var fs = require('fs');
-  var path = require('path');
-
-  var assertCode = fs.readFileSync(path.join(__dirname, '../../assert.js'));
-  vm.runInThisContext(assertCode);
-
-  print = console.log;
-} catch (e) {
-  // Not in Node -- threw "process not found"
-  load("testsrc/assert.js");
-}
+load("testsrc/assert.js");
 
 function nestedThrower(msg) {
   throw new Error(msg);
@@ -47,6 +34,7 @@ function countLines(msg) {
 try {
   throw new Error('Test 1');
 } catch (e) {
+  assertFalse(e.stack == undefined);
   assertTrue(/Test 1/.test(e.toString()));
   assertFalse(/stack-traces.js/.test(e.toString()));
   assertTrue(/Test 1/.test(e.stack));
@@ -184,8 +172,7 @@ try {
 }
 
 // And test that it works the old way when we format it back
-
-delete Error.prepareStackTrace;
+Error.prepareStackTrace = undefined;
 
 try {
   grandparentThrower('Custom 2');

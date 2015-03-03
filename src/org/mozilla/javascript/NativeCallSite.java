@@ -74,57 +74,6 @@ public class NativeCallSite extends IdScriptableObject
     }
 
     @Override
-    protected int findPrototypeId(String s)
-    {
-        if ("constructor".equals(s)) {
-            return Id_constructor;
-        }
-        if ("getThis".equals(s)) {
-            return Id_getThis;
-        }
-        if ("getTypeName".equals(s)) {
-            return Id_getTypeName;
-        }
-        if ("getFunction".equals(s)) {
-            return Id_getFunction;
-        }
-        if ("getFunctionName".equals(s)) {
-            return Id_getFunctionName;
-        }
-        if ("getMethodName".equals(s)) {
-            return Id_getMethodName;
-        }
-        if ("getFileName".equals(s)) {
-            return Id_getFileName;
-        }
-        if ("getLineNumber".equals(s)) {
-            return Id_getLineNumber;
-        }
-        if ("getColumnNumber".equals(s)) {
-            return Id_getColumnNumber;
-        }
-        if ("getEvalOrigin".equals(s)) {
-            return Id_getEvalOrigin;
-        }
-        if ("isToplevel".equals(s)) {
-            return Id_isToplevel;
-        }
-        if ("isEval".equals(s)) {
-            return Id_isEval;
-        }
-        if ("isNative".equals(s)) {
-            return Id_isNative;
-        }
-        if ("isConstructor".equals(s)) {
-            return Id_isConstructor;
-        }
-        if ("toString".equals(s)) {
-            return Id_toString;
-        }
-        return 0;
-    }
-
-    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -236,6 +185,46 @@ public class NativeCallSite extends IdScriptableObject
         return cs.element.lineNumber;
     }
 
+// #string_id_map#
+
+    @Override
+    protected int findPrototypeId(String s)
+    {
+        int id;
+// #generated# Last update: 2015-03-02 23:42:12 PST
+        L0: { id = 0; String X = null; int c;
+            L: switch (s.length()) {
+            case 6: X="isEval";id=Id_isEval; break L;
+            case 7: X="getThis";id=Id_getThis; break L;
+            case 8: c=s.charAt(0);
+                if (c=='i') { X="isNative";id=Id_isNative; }
+                else if (c=='t') { X="toString";id=Id_toString; }
+                break L;
+            case 10: X="isToplevel";id=Id_isToplevel; break L;
+            case 11: switch (s.charAt(4)) {
+                case 'i': X="getFileName";id=Id_getFileName; break L;
+                case 't': X="constructor";id=Id_constructor; break L;
+                case 'u': X="getFunction";id=Id_getFunction; break L;
+                case 'y': X="getTypeName";id=Id_getTypeName; break L;
+                } break L;
+            case 13: switch (s.charAt(3)) {
+                case 'E': X="getEvalOrigin";id=Id_getEvalOrigin; break L;
+                case 'L': X="getLineNumber";id=Id_getLineNumber; break L;
+                case 'M': X="getMethodName";id=Id_getMethodName; break L;
+                case 'o': X="isConstructor";id=Id_isConstructor; break L;
+                } break L;
+            case 15: c=s.charAt(3);
+                if (c=='C') { X="getColumnNumber";id=Id_getColumnNumber; }
+                else if (c=='F') { X="getFunctionName";id=Id_getFunctionName; }
+                break L;
+            }
+            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
+        }
+// #/generated#
+        return id;
+    }
+
     private static final int
       Id_constructor = 1,
       Id_getThis = 2,
@@ -253,4 +242,5 @@ public class NativeCallSite extends IdScriptableObject
       Id_isConstructor = 14,
       Id_toString = 15,
       MAX_PROTOTYPE_ID = 15;
+// #/string_id_map#
 }

@@ -236,12 +236,16 @@ public abstract class RhinoException extends RuntimeException
         }
 
         for (ScriptStackElement elem : stack) {
-            if (stackStyle == StackStyle.MOZILLA) {
+            switch (stackStyle) {
+            case MOZILLA:
                 elem.renderMozillaStyle(buffer);
-            } else if (stackStyle == StackStyle.V8) {
+                break;
+            case V8:
                 elem.renderV8Style(buffer);
-            } else {
+                break;
+            case RHINO:
                 elem.renderJavaStyle(buffer);
+                break;
             }
             buffer.append(lineSeparator);
         }
@@ -406,6 +410,7 @@ public abstract class RhinoException extends RuntimeException
 
     /**
      * Return the current stack style in use.
+     * Return the current stack style in use.
      */
     public static StackStyle getStackStyle() {
         return stackStyle;
@@ -428,7 +433,13 @@ public abstract class RhinoException extends RuntimeException
     static {
         String style = System.getProperty("rhino.stack.style");
         if (style != null) {
-            stackStyle = StackStyle.getStyle(style);
+            if ("Rhino".equalsIgnoreCase(style)) {
+                stackStyle = StackStyle.RHINO;
+            } else if ("Mozilla".equalsIgnoreCase(style)) {
+                stackStyle = StackStyle.MOZILLA;
+            } else if ("V8".equalsIgnoreCase(style)) {
+                stackStyle = StackStyle.V8;
+            }
         }
     }
 }

@@ -1,33 +1,63 @@
 package org.mozilla.javascript.tests;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.StackStyle;
+import org.mozilla.javascript.tools.shell.Global;
 
 import java.io.FileReader;
 import java.io.IOException;
 
 import static org.junit.Assert.*;
 
-public class StackTraceTests
+public class StackTraceExtensionTest
 {
+    @BeforeClass
+    public static void init()
+    {
+        RhinoException.setStackStyle(StackStyle.V8);
+    }
+
+    @AfterClass
+    public static void terminate()
+    {
+        RhinoException.setStackStyle(StackStyle.RHINO);
+    }
+
     private void testTraces(int opt)
     {
-        Context cx = Context.enter();
+        final ContextFactory factory = new ContextFactory() {
+            @Override
+            protected boolean hasFeature(Context cx, int featureIndex)
+            {
+                switch (featureIndex) {
+                case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
+                    return true;
+                default:
+                    return super.hasFeature(cx, featureIndex);
+                }
+            }
+        };
+
+        Context cx = factory.enterContext();
         try {
             cx.setLanguageVersion(Context.VERSION_1_8);
             cx.setOptimizationLevel(opt);
             cx.setGeneratingDebug(true);
-            Scriptable global = cx.initStandardObjects();
+
+            Global global = new Global(cx);
+            Scriptable root = cx.newObject(global);
+
             FileReader rdr = new FileReader("testsrc/jstests/extensions/stack-traces.js");
 
             try {
-                RhinoException.setStackStyle(StackStyle.V8);
-                cx.evaluateReader(global, rdr, "stack-traces.js", 1, null);
+                cx.evaluateReader(root, rdr, "stack-traces.js", 1, null);
             } finally {
-                RhinoException.setStackStyle(StackStyle.RHINO);
                 rdr.close();
             }
         } catch (IOException ioe) {
