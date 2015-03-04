@@ -164,7 +164,8 @@ final class NativeError extends IdScriptableObject
         if (stackProvider == null) {
             stackProvider = re;
             defineProperty("stack", this,
-                           ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, 0);
+                           ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK,
+                           DONTENUM);
         }
     }
 
@@ -300,7 +301,7 @@ final class NativeError extends IdScriptableObject
         // Create a new error that will have the correct prototype so we can re-use "getStackTrace"
         NativeError err = (NativeError)cx.newObject(thisObj, "Error");
         // Wire it up so that it will have an actual exception with a stack trace
-        err.setStackProvider(new JavaScriptException("[object Object]"));
+        err.setStackProvider(new EvaluatorException("[object Object]"));
 
         // Figure out if they passed a function used to hide part of the stack
         if (func != null) {

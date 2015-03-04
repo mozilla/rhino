@@ -73,7 +73,7 @@ public final class ScriptStackElement implements Serializable {
     public void renderV8Style(StringBuilder sb) {
         sb.append("    at ");
 
-        if ((functionName == null) || "anonymous".equals(functionName)) {
+        if ((functionName == null) || "anonymous".equals(functionName) || "undefined".equals(functionName)) {
             // Anonymous functions in V8 don't have names in the stack trace
             appendV8Location(sb);
 
