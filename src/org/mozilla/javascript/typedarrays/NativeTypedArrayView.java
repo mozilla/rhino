@@ -7,6 +7,7 @@
 package org.mozilla.javascript.typedarrays;
 
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.ScriptRuntime;
@@ -27,7 +28,7 @@ import java.util.RandomAccess;
 
 public abstract class NativeTypedArrayView<T>
     extends NativeArrayBufferView
-    implements List<T>, RandomAccess
+    implements List<T>, RandomAccess, ExternalArrayData
 {
     /** The length, in elements, of the array */
     protected final int length;
@@ -403,6 +404,25 @@ public abstract class NativeTypedArrayView<T>
         MAX_INSTANCE_ID         = Id_BYTES_PER_ELEMENT;
 
 // #/string_id_map#
+
+    // External Array implementation
+
+    @Override
+    public Object getArrayElement(int index)
+    {
+        return js_get(index);
+    }
+
+    @Override
+    public void setArrayElement(int index, Object value)
+    {
+        js_set(index, value);
+    }
+
+    @Override
+    public int getArrayLength() {
+        return length;
+    }
 
     // Abstract List implementation
 

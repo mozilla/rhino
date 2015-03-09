@@ -114,6 +114,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     // it indicates sealed object where ~count gives number of keys
     private int count;
 
+    // Where external array data is stored.
+    private transient ExternalArrayData externalData;
+
     // gateways into the definition-order linked list of slots
     private transient Slot firstAdded;
     private transient Slot lastAdded;
@@ -131,6 +134,16 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private static final int INITIAL_SLOT_SIZE = 4;
 
     private boolean isExtensible = true;
+
+    private static final Method GET_ARRAY_LENGTH;
+
+    static {
+        try {
+            GET_ARRAY_LENGTH = ScriptableObject.class.getMethod("getExternalArrayLength");
+        } catch (NoSuchMethodException nsm) {
+            throw new RuntimeException(nsm);
+        }
+    }
 
     private static class Slot implements Serializable
     {
@@ -434,6 +447,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public boolean has(int index, Scriptable start)
     {
+        if (externalData != null) {
+            return (index < externalData.getArrayLength());
+        }
         return null != getSlot(null, index, SLOT_QUERY);
     }
 
@@ -465,6 +481,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public Object get(int index, Scriptable start)
     {
+        if (externalData != null) {
+            if (index < externalData.getArrayLength()) {
+                return externalData.getArrayElement(index);
+            }
+            return Scriptable.NOT_FOUND;
+        }
+
         Slot slot = getSlot(null, index, SLOT_QUERY);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
@@ -505,6 +528,19 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      */
     public void put(int index, Scriptable start, Object value)
     {
+        if (externalData != null) {
+            if (index < externalData.getArrayLength()) {
+                externalData.setArrayElement(index, value);
+            } else {
+                throw new JavaScriptException(
+                    ScriptRuntime.newNativeError(Context.getCurrentContext(), this,
+                                                 TopLevel.NativeErrors.RangeError,
+                                                 new Object[] { "External array index out of bounds " }),
+                    null, 0);
+            }
+            return;
+        }
+
         if (putImpl(null, index, start, value))
             return;
 
@@ -818,6 +854,37 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         gslot.getter = null;
         gslot.setter = null;
         gslot.value = init;
+    }
+
+    /**
+     * Attach the specified object to this object, and delegate all indexed property lookups to it. In other words,
+     * if the object has 3 elements, then an attempt to look up or modify "[0]", "[1]", or "[2]" will be delegated
+     * to this object. Additional indexed properties outside the range specified, and additional non-indexed
+     * properties, may still be added. The object specified must implement the ExternalArrayData interface.
+     *
+     * @param array the List to use for delegated property access. Set this to null to revert back to regular
+     *              property access.
+     * @since 1.8.0
+     */
+    public void setExternalArrayData(ExternalArrayData array)
+    {
+        externalData = array;
+
+        if (array == null) {
+            delete("length");
+        } else {
+            // Define "length" to return whatever length the List gives us.
+            defineProperty("length", null,
+                           GET_ARRAY_LENGTH, null, READONLY | DONTENUM);
+        }
+    }
+
+    /**
+     * This is a function used by setExternalArrayData to dynamically get the "length" property value.
+     */
+    public Object getExternalArrayLength()
+    {
+        return (externalData == null ? 0 : externalData.getArrayLength());
     }
 
     /**
@@ -2963,10 +3030,22 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     Object[] getIds(boolean getAll) {
         Slot[] s = slots;
-        Object[] a = ScriptRuntime.emptyArgs;
-        if (s == null)
+        Object[] a;
+        int externalLen = (externalData == null ? 0 : externalData.getArrayLength());
+
+        if (externalLen == 0) {
+            a = ScriptRuntime.emptyArgs;
+        } else {
+            a = new Object[externalLen];
+            for (int i = 0; i < externalLen; i++) {
+                a[i] = Integer.valueOf(i);
+            }
+        }
+        if (s == null) {
             return a;
-        int c = 0;
+        }
+
+        int c = externalLen;
         Slot slot = firstAdded;
         while (slot != null && slot.wasDeleted) {
             // we used to removed deleted slots from the linked list here
@@ -2977,8 +3056,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
         while (slot != null) {
             if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
-                if (c == 0)
-                    a = new Object[s.length];
+                if (c == externalLen) {
+                    Object[] oldA = a;
+                    a = new Object[s.length + externalLen];
+                    if (oldA != null) {
+                        System.arraycopy(oldA, 0, a, 0, externalLen);
+                    }
+                }
                 a[c++] = slot.name != null
                         ? slot.name
                         : Integer.valueOf(slot.indexOrHash);
@@ -2989,8 +3073,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 slot = slot.orderedNext;
             }
         }
-        if (c == a.length)
+        if (c == (a.length + externalLen)) {
             return a;
+        }
         Object[] result = new Object[c];
         System.arraycopy(a, 0, result, 0, c);
         return result;
