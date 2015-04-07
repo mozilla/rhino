@@ -327,6 +327,11 @@ class JavaMembers
                                     }
                                 }
                             }
+                            Class<?>[] interfaces = clazz.getInterfaces();
+                            for (Class<?> intface : interfaces) {
+                                discoverAccessibleMethods(intface, map, includeProtected,
+                                                          includePrivate);
+                            }
                             clazz = clazz.getSuperclass();
                         } catch (SecurityException e) {
                             // Some security settings (i.e., applets) disallow

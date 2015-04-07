@@ -14,8 +14,10 @@ Requires Ant version 1.2
 
   <available property="jdk15"
              classname="java.lang.reflect.ParameterizedType" />
+  <available property="jdk18"
+             classname="java.util.stream.Stream" />
 
-  <target name="compile" depends="compile-most,compile-jdk15">
+  <target name="compile" depends="compile-most,compile-jdk15,compile-jdk18">
   </target>
 
   <target name="shell" depends="compile">
@@ -30,13 +32,15 @@ Requires Ant version 1.2
     <javac srcdir="src"
            destdir="${classes}"
            includes="org/**/*.java"
-           excludes="org/**/jdk15/*.java"
            deprecation="on"
            debug="${debug}"
            includeAntRuntime="false"
            encoding="UTF-8"
            target="${target-jvm}"
-           source="${source-level}" />
+           source="${source-level}">
+      <exclude name="org/**/jdk15/*.java"/>
+      <exclude name="org/**/jdk18/*.java"/>
+    </javac>
     <copy todir="${classes}">
       <fileset dir="src" includes="org/**/*.properties" />
       <filterset>
@@ -50,6 +54,19 @@ Requires Ant version 1.2
     <javac srcdir="src"
            destdir="${classes}"
            includes="org/**/jdk15/*.java"
+           excludes="org/**/jdk18/*.java"
+           deprecation="on"
+           debug="${debug}"
+           includeAntRuntime="false"
+           encoding="UTF-8"
+           target="${target-jvm}"
+           source="${source-level}" />
+  </target>
+
+  <target name="compile-jdk18" if="jdk18">
+    <javac srcdir="src"
+           destdir="${classes}"
+           includes="org/**/jdk18/*.java"
            deprecation="on"
            debug="${debug}"
            includeAntRuntime="false"
