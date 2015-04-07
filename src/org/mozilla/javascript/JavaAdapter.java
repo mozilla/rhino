@@ -384,7 +384,8 @@ public final class JavaAdapter implements IdFunctionCall
             for (int j = 0; j < methods.length; j++) {
                 Method method = methods[j];
                 int mods = method.getModifiers();
-                if (Modifier.isStatic(mods) || Modifier.isFinal(mods)) {
+                if (Modifier.isStatic(mods) || Modifier.isFinal(mods) ||
+                    VMBridge.instance.isDefaultMethod(method)) {
                     continue;
                 }
                 String methodName = method.getName();
