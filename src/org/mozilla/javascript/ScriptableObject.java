@@ -864,7 +864,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      *
      * @param array the List to use for delegated property access. Set this to null to revert back to regular
      *              property access.
-     * @since 1.8.0
+     * @since 1.7.6
      */
     public void setExternalArrayData(ExternalArrayData array)
     {
@@ -877,6 +877,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             defineProperty("length", null,
                            GET_ARRAY_LENGTH, null, READONLY | DONTENUM);
         }
+    }
+
+    /**
+     * Return the array that was previously set by the call to "setExternalArrayData".
+     *
+     * @return the array, or null if it was never set
+     * @since 1.7.6
+     */
+    public ExternalArrayData getExternalArrayData()
+    {
+        return externalData;
     }
 
     /**
