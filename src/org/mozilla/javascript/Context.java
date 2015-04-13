@@ -1002,6 +1002,33 @@ public class Context
     }
 
     /**
+     * Initialize the standard objects, leaving out those that offer access directly
+     * to Java classes. This sets up "scope" to have access to all the standard
+     * JavaScript classes, but does not create global objects for any top-level
+     * Java packages. In addition, the "Packages," "JavaAdapter," and
+     * "JavaImporter" classes, and the "getClass" function, are not
+     * initialized.
+     *
+     * The result of this function is a scope that may be safely used in a "sandbox"
+     * environment where it is not desirable to give access to Java code from JavaScript.
+     *
+     * Creates instances of the standard objects and their constructors
+     * (Object, String, Number, Date, etc.), setting up 'scope' to act
+     * as a global object as in ECMA 15.1.<p>
+     *
+     * This method must be called to initialize a scope before scripts
+     * can be evaluated in that scope.<p>
+     *
+     * This method does not affect the Context it is called upon.
+     *
+     * @return the initialized scope
+     */
+    public final ScriptableObject initSafeStandardObjects()
+    {
+        return initSafeStandardObjects(null, false);
+    }
+
+    /**
      * Initialize the standard objects.
      *
      * Creates instances of the standard objects and their constructors
@@ -1022,6 +1049,37 @@ public class Context
     public final Scriptable initStandardObjects(ScriptableObject scope)
     {
         return initStandardObjects(scope, false);
+    }
+
+    /**
+     * Initialize the standard objects, leaving out those that offer access directly
+     * to Java classes. This sets up "scope" to have access to all the standard
+     * JavaScript classes, but does not create global objects for any top-level
+     * Java packages. In addition, the "Packages," "JavaAdapter," and
+     * "JavaImporter" classes, and the "getClass" function, are not
+     * initialized.
+     *
+     * The result of this function is a scope that may be safely used in a "sandbox"
+     * environment where it is not desirable to give access to Java code from JavaScript.
+     *
+     * Creates instances of the standard objects and their constructors
+     * (Object, String, Number, Date, etc.), setting up 'scope' to act
+     * as a global object as in ECMA 15.1.<p>
+     *
+     * This method must be called to initialize a scope before scripts
+     * can be evaluated in that scope.<p>
+     *
+     * This method does not affect the Context it is called upon.
+     *
+     * @param scope the scope to initialize, or null, in which case a new
+     *        object will be created to serve as the scope
+     * @return the initialized scope. The method returns the value of the scope
+     *         argument if it is not null or newly allocated scope object which
+     *         is an instance {@link ScriptableObject}.
+     */
+    public final Scriptable initSafeStandardObjects(ScriptableObject scope)
+    {
+        return initSafeStandardObjects(scope, false);
     }
 
     /**
@@ -1055,6 +1113,47 @@ public class Context
                                                 boolean sealed)
     {
         return ScriptRuntime.initStandardObjects(this, scope, sealed);
+    }
+
+    /**
+     * Initialize the standard objects, leaving out those that offer access directly
+     * to Java classes. This sets up "scope" to have access to all the standard
+     * JavaScript classes, but does not create global objects for any top-level
+     * Java packages. In addition, the "Packages," "JavaAdapter," and
+     * "JavaImporter" classes, and the "getClass" function, are not
+     * initialized.
+     *
+     * The result of this function is a scope that may be safely used in a "sandbox"
+     * environment where it is not desirable to give access to Java code from JavaScript.
+     *
+     * Creates instances of the standard objects and their constructors
+     * (Object, String, Number, Date, etc.), setting up 'scope' to act
+     * as a global object as in ECMA 15.1.<p>
+     *
+     * This method must be called to initialize a scope before scripts
+     * can be evaluated in that scope.<p>
+     *
+     * This method does not affect the Context it is called upon.<p>
+     *
+     * This form of the method also allows for creating "sealed" standard
+     * objects. An object that is sealed cannot have properties added, changed,
+     * or removed. This is useful to create a "superglobal" that can be shared
+     * among several top-level objects. Note that sealing is not allowed in
+     * the current ECMA/ISO language specification, but is likely for
+     * the next version.
+     *
+     * @param scope the scope to initialize, or null, in which case a new
+     *        object will be created to serve as the scope
+     * @param sealed whether or not to create sealed standard objects that
+     *        cannot be modified.
+     * @return the initialized scope. The method returns the value of the scope
+     *         argument if it is not null or newly allocated scope object.
+     * @since 1.7.6
+     */
+    public ScriptableObject initSafeStandardObjects(ScriptableObject scope,
+                                                    boolean sealed)
+    {
+        return ScriptRuntime.initSafeStandardObjects(this, scope, sealed);
     }
 
     /**

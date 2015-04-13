@@ -151,9 +151,9 @@ public class ScriptRuntime {
         }
     }
 
-    public static ScriptableObject initStandardObjects(Context cx,
-                                                       ScriptableObject scope,
-                                                       boolean sealed)
+    public static ScriptableObject initSafeStandardObjects(Context cx,
+                                                           ScriptableObject scope,
+                                                           boolean sealed)
     {
         if (scope == null) {
             scope = new NativeObject();
@@ -204,21 +204,8 @@ public class ScriptRuntime {
         // define lazy-loaded properties using their class name
         new LazilyLoadedCtor(scope, "RegExp",
                 "org.mozilla.javascript.regexp.NativeRegExp", sealed, true);
-        new LazilyLoadedCtor(scope, "Packages",
-                "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(scope, "getClass",
-                "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        new LazilyLoadedCtor(scope, "JavaAdapter",
-                "org.mozilla.javascript.JavaAdapter", sealed, true);
-        new LazilyLoadedCtor(scope, "JavaImporter",
-                "org.mozilla.javascript.ImporterTopLevel", sealed, true);
         new LazilyLoadedCtor(scope, "Continuation",
                 "org.mozilla.javascript.NativeContinuation", sealed, true);
-
-        for (String packageName : getTopPackageNames()) {
-            new LazilyLoadedCtor(scope, packageName,
-                    "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
-        }
 
         if (withXml) {
             String xmlImpl = cx.getE4xImplementationFactory().getImplementationClassName();
@@ -270,6 +257,29 @@ public class ScriptRuntime {
         }
 
         return scope;
+    }
+
+    public static ScriptableObject initStandardObjects(Context cx,
+                                                       ScriptableObject scope,
+                                                       boolean sealed)
+    {
+        ScriptableObject s = initSafeStandardObjects(cx, scope, sealed);
+
+        new LazilyLoadedCtor(s, "Packages",
+                "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+        new LazilyLoadedCtor(s, "getClass",
+                "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+        new LazilyLoadedCtor(s, "JavaAdapter",
+                "org.mozilla.javascript.JavaAdapter", sealed, true);
+        new LazilyLoadedCtor(s, "JavaImporter",
+                "org.mozilla.javascript.ImporterTopLevel", sealed, true);
+
+        for (String packageName : getTopPackageNames()) {
+            new LazilyLoadedCtor(s, packageName,
+                    "org.mozilla.javascript.NativeJavaTopPackage", sealed, true);
+        }
+
+        return s;
     }
     
     static String[] getTopPackageNames() {
