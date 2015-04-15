@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Rhino by mozilla</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Rhino</h1>
+        <p class="header">Rhino is an open-source implementation of JavaScript written entirely in Java</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/mozilla/rhino/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/mozilla/rhino/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/mozilla/rhino">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/mozilla">mozilla</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a id="rhino-javascript-in-java" class="anchor" href="#rhino-javascript-in-java" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rhino: JavaScript in Java</h1>
+
+<p><img src="https://developer.mozilla.org/@api/deki/files/832/=Rhino.jpg" alt="Rhino"></p>
+
+<p>Rhino is an implementation of JavaScript in Java.</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>Rhino is licensed under the <a href="./LICENSE.txt">MPL 2.0</a>.</p>
+
+<h2>
+<a id="releases" class="anchor" href="#releases" aria-hidden="true"><span class="octicon octicon-link"></span></a>Releases</h2>
+
+<table>
+<tr>
+<td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7R5_RELEASE">Rhino 1.7R5</a></td>
+<td>January 29, 2015</td>
+</tr>
+</table>
+
+<p>See here for <a href="./RELEASE-NOTES.md">Release Notes</a></p>
+
+<h2>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h2>
+
+<p>Information for script builders and embedders:</p>
+
+<p><a href="https://developer.mozilla.org/en-US/docs/Rhino_documentation">https://developer.mozilla.org/en-US/docs/Rhino_documentation</a></p>
+
+<p>More resources if you get stuck:</p>
+
+<p><a href="https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community">https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community</a></p>
+
+<h2>
+<a id="building" class="anchor" href="#building" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building</h2>
+
+<h3>
+<a id="status-of-master-branch" class="anchor" href="#status-of-master-branch" aria-hidden="true"><span class="octicon octicon-link"></span></a>Status of "master" branch</h3>
+
+<table>
+<tr>
+<td><b>Java 6</b></td>
+<td>
+  <a href="http://ci.apigee.io/job/Mozilla%20Rhino%20Java%206">
+    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino%20Java%206">
+  </a>
+</td>
+</tr>
+<tr>
+<td><b>Java 7</b></td>
+<td>
+  <a href="http://ci.apigee.io/job/Mozilla%20Rhino">
+    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino">
+  </a>
+</td>
+</tr>
+<tr>
+<td><b>Java 8</b></td>
+<td>
+  <a href="http://ci.apigee.io/job/Mozilla%20Rhino%20Java%208">
+    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino%20Java%208">
+  </a>
+</td>
+</tr>
+</table>
+
+<h3>
+<a id="how-to-build" class="anchor" href="#how-to-build" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to Build</h3>
+
+<p>Rhino builds with Ant. Here are some useful tasks:</p>
+
+<pre><code>ant jar
+</code></pre>
+
+<p>Build and create "js.jar" in the build/VERSION directory.</p>
+
+<pre><code>ant junit-all
+</code></pre>
+
+<p>Build and run all the tests.</p>
+
+<pre><code>ant help
+</code></pre>
+
+<p>to find out about the rest.</p>
+
+<h2>
+<a id="running" class="anchor" href="#running" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running</h2>
+
+<p>Rhino can run as a stand-alone interpreter from the command line:</p>
+
+<pre><code>java -jar build/rhino1.7.6/js.jar
+Rhino 1.7.6 2015 04 15
+js&gt; print('Hello, World!');
+Hello, World!
+js&gt;
+</code></pre>
+
+<p>You can also embed it, as most people do. See below for more docs.</p>
+
+<h2>
+<a id="issues" class="anchor" href="#issues" aria-hidden="true"><span class="octicon octicon-link"></span></a>Issues</h2>
+
+<p>Most issues are managed on GitHub:</p>
+
+<p><a href="https://github.com/mozilla/rhino/issues">https://github.com/mozilla/rhino/issues</a></p>
+
+<h2>
+<a id="more-help" class="anchor" href="#more-help" aria-hidden="true"><span class="octicon octicon-link"></span></a>More Help</h2>
+
+<p>The Google group is the best place to go with questions:</p>
+
+<p><a href="https://groups.google.com/forum/#!forum/mozilla-rhino">https://groups.google.com/forum/#!forum/mozilla-rhino</a></p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
