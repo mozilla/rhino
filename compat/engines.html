@@ -1,0 +1,530 @@
+<html><head>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,600"><link rel="stylesheet" href="./master.css"></head><body><h1>ES5</h1>
+<h2>Generic</h2><table border="1">
+<tr><td><b>Object.create</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.defineProperty</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.defineProperties</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.getPrototypeOf</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.keys</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.seal</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.freeze</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.preventExtensions</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.isSealed</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.isFrozen</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.isExtensible</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.getOwnPropertyDescriptor</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Object.getOwnPropertyNames</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Date.prototype.toISOString</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Date.now</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.isArray</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>JSON</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Function.prototype.bind</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>String.prototype.trim</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.indexOf</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.lastIndexOf</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.every</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.some</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.forEach</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.map</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.filter</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.reduce</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.reduceRight</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Getter in property initializer</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Setter in property initializer</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Property access on strings</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Reserved words as property names</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Zero-width chars in identifiers</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>parseInt() ignores leading zeros</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Immutable undefined</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Strict mode</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h1>ES6</h1>
+<h2>proper tail calls (tail call optimisation)</h2><table border="1">
+<tr><td><b>direct recursion</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>mutual recursion</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+</table><h2>default function parameters</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>explicit undefined defers to the default</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>defaults can refer to previous params</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>temporal dead zone</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>separate scope</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>new Function() support</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>rest parameters</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>function 'length' property</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>arguments object interaction</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>can't be used in setters</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>new Function() support</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>spread (...) operator</h2><table border="1">
+<tr><td><b>with arrays, in function calls</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with arrays, in array literals</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with strings, in function calls</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with strings, in array literals</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with astral plane strings, in function calls</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with astral plane strings, in array literals</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with generic iterables, in calls</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with generic iterables, in arrays</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with instances of iterables, in calls</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with instances of iterables, in arrays</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>object literal extensions</h2><table border="1">
+<tr><td><b>computed properties</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>shorthand properties</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>shorthand methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>computed shorthand methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>computed accessors</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>for..of loops</h2><table border="1">
+<tr><td><b>with arrays</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with strings</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with astral plane strings</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with generic iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with instances of generic iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>octal and binary literals</h2><table border="1">
+<tr><td><b>octal literals</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>binary literals</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>octal supported by Number()</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>binary supported by Number()</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>template strings</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>tagged template strings</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>RegExp "y" and "u" flags</h2><table border="1">
+<tr><td><b>"y" flag</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"u" flag</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>destructuring</h2><table border="1">
+<tr><td><b>with arrays</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>with strings</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>with astral plane strings</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with generic iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>with instances of generic iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>iterable destructuring expression</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>chained iterable destructuring</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>trailing commas in iterable patterns</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>with objects</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>object destructuring with primitives</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>trailing commas in object patterns</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>object destructuring expression</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>chained object destructuring</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>throws on null and undefined</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>computed properties</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>multiples in a single var statement</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>nested</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>in parameters</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>in parameters, new Function() support</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>in parameters, function 'length' property</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>in for-in loop heads</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>in for-of loop heads</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>rest</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>nested rest</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>defaults</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>defaults in parameters</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>defaults, let temporal dead zone</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>defaults in parameters, separate scope</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>defaults in parameters, new Function() support</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Unicode code point escapes</h2><table border="1">
+<tr><td><b>in strings</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>in identifiers</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>const</h2><table border="1">
+<tr><td><b>basic support</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>is block-scoped</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>redefining a const is an error</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>temporal dead zone</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>basic support (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>is block-scoped (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>redefining a const (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>temporal dead zone (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>let</h2><table border="1">
+<tr><td><b>basic support</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>is block-scoped</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>for-loop statement scope</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>temporal dead zone</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>for-loop iteration scope</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>basic support (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>is block-scoped (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>for-loop statement scope (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>temporal dead zone (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>for-loop iteration scope (strict mode)</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>block-level function declaration[12]</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>arrow functions</h2><table border="1">
+<tr><td><b>0 parameters</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>1 parameter, no brackets</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>multiple parameters</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>lexical "this" binding</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"this" unchanged by call or apply</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>can't be bound, can be curried</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>lexical "arguments" binding</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>no line break between params and =></b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>no "prototype" property</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>lexical "super" binding</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>lexical "new.target" binding</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>class</h2><table border="1">
+<tr><td><b>class statement</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>is block-scoped</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>class expression</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>anonymous class</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>prototype methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>computed prototype methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>static methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>computed static methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>accessor properties</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>computed accessor properties</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>static accessor properties</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>computed static accessor properties</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>class name is lexically scoped</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>methods aren't enumerable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>implicit strict mode</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>constructor requires new</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>extends</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>extends expressions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>extends null</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>new.target</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>super</h2><table border="1">
+<tr><td><b>statement in constructors</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>expression in constructors</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>in methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>is statically bound</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>generators</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>correct "this" binding</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>sending</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%GeneratorPrototype%</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%GeneratorPrototype%.throw</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%GeneratorPrototype%.return</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>yield operator precedence</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>yield *, arrays</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>yield *, strings</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>yield *, astral plane strings</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>yield *, generic iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>yield *, instances of iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>shorthand generator methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>computed shorthand generators</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>typed arrays</h2><table border="1">
+<tr><td><b>Int8Array</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Uint8Array</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Uint8ClampedArray</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Int16Array</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Uint16Array</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Int32Array</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Uint32Array</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Float32Array</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Float64Array</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>DataView (Int8)</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>DataView (Uint8)</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>DataView (Int16)</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>DataView (Uint16)</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>DataView (Int32)</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>DataView (Uint32)</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>DataView (Float32)</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>DataView (Float64)</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>%TypedArray%.from</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.of</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.subarray</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.join</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.indexOf</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.lastIndexOf</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.slice</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.every</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.filter</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.forEach</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.map</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.reduce</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.reduceRight</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.reverse</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.some</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.sort</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.copyWithin</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.find</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.findIndex</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.fill</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.keys</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.values</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>%TypedArray%.prototype.entries</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Map</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>constructor arguments</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map.prototype.set returns this</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>-0 key converts to +0</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map.prototype.size</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map.prototype.delete</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map.prototype.clear</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map.prototype.forEach</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map.prototype.keys</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map.prototype.values</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map.prototype.entries</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Set</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>constructor arguments</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set.prototype.add returns this</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>-0 key converts to +0</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set.prototype.size</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set.prototype.delete</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set.prototype.clear</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set.prototype.forEach</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set.prototype.keys</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set.prototype.values</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set.prototype.entries</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>WeakMap</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>constructor arguments</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>WeakMap.prototype.set returns this</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>WeakMap.prototype.delete</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Support frozen objects as keys</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>WeakSet</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>constructor arguments</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>WeakSet.prototype.add returns this</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>WeakSet.prototype.delete</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Proxy</h2><table border="1">
+<tr><td><b>"get" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"get" handler, instances of proxies</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"set" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"set" handler, instances of proxies</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"has" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"has" handler, instances of proxies</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"deleteProperty" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"getOwnPropertyDescriptor" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"defineProperty" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"getPrototypeOf" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"setPrototypeOf" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"isExtensible" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"preventExtensions" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"enumerate" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"ownKeys" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"apply" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>"construct" handler</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Proxy.revocable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.isArray support</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>JSON.stringify support</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Reflect</h2><table border="1">
+<tr><td><b>Reflect.get</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.set</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.has</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.deleteProperty</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.getOwnPropertyDescriptor</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.defineProperty</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.getPrototypeOf</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.setPrototypeOf</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.isExtensible</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.preventExtensions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.enumerate</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.ownKeys</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.apply</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.construct</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.construct, new.target</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Promise</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Promise.all</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Promise.race</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Symbol</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>typeof support</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>symbol keys are hidden to pre-ES6 code</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.defineProperty support</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>cannot coerce to string or number</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>can convert with String()</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>new Symbol() throws</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object(symbol)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>global symbol registry</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>well-known symbols</h2><table border="1">
+<tr><td><b>Symbol.hasInstance</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Symbol.isConcatSpreadable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Symbol.iterator</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Symbol.species</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Symbol.toPrimitive</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Symbol.toStringTag</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Symbol.unscopables</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Object static methods</h2><table border="1">
+<tr><td><b>Object.assign</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.is</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.getOwnPropertySymbols</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.setPrototypeOf</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>function "name" property</h2><table border="1">
+<tr><td><b>function statements</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>function expressions</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>new Function</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>bound functions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>variables (function)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>object methods (function)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>accessor properties</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>shorthand methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>shorthand methods (no lexical binding)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>symbol-keyed methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>class statements</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>class expressions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>variables (class)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>object methods (class)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>class prototype methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>class static methods</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>isn't writable, is configurable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>String static methods</h2><table border="1">
+<tr><td><b>String.raw</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String.fromCodePoint</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>String.prototype methods</h2><table border="1">
+<tr><td><b>String.prototype.codePointAt</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String.prototype.normalize</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String.prototype.repeat</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String.prototype.startsWith</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String.prototype.endsWith</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String.prototype.includes</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>RegExp.prototype properties</h2><table border="1">
+<tr><td><b>RegExp.prototype.flags</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp.prototype[Symbol.match]</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp.prototype[Symbol.replace]</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp.prototype[Symbol.split]</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp.prototype[Symbol.search]</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Array static methods</h2><table border="1">
+<tr><td><b>Array.from, array-like objects</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.from, generic iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.from, instances of generic iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.from map function, array-like objects</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.from map function, generic iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.from map function, instances of iterables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.of</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Array.prototype methods</h2><table border="1">
+<tr><td><b>Array.prototype.copyWithin</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.prototype.find</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.findIndex</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array.prototype.fill</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.prototype.keys</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.prototype.values</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.prototype.entries</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.prototype[Symbol.unscopables]</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Number properties</h2><table border="1">
+<tr><td><b>Number.isFinite</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Number.isInteger</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Number.isSafeInteger</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Number.isNaN</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Number.EPSILON</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Number.MIN_SAFE_INTEGER</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Number.MAX_SAFE_INTEGER</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Math methods</h2><table border="1">
+<tr><td><b>Math.clz32</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.imul</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.sign</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.log10</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.log2</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.log1p</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.expm1</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.cosh</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.sinh</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.tanh</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.acosh</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.asinh</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.atanh</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.trunc</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.fround</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.cbrt</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Math.hypot</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Array is subclassable</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.prototype.slice</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.from</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.of</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>RegExp is subclassable</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp.prototype.exec</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp.prototype.test</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Function is subclassable</h2><table border="1">
+<tr><td><b>can be called</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>can be used with "new"</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Function.prototype.call</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Function.prototype.apply</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Function.prototype.bind</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Promise is subclassable</h2><table border="1">
+<tr><td><b>basic functionality</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Promise.all</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Promise.race</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>miscellaneous subclassables</h2><table border="1">
+<tr><td><b>Boolean is subclassable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Number is subclassable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String is subclassable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Map is subclassable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Set is subclassable</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Object static methods accept primitives</h2><table border="1">
+<tr><td><b>Object.getPrototypeOf</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.getOwnPropertyDescriptor</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.getOwnPropertyNames</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.seal</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.freeze</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.preventExtensions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.isSealed</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.isFrozen</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.isExtensible</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.keys</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>miscellaneous</h2><table border="1">
+<tr><td><b>no escaped reserved words as identifiers</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>duplicate property names in strict mode</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>no semicolon needed after do-while</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>no assignments allowed in for-in head</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>accessors aren't constructors</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Invalid Date</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>RegExp constructor can alter flags</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>built-in prototypes are not instances</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2></h2><table border="1">
+<tr><td><b>hoisted block-level function declaration</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+</table><h2>__proto__ in object literals[28]</h2><table border="1">
+<tr><td><b>basic support</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>multiple __proto__ is an error</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>not a computed property</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>not a shorthand property</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>not a shorthand method</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>Object.prototype.__proto__</h2><table border="1">
+<tr><td><b>get prototype</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>set prototype</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>correct property descriptor</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h2>String.prototype HTML methods</h2><table border="1">
+<tr><td><b>existence</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>tags' names are lowercase</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>quotes in arguments are escaped</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp.prototype.compile</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+</table><h1>ES7</h1>
+<h2>String.prototype HTML methods</h2><table border="1">
+<tr><td><b>Exponentiation operator</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array comprehensions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Generator comprehensions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Async functions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Arrow async functions</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Typed objects</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.observe</b></td><td class="no">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.getOwnPropertyDescriptors</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Array.prototype.includes</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Reflect.Realm</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+</table><h1>Non Standard</h1>
+<h2>String.prototype HTML methods</h2><table border="1">
+<tr><td><b>uneval</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>"toSource" method</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>function "caller" property</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>function "arity" property</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>function "arguments" property</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Function.prototype.isGenerator</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>__count__</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>__parent__</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>__noSuchMethod__</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array generics</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>String generics</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Array comprehensions (right-to-left)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Expression closures</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>ECMAScript for XML (E4X)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>"for each..in" loops</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Sharp variables</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Iterator</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>__iterator__</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Generators (JS 1.8)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Generator comprehensions (JS 1.8)</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>RegExp "x" flag</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp "lastMatch"</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>RegExp.$1-$9</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Callable RegExp</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>RegExp named groups</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String.prototype.trimLeft</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>String.prototype.trimRight</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>String.prototype.quote</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>String.prototype.replace flags</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>Date.prototype.toLocaleFormat</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.prototype.watch</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.prototype.unwatch</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Object.prototype.eval</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>error "stack"</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>error "lineNumber"</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>error "columnNumber"</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>error "fileName"</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="yes">rhino17R4</td><td class="yes">rhino17R5</td><td class="yes">rhino176</td></tr>
+<tr><td><b>error "description"</b></td><td class="no">node10</td><td class="no">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="no">rhino176</td></tr>
+<tr><td><b>Error.captureStackTrace</b></td><td class="yes">node10</td><td class="yes">node12harmony</td><td class="no">rhino17R4</td><td class="no">rhino17R5</td><td class="yes">rhino176</td></tr>
+</table></body></html>
