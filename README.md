@@ -12,15 +12,23 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 <table>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7R5_RELEASE">Rhino 1.7R5</a></td><td>January 29, 2015</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_6_RELEASE">Rhino 1.7.6</a></td><td>April 15, 2015</td></tr>
 </table>
 
-See here for [Release Notes](./RELEASE-NOTES.md)
+[Release Notes](./RELEASE-NOTES.md) for recent releases.
+
+[Compatability table](http://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
+features from ES5, 6, and 7 are implemented in Rhino.
 
 ## Documentation
 
 Information for script builders and embedders:
 
 [https://developer.mozilla.org/en-US/docs/Rhino_documentation](https://developer.mozilla.org/en-US/docs/Rhino_documentation)
+
+JavaDoc for all the APIs:
+
+[http://mozilla.github.io/rhino/javadoc/index.html](http://mozilla.github.io/rhino/javadoc/index.html)
 
 More resources if you get stuck:
 
