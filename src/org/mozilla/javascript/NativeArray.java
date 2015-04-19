@@ -1661,9 +1661,9 @@ public class NativeArray extends IdScriptableObject implements List
                 break;
               case Id_find:
                 if (ScriptRuntime.toBoolean(result))
-                  return elem;
+                    return elem;
                 break;
-            case Id_findIndex:
+              case Id_findIndex:
                 if (ScriptRuntime.toBoolean(result))
                     return ScriptRuntime.wrapNumber(i);
                 break;
