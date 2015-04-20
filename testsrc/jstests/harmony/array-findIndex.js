@@ -42,11 +42,11 @@ load("testsrc/assert.js");
 
     // `InterpretedFunction` or `? extends NativeFunction`
     assertEquals(0, a.findIndex(function () { return true; }));
-    // FIXME:
     // `IdScriptableObject`
-    //assertEquals(0, a.findIndex(Object.prototype.toString));
+    assertEquals(0, a.findIndex(Object.prototype.toString));
+    assertEquals(0, a.findIndex(String));
     // `BoundFunction`
-    //assertEquals(0, a.findIndex((function () { return true; }).bind({})))
+    assertEquals(0, a.findIndex((function () { return true; }).bind({})))
 })();
 
 //

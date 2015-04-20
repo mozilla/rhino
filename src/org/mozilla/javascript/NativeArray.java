@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.regexp.NativeRegExp;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -1612,7 +1614,13 @@ public class NativeArray extends IdScriptableObject implements List
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         if (callbackArg == null || !(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
-        } else if ((id == Id_find || id == Id_findIndex) && !(callbackArg instanceof NativeFunction)) {
+        }
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6 && (callbackArg instanceof NativeRegExp)) {
+            // Previously, it was allowed to pass RegExp instance as a callback (it implements Function)
+            // But according to ES2015 21.2.6 Properties of RegExp Instances:
+            // > RegExp instances are ordinary objects that inherit properties from the RegExp prototype object.
+            // > RegExp instances have internal slots [[RegExpMatcher]], [[OriginalSource]], and [[OriginalFlags]].
+            // so, no [[Call]] for RegExp-s
             throw ScriptRuntime.notFunctionError(callbackArg);
         }
 
