@@ -113,17 +113,16 @@ load("testsrc/assert.js");
     assertEquals(a.length, l);
 
     // even for sparse arrays
-    // FIXME:
-    //a = new Array(10);
-    //l = 0;
-    //a.find(predicate);
-    //assertEquals(a.length, l);
-    //
-    //a = [];
-    //a[10] = 1;
-    //l = 0;
-    //a.find(predicate);
-    //assertEquals(a.length, l);
+    a = new Array(10);
+    l = 0;
+    a.find(predicate);
+    assertEquals(a.length, l);
+
+    a = [];
+    a[10] = 1;
+    l = 0;
+    a.find(predicate);
+    assertEquals(a.length, l);
 })();
 
 
