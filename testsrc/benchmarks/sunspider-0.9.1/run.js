@@ -33,7 +33,7 @@ for (var currentRepeat = -1; currentRepeat < repeatCount; currentRepeat++) {
             var test = category.tests[q];
             //print('iteration ' + lpad('' + currentRepeat, 2) + ' : loading ' + category.name + '-' + test.name + '.js')
             var start = new Date();
-            load(category.name + "-" + test.name + ".js");
+            load("sunspider-0.9.1/" + category.name + "-" + test.name + ".js");
             var time = new Date() - start;
             totalTime += time;
             categoryTime += time;
