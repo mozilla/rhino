@@ -4,6 +4,7 @@
 # build directories
 build/
 lib/
+buildGradle
 
 # artifacts
 *.zip
@@ -12,5 +13,6 @@ lib/
 .idea/
 out/
 target/
+.gradle
 
 
