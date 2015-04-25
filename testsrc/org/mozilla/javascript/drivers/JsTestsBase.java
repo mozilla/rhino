@@ -14,7 +14,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 
-public class JsTestsBase extends TestCase {
+public abstract class JsTestsBase extends TestCase {
     private int optimizationLevel;
 
     public void setOptimizationLevel(int level) {
