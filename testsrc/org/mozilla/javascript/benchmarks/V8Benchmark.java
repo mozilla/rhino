@@ -5,17 +5,12 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.tools.shell.Global;
 
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.HashMap;
 
 public class V8Benchmark
 {
-    public static final String TEST_SRC = "run.js";
-    private static final String OUT_FILE = "../../../build/v8benchmark.csv";
+    public static final String TEST_SRC = "v8-benchmarks-v6/run.js";
 
     private static final HashMap<Integer, String> results = new HashMap<Integer, String>();
 
@@ -23,7 +18,9 @@ public class V8Benchmark
     public static void writeResults()
         throws IOException
     {
-        PrintWriter out = new PrintWriter(new FileWriter(OUT_FILE));
+        PrintWriter out = new PrintWriter(
+                new FileWriter(new File(System.getProperty("rhino.benchmark.report"), "v8benchmark.csv.csv"))
+        );
         // Hard code the opt levels for now -- we will make it more generic when we need to
         out.println("Optimization 0,Optimization 9");
         out.println(results.get(0) + ',' + results.get(9));
@@ -33,6 +30,7 @@ public class V8Benchmark
     private void runTest(int optLevel)
         throws IOException
     {
+
         FileInputStream srcFile = new FileInputStream(TEST_SRC);
         InputStreamReader rdr = new InputStreamReader(srcFile, "utf8");
 

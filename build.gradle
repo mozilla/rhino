@@ -1,5 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -52,7 +53,12 @@ test {
 }
 
 task testBenchmark(type: Test) {
-    exclude "**/benchmarks/**"
+    include "**/benchmarks/*Benchmark*"
+    systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
+    workingDir = file("testsrc/benchmarks")
+    maxHeapSize = "256m"
+    testLogging.showStandardStreams = true
+    forkEvery = 1
 }
 
 idea {
@@ -62,5 +68,71 @@ idea {
         excludeDirs += file('build')
         excludeDirs += file('.idea')
         excludeDirs += file('lib')
+    }
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+task rhinoJavadoc(type: Javadoc) {
+    source = sourceSets.main.allJava
+    if (JavaVersion.current().isJava8Compatible()) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+}
+
+task rhinoJavadocJar(type: Jar, dependsOn: rhinoJavadoc) {
+    from rhinoJavadoc.destinationDir
+}
+
+publishing {
+    publications {
+        rhino(MavenPublication) {
+            pom.withXml {
+                def root = asNode()
+
+                root.appendNode('description', """
+    Rhino is an open-source implementation of JavaScript written entirely in Java.
+    It is typically embedded into Java applications to provide scripting to end users.
+""")
+                root.appendNode("url", "https://developer.mozilla.org/en/Rhino")
+
+                def l = root.appendNode("licenses").appendNode("license")
+                l.appendNode("name", "Mozilla Public License, Version 2.0")
+                l.appendNode("url", "http://www.mozilla.org/MPL/2.0/index.txt")
+
+                def scm = root.appendNode("scm")
+                scm.appendNode("connection", "scm:git:git@github.com:mozilla/rhino.git")
+                scm.appendNode("developerConnection", "scm:git:git@github.com:mozilla/rhino.git")
+                scm.appendNode("url", "git@github.com:mozilla/rhino.git")
+
+                def o = root.appendNode("organization")
+                o.appendNode("name", "The Mozilla Foundation")
+                o.appendNode("url", "http://www.mozilla.org")
+
+            }
+            from components.java
+            artifact sourceJar {
+                classifier "sources"
+            }
+            artifact rhinoJavadocJar {
+                classifier "javadoc"
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            credentials {
+                username "admin"
+                password "password"
+            }
+            if (project.version.endsWith('-SNAPSHOT')) {
+                url "https://oss.sonatype.org/content/repositories/snapshots/"
+            } else {
+                url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            }
+        }
     }
 }
