@@ -66,7 +66,7 @@ public class TestUtils {
         List<String> list = inherited == null ?
                 new ArrayList<String>() :
                 new ArrayList<String>(Arrays.asList(inherited));
-        InputStream in = StandardTests.class.getResourceAsStream(resource);
+        InputStream in = JsTestsBase.class.getResourceAsStream(resource);
         if (in != null)
             addTestsFromStream(in, list);
         return list.toArray(new String[0]);
