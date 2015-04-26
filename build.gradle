@@ -47,6 +47,7 @@ dependencies {
 
 test {
     exclude "**/benchmarks/**"
+    exclude "**/*Test*"
     systemProperty 'java.awt.headless', 'true'
     systemProperty 'mozilla.js.tests', 'testsrc/tests'
     systemProperty 'mozilla.js.tests.timeout', 60000
@@ -144,4 +145,5 @@ publishing {
 
 release {
     requireBranch = ""
+    useAutomaticVersion = true
 }
