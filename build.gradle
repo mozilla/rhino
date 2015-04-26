@@ -1,6 +1,11 @@
+plugins {
+    id 'net.researchgate.release' version '2.0.2'
+}
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
+
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -135,4 +140,8 @@ publishing {
             }
         }
     }
+}
+
+release {
+    requireBranch = ""
 }
