@@ -1,11 +1,6 @@
-plugins {
-    id 'net.researchgate.release' version '2.0.2'
-}
-
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
-
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -47,7 +42,6 @@ dependencies {
 
 test {
     exclude "**/benchmarks/**"
-    exclude "**/*Test*"
     systemProperty 'java.awt.headless', 'true'
     systemProperty 'mozilla.js.tests', 'testsrc/tests'
     systemProperty 'mozilla.js.tests.timeout', 60000
@@ -131,20 +125,14 @@ publishing {
     repositories {
         maven {
             credentials {
-                username "admin"
-                password "password"
+                username mavenUser
+                password mavenPassword
             }
             if (project.version.endsWith('-SNAPSHOT')) {
-                url "https://oss.sonatype.org/content/repositories/snapshots/"
+                url mavenSnapshotRepo
             } else {
-                url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+                url mavenReleaseRepo
             }
         }
     }
 }
-
-release {
-    requireBranch = ""
-}
-
-createReleaseTag.dependsOn publish
