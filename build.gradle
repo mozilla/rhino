@@ -1,3 +1,5 @@
+import sun.applet.Main
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
@@ -22,6 +24,8 @@ sourceSets {
         }
         resources {
             srcDirs 'src', 'toolsrc'
+            exclude "build.xml"
+            exclude "manifest"
         }
     }
 
@@ -68,6 +72,19 @@ idea {
         excludeDirs += file('build')
         excludeDirs += file('.idea')
         excludeDirs += file('lib')
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+            "Manifest-Version": "1.0",
+            "Main-Class": "org.mozilla.javascript.tools.shell.Main",
+            "Implementation-Version": project.version,
+            "Implementation-Title":  "Mozilla Rhino",
+            "Implementation-Vendor": "Mozilla Foundation",
+            "Implementation-URL": "http://www.mozilla.org/rhino"
+        )
     }
 }
 
