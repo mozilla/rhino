@@ -146,3 +146,5 @@ publishing {
 release {
     requireBranch = ""
 }
+
+createReleaseTag.dependsOn publish
