@@ -131,13 +131,13 @@ publishing {
     repositories {
         maven {
             credentials {
-                username mavenUser
-                password mavenPassword
+                username "admin"
+                password "password"
             }
             if (project.version.endsWith('-SNAPSHOT')) {
-                url mavenSnapshotRepo
+                url "https://oss.sonatype.org/content/repositories/snapshots/"
             } else {
-                url mavenReleaseRepo
+                url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
             }
         }
     }
