@@ -145,5 +145,4 @@ publishing {
 
 release {
     requireBranch = ""
-    useAutomaticVersion = true
 }
