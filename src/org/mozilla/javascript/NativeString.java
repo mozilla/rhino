@@ -163,6 +163,7 @@ final class NativeString extends IdScriptableObject
           case Id_trim:              arity=0; s="trim";              break;
           case Id_trimLeft:          arity=0; s="trimLeft";          break;
           case Id_trimRight:         arity=0; s="trimRight";         break;
+          case Id_includes:          arity=1; s="includes";          break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -261,6 +262,11 @@ final class NativeString extends IdScriptableObject
               case Id_indexOf:
                 return ScriptRuntime.wrapInt(js_indexOf(
                     ScriptRuntime.toString(thisObj), args));
+
+                case Id_includes:
+                    if (thisObj == ScriptableObject.getTopLevelScope(thisObj))
+                        throw ScriptRuntime.typeError("String.prototype.includes method called on null or undefined");
+                    return ScriptRuntime.wrapBoolean(js_indexOf(ScriptRuntime.toString(thisObj), args) != -1);
 
               case Id_lastIndexOf:
                 return ScriptRuntime.wrapInt(js_lastIndexOf(
@@ -704,7 +710,7 @@ final class NativeString extends IdScriptableObject
                 case 'L': X="trimLeft";id=Id_trimLeft; break L;
                 case 'r': X="toString";id=Id_toString; break L;
                 case 's': X="fontsize";id=Id_fontsize; break L;
-                case 'u': X="toSource";id=Id_toSource; break L;
+                case 'u': X = s.charAt(0) == 't' ? "toSource" : "includes"; id = s.charAt(0) == 't' ? Id_toSource : Id_includes; break L;
                 } break L;
             case 9: c=s.charAt(0);
                 if (c=='f') { X="fontcolor";id=Id_fontcolor; }
@@ -774,7 +780,8 @@ final class NativeString extends IdScriptableObject
         Id_trim                      = 37,
         Id_trimLeft                  = 38,
         Id_trimRight                 = 39,
-        MAX_PROTOTYPE_ID             = Id_trimRight;
+        Id_includes                  = 40,
+        MAX_PROTOTYPE_ID             = Id_includes;
 
 // #/string_id_map#
 
