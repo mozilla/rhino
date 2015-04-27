@@ -148,20 +148,20 @@ myobj = {
 };
 
 assertEquals("foo[a-z]+(bar)?".includes("[a-z]+"), true);
-//assertThrows("'foo[a-z]+(bar)?'.includes(/[a-z]+/)", TypeError);
-//assertThrows("'foo/[a-z]+/(bar)?'.includes(/[a-z]+/)", TypeError);
+assertThrows("'foo[a-z]+(bar)?'.includes(/[a-z]+/)", TypeError);
+assertThrows("'foo/[a-z]+/(bar)?'.includes(/[a-z]+/)", TypeError);
 assertEquals("foo[a-z]+(bar)?".includes("(bar)?"), true);
-//assertThrows("'foo[a-z]+(bar)?'.includes(/(bar)?/)", TypeError);
-//assertThrows("'foo[a-z]+/(bar)?/'.includes(/(bar)?/)", TypeError);
+assertThrows("'foo[a-z]+(bar)?'.includes(/(bar)?/)", TypeError);
+assertThrows("'foo[a-z]+/(bar)?/'.includes(/(bar)?/)", TypeError);
 
 assertThrows("String.prototype.includes.call({ 'toString': function() { " +
     "throw RangeError(); } }, /./)", RangeError);
-//assertThrows("String.prototype.includes.call({ 'toString': function() { " +
-//    "return 'abc'; } }, /./)", TypeError);
+assertThrows("String.prototype.includes.call({ 'toString': function() { " +
+    "return 'abc'; } }, /./)", TypeError);
 
 assertThrows("String.prototype.includes.apply({ 'toString': function() { " +
     "throw RangeError(); } }, [/./])", RangeError);
-//assertThrows("String.prototype.includes.apply({ 'toString': function() { " +
-//    "return 'abc'; } }, [/./])", TypeError);
+assertThrows("String.prototype.includes.apply({ 'toString': function() { " +
+    "return 'abc'; } }, [/./])", TypeError);
 
 "success";
