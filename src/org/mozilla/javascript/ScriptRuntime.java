@@ -3961,14 +3961,14 @@ public class ScriptRuntime {
         return typeError(msg);
     }
 
-    public static EcmaError typeError1(String messageId, String arg1)
+    public static EcmaError typeError1(String messageId, Object arg1)
     {
         String msg = getMessage1(messageId, arg1);
         return typeError(msg);
     }
 
-    public static EcmaError typeError2(String messageId, String arg1,
-                                       String arg2)
+    public static EcmaError typeError2(String messageId, Object arg1,
+                                       Object arg2)
     {
         String msg = getMessage2(messageId, arg1, arg2);
         return typeError(msg);

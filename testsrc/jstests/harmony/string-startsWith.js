@@ -401,3 +401,5 @@ assertThrows(function() {
         "toString": function() { return "abc"; }
     }, [/./]);
 }, TypeError);
+
+"success";
