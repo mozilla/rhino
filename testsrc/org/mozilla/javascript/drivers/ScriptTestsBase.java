@@ -14,6 +14,8 @@ import org.mozilla.javascript.tools.shell.Global;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 
 import static org.junit.Assert.*;
 
@@ -26,59 +28,67 @@ import static org.junit.Assert.*;
 @RunWith(BlockJUnit4ClassRunner.class)
 public abstract class ScriptTestsBase {
 
-  private Object executeRhinoScript(int optLevel) {
-    RhinoTest anno = this.getClass().getAnnotation(RhinoTest.class);
-    assertNotNull(anno);
-    String suiteName = anno.value();
+    private Object executeRhinoScript(int optLevel) {
+        RhinoTest anno = this.getClass().getAnnotation(RhinoTest.class);
+        assertNotNull(anno);
 
-    int jsVersion = Context.VERSION_1_8;
-    LanguageVersion jsVersionAnnotation = this.getClass().getAnnotation(LanguageVersion.class);
-    if (jsVersionAnnotation != null) {
-      jsVersion = jsVersionAnnotation.value();
-      Context.checkLanguageVersion(jsVersion);
+        int jsVersion = Context.VERSION_1_8;
+        LanguageVersion jsVersionAnnotation = this.getClass().getAnnotation(LanguageVersion.class);
+        if (jsVersionAnnotation != null) {
+            jsVersion = jsVersionAnnotation.value();
+            Context.checkLanguageVersion(jsVersion);
+        }
+
+        Reader script = null;
+        String suiteName = null;
+
+        Context cx = Context.enter();
+        try {
+            if (!"".equals(anno.value())) {
+                script = new FileReader(anno.value());
+                suiteName = anno.value();
+            } else if (!"".equals(anno.inline())) {
+                script = new StringReader("load('testsrc/assert.js');\n" + anno.inline() + "\n" + "'success';");
+                suiteName = "inline.js";
+            }
+
+            cx.setOptimizationLevel(optLevel);
+            cx.setLanguageVersion(jsVersion);
+
+            Global global = new Global(cx);
+
+            Scriptable scope = cx.newObject(global);
+            scope.setPrototype(global);
+            scope.setParentScope(null);
+
+            return cx.evaluateReader(scope, script, suiteName, 1, null);
+        } catch (JavaScriptException ex) {
+            fail(ex.getScriptStackTrace());
+            return null;
+        } catch (Exception e) {
+            fail(e.getMessage());
+            return null;
+        } finally {
+            Context.exit();
+            try {
+                if (null != script) script.close();
+            } catch (IOException e) {
+            }
+        }
     }
 
-    FileReader script = null;
-    Context cx = Context.enter();
-    try {
-      script = new FileReader(suiteName);
-      cx.setOptimizationLevel(optLevel);
-      cx.setLanguageVersion(jsVersion);
-
-      Global global = new Global(cx);
-
-      Scriptable scope = cx.newObject(global);
-      scope.setPrototype(global);
-      scope.setParentScope(null);
-
-      return cx.evaluateReader(scope, script, suiteName, 1, null);
-    } catch (JavaScriptException ex) {
-      fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
-      return null;
-    }catch (Exception e) {
-      fail(e.getMessage());
-      return null;
-    } finally {
-      Context.exit();
-      try {
-        if (null != script) script.close();
-      } catch (IOException e) {
-      }
+    @Test
+    public void rhinoTestNoOpt() {
+        assertEquals("success", executeRhinoScript(-1));
     }
-  }
 
-  @Test
-  public void rhinoTestNoOpt() {
-    assertEquals("success", executeRhinoScript(-1));
-  }
+    @Test
+    public void rhinoTestOpt0() {
+        assertEquals("success", executeRhinoScript(0));
+    }
 
-  @Test
-  public void rhinoTestOpt0() {
-    assertEquals("success", executeRhinoScript(0));
-  }
-
-  @Test
-  public void rhinoTestOpt9() {
-    assertEquals("success", executeRhinoScript(9));
-  }
+    @Test
+    public void rhinoTestOpt9() {
+        assertEquals("success", executeRhinoScript(9));
+    }
 }
