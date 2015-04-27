@@ -9,5 +9,6 @@ import static java.lang.annotation.ElementType.TYPE;
 @Target(TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RhinoTest {
-  String value();
+    String value() default "";
+    String inline() default "";
 }
