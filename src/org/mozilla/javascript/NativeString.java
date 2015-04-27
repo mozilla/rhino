@@ -166,6 +166,7 @@ final class NativeString extends IdScriptableObject
           case Id_trimLeft:          arity=0; s="trimLeft";          break;
           case Id_trimRight:         arity=0; s="trimRight";         break;
           case Id_includes:          arity=1; s="includes";          break;
+          case Id_startsWith:        arity=1; s="startsWith";          break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -262,18 +263,23 @@ final class NativeString extends IdScriptableObject
               }
 
               case Id_indexOf:
-                return ScriptRuntime.wrapInt(js_indexOf(
-                        ScriptRuntime.toString(thisObj), args));
+                return ScriptRuntime.wrapInt(js_indexOf(Id_indexOf, ScriptRuntime.toString(thisObj), args));
 
                 case Id_includes:
+                case Id_startsWith:
                     if (thisObj == ScriptableObject.getTopLevelScope(thisObj)) {
-                        throw ScriptRuntime.typeError("String.prototype.includes method called on null or undefined");
+                        throw ScriptRuntime.typeError2("msg.called.null.or.undefined", String.class.getSimpleName(), id);
                     }
                     String s = ScriptRuntime.toString(thisObj);
-                    if (args.length > 0 &&  args[0] instanceof NativeRegExp)
-                        throw ScriptRuntime.typeError("First argument to String.prototype.includes must not be a regular expression");
+                    if (args.length > 0 &&  args[0] instanceof NativeRegExp) {
+                        throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), id);
+                    }
 
-                    return ScriptRuntime.wrapBoolean(js_indexOf(s, args) != -1);
+                    if (id == Id_includes) {
+                        return js_indexOf(Id_includes, s, args) != -1;
+                    } else {
+                        return js_indexOf(Id_startsWith, s, args) == 0;
+                    }
 
               case Id_lastIndexOf:
                 return ScriptRuntime.wrapInt(js_lastIndexOf(
@@ -506,16 +512,19 @@ final class NativeString extends IdScriptableObject
      * See ECMA 15.5.4.6.  Uses Java String.indexOf()
      * OPT to add - BMH searching from jsstr.c.
      */
-    private static int js_indexOf(String target, Object[] args) {
+    private static int js_indexOf(int methodId, String target, Object[] args) {
         String search = ScriptRuntime.toString(args, 0);
         double begin = ScriptRuntime.toInteger(args, 1);
 
-        if (begin > target.length()) {
+        if (begin > target.length() && methodId != Id_startsWith) {
             return -1;
         } else {
-            if (begin < 0)
-                begin = 0;
-            return target.indexOf(search, (int)begin);
+            if (begin < 0) begin = 0;
+            else if (begin > target.length()) begin = target.length();
+
+            return methodId == Id_startsWith
+                    ? target.startsWith(search, (int)begin) ? 0 : -1
+                    : target.indexOf(search, (int)begin);
         }
     }
 
@@ -724,7 +733,10 @@ final class NativeString extends IdScriptableObject
                 else if (c=='s') { X="substring";id=Id_substring; }
                 else if (c=='t') { X="trimRight";id=Id_trimRight; }
                 break L;
-            case 10: X="charCodeAt";id=Id_charCodeAt; break L;
+            case 10: switch(s.charAt(0)) {
+                case 'c': X="charCodeAt";id=Id_charCodeAt; break L;
+                case 's': X="startsWith";id=Id_startsWith; break L;
+                } break L;
             case 11: switch (s.charAt(2)) {
                 case 'L': X="toLowerCase";id=Id_toLowerCase; break L;
                 case 'U': X="toUpperCase";id=Id_toUpperCase; break L;
@@ -788,7 +800,8 @@ final class NativeString extends IdScriptableObject
         Id_trimLeft                  = 38,
         Id_trimRight                 = 39,
         Id_includes                  = 40,
-        MAX_PROTOTYPE_ID             = Id_includes;
+        Id_startsWith                = 41,
+        MAX_PROTOTYPE_ID             = Id_startsWith;
 
 // #/string_id_map#
 
