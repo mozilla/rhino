@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.regexp.NativeRegExp;
+
 import java.text.Collator;
 
 /**
@@ -261,12 +263,17 @@ final class NativeString extends IdScriptableObject
 
               case Id_indexOf:
                 return ScriptRuntime.wrapInt(js_indexOf(
-                    ScriptRuntime.toString(thisObj), args));
+                        ScriptRuntime.toString(thisObj), args));
 
                 case Id_includes:
-                    if (thisObj == ScriptableObject.getTopLevelScope(thisObj))
+                    if (thisObj == ScriptableObject.getTopLevelScope(thisObj)) {
                         throw ScriptRuntime.typeError("String.prototype.includes method called on null or undefined");
-                    return ScriptRuntime.wrapBoolean(js_indexOf(ScriptRuntime.toString(thisObj), args) != -1);
+                    }
+                    String s = ScriptRuntime.toString(thisObj);
+                    if (args.length > 0 &&  args[0] instanceof NativeRegExp)
+                        throw ScriptRuntime.typeError("First argument to String.prototype.includes must not be a regular expression");
+
+                    return ScriptRuntime.wrapBoolean(js_indexOf(s, args) != -1);
 
               case Id_lastIndexOf:
                 return ScriptRuntime.wrapInt(js_lastIndexOf(
