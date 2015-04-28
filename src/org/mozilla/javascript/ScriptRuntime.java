@@ -4228,7 +4228,7 @@ public class ScriptRuntime {
     }
 
     /**
-     * Equivalent to executing "new Error(message)" from JavaScript.
+     * Equivalent to executing "new Error(message, sourceFileName, sourceLineNo)" from JavaScript.
      * @param cx the current context
      * @param scope the current scope
      * @param message the message
@@ -4245,7 +4245,7 @@ public class ScriptRuntime {
 
 
     /**
-     * Equivalent to executing "new Error(message)" from JavaScript.
+     * Equivalent to executing "new $constructorName(message, sourceFileName, sourceLineNo)" from JavaScript.
      * @param cx the current context
      * @param scope the current scope
      * @param message the message
