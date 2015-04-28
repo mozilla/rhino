@@ -166,7 +166,8 @@ final class NativeString extends IdScriptableObject
           case Id_trimLeft:          arity=0; s="trimLeft";          break;
           case Id_trimRight:         arity=0; s="trimRight";         break;
           case Id_includes:          arity=1; s="includes";          break;
-          case Id_startsWith:        arity=1; s="startsWith";          break;
+          case Id_startsWith:        arity=1; s="startsWith";        break;
+          case Id_endsWith:          arity=1; s="endsWith";          break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -267,18 +268,23 @@ final class NativeString extends IdScriptableObject
 
                 case Id_includes:
                 case Id_startsWith:
+                case Id_endsWith:
                     if (thisObj == ScriptableObject.getTopLevelScope(thisObj)) {
-                        throw ScriptRuntime.typeError2("msg.called.null.or.undefined", String.class.getSimpleName(), id);
+                        throw ScriptRuntime.typeError2("msg.called.null.or.undefined", String.class.getSimpleName(), f.getFunctionName());
                     }
                     String s = ScriptRuntime.toString(thisObj);
                     if (args.length > 0 &&  args[0] instanceof NativeRegExp) {
-                        throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), id);
+                        throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), f.getFunctionName());
                     }
 
+                    int idx = js_indexOf(id, s, args);
+
                     if (id == Id_includes) {
-                        return js_indexOf(Id_includes, s, args) != -1;
-                    } else {
-                        return js_indexOf(Id_startsWith, s, args) == 0;
+                        return idx != -1;
+                    } else if (id == Id_startsWith) {
+                        return idx == 0;
+                    } else if (id == Id_endsWith) {
+                        return idx != -1;
                     }
 
               case Id_lastIndexOf:
@@ -443,7 +449,7 @@ final class NativeString extends IdScriptableObject
                     return str.substring(start, end);
                 }
             }
-            throw new IllegalArgumentException(String.valueOf(id));
+            throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
         }
     }
 
@@ -512,19 +518,24 @@ final class NativeString extends IdScriptableObject
      * See ECMA 15.5.4.6.  Uses Java String.indexOf()
      * OPT to add - BMH searching from jsstr.c.
      */
-    private static int js_indexOf(int methodId, String target, Object[] args) {
-        String search = ScriptRuntime.toString(args, 0);
-        double begin = ScriptRuntime.toInteger(args, 1);
+    private static int  js_indexOf(int methodId, String target, Object[] args) {
+        String searchStr = ScriptRuntime.toString(args, 0);
+        double position = ScriptRuntime.toInteger(args, 1);
 
-        if (begin > target.length() && methodId != Id_startsWith) {
+        if (position > target.length() && methodId != Id_startsWith && methodId != Id_endsWith) {
             return -1;
         } else {
-            if (begin < 0) begin = 0;
-            else if (begin > target.length()) begin = target.length();
+            if (position < 0) position = 0;
+            else if (position > target.length()) position = target.length();
+            else if (methodId == Id_endsWith && (position != position  || position > target.length())) position = target.length();
 
+            if (Id_endsWith == methodId) {
+                if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance)) position = target.length();
+                return target.substring(0, (int)position).endsWith(searchStr) ? 0 : -1;
+            }
             return methodId == Id_startsWith
-                    ? target.startsWith(search, (int)begin) ? 0 : -1
-                    : target.indexOf(search, (int)begin);
+                    ? target.startsWith(searchStr, (int)position) ? 0 : -1
+                    : target.indexOf(searchStr, (int)position);
         }
     }
 
@@ -726,6 +737,7 @@ final class NativeString extends IdScriptableObject
                 case 'L': X="trimLeft";id=Id_trimLeft; break L;
                 case 'r': X="toString";id=Id_toString; break L;
                 case 's': X="fontsize";id=Id_fontsize; break L;
+                case 'W': X="endsWith";id=Id_endsWith; break L;
                 case 'u': X = s.charAt(0) == 't' ? "toSource" : "includes"; id = s.charAt(0) == 't' ? Id_toSource : Id_includes; break L;
                 } break L;
             case 9: c=s.charAt(0);
@@ -801,7 +813,8 @@ final class NativeString extends IdScriptableObject
         Id_trimRight                 = 39,
         Id_includes                  = 40,
         Id_startsWith                = 41,
-        MAX_PROTOTYPE_ID             = Id_startsWith;
+        Id_endsWith                  = 42,
+        MAX_PROTOTYPE_ID             = Id_endsWith;
 
 // #/string_id_map#
 
