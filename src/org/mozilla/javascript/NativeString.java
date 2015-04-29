@@ -169,7 +169,8 @@ final class NativeString extends IdScriptableObject
           case Id_includes:          arity=1; s="includes";          break;
           case Id_startsWith:        arity=1; s="startsWith";        break;
           case Id_endsWith:          arity=1; s="endsWith";          break;
-          case Id_normalize:         arity=0; s="normalize";          break;
+          case Id_normalize:         arity=0; s="normalize";         break;
+          case Id_repeat:            arity=1; s="repeat";            break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -461,6 +462,17 @@ final class NativeString extends IdScriptableObject
                     else throw ScriptRuntime.constructError("RangeError", "The normalization form should be one of NFC, NFD, NFKC, NFKD");
 
                     return Normalizer.normalize(ScriptRuntime.toString(thisObj), form);
+                case Id_repeat: //TODO implement RequireObjectCoercible
+                    if (thisObj.getParentScope() == null) throw ScriptRuntime.typeError("qweqwe");
+
+                    String thisStr = ScriptRuntime.toString(thisObj);
+                    double cnt = ScriptRuntime.toInteger(args, 0);
+
+                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw ScriptRuntime.constructError("RangeError", "RangeError"); //TODO method for throwing RangeErrors
+
+                    StringBuilder retval = new StringBuilder("");
+                    while (cnt-- > 0) retval.append(ScriptRuntime.toString(thisObj));
+                    return retval.toString();
             }
             throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
         }
@@ -732,7 +744,7 @@ final class NativeString extends IdScriptableObject
                 case 't': X="split";id=Id_split; break L;
                 } break L;
             case 6: switch (s.charAt(1)) {
-                case 'e': X="search";id=Id_search; break L;
+                case 'e': X= s.charAt(0) == 's' ? "search" : "repeat";id = s.charAt(0) == 's' ? Id_search : Id_repeat; break L;
                 case 'h': X="charAt";id=Id_charAt; break L;
                 case 'n': X="anchor";id=Id_anchor; break L;
                 case 'o': X="concat";id=Id_concat; break L;
@@ -829,7 +841,8 @@ final class NativeString extends IdScriptableObject
         Id_startsWith                = 41,
         Id_endsWith                  = 42,
         Id_normalize                 = 43,
-        MAX_PROTOTYPE_ID             = Id_normalize;
+        Id_repeat                    = 44,
+        MAX_PROTOTYPE_ID             = Id_repeat;
 
 // #/string_id_map#
 
