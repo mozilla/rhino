@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import org.mozilla.javascript.regexp.NativeRegExp;
 
 import java.text.Collator;
+import java.text.Normalizer;
 
 /**
  * This class implements the String native object.
@@ -168,6 +169,7 @@ final class NativeString extends IdScriptableObject
           case Id_includes:          arity=1; s="includes";          break;
           case Id_startsWith:        arity=1; s="startsWith";        break;
           case Id_endsWith:          arity=1; s="endsWith";          break;
+          case Id_normalize:         arity=0; s="normalize";          break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -448,6 +450,17 @@ final class NativeString extends IdScriptableObject
 
                     return str.substring(start, end);
                 }
+                case Id_normalize:
+                    String formStr = ScriptRuntime.toString(args, 0);
+
+                    Normalizer.Form form;
+                    if (Normalizer.Form.NFD.name().equals(formStr)) form = Normalizer.Form.NFD;
+                    else if (Normalizer.Form.NFKC.name().equals(formStr)) form = Normalizer.Form.NFKC;
+                    else if (Normalizer.Form.NFKD.name().equals(formStr)) form = Normalizer.Form.NFKD;
+                    else if (Normalizer.Form.NFC.name().equals(formStr) || args.length == 0) form = Normalizer.Form.NFC;
+                    else throw ScriptRuntime.constructError("RangeError", "The normalization form should be one of NFC, NFD, NFKC, NFKD");
+
+                    return Normalizer.normalize(ScriptRuntime.toString(thisObj), form);
             }
             throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
         }
@@ -744,6 +757,7 @@ final class NativeString extends IdScriptableObject
                 if (c=='f') { X="fontcolor";id=Id_fontcolor; }
                 else if (c=='s') { X="substring";id=Id_substring; }
                 else if (c=='t') { X="trimRight";id=Id_trimRight; }
+                else if (c=='n') { X="normalize";id=Id_normalize; }
                 break L;
             case 10: switch(s.charAt(0)) {
                 case 'c': X="charCodeAt";id=Id_charCodeAt; break L;
@@ -814,7 +828,8 @@ final class NativeString extends IdScriptableObject
         Id_includes                  = 40,
         Id_startsWith                = 41,
         Id_endsWith                  = 42,
-        MAX_PROTOTYPE_ID             = Id_endsWith;
+        Id_normalize                 = 43,
+        MAX_PROTOTYPE_ID             = Id_normalize;
 
 // #/string_id_map#
 
