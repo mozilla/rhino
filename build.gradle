@@ -140,16 +140,18 @@ publishing {
         }
     }
 
-    repositories {
-        maven {
-            credentials {
-                username mavenUser
-                password mavenPassword
-            }
-            if (project.version.endsWith('-SNAPSHOT')) {
-                url mavenSnapshotRepo
-            } else {
-                url mavenReleaseRepo
+    if (project.hasProperty("mavenPassword")) {
+        repositories {
+            maven {
+                credentials {
+                    username mavenUser
+                    password mavenPassword
+                }
+                if (project.version.endsWith('-SNAPSHOT')) {
+                    url mavenSnapshotRepo
+                } else {
+                    url mavenReleaseRepo
+                }
             }
         }
     }
