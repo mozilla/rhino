@@ -3950,6 +3950,11 @@ public class ScriptRuntime {
                              lineNumber, lineSource, columnNumber);
     }
 
+    public static EcmaError rangeError(String message)
+    {
+        return constructError("RangeError", message);
+    }
+
     public static EcmaError typeError(String message)
     {
         return constructError("TypeError", message);
@@ -4246,4 +4251,16 @@ public class ScriptRuntime {
     public static final Object[] emptyArgs = new Object[0];
     public static final String[] emptyStrings = new String[0];
 
+
+    public static Scriptable requireObjectCoercible(Scriptable val, IdFunctionObject idFuncObj) {
+        Scriptable val1 = nullOrUndefined(val);
+        if (val1 == null || val1 == Undefined.instance)
+            throw ScriptRuntime.typeError2("msg.called.null.or.undefined", idFuncObj.getTag(), idFuncObj.getFunctionName());
+
+        return val1;
+    }
+
+    public static Scriptable nullOrUndefined(Scriptable val) {
+        return val.getParentScope() != null ? val : null;
+    }
 }

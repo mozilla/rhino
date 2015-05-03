@@ -3,10 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-gTestfile = 'method-006-n.js';
+gTestfile = 'method-006.js';
 
 /**
-   File Name:      method-006-n.js
+   File Name:      method-006.js
    Description:
 
    Assigning a Java method to a JavaScript object should not change the
@@ -43,7 +43,7 @@ new TestCase(
   "var js_string = \"JavaScript\"" +
   "js_string.startsWith = java_string.startsWith"+
   "js_string.startsWith(\"J\")",
-  false,
+  true,
   js_string.startsWith("J") );
 
 test();
