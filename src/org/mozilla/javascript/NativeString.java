@@ -276,8 +276,7 @@ final class NativeString extends IdScriptableObject
                 case Id_includes:
                 case Id_startsWith:
                 case Id_endsWith:
-                    thisObj = requireObjectCoercible(thisObj, f);
-                    String s = ScriptRuntime.toString(thisObj);
+                    String s = ScriptRuntime.toString(requireObjectCoercible(thisObj, f));
 
                     if (args.length > 0 && args[0] instanceof NativeRegExp) {
                         throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), f.getFunctionName());
@@ -474,8 +473,7 @@ final class NativeString extends IdScriptableObject
                 }
                 case Id_codePointAt:
                 {
-                    thisObj = requireObjectCoercible(thisObj, f);
-                    String str = ScriptRuntime.toString(thisObj);
+                    String str = ScriptRuntime.toString(requireObjectCoercible(thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
                     return (cnt < 0 || cnt >= str.length())
