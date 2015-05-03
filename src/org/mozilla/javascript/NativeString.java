@@ -463,12 +463,12 @@ final class NativeString extends IdScriptableObject
 
                     return Normalizer.normalize(ScriptRuntime.toString(thisObj), form);
                 case Id_repeat: //TODO implement RequireObjectCoercible
-                    if (thisObj.getParentScope() == null) throw ScriptRuntime.typeError("qweqwe");
+                    if (thisObj.getParentScope() == null) throw ScriptRuntime.typeError2("msg.called.null.or.undefined", String.class.getSimpleName(), f.getFunctionName());
 
                     String thisStr = ScriptRuntime.toString(thisObj);
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
-                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw ScriptRuntime.constructError("RangeError", "RangeError"); //TODO method for throwing RangeErrors
+                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw ScriptRuntime.constructError("RangeError", "Invalid count value"); //TODO method for throwing RangeErrors
 
                     StringBuilder retval = new StringBuilder("");
                     while (cnt-- > 0) retval.append(thisStr);
