@@ -11,6 +11,9 @@ import org.mozilla.javascript.regexp.NativeRegExp;
 import java.text.Collator;
 import java.text.Normalizer;
 
+import static org.mozilla.javascript.ScriptRuntime.rangeError;
+import static org.mozilla.javascript.ScriptRuntime.requireObjectCoercible;
+
 /**
  * This class implements the String native object.
  *
@@ -188,96 +191,95 @@ final class NativeString extends IdScriptableObject
       again:
         for(;;) {
             switch (id) {
-              case ConstructorId_charAt:
-              case ConstructorId_charCodeAt:
-              case ConstructorId_indexOf:
-              case ConstructorId_lastIndexOf:
-              case ConstructorId_split:
-              case ConstructorId_substring:
-              case ConstructorId_toLowerCase:
-              case ConstructorId_toUpperCase:
-              case ConstructorId_substr:
-              case ConstructorId_concat:
-              case ConstructorId_slice:
-              case ConstructorId_equalsIgnoreCase:
-              case ConstructorId_match:
-              case ConstructorId_search:
-              case ConstructorId_replace:
-              case ConstructorId_localeCompare:
-              case ConstructorId_toLocaleLowerCase: {
-                if (args.length > 0) {
-                    thisObj = ScriptRuntime.toObject(cx, scope,
+                case ConstructorId_charAt:
+                case ConstructorId_charCodeAt:
+                case ConstructorId_indexOf:
+                case ConstructorId_lastIndexOf:
+                case ConstructorId_split:
+                case ConstructorId_substring:
+                case ConstructorId_toLowerCase:
+                case ConstructorId_toUpperCase:
+                case ConstructorId_substr:
+                case ConstructorId_concat:
+                case ConstructorId_slice:
+                case ConstructorId_equalsIgnoreCase:
+                case ConstructorId_match:
+                case ConstructorId_search:
+                case ConstructorId_replace:
+                case ConstructorId_localeCompare:
+                case ConstructorId_toLocaleLowerCase: {
+                    if (args.length > 0) {
+                        thisObj = ScriptRuntime.toObject(cx, scope,
                             ScriptRuntime.toCharSequence(args[0]));
-                    Object[] newArgs = new Object[args.length-1];
-                    for (int i=0; i < newArgs.length; i++)
-                        newArgs[i] = args[i+1];
-                    args = newArgs;
-                } else {
-                    thisObj = ScriptRuntime.toObject(cx, scope,
+                        Object[] newArgs = new Object[args.length - 1];
+                        for (int i = 0; i < newArgs.length; i++)
+                            newArgs[i] = args[i + 1];
+                        args = newArgs;
+                    } else {
+                        thisObj = ScriptRuntime.toObject(cx, scope,
                             ScriptRuntime.toCharSequence(thisObj));
+                    }
+                    id = -id;
+                    continue again;
                 }
-                id = -id;
-                continue again;
-              }
 
-              case ConstructorId_fromCharCode: {
-                int N = args.length;
-                if (N < 1)
-                    return "";
-                StringBuilder sb = new StringBuilder(N);
-                for (int i = 0; i != N; ++i) {
-                    sb.append(ScriptRuntime.toUint16(args[i]));
+                case ConstructorId_fromCharCode: {
+                    int N = args.length;
+                    if (N < 1)
+                        return "";
+                    StringBuilder sb = new StringBuilder(N);
+                    for (int i = 0; i != N; ++i) {
+                        sb.append(ScriptRuntime.toUint16(args[i]));
+                    }
+                    return sb.toString();
                 }
-                return sb.toString();
-              }
 
-              case Id_constructor: {
-                CharSequence s = (args.length >= 1)
-                    ? ScriptRuntime.toCharSequence(args[0]) : "";
-                if (thisObj == null) {
-                    // new String(val) creates a new String object.
-                    return new NativeString(s);
+                case Id_constructor: {
+                    CharSequence s = (args.length >= 1)
+                        ? ScriptRuntime.toCharSequence(args[0]) : "";
+                    if (thisObj == null) {
+                        // new String(val) creates a new String object.
+                        return new NativeString(s);
+                    }
+                    // String(val) converts val to a string value.
+                    return s instanceof String ? s : s.toString();
                 }
-                // String(val) converts val to a string value.
-                return s instanceof String ? s : s.toString();
-              }
 
-              case Id_toString:
-              case Id_valueOf:
-                // ECMA 15.5.4.2: 'the toString function is not generic.
-                CharSequence cs = realThis(thisObj, f).string;
-                return cs instanceof String ? cs : cs.toString();
+                case Id_toString:
+                case Id_valueOf:
+                    // ECMA 15.5.4.2: 'the toString function is not generic.
+                    CharSequence cs = realThis(thisObj, f).string;
+                    return cs instanceof String ? cs : cs.toString();
 
-              case Id_toSource: {
-                CharSequence s = realThis(thisObj, f).string;
-                return "(new String(\""+ScriptRuntime.escapeString(s.toString())+"\"))";
-              }
-
-              case Id_charAt:
-              case Id_charCodeAt: {
-                 // See ECMA 15.5.4.[4,5]
-                CharSequence target = ScriptRuntime.toCharSequence(thisObj);
-                double pos = ScriptRuntime.toInteger(args, 0);
-                if (pos < 0 || pos >= target.length()) {
-                    if (id == Id_charAt) return "";
-                    else return ScriptRuntime.NaNobj;
+                case Id_toSource: {
+                    CharSequence s = realThis(thisObj, f).string;
+                    return "(new String(\"" + ScriptRuntime.escapeString(s.toString()) + "\"))";
                 }
-                char c = target.charAt((int)pos);
-                if (id == Id_charAt) return String.valueOf(c);
-                else return ScriptRuntime.wrapInt(c);
-              }
 
-              case Id_indexOf:
-                return ScriptRuntime.wrapInt(js_indexOf(Id_indexOf, ScriptRuntime.toString(thisObj), args));
+                case Id_charAt:
+                case Id_charCodeAt: {
+                    // See ECMA 15.5.4.[4,5]
+                    CharSequence target = ScriptRuntime.toCharSequence(thisObj);
+                    double pos = ScriptRuntime.toInteger(args, 0);
+                    if (pos < 0 || pos >= target.length()) {
+                        if (id == Id_charAt) return "";
+                        else return ScriptRuntime.NaNobj;
+                    }
+                    char c = target.charAt((int) pos);
+                    if (id == Id_charAt) return String.valueOf(c);
+                    else return ScriptRuntime.wrapInt(c);
+                }
+
+                case Id_indexOf:
+                    return ScriptRuntime.wrapInt(js_indexOf(Id_indexOf, ScriptRuntime.toString(thisObj), args));
 
                 case Id_includes:
                 case Id_startsWith:
                 case Id_endsWith:
-                    if (thisObj == ScriptableObject.getTopLevelScope(thisObj)) {
-                        throw ScriptRuntime.typeError2("msg.called.null.or.undefined", String.class.getSimpleName(), f.getFunctionName());
-                    }
+                    thisObj = requireObjectCoercible(thisObj, f);
                     String s = ScriptRuntime.toString(thisObj);
-                    if (args.length > 0 &&  args[0] instanceof NativeRegExp) {
+
+                    if (args.length > 0 && args[0] instanceof NativeRegExp) {
                         throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), f.getFunctionName());
                     }
 
@@ -291,89 +293,88 @@ final class NativeString extends IdScriptableObject
                         return idx != -1;
                     }
 
-              case Id_lastIndexOf:
-                return ScriptRuntime.wrapInt(js_lastIndexOf(
-                    ScriptRuntime.toString(thisObj), args));
+                case Id_lastIndexOf:
+                    return ScriptRuntime.wrapInt(js_lastIndexOf(
+                        ScriptRuntime.toString(thisObj), args));
 
-              case Id_split:
-                return ScriptRuntime.checkRegExpProxy(cx).
-                  js_split(cx, scope, ScriptRuntime.toString(thisObj),
-                        args);
+                case Id_split:
+                    return ScriptRuntime.checkRegExpProxy(cx).
+                        js_split(cx, scope, ScriptRuntime.toString(thisObj),
+                            args);
 
-              case Id_substring:
-                return js_substring(cx, ScriptRuntime.toCharSequence(thisObj), args);
+                case Id_substring:
+                    return js_substring(cx, ScriptRuntime.toCharSequence(thisObj), args);
 
-              case Id_toLowerCase:
-                // See ECMA 15.5.4.11
-                return ScriptRuntime.toString(thisObj).toLowerCase(
-                         ScriptRuntime.ROOT_LOCALE);
+                case Id_toLowerCase:
+                    // See ECMA 15.5.4.11
+                    return ScriptRuntime.toString(thisObj).toLowerCase(
+                        ScriptRuntime.ROOT_LOCALE);
 
-              case Id_toUpperCase:
-                // See ECMA 15.5.4.12
-                return ScriptRuntime.toString(thisObj).toUpperCase(
-                         ScriptRuntime.ROOT_LOCALE);
+                case Id_toUpperCase:
+                    // See ECMA 15.5.4.12
+                    return ScriptRuntime.toString(thisObj).toUpperCase(
+                        ScriptRuntime.ROOT_LOCALE);
 
-              case Id_substr:
-                return js_substr(ScriptRuntime.toCharSequence(thisObj), args);
+                case Id_substr:
+                    return js_substr(ScriptRuntime.toCharSequence(thisObj), args);
 
-              case Id_concat:
-                return js_concat(ScriptRuntime.toString(thisObj), args);
+                case Id_concat:
+                    return js_concat(ScriptRuntime.toString(thisObj), args);
 
-              case Id_slice:
-                return js_slice(ScriptRuntime.toCharSequence(thisObj), args);
+                case Id_slice:
+                    return js_slice(ScriptRuntime.toCharSequence(thisObj), args);
 
-              case Id_bold:
-                return tagify(thisObj, "b", null, null);
+                case Id_bold:
+                    return tagify(thisObj, "b", null, null);
 
-              case Id_italics:
-                return tagify(thisObj, "i", null, null);
+                case Id_italics:
+                    return tagify(thisObj, "i", null, null);
 
-              case Id_fixed:
-                return tagify(thisObj, "tt", null, null);
+                case Id_fixed:
+                    return tagify(thisObj, "tt", null, null);
 
-              case Id_strike:
-                return tagify(thisObj, "strike", null, null);
+                case Id_strike:
+                    return tagify(thisObj, "strike", null, null);
 
-              case Id_small:
-                return tagify(thisObj, "small", null, null);
+                case Id_small:
+                    return tagify(thisObj, "small", null, null);
 
-              case Id_big:
-                return tagify(thisObj, "big", null, null);
+                case Id_big:
+                    return tagify(thisObj, "big", null, null);
 
-              case Id_blink:
-                return tagify(thisObj, "blink", null, null);
+                case Id_blink:
+                    return tagify(thisObj, "blink", null, null);
 
-              case Id_sup:
-                return tagify(thisObj, "sup", null, null);
+                case Id_sup:
+                    return tagify(thisObj, "sup", null, null);
 
-              case Id_sub:
-                return tagify(thisObj, "sub", null, null);
+                case Id_sub:
+                    return tagify(thisObj, "sub", null, null);
 
-              case Id_fontsize:
-                return tagify(thisObj, "font", "size", args);
+                case Id_fontsize:
+                    return tagify(thisObj, "font", "size", args);
 
-              case Id_fontcolor:
-                return tagify(thisObj, "font", "color", args);
+                case Id_fontcolor:
+                    return tagify(thisObj, "font", "color", args);
 
-              case Id_link:
-                return tagify(thisObj, "a", "href", args);
+                case Id_link:
+                    return tagify(thisObj, "a", "href", args);
 
-              case Id_anchor:
-                return tagify(thisObj, "a", "name", args);
+                case Id_anchor:
+                    return tagify(thisObj, "a", "name", args);
 
-              case Id_equals:
-              case Id_equalsIgnoreCase: {
-                String s1 = ScriptRuntime.toString(thisObj);
-                String s2 = ScriptRuntime.toString(args, 0);
-                return ScriptRuntime.wrapBoolean(
-                    (id == Id_equals) ? s1.equals(s2)
-                                      : s1.equalsIgnoreCase(s2));
-              }
+                case Id_equals:
+                case Id_equalsIgnoreCase: {
+                    String s1 = ScriptRuntime.toString(thisObj);
+                    String s2 = ScriptRuntime.toString(args, 0);
+                    return ScriptRuntime.wrapBoolean(
+                        (id == Id_equals) ? s1.equals(s2)
+                            : s1.equalsIgnoreCase(s2));
+                }
 
-              case Id_match:
-              case Id_search:
-              case Id_replace:
-                {
+                case Id_match:
+                case Id_search:
+                case Id_replace: {
                     int actionType;
                     if (id == Id_match) {
                         actionType = RegExpProxy.RA_MATCH;
@@ -386,8 +387,7 @@ final class NativeString extends IdScriptableObject
                         action(cx, scope, thisObj, args, actionType);
                 }
                 // ECMA-262 1 5.5.4.9
-              case Id_localeCompare:
-                {
+                case Id_localeCompare: {
                     // For now, create and configure a collator instance. I can't
                     // actually imagine that this'd be slower than caching them
                     // a la ClassCache, so we aren't trying to outsmart ourselves
@@ -396,49 +396,45 @@ final class NativeString extends IdScriptableObject
                     collator.setStrength(Collator.IDENTICAL);
                     collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
                     return ScriptRuntime.wrapNumber(collator.compare(
-                            ScriptRuntime.toString(thisObj),
-                            ScriptRuntime.toString(args, 0)));
+                        ScriptRuntime.toString(thisObj),
+                        ScriptRuntime.toString(args, 0)));
                 }
-              case Id_toLocaleLowerCase:
-                {
+                case Id_toLocaleLowerCase: {
                     return ScriptRuntime.toString(thisObj)
-                            .toLowerCase(cx.getLocale());
+                        .toLowerCase(cx.getLocale());
                 }
-              case Id_toLocaleUpperCase:
-                {
+                case Id_toLocaleUpperCase: {
                     return ScriptRuntime.toString(thisObj)
-                            .toUpperCase(cx.getLocale());
+                        .toUpperCase(cx.getLocale());
                 }
-              case Id_trim:
-                {
+                case Id_trim: {
                     String str = ScriptRuntime.toString(thisObj);
                     char[] chars = str.toCharArray();
 
                     int start = 0;
                     while (start < chars.length && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[start])) {
-                      start++;
+                        start++;
                     }
                     int end = chars.length;
-                    while (end > start && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[end-1])) {
-                      end--;
+                    while (end > start && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[end - 1])) {
+                        end--;
                     }
 
                     return str.substring(start, end);
                 }
-              case Id_trimLeft:
-                {
+                case Id_trimLeft: {
                     String str = ScriptRuntime.toString(thisObj);
                     char[] chars = str.toCharArray();
 
                     int start = 0;
                     while (start < chars.length && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[start])) {
-                      start++;
+                        start++;
                     }
                     int end = chars.length;
 
                     return str.substring(start, end);
                 }
-              case Id_trimRight:
+                case Id_trimRight:
                 {
                     String str = ScriptRuntime.toString(thisObj);
                     char[] chars = str.toCharArray();
@@ -446,13 +442,13 @@ final class NativeString extends IdScriptableObject
                     int start = 0;
 
                     int end = chars.length;
-                    while (end > start && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[end-1])) {
-                      end--;
+                    while (end > start && ScriptRuntime.isJSWhitespaceOrLineTerminator(chars[end - 1])) {
+                        end--;
                     }
 
                     return str.substring(start, end);
                 }
-                case Id_normalize:
+                case Id_normalize: {
                     String formStr = ScriptRuntime.toString(args, 0);
 
                     Normalizer.Form form;
@@ -460,29 +456,32 @@ final class NativeString extends IdScriptableObject
                     else if (Normalizer.Form.NFKC.name().equals(formStr)) form = Normalizer.Form.NFKC;
                     else if (Normalizer.Form.NFKD.name().equals(formStr)) form = Normalizer.Form.NFKD;
                     else if (Normalizer.Form.NFC.name().equals(formStr) || args.length == 0) form = Normalizer.Form.NFC;
-                    else throw ScriptRuntime.constructError("RangeError", "The normalization form should be one of NFC, NFD, NFKC, NFKD");
+                    else throw rangeError("The normalization form should be one of NFC, NFD, NFKC, NFKD");
 
-                    return Normalizer.normalize(ScriptRuntime.toString(thisObj), form);
-                case Id_repeat: //TODO implement RequireObjectCoercible
-                    if (thisObj.getParentScope() == null) throw ScriptRuntime.typeError2("msg.called.null.or.undefined", String.class.getSimpleName(), f.getFunctionName());
+                    return Normalizer.normalize(ScriptRuntime.toString(requireObjectCoercible(thisObj, f)), form);
+                }
 
-                    String thisStr = ScriptRuntime.toString(thisObj);
+                case Id_repeat:
+                {
+                    String str = ScriptRuntime.toString(requireObjectCoercible(thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
-                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw ScriptRuntime.constructError("RangeError", "Invalid count value"); //TODO method for throwing RangeErrors
+                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw rangeError("Invalid count value");
 
                     StringBuilder retval = new StringBuilder("");
-                    while (cnt-- > 0) retval.append(thisStr);
+                    while (cnt-- > 0) retval.append(str);
                     return retval.toString();
+                }
                 case Id_codePointAt:
-                    if (thisObj.getParentScope() == null) throw ScriptRuntime.typeError2("msg.called.null.or.undefined", String.class.getSimpleName(), f.getFunctionName());
+                {
+                    thisObj = requireObjectCoercible(thisObj, f);
+                    String str = ScriptRuntime.toString(thisObj);
+                    double cnt = ScriptRuntime.toInteger(args, 0);
 
-                    thisStr = ScriptRuntime.toString(thisObj);
-                    cnt = ScriptRuntime.toInteger(args, 0);
-
-                    if (cnt < 0 || cnt >= thisStr.length()) return Undefined.instance;
-
-                    return thisStr.codePointAt((int) cnt);
+                    return (cnt < 0 || cnt >= str.length())
+                        ? Undefined.instance
+                        : str.codePointAt((int) cnt);
+                }
             }
             throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
         }

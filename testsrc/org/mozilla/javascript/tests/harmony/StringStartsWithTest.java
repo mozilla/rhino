@@ -8,8 +8,7 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest(
-        value = "testsrc/jstests/harmony/string-startsWith.js"
-//    inline = "assertEquals(\"abc\".startsWith(\"\", +Infinity), true);"
+    value = "testsrc/jstests/harmony/string-startsWith.js"
 )
 public class StringStartsWithTest extends ScriptTestsBase {
 }

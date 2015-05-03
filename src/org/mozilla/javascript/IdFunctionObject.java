@@ -55,6 +55,10 @@ public class IdFunctionObject extends BaseFunction
         return tag == null ? this.tag == null : tag.equals(this.tag);
     }
 
+    public Object getTag() {
+        return tag;
+    }
+
     public final int methodId()
     {
         return methodId;
