@@ -471,7 +471,7 @@ final class NativeString extends IdScriptableObject
                     if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw ScriptRuntime.constructError("RangeError", "RangeError"); //TODO method for throwing RangeErrors
 
                     StringBuilder retval = new StringBuilder("");
-                    while (cnt-- > 0) retval.append(ScriptRuntime.toString(thisObj));
+                    while (cnt-- > 0) retval.append(thisStr);
                     return retval.toString();
             }
             throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
