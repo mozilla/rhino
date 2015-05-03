@@ -55,26 +55,45 @@ More resources if you get stuck:
 
 ### How to Build
 
-Rhino builds with Ant. Here are some useful tasks:
+Rhino builds with `Gradle`. Here are some useful tasks:
 
-    ant jar
+    ./gradlew jar
 
-Build and create "js.jar" in the build/VERSION directory.
+Build and create "rhino.jar" in the `build/libs` directory.
 
-    ant junit-all
+    ./gradlew test
 
 Build and run all the tests.
 
-    ant help
+    ./gradlew testBenchmark
 
-to find out about the rest.
+Build and run benchmark tests.
 
+## Releasing and publishing new version
+
+1. Ensure all tests are passing
+2. Remove `-SNAPSHOT` from version in `gradle.properties` in project root folder
+3. Create file `gradle.properties` in `$HOME/.gradle` folder with following properties. Populate them with maven repo credentials and repo location.
+    ```
+mavenUser=
+mavenPassword=
+mavenSnapshotRepo=
+mavenReleaseRepo=
+    ```
+
+4. Run `Gradle` task to publish artifacts to Maven Central.
+    ```
+./gradlew publish
+    ```
+5. Increase version and add `-SNAPSHOT` to it in `gradle.properties` in project root folder.
+6. Push `gradle.properties` to `GitHub`
+   
 ## Running
 
 Rhino can run as a stand-alone interpreter from the command line:
 
-    java -jar build/rhino1_7R5pre/js.jar
-    Rhino 1.7 release 5 PRERELEASE 2015 01 28
+    java -jar build/libs/rhino-1.7.7-SNAPSHOT.jar
+    Rhino 1.7.7-SNAPSHOT 2015 05 03
     js> print('Hello, World!');
     Hello, World!
     js>
