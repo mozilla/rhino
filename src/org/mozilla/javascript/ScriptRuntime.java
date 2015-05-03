@@ -4253,14 +4253,11 @@ public class ScriptRuntime {
 
 
     public static Scriptable requireObjectCoercible(Scriptable val, IdFunctionObject idFuncObj) {
-        Scriptable val1 = nullOrUndefined(val);
+        Scriptable val1 = val.getParentScope() != null ? val : null;
         if (val1 == null || val1 == Undefined.instance)
             throw ScriptRuntime.typeError2("msg.called.null.or.undefined", idFuncObj.getTag(), idFuncObj.getFunctionName());
 
         return val1;
     }
 
-    public static Scriptable nullOrUndefined(Scriptable val) {
-        return val.getParentScope() != null ? val : null;
-    }
 }
