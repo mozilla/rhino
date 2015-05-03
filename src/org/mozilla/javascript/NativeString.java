@@ -171,6 +171,7 @@ final class NativeString extends IdScriptableObject
           case Id_endsWith:          arity=1; s="endsWith";          break;
           case Id_normalize:         arity=0; s="normalize";         break;
           case Id_repeat:            arity=1; s="repeat";            break;
+          case Id_codePointAt:       arity=1; s="codePointAt";       break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, arity);
@@ -473,6 +474,8 @@ final class NativeString extends IdScriptableObject
                     StringBuilder retval = new StringBuilder("");
                     while (cnt-- > 0) retval.append(thisStr);
                     return retval.toString();
+                case Id_codePointAt:
+                    return "";
             }
             throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
         }
@@ -780,6 +783,7 @@ final class NativeString extends IdScriptableObject
                 case 'U': X="toUpperCase";id=Id_toUpperCase; break L;
                 case 'n': X="constructor";id=Id_constructor; break L;
                 case 's': X="lastIndexOf";id=Id_lastIndexOf; break L;
+                case 'd': X="codePointAt";id=Id_codePointAt; break L;
                 } break L;
             case 13: X="localeCompare";id=Id_localeCompare; break L;
             case 16: X="equalsIgnoreCase";id=Id_equalsIgnoreCase; break L;
@@ -842,7 +846,8 @@ final class NativeString extends IdScriptableObject
         Id_endsWith                  = 42,
         Id_normalize                 = 43,
         Id_repeat                    = 44,
-        MAX_PROTOTYPE_ID             = Id_repeat;
+        Id_codePointAt               = 45,
+        MAX_PROTOTYPE_ID             = Id_codePointAt;
 
 // #/string_id_map#
 
