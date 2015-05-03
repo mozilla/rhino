@@ -475,7 +475,14 @@ final class NativeString extends IdScriptableObject
                     while (cnt-- > 0) retval.append(thisStr);
                     return retval.toString();
                 case Id_codePointAt:
-                    return "";
+                    if (thisObj.getParentScope() == null) throw ScriptRuntime.typeError2("msg.called.null.or.undefined", String.class.getSimpleName(), f.getFunctionName());
+
+                    thisStr = ScriptRuntime.toString(thisObj);
+                    cnt = ScriptRuntime.toInteger(args, 0);
+
+                    if (cnt < 0 || cnt >= thisStr.length()) return Undefined.instance;
+
+                    return thisStr.codePointAt((int) cnt);
             }
             throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
         }
