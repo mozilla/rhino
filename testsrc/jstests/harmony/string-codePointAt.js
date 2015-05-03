@@ -89,3 +89,5 @@ assertEquals(String.prototype.codePointAt.call({
   toString: function() { ++tmp; return String(tmp); }
 }, 0), 0x31);
 assertEquals(tmp, 1);
+
+"success";

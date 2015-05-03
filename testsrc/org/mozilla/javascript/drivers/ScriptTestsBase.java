@@ -63,7 +63,7 @@ public abstract class ScriptTestsBase {
 
             return cx.evaluateReader(scope, script, suiteName, 1, null);
         } catch (JavaScriptException ex) {
-            fail(ex.getScriptStackTrace());
+            fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
             return null;
         } catch (Exception e) {
             fail(e.getMessage());
