@@ -59,7 +59,7 @@ Rhino builds with `Gradle`. Here are some useful tasks:
 
     ./gradlew jar
 
-Build and create "rhino.jar" in the `build/libs` directory.
+Build and create `Rhino` jar in the `build/libs` directory.
 
     ./gradlew test
 
