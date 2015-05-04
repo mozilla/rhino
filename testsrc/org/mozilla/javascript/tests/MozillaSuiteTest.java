@@ -102,7 +102,7 @@ public class MozillaSuiteTest {
         return new String(buf);
     }
 
-    @Parameters
+    @Parameters(name = "js={0} opt={1}")
     public static Collection<Object[]> mozillaSuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
         int[] optLevels = OPT_LEVELS;
