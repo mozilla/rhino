@@ -13,7 +13,8 @@
   <!--
     URL from which junit.jar can be retrieved
   -->
-  <property name="test.junit.url" value="http://repo1.maven.org/maven2/junit/junit/4.10/junit-4.10.jar"/>
+  <property name="test.junit.url" value="http://repo1.maven.org/maven2/junit/junit/4.12/junit-4.12.jar"/>
+  <property name="test.hamcrest.url" value="http://central.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
 
   <!--
     URL from which emma.jar can be retrieved
@@ -48,6 +49,7 @@
   <target name="get-junit" unless="offline">
     <mkdir dir="lib"/>
     <get src="${test.junit.url}" dest="lib/junit.jar" usetimestamp="true"/>
+    <get src="${test.hamcrest.url}" dest="lib/hamcrest.jar" usetimestamp="true"/>
   </target>
 
   <target name="junit-compile">
@@ -61,6 +63,7 @@
     >
       <classpath>
         <pathelement path="lib/junit.jar" />
+        <pathelement path="lib/hamcrest.jar" />
         <pathelement path="${classes}" />
       </classpath>
       <src path="testsrc"/>
@@ -81,6 +84,7 @@
     >
       <classpath>
         <pathelement path="lib/junit.jar" />
+        <pathelement path="lib/hamcrest.jar" />
         <pathelement path="${classes}" />
       </classpath>
       <sourcepath path="testsrc" />
@@ -153,6 +157,7 @@
         <pathelement path="${test.classes}" />
         <pathelement path="lib/emma.jar"/>
         <pathelement path="lib/junit.jar" />
+        <pathelement path="lib/hamcrest.jar" />
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
       <batchtest todir="build/test">
@@ -178,11 +183,13 @@
     <mkdir dir="build/test/benchmark"/>
     <junit printsummary="on" fork="true" forkmode="perTest"
            maxmemory="${test.vm.mx}" showoutput="true"
-           dir="testsrc/benchmarks/sunspider-0.9.1">
-      <classpath>
+           dir="testsrc/benchmarks">
+        <sysproperty key="rhino.benchmark.report" value="../../build" />
+        <classpath>
         <pathelement path="${classes}" />
         <pathelement path="${test.classes}" />
         <pathelement path="lib/junit.jar" />
+        <pathelement path="lib/hamcrest.jar" />
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
 
@@ -197,11 +204,13 @@
 
     <junit printsummary="on" fork="true" forkmode="perTest"
            maxmemory="${test.vm.mx}" showoutput="true"
-           dir="testsrc/benchmarks/v8-benchmarks-v6">
+           dir="testsrc/benchmarks">
+      <sysproperty key="rhino.benchmark.report" value="../../build" />
       <classpath>
         <pathelement path="${classes}" />
         <pathelement path="${test.classes}" />
         <pathelement path="lib/junit.jar" />
+        <pathelement path="lib/hamcrest.jar" />
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
       <batchtest todir="build/test/benchmark">

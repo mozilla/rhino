@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.ShellTest;
-import org.mozilla.javascript.drivers.StandardTests;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
@@ -62,7 +62,7 @@ public class MozillaSuiteTest {
         if (System.getProperty("mozilla.js.tests") != null) {
             testDir = new File(System.getProperty("mozilla.js.tests"));
         } else {
-            URL url = StandardTests.class.getResource(".");
+            URL url = JsTestsBase.class.getResource(".");
             String path = url.getFile();
             int jsIndex = path.lastIndexOf("/js");
             if (jsIndex == -1) {
@@ -102,7 +102,7 @@ public class MozillaSuiteTest {
         return new String(buf);
     }
 
-    @Parameters
+    @Parameters(name = "{index}, js={0}, opt={1}")
     public static Collection<Object[]> mozillaSuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
         int[] optLevels = OPT_LEVELS;
@@ -116,12 +116,16 @@ public class MozillaSuiteTest {
     }
 
     // move "@Parameters" to this method to test a single Mozilla test
+//    @Parameters(name = "{index}, js={0}, opt={1}")
     public static Collection<Object[]> singleDoctest() throws IOException {
-        final String SINGLE_TEST_FILE = "e4x/Expressions/11.1.1.js";
-        final int SINGLE_TEST_OPTIMIZATION_LEVEL = -1;
+        final String SINGLE_TEST_FILE = "...";
+        final int[] SINGLE_TEST_OPTIMIZATION_LEVEL = OPT_LEVELS;
+
         List<Object[]> result = new ArrayList<Object[]>();
-        File f = new File(getTestDir(), SINGLE_TEST_FILE);
-        result.add(new Object[] { f, SINGLE_TEST_OPTIMIZATION_LEVEL });
+        for (int optLevel : SINGLE_TEST_OPTIMIZATION_LEVEL) {
+            File f = new File(getTestDir(), SINGLE_TEST_FILE);
+            result.add(new Object[] { f, optLevel });
+        }
         return result;
     }
 

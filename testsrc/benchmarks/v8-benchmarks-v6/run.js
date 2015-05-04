@@ -26,14 +26,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-load('base.js');
-load('richards.js');
-load('deltablue.js');
-load('crypto.js');
-load('raytrace.js');
-load('earley-boyer.js');
-load('regexp.js');
-load('splay.js');
+load('v8-benchmarks-v6/base.js');
+load('v8-benchmarks-v6/richards.js');
+load('v8-benchmarks-v6/deltablue.js');
+load('v8-benchmarks-v6/crypto.js');
+load('v8-benchmarks-v6/raytrace.js');
+load('v8-benchmarks-v6/earley-boyer.js');
+load('v8-benchmarks-v6/regexp.js');
+load('v8-benchmarks-v6/splay.js');
 
 var success = true;
 var lastScore;
