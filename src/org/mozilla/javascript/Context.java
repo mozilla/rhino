@@ -683,21 +683,34 @@ public class Context
     public final String getImplementationVersion()
     {
         if (implementationVersion == null) {
-            InputStream is = null;
+            Enumeration<URL> urls;
             try {
-                is = Context.class.getClassLoader().getResourceAsStream("META-INF/MANIFEST.MF");
-                Manifest mf = new Manifest(is);
-                Attributes attrs = mf.getMainAttributes();
-                if ("Mozilla Rhino".equals(attrs.getValue("Implementation-Title"))) {
-                    implementationVersion = "Rhino " + attrs.getValue("Implementation-Version") + " " + attrs.getValue("Built-Date").replaceAll("-", " ");
-                }
-            } catch (IOException e) {
+                urls = Context.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+            } catch (IOException ioe) {
+                return null;
+            }
 
-            } finally {
+            // There will be many manifests in the world -- enumerate all of them until we find the right one.
+            while (urls.hasMoreElements()) {
+                URL metaUrl = urls.nextElement();
+                InputStream is = null;
                 try {
-                    if (is != null) is.close();
+                    is = metaUrl.openStream();
+                    Manifest mf = new Manifest(is);
+                    Attributes attrs = mf.getMainAttributes();
+                    if ("Mozilla Rhino".equals(attrs.getValue("Implementation-Title"))) {
+                        implementationVersion =
+                            "Rhino " + attrs.getValue("Implementation-Version") + " " + attrs.getValue("Built-Date").replaceAll("-", " ");
+                        return implementationVersion;
+                    }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    // Ignore this unlikely event
+                } finally {
+                    try {
+                        if (is != null) is.close();
+                    } catch (IOException e) {
+                        // Ignore this even unlikelier event
+                    }
                 }
             }
         }
