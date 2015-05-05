@@ -66,8 +66,7 @@ public abstract class ScriptTestsBase {
             fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
             return null;
         } catch (Exception e) {
-            fail(e.getMessage());
-            return null;
+            throw new RuntimeException(e);
         } finally {
             Context.exit();
             try {
