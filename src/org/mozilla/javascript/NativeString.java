@@ -729,7 +729,7 @@ final class NativeString extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2015-02-09 17:30:54 PST
+// #generated# Last update: 2015-05-06 14:41:38 PDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(2);
@@ -751,7 +751,10 @@ final class NativeString extends IdScriptableObject
                 case 't': X="split";id=Id_split; break L;
                 } break L;
             case 6: switch (s.charAt(1)) {
-                case 'e': X= s.charAt(0) == 's' ? "search" : "repeat";id = s.charAt(0) == 's' ? Id_search : Id_repeat; break L;
+                case 'e': c=s.charAt(0);
+                    if (c=='r') { X="repeat";id=Id_repeat; }
+                    else if (c=='s') { X="search";id=Id_search; }
+                    break L;
                 case 'h': X="charAt";id=Id_charAt; break L;
                 case 'n': X="anchor";id=Id_anchor; break L;
                 case 'o': X="concat";id=Id_concat; break L;
@@ -765,29 +768,30 @@ final class NativeString extends IdScriptableObject
                 case 'n': X="indexOf";id=Id_indexOf; break L;
                 case 't': X="italics";id=Id_italics; break L;
                 } break L;
-            case 8: switch (s.charAt(4)) {
-                case 'L': X="trimLeft";id=Id_trimLeft; break L;
-                case 'r': X="toString";id=Id_toString; break L;
-                case 's': X="fontsize";id=Id_fontsize; break L;
-                case 'W': X="endsWith";id=Id_endsWith; break L;
-                case 'u': X = s.charAt(0) == 't' ? "toSource" : "includes"; id = s.charAt(0) == 't' ? Id_toSource : Id_includes; break L;
+            case 8: switch (s.charAt(6)) {
+                case 'c': X="toSource";id=Id_toSource; break L;
+                case 'e': X="includes";id=Id_includes; break L;
+                case 'f': X="trimLeft";id=Id_trimLeft; break L;
+                case 'n': X="toString";id=Id_toString; break L;
+                case 't': X="endsWith";id=Id_endsWith; break L;
+                case 'z': X="fontsize";id=Id_fontsize; break L;
                 } break L;
-            case 9: c=s.charAt(0);
-                if (c=='f') { X="fontcolor";id=Id_fontcolor; }
-                else if (c=='s') { X="substring";id=Id_substring; }
-                else if (c=='t') { X="trimRight";id=Id_trimRight; }
-                else if (c=='n') { X="normalize";id=Id_normalize; }
+            case 9: switch (s.charAt(0)) {
+                case 'f': X="fontcolor";id=Id_fontcolor; break L;
+                case 'n': X="normalize";id=Id_normalize; break L;
+                case 's': X="substring";id=Id_substring; break L;
+                case 't': X="trimRight";id=Id_trimRight; break L;
+                } break L;
+            case 10: c=s.charAt(0);
+                if (c=='c') { X="charCodeAt";id=Id_charCodeAt; }
+                else if (c=='s') { X="startsWith";id=Id_startsWith; }
                 break L;
-            case 10: switch(s.charAt(0)) {
-                case 'c': X="charCodeAt";id=Id_charCodeAt; break L;
-                case 's': X="startsWith";id=Id_startsWith; break L;
-                } break L;
             case 11: switch (s.charAt(2)) {
                 case 'L': X="toLowerCase";id=Id_toLowerCase; break L;
                 case 'U': X="toUpperCase";id=Id_toUpperCase; break L;
+                case 'd': X="codePointAt";id=Id_codePointAt; break L;
                 case 'n': X="constructor";id=Id_constructor; break L;
                 case 's': X="lastIndexOf";id=Id_lastIndexOf; break L;
-                case 'd': X="codePointAt";id=Id_codePointAt; break L;
                 } break L;
             case 13: X="localeCompare";id=Id_localeCompare; break L;
             case 16: X="equalsIgnoreCase";id=Id_equalsIgnoreCase; break L;
