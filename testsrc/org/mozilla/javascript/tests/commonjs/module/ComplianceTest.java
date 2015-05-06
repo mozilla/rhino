@@ -31,7 +31,7 @@ public class ComplianceTest {
     @Parameterized.Parameters(name = "/{0}")
     public static Collection<Object[]> data() {
         List<Object[]> retval = new ArrayList<Object[]>(16);
-        final File[] files = new File(ComplianceTest.class.getResource("1.0").getPath()).listFiles();
+        final File[] files = new File("testsrc/org/mozilla/javascript/tests/commonjs/module/1.0").listFiles();
         for (File file : files) {
             if (file.isDirectory()) {
                 retval.add(new Object[]{file.getName(), file});
