@@ -1,8 +1,7 @@
-import sun.applet.Main
-
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
+apply plugin: 'jacoco'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -151,4 +150,8 @@ publishing {
             }
         }
     }
+}
+
+jacoco {
+    toolVersion = "jacoco-0.7.4.201502262128"
 }
