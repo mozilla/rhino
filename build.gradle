@@ -7,7 +7,7 @@ apply plugin: 'maven-publish'
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
-compileJava.options.encoding = 'UTF-8'
+tasks.withType(JavaCompile) { options.encoding = "UTF-8" }
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.3'
