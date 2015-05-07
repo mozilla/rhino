@@ -12,7 +12,7 @@ import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.drivers.JsTestsBase;
 
 public class JsTestsTest extends JsTestsBase {
-    static final String baseDirectory = "testsrc" + File.separator + "jstests";
+    static final String baseDirectory = "testsrc-resources" + File.separator + "jstests";
 
     static final String jstestsExtension = ".jstest";
 

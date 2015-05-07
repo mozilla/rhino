@@ -7,7 +7,7 @@ package org.mozilla.javascript.tests.harmony;
 import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
-@RhinoTest("testsrc/jstests/harmony/dataview-accessors.js")
+@RhinoTest("testsrc-resources/jstests/harmony/dataview-accessors.js")
 public class DataViewAccessorsTest extends ScriptTestsBase
 {
 }

@@ -48,7 +48,7 @@ public abstract class ScriptTestsBase {
                 script = new FileReader(anno.value());
                 suiteName = anno.value();
             } else if (!"".equals(anno.inline())) {
-                script = new StringReader("load('testsrc/assert.js');\n" + anno.inline() + "\n" + "'success';");
+                script = new StringReader("load('testsrc-resources/assert.js');\n" + anno.inline() + "\n" + "'success';");
                 suiteName = "inline.js";
             }
 

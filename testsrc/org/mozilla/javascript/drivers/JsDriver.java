@@ -552,7 +552,7 @@ public class JsDriver {
     void run(Arguments arguments) throws Throwable {
         if (arguments.help()) {
             System.out.println("See mozilla/js/tests/README-jsDriver.html; note that some options are not supported.");
-            System.out.println("Consult the Java source code at testsrc/org/mozilla/javascript/JsDriver.java for details.");
+            System.out.println("Consult the Java source code at testsrc-resources/org/mozilla/javascript/JsDriver.java for details.");
             System.exit(0);
         }
 

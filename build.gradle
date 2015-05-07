@@ -15,20 +15,20 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs 'src'
+            srcDir 'src'
         }
         resources {
-            srcDirs 'src-resources'
+            srcDir 'src-resources'
         }
     }
 
     test {
         java {
-            srcDirs "testsrc"
-            exclude 'tests/**'
+            srcDir "testsrc"
         }
         resources {
-            srcDirs "testsrc"
+            srcDir "testsrc-resources"
+            exclude 'tests/src/**'
         }
     }
 }
@@ -40,7 +40,7 @@ dependencies {
 test {
     exclude "**/benchmarks/**"
     systemProperty 'java.awt.headless', 'true'
-    systemProperty 'mozilla.js.tests', 'testsrc/tests'
+    systemProperty 'mozilla.js.tests', 'testsrc-resources/tests'
     systemProperty 'mozilla.js.tests.timeout', 60000
     systemProperty 'user.language', 'en'
     systemProperty 'user.country', 'US'
@@ -52,7 +52,7 @@ test {
 task testBenchmark(type: Test) {
     include "**/benchmarks/*Benchmark*"
     systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
-    workingDir = file("testsrc/benchmarks")
+    workingDir = file("testsrc-resources/benchmarks")
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
     forkEvery = 1
@@ -60,7 +60,7 @@ task testBenchmark(type: Test) {
 
 idea {
     module {
-        excludeDirs += file('testsrc/tests/src')
+        excludeDirs += file('testsrc-resources/tests/src')
         excludeDirs += file('buildGradle')
         excludeDirs += file('build')
         excludeDirs += file('.idea')
@@ -153,5 +153,5 @@ publishing {
 }
 
 jacoco {
-    toolVersion = "jacoco-0.7.4.201502262128"
+    toolVersion = "0.7.4.201502262128"
 }

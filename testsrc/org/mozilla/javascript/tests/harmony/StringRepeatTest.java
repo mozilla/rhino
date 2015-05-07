@@ -8,7 +8,7 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest(
-    value = "testsrc/jstests/harmony/string-repeat.js"
+    value = "testsrc-resources/jstests/harmony/string-repeat.js"
 )
 public class StringRepeatTest extends ScriptTestsBase {
 }

@@ -53,7 +53,7 @@ public class StackTraceExtensionTest
             Global global = new Global(cx);
             Scriptable root = cx.newObject(global);
 
-            FileReader rdr = new FileReader("testsrc/jstests/extensions/stack-traces.js");
+            FileReader rdr = new FileReader("testsrc-resources/jstests/extensions/stack-traces.js");
 
             try {
                 cx.evaluateReader(root, rdr, "stack-traces.js", 1, null);

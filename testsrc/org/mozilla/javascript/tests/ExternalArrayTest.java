@@ -46,7 +46,7 @@ public class ExternalArrayTest
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, true);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc-resources/jstests/extensions/external-array-test.js", 1);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class ExternalArrayTest
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc-resources/jstests/extensions/external-array-test.js", 1);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class ExternalArrayTest
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc-resources/jstests/extensions/external-array-test.js", 1);
 
         // Clear it and test again. When cleared, object should go back to behaving like a
         // regular JavaScript object.
@@ -89,7 +89,7 @@ public class ExternalArrayTest
         }
         a.defineProperty("length", 10, ScriptableObject.DONTENUM);
         root.put("regularArray", root, true);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc-resources/jstests/extensions/external-array-test.js", 1);
     }
 
     @Test
@@ -102,7 +102,7 @@ public class ExternalArrayTest
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc-resources/jstests/extensions/external-array-test.js", 1);
     }
 
     @Test
@@ -115,7 +115,7 @@ public class ExternalArrayTest
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc-resources/jstests/extensions/external-array-test.js", 1);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class ExternalArrayTest
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
         root.put("regularArray", root, false);
-        runScript("testsrc/jstests/extensions/external-array-test.js", 1);
+        runScript("testsrc-resources/jstests/extensions/external-array-test.js", 1);
     }
 
     private void runScript(String script, int opt)

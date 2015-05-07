@@ -8,7 +8,7 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest(
-    value = "testsrc/jstests/harmony/string-startsWith.js"
+    value = "testsrc-resources/jstests/harmony/string-startsWith.js"
 )
 public class StringStartsWithTest extends ScriptTestsBase {
 }

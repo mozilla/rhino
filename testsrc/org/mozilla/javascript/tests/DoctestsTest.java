@@ -22,7 +22,7 @@ import org.mozilla.javascript.tools.shell.Global;
 import static org.junit.Assert.*;
 
 /**
- * Run doctests in folder testsrc/doctests.
+ * Run doctests in folder testsrc-resources/doctests.
  *
  * A doctest is a test in the form of an interactive shell session; Rhino
  * collects and runs the inputs to the shell prompt and compares them to the
@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
  */
 @RunWith(Parameterized.class)
 public class DoctestsTest {
-    static final String baseDirectory = "testsrc" + File.separator + "doctests";
+    static final String baseDirectory = "testsrc-resources" + File.separator + "doctests";
     static final String doctestsExtension = ".doctest";
     String name;
     String source;

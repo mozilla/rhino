@@ -7,7 +7,7 @@ package org.mozilla.javascript.tests.harmony;
 import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
-@RhinoTest("testsrc/jstests/harmony/string-includes.js")
+@RhinoTest("testsrc-resources/jstests/harmony/string-includes.js")
 public class StringIncludesTest extends ScriptTestsBase
 {
 }
