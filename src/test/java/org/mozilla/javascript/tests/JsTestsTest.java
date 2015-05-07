@@ -12,15 +12,12 @@ import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.drivers.JsTestsBase;
 
 public class JsTestsTest extends JsTestsBase {
-    static final String baseDirectory = "src/test/resources" + File.separator + "jstests";
-
-    static final String jstestsExtension = ".jstest";
 
     public void runJsTests() throws IOException {
-        File[] tests = TestUtils.recursiveListFiles(new File(baseDirectory),
+        File[] tests = TestUtils.recursiveListFiles(new File("src/test/resources/jstests"),
                 new FileFilter() {
                   public boolean accept(File f) {
-                      return f.getName().endsWith(jstestsExtension);
+                      return f.getName().endsWith(".jstest");
                   }
                 });
         runJsTests(tests);

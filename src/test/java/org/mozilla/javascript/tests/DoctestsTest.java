@@ -32,8 +32,7 @@ import static org.junit.Assert.*;
  */
 @RunWith(Parameterized.class)
 public class DoctestsTest {
-    static final String baseDirectory = "src/test/resources" + File.separator + "doctests";
-    static final String doctestsExtension = ".doctest";
+    static final String baseDirectory = "src/test/resources/doctests";
     String name;
     String source;
     int optimizationLevel;
@@ -48,7 +47,7 @@ public class DoctestsTest {
         return TestUtils.recursiveListFiles(new File(baseDirectory),
                 new FileFilter() {
                     public boolean accept(File f) {
-                        return f.getName().endsWith(doctestsExtension);
+                        return f.getName().endsWith(".doctest");
                     }
             });
     }

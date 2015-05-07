@@ -58,21 +58,7 @@ public class MozillaSuiteTest {
     }
 
     public static File getTestDir() throws IOException {
-        File testDir = null;
-        if (System.getProperty("mozilla.js.tests") != null) {
-            testDir = new File(System.getProperty("mozilla.js.tests"));
-        } else {
-            URL url = JsTestsBase.class.getResource("");
-            String path = url.getFile();
-            int jsIndex = path.lastIndexOf("/js");
-            if (jsIndex == -1) {
-                throw new IllegalStateException("You aren't running the tests "+
-                    "from within the standard mozilla/js directory structure");
-            }
-            path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
-            path = path.replace("%20", " ");
-            testDir = new File(path, "tests");
-        }
+        File testDir = new File("src/test/resources/tests");
         if (!testDir.isDirectory()) {
             throw new FileNotFoundException(testDir + " is not a directory");
         }
@@ -132,11 +118,7 @@ public class MozillaSuiteTest {
     private static class ShellTestParameters extends ShellTest.Parameters {
         @Override
         public int getTimeoutMilliseconds() {
-            if (System.getProperty("mozilla.js.tests.timeout") != null) {
-                return Integer.parseInt(System.getProperty(
-                    "mozilla.js.tests.timeout"));
-            }
-            return 10000;
+            return 60000;
         }
     }
 
