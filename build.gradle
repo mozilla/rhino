@@ -13,21 +13,8 @@ repositories {
 }
 
 sourceSets {
-    main {
-        java {
-            srcDir 'src'
-        }
-        resources {
-            srcDir 'src-resources'
-        }
-    }
-
     test {
-        java {
-            srcDir "testsrc"
-        }
         resources {
-            srcDir "testsrc-resources"
             exclude 'tests/src/**'
         }
     }
@@ -40,7 +27,7 @@ dependencies {
 test {
     exclude "**/benchmarks/**"
     systemProperty 'java.awt.headless', 'true'
-    systemProperty 'mozilla.js.tests', 'testsrc-resources/tests'
+    systemProperty 'mozilla.js.tests', 'src/test/resources/tests'
     systemProperty 'mozilla.js.tests.timeout', 60000
     systemProperty 'user.language', 'en'
     systemProperty 'user.country', 'US'
@@ -52,7 +39,7 @@ test {
 task testBenchmark(type: Test) {
     include "**/benchmarks/*Benchmark*"
     systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
-    workingDir = file("testsrc-resources/benchmarks")
+    workingDir = file("src/test/resources/benchmarks")
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
     forkEvery = 1
@@ -60,11 +47,9 @@ task testBenchmark(type: Test) {
 
 idea {
     module {
-        excludeDirs += file('testsrc-resources/tests/src')
-        excludeDirs += file('buildGradle')
+        excludeDirs += file('src/test/resources/tests/src')
         excludeDirs += file('build')
         excludeDirs += file('.idea')
-        excludeDirs += file('lib')
     }
 }
 

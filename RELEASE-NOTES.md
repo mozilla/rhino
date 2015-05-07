@@ -64,7 +64,7 @@ André Bargull (60):
 *     Add missing @Override annotations
 *     Add missing generic type info to deprecatedsrc/
 *     Add missing generic type info to toolsrc/
-*     Add missing generic type info to testsrc-resources/
+*     Add missing generic type info to src/test/resources/
 *     Add missing generic type info to src/
 *     Fix invalid JavaDoc links
 *     Replace StringBuffer with StringBuilder if possible
@@ -184,7 +184,7 @@ Gregory Brail (10):
 
 *     Add JUnit-based benchmarks that we can automate in Jenkins.
 *     Extract zipped-up tests into a directory and check them in that way.
-*     Extracted the stuff that was formerly in testsrc-resources/tests.tar.gz.
+*     Extracted the stuff that was formerly in src/test/resources/tests.tar.gz.
 *     Add XML output for EMMA coverage reports.
 *     Fix character encoding tests to work on Mac.
 *     Add output to benchmarks that can work with the Jenkins     "Measurement Plots" plugin. This replaces the former output from the     "SunSpider" and "V8" benchmarks.
