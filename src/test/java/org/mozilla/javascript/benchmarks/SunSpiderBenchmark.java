@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 public class SunSpiderBenchmark
 {
-    public static final String TEST_SRC = "sunspider-0.9.1/run.js";
+    public static final String TEST_SRC = "src/test/resources/benchmarks/sunspider-0.9.1/run.js";
 
     private static final HashMap<Integer, String> results = new HashMap<Integer, String>();
 
@@ -18,9 +18,7 @@ public class SunSpiderBenchmark
     public static void writeResults()
         throws IOException
     {
-        PrintWriter out = new PrintWriter(
-            new FileWriter(new File(System.getProperty("rhino.benchmark.report"), "sunspider.csv"))
-        );
+        PrintWriter out = new PrintWriter(new FileWriter(new File("build", "sunspider.csv")));
         // Hard code the opt levels for now -- we will make it more generic when we need to
         out.println("Optimization 0,Optimization 9");
         out.println(results.get(0) + ',' + results.get(9));

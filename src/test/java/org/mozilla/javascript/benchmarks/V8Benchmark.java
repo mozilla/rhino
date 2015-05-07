@@ -10,17 +10,14 @@ import java.util.HashMap;
 
 public class V8Benchmark
 {
-    public static final String TEST_SRC = "v8-benchmarks-v6/run.js";
+    public static final String TEST_SRC = "src/test/resources/benchmarks/v8-benchmarks-v6/run.js";
 
     private static final HashMap<Integer, String> results = new HashMap<Integer, String>();
 
     @AfterClass
-    public static void writeResults()
-        throws IOException
+    public static void writeResults() throws IOException
     {
-        PrintWriter out = new PrintWriter(
-                new FileWriter(new File(System.getProperty("rhino.benchmark.report"), "v8benchmark.csv.csv"))
-        );
+        PrintWriter out = new PrintWriter(new FileWriter(new File("build", "v8benchmark.csv.csv")));
         // Hard code the opt levels for now -- we will make it more generic when we need to
         out.println("Optimization 0,Optimization 9");
         out.println(results.get(0) + ',' + results.get(9));

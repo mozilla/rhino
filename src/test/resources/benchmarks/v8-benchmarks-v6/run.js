@@ -26,14 +26,16 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-load('v8-benchmarks-v6/base.js');
-load('v8-benchmarks-v6/richards.js');
-load('v8-benchmarks-v6/deltablue.js');
-load('v8-benchmarks-v6/crypto.js');
-load('v8-benchmarks-v6/raytrace.js');
-load('v8-benchmarks-v6/earley-boyer.js');
-load('v8-benchmarks-v6/regexp.js');
-load('v8-benchmarks-v6/splay.js');
+var baseDir = 'src/test/resources/benchmarks/v8-benchmarks-v6';
+
+load(baseDir + '/base.js');
+load(baseDir + '/richards.js');
+load(baseDir + '/deltablue.js');
+load(baseDir + '/crypto.js');
+load(baseDir + '/raytrace.js');
+load(baseDir + '/earley-boyer.js');
+load(baseDir + '/regexp.js');
+load(baseDir + '/splay.js');
 
 var success = true;
 var lastScore;

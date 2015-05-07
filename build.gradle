@@ -18,7 +18,6 @@ dependencies {
 
 test {
     exclude "**/benchmarks/**"
-    systemProperty 'java.awt.headless', 'true'
     systemProperty 'user.language', 'en'
     systemProperty 'user.country', 'US'
     systemProperty 'user.timezone', 'America/Los_Angeles'
@@ -28,8 +27,6 @@ test {
 
 task testBenchmark(type: Test) {
     include "**/benchmarks/*Benchmark*"
-    systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
-    workingDir = file("src/test/resources/benchmarks")
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
     forkEvery = 1
