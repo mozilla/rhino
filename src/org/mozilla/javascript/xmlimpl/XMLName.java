@@ -356,7 +356,7 @@ class XMLName extends Ref {
     public String toString() {
         //return qname.localName();
         StringBuilder buff = new StringBuilder();
-        if (isDescendants) buff.append("..");
+        if (isDescendants) buff.append("src/main");
         if (isAttributeName) buff.append('@');
         if (uri() == null) {
             buff.append('*');
