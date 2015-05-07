@@ -9,10 +9,6 @@ targetCompatibility = 1.6
 
 compileJava.options.encoding = 'UTF-8'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
-}
-
 repositories {
     mavenCentral()
 }
@@ -20,18 +16,16 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs 'src', 'toolsrc', 'xmlimplsrc'
+            srcDirs 'src'
         }
         resources {
-            srcDirs 'src', 'toolsrc'
-            exclude "build.xml"
-            exclude "manifest"
+            srcDirs 'src'
         }
     }
 
     test {
         java {
-            srcDirs "testsrc", 'examples'
+            srcDirs "testsrc"
             exclude 'tests/**'
         }
         resources {
