@@ -12,5 +12,4 @@ lib/
 .idea/
 out/
 target/
-
-
+*~
