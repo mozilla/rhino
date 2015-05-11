@@ -59,15 +59,14 @@ task sourceJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
-task rhinoJavadoc(type: Javadoc) {
-    source = sourceSets.main.allJava
+javadoc {
     if (JavaVersion.current().isJava8Compatible()) {
         options.addStringOption('Xdoclint:none', '-quiet')
     }
 }
 
-task rhinoJavadocJar(type: Jar, dependsOn: rhinoJavadoc) {
-    from rhinoJavadoc.destinationDir
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    from javadoc.destinationDir
 }
 
 publishing {
@@ -100,7 +99,7 @@ publishing {
             artifact sourceJar {
                 classifier "sources"
             }
-            artifact rhinoJavadocJar {
+            artifact javadocJar {
                 classifier "javadoc"
             }
         }
@@ -125,4 +124,23 @@ publishing {
 
 jacoco {
     toolVersion = "0.7.4.201502262128"
+}
+
+task distZip(type: Zip, dependsOn: [javadoc, jar]) {
+    from(sourceSets.main.allSource) {
+        exclude 'man'
+        into 'src'
+    }
+    from(sourceSets.main.allSource) {
+        include 'man/*.1'
+    }
+    from(file(".")) {
+        include '*.txt'
+    }
+    from(javadoc.destinationDir) {
+        into 'docs'
+    }
+    from(jar.outputs.files) {
+        into 'lib'
+    }
 }
