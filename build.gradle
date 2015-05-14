@@ -126,6 +126,8 @@ jacoco {
     toolVersion = "0.7.4.201502262128"
 }
 
+jacocoTestReport.dependsOn test
+
 task distZip(type: Zip, dependsOn: [javadoc, jar]) {
     from(sourceSets.main.allSource) {
         exclude 'man'
