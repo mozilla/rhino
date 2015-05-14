@@ -1,5 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'distribution'
 apply plugin: 'maven-publish'
 apply plugin: 'jacoco'
 
@@ -128,21 +129,28 @@ jacoco {
 
 jacocoTestReport.dependsOn test
 
-task distZip(type: Zip, dependsOn: [javadoc, jar]) {
-    from(sourceSets.main.allSource) {
-        exclude 'man'
-        into 'src'
-    }
-    from(sourceSets.main.allSource) {
-        include 'man/*.1'
-    }
-    from(file(".")) {
-        include '*.txt'
-    }
-    from(javadoc.destinationDir) {
-        into 'docs'
-    }
-    from(jar.outputs.files) {
-        into 'lib'
+distributions {
+    main {
+        contents {
+            from(sourceSets.main.allSource) {
+                exclude 'man'
+                into '/src'
+            }
+            from(javadoc.destinationDir) {
+                into '/docs'
+            }
+            from(jar.outputs.files) {
+                into '/lib'
+            }
+            from(sourceSets.main.allSource) {
+                include 'man/*.1'
+            }
+            from(file(".")) {
+                include '*.txt'
+            }
+            into "/"
+        }
     }
 }
+
+distZip.dependsOn javadoc, jar
