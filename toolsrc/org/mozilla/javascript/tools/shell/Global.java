@@ -97,9 +97,11 @@ public class Global extends ImporterTopLevel
             "load",
             "loadClass",
             "print",
+            "write",
             "quit",
             "readFile",
             "readUrl",
+            "readline",
             "runCommand",
             "seal",
             "serialize",
@@ -188,6 +190,24 @@ public class Global extends ImporterTopLevel
                                Object[] args, Function funObj)
     {
         PrintStream out = getInstance(funObj).getOut();
+        write(cx, thisObj, args, funObj);
+        out.println();
+        return Context.getUndefinedValue();
+    }
+    
+    /**
+     * Print the string values of its arguments (without a new line).
+     *
+     * This method is defined as a JavaScript function.
+     * Note that its arguments are of the "varargs" form, which
+     * allows it to handle an arbitrary number of arguments
+     * supplied to the JavaScript function.
+     *
+     */
+    public static Object write(Context cx, Scriptable thisObj,
+                               Object[] args, Function funObj)
+    {
+        PrintStream out = getInstance(funObj).getOut();
         for (int i=0; i < args.length; i++) {
             if (i > 0)
                 out.print(" ");
@@ -197,7 +217,6 @@ public class Global extends ImporterTopLevel
 
             out.print(s);
         }
-        out.println();
         return Context.getUndefinedValue();
     }
 
@@ -779,7 +798,19 @@ public class Global extends ImporterTopLevel
             ((ScriptableObject)arg).sealObject();
         }
     }
-
+    
+    /**
+     * The readline reads one line from the standard input
+     * <p>
+     * Usage:
+     * <pre>
+     * readline()
+     * </pre>
+     */
+     public static Object readline(Context cx, Scriptable thisObj, Object[] args, Function funObj) throws IOException{
+         return new BufferedReader(new InputStreamReader(System.in)).readLine();
+     }
+     
     /**
      * The readFile reads the given file content and convert it to a string
      * using the specified character coding or default character coding if
