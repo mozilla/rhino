@@ -4233,7 +4233,7 @@ public class ScriptRuntime {
     }
 
     /**
-     * Equivalent to executing "new Error(message)" from JavaScript.
+     * Equivalent to executing "new Error(message, sourceFileName, sourceLineNo)" from JavaScript.
      * @param cx the current context
      * @param scope the current scope
      * @param message the message
@@ -4246,6 +4246,23 @@ public class ScriptRuntime {
         final Scriptable error = newBuiltinObject(cx, scope,
                 TopLevel.Builtins.Error, new Object[] { message, filename, Integer.valueOf(linep[0]) });
         return new JavaScriptException(error, filename, linep[0]);
+    }
+
+
+    /**
+     * Equivalent to executing "new $constructorName(message, sourceFileName, sourceLineNo)" from JavaScript.
+     * @param cx the current context
+     * @param scope the current scope
+     * @param message the message
+     * @return a JavaScriptException you should throw
+     */
+    public static JavaScriptException throwCustomError(Context cx, Scriptable scope, String constructorName,
+            String message) {
+      int[] linep = { 0 };
+      String filename = Context.getSourcePositionFromStack(linep);
+      final Scriptable error =  cx.newObject(scope, constructorName,
+    		  new Object[] { message, filename, Integer.valueOf(linep[0]) });
+      return new JavaScriptException(error, filename, linep[0]);
     }
 
     public static final Object[] emptyArgs = new Object[0];
