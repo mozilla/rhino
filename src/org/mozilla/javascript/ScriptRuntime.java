@@ -3486,13 +3486,13 @@ public class ScriptRuntime {
                                                        null);
                 ScriptableObject.defineProperty(
                     errorObject, "javaException", wrap,
-                    ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                    ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
             }
             if (isVisible(cx, re)) {
                 Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
                 ScriptableObject.defineProperty(
                         errorObject, "rhinoException", wrap,
-                        ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                        ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
             }
             obj = errorObject;
         }
@@ -3579,13 +3579,13 @@ public class ScriptRuntime {
                                                    null);
             ScriptableObject.defineProperty(
                 errorObject, "javaException", wrap,
-                ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
         }
         if (isVisible(cx, re)) {
             Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
             ScriptableObject.defineProperty(
                     errorObject, "rhinoException", wrap,
-                    ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                    ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
         }
         return errorObject;
     }
