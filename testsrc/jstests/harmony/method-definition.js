@@ -39,33 +39,36 @@ assertEquals("\n" +
 "}\n", (function() { +{ f() { print(1); }}; }).toString());
 
 // Allow reserved word
-// assertEquals(123, {
-//   if() {
-//     return 123;
-//   }
-// }.a());
+assertEquals(123, {
+  if() {
+    return 123;
+  }
+}.if());
 
 // Allow NumericLiteral
-// assertEquals(123, {
-//   123() {
-//     return 123;
-//   }
-// }[123]());
+assertEquals(123, {
+  123() {
+    return 123;
+  }
+}[123]());
 
 // Allow StringLiteral
-// assertEquals(123, {
-//   'abc'() {
-//     return 123;
-//   }
-// }.abc());
+assertEquals(123, {
+  'abc'() {
+    return 123;
+  }
+}.abc());
 
 // Method is the kind of function, that is non-constructor.
 // assertThrows('new (({ a() {} }).a)', TypeError);
 
-// assertEquals(, Object.getOwnPropertyDescriptor({
-//   a() {
-//     return 123;
-//   }
-// }, 'a'));
+var desc = Object.getOwnPropertyDescriptor({
+  a() {
+    return 123;
+  }
+}, 'a');
+assertEquals(true, desc.writable);
+assertEquals(true, desc.enumerable);
+assertEquals(true, desc.configurable);
 
 "success";
