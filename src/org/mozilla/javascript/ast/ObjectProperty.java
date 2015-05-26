@@ -44,7 +44,8 @@ public class ObjectProperty extends InfixExpression {
     public void setNodeType(int nodeType) {
         if (nodeType != Token.COLON
             && nodeType != Token.GET
-            && nodeType != Token.SET)
+            && nodeType != Token.SET
+            && nodeType != Token.METHOD)
             throw new IllegalArgumentException("invalid node type: "
                                                + nodeType);
         setType(nodeType);
@@ -64,29 +65,41 @@ public class ObjectProperty extends InfixExpression {
     /**
      * Marks this node as a "getter" property.
      */
-    public void setIsGetter() {
+    public void setIsGetterMethod() {
         type = Token.GET;
     }
 
     /**
      * Returns true if this is a getter function.
      */
-    public boolean isGetter() {
+    public boolean isGetterMethod() {
         return type == Token.GET;
     }
 
     /**
      * Marks this node as a "setter" property.
      */
-    public void setIsSetter() {
+    public void setIsSetterMethod() {
         type = Token.SET;
     }
 
     /**
      * Returns true if this is a setter function.
      */
-    public boolean isSetter() {
+    public boolean isSetterMethod() {
         return type == Token.SET;
+    }
+
+    public void setIsNormalMethod() {
+        type = Token.METHOD;
+    }
+
+    public boolean isNormalMethod() {
+        return type == Token.METHOD;
+    }
+
+    public boolean isMethod() {
+        return isGetterMethod() || isSetterMethod() || isNormalMethod();
     }
 
     @Override
@@ -94,9 +107,9 @@ public class ObjectProperty extends InfixExpression {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
         sb.append(makeIndent(depth+1));
-        if (isGetter()) {
+        if (isGetterMethod()) {
             sb.append("get ");
-        } else if (isSetter()) {
+        } else if (isSetterMethod()) {
             sb.append("set ");
         }
         sb.append(left.toSource(getType()==Token.COLON ? 0 : depth));

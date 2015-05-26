@@ -323,7 +323,12 @@ public class Decompiler
             switch(source.charAt(i)) {
             case Token.GET:
             case Token.SET:
-                result.append(source.charAt(i) == Token.GET ? "get " : "set ");
+            case Token.METHOD:
+                if (source.charAt(i) == Token.GET) {
+                    result.append("get ");
+                } else if (source.charAt(i) == Token.SET) {
+                    result.append("set ");
+                }
                 ++i;
                 i = printSourceString(source, i + 1, false, result);
                 // Now increment one more to get past the FUNCTION token

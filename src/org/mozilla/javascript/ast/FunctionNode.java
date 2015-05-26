@@ -64,7 +64,7 @@ public class FunctionNode extends ScriptNode {
     public static final int FUNCTION_EXPRESSION           = 2;
     public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
 
-    public static enum Form { FUNCTION, GETTER, SETTER }
+    public static enum Form { FUNCTION, GETTER, SETTER, METHOD }
 
     private static final List<AstNode> NO_PARAMS =
         Collections.unmodifiableList(new ArrayList<AstNode>());
@@ -325,24 +325,32 @@ public class FunctionNode extends ScriptNode {
         functionType = type;
     }
 
-    public boolean isGetterOrSetter() {
-        return functionForm == Form.GETTER || functionForm == Form.SETTER;
+    public boolean isMethod() {
+        return functionForm == Form.GETTER || functionForm == Form.SETTER || functionForm == Form.METHOD;
     }
 
-    public boolean isGetter() {
+    public boolean isGetterMethod() {
         return functionForm == Form.GETTER;
     }
 
-    public boolean isSetter() {
+    public boolean isSetterMethod() {
         return functionForm == Form.SETTER;
     }
 
-    public void setFunctionIsGetter() {
+    public boolean isNormalMethod() {
+        return functionForm == Form.METHOD;
+    }
+
+    public void setFunctionIsGetterMethod() {
         functionForm = Form.GETTER;
     }
 
-    public void setFunctionIsSetter() {
+    public void setFunctionIsSetterMethod() {
         functionForm = Form.SETTER;
+    }
+
+    public void setFunctionIsNormalMethod() {
+        functionForm = Form.METHOD;
     }
 
     /**
@@ -368,7 +376,7 @@ public class FunctionNode extends ScriptNode {
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
-        if (!isGetterOrSetter()) {
+        if (!isMethod()) {
             sb.append(makeIndent(depth));
             sb.append("function");
         }
@@ -400,7 +408,7 @@ public class FunctionNode extends ScriptNode {
         } else {
             sb.append(getBody().toSource(depth).trim());
         }
-        if (functionType == FUNCTION_STATEMENT || isGetterOrSetter()) {
+        if (functionType == FUNCTION_STATEMENT || isMethod()) {
             sb.append("\n");
         }
         return sb.toString();
