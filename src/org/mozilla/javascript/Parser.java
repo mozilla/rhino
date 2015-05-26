@@ -3221,12 +3221,12 @@ public class Parser
                           && peeked != Token.COLON
                           && peeked != Token.RC)
                   {
-                      if ("get".equals(propertyName)) {
+                      if (peeked == Token.LP) {
+                          entryKind = METHOD_ENTRY;
+                      } else if ("get".equals(propertyName)) {
                           entryKind = GET_ENTRY;
                       } else if ("set".equals(propertyName)) {
                           entryKind = SET_ENTRY;
-                      } else {
-                          entryKind = METHOD_ENTRY;
                       }
                       AstNode pname;
                       if (entryKind == METHOD_ENTRY) {
