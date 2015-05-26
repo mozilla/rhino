@@ -3201,69 +3201,64 @@ public class Parser
             int entryKind = PROP_ENTRY;
             int tt = peekToken();
             Comment jsdocNode = getAndResetJsDoc();
-            switch(tt) {
-              case Token.NAME:
-                  Name name = createNameNode();
-                  propertyName = ts.getString();
-                  int ppos = ts.tokenBeg;
-                  consumeToken();
 
-                  // This code path needs to handle both destructuring object
-                  // literals like:
-                  // var {get, b} = {get: 1, b: 2};
-                  // and getters like:
-                  // var x = {get 1() { return 2; };
-                  // So we check a whitelist of tokens to check if we're at the
-                  // first case. (Because of keywords, the second case may be
-                  // many tokens.)
-                  int peeked = peekToken();
-                  if (peeked != Token.COMMA
-                          && peeked != Token.COLON
-                          && peeked != Token.RC)
-                  {
-                      if (peeked == Token.LP) {
-                          entryKind = METHOD_ENTRY;
-                      } else if ("get".equals(propertyName)) {
-                          entryKind = GET_ENTRY;
-                      } else if ("set".equals(propertyName)) {
-                          entryKind = SET_ENTRY;
-                      }
-                      AstNode pname;
-                      if (entryKind == METHOD_ENTRY) {
-                          pname = name;
-                      } else {
-                          pname = objliteralProperty();
-                      }
-                      if (pname == null) {
-                          propertyName = null;
-                      } else {
-                          propertyName = ts.getString();
-                          ObjectProperty objectProp = methodDefinition(
-                                  ppos, pname, entryKind);
-                          pname.setJsDocNode(jsdocNode);
-                          elems.add(objectProp);
-                      }
-                  } else {
-                      name.setJsDocNode(jsdocNode);
-                      elems.add(plainProperty(name, tt));
-                  }
-                  break;
+            if (tt == Token.RC) {
+                if (afterComma != -1)
+                    warnTrailingComma(pos, elems, afterComma);
+                break commaLoop;
+            } else {
+                AstNode pname = objliteralProperty();
+                if (pname == null) {
+                    propertyName = null;
+                    reportError("msg.bad.prop");
+                } else {
+                    propertyName = ts.getString();
+                    int ppos = ts.tokenBeg;
+                    consumeToken();
 
-              case Token.RC:
-                  if (afterComma != -1)
-                      warnTrailingComma(pos, elems, afterComma);
-                  break commaLoop;
-
-              default:
-                  AstNode pname = objliteralProperty();
-                  if (pname == null) {
-                      propertyName = null;
-                  } else {
-                      propertyName = ts.getString();
-                      pname.setJsDocNode(jsdocNode);
-                      elems.add(plainProperty(pname, tt));
-                  }
-                  break;
+                    // This code path needs to handle both destructuring object
+                    // literals like:
+                    // var {get, b} = {get: 1, b: 2};
+                    // and getters like:
+                    // var x = {get 1() { return 2; };
+                    // So we check a whitelist of tokens to check if we're at the
+                    // first case. (Because of keywords, the second case may be
+                    // many tokens.)
+                    int peeked = peekToken();
+                    if (peeked != Token.COMMA
+                            && peeked != Token.COLON
+                            && peeked != Token.RC)
+                    {
+                        if (peeked == Token.LP) {
+                            entryKind = METHOD_ENTRY;
+                        } else if (pname.getType() == Token.NAME) {
+                            if ("get".equals(propertyName)) {
+                                entryKind = GET_ENTRY;
+                            } else if ("set".equals(propertyName)) {
+                                entryKind = SET_ENTRY;
+                            }
+                        }
+                        if (entryKind == GET_ENTRY || entryKind == SET_ENTRY) {
+                            pname = objliteralProperty();
+                            if (pname == null) {
+                                reportError("msg.bad.prop");
+                            }
+                            consumeToken();
+                        }
+                        if (pname == null) {
+                            propertyName = null;
+                        } else {
+                            propertyName = ts.getString();
+                            ObjectProperty objectProp = methodDefinition(
+                                    ppos, pname, entryKind);
+                            pname.setJsDocNode(jsdocNode);
+                            elems.add(objectProp);
+                        }
+                    } else {
+                        pname.setJsDocNode(jsdocNode);
+                        elems.add(plainProperty(pname, tt));
+                    }
+                }
             }
 
             if (this.inUseStrictDirective && propertyName != null) {
@@ -3336,11 +3331,9 @@ public class Parser
                   pname = createNameNode();
                   break;
               }
-              reportError("msg.bad.prop");
               return null;
         }
 
-        consumeToken();
         return pname;
     }
 
