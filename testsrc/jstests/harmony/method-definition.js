@@ -19,6 +19,18 @@ assertEquals("abcefg", {
   }
 }.efg());
 
+assertEquals(123, {
+  get() {
+    return 123;
+  }
+}.get());
+
+assertEquals(123, {
+  set() {
+    return 123;
+  }
+}.set());
+
 assertEquals("\n" +
 "function () {\n" +
 "    +{f() {\n" +
