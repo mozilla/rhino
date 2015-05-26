@@ -854,25 +854,29 @@ public final class IRFactory extends Parser
             int size = elems.size(), i = 0;
             properties = new Object[size];
             for (ObjectProperty prop : elems) {
-                if (prop.isGetter()) {
+                if (prop.isGetterMethod()) {
                     decompiler.addToken(Token.GET);
-                } else if (prop.isSetter()) {
+                } else if (prop.isSetterMethod()) {
                     decompiler.addToken(Token.SET);
+                } else if (prop.isNormalMethod()) {
+                    decompiler.addToken(Token.METHOD);
                 }
 
                 properties[i++] = getPropKey(prop.getLeft());
 
                 // OBJECTLIT is used as ':' in object literal for
                 // decompilation to solve spacing ambiguity.
-                if (!(prop.isGetter() || prop.isSetter())) {
+                if (!(prop.isMethod())) {
                     decompiler.addToken(Token.OBJECTLIT);
                 }
 
                 Node right = transform(prop.getRight());
-                if (prop.isGetter()) {
+                if (prop.isGetterMethod()) {
                     right = createUnary(Token.GET, right);
-                } else if (prop.isSetter()) {
+                } else if (prop.isSetterMethod()) {
                     right = createUnary(Token.SET, right);
+                } else if (prop.isNormalMethod()) {
+                    right = createUnary(Token.METHOD, right);
                 }
                 object.addChildToBack(right);
 

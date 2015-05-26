@@ -3151,7 +3151,7 @@ class BodyCodegen
             // see bug 757410 for an explanation why we need to split this
             for (int i = 0; i != count; ++i) {
                 int childType = child.getType();
-                if (childType == Token.GET || childType == Token.SET) {
+                if (childType == Token.GET || childType == Token.SET || childType == Token.METHOD) {
                     generateExpression(child.getFirstChild(), node);
                 } else {
                     generateExpression(child, node);
@@ -3173,7 +3173,7 @@ class BodyCodegen
                 cfw.add(ByteCode.DUP);
                 cfw.addPush(i);
                 int childType = child2.getType();
-                if (childType == Token.GET || childType == Token.SET) {
+                if (childType == Token.GET || childType == Token.SET || childType == Token.METHOD) {
                     generateExpression(child2.getFirstChild(), node);
                 } else {
                     generateExpression(child2, node);
