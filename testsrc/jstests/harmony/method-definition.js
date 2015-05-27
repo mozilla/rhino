@@ -4,11 +4,15 @@
 
 load("testsrc/assert.js");
 
-assertEquals(123, {
+var obj;
+
+obj = {
   a() {
     return 123;
   }
-}.a());
+};
+assertEquals(123, obj.a());
+// assertEquals("a", obj.a.name);
 
 assertEquals("abcefg", {
   abc() {
@@ -19,17 +23,21 @@ assertEquals("abcefg", {
   }
 }.efg());
 
-assertEquals(123, {
+obj = {
   get() {
     return 123;
   }
-}.get());
+};
+assertEquals(123, obj.get());
+// assertEquals("get", obj.get.name);
 
-assertEquals(123, {
+obj = {
   set() {
     return 123;
   }
-}.set());
+};
+assertEquals(123, obj.set());
+// assertEquals("set", obj.set.name);
 
 assertEquals("\n" +
 "function () {\n" +
