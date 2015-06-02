@@ -17,3 +17,7 @@ target/
 
 
 *~
+
+# eclipse
+.classpath
+.project
