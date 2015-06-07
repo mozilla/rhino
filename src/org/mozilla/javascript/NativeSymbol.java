@@ -10,6 +10,7 @@ public class NativeSymbol extends IdScriptableObject {
 
     public static final String SPECIES_PROPERTY = "@@species";
     public static final String ITERATOR_PROPERTY = "@@iterator";
+    public static final String TO_STRING_TAG_PROPERTY = "@@toStringTag";
 
     public static final String CLASS_NAME = "Symbol";
 
@@ -31,6 +32,7 @@ public class NativeSymbol extends IdScriptableObject {
         super.fillConstructorProperties(ctor);
         ctor.defineProperty("iterator", ITERATOR_PROPERTY, DONTENUM | READONLY | PERMANENT);
         ctor.defineProperty("species", SPECIES_PROPERTY, DONTENUM | READONLY | PERMANENT);
+        ctor.defineProperty("toStringTag", TO_STRING_TAG_PROPERTY, DONTENUM | READONLY | PERMANENT);
     }
 
     // #string_id_map#

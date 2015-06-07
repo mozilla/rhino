@@ -254,7 +254,7 @@ public class ScriptRuntime {
                                  sealed, true);
         }
 
-        if (cx.getLanguageVersion() >= Context.VERSION_1_8) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             new LazilyLoadedCtor(scope, NativeSymbol.CLASS_NAME,
                 NativeSymbol.class.getName(),
                 sealed, true);

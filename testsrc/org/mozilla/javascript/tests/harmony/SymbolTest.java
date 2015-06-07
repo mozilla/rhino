@@ -7,9 +7,7 @@ package org.mozilla.javascript.tests.harmony;
 import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
-@RhinoTest(
-    inline = "assertNotNull(Symbol.iterator);\n"
-)
+@RhinoTest("testsrc/jstests/harmony/symbols.js")
 public class SymbolTest extends ScriptTestsBase
 {
 }
