@@ -253,6 +253,14 @@ public class ScriptRuntime {
                                  "org.mozilla.javascript.typedarrays.NativeDataView",
                                  sealed, true);
         }
+
+        if (cx.getLanguageVersion() >= Context.VERSION_1_8) {
+            new LazilyLoadedCtor(scope, NativeSymbol.CLASS_NAME,
+                NativeSymbol.class.getName(),
+                sealed, true);
+
+        }
+
      
         if (scope instanceof TopLevel) {
             ((TopLevel)scope).cacheBuiltins();
