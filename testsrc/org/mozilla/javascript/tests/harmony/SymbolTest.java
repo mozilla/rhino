@@ -8,7 +8,7 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest(
-    inline = "print(Symbol.iterator);\n"
+    inline = "assertNotNull(Symbol.iterator);\n"
 )
 public class SymbolTest extends ScriptTestsBase
 {
