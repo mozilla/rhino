@@ -8,7 +8,8 @@ package org.mozilla.javascript;
 
 public class NativeSymbol extends IdScriptableObject {
 
-    private static Object ITERATOR = new Object();
+    public static final String SPECIES_PROPERTY = "@@species";
+    public static final String ITERATOR_PROPERTY = "@@iterator";
 
     public static final String CLASS_NAME = "Symbol";
 
@@ -28,7 +29,8 @@ public class NativeSymbol extends IdScriptableObject {
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor) {
         super.fillConstructorProperties(ctor);
-        ctor.defineProperty("iterator", ITERATOR, DONTENUM | READONLY | PERMANENT);
+        ctor.defineProperty("iterator", ITERATOR_PROPERTY, DONTENUM | READONLY | PERMANENT);
+        ctor.defineProperty("species", SPECIES_PROPERTY, DONTENUM | READONLY | PERMANENT);
     }
 
     // #string_id_map#
