@@ -215,8 +215,10 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
         }
 
-        if ((cx.getLanguageVersion() >= Context.VERSION_1_8) &&
-             cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) {
+        if (((cx.getLanguageVersion() >= Context.VERSION_1_8) &&
+             cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) ||
+            (cx.getLanguageVersion() >= Context.VERSION_ES6))
+        {
             new LazilyLoadedCtor(scope, "ArrayBuffer",
                                  "org.mozilla.javascript.typedarrays.NativeArrayBuffer",
                                  sealed, true);
