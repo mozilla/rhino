@@ -150,16 +150,10 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     return js_eval(cx, scope, args);
 
                 case Id_isFinite: {
-                    boolean result;
                     if (args.length < 1) {
-                        result = false;
-                    } else {
-                        double d = ScriptRuntime.toNumber(args[0]);
-                        result = (d == d
-                                  && d != Double.POSITIVE_INFINITY
-                                  && d != Double.NEGATIVE_INFINITY);
+                        return Boolean.FALSE;
                     }
-                    return ScriptRuntime.wrapBoolean(result);
+                    return NativeNumber.isFinite(args[0]);
                 }
 
                 case Id_isNaN: {
@@ -209,7 +203,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
     /**
      * The global method parseInt, as per ECMA-262 15.1.2.2.
      */
-    private Object js_parseInt(Object[] args) {
+    static Object js_parseInt(Object[] args) {
         String s = ScriptRuntime.toString(args, 0);
         int radix = ScriptRuntime.toInt32(args, 1);
 
@@ -264,7 +258,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      *
      * @param args the arguments to parseFloat, ignoring args[>=1]
      */
-    private Object js_parseFloat(Object[] args)
+    static Object js_parseFloat(Object[] args)
     {
         if (args.length < 1)
             return ScriptRuntime.NaNobj;
