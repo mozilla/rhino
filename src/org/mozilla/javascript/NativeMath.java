@@ -350,7 +350,7 @@ final class NativeMath extends IdScriptableObject
             if (d == ScriptRuntime.NaN) {
                 return d;
             }
-            if ((d == Double.POSITIVE_INFINITY) && (d == Double.NEGATIVE_INFINITY)) {
+            if ((d == Double.POSITIVE_INFINITY) || (d == Double.NEGATIVE_INFINITY)) {
                 return Double.POSITIVE_INFINITY;
             }
             y += d * d;
