@@ -1,0 +1,33 @@
+Update version in:
+	src/manifest
+	build.properties
+	maven/maven-pom.xml
+
+ant dist source-zip
+
+Paste release notes into RELEASE_NOTES.md:
+	git shortlog LAST_TAG.. | sed 's/^ /*/'
+
+Paste release info into README.md
+	Copy README into gh-pages
+	Extract build/*/javadoc.zip to gh-pages/javadoc
+
+Re-run compat-table "engine.js"
+	Copy HTML to gh-pages/compat
+
+Go to oss.sonatype.org
+	Find "org.mozilla" staging repo, close, release, and drop.
+
+git tag for new release
+
+Update release in GitHub
+	Paste release notes, upload "rhinoXXX.zip" and "js.jar"
+
+Update to new snapshot version in:
+	src/manifest
+	build.properties
+	maven/maven-pom.xml
+
+Update the Homebrew formula. Submit a PR for:
+	Homebrew/homebrew
+		Library/Formula/rhino.rb
