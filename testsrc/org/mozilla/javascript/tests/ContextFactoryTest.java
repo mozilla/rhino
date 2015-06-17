@@ -9,8 +9,7 @@ package org.mozilla.javascript.tests;
 
 import junit.framework.TestCase;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.mozilla.javascript.Context;
@@ -24,24 +23,37 @@ import static org.junit.Assert.assertTrue;
 @RunWith(BlockJUnit4ClassRunner.class)
 public class ContextFactoryTest {
 
+    private static Context CTX;
+    private static int LV;
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        CTX = Context.enter();
+        LV = CTX.getLanguageVersion();
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        CTX.setLanguageVersion(LV);
+        CTX.exit();
+    }
+
     @Test
     public void whenVersionLessEq17ThenOldUndefNullThis() throws Exception {
-        Context ctx = Context.enter();
-        ctx.setLanguageVersion(Context.VERSION_1_7);
-        assertTrue(ctx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
+        CTX.setLanguageVersion(Context.VERSION_1_7);
+        assertTrue(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
 
-        ctx.setLanguageVersion(Context.VERSION_1_6);
-        assertTrue(ctx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
+        CTX.setLanguageVersion(Context.VERSION_1_6);
+        assertTrue(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
     }
 
     @Test
     public void whenVersionGt17ThenNewUndefNullThis() throws Exception {
-        Context ctx = Context.enter();
-        ctx.setLanguageVersion(Context.VERSION_1_8);
-        assertFalse(ctx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
+        CTX.setLanguageVersion(Context.VERSION_1_8);
+        assertFalse(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
 
-        ctx.setLanguageVersion(Context.VERSION_ES6);
-        assertFalse(ctx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
+        CTX.setLanguageVersion(Context.VERSION_ES6);
+        assertFalse(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
     }
 
 }
