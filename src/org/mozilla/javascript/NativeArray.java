@@ -325,14 +325,18 @@ public class NativeArray extends IdScriptableObject implements List
               case Id_forEach:
               case Id_map:
               case Id_some:
+                return iterativeMethod(cx, id, scope, thisObj, args);
               case Id_find:
               case Id_findIndex:
-                return iterativeMethod(cx, id, scope, thisObj, args);
+                  if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                      return iterativeMethod(cx, id, scope, thisObj, args);
+                  }
+                  break;
               case Id_reduce:
               case Id_reduceRight:
                 return reduceMethod(cx, id, scope, thisObj, args);
             }
-            throw new IllegalArgumentException(String.valueOf(id));
+            throw new IllegalArgumentException("Array.prototype has no method: " + f.getFunctionName());
         }
     }
 
