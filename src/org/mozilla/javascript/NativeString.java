@@ -12,7 +12,7 @@ import java.text.Collator;
 import java.text.Normalizer;
 
 import static org.mozilla.javascript.ScriptRuntime.rangeError;
-import static org.mozilla.javascript.ScriptRuntime.requireObjectCoercible;
+import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 /**
  * This class implements the String native object.
@@ -276,8 +276,9 @@ final class NativeString extends IdScriptableObject
                 case Id_includes:
                 case Id_startsWith:
                 case Id_endsWith:
-                    String s = ScriptRuntime.toString(requireObjectCoercible(thisObj, f));
+                    if (cx.getLanguageVersion() < Context.VERSION_ES6) break;
 
+                    String s = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     if (args.length > 0 && args[0] instanceof NativeRegExp) {
                         throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), f.getFunctionName());
                     }
@@ -447,7 +448,10 @@ final class NativeString extends IdScriptableObject
 
                     return str.substring(start, end);
                 }
-                case Id_normalize: {
+                case Id_normalize:
+                {
+                    if (cx.getLanguageVersion() < Context.VERSION_ES6) break;
+
                     String formStr = ScriptRuntime.toString(args, 0);
 
                     Normalizer.Form form;
@@ -457,12 +461,14 @@ final class NativeString extends IdScriptableObject
                     else if (Normalizer.Form.NFC.name().equals(formStr) || args.length == 0) form = Normalizer.Form.NFC;
                     else throw rangeError("The normalization form should be one of NFC, NFD, NFKC, NFKD");
 
-                    return Normalizer.normalize(ScriptRuntime.toString(requireObjectCoercible(thisObj, f)), form);
+                    return Normalizer.normalize(ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f)), form);
                 }
 
                 case Id_repeat:
                 {
-                    String str = ScriptRuntime.toString(requireObjectCoercible(thisObj, f));
+                    if (cx.getLanguageVersion() < Context.VERSION_ES6) break;
+
+                    String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
                     if (cnt == 0) {
@@ -491,7 +497,9 @@ final class NativeString extends IdScriptableObject
                 }
                 case Id_codePointAt:
                 {
-                    String str = ScriptRuntime.toString(requireObjectCoercible(thisObj, f));
+                    if (cx.getLanguageVersion() < Context.VERSION_ES6) break;
+
+                    String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
                     return (cnt < 0 || cnt >= str.length())

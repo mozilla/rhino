@@ -4,11 +4,12 @@
 
 package org.mozilla.javascript.tests.harmony;
 
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.drivers.LanguageVersion;
 import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
-@RhinoTest(
-    value = "testsrc/jstests/harmony/string-repeat.js"
-)
+@RhinoTest("testsrc/jstests/harmony/string-repeat.js")
+@LanguageVersion(Context.VERSION_ES6)
 public class StringRepeatTest extends ScriptTestsBase {
 }
