@@ -1,3 +1,115 @@
+# Rhino 1.7.7
+## June 17, 2015
+
+Major changes in this release:
+
+[Release 1.7.7](https://github.com/mozilla/rhino/issues?q=milestone%3A%22Release+1.7.7%22+is%3Aclosed)
+
+Specific changes:
+
+* [Issue 202](https://github.com/mozilla/rhino/issues/202) Initial support for ECMA Script 6 "method definitions".
+* [Issue 201](https://github.com/mozilla/rhino/issues/201) Make sure that all native Error instances can be converted
+to JSON.
+* [Issue 184](https://github.com/mozilla/rhino/issues/184) Fix compile encoding errors.
+* [Issue 178](https://github.com/mozilla/rhino/issues/178) Support build using Gradle (build using Ant is still
+supported but will be removed in a future release.)
+* [Issue 176](https://github.com/mozilla/rhino/issues/176) Add ScriptRuntime.throwCustomError to make it easier
+to re-throw Java exceptions
+* [Issue 166](https://github.com/mozilla/rhino/issues/166) Support many ES6 additions to the Math class.
+* [Issue 165](https://github.com/mozilla/rhino/issues/165) Support many ES6 additions to the Number class.
+* [Issue 163](https://github.com/mozilla/rhino/issues/163) Support ES6 additions to the String class.
+
+Thanks to everyone who contributed!
+
+Ahmed Ashour (3):
+*     Add .gitattributes for End-Of-Line automatic handling
+*     Remove extra space
+*     Update .gitignore for eclipse generated files.
+
+Evgeny Shepelyuk (45):
+*     Implementing possibility of writing  JS tests code inside JUnit Test.
+*     + gradle wrapper     + sources and test compilation     + jar building
+*     + More JUnit style for Gradle compatibility     - disabled test removed
+*     + running tests
+*     + benchmark test changes for Gradle compaibility     + run benchmark from Gradle     + publishing artifacts from Gradle
+*     + benchmark test changes for Gradle compaibility     + run benchmark from Gradle     + publishing artifacts from Gradle
+*     + publishing artifacts to maven compatible repositories
+*     + releasing with Gradle
+*     + releasing with Gradle
+*     + releasing with Gradle
+*     + releasing with Gradle
+*     [Gradle Release Plugin] - new version commit:  '1.7.8'.
+*     + releasing with Gradle
+*     + releasing with Gradle
+*     + releasing with Gradle
+*     [Gradle Release Plugin] - pre tag commit:  '1.7.8'.
+*     Revert "+ publishing artifacts to maven compatible repositories"
+*     rollback gradle release
+*     + properly populating manifest     + exclude unnecesary files from jar
+*     + adding license to jar
+*     + build will not fail when maven credentials are not defined
+*     + getting rhino display version from MANIFEST
+*     * modifying README with Gradle details
+*     Update README.md
+*     Improving reporting of MozillaSuiteTest tests
+*     Improving reporting of MozillaSuiteTest tests
+*     + initial implementation of String.prototype.includes
+*     + initial implementation of String.prototype.includes
+*     + initial implementation of String.prototype.includes
+*     + initial implementation of String.prototype.startsWith
+*     + initial implementation of String.prototype.startsWith
+*     + initial implementation of String.prototype.endsWith
+*     + initial implementation of String.prototype.endsWith
+*     + initial implementation of String.prototype.endsWith
+*     + implementation of String.prototype.normalize
+*     + implementation of String.prototype.normalize
+*     + implementation of String.prototype.normalize
+*     + implementation of String.prototype.repeat
+*     + implementation of String.prototype.repeat
+*     + implementation of String.prototype.codePointAt
+*     + implementation of String.prototype.codePointAt
+*     * fixing tests after implementation of ES6 string methods     + implementing RequireObjectCoercible from ECMA spec
+*     * fixing tests after implementation of ES6 string methods     + implementing RequireObjectCoercible from ECMA spec
+*     * fixing tests after implementation of ES6 string methods     + implementing RequireObjectCoercible from ECMA spec
+*     Better exception reporting
+
+Gregory Brail (16):
+*     Update for new development iteration.
+*     Read manifest URLs in a loop until we find the right one when trying     to determine the implementation version.
+*     Permissions fix.
+*     Fix potential NPE in ComplianceTest.
+*     Re-run IDMap on NativeString.
+*     Merge branch 'issue_176_2' of https://github.com/raimi/rhino into raimi-issue_176_2
+*     Merge branch 'master' of https://github.com/asashour/rhino into asashour-master
+*     Add .gitattributes.
+*     Re-arrange "global variables" regression tests for fewer spurious failures     under Gradle.
+*     Don't make "javaException" and "rhinoException" on the NativeError     object enumerable, because they cannot be converted to JSON.
+*     Fix file name for V8 benchmark results.
+*     Add some ES6 methods to Math and Number.
+*     "BigO" regression test exhibits different and inconsistent behavior     on Java 8. So fix it.
+*     Fix a bug in Math.hypot().
+*     Added a constant for ECMAScript 6 language level:     Context.VERSION_ES6.
+*     Add "readline" and "write" to console.
+
+Raimund Jacob (5):
+*     Allow throwing arbitrary objects from java world
+*     176: Adjust javadoc to reality.
+*     Emacs, sorry
+*     Issue176: Test infrastructure
+*     176: Actually Working Tests
+
+sainaen (1):
+*     Print exception message in case of JavaScriptException in ScriptTestsBase
+
+tntim96 (1):
+*     Fix Test compile encoding error 'unmappable character for encoding ASCII' - https://github.com/mozilla/rhino/issues/184
+
+uchida_t (5):
+*     set capacity for StringBuilder in String#repeat
+*     Implement ES6 MethodDefinition
+*     `set` and `get` is valid method name.
+*     NumericLiteral/StringLiteral is valid method name.
+
 # Rhino 1.7.6
 ## April 15, 2015
 

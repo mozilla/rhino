@@ -3176,9 +3176,10 @@ public class Parser
         }
     }
 
-    private static final int PROP_ENTRY = 1;
-    private static final int GET_ENTRY  = 2;
-    private static final int SET_ENTRY  = 4;
+    private static final int PROP_ENTRY   = 1;
+    private static final int GET_ENTRY    = 2;
+    private static final int SET_ENTRY    = 4;
+    private static final int METHOD_ENTRY = 8;
 
     private ObjectLiteral objectLiteral()
         throws IOException
@@ -3200,68 +3201,70 @@ public class Parser
             int entryKind = PROP_ENTRY;
             int tt = peekToken();
             Comment jsdocNode = getAndResetJsDoc();
-            switch(tt) {
-              case Token.NAME:
-                  Name name = createNameNode();
-                  propertyName = ts.getString();
-                  int ppos = ts.tokenBeg;
-                  consumeToken();
 
-                  // This code path needs to handle both destructuring object
-                  // literals like:
-                  // var {get, b} = {get: 1, b: 2};
-                  // and getters like:
-                  // var x = {get 1() { return 2; };
-                  // So we check a whitelist of tokens to check if we're at the
-                  // first case. (Because of keywords, the second case may be
-                  // many tokens.)
-                  int peeked = peekToken();
-                  boolean maybeGetterOrSetter =
-                          "get".equals(propertyName)
-                          || "set".equals(propertyName);
-                  if (maybeGetterOrSetter
-                          && peeked != Token.COMMA
-                          && peeked != Token.COLON
-                          && peeked != Token.RC)
-                  {
-                      boolean isGet = "get".equals(propertyName);
-                      entryKind = isGet ? GET_ENTRY : SET_ENTRY;
-                      AstNode pname = objliteralProperty();
-                      if (pname == null) {
-                          propertyName = null;
-                      } else {
-                          propertyName = ts.getString();
-                          ObjectProperty objectProp = getterSetterProperty(
-                                  ppos, pname, isGet);
-                          pname.setJsDocNode(jsdocNode);
-                          elems.add(objectProp);
-                      }
-                  } else {
-                      name.setJsDocNode(jsdocNode);
-                      elems.add(plainProperty(name, tt));
-                  }
-                  break;
+            if (tt == Token.RC) {
+                if (afterComma != -1)
+                    warnTrailingComma(pos, elems, afterComma);
+                break commaLoop;
+            } else {
+                AstNode pname = objliteralProperty();
+                if (pname == null) {
+                    propertyName = null;
+                    reportError("msg.bad.prop");
+                } else {
+                    propertyName = ts.getString();
+                    int ppos = ts.tokenBeg;
+                    consumeToken();
 
-              case Token.RC:
-                  if (afterComma != -1)
-                      warnTrailingComma(pos, elems, afterComma);
-                  break commaLoop;
-
-              default:
-                  AstNode pname = objliteralProperty();
-                  if (pname == null) {
-                      propertyName = null;
-                  } else {
-                      propertyName = ts.getString();
-                      pname.setJsDocNode(jsdocNode);
-                      elems.add(plainProperty(pname, tt));
-                  }
-                  break;
+                    // This code path needs to handle both destructuring object
+                    // literals like:
+                    // var {get, b} = {get: 1, b: 2};
+                    // and getters like:
+                    // var x = {get 1() { return 2; };
+                    // So we check a whitelist of tokens to check if we're at the
+                    // first case. (Because of keywords, the second case may be
+                    // many tokens.)
+                    int peeked = peekToken();
+                    if (peeked != Token.COMMA
+                            && peeked != Token.COLON
+                            && peeked != Token.RC)
+                    {
+                        if (peeked == Token.LP) {
+                            entryKind = METHOD_ENTRY;
+                        } else if (pname.getType() == Token.NAME) {
+                            if ("get".equals(propertyName)) {
+                                entryKind = GET_ENTRY;
+                            } else if ("set".equals(propertyName)) {
+                                entryKind = SET_ENTRY;
+                            }
+                        }
+                        if (entryKind == GET_ENTRY || entryKind == SET_ENTRY) {
+                            pname = objliteralProperty();
+                            if (pname == null) {
+                                reportError("msg.bad.prop");
+                            }
+                            consumeToken();
+                        }
+                        if (pname == null) {
+                            propertyName = null;
+                        } else {
+                            propertyName = ts.getString();
+                            ObjectProperty objectProp = methodDefinition(
+                                    ppos, pname, entryKind);
+                            pname.setJsDocNode(jsdocNode);
+                            elems.add(objectProp);
+                        }
+                    } else {
+                        pname.setJsDocNode(jsdocNode);
+                        elems.add(plainProperty(pname, tt));
+                    }
+                }
             }
 
             if (this.inUseStrictDirective && propertyName != null) {
                 switch (entryKind) {
                 case PROP_ENTRY:
+                case METHOD_ENTRY:
                     if (getterNames.contains(propertyName)
                             || setterNames.contains(propertyName)) {
                         addError("msg.dup.obj.lit.prop.strict", propertyName);
@@ -3328,11 +3331,9 @@ public class Parser
                   pname = createNameNode();
                   break;
               }
-              reportError("msg.bad.prop");
               return null;
         }
 
-        consumeToken();
         return pname;
     }
 
@@ -3360,8 +3361,7 @@ public class Parser
         return pn;
     }
 
-    private ObjectProperty getterSetterProperty(int pos, AstNode propName,
-                                                boolean isGetter)
+    private ObjectProperty methodDefinition(int pos, AstNode propName, int entryKind)
         throws IOException
     {
         FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION);
@@ -3371,12 +3371,19 @@ public class Parser
             reportError("msg.bad.prop");
         }
         ObjectProperty pn = new ObjectProperty(pos);
-        if (isGetter) {
-            pn.setIsGetter();
-            fn.setFunctionIsGetter();
-        } else {
-            pn.setIsSetter();
-            fn.setFunctionIsSetter();
+        switch (entryKind) {
+        case GET_ENTRY:
+            pn.setIsGetterMethod();
+            fn.setFunctionIsGetterMethod();
+            break;
+        case SET_ENTRY:
+            pn.setIsSetterMethod();
+            fn.setFunctionIsSetterMethod();
+            break;
+        case METHOD_ENTRY:
+            pn.setIsNormalMethod();
+            fn.setFunctionIsNormalMethod();
+            break;
         }
         int end = getNodeEnd(fn);
         pn.setLeft(propName);

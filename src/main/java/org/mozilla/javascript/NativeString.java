@@ -465,10 +465,28 @@ final class NativeString extends IdScriptableObject
                     String str = ScriptRuntime.toString(requireObjectCoercible(thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
+                    if (cnt == 0) {
+                        return "";
+                    }
+
                     if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw rangeError("Invalid count value");
 
-                    StringBuilder retval = new StringBuilder("");
-                    while (cnt-- > 0) retval.append(str);
+                    long size = str.length() * (long) cnt;
+                    // Check for overflow
+                    if (cnt >= Integer.MAX_VALUE || size >= Integer.MAX_VALUE) {
+                        size = Integer.MAX_VALUE;
+                    }
+
+                    StringBuilder retval = new StringBuilder((int) size);
+                    retval.append(str);
+
+                    int i = 1;
+                    while (i <= cnt/2) {
+                        retval.append(retval);
+                        i *= 2;
+                    }
+                    while (i++ < cnt) retval.append(str);
+
                     return retval.toString();
                 }
                 case Id_codePointAt:

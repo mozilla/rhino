@@ -98,6 +98,7 @@ public class Global extends ImporterTopLevel
             "loadClass",
             "print",
             "quit",
+            "readline",
             "readFile",
             "readUrl",
             "runCommand",
@@ -107,6 +108,7 @@ public class Global extends ImporterTopLevel
             "sync",
             "toint32",
             "version",
+            "write"
         };
         defineFunctionProperties(names, Global.class,
                                  ScriptableObject.DONTENUM);
@@ -187,6 +189,20 @@ public class Global extends ImporterTopLevel
     public static Object print(Context cx, Scriptable thisObj,
                                Object[] args, Function funObj)
     {
+        return doPrint(args, funObj, true);
+    }
+
+    /**
+     * Print just as in "print," but without the trailing newline.
+     */
+    public static Object write(Context cx, Scriptable thisObj,
+                               Object[] args, Function funObj)
+    {
+        return doPrint(args, funObj, false);
+    }
+
+    private static Object doPrint(Object[] args, Function funObj, boolean newline)
+    {
         PrintStream out = getInstance(funObj).getOut();
         for (int i=0; i < args.length; i++) {
             if (i > 0)
@@ -197,7 +213,9 @@ public class Global extends ImporterTopLevel
 
             out.print(s);
         }
-        out.println();
+        if (newline) {
+            out.println();
+        }
         return Context.getUndefinedValue();
     }
 
@@ -1111,6 +1129,25 @@ public class Global extends ImporterTopLevel
                 is.close();
         }
     }
+
+    /**
+     * The readline reads one line from the standard input. "Prompt" is optional.
+     * <p>
+     * Usage:
+     * <pre>
+     * readline(prompt)
+     * </pre>
+     */
+     public static Object readline(Context cx, Scriptable thisObj, Object[] args, Function funObj)
+         throws IOException
+     {
+         Global self = getInstance(funObj);
+
+         if (args.length > 0) {
+             return self.console.readLine(Context.toString(args[0]));
+         }
+         return self.console.readLine();
+     }
 
     private static String getCharCodingFromType(String type)
     {

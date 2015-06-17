@@ -17,7 +17,9 @@ public class V8Benchmark
     @AfterClass
     public static void writeResults() throws IOException
     {
-        PrintWriter out = new PrintWriter(new FileWriter(new File("build", "v8benchmark.csv.csv")));
+        PrintWriter out = new PrintWriter(
+                new FileWriter(new File(System.getProperty("rhino.benchmark.report"), "v8benchmark.csv"))
+        );
         // Hard code the opt levels for now -- we will make it more generic when we need to
         out.println("Optimization 0,Optimization 9");
         out.println(results.get(0) + ',' + results.get(9));

@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.typedarrays.Conversions;
+
 /**
  * This class implements the Math native object.
  * See ECMA 15.8.
@@ -49,19 +51,29 @@ final class NativeMath extends IdScriptableObject
               case Id_asin:     arity = 1; name = "asin";     break;
               case Id_atan:     arity = 1; name = "atan";     break;
               case Id_atan2:    arity = 2; name = "atan2";    break;
+              case Id_cbrt:     arity = 1; name = "cbrt";     break;
               case Id_ceil:     arity = 1; name = "ceil";     break;
               case Id_cos:      arity = 1; name = "cos";      break;
+              case Id_cosh:     arity = 1; name = "cosh";     break;
               case Id_exp:      arity = 1; name = "exp";      break;
+              case Id_expm1:    arity = 1; name = "expm1";    break;
               case Id_floor:    arity = 1; name = "floor";    break;
+              case Id_hypot:    arity = 2; name = "hypot";    break;
+              case Id_imul:     arity = 2; name = "imul";     break;
               case Id_log:      arity = 1; name = "log";      break;
+              case Id_log1p:    arity = 1; name = "log1p";    break;
+              case Id_log10:    arity = 1; name = "log10";    break;
               case Id_max:      arity = 2; name = "max";      break;
               case Id_min:      arity = 2; name = "min";      break;
               case Id_pow:      arity = 2; name = "pow";      break;
               case Id_random:   arity = 0; name = "random";   break;
               case Id_round:    arity = 1; name = "round";    break;
               case Id_sin:      arity = 1; name = "sin";      break;
+              case Id_sinh:     arity = 1; name = "sinh";     break;
               case Id_sqrt:     arity = 1; name = "sqrt";     break;
               case Id_tan:      arity = 1; name = "tan";      break;
+              case Id_tanh:     arity = 1; name = "tanh";     break;
+              case Id_trunc:    arity = 1; name = "trunc";    break;
               default: throw new IllegalStateException(String.valueOf(id));
             }
             initPrototypeMethod(MATH_TAG, id, name, arity);
@@ -123,6 +135,11 @@ final class NativeMath extends IdScriptableObject
                 x = Math.atan2(x, ScriptRuntime.toNumber(args, 1));
                 break;
 
+            case Id_cbrt:
+                x = ScriptRuntime.toNumber(args, 0);
+                x = Math.cbrt(x);
+                break;
+
             case Id_ceil:
                 x = ScriptRuntime.toNumber(args, 0);
                 x = Math.ceil(x);
@@ -135,6 +152,15 @@ final class NativeMath extends IdScriptableObject
                     ? Double.NaN : Math.cos(x);
                 break;
 
+            case Id_cosh:
+                x = ScriptRuntime.toNumber(args, 0);
+                x = Math.cosh(x);
+                break;
+
+            case Id_hypot:
+                x = js_hypot(args);
+                break;
+
             case Id_exp:
                 x = ScriptRuntime.toNumber(args, 0);
                 x = (x == Double.POSITIVE_INFINITY) ? x
@@ -142,15 +168,33 @@ final class NativeMath extends IdScriptableObject
                     : Math.exp(x);
                 break;
 
+            case Id_expm1:
+                x = ScriptRuntime.toNumber(args, 0);
+                x = Math.expm1(x);
+                break;
+
             case Id_floor:
                 x = ScriptRuntime.toNumber(args, 0);
                 x = Math.floor(x);
                 break;
 
+            case Id_imul:
+                return js_imul(args);
+
             case Id_log:
                 x = ScriptRuntime.toNumber(args, 0);
                 // Java's log(<0) = -Infinity; we need NaN
                 x = (x < 0) ? Double.NaN : Math.log(x);
+                break;
+
+            case Id_log1p:
+                x = ScriptRuntime.toNumber(args, 0);
+                x = Math.log1p(x);
+                break;
+
+            case Id_log10:
+                x = ScriptRuntime.toNumber(args, 0);
+                x = Math.log10(x);
                 break;
 
             case Id_max:
@@ -208,6 +252,11 @@ final class NativeMath extends IdScriptableObject
                     ? Double.NaN : Math.sin(x);
                 break;
 
+            case Id_sinh:
+                x = ScriptRuntime.toNumber(args, 0);
+                x = Math.sinh(x);
+                break;
+
             case Id_sqrt:
                 x = ScriptRuntime.toNumber(args, 0);
                 x = Math.sqrt(x);
@@ -216,6 +265,16 @@ final class NativeMath extends IdScriptableObject
             case Id_tan:
                 x = ScriptRuntime.toNumber(args, 0);
                 x = Math.tan(x);
+                break;
+
+            case Id_tanh:
+                x = ScriptRuntime.toNumber(args, 0);
+                x = Math.tanh(x);
+                break;
+
+            case Id_trunc:
+                x = ScriptRuntime.toNumber(args, 0);
+                x = js_trunc(x);
                 break;
 
             default: throw new IllegalStateException(String.valueOf(methodId));
@@ -278,13 +337,53 @@ final class NativeMath extends IdScriptableObject
         return result;
     }
 
+    // Based on code from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
+    private double js_hypot(Object[] args)
+    {
+        if (args == null) {
+            return 0.0;
+        }
+        double y = 0.0;
+
+        for (Object o : args) {
+            double d = ScriptRuntime.toNumber(o);
+            if (d == ScriptRuntime.NaN) {
+                return d;
+            }
+            if ((d == Double.POSITIVE_INFINITY) || (d == Double.NEGATIVE_INFINITY)) {
+                return Double.POSITIVE_INFINITY;
+            }
+            y += d * d;
+        }
+        return Math.sqrt(y);
+    }
+
+    private double js_trunc(double d)
+    {
+        return ((d < 0.0) ? Math.ceil(d) : Math.floor(d));
+    }
+
+    // From EcmaScript 6 section 20.2.2.19
+    private Object js_imul(Object[] args)
+    {
+        if ((args == null) || (args.length < 2)) {
+            return ScriptRuntime.wrapNumber(ScriptRuntime.NaN);
+        }
+
+        long x = Conversions.toUint32(args[0]);
+        long y = Conversions.toUint32(args[1]);
+        long product = (x * y) % Conversions.THIRTYTWO_BIT;
+        long result = (product >= (1L << 31L)) ? (product - Conversions.THIRTYTWO_BIT) : product;
+        return ScriptRuntime.toNumber(result);
+    }
+
 // #string_id_map#
 
     @Override
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2004-03-17 13:51:32 CET
+// #generated# Last update: 2015-06-16 09:41:02 PDT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 1: if (s.charAt(0)=='E') {id=Id_E; break L0;} break L;
@@ -305,8 +404,13 @@ final class NativeMath extends IdScriptableObject
                 } break L;
             case 4: switch (s.charAt(1)) {
                 case 'N': X="LN10";id=Id_LN10; break L;
+                case 'a': X="tanh";id=Id_tanh; break L;
+                case 'b': X="cbrt";id=Id_cbrt; break L;
                 case 'c': X="acos";id=Id_acos; break L;
                 case 'e': X="ceil";id=Id_ceil; break L;
+                case 'i': X="sinh";id=Id_sinh; break L;
+                case 'm': X="imul";id=Id_imul; break L;
+                case 'o': X="cosh";id=Id_cosh; break L;
                 case 'q': X="sqrt";id=Id_sqrt; break L;
                 case 's': X="asin";id=Id_asin; break L;
                 case 't': X="atan";id=Id_atan; break L;
@@ -315,8 +419,15 @@ final class NativeMath extends IdScriptableObject
                 case 'L': X="LOG2E";id=Id_LOG2E; break L;
                 case 'S': X="SQRT2";id=Id_SQRT2; break L;
                 case 'a': X="atan2";id=Id_atan2; break L;
+                case 'e': X="expm1";id=Id_expm1; break L;
                 case 'f': X="floor";id=Id_floor; break L;
+                case 'h': X="hypot";id=Id_hypot; break L;
+                case 'l': c=s.charAt(4);
+                    if (c=='0') { X="log10";id=Id_log10; }
+                    else if (c=='p') { X="log1p";id=Id_log1p; }
+                    break L;
                 case 'r': X="round";id=Id_round; break L;
+                case 't': X="trunc";id=Id_trunc; break L;
                 } break L;
             case 6: c=s.charAt(0);
                 if (c=='L') { X="LOG10E";id=Id_LOG10E; }
@@ -326,6 +437,7 @@ final class NativeMath extends IdScriptableObject
             case 8: X="toSource";id=Id_toSource; break L;
             }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break L0;
         }
 // #/generated#
         return id;
@@ -351,8 +463,27 @@ final class NativeMath extends IdScriptableObject
         Id_sin          = 17,
         Id_sqrt         = 18,
         Id_tan          = 19,
+        Id_cbrt         = 20,
+        Id_cosh         = 21,
+        Id_expm1        = 22,
+        Id_hypot        = 23,
+        Id_log1p        = 24,
+        Id_log10        = 25,
+        Id_sinh         = 26,
+        Id_tanh         = 27,
+        Id_imul         = 28,
+        Id_trunc        = 29,
 
-        LAST_METHOD_ID  = 19;
+        LAST_METHOD_ID  = Id_trunc;
+
+/* Missing from ES6:
+    acosh
+    asinh
+    atanh
+    clz32
+    fround
+    log2
+ */
 
     private static final int
         Id_E            = LAST_METHOD_ID + 1,

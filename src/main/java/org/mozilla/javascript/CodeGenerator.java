@@ -1086,6 +1086,9 @@ class CodeGenerator extends Icode {
             } else if (childType == Token.SET) {
                 visitExpression(child.getFirstChild(), 0);
                 addIcode(Icode_LITERAL_SETTER);
+            } else if (childType == Token.METHOD) {
+                visitExpression(child.getFirstChild(), 0);
+                addIcode(Icode_LITERAL_SET);
             } else {
                 visitExpression(child, 0);
                 addIcode(Icode_LITERAL_SET);

@@ -228,7 +228,8 @@ public class Token
         DEBUGGER       = 160,
         COMMENT        = 161,
         GENEXPR        = 162,
-        LAST_TOKEN     = 163;
+        METHOD         = 163,  // ES6 MethodDefinition
+        LAST_TOKEN     = 164;
 
     /**
      * Returns a name for the token.  If Rhino is compiled with certain
@@ -413,6 +414,7 @@ public class Token
           case DEBUGGER:        return "DEBUGGER";
           case COMMENT:         return "COMMENT";
           case GENEXPR:         return "GENEXPR";
+          case METHOD:          return "METHOD";
         }
 
         // Token without name

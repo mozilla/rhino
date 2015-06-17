@@ -215,8 +215,10 @@ public class ScriptRuntime {
             new LazilyLoadedCtor(scope, "QName", xmlImpl, sealed, true);
         }
 
-        if ((cx.getLanguageVersion() >= Context.VERSION_1_8) &&
-             cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) {
+        if (((cx.getLanguageVersion() >= Context.VERSION_1_8) &&
+             cx.hasFeature(Context.FEATURE_V8_EXTENSIONS)) ||
+            (cx.getLanguageVersion() >= Context.VERSION_ES6))
+        {
             new LazilyLoadedCtor(scope, "ArrayBuffer",
                                  "org.mozilla.javascript.typedarrays.NativeArrayBuffer",
                                  sealed, true);
@@ -3486,13 +3488,13 @@ public class ScriptRuntime {
                                                        null);
                 ScriptableObject.defineProperty(
                     errorObject, "javaException", wrap,
-                    ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                    ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
             }
             if (isVisible(cx, re)) {
                 Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
                 ScriptableObject.defineProperty(
                         errorObject, "rhinoException", wrap,
-                        ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                        ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
             }
             obj = errorObject;
         }
@@ -3579,13 +3581,13 @@ public class ScriptRuntime {
                                                    null);
             ScriptableObject.defineProperty(
                 errorObject, "javaException", wrap,
-                ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
         }
         if (isVisible(cx, re)) {
             Object wrap = cx.getWrapFactory().wrap(cx, scope, re, null);
             ScriptableObject.defineProperty(
                     errorObject, "rhinoException", wrap,
-                    ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                    ScriptableObject.PERMANENT | ScriptableObject.READONLY | ScriptableObject.DONTENUM);
         }
         return errorObject;
     }
@@ -4233,7 +4235,7 @@ public class ScriptRuntime {
     }
 
     /**
-     * Equivalent to executing "new Error(message)" from JavaScript.
+     * Equivalent to executing "new Error(message, sourceFileName, sourceLineNo)" from JavaScript.
      * @param cx the current context
      * @param scope the current scope
      * @param message the message
@@ -4246,6 +4248,23 @@ public class ScriptRuntime {
         final Scriptable error = newBuiltinObject(cx, scope,
                 TopLevel.Builtins.Error, new Object[] { message, filename, Integer.valueOf(linep[0]) });
         return new JavaScriptException(error, filename, linep[0]);
+    }
+
+
+    /**
+     * Equivalent to executing "new $constructorName(message, sourceFileName, sourceLineNo)" from JavaScript.
+     * @param cx the current context
+     * @param scope the current scope
+     * @param message the message
+     * @return a JavaScriptException you should throw
+     */
+    public static JavaScriptException throwCustomError(Context cx, Scriptable scope, String constructorName,
+            String message) {
+      int[] linep = { 0 };
+      String filename = Context.getSourcePositionFromStack(linep);
+      final Scriptable error =  cx.newObject(scope, constructorName,
+    		  new Object[] { message, filename, Integer.valueOf(linep[0]) });
+      return new JavaScriptException(error, filename, linep[0]);
     }
 
     public static final Object[] emptyArgs = new Object[0];

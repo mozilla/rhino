@@ -23,12 +23,13 @@ var ratio;
 var globalvar;
 var globaltotal = 0;
 
+// Warm up
+global();
+local();
+
 printStatus("Testing global variables");
 starttime = new Date();
-for (globalvar = 0; globalvar < 100000; globalvar++)
-{
-  globaltotal += 1;
-}
+global();
 stoptime = new Date();
 globaltime = stoptime - starttime;
 
@@ -45,6 +46,14 @@ expect = true;
 actual = (ratio < maxratio);
 summary += ', Ratio: ' + ratio + ' '; 
 reportCompare(expect, actual, summary);
+
+function global()
+{
+  for (globalvar = 0; globalvar < 100000; globalvar++)
+  {
+    globaltotal += 1;
+  }
+}
 
 function local()
 {

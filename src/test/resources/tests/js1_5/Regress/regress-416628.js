@@ -66,7 +66,7 @@ function test()
   printStatus(msg);
   printStatus('Order: ' + order);
 
-  reportCompare(true, order < 2, 'BigO ' + order + ' < 2');
+  reportCompare(true, order < 4, 'BigO ' + order + ' < 4');
 
   exitFunc ('test');
 }
