@@ -253,7 +253,7 @@ public class ScriptRuntime {
                                  "org.mozilla.javascript.typedarrays.NativeDataView",
                                  sealed, true);
         }
-     
+
         if (scope instanceof TopLevel) {
             ((TopLevel)scope).cacheBuiltins();
         }
@@ -283,7 +283,7 @@ public class ScriptRuntime {
 
         return s;
     }
-    
+
     static String[] getTopPackageNames() {
         // Include "android" top package if running on Android
         return "Dalvik".equals(System.getProperty("java.vm.name")) ?
@@ -2563,9 +2563,8 @@ public class ScriptRuntime {
         if (L != 0) {
             callThis = toObjectOrNull(cx, args[0], scope);
         }
-        if (callThis == null) {
-            // This covers the case of args[0] == (null|undefined) as well.
-            callThis = getTopCallScope(cx);
+        if ((callThis == null || callThis == Undefined.instance) && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
+            callThis = getTopCallScope(cx); // This covers the case of args[0] == (null|undefined) as well.
         }
 
         Object[] callArgs;
@@ -4270,13 +4269,5 @@ public class ScriptRuntime {
     public static final Object[] emptyArgs = new Object[0];
     public static final String[] emptyStrings = new String[0];
 
-
-    public static Scriptable requireObjectCoercible(Scriptable val, IdFunctionObject idFuncObj) {
-        Scriptable val1 = val.getParentScope() != null ? val : null;
-        if (val1 == null || val1 == Undefined.instance)
-            throw ScriptRuntime.typeError2("msg.called.null.or.undefined", idFuncObj.getTag(), idFuncObj.getFunctionName());
-
-        return val1;
-    }
 
 }
