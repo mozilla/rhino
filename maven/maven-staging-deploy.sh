@@ -5,9 +5,12 @@ vers=`egrep '^version:' ../build.properties | awk '{print $2}'`
 echo "Deploying ${vers}"
 
 pom=maven-pom.xml
-jsjar=../build/rhino${vers}/js.jar
+jsjar=../buildGradle/libs/rhino-${vers}.jar
+echo "Installing ${jsjar}"
 srczip=../rhino${vers}-sources.zip
+echo "Sources are ${srczip}"
 doczip=../build/rhino${vers}/javadoc.zip
+echo "Javadoc is ${doczip}"
 
 if [ ! -f $jsjar ]
 then
