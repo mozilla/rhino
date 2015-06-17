@@ -23,17 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class ContextFactoryTest {
-    static class MyFactory extends ContextFactory {
-        @Override
-        public boolean hasFeature(Context cx, int featureIndex)
-        {
-            switch (featureIndex) {
-                case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
-                    return true;
-            }
-            return super.hasFeature(cx, featureIndex);
-        }
-    }
 
     @Test
     public void whenVersionLessEq17ThenOldUndefNullThis() throws Exception {
