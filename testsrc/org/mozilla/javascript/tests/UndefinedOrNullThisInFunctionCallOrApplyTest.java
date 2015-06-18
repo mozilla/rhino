@@ -17,14 +17,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * 15.3.4.3-1.js
- */
 public class UndefinedOrNullThisInFunctionCallOrApplyTest {
+
     private Context cx;
 
     private BaseFunction function;
-    private HashMap<String, Scriptable> bindings;
 
     @Before
     public void setUp() throws Exception {
@@ -32,17 +29,67 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         function = new BaseFunction() {
             @Override
             public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+                System.out.println("QWE");
                 return thisObj;
             }
         };
-        bindings = new HashMap<String, Scriptable>();
-        bindings.put("myFunc", function);
     }
 
     @After
     public void tearDown() throws Exception {
         cx.setLanguageVersion(Context.VERSION_DEFAULT);
         Context.exit();
+    }
+
+    @Test
+    @Ignore
+    public void whenVersionGt17ThenPassNullAsThisObjJavaFunc() {
+        HashMap<String, Scriptable> bindings = new HashMap<String, Scriptable>();
+        bindings.put("F2", function);
+
+        cx.setLanguageVersion(Context.VERSION_1_8);
+        NativeArray arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(undefined)];", bindings);
+
+        assertNotEquals(arr.get(0), arr.get(1));
+        assertNotEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
+        arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(null)];", bindings);
+        assertNotEquals(arr.get(0), arr.get(1));
+        assertNotEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
+        cx.setLanguageVersion(Context.VERSION_ES6);
+        arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(undefined)];", bindings);
+
+        assertNotEquals(arr.get(0), arr.get(1));
+        assertNotEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
+        arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(null)];", bindings);
+        assertNotEquals(arr.get(0), arr.get(1));
+        assertNotEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+    }
+
+    @Test
+    @Ignore
+    public void whenVersionLtEq17ThenPassGlobalThisObjJavaFunc() {
+        HashMap<String, Scriptable> bindings = new HashMap<String, Scriptable>();
+        bindings.put("F2", function);
+
+        cx.setLanguageVersion(Context.VERSION_1_7);
+        NativeArray arr = (NativeArray) Evaluator.eval("{return this;};[this, F2.apply(), F2.apply(undefined)];", bindings);
+
+        assertEquals(arr.get(0), arr.get(1));
+        assertEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
+        arr = (NativeArray) Evaluator.eval("[this, F2.apply(), F2.apply(null)];", bindings);
+
+        assertEquals(arr.get(0), arr.get(1));
+        assertEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
     }
 
     @Test
