@@ -9,45 +9,51 @@ package org.mozilla.javascript.tests;
 
 import junit.framework.TestCase;
 
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.BlockJUnit4ClassRunner;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.RhinoException;
 
-/**
- * @author Norris Boyd
- */
-public class ContextFactoryTest extends TestCase {
-    static class MyFactory extends ContextFactory {
-        @Override
-        public boolean hasFeature(Context cx, int featureIndex)
-        {
-            switch (featureIndex) {
-                case Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME:
-                    return true;
-            }
-            return super.hasFeature(cx, featureIndex);
-        }
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+@RunWith(BlockJUnit4ClassRunner.class)
+public class ContextFactoryTest {
+
+    private static Context CTX;
+    private static int LV;
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        CTX = Context.enter();
+        LV = CTX.getLanguageVersion();
     }
 
-    public void testCustomContextFactory() {
-        ContextFactory factory = new MyFactory();
-        Context cx = factory.enterContext();
-        try {
-            Scriptable globalScope = cx.initStandardObjects();
-            // Test that FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME is enabled
-            /* TODO(stevey): fix this functionality in parser
-            Object result = cx.evaluateString(globalScope,
-                    "var obj = {};" +
-                    "function obj.foo() { return 'bar'; }" +
-                    "obj.foo();",
-                    "test source", 1, null);
-            assertEquals("bar", result);
-            */
-        } catch (RhinoException e) {
-            fail(e.toString());
-        } finally {
-            Context.exit();
-        }
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        CTX.setLanguageVersion(LV);
+        CTX.exit();
     }
- }
+
+    @Test
+    public void whenVersionLessEq17ThenOldUndefNullThis() throws Exception {
+        CTX.setLanguageVersion(Context.VERSION_1_7);
+        assertTrue(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
+
+        CTX.setLanguageVersion(Context.VERSION_1_6);
+        assertTrue(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
+    }
+
+    @Test
+    public void whenVersionGt17ThenNewUndefNullThis() throws Exception {
+        CTX.setLanguageVersion(Context.VERSION_1_8);
+        assertFalse(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
+
+        CTX.setLanguageVersion(Context.VERSION_ES6);
+        assertFalse(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
+    }
+
+}
