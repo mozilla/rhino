@@ -254,6 +254,14 @@ public class ScriptRuntime {
                                  sealed, true);
         }
 
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            new LazilyLoadedCtor(scope, NativeSymbol.CLASS_NAME,
+                NativeSymbol.class.getName(),
+                sealed, true);
+
+        }
+
+     
         if (scope instanceof TopLevel) {
             ((TopLevel)scope).cacheBuiltins();
         }
@@ -283,7 +291,7 @@ public class ScriptRuntime {
 
         return s;
     }
-
+    
     static String[] getTopPackageNames() {
         // Include "android" top package if running on Android
         return "Dalvik".equals(System.getProperty("java.vm.name")) ?
