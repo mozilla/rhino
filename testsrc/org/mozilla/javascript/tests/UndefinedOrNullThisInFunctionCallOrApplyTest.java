@@ -6,15 +6,16 @@ package org.mozilla.javascript.tests;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.mozilla.javascript.BaseFunction;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.*;
+import org.mozilla.javascript.drivers.LanguageVersion;
 
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * 15.3.4.3-1.js
@@ -40,13 +41,51 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
 
     @After
     public void tearDown() throws Exception {
+        cx.setLanguageVersion(Context.VERSION_DEFAULT);
         Context.exit();
     }
 
     @Test
-    public void test1() {
+    public void whenVersionGt17ThenPassNullAsThisObjJsFunc() {
+        cx.setLanguageVersion(Context.VERSION_1_8);
+        NativeArray arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
+
+        assertNotEquals(arr.get(0), arr.get(1));
+        assertNotEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
+        arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
+        assertNotEquals(arr.get(0), arr.get(1));
+        assertNotEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
         cx.setLanguageVersion(Context.VERSION_ES6);
-        Object o = Evaluator.eval("myFunc.apply(undefined);", bindings);
-        assertEquals(Undefined.instance, o);
+        arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
+
+        assertNotEquals(arr.get(0), arr.get(1));
+        assertNotEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
+        arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
+        assertNotEquals(arr.get(0), arr.get(1));
+        assertNotEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
+    }
+
+    @Test
+    public void whenVersionLtEq17ThenPassGlobalThisObjJsFunc() {
+        cx.setLanguageVersion(Context.VERSION_1_7);
+        NativeArray arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.apply(), F2.apply(undefined)];");
+
+        assertEquals(arr.get(0), arr.get(1));
+        assertEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
+
+        arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
+
+        assertEquals(arr.get(0), arr.get(1));
+        assertEquals(arr.get(0), arr.get(2));
+        assertEquals(arr.get(1), arr.get(2));
     }
 }

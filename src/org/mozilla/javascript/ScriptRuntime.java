@@ -2563,7 +2563,7 @@ public class ScriptRuntime {
         if (L != 0) {
             callThis = toObjectOrNull(cx, args[0], scope);
         }
-        if ((callThis == null || callThis == Undefined.instance) && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
+        if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
             callThis = getTopCallScope(cx); // This covers the case of args[0] == (null|undefined) as well.
         }
 
