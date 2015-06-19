@@ -12,15 +12,14 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.Global;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.io.*;
+import java.nio.charset.CharsetEncoder;
+import java.nio.file.Files;
+import java.util.*;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -49,7 +48,22 @@ public class Test262SuiteTest {
         Context cx = Context.enter();
 
         try {
+            String jsFileStr = (String) SourceReader.readFileOrUrl(jsFile.getPath(), true, "UTF-8");
+            String[] jsFileStrLines = jsFileStr.split("\n");
+
             jsFileReader = new FileReader(jsFile);
+            boolean flag = false;
+            List<String> harnessFiles = new ArrayList<String>();
+
+            for (String jsFileStrLine : jsFileStrLines) {
+                if (jsFileStrLine.startsWith("/*---")) flag = true;
+                if (jsFileStrLine.startsWith("includes") && flag) {
+                    String s = jsFileStrLine.substring(jsFileStrLine.indexOf("["));
+                    s = s.substring(jsFileStrLine.lastIndexOf("]"));
+                    harnessFiles.addAll(Arrays.asList(s.split(",")));
+                    break;
+                }
+            }
 
             cx.setOptimizationLevel(optLevel);
             cx.setLanguageVersion(Context.VERSION_ES6);
@@ -58,7 +72,10 @@ public class Test262SuiteTest {
 
             cx.evaluateReader(global, new FileReader("test262/harness/sta.js"), "test262/harness/sta.js", 1, null);
             cx.evaluateReader(global, new FileReader("test262/harness/assert.js"), "test262/harness/assert.js", 1, null);
-            cx.evaluateReader(global, new FileReader("test262/harness/propertyHelper.js"), "test262/harness/propertyHelper.js", 1, null);
+
+            for (String harnessFile : harnessFiles) {
+                cx.evaluateReader(global, new FileReader("test262/harness/" + harnessFile), "test262/harness/" + harnessFile, 1, null);
+            }
 
             Scriptable scope = cx.newObject(global);
             scope.setPrototype(global);
@@ -80,16 +97,27 @@ public class Test262SuiteTest {
     }
 
     public static File[] getTestFiles() throws IOException {
-//        File testDir = getTestDir();
-//        String[] tests = TestUtils.loadTestsFromResource("/" + getTestFilename(optLevel), null);
-//        Arrays.sort(tests);
-//        File[] files = new File[tests.length];
-//        for (int i=0; i < files.length; i++) {
-//            files[i] = new File(testDir, tests[i]);
-//        }
-//        return files;
+        File testDir = new File("test262/test");
+        String[] tests = TestUtils.loadTestsFromResource("/test262.properties", null);
+        List<File> files = new LinkedList<File>();
+        for (String test : tests) {
+            File file = new File(testDir, test);
+            if (!file.isDirectory()) {
+                files.add(file);
+            } else {
+                TestUtils.recursiveListFilesHelper(file, new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        return pathname.getAbsolutePath().endsWith(".js");
+                    }
+                }, files);
+            }
+        }
 
-        return new File[]{new File("test262/test/built-ins/String/prototype/charAt/S15.5.4.4_A1.1.js")};
+        //Arrays.sort(tests);
+        return files.toArray(new File[files.size()]);
+
+//        return new File[]{new File("test262/test/built-ins/String/prototype/charAt/S15.5.4.4_A1.1.js")};
     }
 
     public static String loadFile(File f) throws IOException {
