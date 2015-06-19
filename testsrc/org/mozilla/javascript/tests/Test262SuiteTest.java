@@ -4,7 +4,6 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,8 +14,13 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -28,12 +32,10 @@ public class Test262SuiteTest {
     private final int optLevel;
     private final boolean isStrict;
 
-    static final int[] OPT_LEVELS = { -1, 0, 9 };
+    static final int[] OPT_LEVELS = {-1, 0, 9};
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        System.setProperty("user.language", "US");
-        System.setProperty("user.country", "en");
     }
 
     public Test262SuiteTest(File jsFile, int optLevel, boolean isStrict) {
@@ -86,7 +88,8 @@ public class Test262SuiteTest {
 //            files[i] = new File(testDir, tests[i]);
 //        }
 //        return files;
-        return new File[]{new File("test262/test/built-ins/Set/name.js")};
+
+        return new File[]{new File("test262/test/built-ins/String/prototype/charAt/S15.5.4.4_A1.1.js")};
     }
 
     public static String loadFile(File f) throws IOException {
