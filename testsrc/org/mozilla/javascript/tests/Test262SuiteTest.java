@@ -13,13 +13,10 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.Global;
 
 import java.io.*;
-import java.nio.charset.CharsetEncoder;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,20 +29,22 @@ import static org.mozilla.javascript.drivers.TestUtils.recursiveListFilesHelper;
 @RunWith(Parameterized.class)
 public class Test262SuiteTest {
 
-    private final File jsFile;
-    private final int optLevel;
-    private final boolean isStrict;
-
     static final int[] OPT_LEVELS = {-1, 0, 9};
 
-    static Map<Integer, Map<String, Script>> CACHE = new HashMap<Integer, Map<String, Script>>();
+    static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<Integer, Map<String, Script>>();
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        CACHE.put(-1, new HashMap<String, Script>());
-        CACHE.put(0, new HashMap<String, Script>());
-        CACHE.put(9, new HashMap<String, Script>());
+        HARNESS_SCRIPT_CACHE.put(-1, new HashMap<String, Script>());
+        HARNESS_SCRIPT_CACHE.put(0, new HashMap<String, Script>());
+        HARNESS_SCRIPT_CACHE.put(9, new HashMap<String, Script>());
     }
+
+    private static final Pattern EXCLUDE_PATTERN = Pattern.compile("\\s{1,4}!\\s*(.+)");
+
+    private final File jsFile;
+    private final int optLevel;
+    private final boolean isStrict;
 
     public Test262SuiteTest(File jsFile, int optLevel, boolean isStrict) {
         this.jsFile = jsFile;
@@ -74,19 +73,15 @@ public class Test262SuiteTest {
             cx.setOptimizationLevel(optLevel);
             cx.setLanguageVersion(Context.VERSION_ES6);
 
-            Global global = new Global(cx);
-            Scriptable scope = cx.newObject(global);
-            scope.setPrototype(global);
-            scope.setParentScope(null);
-
+            Scriptable scope = cx.initStandardObjects();
             for (String harnessFile : harnessFiles) {
-                if (!CACHE.get(optLevel).containsKey(harnessFile)) {
-                    CACHE.get(optLevel).put(
+                if (!HARNESS_SCRIPT_CACHE.get(optLevel).containsKey(harnessFile)) {
+                    HARNESS_SCRIPT_CACHE.get(optLevel).put(
                         harnessFile,
                         cx.compileReader(new FileReader("test262/harness/" + harnessFile), "test262/harness/" + harnessFile, 1, null)
                     );
                 }
-                CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
+                HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
             }
 
             return cx.evaluateString(scope, jsFileStr, jsFile.getPath().replaceAll("\\\\", "/"), 1, null);
@@ -151,17 +146,6 @@ public class Test262SuiteTest {
 
         //TODO Arrays.sort(cfgLines);
         return testFiles;
-    }
-
-    private static final Pattern EXCLUDE_PATTERN = Pattern.compile("\\s{1,4}!\\s*(.+)");
-
-    private static final Pattern HARNESS_INCLUDES_PATTERN = Pattern.compile("^.*(includes:\\s\\[(.*)\\]).*$");
-
-    public static String loadFile(File f) throws IOException {
-        int length = (int) f.length(); // don't worry about very long files
-        char[] buf = new char[length];
-        new FileReader(f).read(buf, 0, length);
-        return new String(buf);
     }
 
     @Parameters(name = "{index}, js={0}, opt={1}, strict={2}")
