@@ -128,11 +128,17 @@ public class Test262SuiteTest {
                     if (curLine == null) {
                         testFiles.addAll(dirFiles);
                         break;
-                    };
+                    }
+
+                    if (curLine.startsWith("#")) continue;
 
                     Matcher m = EXCLUDE_PATTERN.matcher(curLine);
                     if (m.matches()) {
-                        dirFiles.remove(new File(file, m.group(1)));
+                        Iterator<File> it = dirFiles.iterator();
+                        while (it.hasNext()) {
+                            String path = it.next().getPath().replaceAll("\\\\", "/");
+                            if (path.contains(m.group(1))) it.remove();
+                        }
                     } else if (nxtLine == null || !nxtLine.matches(EXCLUDE_PATTERN.pattern())) {
                         testFiles.addAll(dirFiles);
                         dirFiles.clear();
@@ -144,7 +150,6 @@ public class Test262SuiteTest {
         }
         scanner.close();
 
-        //TODO Arrays.sort(cfgLines);
         return testFiles;
     }
 
