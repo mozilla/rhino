@@ -20,9 +20,13 @@ import java.io.*;
 import java.nio.charset.CharsetEncoder;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.mozilla.javascript.drivers.TestUtils.JS_FILE_FILTER;
+import static org.mozilla.javascript.drivers.TestUtils.recursiveListFilesHelper;
 
 @RunWith(Parameterized.class)
 public class Test262SuiteTest {
@@ -44,35 +48,27 @@ public class Test262SuiteTest {
     }
 
     private Object executeRhinoScript(File jsFile, int optLevel, boolean isStrict) {
-        Reader jsFileReader = null;
         Context cx = Context.enter();
 
         try {
-            String jsFileStr = (String) SourceReader.readFileOrUrl(jsFile.getPath(), true, "UTF-8");
-            String[] jsFileStrLines = jsFileStr.split("\n");
-
-            jsFileReader = new FileReader(jsFile);
-            boolean flag = false;
             List<String> harnessFiles = new ArrayList<String>();
+            harnessFiles.add("sta.js");
+            harnessFiles.add("assert.js");
 
-            for (String jsFileStrLine : jsFileStrLines) {
-                if (jsFileStrLine.startsWith("/*---")) flag = true;
-                if (jsFileStrLine.startsWith("includes") && flag) {
-                    String s = jsFileStrLine.substring(jsFileStrLine.indexOf("["));
-                    s = s.substring(jsFileStrLine.lastIndexOf("]"));
-                    harnessFiles.addAll(Arrays.asList(s.split(",")));
-                    break;
+            String jsFileStr = (String) SourceReader.readFileOrUrl(jsFile.getPath(), true, "UTF-8");
+            Scanner scanner = new Scanner(new StringReader(jsFileStr));
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                if (line.startsWith("includes: ")) {
+                    harnessFiles.addAll(Arrays.asList(line.substring(line.indexOf('[') + 1, line.lastIndexOf("]")).split(",")));
                 }
             }
+            scanner.close();
 
             cx.setOptimizationLevel(optLevel);
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             Global global = new Global(cx);
-
-            cx.evaluateReader(global, new FileReader("test262/harness/sta.js"), "test262/harness/sta.js", 1, null);
-            cx.evaluateReader(global, new FileReader("test262/harness/assert.js"), "test262/harness/assert.js", 1, null);
-
             for (String harnessFile : harnessFiles) {
                 cx.evaluateReader(global, new FileReader("test262/harness/" + harnessFile), "test262/harness/" + harnessFile, 1, null);
             }
@@ -81,7 +77,7 @@ public class Test262SuiteTest {
             scope.setPrototype(global);
             scope.setParentScope(null);
 
-            return cx.evaluateReader(scope, jsFileReader, jsFile.getPath().replaceAll("\\\\", "/"), 1, null);
+            return cx.evaluateString(scope, jsFileStr, jsFile.getPath().replaceAll("\\\\", "/"), 1, null);
         } catch (JavaScriptException ex) {
             fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
             return null;
@@ -89,36 +85,65 @@ public class Test262SuiteTest {
             throw new RuntimeException(e);
         } finally {
             Context.exit();
-            try {
-                if (null != jsFileReader) jsFileReader.close();
-            } catch (IOException e) {
-            }
         }
     }
 
-    public static File[] getTestFiles() throws IOException {
+    public static List<File> getTestFiles() throws IOException {
         File testDir = new File("test262/test");
-        String[] tests = TestUtils.loadTestsFromResource("/test262.properties", null);
-        List<File> files = new LinkedList<File>();
-        for (String test : tests) {
-            File file = new File(testDir, test);
-            if (!file.isDirectory()) {
-                files.add(file);
-            } else {
-                TestUtils.recursiveListFilesHelper(file, new FileFilter() {
-                    @Override
-                    public boolean accept(File pathname) {
-                        return pathname.getAbsolutePath().endsWith(".js");
+
+        List<File> testFiles = new LinkedList<File>();
+
+        List<File> dirFiles = new LinkedList<File>();
+
+        Scanner scanner = new Scanner(new File("testsrc/test262.properties"));
+
+        String curLine = "", nxtLine = "";
+
+        while (true) {
+            curLine = nxtLine;
+            nxtLine = scanner.hasNextLine() ? scanner.nextLine() : null;
+
+            if (curLine == null) break;
+
+            if (curLine.isEmpty() || curLine.startsWith("#")) continue;
+
+            File file = new File(testDir, curLine);
+
+            if (file.isFile()) {
+                testFiles.add(file);
+            } else if (file.isDirectory()) {
+                recursiveListFilesHelper(file, JS_FILE_FILTER, dirFiles);
+
+                while (true) {
+                    curLine = nxtLine;
+                    nxtLine = scanner.hasNextLine() ? scanner.nextLine() : null;
+
+                    if (curLine == null) {
+                        testFiles.addAll(dirFiles);
+                        break;
+                    };
+
+                    Matcher m = EXCLUDE_PATTERN.matcher(curLine);
+                    if (m.matches()) {
+                        dirFiles.remove(new File(file, m.group(1)));
+                    } else if (nxtLine == null || !nxtLine.matches(EXCLUDE_PATTERN.pattern())) {
+                        testFiles.addAll(dirFiles);
+                        dirFiles.clear();
+                        nxtLine = curLine;
+                        break;
                     }
-                }, files);
+                }
             }
         }
+        scanner.close();
 
-        //Arrays.sort(tests);
-        return files.toArray(new File[files.size()]);
-
-//        return new File[]{new File("test262/test/built-ins/String/prototype/charAt/S15.5.4.4_A1.1.js")};
+        //TODO Arrays.sort(cfgLines);
+        return testFiles;
     }
+
+    private static final Pattern EXCLUDE_PATTERN = Pattern.compile("\\s{1,4}!\\s*(.+)");
+
+    private static final Pattern HARNESS_INCLUDES_PATTERN = Pattern.compile("^.*(includes:\\s\\[(.*)\\]).*$");
 
     public static String loadFile(File f) throws IOException {
         int length = (int) f.length(); // don't worry about very long files
@@ -130,7 +155,7 @@ public class Test262SuiteTest {
     @Parameters(name = "{index}, js={0}, opt={1}, strict={2}")
     public static Collection<Object[]> test262SuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
-        File[] tests = getTestFiles();
+        List<File> tests = getTestFiles();
         for (File jsTest : tests) {
             for (int optLevel : OPT_LEVELS) {
                 result.add(new Object[]{jsTest, optLevel, false});
