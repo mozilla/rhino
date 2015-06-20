@@ -11,6 +11,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
+import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
@@ -37,8 +38,13 @@ public class Test262SuiteTest {
 
     static final int[] OPT_LEVELS = {-1, 0, 9};
 
+    static Map<Integer, Map<String, Script>> CACHE = new HashMap<Integer, Map<String, Script>>();
+
     @BeforeClass
     public static void setUpClass() throws Exception {
+        CACHE.put(-1, new HashMap<String, Script>());
+        CACHE.put(0, new HashMap<String, Script>());
+        CACHE.put(9, new HashMap<String, Script>());
     }
 
     public Test262SuiteTest(File jsFile, int optLevel, boolean isStrict) {
@@ -69,13 +75,19 @@ public class Test262SuiteTest {
             cx.setLanguageVersion(Context.VERSION_ES6);
 
             Global global = new Global(cx);
-            for (String harnessFile : harnessFiles) {
-                cx.evaluateReader(global, new FileReader("test262/harness/" + harnessFile), "test262/harness/" + harnessFile, 1, null);
-            }
-
             Scriptable scope = cx.newObject(global);
             scope.setPrototype(global);
             scope.setParentScope(null);
+
+            for (String harnessFile : harnessFiles) {
+                if (!CACHE.get(optLevel).containsKey(harnessFile)) {
+                    CACHE.get(optLevel).put(
+                        harnessFile,
+                        cx.compileReader(new FileReader("test262/harness/" + harnessFile), "test262/harness/" + harnessFile, 1, null)
+                    );
+                }
+                CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
+            }
 
             return cx.evaluateString(scope, jsFileStr, jsFile.getPath().replaceAll("\\\\", "/"), 1, null);
         } catch (JavaScriptException ex) {
