@@ -14,7 +14,7 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.SourceReader;
-import org.mozilla.javascript.tools.shell.Global;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.*;
@@ -56,19 +56,8 @@ public class Test262SuiteTest {
         Context cx = Context.enter();
 
         try {
-            List<String> harnessFiles = new ArrayList<String>();
-            harnessFiles.add("sta.js");
-            harnessFiles.add("assert.js");
-
             String jsFileStr = (String) SourceReader.readFileOrUrl(jsFile.getPath(), true, "UTF-8");
-            Scanner scanner = new Scanner(new StringReader(jsFileStr));
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if (line.startsWith("includes: ")) {
-                    harnessFiles.addAll(Arrays.asList(line.substring(line.indexOf('[') + 1, line.lastIndexOf("]")).split(",")));
-                }
-            }
-            scanner.close();
+            List<String> harnessFiles = detectHarnessFiles(jsFileStr);
 
             cx.setOptimizationLevel(optLevel);
             cx.setLanguageVersion(Context.VERSION_ES6);
@@ -93,6 +82,20 @@ public class Test262SuiteTest {
         } finally {
             Context.exit();
         }
+    }
+
+    private static final Yaml YAML = new Yaml();
+
+    private static List<String> detectHarnessFiles(String jsFileStr) {
+        List<String> harnessFiles = new ArrayList<String>();
+        harnessFiles.add("sta.js");
+        harnessFiles.add("assert.js");
+
+        Map header = (Map) YAML.load(jsFileStr.substring(jsFileStr.indexOf("/*---") + 5, jsFileStr.lastIndexOf("---*/")));
+        if (header.containsKey("includes")) {
+            harnessFiles.addAll((Collection)header.get("includes"));
+        }
+        return harnessFiles;
     }
 
     public static List<File> getTestFiles() throws IOException {
