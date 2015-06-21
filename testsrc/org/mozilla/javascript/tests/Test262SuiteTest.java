@@ -133,7 +133,7 @@ public class Test262SuiteTest {
                         break;
                     }
 
-                    if (curLine.startsWith("#")) continue;
+                    if (curLine.isEmpty() || curLine.startsWith("#")) continue;
 
                     Matcher m = EXCLUDE_PATTERN.matcher(curLine);
                     if (m.matches()) {
@@ -142,11 +142,16 @@ public class Test262SuiteTest {
                             String path = it.next().getPath().replaceAll("\\\\", "/");
                             if (path.contains(m.group(1))) it.remove();
                         }
-                    } else if (nxtLine == null || !nxtLine.matches(EXCLUDE_PATTERN.pattern())) {
+                    } else {
                         testFiles.addAll(dirFiles);
                         dirFiles.clear();
-                        nxtLine = curLine;
-                        break;
+                        file = new File(testDir, curLine);
+                        if (file.isFile()) {
+                            testFiles.add(file);
+                            break;
+                        } else if (file.isDirectory()) {
+                            recursiveListFilesHelper(file, JS_FILE_FILTER, dirFiles);
+                        }
                     }
                 }
             }
