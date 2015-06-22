@@ -276,8 +276,6 @@ final class NativeString extends IdScriptableObject
                 case Id_includes:
                 case Id_startsWith:
                 case Id_endsWith:
-                    if (cx.getLanguageVersion() < Context.VERSION_ES6) break;
-
                     String s = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     if (args.length > 0 && args[0] instanceof NativeRegExp) {
                         throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), f.getFunctionName());
@@ -450,8 +448,6 @@ final class NativeString extends IdScriptableObject
                 }
                 case Id_normalize:
                 {
-                    if (cx.getLanguageVersion() < Context.VERSION_ES6) break;
-
                     String formStr = ScriptRuntime.toString(args, 0);
 
                     Normalizer.Form form;
@@ -466,8 +462,6 @@ final class NativeString extends IdScriptableObject
 
                 case Id_repeat:
                 {
-                    if (cx.getLanguageVersion() < Context.VERSION_ES6) break;
-
                     String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
@@ -497,8 +491,6 @@ final class NativeString extends IdScriptableObject
                 }
                 case Id_codePointAt:
                 {
-                    if (cx.getLanguageVersion() < Context.VERSION_ES6) break;
-
                     String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
