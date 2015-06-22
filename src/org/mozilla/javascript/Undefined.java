@@ -31,19 +31,19 @@ public class Undefined implements Serializable
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == Undefined.instance || obj == Undefined.SCRIPTABLE_INSTANCE) return true;
+        if (obj == Undefined.instance || obj == Undefined.SCRIPTABLE_UNDEFINED) return true;
         return super.equals(obj);
     }
 
-    public static final Scriptable SCRIPTABLE_INSTANCE;
+    public static final Scriptable SCRIPTABLE_UNDEFINED;
 
     static {
-        SCRIPTABLE_INSTANCE = (Scriptable) Proxy.newProxyInstance(Undefined.class.getClassLoader(), new Class[]{Scriptable.class}, new InvocationHandler() {
+        SCRIPTABLE_UNDEFINED = (Scriptable) Proxy.newProxyInstance(Undefined.class.getClassLoader(), new Class[]{Scriptable.class}, new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 if (method.getName().equals("toString")) return "undefined";
                 if (method.getName().equals("equals")) {
-                    return args.length > 0 && (args[0] == Undefined.instance || args[0] == Undefined.SCRIPTABLE_INSTANCE);
+                    return args.length > 0 && (args[0] == Undefined.instance || args[0] == Undefined.SCRIPTABLE_UNDEFINED);
                 }
                 throw new UnsupportedOperationException("undefined doesn't support " + method.getName());
             }

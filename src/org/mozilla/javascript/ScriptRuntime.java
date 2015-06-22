@@ -261,7 +261,7 @@ public class ScriptRuntime {
 
         }
 
-     
+
         if (scope instanceof TopLevel) {
             ((TopLevel)scope).cacheBuiltins();
         }
@@ -291,7 +291,7 @@ public class ScriptRuntime {
 
         return s;
     }
-    
+
     static String[] getTopPackageNames() {
         // Include "android" top package if running on Android
         return "Dalvik".equals(System.getProperty("java.vm.name")) ?
@@ -812,7 +812,7 @@ public class ScriptRuntime {
             if (val == null) {
                 return "null";
             }
-            if (val == Undefined.instance || val == Undefined.SCRIPTABLE_INSTANCE) {
+            if (val == Undefined.instance || val == Undefined.SCRIPTABLE_UNDEFINED) {
                 return "undefined";
             }
             if (val instanceof String) {
@@ -2572,7 +2572,7 @@ public class ScriptRuntime {
             if  (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
                 callThis = toObjectOrNull(cx, args[0], scope);
             } else {
-                callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_INSTANCE : (Scriptable) args[0];
+                callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_UNDEFINED : (Scriptable) args[0];
             }
         }
         if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {

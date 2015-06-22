@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.*;
-import org.mozilla.javascript.drivers.LanguageVersion;
 
 import java.util.HashMap;
 
@@ -101,7 +100,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         assertNotEquals(arr.get(0), arr.get(2));
         assertNotEquals(arr.get(1), arr.get(2));
         assertEquals(Undefined.instance, arr.get(2));
-        assertEquals(Undefined.SCRIPTABLE_INSTANCE, arr.get(2));
+        assertEquals(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
 
         arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
         assertNotEquals(arr.get(0), arr.get(1));
@@ -115,7 +114,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         assertNotEquals(arr.get(0), arr.get(2));
         assertNotEquals(arr.get(1), arr.get(2));
         assertEquals(Undefined.instance, arr.get(2));
-        assertEquals(Undefined.SCRIPTABLE_INSTANCE, arr.get(2));
+        assertEquals(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
 
         arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.apply(), F2.apply(null)];");
         assertNotEquals(arr.get(0), arr.get(1));
@@ -149,7 +148,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         assertNotEquals(arr.get(0), arr.get(2));
         assertNotEquals(arr.get(1), arr.get(2));
         assertEquals(Undefined.instance, arr.get(2));
-        assertEquals(Undefined.SCRIPTABLE_INSTANCE, arr.get(2));
+        assertEquals(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
 
         arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.call(), F2.call(null)];");
         assertNotEquals(arr.get(0), arr.get(1));
@@ -163,7 +162,7 @@ public class UndefinedOrNullThisInFunctionCallOrApplyTest {
         assertNotEquals(arr.get(0), arr.get(2));
         assertNotEquals(arr.get(1), arr.get(2));
         assertEquals(Undefined.instance, arr.get(2));
-        assertEquals(Undefined.SCRIPTABLE_INSTANCE, arr.get(2));
+        assertEquals(Undefined.SCRIPTABLE_UNDEFINED, arr.get(2));
 
         arr = (NativeArray) Evaluator.eval("function F2() {return this;};[this, F2.call(), F2.call(null)];");
         assertNotEquals(arr.get(0), arr.get(1));
