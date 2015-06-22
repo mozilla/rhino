@@ -1183,6 +1183,17 @@ public class ParserTest extends TestCase {
       parse("({import:1}).import;");
     }
 
+    public void testKeywordLengthAtEOF() {
+        AstRoot root = parse("null");
+        assertEquals(4, root.getLength());
+
+        root = parse("true");
+        assertEquals(4, root.getLength());
+
+        root = parse("false");
+        assertEquals(5, root.getLength());
+    }
+
     private void expectParseErrors(String string, String [] errors) {
       parse(string, errors, null, false);
     }
