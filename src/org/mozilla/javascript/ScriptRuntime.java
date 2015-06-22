@@ -804,7 +804,7 @@ public class ScriptRuntime {
             if (val == null) {
                 return "null";
             }
-            if (val == Undefined.instance) {
+            if (val == Undefined.instance || val == Undefined.SCRIPTABLE_INSTANCE) {
                 return "undefined";
             }
             if (val instanceof String) {
@@ -2561,7 +2561,11 @@ public class ScriptRuntime {
 
         Scriptable callThis = null;
         if (L != 0) {
-            callThis = toObjectOrNull(cx, args[0], scope);
+            if  (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
+                callThis = toObjectOrNull(cx, args[0], scope);
+            } else {
+                callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_INSTANCE : (Scriptable) args[0];
+            }
         }
         if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
             callThis = getTopCallScope(cx); // This covers the case of args[0] == (null|undefined) as well.
