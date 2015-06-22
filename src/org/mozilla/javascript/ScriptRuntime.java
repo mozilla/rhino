@@ -2572,7 +2572,7 @@ public class ScriptRuntime {
             if  (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
                 callThis = toObjectOrNull(cx, args[0], scope);
             } else {
-                callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_UNDEFINED : (Scriptable) args[0];
+                callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_UNDEFINED : toObjectOrNull(cx, args[0], scope);
             }
         }
         if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
