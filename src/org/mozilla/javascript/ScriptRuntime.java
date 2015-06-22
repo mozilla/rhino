@@ -3116,7 +3116,9 @@ public class ScriptRuntime {
             double d = ((Number)x).doubleValue();
             return d == d;
         }
-        if (x == null || x == Undefined.instance) {
+        if (x == null || x == Undefined.instance || x == Undefined.SCRIPTABLE_UNDEFINED) {
+            if ((x == Undefined.instance && y == Undefined.SCRIPTABLE_UNDEFINED)
+                || (x == Undefined.SCRIPTABLE_UNDEFINED && y == Undefined.instance)) return true;
             return false;
         } else if (x instanceof Number) {
             if (y instanceof Number) {
