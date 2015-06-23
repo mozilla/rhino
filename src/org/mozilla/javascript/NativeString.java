@@ -127,7 +127,7 @@ final class NativeString extends IdScriptableObject
     @Override
     protected void initPrototypeId(int id)
     {
-        String s;
+        String s, fnName = null;
         int arity;
         switch (id) {
           case Id_constructor:       arity=1; s="constructor";       break;
@@ -175,10 +175,14 @@ final class NativeString extends IdScriptableObject
           case Id_normalize:         arity=0; s="normalize";         break;
           case Id_repeat:            arity=1; s="repeat";            break;
           case Id_codePointAt:       arity=1; s="codePointAt";       break;
-          case Id_iterator:          arity=0; s="iterator";          break;
+          case Id_iterator:          arity=0; s="@@iterator"; fnName="[Symbol.iterator]"; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(STRING_TAG, id, s, arity);
+        if (fnName == null) {
+            initPrototypeMethod(STRING_TAG, id, s, arity);
+        } else {
+            initPrototypeMethod(STRING_TAG, id, s, fnName, arity);
+        }
     }
 
     @Override
@@ -799,7 +803,6 @@ final class NativeString extends IdScriptableObject
                 case 'n': X="toString";id=Id_toString; break L;
                 case 't': X="endsWith";id=Id_endsWith; break L;
                 case 'z': X="fontsize";id=Id_fontsize; break L;
-                case 'o': X="iterator";id=Id_iterator; break L;
                 } break L;
             case 9: switch (s.charAt(0)) {
                 case 'f': X="fontcolor";id=Id_fontcolor; break L;
@@ -810,6 +813,7 @@ final class NativeString extends IdScriptableObject
             case 10: c=s.charAt(0);
                 if (c=='c') { X="charCodeAt";id=Id_charCodeAt; }
                 else if (c=='s') { X="startsWith";id=Id_startsWith; }
+                else if (c=='@') { X="@@iterator";id=Id_iterator; }
                 break L;
             case 11: switch (s.charAt(2)) {
                 case 'L': X="toLowerCase";id=Id_toLowerCase; break L;

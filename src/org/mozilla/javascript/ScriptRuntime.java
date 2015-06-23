@@ -2198,10 +2198,10 @@ public class ScriptRuntime {
     }
 
     private static Object enumInitInOrder(Context cx, IdEnumeration x) {
-        if (x.obj == null || !ScriptableObject.hasProperty(x.obj, NativeElementIterator.ITERATOR_FUNCTION_NAME)) {
+        if (x.obj == null || !ScriptableObject.hasProperty(x.obj, NativeSymbol.ITERATOR_PROPERTY)) {
             throw typeError1("msg.not.iterable", toString(x.obj));
         }
-        Object iterator = ScriptableObject.getProperty(x.obj, NativeElementIterator.ITERATOR_FUNCTION_NAME);
+        Object iterator = ScriptableObject.getProperty(x.obj, NativeSymbol.ITERATOR_PROPERTY);
         if (!(iterator instanceof Callable)) {
             throw typeError1("msg.not.iterable", toString(x.obj));
         }
