@@ -198,7 +198,8 @@ public class ScriptRuntime {
 
         NativeIterator.init(scope, sealed); // Also initializes NativeGenerator
 
-        NativeElementIterator.init(scope, sealed);
+        NativeArrayIterator.init(scope, sealed);
+        NativeStringIterator.init(scope, sealed);
 
         boolean withXml = cx.hasFeature(Context.FEATURE_E4X) &&
                           cx.getE4xImplementationFactory() != null;
@@ -2274,20 +2275,20 @@ public class ScriptRuntime {
 
     private static Boolean enumNextInOrder(IdEnumeration enumObj)
     {
-        Object v = ScriptableObject.getProperty(enumObj.iterator, "next");
+        Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
-            throw notFunctionError(enumObj.iterator, "next");
+            throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;
         Context cx = Context.getContext();
         Scriptable scope = enumObj.iterator.getParentScope();
         Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
         Scriptable iteratorResult = toObject(cx, scope, r);
-        Object done = ScriptableObject.getProperty(iteratorResult, "done");
+        Object done = ScriptableObject.getProperty(iteratorResult, ES6Iterator.DONE_PROPERTY);
         if (done != ScriptableObject.NOT_FOUND && toBoolean(done)) {
             return Boolean.FALSE;
         }
-        enumObj.currentId = ScriptableObject.getProperty(iteratorResult, "value");
+        enumObj.currentId = ScriptableObject.getProperty(iteratorResult, ES6Iterator.VALUE_PROPERTY);
         return Boolean.TRUE;
     }
 

@@ -506,7 +506,7 @@ final class NativeString extends IdScriptableObject
                 }
 
               case Id_iterator:
-                  return new NativeElementIterator(scope, thisObj);
+                  return new NativeStringIterator(scope, thisObj);
 
             }
             throw new IllegalArgumentException("String.prototype has no method: " + f.getFunctionName());
