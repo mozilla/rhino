@@ -148,4 +148,15 @@ assertThrows(function() {
   for (var b of a);
 }, TypeError);
 
+var string = '𠮷野家';
+var first = '𠮷';
+var second = '野';
+var third = '家';
+for (var c of string) {
+  assertEquals(c, first);
+  first = second;
+  second = third;
+  third = null;
+}
+
 "success"

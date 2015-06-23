@@ -338,7 +338,7 @@ public class NativeArray extends IdScriptableObject implements List
                 return reduceMethod(cx, id, scope, thisObj, args);
 
               case Id_iterator:
-                return new NativeElementIterator(scope, thisObj);
+                return new NativeArrayIterator(scope, thisObj);
             }
             throw new IllegalArgumentException(String.valueOf(id));
         }

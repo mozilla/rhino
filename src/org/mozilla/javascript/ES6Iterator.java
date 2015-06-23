@@ -6,21 +6,9 @@
 
 package org.mozilla.javascript;
 
-import java.util.Iterator;
+public abstract class ES6Iterator extends IdScriptableObject {
 
-/**
- * This class implements ArrayIterator and StringIterator objects. See
- * http://wiki.ecmascript.org/doku.php?id=harmony:iterators
- */
-public final class NativeElementIterator extends IdScriptableObject {
-    private static final long serialVersionUID = 1L;
-    private static final Object ELEMENT_ITERATOR_TAG = "ElementIterator";
-
-    static void init(ScriptableObject scope, boolean sealed) {
-        // NativeElementIterator
-        // Can't use "NativeElementIterator().exportAsJSClass" since we don't want
-        // to define "NativeElementIterator" as a constructor in the top-level scope.
-        NativeElementIterator prototype = new NativeElementIterator();
+    static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);
             prototype.setPrototype(getObjectPrototype(scope));
@@ -35,32 +23,21 @@ public final class NativeElementIterator extends IdScriptableObject {
         // to use to find the prototype. Use the "associateValue"
         // approach instead.
         if (scope != null) {
-            scope.associateValue(ELEMENT_ITERATOR_TAG, prototype);
+            scope.associateValue(tag, prototype);
         }
     }
 
-    /**
-     * Only for constructing the prototype object.
-     */
-    private NativeElementIterator() {
-    }
+    ES6Iterator() {}
 
-    NativeElementIterator(Scriptable scope, Scriptable arrayLike) {
-        this.arrayLike = arrayLike;
-        this.index = 0;
+    ES6Iterator(Scriptable scope) {
         // Set parent and prototype properties. Since we don't have a
         // "Iterator" constructor in the top scope, we stash the
         // prototype in the top scope's associated value.
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
-        NativeElementIterator prototype = (NativeElementIterator)
-            ScriptableObject.getTopScopeValue(top, ELEMENT_ITERATOR_TAG);
+        IdScriptableObject prototype = (IdScriptableObject)
+            ScriptableObject.getTopScopeValue(top, getTag());
         setPrototype(prototype);
-    }
-
-    @Override
-    public String getClassName() {
-        return "Iterator";
     }
 
     @Override
@@ -69,25 +46,25 @@ public final class NativeElementIterator extends IdScriptableObject {
         String s;
         int arity;
         switch (id) {
-        case Id_next:           arity=0; s="next";           break;
+        case Id_next:           arity=0; s=NEXT_METHOD;           break;
         default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(ELEMENT_ITERATOR_TAG, id, s, arity);
+        initPrototypeMethod(getTag(), id, s, arity);
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
-        if (!f.hasTag(ELEMENT_ITERATOR_TAG)) {
+        if (!f.hasTag(getTag())) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
 
-        if (!(thisObj instanceof NativeElementIterator))
+        if (!(thisObj instanceof ES6Iterator))
             throw incompatibleCallError(f);
 
-        NativeElementIterator iterator = (NativeElementIterator) thisObj;
+        ES6Iterator iterator = (ES6Iterator) thisObj;
 
         switch (id) {
         case Id_next:
@@ -102,7 +79,7 @@ public final class NativeElementIterator extends IdScriptableObject {
     @Override
     protected int findPrototypeId(String s)
     {
-        if (s.equals("next")) {
+        if (s.equals(NEXT_METHOD)) {
             return Id_next;
         // } else if (s.equals("return")) {
         //     return Id_return;
@@ -112,25 +89,26 @@ public final class NativeElementIterator extends IdScriptableObject {
         return 0;
     }
 
-    private Object next(Context cx, Scriptable scope) {
-        Object value = Undefined.instance;
-        boolean done = index >= NativeArray.getLengthProperty(cx, arrayLike);
-        if (!done) {
-            value = arrayLike.get(index++, arrayLike);
-        }
+    abstract Object next(Context cx, Scriptable scope);
 
+    abstract String getTag();
+
+    // 25.1.1.3 The IteratorResult Interface
+    protected Scriptable makeIteratorResult(Context cx, Scriptable scope, boolean done, Object value) {
         Scriptable iteratorResult = cx.newObject(scope);
-        ScriptableObject.putProperty(iteratorResult, "value", value);
-        ScriptableObject.putProperty(iteratorResult, "done", done);
+        ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
+        ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
         return iteratorResult;
     }
 
-    private Scriptable arrayLike;
-    private int index;
-
     private static final int
         Id_next          = 1,
-        Id_return        = 2,
-        Id_throw         = 3,
-        MAX_PROTOTYPE_ID = 3;
+        // Id_return        = 2,
+        // Id_throw         = 3,
+        MAX_PROTOTYPE_ID = 1;
+
+    public static final String NEXT_METHOD = "next";
+
+    public static final String DONE_PROPERTY = "done";
+    public static final String VALUE_PROPERTY = "value";
 }
