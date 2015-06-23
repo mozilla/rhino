@@ -1289,7 +1289,8 @@ public class Parser
                 isForIn = true;
                 inPos = ts.tokenBeg - forPos;
                 cond = expr();  // object over which we're iterating
-            } else if (matchToken(Token.NAME) && "of".equals(ts.getString())) {
+            } else if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 &&
+                       matchToken(Token.NAME) && "of".equals(ts.getString())) {
                 isForOf = true;
                 inPos = ts.tokenBeg - forPos;
                 cond = expr();  // object over which we're iterating
