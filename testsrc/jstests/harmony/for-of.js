@@ -1,25 +1,12 @@
 
-function assertEq(expected, actual) {
-  if (expected !== actual) {
-    throw "Expected '" + expected + "' but was '" + actual + "'";
-  }
-}
-
-function assertException(exception, fn) {
-  try {
-    fn();
-  } catch (e if e instanceof exception) {
-    return;
-  }
-  throw "Expected to throw '" + exception + "' but not thrown";
-}
+load("testsrc/assert.js");
 
 // Array
 var r = [];
 for (var n of [1, 2, 3]) {
   r.push(n*2);
 }
-assertEq(r.join(), '2,4,6');
+assertEquals('2,4,6', r.join());
 
 var r = [];
 for (var n of [1, 2, 3]) {
@@ -27,7 +14,7 @@ for (var n of [1, 2, 3]) {
     r.push(n + m);
   }
 }
-assertEq(r.join(), '5,6,7,6,7,8,7,8,9');
+assertEquals('5,6,7,6,7,8,7,8,9', r.join());
 
 /*
 var a = {
@@ -41,7 +28,7 @@ var r = [];
 for (var n of a) {
   r.push(n);
 }
-assertEq(r.join(), '0,1,2');
+assertEquals(r.join(), '0,1,2');
 */
 
 var a = [0];
@@ -54,7 +41,7 @@ for (var n of a) {
   }
   r.push(n);
 }
-assertEq(r.join(), '0,1,2');
+assertEquals('0,1,2', r.join());
 
 var a = [0, 1, 2];
 var r = [];
@@ -63,7 +50,7 @@ for (var n of a) {
   a.length = 0;
   r.push(n);
 }
-assertEq(r.join(), '0');
+assertEquals('0', r.join());
 
 // Array like
 var a = {
@@ -72,11 +59,11 @@ var a = {
   length: 2
 };
 var ite = Array.prototype.iterator.call(a);
-assertEq(ite.next(), 'foo');
-assertEq(ite.next(), 'bar');
-assertException(StopIteration, function() {
+assertEquals('foo', ite.next());
+assertEquals('bar', ite.next());
+assertThrows(function() {
   ite.next();
-});
+}, StopIteration);
 
 // Other
 var a = {
@@ -96,14 +83,14 @@ var r = [];
 for (var n of a) {
   r.push(n);
 }
-assertEq(r.join(), '0,1,2');
+assertEquals('0,1,2', r.join());
 
 var a = [12];
 Object.defineProperty(a, 0, {
   enumerable: false
 });
 for (var n of a) {
-  assertEq(n, 12);
+  assertEquals(12, n);
 }
 
 // String
@@ -112,49 +99,45 @@ var r = '';
 for (var c of a) {
   r += c.toUpperCase();
 }
-assertEq(r, 'ABC');
+assertEquals('ABC', r);
 
 // No iterable
-assertException(TypeError, function() {
+assertThrows(function() {
   for (var n of null) {}
-});
+}, TypeError);
 
-assertException(TypeError, function() {
+assertThrows(function() {
   for (var n of 0) {}
-});
+}, TypeError);
 
-assertException(TypeError, function() {
+assertThrows(function() {
   var a = {
     iterator: function() {
       return 0;
     }
   };
   for (var n of 1) {}
-});
+}, TypeError);
 
 // Array comprehension
-assertEq([n*n for (n of [1, 2, 3])].join(), '1,4,9');
-assertEq([n+m for (n of [1, 2, 3]) for (m of [4, 5, 6])].join(), '5,6,7,6,7,8,7,8,9');
+assertEquals('1,4,9', [n*n for (n of [1, 2, 3])].join());
+assertEquals('5,6,7,6,7,8,7,8,9', [n+m for (n of [1, 2, 3]) for (m of [4, 5, 6])].join());
 
 // 'of' is not ECMAScript keywords.
 var of = 10;
-assertEq(of, 10);
+assertEquals(10, of);
 
 (function() {
   function of() { return 12; }
-  assertEq(of(), 12);
+  assertEquals(12, of());
 })();
 
 function f(of) { return of*2; }
-assertEq(f(12), 24);
+assertEquals(24, f(12));
 
 // for each-of is SyntaxError
-assertException(SyntaxError, function() {
-  eval('for each (n of [1,2]) {}');
-});
+assertThrows('for each (n of [1,2]) {}', SyntaxError);
 
-assertException(SyntaxError, function() {
-  eval('[n*n for each (n of [1,2])]');
-});
+assertThrows('[n*n for each (n of [1,2])]', SyntaxError);
 
 "success"
