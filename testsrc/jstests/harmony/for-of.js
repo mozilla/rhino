@@ -16,21 +16,6 @@ for (var n of [1, 2, 3]) {
 }
 assertEquals('5,6,7,6,7,8,7,8,9', r.join());
 
-/*
-var a = {
-  iterator: function() {
-    for (var i = 0; i < 3; i++) {
-      yield i;
-    }
-  }
-};
-var r = [];
-for (var n of a) {
-  r.push(n);
-}
-assertEquals(r.join(), '0,1,2');
-*/
-
 var a = [0];
 var r = [];
 var i = 0;
@@ -58,7 +43,7 @@ var a = {
   '1': 'bar',
   length: 2
 };
-var ite = Array.prototype.iterator.call(a);
+var ite = Array.prototype[Symbol.iterator].call(a);
 assertEquals('foo', ite.next());
 assertEquals('bar', ite.next());
 assertThrows(function() {
@@ -66,18 +51,17 @@ assertThrows(function() {
 }, StopIteration);
 
 // Other
-var a = {
-  iterator: function() {
-    return {
-      n: 0,
-      next: function() {
-        if (this.n >= 3) {
-          throw StopIteration;
-        }
-        return this.n++;
+var a = {};
+a[Symbol.iterator] = function() {
+  return {
+    n: 0,
+    next: function() {
+      if (this.n >= 3) {
+        throw StopIteration;
       }
-    };
-  }
+      return this.n++;
+    }
+  };
 };
 var r = [];
 for (var n of a) {
@@ -111,10 +95,9 @@ assertThrows(function() {
 }, TypeError);
 
 assertThrows(function() {
-  var a = {
-    iterator: function() {
-      return 0;
-    }
+  var a = {};
+  a[Symbol.iterator] = function() {
+    return 0;
   };
   for (var n of 1) {}
 }, TypeError);
@@ -139,5 +122,8 @@ assertEquals(24, f(12));
 assertThrows('for each (n of [1,2]) {}', SyntaxError);
 
 assertThrows('[n*n for each (n of [1,2])]', SyntaxError);
+
+assertEquals('[Symbol.iterator]', Array.prototype[Symbol.iterator].name);
+assertEquals('[Symbol.iterator]', String.prototype[Symbol.iterator].name);
 
 "success"

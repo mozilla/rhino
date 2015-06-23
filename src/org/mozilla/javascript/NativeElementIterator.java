@@ -115,8 +115,6 @@ public final class NativeElementIterator extends IdScriptableObject {
         return arrayLike.get(index++, arrayLike);
     }
 
-    public static final String ITERATOR_FUNCTION_NAME = "iterator";
-
     private Scriptable arrayLike;
     private int index;
 

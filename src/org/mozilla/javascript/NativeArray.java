@@ -186,7 +186,7 @@ public class NativeArray extends IdScriptableObject implements List
     @Override
     protected void initPrototypeId(int id)
     {
-        String s;
+        String s, fnName = null;
         int arity;
         switch (id) {
           case Id_constructor:    arity=1; s="constructor";    break;
@@ -214,10 +214,14 @@ public class NativeArray extends IdScriptableObject implements List
           case Id_findIndex:      arity=1; s="findIndex";      break;
           case Id_reduce:         arity=1; s="reduce";         break;
           case Id_reduceRight:    arity=1; s="reduceRight";    break;
-          case Id_iterator:       arity=0; s="iterator";       break;
+          case Id_iterator:       arity=0; s="@@iterator"; fnName="[Symbol.iterator]"; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(ARRAY_TAG, id, s, arity);
+        if (fnName == null) {
+            initPrototypeMethod(ARRAY_TAG, id, s, arity);
+        } else {
+            initPrototypeMethod(ARRAY_TAG, id, s, fnName, arity);
+        }
     }
 
     @Override
@@ -1984,9 +1988,9 @@ public class NativeArray extends IdScriptableObject implements List
             case 8: c=s.charAt(3);
                 if (c=='o') { X="toSource";id=Id_toSource; }
                 else if (c=='t') { X="toString";id=Id_toString; }
-                else if (c=='r') { X="iterator";id=Id_iterator; }
                 break L;
             case 9: X="findIndex";id=Id_findIndex; break L;
+            case 10: X="@@iterator";id=Id_iterator; break L;
             case 11: c=s.charAt(0);
                 if (c=='c') { X="constructor";id=Id_constructor; }
                 else if (c=='l') { X="lastIndexOf";id=Id_lastIndexOf; }
