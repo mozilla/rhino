@@ -44,22 +44,31 @@ var a = {
   length: 2
 };
 var ite = Array.prototype[Symbol.iterator].call(a);
-assertEquals('foo', ite.next());
-assertEquals('bar', ite.next());
-assertThrows(function() {
-  ite.next();
-}, StopIteration);
+var r;
+r = ite.next();
+assertEquals('foo', r.value);
+assertFalse(r.done);
+r = ite.next();
+assertEquals('bar', r.value);
+assertFalse(r.done);
+r = ite.next();
+assertTrue(r.done);
 
 // Other
 var a = {};
 a[Symbol.iterator] = function() {
+  var n = 0;
   return {
-    n: 0,
     next: function() {
-      if (this.n >= 3) {
-        throw StopIteration;
+      if (n >= 3) {
+        return {
+          done: true
+        };
       }
-      return this.n++;
+      return {
+        value: n++,
+        done: false
+      };
     }
   };
 };
@@ -125,5 +134,18 @@ assertThrows('[n*n for each (n of [1,2])]', SyntaxError);
 
 assertEquals('[Symbol.iterator]', Array.prototype[Symbol.iterator].name);
 assertEquals('[Symbol.iterator]', String.prototype[Symbol.iterator].name);
+
+// should have `value` and `done` property.
+var a = {};
+a[Symbol.iterator] = function() {
+  return {
+    next() {
+      return null;
+    }
+  };
+};
+assertThrows(function() {
+  for (var b of a);
+}, TypeError);
 
 "success"
