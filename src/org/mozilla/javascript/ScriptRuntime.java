@@ -2224,6 +2224,9 @@ public class ScriptRuntime {
     {
         IdEnumeration x = (IdEnumeration)enumObj;
         if (x.iterator != null) {
+            if (x.enumType == ENUMERATE_VALUES_IN_ORDER) {
+                return enumNextInOrder(x);
+            }
             Object v = ScriptableObject.getProperty(x.iterator, "next");
             if (!(v instanceof Callable))
                 return Boolean.FALSE;
@@ -2235,7 +2238,7 @@ public class ScriptRuntime {
                 return Boolean.TRUE;
             } catch (JavaScriptException e) {
                 if (e.getValue() instanceof NativeIterator.StopIteration) {
-                  return Boolean.FALSE;
+                    return Boolean.FALSE;
                 }
                 throw e;
             }
@@ -2267,6 +2270,25 @@ public class ScriptRuntime {
             }
             return Boolean.TRUE;
         }
+    }
+
+    private static Boolean enumNextInOrder(IdEnumeration enumObj)
+    {
+        Object v = ScriptableObject.getProperty(enumObj.iterator, "next");
+        if (!(v instanceof Callable)) {
+            throw notFunctionError(enumObj.iterator, "next");
+        }
+        Callable f = (Callable) v;
+        Context cx = Context.getContext();
+        Scriptable scope = enumObj.iterator.getParentScope();
+        Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
+        Scriptable iteratorResult = toObject(cx, scope, r);
+        Object done = ScriptableObject.getProperty(iteratorResult, "done");
+        if (done != ScriptableObject.NOT_FOUND && toBoolean(done)) {
+            return Boolean.FALSE;
+        }
+        enumObj.currentId = ScriptableObject.getProperty(iteratorResult, "value");
+        return Boolean.TRUE;
     }
 
     public static Object enumId(Object enumObj, Context cx)

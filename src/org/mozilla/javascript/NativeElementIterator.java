@@ -92,6 +92,8 @@ public final class NativeElementIterator extends IdScriptableObject {
         switch (id) {
         case Id_next:
             return iterator.next(cx, scope);
+        // case Id_return:
+        // case Id_throw:
         default:
             throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -102,17 +104,25 @@ public final class NativeElementIterator extends IdScriptableObject {
     {
         if (s.equals("next")) {
             return Id_next;
+        // } else if (s.equals("return")) {
+        //     return Id_return;
+        // } else if (s.equals("throw")) {
+        //     return Id_throw;
         }
         return 0;
     }
 
     private Object next(Context cx, Scriptable scope) {
-        if (index >= NativeArray.getLengthProperty(cx, arrayLike)) {
-            // Out of values. Throw StopIteration.
-            throw new JavaScriptException(
-                NativeIterator.getStopIterationObject(scope), null, 0);
+        Object value = Undefined.instance;
+        boolean done = index >= NativeArray.getLengthProperty(cx, arrayLike);
+        if (!done) {
+            value = arrayLike.get(index++, arrayLike);
         }
-        return arrayLike.get(index++, arrayLike);
+
+        Scriptable iteratorResult = cx.newObject(scope);
+        ScriptableObject.putProperty(iteratorResult, "value", value);
+        ScriptableObject.putProperty(iteratorResult, "done", done);
+        return iteratorResult;
     }
 
     private Scriptable arrayLike;
@@ -120,5 +130,7 @@ public final class NativeElementIterator extends IdScriptableObject {
 
     private static final int
         Id_next          = 1,
-        MAX_PROTOTYPE_ID = 1;
+        Id_return        = 2,
+        Id_throw         = 3,
+        MAX_PROTOTYPE_ID = 3;
 }
