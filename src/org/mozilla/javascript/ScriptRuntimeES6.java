@@ -9,10 +9,9 @@ package org.mozilla.javascript;
 public class ScriptRuntimeES6 {
 
     public static Scriptable requireObjectCoercible(Context cx, Scriptable val, IdFunctionObject idFuncObj) {
-        if (cx.getLanguageVersion() < Context.VERSION_ES6) throw Context.reportRuntimeError(idFuncObj.getFunctionName() + " is only available for version >= ES6");
-
-        if (val == null || val == Undefined.SCRIPTABLE_UNDEFINED) throw ScriptRuntime.typeError2("msg.called.null.or.undefined", idFuncObj.getTag(), idFuncObj.getFunctionName());
-
+        if (val == null || val == Undefined.SCRIPTABLE_UNDEFINED) {
+            throw ScriptRuntime.typeError2("msg.called.null.or.undefined", idFuncObj.getTag(), idFuncObj.getFunctionName());
+        }
         return val;
     }
 }
