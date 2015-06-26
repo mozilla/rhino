@@ -111,7 +111,7 @@ public class Test262SuiteTest {
 
         List<File> dirFiles = new LinkedList<File>();
 
-        Scanner scanner = new Scanner(new File("testsrc/test262.properties"));
+        Scanner scanner = new Scanner(new File("src/test/resources/test262.properties"));
 
         String curLine = "", nxtLine = "";
 

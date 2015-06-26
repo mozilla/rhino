@@ -4,9 +4,9 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest(
-    value = "testsrc/jstests/harmony/math-functions.js"
+    value = "src/test/resources/jstests/harmony/parse-int-float.js"
 )
-public class MathFunctionsTest
+public class ParseIntFloatTest
     extends ScriptTestsBase
 {
 }

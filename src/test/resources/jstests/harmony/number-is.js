@@ -28,7 +28,7 @@
 // Test number predicates that Harmony adds to the Number constructor:
 // isFinite(), isNaN(), isInteger(), isSafeInteger().
 
-load("testsrc/assert.js");
+load("src/test/resources/assert.js");
 
 assertTrue(Number.isFinite(0));
 assertTrue(Number.isFinite(Number.MIN_VALUE));

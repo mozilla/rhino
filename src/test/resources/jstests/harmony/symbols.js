@@ -1,4 +1,4 @@
-load("testsrc/assert.js");
+load("src/test/resources/assert.js");
 
 assertTrue(Symbol.iterator !== undefined);
 let desc = Object.getOwnPropertyDescriptor(Symbol, "iterator");

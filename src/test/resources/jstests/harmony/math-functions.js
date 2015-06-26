@@ -1,4 +1,4 @@
-load("testsrc/assert.js");
+load("src/test/resources/assert.js");
 
 assertEquals(Math.cbrt(-1), -1);
 assertEquals(Math.cbrt(0), 0);
