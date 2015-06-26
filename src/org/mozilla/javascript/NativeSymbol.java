@@ -82,4 +82,9 @@ public class NativeSymbol extends IdScriptableObject {
         return super.execIdCall(f, cx, scope, thisObj, args);
 
     }
+
+    @Override
+    public String getTypeOf() {
+        return "symbol";
+    }
 }

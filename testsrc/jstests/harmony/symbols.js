@@ -18,4 +18,7 @@ assertFalse(desc.writable);
 assertFalse(desc.configurable);
 assertFalse(desc.enumerable);
 
+assertEquals("symbol", typeof Symbol());
+assertEquals("symbol", typeof Symbol("qwe"));
+
 "success";
