@@ -42,6 +42,7 @@ sourceSets {
 
 dependencies {
     testCompile "junit:junit:4.12"
+    testCompile "org.yaml:snakeyaml:1.15"
 }
 
 test {
