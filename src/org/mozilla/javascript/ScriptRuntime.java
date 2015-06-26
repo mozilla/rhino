@@ -264,7 +264,7 @@ public class ScriptRuntime {
 
         }
 
-     
+
         if (scope instanceof TopLevel) {
             ((TopLevel)scope).cacheBuiltins();
         }
@@ -294,7 +294,7 @@ public class ScriptRuntime {
 
         return s;
     }
-    
+
     static String[] getTopPackageNames() {
         // Include "android" top package if running on Android
         return "Dalvik".equals(System.getProperty("java.vm.name")) ?
@@ -815,7 +815,7 @@ public class ScriptRuntime {
             if (val == null) {
                 return "null";
             }
-            if (val == Undefined.instance) {
+            if (val == Undefined.instance || val == Undefined.SCRIPTABLE_UNDEFINED) {
                 return "undefined";
             }
             if (val instanceof String) {
@@ -2620,11 +2620,14 @@ public class ScriptRuntime {
 
         Scriptable callThis = null;
         if (L != 0) {
-            callThis = toObjectOrNull(cx, args[0], scope);
+            if  (cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
+                callThis = toObjectOrNull(cx, args[0], scope);
+            } else {
+                callThis = args[0] == Undefined.instance ? Undefined.SCRIPTABLE_UNDEFINED : toObjectOrNull(cx, args[0], scope);
+            }
         }
-        if (callThis == null) {
-            // This covers the case of args[0] == (null|undefined) as well.
-            callThis = getTopCallScope(cx);
+        if (callThis == null && cx.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS)) {
+            callThis = getTopCallScope(cx); // This covers the case of args[0] == (null|undefined) as well.
         }
 
         Object[] callArgs;
@@ -3164,7 +3167,9 @@ public class ScriptRuntime {
             double d = ((Number)x).doubleValue();
             return d == d;
         }
-        if (x == null || x == Undefined.instance) {
+        if (x == null || x == Undefined.instance || x == Undefined.SCRIPTABLE_UNDEFINED) {
+            if ((x == Undefined.instance && y == Undefined.SCRIPTABLE_UNDEFINED)
+                || (x == Undefined.SCRIPTABLE_UNDEFINED && y == Undefined.instance)) return true;
             return false;
         } else if (x instanceof Number) {
             if (y instanceof Number) {
@@ -4329,13 +4334,5 @@ public class ScriptRuntime {
     public static final Object[] emptyArgs = new Object[0];
     public static final String[] emptyStrings = new String[0];
 
-
-    public static Scriptable requireObjectCoercible(Scriptable val, IdFunctionObject idFuncObj) {
-        Scriptable val1 = val.getParentScope() != null ? val : null;
-        if (val1 == null || val1 == Undefined.instance)
-            throw ScriptRuntime.typeError2("msg.called.null.or.undefined", idFuncObj.getTag(), idFuncObj.getFunctionName());
-
-        return val1;
-    }
 
 }

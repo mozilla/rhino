@@ -292,6 +292,9 @@ public class Context
      */
     public static final int FEATURE_V8_EXTENSIONS = 14;
 
+
+    public static final int FEATURE_OLD_UNDEF_NULL_THIS = 15;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 

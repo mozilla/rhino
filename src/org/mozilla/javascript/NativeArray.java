@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.regexp.NativeRegExp;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -17,6 +15,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 /**
  * This class implements the Array native object.
@@ -332,7 +332,7 @@ public class NativeArray extends IdScriptableObject implements List
               case Id_some:
               case Id_find:
               case Id_findIndex:
-                return iterativeMethod(cx, id, scope, thisObj, args);
+                return iterativeMethod(cx, f, scope, thisObj, args);
               case Id_reduce:
               case Id_reduceRight:
                 return reduceMethod(cx, id, scope, thisObj, args);
@@ -340,7 +340,7 @@ public class NativeArray extends IdScriptableObject implements List
               case Id_iterator:
                 return new NativeArrayIterator(scope, thisObj);
             }
-            throw new IllegalArgumentException(String.valueOf(id));
+            throw new IllegalArgumentException("Array.prototype has no method: " + f.getFunctionName());
         }
     }
 
@@ -1601,9 +1601,13 @@ public class NativeArray extends IdScriptableObject implements List
     /**
      * Implements the methods "every", "filter", "forEach", "map", and "some".
      */
-    private static Object iterativeMethod(Context cx, int id, Scriptable scope,
+    private static Object iterativeMethod(Context cx, IdFunctionObject idFunctionObject, Scriptable scope,
                                           Scriptable thisObj, Object[] args)
     {
+        int id = idFunctionObject.methodId();
+
+        if (Id_find == id || Id_findIndex == id) thisObj = requireObjectCoercible(cx, thisObj, idFunctionObject);
+
         long length = getLengthProperty(cx, thisObj);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         if (callbackArg == null || !(callbackArg instanceof Function)) {
@@ -1619,10 +1623,6 @@ public class NativeArray extends IdScriptableObject implements List
             thisArg = parent;
         } else {
             thisArg = ScriptRuntime.toObject(cx, scope, args[1]);
-        }
-
-        if ((Id_find == id || Id_findIndex == id) && thisArg == thisObj) {
-            throw ScriptRuntime.typeError("Array.prototype method called on null or undefined");
         }
 
         Scriptable array = null;
