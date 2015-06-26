@@ -15,6 +15,7 @@
   -->
   <property name="test.junit.url" value="http://repo1.maven.org/maven2/junit/junit/4.12/junit-4.12.jar"/>
   <property name="test.hamcrest.url" value="http://central.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
+  <property name="test.snakeyaml.url" value="http://central.maven.org/maven2/org/yaml/snakeyaml/1.15/snakeyaml-1.15.jar"/>
 
   <!--
     URL from which emma.jar can be retrieved
@@ -50,6 +51,7 @@
     <mkdir dir="lib"/>
     <get src="${test.junit.url}" dest="lib/junit.jar" usetimestamp="true"/>
     <get src="${test.hamcrest.url}" dest="lib/hamcrest.jar" usetimestamp="true"/>
+    <get src="${test.snakeyaml.url}" dest="lib/snakeyaml.jar" usetimestamp="true"/>
   </target>
 
   <target name="junit-compile">
@@ -64,6 +66,7 @@
       <classpath>
         <pathelement path="lib/junit.jar" />
         <pathelement path="lib/hamcrest.jar" />
+        <pathelement path="lib/snakeyaml.jar" />
         <pathelement path="${classes}" />
       </classpath>
       <src path="testsrc"/>
@@ -85,6 +88,7 @@
       <classpath>
         <pathelement path="lib/junit.jar" />
         <pathelement path="lib/hamcrest.jar" />
+        <pathelement path="lib/snakeyaml.jar" />
         <pathelement path="${classes}" />
       </classpath>
       <sourcepath path="testsrc" />
@@ -158,6 +162,7 @@
         <pathelement path="lib/emma.jar"/>
         <pathelement path="lib/junit.jar" />
         <pathelement path="lib/hamcrest.jar" />
+        <pathelement path="lib/snakeyaml.jar" />
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
       <batchtest todir="build/test">
@@ -190,6 +195,7 @@
         <pathelement path="${test.classes}" />
         <pathelement path="lib/junit.jar" />
         <pathelement path="lib/hamcrest.jar" />
+        <pathelement path="lib/snakeyaml.jar" />
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
 
@@ -211,6 +217,7 @@
         <pathelement path="${test.classes}" />
         <pathelement path="lib/junit.jar" />
         <pathelement path="lib/hamcrest.jar" />
+        <pathelement path="lib/snakeyaml.jar" />
         <pathelement location="${test.jstests.jar}"/>
       </classpath>
       <batchtest todir="build/test/benchmark">
