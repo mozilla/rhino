@@ -38,6 +38,9 @@ public final class NativeArrayIterator extends ES6Iterator {
         boolean done = index >= NativeArray.getLengthProperty(cx, arrayLike);
         if (!done) {
             value = arrayLike.get(index++, arrayLike);
+            if (value == ScriptableObject.NOT_FOUND) {
+                value = Undefined.instance;
+            }
         }
         return makeIteratorResult(cx, scope, done, value);
     }
