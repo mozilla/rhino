@@ -42,6 +42,8 @@ final class Arguments extends IdScriptableObject
         } else {
             callerObj = NOT_FOUND;
         }
+
+        defineProperty(NativeSymbol.ITERATOR_PROPERTY, iteratorMethod, ScriptableObject.DONTENUM);
     }
 
     @Override
@@ -360,6 +362,18 @@ final class Arguments extends IdScriptableObject
         removeArg(index);
       }
     }
+
+    private static BaseFunction iteratorMethod = new BaseFunction() {
+        @Override
+        public Object call(Context cx, Scriptable scope, Scriptable thisObj,
+                           Object[] args) {
+            // TODO : call %ArrayProto_values%
+            // 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
+            //  1. Perform DefinePropertyOrThrow(obj, @@iterator, PropertyDescriptor {[[Value]]:%ArrayProto_values%,
+            //     [[Writable]]: true, [[Enumerable]]: false, [[Configurable]]: true}).
+            return new NativeArrayIterator(scope, thisObj);
+        }
+    };
 
 // Fields to hold caller, callee and length properties,
 // where NOT_FOUND value tags deleted properties.
