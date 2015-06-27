@@ -43,13 +43,18 @@ public abstract class ES6Iterator extends IdScriptableObject {
     @Override
     protected void initPrototypeId(int id)
     {
-        String s;
+        String s, fnName = null;;
         int arity;
         switch (id) {
         case Id_next:           arity=0; s=NEXT_METHOD;           break;
+        case Id_iterator:       arity=0; s="@@iterator"; fnName="[Symbol.iterator]"; break;
         default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(getTag(), id, s, arity);
+        if (fnName == null) {
+            initPrototypeMethod(getTag(), id, s, arity);
+        } else {
+            initPrototypeMethod(getTag(), id, s, fnName, arity);
+        }
     }
 
     @Override
@@ -71,6 +76,8 @@ public abstract class ES6Iterator extends IdScriptableObject {
             return iterator.next(cx, scope);
         // case Id_return:
         // case Id_throw:
+        case Id_iterator:
+            return iterator;
         default:
             throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -85,6 +92,8 @@ public abstract class ES6Iterator extends IdScriptableObject {
         //     return Id_return;
         // } else if (s.equals("throw")) {
         //     return Id_throw;
+        } else if (s.equals("@@iterator")) {
+            return Id_iterator;
         }
         return 0;
     }
@@ -105,7 +114,8 @@ public abstract class ES6Iterator extends IdScriptableObject {
         Id_next          = 1,
         // Id_return        = 2,
         // Id_throw         = 3,
-        MAX_PROTOTYPE_ID = 1;
+        Id_iterator      = 2,
+        MAX_PROTOTYPE_ID = 2;
 
     public static final String NEXT_METHOD = "next";
 
