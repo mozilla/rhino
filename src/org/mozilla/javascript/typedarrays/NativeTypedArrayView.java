@@ -10,6 +10,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
@@ -281,6 +282,9 @@ public abstract class NativeTypedArrayView<T>
             } else {
                 throw ScriptRuntime.constructError("Error", "invalid arguments");
             }
+
+        case Id_iterator:
+            return new NativeArrayIterator(scope, thisObj);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -288,16 +292,21 @@ public abstract class NativeTypedArrayView<T>
     @Override
     protected void initPrototypeId(int id)
     {
-        String s;
+        String s, fnName = null;;
         int arity;
         switch (id) {
         case Id_constructor:        arity = 1; s = "constructor"; break;
         case Id_get:                arity = 1; s = "get"; break;
         case Id_set:                arity = 2; s = "set"; break;
         case Id_subarray:           arity = 2; s = "subarray"; break;
+        case Id_iterator:           arity = 0; s = "@@iterator"; fnName="[Symbol.iterator]"; break;
         default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        initPrototypeMethod(getClassName(), id, s, arity);
+        if (fnName == null) {
+            initPrototypeMethod(getClassName(), id, s, arity);
+        } else {
+            initPrototypeMethod(getClassName(), id, s, fnName, arity);
+        }
     }
 
     // #string_id_map#
@@ -315,6 +324,7 @@ public abstract class NativeTypedArrayView<T>
                 else if (c=='s') { if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_set; break L0;} }
             }
             else if (s_length==8) { X="subarray";id=Id_subarray; }
+            else if (s_length==10) { X="@@iterator";id=Id_iterator; }
             else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
@@ -328,10 +338,11 @@ public abstract class NativeTypedArrayView<T>
         Id_constructor          = 1,
         Id_get                  = 2,
         Id_set                  = 3,
-        Id_subarray             = 4;
+        Id_subarray             = 4,
+        Id_iterator             = 5;
 
     protected static final int
-        MAX_PROTOTYPE_ID        = Id_subarray;
+        MAX_PROTOTYPE_ID        = Id_iterator;
 
 // #/string_id_map#
 
