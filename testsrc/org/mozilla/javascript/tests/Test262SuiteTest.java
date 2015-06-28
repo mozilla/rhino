@@ -197,6 +197,6 @@ public class Test262SuiteTest {
 
     @Test
     public void test262() throws Exception {
-        assertNotNull(executeRhinoScript());
+        executeRhinoScript();
     }
 }
