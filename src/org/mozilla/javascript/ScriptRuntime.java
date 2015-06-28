@@ -3804,7 +3804,7 @@ public class ScriptRuntime {
                 ++skip;
                 continue;
             }
-            ScriptableObject.putProperty(array, i, objects[j]);
+            array.put(i, array, objects[j]);
             ++j;
         }
         return array;
