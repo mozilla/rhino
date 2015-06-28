@@ -295,11 +295,10 @@ load("testsrc/assert.js");
     assertEquals("b", found);
 
     // Test array itself as thisArg
-    var a = [1, 2];
     var o;
-    // FIXME:
-    //a.find(function () { o = this; }, a);
-    //assertEquals(a, o);
+    var a = [1, 2];
+    a.find(function () { o = this; }, a);
+    assertEquals(a, o);
 })();
 
 // Test exceptions
