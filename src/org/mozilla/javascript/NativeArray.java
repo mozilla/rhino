@@ -1642,8 +1642,12 @@ public class NativeArray extends IdScriptableObject implements List
         for (long i=0; i < length; i++) {
             Object[] innerArgs = new Object[3];
             Object elem = getRawElem(thisObj, i);
-            if (elem == Scriptable.NOT_FOUND && !(id == Id_find || id == Id_findIndex)) {
-                continue;
+            if (elem == Scriptable.NOT_FOUND) {
+                if (id == Id_find || id == Id_findIndex) {
+                    elem = Undefined.instance;
+                } else {
+                    continue;
+                }
             }
             innerArgs[0] = elem;
             innerArgs[1] = Long.valueOf(i);

@@ -105,24 +105,30 @@ load("testsrc/assert.js");
 (function () {
     var a = [1, 2, 3, 4, 5];
     var l = 0;
-    var predicate = function p() {
+    var sawUndefined = false;
+    var predicate = function p(v) {
         l++;
+        sawUndefined = sawUndefined || (v === undefined);
     };
 
     a.findIndex(predicate);
     assertEquals(a.length, l);
+    assertFalse(sawUndefined);
 
     // even for sparse arrays
     a = new Array(10);
     l = 0;
     a.findIndex(predicate);
     assertEquals(a.length, l);
+    assertTrue(sawUndefined);
 
     a = [];
     a[10] = 1;
     l = 0;
+    sawUndefined = false;
     a.findIndex(predicate);
     assertEquals(a.length, l);
+    assertTrue(sawUndefined);
 })();
 
 
