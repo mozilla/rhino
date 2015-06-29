@@ -253,7 +253,7 @@ public class Parser
     void reportError(String messageId, String messageArg, int position,
                      int length)
     {
-        addError(messageId, position, length);
+        addError(messageId, messageArg, position, length);
 
         if (!compilerEnv.recoverFromErrors()) {
             throw new ParserException();
