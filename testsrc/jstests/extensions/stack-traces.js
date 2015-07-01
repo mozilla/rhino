@@ -181,3 +181,47 @@ try {
   assertTrue(/nestedThrower/.test(e.stack));
   assertTrue(/parentThrower/.test(e.stack));
 }
+
+// test that all the functions on a stack frame work
+
+function printFrame(l, f) {
+  var o =
+    {typeofThis: typeof f.getThis(),
+     typeName: f.getTypeName(),
+     function: f.getFunction(),
+    functionName: f.getFunctionName(),
+    methodName: f.getMethodName(),
+    fileName: f.getFileName(),
+    lineNumber: f.getLineNumber(),
+    columnNumber: f.getColumnNumber(),
+    evalOrigin: f.getEvalOrigin(),
+    topLevel: f.isToplevel(),
+    eval: f.isEval(),
+    native: f.isNative(),
+    constructor: f.isConstructor()
+    };
+
+  l.push(o);
+  return l;
+}
+
+Error.prepareStackTrace = function (e, frames) {
+  return frames.reduce(printFrame, []);
+};
+
+try {
+  grandparentThrower('testing stack');
+} catch (e) {
+  e.stack.forEach(function (f) {
+    verifyFrame(f);
+  });
+}
+
+function verifyFrame(f) {
+  assertEquals(typeof f.fileName, 'string');
+  assertEquals(typeof f.lineNumber, 'number');
+  assertEquals(typeof f.topLevel, 'boolean');
+  assertEquals(typeof f.eval, 'boolean');
+  assertEquals(typeof f.native, 'boolean');
+  assertEquals(typeof f.constructor, 'boolean');
+}
