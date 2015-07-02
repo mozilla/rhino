@@ -1312,7 +1312,7 @@ public class Context
         // Annotate so we can check later to ensure no java code in
         // intervening frames
         isContinuationsTopCall = true;
-        return ScriptRuntime.doTopCall(function, this, scope, scope, args);
+        return ScriptRuntime.doTopCall(function, this, scope, scope, args, isTopLevelStrict);
     }
 
     /**
@@ -2672,6 +2672,10 @@ public class Context
             activationNames.remove(name);
     }
 
+    public final boolean isStrictMode() {
+        return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
+    }
+
     private static String implementationVersion;
 
     private final ContextFactory factory;
@@ -2741,4 +2745,6 @@ public class Context
 
     // Generate an observer count on compiled code
     public boolean generateObserverCount = false;
+
+    boolean isTopLevelStrict;
 }

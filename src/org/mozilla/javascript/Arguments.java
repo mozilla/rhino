@@ -118,6 +118,22 @@ final class Arguments extends IdScriptableObject
       }
     }
 
+    @Override
+    public Object get(String name, Scriptable start)
+    {
+        int info = findInstanceIdInfo(name);
+        int id = info & 0xFFFF;
+        switch (id) {
+        case Id_caller:
+        case Id_callee:
+            Context cx = Context.getContext();
+            if (cx.isStrictMode()) {
+                throw ScriptRuntime.typeError1("msg.arguments.not.access.strict", getInstanceIdName(id));
+            }
+        }
+        return super.get(name, start);
+    }
+
     private boolean sharedWithActivation(int index)
     {
         NativeFunction f = activation.function;

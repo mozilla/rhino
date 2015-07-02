@@ -28,12 +28,7 @@ public final class NativeCall extends IdScriptableObject
 
     NativeCall() { }
 
-    NativeCall(NativeFunction function, Scriptable scope, Object[] args)
-    {
-        this(function, scope, args, false);
-    }
-
-    NativeCall(NativeFunction function, Scriptable scope, Object[] args, boolean isArrow)
+    NativeCall(NativeFunction function, Scriptable scope, Object[] args, boolean isArrow, boolean isStrict)
     {
         this.function = function;
 
@@ -41,6 +36,7 @@ public final class NativeCall extends IdScriptableObject
         // leave prototype null
 
         this.originalArgs = (args == null) ? ScriptRuntime.emptyArgs : args;
+        this.isStrict = isStrict;
 
         // initialize values of arguments
         int paramAndVarCount = function.getParamAndVarCount();
@@ -124,6 +120,7 @@ public final class NativeCall extends IdScriptableObject
 
     NativeFunction function;
     Object[] originalArgs;
+    boolean isStrict;
 
     transient NativeCall parentActivationCall;
 }

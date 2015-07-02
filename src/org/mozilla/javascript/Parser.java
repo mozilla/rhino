@@ -621,7 +621,7 @@ public class Parser
         return root;
     }
 
-    private AstNode parseFunctionBody(int type)
+    private AstNode parseFunctionBody(int type, FunctionNode fnNode)
         throws IOException
     {
         boolean isExpressionClosure = false;
@@ -675,6 +675,7 @@ public class Parser
                                     inDirectivePrologue = false;
                                 } else if (directive.equals("use strict")) {
                                     inUseStrictDirective = true;
+                                    fnNode.setInStrictMode(true);
                                 }
                             }
                             break;
@@ -829,7 +830,7 @@ public class Parser
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         try {
             parseFunctionParams(fnNode);
-            fnNode.setBody(parseFunctionBody(type));
+            fnNode.setBody(parseFunctionBody(type, fnNode));
             fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
             fnNode.setLength(ts.tokenEnd - functionSourceStart);
 
@@ -910,7 +911,7 @@ public class Parser
                 fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
             }
                 
-            fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION));
+            fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode));
             fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
             fnNode.setLength(ts.tokenEnd - functionSourceStart);
         } finally {
