@@ -391,7 +391,7 @@ public class NativeArray extends IdScriptableObject implements List
     private static long toArrayIndex(double d) {
         if (d == d) {
             long index = ScriptRuntime.toUint32(d);
-            if (index == d && index != 4294967295L) {
+            if (index == d && index != MAX_LENGTH) {
                 return index;
             }
         }
@@ -2109,4 +2109,9 @@ public class NativeArray extends IdScriptableObject implements List
      */
     private static final double GROW_FACTOR = 1.5;
     private static final int MAX_PRE_GROW_SIZE = (int)(Integer.MAX_VALUE / GROW_FACTOR);
+
+    /**
+     * Maximum array's length 2^32 - 1 (ES2015 15.4)
+     */
+    private static final long MAX_LENGTH = (2L << 31) - 1;
 }
