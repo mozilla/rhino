@@ -11,7 +11,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.JavaScriptException;
+import org.mozilla.javascript.EcmaError;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.drivers.TestUtils;
@@ -24,7 +25,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mozilla.javascript.drivers.TestUtils.JS_FILE_FILTER;
 import static org.mozilla.javascript.drivers.TestUtils.recursiveListFilesHelper;
@@ -60,13 +61,15 @@ public class Test262SuiteTest {
     private final int optLevel;
     private final boolean useStrict;
     private List<String> harnessFiles;
+    private EcmaErrorType errorType;
 
-    public Test262SuiteTest(String jsFilePath, String jsFileStr, List<String> harnessFiles, int optLevel, boolean useStrict) {
+    public Test262SuiteTest(String jsFilePath, String jsFileStr, List<String> harnessFiles, int optLevel, boolean useStrict, EcmaErrorType errorType) {
         this.jsFilePath = jsFilePath;
         this.jsFileStr = jsFileStr;
         this.optLevel = optLevel;
         this.useStrict = useStrict;
         this.harnessFiles = harnessFiles;
+        this.errorType = errorType;
     }
 
     private Object executeRhinoScript() {
@@ -91,9 +94,25 @@ public class Test262SuiteTest {
                 str = "\"use strict\";\nvar strict_mode = true;\n" + jsFileStr;
             }
 
-            return cx.evaluateString(scope, str, jsFilePath.replaceAll("\\\\", "/"), 1, null);
-        } catch (JavaScriptException ex) {
-            fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
+            Object result = cx.evaluateString(scope, str, jsFilePath.replaceAll("\\\\", "/"), 1, null);
+
+            if (errorType != EcmaErrorType.NONE) {
+                fail(String.format("failed negative test. expected error: %s", errorType));
+                return null;
+            }
+
+            return result;
+        } catch (RhinoException ex) {
+            if (errorType == EcmaErrorType.NONE || !(ex instanceof EcmaError)) {
+                fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
+            } else {
+                if (errorType == EcmaErrorType.ANY) {
+                    // passed
+                } else {
+                    EcmaError ecmaError = (EcmaError)ex;
+                    assertEquals(errorType.name(), ecmaError.getName());
+                }
+            }
             return null;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -182,13 +201,14 @@ public class Test262SuiteTest {
                 harnessFiles.addAll((Collection)header.get("includes"));
             }
 
+            EcmaErrorType errorType = EcmaErrorType._valueOf((String)header.get("negative"));
             List<String> flags = header.containsKey("flags") ? (List<String>) header.get("flags") : Collections.EMPTY_LIST;
             for (int optLevel : OPT_LEVELS) {
                 if (!flags.contains("onlyStrict")) {
-                    result.add(new Object[]{jsTest.getPath(), jsFileStr, harnessFiles, optLevel, false});
+                    result.add(new Object[]{jsTest.getPath(), jsFileStr, harnessFiles, optLevel, false, errorType});
                 }
                 if (!flags.contains("noStrict")) {
-                    result.add(new Object[]{jsTest.getPath(), jsFileStr, harnessFiles, optLevel, true});
+                    result.add(new Object[]{jsTest.getPath(), jsFileStr, harnessFiles, optLevel, true, errorType});
                 }
             }
         }
@@ -198,5 +218,35 @@ public class Test262SuiteTest {
     @Test
     public void test262() throws Exception {
         executeRhinoScript();
+    }
+
+    static enum EcmaErrorType {
+        NONE,
+        ANY,
+        NotEarlyError,
+        ReferenceError,
+        SyntaxError,
+        Test262Error,
+        TypeError,
+        expected_message;
+
+        static EcmaErrorType _valueOf(String s) {
+            if (s == null || s.equals("")) {
+                return NONE;
+            } else if (s.equals("NotEarlyError")) {
+                return NotEarlyError;
+            } else if (s.equals("ReferenceError")) {
+                return ReferenceError;
+            } else if (s.equals("SyntaxError")) {
+                return SyntaxError;
+            } else if (s.equals("Test262Error")) {
+                return Test262Error;
+            } else if (s.equals("TypeError")) {
+                return TypeError;
+            } else if (s.equals("expected_message")) {
+                return expected_message;
+            }
+            return ANY;
+        }
     }
 }
