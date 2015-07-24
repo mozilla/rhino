@@ -133,6 +133,11 @@ public final class OptRuntime extends ScriptRuntime
         ScriptRuntime.initFunction(cx, scope, fn, functionType, false);
     }
 
+    public static Function bindThis(NativeFunction fn, Context cx, Scriptable scope, Scriptable thisObj)
+    {
+        return new ArrowFunction(cx, scope, fn, thisObj);
+    }
+
     public static Object callSpecial(Context cx, Callable fun,
                                      Scriptable thisObj, Object[] args,
                                      Scriptable scope,

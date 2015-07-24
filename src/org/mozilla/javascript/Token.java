@@ -230,7 +230,8 @@ public class Token
         COMMENT        = 162,
         GENEXPR        = 163,
         METHOD         = 164,  // ES6 MethodDefinition
-        LAST_TOKEN     = 165;
+        ARROW          = 165,  // ES6 ArrowFunction
+        LAST_TOKEN     = 166;
 
     /**
      * Returns a name for the token.  If Rhino is compiled with certain

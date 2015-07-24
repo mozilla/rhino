@@ -505,7 +505,8 @@ class CodeGenerator extends Icode {
                 int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
                 FunctionNode fn = scriptOrFn.getFunctionNode(fnIndex);
                 // See comments in visitStatement for Token.FUNCTION case
-                if (fn.getFunctionType() != FunctionNode.FUNCTION_EXPRESSION) {
+                if (fn.getFunctionType() != FunctionNode.FUNCTION_EXPRESSION &&
+                    fn.getFunctionType() != FunctionNode.ARROW_FUNCTION) {
                     throw Kit.codeBug();
                 }
                 addIndexOp(Icode_CLOSURE_EXPR, fnIndex);

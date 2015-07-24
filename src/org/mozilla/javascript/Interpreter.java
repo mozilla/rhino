@@ -1714,9 +1714,14 @@ switch (op) {
         stack[indexReg] = frame.scope;
         continue Loop;
     case Icode_CLOSURE_EXPR :
-        stack[++stackTop] = InterpretedFunction.createFunction(cx, frame.scope,
-                                                               frame.fnOrScript,
-                                                               indexReg);
+        InterpretedFunction fn = InterpretedFunction.createFunction(cx, frame.scope,
+                                                                    frame.fnOrScript,
+                                                                    indexReg);
+        if (fn.idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
+            stack[++stackTop] = new ArrowFunction(cx, frame.scope, fn, frame.thisObj);
+        } else {
+            stack[++stackTop] = fn;
+        }
         continue Loop;
     case Icode_CLOSURE_STMT :
         initFunction(cx, frame.scope, frame.fnOrScript, indexReg);
@@ -2753,8 +2758,11 @@ switch (op) {
             scope = fnOrScript.getParentScope();
 
             if (useActivation) {
-                scope = ScriptRuntime.createFunctionActivation(
-                            fnOrScript, scope, args);
+                if (idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
+                    scope = ScriptRuntime.createArrowFunctionActivation(fnOrScript, scope, args);
+                } else {
+                    scope = ScriptRuntime.createFunctionActivation(fnOrScript, scope, args);
+                }
             }
         } else {
             scope = callerScope;

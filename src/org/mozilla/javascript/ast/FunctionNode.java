@@ -63,6 +63,7 @@ public class FunctionNode extends ScriptNode {
     public static final int FUNCTION_STATEMENT            = 1;
     public static final int FUNCTION_EXPRESSION           = 2;
     public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
+    public static final int ARROW_FUNCTION                = 4;
 
     public static enum Form { FUNCTION, GETTER, SETTER, METHOD }
 
@@ -384,12 +385,20 @@ public class FunctionNode extends ScriptNode {
             sb.append(" ");
             sb.append(functionName.toSource(0));
         }
+        boolean isArrow = functionType == ARROW_FUNCTION;
         if (params == null) {
             sb.append("() ");
+        } else if (isArrow && lp == -1) {
+            // no paren
+            printList(params, sb);
+            sb.append(" ");
         } else {
             sb.append("(");
             printList(params, sb);
             sb.append(") ");
+        }
+        if (isArrow) {
+            sb.append("=> ");
         }
         if (isExpressionClosure) {
             AstNode body = getBody();

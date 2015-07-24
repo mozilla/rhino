@@ -957,8 +957,11 @@ public final class IRFactory extends Parser
 
     private Node transformReturn(ReturnStatement node) {
         boolean expClosure = Boolean.TRUE.equals(node.getProp(Node.EXPRESSION_CLOSURE_PROP));
+        boolean isArrow = Boolean.TRUE.equals(node.getProp(Node.ARROW_FUNCTION_PROP));
         if (expClosure) {
-            decompiler.addName(" ");
+            if (!isArrow) {
+                decompiler.addName(" ");
+            }
         } else {
             decompiler.addToken(Token.RETURN);
         }
@@ -2288,7 +2291,11 @@ public final class IRFactory extends Parser
         } else if (fn.getMemberExprNode() != null) {
             mexpr = transform(fn.getMemberExprNode());
         }
-        decompiler.addToken(Token.LP);
+        boolean isArrow = fn.getFunctionType() == FunctionNode.ARROW_FUNCTION;
+        boolean noParen = isArrow && fn.getLp() == -1;
+        if (!noParen) {
+            decompiler.addToken(Token.LP);
+        }
         List<AstNode> params = fn.getParams();
         for (int i = 0; i < params.size(); i++) {
             decompile(params.get(i));
@@ -2296,7 +2303,12 @@ public final class IRFactory extends Parser
                 decompiler.addToken(Token.COMMA);
             }
         }
-        decompiler.addToken(Token.RP);
+        if (!noParen) {
+            decompiler.addToken(Token.RP);
+        }
+        if (isArrow) {
+            decompiler.addToken(Token.ARROW);
+        }
         if (!fn.isExpressionClosure()) {
             decompiler.addEOL(Token.LC);
         }
