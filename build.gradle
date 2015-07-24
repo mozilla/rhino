@@ -111,6 +111,9 @@ task rhinoJavadocJar(type: Jar, dependsOn: rhinoJavadoc) {
 publishing {
     publications {
         rhino(MavenPublication) {
+            groupId 'org.mozilla'
+            artifactId 'rhino'
+            
             pom.withXml {
                 def root = asNode()
 
