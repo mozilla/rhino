@@ -377,15 +377,17 @@ public class FunctionNode extends ScriptNode {
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
+        boolean isArrow = functionType == ARROW_FUNCTION;
         if (!isMethod()) {
             sb.append(makeIndent(depth));
-            sb.append("function");
+            if (!isArrow) {
+                sb.append("function");
+            }
         }
         if (functionName != null) {
             sb.append(" ");
             sb.append(functionName.toSource(0));
         }
-        boolean isArrow = functionType == ARROW_FUNCTION;
         if (params == null) {
             sb.append("() ");
         } else if (isArrow && lp == -1) {
