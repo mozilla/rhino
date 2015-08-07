@@ -270,7 +270,11 @@ public final class IRFactory extends Parser
             defineSymbol(Token.LET, name, false);
             iterators[i] = init;
 
-            decompiler.addToken(Token.IN);
+            if (acl.isForOf()) {
+                decompiler.addName("of ");
+            } else {
+                decompiler.addToken(Token.IN);
+            }
             iteratedObjs[i] = transform(acl.getIteratedObject());
             decompiler.addToken(Token.RP);
         }
@@ -305,7 +309,8 @@ public final class IRFactory extends Parser
                                    iterators[i],
                                    iteratedObjs[i],
                                    body,
-                                   acl.isForEach());
+                                   acl.isForEach(),
+                                   acl.isForOf());
             }
         } finally {
             for (int i = 0; i < pushed; i++) {
@@ -468,14 +473,18 @@ public final class IRFactory extends Parser
                 declType = ((VariableDeclaration)iter).getType();
             }
             Node lhs = transform(iter);
-            decompiler.addToken(Token.IN);
+            if (loop.isForOf()) {
+                decompiler.addName("of ");
+            } else {
+                decompiler.addToken(Token.IN);
+            }
             Node obj = transform(loop.getIteratedObject());
             decompiler.addToken(Token.RP);
             decompiler.addEOL(Token.LC);
             Node body = transform(loop.getBody());
             decompiler.addEOL(Token.RC);
             return createForIn(declType, loop, lhs, obj, body,
-                               loop.isForEach());
+                               loop.isForEach(), loop.isForOf());
         } finally {
             popScope();
         }
@@ -671,7 +680,11 @@ public final class IRFactory extends Parser
             defineSymbol(Token.LET, name, false);
             iterators[i] = init;
 
-            decompiler.addToken(Token.IN);
+            if (acl.isForOf()) {
+                decompiler.addName("of ");
+            } else {
+                decompiler.addToken(Token.IN);
+            }
             iteratedObjs[i] = transform(acl.getIteratedObject());
             decompiler.addToken(Token.RP);
         }
@@ -703,7 +716,8 @@ public final class IRFactory extends Parser
                                    iterators[i],
                                    iteratedObjs[i],
                                    body,
-                                   acl.isForEach());
+                                   acl.isForEach(),
+                                   acl.isForOf());
             }
         } finally {
             for (int i = 0; i < pushed; i++) {
@@ -943,8 +957,11 @@ public final class IRFactory extends Parser
 
     private Node transformReturn(ReturnStatement node) {
         boolean expClosure = Boolean.TRUE.equals(node.getProp(Node.EXPRESSION_CLOSURE_PROP));
+        boolean isArrow = Boolean.TRUE.equals(node.getProp(Node.ARROW_FUNCTION_PROP));
         if (expClosure) {
-            decompiler.addName(" ");
+            if (!isArrow) {
+                decompiler.addName(" ");
+            }
         } else {
             decompiler.addToken(Token.RETURN);
         }
@@ -1510,7 +1527,7 @@ public final class IRFactory extends Parser
      * Generate IR for a for..in loop.
      */
     private Node createForIn(int declType, Node loop, Node lhs,
-                             Node obj, Node body, boolean isForEach)
+                             Node obj, Node body, boolean isForEach, boolean isForOf)
     {
         int destructuring = -1;
         int destructuringLen = 0;
@@ -1548,6 +1565,7 @@ public final class IRFactory extends Parser
 
         Node localBlock = new Node(Token.LOCAL_BLOCK);
         int initType = isForEach ? Token.ENUM_INIT_VALUES
+                       : isForOf ? Token.ENUM_INIT_VALUES_IN_ORDER
                                  : (destructuring != -1
                                     ? Token.ENUM_INIT_ARRAY
                                     : Token.ENUM_INIT_KEYS);
@@ -1562,8 +1580,9 @@ public final class IRFactory extends Parser
         Node assign;
         if (destructuring != -1) {
             assign = createDestructuringAssignment(declType, lvalue, id);
-            if (!isForEach && (destructuring == Token.OBJECTLIT ||
-                               destructuringLen != 2))
+            if (!isForEach && !isForOf &&
+                (destructuring == Token.OBJECTLIT ||
+                 destructuringLen != 2))
             {
                 // destructuring assignment is only allowed in for..each or
                 // with an array type of length 2 (to hold key and value)
@@ -2272,7 +2291,11 @@ public final class IRFactory extends Parser
         } else if (fn.getMemberExprNode() != null) {
             mexpr = transform(fn.getMemberExprNode());
         }
-        decompiler.addToken(Token.LP);
+        boolean isArrow = fn.getFunctionType() == FunctionNode.ARROW_FUNCTION;
+        boolean noParen = isArrow && fn.getLp() == -1;
+        if (!noParen) {
+            decompiler.addToken(Token.LP);
+        }
         List<AstNode> params = fn.getParams();
         for (int i = 0; i < params.size(); i++) {
             decompile(params.get(i));
@@ -2280,7 +2303,12 @@ public final class IRFactory extends Parser
                 decompiler.addToken(Token.COMMA);
             }
         }
-        decompiler.addToken(Token.RP);
+        if (!noParen) {
+            decompiler.addToken(Token.RP);
+        }
+        if (isArrow) {
+            decompiler.addToken(Token.ARROW);
+        }
         if (!fn.isExpressionClosure()) {
             decompiler.addEOL(Token.LC);
         }

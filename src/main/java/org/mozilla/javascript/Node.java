@@ -63,7 +63,8 @@ public class Node implements Iterable<Node>
         JSDOC_PROP           = 24,
         EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return
         DESTRUCTURING_SHORTHAND = 26, // JS 1.8 destructuring shorthand
-        LAST_PROP            = 26;
+        ARROW_FUNCTION_PROP  = 27,
+        LAST_PROP            = 27;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types

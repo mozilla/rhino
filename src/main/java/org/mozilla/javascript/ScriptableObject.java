@@ -242,6 +242,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
             desc.defineProperty("enumerable", (attr & DONTENUM) == 0, EMPTY);
             desc.defineProperty("configurable", (attr & PERMANENT) == 0, EMPTY);
+            desc.defineProperty("writable", (attr & READONLY) == 0, EMPTY);
             if (getter != null) desc.defineProperty("get", getter, EMPTY);
             if (setter != null) desc.defineProperty("set", setter, EMPTY);
             return desc;

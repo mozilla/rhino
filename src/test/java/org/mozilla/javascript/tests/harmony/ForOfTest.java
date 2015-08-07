@@ -9,7 +9,8 @@ import org.mozilla.javascript.drivers.LanguageVersion;
 import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
-@RhinoTest("src/test/resources/jstests/harmony/string-endsWith.js")
+@RhinoTest("testsrc/jstests/harmony/for-of.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class StringEndsWithTest extends ScriptTestsBase {
+public class ForOfTest extends ScriptTestsBase
+{
 }

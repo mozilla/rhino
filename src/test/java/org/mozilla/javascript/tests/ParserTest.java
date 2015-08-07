@@ -1183,6 +1183,11 @@ public class ParserTest extends TestCase {
       parse("({import:1}).import;");
     }
 
+    public void testReportError() {
+      expectParseErrors("'use strict';(function(eval) {})();",
+                        new String[] { "\"eval\" is not a valid identifier for this use in strict mode." });
+    }
+
     private void expectParseErrors(String string, String [] errors) {
       parse(string, errors, null, false);
     }

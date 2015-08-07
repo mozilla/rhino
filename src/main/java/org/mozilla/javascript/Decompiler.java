@@ -86,8 +86,10 @@ public class Decompiler
     int markFunctionStart(int functionType)
     {
         int savedOffset = getCurrentOffset();
-        addToken(Token.FUNCTION);
-        append((char)functionType);
+        if (functionType != FunctionNode.ARROW_FUNCTION) {
+            addToken(Token.FUNCTION);
+            append((char)functionType);
+        }
         return savedOffset;
     }
 
@@ -790,6 +792,10 @@ public class Decompiler
 
             case Token.DEBUGGER:
                 result.append("debugger;\n");
+                break;
+
+            case Token.ARROW:
+                result.append(" => ");
                 break;
 
             default:

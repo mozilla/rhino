@@ -100,6 +100,8 @@ public class NativeCallSite extends IdScriptableObject
         case Id_getEvalOrigin:
         case Id_isEval:
         case Id_isConstructor:
+        case Id_isNative:
+        case Id_isToplevel:
             return getFalse();
         case Id_toString:
             return js_toString(thisObj);

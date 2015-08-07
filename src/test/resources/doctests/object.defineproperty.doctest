@@ -128,7 +128,7 @@ js> var obj = define(obj, 'a', {get   : function() { return 4 }});
 js> obj.a
 4
 js> describe(obj, 'a').toSource()
-({enumerable:false, configurable:true, get:(function () {return 4;})})
+({enumerable:false, configurable:true, writable:false, get:(function () {return 4;})})
 
 js> // can change from accessor property to data property when configurable is true
 js> var obj = define({},  'a', {get   : function() { return 2 }, configurable:true});

@@ -75,6 +75,9 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 publishing {
     publications {
         rhino(MavenPublication) {
+            groupId 'org.mozilla'
+            artifactId 'rhino'
+
             pom.withXml {
                 def root = asNode()
 
@@ -83,6 +86,11 @@ publishing {
     It is typically embedded into Java applications to provide scripting to end users.
 """)
                 root.appendNode("url", "https://developer.mozilla.org/en/Rhino")
+
+                def p = root.appendNode("parent")
+                p.appendNode("groupId", "org.sonatype.oss")
+                p.appendNode("artifactId", "oss-parent")
+                p.appendNode("version", "7")
 
                 def l = root.appendNode("licenses").appendNode("license")
                 l.appendNode("name", "Mozilla Public License, Version 2.0")

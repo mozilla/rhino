@@ -670,6 +670,8 @@ class TokenStream
                     } else {
                         return Token.EQ;
                     }
+                } else if (matchChar('>')) {
+                    return Token.ARROW;
                 } else {
                     return Token.ASSIGN;
                 }

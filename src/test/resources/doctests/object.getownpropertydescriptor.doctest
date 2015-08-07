@@ -32,7 +32,7 @@ true
 js> var desc = Object.getOwnPropertyDescriptor({ get p() {}, set p() {} }, 'p');
 js> desc.value === undefined;
 true
-js> desc.writable === undefined;
+js> desc.writable
 true
 js> desc.get.toSource()
 (function () {})
