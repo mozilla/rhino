@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
@@ -108,9 +109,14 @@ public class Test262SuiteTest {
                 if (errorType == EcmaErrorType.ANY) {
                     // passed
                 } else {
-                    String exceptionName = ex.details();
-                    if (exceptionName.contains(":")) {
-                        exceptionName = exceptionName.substring(0, exceptionName.indexOf(":"));
+                    String exceptionName;
+                    if (ex instanceof EvaluatorException) {
+                        exceptionName = "SyntaxError";
+                    } else {
+                        exceptionName = ex.details();
+                        if (exceptionName.contains(":")) {
+                            exceptionName = exceptionName.substring(0, exceptionName.indexOf(":"));
+                        }
                     }
                     assertEquals(ex.details(), errorType.name(), exceptionName);
                 }

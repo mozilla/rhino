@@ -4012,11 +4012,11 @@ public class Parser
         int nodeType = left.getType();
         switch (nodeType) {
           case Token.NAME:
+              String name = ((Name) left).getIdentifier();
               if (inUseStrictDirective &&
-                  "eval".equals(((Name) left).getIdentifier()))
+                  ("eval".equals(name) || "arguments".equals(name)))
               {
-                  reportError("msg.bad.id.strict",
-                              ((Name) left).getIdentifier());
+                  reportError("msg.bad.id.strict", name);
               }
               left.setType(Token.BINDNAME);
               return new Node(Token.SETNAME, left, right);
