@@ -169,6 +169,22 @@ final class Arguments extends IdScriptableObject
     }
 
     @Override
+    public void put(String name, Scriptable start, Object value)
+    {
+        int info = findInstanceIdInfo(name);
+        int id = info & 0xFFFF;
+        switch (id) {
+        case Id_caller:
+        case Id_callee:
+            Context cx = Context.getContext();
+            if (cx.isStrictMode()) {
+                throw ScriptRuntime.typeError1("msg.arguments.not.access.strict", getInstanceIdName(id));
+            }
+        }
+        super.put(name, start, value);
+    }
+
+    @Override
     public void delete(int index)
     {
         if (0 <= index && index < args.length) {
