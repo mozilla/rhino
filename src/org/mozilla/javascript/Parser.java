@@ -93,6 +93,8 @@ public class Parser
     private String prevNameTokenString = "";
     private int prevNameTokenLineno;
 
+    private boolean defaultUseStrictDirective;
+
     // Exception to unwind
     private static class ParserException extends RuntimeException
     {
@@ -549,8 +551,11 @@ public class Parser
 
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
-        // TODO: eval code should get strict mode from invoking code
-        inUseStrictDirective = false;
+
+        inUseStrictDirective = defaultUseStrictDirective;
+        if (inUseStrictDirective) {
+            root.setInStrictMode(true);
+        }
 
         try {
             for (;;) {
@@ -4088,5 +4093,9 @@ public class Parser
         throw Kit.codeBug("ts.cursor=" + ts.cursor
                           + ", ts.tokenBeg=" + ts.tokenBeg
                           + ", currentToken=" + currentToken);
+    }
+
+    public void setDefaultUseStrictDirective(boolean useStrict) {
+        defaultUseStrictDirective = useStrict;
     }
 }

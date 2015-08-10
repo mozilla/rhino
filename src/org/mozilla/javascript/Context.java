@@ -2486,6 +2486,9 @@ public class Context
         if (returnFunction) {
             p.calledByCompileFunction = true;
         }
+        if (isStrictMode()) {
+            p.setDefaultUseStrictDirective(true);
+        }
         AstRoot ast;
         if (sourceString != null) {
             ast = p.parse(sourceString, sourceName, lineno);
