@@ -136,6 +136,10 @@ final class Arguments extends IdScriptableObject
 
     private boolean sharedWithActivation(int index)
     {
+        Context cx = Context.getContext();
+        if (cx.isStrictMode()) {
+            return false;
+        }
         NativeFunction f = activation.function;
         int definedCount = f.getParamCount();
         if (index < definedCount) {
