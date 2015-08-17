@@ -53,7 +53,8 @@ public final class NativeCall extends IdScriptableObject
         // initialize "arguments" property but only if it was not overridden by
         // the parameter with the same name
         if (!super.has("arguments", this) && !isArrow) {
-            defineProperty("arguments", new Arguments(this), PERMANENT);
+            arguments = new Arguments(this);
+            defineProperty("arguments", arguments, PERMANENT);
         }
 
         if (paramAndVarCount != 0) {
@@ -114,6 +115,12 @@ public final class NativeCall extends IdScriptableObject
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
+    public void defineAttributesForArguments() {
+        if (arguments != null) {
+            arguments.defineAttributesForStrictMode();
+        }
+    }
+
     private static final int
         Id_constructor   = 1,
         MAX_PROTOTYPE_ID = 1;
@@ -121,6 +128,7 @@ public final class NativeCall extends IdScriptableObject
     NativeFunction function;
     Object[] originalArgs;
     boolean isStrict;
+    private Arguments arguments;
 
     transient NativeCall parentActivationCall;
 }

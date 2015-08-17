@@ -118,22 +118,6 @@ final class Arguments extends IdScriptableObject
       }
     }
 
-    @Override
-    public Object get(String name, Scriptable start)
-    {
-        int info = findInstanceIdInfo(name);
-        int id = info & 0xFFFF;
-        switch (id) {
-        case Id_caller:
-        case Id_callee:
-            Context cx = Context.getContext();
-            if (cx.isStrictMode()) {
-                throw ScriptRuntime.typeError1("msg.arguments.not.access.strict", getInstanceIdName(id));
-            }
-        }
-        return super.get(name, start);
-    }
-
     private boolean sharedWithActivation(int index)
     {
         Context cx = Context.getContext();
@@ -171,16 +155,6 @@ final class Arguments extends IdScriptableObject
     @Override
     public void put(String name, Scriptable start, Object value)
     {
-        int info = findInstanceIdInfo(name);
-        int id = info & 0xFFFF;
-        switch (id) {
-        case Id_caller:
-        case Id_callee:
-            Context cx = Context.getContext();
-            if (cx.isStrictMode()) {
-                throw ScriptRuntime.typeError1("msg.arguments.not.access.strict", getInstanceIdName(id));
-            }
-        }
         super.put(name, start, value);
     }
 
@@ -225,6 +199,13 @@ final class Arguments extends IdScriptableObject
             break L0;
         }
 // #/generated#
+        Context cx = Context.getContext();
+        if (cx.isStrictMode()) {
+            if (id == Id_callee || id == Id_caller) {
+                return super.findInstanceIdInfo(s);
+            }
+        }
+
 
         if (id == 0) return super.findInstanceIdInfo(s);
 
@@ -399,6 +380,27 @@ final class Arguments extends IdScriptableObject
       }
     }
 
+    // ECMAScript2015
+    // 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
+    //   8. Perform DefinePropertyOrThrow(obj, "caller", PropertyDescriptor {[[Get]]: %ThrowTypeError%,
+    //      [[Set]]: %ThrowTypeError%, [[Enumerable]]: false, [[Configurable]]: false}).
+    //   9. Perform DefinePropertyOrThrow(obj, "callee", PropertyDescriptor {[[Get]]: %ThrowTypeError%,
+    //      [[Set]]: %ThrowTypeError%, [[Enumerable]]: false, [[Configurable]]: false}).
+    void defineAttributesForStrictMode() {
+        Context cx = Context.getContext();
+        if (!cx.isStrictMode()) {
+            return;
+        }
+        setGetterOrSetter("caller", 0, new ThrowTypeError("caller"), true);
+        setGetterOrSetter("caller", 0, new ThrowTypeError("caller"), false);
+        setGetterOrSetter("callee", 0, new ThrowTypeError("callee"), true);
+        setGetterOrSetter("callee", 0, new ThrowTypeError("callee"), false);
+        setAttributes("caller", DONTENUM | PERMANENT);
+        setAttributes("callee", DONTENUM | PERMANENT);
+        callerObj = null;
+        calleeObj = null;
+    }
+
     private static BaseFunction iteratorMethod = new BaseFunction() {
         @Override
         public Object call(Context cx, Scriptable scope, Scriptable thisObj,
@@ -410,6 +412,19 @@ final class Arguments extends IdScriptableObject
             return new NativeArrayIterator(scope, thisObj);
         }
     };
+
+    private static class ThrowTypeError extends BaseFunction {
+        private String propertyName;
+
+        ThrowTypeError(String propertyName) {
+            this.propertyName = propertyName;
+        }
+
+        @Override
+        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            throw ScriptRuntime.typeError1("msg.arguments.not.access.strict", propertyName);
+        }
+    }
 
 // Fields to hold caller, callee and length properties,
 // where NOT_FOUND value tags deleted properties.
