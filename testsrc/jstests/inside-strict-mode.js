@@ -20,4 +20,11 @@ function f1() {
 
 assertEquals(f1, f1());
 
+// A simple function is not required activation.
+// But when it changes to strict mode, requires activation.
+assertThrows(function() {
+  'use strict';
+  delete Math.LN2;
+}, TypeError);
+
 "success";
