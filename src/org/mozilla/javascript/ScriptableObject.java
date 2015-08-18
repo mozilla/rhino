@@ -2975,7 +2975,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 prev = slot;
                 slot = slot.next;
             }
-            if (slot != null && (slot.getAttributes() & PERMANENT) == 0) {
+            if (slot != null) {
+                // non-configurable
+                if ((slot.getAttributes() & PERMANENT) != 0) {
+                    Context cx = Context.getContext();
+                    if (cx.isStrictMode()) {
+                        throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", name);
+                    }
+                    return;
+                }
                 count--;
                 // remove slot from hash table
                 if (prev == slot) {
