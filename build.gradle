@@ -23,6 +23,7 @@ test {
     systemProperty 'user.language', 'en'
     systemProperty 'user.country', 'US'
     systemProperty 'user.timezone', 'America/Los_Angeles'
+    systemProperty 'file.encoding', 'UTF-8'
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
     ignoreFailures = true
@@ -30,6 +31,7 @@ test {
 
 task testBenchmark(type: Test) {
     include "**/benchmarks/*Benchmark*"
+    systemProperty 'file.encoding', 'UTF-8'
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
     forkEvery = 1

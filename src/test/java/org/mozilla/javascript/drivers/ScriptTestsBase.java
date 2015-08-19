@@ -12,10 +12,7 @@ import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 
 import static org.junit.Assert.*;
 
@@ -45,7 +42,7 @@ public abstract class ScriptTestsBase {
         Context cx = Context.enter();
         try {
             if (!"".equals(anno.value())) {
-                script = new FileReader(anno.value());
+                script = new InputStreamReader(new FileInputStream(anno.value()), "UTF-8");
                 suiteName = anno.value();
             } else if (!"".equals(anno.inline())) {
                 script = new StringReader("load('src/test/resources/assert.js');\n" + anno.inline() + "\n" + "'success';");
