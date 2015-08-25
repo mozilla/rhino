@@ -75,7 +75,7 @@ final class InterpretedFunction extends NativeFunction implements Script
      * Create function embedded in script or another function.
      */
     static InterpretedFunction createFunction(Context cx, Scriptable scope,
-                                              InterpretedFunction  parent,
+                                              InterpretedFunction parent,
                                               int index)
     {
         InterpretedFunction f = new InterpretedFunction(parent, index);
@@ -104,7 +104,7 @@ final class InterpretedFunction extends NativeFunction implements Script
                        Object[] args)
     {
         if (!ScriptRuntime.hasTopCall(cx)) {
-            return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args);
+            return ScriptRuntime.doTopCall(this, cx, scope, thisObj, args, idata.isStrict);
         }
         return Interpreter.interpret(this, cx, scope, thisObj, args);
     }
@@ -118,7 +118,7 @@ final class InterpretedFunction extends NativeFunction implements Script
         if (!ScriptRuntime.hasTopCall(cx)) {
             // It will go through "call" path. but they are equivalent
             return ScriptRuntime.doTopCall(
-                this, cx, scope, scope, ScriptRuntime.emptyArgs);
+                this, cx, scope, scope, ScriptRuntime.emptyArgs, idata.isStrict);
         }
         return Interpreter.interpret(
             this, cx, scope, scope, ScriptRuntime.emptyArgs);

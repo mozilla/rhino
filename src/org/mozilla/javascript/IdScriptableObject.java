@@ -188,7 +188,15 @@ public abstract class IdScriptableObject extends ScriptableObject
         {
             ensureId(id);
             int attr = attributeArray[id - 1];
-            if ((attr & PERMANENT) == 0) {
+            // non-configurable
+            if ((attr & PERMANENT) != 0) {
+                Context cx = Context.getContext();
+                if (cx.isStrictMode()) {
+                    int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
+                    String name = (String)valueArray[nameSlot];
+                    throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", name);
+                }
+            } else {
                 int valueSlot = (id  - 1) * SLOT_SPAN;
                 synchronized (this) {
                     valueArray[valueSlot] = NOT_FOUND;
@@ -394,7 +402,13 @@ public abstract class IdScriptableObject extends ScriptableObject
             // Let the super class to throw exceptions for sealed objects
             if (!isSealed()) {
                 int attr = (info >>> 16);
-                if ((attr & PERMANENT) == 0) {
+                // non-configurable
+                if ((attr & PERMANENT) != 0) {
+                    Context cx = Context.getContext();
+                    if (cx.isStrictMode()) {
+                        throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", name);
+                    }
+                } else {
                     int id = (info & 0xFFFF);
                     setInstanceIdValue(id, NOT_FOUND);
                 }

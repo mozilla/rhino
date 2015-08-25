@@ -3330,9 +3330,19 @@ public class ScriptRuntime {
         return scope;
     }
 
+    /**
+     * @deprecated Use {@link #doTopCall(Callable, Context, Scriptable, Scriptable, Object[], boolean)} instead
+     */
     public static Object doTopCall(Callable callable,
                                    Context cx, Scriptable scope,
                                    Scriptable thisObj, Object[] args)
+    {
+        return doTopCall(callable, cx, scope, thisObj, args, cx.isTopLevelStrict);
+    }
+
+    public static Object doTopCall(Callable callable,
+                                   Context cx, Scriptable scope,
+                                   Scriptable thisObj, Object[] args, boolean isTopLevelStrict)
     {
         if (scope == null)
             throw new IllegalArgumentException();
@@ -3341,6 +3351,8 @@ public class ScriptRuntime {
         Object result;
         cx.topCallScope = ScriptableObject.getTopLevelScope(scope);
         cx.useDynamicScope = cx.hasFeature(Context.FEATURE_DYNAMIC_SCOPE);
+        boolean previousTopLevelStrict = cx.isTopLevelStrict;
+        cx.isTopLevelStrict = isTopLevelStrict;
         ContextFactory f = cx.getFactory();
         try {
             result = f.doTopCall(callable, cx, scope, thisObj, args);
@@ -3348,6 +3360,7 @@ public class ScriptRuntime {
             cx.topCallScope = null;
             // Cleanup cached references
             cx.cachedXMLLib = null;
+            cx.isTopLevelStrict = previousTopLevelStrict;
 
             if (cx.currentActivationCall != null) {
                 // Function should always call exitActivationFunction
@@ -3433,18 +3446,31 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * @deprecated Use {@link #createFunctionActivation(NativeFunction, Scriptable, Object[], boolean)} instead
+     */
+    @Deprecated
     public static Scriptable createFunctionActivation(NativeFunction funObj,
                                                       Scriptable scope,
                                                       Object[] args)
     {
-        return new NativeCall(funObj, scope, args);
+        return createFunctionActivation(funObj, scope, args, false);
+    }
+
+    public static Scriptable createFunctionActivation(NativeFunction funObj,
+                                                      Scriptable scope,
+                                                      Object[] args,
+                                                      boolean isStrict)
+    {
+        return new NativeCall(funObj, scope, args, false, isStrict);
     }
 
     public static Scriptable createArrowFunctionActivation(NativeFunction funObj,
                                                            Scriptable scope,
-                                                           Object[] args)
+                                                           Object[] args,
+                                                           boolean isStrict)
     {
-        return new NativeCall(funObj, scope, args, true);
+        return new NativeCall(funObj, scope, args, true, isStrict);
     }
 
     public static void enterActivationFunction(Context cx,
@@ -3455,6 +3481,7 @@ public class ScriptRuntime {
         NativeCall call = (NativeCall)scope;
         call.parentActivationCall = cx.currentActivationCall;
         cx.currentActivationCall = call;
+        call.defineAttributesForArguments();
     }
 
     public static void exitActivationFunction(Context cx)
