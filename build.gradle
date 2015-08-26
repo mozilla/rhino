@@ -1,43 +1,16 @@
-import sun.applet.Main
-
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'distribution'
 apply plugin: 'maven-publish'
+apply plugin: 'jacoco'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 tasks.withType(JavaCompile) { options.encoding = "UTF-8" }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
-}
-
 repositories {
     mavenCentral()
-}
-
-sourceSets {
-    main {
-        java {
-            srcDirs 'src', 'toolsrc', 'xmlimplsrc'
-        }
-        resources {
-            srcDirs 'src', 'toolsrc'
-            exclude "build.xml"
-            exclude "manifest"
-        }
-    }
-
-    test {
-        java {
-            srcDirs "testsrc", 'examples'
-            exclude 'tests/**'
-        }
-        resources {
-            srcDirs "testsrc"
-        }
-    }
 }
 
 dependencies {
@@ -47,9 +20,6 @@ dependencies {
 
 test {
     exclude "**/benchmarks/**"
-    systemProperty 'java.awt.headless', 'true'
-    systemProperty 'mozilla.js.tests', 'testsrc/tests'
-    systemProperty 'mozilla.js.tests.timeout', 60000
     systemProperty 'user.language', 'en'
     systemProperty 'user.country', 'US'
     systemProperty 'user.timezone', 'America/Los_Angeles'
@@ -61,9 +31,7 @@ test {
 
 task testBenchmark(type: Test) {
     include "**/benchmarks/*Benchmark*"
-    systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
     systemProperty 'file.encoding', 'UTF-8'
-    workingDir = file("testsrc/benchmarks")
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
     forkEvery = 1
@@ -71,11 +39,8 @@ task testBenchmark(type: Test) {
 
 idea {
     module {
-        excludeDirs += file('testsrc/tests/src')
-        excludeDirs += file('buildGradle')
         excludeDirs += file('build')
         excludeDirs += file('.idea')
-        excludeDirs += file('lib')
     }
 }
 
@@ -99,15 +64,14 @@ task sourceJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
-task rhinoJavadoc(type: Javadoc) {
-    source = sourceSets.main.allJava
+javadoc {
     if (JavaVersion.current().isJava8Compatible()) {
         options.addStringOption('Xdoclint:none', '-quiet')
     }
 }
 
-task rhinoJavadocJar(type: Jar, dependsOn: rhinoJavadoc) {
-    from rhinoJavadoc.destinationDir
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    from javadoc.destinationDir
 }
 
 publishing {
@@ -148,7 +112,7 @@ publishing {
             artifact sourceJar {
                 classifier "sources"
             }
-            artifact rhinoJavadocJar {
+            artifact javadocJar {
                 classifier "javadoc"
             }
         }
@@ -170,3 +134,35 @@ publishing {
         }
     }
 }
+
+jacoco {
+    toolVersion = "0.7.4.201502262128"
+}
+
+jacocoTestReport.dependsOn test
+
+distributions {
+    main {
+        contents {
+            from(sourceSets.main.allSource) {
+                exclude 'man'
+                into '/src'
+            }
+            from(javadoc.destinationDir) {
+                into '/docs'
+            }
+            from(jar.outputs.files) {
+                into '/lib'
+            }
+            from(sourceSets.main.allSource) {
+                include 'man/*.1'
+            }
+            from(file(".")) {
+                include '*.txt'
+            }
+            into "/"
+        }
+    }
+}
+
+distZip.dependsOn javadoc, jar

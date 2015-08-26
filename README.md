@@ -56,7 +56,10 @@ More resources if you get stuck:
 
 ### How to Build
 
-Rhino builds with `Gradle`. Here are some useful tasks:
+Rhino builds with `Gradle`. You don't need to install `Gradle` locally to build `Rhino` thanks to [Gradle wrapper](http://gradle.org/docs/current/userguide/gradle_wrapper.html)
+Just clone project from `GitHub` and use provided `gradlew` or `gradlew.bat` for `Linux` / `Mac OS` or `Windows` accordingly.
+
+Here are some useful tasks:
 
     ./gradlew jar
 

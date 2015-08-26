@@ -1,9 +1,7 @@
 Update version in:
-	src/manifest
 	build.properties
-	maven/maven-pom.xml
 
-ant dist source-zip
+./gradlew distZip
 
 Paste release notes into RELEASE_NOTES.md:
 	git shortlog LAST_TAG.. | sed 's/^ /*/'
@@ -24,9 +22,7 @@ Update release in GitHub
 	Paste release notes, upload "rhinoXXX.zip" and "js.jar"
 
 Update to new snapshot version in:
-	src/manifest
 	build.properties
-	maven/maven-pom.xml
 
 Update the Homebrew formula. Submit a PR for:
 	Homebrew/homebrew
