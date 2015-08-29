@@ -223,6 +223,14 @@ public class NativeJavaMethod extends BaseFunction
         }
 
         Object retval = meth.invoke(javaObject, args);
+        
+        // active java extension
+        if (retval instanceof IJsJavaProxy) {
+        	// get native scriptable object if extension is used
+        	return ((IJsJavaProxy)retval).getJsNative();
+        }
+        
+        
         Class<?> staticType = meth.method().getReturnType();
 
         if (debug) {

@@ -6,10 +6,16 @@
 
 package org.mozilla.javascript;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.Map;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment.  It
@@ -217,6 +223,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     private static final int JSTYPE_JAVA_OBJECT = 6; // JavaObject
     private static final int JSTYPE_JAVA_ARRAY  = 7; // JavaArray
     private static final int JSTYPE_OBJECT      = 8; // Scriptable
+    private static final int JSTYPE_JAVA_PROXIED     = 9; // Scriptable associated with a java proxy
 
     static final byte CONVERSION_TRIVIAL      = 1;
     static final byte CONVERSION_NONTRIVIAL   = 0;
@@ -336,6 +343,10 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             break;
 
         case JSTYPE_OBJECT:
+        	// support proxy object
+        	if (IJsJavaProxy.class.isAssignableFrom(to)) {
+        		return 1;
+        	}
             // Other objects takes #1-#3 spots
             if (to != ScriptRuntime.ObjectClass && to.isInstance(fromObj)) {
                 // No conversion required, but don't apply for java.lang.Object
@@ -376,6 +387,14 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
                 return 4 + getSizeRank(to);
             }
             break;
+        // support active proxied objects
+        case JSTYPE_JAVA_PROXIED:
+        	Scriptable s = (Scriptable)fromObj;
+        	Object proxy = s.get(IJsJavaProxy.JS_JAVA_PROXY, s);
+        	if (to.isInstance(proxy)) {
+				return 1; //easy convert	
+			}
+        
         }
 
         return CONVERSION_NONE;
@@ -428,6 +447,11 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             return JSTYPE_BOOLEAN;
         }
         else if (value instanceof Scriptable) {
+        	// active support
+        	Scriptable s = (Scriptable)value;
+        	if (s.has(IJsJavaProxy.JS_JAVA_PROXY, s)) {
+        		return JSTYPE_JAVA_PROXIED;
+        	}
             if (value instanceof NativeJavaClass) {
                 return JSTYPE_JAVA_CLASS;
             }
@@ -466,6 +490,9 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     {
         return coerceTypeImpl(type, value);
     }
+    
+    private static final Class[] PROXY_CONSTRUCTOR_ARG_TYPES = new Class[] {Scriptable.class};
+      
 
     /**
      * Type-munging for field setting and method invocation.
@@ -478,6 +505,11 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         }
 
         switch (getJSTypeCode(value)) {
+        
+        
+        case JSTYPE_JAVA_PROXIED:
+        	Scriptable s = (Scriptable)value;
+        	return s.get(IJsJavaProxy.JS_JAVA_PROXY, s);
 
         case JSTYPE_NULL:
             // raise error if type.isPrimitive()
@@ -599,6 +631,15 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             break;
 
         case JSTYPE_OBJECT:
+        	if (IJsJavaProxy.class.isAssignableFrom(type)) {
+        		try {
+        			Constructor cstr = type.getConstructor(PROXY_CONSTRUCTOR_ARG_TYPES);
+        			return cstr.newInstance(value);
+				} catch (Exception e) {
+					throw new RuntimeException(type.getName()
+						+ " doesn't have a proper public constructor with Scriptable arg");
+				}
+        	}
             if (type == ScriptRuntime.StringClass) {
                 return ScriptRuntime.toString(value);
             }
@@ -647,6 +688,17 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
                     || value instanceof NativeFunction)) {
                 // Try to use function/object as implementation of Java interface.
                 return createInterfaceAdapter(type, (ScriptableObject) value);
+            }
+            else if (IJsJavaConvertible.class.isAssignableFrom(type) && value instanceof Scriptable) {
+            	//active object support
+            	Context cx = Context.getContext();
+            	
+            	@SuppressWarnings("unchecked")
+				Object obj = cx.convert((Scriptable)value, (Class<? extends org.mozilla.javascript.IJsJavaConvertible>) type);
+            	if (obj != null) {
+            		return obj;
+            	}
+            	reportConversionError(value, type);
             } else {
                 reportConversionError(value, type);
             }
