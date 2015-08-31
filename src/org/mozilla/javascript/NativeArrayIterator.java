@@ -33,20 +33,21 @@ public final class NativeArrayIterator extends ES6Iterator {
     }
 
     @Override
-    Object next(Context cx, Scriptable scope) {
-        Object value = Undefined.instance;
-        boolean done = index >= NativeArray.getLengthProperty(cx, arrayLike);
-        if (!done) {
-            value = arrayLike.get(index++, arrayLike);
-            if (value == ScriptableObject.NOT_FOUND) {
-                value = Undefined.instance;
-            }
-        }
-        return makeIteratorResult(cx, scope, done, value);
+    protected boolean isDone(Context cx, Scriptable scope) {
+        return index >= NativeArray.getLengthProperty(cx, arrayLike);
     }
 
     @Override
-    String getTag() {
+    protected Object nextValue(Context cx, Scriptable scope) {
+        Object value = arrayLike.get(index++, arrayLike);
+        if (value == ScriptableObject.NOT_FOUND) {
+            value = Undefined.instance;
+        }
+        return value;
+    }
+
+    @Override
+    protected String getTag() {
         return ITERATOR_TAG;
     }
 
