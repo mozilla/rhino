@@ -92,7 +92,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
             return Id_next;
         } else if (ITERATOR_PROPERTY.equals(s)) {
             return Id_iterator;
-        } else if (NativeSymbol.TO_STRING_TAG_PROPERTY.equals(s)) {
+        } else if (TO_STRING_TAG_PROPERTY.equals(s)) {
             return Id_toStringTag;
         }
         return 0;
