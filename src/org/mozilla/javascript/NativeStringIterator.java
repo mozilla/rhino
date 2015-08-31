@@ -33,19 +33,20 @@ public final class NativeStringIterator extends ES6Iterator {
     }
 
     @Override
-    Object next(Context cx, Scriptable scope) {
-        Object value = Undefined.instance;
-        boolean done = index >= string.length();
-        if (!done) {
-            int newIndex = string.offsetByCodePoints(index, 1);
-            value = string.substring(index, newIndex);
-            index = newIndex;
-        }
-        return makeIteratorResult(cx, scope, done, value);
+    protected boolean isDone(Context cx, Scriptable scope) {
+        return index >= string.length();
     }
 
     @Override
-    String getTag() {
+    protected Object nextValue(Context cx, Scriptable scope) {
+        int newIndex = string.offsetByCodePoints(index, 1);
+        Object value = string.substring(index, newIndex);
+        index = newIndex;
+        return value;
+    }
+
+    @Override
+    protected String getTag() {
         return ITERATOR_TAG;
     }
 

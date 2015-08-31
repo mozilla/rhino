@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.NativeSymbol.ITERATOR_PROPERTY;
+import static org.mozilla.javascript.NativeSymbol.TO_STRING_TAG_PROPERTY;
+
 public abstract class ES6Iterator extends IdScriptableObject {
 
     static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
@@ -27,6 +30,8 @@ public abstract class ES6Iterator extends IdScriptableObject {
         }
     }
 
+    protected boolean exhausted = false;
+
     ES6Iterator() {}
 
     ES6Iterator(Scriptable scope) {
@@ -43,17 +48,17 @@ public abstract class ES6Iterator extends IdScriptableObject {
     @Override
     protected void initPrototypeId(int id)
     {
-        String s, fnName = null;;
-        int arity;
         switch (id) {
-        case Id_next:           arity=0; s=NEXT_METHOD;           break;
-        case Id_iterator:       arity=0; s="@@iterator"; fnName="[Symbol.iterator]"; break;
-        default: throw new IllegalArgumentException(String.valueOf(id));
-        }
-        if (fnName == null) {
-            initPrototypeMethod(getTag(), id, s, arity);
-        } else {
-            initPrototypeMethod(getTag(), id, s, fnName, arity);
+            case Id_next:
+                initPrototypeMethod(getTag(), id, NEXT_METHOD, 0);
+                return;
+            case Id_iterator:
+                initPrototypeMethod(getTag(), id, ITERATOR_PROPERTY, "[Symbol.iterator]", 0);
+                return;
+            case Id_toStringTag:
+                initPrototypeValue(Id_toStringTag, TO_STRING_TAG_PROPERTY, getClassName(), DONTENUM | READONLY);
+                return;
+            default: throw new IllegalArgumentException(String.valueOf(id));
         }
     }
 
@@ -74,8 +79,6 @@ public abstract class ES6Iterator extends IdScriptableObject {
         switch (id) {
         case Id_next:
             return iterator.next(cx, scope);
-        // case Id_return:
-        // case Id_throw:
         case Id_iterator:
             return iterator;
         default:
@@ -84,26 +87,36 @@ public abstract class ES6Iterator extends IdScriptableObject {
     }
 
     @Override
-    protected int findPrototypeId(String s)
-    {
-        if (s.equals(NEXT_METHOD)) {
+    protected int findPrototypeId(String s) {
+        if (s.charAt(0) == 'n') {
             return Id_next;
-        // } else if (s.equals("return")) {
-        //     return Id_return;
-        // } else if (s.equals("throw")) {
-        //     return Id_throw;
-        } else if (s.equals("@@iterator")) {
+        } else if (ITERATOR_PROPERTY.equals(s)) {
             return Id_iterator;
+        } else if (NativeSymbol.TO_STRING_TAG_PROPERTY.equals(s)) {
+            return Id_toStringTag;
         }
         return 0;
     }
 
-    abstract Object next(Context cx, Scriptable scope);
+    abstract protected boolean isDone(Context cx, Scriptable scope);
 
-    abstract String getTag();
+    abstract protected Object nextValue(Context cx, Scriptable scope);
+
+    protected Object next(Context cx, Scriptable scope) {
+        Object value = Undefined.instance;
+        boolean done = isDone(cx, scope) || this.exhausted;
+        if (!done) {
+            value = nextValue(cx, scope);
+        } else {
+            this.exhausted = true;
+        }
+        return makeIteratorResult(cx, scope, done, value);
+    }
+
+    abstract protected String getTag();
 
     // 25.1.1.3 The IteratorResult Interface
-    protected Scriptable makeIteratorResult(Context cx, Scriptable scope, boolean done, Object value) {
+    private Scriptable makeIteratorResult(Context cx, Scriptable scope, boolean done, Object value) {
         Scriptable iteratorResult = cx.newObject(scope);
         ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
         ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
@@ -111,14 +124,12 @@ public abstract class ES6Iterator extends IdScriptableObject {
     }
 
     private static final int
-        Id_next          = 1,
-        // Id_return        = 2,
-        // Id_throw         = 3,
-        Id_iterator      = 2,
-        MAX_PROTOTYPE_ID = 2;
+        Id_next             = 1,
+        Id_iterator         = 2,
+        Id_toStringTag      = 3,
+        MAX_PROTOTYPE_ID    = Id_toStringTag;
 
     public static final String NEXT_METHOD = "next";
-
     public static final String DONE_PROPERTY = "done";
     public static final String VALUE_PROPERTY = "value";
 }
