@@ -708,8 +708,22 @@ public abstract class IdScriptableObject extends ScriptableObject
     private IdFunctionObject newIdFunction(Object tag, int id, String name,
                                            int arity, Scriptable scope)
     {
-        IdFunctionObject f = new IdFunctionObject(this, tag, id, name, arity,
-                                                  scope);
+        IdFunctionObject function = null;
+        if (Context.getContext().getLanguageVersion() < Context.VERSION_ES6) {
+            function = new IdFunctionObject(this, tag, id, name, arity, scope);
+        } else {
+            function = new IdFunctionObjectES6(this, tag, id, name, arity, scope);
+        }
+
+        if (isSealed()) { function.sealObject(); }
+        return function;
+    }
+
+    private IdFunctionObjectES6 newIdFunctionES6(Object tag, int id, String name,
+                                           int arity, Scriptable scope)
+    {
+        IdFunctionObjectES6 f = new IdFunctionObjectES6(this, tag, id, name, arity,
+            scope);
         if (isSealed()) { f.sealObject(); }
         return f;
     }
