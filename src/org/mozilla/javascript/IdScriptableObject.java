@@ -625,18 +625,21 @@ public abstract class IdScriptableObject extends ScriptableObject
         }
     }
 
-    public final void initPrototypeMethod(Object tag, int id, String name,
+    public final IdFunctionObject initPrototypeMethod(Object tag, int id, String name,
                                           int arity)
     {
-		initPrototypeMethod(tag, id, name, name, arity);
+		return initPrototypeMethod(tag, id, name, name, arity);
     }
 
-    public final void initPrototypeMethod(Object tag, int id, String propertyName, String functionName,
+    public final IdFunctionObject initPrototypeMethod(Object tag, int id, String propertyName, String functionName,
                                           int arity)
     {
         Scriptable scope = ScriptableObject.getTopLevelScope(this);
-        IdFunctionObject f = newIdFunction(tag, id, functionName, arity, scope);
-        prototypeValues.initValue(id, propertyName, f, DONTENUM);
+        IdFunctionObject function = newIdFunction(tag, id,
+            functionName != null ? functionName : propertyName,
+            arity, scope);
+        prototypeValues.initValue(id, propertyName, function, DONTENUM);
+        return function;
     }
 
     public final void initPrototypeConstructor(IdFunctionObject f)
