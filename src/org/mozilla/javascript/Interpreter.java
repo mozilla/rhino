@@ -853,7 +853,7 @@ public final class Interpreter extends Icode implements Evaluator
                                              Scriptable scope, Object[] args)
     {
         if (!ScriptRuntime.hasTopCall(cx)) {
-            return ScriptRuntime.doTopCall(c, cx, scope, null, args);
+            return ScriptRuntime.doTopCall(c, cx, scope, null, args, cx.isTopLevelStrict);
         }
 
         Object arg;
@@ -2759,9 +2759,9 @@ switch (op) {
 
             if (useActivation) {
                 if (idata.itsFunctionType == FunctionNode.ARROW_FUNCTION) {
-                    scope = ScriptRuntime.createArrowFunctionActivation(fnOrScript, scope, args);
+                    scope = ScriptRuntime.createArrowFunctionActivation(fnOrScript, scope, args, idata.isStrict);
                 } else {
-                    scope = ScriptRuntime.createFunctionActivation(fnOrScript, scope, args);
+                    scope = ScriptRuntime.createFunctionActivation(fnOrScript, scope, args, idata.isStrict);
                 }
             }
         } else {

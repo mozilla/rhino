@@ -174,6 +174,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
         boolean setValue(Object value, Scriptable owner, Scriptable start) {
             if ((attributes & READONLY) != 0) {
+                Context cx = Context.getContext();
+                if (cx.isStrictMode()) {
+                    throw ScriptRuntime.typeError1("msg.modify.readonly", name);
+                }
                 return true;
             }
             if (owner == start) {
@@ -242,7 +246,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
             desc.defineProperty("enumerable", (attr & DONTENUM) == 0, EMPTY);
             desc.defineProperty("configurable", (attr & PERMANENT) == 0, EMPTY);
-            desc.defineProperty("writable", (attr & READONLY) == 0, EMPTY);
+            if (getter == null && setter == null) {
+                desc.defineProperty("writable", (attr & READONLY) == 0, EMPTY);
+            }
             if (getter != null) desc.defineProperty("get", getter, EMPTY);
             if (setter != null) desc.defineProperty("set", setter, EMPTY);
             return desc;
@@ -252,9 +258,11 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         boolean setValue(Object value, Scriptable owner, Scriptable start) {
             if (setter == null) {
                 if (getter != null) {
-                    if (Context.getContext().hasFeature(Context.FEATURE_STRICT_MODE)) {
+                    Context cx = Context.getContext();
+                    if (cx.isStrictMode() ||
                         // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
                         // we should throw a TypeError in this case.
+                        cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
                         throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
                     }
                     // Assignment to a property with only a getter defined. The
@@ -2710,6 +2718,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     {
         // This method is very hot (basically called on each assignment)
         // so we inline the extensible/sealed checks below.
+        if (!isExtensible) {
+            Context cx = Context.getContext();
+            if (cx.isStrictMode()) {
+                throw ScriptRuntime.typeError0("msg.not.extensible");
+            }
+        }
         Slot slot;
         if (this != start) {
             slot = getSlot(name, index, SLOT_QUERY);
@@ -2744,6 +2758,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                                  Object value, int constFlag)
     {
         assert (constFlag != EMPTY);
+        if (!isExtensible) {
+            Context cx = Context.getContext();
+            if (cx.isStrictMode()) {
+                throw ScriptRuntime.typeError0("msg.not.extensible");
+            }
+        }
         Slot slot;
         if (this != start) {
             slot = getSlot(name, index, SLOT_QUERY);
@@ -2955,7 +2975,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 prev = slot;
                 slot = slot.next;
             }
-            if (slot != null && (slot.getAttributes() & PERMANENT) == 0) {
+            if (slot != null) {
+                // non-configurable
+                if ((slot.getAttributes() & PERMANENT) != 0) {
+                    Context cx = Context.getContext();
+                    if (cx.isStrictMode()) {
+                        throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", name);
+                    }
+                    return;
+                }
                 count--;
                 // remove slot from hash table
                 if (prev == slot) {

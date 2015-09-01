@@ -71,10 +71,11 @@ class CodeGenerator extends Icode {
         } else {
             scriptOrFn = tree;
         }
+
         itsData = new InterpreterData(compilerEnv.getLanguageVersion(),
                                       scriptOrFn.getSourceName(),
                                       encodedSource,
-                                      ((AstRoot)tree).isInStrictMode());
+                                      scriptOrFn.isInStrictMode());
         itsData.topLevel = true;
 
         if (returnFunction) {
@@ -99,6 +100,9 @@ class CodeGenerator extends Icode {
         if (theFunction.isGenerator()) {
           addIcode(Icode_GENERATOR);
           addUint16(theFunction.getBaseLineno() & 0xFFFF);
+        }
+        if (theFunction.isInStrictMode()) {
+            itsData.isStrict = true;
         }
 
         generateICodeFromTree(theFunction.getLastChild());

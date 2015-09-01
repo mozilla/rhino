@@ -93,6 +93,8 @@ public class Parser
     private String prevNameTokenString = "";
     private int prevNameTokenLineno;
 
+    private boolean defaultUseStrictDirective;
+
     // Exception to unwind
     private static class ParserException extends RuntimeException
     {
@@ -549,8 +551,11 @@ public class Parser
 
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
-        // TODO: eval code should get strict mode from invoking code
-        inUseStrictDirective = false;
+
+        inUseStrictDirective = defaultUseStrictDirective;
+        if (inUseStrictDirective) {
+            root.setInStrictMode(true);
+        }
 
         try {
             for (;;) {
@@ -621,7 +626,7 @@ public class Parser
         return root;
     }
 
-    private AstNode parseFunctionBody(int type)
+    private AstNode parseFunctionBody(int type, FunctionNode fnNode)
         throws IOException
     {
         boolean isExpressionClosure = false;
@@ -675,6 +680,10 @@ public class Parser
                                     inDirectivePrologue = false;
                                 } else if (directive.equals("use strict")) {
                                     inUseStrictDirective = true;
+                                    fnNode.setInStrictMode(true);
+                                    if (!savedStrictMode) {
+                                        setRequiresActivation();
+                                    }
                                 }
                             }
                             break;
@@ -829,7 +838,7 @@ public class Parser
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         try {
             parseFunctionParams(fnNode);
-            fnNode.setBody(parseFunctionBody(type));
+            fnNode.setBody(parseFunctionBody(type, fnNode));
             fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
             fnNode.setLength(ts.tokenEnd - functionSourceStart);
 
@@ -910,7 +919,7 @@ public class Parser
                 fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
             }
                 
-            fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION));
+            fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode));
             fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
             fnNode.setLength(ts.tokenEnd - functionSourceStart);
         } finally {
@@ -4006,11 +4015,11 @@ public class Parser
         int nodeType = left.getType();
         switch (nodeType) {
           case Token.NAME:
+              String name = ((Name) left).getIdentifier();
               if (inUseStrictDirective &&
-                  "eval".equals(((Name) left).getIdentifier()))
+                  ("eval".equals(name) || "arguments".equals(name)))
               {
-                  reportError("msg.bad.id.strict",
-                              ((Name) left).getIdentifier());
+                  reportError("msg.bad.id.strict", name);
               }
               left.setType(Token.BINDNAME);
               return new Node(Token.SETNAME, left, right);
@@ -4087,5 +4096,9 @@ public class Parser
         throw Kit.codeBug("ts.cursor=" + ts.cursor
                           + ", ts.tokenBeg=" + ts.tokenBeg
                           + ", currentToken=" + currentToken);
+    }
+
+    public void setDefaultUseStrictDirective(boolean useStrict) {
+        defaultUseStrictDirective = useStrict;
     }
 }
