@@ -408,7 +408,7 @@ final class NativeString extends IdScriptableObject
                         .toUpperCase(cx.getLocale());
                 }
                 case Id_trim: {
-                    String str = ScriptRuntime.toString(thisObj);
+                    String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     char[] chars = str.toCharArray();
 
                     int start = 0;
