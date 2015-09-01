@@ -18,6 +18,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static org.mozilla.javascript.NativeSymbol.ITERATOR_PROPERTY;
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 /**
@@ -216,14 +217,11 @@ public class NativeArray extends IdScriptableObject implements List
           case Id_findIndex:      arity=1; s="findIndex";      break;
           case Id_reduce:         arity=1; s="reduce";         break;
           case Id_reduceRight:    arity=1; s="reduceRight";    break;
-          case Id_iterator:       arity=0; s="@@iterator"; fnName="[Symbol.iterator]"; break;
+          case Id_iterator:       arity=0; s= ITERATOR_PROPERTY; fnName="[Symbol.iterator]"; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        if (fnName == null) {
-            initPrototypeMethod(ARRAY_TAG, id, s, arity);
-        } else {
-            initPrototypeMethod(ARRAY_TAG, id, s, fnName, arity);
-        }
+
+        initPrototypeMethod(ARRAY_TAG, id, s, fnName, arity);
     }
 
     @Override

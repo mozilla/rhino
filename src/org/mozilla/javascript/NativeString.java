@@ -11,6 +11,7 @@ import org.mozilla.javascript.regexp.NativeRegExp;
 import java.text.Collator;
 import java.text.Normalizer;
 
+import static org.mozilla.javascript.NativeSymbol.ITERATOR_PROPERTY;
 import static org.mozilla.javascript.ScriptRuntime.rangeError;
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
@@ -175,14 +176,10 @@ final class NativeString extends IdScriptableObject
           case Id_normalize:         arity=0; s="normalize";         break;
           case Id_repeat:            arity=1; s="repeat";            break;
           case Id_codePointAt:       arity=1; s="codePointAt";       break;
-          case Id_iterator:          arity=0; s="@@iterator"; fnName="[Symbol.iterator]"; break;
+          case Id_iterator:          arity=0; s= ITERATOR_PROPERTY; fnName="[Symbol.iterator]"; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
-        if (fnName == null) {
-            initPrototypeMethod(STRING_TAG, id, s, arity);
-        } else {
-            initPrototypeMethod(STRING_TAG, id, s, fnName, arity);
-        }
+        initPrototypeMethod(STRING_TAG, id, s, fnName, arity);
     }
 
     @Override
