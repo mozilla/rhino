@@ -56,7 +56,6 @@ test {
     systemProperty 'file.encoding', 'UTF-8'
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
-    ignoreFailures = true
 }
 
 task testBenchmark(type: Test) {
