@@ -31,8 +31,7 @@ public class Undefined implements Serializable
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == Undefined.instance || obj == Undefined.SCRIPTABLE_UNDEFINED) return true;
-        return super.equals(obj);
+        return isUndefined(obj) || super.equals(obj);
     }
 
     public static final Scriptable SCRIPTABLE_UNDEFINED;
@@ -43,10 +42,15 @@ public class Undefined implements Serializable
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 if (method.getName().equals("toString")) return "undefined";
                 if (method.getName().equals("equals")) {
-                    return args.length > 0 && (args[0] == Undefined.instance || args[0] == Undefined.SCRIPTABLE_UNDEFINED);
+                    return args.length > 0 && isUndefined(args[0]);
                 }
                 throw new UnsupportedOperationException("undefined doesn't support " + method.getName());
             }
         });
+    }
+
+    public static boolean isUndefined(Object obj)
+    {
+        return Undefined.instance == obj || Undefined.SCRIPTABLE_UNDEFINED == obj;
     }
 }
