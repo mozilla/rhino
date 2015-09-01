@@ -1,8 +1,8 @@
-import sun.applet.Main
-
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
+apply plugin: 'jacoco'
+apply plugin: 'distribution'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -170,3 +170,40 @@ publishing {
         }
     }
 }
+
+jacoco {
+    toolVersion = "0.7.4.201502262128"
+}
+
+jacocoTestReport.dependsOn test
+jacocoTestReport {
+    reports {
+        html.destination "${buildDir}/jacocoHtml"
+    }
+}
+
+distributions {
+    main {
+        contents {
+            from(sourceSets.main.allSource) {
+                exclude 'man'
+                into '/src'
+            }
+            from(javadoc.destinationDir) {
+                into '/docs'
+            }
+            from(jar.outputs.files) {
+                into '/lib'
+            }
+            from(sourceSets.main.allSource) {
+                include 'man/*.1'
+            }
+            from(file(".")) {
+                include '*.txt'
+            }
+            into "/"
+        }
+    }
+}
+
+distZip.dependsOn javadoc, jar
