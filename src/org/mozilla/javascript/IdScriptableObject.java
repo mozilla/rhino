@@ -719,15 +719,6 @@ public abstract class IdScriptableObject extends ScriptableObject
         return function;
     }
 
-    private IdFunctionObjectES6 newIdFunctionES6(Object tag, int id, String name,
-                                           int arity, Scriptable scope)
-    {
-        IdFunctionObjectES6 f = new IdFunctionObjectES6(this, tag, id, name, arity,
-            scope);
-        if (isSealed()) { f.sealObject(); }
-        return f;
-    }
-
     @Override
     public void defineOwnProperty(Context cx, Object key, ScriptableObject desc) {
       if (key instanceof String) {
