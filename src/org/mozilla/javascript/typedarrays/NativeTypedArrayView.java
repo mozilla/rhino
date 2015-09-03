@@ -6,7 +6,14 @@
 
 package org.mozilla.javascript.typedarrays;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ExternalArrayData;
+import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeArrayIterator;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
