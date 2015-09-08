@@ -842,6 +842,10 @@ public class ScriptRuntime {
 
     static String defaultObjectToString(Scriptable obj)
     {
+        if (obj == null)
+            return "[object Null]";
+        if (Undefined.isUndefined(obj))
+            return "[object Undefined]";
         return "[object " + obj.getClassName() + ']';
     }
 
