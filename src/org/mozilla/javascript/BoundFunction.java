@@ -24,7 +24,8 @@ public class BoundFunction extends BaseFunction {
                        Object[] boundArgs)
   {
     this.targetFunction = targetFunction;
-    this.boundThis = boundThis;
+    //if object-to-bind is null, then it have to be replaced with the global object according to spec
+    this.boundThis = boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
     this.boundArgs = boundArgs;
     if (targetFunction instanceof BaseFunction) {
       length = Math.max(0, ((BaseFunction) targetFunction).getLength() - boundArgs.length);
@@ -47,10 +48,8 @@ public class BoundFunction extends BaseFunction {
   }
 
   @Override
-  public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] extraArgs)
-  {
-    Scriptable callThis = boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
-    return targetFunction.call(cx, scope, callThis, concat(boundArgs, extraArgs));
+  public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] extraArgs) {
+      return targetFunction.call(cx, scope, boundThis, concat(boundArgs, extraArgs));
   }
 
   @Override
