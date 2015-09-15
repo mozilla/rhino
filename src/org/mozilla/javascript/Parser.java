@@ -2713,7 +2713,7 @@ public class Parser
             int maybeName = nextToken();
             if (maybeName != Token.NAME
                     && !(compilerEnv.isReservedKeywordAsIdentifier()
-                    && TokenStream.isKeyword(ts.getString()))) {
+                    && TokenStream.isKeyword(ts.getString(), compilerEnv.getLanguageVersion(), inUseStrictDirective))) {
               reportError("msg.no.name.after.dot");
             }
 
@@ -2749,6 +2749,13 @@ public class Parser
               //          '@::attr', '@::*', '@*', '@*::attr', '@*::*'
               ref = attributeAccess();
               break;
+
+          case Token.RESERVED: {
+              String name = ts.getString();
+              saveNameTokenData(ts.tokenBeg, name, ts.lineno);
+              ref = propertyName(-1, name, memberTypeFlags);
+              break;
+          }
 
           default:
               if (compilerEnv.isReservedKeywordAsIdentifier()) {
@@ -3477,7 +3484,7 @@ public class Parser
 
           default:
               if (compilerEnv.isReservedKeywordAsIdentifier()
-                      && TokenStream.isKeyword(ts.getString())) {
+                      && TokenStream.isKeyword(ts.getString(), compilerEnv.getLanguageVersion(), inUseStrictDirective)) {
                   // convert keyword to property name, e.g. ({if: 1})
                   pname = createNameNode();
                   break;
@@ -4102,5 +4109,9 @@ public class Parser
 
     public void setDefaultUseStrictDirective(boolean useStrict) {
         defaultUseStrictDirective = useStrict;
+    }
+
+    public boolean inUseStrictDirective() {
+        return inUseStrictDirective;
     }
 }
