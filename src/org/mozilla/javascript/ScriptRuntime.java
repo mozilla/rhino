@@ -784,7 +784,7 @@ public class ScriptRuntime {
         return (sb == null) ? s : sb.toString();
     }
 
-    static boolean isValidIdentifierName(String s)
+    static boolean isValidIdentifierName(String s, Context cx, boolean isStrict)
     {
         int L = s.length();
         if (L == 0)
@@ -795,7 +795,7 @@ public class ScriptRuntime {
             if (!Character.isJavaIdentifierPart(s.charAt(i)))
                 return false;
         }
-        return !TokenStream.isKeyword(s);
+        return !TokenStream.isKeyword(s, cx.getLanguageVersion(), isStrict);
     }
 
     public static CharSequence toCharSequence(Object val) {
@@ -978,7 +978,7 @@ public class ScriptRuntime {
                             continue;   // a property has been removed
                         if (i > 0)
                             result.append(", ");
-                        if (ScriptRuntime.isValidIdentifierName(strId)) {
+                        if (ScriptRuntime.isValidIdentifierName(strId, cx, cx.isStrictMode())) {
                             result.append(strId);
                         } else {
                             result.append('\'');
