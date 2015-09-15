@@ -31,14 +31,20 @@ public class NodeTransformer
 
     public final void transform(ScriptNode tree)
     {
-        transformCompilationUnit(tree);
+        transform(tree, false);
+    }
+
+    public final void transform(ScriptNode tree, boolean inStrictMode)
+    {
+        inStrictMode = inStrictMode || tree.isInStrictMode();
+        transformCompilationUnit(tree, inStrictMode);
         for (int i = 0; i != tree.getFunctionCount(); ++i) {
             FunctionNode fn = tree.getFunctionNode(i);
-            transform(fn);
+            transform(fn, inStrictMode);
         }
     }
 
-    private void transformCompilationUnit(ScriptNode tree)
+    private void transformCompilationUnit(ScriptNode tree, boolean inStrictMode)
     {
         loops = new ObjArray();
         loopEnds = new ObjArray();
@@ -53,8 +59,6 @@ public class NodeTransformer
 
         //uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
-        boolean inStrictMode = tree instanceof AstRoot &&
-                               ((AstRoot)tree).isInStrictMode();
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects,
                                    inStrictMode);
     }
