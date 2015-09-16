@@ -3595,10 +3595,12 @@ public class Parser
             return;
         }
         boolean activation = false;
-        if ("arguments".equals(name)
-            || (compilerEnv.getActivationNames() != null
-                && compilerEnv.getActivationNames().contains(name)))
-        {
+        if ("arguments".equals(name) &&
+            // An arrow function not generate arguments. So it not need activation.
+            ((FunctionNode)currentScriptOrFn).getFunctionType() != FunctionNode.ARROW_FUNCTION) {
+            activation = true;
+        } else if (compilerEnv.getActivationNames() != null
+                && compilerEnv.getActivationNames().contains(name)) {
             activation = true;
         } else if ("length".equals(name)) {
             if (token == Token.GETPROP
