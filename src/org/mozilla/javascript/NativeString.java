@@ -467,11 +467,11 @@ final class NativeString extends IdScriptableObject
                     String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
-                    if (cnt == 0) {
+                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw rangeError("Invalid count value");
+
+                    if (cnt == 0 || str.length() == 0) {
                         return "";
                     }
-
-                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw rangeError("Invalid count value");
 
                     long size = str.length() * (long) cnt;
                     // Check for overflow
