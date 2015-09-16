@@ -418,6 +418,7 @@ public class Token
           case COMMENT:         return "COMMENT";
           case GENEXPR:         return "GENEXPR";
           case METHOD:          return "METHOD";
+          case ARROW:           return "ARROW";
         }
 
         // Token without name
