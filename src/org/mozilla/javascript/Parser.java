@@ -2172,7 +2172,12 @@ public class Parser
             return returnOrYield(tt, true);
         }
         AstNode pn = condExpr();
-        tt = peekToken();
+        boolean hasEOL = false;
+        tt = peekTokenOrEOL();
+        if (tt == Token.EOL) {
+            hasEOL = true;
+            tt = peekToken();
+        }
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
             consumeToken();
 
@@ -2193,7 +2198,7 @@ public class Parser
             if (currentJsDocComment != null) {
                 pn.setJsDocNode(getAndResetJsDoc());
             }
-        } else if (tt == Token.ARROW) {
+        } else if (!hasEOL && tt == Token.ARROW) {
             consumeToken();
             pn = arrowFunction(pn);
         }
