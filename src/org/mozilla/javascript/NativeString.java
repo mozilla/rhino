@@ -487,7 +487,9 @@ final class NativeString extends IdScriptableObject
                         retval.append(retval);
                         i *= 2;
                     }
-                    while (i++ < cnt) retval.append(str);
+                    if (i < cnt) {
+                        retval.append(retval.substring(0, str.length() * (int)(cnt - i)));
+                    }
 
                     return retval.toString();
                 }
