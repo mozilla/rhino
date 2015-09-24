@@ -28,7 +28,7 @@ public abstract class JsTestsBase extends TestCase {
         System.out.print(name + ": ");
         Object result;
         try {
-            result = cx.evaluateString(scope, source, "jstest input", 1, null);
+            result = cx.evaluateString(scope, source, "jstest input: " + name, 1, null);
         } catch (RuntimeException e) {
             e.printStackTrace(System.err);
             System.out.println("FAILED");
