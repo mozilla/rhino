@@ -476,7 +476,7 @@ final class NativeString extends IdScriptableObject
                     long size = str.length() * (long) cnt;
                     // Check for overflow
                     if (cnt > Integer.MAX_VALUE || size > Integer.MAX_VALUE) {
-                        size = Integer.MAX_VALUE;
+                        throw rangeError("Size too large");
                     }
 
                     StringBuilder retval = new StringBuilder((int) size);
