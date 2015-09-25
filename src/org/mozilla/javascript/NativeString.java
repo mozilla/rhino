@@ -464,34 +464,7 @@ final class NativeString extends IdScriptableObject
 
                 case Id_repeat:
                 {
-                    String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    double cnt = ScriptRuntime.toInteger(args, 0);
-
-                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw rangeError("Invalid count value");
-
-                    if (cnt == 0 || str.length() == 0) {
-                        return "";
-                    }
-
-                    long size = str.length() * (long) cnt;
-                    // Check for overflow
-                    if (cnt > Integer.MAX_VALUE || size > Integer.MAX_VALUE) {
-                        size = Integer.MAX_VALUE;
-                    }
-
-                    StringBuilder retval = new StringBuilder((int) size);
-                    retval.append(str);
-
-                    int i = 1;
-                    while (i <= cnt/2) {
-                        retval.append(retval);
-                        i *= 2;
-                    }
-                    if (i < cnt) {
-                        retval.append(retval.substring(0, str.length() * (int)(cnt - i)));
-                    }
-
-                    return retval.toString();
+                    return js_repeat(cx, thisObj, f, args);
                 }
                 case Id_codePointAt:
                 {
@@ -747,6 +720,41 @@ final class NativeString extends IdScriptableObject
                 end = begin;
         }
         return target.subSequence((int) begin, (int) end);
+    }
+
+    private static String js_repeat(Context cx, Scriptable thisObj, IdFunctionObject f, Object[] args)
+    {
+        String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+        double cnt = ScriptRuntime.toInteger(args, 0);
+
+        if ((cnt < 0.0) || (cnt == Double.POSITIVE_INFINITY)) {
+            throw rangeError("Invalid count value");
+        }
+
+        if (cnt == 0.0 || str.length() == 0) {
+            return "";
+        }
+
+        long size = str.length() * (long)cnt;
+        // Check for overflow
+        if ((cnt > Integer.MAX_VALUE) || (size > Integer.MAX_VALUE)) {
+            throw rangeError("Invalid size or count value");
+        }
+
+        StringBuilder retval = new StringBuilder((int) size);
+        retval.append(str);
+
+        int i = 1;
+        int icnt = (int)cnt;
+        while (i <= (icnt / 2)) {
+            retval.append(retval);
+            i *= 2;
+        }
+        if (i < icnt) {
+            retval.append(retval.substring(0, str.length() * (icnt - i)));
+        }
+
+        return retval.toString();
     }
 
 // #string_id_map#
