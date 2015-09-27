@@ -467,16 +467,16 @@ final class NativeString extends IdScriptableObject
                     String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     double cnt = ScriptRuntime.toInteger(args, 0);
 
-                    if (cnt == 0) {
+                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw rangeError("Invalid count value");
+
+                    if (cnt == 0 || str.length() == 0) {
                         return "";
                     }
 
-                    if (cnt < 0 || cnt == Double.POSITIVE_INFINITY) throw rangeError("Invalid count value");
-
                     long size = str.length() * (long) cnt;
                     // Check for overflow
-                    if (cnt >= Integer.MAX_VALUE || size >= Integer.MAX_VALUE) {
-                        size = Integer.MAX_VALUE;
+                    if (cnt > Integer.MAX_VALUE || size > Integer.MAX_VALUE) {
+                        throw rangeError("Size too large");
                     }
 
                     StringBuilder retval = new StringBuilder((int) size);
@@ -487,7 +487,9 @@ final class NativeString extends IdScriptableObject
                         retval.append(retval);
                         i *= 2;
                     }
-                    while (i++ < cnt) retval.append(str);
+                    if (i < cnt) {
+                        retval.append(retval.substring(0, str.length() * (int)(cnt - i)));
+                    }
 
                     return retval.toString();
                 }

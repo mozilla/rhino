@@ -69,8 +69,8 @@ assertThrows('"a".repeat(Number.POSITIVE_INFINITY)', RangeError);
 assertThrows('"a".repeat(Infinity)', RangeError);
 assertThrows('"a".repeat(+Infinity)', RangeError);
 
-//assertThrows('"a".repeat(Math.pow(2, 30))', RangeError);
-//assertThrows('"a".repeat(Math.pow(2, 40))', RangeError);
+assertThrows('"a".repeat(Math.pow(2, 32))', RangeError);
+assertThrows('"a".repeat(Math.pow(2, 40))', RangeError);
 
 var myobj = {
   toString: function() {
