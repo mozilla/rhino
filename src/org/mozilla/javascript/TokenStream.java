@@ -433,6 +433,7 @@ class TokenStream
     }
 
     final double getNumber() { return number; }
+    final boolean isNumberOldOctal() { return isOldOctal; }
     final boolean isNumberOctal() { return isOctal; }
     final boolean isNumberHex() { return isHex; }
 
@@ -577,10 +578,9 @@ class TokenStream
 
             // is it a number?
             if (isDigit(c) || (c == '.' && isDigit(peekChar()))) {
-                isOctal = false;
                 stringBufferTop = 0;
                 int base = 10;
-                isHex = isOctal = false;
+                isHex = isOldOctal = isOctal = false;
 
                 if (c == '0') {
                     c = getChar();
@@ -588,9 +588,13 @@ class TokenStream
                         base = 16;
                         isHex = true;
                         c = getChar();
-                    } else if (isDigit(c)) {
+                    } else if (c == 'o' || c == 'O') {
                         base = 8;
                         isOctal = true;
+                        c = getChar();
+                    } else if (isDigit(c)) {
+                        base = 8;
+                        isOldOctal = true;
                     } else {
                         addToString('0');
                     }
@@ -603,16 +607,21 @@ class TokenStream
                     }
                 } else {
                     while ('0' <= c && c <= '9') {
-                        /*
-                         * We permit 08 and 09 as decimal numbers, which
-                         * makes our behavior a superset of the ECMA
-                         * numeric grammar.  We might not always be so
-                         * permissive, so we warn about it.
-                         */
                         if (base == 8 && c >= '8') {
-                            parser.addWarning("msg.bad.octal.literal",
-                                              c == '8' ? "8" : "9");
-                            base = 10;
+                            if (isOldOctal) {
+                                /*
+                                 * We permit 08 and 09 as decimal numbers, which
+                                 * makes our behavior a superset of the ECMA
+                                 * numeric grammar.  We might not always be so
+                                 * permissive, so we warn about it.
+                                 */
+                                parser.addWarning("msg.bad.octal.literal",
+                                                  c == '8' ? "8" : "9");
+                                base = 10;
+                            } else {
+                                parser.addError("msg.caught.nfe");
+                                return Token.ERROR;
+                            }
                         }
                         addToString(c);
                         c = getChar();
@@ -1782,6 +1791,7 @@ class TokenStream
     // code.
     private String string = "";
     private double number;
+    private boolean isOldOctal;
     private boolean isOctal;
     private boolean isHex;
 
