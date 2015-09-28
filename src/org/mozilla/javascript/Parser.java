@@ -2960,6 +2960,9 @@ public class Parser
               if (this.inUseStrictDirective && ts.isNumberOldOctal()) {
                   reportError("msg.no.old.octal.strict");
               }
+              if (ts.isNumberBinary()) {
+                  s = "0b"+s;
+              }
               if (ts.isNumberOldOctal()) {
                   s = "0"+s;
               }
