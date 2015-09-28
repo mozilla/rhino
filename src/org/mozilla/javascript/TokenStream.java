@@ -433,6 +433,7 @@ class TokenStream
     }
 
     final double getNumber() { return number; }
+    final boolean isNumberBinary() { return isBinary; }
     final boolean isNumberOldOctal() { return isOldOctal; }
     final boolean isNumberOctal() { return isOctal; }
     final boolean isNumberHex() { return isHex; }
@@ -580,7 +581,7 @@ class TokenStream
             if (isDigit(c) || (c == '.' && isDigit(peekChar()))) {
                 stringBufferTop = 0;
                 int base = 10;
-                isHex = isOldOctal = isOctal = false;
+                isHex = isOldOctal = isOctal = isBinary = false;
 
                 if (c == '0') {
                     c = getChar();
@@ -592,6 +593,10 @@ class TokenStream
                         base = 8;
                         isOctal = true;
                         c = getChar();
+                    } else if (c == 'b' || c == 'B') {
+                        base = 2;
+                        isBinary = true;
+                        c = getChar();
                     } else if (isDigit(c)) {
                         base = 8;
                         isOldOctal = true;
@@ -600,10 +605,12 @@ class TokenStream
                     }
                 }
 
+                boolean isEmpty = true;
                 if (base == 16) {
                     while (0 <= Kit.xDigitToInt(c, 0)) {
                         addToString(c);
                         c = getChar();
+                        isEmpty = false;
                     }
                 } else {
                     while ('0' <= c && c <= '9') {
@@ -622,10 +629,18 @@ class TokenStream
                                 parser.addError("msg.caught.nfe");
                                 return Token.ERROR;
                             }
+                        } else if (base == 2 && c >= '2') {
+                            parser.addError("msg.caught.nfe");
+                            return Token.ERROR;
                         }
                         addToString(c);
                         c = getChar();
+                        isEmpty = false;
                     }
+                }
+                if (isEmpty && (isBinary || isOctal || isHex)) {
+                    parser.addError("msg.caught.nfe");
+                    return Token.ERROR;
                 }
 
                 boolean isInteger = true;
@@ -1791,6 +1806,7 @@ class TokenStream
     // code.
     private String string = "";
     private double number;
+    private boolean isBinary;
     private boolean isOldOctal;
     private boolean isOctal;
     private boolean isHex;
