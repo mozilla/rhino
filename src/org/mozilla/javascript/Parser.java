@@ -2957,11 +2957,14 @@ public class Parser
           case Token.NUMBER: {
               consumeToken();
               String s = ts.getString();
-              if (this.inUseStrictDirective && ts.isNumberOctal()) {
-                  reportError("msg.no.octal.strict");
+              if (this.inUseStrictDirective && ts.isNumberOldOctal()) {
+                  reportError("msg.no.old.octal.strict");
+              }
+              if (ts.isNumberOldOctal()) {
+                  s = "0"+s;
               }
               if (ts.isNumberOctal()) {
-                  s = "0"+s;
+                  s = "0o"+s;
               }
               if (ts.isNumberHex()) {
                   s = "0x"+s;
