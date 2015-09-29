@@ -582,6 +582,7 @@ class TokenStream
                 stringBufferTop = 0;
                 int base = 10;
                 isHex = isOldOctal = isOctal = isBinary = false;
+                boolean es6 = parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
 
                 if (c == '0') {
                     c = getChar();
@@ -589,11 +590,11 @@ class TokenStream
                         base = 16;
                         isHex = true;
                         c = getChar();
-                    } else if (c == 'o' || c == 'O') {
+                    } else if (es6 && (c == 'o' || c == 'O')) {
                         base = 8;
                         isOctal = true;
                         c = getChar();
-                    } else if (c == 'b' || c == 'B') {
+                    } else if (es6 && (c == 'b' || c == 'B')) {
                         base = 2;
                         isBinary = true;
                         c = getChar();
