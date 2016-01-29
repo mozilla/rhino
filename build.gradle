@@ -1,8 +1,8 @@
-import sun.applet.Main
-
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
+apply plugin: 'jacoco'
+apply plugin: 'distribution'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -42,6 +42,7 @@ sourceSets {
 
 dependencies {
     testCompile "junit:junit:4.12"
+    testCompile "org.yaml:snakeyaml:1.15"
 }
 
 test {
@@ -52,6 +53,7 @@ test {
     systemProperty 'user.language', 'en'
     systemProperty 'user.country', 'US'
     systemProperty 'user.timezone', 'America/Los_Angeles'
+    systemProperty 'file.encoding', 'UTF-8'
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
 }
@@ -59,6 +61,7 @@ test {
 task testBenchmark(type: Test) {
     include "**/benchmarks/*Benchmark*"
     systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
+    systemProperty 'file.encoding', 'UTF-8'
     workingDir = file("testsrc/benchmarks")
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
@@ -109,6 +112,9 @@ task rhinoJavadocJar(type: Jar, dependsOn: rhinoJavadoc) {
 publishing {
     publications {
         rhino(MavenPublication) {
+            groupId 'org.mozilla'
+            artifactId 'rhino'
+
             pom.withXml {
                 def root = asNode()
 
@@ -117,6 +123,11 @@ publishing {
     It is typically embedded into Java applications to provide scripting to end users.
 """)
                 root.appendNode("url", "https://developer.mozilla.org/en/Rhino")
+
+                def p = root.appendNode("parent")
+                p.appendNode("groupId", "org.sonatype.oss")
+                p.appendNode("artifactId", "oss-parent")
+                p.appendNode("version", "7")
 
                 def l = root.appendNode("licenses").appendNode("license")
                 l.appendNode("name", "Mozilla Public License, Version 2.0")
@@ -158,3 +169,40 @@ publishing {
         }
     }
 }
+
+jacoco {
+    toolVersion = "0.7.4.201502262128"
+}
+
+jacocoTestReport.dependsOn test
+jacocoTestReport {
+    reports {
+        html.destination "${buildDir}/jacocoHtml"
+    }
+}
+
+distributions {
+    main {
+        contents {
+            from(sourceSets.main.allSource) {
+                exclude 'man'
+                into '/src'
+            }
+            from(javadoc.destinationDir) {
+                into '/docs'
+            }
+            from(jar.outputs.files) {
+                into '/lib'
+            }
+            from(sourceSets.main.allSource) {
+                include 'man/*.1'
+            }
+            from(file(".")) {
+                include '*.txt'
+            }
+            into "/"
+        }
+    }
+}
+
+distZip.dependsOn javadoc, jar
