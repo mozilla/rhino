@@ -14,6 +14,7 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7R5_RELEASE">Rhino 1.7R5</a></td><td>January 29, 2015</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_6_RELEASE">Rhino 1.7.6</a></td><td>April 15, 2015</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_RELEASE">Rhino 1.7.7</a></td><td>June 17, 2015</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_1_RELEASE">Rhino 1.7.7.1</a></td><td>February 2, 2016</td></tr>
 </table>
 
 [Release Notes](./RELEASE-NOTES.md) for recent releases.
@@ -93,7 +94,7 @@ mavenReleaseRepo=
 
 Rhino can run as a stand-alone interpreter from the command line:
 
-    java -jar build/libs/rhino-1.7.7.jar
+    java -jar buildGradle/libs/rhino-1.7.7.1.jar
     Rhino 1.7.7 2015 05 03
     js> print('Hello, World!');
     Hello, World!
