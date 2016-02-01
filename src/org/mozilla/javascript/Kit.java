@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Collection of utilities
@@ -18,6 +20,8 @@ import java.util.Map;
 
 public class Kit
 {
+    static Set<String> notClassSet = new ConcurrentSkipListSet<String>();
+
     /**
      * Reflection of Throwable.initCause(Throwable) from JDK 1.4
      * or nul if it is not available.
@@ -38,9 +42,12 @@ public class Kit
 
     public static Class<?> classOrNull(String className)
     {
+        if (notClassSet.contains(className))
+            return null;
         try {
             return Class.forName(className);
         } catch  (ClassNotFoundException ex) {
+            notClassSet.add(className);
         } catch  (SecurityException ex) {
         } catch  (LinkageError ex) {
         } catch (IllegalArgumentException e) {
@@ -56,9 +63,12 @@ public class Kit
      */
     public static Class<?> classOrNull(ClassLoader loader, String className)
     {
+        if (notClassSet.contains(className))
+            return null;
         try {
             return loader.loadClass(className);
         } catch (ClassNotFoundException ex) {
+            notClassSet.add(className);
         } catch (SecurityException ex) {
         } catch (LinkageError ex) {
         } catch (IllegalArgumentException e) {
