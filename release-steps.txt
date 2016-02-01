@@ -1,9 +1,8 @@
 Update version in:
 	src/manifest
 	build.properties
+	gradle.properties
 	maven/maven-pom.xml
-
-ant dist source-zip
 
 Paste release notes into RELEASE_NOTES.md:
 	git shortlog LAST_TAG.. | sed 's/^ /*/'
@@ -14,6 +13,10 @@ Paste release info into README.md
 
 Re-run compat-table "engine.js"
 	Copy HTML to gh-pages/compat
+
+./gradlew publishToMavenLocal distZip 
+cd maven
+./maven-staging-deploy.sh
 
 Go to oss.sonatype.org
 	Find "org.mozilla" staging repo, close, release, and drop.
@@ -26,6 +29,7 @@ Update release in GitHub
 Update to new snapshot version in:
 	src/manifest
 	build.properties
+	gradle.properties
 	maven/maven-pom.xml
 
 Update the Homebrew formula. Submit a PR for:
