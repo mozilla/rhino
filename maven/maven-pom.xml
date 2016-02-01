@@ -12,7 +12,7 @@
   <groupId>org.mozilla</groupId>
   <artifactId>rhino</artifactId>
   <name>Mozilla Rhino</name>
-  <version>1.7.7</version>
+  <version>1.7.7.1</version>
 
   <packaging>jar</packaging>
   <description>
