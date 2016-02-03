@@ -181,24 +181,28 @@ jacocoTestReport {
     }
 }
 
+
+
 distributions {
     main {
         contents {
             from(sourceSets.main.allSource) {
                 exclude 'man'
-                into '/src'
+                into 'rhino' + project.version + '/src'
             }
             from(javadoc.destinationDir) {
-                into '/docs'
+                into 'rhino' + project.version + '/docs'
             }
             from(jar.outputs.files) {
-                into '/lib'
+                into 'rhino' + project.version + '/lib'
             }
             from(sourceSets.main.allSource) {
                 include 'man/*.1'
+                into 'rhino' + project.version
             }
             from(file(".")) {
                 include '*.txt'
+                into 'rhino' + project.version 
             }
             into "/"
         }
