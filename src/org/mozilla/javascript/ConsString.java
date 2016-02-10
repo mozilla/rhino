@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * <p>This class represents a string composed of two components, each of which
@@ -43,10 +44,6 @@ public class ConsString implements CharSequence, Serializable {
         if (str2 instanceof ConsString) {
             depth += ((ConsString)str2).depth;
         }
-        // Don't let it grow too deep, can cause stack overflows
-        if (depth > 2000) {
-            flatten();
-        }
     }
 
     // Replace with string representation when serializing
@@ -62,25 +59,24 @@ public class ConsString implements CharSequence, Serializable {
     private synchronized String flatten() {
         if (depth > 0) {
             StringBuilder b = new StringBuilder(length);
-            appendTo(b);
+            ArrayList<CharSequence> buffer = new ArrayList<CharSequence>();
+            buffer.add(s2);
+            buffer.add(s1);
+            while(!buffer.isEmpty()) {
+                CharSequence next = buffer.remove(buffer.size() - 1);
+                if (next instanceof ConsString) {
+                    ConsString casted = (ConsString) next;
+                    buffer.add(casted.s2);
+                    buffer.add(casted.s1);
+                } else {
+                    b.append(next);
+                }
+            }
             s1 = b.toString();
             s2 = "";
             depth = 0;
         }
         return (String)s1;
-    }
-
-    private synchronized void appendTo(StringBuilder b) {
-        appendFragment(s1, b);
-        appendFragment(s2, b);
-    }
-
-    private static void appendFragment(CharSequence s, StringBuilder b) {
-        if (s instanceof ConsString) {
-            ((ConsString)s).appendTo(b);
-        } else {
-            b.append(s);
-        }
     }
 
     public int length() {
