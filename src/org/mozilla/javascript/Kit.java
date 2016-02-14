@@ -12,6 +12,7 @@ import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
@@ -20,7 +21,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class Kit
 {
-    static Set<String> notClassSet = new ConcurrentSkipListSet<String>();
+    static Map<ClassLoader, Set<String>> notClassMap = new ConcurrentHashMap<ClassLoader, Set<String>>(16);
 
     /**
      * Reflection of Throwable.initCause(Throwable) from JDK 1.4
@@ -42,19 +43,8 @@ public class Kit
 
     public static Class<?> classOrNull(String className)
     {
-        if (notClassSet.contains(className))
-            return null;
-        try {
-            return Class.forName(className);
-        } catch  (ClassNotFoundException ex) {
-            notClassSet.add(className);
-        } catch  (SecurityException ex) {
-        } catch  (LinkageError ex) {
-        } catch (IllegalArgumentException e) {
-            // Can be thrown if name has characters that a class name
-            // can not contain
-        }
-        return null;
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        return classOrNull(classLoader, className);
     }
 
     /**
@@ -63,14 +53,22 @@ public class Kit
      */
     public static Class<?> classOrNull(ClassLoader loader, String className)
     {
-        if (notClassSet.contains(className))
+
+        Set<String> currentNotClassSet = notClassMap.get(Thread.currentThread().getContextClassLoader());
+
+        if (currentNotClassSet != null && currentNotClassSet.contains(className))
             return null;
+
         try {
             return loader.loadClass(className);
-        } catch (ClassNotFoundException ex) {
-            notClassSet.add(className);
-        } catch (SecurityException ex) {
-        } catch (LinkageError ex) {
+        } catch  (ClassNotFoundException ex) {
+            if (currentNotClassSet == null) {
+                currentNotClassSet = new ConcurrentSkipListSet<String>();
+                notClassMap.put(loader, currentNotClassSet);
+            }
+            currentNotClassSet.add(className);
+        } catch  (SecurityException ex) {
+        } catch  (LinkageError ex) {
         } catch (IllegalArgumentException e) {
             // Can be thrown if name has characters that a class name
             // can not contain
