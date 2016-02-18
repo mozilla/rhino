@@ -43,6 +43,7 @@ sourceSets {
 dependencies {
     testCompile "junit:junit:4.12"
     testCompile "org.yaml:snakeyaml:1.15"
+    testCompile "net.trajano.caliper:caliper:1.2.1"
 }
 
 test {
@@ -59,6 +60,9 @@ test {
 }
 
 task testBenchmark(type: Test) {
+    jacoco {
+        enabled = false
+    }
     include "**/benchmarks/*Benchmark*"
     systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
     systemProperty 'file.encoding', 'UTF-8'
@@ -66,6 +70,12 @@ task testBenchmark(type: Test) {
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
     forkEvery = 1
+}
+
+task microBenchmark(type: JavaExec) {
+    main "com.google.caliper.runner.CaliperMain"
+    args "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperObjectBenchmark.FieldAccess", "-DstringKeys=100,1000", "-DintKeys=0,10,1000"
+    classpath sourceSets.test.runtimeClasspath
 }
 
 idea {
