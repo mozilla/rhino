@@ -59,11 +59,18 @@ test {
     testLogging.showStandardStreams = true
 }
 
+task sunSpiderBenchmark(type: JavaExec) {
+    main "com.google.caliper.runner.CaliperMain"
+    systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
+    args "-Cresults.upload.class=org.mozilla.javascript.benchmarks.ResultPlotter", "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperSpiderBenchmark.Spider"
+    classpath sourceSets.test.runtimeClasspath
+}
+
 task testBenchmark(type: Test) {
     jacoco {
         enabled = false
     }
-    include "**/benchmarks/*Benchmark*"
+    include "**/benchmarks/V8Benchmark*"
     systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
     systemProperty 'file.encoding', 'UTF-8'
     workingDir = file("testsrc/benchmarks")
@@ -71,6 +78,7 @@ task testBenchmark(type: Test) {
     testLogging.showStandardStreams = true
     forkEvery = 1
 }
+testBenchmark.dependsOn sunSpiderBenchmark
 
 task microBenchmark(type: JavaExec) {
     main "com.google.caliper.runner.CaliperMain"
@@ -78,11 +86,7 @@ task microBenchmark(type: JavaExec) {
     classpath sourceSets.test.runtimeClasspath
 }
 
-task sunSpiderBenchmark(type: JavaExec) {
-    main "com.google.caliper.runner.CaliperMain"
-    args "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperSpiderBenchmark.Spider"
-    classpath sourceSets.test.runtimeClasspath
-}
+
 
 idea {
     module {
