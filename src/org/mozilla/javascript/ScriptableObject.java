@@ -19,6 +19,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -3118,6 +3120,13 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
         Object[] result = new Object[c];
         System.arraycopy(a, 0, result, 0, c);
+
+        Context cx = Context.getCurrentContext();
+        if ((cx != null) && cx.hasFeature(Context.FEATURE_ENUMERATE_IDS_FIRST)) {
+            // Move all the numeric IDs to the front in numeric order
+            Arrays.sort(a, KEY_COMPARATOR);
+        }
+
         return result;
     }
 
@@ -3236,4 +3245,38 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
     }
 
+    private static final Comparator<Object> KEY_COMPARATOR = new KeyComparator();
+
+    /**
+     * This comparator sorts property fields in spec-compliant order. Numeric ids first, in numeric
+     * order, folowed by string ids, in insertion order. Since this class already keeps string keys
+     * in insertion-time order, we treat all as equal. The "Arrays.sort" method will then not
+     * change their order, but simply move all the numeric properties to the front.
+     */
+    private static final class KeyComparator
+        implements Comparator<Object>
+    {
+        @Override
+        public int compare(Object o1, Object o2)
+        {
+            if (o1 instanceof Integer) {
+                if (o2 instanceof Integer) {
+                    int i1 = (Integer) o1;
+                    int i2 = (Integer) o2;
+                    if (i1 < i2) {
+                        return -1;
+                    }
+                    if (i1 > i2) {
+                        return 1;
+                    }
+                    return 0;
+                }
+                return -1;
+            }
+            if (o2 instanceof Integer) {
+                return 1;
+            }
+            return 0;
+        }
+    }
 }

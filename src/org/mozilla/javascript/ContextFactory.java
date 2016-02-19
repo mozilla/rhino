@@ -282,8 +282,12 @@ public class ContextFactory
 
           case Context.FEATURE_V8_EXTENSIONS:
             return true;
+
           case Context.FEATURE_OLD_UNDEF_NULL_THIS:
               return cx.getLanguageVersion() <= Context.VERSION_1_7;
+
+          case Context.FEATURE_ENUMERATE_IDS_FIRST:
+              return cx.getLanguageVersion() >= Context.VERSION_ES6;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));
