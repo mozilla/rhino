@@ -266,13 +266,13 @@ public class NativeObject extends IdScriptableObject implements Map
           case ConstructorId_getPrototypeOf:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                Scriptable obj = ensureScriptable(arg);
+                Scriptable obj = getCompatibleObject(cx, scope, arg);
                 return obj.getPrototype();
               }
           case ConstructorId_keys:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                Scriptable obj = ensureScriptable(arg);
+                Scriptable obj = getCompatibleObject(cx, scope, arg);
                 Object[] ids = obj.getIds();
                 for (int i = 0; i < ids.length; i++) {
                   ids[i] = ScriptRuntime.toString(ids[i]);
@@ -282,7 +282,8 @@ public class NativeObject extends IdScriptableObject implements Map
           case ConstructorId_getOwnPropertyNames:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                ScriptableObject obj = ensureScriptableObject(arg);
+                Scriptable s = getCompatibleObject(cx, scope, arg);
+                ScriptableObject obj = ensureScriptableObject(s);
                 Object[] ids = obj.getAllIds();
                 for (int i = 0; i < ids.length; i++) {
                   ids[i] = ScriptRuntime.toString(ids[i]);
@@ -295,7 +296,8 @@ public class NativeObject extends IdScriptableObject implements Map
                 // TODO(norris): There's a deeper issue here if
                 // arg instanceof Scriptable. Should we create a new
                 // interface to admit the new ECMAScript 5 operations?
-                ScriptableObject obj = ensureScriptableObject(arg);
+                Scriptable s = getCompatibleObject(cx, scope, arg);
+                ScriptableObject obj = ensureScriptableObject(s);
                 Object nameArg = args.length < 2 ? Undefined.instance : args[1];
                 String name = ScriptRuntime.toString(nameArg);
                 Scriptable desc = obj.getOwnPropertyDescriptor(cx, name);
@@ -419,6 +421,15 @@ public class NativeObject extends IdScriptableObject implements Map
           default:
             throw new IllegalArgumentException(String.valueOf(id));
         }
+    }
+
+    private Scriptable getCompatibleObject(Context cx, Scriptable scope, Object arg)
+    {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            Scriptable s = ScriptRuntime.toObject(cx, scope, arg);
+            return ensureScriptable(s);
+        }
+        return ensureScriptable(arg);
     }
 
     // methods implementing java.util.Map
