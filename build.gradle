@@ -78,6 +78,12 @@ task microBenchmark(type: JavaExec) {
     classpath sourceSets.test.runtimeClasspath
 }
 
+task sunSpiderBenchmark(type: JavaExec) {
+    main "com.google.caliper.runner.CaliperMain"
+    args "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperSpiderBenchmark.Spider"
+    classpath sourceSets.test.runtimeClasspath
+}
+
 idea {
     module {
         excludeDirs += file('testsrc/tests/src')
