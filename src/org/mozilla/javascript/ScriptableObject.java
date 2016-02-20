@@ -3124,7 +3124,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Context cx = Context.getCurrentContext();
         if ((cx != null) && cx.hasFeature(Context.FEATURE_ENUMERATE_IDS_FIRST)) {
             // Move all the numeric IDs to the front in numeric order
-            Arrays.sort(a, KEY_COMPARATOR);
+            Arrays.sort(result, KEY_COMPARATOR);
         }
 
         return result;
