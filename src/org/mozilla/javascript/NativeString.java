@@ -11,7 +11,6 @@ import org.mozilla.javascript.regexp.NativeRegExp;
 import java.text.Collator;
 import java.text.Normalizer;
 
-import static org.mozilla.javascript.NativeSymbol.ITERATOR_PROPERTY;
 import static org.mozilla.javascript.ScriptRuntime.rangeError;
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
@@ -128,6 +127,11 @@ final class NativeString extends IdScriptableObject
     @Override
     protected void initPrototypeId(int id)
     {
+        if (id == SymbolId_iterator) {
+            initPrototypeMethod(STRING_TAG, id, SymbolKey.ITERATOR, "[Symbol.iterator]", 0);
+            return;
+        }
+
         String s, fnName = null;
         int arity;
         switch (id) {
@@ -176,7 +180,6 @@ final class NativeString extends IdScriptableObject
           case Id_normalize:         arity=0; s="normalize";         break;
           case Id_repeat:            arity=1; s="repeat";            break;
           case Id_codePointAt:       arity=1; s="codePointAt";       break;
-          case Id_iterator:          arity=0; s= ITERATOR_PROPERTY; fnName="[Symbol.iterator]"; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, fnName, arity);
@@ -237,8 +240,17 @@ final class NativeString extends IdScriptableObject
                 }
 
                 case Id_constructor: {
-                    CharSequence s = (args.length >= 1)
-                        ? ScriptRuntime.toCharSequence(args[0]) : "";
+                    CharSequence s;
+                    if (args.length == 0) {
+                        s = "";
+                    } else if
+                        (ScriptRuntime.isSymbol(args[0]) &&
+                        (thisObj != null)) {
+                        // 19.4.3.2 et.al. Convert a symbol to a string with String() but not new String()
+                        s = args[0].toString();
+                    } else {
+                        s = ScriptRuntime.toCharSequence(args[0]);
+                    }
                     if (thisObj == null) {
                         // new String(val) creates a new String object.
                         return new NativeString(s);
@@ -476,7 +488,7 @@ final class NativeString extends IdScriptableObject
                         : str.codePointAt((int) cnt);
                 }
 
-              case Id_iterator:
+              case SymbolId_iterator:
                   return new NativeStringIterator(scope, thisObj);
 
             }
@@ -545,12 +557,20 @@ final class NativeString extends IdScriptableObject
     }
 
     @Override
-    public Object[] getAllIds()
+    public boolean has(int index, Scriptable start) {
+        if (0 <= index && index < string.length()) {
+            return true;
+        }
+        return super.has(index, start);
+    }
+
+    @Override
+    protected Object[] getIds(boolean nonEnumerable, boolean getSymbols)
     {
         // In ES6, Strings have entries in the property map for each character.
         Context cx = Context.getCurrentContext();
         if ((cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
-            Object[] sids = super.getAllIds();
+            Object[] sids = super.getIds(nonEnumerable, getSymbols);
             Object[] a = new Object[sids.length + string.length()];
             int i;
             for (i = 0; i < string.length(); i++) {
@@ -559,7 +579,7 @@ final class NativeString extends IdScriptableObject
             System.arraycopy(sids, 0, a, i, sids.length);
             return a;
         }
-        return super.getAllIds();
+        return super.getIds(nonEnumerable, getSymbols);
     }
 
     /*
@@ -775,13 +795,22 @@ final class NativeString extends IdScriptableObject
         return retval.toString();
     }
 
+    @Override
+    protected int findPrototypeId(Symbol k)
+    {
+        if (SymbolKey.ITERATOR.equals(k)) {
+            return SymbolId_iterator;
+        }
+        return 0;
+    }
+
 // #string_id_map#
 
     @Override
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2015-05-06 14:41:38 PDT
+// #generated# Last update: 2016-03-04 20:51:44 GMT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(2);
@@ -837,7 +866,6 @@ final class NativeString extends IdScriptableObject
             case 10: c=s.charAt(0);
                 if (c=='c') { X="charCodeAt";id=Id_charCodeAt; }
                 else if (c=='s') { X="startsWith";id=Id_startsWith; }
-                else if (c=='@') { X="@@iterator";id=Id_iterator; }
                 break L;
             case 11: switch (s.charAt(2)) {
                 case 'L': X="toLowerCase";id=Id_toLowerCase; break L;
@@ -908,8 +936,8 @@ final class NativeString extends IdScriptableObject
         Id_normalize                 = 43,
         Id_repeat                    = 44,
         Id_codePointAt               = 45,
-        Id_iterator                  = 46,
-        MAX_PROTOTYPE_ID             = Id_iterator;
+        SymbolId_iterator            = 46,
+        MAX_PROTOTYPE_ID             = SymbolId_iterator;
 
 // #/string_id_map#
 

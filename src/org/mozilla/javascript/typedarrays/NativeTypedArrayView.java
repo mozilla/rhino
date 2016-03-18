@@ -13,6 +13,8 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Symbol;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 
 import java.lang.reflect.Array;
@@ -21,8 +23,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
-
-import static org.mozilla.javascript.NativeSymbol.ITERATOR_PROPERTY;
 
 /**
  * This class is the abstract parent for all of the various typed arrays. Each one
@@ -285,7 +285,7 @@ public abstract class NativeTypedArrayView<T>
                 throw ScriptRuntime.constructError("Error", "invalid arguments");
             }
 
-        case Id_iterator:
+        case SymbolId_iterator:
             return new NativeArrayIterator(scope, thisObj);
         }
         throw new IllegalArgumentException(String.valueOf(id));
@@ -294,6 +294,11 @@ public abstract class NativeTypedArrayView<T>
     @Override
     protected void initPrototypeId(int id)
     {
+        if (id == SymbolId_iterator) {
+            initPrototypeMethod(getClassName(), id, SymbolKey.ITERATOR, "[Symbol.iterator]", 0);
+            return;
+        }
+
         String s, fnName = null;
         int arity;
         switch (id) {
@@ -301,10 +306,18 @@ public abstract class NativeTypedArrayView<T>
         case Id_get:                arity = 1; s = "get"; break;
         case Id_set:                arity = 2; s = "set"; break;
         case Id_subarray:           arity = 2; s = "subarray"; break;
-        case Id_iterator:           arity = 0; s = ITERATOR_PROPERTY; fnName="[Symbol.iterator]"; break;
         default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(getClassName(), id, s, fnName, arity);
+    }
+
+    @Override
+    protected int findPrototypeId(Symbol k)
+    {
+        if (SymbolKey.ITERATOR.equals(k)) {
+            return SymbolId_iterator;
+        }
+        return 0;
     }
 
     // #string_id_map#
@@ -313,7 +326,7 @@ public abstract class NativeTypedArrayView<T>
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2014-12-04 18:21:01 PST
+// #generated# Last update: 2016-03-04 20:59:23 GMT
         L0: { id = 0; String X = null; int c;
             int s_length = s.length();
             if (s_length==3) {
@@ -322,7 +335,6 @@ public abstract class NativeTypedArrayView<T>
                 else if (c=='s') { if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_set; break L0;} }
             }
             else if (s_length==8) { X="subarray";id=Id_subarray; }
-            else if (s_length==10) { X="@@iterator";id=Id_iterator; }
             else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
@@ -337,10 +349,10 @@ public abstract class NativeTypedArrayView<T>
         Id_get                  = 2,
         Id_set                  = 3,
         Id_subarray             = 4,
-        Id_iterator             = 5;
+        SymbolId_iterator       = 5;
 
     protected static final int
-        MAX_PROTOTYPE_ID        = Id_iterator;
+        MAX_PROTOTYPE_ID        = SymbolId_iterator;
 
 // #/string_id_map#
 

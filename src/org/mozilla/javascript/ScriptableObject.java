@@ -46,7 +46,9 @@ import org.mozilla.javascript.annotations.JSStaticFunction;
  * @author Norris Boyd
  */
 
-public abstract class ScriptableObject implements Scriptable, Serializable,
+public abstract class ScriptableObject implements Scriptable,
+                                                  SymbolScriptable,
+                                                  Serializable,
                                                   DebuggableObject,
                                                   ConstProperties
 {
@@ -150,7 +152,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     private static class Slot implements Serializable
     {
         private static final long serialVersionUID = -6090581677123995491L;
-        String name; // This can change due to caching
+        Object name; // This can change due to caching
         int indexOrHash;
         private volatile short attributes;
         transient volatile boolean wasDeleted;
@@ -158,7 +160,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         transient Slot next; // next in hash table bucket
         transient volatile Slot orderedNext; // next in linked list
 
-        Slot(String name, int indexOrHash, int attributes)
+        Slot(Object name, int indexOrHash, int attributes)
         {
             this.name = name;
             this.indexOrHash = indexOrHash;
@@ -236,7 +238,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Object getter;
         Object setter;
 
-        GetterSlot(String name, int indexOrHash, int attributes)
+        GetterSlot(Object name, int indexOrHash, int attributes)
         {
             super(name, indexOrHash, attributes);
         }
@@ -465,6 +467,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
+     * A version of "has" that supports symbols.
+     */
+    public boolean has(Symbol key, Scriptable start)
+    {
+        return null != getSlot(key, 0, SLOT_QUERY);
+    }
+
+    /**
      * Returns the value of the named property or NOT_FOUND.
      *
      * If the property was created using defineProperty, the
@@ -500,6 +510,18 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
 
         Slot slot = getSlot(null, index, SLOT_QUERY);
+        if (slot == null) {
+            return Scriptable.NOT_FOUND;
+        }
+        return slot.getValue(start);
+    }
+
+    /**
+     * Another version of Get that supports Symbol keyed properties.
+     */
+    public Object get(Symbol key, Scriptable start)
+    {
+        Slot slot = getSlot(key, 0, SLOT_QUERY);
         if (slot == null) {
             return Scriptable.NOT_FOUND;
         }
@@ -560,6 +582,18 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
+     * Implementation of put required by SymbolScriptable objects.
+     */
+    public void put(Symbol key, Scriptable start, Object value)
+    {
+        if (putImpl(key, 0, start, value))
+            return;
+
+        if (start == this) throw Kit.codeBug();
+        ensureSymbolScriptable(start).put(key, start, value);
+    }
+
+    /**
      * Removes a named property from the object.
      *
      * If the property is not found, or it has the PERMANENT attribute,
@@ -585,6 +619,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     {
         checkNotSealed(null, index);
         removeSlot(null, index);
+    }
+
+    /**
+     * Removes an object like the others, but using a Symbol as the key.
+     */
+    public void delete(Symbol key)
+    {
+        checkNotSealed(key, 0);
+        removeSlot(key, 0);
     }
 
     /**
@@ -721,6 +764,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return findAttributeSlot(null, index, SLOT_QUERY).getAttributes();
     }
 
+    public int getAttributes(Symbol sym)
+    {
+        return findAttributeSlot(sym, SLOT_QUERY).getAttributes();
+    }
+
+
     /**
      * Set the attributes of a named property.
      *
@@ -764,6 +813,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     {
         checkNotSealed(null, index);
         findAttributeSlot(null, index, SLOT_MODIFY).setAttributes(attributes);
+    }
+
+    /**
+     * Set attributes of a Symbol-keyed property.
+     */
+    public void setAttributes(Symbol key, int attributes)
+    {
+        checkNotSealed(key, 0);
+        findAttributeSlot(key, SLOT_MODIFY).setAttributes(attributes);
     }
 
     /**
@@ -953,7 +1011,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * a String will have a String entry in the returned array.
      */
     public Object[] getIds() {
-        return getIds(false);
+        return getIds(false, false);
     }
 
     /**
@@ -968,7 +1026,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * a String will have a String entry in the returned array.
      */
     public Object[] getAllIds() {
-        return getIds(true);
+        return getIds(true, false);
     }
 
     /**
@@ -1626,6 +1684,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
+     * A version of defineProperty that uses a Symbol key.
+     */
+    public void defineProperty(Symbol key, Object value,
+                               int attributes)
+    {
+        checkNotSealed(key, 0);
+        put(key, this, value);
+        setAttributes(key, attributes);
+    }
+
+    /**
      * Utility method to add properties to arbitrary Scriptable object.
      * If destination is instance of ScriptableObject, calls
      * defineProperty there, otherwise calls put in destination
@@ -1841,7 +1910,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * @param props a map of property ids to property descriptors
      */
     public void defineOwnProperties(Context cx, ScriptableObject props) {
-        Object[] ids = props.getIds();
+        Object[] ids = props.getIds(false, true);
         ScriptableObject[] descs = new ScriptableObject[ids.length];
         for (int i = 0, len = ids.length; i < len; ++i) {
             Object descObj = ScriptRuntime.getObjectElem(props, ids[i], cx);
@@ -1885,8 +1954,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (checkValid) {
             ScriptableObject current = slot == null ?
                     null : slot.getPropertyDescriptor(cx, this);
-            String name = ScriptRuntime.toString(id);
-            checkPropertyChange(name, current, desc);
+            checkPropertyChange(id, current, desc);
         }
 
         boolean isAccessor = isAccessorDescriptor(desc);
@@ -1950,7 +2018,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
     }
 
-    protected void checkPropertyChange(String id, ScriptableObject current,
+    protected void checkPropertyChange(Object id, ScriptableObject current,
                                        ScriptableObject desc) {
         if (current == null) { // new property
             if (!isExtensible()) throw ScriptRuntime.typeError0("msg.not.extensible");
@@ -2088,6 +2156,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if ( !(arg instanceof Scriptable) )
             throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
         return (Scriptable) arg;
+    }
+
+    protected static SymbolScriptable ensureSymbolScriptable(Object arg) {
+        if ( !(arg instanceof SymbolScriptable) )
+            throw ScriptRuntime.typeError1("msg.object.not.symbolscriptable", ScriptRuntime.typeof(arg));
+        return (SymbolScriptable) arg;
     }
 
     protected static ScriptableObject ensureScriptableObject(Object arg) {
@@ -2251,12 +2325,12 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return count < 0;
     }
 
-    private void checkNotSealed(String name, int index)
+    private void checkNotSealed(Object key, int index)
     {
         if (!isSealed())
             return;
 
-        String str = (name != null) ? name : Integer.toString(index);
+        String str = (key != null) ? key.toString() : Integer.toString(index);
         throw Context.reportRuntimeError1("msg.modify.sealed", str);
     }
 
@@ -2278,6 +2352,22 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Object result;
         do {
             result = obj.get(name, start);
+            if (result != Scriptable.NOT_FOUND)
+                break;
+            obj = obj.getPrototype();
+        } while (obj != null);
+        return result;
+    }
+
+    /**
+     * This is a version of getProperty that works with Symbols.
+     */
+    public static Object getProperty(Scriptable obj, Symbol key)
+    {
+        Scriptable start = obj;
+        Object result;
+        do {
+            result = ensureSymbolScriptable(obj).get(key, start);
             if (result != Scriptable.NOT_FOUND)
                 break;
             obj = obj.getPrototype();
@@ -2421,6 +2511,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     /**
+     * A version of hasProperty for properties with Symbol keys.
+     */
+    public static boolean hasProperty(Scriptable obj, Symbol key)
+    {
+        return null != getBase(obj, key);
+    }
+
+    /**
      * Puts a named property in an object or in an object in its prototype chain.
      * <p>
      * Searches for the named property in the prototype chain. If it is found,
@@ -2441,6 +2539,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         if (base == null)
             base = obj;
         base.put(name, obj, value);
+    }
+
+    /**
+     * This is a version of putProperty for Symbol keys.
+     */
+    public static void putProperty(Scriptable obj, Symbol key, Object value)
+    {
+        Scriptable base = getBase(obj, key);
+        if (base == null)
+            base = obj;
+        ensureSymbolScriptable(base).put(key, obj, value);
     }
 
     /**
@@ -2641,6 +2750,16 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return obj;
     }
 
+    private static Scriptable getBase(Scriptable obj, Symbol key)
+    {
+        do {
+            if (ensureSymbolScriptable(obj).has(key, obj))
+                break;
+            obj = obj.getPrototype();
+        } while(obj != null);
+        return obj;
+    }
+
     /**
      * Get arbitrary application-specific value associated with this object.
      * @param key key object to select particular value.
@@ -2708,14 +2827,14 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
     /**
      *
-     * @param name
+     * @param key
      * @param index
      * @param start
      * @param value
      * @return false if this != start and no slot was found.  true if this == start
      * or this != start and a READONLY slot was found.
      */
-    private boolean putImpl(String name, int index, Scriptable start,
+    private boolean putImpl(Object key, int index, Scriptable start,
                             Object value)
     {
         // This method is very hot (basically called on each assignment)
@@ -2728,18 +2847,18 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
         Slot slot;
         if (this != start) {
-            slot = getSlot(name, index, SLOT_QUERY);
+            slot = getSlot(key, index, SLOT_QUERY);
             if (slot == null) {
                 return false;
             }
         } else if (!isExtensible) {
-            slot = getSlot(name, index, SLOT_QUERY);
+            slot = getSlot(key, index, SLOT_QUERY);
             if (slot == null) {
                 return true;
             }
         } else {
-            if (count < 0) checkNotSealed(name, index);
-            slot = getSlot(name, index, SLOT_MODIFY);
+            if (count < 0) checkNotSealed(key, index);
+            slot = getSlot(key, index, SLOT_MODIFY);
         }
         return slot.setValue(value, this, start);
     }
@@ -2805,6 +2924,15 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return slot;
     }
 
+    private Slot findAttributeSlot(Symbol key, int accessType)
+    {
+        Slot slot = getSlot(key, 0, accessType);
+        if (slot == null) {
+            throw Context.reportRuntimeError1("msg.prop.not.found", key);
+        }
+        return slot;
+    }
+
     private static Slot unwrapSlot(Slot slot) {
         return (slot instanceof RelinkedSlot) ? ((RelinkedSlot)slot).slot : slot;
     }
@@ -2813,10 +2941,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * Locate the slot with given name or index. Depending on the accessType
      * parameter and the current slot status, a new slot may be allocated.
      *
-     * @param name property name or null if slot holds spare array index.
+     * @param key either a String or a Symbol object that identifies the property
      * @param index index or 0 if slot holds property name.
      */
-    private Slot getSlot(String name, int index, int accessType)
+    private Slot getSlot(Object key, int index, int accessType)
     {
         // Check the hashtable without using synchronization
         Slot[] slotsLocalRef = slots; // Get stable local reference
@@ -2824,17 +2952,17 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             return null;
         }
 
-        int indexOrHash = (name != null ? name.hashCode() : index);
+        int indexOrHash = (key != null ? key.hashCode() : index);
         if (slotsLocalRef != null) {
             Slot slot;
             int slotIndex = getSlotIndex(slotsLocalRef.length, indexOrHash);
             for (slot = slotsLocalRef[slotIndex];
                  slot != null;
                  slot = slot.next) {
-                Object sname = slot.name;
+                Object skey = slot.name;
                 if (indexOrHash == slot.indexOrHash &&
-                        (sname == name ||
-                                (name != null && name.equals(sname)))) {
+                        (skey == key ||
+                                (key != null && key.equals(skey)))) {
                     break;
                 }
             }
@@ -2861,10 +2989,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
         // A new slot has to be inserted or the old has to be replaced
         // by GetterSlot. Time to synchronize.
-        return createSlot(name, indexOrHash, accessType);
+        return createSlot(key, indexOrHash, accessType);
     }
 
-    private synchronized Slot createSlot(String name, int indexOrHash, int accessType) {
+    private synchronized Slot createSlot(Object key, int indexOrHash, int accessType) {
         Slot[] slotsLocalRef = slots;
         int insertPos;
         if (count == 0) {
@@ -2879,8 +3007,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             Slot slot = prev;
             while (slot != null) {
                 if (slot.indexOrHash == indexOrHash &&
-                        (slot.name == name ||
-                                (name != null && name.equals(slot.name))))
+                        (slot.name == key ||
+                                (key != null && key.equals(slot.name))))
                 {
                     break;
                 }
@@ -2900,10 +3028,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
 
                 if (accessType == SLOT_MODIFY_GETTER_SETTER
                         && !(inner instanceof GetterSlot)) {
-                    newSlot = new GetterSlot(name, indexOrHash, inner.getAttributes());
+                    newSlot = new GetterSlot(key, indexOrHash, inner.getAttributes());
                 } else if (accessType == SLOT_CONVERT_ACCESSOR_TO_DATA
                         && (inner instanceof GetterSlot)) {
-                    newSlot = new Slot(name, indexOrHash, inner.getAttributes());
+                    newSlot = new Slot(key, indexOrHash, inner.getAttributes());
                 } else if (accessType == SLOT_MODIFY_CONST) {
                     return null;
                 } else {
@@ -2942,8 +3070,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             }
         }
         Slot newSlot = (accessType == SLOT_MODIFY_GETTER_SETTER
-                ? new GetterSlot(name, indexOrHash, 0)
-                : new Slot(name, indexOrHash, 0));
+                ? new GetterSlot(key, indexOrHash, 0)
+                : new Slot(key, indexOrHash, 0));
         if (accessType == SLOT_MODIFY_CONST)
             newSlot.setAttributes(CONST);
         ++count;
@@ -2958,8 +3086,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         return newSlot;
     }
 
-    private synchronized void removeSlot(String name, int index) {
-        int indexOrHash = (name != null ? name.hashCode() : index);
+    private synchronized void removeSlot(Object key, int index) {
+        int indexOrHash = (key != null ? key.hashCode() : index);
 
         Slot[] slotsLocalRef = slots;
         if (count != 0) {
@@ -2969,8 +3097,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             Slot slot = prev;
             while (slot != null) {
                 if (slot.indexOrHash == indexOrHash &&
-                        (slot.name == name ||
-                                (name != null && name.equals(slot.name))))
+                        (slot.name == key ||
+                                (key != null && key.equals(slot.name))))
                 {
                     break;
                 }
@@ -2982,7 +3110,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
                 if ((slot.getAttributes() & PERMANENT) != 0) {
                     Context cx = Context.getContext();
                     if (cx.isStrictMode()) {
-                        throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", name);
+                        throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", key);
                     }
                     return;
                 }
@@ -3070,7 +3198,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         }
     }
 
-    Object[] getIds(boolean getAll) {
+    Object[] getIds(boolean getNonEnumerable, boolean getSymbols) {
         Slot[] s = slots;
         Object[] a;
         int externalLen = (externalData == null ? 0 : externalData.getArrayLength());
@@ -3097,8 +3225,10 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
             slot = slot.orderedNext;
         }
         while (slot != null) {
-            if (getAll || (slot.getAttributes() & DONTENUM) == 0) {
+            if ((getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0) &&
+                    (getSymbols || !(slot.name instanceof Symbol))) {
                 if (c == externalLen) {
+                    // Special handling to combine external array with additional properties
                     Object[] oldA = a;
                     a = new Object[s.length + externalLen];
                     if (oldA != null) {
@@ -3209,6 +3339,9 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
     }
 
     protected Slot getSlot(Context cx, Object id, int accessType) {
+        if (id instanceof Symbol) {
+            return getSlot(id, 0, accessType);
+        }
         String name = ScriptRuntime.toStringIdOrIndex(cx, id);
         if (name == null) {
             return getSlot(null, ScriptRuntime.lastIndexResult(cx), accessType);
@@ -3233,6 +3366,8 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
         Object value = null;
         if (key instanceof String) {
             value = get((String) key, this);
+        } else if (key instanceof Symbol) {
+            value = get((Symbol) key, this);
         } else if (key instanceof Number) {
             value = get(((Number) key).intValue(), this);
         }

@@ -12,13 +12,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
-import static org.mozilla.javascript.NativeSymbol.ITERATOR_PROPERTY;
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 /**
@@ -189,6 +186,11 @@ public class NativeArray extends IdScriptableObject implements List
     @Override
     protected void initPrototypeId(int id)
     {
+        if (id == SymbolId_iterator) {
+            initPrototypeMethod(ARRAY_TAG, id, SymbolKey.ITERATOR, "[Symbol.iterator]", 0);
+            return;
+        }
+
         String s, fnName = null;
         int arity;
         switch (id) {
@@ -217,7 +219,6 @@ public class NativeArray extends IdScriptableObject implements List
           case Id_findIndex:      arity=1; s="findIndex";      break;
           case Id_reduce:         arity=1; s="reduce";         break;
           case Id_reduceRight:    arity=1; s="reduceRight";    break;
-          case Id_iterator:       arity=0; s= ITERATOR_PROPERTY; fnName="[Symbol.iterator]"; break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
 
@@ -337,7 +338,7 @@ public class NativeArray extends IdScriptableObject implements List
               case Id_reduceRight:
                 return reduceMethod(cx, id, scope, thisObj, args);
 
-              case Id_iterator:
+              case SymbolId_iterator:
                 return new NativeArrayIterator(scope, thisObj);
             }
             throw new IllegalArgumentException("Array.prototype has no method: " + f.getFunctionName());
@@ -478,9 +479,9 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     @Override
-    public Object[] getIds()
+    public Object[] getIds(boolean nonEnumerable, boolean getSymbols)
     {
-        Object[] superIds = super.getIds();
+        Object[] superIds = super.getIds(nonEnumerable, getSymbols);
         if (dense == null) { return superIds; }
         int N = dense.length;
         long currentLength = length;
@@ -507,15 +508,6 @@ public class NativeArray extends IdScriptableObject implements List
         }
         System.arraycopy(superIds, 0, ids, presentCount, superLength);
         return ids;
-    }
-
-    @Override
-    public Object[] getAllIds()
-    {
-      Set<Object> allIds = new LinkedHashSet<Object>(
-            Arrays.asList(this.getIds()));
-      allIds.addAll(Arrays.asList(super.getAllIds()));
-      return allIds.toArray();
     }
 
     public Integer[] getIndexIds() {
@@ -1958,13 +1950,22 @@ public class NativeArray extends IdScriptableObject implements List
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    protected int findPrototypeId(Symbol k)
+    {
+        if (SymbolKey.ITERATOR.equals(k)) {
+            return SymbolId_iterator;
+        }
+        return 0;
+    }
+
 // #string_id_map#
 
     @Override
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2015-02-24 17:45:09 PST
+// #generated# Last update: 2016-03-04 20:46:26 GMT
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(0);
@@ -2000,7 +2001,6 @@ public class NativeArray extends IdScriptableObject implements List
                 else if (c=='t') { X="toString";id=Id_toString; }
                 break L;
             case 9: X="findIndex";id=Id_findIndex; break L;
-            case 10: X="@@iterator";id=Id_iterator; break L;
             case 11: c=s.charAt(0);
                 if (c=='c') { X="constructor";id=Id_constructor; }
                 else if (c=='l') { X="lastIndexOf";id=Id_lastIndexOf; }
@@ -2041,9 +2041,9 @@ public class NativeArray extends IdScriptableObject implements List
         Id_findIndex            = 23,
         Id_reduce               = 24,
         Id_reduceRight          = 25,
-        Id_iterator             = 26,
+        SymbolId_iterator       = 26,
 
-        MAX_PROTOTYPE_ID        = 26;
+        MAX_PROTOTYPE_ID        = SymbolId_iterator;
 
 // #/string_id_map#
 
