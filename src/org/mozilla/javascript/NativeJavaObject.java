@@ -489,7 +489,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         case JSTYPE_UNDEFINED:
             if (type == ScriptRuntime.StringClass ||
                 type == ScriptRuntime.ObjectClass) {
-                return "undefined";
+            	return null;
             }
             else {
                 reportConversionError("undefined", type);
