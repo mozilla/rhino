@@ -20,7 +20,7 @@ through the LiveConnect, should implement this interface.
  public interface ClassShutter {
 
     /**
-     * Return true iff the Java class with the given name should be exposed
+     * Return true if the Java class with the given name should be exposed
      * to scripts.
      * <p>
      * An embedding may filter which Java classes are exposed through
