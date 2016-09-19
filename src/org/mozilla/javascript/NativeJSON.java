@@ -276,7 +276,7 @@ public final class NativeJSON extends IdScriptableObject
             value = getProperty(holder, ((Number) key).intValue());
         }
 
-        if (value instanceof Scriptable) {
+        if (value instanceof Scriptable && hasProperty((Scriptable) value, "toJSON")) {
             Object toJSON = getProperty((Scriptable) value, "toJSON");
             if (toJSON instanceof Callable) {
                 value = callMethod(state.cx, (Scriptable) value, "toJSON",
