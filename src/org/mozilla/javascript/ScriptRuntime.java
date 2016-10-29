@@ -4165,12 +4165,13 @@ public class ScriptRuntime {
 
     private static void warnAboutNonJSObject(Object nonJSObject)
     {
-        String message =
-"RHINO USAGE WARNING: Missed Context.javaToJS() conversion:\n"
-+"Rhino runtime detected object "+nonJSObject+" of class "+nonJSObject.getClass().getName()+" where it expected String, Number, Boolean or Scriptable instance. Please check your code for missing Context.javaToJS() call.";
-        Context.reportWarning(message);
-        // Just to be sure that it would be noticed
-        System.err.println(message);
+        final String omitParam = ScriptRuntime.getMessage0("params.omit.non.js.object.warning");
+        if (!"true".equals(omitParam)) {
+            String message = ScriptRuntime.getMessage2("msg.non.js.object.warning",nonJSObject,nonJSObject.getClass().getName());
+            Context.reportWarning(message);
+            // Just to be sure that it would be noticed
+            System.err.println(message);
+        }
     }
 
     public static RegExpProxy getRegExpProxy(Context cx)
