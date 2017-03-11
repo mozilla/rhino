@@ -46,6 +46,14 @@ dependencies {
     testCompile "net.trajano.caliper:caliper:1.2.1"
 }
 
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}
+
 test {
     exclude "**/benchmarks/**"
     systemProperty 'java.awt.headless', 'true'
