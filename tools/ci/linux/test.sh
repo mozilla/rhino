@@ -1,5 +1,5 @@
 #!/bin/sh
 
-BUILDROOT=${BUILDROOT:-src/github/rhino}
+BUILDROOT=${BUILDROOT:-github/rhino}
 
 (cd $BUILDROOT; ./gradlew clean test)
