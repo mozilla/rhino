@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Arguments;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.IdFunctionObject;
@@ -156,9 +157,10 @@ public abstract class NativeTypedArrayView<T>
 
             return construct(na, byteOff, byteLen / getBytesPerElement());
 
-        } else if (args[0] instanceof NativeArray) {
+        } else if (args[0] instanceof NativeArray || args[0] instanceof Arguments) {
             // Copy elements of the array and convert them to the correct type
-            List l = (List)args[0];
+            List l = args[0] instanceof NativeArray ? (List)args[0] :
+                Arrays.asList(ScriptRuntime.getArrayElements((Scriptable) args[0]));
             NativeArrayBuffer na = makeArrayBuffer(cx, scope, l.size() * getBytesPerElement());
             NativeTypedArrayView v = construct(na, 0, l.size());
             int p = 0;
