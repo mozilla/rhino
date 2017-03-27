@@ -114,11 +114,15 @@
       <include name="org/mozilla/javascript/annotations/*.class"/>
       <include name="org/mozilla/javascript/v8dtoa/*.class"/>
 
+      <include name="org/mozilla/classfile/*.class" if="${optimizer}"/>
+      <include name="org/mozilla/javascript/tools/jsc/*.class" if="${optimizer}"/>
+      <include name="org/mozilla/javascript/optimizer/*.class" if="${optimizer}"/>
+      <include name="org/mozilla/javascript/tools/*.class" if="${optimizer}"/>
       <!-- exclude classes that uses class generation library -->
-      <exclude name="org/mozilla/javascript/JavaAdapter*.class"/>
+      <exclude name="org/mozilla/javascript/JavaAdapter*.class" unless="${optimizer}"/>
 
       <include name="org/mozilla/javascript/regexp/*.class"
-               unless="no-regexp"/>
+               unless="${no-regexp}"/>
     </jar>
   </target>
 
