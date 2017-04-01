@@ -2474,7 +2474,9 @@ public class ScriptRuntime {
           String property, Context cx, Scriptable thisObj)
     {
         if (thisObj == null) {
-            throw undefCallError(obj, property);
+            throw Context.throwAsScriptRuntimeEx(Context.reportRuntimeError(
+                    "Attempt to invoke method '" + property +
+                    "' on an undefined object"));
         }
 
         Object value = ScriptableObject.getProperty(thisObj, property);
