@@ -165,9 +165,6 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             // Found the constructor, so try invoking it.
             return constructSpecific(cx, scope, args, ctors.methods[index]);
         } else {
-            if (args.length == 0) {
-                throw Context.reportRuntimeError0("msg.adapter.zero.args");
-            }
             Scriptable topLevel = ScriptableObject.getTopLevelScope(this);
             String msg = "";
             try {
