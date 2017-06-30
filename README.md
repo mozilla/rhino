@@ -58,17 +58,17 @@ More resources if you get stuck:
 ### How to Build
 
 Rhino builds with `Gradle`. Here are some useful tasks:
-
-    ./gradlew jar
-
+```
+./gradlew jar
+```
 Build and create `Rhino` jar in the `build/libs` directory.
-
-    ./gradlew test
-
+```
+./gradlew test
+```
 Build and run all the tests.
-
-    ./gradlew testBenchmark
-
+```
+./gradlew testBenchmark
+```
 Build and run benchmark tests.
 
 ## Releasing and publishing new version
@@ -76,30 +76,30 @@ Build and run benchmark tests.
 1. Ensure all tests are passing
 2. Remove `-SNAPSHOT` from version in `gradle.properties` in project root folder
 3. Create file `gradle.properties` in `$HOME/.gradle` folder with following properties. Populate them with maven repo credentials and repo location.
-    ```
+```
 mavenUser=
 mavenPassword=
 mavenSnapshotRepo=
 mavenReleaseRepo=
-    ```
+```
 
 4. Run `Gradle` task to publish artifacts to Maven Central.
-    ```
+```
 ./gradlew publish
-    ```
+```
 5. Increase version and add `-SNAPSHOT` to it in `gradle.properties` in project root folder.
 6. Push `gradle.properties` to `GitHub`
    
 ## Running
 
 Rhino can run as a stand-alone interpreter from the command line:
-
-    java -jar buildGradle/libs/rhino-1.7.7.1.jar
-    Rhino 1.7.7 2015 05 03
-    js> print('Hello, World!');
-    Hello, World!
-    js>
-
+```
+java -jar buildGradle/libs/rhino-1.7.7.1.jar
+Rhino 1.7.7 2015 05 03
+js> print('Hello, World!');
+Hello, World!
+js>
+```
 You can also embed it, as most people do. See below for more docs.
 
 ## Issues
