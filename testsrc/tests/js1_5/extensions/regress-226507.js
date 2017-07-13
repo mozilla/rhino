@@ -55,8 +55,10 @@ var expectedvalues = [];
 /*
  * With stack limit 100K on Linux debug build even N=30 already can cause
  * stack overflow; use 35 to trigger it for sure.
+ * But we need to trigger this consistently but not a Java exception, so back
+ * to 35.
  */
-var N = 350;
+var N = 35;
 
 var counter = 0;
 function f()
