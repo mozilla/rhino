@@ -6,11 +6,13 @@
 
 package org.mozilla.classfile;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.UintMap;
 
-import java.io.*;
 import java.util.Arrays;
 
 /**
@@ -1883,6 +1885,7 @@ public class ClassFileWriter {
                 case ByteCode.CASTORE:
                 case ByteCode.SASTORE:
                     pop();
+                    // fallthru
                 case ByteCode.PUTFIELD: // pop; pop
                 case ByteCode.IF_ICMPEQ:
                 case ByteCode.IF_ICMPNE:
@@ -1893,6 +1896,7 @@ public class ClassFileWriter {
                 case ByteCode.IF_ACMPEQ:
                 case ByteCode.IF_ACMPNE:
                     pop();
+                    // fallthru
                 case ByteCode.IFEQ: // pop
                 case ByteCode.IFNE:
                 case ByteCode.IFLT:
@@ -1934,6 +1938,7 @@ public class ClassFileWriter {
                 case ByteCode.DCMPL:
                 case ByteCode.DCMPG:
                     pop();
+                    // fallthru
                 case ByteCode.INEG: // pop; push(INTEGER)
                 case ByteCode.L2I:
                 case ByteCode.F2I:
@@ -1944,6 +1949,7 @@ public class ClassFileWriter {
                 case ByteCode.ARRAYLENGTH:
                 case ByteCode.INSTANCEOF:
                     pop();
+                    // fallthru
                 case ByteCode.ICONST_M1: // push(INTEGER)
                 case ByteCode.ICONST_0:
                 case ByteCode.ICONST_1:
@@ -1973,11 +1979,13 @@ public class ClassFileWriter {
                 case ByteCode.LOR:
                 case ByteCode.LXOR:
                     pop();
+                    // fallthru
                 case ByteCode.LNEG: // pop; push(LONG)
                 case ByteCode.I2L:
                 case ByteCode.F2L:
                 case ByteCode.D2L:
                     pop();
+                    // fallthru
                 case ByteCode.LCONST_0: // push(LONG)
                 case ByteCode.LCONST_1:
                 case ByteCode.LLOAD:
@@ -1994,11 +2002,13 @@ public class ClassFileWriter {
                 case ByteCode.FDIV:
                 case ByteCode.FREM:
                     pop();
+                    // fallthru
                 case ByteCode.FNEG: // pop; push(FLOAT)
                 case ByteCode.I2F:
                 case ByteCode.L2F:
                 case ByteCode.D2F:
                     pop();
+                    // fallthru
                 case ByteCode.FCONST_0: // push(FLOAT)
                 case ByteCode.FCONST_1:
                 case ByteCode.FCONST_2:
@@ -2016,11 +2026,13 @@ public class ClassFileWriter {
                 case ByteCode.DDIV:
                 case ByteCode.DREM:
                     pop();
+                    // fallthru
                 case ByteCode.DNEG: // pop; push(DOUBLE)
                 case ByteCode.I2D:
                 case ByteCode.L2D:
                 case ByteCode.F2D:
                     pop();
+                    // fallthru
                 case ByteCode.DCONST_0: // push(DOUBLE)
                 case ByteCode.DCONST_1:
                 case ByteCode.DLOAD:
@@ -2187,6 +2199,7 @@ public class ClassFileWriter {
                     break;
                 case ByteCode.GETFIELD:
                     pop();
+                    // fallthru
                 case ByteCode.GETSTATIC:
                     index = getOperand(bci + 1, 2);
                     FieldOrMethodRef f = (FieldOrMethodRef)
@@ -2869,7 +2882,7 @@ public class ClassFileWriter {
                     case 'J' :
                     case 'D' :
                         --stackDiff;
-                        // fall thru
+                        // fallthru
                     case 'B' :
                     case 'S' :
                     case 'C' :
@@ -2904,9 +2917,9 @@ public class ClassFileWriter {
                                 ++index;
                                 continue;
                             case 'L':
-                                // fall thru
+                                // fallthru
                         }
-                          // fall thru
+                          // fallthru
                     case 'L' : {
                         --stackDiff;
                         ++count;
@@ -2931,7 +2944,7 @@ public class ClassFileWriter {
                     case 'J' :
                     case 'D' :
                         ++stackDiff;
-                        // fall thru
+                        // fallthru
                     case 'B' :
                     case 'S' :
                     case 'C' :
@@ -2941,7 +2954,7 @@ public class ClassFileWriter {
                     case 'L' :
                     case '[' :
                         ++stackDiff;
-                        // fall thru
+                        // fallthru
                     case 'V' :
                         break;
                 }

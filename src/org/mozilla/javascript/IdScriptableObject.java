@@ -628,7 +628,7 @@ public abstract class IdScriptableObject extends ScriptableObject
     public final IdFunctionObject initPrototypeMethod(Object tag, int id, String name,
                                           int arity)
     {
-		return initPrototypeMethod(tag, id, name, name, arity);
+        return initPrototypeMethod(tag, id, name, name, arity);
     }
 
     public final IdFunctionObject initPrototypeMethod(Object tag, int id, String propertyName, String functionName,

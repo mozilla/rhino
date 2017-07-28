@@ -106,6 +106,6 @@ public abstract class XMLObject extends IdScriptableObject
     @Override
     public String getTypeOf()
     {
-    	return avoidObjectDetection() ? "undefined" : "xml";
+        return avoidObjectDetection() ? "undefined" : "xml";
     }
 }

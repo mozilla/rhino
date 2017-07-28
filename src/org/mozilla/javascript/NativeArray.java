@@ -1224,8 +1224,8 @@ public class NativeArray extends IdScriptableObject implements List
     private static Object js_splice(Context cx, Scriptable scope,
                                     Scriptable thisObj, Object[] args)
     {
-    	NativeArray na = null;
-    	boolean denseMode = false;
+      NativeArray na = null;
+      boolean denseMode = false;
         if (thisObj instanceof NativeArray) {
             na = (NativeArray) thisObj;
             denseMode = na.denseOnly;
@@ -1279,7 +1279,7 @@ public class NativeArray extends IdScriptableObject implements List
                  */
                 result = getElem(cx, thisObj, begin);
             } else {
-            	if (denseMode) {
+                if (denseMode) {
                     int intLen = (int) (end - begin);
                     Object[] copy = new Object[intLen];
                     System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
@@ -1295,10 +1295,10 @@ public class NativeArray extends IdScriptableObject implements List
                     // Need to set length for sparse result array
                     setLengthProperty(cx, resultArray, end - begin);
                     result = resultArray;
-            	}
+                }
             }
         } else { // (count == 0)
-        	if (cx.getLanguageVersion() == Context.VERSION_1_2) {
+            if (cx.getLanguageVersion() == Context.VERSION_1_2) {
                 /* Emulate C JS1.2; if no elements are removed, return undefined. */
                 result = Undefined.instance;
             } else {

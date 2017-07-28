@@ -12,7 +12,7 @@ import org.mozilla.javascript.Context;
  * Interface for URL connection based security domain providers. Used by
  * {@link UrlModuleSourceProvider} to create Rhino security domain objects for
  * newly loaded scripts (see {@link Context#compileReader(java.io.Reader,
- * String, int, Object)}) based on the properties obtainable through their URL
+ * String, int, Object)}, in {@link Context}) based on the properties obtainable through their URL
  * connection.
  * @author Attila Szegedi
  * @version $Id: UrlConnectionSecurityDomainProvider.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $

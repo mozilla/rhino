@@ -12,27 +12,28 @@ public abstract class XMLLib
 {
     private static final Object XML_LIB_KEY = new Object();
 
-	/**
-		An object which specifies an XMLLib implementation to be used at runtime.
+  /**
+   * An object which specifies an XMLLib implementation to be used at runtime.
+   *
+   * This interface should be considered experimental.  It may be better
+   * (and certainly more flexible) to write an interface that returns an
+   * XMLLib object rather than a class name, for example.  But that would
+   * cause many more ripple effects in the code, all the way back to
+   * {@link ScriptRuntime}.
+   */
+  public static abstract class Factory {
 
-		This interface should be considered experimental.  It may be better
-		(and certainly more flexible) to write an interface that returns an
-		XMLLib object rather than a class name, for example.  But that would
-		cause many more ripple effects in the code, all the way back to
-		{@link ScriptRuntime}.
-	 */
-	public static abstract class Factory {
-		public static Factory create(final String className) {
-			return new Factory() {
-			    @Override
-				public String getImplementationClassName() {
-					return className;
-				}
-			};
-		}
+    public static Factory create(final String className) {
+      return new Factory() {
+        @Override
+        public String getImplementationClassName() {
+          return className;
+        }
+      };
+    }
 
-		public abstract String getImplementationClassName();
-	}
+    public abstract String getImplementationClassName();
+  }
 
     public static XMLLib extractFromScopeOrNull(Scriptable scope)
     {
@@ -104,7 +105,7 @@ public abstract class XMLLib
     }
 
     public void setIgnoreWhitespace(boolean b) {
-        throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException();
     }
 
     public void setIgnoreProcessingInstructions(boolean b) {

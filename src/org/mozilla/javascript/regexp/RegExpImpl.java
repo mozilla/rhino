@@ -579,7 +579,7 @@ public class RegExpImpl implements RegExpProxy {
          * that matched part of the delimiter in the new array, after the
          * split substring that was delimited.
          */
-            if (re != null && matched[0] == true) {
+            if (re != null && matched[0]) {
                 int size = parens[0].length;
                 for (int num = 0; num < size; num++) {
                     if (limited && len >= limit)

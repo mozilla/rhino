@@ -407,7 +407,7 @@ public class Codegen implements Evaluator
         boolean hasGenerators = false;
         for (int i=0; i < scriptOrFnNodes.length; i++) {
             if (isGenerator(scriptOrFnNodes[i]))
-            	hasGenerators = true;
+                hasGenerators = true;
         }
 
         // if there are no generators defined, we don't implement a
@@ -2561,7 +2561,7 @@ class BodyCodegen
                 }
                 else {
                     cfw.addALoad(variableObjectLocal);
-                	addScriptRuntimeInvoke(
+                    addScriptRuntimeInvoke(
                         "getObjectElem",
                         "(Ljava/lang/Object;"
                         +"Ljava/lang/Object;"

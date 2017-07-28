@@ -425,7 +425,7 @@ public abstract class ScriptableObject implements Scriptable, Serializable,
      * case it returns "undefined"
      */
     public String getTypeOf() {
-    	return avoidObjectDetection() ? "undefined" : "object";
+        return avoidObjectDetection() ? "undefined" : "object";
     }
 
     /**

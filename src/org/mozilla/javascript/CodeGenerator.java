@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.FunctionNode;
@@ -274,8 +273,8 @@ class CodeGenerator extends Icode {
           case Token.EMPTY:
           case Token.WITH:
             updateLineNumber(node);
+            // fallthru
           case Token.SCRIPT:
-            // fall through
             while (child != null) {
                 visitStatement(child, initialStackDepth);
                 child = child.getNext();

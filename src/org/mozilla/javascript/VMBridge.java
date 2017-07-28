@@ -108,7 +108,7 @@ public abstract class VMBridge
      * {@link InterfaceAdapter#invoke(ContextFactory, Object, Scriptable,
      *                                Method, Object[])}
      * as implementation of interface methods associated with
-     * <tt>proxyHelper</tt>.
+     * <tt>proxyHelper</tt>. {@link Method}
      *
      * @param proxyHelper The result of the previous call to
      *        {@link #getInterfaceProxyHelper(ContextFactory, Class[])}.

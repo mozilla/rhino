@@ -10,12 +10,21 @@ package org.mozilla.javascript;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -1388,8 +1397,7 @@ public class Context
      * @return whether the source is ready for compilation
      * @since 1.4 Release 2
      */
-    public final boolean stringIsCompilableUnit(String source)
-    {
+    public final boolean stringIsCompilableUnit(String source) {
         boolean errorseen = false;
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(this);
@@ -1405,10 +1413,7 @@ public class Context
         // Return false only if an error occurred as a result of reading past
         // the end of the file, i.e. if the source could be fixed by
         // appending more source.
-        if (errorseen && p.eof())
-            return false;
-        else
-            return true;
+        return !(errorseen && p.eof());
     }
 
     /**

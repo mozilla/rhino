@@ -3,6 +3,7 @@ apply plugin: 'idea'
 apply plugin: 'maven-publish'
 apply plugin: 'jacoco'
 apply plugin: 'distribution'
+apply plugin: 'checkstyle'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -209,7 +210,10 @@ jacocoTestReport {
     }
 }
 
-
+checkstyle {
+    configFile = file("${projectDir}/checkstyle.xml")
+    sourceSets = [project.sourceSets.main]
+}
 
 distributions {
     main {

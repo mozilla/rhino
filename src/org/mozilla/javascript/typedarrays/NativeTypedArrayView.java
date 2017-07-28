@@ -294,7 +294,7 @@ public abstract class NativeTypedArrayView<T>
     @Override
     protected void initPrototypeId(int id)
     {
-        String s, fnName = null;;
+        String s, fnName = null;
         int arity;
         switch (id) {
         case Id_constructor:        arity = 1; s = "constructor"; break;

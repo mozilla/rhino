@@ -16,7 +16,7 @@ import java.security.PrivilegedAction;
  * <p> This improves startup time and average memory usage.
  */
 public final class LazilyLoadedCtor implements java.io.Serializable {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
     private static final int STATE_BEFORE_INIT = 0;
     private static final int STATE_INITIALIZING = 1;

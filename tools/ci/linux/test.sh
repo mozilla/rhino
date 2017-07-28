@@ -3,7 +3,7 @@
 BUILDROOT=${BUILDROOT:-github/rhino}
 
 (cd $BUILDROOT; git submodule init; git submodule update)
-(cd $BUILDROOT; ./gradlew clean test)
+(cd $BUILDROOT; ./gradlew clean check)
 testStatus=$?
 
 for n in ${BUILDROOT}/buildGradle/test-results/*.xml

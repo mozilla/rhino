@@ -34,6 +34,12 @@ public class Undefined implements Serializable
         return isUndefined(obj) || super.equals(obj);
     }
 
+    @Override
+    public int hashCode() {
+        // All instances of Undefined are equivalent!
+        return 0;
+    }
+
     public static final Scriptable SCRIPTABLE_UNDEFINED;
 
     static {

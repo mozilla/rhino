@@ -92,11 +92,11 @@ public final class NativeJSON extends IdScriptableObject
             case Id_stringify: {
                 Object value = null, replacer = null, space = null;
                 switch (args.length) {
-                    default:
                     case 3: space = args[2];
-                    case 2: replacer = args[1];
-                    case 1: value = args[0];
-                    case 0:
+                    /* fallthru */ case 2: replacer = args[1];
+                    /* fallthru */ case 1: value = args[0];
+                    /* fallthru */ case 0:
+                    /* fallthru */ default:
                 }
                 return stringify(cx, scope, value, replacer, space);
             }
