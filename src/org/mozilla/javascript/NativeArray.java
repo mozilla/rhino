@@ -993,51 +993,25 @@ public class NativeArray extends IdScriptableObject implements List
                     .getValueFunctionAndThis(args[0], cx);
             final Scriptable funThis = ScriptRuntime.lastStoredScriptable(cx);
             final Object[] cmpBuf = new Object[2]; // Buffer for cmp arguments
-            comparator = new Comparator<Object>() {
-                public int compare(final Object x, final Object y) {
-                    // sort undefined to end
-                    if (x == NOT_FOUND) {
-                        return y == NOT_FOUND ? 0 : 1;
-                    } else if (y == NOT_FOUND) {
-                        return -1;
-                    } else if (x == Undefined.instance) {
-                        return y == Undefined.instance ? 0 : 1;
-                    } else if (y == Undefined.instance) {
-                        return -1;
-                    }
-
+            comparator = new ElementComparator(
+                new Comparator<Object>() {
+                  public int compare(final Object x, final Object y) {
+                    // This comparator is invoked only for non-undefined objects
                     cmpBuf[0] = x;
                     cmpBuf[1] = y;
                     Object ret = jsCompareFunction.call(cx, scope, funThis,
-                            cmpBuf);
+                        cmpBuf);
                     final double d = ScriptRuntime.toNumber(ret);
                     if (d < 0) {
-                        return -1;
+                      return -1;
                     } else if (d > 0) {
-                        return +1;
+                      return +1;
                     }
                     return 0; // ??? double and 0???
-                }
-            };
+                  }
+                });
         } else {
-            comparator = new Comparator<Object>() {
-                public int compare(final Object x, final Object y) {
-                    // sort undefined to end
-                    if (x == NOT_FOUND) {
-                        return y == NOT_FOUND ? 0 : 1;
-                    } else if (y == NOT_FOUND) {
-                        return -1;
-                    } else if (x == Undefined.instance) {
-                        return y == Undefined.instance ? 0 : 1;
-                    } else if (y == Undefined.instance) {
-                        return -1;
-                    }
-
-                    final String a = ScriptRuntime.toString(x);
-                    final String b = ScriptRuntime.toString(y);
-                    return a.compareTo(b);
-                }
-            };
+            comparator = DEFAULT_COMPARATOR;
         }
 
         long llength = getLengthProperty(cx, thisObj);
@@ -1053,7 +1027,7 @@ public class NativeArray extends IdScriptableObject implements List
             working[i] = getRawElem(thisObj, i);
         }
 
-        Arrays.sort(working, comparator);
+        Sorting.hybridSort(working, comparator);
 
         // copy the working array back into thisObj
         for (int i = 0; i < length; ++i) {
@@ -1957,6 +1931,60 @@ public class NativeArray extends IdScriptableObject implements List
             return SymbolId_iterator;
         }
         return 0;
+    }
+
+    // Comparators for the js_sort method. Putting them here lets us unit-test them better.
+
+    private static final Comparator<Object> STRING_COMPARATOR = new StringLikeComparator();
+    private static final Comparator<Object> DEFAULT_COMPARATOR = new ElementComparator();
+
+    public static final class StringLikeComparator
+      implements Comparator<Object> {
+
+      public int compare(final Object x, final Object y) {
+        final String a = ScriptRuntime.toString(x);
+        final String b = ScriptRuntime.toString(y);
+        return a.compareTo(b);
+      }
+    }
+
+    public static final class ElementComparator
+      implements Comparator<Object> {
+
+      private final Comparator<Object> child;
+
+      public ElementComparator() {
+        child = STRING_COMPARATOR;
+      }
+
+      public ElementComparator(Comparator<Object> c) {
+        child = c;
+      }
+
+      public int compare(final Object x, final Object y) {
+        // Sort NOT_FOUND to very end, Undefined before that, exclusively, as per
+        // ECMA 22.1.3.25.1.
+        if (x == Undefined.instance) {
+          if (y == Undefined.instance) {
+            return 0;
+          }
+          if (y == NOT_FOUND) {
+            return -1;
+          }
+          return 1;
+        } else if (x == NOT_FOUND) {
+          return y == NOT_FOUND ? 0 : 1;
+        }
+
+        if (y == NOT_FOUND) {
+          return -1;
+        }
+        if (y == Undefined.instance) {
+          return -1;
+        }
+
+        return child.compare(x, y);
+      }
     }
 
 // #string_id_map#
