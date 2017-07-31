@@ -91,8 +91,6 @@ public class DoctestsTest {
             Global global = new Global(cx);
             // global.runDoctest throws an exception on any failure
             int testsPassed = global.runDoctest(cx, global, source, name, 1);
-            System.out.println(name + "(" + optimizationLevel + "): " +
-                    testsPassed + " passed.");
             assertTrue(testsPassed > 0);
         } catch (Exception ex) {
           System.out.println(name + "(" + optimizationLevel + "): FAILED due to "+ex);

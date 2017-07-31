@@ -25,7 +25,6 @@ public abstract class JsTestsBase extends TestCase {
         // create a lightweight top-level scope
         Scriptable scope = cx.newObject(shared);
         scope.setPrototype(shared);
-        System.out.print(name + ": ");
         Object result;
         try {
             result = cx.evaluateString(scope, source, "jstest input: " + name, 1, null);
@@ -36,7 +35,6 @@ public abstract class JsTestsBase extends TestCase {
         }
         assertTrue(result != null);
         assertTrue("success".equals(result));
-        System.out.println("passed");
     }
 
     public void runJsTests(File[] tests) throws IOException {
