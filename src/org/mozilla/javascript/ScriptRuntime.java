@@ -3149,6 +3149,38 @@ public class ScriptRuntime {
         }
     }
 
+    /*
+     * Implement "SameValue" as in ECMA 7.2.9. This is not the same as "eq" because it handles
+     * signed zeroes and NaNs differently.
+     */
+    public static boolean same(Object x, Object y) {
+        if (!typeof(x).equals(typeof(y))) {
+            return false;
+        }
+        if (x instanceof Number) {
+            if (isNaN(x) && isNaN(y)) {
+                return true;
+            }
+            return x.equals(y);
+        }
+        return eq(x, y);
+    }
+
+    public static boolean isNaN(Object n) {
+        if (n == NaNobj) {
+            return true;
+        }
+        if (n instanceof Double) {
+            Double d = (Double)n;
+            return ((d == NaN) || Double.isNaN(d));
+        }
+        if (n instanceof Float) {
+            Float f = (Float)n;
+            return ((f == NaN) || Float.isNaN(f));
+        }
+        return false;
+    }
+
     public static boolean isPrimitive(Object obj) {
         return obj == null || obj == Undefined.instance ||
                 (obj instanceof Number) || (obj instanceof String) ||
@@ -3315,6 +3347,9 @@ public class ScriptRuntime {
             d1 = ((Number)val1).doubleValue();
             d2 = ((Number)val2).doubleValue();
         } else {
+            if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+                throw typeError0("msg.compare.symbol");
+            }
             if (val1 instanceof Scriptable)
                 val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
             if (val2 instanceof Scriptable)
@@ -3335,6 +3370,9 @@ public class ScriptRuntime {
             d1 = ((Number)val1).doubleValue();
             d2 = ((Number)val2).doubleValue();
         } else {
+            if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+                throw typeError0("msg.compare.symbol");
+            }
             if (val1 instanceof Scriptable)
                 val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
             if (val2 instanceof Scriptable)

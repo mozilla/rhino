@@ -24,6 +24,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -204,9 +205,19 @@ public class Test262SuiteTest {
             harnessFiles.add("sta.js");
             harnessFiles.add("assert.js");
 
-            Map header = (Map) YAML.load(jsFileStr.substring(jsFileStr.indexOf("/*---") + 5, jsFileStr.lastIndexOf("---*/")));
-            if (header.containsKey("includes")) {
-                harnessFiles.addAll((Collection)header.get("includes"));
+            Map header;
+            String hdrStr = jsFileStr
+                .substring(jsFileStr.indexOf("/*---") + 5, jsFileStr.indexOf("---*/"));
+            try {
+                header = (Map) YAML.load(hdrStr);
+                if (header.containsKey("includes")) {
+                    harnessFiles.addAll((Collection) header.get("includes"));
+                }
+            } catch (YAMLException e) {
+                String msg = "Error scanning \"" + hdrStr + "\" from " + jsTest.getPath() + ": " + e;
+                YAMLException te = new YAMLException(msg);
+                te.initCause(e);
+                throw te;
             }
 
             EcmaErrorType errorType = EcmaErrorType._valueOf((String)header.get("negative"));
