@@ -247,9 +247,12 @@ public final class OptRuntime extends ScriptRuntime
         });
     }
 
-    public static void throwStopIteration(Object obj) {
-        throw new JavaScriptException(
-            NativeIterator.getStopIterationObject((Scriptable)obj), "", 0);
+    public static void throwStopIteration(Object scope, Object value) {
+        Object si =
+            (value == Undefined.instance) ?
+              NativeIterator.getStopIterationObject((Scriptable)scope) :
+              new NativeIterator.StopIteration(value);
+        throw new JavaScriptException(si, "", 0);
     }
 
     public static Scriptable createNativeGenerator(NativeFunction funObj,
@@ -258,8 +261,12 @@ public final class OptRuntime extends ScriptRuntime
                                                    int maxLocals,
                                                    int maxStack)
     {
-        return new NativeGenerator(scope, funObj,
-                new GeneratorState(thisObj, maxLocals, maxStack));
+        GeneratorState gs = new GeneratorState(thisObj, maxLocals, maxStack);
+        if (Context.getCurrentContext().getLanguageVersion() >= Context.VERSION_ES6) {
+            return new ES6Generator(scope, funObj, gs);
+        } else {
+            return new NativeGenerator(scope, funObj, gs);
+        }
     }
 
     public static Object[] getGeneratorStackState(Object obj) {

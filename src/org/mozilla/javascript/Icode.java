@@ -132,11 +132,12 @@ abstract class Icode {
     // Generator opcodes (along with Token.YIELD)
        Icode_GENERATOR                  = -62,
        Icode_GENERATOR_END              = -63,
+       Icode_GENERATOR_RETURN           = -65,
 
        Icode_DEBUGGER                   = -64,
 
        // Last icode
-        MIN_ICODE                       = -64;
+       MIN_ICODE                       = Icode_GENERATOR_RETURN;
 
     static String bytecodeName(int bytecode)
     {
@@ -216,6 +217,7 @@ abstract class Icode {
           case Icode_SETCONSTVAR1:     return "SETCONSTVAR1";
           case Icode_GENERATOR:        return "GENERATOR";
           case Icode_GENERATOR_END:    return "GENERATOR_END";
+          case Icode_GENERATOR_RETURN: return "GENERATOR_RETURN";
           case Icode_DEBUGGER:         return "DEBUGGER";
         }
 

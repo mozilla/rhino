@@ -189,9 +189,26 @@ public class Codegen implements Evaluator
         initScriptNodesData(scriptOrFn);
 
         this.mainClassName = mainClassName;
-        this.mainClassSignature = ClassFileWriter.classNameToSignature(mainClassName);
+        this.mainClassSignature
+            = ClassFileWriter.classNameToSignature(mainClassName);
 
-        return generateCode(encodedSource);
+        try {
+            return generateCode(encodedSource);
+        } catch (ClassFileWriter.ClassFileFormatException e) {
+            throw reportClassFileFormatException(scriptOrFn, e.getMessage());
+        }
+    }
+
+    private RuntimeException reportClassFileFormatException(
+        ScriptNode scriptOrFn,
+        String message)
+    {
+        String msg = scriptOrFn instanceof FunctionNode
+        ? ScriptRuntime.getMessage2("msg.while.compiling.fn",
+            ((FunctionNode)scriptOrFn).getFunctionName(), message)
+        : ScriptRuntime.getMessage1("msg.while.compiling.script", message);
+        return Context.reportRuntimeError(msg, scriptOrFn.getSourceName(),
+            scriptOrFn.getLineno(), null, 0);
     }
 
     private void transform(ScriptNode tree)
@@ -316,7 +333,11 @@ public class Codegen implements Evaluator
             bodygen.scriptOrFn = n;
             bodygen.scriptOrFnIndex = i;
 
-            bodygen.generateBodyCode();
+            try {
+                bodygen.generateBodyCode();
+            } catch (ClassFileWriter.ClassFileFormatException e) {
+                throw reportClassFileFormatException(n, e.getMessage());
+            }
 
             if (n.getType() == Token.FUNCTION) {
                 OptFunctionNode ofn = OptFunctionNode.get(n);
@@ -1138,8 +1159,9 @@ public class Codegen implements Evaluator
         int inum = (int)num;
         if (inum == num) {
             return "Ljava/lang/Integer;";
+        } else {
+            return "Ljava/lang/Double;";
         }
-        return "Ljava/lang/Double;";
     }
     static void pushUndefined(ClassFileWriter cfw)
     {
@@ -2836,6 +2858,7 @@ class BodyCodegen
 
     private void generateYieldPoint(Node node, boolean exprContext) {
         // save stack state
+        System.out.println("** Start YieldPoint");
         int top = cfw.getStackTop();
         maxStack = maxStack > top ? maxStack : top;
         if (cfw.getStackTop() != 0) {
@@ -2885,6 +2908,7 @@ class BodyCodegen
         if (exprContext) {
             cfw.addALoad(argsLocal);
         }
+        System.out.println("** End YieldPoint");
     }
 
     private void generateCheckForThrowOrClose(int label,
@@ -3748,6 +3772,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
     private void visitTryCatchFinally(Jump node, Node child)
     {
+        System.out.println("** Start TryCatchFinally");
         /* Save the variable object, in case there are with statements
          * enclosed by the try block and we catch some exception.
          * We'll restore it for the catch block so that catch block
@@ -3908,6 +3933,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         if (!isGenerator) {
             exceptionManager.popExceptionInfo();
         }
+        System.out.println("** End TryCatchFinally");
     }
 
     private static final int JAVASCRIPT_EXCEPTION  = 0;
@@ -3937,6 +3963,8 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         // reset the variable object local
         cfw.addALoad(savedVariableObject);
         cfw.addAStore(variableObjectLocal);
+
+        String exceptionName = exceptionTypeToName(exceptionType);
 
         cfw.add(ByteCode.GOTO, catchLabel);
     }
@@ -4029,6 +4057,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
          */
         void setHandlers(int[] handlerLabels, int startLabel)
         {
+            ExceptionInfo top = getTop();
             for (int i = 0; i < handlerLabels.length; i++) {
                 if (handlerLabels[i] != 0) {
                     addHandler(i, handlerLabels[i], startLabel);
@@ -4169,12 +4198,14 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         {
             ExceptionInfo(Jump node, Node finallyBlock)
             {
+                this.node = node;
                 this.finallyBlock = finallyBlock;
                 handlerLabels = new int[EXCEPTION_MAX];
                 exceptionStarts = new int[EXCEPTION_MAX];
                 currentFinally = null;
             }
 
+            Jump node;
             Node finallyBlock;
             int[] handlerLabels;
             int[] exceptionStarts;

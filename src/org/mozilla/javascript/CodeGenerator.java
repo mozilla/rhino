@@ -471,7 +471,26 @@ class CodeGenerator extends Icode {
 
           case Token.RETURN:
             updateLineNumber(node);
-            if (node.getIntProp(Node.GENERATOR_END_PROP, 0) != 0) {
+            if (child == null) {
+                if (node.getIntProp(Node.GENERATOR_END_PROP, 0) != 0) {
+                    addIcode(Icode_GENERATOR_END);
+                    addUint16(lineNumber & 0xFFFF);
+                } else {
+                    addIcode(Icode_RETUNDEF);
+                }
+            } else {
+                visitExpression(child, ECF_TAIL);
+                if (node.getIntProp(Node.GENERATOR_END_PROP, 0) != 0) {
+                    addIcode(Icode_GENERATOR_RETURN);
+                    addUint16(lineNumber & 0xFFFF);
+                } else {
+                    addToken(Token.RETURN);
+                }
+                stackChange(-1);
+            }
+
+            if ((node.getIntProp(Node.GENERATOR_END_PROP, 0) != 0) &&
+                (compilerEnv.getLanguageVersion() < Context.VERSION_ES6)) {
                 // We're in a generator, so change RETURN to GENERATOR_END
                 addIcode(Icode_GENERATOR_END);
                 addUint16(lineNumber & 0xFFFF);

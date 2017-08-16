@@ -863,6 +863,12 @@ public class Parser
     }
 
     private FunctionNode function(int type)
+            throws IOException
+    {
+      return function(type, false);
+    }
+
+    private FunctionNode function(int type, boolean isGenerator)
         throws IOException
     {
         int syntheticType = type;
@@ -889,6 +895,10 @@ public class Parser
             }
         } else if (matchToken(Token.LP, true)) {
             // Anonymous function:  leave name as null
+        } else if (matchToken(Token.MUL) &&
+                (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6)) {
+            // ES6 generator syntax
+            return function(type, true);
         } else {
             if (compilerEnv.isAllowMemberExprAsFunctionName()) {
                 // Note that memberExpr can not start with '(' like
@@ -912,6 +922,9 @@ public class Parser
 
         FunctionNode fnNode = new FunctionNode(functionSourceStart, name);
         fnNode.setFunctionType(type);
+        if (isGenerator) {
+            fnNode.setIsES6Generator();
+        }
         if (lpPos != -1)
             fnNode.setLp(lpPos - functionSourceStart);
 
@@ -1941,6 +1954,7 @@ public class Parser
             endFlags |= Node.END_YIELDS;
             ret = new Yield(pos, end - pos, e);
             setRequiresActivation();
+
             setIsGenerator();
             if (!exprContext) {
                 ret = new ExpressionStatement(ret);
@@ -1951,11 +1965,14 @@ public class Parser
         if (insideFunction()
             && nowAllSet(before, endFlags,
                     Node.END_YIELDS|Node.END_RETURNS_VALUE)) {
-            Name name = ((FunctionNode)currentScriptOrFn).getFunctionName();
-            if (name == null || name.length() == 0)
-                addError("msg.anon.generator.returns", "");
-            else
-                addError("msg.generator.returns", name.getIdentifier());
+            FunctionNode fn = (FunctionNode)currentScriptOrFn;
+            if (!fn.isES6Generator()) {
+                Name name = fn.getFunctionName();
+                if (name == null || name.length() == 0)
+                    addError("msg.anon.generator.returns", "");
+                else
+                    addError("msg.generator.returns", name.getIdentifier());
+            }
         }
 
         ret.setLineno(lineno);
