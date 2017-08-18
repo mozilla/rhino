@@ -462,4 +462,29 @@ function TestInsufficientArguments() {
 
 TestInsufficientArguments();
 
+function TestOffsets(func, val) {
+  var a = new ArrayBuffer(32);
+  var view = new DataView(a);
+  var sf = view["set" + func];
+  sf.call(view, 0, val);
+
+  var v1 = new DataView(a, 16, 16);
+  var gf = v1["get" + func];
+  var result = gf.call(v1, 0);
+  assertEquals(0, result);
+
+}
+
+TestOffsets("Int8", 0xff);
+TestOffsets("Int16", 0xffff);
+TestOffsets("Int32", 0xffffffff);
+TestOffsets("Int8", -1);
+TestOffsets("Int16", -12);
+TestOffsets("Int32", -1234);
+TestOffsets("Uint8", 0xff);
+TestOffsets("Uint16", 0xffff);
+TestOffsets("Uint32", 0xffffffff);
+TestOffsets("Float32", 3.14);
+TestOffsets("Float64", 3.14159);
+
 "success";
