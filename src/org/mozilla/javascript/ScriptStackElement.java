@@ -15,7 +15,7 @@ import java.io.Serializable;
 public final class ScriptStackElement implements Serializable {
 
     static final long serialVersionUID = -6416688260860477449L;
-    
+
     public final String fileName;
     public final String functionName;
     public final int lineNumber;
@@ -36,6 +36,7 @@ public final class ScriptStackElement implements Serializable {
     /**
      * Render stack element in Java-inspired style:
      * <code>    at fileName:lineNumber (functionName)</code>
+     *
      * @param sb the StringBuilder to append to
      */
     public void renderJavaStyle(StringBuilder sb) {
@@ -51,6 +52,7 @@ public final class ScriptStackElement implements Serializable {
     /**
      * Render stack element in Mozilla/Firefox style:
      * <code>functionName()@fileName:lineNumber</code>
+     *
      * @param sb the StringBuilder to append to
      */
     public void renderMozillaStyle(StringBuilder sb) {
@@ -68,12 +70,14 @@ public final class ScriptStackElement implements Serializable {
      * <code>    at functionName (fileName:lineNumber:columnNumber)</code>
      * or:
      * <code>    at fileName:lineNumber:columnNumber</code>
+     *
      * @param sb the StringBuilder to append to
      */
     public void renderV8Style(StringBuilder sb) {
         sb.append("    at ");
 
-        if ((functionName == null) || "anonymous".equals(functionName) || "undefined".equals(functionName)) {
+        if ((functionName == null) || "anonymous".equals(functionName) || "undefined"
+            .equals(functionName)) {
             // Anonymous functions in V8 don't have names in the stack trace
             appendV8Location(sb);
 
@@ -84,11 +88,8 @@ public final class ScriptStackElement implements Serializable {
         }
     }
 
-    private void appendV8Location(StringBuilder sb)
-    {
-        sb.append(fileName);
-        if (lineNumber > -1) {
-            sb.append(':').append(lineNumber);
-        }
+    private void appendV8Location(StringBuilder sb) {
+        sb.append(fileName).append(':');
+        sb.append(lineNumber > -1 ? lineNumber : 0).append(":0");
     }
 }
