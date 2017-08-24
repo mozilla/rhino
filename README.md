@@ -15,6 +15,7 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_6_RELEASE">Rhino 1.7.6</a></td><td>April 15, 2015</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_RELEASE">Rhino 1.7.7</a></td><td>June 17, 2015</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_1_RELEASE">Rhino 1.7.7.1</a></td><td>February 2, 2016</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_7_2_RELEASE">Rhino 1.7.7.2</a></td><td>August 24, 2017</td></tr>
 </table>
 
 [Release Notes](./RELEASE-NOTES.md) for recent releases.
@@ -37,23 +38,6 @@ More resources if you get stuck:
 [https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Community)
 
 ## Building
-
-### Status of "master" branch
-
-<table>
-<tr><td><b>Java 6</b></td><td>
-  <a href="http://ci.apigee.io/job/Mozilla%20Rhino%20Java%206">
-    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino%20Java%206"/>
-  </a></td></tr>
-<tr><td><b>Java 7</b></td><td>
-  <a href="http://ci.apigee.io/job/Mozilla%20Rhino">
-    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino"/>
-  </a></td></tr>
-<tr><td><b>Java 8</b></td><td>
-  <a href="http://ci.apigee.io/job/Mozilla%20Rhino%20Java%208">
-    <img src="http://ci.apigee.io/buildStatus/icon?job=Mozilla%20Rhino%20Java%208"/>
-  </a></td></tr>
-</table>
 
 ### How to Build
 
@@ -94,8 +78,8 @@ mavenReleaseRepo=
 
 Rhino can run as a stand-alone interpreter from the command line:
 ```
-java -jar buildGradle/libs/rhino-1.7.7.1.jar
-Rhino 1.7.7 2015 05 03
+java -jar buildGradle/libs/rhino-1.7.7.2.jar
+Rhino 1.7.7.2 2017 08 24
 js> print('Hello, World!');
 Hello, World!
 js>
