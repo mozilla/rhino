@@ -8,8 +8,8 @@
 
 package org.mozilla.javascript;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
-import java.lang.reflect.Member;
 import java.util.Iterator;
 
 public abstract class VMBridge
@@ -22,8 +22,6 @@ public abstract class VMBridge
         String[] classNames = {
             "org.mozilla.javascript.VMBridge_custom",
             "org.mozilla.javascript.jdk15.VMBridge_jdk15",
-            "org.mozilla.javascript.jdk13.VMBridge_jdk13",
-            "org.mozilla.javascript.jdk11.VMBridge_jdk11",
         };
         for (int i = 0; i != classNames.length; ++i) {
             String className = classNames[i];
@@ -68,11 +66,6 @@ public abstract class VMBridge
     protected abstract void setContext(Object contextHelper, Context cx);
 
     /**
-     * Return the ClassLoader instance associated with the current thread.
-     */
-    protected abstract ClassLoader getCurrentThreadClassLoader();
-
-    /**
      * In many JVMSs, public methods in private
      * classes are not accessible by default (Sun Bug #4071593).
      * VMBridge instance should try to workaround that via, for example,
@@ -83,7 +76,7 @@ public abstract class VMBridge
      * @return true if it was possible to make method accessible
      *         or false otherwise.
      */
-    protected abstract boolean tryToMakeAccessible(Object accessibleObject);
+    protected abstract boolean tryToMakeAccessible(AccessibleObject accessible);
 
     /**
      * Create helper object to create later proxies implementing the specified
@@ -96,12 +89,8 @@ public abstract class VMBridge
      *
      * @param interfaces Array with one or more interface class objects.
      */
-    protected Object getInterfaceProxyHelper(ContextFactory cf,
-                                             Class<?>[] interfaces)
-    {
-        throw Context.reportRuntimeError(
-            "VMBridge.getInterfaceProxyHelper is not supported");
-    }
+    protected abstract Object getInterfaceProxyHelper(ContextFactory cf,
+                                             Class<?>[] interfaces);
 
     /**
      * Create proxy object for {@link InterfaceAdapter}. The proxy should call
@@ -113,37 +102,16 @@ public abstract class VMBridge
      * @param proxyHelper The result of the previous call to
      *        {@link #getInterfaceProxyHelper(ContextFactory, Class[])}.
      */
-    protected Object newInterfaceProxy(Object proxyHelper,
+    protected abstract Object newInterfaceProxy(Object proxyHelper,
                                        ContextFactory cf,
                                        InterfaceAdapter adapter,
                                        Object target,
-                                       Scriptable topScope)
-    {
-        throw Context.reportRuntimeError(
-            "VMBridge.newInterfaceProxy is not supported");
-    }
-
-    /**
-     * Returns whether or not a given member (method or constructor)
-     * has variable arguments.
-     * Variable argument methods have only been supported in Java since
-     * JDK 1.5.
-     */
-    protected abstract boolean isVarArgs(Member member);
+                                       Scriptable topScope);
 
     /**
      * If "obj" is a java.util.Iterator or a java.lang.Iterable, return a
      * wrapping as a JavaScript Iterator. Otherwise, return null.
      * This method is in VMBridge since Iterable is a JDK 1.5 addition.
      */
-    public Iterator<?> getJavaIterator(Context cx, Scriptable scope, Object obj) {
-        if (obj instanceof Wrapper) {
-            Object unwrapped = ((Wrapper) obj).unwrap();
-            Iterator<?> iterator = null;
-            if (unwrapped instanceof Iterator)
-                iterator = (Iterator<?>) unwrapped;
-            return iterator;
-        }
-        return null;
-    }
+    protected abstract Iterator<?> getJavaIterator(Context cx, Scriptable scope, Object obj);
 }
