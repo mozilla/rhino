@@ -41,14 +41,14 @@ final class MemberBox implements Serializable
     {
         this.memberObject = method;
         this.argTypes = method.getParameterTypes();
-        this.vararg = VMBridge.instance.isVarArgs(method);
+        this.vararg = method.isVarArgs();
     }
 
     private void init(Constructor<?> constructor)
     {
         this.memberObject = constructor;
         this.argTypes = constructor.getParameterTypes();
-        this.vararg = VMBridge.instance.isVarArgs(constructor);
+        this.vararg = constructor.isVarArgs();
     }
 
     Method method()

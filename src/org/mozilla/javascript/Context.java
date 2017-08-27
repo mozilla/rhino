@@ -2410,7 +2410,7 @@ public class Context
             ClassLoader loader = f.getApplicationClassLoader();
             if (loader == null) {
                 ClassLoader threadLoader
-                    = VMBridge.instance.getCurrentThreadClassLoader();
+                    = Thread.currentThread().getContextClassLoader();
                 if (threadLoader != null
                     && Kit.testIfCanLoadRhinoClasses(threadLoader))
                 {
