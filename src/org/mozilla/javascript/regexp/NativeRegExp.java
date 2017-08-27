@@ -2476,7 +2476,6 @@ public class NativeRegExp extends IdScriptableObject implements Function
             res.parens = new SubString[re.parenCount];
             for (num = 0; num < re.parenCount; num++) {
                 int cap_index = gData.parensIndex(num);
-                String parstr;
                 if (cap_index != -1) {
                     int cap_length = gData.parensLength(num);
                     parsub = new SubString(str, cap_index, cap_length);
