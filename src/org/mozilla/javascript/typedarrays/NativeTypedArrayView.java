@@ -555,7 +555,7 @@ public abstract class NativeTypedArrayView<T>
         for (int i = 0; i < length; i++) {
             hc += js_get(i).hashCode();
         }
-        return 0;
+        return hc;
     }
 
     @SuppressWarnings("unused")

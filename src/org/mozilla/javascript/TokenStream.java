@@ -1785,7 +1785,7 @@ class TokenStream
 
     private String convertLastCharToHex(String str) {
       int lastIndex = str.length()-1;
-      StringBuffer buf = new StringBuffer(
+      StringBuilder buf = new StringBuilder(
           str.substring(0, lastIndex));
       buf.append("\\u");
       String hexCode = Integer.toHexString(str.charAt(lastIndex));

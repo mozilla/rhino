@@ -146,8 +146,6 @@ public class NativeSymbol
     @Override
     protected void initPrototypeId(int id)
     {
-        String s = null;
-        int arity = -1;
         switch (id) {
         case Id_constructor:
             initPrototypeMethod(CLASS_NAME, id, "constructor", 1);
