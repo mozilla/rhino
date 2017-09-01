@@ -21,6 +21,7 @@ public abstract class VMBridge
     {
         String[] classNames = {
             "org.mozilla.javascript.VMBridge_custom",
+            "org.mozilla.javascript.jdk18.VMBridge_jdk18",
             "org.mozilla.javascript.jdk15.VMBridge_jdk15",
             "org.mozilla.javascript.jdk13.VMBridge_jdk13",
             "org.mozilla.javascript.jdk11.VMBridge_jdk11",
@@ -145,5 +146,9 @@ public abstract class VMBridge
             return iterator;
         }
         return null;
+    }
+
+    public boolean isDefaultMethod(Method method) {
+        return false;
     }
 }
