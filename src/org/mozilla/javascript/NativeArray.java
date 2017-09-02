@@ -1570,7 +1570,7 @@ public class NativeArray extends IdScriptableObject implements List
     private static Object iterativeMethod(Context cx, IdFunctionObject idFunctionObject, Scriptable scope,
                                           Scriptable thisObj, Object[] args)
     {
-        int id = idFunctionObject.methodId();
+        int id = Math.abs(idFunctionObject.methodId());
 
         if (Id_find == id || Id_findIndex == id) thisObj = requireObjectCoercible(cx, thisObj, idFunctionObject);
 
