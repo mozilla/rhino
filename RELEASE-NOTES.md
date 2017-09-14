@@ -1,5 +1,5 @@
 # Rhino 1.7.7.2
-## February 1, 2016
+## August 24, 2017
 
 This release contains fixes for a few important bugs that have caught Rhino users out in the
 field.
@@ -24,7 +24,7 @@ first).
 The next release is likely to be 1.7.8.
 
 # Rhino 1.7.7.1
-## February 1, 2016
+## February 2, 2016
 
 This release fixes a few critical bugs that were affecting code in the field:
 
