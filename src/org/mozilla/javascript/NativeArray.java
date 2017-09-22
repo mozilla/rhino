@@ -170,10 +170,6 @@ public class NativeArray extends IdScriptableObject implements List
                 "map", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_some,
                 "some", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_find,
-                "find", 1);
-        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_findIndex,
-                "findIndex", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduce,
                 "reduce", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_reduceRight,
@@ -253,8 +249,6 @@ public class NativeArray extends IdScriptableObject implements List
               case ConstructorId_forEach:
               case ConstructorId_map:
               case ConstructorId_some:
-              case ConstructorId_find:
-              case ConstructorId_findIndex:
               case ConstructorId_reduce:
               case ConstructorId_reduceRight: {
                 // this is a small trick; we will handle all the ConstructorId_xxx calls
@@ -2101,8 +2095,6 @@ public class NativeArray extends IdScriptableObject implements List
         ConstructorId_forEach              = -Id_forEach,
         ConstructorId_map                  = -Id_map,
         ConstructorId_some                 = -Id_some,
-        ConstructorId_find                 = -Id_find,
-        ConstructorId_findIndex            = -Id_findIndex,
         ConstructorId_reduce               = -Id_reduce,
         ConstructorId_reduceRight          = -Id_reduceRight,
         ConstructorId_isArray              = -26;

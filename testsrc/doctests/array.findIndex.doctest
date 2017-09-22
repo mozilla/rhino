@@ -2,10 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-js> Array.findIndex;
-function findIndex() { [native code for Array.findIndex, arity=1] }
-
 js> function isSmall(n) { return n < 10; };
 
-js> Array.findIndex([13, 4, 17], isSmall);
+js> [13, 4, 17].findIndex;
+function findIndex() { [native code for Array.findIndex, arity=1] }
+
+js> [13, 4, 17].findIndex(isSmall);
 1
+
+js> Array.findIndex;
+
