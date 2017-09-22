@@ -76,7 +76,7 @@ task sunSpiderBenchmark(type: JavaExec) {
     classpath sourceSets.test.runtimeClasspath
 }
 
-task testBenchmark(type: Test) {
+task v8Benchmark(type: Test) {
     jacoco {
         enabled = false
     }
@@ -88,14 +88,16 @@ task testBenchmark(type: Test) {
     testLogging.showStandardStreams = true
     forkEvery = 1
 }
+
+task testBenchmark() {}
 testBenchmark.dependsOn sunSpiderBenchmark
+testBenchmark.dependsOn v8Benchmark
 
 task microBenchmark(type: JavaExec) {
     main "com.google.caliper.runner.CaliperMain"
-    args "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperObjectBenchmark.FieldAccess", "-DstringKeys=100,1000", "-DintKeys=0,10,1000"
+    args "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperObjectBenchmark.FieldAccess", "-DstringKeys=100,1000", "-DintKeys=100,1000"
     classpath sourceSets.test.runtimeClasspath
 }
-
 
 
 idea {
