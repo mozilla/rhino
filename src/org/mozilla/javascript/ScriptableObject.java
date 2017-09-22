@@ -26,6 +26,10 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.mozilla.javascript.debug.DebuggableObject;
+
+import net.sourceforge.htmlunit.corejs.javascript.Delegator;
+import net.sourceforge.htmlunit.corejs.javascript.Scriptable;
+
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
 import org.mozilla.javascript.annotations.JSGetter;
@@ -2153,14 +2157,11 @@ public abstract class ScriptableObject implements Scriptable,
     }
 
     protected static Scriptable ensureScriptable(Object arg) {
-        if (arg instanceof Scriptable)
+        if (arg instanceof Scriptable) {
             return (Scriptable) arg;
-
+        }
         if (arg instanceof Delegator) {
-            arg = ((Delegator) arg).getDelegee();
-            if (arg instanceof Scriptable) {
-                return (Scriptable) arg;
-            }
+            return ((Delegator) arg).getDelegee();
         }
         throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
     }
