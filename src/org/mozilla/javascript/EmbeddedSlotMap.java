@@ -25,7 +25,7 @@ public class EmbeddedSlotMap
     private ScriptableObject.Slot firstAdded;
     private ScriptableObject.Slot lastAdded;
 
-    private int count;
+    private volatile int count;
 
     // initial slot array size, must be a power of 2
     private static final int INITIAL_SLOT_SIZE = 4;
