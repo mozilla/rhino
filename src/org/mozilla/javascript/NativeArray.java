@@ -257,6 +257,11 @@ public class NativeArray extends IdScriptableObject implements List
               case ConstructorId_findIndex:
               case ConstructorId_reduce:
               case ConstructorId_reduceRight: {
+                // this is a small trick; we will handle all the ConstructorId_xxx calls
+                // the same way the object calls are processed
+                // so we adjust the args, inverting the id and
+                // restarting the method selection
+                // Attention: the implementations have to be aware of this
                 if (args.length > 0) {
                     thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
                     Object[] newArgs = new Object[args.length-1];
@@ -1570,8 +1575,11 @@ public class NativeArray extends IdScriptableObject implements List
     private static Object iterativeMethod(Context cx, IdFunctionObject idFunctionObject, Scriptable scope,
                                           Scriptable thisObj, Object[] args)
     {
+        // execIdCall(..) uses a trick for all the ConstructorId_xxx calls
+        // they are handled like object calls by adjusting the args list
+        // as a result we have to handle ConstructorId_xxx calls (negative id)
+        // the same way and always us the abs value of the id for method selection
         int id = Math.abs(idFunctionObject.methodId());
-
         if (Id_find == id || Id_findIndex == id) thisObj = requireObjectCoercible(cx, thisObj, idFunctionObject);
 
         long length = getLengthProperty(cx, thisObj);
