@@ -19,7 +19,15 @@ package org.mozilla.javascript;
 
 public interface SlotMap
     extends Iterable<ScriptableObject.Slot> {
+
+    /**
+     * Return the size of the map.
+     */
     int size();
+
+    /**
+     * Return whether the map is empty.
+     */
     boolean isEmpty();
 
     /**
@@ -31,6 +39,7 @@ public interface SlotMap
 
     /**
      * This is an optimization that is the same as get with an accessType of SLOT_QUERY.
+     * It should be used instead of SLOT_QUERY because it is more efficient.
      */
     ScriptableObject.Slot query(Object key, int index);
 
@@ -45,3 +54,4 @@ public interface SlotMap
      */
     void remove(Object key, int index);
 }
+
