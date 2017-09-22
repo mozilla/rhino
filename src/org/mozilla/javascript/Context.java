@@ -313,9 +313,19 @@ public class Context
      * If set, then the order of property key enumeration will be first numeric keys in numeric order,
      * followed by string keys in order of creation, and finally Symbol keys, as specified in ES6.
      * Default is true for language version >= "ES6" and false otherwise.
-     * @since 1.7.8
+     * @since 1.7.7.1
      */
     public static final int FEATURE_ENUMERATE_IDS_FIRST = 16;
+
+    /**
+     * If set, then all objects will have a thread-safe property map. (Note that this doesn't make
+     * everything else that they do thread-safe -- that depends on the specific implementation.
+     * If not set, users should not share Rhino objects between threads, unless the "sync"
+     * function is used to wrap them with an explicit synchronizer. The default
+     * is false, which means that by default, individual objects are not thread-safe.
+     * @since 1.7.8
+     */
+    public static final int FEATURE_THREAD_SAFE_OBJECTS = 17;
 
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";

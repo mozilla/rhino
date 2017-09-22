@@ -56,11 +56,6 @@ public class EmbeddedSlotMap
     {
     }
 
-    public EmbeddedSlotMap(int initialSize)
-    {
-        slots = new ScriptableObject.Slot[initialSize];
-    }
-
     @Override
     public int size() {
         return count;
@@ -82,13 +77,12 @@ public class EmbeddedSlotMap
     @Override
     public ScriptableObject.Slot query(Object key, int index)
     {
-        final ScriptableObject.Slot[] localSlots = slots;
-        if (localSlots == null) {
+        if (slots == null) {
             return null;
         }
 
         final int indexOrHash = (key != null ? key.hashCode() : index);
-        final int slotIndex = getSlotIndex(localSlots.length, indexOrHash);
+        final int slotIndex = getSlotIndex(slots.length, indexOrHash);
         for (ScriptableObject.Slot slot = slots[slotIndex];
             slot != null;
             slot = slot.next) {
@@ -112,16 +106,15 @@ public class EmbeddedSlotMap
     @Override
     public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType)
     {
-        // Check the hashtable without using synchronization.
-        final ScriptableObject.Slot[] localSlots = slots;
-        if (localSlots == null && accessType == QUERY) {
+        if (slots == null && accessType == QUERY) {
             return null;
         }
 
         final int indexOrHash = (key != null ? key.hashCode() : index);
-        if (localSlots != null) {
-            ScriptableObject.Slot slot;
-            final int slotIndex = getSlotIndex(localSlots.length, indexOrHash);
+        ScriptableObject.Slot slot = null;
+
+        if (slots != null) {
+            final int slotIndex = getSlotIndex(slots.length, indexOrHash);
             for (slot = slots[slotIndex];
                  slot != null;
                  slot = slot.next) {
@@ -137,35 +130,37 @@ public class EmbeddedSlotMap
                     return slot;
                 case MODIFY:
                 case MODIFY_CONST:
-                    if (slot != null)
+                    if (slot != null) {
                         return slot;
+                    }
                     break;
                 case MODIFY_GETTER_SETTER:
                     slot = ScriptableObject.unwrapSlot(slot);
-                    if (slot instanceof ScriptableObject.GetterSlot)
+                    if (slot instanceof ScriptableObject.GetterSlot) {
                         return slot;
+                    }
                     break;
                 case CONVERT_ACCESSOR_TO_DATA:
                     slot = ScriptableObject.unwrapSlot(slot);
-                    if ( !(slot instanceof ScriptableObject.GetterSlot) )
+                    if ( !(slot instanceof ScriptableObject.GetterSlot) ) {
                         return slot;
+                    }
                     break;
             }
         }
 
         // A new slot has to be inserted or the old has to be replaced
         // by GetterSlot. Time to synchronize.
-        return createSlot(key, indexOrHash, accessType);
+        return createSlot(key, indexOrHash, accessType, slot);
     }
 
-    private synchronized ScriptableObject.Slot createSlot(Object key, int indexOrHash,
-        ScriptableObject.SlotAccess accessType) {
+    private ScriptableObject.Slot createSlot(Object key, int indexOrHash,
+        ScriptableObject.SlotAccess accessType, ScriptableObject.Slot slot) {
         if (count == 0) {
             // Always throw away old slots if any on empty insert.
             slots = new ScriptableObject.Slot[INITIAL_SLOT_SIZE];
         } else {
-            final int tableSize = slots.length;
-            final int insertPos = getSlotIndex(tableSize, indexOrHash);
+            final int insertPos = getSlotIndex(slots.length, indexOrHash);
             ScriptableObject.Slot prev = slots[insertPos];
             ScriptableObject.Slot slot = prev;
             while (slot != null) {
@@ -242,7 +237,10 @@ public class EmbeddedSlotMap
     }
 
     @Override
-    public synchronized void addSlot(ScriptableObject.Slot newSlot) {
+    public void addSlot(ScriptableObject.Slot newSlot) {
+        if (slots == null) {
+            slots = new ScriptableObject.Slot[INITIAL_SLOT_SIZE];
+        }
         insertNewSlot(newSlot);
     }
 
@@ -259,7 +257,7 @@ public class EmbeddedSlotMap
     }
 
     @Override
-    public synchronized void remove(Object key, int index) {
+    public void remove(Object key, int index) {
         int indexOrHash = (key != null ? key.hashCode() : index);
 
         ScriptableObject.Slot[] slotsLocalRef = slots;
@@ -321,7 +319,6 @@ public class EmbeddedSlotMap
         }
     }
 
-    // Must be inside synchronized (this)
     private void copyTable(ScriptableObject.Slot[] oldSlots, ScriptableObject.Slot[] newSlots, int count)
     {
         for (ScriptableObject.Slot slot : oldSlots) {

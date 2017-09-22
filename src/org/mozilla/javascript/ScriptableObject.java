@@ -114,17 +114,10 @@ public abstract class ScriptableObject implements Scriptable,
     private Scriptable parentScopeObject;
 
     /**
-     * Once the object has this many properties in it, we will replace the EmbeddedSlotMap
-     * with HashSlotMap. We can adjust this parameter to balance
-     * performance for typical objects versus performance for huge objects with many collisions.
+     * This holds all the slots. It may or may not be thread-safe, and may expand itself to
+     * a different data structure depending on the size of the object.
      */
-    private static final int MAX_EMBEDDED_HASH_SIZE = 2000;
-
-    /**
-     * This holds all the slots. We start with the small, fast EmbeddedSlotMap and move to a
-     * more complex map when we reach MAX_EMBEDDED_HASH_SIZE.
-     */
-    private transient SlotMap slotMap = new EmbeddedSlotMap();
+    private transient SlotMapContainer slotMap;
 
     // Where external array data is stored.
     private transient ExternalArrayData externalData;
@@ -415,8 +408,18 @@ public abstract class ScriptableObject implements Scriptable,
         }
     }
 
+    private SlotMapContainer createSlotMap(int initialSize)
+    {
+        Context cx = Context.getCurrentContext();
+        if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
+            return new ThreadSafeSlotMapContainer(initialSize);
+        }
+        return new SlotMapContainer(initialSize);
+    }
+
     public ScriptableObject()
     {
+        slotMap = createSlotMap(0);
     }
 
     public ScriptableObject(Scriptable scope, Scriptable prototype)
@@ -426,6 +429,7 @@ public abstract class ScriptableObject implements Scriptable,
 
         parentScopeObject = scope;
         prototypeObject = prototype;
+        slotMap = createSlotMap(0);
     }
 
     /**
@@ -852,7 +856,6 @@ public abstract class ScriptableObject implements Scriptable,
 
         final GetterSlot gslot;
         if (isExtensible()) {
-            checkMapSize();
             gslot = (GetterSlot)slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
         } else {
             Slot slot = unwrapSlot(slotMap.query(name, index));
@@ -925,7 +928,6 @@ public abstract class ScriptableObject implements Scriptable,
         if (name != null && index != 0)
             throw new IllegalArgumentException(name);
         checkNotSealed(name, index);
-        checkMapSize();
         GetterSlot gslot = (GetterSlot)slotMap.get(name, index,
             SlotAccess.MODIFY_GETTER_SETTER);
         gslot.setAttributes(attributes);
@@ -1905,7 +1907,6 @@ public abstract class ScriptableObject implements Scriptable,
             }
         }
 
-        checkMapSize();
         GetterSlot gslot = (GetterSlot)slotMap.get(propertyName, 0,
             SlotAccess.MODIFY_GETTER_SETTER);
         gslot.setAttributes(attributes);
@@ -1971,7 +1972,6 @@ public abstract class ScriptableObject implements Scriptable,
         final int attributes;
 
         if (slot == null) { // new slot
-            checkMapSize();
             slot = getSlot(cx, id, isAccessor ? SlotAccess.MODIFY_GETTER_SETTER : SlotAccess.MODIFY);
             attributes = applyDescriptorToAttributeBitset(DONTENUM|READONLY|PERMANENT, desc);
         } else {
@@ -1982,7 +1982,6 @@ public abstract class ScriptableObject implements Scriptable,
 
         if (isAccessor) {
             if ( !(slot instanceof GetterSlot) ) {
-                checkMapSize();
                 slot = getSlot(cx, id, SlotAccess.MODIFY_GETTER_SETTER);
             }
 
@@ -2306,20 +2305,25 @@ public abstract class ScriptableObject implements Scriptable,
      *
      * @since 1.4R3
      */
-    public synchronized void sealObject() {
+    public void sealObject() {
         if (!isSealed) {
-            for (Slot slot : slotMap) {
-                Object value = slot.value;
-                if (value instanceof LazilyLoadedCtor) {
-                    LazilyLoadedCtor initializer = (LazilyLoadedCtor) value;
-                    try {
-                        initializer.init();
-                    } finally {
-                        slot.value = initializer.getValue();
+            final long stamp = slotMap.readLock();
+            try {
+                for (Slot slot : slotMap) {
+                    Object value = slot.value;
+                    if (value instanceof LazilyLoadedCtor) {
+                        LazilyLoadedCtor initializer = (LazilyLoadedCtor) value;
+                        try {
+                            initializer.init();
+                        } finally {
+                            slot.value = initializer.getValue();
+                        }
                     }
                 }
+                isSealed = true;
+            } finally {
+                slotMap.unlockRead(stamp);
             }
-            isSealed = true;
         }
     }
 
@@ -2834,20 +2838,6 @@ public abstract class ScriptableObject implements Scriptable,
         return Kit.initHash(h, key, value);
     }
 
-    private void checkMapSize()
-    {
-        if ((slotMap instanceof EmbeddedSlotMap) && slotMap.size() >= MAX_EMBEDDED_HASH_SIZE) {
-            synchronized (this) {
-                // It's time to replace slot map implementations.
-                SlotMap newMap = new HashSlotMap();
-                for (Slot s : slotMap) {
-                    newMap.addSlot(s);
-                }
-                slotMap = newMap;
-            }
-        }
-    }
-
     /**
      *
      * @param key
@@ -2881,7 +2871,6 @@ public abstract class ScriptableObject implements Scriptable,
             }
         } else {
             if (isSealed) checkNotSealed(key, index);
-            checkMapSize();
             slot = slotMap.get(key, index, SlotAccess.MODIFY);
         }
         return slot.setValue(value, this, start);
@@ -2923,7 +2912,6 @@ public abstract class ScriptableObject implements Scriptable,
         } else {
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
-            checkMapSize();
             slot = unwrapSlot(slotMap.get(name, index, SlotAccess.MODIFY_CONST));
             int attr = slot.getAttributes();
             if ((attr & READONLY) == 0)
@@ -2979,22 +2967,27 @@ public abstract class ScriptableObject implements Scriptable,
         }
 
         int c = externalLen;
-        for (Slot slot : slotMap) {
-            if (!slot.wasDeleted &&
-                (getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0) &&
+        final long stamp = slotMap.readLock();
+        try {
+            for (Slot slot : slotMap) {
+                if (!slot.wasDeleted &&
+                    (getNonEnumerable || (slot.getAttributes() & DONTENUM) == 0) &&
                     (getSymbols || !(slot.name instanceof Symbol))) {
-                if (c == externalLen) {
-                    // Special handling to combine external array with additional properties
-                    Object[] oldA = a;
-                    a = new Object[slotMap.size() + externalLen];
-                    if (oldA != null) {
-                        System.arraycopy(oldA, 0, a, 0, externalLen);
+                    if (c == externalLen) {
+                        // Special handling to combine external array with additional properties
+                        Object[] oldA = a;
+                        a = new Object[slotMap.dirtySize() + externalLen];
+                        if (oldA != null) {
+                            System.arraycopy(oldA, 0, a, 0, externalLen);
+                        }
                     }
-                }
-                a[c++] = slot.name != null
+                    a[c++] = slot.name != null
                         ? slot.name
                         : Integer.valueOf(slot.indexOrHash);
+                }
             }
+        } finally {
+            slotMap.unlockRead(stamp);
         }
 
         Object[] result;
@@ -3014,20 +3007,25 @@ public abstract class ScriptableObject implements Scriptable,
         return result;
     }
 
-    private synchronized void writeObject(ObjectOutputStream out)
+    private void writeObject(ObjectOutputStream out)
         throws IOException
     {
         out.defaultWriteObject();
-        int objectsCount = slotMap.size();
-        if (objectsCount == 0) {
-            out.writeInt(0);
-        } else {
-            out.writeInt(objectsCount);
-            for (Slot slot : slotMap) {
-                if (!slot.wasDeleted) {
-                    out.writeObject(slot);
+        final long stamp = slotMap.readLock();
+        try {
+            int objectsCount = slotMap.dirtySize();
+            if (objectsCount == 0) {
+                out.writeInt(0);
+            } else {
+                out.writeInt(objectsCount);
+                for (Slot slot : slotMap) {
+                    if (!slot.wasDeleted) {
+                        out.writeObject(slot);
+                    }
                 }
             }
+        } finally {
+            slotMap.unlockRead(stamp);
         }
     }
 
@@ -3037,7 +3035,7 @@ public abstract class ScriptableObject implements Scriptable,
         in.defaultReadObject();
 
         int tableSize = in.readInt();
-        slotMap = new EmbeddedSlotMap(tableSize);
+        slotMap = createSlotMap(tableSize);
         for (int i = 0; i < tableSize; i++) {
             Slot slot = (Slot)in.readObject();
             slotMap.addSlot(slot);
