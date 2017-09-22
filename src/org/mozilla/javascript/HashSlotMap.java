@@ -25,24 +25,24 @@ public class HashSlotMap
         new LinkedHashMap<Object, ScriptableObject.Slot>();
 
     @Override
-    public synchronized int size() {
+    public int size() {
         return map.size();
     }
 
     @Override
-    public synchronized boolean isEmpty() {
+    public boolean isEmpty() {
         return map.isEmpty();
     }
 
     @Override
-    public synchronized ScriptableObject.Slot query(Object key, int index)
+    public ScriptableObject.Slot query(Object key, int index)
     {
         Object name = key == null ? String.valueOf(index) : key;
         return map.get(name);
     }
 
     @Override
-    public synchronized ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType) {
+    public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType) {
         Object name = key == null ? String.valueOf(index) : key;
         ScriptableObject.Slot slot = map.get(name);
         switch (accessType) {
@@ -103,13 +103,13 @@ public class HashSlotMap
     }
 
     @Override
-    public synchronized void addSlot(ScriptableObject.Slot newSlot) {
+    public void addSlot(ScriptableObject.Slot newSlot) {
         Object name = newSlot.name == null ? String.valueOf(newSlot.indexOrHash) : newSlot.name;
         map.put(name, newSlot);
     }
 
     @Override
-    public synchronized void remove(Object key, int index) {
+    public void remove(Object key, int index) {
         Object name = key == null ? String.valueOf(index) : key;
         ScriptableObject.Slot slot = map.get(name);
         if (slot != null) {

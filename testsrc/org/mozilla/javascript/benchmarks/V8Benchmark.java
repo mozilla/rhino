@@ -55,10 +55,12 @@ public class V8Benchmark
         runTest(9);
     }
 
+    /*
     @Test
     public void testOptLevel0()
         throws IOException
     {
         runTest(0);
     }
+    */
 }
