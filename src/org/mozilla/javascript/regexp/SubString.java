@@ -36,8 +36,6 @@ public class SubString {
                : str.substring(index, index + length);
     }
 
-    public static final SubString emptySubString = new SubString();
-
     String str;
     int    index;
     int    length;
