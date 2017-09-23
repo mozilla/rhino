@@ -2469,7 +2469,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
         if (re.parenCount == 0) {
             res.parens = null;
-            res.lastParen = SubString.emptySubString;
+            res.lastParen = new SubString();
         } else {
             SubString parsub = null;
             int num;

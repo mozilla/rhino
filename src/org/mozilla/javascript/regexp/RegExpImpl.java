@@ -282,7 +282,7 @@ public class RegExpImpl implements RegExpProxy {
                 return parsub;
             }
         }
-        return SubString.emptySubString;
+        return new SubString();
     }
 
     /*
