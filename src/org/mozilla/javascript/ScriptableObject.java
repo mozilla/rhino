@@ -27,9 +27,6 @@ import java.util.Map;
 
 import org.mozilla.javascript.debug.DebuggableObject;
 
-import net.sourceforge.htmlunit.corejs.javascript.Delegator;
-import net.sourceforge.htmlunit.corejs.javascript.Scriptable;
-
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
 import org.mozilla.javascript.annotations.JSGetter;
