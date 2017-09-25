@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.mozilla.javascript.debug.DebuggableObject;
+
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
 import org.mozilla.javascript.annotations.JSGetter;
@@ -2153,9 +2154,13 @@ public abstract class ScriptableObject implements Scriptable,
     }
 
     protected static Scriptable ensureScriptable(Object arg) {
-        if ( !(arg instanceof Scriptable) )
-            throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
-        return (Scriptable) arg;
+        if (arg instanceof Scriptable) {
+            return (Scriptable) arg;
+        }
+        if (arg instanceof Delegator) {
+            return ((Delegator) arg).getDelegee();
+        }
+        throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
     }
 
     protected static SymbolScriptable ensureSymbolScriptable(Object arg) {
@@ -2165,9 +2170,16 @@ public abstract class ScriptableObject implements Scriptable,
     }
 
     protected static ScriptableObject ensureScriptableObject(Object arg) {
-        if ( !(arg instanceof ScriptableObject) )
-            throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
-        return (ScriptableObject) arg;
+        if (arg instanceof ScriptableObject)
+            return (ScriptableObject) arg;
+
+        if (arg instanceof Delegator) {
+            arg = ((Delegator) arg).getDelegee();
+            if (arg instanceof ScriptableObject) {
+                return (ScriptableObject) arg;
+            }
+        }
+        throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(arg));
     }
 
     /**
