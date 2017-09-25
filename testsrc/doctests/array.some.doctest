@@ -2,10 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-js> Array.some;
+js> function isSmall(n) { return n < 10; };
+
+js> [1, 4, 9, 16].some;
 function some() { [native code for Array.some, arity=1] }
 
-js> function isSmall(n) { return n < 10; };
+js> [1, 4, 9, 16].some(isSmall);
+true
+
+js> [19, 42].some(isSmall);
+false
+
+js> Array.some;
+function some() { [native code for Array.some, arity=1] }
 
 js> Array.some([1, 4, 9, 16], isSmall);
 true
