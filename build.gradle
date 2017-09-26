@@ -27,7 +27,7 @@ sourceSets {
         }
         resources {
             srcDirs 'src', 'toolsrc'
-            include "*.properties"
+            include "**/*.properties"
         }
     }
 
@@ -39,7 +39,6 @@ sourceSets {
         }
         resources {
             srcDirs "testsrc"
-            include "*.properties"
         }
     }
 }
@@ -223,8 +222,11 @@ checkstyle {
 distributions {
     main {
         contents {
-            from(sourceSets.main.allSource) {
+            from(sourceSets.main.java) {
                 exclude 'man'
+                into 'rhino' + project.version + '/src'
+            }
+            from(sourceSets.main.resources) {
                 into 'rhino' + project.version + '/src'
             }
             from(javadoc.destinationDir) {
