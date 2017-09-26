@@ -1195,8 +1195,8 @@ public class NativeArray extends IdScriptableObject implements List
     private static Object js_splice(Context cx, Scriptable scope,
                                     Scriptable thisObj, Object[] args)
     {
-      NativeArray na = null;
-      boolean denseMode = false;
+        NativeArray na = null;
+        boolean denseMode = false;
         if (thisObj instanceof NativeArray) {
             na = (NativeArray) thisObj;
             denseMode = na.denseOnly;
