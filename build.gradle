@@ -221,8 +221,12 @@ checkstyle {
 distributions {
     main {
         contents {
-            from(sourceSets.main.allSource) {
+            from(sourceSets.main.java) {
                 exclude 'man'
+                into 'rhino' + project.version + '/src'
+            }
+            from(sourceSets.main.resources) {
+                exclude '**/*.java'
                 into 'rhino' + project.version + '/src'
             }
             from(javadoc.destinationDir) {
@@ -236,7 +240,8 @@ distributions {
                 into 'rhino' + project.version
             }
             from(file(".")) {
-                include '*.txt'
+                include '*.txt', '*.md', 'build.gradle', 'build.properties', 'gradle.properties',
+                        'gradle/**', 'gradlew'
                 into 'rhino' + project.version 
             }
             into "/"
