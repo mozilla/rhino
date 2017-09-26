@@ -1022,11 +1022,12 @@ public class ScriptRuntime {
     @Deprecated
     public static Scriptable toObjectOrNull(Context cx, Object obj)
     {
-        if (obj instanceof Scriptable) {
+        if (obj instanceof Delegator)
+            obj = ((Delegator) obj).getDelegee();
+        if (obj instanceof Scriptable)
             return (Scriptable)obj;
-        } else if (obj != null && obj != Undefined.instance) {
+        if (obj != null && obj != Undefined.instance)
             return toObject(cx, getTopCallScope(cx), obj);
-        }
         return null;
     }
 
@@ -1036,11 +1037,12 @@ public class ScriptRuntime {
     public static Scriptable toObjectOrNull(Context cx, Object obj,
                                             Scriptable scope)
     {
-        if (obj instanceof Scriptable) {
+        if (obj instanceof Delegator)
+            obj = ((Delegator) obj).getDelegee();
+        if (obj instanceof Scriptable)
             return (Scriptable)obj;
-        } else if (obj != null && obj != Undefined.instance) {
+        if (obj != null && obj != Undefined.instance)
             return toObject(cx, scope, obj);
-        }
         return null;
     }
 
@@ -2784,6 +2786,8 @@ public class ScriptRuntime {
             return "object";
         if (value == Undefined.instance)
             return "undefined";
+        if (value instanceof Delegator)
+            value = ((Delegator) value).getDelegee();
         if (value instanceof ScriptableObject)
             return ((ScriptableObject) value).getTypeOf();
         if (value instanceof Scriptable)
@@ -3274,6 +3278,18 @@ public class ScriptRuntime {
         } else if (x instanceof Scriptable) {
             if (x instanceof Wrapper && y instanceof Wrapper) {
                 return ((Wrapper)x).unwrap() == ((Wrapper)y).unwrap();
+            }
+            if (x instanceof Delegator) {
+                x = ((Delegator)x).getDelegee();
+                if (y instanceof Delegator) {
+                    return shallowEq(x, ((Delegator)y).getDelegee());
+                }
+                if (x == y) {
+                    return true;
+                }
+            }
+            if (y instanceof Delegator && ((Delegator)y).getDelegee() == x) {
+                return true;
             }
         } else {
             warnAboutNonJSObject(x);
