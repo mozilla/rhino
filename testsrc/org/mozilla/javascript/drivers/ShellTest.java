@@ -96,39 +96,39 @@ public class ShellTest {
             return new Status() {
                 @Override
                 public void running(File file) {
-					for (int i=0; i<array.length; i++) {
-						array[i].running(file);
-					}
+                    for (int i=0; i<array.length; i++) {
+                        array[i].running(file);
+                    }
                 }
                 @Override
                 public void threw(Throwable t) {
-					for (int i=0; i<array.length; i++) {
-						array[i].threw(t);
-					}
-				}
+                    for (int i=0; i<array.length; i++) {
+                        array[i].threw(t);
+                    }
+                }
                 @Override
                 public void failed(String s) {
-					for (int i=0; i<array.length; i++) {
-						array[i].failed(s);
-					}
+                    for (int i=0; i<array.length; i++) {
+                        array[i].failed(s);
+                    }
                 }
                 @Override
                 public void exitCodesWere(int expected, int actual) {
-					for (int i=0; i<array.length; i++) {
-						array[i].exitCodesWere(expected, actual);
-					}
+                    for (int i=0; i<array.length; i++) {
+                        array[i].exitCodesWere(expected, actual);
+                    }
                 }
                 @Override
                 public void outputWas(String s) {
-					for (int i=0; i<array.length; i++) {
-						array[i].outputWas(s);
-					}
+                    for (int i=0; i<array.length; i++) {
+                        array[i].outputWas(s);
+                    }
                 }
                 @Override
                 public void timedOut() {
-					for (int i=0; i<array.length; i++) {
-						array[i].timedOut();
-					}
+                    for (int i=0; i<array.length; i++) {
+                        array[i].timedOut();
+                    }
                 }
             };
         }
@@ -350,7 +350,7 @@ public class ShellTest {
         }
         if (thrown[0] != null)
         {
-        	status.threw(thrown[0]);
+            status.threw(thrown[0]);
         }
         status.exitCodesWere(expectedExitCode, testState.exitCode);
         if(failures != "")

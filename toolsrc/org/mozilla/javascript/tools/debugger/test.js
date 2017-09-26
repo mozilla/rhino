@@ -13,38 +13,38 @@ var x = 12;
 
 function sleep(millis)
 {
-	java.lang.Thread.sleep(millis);
+    java.lang.Thread.sleep(millis);
 }
 
 function thread_loop_body(counter, thread_title)
 {
-	print("["+counter+"] Thread '"+thread_title);
-	sleep(1000);
+    print("["+counter+"] Thread '"+thread_title);
+    sleep(1000);
 }
 
 function make_thread(thread_title, repeat_count, loop_body)
 {
-	var Thread = java.lang.Thread;
-	var thread = new Thread(function() {
-		for (var i = 0; i < repeat_count; ++i) {
-			loop_body(i, thread_title);
-		}
-		print("[DONE] Thread "+thread_title);
-	});
-	return thread;
+    var Thread = java.lang.Thread;
+    var thread = new Thread(function() {
+        for (var i = 0; i < repeat_count; ++i) {
+            loop_body(i, thread_title);
+        }
+        print("[DONE] Thread "+thread_title);
+    });
+    return thread;
 }
 
 function make_thread2(thread_title, repeat_count, loop_body, loop_end)
 {
-	var Thread = java.lang.Thread;
-	var thread = new Thread(function() {
-		create_gui();
-		for (var i = 0; i < repeat_count; ++i) {
-			loop_body(i, thread_title);
-		}
-		loop_end(thread_title);
-	});
-	return thread;
+    var Thread = java.lang.Thread;
+    var thread = new Thread(function() {
+        create_gui();
+        for (var i = 0; i < repeat_count; ++i) {
+            loop_body(i, thread_title);
+        }
+        loop_end(thread_title);
+    });
+    return thread;
 }
 
 
@@ -55,11 +55,11 @@ eval("loop_body = "+loop_body_text);
 var thread1 = make_thread("A", 5, loop_body);
 var thread2 = make_thread("B", 1000, loop_body);
 var thread3 = make_thread2("C", 2, loop_body, 
-		function loop_end(thread_title) {
-			print("[DONE] Thread "+thread_title);
-			// Do somethig to throw exception
-			Math.xxxx();
-	        });
+        function loop_end(thread_title) {
+            print("[DONE] Thread "+thread_title);
+            // Do somethig to throw exception
+            Math.xxxx();
+            });
 
 thread1.start();
 thread2.start();
@@ -82,8 +82,8 @@ function create_gui()
     var button = new swing.JButton("Click Me!");
     button.mnemonic = Packages.java.awt.event.KeyEvent.VK_I;
     button.addActionListener(function() {
-	numClicks += 1;
-	label.setText(labelPrefix + numClicks);
+    numClicks += 1;
+    label.setText(labelPrefix + numClicks);
     });
     label.setLabelFor(button);
 
@@ -94,10 +94,10 @@ function create_gui()
 
     frame.getContentPane().add(pane, awt.BorderLayout.CENTER);
     frame.addWindowListener(function(event, methodName) {
-    	print(event + " "+methodName);
-	if (methodName == "windowClosing") {     
+        print(event + " "+methodName);
+    if (methodName == "windowClosing") {     
             //java.lang.System.exit(0);
-	}
+    }
     });
 
     //Finish setting up the frame, and show it.

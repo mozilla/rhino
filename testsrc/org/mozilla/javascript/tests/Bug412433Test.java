@@ -20,8 +20,8 @@ public class Bug412433Test extends TestCase {
     {
         Context context = Context.enter();
         try {
-	        ScriptableObject scope = context.initStandardObjects();
-	        context.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
+            ScriptableObject scope = context.initStandardObjects();
+            context.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
         } finally {
             Context.exit();
         }

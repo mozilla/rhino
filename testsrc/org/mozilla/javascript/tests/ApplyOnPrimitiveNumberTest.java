@@ -18,22 +18,22 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class ApplyOnPrimitiveNumberTest extends TestCase
 {
-	public void testIt()
-	{
-		final String script = "var fn = function() { return this; }\n"
-			+ "fn.apply(1)";
+    public void testIt()
+    {
+        final String script = "var fn = function() { return this; }\n"
+            + "fn.apply(1)";
 
-		final ContextAction action = new ContextAction()
-		{
-			public Object run(final Context _cx)
-			{
-				final ScriptableObject scope = _cx.initStandardObjects();
-				final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-				assertEquals("object", ScriptRuntime.typeof(result));
-				assertEquals("1", Context.toString(result));
-				return null;
-			}
-		};
-		Utils.runWithAllOptimizationLevels(action);
-	}
+        final ContextAction action = new ContextAction()
+        {
+            public Object run(final Context _cx)
+            {
+                final ScriptableObject scope = _cx.initStandardObjects();
+                final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
+                assertEquals("object", ScriptRuntime.typeof(result));
+                assertEquals("1", Context.toString(result));
+                return null;
+            }
+        };
+        Utils.runWithAllOptimizationLevels(action);
+    }
 }

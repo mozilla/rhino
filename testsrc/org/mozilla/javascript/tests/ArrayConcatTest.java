@@ -18,22 +18,22 @@ import org.mozilla.javascript.ScriptableObject;
 public class ArrayConcatTest extends TestCase {
 
     public void testArrayConcat() {
-		final String script = "var a = ['a0', 'a1'];\n"
-			+ "a[3] = 'a3';\n"
-			+ "var b = ['b1', 'b2'];\n"
-			+ "b.concat(a)";
+        final String script = "var a = ['a0', 'a1'];\n"
+            + "a[3] = 'a3';\n"
+            + "var b = ['b1', 'b2'];\n"
+            + "b.concat(a)";
 
-		final ContextAction action = new ContextAction()
-		{
-			public Object run(final Context _cx)
-			{
-				final ScriptableObject scope = _cx.initStandardObjects();
-				final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-				assertEquals("b1,b2,a0,a1,,a3", Context.toString(result));
-				return null;
-			}
-		};
+        final ContextAction action = new ContextAction()
+        {
+            public Object run(final Context _cx)
+            {
+                final ScriptableObject scope = _cx.initStandardObjects();
+                final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
+                assertEquals("b1,b2,a0,a1,,a3", Context.toString(result));
+                return null;
+            }
+        };
 
-		Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllOptimizationLevels(action);
     }
 }
