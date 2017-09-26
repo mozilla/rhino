@@ -23,11 +23,11 @@ sourceSets {
     main {
         java {
             srcDirs 'src', 'toolsrc', 'xmlimplsrc'
+            exclude 'build.xml'
         }
         resources {
             srcDirs 'src', 'toolsrc'
-            exclude "build.xml"
-            exclude "manifest"
+            include "*.properties"
         }
     }
 
@@ -35,9 +35,11 @@ sourceSets {
         java {
             srcDirs "testsrc", 'examples'
             exclude 'tests/**'
+            exclude 'build.xml'
         }
         resources {
             srcDirs "testsrc"
+            include "*.properties"
         }
     }
 }
@@ -231,12 +233,10 @@ distributions {
             from(jar.outputs.files) {
                 into 'rhino' + project.version + '/lib'
             }
-            from(sourceSets.main.allSource) {
-                include 'man/*.1'
-                into 'rhino' + project.version
-            }
             from(file(".")) {
-                include '*.txt'
+                include '*.txt', '*.md', 'build.gradle', 'build.properties',
+                        'gradle.properties', 'gradlew',
+                        'man/**', 'gradle/**'
                 into 'rhino' + project.version 
             }
             into "/"
