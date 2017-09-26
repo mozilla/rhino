@@ -3064,9 +3064,6 @@ public class Parser
               pos = ts.tokenBeg; end = ts.tokenEnd;
               return new KeywordLiteral(pos, end - pos, tt);
 
-          case Token.RP:
-              return new EmptyExpression();
-
           case Token.RESERVED:
               consumeToken();
               reportError("msg.reserved.id");
@@ -3099,7 +3096,7 @@ public class Parser
             Comment jsdocNode = getAndResetJsDoc();
             int lineno = ts.lineno;
             int begin = ts.tokenBeg;
-            AstNode e = expr();
+            AstNode e = (peekToken() == Token.RP ? new EmptyExpression() : expr());
             if (peekToken() == Token.FOR) {
                 return generatorExpression(e, begin);
             }
