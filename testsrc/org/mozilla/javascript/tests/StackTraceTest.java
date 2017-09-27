@@ -21,10 +21,10 @@ import org.mozilla.javascript.Scriptable;
 public class StackTraceTest extends TestCase {
     final static String LS = System.getProperty("line.separator");
 
-	/**
-	 * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some
-	 * native function has been made.
-	 */
+    /**
+     * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some
+     * native function has been made.
+     */
     public void testFailureStackTrace() {
         RhinoException.useMozillaStackStyle(false);
         final String source1 = "function f2() { throw 'hello'; }; f2();";
@@ -37,22 +37,22 @@ public class StackTraceTest extends TestCase {
         runWithExpectedStackTrace(source3, result);
     }
 
-	private void runWithExpectedStackTrace(final String _source, final String _expectedStackTrace)
-	{
+    private void runWithExpectedStackTrace(final String _source, final String _expectedStackTrace)
+    {
         final ContextAction action = new ContextAction() {
-        	public Object run(Context cx) {
-        		final Scriptable scope = cx.initStandardObjects();
-        		try {
-        			cx.evaluateString(scope, _source, "test.js", 0, null);
-        		}
-        		catch (final JavaScriptException e)
-        		{
-        			assertEquals(_expectedStackTrace, e.getScriptStackTrace());
-        			return null;
-        		}
-        		throw new RuntimeException("Exception expected!");
-        	}
+            public Object run(Context cx) {
+                final Scriptable scope = cx.initStandardObjects();
+                try {
+                    cx.evaluateString(scope, _source, "test.js", 0, null);
+                }
+                catch (final JavaScriptException e)
+                {
+                    assertEquals(_expectedStackTrace, e.getScriptStackTrace());
+                    return null;
+                }
+                throw new RuntimeException("Exception expected!");
+            }
         };
         Utils.runWithOptimizationLevel(action, -1);
-	}
+    }
  }

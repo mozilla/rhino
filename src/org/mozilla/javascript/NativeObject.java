@@ -746,7 +746,7 @@ public class NativeObject extends IdScriptableObject implements Map
         ConstructorId_defineProperty = -5,
         ConstructorId_isExtensible = -6,
         ConstructorId_preventExtensions = -7,
-        ConstructorId_defineProperties= -8,
+        ConstructorId_defineProperties = -8,
         ConstructorId_create = -9,
         ConstructorId_isSealed = -10,
         ConstructorId_isFrozen = -11,

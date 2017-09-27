@@ -43,8 +43,8 @@ public class ParserTest extends TestCase {
 
     public void testParseAutoSemiColonBeforeNewlineAndComments() throws IOException {
         AstRoot root = parseAsReader(
-        		"var s = 3\n"
-        		+ "/* */var t = 1;");
+                "var s = 3\n"
+                + "/* */var t = 1;");
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
 

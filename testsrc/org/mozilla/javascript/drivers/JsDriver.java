@@ -325,72 +325,72 @@ public class JsDriver {
         }
     }
 
-	private static class XmlStatus extends ShellTest.Status {
-		private Element target;
-		private Date start;
+    private static class XmlStatus extends ShellTest.Status {
+        private Element target;
+        private Date start;
 
-		XmlStatus(String path, Element root) {
-			this.target = root.getOwnerDocument().createElement("test");
-			this.target.setAttribute("path", path);
-			root.appendChild(target);
-		}
+        XmlStatus(String path, Element root) {
+            this.target = root.getOwnerDocument().createElement("test");
+            this.target.setAttribute("path", path);
+            root.appendChild(target);
+        }
 
-		@Override
-		public void running(File file) {
-			this.start = new Date();
-		}
+        @Override
+        public void running(File file) {
+            this.start = new Date();
+        }
 
-		private Element createElement(Element parent, String name) {
-			Element rv = parent.getOwnerDocument().createElement(name);
-			parent.appendChild(rv);
-			return rv;
-		}
+        private Element createElement(Element parent, String name) {
+            Element rv = parent.getOwnerDocument().createElement(name);
+            parent.appendChild(rv);
+            return rv;
+        }
 
-		private void finish() {
-			Date end = new Date();
-			long elapsed = end.getTime() - start.getTime();
-			this.target.setAttribute("elapsed", String.valueOf(elapsed));
-		}
+        private void finish() {
+            Date end = new Date();
+            long elapsed = end.getTime() - start.getTime();
+            this.target.setAttribute("elapsed", String.valueOf(elapsed));
+        }
 
-		private void setTextContent(Element e, String content) {
-			e.setTextContent( newlineLineEndings(content) );
-		}
+        private void setTextContent(Element e, String content) {
+            e.setTextContent( newlineLineEndings(content) );
+        }
 
         @Override
         public void exitCodesWere(int expected, int actual) {
-			finish();
-			Element exit = createElement(target, "exit");
-			exit.setAttribute("expected", String.valueOf(expected));
-			exit.setAttribute("actual", String.valueOf(actual));
-		}
+            finish();
+            Element exit = createElement(target, "exit");
+            exit.setAttribute("expected", String.valueOf(expected));
+            exit.setAttribute("actual", String.valueOf(actual));
+        }
 
         @Override
         public void timedOut() {
-			finish();
-			createElement(target, "timedOut");
-		}
+            finish();
+            createElement(target, "timedOut");
+        }
 
         @Override
         public void failed(String s) {
-			finish();
-			Element failed = createElement(target, "failed");
-			setTextContent(failed, s);
-		}
+            finish();
+            Element failed = createElement(target, "failed");
+            setTextContent(failed, s);
+        }
 
         @Override
         public void outputWas(String message) {
-			finish();
-			Element output = createElement(target, "output");
-			setTextContent(output, message);
-		}
+            finish();
+            Element output = createElement(target, "output");
+            setTextContent(output, message);
+        }
 
         @Override
         public void threw(Throwable t) {
-			finish();
-			Element threw = createElement(target, "threw");
-			setTextContent(threw, ShellTest.getStackTrace(t));
-		}
-	}
+            finish();
+            Element threw = createElement(target, "threw");
+            setTextContent(threw, ShellTest.getStackTrace(t));
+        }
+    }
 
     private static class Results {
         private ShellContextFactory factory;
@@ -401,9 +401,9 @@ public class JsDriver {
         private Document html;
         private Element failureHtml;
 
-		private Document xml;
+        private Document xml;
 
-		private Date start;
+        private Date start;
         private int tests;
         private int failures;
 
@@ -411,11 +411,11 @@ public class JsDriver {
             this.factory = factory;
             this.arguments = arguments;
 
-			File output = arguments.getOutputFile();
-			if (output == null) {
-				output = new File("rhino-test-results." + new java.text.SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + ".html");
-			}
-			this.output = output;
+            File output = arguments.getOutputFile();
+            if (output == null) {
+                output = new File("rhino-test-results." + new java.text.SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + ".html");
+            }
+            this.output = output;
 
             this.trace = trace;
         }
@@ -437,14 +437,14 @@ public class JsDriver {
 
         private void write(Document template, boolean xml) {
             try {
-				File output = this.output;
-				javax.xml.transform.TransformerFactory factory = javax.xml.transform.TransformerFactory.newInstance();
-				javax.xml.transform.Transformer xform = factory.newTransformer();
-				if (xml) {
-					xform.setOutputProperty(javax.xml.transform.OutputKeys.METHOD, "xml");
-					xform.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
-					output = new File(output.getCanonicalPath() + ".xml");
-				}
+                File output = this.output;
+                javax.xml.transform.TransformerFactory factory = javax.xml.transform.TransformerFactory.newInstance();
+                javax.xml.transform.Transformer xform = factory.newTransformer();
+                if (xml) {
+                    xform.setOutputProperty(javax.xml.transform.OutputKeys.METHOD, "xml");
+                    xform.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+                    output = new File(output.getCanonicalPath() + ".xml");
+                }
                 xform.transform(
                     new javax.xml.transform.dom.DOMSource(template),
                     new javax.xml.transform.stream.StreamResult( new FileOutputStream(output) )
@@ -459,7 +459,7 @@ public class JsDriver {
             }
         }
 
-		void start() {
+        void start() {
             this.html = getTemplate();
             this.failureHtml = getElementById(html.getDocumentElement(), "failureDetails.prototype");
             if (this.failureHtml == null) {
@@ -475,27 +475,27 @@ public class JsDriver {
             }
             this.failureHtml.getParentNode().removeChild(this.failureHtml);
 
-			try {
-				this.xml = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
-					.getDOMImplementation().createDocument(null, "results", null)
-				;
-				xml.getDocumentElement().setAttribute("timestamp", String.valueOf(new Date().getTime()));
-				xml.getDocumentElement().setAttribute("optimization", String.valueOf(arguments.getOptimizationLevel()));
+            try {
+                this.xml = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                    .getDOMImplementation().createDocument(null, "results", null)
+                ;
+                xml.getDocumentElement().setAttribute("timestamp", String.valueOf(new Date().getTime()));
+                xml.getDocumentElement().setAttribute("optimization", String.valueOf(arguments.getOptimizationLevel()));
                 xml.getDocumentElement().setAttribute("strict", String.valueOf(arguments.isStrict()));
                 xml.getDocumentElement().setAttribute("timeout", String.valueOf(arguments.getTimeout()));
-			} catch (javax.xml.parsers.ParserConfigurationException e) {
-				throw new RuntimeException(e);
-			}
+            } catch (javax.xml.parsers.ParserConfigurationException e) {
+                throw new RuntimeException(e);
+            }
 
-			this.start = new Date();
-		}
+            this.start = new Date();
+        }
 
         void run(Tests.Script script, ShellTest.Parameters parameters) {
-			String path = script.getPath();
-			File test = script.getFile();
+            String path = script.getPath();
+            File test = script.getFile();
             ConsoleStatus cStatus = new ConsoleStatus(arguments.getConsole(), trace);
             HtmlStatus hStatus = new HtmlStatus(arguments.getLxrUrl(), arguments.getBugUrl(), path, html, (Element)failureHtml.cloneNode(true));
-			XmlStatus xStatus = new XmlStatus(path, this.xml.getDocumentElement());
+            XmlStatus xStatus = new XmlStatus(path, this.xml.getDocumentElement());
             ShellTest.Status status = ShellTest.Status.compose(new ShellTest.Status[] { cStatus, hStatus, xStatus });
             try {
                 ShellTest.run(factory, test, parameters, status);
@@ -514,7 +514,7 @@ public class JsDriver {
         }
 
         void finish() {
-			Date end = new Date();
+            Date end = new Date();
             long elapsedMs = end.getTime() - start.getTime();
             set(html, "results.testlist", join(arguments.getTestList()));
             set(html, "results.skiplist", join(arguments.getSkipList()));
@@ -532,7 +532,7 @@ public class JsDriver {
             set(html, "results.elapsed", elapsed);
             set(html, "results.time", new java.text.SimpleDateFormat("MMMM d yyyy h:mm:ss aa").format(new java.util.Date()));
             write(html, false);
-			write(xml, true);
+            write(xml, true);
         }
     }
 
@@ -573,11 +573,11 @@ public class JsDriver {
 
         Results results = new Results(factory, arguments, arguments.trace());
 
-		results.start();
+        results.start();
         for (int i=0; i<all.length; i++) {
             results.run(all[i], new ShellTestParameters(arguments.getTimeout()));
         }
-		results.finish();
+        results.finish();
     }
 
     public static void main(Arguments arguments) throws Throwable {
@@ -793,7 +793,7 @@ public class JsDriver {
                 }
 
                 if (arguments.size() == lengthBefore) {
-					System.err.println("WARNING: ignoring unrecognized option " + arguments.remove(0));
+                    System.err.println("WARNING: ignoring unrecognized option " + arguments.remove(0));
                 }
             }
         }
