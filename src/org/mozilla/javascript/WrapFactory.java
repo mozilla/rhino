@@ -57,8 +57,13 @@ public class WrapFactory
             return obj;
         }
         if (!isJavaPrimitiveWrap()) {
-            if (obj instanceof String || obj instanceof Number
-                || obj instanceof Boolean)
+            if (obj instanceof String ||
+                obj instanceof Boolean ||
+                obj instanceof Integer ||
+                obj instanceof Short ||
+                obj instanceof Long ||
+                obj instanceof Float ||
+                obj instanceof Double)
             {
                 return obj;
             } else if (obj instanceof Character) {
