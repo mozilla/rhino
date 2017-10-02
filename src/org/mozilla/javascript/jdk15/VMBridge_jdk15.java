@@ -168,4 +168,9 @@ public class VMBridge_jdk15 extends VMBridge
         }
         return null;
     }
+
+    @Override
+    public boolean isDefaultMethod(Method method) {
+        return false;
+    }
 }
