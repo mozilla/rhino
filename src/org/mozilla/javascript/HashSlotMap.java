@@ -54,12 +54,10 @@ public class HashSlotMap
                     return slot;
                 break;
             case MODIFY_GETTER_SETTER:
-                slot = ScriptableObject.unwrapSlot(slot);
                 if (slot instanceof ScriptableObject.GetterSlot)
                     return slot;
                 break;
             case CONVERT_ACCESSOR_TO_DATA:
-                slot = ScriptableObject.unwrapSlot(slot);
                 if ( !(slot instanceof ScriptableObject.GetterSlot) )
                     return slot;
                 break;
@@ -72,22 +70,20 @@ public class HashSlotMap
         Object name, ScriptableObject.SlotAccess accessType) {
         ScriptableObject.Slot slot = map.get(name);
         if (slot != null) {
-            ScriptableObject.Slot inner = ScriptableObject.unwrapSlot(slot);
             ScriptableObject.Slot newSlot;
 
             if (accessType == MODIFY_GETTER_SETTER
-                    && !(inner instanceof ScriptableObject.GetterSlot)) {
-                newSlot = new ScriptableObject.GetterSlot(name, slot.indexOrHash, inner.getAttributes());
+                    && !(slot instanceof ScriptableObject.GetterSlot)) {
+                newSlot = new ScriptableObject.GetterSlot(name, slot.indexOrHash, slot.getAttributes());
             } else if (accessType == CONVERT_ACCESSOR_TO_DATA
-                    && (inner instanceof ScriptableObject.GetterSlot)) {
-                newSlot = new ScriptableObject.Slot(name, slot.indexOrHash, inner.getAttributes());
+                    && (slot instanceof ScriptableObject.GetterSlot)) {
+                newSlot = new ScriptableObject.Slot(name, slot.indexOrHash, slot.getAttributes());
             } else if (accessType == MODIFY_CONST) {
                 return null;
             } else {
-                return inner;
+                return slot;
             }
-            newSlot.value = inner.value;
-            slot.markDeleted();
+            newSlot.value = slot.value;
             map.put(name, newSlot);
             return newSlot;
         }
@@ -121,7 +117,6 @@ public class HashSlotMap
                 }
                 return;
             }
-            slot.markDeleted();
             map.remove(name);
         }
     }

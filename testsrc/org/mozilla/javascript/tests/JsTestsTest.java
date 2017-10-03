@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 
+import org.junit.Test;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.drivers.JsTestsBase;
 
@@ -26,16 +27,19 @@ public class JsTestsTest extends JsTestsBase {
         runJsTests(tests);
     }
 
+    @Test
     public void testJsTestsInterpreted() throws IOException {
         setOptimizationLevel(-1);
         runJsTests();
     }
 
+    @Test
     public void testJsTestsCompiled() throws IOException {
         setOptimizationLevel(0);
         runJsTests();
     }
 
+    @Test
     public void testJsTestsOptimized() throws IOException {
         setOptimizationLevel(9);
         runJsTests();
