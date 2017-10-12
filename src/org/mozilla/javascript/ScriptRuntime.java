@@ -2696,13 +2696,27 @@ public class ScriptRuntime {
 
         return function.call(cx, scope, callThis, callArgs);
     }
+    
+    /**
+      * @return true if the passed in Scriptable looks like an array
+      */
+    private static boolean isArrayLike(Scriptable obj)
+    {
+        return obj != null && (
+            obj instanceof NativeArray ||
+            obj instanceof Arguments ||
+            ScriptableObject.hasProperty(obj, "length")
+        );
+    }
 
     static Object[] getApplyArguments(Context cx, Object arg1)
     {
         if (arg1 == null || arg1 == Undefined.instance) {
             return ScriptRuntime.emptyArgs;
-        } else if (arg1 instanceof NativeArray || arg1 instanceof Arguments) {
+        } else if ( arg1 instanceof Scriptable && isArrayLike((Scriptable) arg1) ) {
             return cx.getElements((Scriptable) arg1);
+        } else if( arg1 instanceof ScriptableObject ) {
+            return ScriptRuntime.emptyArgs;
         } else {
             throw ScriptRuntime.typeError0("msg.arg.isnt.array");
         }
