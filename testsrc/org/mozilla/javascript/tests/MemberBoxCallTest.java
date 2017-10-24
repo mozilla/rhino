@@ -28,7 +28,7 @@ public class MemberBoxCallTest {
 					"valueProperty.set.call(hostObj, 'superVal');" +
 					"result = valueProperty.get.call(hostObj);" +
 				"}"+
-				"result;", "superVal");
+				"result;", "superVal"));
         } finally {
             Context.exit();
         }
