@@ -644,7 +644,7 @@ public class Parser
                         String directive = getDirective(n);
                         if (directive == null) {
                             inDirectivePrologue = false;
-                        } else if (directive.equals("use strict")) {
+                        } else if (isUseStrictDirective(directive)) {
                             inUseStrictDirective = true;
                             root.setInStrictMode(true);
                         }
@@ -688,6 +688,10 @@ public class Parser
         root.setBaseLineno(baseLineno);
         root.setEndLineno(ts.lineno);
         return root;
+    }
+
+    private boolean isUseStrictDirective(String directive) {
+        return !compilerEnv.ignoreStrictDirective() && directive.equals("use strict");
     }
 
     private AstNode parseFunctionBody(int type, FunctionNode fnNode)
@@ -742,7 +746,7 @@ public class Parser
                                 String directive = getDirective(n);
                                 if (directive == null) {
                                     inDirectivePrologue = false;
-                                } else if (directive.equals("use strict")) {
+                                } else if (isUseStrictDirective(directive)) {
                                     inUseStrictDirective = true;
                                     fnNode.setInStrictMode(true);
                                     if (!savedStrictMode) {
