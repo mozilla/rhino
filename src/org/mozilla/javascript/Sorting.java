@@ -1,6 +1,5 @@
 package org.mozilla.javascript;
 
-import java.util.Arrays;
 import java.util.Comparator;
 
 public final class Sorting {
@@ -51,31 +50,44 @@ public final class Sorting {
     }
 
     /*
-    Quicksort-style partitioning, using the Hoare partition scheme described on Wikipedia.
+    Quicksort-style partitioning, using the Hoare partition scheme as coded by
+    Sedgewick at https://algs4.cs.princeton.edu/23quicksort/Quick.java.html.
     Use the "median of three" method to determine which index to pivot on, and then
     separate the array into two halves based on the pivot.
     */
     private static int partition(Object[] a, int start, int end, Comparator<Object> cmp) {
-        Object pivot = a[median(start, end, start + ((end - start) / 2))];
-        int i = start - 1;
+        final int p = median(a, start, end, cmp);
+        final Object pivot = a[p];
+        a[p] = a[start];
+        a[start] = pivot;
+
+        int i = start;
         int j = end + 1;
+
         while (true) {
-            do {
-                i++;
-            } while (cmp.compare(a[i], pivot) < 0);
-            do {
-                j--;
-            } while (cmp.compare(a[j], pivot) > 0);
+            while (cmp.compare(a[++i], pivot) < 0) {
+                if (i == end) {
+                    break;
+                }
+            }
+            while (cmp.compare(a[--j], pivot) >= 0) {
+                if (j == start) {
+                    break;
+                }
+            }
             if (i >= j) {
-                return j;
+                break;
             }
             swap(a, i, j);
         }
+
+        swap(a, start, j);
+        return j;
     }
 
     private static void swap(Object[] a, int l, int h)
     {
-        Object tmp = a[l];
+        final Object tmp = a[l];
         a[l] = a[h];
         a[h] = tmp;
     }
@@ -85,10 +97,28 @@ public final class Sorting {
         return (int)(Math.log10(n) / Math.log10(2.0));
     }
 
-    private static int median(int n1, int n2, int n3)
+    /*
+    Return the index of the smallest of three elements in the specified array range -- the
+    first, the last, and the one in the middle.
+    */
+    private static int median(final Object[] a, int start, int end,  Comparator<Object> cmp)
     {
-        int[] a = {n1, n2, n3};
-        Arrays.sort(a);
-        return a[1];
+        final int m = start + ((end - start) / 2);
+        int smallest = start;
+
+        if (cmp.compare(a[smallest], a[m]) > 0) {
+            smallest = m;
+        }
+        if (cmp.compare(a[smallest], a[end]) > 0) {
+            smallest = end;
+        }
+
+        if (smallest == start) {
+            return (cmp.compare(a[m], a[end]) < 0) ? m : end;
+        }
+        if (smallest == m) {
+            return (cmp.compare(a[start], a[end]) < 0) ? start : end;
+        }
+        return (cmp.compare(a[start], a[m]) < 0) ? start : m;
     }
 }
