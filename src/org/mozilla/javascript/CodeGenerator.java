@@ -58,7 +58,7 @@ class CodeGenerator extends Icode {
             System.out.println(tree.toStringTree(tree));
         }
 
-        new NodeTransformer().transform(tree);
+        new NodeTransformer().transform(tree, compilerEnv);
 
         if (Token.printTrees) {
             System.out.println("after transform:");

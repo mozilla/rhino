@@ -28,18 +28,24 @@ public class NodeTransformer
     {
     }
 
-    public final void transform(ScriptNode tree)
+    public final void transform(ScriptNode tree, CompilerEnvirons env)
     {
-        transform(tree, false);
+        transform(tree, false, env);
     }
 
-    public final void transform(ScriptNode tree, boolean inStrictMode)
+    public final void transform(ScriptNode tree, boolean inStrictMode, CompilerEnvirons env)
     {
-        inStrictMode = inStrictMode || tree.isInStrictMode();
-        transformCompilationUnit(tree, inStrictMode);
+        boolean useStrictMode = inStrictMode;
+        // Support strict mode inside a function only for "ES6" language level
+        // and above. Otherwise, we will end up breaking backward compatibility for
+        // many existing scripts.
+        if ((env.getLanguageVersion() >= Context.VERSION_ES6) && tree.isInStrictMode()) {
+          useStrictMode = true;
+        }
+        transformCompilationUnit(tree, useStrictMode);
         for (int i = 0; i != tree.getFunctionCount(); ++i) {
             FunctionNode fn = tree.getFunctionNode(i);
-            transform(fn, inStrictMode);
+            transform(fn, useStrictMode, env);
         }
     }
 
