@@ -98,10 +98,10 @@ public final class Sorting {
     }
 
     /*
-    Return the index of the smallest of three elements in the specified array range -- the
+    Return the index of the median of three elements in the specified array range -- the
     first, the last, and the one in the middle.
     */
-    private static int median(final Object[] a, int start, int end,  Comparator<Object> cmp)
+    public static int median(final Object[] a, int start, int end, Comparator<Object> cmp)
     {
         final int m = start + ((end - start) / 2);
         int smallest = start;

@@ -62,9 +62,7 @@ sortAndCompare(["a", "b", "c"],
     return 0;
   });
 
-// Torture tests devised by @sainen and @bensummers
-// array's length has to be more than 17 to get into |hybridSort()|
-// |0| is in the middle to be chosen as pivot on the first |partition()| call
+// White-box tests devised by @sainaen and @bensummers
 sortAndCompare([1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     .map(function(value, index) { return {index: index, criteria: value}; }),
     function(left, right) {
@@ -76,24 +74,17 @@ sortAndCompare([1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         }
         return left.index < right.index ? -1 : 1;
     });
-
-
-sortAndCompare(["UHl3DzELNleHuQ", "Na6de_6oK1SkkNPRHLib8Y2Lwg",
-                   "GnPrJj5R7savc5YGqRQ8Vf5z", "AmV1H9UWHU1GxQ",
-                   "i7w_JpplQauf2jAD8ko", "z-qs4duUdshTy686Pg4",
-                   "EI8kRBMNjZfRC9YH-Q", "w-A", "ukUm_NcvcToZyKn4Vw",
-                   "05C4qwB52eGjZcf83_YO3PSbYA", "_73TGwD1CRtoWdwdCTZdw8E",
-                   "NnXYyCqBJ-q036o", "eg", "uUIuxNDHfoHgntjZnqrvrjjTVJc",
-                   "bhY", "qSzGSQ", "LpLx6ZJDp0LNHZsoRee3wYim", "uDXkQA", "hhWgHw"]
-      .map(function(value, index) { return {index: index, criteria: value}; }),
-      function(left, right) {
-          var a = left.criteria;
-          var b = right.criteria;
-          if (a !== b) {
-              if (a > b || a === void 0) return 1;
-              if (a < b || b === void 0) return -1;
-          }
-          return left.index < right.index ? -1 : 1;
-      });
+// This one sorts fine but confuses our "verify" code.
+assertDoesNotThrow(function() {
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1].sort(function (a, b) { return a >= b ? 1 : -1; });
+});
+// weird comparator, array may not be sorted, but shouldn't fail/throw
+assertDoesNotThrow(function () {
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1].sort(function (a, b) { return -1; });
+});
+// yet another weird comparator, again shouldn't fail/throw
+assertDoesNotThrow(function () {
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1].sort(function (a, b) { return 1; });
+});
 
 "success";

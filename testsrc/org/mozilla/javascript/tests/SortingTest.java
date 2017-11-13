@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 
 public class SortingTest {
     private static final int BIG_ARRAY = 100000;
-    private static final int ITERATIONS = 4;
+    private static final int ITERATIONS = 1;
 
     private static final Random rand = new Random();
 
@@ -61,6 +61,19 @@ public class SortingTest {
         hybridSort(sameArray(100));
         hybridSort(new Object[] {});
         hybridSort(randomArray(10000));
+    }
+
+    @Test
+    public void testMedian()
+    {
+        Object[] a = new Object[] { 1, 2, 3, 4, 5 };
+        assertEquals(2, Sorting.median(a, 0, 4, new IntComparator()));
+        a = new Object[] { 5, 4, 3, 2, 1 };
+        assertEquals(2, Sorting.median(a, 0, 4, new IntComparator()));
+        a = new Object[] { 3, 4, 5, 2, 1 };
+        assertEquals(0, Sorting.median(a, 0, 4, new IntComparator()));
+        a = new Object[] { 4, 5, 1, 2, 3 };
+        assertEquals(4, Sorting.median(a, 0, 4, new IntComparator()));
     }
 
     /*
