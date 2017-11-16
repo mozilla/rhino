@@ -9,6 +9,7 @@ import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.NodeVisitor;
+import org.mozilla.javascript.ast.ReturnStatement;
 
 import java.util.Objects;
 
@@ -68,6 +69,15 @@ public class ArrowFnPositionBugTest {
         // (i.e. it's shifted by one char compared to no-parameters case)
         assertEquals(5, arrowFn.getPosition());
         assertEquals(9, arrowFn.getAbsolutePosition());
+    }
+
+    @Test
+    public void testArrowFnReturnPosition() {
+        FunctionNode arrowFn = parseAndExtractArrowFn("test((cb) => cb() + 1);");
+        ReturnStatement returnStatement = (ReturnStatement) arrowFn.getBody().getFirstChild();
+        assertEquals(0, returnStatement.getPosition());
+        assertEquals(13, returnStatement.getAbsolutePosition());
+        assertEquals(8, returnStatement.getLength());
     }
 
 }
