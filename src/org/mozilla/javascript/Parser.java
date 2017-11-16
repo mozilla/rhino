@@ -3106,7 +3106,7 @@ public class Parser
             Comment jsdocNode = getAndResetJsDoc();
             int lineno = ts.lineno;
             int begin = ts.tokenBeg;
-            AstNode e = (peekToken() == Token.RP ? new EmptyExpression() : expr());
+            AstNode e = (peekToken() == Token.RP ? new EmptyExpression(begin) : expr());
             if (peekToken() == Token.FOR) {
                 return generatorExpression(e, begin);
             }
