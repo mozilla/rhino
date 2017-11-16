@@ -713,8 +713,8 @@ public class Parser
         pn.setLineno(ts.lineno);
         try {
             if (isExpressionClosure) {
-                ReturnStatement n = new ReturnStatement(ts.lineno);
-                n.setReturnValue(assignExpr());
+                AstNode returnValue = assignExpr();
+                ReturnStatement n = new ReturnStatement(returnValue.getPosition(), returnValue.getLength(), returnValue);
                 // expression closure flag is required on both nodes
                 n.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
                 pn.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
