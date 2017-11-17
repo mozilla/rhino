@@ -304,6 +304,7 @@ final class NativeString extends IdScriptableObject
                     } else if (id == Id_endsWith) {
                         return idx != -1;
                     }
+                    // fallthrough
 
                 case Id_lastIndexOf:
                     return ScriptRuntime.wrapInt(js_lastIndexOf(
