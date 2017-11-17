@@ -4,20 +4,21 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.EvaluatorException;
 
+import static org.junit.Assert.*;
+
 /**
  * Test of strict mode APIs.
  *
  * @author Norris Boyd
  */
-public class StrictModeApiTest extends TestCase {
+public class StrictModeApiTest {
 
   private ScriptableObject global;
   private ContextFactory contextFactory;
@@ -36,6 +37,7 @@ public class StrictModeApiTest extends TestCase {
     }
   }
 
+  @Test
   public void testStrictModeError() {
     contextFactory = new MyContextFactory();
     Context cx = contextFactory.enterContext();

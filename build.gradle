@@ -12,7 +12,7 @@ targetCompatibility = 1.8
 tasks.withType(JavaCompile) { options.encoding = "UTF-8" }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
+    gradleVersion = '4.3.1'
 }
 
 repositories {
@@ -57,6 +57,7 @@ if (JavaVersion.current().isJava8Compatible()) {
 }
 
 test {
+    useJUnit()
     exclude "**/benchmarks/**"
     systemProperty 'java.awt.headless', 'true'
     systemProperty 'mozilla.js.tests', 'testsrc/tests'
@@ -67,6 +68,10 @@ test {
     systemProperty 'file.encoding', 'UTF-8'
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
+    // Many tests do not clean up contexts properly. This makes the tests much
+    // more resilient at the expense of performance.
+    forkEvery = 1
+    maxParallelForks = 10
 }
 
 task sunSpiderBenchmark(type: JavaExec) {
@@ -203,13 +208,13 @@ publishing {
 }
 
 jacoco {
-    toolVersion = "0.7.4.201502262128"
+    toolVersion = "0.7.9"
 }
 
 jacocoTestReport.dependsOn test
 jacocoTestReport {
     reports {
-        html.destination "${buildDir}/jacocoHtml"
+        html.destination file("${buildDir}/jacocoHtml")
     }
 }
 

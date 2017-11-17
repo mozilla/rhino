@@ -387,17 +387,29 @@ class TokenStream
                     else if (c=='r') { X="return";id=Id_return; }
                     break L;
                 case 'm': X="import";id=Id_import; break L;
-                case 't': if (isStrict) { X="static";id=Id_static; break L; }
-                case 'u': if (isStrict) { X="public";id=Id_public; break L; }
+                case 't': if (isStrict) {
+                    X="static";id=Id_static; break L;
+                }
+                // fallthru
+                case 'u': if (isStrict) {
+                    X="public";id=Id_public; break L;
+                }
+                // fallthru
                 case 'w': X="switch";id=Id_switch; break L;
                 case 'x': X="export";id=Id_export; break L;
                 case 'y': X="typeof";id=Id_typeof; break L;
                 } break L;
             case 7: switch (s.charAt(1)) {
-                case 'a': if (isStrict) { X="package";id=Id_package; break L; }
+                case 'a': if (isStrict) {
+                    X="package";id=Id_package; break L;
+                }
+                // fallthru
                 case 'e': X="default";id=Id_default; break L;
                 case 'i': X="finally";id=Id_finally; break L;
-                case 'r': if (isStrict) { X="private";id=Id_private; break L; }
+                case 'r': if (isStrict) {
+                    X="private";id=Id_private; break L;
+                }
+                // fallthru
                 case 'x': X="extends";id=Id_extends; break L;
                 } break L;
             case 8: switch (s.charAt(0)) {
