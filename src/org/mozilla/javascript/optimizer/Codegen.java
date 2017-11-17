@@ -7,15 +7,40 @@
 
 package org.mozilla.javascript.optimizer;
 
-import org.mozilla.javascript.*;
+import org.mozilla.classfile.ByteCode;
+import org.mozilla.classfile.ClassFileWriter;
+import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Evaluator;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeFunction;
+import org.mozilla.javascript.NativeGenerator;
+import org.mozilla.javascript.Node;
+import org.mozilla.javascript.ObjArray;
+import org.mozilla.javascript.ObjToIntMap;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.SecurityController;
+import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.classfile.*;
 
-import java.util.*;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 import static org.mozilla.classfile.ClassFileWriter.ACC_FINAL;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
@@ -5100,10 +5125,25 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +")Ljava/lang/Object;");
             return;
         }
+        // generate invokedynamic instruction for foo.bar
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        ClassFileWriter.MHandle bootstrap = new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
+                "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
+                "bootstrapGetObjectProp",
+                MethodType.methodType(
+                        CallSite.class, MethodHandles.Lookup.class,
+                        String.class, MethodType.class).toMethodDescriptorString());
+        cfw.addInvokeDynamic("getObjectProp", "(Ljava/lang/Object;"
+                +"Ljava/lang/String;"
+                +"Lorg/mozilla/javascript/Context;"
+                +"Lorg/mozilla/javascript/Scriptable;"
+                +")Ljava/lang/Object;", bootstrap);
         /*
             for 'this.foo' we call getObjectProp(Scriptable...) which can
             skip some casting overhead.
         */
+        /*
         int childType = child.getType();
         if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
             cfw.addALoad(contextLocal);
@@ -5123,7 +5163,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +"Lorg/mozilla/javascript/Context;"
                 +"Lorg/mozilla/javascript/Scriptable;"
                 +")Ljava/lang/Object;");
-        }
+        }*/
     }
 
     private void visitSetProp(int type, Node node, Node child)
