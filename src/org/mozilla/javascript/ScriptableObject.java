@@ -154,6 +154,9 @@ public abstract class ScriptableObject implements Scriptable,
         Object value;
         transient Slot next; // next in hash table bucket
         transient Slot orderedNext; // next in linked list
+        // These are used for "permanently mapped" slots
+        transient int permIndex = -1;
+        transient boolean deleted;
 
         Slot(Object name, int indexOrHash, int attributes)
         {
@@ -466,6 +469,28 @@ public abstract class ScriptableObject implements Scriptable,
     {
         Slot slot = slotMap.query(key, 0);
         if (slot == null) {
+            return Scriptable.NOT_FOUND;
+        }
+        return slot.getValue(start);
+    }
+
+    /**
+     * Return an index that may be used to return a property by index.
+     */
+    public int getMapping(String key)
+    {
+        return slotMap.getMapping(key);
+    }
+
+    public int getMapping(Symbol key)
+    {
+        return slotMap.getMapping(key);
+    }
+
+    public Object getMappedSlot(int index, Scriptable start)
+    {
+        Slot slot = slotMap.getMappedSlot(index);
+        if ((slot == null) || slot.deleted) {
             return Scriptable.NOT_FOUND;
         }
         return slot.getValue(start);

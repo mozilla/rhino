@@ -1,8 +1,15 @@
+/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Wrapper;
 
 import java.lang.invoke.CallSite;
@@ -48,7 +55,7 @@ public class InvokeDynamicSupport {
                                                   String name, MethodType type) {
         CachingCallSite callSite = new CachingCallSite(lookup, type);
         // The first call will be to getObjectProp in this class.
-        MethodHandle check = INITOBJPROP.bindTo(callSite);
+        MethodHandle check = INITGETOBJPROP.bindTo(callSite);
         check = check.asType(type);
 
         callSite.setTarget(check);
@@ -66,22 +73,7 @@ public class InvokeDynamicSupport {
         return callSite;
     }
     */
-    
-/*
-    public static boolean checkClass(Class<?> clazz, Object receiver) {
-        return receiver instanceof NativeJavaObject &&
-                ((NativeJavaObject)receiver).unwrap().getClass() == clazz;
-    }
 
-    public static boolean checkLayout(ClassyLayout layout, Object receiver) {
-        return receiver instanceof ClassyScriptable &&
-                ((ClassyScriptable)receiver).getLayout() == layout;
-    }
-    */
-
-    public static Object unwrapObject(Object obj) {
-        return ((Wrapper)obj).unwrap();
-    }
 /*
     public static Object callProp0(CachingCallSite callSite, Object value,
                                String property, Context cx, Scriptable scope)
@@ -109,13 +101,49 @@ public class InvokeDynamicSupport {
         return localTarget.invoke(javaObject);
     }
 */
-    public static Object getObjectProp(CachingCallSite callSite, Object value,
-                               String property, Context cx, Scriptable scope)
-            throws Throwable {
-        // For now, always point this call to ScriptRuntime.getObjectProp
+    public static Object initGetObjectProp(CachingCallSite callSite, Object value,
+                                           String property, Context cx, Scriptable scope)
+        throws Throwable
+    {
+        if (value instanceof ScriptableObject) {
+            final int mapping = ((ScriptableObject)value).getMapping(property);
+            if (mapping >= 0) {
+                return replaceGetFastObjectProp(callSite, value, property, cx, scope, mapping);
+            }
+        }
+
+        // Otherwise, always fallback to ScriptRuntime.getObjectProp
         callSite.setTarget(GETOBJPROP_FALLBACK);
         return GETOBJPROP_FALLBACK.invoke(value, property, cx, scope);
     }
+
+    public static Object getFastObjectProp(int index, Object value, String property, Context cx, Scriptable scope)
+    {
+        return ((ScriptableObject)value).getMappedSlot(index, scope);
+    }
+
+    public static boolean isSameObject(Object so, Object value)
+    {
+        return so == value;
+    }
+
+    private static Object replaceGetFastObjectProp(CachingCallSite callSite, Object value,
+                                                   String property, Context cx, Scriptable scope,
+                                                   int index)
+            throws Throwable
+    {
+        // Make a MethodHandle that can go directly to the ScriptableObject
+        // First arg is an int
+        MethodHandle target = MethodHandles.insertArguments(GETFASTOBJPROP, 0, index);
+
+        // Make a "guard" MethodHandle that will see if it's the same object
+        MethodHandle test = MethodHandles.insertArguments(CHECK_SAME, 0, value);
+
+        MethodHandle guard = MethodHandles.guardWithTest(test, target, GETOBJPROP_FALLBACK);
+        callSite.setTarget(guard);
+        return guard.invoke(value, property, cx, scope);
+    }
+
 /*
         if (!(value instanceof ClassyScriptable)) {
             callSite.setTarget(GETOBJPROP_FALLBACK);
@@ -196,13 +224,13 @@ public class InvokeDynamicSupport {
     }
     */
 
-    //private static final MethodHandle CHECK_CLASS;
+    private static final MethodHandle CHECK_SAME;
     //private static final MethodHandle CHECK_LAYOUT;
     //private static final MethodHandle INITCALL;
-    private static final MethodHandle INITOBJPROP;
+    private static final MethodHandle INITGETOBJPROP;
     //private static final MethodHandle CALLPROP0_FALLBACK;
     private static final MethodHandle GETOBJPROP_FALLBACK;
-    //private static final MethodHandle GETFASTOBJPROP;
+    private static final MethodHandle GETFASTOBJPROP;
     //private static final MethodHandle UNWRAP;
     //private static final MethodHandle SETOBJPROP_FALLBACK;
     //private static final MethodHandle SETOBJPROP;
@@ -211,26 +239,30 @@ public class InvokeDynamicSupport {
     static {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         try {
-            INITOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "getObjectProp",
+            INITGETOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "initGetObjectProp",
                     MethodType.methodType(Object.class, CachingCallSite.class,
                             Object.class, String.class, Context.class,
                             Scriptable.class));
             GETOBJPROP_FALLBACK = lookup.findStatic(ScriptRuntime.class, "getObjectProp",
                     MethodType.methodType(Object.class, Object.class,
                             String.class, Context.class, Scriptable.class));
+            GETFASTOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "getFastObjectProp",
+                    MethodType.methodType(Object.class, Integer.TYPE,
+                            Object.class, String.class, Context.class,
+                            Scriptable.class));
+            CHECK_SAME = lookup.findStatic(InvokeDynamicSupport.class, "isSameObject",
+                    MethodType.methodType(Boolean.TYPE, Object.class, Object.class));
+
         /*
+            GETFASTOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "getFastObjectProp",
+                    MethodType.methodType(Object.class, Integer.TYPE, Scriptable.class));
             CHECK_CLASS = lookup.findStatic(InvokeDynamicSupport.class, "checkClass",
                     MethodType.methodType(boolean.class, Class.class, Object.class));
             CHECK_LAYOUT = lookup.findStatic(InvokeDynamicSupport.class, "checkLayout",
                     MethodType.methodType(boolean.class, ClassyLayout.class, Object.class));
-
             CALLPROP0_FALLBACK = lookup.findStatic(OptRuntime.class, "callProp0",
                     MethodType.methodType(Object.class, Object.class,
                             String.class, Context.class, Scriptable.class));
-
-
-            GETFASTOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "getFastObjectProp",
-                    MethodType.methodType(Object.class, Object.class, Integer.TYPE));
             UNWRAP = lookup.findStatic(InvokeDynamicSupport.class, "unwrapObject",
                     MethodType.methodType(Object.class, Object.class));
             SETOBJPROP_FALLBACK = lookup.findStatic(ScriptRuntime.class, "setObjectProp",

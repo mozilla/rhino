@@ -13,6 +13,7 @@ package org.mozilla.javascript;
  * to have a measurable performance benefit.
  */
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import static org.mozilla.javascript.ScriptableObject.SlotAccess.*;
 
@@ -20,6 +21,7 @@ public class EmbeddedSlotMap
     implements SlotMap {
 
     private ScriptableObject.Slot[] slots;
+    private ArrayList<ScriptableObject.Slot> permanentSlots;
 
     // gateways into the definition-order linked list of slots
     private ScriptableObject.Slot firstAdded;
@@ -29,6 +31,8 @@ public class EmbeddedSlotMap
 
     // initial slot array size, must be a power of 2
     private static final int INITIAL_SLOT_SIZE = 4;
+    // Maximum number of permanently-mapped slots
+    private static final int MAX_PERM_SLOTS = 32;
 
     private static final class Iter
         implements Iterator<ScriptableObject.Slot>
@@ -71,6 +75,28 @@ public class EmbeddedSlotMap
         return new Iter(firstAdded);
     }
 
+    @Override
+    public int getMapping(Object key)
+    {
+        if (slots == null) {
+            return -1;
+        }
+
+        final int hash = key.hashCode();
+        final int slotIndex = getSlotIndex(slots.length, hash);
+        for (ScriptableObject.Slot slot = slots[slotIndex];
+             slot != null;
+             slot = slot.next) {
+            Object skey = slot.name;
+            if (hash == slot.indexOrHash &&
+                    (skey == key ||
+                            (key != null && key.equals(skey)))) {
+                return slot.deleted ? -1 : slot.permIndex;
+            }
+        }
+        return -1;
+    }
+
     /**
      * Locate the slot with the given name or index.
      */
@@ -90,10 +116,16 @@ public class EmbeddedSlotMap
             if (indexOrHash == slot.indexOrHash &&
                 (skey == key ||
                     (key != null && key.equals(skey)))) {
-                return slot;
+                return slot.deleted ? null : slot;
             }
         }
         return null;
+    }
+
+    @Override
+    public ScriptableObject.Slot getMappedSlot(int index)
+    {
+        return permanentSlots.get(index);
     }
 
     /**
@@ -127,10 +159,13 @@ public class EmbeddedSlotMap
             }
             switch (accessType) {
                 case QUERY:
+                    if ((slot != null) && slot.deleted) {
+                        return null;
+                    }
                     return slot;
                 case MODIFY:
                 case MODIFY_CONST:
-                    if (slot != null) {
+                    if ((slot != null) && !slot.deleted) {
                         return slot;
                     }
                     break;
@@ -154,10 +189,10 @@ public class EmbeddedSlotMap
 
     private ScriptableObject.Slot createSlot(Object key, int indexOrHash,
         ScriptableObject.SlotAccess accessType, ScriptableObject.Slot existingSlot) {
-        if (count == 0) {
-            // Always throw away old slots if any on empty insert.
+        if (slots == null) {
             slots = new ScriptableObject.Slot[INITIAL_SLOT_SIZE];
-        } else if (existingSlot != null) {
+        }
+        if (existingSlot != null) {
             // Re-search the slot list because it is a singly-linked list to find
             // where to replace it with a new object if necessary
             final int insertPos = getSlotIndex(slots.length, indexOrHash);
@@ -191,11 +226,17 @@ public class EmbeddedSlotMap
                 } else if (accessType == MODIFY_CONST) {
                     return null;
                 } else {
+                    if (slot.deleted) {
+                        addToLinkedList(slot);
+                        count++;
+                        slot.deleted = false;
+                    }
                     return slot;
                 }
 
                 newSlot.value = slot.value;
                 newSlot.next = slot.next;
+                newSlot.permIndex = slot.permIndex;
                 // add new slot to linked list
                 if (lastAdded != null) {
                     lastAdded.orderedNext = newSlot;
@@ -209,6 +250,9 @@ public class EmbeddedSlotMap
                     slots[insertPos] = newSlot;
                 } else {
                     prev.next = newSlot;
+                }
+                if (newSlot.permIndex >= 0) {
+                    permanentSlots.set(newSlot.permIndex, newSlot);
                 }
                 return newSlot;
             }
@@ -241,9 +285,22 @@ public class EmbeddedSlotMap
         insertNewSlot(newSlot);
     }
 
-    private void insertNewSlot(ScriptableObject.Slot newSlot) {
+    private void insertNewSlot(ScriptableObject.Slot newSlot)
+    {
         ++count;
-        // add new slot to linked list
+        addToLinkedList(newSlot);
+        addKnownAbsentSlot(slots, newSlot);
+        if (permanentSlots == null) {
+            permanentSlots = new ArrayList<>();
+        }
+        if (permanentSlots.size() < MAX_PERM_SLOTS) {
+            newSlot.permIndex = permanentSlots.size();
+            permanentSlots.add(newSlot);
+        }
+    }
+
+    private void addToLinkedList(ScriptableObject.Slot newSlot)
+    {
         if (lastAdded != null) {
             lastAdded.orderedNext = newSlot;
         }
@@ -251,8 +308,6 @@ public class EmbeddedSlotMap
             firstAdded = newSlot;
         }
         lastAdded = newSlot;
-        // add new slot to hash table, return it
-        addKnownAbsentSlot(slots, newSlot);
     }
 
     @Override
@@ -283,11 +338,17 @@ public class EmbeddedSlotMap
                     return;
                 }
                 count--;
-                // remove slot from hash table
-                if (prev == slot) {
-                    slots[slotIndex] = slot.next;
-                } else {
-                    prev.next = slot.next;
+
+                slot.deleted = true;
+                slot.value = null;
+
+                if (slot.permIndex < 0) {
+                    // remove slot from hash table, but only if it's not permanent
+                    if (prev == slot) {
+                        slots[slotIndex] = slot.next;
+                    } else {
+                        prev.next = slot.next;
+                    }
                 }
 
                 // remove from ordered list. Previously this was done lazily in

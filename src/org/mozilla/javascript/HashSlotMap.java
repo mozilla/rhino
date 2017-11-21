@@ -35,6 +35,18 @@ public class HashSlotMap
     }
 
     @Override
+    public int getMapping(Object key)
+    {
+        return -1;
+    }
+
+    @Override
+    public ScriptableObject.Slot getMappedSlot(int mapping)
+    {
+        return null;
+    }
+
+    @Override
     public ScriptableObject.Slot query(Object key, int index)
     {
         Object name = key == null ? String.valueOf(index) : key;

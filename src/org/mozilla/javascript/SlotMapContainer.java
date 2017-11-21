@@ -51,6 +51,19 @@ class SlotMapContainer
   }
 
   @Override
+  public int getMapping(Object key)
+  {
+    return map.getMapping(key);
+  }
+
+  @Override
+  public ScriptableObject.Slot getMappedSlot(int mapping)
+  {
+
+    return map.getMappedSlot(mapping);
+  }
+
+  @Override
   public Slot get(Object key, int index, SlotAccess accessType)
   {
     if (accessType != SlotAccess.QUERY) {

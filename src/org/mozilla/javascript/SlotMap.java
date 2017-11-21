@@ -53,5 +53,17 @@ public interface SlotMap
      * Remove the slot at either "key" or "index".
      */
     void remove(Object key, int index);
+
+    /**
+     * Get the mapping of a name or Symbol property that may be used for a direct
+     * access at any time. Return -1 if there is no mapping.
+     */
+    int getMapping(Object key);
+
+    /**
+     * If "getMapping" returned a zero or greater result, then this method
+     * will return the slot every time, although it may have been deleted.
+     */
+    ScriptableObject.Slot getMappedSlot(int index);
 }
 
