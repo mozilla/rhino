@@ -3383,6 +3383,7 @@ class BodyCodegen
         int childType = child.getType();
 
         String methodName;
+        String bootstrapName = null;
         String signature;
 
         if (firstArgChild == null) {
@@ -3403,6 +3404,7 @@ class BodyCodegen
                 String property = id.getString();
                 cfw.addPush(property);
                 methodName = "callProp0";
+                bootstrapName = "bootstrapProp0Call";
                 signature = "(Ljava/lang/Object;"
                             +"Ljava/lang/String;"
                             +"Lorg/mozilla/javascript/Context;"
@@ -3439,43 +3441,97 @@ class BodyCodegen
             for (Node arg = firstArgChild; arg != null; arg = arg.getNext()) {
                 ++argCount;
             }
-            generateFunctionAndThisObj(child, node);
-            // stack: ... functionObj thisObj
-            if (argCount == 1) {
-                generateExpression(firstArgChild, node);
-                methodName = "call1";
-                signature = "(Lorg/mozilla/javascript/Callable;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
-                            +"Ljava/lang/Object;"
-                            +"Lorg/mozilla/javascript/Context;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
-                            +")Ljava/lang/Object;";
-            } else if (argCount == 2) {
-                generateExpression(firstArgChild, node);
-                generateExpression(firstArgChild.getNext(), node);
-                methodName = "call2";
-                signature = "(Lorg/mozilla/javascript/Callable;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
-                            +"Ljava/lang/Object;"
-                            +"Ljava/lang/Object;"
-                            +"Lorg/mozilla/javascript/Context;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
-                            +")Ljava/lang/Object;";
+            if (childType == Token.GETPROP) {
+                // Invokedynamic optimization for looking up object properties
+                Node propTarget = child.getFirstChild();
+                generateExpression(propTarget, node);
+                Node id = propTarget.getNext();
+                String property = id.getString();
+                cfw.addPush(property);
+                if (argCount == 1) {
+                    generateExpression(firstArgChild, node);
+                    methodName = "call1";
+                    bootstrapName = "bootstrapProp1Call";
+                    signature = "(Ljava/lang/Object;"
+                            + "Ljava/lang/String;"
+                            + "Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + ")Ljava/lang/Object;";
+                } else if (argCount == 2) {
+                    generateExpression(firstArgChild, node);
+                    generateExpression(firstArgChild.getNext(), node);
+                    methodName = "call2";
+                    bootstrapName = "bootstrapProp2Call";
+                    signature = "(Ljava/lang/Object;"
+                            + "Ljava/lang/String;"
+                            + "Ljava/lang/Object;"
+                            + "Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + ")Ljava/lang/Object;";
+                } else {
+                    generateCallArgArray(node, firstArgChild, false);
+                    methodName = "callN";
+                    bootstrapName = "bootstrapPropNCall";
+                    signature = "(Ljava/lang/Object;"
+                            + "Ljava/lang/String;"
+                            + "[Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + ")Ljava/lang/Object;";
+                }
             } else {
-                generateCallArgArray(node, firstArgChild, false);
-                methodName = "callN";
-                signature = "(Lorg/mozilla/javascript/Callable;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
-                            +"[Ljava/lang/Object;"
-                            +"Lorg/mozilla/javascript/Context;"
-                            +"Lorg/mozilla/javascript/Scriptable;"
-                            +")Ljava/lang/Object;";
+                // Inline code for other types of properties and elements
+                generateFunctionAndThisObj(child, node);
+                // stack: ... functionObj thisObj
+                if (argCount == 1) {
+                    generateExpression(firstArgChild, node);
+                    methodName = "call1";
+                    signature = "(Lorg/mozilla/javascript/Callable;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + ")Ljava/lang/Object;";
+                } else if (argCount == 2) {
+                    generateExpression(firstArgChild, node);
+                    generateExpression(firstArgChild.getNext(), node);
+                    methodName = "call2";
+                    signature = "(Lorg/mozilla/javascript/Callable;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "Ljava/lang/Object;"
+                            + "Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + ")Ljava/lang/Object;";
+                } else {
+                    generateCallArgArray(node, firstArgChild, false);
+                    methodName = "callN";
+                    signature = "(Lorg/mozilla/javascript/Callable;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + "[Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + ")Ljava/lang/Object;";
+                }
             }
         }
 
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        addOptRuntimeInvoke(methodName, signature);
+
+        if (bootstrapName == null) {
+            addOptRuntimeInvoke(methodName, signature);
+        } else {
+            ClassFileWriter.MHandle bootstrap = new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
+                "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
+                bootstrapName,
+                MethodType.methodType(
+                        CallSite.class, MethodHandles.Lookup.class,
+                        String.class, MethodType.class).toMethodDescriptorString());
+            cfw.addInvokeDynamic(methodName, signature, bootstrap);
+        }
     }
 
     private void visitStandardNew(Node node, Node child)

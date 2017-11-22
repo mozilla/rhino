@@ -46,6 +46,7 @@ dependencies {
     testCompile "junit:junit:4.12"
     testCompile "org.yaml:snakeyaml:1.15"
     testCompile "net.trajano.caliper:caliper:1.2.1"
+    testCompile "org.scijava:junit-benchmarks:0.7.4-scijava"
 }
 
 if (JavaVersion.current().isJava8Compatible()) {
@@ -98,12 +99,14 @@ task testBenchmark() {}
 testBenchmark.dependsOn sunSpiderBenchmark
 testBenchmark.dependsOn v8Benchmark
 
-task microBenchmark(type: JavaExec) {
-    main "com.google.caliper.runner.CaliperMain"
-    args "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperObjectBenchmark.FieldAccess", "-DstringKeys=100,1000", "-DintKeys=100,1000"
-    classpath sourceSets.test.runtimeClasspath
+task microBenchmark(type: Test) {
+    useJUnit()
+    jacoco {
+        enabled = false
+    }
+    include "**/benchmarks/microbenchmarks/**"
+    testLogging.showStandardStreams = true
 }
-
 
 idea {
     module {

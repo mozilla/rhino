@@ -44,6 +44,23 @@ class ThreadSafeSlotMapContainer
   }
 
   @Override
+  public int getGeneration()
+  {
+    long stamp = lock.tryOptimisticRead();
+    int s = map.getGeneration();
+    if (lock.validate(stamp)) {
+      return s;
+    }
+
+    stamp = lock.readLock();
+    try {
+      return map.getGeneration();
+    } finally {
+      lock.unlockRead(stamp);
+    }
+  }
+
+  @Override
   public int dirtySize()
   {
     assert(lock.isReadLocked());

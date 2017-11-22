@@ -69,11 +69,11 @@ public class ScriptRuntime {
       return cx.typeErrorThrower;
     }
 
-    static class NoSuchMethodShim implements Callable {
+    public static class NoSuchMethodShim implements Callable {
         String methodName;
         Callable noSuchMethodMethod;
 
-        NoSuchMethodShim(Callable noSuchMethodMethod, String methodName)
+        public NoSuchMethodShim(Callable noSuchMethodMethod, String methodName)
         {
             this.noSuchMethodMethod = noSuchMethodMethod;
             this.methodName = methodName;

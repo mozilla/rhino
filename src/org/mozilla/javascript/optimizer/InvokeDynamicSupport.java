@@ -6,13 +6,18 @@
 
 package org.mozilla.javascript.optimizer;
 
+import jdk.dynalink.CallSiteDescriptor;
+import jdk.dynalink.StandardOperation;
+import jdk.dynalink.support.ChainedCallSite;
+import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.Wrapper;
+import org.mozilla.javascript.ScriptableObjectSlot;
 
 import java.lang.invoke.CallSite;
+import java.lang.invoke.ConstantCallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -26,6 +31,8 @@ import java.lang.invoke.MutableCallSite;
 
 public class InvokeDynamicSupport {
 
+    static final boolean DYNALINK = true;
+
     static class CachingCallSite extends MutableCallSite {
         final Lookup lookup;
 
@@ -35,17 +42,61 @@ public class InvokeDynamicSupport {
         }
     }
 
-    /*
+    @SuppressWarnings("unused")
     public static CallSite bootstrapProp0Call(MethodHandles.Lookup lookup,
                                               String name, MethodType type) {
-        CachingCallSite callSite = new CachingCallSite(lookup, type);
-        MethodHandle check = INITCALL.bindTo(callSite);
-        check = check.asType(type);
-
-        callSite.setTarget(check);
-        return callSite;
+        if (DYNALINK) {
+            return Linker.getLinker().link(
+                    new ChainedCallSite(
+                            new CallSiteDescriptor(lookup, StandardOperation.CALL,
+                                    MethodType.methodType(Object.class,
+                                            Object.class, String.class, Context.class,
+                                            Scriptable.class))));
+        }
+        return new ConstantCallSite(CALLPROP0_FALLBACK);
     }
-    */
+
+    @SuppressWarnings("unused")
+    public static CallSite bootstrapProp1Call(MethodHandles.Lookup lookup,
+                                              String name, MethodType type) {
+        if (DYNALINK) {
+            return Linker.getLinker().link(
+                    new ChainedCallSite(
+                            new CallSiteDescriptor(lookup, Linker.CALL1,
+                                    MethodType.methodType(Object.class,
+                                            Object.class, String.class, Object.class, Context.class,
+                                            Scriptable.class))));
+        }
+        return new ConstantCallSite(CALLPROP1_FALLBACK);
+    }
+
+    @SuppressWarnings("unused")
+    public static CallSite bootstrapProp2Call(MethodHandles.Lookup lookup,
+                                              String name, MethodType type) {
+        if (DYNALINK) {
+            return Linker.getLinker().link(
+                    new ChainedCallSite(
+                            new CallSiteDescriptor(lookup, Linker.CALL2,
+                                    MethodType.methodType(Object.class,
+                                            Object.class, String.class, Object.class, Object.class,
+                                            Context.class, Scriptable.class))));
+        }
+        return new ConstantCallSite(CALLPROP2_FALLBACK);
+    }
+
+    @SuppressWarnings("unused")
+    public static CallSite bootstrapPropNCall(MethodHandles.Lookup lookup,
+                                              String name, MethodType type) {
+        if (DYNALINK) {
+            return Linker.getLinker().link(
+                    new ChainedCallSite(
+                            new CallSiteDescriptor(lookup, Linker.CALLN,
+                                    MethodType.methodType(Object.class,
+                                            Object.class, String.class, Object[].class,
+                                            Context.class, Scriptable.class))));
+        }
+        return new ConstantCallSite(CALLPROPN_FALLBACK);
+    }
 
     /**
      * Begin the process of setting up a CallSite to get the property of an object.
@@ -53,13 +104,15 @@ public class InvokeDynamicSupport {
     @SuppressWarnings("unused")
     public static CallSite bootstrapGetObjectProp(MethodHandles.Lookup lookup,
                                                   String name, MethodType type) {
-        CachingCallSite callSite = new CachingCallSite(lookup, type);
-        // The first call will be to getObjectProp in this class.
-        MethodHandle check = INITGETOBJPROP.bindTo(callSite);
-        check = check.asType(type);
-
-        callSite.setTarget(check);
-        return callSite;
+        if (DYNALINK) {
+            return Linker.getLinker().link(
+                    new ChainedCallSite(
+                            new CallSiteDescriptor(lookup, StandardOperation.GET,
+                                    MethodType.methodType(Object.class,
+                                            Object.class, String.class, Context.class,
+                                            Scriptable.class))));
+        }
+        return new ConstantCallSite(GETOBJPROP_FALLBACK);
     }
 
     /*
@@ -100,7 +153,8 @@ public class InvokeDynamicSupport {
 
         return localTarget.invoke(javaObject);
     }
-*/
+
+/*
     public static Object initGetObjectProp(CachingCallSite callSite, Object value,
                                            String property, Context cx, Scriptable scope)
         throws Throwable
@@ -116,8 +170,10 @@ public class InvokeDynamicSupport {
         callSite.setTarget(GETOBJPROP_FALLBACK);
         return GETOBJPROP_FALLBACK.invoke(value, property, cx, scope);
     }
+    */
 
-    public static Object getFastObjectProp(int index, Object value, String property, Context cx, Scriptable scope)
+/*
+    public static Object getFastObjectProp(Object value, int index, String property, Context cx, Scriptable scope)
     {
         return ((ScriptableObject)value).getMappedSlot(index, scope);
     }
@@ -143,7 +199,7 @@ public class InvokeDynamicSupport {
         callSite.setTarget(guard);
         return guard.invoke(value, property, cx, scope);
     }
-
+*/
 /*
         if (!(value instanceof ClassyScriptable)) {
             callSite.setTarget(GETOBJPROP_FALLBACK);
@@ -224,13 +280,122 @@ public class InvokeDynamicSupport {
     }
     */
 
-    private static final MethodHandle CHECK_SAME;
+    public static boolean checkObjectGeneration(int generation, ScriptableObject check, ScriptableObject so) {
+        return (so == check) && so.checkGeneration(generation);
+    }
+
+    public static boolean checkSlotValue(int generation, ScriptableObject check,
+        ScriptableObjectSlot slot, Object slotVal, ScriptableObject so) {
+        return (so == check) &&
+        so.checkGeneration(generation) &&
+        slot.getValue(so) == slotVal;
+    }
+
+    public static Object getSlotValue(ScriptableObjectSlot slot,
+        ScriptableObject so, String name, Context cx, Scriptable start)
+    {
+        return slot.getValue(so);
+    }
+
+    public static Object invokeSlot0(ScriptableObjectSlot slot,
+            ScriptableObject so, String name, Context cx, Scriptable start)
+    {
+        return invokeSlot(so, name, cx, start, slot, ScriptRuntime.emptyArgs);
+    }
+
+    public static Object invokeSlot1(ScriptableObjectSlot slot,
+        ScriptableObject so, String name, Object arg1, Context cx, Scriptable start)
+    {
+        return invokeSlot(so, name, cx, start, slot, new Object[]{arg1});
+    }
+
+    public static Object invokeSlot2(ScriptableObjectSlot slot,
+        ScriptableObject so, String name, Object arg1, Object arg2,
+        Context cx, Scriptable start)
+    {
+        return invokeSlot(so, name, cx, start, slot, new Object[]{arg1, arg2});
+    }
+
+    public static Object invokeSlotN(ScriptableObjectSlot slot,
+        ScriptableObject so, String name, Object[] args, Context cx, Scriptable start)
+    {
+        return invokeSlot(so, name, cx, start, slot, args);
+    }
+
+    private static Object invokeSlot(ScriptableObject so, String name, Context cx, Scriptable start,
+                                     ScriptableObjectSlot slot, Object[] args)
+    {
+        final Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, so, start);
+        if (thisObj == null) {
+            throw ScriptRuntime.undefCallError(so, name);
+        }
+
+        // Was this: ?!?
+        // Object value = ScriptableObject.getProperty(thisObj, property);
+        Object value = slot.getValue(thisObj);
+        if (!(value instanceof Callable)) {
+            Object noSuchMethod = ScriptableObject.getProperty(thisObj, "__noSuchMethod__");
+            if (noSuchMethod instanceof Callable) {
+                value = new ScriptRuntime.NoSuchMethodShim((Callable)noSuchMethod, name);
+            }
+        }
+
+        if (!(value instanceof Callable)) {
+            throw ScriptRuntime.notFunctionError(thisObj, value, name);
+        }
+
+        return ((Callable)value).call(cx, start, thisObj, args);
+    }
+
+    private static Object invokeFallback(Object so, String name,
+                                         Object[] args, Context cx, Scriptable start)
+    {
+        Callable f = ScriptRuntime.getPropFunctionAndThis(so, name, cx, start);
+        Scriptable thisObj = ScriptRuntime.lastStoredScriptable(cx);
+        return f.call(cx, start, thisObj, args);
+    }
+
+
+    public static Object callProp1Fallback(Object so, String name,
+                                           Object arg1, Context cx, Scriptable start)
+    {
+        return invokeFallback(so, name, new Object[]{arg1}, cx, start);
+    }
+
+    public static Object callProp2Fallback(Object so, String name,
+                                           Object arg1, Object arg2, Context cx, Scriptable start)
+    {
+        return invokeFallback(so, name, new Object[]{arg1, arg2}, cx, start);
+    }
+
+    public static Object callPropNFallback(Object so, String name,
+                                           Object[] args, Context cx, Scriptable start)
+    {
+        return invokeFallback(so, name, args, cx, start);
+    }
+
+    static final MethodHandle GETOBJPROP_FALLBACK;
+    static final MethodHandle GETSCRIPTABLEOBJPROP;
+    static final MethodHandle GETSLOTVALUE;
+    static final MethodHandle INVOKESLOT0;
+    static final MethodHandle INVOKESLOT1;
+    static final MethodHandle INVOKESLOT2;
+    static final MethodHandle INVOKESLOTN;
+    static final MethodHandle CHECKOBJECTGENERATION;
+    static final MethodHandle CHECKSLOTVALUE;
+    static final MethodHandle CALLPROP0_FALLBACK;
+    static final MethodHandle CALLPROP1_FALLBACK;
+    static final MethodHandle CALLPROP2_FALLBACK;
+    static final MethodHandle CALLPROPN_FALLBACK;
+    static final MethodHandle CALLABLE_CALL;
+    static final MethodHandle GETSOSLOTVALUE;
+
+    //static final MethodHandle CHECK_SAME;
     //private static final MethodHandle CHECK_LAYOUT;
     //private static final MethodHandle INITCALL;
-    private static final MethodHandle INITGETOBJPROP;
-    //private static final MethodHandle CALLPROP0_FALLBACK;
-    private static final MethodHandle GETOBJPROP_FALLBACK;
-    private static final MethodHandle GETFASTOBJPROP;
+    //static final MethodHandle INITGETOBJPROP;
+
+    //static final MethodHandle GETFASTOBJPROP;
     //private static final MethodHandle UNWRAP;
     //private static final MethodHandle SETOBJPROP_FALLBACK;
     //private static final MethodHandle SETOBJPROP;
@@ -239,30 +404,72 @@ public class InvokeDynamicSupport {
     static {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         try {
+            GETOBJPROP_FALLBACK = lookup.findStatic(ScriptRuntime.class, "getObjectProp",
+                    MethodType.methodType(Object.class, Object.class,
+                            String.class, Context.class, Scriptable.class));
+            GETSCRIPTABLEOBJPROP = lookup.findStatic(ScriptRuntime.class, "getObjectProp",
+                    MethodType.methodType(Object.class, Scriptable.class,
+                            String.class, Context.class));
+            GETSLOTVALUE = lookup.findStatic(InvokeDynamicSupport.class, "getSlotValue",
+                    MethodType.methodType(Object.class, ScriptableObjectSlot.class,
+                    ScriptableObject.class,
+                    String.class, Context.class, Scriptable.class));
+            INVOKESLOT0 = lookup.findStatic(InvokeDynamicSupport.class, "invokeSlot0",
+                    MethodType.methodType(Object.class, ScriptableObjectSlot.class, ScriptableObject.class,
+                            String.class, Context.class, Scriptable.class));
+            INVOKESLOT1 = lookup.findStatic(InvokeDynamicSupport.class, "invokeSlot1",
+                    MethodType.methodType(Object.class, ScriptableObjectSlot.class, ScriptableObject.class,
+                            String.class, Object.class, Context.class, Scriptable.class));
+            INVOKESLOT2 = lookup.findStatic(InvokeDynamicSupport.class, "invokeSlot2",
+                    MethodType.methodType(Object.class, ScriptableObjectSlot.class, ScriptableObject.class,
+                            String.class, Object.class, Object.class,
+                            Context.class, Scriptable.class));
+            INVOKESLOTN = lookup.findStatic(InvokeDynamicSupport.class, "invokeSlotN",
+                    MethodType.methodType(Object.class, ScriptableObjectSlot.class, ScriptableObject.class,
+                            String.class, Object[].class, Context.class, Scriptable.class));
+            CHECKOBJECTGENERATION = lookup.findStatic(InvokeDynamicSupport.class, "checkObjectGeneration",
+                    MethodType.methodType(Boolean.TYPE, Integer.TYPE, ScriptableObject.class,
+                        ScriptableObject.class));
+            CHECKSLOTVALUE = lookup.findStatic(InvokeDynamicSupport.class, "checkSlotValue",
+                    MethodType.methodType(Boolean.TYPE, Integer.TYPE, ScriptableObject.class,
+                            ScriptableObjectSlot.class, Object.class, ScriptableObject.class));
+            CALLPROP0_FALLBACK = lookup.findStatic(OptRuntime.class, "callProp0",
+                    MethodType.methodType(Object.class, Object.class,
+                            String.class, Context.class, Scriptable.class));
+            CALLPROP1_FALLBACK = lookup.findStatic(InvokeDynamicSupport.class, "callProp1Fallback",
+                    MethodType.methodType(Object.class, Object.class,
+                            String.class, Object.class, Context.class, Scriptable.class));
+            CALLPROP2_FALLBACK = lookup.findStatic(InvokeDynamicSupport.class, "callProp2Fallback",
+                    MethodType.methodType(Object.class, Object.class,
+                            String.class, Object.class, Object.class, Context.class, Scriptable.class));
+            CALLPROPN_FALLBACK = lookup.findStatic(InvokeDynamicSupport.class, "callPropNFallback",
+                    MethodType.methodType(Object.class, Object.class,
+                            String.class, Object[].class, Context.class, Scriptable.class));
+            CALLABLE_CALL = lookup.findVirtual(Callable.class, "call",
+                    MethodType.methodType(Object.class, Context.class, Scriptable.class,
+                        Scriptable.class, Object[].class));
+            GETSOSLOTVALUE = lookup.findGetter(ScriptableObject.Slot.class, "value", Object.class);
+
+        /*
             INITGETOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "initGetObjectProp",
                     MethodType.methodType(Object.class, CachingCallSite.class,
                             Object.class, String.class, Context.class,
                             Scriptable.class));
-            GETOBJPROP_FALLBACK = lookup.findStatic(ScriptRuntime.class, "getObjectProp",
-                    MethodType.methodType(Object.class, Object.class,
-                            String.class, Context.class, Scriptable.class));
+
             GETFASTOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "getFastObjectProp",
-                    MethodType.methodType(Object.class, Integer.TYPE,
-                            Object.class, String.class, Context.class,
+                    MethodType.methodType(Object.class, Object.class, Integer.TYPE,
+                            String.class, Context.class,
                             Scriptable.class));
             CHECK_SAME = lookup.findStatic(InvokeDynamicSupport.class, "isSameObject",
                     MethodType.methodType(Boolean.TYPE, Object.class, Object.class));
 
-        /*
             GETFASTOBJPROP = lookup.findStatic(InvokeDynamicSupport.class, "getFastObjectProp",
                     MethodType.methodType(Object.class, Integer.TYPE, Scriptable.class));
             CHECK_CLASS = lookup.findStatic(InvokeDynamicSupport.class, "checkClass",
                     MethodType.methodType(boolean.class, Class.class, Object.class));
             CHECK_LAYOUT = lookup.findStatic(InvokeDynamicSupport.class, "checkLayout",
                     MethodType.methodType(boolean.class, ClassyLayout.class, Object.class));
-            CALLPROP0_FALLBACK = lookup.findStatic(OptRuntime.class, "callProp0",
-                    MethodType.methodType(Object.class, Object.class,
-                            String.class, Context.class, Scriptable.class));
+
             UNWRAP = lookup.findStatic(InvokeDynamicSupport.class, "unwrapObject",
                     MethodType.methodType(Object.class, Object.class));
             SETOBJPROP_FALLBACK = lookup.findStatic(ScriptRuntime.class, "setObjectProp",

@@ -21,6 +21,8 @@ import static org.mozilla.javascript.ScriptableObject.SlotAccess.*;
 public class HashSlotMap
     implements SlotMap {
 
+    private int generation;
+
     private final LinkedHashMap<Object, ScriptableObject.Slot> map =
         new LinkedHashMap<Object, ScriptableObject.Slot>();
 
@@ -35,15 +37,13 @@ public class HashSlotMap
     }
 
     @Override
-    public int getMapping(Object key)
-    {
-        return -1;
+    public int getGeneration() {
+        return generation;
     }
 
     @Override
-    public ScriptableObject.Slot getMappedSlot(int mapping)
-    {
-        return null;
+    public void setGeneration(int gen) {
+        this.generation = gen;
     }
 
     @Override
@@ -97,6 +97,8 @@ public class HashSlotMap
             }
             newSlot.value = slot.value;
             map.put(name, newSlot);
+            // Cause anyone who cached this slot to look it up again
+            generation++;
             return newSlot;
         }
 
@@ -130,6 +132,8 @@ public class HashSlotMap
                 return;
             }
             map.remove(name);
+            // Cause anyone who cached this slot to look it up again
+            generation++;
         }
     }
 

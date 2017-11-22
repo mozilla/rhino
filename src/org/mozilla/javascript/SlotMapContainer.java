@@ -51,16 +51,13 @@ class SlotMapContainer
   }
 
   @Override
-  public int getMapping(Object key)
-  {
-    return map.getMapping(key);
+  public int getGeneration() {
+    return map.getGeneration();
   }
 
   @Override
-  public ScriptableObject.Slot getMappedSlot(int mapping)
-  {
-
-    return map.getMappedSlot(mapping);
+  public void setGeneration(int gen) {
+    map.setGeneration(gen);
   }
 
   @Override
@@ -116,6 +113,7 @@ class SlotMapContainer
       for (Slot s : map) {
         newMap.addSlot(s);
       }
+      newMap.setGeneration(map.getGeneration());
       map = newMap;
     }
   }

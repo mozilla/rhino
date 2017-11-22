@@ -31,6 +31,18 @@ public interface SlotMap
     boolean isEmpty();
 
     /**
+     * Return the generation number of the map -- we increment this whenever
+     * there is a change that would caused a caller who has cached a Slot
+     * object to have to look it up again. This mainly happens on a "delete."
+     */
+    int getGeneration();
+
+    /**
+     * Update the generation number.
+     */
+    void setGeneration(int gen);
+
+    /**
      * Return the Slot that matches EITHER "key" or "index". (It will use "key"
      * if it is not null, and otherwise "index". "accessType" is one of the
      * constants defined in ScriptableObject.
@@ -53,17 +65,5 @@ public interface SlotMap
      * Remove the slot at either "key" or "index".
      */
     void remove(Object key, int index);
-
-    /**
-     * Get the mapping of a name or Symbol property that may be used for a direct
-     * access at any time. Return -1 if there is no mapping.
-     */
-    int getMapping(Object key);
-
-    /**
-     * If "getMapping" returned a zero or greater result, then this method
-     * will return the slot every time, although it may have been deleted.
-     */
-    ScriptableObject.Slot getMappedSlot(int index);
 }
 

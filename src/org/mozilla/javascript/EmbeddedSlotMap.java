@@ -13,7 +13,6 @@ package org.mozilla.javascript;
  * to have a measurable performance benefit.
  */
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import static org.mozilla.javascript.ScriptableObject.SlotAccess.*;
 
@@ -21,18 +20,16 @@ public class EmbeddedSlotMap
     implements SlotMap {
 
     private ScriptableObject.Slot[] slots;
-    private ArrayList<ScriptableObject.Slot> permanentSlots;
 
     // gateways into the definition-order linked list of slots
     private ScriptableObject.Slot firstAdded;
     private ScriptableObject.Slot lastAdded;
 
     private int count;
+    private int generation;
 
     // initial slot array size, must be a power of 2
     private static final int INITIAL_SLOT_SIZE = 4;
-    // Maximum number of permanently-mapped slots
-    private static final int MAX_PERM_SLOTS = 32;
 
     private static final class Iter
         implements Iterator<ScriptableObject.Slot>
@@ -71,30 +68,18 @@ public class EmbeddedSlotMap
     }
 
     @Override
-    public Iterator<ScriptableObject.Slot> iterator() {
-        return new Iter(firstAdded);
+    public int getGeneration() {
+        return generation;
     }
 
     @Override
-    public int getMapping(Object key)
-    {
-        if (slots == null) {
-            return -1;
-        }
+    public void setGeneration(int gen) {
+        this.generation = gen;
+    }
 
-        final int hash = key.hashCode();
-        final int slotIndex = getSlotIndex(slots.length, hash);
-        for (ScriptableObject.Slot slot = slots[slotIndex];
-             slot != null;
-             slot = slot.next) {
-            Object skey = slot.name;
-            if (hash == slot.indexOrHash &&
-                    (skey == key ||
-                            (key != null && key.equals(skey)))) {
-                return slot.deleted ? -1 : slot.permIndex;
-            }
-        }
-        return -1;
+    @Override
+    public Iterator<ScriptableObject.Slot> iterator() {
+        return new Iter(firstAdded);
     }
 
     /**
@@ -116,16 +101,10 @@ public class EmbeddedSlotMap
             if (indexOrHash == slot.indexOrHash &&
                 (skey == key ||
                     (key != null && key.equals(skey)))) {
-                return slot.deleted ? null : slot;
+                return slot;
             }
         }
         return null;
-    }
-
-    @Override
-    public ScriptableObject.Slot getMappedSlot(int index)
-    {
-        return permanentSlots.get(index);
     }
 
     /**
@@ -159,13 +138,10 @@ public class EmbeddedSlotMap
             }
             switch (accessType) {
                 case QUERY:
-                    if ((slot != null) && slot.deleted) {
-                        return null;
-                    }
                     return slot;
                 case MODIFY:
                 case MODIFY_CONST:
-                    if ((slot != null) && !slot.deleted) {
+                    if (slot != null) {
                         return slot;
                     }
                     break;
@@ -226,17 +202,11 @@ public class EmbeddedSlotMap
                 } else if (accessType == MODIFY_CONST) {
                     return null;
                 } else {
-                    if (slot.deleted) {
-                        addToLinkedList(slot);
-                        count++;
-                        slot.deleted = false;
-                    }
                     return slot;
                 }
 
                 newSlot.value = slot.value;
                 newSlot.next = slot.next;
-                newSlot.permIndex = slot.permIndex;
                 // add new slot to linked list
                 if (lastAdded != null) {
                     lastAdded.orderedNext = newSlot;
@@ -251,9 +221,8 @@ public class EmbeddedSlotMap
                 } else {
                     prev.next = newSlot;
                 }
-                if (newSlot.permIndex >= 0) {
-                    permanentSlots.set(newSlot.permIndex, newSlot);
-                }
+                // Cause anyone who cached this slot to look it up again
+                generation++;
                 return newSlot;
             }
         }
@@ -290,13 +259,6 @@ public class EmbeddedSlotMap
         ++count;
         addToLinkedList(newSlot);
         addKnownAbsentSlot(slots, newSlot);
-        if (permanentSlots == null) {
-            permanentSlots = new ArrayList<>();
-        }
-        if (permanentSlots.size() < MAX_PERM_SLOTS) {
-            newSlot.permIndex = permanentSlots.size();
-            permanentSlots.add(newSlot);
-        }
     }
 
     private void addToLinkedList(ScriptableObject.Slot newSlot)
@@ -339,16 +301,11 @@ public class EmbeddedSlotMap
                 }
                 count--;
 
-                slot.deleted = true;
-                slot.value = null;
-
-                if (slot.permIndex < 0) {
-                    // remove slot from hash table, but only if it's not permanent
-                    if (prev == slot) {
-                        slots[slotIndex] = slot.next;
-                    } else {
-                        prev.next = slot.next;
-                    }
+                // remove slot from hash table
+                if (prev == slot) {
+                    slots[slotIndex] = slot.next;
+                } else {
+                    prev.next = slot.next;
                 }
 
                 // remove from ordered list. Previously this was done lazily in
@@ -369,6 +326,9 @@ public class EmbeddedSlotMap
                 if (slot == lastAdded) {
                     lastAdded = prev;
                 }
+
+                // Cause anyone who cached this slot to look it up again
+                generation++;
             }
         }
     }
