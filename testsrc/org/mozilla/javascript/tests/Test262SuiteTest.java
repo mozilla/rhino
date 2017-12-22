@@ -55,7 +55,7 @@ public class Test262SuiteTest {
         TestUtils.setGlobalContextFactory(null);
     }
 
-    private static final Pattern EXCLUDE_PATTERN = Pattern.compile("\\s{1,4}!\\s*(.+)");
+    private static final Pattern EXCLUDE_PATTERN = Pattern.compile("!\\s*(.+)");
 
     private final String jsFilePath;
     private final String jsFileStr;
@@ -145,7 +145,7 @@ public class Test262SuiteTest {
 
         while (true) {
             curLine = nxtLine;
-            nxtLine = scanner.hasNextLine() ? scanner.nextLine() : null;
+            nxtLine = scanner.hasNextLine() ? scanner.nextLine().trim() : null;
 
             if (curLine == null) break;
 
@@ -160,7 +160,7 @@ public class Test262SuiteTest {
 
                 while (true) {
                     curLine = nxtLine;
-                    nxtLine = scanner.hasNextLine() ? scanner.nextLine() : null;
+                    nxtLine = scanner.hasNextLine() ? scanner.nextLine().trim() : null;
 
                     if (curLine == null) {
                         testFiles.addAll(dirFiles);
@@ -171,10 +171,11 @@ public class Test262SuiteTest {
 
                     Matcher m = EXCLUDE_PATTERN.matcher(curLine);
                     if (m.matches()) {
+                        String excludeSubstring = m.group(1);
                         Iterator<File> it = dirFiles.iterator();
                         while (it.hasNext()) {
                             String path = it.next().getPath().replaceAll("\\\\", "/");
-                            if (path.contains(m.group(1))) it.remove();
+                            if (path.contains(excludeSubstring)) it.remove();
                         }
                     } else {
                         testFiles.addAll(dirFiles);
