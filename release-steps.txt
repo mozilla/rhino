@@ -1,6 +1,5 @@
 Update version in:
 	src/manifest
-	build.properties
 	gradle.properties
 	maven/maven-pom.xml
 
@@ -28,7 +27,6 @@ Update release in GitHub
 
 Update to new snapshot version in:
 	src/manifest
-	build.properties
 	gradle.properties
 	maven/maven-pom.xml
 
