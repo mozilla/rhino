@@ -19,12 +19,12 @@ import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.SourceReader;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.yaml.snakeyaml.error.YAMLException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -141,56 +141,86 @@ public class Test262SuiteTest {
 
         Scanner scanner = new Scanner(new File("testsrc/test262.properties"));
 
-        String curLine = "", nxtLine = "";
+        int lineNo = 0;
+        String line = null;
+        while (line != null || scanner.hasNextLine()) {
+            // Note, here line could be not null when it
+            // wasn't handled on the previous iteration
+            if (line == null) {
+                line = scanner.nextLine().trim();
+                lineNo++;
+            }
 
-        while (true) {
-            curLine = nxtLine;
-            nxtLine = scanner.hasNextLine() ? scanner.nextLine().trim() : null;
+            if (line.isEmpty() || line.startsWith("#")) {
+                line = null; // consume the line
+                continue;
+            }
 
-            if (curLine == null) break;
+            File target = new File(testDir, line);
+            if (!target.exists()) {
+                if (line.startsWith("!")) {
+                    throw new RuntimeException(
+                            "Unexpected exclusion '" + line + "' at the line #" + lineNo);
+                } else {
+                    throw new FileNotFoundException(
+                            "File " + line + " declared at line #" + lineNo + " doesn't exist");
+                }
+            }
 
-            if (curLine.isEmpty() || curLine.startsWith("#")) continue;
+            if (target.isFile()) {
+                testFiles.add(target);
+            } else if (target.isDirectory()) {
+                recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
 
-            File file = new File(testDir, curLine);
+                // start handling exclusions that could follow
+                while (scanner.hasNextLine()) {
+                    line = scanner.nextLine().trim();
+                    lineNo++;
 
-            if (file.isFile()) {
-                testFiles.add(file);
-            } else if (file.isDirectory()) {
-                recursiveListFilesHelper(file, JS_FILE_FILTER, dirFiles);
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        line = null; // consume the line
+                        continue;
+                    }
 
-                while (true) {
-                    curLine = nxtLine;
-                    nxtLine = scanner.hasNextLine() ? scanner.nextLine().trim() : null;
-
-                    if (curLine == null) {
-                        testFiles.addAll(dirFiles);
+                    Matcher m = EXCLUDE_PATTERN.matcher(line);
+                    if (!m.matches()) {
+                        // stop an exclusion handling loop
                         break;
                     }
 
-                    if (curLine.isEmpty() || curLine.startsWith("#")) continue;
-
-                    Matcher m = EXCLUDE_PATTERN.matcher(curLine);
-                    if (m.matches()) {
-                        String excludeSubstring = m.group(1);
-                        Iterator<File> it = dirFiles.iterator();
-                        while (it.hasNext()) {
-                            String path = it.next().getPath().replaceAll("\\\\", "/");
-                            if (path.contains(excludeSubstring)) it.remove();
-                        }
-                    } else {
-                        testFiles.addAll(dirFiles);
-                        dirFiles.clear();
-                        file = new File(testDir, curLine);
-                        if (file.isFile()) {
-                            testFiles.add(file);
-                            break;
-                        } else if (file.isDirectory()) {
-                            recursiveListFilesHelper(file, JS_FILE_FILTER, dirFiles);
+                    String excludeSubstr = m.group(1);
+                    Iterator<File> it = dirFiles.iterator();
+                    int excludeCount = 0;
+                    while (it.hasNext()) {
+                        String path = it.next().getPath().replaceAll("\\\\", "/");
+                        if (path.contains(excludeSubstr)) {
+                            it.remove();
+                            excludeCount++;
                         }
                     }
+                    if (excludeCount == 0) {
+                        System.err.format(
+                                "WARN: Exclusion '%s' at line #%d doesn't exclude anything",
+                                excludeSubstr, lineNo);
+                    }
+                    // exclusion handled
+                    line = null;
+                }
+
+                testFiles.addAll(dirFiles);
+                dirFiles.clear();
+
+                if (line != null) {
+                    // not an exclusion, so it wasn't handled,
+                    // let the main loop deal with it
+                    continue;
                 }
             }
+
+            // this line was handled
+            line = null;
         }
+
         scanner.close();
 
         return testFiles;
