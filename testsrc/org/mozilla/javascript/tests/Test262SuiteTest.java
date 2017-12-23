@@ -36,105 +36,156 @@ public class Test262SuiteTest {
 
     static final int[] OPT_LEVELS = {-1, 0, 9};
 
-    static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<Integer, Map<String, Script>>();
+    static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<>();
 
     static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
 
+    static final Set<String> UNSUPPORTED_FEATURES = new HashSet<>(Arrays.asList(
+            "Atomics",
+            "BigInt",
+            "IsHTMLDDA",
+            "Map",
+            "Promise.prototype.finally",
+            "Proxy",
+            "Reflect",
+            "Reflect.construct",
+            "Reflect.set",
+            "Reflect.setPrototypeOf",
+            "Set",
+            "SharedArrayBuffer",
+            "WeakMap",
+            "WeakSet",
+            "async-functions",
+            "async-iteration",
+            "class",
+            "class-fields-private",
+            "class-fields-public",
+            "computed-property-names",
+            "cross-realm",
+            "default-arg",
+            "default-parameters",
+            "generators",
+            "new.target",
+            "object-rest",
+            "regexp-dotall",
+            "regexp-lookbehind",
+            "regexp-named-groups",
+            "super",
+            "tail-call-optimization",
+            "u180e"
+    ));
+
     @BeforeClass
-    public static void setUpClass() throws Exception {
-        HARNESS_SCRIPT_CACHE.put(-1, new HashMap<String, Script>());
-        HARNESS_SCRIPT_CACHE.put(0, new HashMap<String, Script>());
-        HARNESS_SCRIPT_CACHE.put(9, new HashMap<String, Script>());
+    public static void setUpClass() {
+        for (int optLevel : OPT_LEVELS) {
+            HARNESS_SCRIPT_CACHE.put(optLevel, new HashMap<>());
+        }
 
         CTX_FACTORY.setLanguageVersion(Context.VERSION_ES6);
         TestUtils.setGlobalContextFactory(CTX_FACTORY);
     }
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
+    public static void tearDownClass() {
         TestUtils.setGlobalContextFactory(null);
     }
 
     private static final Pattern EXCLUDE_PATTERN = Pattern.compile("!\\s*(.+)");
 
-    private final String jsFilePath;
-    private final String jsFileStr;
+    private final String testFilePath;
     private final int optLevel;
     private final boolean useStrict;
-    private List<String> harnessFiles;
-    private EcmaErrorType errorType;
+    private final Test262Case testCase;
 
-    public Test262SuiteTest(String jsFilePath, String jsFileStr, List<String> harnessFiles, int optLevel, boolean useStrict, EcmaErrorType errorType) {
-        this.jsFilePath = jsFilePath;
-        this.jsFileStr = jsFileStr;
+    public Test262SuiteTest(String testFilePath, int optLevel, boolean useStrict, Test262Case testCase) {
+        this.testFilePath = testFilePath;
         this.optLevel = optLevel;
         this.useStrict = useStrict;
-        this.harnessFiles = harnessFiles;
-        this.errorType = errorType;
+        this.testCase = testCase;
     }
 
-    private Object executeRhinoScript() {
-        Context cx = Context.enter();
-
-        try {
-            cx.setOptimizationLevel(optLevel);
-
-            Scriptable scope = cx.initStandardObjects();
-            for (String harnessFile : harnessFiles) {
-                if (!HARNESS_SCRIPT_CACHE.get(optLevel).containsKey(harnessFile)) {
-                    HARNESS_SCRIPT_CACHE.get(optLevel).put(
+    private Scriptable buildScope(Context cx) throws IOException {
+        Scriptable scope = cx.initSafeStandardObjects();
+        for (String harnessFile : testCase.harnessFiles) {
+            if (!HARNESS_SCRIPT_CACHE.get(optLevel).containsKey(harnessFile)) {
+                String harnessPath = "test262/harness/" + harnessFile;
+                HARNESS_SCRIPT_CACHE.get(optLevel).put(
                         harnessFile,
-                        cx.compileReader(new FileReader("test262/harness/" + harnessFile), "test262/harness/" + harnessFile, 1, null)
-                    );
-                }
-                HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
+                        cx.compileReader(new FileReader(harnessPath), harnessPath, 1, null)
+                );
             }
+            HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
+        }
+        return scope;
+    }
 
-            String str = jsFileStr;
-            if (useStrict) { // taken from test262.py
-                str = "\"use strict\";\nvar strict_mode = true;\n" + jsFileStr;
+    private static String extractJSErrorName(RhinoException ex) {
+        if (ex instanceof EvaluatorException) {
+            // there's no universal format to EvaluatorException's
+            // for now, just assume that it's a SyntaxError
+            return "SyntaxError";
+        }
+
+        String exceptionName = ex.details();
+        if (exceptionName.contains(":")) {
+            exceptionName = exceptionName.substring(0, exceptionName.indexOf(":"));
+        }
+        return exceptionName;
+    }
+
+    @Test
+    public void test262Case() {
+        Context cx = Context.enter();
+        cx.setOptimizationLevel(optLevel);
+
+        Scriptable scope;
+        try {
+            scope = buildScope(cx);
+        } catch (Exception ex) {
+            Context.exit();
+            throw new RuntimeException("Failed to build a scope with the harness files.", ex);
+        }
+
+        String str = testCase.source;
+        if (useStrict) {
+            str = "\"use strict\";\n" + str;
+        }
+
+        boolean failedEarly = true;
+        try {
+            Script caseScript = cx.compileString(str, testFilePath, 0, null);
+
+            failedEarly = false; // not after this line
+            caseScript.exec(cx, scope);
+
+            if (testCase.isNegative()) {
+                fail(String.format(
+                        "Failed a negative test. Expected error: %s (at phase '%s')",
+                        testCase.expectedError,
+                        testCase.hasEarlyError ? "early" : "runtime"));
             }
-
-            Object result = cx.evaluateString(scope, str, jsFilePath.replaceAll("\\\\", "/"), 1, null);
-
-            if (errorType != EcmaErrorType.NONE) {
-                fail(String.format("failed negative test. expected error: %s", errorType));
-                return null;
-            }
-
-            return result;
         } catch (RhinoException ex) {
-            if (errorType == EcmaErrorType.NONE) {
+            if (!testCase.isNegative()) {
                 fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
-            } else {
-                if (errorType == EcmaErrorType.ANY) {
-                    // passed
-                } else {
-                    String exceptionName;
-                    if (ex instanceof EvaluatorException) {
-                        exceptionName = "SyntaxError";
-                    } else {
-                        exceptionName = ex.details();
-                        if (exceptionName.contains(":")) {
-                            exceptionName = exceptionName.substring(0, exceptionName.indexOf(":"));
-                        }
-                    }
-                    assertEquals(ex.details(), errorType.name(), exceptionName);
-                }
             }
-            return null;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+
+            String errorName = extractJSErrorName(ex);
+
+            if (testCase.hasEarlyError && !failedEarly) {
+                fail(String.format(
+                        "Expected an early error: %s, got: %s in the runtime",
+                        testCase.expectedError,
+                        errorName));
+            }
+
+            assertEquals(ex.details(), testCase.expectedError, errorName);
         } finally {
             Context.exit();
         }
     }
 
-    private static final Yaml YAML = new Yaml();
-
-    public static List<File> getTestFiles() throws IOException {
-        File testDir = new File("test262/test");
-
+    private static final File testDir = new File("test262/test");
+    private static List<File> getTestFiles() throws IOException {
         List<File> testFiles = new LinkedList<File>();
 
         List<File> dirFiles = new LinkedList<File>();
@@ -170,6 +221,7 @@ public class Test262SuiteTest {
             if (target.isFile()) {
                 testFiles.add(target);
             } else if (target.isDirectory()) {
+                String curDirectory = line;
                 recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
 
                 // start handling exclusions that could follow
@@ -200,7 +252,7 @@ public class Test262SuiteTest {
                     }
                     if (excludeCount == 0) {
                         System.err.format(
-                                "WARN: Exclusion '%s' at line #%d doesn't exclude anything",
+                                "WARN: Exclusion '%s' at line #%d doesn't exclude anything%n",
                                 excludeSubstr, lineNo);
                     }
                     // exclusion handled
@@ -210,9 +262,9 @@ public class Test262SuiteTest {
                 testFiles.addAll(dirFiles);
                 dirFiles.clear();
 
-                if (line != null) {
-                    // not an exclusion, so it wasn't handled,
-                    // let the main loop deal with it
+                if (line != null && !line.equals(curDirectory)) {
+                    // saw a different line and it isn't an exclusion,
+                    // so it wasn't handled, let the main loop deal with it
                     continue;
                 }
             }
@@ -226,77 +278,127 @@ public class Test262SuiteTest {
         return testFiles;
     }
 
-    @Parameters(name = "js={0}, opt={3}, strict={4}")
+    @Parameters(name = "js={0}, opt={1}, strict={2}")
     public static Collection<Object[]> test262SuiteValues() throws IOException {
-        List<Object[]> result = new ArrayList<Object[]>();
-        List<File> tests = getTestFiles();
-        for (File jsTest : tests) {
-            String jsFileStr = (String) SourceReader.readFileOrUrl(jsTest.getPath(), true, "UTF-8");
-            List<String> harnessFiles = new ArrayList<String>();
-            harnessFiles.add("sta.js");
-            harnessFiles.add("assert.js");
+        List<Object[]> result = new ArrayList<>();
 
-            Map header;
-            String hdrStr = jsFileStr
-                .substring(jsFileStr.indexOf("/*---") + 5, jsFileStr.indexOf("---*/"));
+        fileLoop:
+        for (File testFile : getTestFiles()) {
+
+            Test262Case testCase;
             try {
-                header = (Map) YAML.load(hdrStr);
-                if (header.containsKey("includes")) {
-                    harnessFiles.addAll((Collection) header.get("includes"));
-                }
-            } catch (YAMLException e) {
-                String msg = "Error scanning \"" + hdrStr + "\" from " + jsTest.getPath() + ": " + e;
-                YAMLException te = new YAMLException(msg);
-                te.initCause(e);
-                throw te;
+                testCase = Test262Case.fromSource(testFile.getPath());
+            } catch (YAMLException ex) {
+                throw new RuntimeException("Error while parsing metadata of " + testFile.getPath(), ex);
             }
 
-            EcmaErrorType errorType = EcmaErrorType._valueOf((String)header.get("negative"));
-            List<String> flags = header.containsKey("flags") ? (List<String>) header.get("flags") : Collections.EMPTY_LIST;
-            for (int optLevel : OPT_LEVELS) {
-                if (!flags.contains("onlyStrict")) {
-                    result.add(new Object[]{jsTest.getPath(), jsFileStr, harnessFiles, optLevel, false, errorType});
+            // all the reasons not to execute this file
+            // even if it's not excluded in the config:
+            // 1. it requires/tests unsupported features
+            for (String feature : testCase.features) {
+                if (UNSUPPORTED_FEATURES.contains(feature)) {
+                    continue fileLoop;
                 }
-                if (!flags.contains("noStrict")) {
-                    result.add(new Object[]{jsTest.getPath(), jsFileStr, harnessFiles, optLevel, true, errorType});
+            }
+            // 2. it runs in an unsupported environment
+            if (testCase.hasFlag("module") ||
+                testCase.hasFlag("async")) {
+                continue;
+            }
+
+            String caseShortPath = testDir.toPath().relativize(testFile.toPath()).toString();
+            for (int optLevel : OPT_LEVELS) {
+                if (!testCase.hasFlag("onlyStrict") || testCase.hasFlag("raw")) {
+                    result.add(new Object[]{caseShortPath, optLevel, false, testCase});
+                }
+                if (!testCase.hasFlag("noStrict") && !testCase.hasFlag("raw")) {
+                    result.add(new Object[]{caseShortPath, optLevel, true, testCase});
                 }
             }
         }
         return result;
     }
 
-    @Test
-    public void test262() throws Exception {
-        executeRhinoScript();
-    }
+    private static class Test262Case {
+        private static final Yaml YAML = new Yaml();
 
-    static enum EcmaErrorType {
-        NONE,
-        ANY,
-        NotEarlyError,
-        ReferenceError,
-        SyntaxError,
-        Test262Error,
-        TypeError,
-        expected_message;
+        final String source;
 
-        static EcmaErrorType _valueOf(String s) {
-            if (s == null || s.equals("")) {
-                return NONE;
-            } else if (s.equals("NotEarlyError")) {
-                return NotEarlyError;
-            } else if (s.equals("ReferenceError")) {
-                return ReferenceError;
-            } else if (s.equals("SyntaxError")) {
-                return SyntaxError;
-            } else if (s.equals("Test262Error")) {
-                return Test262Error;
-            } else if (s.equals("TypeError")) {
-                return TypeError;
-            } else if (s.equals("expected_message")) {
-                return expected_message;
+        final String expectedError;
+        final boolean hasEarlyError;
+
+        final Set<String> flags;
+        final Set<String> harnessFiles;
+        final Set<String> features;
+
+        Test262Case(
+                String source,
+                Set<String> harnessFiles,
+                String expectedError,
+                boolean hasEarlyError,
+                Set<String> flags,
+                Set<String> features) {
+
+            this.source = source;
+            this.harnessFiles = harnessFiles;
+            this.expectedError = expectedError;
+            this.hasEarlyError = hasEarlyError;
+            this.flags = flags;
+            this.features = features;
+        }
+
+        boolean hasFlag(String flag) {
+            return flags.contains(flag);
+        }
+
+        boolean isNegative() {
+            return expectedError != null;
+        }
+
+        @SuppressWarnings("unchecked")
+        static Test262Case fromSource(String testFilePath) throws IOException {
+            String testSource = (String) SourceReader.readFileOrUrl(testFilePath, true, "UTF-8");
+
+            Set<String> harnessFiles = new HashSet<>();
+
+            String metadataStr = testSource.substring(
+                    testSource.indexOf("/*---") + 5,
+                    testSource.indexOf("---*/"));
+            Map<String, Object> metadata = (Map<String, Object>) YAML.load(metadataStr);
+
+            if (metadata.containsKey("includes")) {
+                harnessFiles.addAll((List<String>) metadata.get("includes"));
             }
-            return ANY;
+
+            String expectedError = null;
+            boolean isEarly = false;
+            if (metadata.containsKey("negative")) {
+                Map<String, String> negative = (Map<String, String>) metadata.get("negative");
+                expectedError = negative.get("type");
+                isEarly = "early".equals(negative.get("phase"));
+            }
+
+            Set<String> flags = new HashSet<>();
+            if (metadata.containsKey("flags")) {
+                flags.addAll((Collection<String>) metadata.get("flags"));
+            }
+
+            Set<String> features = new HashSet<>();
+            if (metadata.containsKey("features")) {
+                features.addAll((Collection<String>) metadata.get("features"));
+            }
+
+            if (!flags.contains("raw")) {
+                // present by default harness files
+                harnessFiles.add("assert.js");
+                harnessFiles.add("sta.js");
+            } else if (!harnessFiles.isEmpty()) {
+                System.err.format(
+                        "WARN: case '%s' is flagged as 'raw' but also has defined includes%n",
+                        testFilePath);
+            }
+
+            return new Test262Case(testSource, harnessFiles, expectedError, isEarly, flags, features);
         }
     }
 }
