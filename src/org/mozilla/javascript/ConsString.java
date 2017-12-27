@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 
 /**
  * <p>This class represents a string composed of two components, each of which
@@ -38,12 +38,6 @@ public class ConsString implements CharSequence, Serializable {
         s2 = str2;
         length = str1.length() + str2.length();
         depth = 1;
-        if (str1 instanceof ConsString) {
-            depth += ((ConsString)str1).depth;
-        }
-        if (str2 instanceof ConsString) {
-            depth += ((ConsString)str2).depth;
-        }
     }
 
     // Replace with string representation when serializing
@@ -57,21 +51,28 @@ public class ConsString implements CharSequence, Serializable {
     }
 
     private synchronized String flatten() {
-        if (depth > 0) {
+        if (depth == 1) {
             StringBuilder b = new StringBuilder(length);
-            ArrayList<CharSequence> buffer = new ArrayList<CharSequence>();
-            buffer.add(s2);
-            buffer.add(s1);
-            while(!buffer.isEmpty()) {
-                CharSequence next = buffer.remove(buffer.size() - 1);
+            ArrayDeque<CharSequence> deque = new ArrayDeque<CharSequence>();
+            deque.addFirst(s2);
+
+            CharSequence next = s1;
+            do {
                 if (next instanceof ConsString) {
                     ConsString casted = (ConsString) next;
-                    buffer.add(casted.s2);
-                    buffer.add(casted.s1);
+                    if (casted.depth == 0) {
+                        b.append((String)casted.s1);
+                        next = deque.isEmpty() ? null : deque.pollFirst();
+                    } else {
+                        deque.addFirst(casted.s2);
+                        next = casted.s1;
+                    }
                 } else {
                     b.append(next);
+                    next = deque.isEmpty() ? null : deque.pollFirst();
                 }
-            }
+            } while (next != null);
+
             s1 = b.toString();
             s2 = "";
             depth = 0;
@@ -92,5 +93,4 @@ public class ConsString implements CharSequence, Serializable {
         String str = depth == 0 ? (String)s1 : flatten();
         return str.substring(start, end);
     }
-
 }
