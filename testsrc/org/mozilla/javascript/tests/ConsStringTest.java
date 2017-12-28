@@ -4,11 +4,18 @@ import junit.framework.TestCase;
 import org.mozilla.javascript.ConsString;
 
 public class ConsStringTest extends TestCase {
+
     public void testAppend() {
         ConsString current = new ConsString("a", "b");
         current = new ConsString(current, "c");
         current = new ConsString(current, "d");
 
+        assertEquals("abcd", current.toString());
+
+        current = new ConsString("x", new ConsString("a", "b"));
+        assertEquals("xab", current.toString());
+
+        current = new ConsString(new ConsString("a", "b"), new ConsString("c", "d"));
         assertEquals("abcd", current.toString());
     }
 

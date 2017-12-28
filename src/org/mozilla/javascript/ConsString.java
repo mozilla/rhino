@@ -29,15 +29,15 @@ public class ConsString implements CharSequence, Serializable {
 
     private static final long serialVersionUID = -8432806714471372570L;
 
-    private CharSequence s1, s2;
+    private CharSequence first, second;
     private final int length;
-    private int depth;
+    private boolean isFlat;
 
     public ConsString(CharSequence str1, CharSequence str2) {
-        s1 = str1;
-        s2 = str2;
+        first = str1;
+        second = str2;
         length = str1.length() + str2.length();
-        depth = 1;
+        isFlat = false;
     }
 
     // Replace with string representation when serializing
@@ -47,37 +47,41 @@ public class ConsString implements CharSequence, Serializable {
     
     @Override
     public String toString() {
-        return depth == 0 ? (String)s1 : flatten();
+        return isFlat ? (String)first : flatten();
     }
 
     private synchronized String flatten() {
-        if (depth == 1) {
-            StringBuilder b = new StringBuilder(length);
-            ArrayList<CharSequence> buffer = new ArrayList<CharSequence>();
-            buffer.add(s2);
+        if (!isFlat) {
+            final char[] chars = new char[length];
+            int charPos = length;
 
-            CharSequence next = s1;
+            ArrayList<CharSequence> stack = new ArrayList<CharSequence>();
+            stack.add(first);
+
+            CharSequence next = second;
             do {
                 if (next instanceof ConsString) {
                     ConsString casted = (ConsString) next;
-                    if (casted.depth == 0) {
-                        b.append((String)casted.s1);
-                        next = buffer.isEmpty() ? null : buffer.remove(buffer.size() - 1);
+                    if (casted.isFlat) {
+                        next = casted.first;
                     } else {
-                        buffer.add(casted.s2);
-                        next = casted.s1;
+                        stack.add(casted.first);
+                        next = casted.second;
+                        continue;
                     }
-                } else {
-                    b.append(next);
-                    next = buffer.isEmpty() ? null : buffer.remove(buffer.size() - 1);
                 }
+
+                final String str = (String) next;
+                charPos -= str.length();
+                str.getChars(0, str.length(), chars, charPos);
+                next = stack.isEmpty() ? null : stack.remove(stack.size() - 1);
             } while (next != null);
 
-            s1 = b.toString();
-            s2 = "";
-            depth = 0;
+            first = new String(chars);
+            second = "";
+            isFlat = true;
         }
-        return (String)s1;
+        return (String)first;
     }
 
     public int length() {
@@ -85,12 +89,12 @@ public class ConsString implements CharSequence, Serializable {
     }
 
     public char charAt(int index) {
-        String str = depth == 0 ? (String)s1 : flatten();
+        String str = isFlat ? (String)first : flatten();
         return str.charAt(index);
     }
 
     public CharSequence subSequence(int start, int end) {
-        String str = depth == 0 ? (String)s1 : flatten();
+        String str = isFlat ? (String)first : flatten();
         return str.substring(start, end);
     }
 }
