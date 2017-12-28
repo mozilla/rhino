@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 
 /**
  * <p>This class represents a string composed of two components, each of which
@@ -29,15 +29,15 @@ public class ConsString implements CharSequence, Serializable {
 
     private static final long serialVersionUID = -8432806714471372570L;
 
-    private CharSequence first, second;
+    private CharSequence left, right;
     private final int length;
     private boolean isFlat;
 
     public ConsString(CharSequence str1, CharSequence str2) {
-        first = str1;
-        second = str2;
-        length = str1.length() + str2.length();
-        isFlat = false;
+        left = str1;
+        right = str2;
+        length = left.length() + right.length();
+        isFlat = right.length() == 0;
     }
 
     // Replace with string representation when serializing
@@ -47,7 +47,7 @@ public class ConsString implements CharSequence, Serializable {
     
     @Override
     public String toString() {
-        return isFlat ? (String)first : flatten();
+        return isFlat ? (String)left : flatten();
     }
 
     private synchronized String flatten() {
@@ -55,18 +55,18 @@ public class ConsString implements CharSequence, Serializable {
             final char[] chars = new char[length];
             int charPos = length;
 
-            ArrayList<CharSequence> stack = new ArrayList<CharSequence>();
-            stack.add(first);
+            ArrayDeque<CharSequence> stack = new ArrayDeque<CharSequence>();
+            stack.addFirst(left);
 
-            CharSequence next = second;
+            CharSequence next = right;
             do {
                 if (next instanceof ConsString) {
                     ConsString casted = (ConsString) next;
                     if (casted.isFlat) {
-                        next = casted.first;
+                        next = casted.left;
                     } else {
-                        stack.add(casted.first);
-                        next = casted.second;
+                        stack.addFirst(casted.left);
+                        next = casted.right;
                         continue;
                     }
                 }
@@ -74,14 +74,14 @@ public class ConsString implements CharSequence, Serializable {
                 final String str = (String) next;
                 charPos -= str.length();
                 str.getChars(0, str.length(), chars, charPos);
-                next = stack.isEmpty() ? null : stack.remove(stack.size() - 1);
+                next = stack.isEmpty() ? null : stack.removeFirst();
             } while (next != null);
 
-            first = new String(chars);
-            second = "";
+            left = new String(chars);
+            right = "";
             isFlat = true;
         }
-        return (String)first;
+        return (String)left;
     }
 
     public int length() {
@@ -89,12 +89,12 @@ public class ConsString implements CharSequence, Serializable {
     }
 
     public char charAt(int index) {
-        String str = isFlat ? (String)first : flatten();
+        String str = isFlat ? (String)left : flatten();
         return str.charAt(index);
     }
 
     public CharSequence subSequence(int start, int end) {
-        String str = isFlat ? (String)first : flatten();
+        String str = isFlat ? (String)left : flatten();
         return str.substring(start, end);
     }
 }
