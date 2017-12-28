@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 /**
  * <p>This class represents a string composed of two components, each of which
@@ -53,8 +53,8 @@ public class ConsString implements CharSequence, Serializable {
     private synchronized String flatten() {
         if (depth == 1) {
             StringBuilder b = new StringBuilder(length);
-            ArrayDeque<CharSequence> deque = new ArrayDeque<CharSequence>();
-            deque.addFirst(s2);
+            ArrayList<CharSequence> buffer = new ArrayList<CharSequence>();
+            buffer.add(s2);
 
             CharSequence next = s1;
             do {
@@ -62,14 +62,14 @@ public class ConsString implements CharSequence, Serializable {
                     ConsString casted = (ConsString) next;
                     if (casted.depth == 0) {
                         b.append((String)casted.s1);
-                        next = deque.isEmpty() ? null : deque.pollFirst();
+                        next = buffer.isEmpty() ? null : buffer.remove(buffer.size() - 1);
                     } else {
-                        deque.addFirst(casted.s2);
+                        buffer.add(casted.s2);
                         next = casted.s1;
                     }
                 } else {
                     b.append(next);
-                    next = deque.isEmpty() ? null : deque.pollFirst();
+                    next = buffer.isEmpty() ? null : buffer.remove(buffer.size() - 1);
                 }
             } while (next != null);
 
