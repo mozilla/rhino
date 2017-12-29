@@ -37,7 +37,7 @@ public class ConsString implements CharSequence, Serializable {
         left = str1;
         right = str2;
         length = left.length() + right.length();
-        isFlat = right.length() == 0;
+        isFlat = false;
     }
 
     // Replace with string representation when serializing
