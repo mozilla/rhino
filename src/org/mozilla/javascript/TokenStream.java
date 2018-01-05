@@ -698,7 +698,7 @@ class TokenStream
                         return Token.ERROR;
                     }
                 } else {
-                    dval = ScriptRuntime.stringToNumber(numString, 0, base);
+                    dval = ScriptRuntime.stringPrefixToNumber(numString, 0, base);
                 }
 
                 this.number = dval;

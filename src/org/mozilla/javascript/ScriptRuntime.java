@@ -462,14 +462,21 @@ public class ScriptRuntime {
 
     public static final Double NaNobj = new Double(NaN);
 
+    static double stringPrefixToNumber(String s, int start, int radix) {
+        return stringToNumber(s, start, s.length() - 1, radix, true);
+    }
+
+    static double stringToNumber(String s, int start, int end, int radix) {
+        return stringToNumber(s, start, end, radix, false);
+    }
+
     /*
      * Helper function for toNumber, parseInt, and TokenStream.getToken.
      */
-    static double stringToNumber(String s, int start, int radix) {
+    private static double stringToNumber(String source, int sourceStart, int sourceEnd, int radix, boolean isPrefix) {
         char digitMax = '9';
         char lowerCaseBound = 'a';
         char upperCaseBound = 'A';
-        int len = s.length();
         if (radix < 10) {
             digitMax = (char) ('0' + radix - 1);
         }
@@ -479,8 +486,8 @@ public class ScriptRuntime {
         }
         int end;
         double sum = 0.0;
-        for (end=start; end < len; end++) {
-            char c = s.charAt(end);
+        for (end = sourceStart; end <= sourceEnd; end++) {
+            char c = source.charAt(end);
             int newDigit;
             if ('0' <= c && c <= digitMax)
                 newDigit = c - '0';
@@ -488,11 +495,13 @@ public class ScriptRuntime {
                 newDigit = c - 'a' + 10;
             else if ('A' <= c && c < upperCaseBound)
                 newDigit = c - 'A' + 10;
+            else if (!isPrefix)
+                return NaN; // isn't a prefix but found unexpected char
             else
-                break;
+                break; // unexpected char
             sum = sum*radix + newDigit;
         }
-        if (start == end) {
+        if (sourceStart == end) { // stopped right at the beginning
             return NaN;
         }
         if (sum >= 9007199254740992.0) {
@@ -503,7 +512,7 @@ public class ScriptRuntime {
                  * answer.
                  */
                 try {
-                    return Double.parseDouble(s.substring(start, end));
+                    return Double.parseDouble(source.substring(sourceStart, end));
                 } catch (NumberFormatException nfe) {
                     return NaN;
                 }
@@ -535,12 +544,13 @@ public class ScriptRuntime {
                 boolean bit53 = false;
                 // bit54 is the 54th bit (the first dropped from the mantissa)
                 boolean bit54 = false;
+                int pos = sourceStart;
 
                 for (;;) {
                     if (bitShiftInChar == 1) {
-                        if (start == end)
+                        if (pos == end)
                             break;
-                        digit = s.charAt(start++);
+                        digit = source.charAt(pos++);
                         if ('0' <= digit && digit <= '9')
                             digit -= '0';
                         else if ('a' <= digit && digit <= 'z')
@@ -614,61 +624,93 @@ public class ScriptRuntime {
         return sum;
     }
 
-
     /**
      * ToNumber applied to the String type
      *
-     * See ECMA 9.3.1
+     * See the #sec-tonumber-applied-to-the-string-type section of ECMA
      */
     public static double toNumber(String s) {
-        int len = s.length();
+        final int len = s.length();
+
+        // Skip whitespace at the start
         int start = 0;
         char startChar;
         for (;;) {
             if (start == len) {
-                // Empty or contains only whitespace
+                // empty or contains only whitespace
                 return +0.0;
             }
             startChar = s.charAt(start);
-            if (!ScriptRuntime.isStrWhiteSpaceChar(startChar))
+            if (!ScriptRuntime.isStrWhiteSpaceChar(startChar)) {
+                // found first non-whitespace character
                 break;
+            }
             start++;
         }
 
+        // Skip whitespace at the end
+        int end = len - 1;
+        char endChar;
+        while (ScriptRuntime.isStrWhiteSpaceChar(endChar = s.charAt(end))) {
+            end--;
+        }
+
+        // Do not break scripts relying on old non-compliant conversion
+        // (see bug #368)
+        // 1. makes ToNumber parse only a valid prefix in hex literals (similar to 'parseInt()')
+        //    ToNumber('0x10 something') => 16
+        // 2. allows plus and minus signs for hexadecimal numbers
+        //    ToNumber('-0x10') => -16
+        // 3. disables support for binary ('0b10') and octal ('0o13') literals
+        //    ToNumber('0b1') => NaN
+        //    ToNumber('0o5') => NaN
+        final Context cx = Context.getCurrentContext();
+        final boolean oldParsingMode =
+                cx == null || cx.getLanguageVersion() < Context.VERSION_ES6;
+
+        // Handle non-base10 numbers
         if (startChar == '0') {
-            if (start + 2 < len) {
-                int c1 = s.charAt(start + 1);
-                if (c1 == 'x' || c1 == 'X') {
-                    // A hexadecimal number
-                    return stringToNumber(s, start + 2, 16);
+            if (start + 2 <= end) {
+                final char radixC = s.charAt(start + 1);
+                int radix = -1;
+                if (radixC == 'x' || radixC == 'X') {
+                    radix = 16;
+                } else if (!oldParsingMode && (radixC == 'o' || radixC == 'O')) {
+                    radix = 8;
+                } else if (!oldParsingMode && (radixC == 'b' || radixC == 'B')) {
+                    radix = 2;
+                }
+                if (radix != -1) {
+                    if (oldParsingMode) {
+                        return stringPrefixToNumber(s, start + 2, radix);
+                    }
+                    return stringToNumber(s, start + 2, end, radix);
                 }
             }
-        } else if (startChar == '+' || startChar == '-') {
-            if (start + 3 < len && s.charAt(start + 1) == '0') {
-                int c2 = s.charAt(start + 2);
-                if (c2 == 'x' || c2 == 'X') {
-                    // A hexadecimal number with sign
-                    double val = stringToNumber(s, start + 3, 16);
+        } else if (oldParsingMode && (startChar == '+' || startChar == '-')) {
+            // If in old parsing mode, check for a signed hexadecimal number
+            if (start + 3 <= end && s.charAt(start + 1) == '0') {
+                final char radixC = s.charAt(start + 2);
+                if (radixC == 'x' || radixC == 'X') {
+                    double val = stringPrefixToNumber(s, start + 3, 16);
                     return startChar == '-' ? -val : val;
                 }
             }
         }
 
-        int end = len - 1;
-        char endChar;
-        while (ScriptRuntime.isStrWhiteSpaceChar(endChar = s.charAt(end)))
-            end--;
         if (endChar == 'y') {
             // check for "Infinity"
-            if (startChar == '+' || startChar == '-')
+            if (startChar == '+' || startChar == '-') {
                 start++;
-            if (start + 7 == end && s.regionMatches(start, "Infinity", 0, 8))
+            }
+            if (start + 7 == end && s.regionMatches(start, "Infinity", 0, 8)) {
                 return startChar == '-'
-                    ? Double.NEGATIVE_INFINITY
-                    : Double.POSITIVE_INFINITY;
+                        ? Double.NEGATIVE_INFINITY
+                        : Double.POSITIVE_INFINITY;
+            }
             return NaN;
         }
-        // A non-hexadecimal, non-infinity number:
+        // A base10, non-infinity number:
         // just try a normal floating point conversion
         String sub = s.substring(start, end+1);
         // Quick test to check string contains only valid characters because
