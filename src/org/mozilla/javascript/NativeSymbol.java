@@ -32,7 +32,7 @@ public class NativeSymbol
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeSymbol obj = new NativeSymbol("");
-        ScriptableObject ctor = obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        ScriptableObject ctor = obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, false);
 
         cx.putThreadLocal(CONSTRUCTOR_SLOT, Boolean.TRUE);
         try {
@@ -48,8 +48,14 @@ public class NativeSymbol
             createStandardSymbol(cx, scope, ctor, "search", SymbolKey.SEARCH);
             createStandardSymbol(cx, scope, ctor, "split", SymbolKey.SPLIT);
             createStandardSymbol(cx, scope, ctor, "unscopables", SymbolKey.UNSCOPABLES);
+
         } finally {
             cx.removeThreadLocal(CONSTRUCTOR_SLOT);
+        }
+
+        if (sealed) {
+            // Can't seal until we have created all the stuff above!
+            ctor.sealObject();
         }
     }
 
