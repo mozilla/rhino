@@ -59,12 +59,9 @@ public class DynamicScopeTest extends TestCase {
 			cx.setLanguageVersion(Context.VERSION_ES6);
 	        cx.setOptimizationLevel(0);
 
-	        // Case 1: Fails with org.mozilla.javascript.EvaluatorException: Cannot modify a property of a sealed object: iterator.
-	        final ScriptableObject scope = cx.initStandardObjects(new TopLevel(), true); // 
+	        // Used to fail with org.mozilla.javascript.EvaluatorException: Cannot modify a property of a sealed object: iterator.
+	        final ScriptableObject scope = cx.initStandardObjects(new TopLevel(), true); 
 	        
-	        // Case 2: Workaround attempt: works
-	        // final ScriptableObject scope = cx.initStandardObjects(new TopLevel(), false);
-
 	        Object result = cx.evaluateString(scope, "42", "source", 1, null);
 			assertEquals(42, result);
 		} finally {
@@ -79,11 +76,9 @@ public class DynamicScopeTest extends TestCase {
 			cx2.setLanguageVersion(Context.VERSION_ES6);
 	        cx2.setOptimizationLevel(0);
 	        
-	        // Case 2: Fails with org.mozilla.javascript.EvaluatorException: Cannot modify a property of a sealed object: iterator.
+	        // Used to fail with org.mozilla.javascript.EvaluatorException: Cannot modify a property of a sealed object: iterator.
 	        final ScriptableObject scope = cx.initStandardObjects(new TopLevel(), true);
 	        
-	        // Case 3: Workaround attempt: works
-	        // final ScriptableObject scope = cx.initStandardObjects(new TopLevel(), false);
 	        Object result = cx.evaluateString(scope, "23", "source", 1, null);
 			assertEquals(23, result);
 		} finally {
