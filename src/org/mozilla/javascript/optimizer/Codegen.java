@@ -2574,26 +2574,7 @@ class BodyCodegen
                 break;
 
               case Token.GETELEM:
-                generateExpression(child, node); // object
-                generateExpression(child.getNext(), node);  // id
-                cfw.addALoad(contextLocal);
-                if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
-                    addScriptRuntimeInvoke(
-                        "getObjectIndex",
-                        "(Ljava/lang/Object;D"
-                        +"Lorg/mozilla/javascript/Context;"
-                        +")Ljava/lang/Object;");
-                }
-                else {
-                    cfw.addALoad(variableObjectLocal);
-                    addScriptRuntimeInvoke(
-                        "getObjectElem",
-                        "(Ljava/lang/Object;"
-                        +"Ljava/lang/Object;"
-                        +"Lorg/mozilla/javascript/Context;"
-                        +"Lorg/mozilla/javascript/Scriptable;"
-                        +")Ljava/lang/Object;");
-                }
+                visitGetObjectElement(node, child);
                 break;
 
               case Token.GET_REF:
@@ -5167,9 +5148,10 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private void visitGetProp(Node node, Node child)
     {
         generateExpression(child, node); // object
-        Node nameChild = child.getNext();
-        generateExpression(nameChild, node);  // the name
+        final Node nameChild = child.getNext();
+
         if (node.getType() == Token.GETPROPNOWARN) {
+            generateExpression(nameChild, node);  // the name
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
             addScriptRuntimeInvoke(
@@ -5181,26 +5163,29 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +")Ljava/lang/Object;");
             return;
         }
-        // generate invokedynamic instruction for foo.bar
-        cfw.addALoad(contextLocal);
-        cfw.addALoad(variableObjectLocal);
-        ClassFileWriter.MHandle bootstrap = new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
-                "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
-                "bootstrapGetObjectProp",
-                MethodType.methodType(
-                        CallSite.class, MethodHandles.Lookup.class,
-                        String.class, MethodType.class).toMethodDescriptorString());
-        cfw.addInvokeDynamic("getObjectProp", "(Ljava/lang/Object;"
-                +"Ljava/lang/String;"
-                +"Lorg/mozilla/javascript/Context;"
-                +"Lorg/mozilla/javascript/Scriptable;"
-                +")Ljava/lang/Object;", bootstrap);
+        if (nameChild.getType() == Token.STRING) {
+            // generate invokedynamic instruction for foo.bar with hard-coded name
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            ClassFileWriter.MHandle bootstrap = new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
+                    "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
+                    "bootstrapGetObjectProp",
+                    MethodType.methodType(
+                            CallSite.class, MethodHandles.Lookup.class,
+                            String.class, MethodType.class).toMethodDescriptorString());
+            cfw.addInvokeDynamic(nameChild.getString(),
+                     "(Ljava/lang/Object;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;", bootstrap);
+            return;
+        }
         /*
             for 'this.foo' we call getObjectProp(Scriptable...) which can
             skip some casting overhead.
         */
-        /*
         int childType = child.getType();
+        generateExpression(nameChild, node);  // the name
         if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
             cfw.addALoad(contextLocal);
             addScriptRuntimeInvoke(
@@ -5219,7 +5204,52 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 +"Lorg/mozilla/javascript/Context;"
                 +"Lorg/mozilla/javascript/Scriptable;"
                 +")Ljava/lang/Object;");
-        }*/
+        }
+    }
+
+    private void visitGetObjectElement(Node node, Node child)
+    {
+        generateExpression(child, node); // object
+        final Node nameChild = child.getNext();
+
+        if (nameChild.getType() == Token.STRING) {
+            // generate invokedynamic instruction for foo[bar] with hard-coded name.
+            // Same use case that we had with visitGetProp.
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            ClassFileWriter.MHandle bootstrap = new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
+                    "org/mozilla/javascript/optimizer/InvokeDynamicSupport",
+                    "bootstrapGetObjectProp",
+                    MethodType.methodType(
+                            CallSite.class, MethodHandles.Lookup.class,
+                            String.class, MethodType.class).toMethodDescriptorString());
+            cfw.addInvokeDynamic(nameChild.getString(),
+                    "(Ljava/lang/Object;"
+                            + "Lorg/mozilla/javascript/Context;"
+                            + "Lorg/mozilla/javascript/Scriptable;"
+                            + ")Ljava/lang/Object;", bootstrap);
+            return;
+        }
+
+        generateExpression(child.getNext(), node);  // id
+        cfw.addALoad(contextLocal);
+        if (node.getIntProp(Node.ISNUMBER_PROP, -1) != -1) {
+            addScriptRuntimeInvoke(
+                    "getObjectIndex",
+                    "(Ljava/lang/Object;D"
+                            +"Lorg/mozilla/javascript/Context;"
+                            +")Ljava/lang/Object;");
+        }
+        else {
+            cfw.addALoad(variableObjectLocal);
+            addScriptRuntimeInvoke(
+                    "getObjectElem",
+                    "(Ljava/lang/Object;"
+                            +"Ljava/lang/Object;"
+                            +"Lorg/mozilla/javascript/Context;"
+                            +"Lorg/mozilla/javascript/Scriptable;"
+                            +")Ljava/lang/Object;");
+        }
     }
 
     private void visitSetProp(int type, Node node, Node child)

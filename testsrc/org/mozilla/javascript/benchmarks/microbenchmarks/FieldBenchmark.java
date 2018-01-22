@@ -2,6 +2,9 @@ package org.mozilla.javascript.benchmarks.microbenchmarks;
 
 import com.carrotsearch.junitbenchmarks.BenchmarkOptions;
 import com.carrotsearch.junitbenchmarks.BenchmarkRule;
+import com.carrotsearch.junitbenchmarks.Clock;
+import com.carrotsearch.junitbenchmarks.annotation.AxisRange;
+import com.carrotsearch.junitbenchmarks.annotation.BenchmarkHistoryChart;
 import com.carrotsearch.junitbenchmarks.annotation.BenchmarkMethodChart;
 import org.junit.After;
 import org.junit.Before;
@@ -22,12 +25,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
-@BenchmarkOptions(concurrency=1, warmupRounds=250, benchmarkRounds=500)
-@BenchmarkMethodChart(filePrefix="fieldbenchmark")
+@BenchmarkOptions(concurrency=1, warmupRounds=5, benchmarkRounds=5, clock= Clock.NANO_TIME)
+@BenchmarkMethodChart(filePrefix="benchmark-results")
+@BenchmarkHistoryChart(filePrefix="benchmark-runs", maxRuns=20)
+@AxisRange(min = 0, max=3)
 @RunWith(Parameterized.class)
 public class FieldBenchmark
 {
-    public static final int ITERATIONS = 100000;
+    public static final int ITERATIONS = 20000000;
 
     static final Random rand = new Random();
 

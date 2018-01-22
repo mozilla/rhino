@@ -8,6 +8,7 @@
 
 import jdk.dynalink.DynamicLinker;
 import jdk.dynalink.DynamicLinkerFactory;
+import jdk.dynalink.NamedOperation;
 import jdk.dynalink.NamespaceOperation;
 import jdk.dynalink.Operation;
 import jdk.dynalink.StandardNamespace;
@@ -65,6 +66,14 @@ public class Linker
         linker = factory.createLinker();
     }
 
+    protected static Operation baseOperation(Operation op)
+    {
+        if (op instanceof NamedOperation) {
+            return ((NamedOperation)op).getBaseOperation();
+        }
+        return op;
+    }
+
     /**
      * This is the most basic linker. It just delegates permanently to ScriptRuntime
      * like the old, pre-dynalink runtime.
@@ -82,9 +91,12 @@ public class Linker
             LinkRequest req, LinkerServices services)
             throws Exception
         {
-            final Operation op = req.getCallSiteDescriptor().getOperation();
+            final Operation op = baseOperation(req.getCallSiteDescriptor().getOperation());
             if (op == StandardOperation.GET) {
-                return new GuardedInvocation(InvokeDynamicSupport.GETOBJPROP_FALLBACK);
+                MethodHandle target =
+                    MethodHandles.insertArguments(InvokeDynamicSupport.GETOBJPROP_FALLBACK,
+                        1, ((NamedOperation)op).getName());
+                return new GuardedInvocation(target);
             } else if (op == StandardOperation.CALL) {
                 return new GuardedInvocation(InvokeDynamicSupport.CALLPROP0_FALLBACK);
             } else if (op == CALL1) {
@@ -141,19 +153,25 @@ public class Linker
                 throws Exception
         {
             final Operation op = req.getCallSiteDescriptor().getOperation();
+            final Operation baseOp = baseOperation(op);
             final ScriptableObject so = (ScriptableObject)req.getReceiver();
             final Object[] args = req.getArguments();
 
-            if (op == StandardOperation.GET) {
+            if (baseOp == StandardOperation.GET) {
+                final String name = (String)(((NamedOperation)op).getName());
                 if (req.isCallSiteUnstable()) {
                     // Fallback if caching just doesn't work for this CallSite
-                    return new GuardedInvocation(GETSCRIPTABLE);
+                    MethodHandle target =
+                            MethodHandles.insertArguments(GETSCRIPTABLE, 1, name);
+                    return new GuardedInvocation(target);
                 }
 
-                final ScriptableObjectSlot slot = so.getSlot((String)args[1]);
+                final ScriptableObjectSlot slot = so.getSlot(name);
                 if (slot == null) {
                     // Slot not found or not in a Slot, perhaps a subclass
-                    return new GuardedInvocation(GETSCRIPTABLE);
+                    MethodHandle target =
+                            MethodHandles.insertArguments(GETSCRIPTABLE, 1, name);
+                    return new GuardedInvocation(target);
                 } else {
                     // Return a method handle that will check object identity
                     // and also object generation on every request
@@ -167,7 +185,7 @@ public class Linker
                     return new GuardedInvocation(getValue, checkGeneration);
                 }
 
-            } else if (op == StandardOperation.CALL) {
+            } else if (baseOp == StandardOperation.CALL) {
                 if (req.isCallSiteUnstable()) {
                     // Fallback if caching just doesn't work for this CallSite
                     return new GuardedInvocation(InvokeDynamicSupport.CALLPROP0_FALLBACK);
@@ -193,7 +211,7 @@ public class Linker
                     return new GuardedInvocation(getValue, checkGeneration);
                 }
 
-            } else if (op == CALL1) {
+            } else if (baseOp == CALL1) {
                 if (req.isCallSiteUnstable()) {
                     // Fallback if caching just doesn't work for this CallSite
                     return new GuardedInvocation(InvokeDynamicSupport.CALLPROP1_FALLBACK);
@@ -216,7 +234,7 @@ public class Linker
                     return new GuardedInvocation(getValue, checkGeneration);
                 }
 
-            } else if (op == CALL2) {
+            } else if (baseOp == CALL2) {
                 if (req.isCallSiteUnstable()) {
                     // Fallback if caching just doesn't work for this CallSite
                     return new GuardedInvocation(InvokeDynamicSupport.CALLPROP2_FALLBACK);
@@ -239,7 +257,7 @@ public class Linker
                     return new GuardedInvocation(getValue, checkGeneration);
                 }
 
-            } else if (op == CALLN) {
+            } else if (baseOp == CALLN) {
                 if (req.isCallSiteUnstable()) {
                     // Fallback if caching just doesn't work for this CallSite
                     return new GuardedInvocation(InvokeDynamicSupport.CALLPROPN_FALLBACK);

@@ -7,6 +7,8 @@
 package org.mozilla.javascript.optimizer;
 
 import jdk.dynalink.CallSiteDescriptor;
+import jdk.dynalink.NamedOperation;
+import jdk.dynalink.Operation;
 import jdk.dynalink.StandardOperation;
 import jdk.dynalink.support.ChainedCallSite;
 import org.mozilla.javascript.Callable;
@@ -107,12 +109,14 @@ public class InvokeDynamicSupport {
         if (DYNALINK) {
             return Linker.getLinker().link(
                     new ChainedCallSite(
-                            new CallSiteDescriptor(lookup, StandardOperation.GET,
+                            new CallSiteDescriptor(lookup, StandardOperation.GET.named(name),
                                     MethodType.methodType(Object.class,
-                                            Object.class, String.class, Context.class,
+                                            Object.class, Context.class,
                                             Scriptable.class))));
         }
-        return new ConstantCallSite(GETOBJPROP_FALLBACK);
+        MethodHandle target =
+            MethodHandles.insertArguments(GETOBJPROP_FALLBACK, 1, name);
+        return new ConstantCallSite(target);
     }
 
     /*
@@ -292,9 +296,9 @@ public class InvokeDynamicSupport {
     }
 
     public static Object getSlotValue(ScriptableObjectSlot slot,
-        ScriptableObject so, String name, Context cx, Scriptable start)
+        ScriptableObject so, Context cx, Scriptable start)
     {
-        return slot.getValue(so);
+        return slot.getValue(start);
     }
 
     public static Object invokeSlot0(ScriptableObjectSlot slot,
@@ -412,8 +416,7 @@ public class InvokeDynamicSupport {
                             String.class, Context.class));
             GETSLOTVALUE = lookup.findStatic(InvokeDynamicSupport.class, "getSlotValue",
                     MethodType.methodType(Object.class, ScriptableObjectSlot.class,
-                    ScriptableObject.class,
-                    String.class, Context.class, Scriptable.class));
+                    ScriptableObject.class, Context.class, Scriptable.class));
             INVOKESLOT0 = lookup.findStatic(InvokeDynamicSupport.class, "invokeSlot0",
                     MethodType.methodType(Object.class, ScriptableObjectSlot.class, ScriptableObject.class,
                             String.class, Context.class, Scriptable.class));

@@ -47,6 +47,7 @@ dependencies {
     testCompile "org.yaml:snakeyaml:1.15"
     testCompile "net.trajano.caliper:caliper:1.2.1"
     testCompile "org.scijava:junit-benchmarks:0.7.4-scijava"
+    testRuntime "com.h2database:h2:1.4.196"
 }
 
 if (JavaVersion.current().isJava8Compatible()) {
@@ -104,6 +105,8 @@ task microBenchmark(type: Test) {
     jacoco {
         enabled = false
     }
+    systemProperty 'jub.consumers', 'H2,CONSOLE'
+    systemProperty 'jub.db.file', 'benchmark-results.dat'
     include "**/benchmarks/microbenchmarks/**"
     testLogging.showStandardStreams = true
 }
