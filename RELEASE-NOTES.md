@@ -1,5 +1,5 @@
-# Rhino 1.7.8-RC1
-## December 22, 2017
+# Rhino 1.7.8
+## January 22, 2018
 
 Most important changes in this release:
 
@@ -41,6 +41,8 @@ backward compatibility
 ArrayIndexOutOfBoundsException
 [Issue 295](https://github.com/mozilla/rhino/issues/295) Change WrapFactory to only wrap
 "true" primitive types and not subclasses.
+[Issue 377](https://github.com/mozilla/rhino/issues/377) Context initialization in 
+"sealed" mode failed for ES6 language level.
 [PR102](https://github.com/mozilla/rhino/pull/102) Fix regexp parsing for "/0{0/"
 [PR108](https://github.com/mozilla/rhino/pull/108) Attach jsdoc nodes to function params.
 [PR 169](https://github.com/mozilla/rhino/pull/169) Enable calling default method
@@ -49,6 +51,8 @@ on Java 8.
 [PR353](https://github.com/mozilla/rhino/pull/353) Member box call error.
 [PR355](https://github.com/mozilla/rhino/pull/358) Support array-like parameters to 
 Function.prototype.apply().
+[PR372](https://github.com/mozilla/rhino/pull/372) Improve test262 integration and enable
+many more tests.
 
 # Rhino 1.7.7.2
 ## August 24, 2017
