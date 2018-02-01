@@ -58,7 +58,9 @@ public class TopLevel extends IdScriptableObject {
         /** The built-in RegExp type. */
         RegExp,
         /** The built-in Error type. */
-        Error
+        Error,
+        /** The built-in Symbol type. */
+        Symbol
     }
 
     /**

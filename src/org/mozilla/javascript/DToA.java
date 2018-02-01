@@ -602,7 +602,7 @@ class DToA {
                 break;
             case 2:
                 leftright = false;
-                /* no break */
+                /* fallthru */
             case 4:
                 if (ndigits <= 0)
                     ndigits = 1;
@@ -610,7 +610,7 @@ class DToA {
                 break;
             case 3:
                 leftright = false;
-                /* no break */
+                /* fallthru */
             case 5:
                 i = ndigits + k + 1;
                 ilim = i;
@@ -1168,7 +1168,7 @@ class DToA {
                 case DTOSTR_EXPONENTIAL:
 //                    JS_ASSERT(precision > 0);
                     minNDigits = precision;
-                    /* Fall through */
+                    /* fallthru */
                 case DTOSTR_STANDARD_EXPONENTIAL:
                     exponentialNotation = true;
                     break;

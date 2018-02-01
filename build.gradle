@@ -1,16 +1,18 @@
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'jacoco'
 apply plugin: 'distribution'
+apply plugin: 'checkstyle'
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 tasks.withType(JavaCompile) { options.encoding = "UTF-8" }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
+    gradleVersion = '4.3.1'
 }
 
 repositories {
@@ -43,9 +45,19 @@ sourceSets {
 dependencies {
     testCompile "junit:junit:4.12"
     testCompile "org.yaml:snakeyaml:1.15"
+    testCompile "net.trajano.caliper:caliper:1.2.1"
+}
+
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
 }
 
 test {
+    useJUnit()
     exclude "**/benchmarks/**"
     systemProperty 'java.awt.headless', 'true'
     systemProperty 'mozilla.js.tests', 'testsrc/tests'
@@ -56,10 +68,24 @@ test {
     systemProperty 'file.encoding', 'UTF-8'
     maxHeapSize = "256m"
     testLogging.showStandardStreams = true
+    // Many tests do not clean up contexts properly. This makes the tests much
+    // more resilient at the expense of performance.
+    forkEvery = 1
+    maxParallelForks = 10
 }
 
-task testBenchmark(type: Test) {
-    include "**/benchmarks/*Benchmark*"
+task sunSpiderBenchmark(type: JavaExec) {
+    main "com.google.caliper.runner.CaliperMain"
+    systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
+    args "-Cresults.upload.class=org.mozilla.javascript.benchmarks.ResultPlotter", "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperSpiderBenchmark.Spider"
+    classpath sourceSets.test.runtimeClasspath
+}
+
+task v8Benchmark(type: Test) {
+    jacoco {
+        enabled = false
+    }
+    include "**/benchmarks/V8Benchmark*"
     systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
     systemProperty 'file.encoding', 'UTF-8'
     workingDir = file("testsrc/benchmarks")
@@ -67,6 +93,17 @@ task testBenchmark(type: Test) {
     testLogging.showStandardStreams = true
     forkEvery = 1
 }
+
+task testBenchmark() {}
+testBenchmark.dependsOn sunSpiderBenchmark
+testBenchmark.dependsOn v8Benchmark
+
+task microBenchmark(type: JavaExec) {
+    main "com.google.caliper.runner.CaliperMain"
+    args "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperObjectBenchmark.FieldAccess", "-DstringKeys=100,1000", "-DintKeys=100,1000"
+    classpath sourceSets.test.runtimeClasspath
+}
+
 
 idea {
     module {
@@ -171,34 +208,46 @@ publishing {
 }
 
 jacoco {
-    toolVersion = "0.7.4.201502262128"
+    toolVersion = "0.7.9"
 }
 
 jacocoTestReport.dependsOn test
 jacocoTestReport {
     reports {
-        html.destination "${buildDir}/jacocoHtml"
+        html.destination file("${buildDir}/jacocoHtml")
     }
+}
+
+checkstyle {
+    configFile = file("${projectDir}/checkstyle.xml")
+    sourceSets = [project.sourceSets.main]
 }
 
 distributions {
     main {
         contents {
-            from(sourceSets.main.allSource) {
+            from(sourceSets.main.java) {
                 exclude 'man'
-                into '/src'
+                into 'rhino' + project.version + '/src'
+            }
+            from(sourceSets.main.resources) {
+                exclude '**/*.java'
+                into 'rhino' + project.version + '/src'
             }
             from(javadoc.destinationDir) {
-                into '/docs'
+                into 'rhino' + project.version + '/docs'
             }
             from(jar.outputs.files) {
-                into '/lib'
+                into 'rhino' + project.version + '/lib'
             }
             from(sourceSets.main.allSource) {
                 include 'man/*.1'
+                into 'rhino' + project.version
             }
             from(file(".")) {
-                include '*.txt'
+                include '*.txt', '*.md', 'build.gradle', 'build.properties', 'gradle.properties',
+                        'gradle/**', 'gradlew'
+                into 'rhino' + project.version 
             }
             into "/"
         }

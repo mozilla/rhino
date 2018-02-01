@@ -96,22 +96,22 @@ public class NativeDataView
     {
         checkOffset(args, 0);
 
-        int offset = ScriptRuntime.toInt32(args[0]);
-        rangeCheck(offset, bytes);
+        int pos = ScriptRuntime.toInt32(args[0]);
+        rangeCheck(pos, bytes);
 
         boolean littleEndian =
             (isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]));
 
         switch (bytes) {
         case 1:
-            return (signed ? ByteIo.readInt8(arrayBuffer.buffer, offset) :
-                             ByteIo.readUint8(arrayBuffer.buffer, offset));
+            return (signed ? ByteIo.readInt8(arrayBuffer.buffer, offset + pos) :
+                             ByteIo.readUint8(arrayBuffer.buffer, offset + pos));
         case 2:
-            return (signed ? ByteIo.readInt16(arrayBuffer.buffer, offset, littleEndian) :
-                             ByteIo.readUint16(arrayBuffer.buffer, offset, littleEndian));
+            return (signed ? ByteIo.readInt16(arrayBuffer.buffer, offset + pos, littleEndian) :
+                             ByteIo.readUint16(arrayBuffer.buffer, offset + pos, littleEndian));
         case 4:
-            return (signed ? ByteIo.readInt32(arrayBuffer.buffer, offset, littleEndian) :
-                             ByteIo.readUint32(arrayBuffer.buffer, offset, littleEndian));
+            return (signed ? ByteIo.readInt32(arrayBuffer.buffer, offset + pos, littleEndian) :
+                             ByteIo.readUint32(arrayBuffer.buffer, offset + pos, littleEndian));
         default:
             throw new AssertionError();
         }
@@ -121,17 +121,17 @@ public class NativeDataView
     {
         checkOffset(args, 0);
 
-        int offset = ScriptRuntime.toInt32(args[0]);
-        rangeCheck(offset, bytes);
+        int pos = ScriptRuntime.toInt32(args[0]);
+        rangeCheck(pos, bytes);
 
         boolean littleEndian =
             (isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]));
 
         switch (bytes) {
         case 4:
-            return ByteIo.readFloat32(arrayBuffer.buffer, offset, littleEndian);
+            return ByteIo.readFloat32(arrayBuffer.buffer, offset + pos, littleEndian);
         case 8:
-            return ByteIo.readFloat64(arrayBuffer.buffer, offset, littleEndian);
+            return ByteIo.readFloat64(arrayBuffer.buffer, offset + pos, littleEndian);
         default:
             throw new AssertionError();
         }
@@ -142,8 +142,8 @@ public class NativeDataView
         checkOffset(args, 0);
         checkValue(args, 1);
 
-        int offset = ScriptRuntime.toInt32(args[0]);
-        rangeCheck(offset, bytes);
+        int pos = ScriptRuntime.toInt32(args[0]);
+        rangeCheck(pos, bytes);
 
         boolean littleEndian =
             (isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]));
@@ -151,23 +151,23 @@ public class NativeDataView
         switch (bytes) {
         case 1:
             if (signed) {
-                ByteIo.writeInt8(arrayBuffer.buffer, offset, Conversions.toInt8(args[1]));
+                ByteIo.writeInt8(arrayBuffer.buffer, offset + pos, Conversions.toInt8(args[1]));
             } else {
-                ByteIo.writeUint8(arrayBuffer.buffer, offset, Conversions.toUint8(args[1]));
+                ByteIo.writeUint8(arrayBuffer.buffer, offset + pos, Conversions.toUint8(args[1]));
             }
             break;
         case 2:
             if (signed) {
-                ByteIo.writeInt16(arrayBuffer.buffer, offset, Conversions.toInt16(args[1]), littleEndian);
+                ByteIo.writeInt16(arrayBuffer.buffer, offset + pos, Conversions.toInt16(args[1]), littleEndian);
             } else {
-                ByteIo.writeUint16(arrayBuffer.buffer, offset, Conversions.toUint16(args[1]), littleEndian);
+                ByteIo.writeUint16(arrayBuffer.buffer, offset + pos, Conversions.toUint16(args[1]), littleEndian);
             }
             break;
         case 4:
             if (signed) {
-                ByteIo.writeInt32(arrayBuffer.buffer, offset, Conversions.toInt32(args[1]), littleEndian);
+                ByteIo.writeInt32(arrayBuffer.buffer, offset + pos, Conversions.toInt32(args[1]), littleEndian);
             } else {
-                ByteIo.writeUint32(arrayBuffer.buffer, offset, Conversions.toUint32(args[1]), littleEndian);
+                ByteIo.writeUint32(arrayBuffer.buffer, offset + pos, Conversions.toUint32(args[1]), littleEndian);
             }
             break;
         default:
@@ -180,8 +180,8 @@ public class NativeDataView
         checkOffset(args, 0);
         checkValue(args, 1);
 
-        int offset = ScriptRuntime.toInt32(args[0]);
-        rangeCheck(offset, bytes);
+        int pos = ScriptRuntime.toInt32(args[0]);
+        rangeCheck(pos, bytes);
 
         boolean littleEndian =
             (isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]));
@@ -189,10 +189,10 @@ public class NativeDataView
 
         switch (bytes) {
         case 4:
-            ByteIo.writeFloat32(arrayBuffer.buffer, offset, val, littleEndian);
+            ByteIo.writeFloat32(arrayBuffer.buffer, offset + pos, val, littleEndian);
             break;
         case 8:
-            ByteIo.writeFloat64(arrayBuffer.buffer, offset, val, littleEndian);
+            ByteIo.writeFloat64(arrayBuffer.buffer, offset + pos, val, littleEndian);
             break;
         default:
             throw new AssertionError();

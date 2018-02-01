@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.tools.shell.ShellConsole;
 
 /**
  * Provides a specialized input stream for consoles to handle line

@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
@@ -29,16 +28,28 @@ public class NodeTransformer
     {
     }
 
-    public final void transform(ScriptNode tree)
+    public final void transform(ScriptNode tree, CompilerEnvirons env)
     {
-        transformCompilationUnit(tree);
+        transform(tree, false, env);
+    }
+
+    public final void transform(ScriptNode tree, boolean inStrictMode, CompilerEnvirons env)
+    {
+        boolean useStrictMode = inStrictMode;
+        // Support strict mode inside a function only for "ES6" language level
+        // and above. Otherwise, we will end up breaking backward compatibility for
+        // many existing scripts.
+        if ((env.getLanguageVersion() >= Context.VERSION_ES6) && tree.isInStrictMode()) {
+          useStrictMode = true;
+        }
+        transformCompilationUnit(tree, useStrictMode);
         for (int i = 0; i != tree.getFunctionCount(); ++i) {
             FunctionNode fn = tree.getFunctionNode(i);
-            transform(fn);
+            transform(fn, useStrictMode, env);
         }
     }
 
-    private void transformCompilationUnit(ScriptNode tree)
+    private void transformCompilationUnit(ScriptNode tree, boolean inStrictMode)
     {
         loops = new ObjArray();
         loopEnds = new ObjArray();
@@ -53,8 +64,6 @@ public class NodeTransformer
 
         //uncomment to print tree before transformation
         if (Token.printTrees) System.out.println(tree.toStringTree(tree));
-        boolean inStrictMode = tree instanceof AstRoot &&
-                               ((AstRoot)tree).isInStrictMode();
         transformCompilationUnit_r(tree, tree, tree, createScopeObjects,
                                    inStrictMode);
     }
@@ -320,27 +329,28 @@ public class NodeTransformer
                    * for the following constructs: typeof o.p, if (o.p),
                    * if (!o.p), if (o.p == undefined), if (undefined == o.p)
                    */
-            	  Node child = node.getFirstChild();
-            	  if (type == Token.IFNE) {
-                	  while (child.getType() == Token.NOT) {
-                	      child = child.getFirstChild();
-                	  }
-                	  if (child.getType() == Token.EQ ||
-                	      child.getType() == Token.NE)
-                	  {
-                	      Node first = child.getFirstChild();
-                	      Node last = child.getLastChild();
-                	      if (first.getType() == Token.NAME &&
-                	          first.getString().equals("undefined"))
-                	          child = last;
-                	      else if (last.getType() == Token.NAME &&
-                	               last.getString().equals("undefined"))
-                              child = first;
-                	  }
-            	  }
-            	  if (child.getType() == Token.GETPROP)
-            		  child.setType(Token.GETPROPNOWARN);
-            	  break;
+                Node child = node.getFirstChild();
+                if (type == Token.IFNE) {
+                  while (child.getType() == Token.NOT) {
+                    child = child.getFirstChild();
+                  }
+                  if (child.getType() == Token.EQ ||
+                      child.getType() == Token.NE) {
+                    Node first = child.getFirstChild();
+                    Node last = child.getLastChild();
+                    if (first.getType() == Token.NAME &&
+                        first.getString().equals("undefined")) {
+                      child = last;
+                    } else if (last.getType() == Token.NAME &&
+                        last.getString().equals("undefined")) {
+                      child = first;
+                    }
+                  }
+                }
+                if (child.getType() == Token.GETPROP) {
+                  child.setType(Token.GETPROPNOWARN);
+                }
+                break;
               }
 
               case Token.SETNAME:

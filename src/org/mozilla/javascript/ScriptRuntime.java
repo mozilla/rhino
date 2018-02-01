@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -258,12 +258,8 @@ public class ScriptRuntime {
         }
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-            new LazilyLoadedCtor(scope, NativeSymbol.CLASS_NAME,
-                NativeSymbol.class.getName(),
-                sealed, true);
-
+            NativeSymbol.init(cx, scope, sealed);
         }
-
 
         if (scope instanceof TopLevel) {
             ((TopLevel)scope).cacheBuiltins();
@@ -342,21 +338,21 @@ public class ScriptRuntime {
      */
     static boolean isStrWhiteSpaceChar(int c)
     {
-    	switch (c) {
-    		case ' ': // <SP>
-    		case '\n': // <LF>
-    		case '\r': // <CR>
-    		case '\t': // <TAB>
-    		case '\u00A0': // <NBSP>
-    		case '\u000C': // <FF>
-    		case '\u000B': // <VT>
-    		case '\u2028': // <LS>
-    		case '\u2029': // <PS>
-        case '\uFEFF': // <BOM>
-    			return true;
-    		default:
-    			return Character.getType(c) == Character.SPACE_SEPARATOR;
-    	}
+        switch (c) {
+            case ' ': // <SP>
+            case '\n': // <LF>
+            case '\r': // <CR>
+            case '\t': // <TAB>
+            case '\u00A0': // <NBSP>
+            case '\u000C': // <FF>
+            case '\u000B': // <VT>
+            case '\u2028': // <LS>
+            case '\u2029': // <PS>
+            case '\uFEFF': // <BOM>
+                return true;
+            default:
+                return Character.getType(c) == Character.SPACE_SEPARATOR;
+        }
     }
 
     public static Boolean wrapBoolean(boolean b)
@@ -407,7 +403,7 @@ public class ScriptRuntime {
                 }
                 // ECMA extension
                 val = ((Scriptable) val).getDefaultValue(BooleanClass);
-                if (val instanceof Scriptable)
+                if ((val instanceof Scriptable) && !isSymbol(val))
                     throw errorWithClassName("msg.primitive.expected", val);
                 continue;
             }
@@ -436,9 +432,11 @@ public class ScriptRuntime {
                 return toNumber(val.toString());
             if (val instanceof Boolean)
                 return ((Boolean) val).booleanValue() ? 1 : +0.0;
+            if (val instanceof Symbol)
+                throw typeError0("msg.not.a.number");
             if (val instanceof Scriptable) {
                 val = ((Scriptable) val).getDefaultValue(NumberClass);
-                if (val instanceof Scriptable)
+                if ((val instanceof Scriptable) && !isSymbol(val))
                     throw errorWithClassName("msg.primitive.expected", val);
                 continue;
             }
@@ -464,14 +462,21 @@ public class ScriptRuntime {
 
     public static final Double NaNobj = new Double(NaN);
 
+    static double stringPrefixToNumber(String s, int start, int radix) {
+        return stringToNumber(s, start, s.length() - 1, radix, true);
+    }
+
+    static double stringToNumber(String s, int start, int end, int radix) {
+        return stringToNumber(s, start, end, radix, false);
+    }
+
     /*
      * Helper function for toNumber, parseInt, and TokenStream.getToken.
      */
-    static double stringToNumber(String s, int start, int radix) {
+    private static double stringToNumber(String source, int sourceStart, int sourceEnd, int radix, boolean isPrefix) {
         char digitMax = '9';
         char lowerCaseBound = 'a';
         char upperCaseBound = 'A';
-        int len = s.length();
         if (radix < 10) {
             digitMax = (char) ('0' + radix - 1);
         }
@@ -481,8 +486,8 @@ public class ScriptRuntime {
         }
         int end;
         double sum = 0.0;
-        for (end=start; end < len; end++) {
-            char c = s.charAt(end);
+        for (end = sourceStart; end <= sourceEnd; end++) {
+            char c = source.charAt(end);
             int newDigit;
             if ('0' <= c && c <= digitMax)
                 newDigit = c - '0';
@@ -490,11 +495,13 @@ public class ScriptRuntime {
                 newDigit = c - 'a' + 10;
             else if ('A' <= c && c < upperCaseBound)
                 newDigit = c - 'A' + 10;
+            else if (!isPrefix)
+                return NaN; // isn't a prefix but found unexpected char
             else
-                break;
+                break; // unexpected char
             sum = sum*radix + newDigit;
         }
-        if (start == end) {
+        if (sourceStart == end) { // stopped right at the beginning
             return NaN;
         }
         if (sum >= 9007199254740992.0) {
@@ -505,7 +512,7 @@ public class ScriptRuntime {
                  * answer.
                  */
                 try {
-                    return Double.parseDouble(s.substring(start, end));
+                    return Double.parseDouble(source.substring(sourceStart, end));
                 } catch (NumberFormatException nfe) {
                     return NaN;
                 }
@@ -537,12 +544,13 @@ public class ScriptRuntime {
                 boolean bit53 = false;
                 // bit54 is the 54th bit (the first dropped from the mantissa)
                 boolean bit54 = false;
+                int pos = sourceStart;
 
                 for (;;) {
                     if (bitShiftInChar == 1) {
-                        if (start == end)
+                        if (pos == end)
                             break;
-                        digit = s.charAt(start++);
+                        digit = source.charAt(pos++);
                         if ('0' <= digit && digit <= '9')
                             digit -= '0';
                         else if ('a' <= digit && digit <= 'z')
@@ -616,61 +624,93 @@ public class ScriptRuntime {
         return sum;
     }
 
-
     /**
      * ToNumber applied to the String type
      *
-     * See ECMA 9.3.1
+     * See the #sec-tonumber-applied-to-the-string-type section of ECMA
      */
     public static double toNumber(String s) {
-        int len = s.length();
+        final int len = s.length();
+
+        // Skip whitespace at the start
         int start = 0;
         char startChar;
         for (;;) {
             if (start == len) {
-                // Empty or contains only whitespace
+                // empty or contains only whitespace
                 return +0.0;
             }
             startChar = s.charAt(start);
-            if (!ScriptRuntime.isStrWhiteSpaceChar(startChar))
+            if (!ScriptRuntime.isStrWhiteSpaceChar(startChar)) {
+                // found first non-whitespace character
                 break;
+            }
             start++;
         }
 
+        // Skip whitespace at the end
+        int end = len - 1;
+        char endChar;
+        while (ScriptRuntime.isStrWhiteSpaceChar(endChar = s.charAt(end))) {
+            end--;
+        }
+
+        // Do not break scripts relying on old non-compliant conversion
+        // (see bug #368)
+        // 1. makes ToNumber parse only a valid prefix in hex literals (similar to 'parseInt()')
+        //    ToNumber('0x10 something') => 16
+        // 2. allows plus and minus signs for hexadecimal numbers
+        //    ToNumber('-0x10') => -16
+        // 3. disables support for binary ('0b10') and octal ('0o13') literals
+        //    ToNumber('0b1') => NaN
+        //    ToNumber('0o5') => NaN
+        final Context cx = Context.getCurrentContext();
+        final boolean oldParsingMode =
+                cx == null || cx.getLanguageVersion() < Context.VERSION_ES6;
+
+        // Handle non-base10 numbers
         if (startChar == '0') {
-            if (start + 2 < len) {
-                int c1 = s.charAt(start + 1);
-                if (c1 == 'x' || c1 == 'X') {
-                    // A hexadecimal number
-                    return stringToNumber(s, start + 2, 16);
+            if (start + 2 <= end) {
+                final char radixC = s.charAt(start + 1);
+                int radix = -1;
+                if (radixC == 'x' || radixC == 'X') {
+                    radix = 16;
+                } else if (!oldParsingMode && (radixC == 'o' || radixC == 'O')) {
+                    radix = 8;
+                } else if (!oldParsingMode && (radixC == 'b' || radixC == 'B')) {
+                    radix = 2;
+                }
+                if (radix != -1) {
+                    if (oldParsingMode) {
+                        return stringPrefixToNumber(s, start + 2, radix);
+                    }
+                    return stringToNumber(s, start + 2, end, radix);
                 }
             }
-        } else if (startChar == '+' || startChar == '-') {
-            if (start + 3 < len && s.charAt(start + 1) == '0') {
-                int c2 = s.charAt(start + 2);
-                if (c2 == 'x' || c2 == 'X') {
-                    // A hexadecimal number with sign
-                    double val = stringToNumber(s, start + 3, 16);
+        } else if (oldParsingMode && (startChar == '+' || startChar == '-')) {
+            // If in old parsing mode, check for a signed hexadecimal number
+            if (start + 3 <= end && s.charAt(start + 1) == '0') {
+                final char radixC = s.charAt(start + 2);
+                if (radixC == 'x' || radixC == 'X') {
+                    double val = stringPrefixToNumber(s, start + 3, 16);
                     return startChar == '-' ? -val : val;
                 }
             }
         }
 
-        int end = len - 1;
-        char endChar;
-        while (ScriptRuntime.isStrWhiteSpaceChar(endChar = s.charAt(end)))
-            end--;
         if (endChar == 'y') {
             // check for "Infinity"
-            if (startChar == '+' || startChar == '-')
+            if (startChar == '+' || startChar == '-') {
                 start++;
-            if (start + 7 == end && s.regionMatches(start, "Infinity", 0, 8))
+            }
+            if (start + 7 == end && s.regionMatches(start, "Infinity", 0, 8)) {
                 return startChar == '-'
-                    ? Double.NEGATIVE_INFINITY
-                    : Double.POSITIVE_INFINITY;
+                        ? Double.NEGATIVE_INFINITY
+                        : Double.POSITIVE_INFINITY;
+            }
             return NaN;
         }
-        // A non-hexadecimal, non-infinity number:
+        // A base10, non-infinity number:
         // just try a normal floating point conversion
         String sub = s.substring(start, end+1);
         // Quick test to check string contains only valid characters because
@@ -784,7 +824,7 @@ public class ScriptRuntime {
         return (sb == null) ? s : sb.toString();
     }
 
-    static boolean isValidIdentifierName(String s)
+    static boolean isValidIdentifierName(String s, Context cx, boolean isStrict)
     {
         int L = s.length();
         if (L == 0)
@@ -795,7 +835,7 @@ public class ScriptRuntime {
             if (!Character.isJavaIdentifierPart(s.charAt(i)))
                 return false;
         }
-        return !TokenStream.isKeyword(s);
+        return !TokenStream.isKeyword(s, cx.getLanguageVersion(), isStrict);
     }
 
     public static CharSequence toCharSequence(Object val) {
@@ -829,9 +869,12 @@ public class ScriptRuntime {
                 // about Numbers?
                 return numberToString(((Number)val).doubleValue(), 10);
             }
+            if (val instanceof Symbol) {
+                throw typeError0("msg.not.a.string");
+            }
             if (val instanceof Scriptable) {
                 val = ((Scriptable) val).getDefaultValue(StringClass);
-                if (val instanceof Scriptable) {
+                if ((val instanceof Scriptable) && !isSymbol(val)) {
                     throw errorWithClassName("msg.primitive.expected", val);
                 }
                 continue;
@@ -842,6 +885,10 @@ public class ScriptRuntime {
 
     static String defaultObjectToString(Scriptable obj)
     {
+        if (obj == null)
+            return "[object Null]";
+        if (Undefined.isUndefined(obj))
+            return "[object Undefined]";
         return "[object " + obj.getClassName() + ']';
     }
 
@@ -974,7 +1021,7 @@ public class ScriptRuntime {
                             continue;   // a property has been removed
                         if (i > 0)
                             result.append(", ");
-                        if (ScriptRuntime.isValidIdentifierName(strId)) {
+                        if (ScriptRuntime.isValidIdentifierName(strId, cx, cx.isStrictMode())) {
                             result.append(strId);
                         } else {
                             result.append('\'');
@@ -1059,6 +1106,11 @@ public class ScriptRuntime {
      */
     public static Scriptable toObject(Context cx, Scriptable scope, Object val)
     {
+        if (isSymbol(val)) {
+            NativeSymbol result = new NativeSymbol((NativeSymbol)val);
+            setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Symbol);
+            return result;
+        }
         if (val instanceof Scriptable) {
             return (Scriptable) val;
         }
@@ -1451,7 +1503,7 @@ public class ScriptRuntime {
     @Deprecated
     public static Object getObjectElem(Object obj, Object elem, Context cx)
     {
-    	return getObjectElem(obj, elem, cx, getTopCallScope(cx));
+        return getObjectElem(obj, elem, cx, getTopCallScope(cx));
     }
 
     /**
@@ -1474,6 +1526,8 @@ public class ScriptRuntime {
 
         if (obj instanceof XMLObject) {
             result = ((XMLObject)obj).get(cx, elem);
+        } else if (isSymbol(elem)) {
+            result = ScriptableObject.getProperty(obj, (Symbol)elem);
         } else {
             String s = toStringIdOrIndex(cx, elem);
             if (s == null) {
@@ -1633,6 +1687,8 @@ public class ScriptRuntime {
     {
         if (obj instanceof XMLObject) {
             ((XMLObject)obj).put(cx, elem, value);
+        } else if (isSymbol(elem)) {
+            ScriptableObject.putProperty(obj, (Symbol)elem, value);
         } else {
             String s = toStringIdOrIndex(cx, elem);
             if (s == null) {
@@ -1724,6 +1780,12 @@ public class ScriptRuntime {
     public static boolean deleteObjectElem(Scriptable target, Object elem,
                                            Context cx)
     {
+        if (isSymbol(elem)) {
+            SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(target);
+            Symbol s = (Symbol)elem;
+            so.delete(s);
+            return !so.has(s, target);
+        }
         String s = toStringIdOrIndex(cx, elem);
         if (s == null) {
             int index = lastIndexResult(cx);
@@ -1740,12 +1802,16 @@ public class ScriptRuntime {
     {
         boolean result;
 
-        String s = toStringIdOrIndex(cx, elem);
-        if (s == null) {
-            int index = lastIndexResult(cx);
-            result = ScriptableObject.hasProperty(target, index);
+        if (isSymbol(elem)) {
+            result = ScriptableObject.hasProperty(target, (Symbol)elem);
         } else {
-            result = ScriptableObject.hasProperty(target, s);
+            String s = toStringIdOrIndex(cx, elem);
+            if (s == null) {
+                int index = lastIndexResult(cx);
+                result = ScriptableObject.hasProperty(target, index);
+            } else {
+                result = ScriptableObject.hasProperty(target, s);
+            }
         }
 
         return result;
@@ -2199,10 +2265,15 @@ public class ScriptRuntime {
     }
 
     private static Object enumInitInOrder(Context cx, IdEnumeration x) {
-        if (x.obj == null || !ScriptableObject.hasProperty(x.obj, NativeSymbol.ITERATOR_PROPERTY)) {
+        if (!(x.obj instanceof ScriptableObject)) {
             throw typeError1("msg.not.iterable", toString(x.obj));
         }
-        Object iterator = ScriptableObject.getProperty(x.obj, NativeSymbol.ITERATOR_PROPERTY);
+
+        ScriptableObject xo = (ScriptableObject)x.obj;
+        if (!ScriptableObject.hasProperty(xo, SymbolKey.ITERATOR)) {
+            throw typeError1("msg.not.iterable", toString(x.obj));
+        }
+        Object iterator = ScriptableObject.getProperty(xo, SymbolKey.ITERATOR);
         if (!(iterator instanceof Callable)) {
             throw typeError1("msg.not.iterable", toString(x.obj));
         }
@@ -2257,8 +2328,10 @@ public class ScriptRuntime {
             if (x.used != null && x.used.has(id)) {
                 continue;
             }
-            if (id instanceof String) {
-                String strId = (String)id;
+            if (id instanceof Symbol) {
+                continue;
+            } else if (id instanceof String) {
+                String strId = (String) id;
                 if (!x.obj.has(strId, x.obj))
                     continue;   // must have been deleted
                 x.currentId = strId;
@@ -2319,12 +2392,17 @@ public class ScriptRuntime {
 
         Object result;
 
-        String s = toStringIdOrIndex(cx, x.currentId);
-        if (s == null) {
-            int index = lastIndexResult(cx);
-            result = x.obj.get(index, x.obj);
+        if (isSymbol(x.currentId)) {
+            SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(x.obj);
+            result = so.get((Symbol)x.currentId, x.obj);
         } else {
-            result = x.obj.get(s, x.obj);
+            String s = toStringIdOrIndex(cx, x.currentId);
+            if (s == null) {
+                int index = lastIndexResult(cx);
+                result = x.obj.get(index, x.obj);
+            } else {
+                result = x.obj.get(s, x.obj);
+            }
         }
 
         return result;
@@ -2412,18 +2490,31 @@ public class ScriptRuntime {
     public static Callable getElemFunctionAndThis(Object obj, Object elem,
                                                   Context cx, Scriptable scope)
     {
-        String str = toStringIdOrIndex(cx, elem);
-        if (str != null) {
-            return getPropFunctionAndThis(obj, str, cx, scope);
-        }
-        int index = lastIndexResult(cx);
+        Scriptable thisObj;
+        Object value;
 
-        Scriptable thisObj = toObjectOrNull(cx, obj, scope);
-        if (thisObj == null) {
-            throw undefCallError(obj, String.valueOf(index));
+        if (isSymbol(elem)) {
+            thisObj = toObjectOrNull(cx, obj, scope);
+            if (thisObj == null) {
+                throw undefCallError(obj, String.valueOf(elem));
+            }
+            value = ScriptableObject.getProperty(thisObj, (Symbol)elem);
+
+        } else {
+            String str = toStringIdOrIndex(cx, elem);
+            if (str != null) {
+                return getPropFunctionAndThis(obj, str, cx, scope);
+            }
+            int index = lastIndexResult(cx);
+
+            thisObj = toObjectOrNull(cx, obj, scope);
+            if (thisObj == null) {
+                throw undefCallError(obj, String.valueOf(elem));
+            }
+
+            value = ScriptableObject.getProperty(thisObj, index);
         }
 
-        Object value = ScriptableObject.getProperty(thisObj, index);
         if (!(value instanceof Callable)) {
             throw notFunctionError(value, elem);
         }
@@ -2647,13 +2738,27 @@ public class ScriptRuntime {
 
         return function.call(cx, scope, callThis, callArgs);
     }
+    
+    /**
+      * @return true if the passed in Scriptable looks like an array
+      */
+    private static boolean isArrayLike(Scriptable obj)
+    {
+        return obj != null && (
+            obj instanceof NativeArray ||
+            obj instanceof Arguments ||
+            ScriptableObject.hasProperty(obj, "length")
+        );
+    }
 
     static Object[] getApplyArguments(Context cx, Object arg1)
     {
         if (arg1 == null || arg1 == Undefined.instance) {
             return ScriptRuntime.emptyArgs;
-        } else if (arg1 instanceof NativeArray || arg1 instanceof Arguments) {
+        } else if ( arg1 instanceof Scriptable && isArrayLike((Scriptable) arg1) ) {
             return cx.getElements((Scriptable) arg1);
+        } else if( arg1 instanceof ScriptableObject ) {
+            return ScriptRuntime.emptyArgs;
         } else {
             throw ScriptRuntime.typeError0("msg.arg.isnt.array");
         }
@@ -2736,7 +2841,7 @@ public class ScriptRuntime {
         if (value == Undefined.instance)
             return "undefined";
         if (value instanceof ScriptableObject)
-        	return ((ScriptableObject) value).getTypeOf();
+            return ((ScriptableObject) value).getTypeOf();
         if (value instanceof Scriptable)
             return (value instanceof Callable) ? "function" : "object";
         if (value instanceof CharSequence)
@@ -2789,6 +2894,9 @@ public class ScriptRuntime {
             if (test != Scriptable.NOT_FOUND) {
                 return test;
             }
+        }
+        if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+            throw typeError0("msg.not.a.number");
         }
         if (val1 instanceof Scriptable)
             val1 = ((Scriptable) val1).getDefaultValue(null);
@@ -3009,7 +3117,7 @@ public class ScriptRuntime {
         }
         Scriptable s = (Scriptable)val;
         Object result = s.getDefaultValue(typeHint);
-        if (result instanceof Scriptable)
+        if ((result instanceof Scriptable) && !isSymbol(result))
             throw typeError0("msg.bad.default.value");
         return result;
     }
@@ -3097,6 +3205,38 @@ public class ScriptRuntime {
         }
     }
 
+    /*
+     * Implement "SameValue" as in ECMA 7.2.9. This is not the same as "eq" because it handles
+     * signed zeroes and NaNs differently.
+     */
+    public static boolean same(Object x, Object y) {
+        if (!typeof(x).equals(typeof(y))) {
+            return false;
+        }
+        if (x instanceof Number) {
+            if (isNaN(x) && isNaN(y)) {
+                return true;
+            }
+            return x.equals(y);
+        }
+        return eq(x, y);
+    }
+
+    public static boolean isNaN(Object n) {
+        if (n == NaNobj) {
+            return true;
+        }
+        if (n instanceof Double) {
+            Double d = (Double)n;
+            return ((d == NaN) || Double.isNaN(d));
+        }
+        if (n instanceof Float) {
+            Float f = (Float)n;
+            return ((f == NaN) || Float.isNaN(f));
+        }
+        return false;
+    }
+
     public static boolean isPrimitive(Object obj) {
         return obj == null || obj == Undefined.instance ||
                 (obj instanceof Number) || (obj instanceof String) ||
@@ -3113,7 +3253,9 @@ public class ScriptRuntime {
             } else if (y instanceof CharSequence) {
                 return x == toNumber(y);
             } else if (y instanceof Boolean) {
-                return x == (((Boolean)y).booleanValue() ? 1.0 : +0.0);
+                return x == (((Boolean) y).booleanValue() ? 1.0 : +0.0);
+            } else if (isSymbol(y)) {
+                return false;
             } else if (y instanceof Scriptable) {
                 if (y instanceof ScriptableObject) {
                     Object xval = wrapNumber(x);
@@ -3141,7 +3283,9 @@ public class ScriptRuntime {
             } else if (y instanceof Number) {
                 return toNumber(x.toString()) == ((Number)y).doubleValue();
             } else if (y instanceof Boolean) {
-                return toNumber(x.toString()) == (((Boolean)y).booleanValue() ? 1.0 : 0.0);
+                return toNumber(x.toString()) == (((Boolean) y).booleanValue() ? 1.0 : 0.0);
+            } else if (isSymbol(y)) {
+                return false;
             } else if (y instanceof Scriptable) {
                 if (y instanceof ScriptableObject) {
                     Object test = ((ScriptableObject)y).equivalentValues(x.toString());
@@ -3259,6 +3403,9 @@ public class ScriptRuntime {
             d1 = ((Number)val1).doubleValue();
             d2 = ((Number)val2).doubleValue();
         } else {
+            if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+                throw typeError0("msg.compare.symbol");
+            }
             if (val1 instanceof Scriptable)
                 val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
             if (val2 instanceof Scriptable)
@@ -3279,6 +3426,9 @@ public class ScriptRuntime {
             d1 = ((Number)val1).doubleValue();
             d2 = ((Number)val2).doubleValue();
         } else {
+            if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+                throw typeError0("msg.compare.symbol");
+            }
             if (val1 instanceof Scriptable)
                 val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
             if (val2 instanceof Scriptable)
@@ -3398,7 +3548,7 @@ public class ScriptRuntime {
 
     public static void addInstructionCount(Context cx, int instructionsToAdd)
     {
-    	cx.instructionCount += instructionsToAdd;
+        cx.instructionCount += instructionsToAdd;
         if (cx.instructionCount > cx.instructionThreshold)
         {
             cx.observeInstructionCount(cx.instructionCount);
@@ -4161,12 +4311,13 @@ public class ScriptRuntime {
 
     private static void warnAboutNonJSObject(Object nonJSObject)
     {
-        String message =
-"RHINO USAGE WARNING: Missed Context.javaToJS() conversion:\n"
-+"Rhino runtime detected object "+nonJSObject+" of class "+nonJSObject.getClass().getName()+" where it expected String, Number, Boolean or Scriptable instance. Please check your code for missing Context.javaToJS() call.";
-        Context.reportWarning(message);
-        // Just to be sure that it would be noticed
-        System.err.println(message);
+        final String omitParam = ScriptRuntime.getMessage0("params.omit.non.js.object.warning");
+        if (!"true".equals(omitParam)) {
+            String message = ScriptRuntime.getMessage2("msg.non.js.object.warning",nonJSObject,nonJSObject.getClass().getName());
+            Context.reportWarning(message);
+            // Just to be sure that it would be noticed
+            System.err.println(message);
+        }
     }
 
     public static RegExpProxy getRegExpProxy(Context cx)
@@ -4326,6 +4477,15 @@ public class ScriptRuntime {
                || sourceUrl.indexOf("(Function)") >= 0;
     }
 
+    /**
+     * Not all "NativeSymbol" instances are actually symbols. So account for that here rather than just
+     * by using an "instanceof" check.
+     */
+    static boolean isSymbol(Object obj) {
+        return (((obj instanceof NativeSymbol) &&
+                ((NativeSymbol)obj).isSymbol())) || (obj instanceof SymbolKey);
+    }
+
     private static RuntimeException errorWithClassName(String msg, Object val)
     {
         return Context.reportRuntimeError1(msg, val.getClass().getName());
@@ -4360,7 +4520,7 @@ public class ScriptRuntime {
       int[] linep = { 0 };
       String filename = Context.getSourcePositionFromStack(linep);
       final Scriptable error =  cx.newObject(scope, constructorName,
-    		  new Object[] { message, filename, Integer.valueOf(linep[0]) });
+        new Object[] { message, filename, Integer.valueOf(linep[0]) });
       return new JavaScriptException(error, filename, linep[0]);
     }
 

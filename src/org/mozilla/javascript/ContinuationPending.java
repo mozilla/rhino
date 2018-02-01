@@ -26,9 +26,10 @@ public class ContinuationPending extends RuntimeException {
      * users of the API should get continuations created on their behalf by
      * calling {@link org.mozilla.javascript.Context#executeScriptWithContinuations(Script, Scriptable)}
      * and {@link org.mozilla.javascript.Context#callFunctionWithContinuations(Callable, Scriptable, Object[])}
+     * Creating subclasses allowed.
      * @param continuationState Internal Continuation object
      */
-    ContinuationPending(NativeContinuation continuationState) {
+    protected ContinuationPending(NativeContinuation continuationState) {
         this.continuationState = continuationState;
     }
 
@@ -42,6 +43,14 @@ public class ContinuationPending extends RuntimeException {
         return continuationState;
     }
 
+    /**
+     * Set continuation object. Allows subclasses to modify the internal state.
+     * @param continuation object
+     */
+    public void setContinuation(NativeContinuation continuation) {
+        this.continuationState = continuation;
+    }
+    
     /**
      * @return internal continuation state
      */

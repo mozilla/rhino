@@ -249,7 +249,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
             }
         }
 
-        double d = ScriptRuntime.stringToNumber(s, start, radix);
+        double d = ScriptRuntime.stringPrefixToNumber(s, start, radix);
         return ScriptRuntime.wrapNumber(negative ? -d : d);
     }
 

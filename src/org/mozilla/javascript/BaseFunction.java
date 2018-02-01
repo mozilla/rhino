@@ -48,7 +48,7 @@ public class BaseFunction extends IdScriptableObject implements Function
     @Override
     public String getTypeOf()
     {
-    	return avoidObjectDetection() ? "undefined" : "function";
+        return avoidObjectDetection() ? "undefined" : "function";
     }
 
     /**

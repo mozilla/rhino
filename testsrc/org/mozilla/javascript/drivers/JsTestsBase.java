@@ -8,14 +8,30 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import junit.framework.TestCase;
-
+import org.junit.BeforeClass;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 
-public abstract class JsTestsBase extends TestCase {
+import static org.junit.Assert.*;
+
+public abstract class JsTestsBase {
     private int optimizationLevel;
+
+    private static ContextFactory threadSafeFactory;
+
+    @BeforeClass
+    public static void init() {
+        threadSafeFactory = new ContextFactory() {
+            @Override
+            protected boolean hasFeature(Context cx, int featureIndex) {
+                if (featureIndex == Context.FEATURE_THREAD_SAFE_OBJECTS) {
+                    return true;
+                }
+                return super.hasFeature(cx, featureIndex);
+            }
+        };
+    }
 
     public void setOptimizationLevel(int level) {
         this.optimizationLevel = level;
@@ -25,10 +41,9 @@ public abstract class JsTestsBase extends TestCase {
         // create a lightweight top-level scope
         Scriptable scope = cx.newObject(shared);
         scope.setPrototype(shared);
-        System.out.print(name + ": ");
         Object result;
         try {
-            result = cx.evaluateString(scope, source, "jstest input", 1, null);
+            result = cx.evaluateString(scope, source, "jstest input: " + name, 1, null);
         } catch (RuntimeException e) {
             e.printStackTrace(System.err);
             System.out.println("FAILED");
@@ -36,12 +51,10 @@ public abstract class JsTestsBase extends TestCase {
         }
         assertTrue(result != null);
         assertTrue("success".equals(result));
-        System.out.println("passed");
     }
 
     public void runJsTests(File[] tests) throws IOException {
-        ContextFactory factory = ContextFactory.getGlobal();
-        Context cx = factory.enterContext();
+        Context cx = threadSafeFactory.enterContext();
         try {
             cx.setOptimizationLevel(this.optimizationLevel);
             Scriptable shared = cx.initStandardObjects();

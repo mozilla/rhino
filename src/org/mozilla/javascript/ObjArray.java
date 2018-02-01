@@ -174,21 +174,21 @@ public class ObjArray implements Serializable
             case 0:
                 if (N == 0) { f0 = value; break; }
                 tmp = f0; f0 = value; value = tmp;
-            case 1:
+            /* fallthru */ case 1:
                 if (N == 1) { f1 = value; break; }
                 tmp = f1; f1 = value; value = tmp;
-            case 2:
+            /* fallthru */ case 2:
                 if (N == 2) { f2 = value; break; }
                 tmp = f2; f2 = value; value = tmp;
-            case 3:
+            /* fallthru */ case 3:
                 if (N == 3) { f3 = value; break; }
                 tmp = f3; f3 = value; value = tmp;
-            case 4:
+            /* fallthru */ case 4:
                 if (N == 4) { f4 = value; break; }
                 tmp = f4; f4 = value; value = tmp;
 
                 index = FIELDS_STORE_SIZE;
-            default:
+            /* fallthru */ default:
                 ensureCapacity(N + 1);
                 if (index != N) {
                     System.arraycopy(data, index - FIELDS_STORE_SIZE,
@@ -210,21 +210,21 @@ public class ObjArray implements Serializable
             case 0:
                 if (N == 0) { f0 = null; break; }
                 f0 = f1;
-            case 1:
+            /* fallthru */ case 1:
                 if (N == 1) { f1 = null; break; }
                 f1 = f2;
-            case 2:
+            /* fallthru */ case 2:
                 if (N == 2) { f2 = null; break; }
                 f2 = f3;
-            case 3:
+            /* fallthru */ case 3:
                 if (N == 3) { f3 = null; break; }
                 f3 = f4;
-            case 4:
+            /* fallthru */ case 4:
                 if (N == 4) { f4 = null; break; }
                 f4 = data[0];
 
                 index = FIELDS_STORE_SIZE;
-            default:
+            /* fallthru */ default:
                 if (index != N) {
                     System.arraycopy(data, index - FIELDS_STORE_SIZE + 1,
                                      data, index - FIELDS_STORE_SIZE,
@@ -264,12 +264,12 @@ public class ObjArray implements Serializable
             default:
                 System.arraycopy(data, 0, array, offset + FIELDS_STORE_SIZE,
                                  N - FIELDS_STORE_SIZE);
-            case 5: array[offset + 4] = f4;
-            case 4: array[offset + 3] = f3;
-            case 3: array[offset + 2] = f2;
-            case 2: array[offset + 1] = f1;
-            case 1: array[offset + 0] = f0;
-            case 0: break;
+            /* fallthru */ case 5: array[offset + 4] = f4;
+            /* fallthru */ case 4: array[offset + 3] = f3;
+            /* fallthru */ case 3: array[offset + 2] = f2;
+            /* fallthru */ case 2: array[offset + 1] = f1;
+            /* fallthru */ case 1: array[offset + 0] = f0;
+            /* fallthru */ case 0: break;
         }
     }
 

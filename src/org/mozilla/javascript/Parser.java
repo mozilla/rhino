@@ -6,7 +6,71 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.ast.*;  // we use basically every class
+import org.mozilla.javascript.ast.ArrayComprehension;
+import org.mozilla.javascript.ast.ArrayComprehensionLoop;
+import org.mozilla.javascript.ast.ArrayLiteral;
+import org.mozilla.javascript.ast.Assignment;
+import org.mozilla.javascript.ast.AstNode;
+import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.Block;
+import org.mozilla.javascript.ast.BreakStatement;
+import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.Comment;
+import org.mozilla.javascript.ast.ConditionalExpression;
+import org.mozilla.javascript.ast.ContinueStatement;
+import org.mozilla.javascript.ast.DestructuringForm;
+import org.mozilla.javascript.ast.DoLoop;
+import org.mozilla.javascript.ast.ElementGet;
+import org.mozilla.javascript.ast.EmptyExpression;
+import org.mozilla.javascript.ast.EmptyStatement;
+import org.mozilla.javascript.ast.ErrorNode;
+import org.mozilla.javascript.ast.ExpressionStatement;
+import org.mozilla.javascript.ast.ForInLoop;
+import org.mozilla.javascript.ast.ForLoop;
+import org.mozilla.javascript.ast.FunctionCall;
+import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.GeneratorExpression;
+import org.mozilla.javascript.ast.GeneratorExpressionLoop;
+import org.mozilla.javascript.ast.IdeErrorReporter;
+import org.mozilla.javascript.ast.IfStatement;
+import org.mozilla.javascript.ast.InfixExpression;
+import org.mozilla.javascript.ast.Jump;
+import org.mozilla.javascript.ast.KeywordLiteral;
+import org.mozilla.javascript.ast.Label;
+import org.mozilla.javascript.ast.LabeledStatement;
+import org.mozilla.javascript.ast.LetNode;
+import org.mozilla.javascript.ast.Loop;
+import org.mozilla.javascript.ast.Name;
+import org.mozilla.javascript.ast.NewExpression;
+import org.mozilla.javascript.ast.NumberLiteral;
+import org.mozilla.javascript.ast.ObjectLiteral;
+import org.mozilla.javascript.ast.ObjectProperty;
+import org.mozilla.javascript.ast.ParenthesizedExpression;
+import org.mozilla.javascript.ast.PropertyGet;
+import org.mozilla.javascript.ast.RegExpLiteral;
+import org.mozilla.javascript.ast.ReturnStatement;
+import org.mozilla.javascript.ast.Scope;
+import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.StringLiteral;
+import org.mozilla.javascript.ast.SwitchCase;
+import org.mozilla.javascript.ast.SwitchStatement;
+import org.mozilla.javascript.ast.Symbol;
+import org.mozilla.javascript.ast.ThrowStatement;
+import org.mozilla.javascript.ast.TryStatement;
+import org.mozilla.javascript.ast.UnaryExpression;
+import org.mozilla.javascript.ast.VariableDeclaration;
+import org.mozilla.javascript.ast.VariableInitializer;
+import org.mozilla.javascript.ast.WhileLoop;
+import org.mozilla.javascript.ast.WithStatement;
+import org.mozilla.javascript.ast.XmlDotQuery;
+import org.mozilla.javascript.ast.XmlElemRef;
+import org.mozilla.javascript.ast.XmlExpression;
+import org.mozilla.javascript.ast.XmlLiteral;
+import org.mozilla.javascript.ast.XmlMemberGet;
+import org.mozilla.javascript.ast.XmlPropRef;
+import org.mozilla.javascript.ast.XmlRef;
+import org.mozilla.javascript.ast.XmlString;
+import org.mozilla.javascript.ast.Yield;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -649,8 +713,8 @@ public class Parser
         pn.setLineno(ts.lineno);
         try {
             if (isExpressionClosure) {
-                ReturnStatement n = new ReturnStatement(ts.lineno);
-                n.setReturnValue(assignExpr());
+                AstNode returnValue = assignExpr();
+                ReturnStatement n = new ReturnStatement(returnValue.getPosition(), returnValue.getLength(), returnValue);
                 // expression closure flag is required on both nodes
                 n.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
                 pn.putProp(Node.EXPRESSION_CLOSURE_PROP, Boolean.TRUE);
@@ -744,7 +808,12 @@ public class Parser
                 destructuring.put(pname, expr);
             } else {
                 if (mustMatchToken(Token.NAME, "msg.no.parm")) {
-                    fnNode.addParam(createNameNode());
+                    Name paramNameNode = createNameNode();
+                    Comment jsdocNodeForName = getAndResetJsDoc();
+                    if (jsdocNodeForName != null) {
+                      paramNameNode.setJsDocNode(jsdocNodeForName);
+                    }
+                    fnNode.addParam(paramNameNode);
                     String paramName = ts.getString();
                     defineSymbol(Token.LP, paramName);
                     if (this.inUseStrictDirective) {
@@ -1520,7 +1589,12 @@ public class Parser
                     lp = ts.tokenBeg;
 
                 mustMatchToken(Token.NAME, "msg.bad.catchcond");
+
                 Name varName = createNameNode();
+                Comment jsdocNodeForName = getAndResetJsDoc();
+                if (jsdocNodeForName != null) {
+                  varName.setJsDocNode(jsdocNodeForName);
+                }
                 String varNameString = varName.getIdentifier();
                 if (inUseStrictDirective) {
                     if ("eval".equals(varNameString) ||
@@ -2172,7 +2246,12 @@ public class Parser
             return returnOrYield(tt, true);
         }
         AstNode pn = condExpr();
-        tt = peekToken();
+        boolean hasEOL = false;
+        tt = peekTokenOrEOL();
+        if (tt == Token.EOL) {
+            hasEOL = true;
+            tt = peekToken();
+        }
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
             consumeToken();
 
@@ -2193,7 +2272,7 @@ public class Parser
             if (currentJsDocComment != null) {
                 pn.setJsDocNode(getAndResetJsDoc());
             }
-        } else if (tt == Token.ARROW) {
+        } else if (!hasEOL && tt == Token.ARROW) {
             consumeToken();
             pn = arrowFunction(pn);
         }
@@ -2455,6 +2534,7 @@ public class Parser
                   return memberExprTail(true, xmlInitializer());
               }
               // Fall thru to the default handling of RELOP
+              // fallthru
 
           default:
               AstNode pn = memberExpr(true);
@@ -2713,7 +2793,7 @@ public class Parser
             int maybeName = nextToken();
             if (maybeName != Token.NAME
                     && !(compilerEnv.isReservedKeywordAsIdentifier()
-                    && TokenStream.isKeyword(ts.getString()))) {
+                    && TokenStream.isKeyword(ts.getString(), compilerEnv.getLanguageVersion(), inUseStrictDirective))) {
               reportError("msg.no.name.after.dot");
             }
 
@@ -2749,6 +2829,13 @@ public class Parser
               //          '@::attr', '@::*', '@*', '@*::attr', '@*::*'
               ref = attributeAccess();
               break;
+
+          case Token.RESERVED: {
+              String name = ts.getString();
+              saveNameTokenData(ts.tokenBeg, name, ts.lineno);
+              ref = propertyName(-1, name, memberTypeFlags);
+              break;
+          }
 
           default:
               if (compilerEnv.isReservedKeywordAsIdentifier()) {
@@ -2945,11 +3032,17 @@ public class Parser
           case Token.NUMBER: {
               consumeToken();
               String s = ts.getString();
-              if (this.inUseStrictDirective && ts.isNumberOctal()) {
-                  reportError("msg.no.octal.strict");
+              if (this.inUseStrictDirective && ts.isNumberOldOctal()) {
+                  reportError("msg.no.old.octal.strict");
+              }
+              if (ts.isNumberBinary()) {
+                  s = "0b"+s;
+              }
+              if (ts.isNumberOldOctal()) {
+                  s = "0"+s;
               }
               if (ts.isNumberOctal()) {
-                  s = "0"+s;
+                  s = "0o"+s;
               }
               if (ts.isNumberHex()) {
                   s = "0x"+s;
@@ -2981,9 +3074,6 @@ public class Parser
               consumeToken();
               pos = ts.tokenBeg; end = ts.tokenEnd;
               return new KeywordLiteral(pos, end - pos, tt);
-
-          case Token.RP:
-              return new EmptyExpression();
 
           case Token.RESERVED:
               consumeToken();
@@ -3017,7 +3107,7 @@ public class Parser
             Comment jsdocNode = getAndResetJsDoc();
             int lineno = ts.lineno;
             int begin = ts.tokenBeg;
-            AstNode e = expr();
+            AstNode e = (peekToken() == Token.RP ? new EmptyExpression(begin) : expr());
             if (peekToken() == Token.FOR) {
                 return generatorExpression(e, begin);
             }
@@ -3216,6 +3306,7 @@ public class Parser
                     isForOf = true;
                     break;
                 }
+                // fallthru
             default:
                 reportError("msg.in.after.for.name");
             }
@@ -3477,7 +3568,7 @@ public class Parser
 
           default:
               if (compilerEnv.isReservedKeywordAsIdentifier()
-                      && TokenStream.isKeyword(ts.getString())) {
+                      && TokenStream.isKeyword(ts.getString(), compilerEnv.getLanguageVersion(), inUseStrictDirective)) {
                   // convert keyword to property name, e.g. ({if: 1})
                   pname = createNameNode();
                   break;
@@ -3595,10 +3686,12 @@ public class Parser
             return;
         }
         boolean activation = false;
-        if ("arguments".equals(name)
-            || (compilerEnv.getActivationNames() != null
-                && compilerEnv.getActivationNames().contains(name)))
-        {
+        if ("arguments".equals(name) &&
+            // An arrow function not generate arguments. So it not need activation.
+            ((FunctionNode)currentScriptOrFn).getFunctionType() != FunctionNode.ARROW_FUNCTION) {
+            activation = true;
+        } else if (compilerEnv.getActivationNames() != null
+                && compilerEnv.getActivationNames().contains(name)) {
             activation = true;
         } else if ("length".equals(name)) {
             if (token == Token.GETPROP
@@ -4100,5 +4193,9 @@ public class Parser
 
     public void setDefaultUseStrictDirective(boolean useStrict) {
         defaultUseStrictDirective = useStrict;
+    }
+
+    public boolean inUseStrictDirective() {
+        return inUseStrictDirective;
     }
 }

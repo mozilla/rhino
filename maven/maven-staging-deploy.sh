@@ -7,9 +7,9 @@ echo "Deploying ${vers}"
 pom=maven-pom.xml
 jsjar=../buildGradle/libs/rhino-${vers}.jar
 echo "Installing ${jsjar}"
-srczip=../rhino${vers}-sources.zip
+srczip=../buildGradle/libs/rhino-${vers}-sources.jar
 echo "Sources are ${srczip}"
-doczip=../build/rhino${vers}/javadoc.zip
+doczip=../buildGradle/libs/rhino-${vers}-javadoc.jar
 echo "Javadoc is ${doczip}"
 
 if [ ! -f $jsjar ]
@@ -20,7 +20,7 @@ fi
 
 if [ ! -f $srczip ]
 then
-  echo "Missing rhino${vers}-sources.zip. Run \"ant source-zip\"."
+  echo "Missing rhino-${vers}-sources.zip. Run \"ant source-zip\"."
   exit 2
 fi
 

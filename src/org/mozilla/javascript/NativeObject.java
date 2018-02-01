@@ -6,13 +6,7 @@
 
 package org.mozilla.javascript;
 
-import java.util.AbstractCollection;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class implements the Object native object.
@@ -52,6 +46,8 @@ public class NativeObject extends IdScriptableObject implements Map
                 "keys", 1);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyNames,
                 "getOwnPropertyNames", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertySymbols,
+                "getOwnPropertySymbols", 1);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_getOwnPropertyDescriptor,
                 "getOwnPropertyDescriptor", 2);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperty,
@@ -72,6 +68,10 @@ public class NativeObject extends IdScriptableObject implements Map
                 "seal", 1);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_freeze,
                 "freeze", 1);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_assign,
+                "assign", 2);
+        addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_is,
+                "is", 2);
         super.fillConstructorProperties(ctor);
     }
 
@@ -152,36 +152,50 @@ public class NativeObject extends IdScriptableObject implements Map
             return thisObj;
 
           case Id_hasOwnProperty: {
-            boolean result;
-            Object arg = args.length < 1 ? Undefined.instance : args[0];
-            String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-            if (s == null) {
-                int index = ScriptRuntime.lastIndexResult(cx);
-                result = thisObj.has(index, thisObj);
-            } else {
-                result = thisObj.has(s, thisObj);
-            }
-            return ScriptRuntime.wrapBoolean(result);
+              boolean result;
+              Object arg = args.length < 1 ? Undefined.instance : args[0];
+              if (arg instanceof Symbol) {
+                  result = ensureSymbolScriptable(thisObj).has((Symbol) arg, thisObj);
+              } else {
+                  String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
+                  if (s == null) {
+                      int index = ScriptRuntime.lastIndexResult(cx);
+                      result = thisObj.has(index, thisObj);
+                  } else {
+                      result = thisObj.has(s, thisObj);
+                  }
+              }
+              return ScriptRuntime.wrapBoolean(result);
           }
 
           case Id_propertyIsEnumerable: {
             boolean result;
             Object arg = args.length < 1 ? Undefined.instance : args[0];
-            String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-            if (s == null) {
-                int index = ScriptRuntime.lastIndexResult(cx);
-                result = thisObj.has(index, thisObj);
+
+            if (arg instanceof Symbol) {
+                result = ((SymbolScriptable)thisObj).has((Symbol)arg, thisObj);
                 if (result && thisObj instanceof ScriptableObject) {
                     ScriptableObject so = (ScriptableObject)thisObj;
-                    int attrs = so.getAttributes(index);
+                    int attrs = so.getAttributes((Symbol)arg);
                     result = ((attrs & ScriptableObject.DONTENUM) == 0);
                 }
             } else {
-                result = thisObj.has(s, thisObj);
-                if (result && thisObj instanceof ScriptableObject) {
-                    ScriptableObject so = (ScriptableObject)thisObj;
-                    int attrs = so.getAttributes(s);
-                    result = ((attrs & ScriptableObject.DONTENUM) == 0);
+                String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
+                if (s == null) {
+                    int index = ScriptRuntime.lastIndexResult(cx);
+                    result = thisObj.has(index, thisObj);
+                    if (result && thisObj instanceof ScriptableObject) {
+                        ScriptableObject so = (ScriptableObject) thisObj;
+                        int attrs = so.getAttributes(index);
+                        result = ((attrs & ScriptableObject.DONTENUM) == 0);
+                    }
+                } else {
+                    result = thisObj.has(s, thisObj);
+                    if (result && thisObj instanceof ScriptableObject) {
+                        ScriptableObject so = (ScriptableObject) thisObj;
+                        int attrs = so.getAttributes(s);
+                        result = ((attrs & ScriptableObject.DONTENUM) == 0);
+                    }
                 }
             }
             return ScriptRuntime.wrapBoolean(result);
@@ -266,13 +280,13 @@ public class NativeObject extends IdScriptableObject implements Map
           case ConstructorId_getPrototypeOf:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                Scriptable obj = ensureScriptable(arg);
+                Scriptable obj = getCompatibleObject(cx, scope, arg);
                 return obj.getPrototype();
               }
           case ConstructorId_keys:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                Scriptable obj = ensureScriptable(arg);
+                Scriptable obj = getCompatibleObject(cx, scope, arg);
                 Object[] ids = obj.getIds();
                 for (int i = 0; i < ids.length; i++) {
                   ids[i] = ScriptRuntime.toString(ids[i]);
@@ -282,23 +296,38 @@ public class NativeObject extends IdScriptableObject implements Map
           case ConstructorId_getOwnPropertyNames:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
-                ScriptableObject obj = ensureScriptableObject(arg);
-                Object[] ids = obj.getAllIds();
+                Scriptable s = getCompatibleObject(cx, scope, arg);
+                ScriptableObject obj = ensureScriptableObject(s);
+                Object[] ids = obj.getIds(true, false);
                 for (int i = 0; i < ids.length; i++) {
                   ids[i] = ScriptRuntime.toString(ids[i]);
                 }
                 return cx.newArray(scope, ids);
               }
+            case ConstructorId_getOwnPropertySymbols:
+            {
+                Object arg = args.length < 1 ? Undefined.instance : args[0];
+                Scriptable s = getCompatibleObject(cx, scope, arg);
+                ScriptableObject obj = ensureScriptableObject(s);
+                Object[] ids = obj.getIds(true, true);
+                ArrayList<Object> syms = new ArrayList<Object>();
+                for (int i = 0; i < ids.length; i++) {
+                    if (ids[i] instanceof Symbol) {
+                        syms.add(ids[i]);
+                    }
+                }
+                return cx.newArray(scope, syms.toArray());
+            }
           case ConstructorId_getOwnPropertyDescriptor:
               {
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 // TODO(norris): There's a deeper issue here if
                 // arg instanceof Scriptable. Should we create a new
                 // interface to admit the new ECMAScript 5 operations?
-                ScriptableObject obj = ensureScriptableObject(arg);
+                Scriptable s = getCompatibleObject(cx, scope, arg);
+                ScriptableObject obj = ensureScriptableObject(s);
                 Object nameArg = args.length < 2 ? Undefined.instance : args[1];
-                String name = ScriptRuntime.toString(nameArg);
-                Scriptable desc = obj.getOwnPropertyDescriptor(cx, name);
+                Scriptable desc = obj.getOwnPropertyDescriptor(cx, nameArg);
                 return desc == null ? Undefined.instance : desc;
               }
           case ConstructorId_defineProperty:
@@ -415,10 +444,56 @@ public class NativeObject extends IdScriptableObject implements Map
                 return obj;
               }
 
+          case ConstructorId_assign:
+          {
+            if (args.length < 1) {
+              throw ScriptRuntime.typeError1("msg.incompat.call", "assign");
+            }
+            Scriptable t = ScriptRuntime.toObject(cx, thisObj, args[0]);
+            for (int i = 1; i < args.length; i++) {
+              if ((args[i] == null) || Undefined.instance.equals(args[i])) {
+                continue;
+              }
+              Scriptable s = ScriptRuntime.toObject(cx, thisObj, args[i]);
+              Object[] ids = s.getIds();
+              for (Object key : ids) {
+                if (key instanceof String) {
+                  Object val = s.get((String) key, t);
+                  if ((val != Scriptable.NOT_FOUND) && (val != Undefined.instance)) {
+                    t.put((String) key, t, val);
+                  }
+                } else if (key instanceof Number) {
+                  int ii = ScriptRuntime.toInt32(key);
+                  Object val = s.get(ii, t);
+                  if ((val != Scriptable.NOT_FOUND) && (val != Undefined.instance)) {
+                    t.put(ii, t, val);
+                  }
+                }
+              }
+            }
+            return t;
+          }
+
+          case ConstructorId_is:
+          {
+            Object a1 = args.length < 1 ? Undefined.instance : args[0];
+            Object a2 = args.length < 2 ? Undefined.instance : args[1];
+            return ScriptRuntime.wrapBoolean(ScriptRuntime.same(a1, a2));
+          }
+
 
           default:
             throw new IllegalArgumentException(String.valueOf(id));
         }
+    }
+
+    private Scriptable getCompatibleObject(Context cx, Scriptable scope, Object arg)
+    {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            Scriptable s = ScriptRuntime.toObject(cx, scope, arg);
+            return ensureScriptable(s);
+        }
+        return ensureScriptable(arg);
     }
 
     // methods implementing java.util.Map
@@ -677,6 +752,9 @@ public class NativeObject extends IdScriptableObject implements Map
         ConstructorId_isFrozen = -11,
         ConstructorId_seal = -12,
         ConstructorId_freeze = -13,
+        ConstructorId_getOwnPropertySymbols = -14,
+        ConstructorId_assign = -15,
+        ConstructorId_is = -16,
 
         Id_constructor           = 1,
         Id_toString              = 2,

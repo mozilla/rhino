@@ -417,20 +417,18 @@ public class Global extends ImporterTopLevel
      * (since 2 tests were executed).
      */
     public static Object doctest(Context cx, Scriptable thisObj,
-                                 Object[] args, Function funObj)
-    {
-    	if (args.length == 0) {
-    		return Boolean.FALSE;
-    	}
-    	String session = Context.toString(args[0]);
+        Object[] args, Function funObj) {
+        if (args.length == 0) {
+            return Boolean.FALSE;
+        }
+        String session = Context.toString(args[0]);
         Global global = getInstance(funObj);
         return new Integer(global.runDoctest(cx, global, session, null, 0));
     }
 
     public int runDoctest(Context cx, Scriptable scope, String session,
-                          String sourceName, int lineNumber)
-    {
-        doctestCanonicalizations = new HashMap<String,String>();
+        String sourceName, int lineNumber) {
+        doctestCanonicalizations = new HashMap<String, String>();
         String[] lines = session.split("\r\n?|\n");
         String prompt0 = this.prompts[0].trim();
         String prompt1 = this.prompts[1].trim();
@@ -439,62 +437,61 @@ public class Global extends ImporterTopLevel
         while (i < lines.length && !lines[i].trim().startsWith(prompt0)) {
             i++; // skip lines that don't look like shell sessions
         }
-    	while (i < lines.length) {
-    		String inputString = lines[i].trim().substring(prompt0.length());
+        while (i < lines.length) {
+            String inputString = lines[i].trim().substring(prompt0.length());
             inputString += "\n";
-    		i++;
-    		while (i < lines.length && lines[i].trim().startsWith(prompt1)) {
-    			inputString += lines[i].trim().substring(prompt1.length());
-    			inputString += "\n";
-    			i++;
-    		}
+            i++;
+            while (i < lines.length && lines[i].trim().startsWith(prompt1)) {
+                inputString += lines[i].trim().substring(prompt1.length());
+                inputString += "\n";
+                i++;
+            }
             String expectedString = "";
             while (i < lines.length &&
-                   !lines[i].trim().startsWith(prompt0))
-            {
+                !lines[i].trim().startsWith(prompt0)) {
                 expectedString += lines[i] + "\n";
                 i++;
             }
-    		PrintStream savedOut = this.getOut();
-    		PrintStream savedErr = this.getErr();
-    		ByteArrayOutputStream out = new ByteArrayOutputStream();
-    		ByteArrayOutputStream err = new ByteArrayOutputStream();
-    		this.setOut(new PrintStream(out));
-    		this.setErr(new PrintStream(err));
-    		String resultString = "";
-    		ErrorReporter savedErrorReporter = cx.getErrorReporter();
-    		cx.setErrorReporter(new ToolErrorReporter(false, this.getErr()));
-    		try {
-    		    testCount++;
-	    		Object result = cx.evaluateString(scope, inputString,
-	    				            "doctest input", 1, null);
-	            if (result != Context.getUndefinedValue() &&
-	                    !(result instanceof Function &&
-	                      inputString.trim().startsWith("function")))
-	            {
-	            	resultString = Context.toString(result);
-	            }
-    		} catch (RhinoException e) {
+            PrintStream savedOut = this.getOut();
+            PrintStream savedErr = this.getErr();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ByteArrayOutputStream err = new ByteArrayOutputStream();
+            this.setOut(new PrintStream(out));
+            this.setErr(new PrintStream(err));
+            String resultString = "";
+            ErrorReporter savedErrorReporter = cx.getErrorReporter();
+            cx.setErrorReporter(new ToolErrorReporter(false, this.getErr()));
+            try {
+                testCount++;
+                Object result = cx.evaluateString(scope, inputString,
+                    "doctest input", 1, null);
+                if (result != Context.getUndefinedValue() &&
+                    !(result instanceof Function &&
+                        inputString.trim().startsWith("function"))) {
+                    resultString = Context.toString(result);
+                }
+            } catch (RhinoException e) {
                 ToolErrorReporter.reportException(cx.getErrorReporter(), e);
-    		} finally {
-    		    this.setOut(savedOut);
-    		    this.setErr(savedErr);
-        		cx.setErrorReporter(savedErrorReporter);
-    			resultString += err.toString() + out.toString();
-    		}
-    		if (!doctestOutputMatches(expectedString, resultString)) {
-    		    String message = "doctest failure running:\n" +
+            } finally {
+                this.setOut(savedOut);
+                this.setErr(savedErr);
+                cx.setErrorReporter(savedErrorReporter);
+                resultString += err.toString() + out.toString();
+            }
+            if (!doctestOutputMatches(expectedString, resultString)) {
+                String message = "doctest failure running:\n" +
                     inputString +
                     "expected: " + expectedString +
                     "actual: " + resultString + "\n";
-    		    if (sourceName != null)
+                if (sourceName != null) {
                     throw Context.reportRuntimeError(message, sourceName,
-                            lineNumber+i-1, null, 0);
-    		    else
+                        lineNumber + i - 1, null, 0);
+                } else {
                     throw Context.reportRuntimeError(message);
-    		}
-    	}
-    	return testCount;
+                }
+            }
+        }
+        return testCount;
     }
 
     /**

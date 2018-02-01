@@ -1292,8 +1292,6 @@ js1_5/Array/regress-456845.js
 js1_5/Array/regress-465980-01.js
 js1_5/Array/regress-474529.js
 js1_5/Array/regress-94257.js
-js1_5/Array/regress-99120-01.js
-js1_5/Array/regress-99120-02.js
 js1_5/Date/regress-188211.js
 js1_5/Date/regress-301738-01.js
 js1_5/Date/regress-309925-01.js
@@ -1484,7 +1482,6 @@ js1_5/Regress/regress-344804.js
 js1_5/Regress/regress-344959.js
 js1_5/Regress/regress-346237.js
 js1_5/Regress/regress-346801.js
-js1_5/Regress/regress-347306-01.js
 js1_5/Regress/regress-349482-01.js
 js1_5/Regress/regress-349482-02.js
 js1_5/Regress/regress-349592.js
@@ -1638,9 +1635,7 @@ js1_5/Regress/regress-76054.js
 js1_5/Regress/regress-82306.js
 js1_5/Regress/regress-89474.js
 js1_5/Regress/regress-90445.js
-js1_5/Regress/regress-96128-n.js
 js1_5/Regress/regress-96526-001.js
-js1_5/Regress/regress-98901.js
 js1_5/Scope/regress-154693.js
 js1_5/Scope/regress-184107.js
 js1_5/Scope/regress-185485.js
@@ -1658,12 +1653,7 @@ js1_5/Scope/scope-003.js
 js1_5/Scope/scope-004.js
 js1_5/String/regress-107771.js
 js1_5/String/regress-112626.js
-js1_5/String/regress-157334-01.js
 js1_5/String/regress-179068.js
-js1_5/String/regress-314890.js
-js1_5/String/regress-322772.js
-js1_5/String/regress-56940-01.js
-js1_5/String/regress-56940-02.js
 js1_5/decompilation/regress-344120.js
 js1_5/decompilation/regress-349489.js
 js1_5/decompilation/regress-349663.js
@@ -1740,7 +1730,6 @@ js1_5/extensions/regress-341956-01.js
 js1_5/extensions/regress-341956-02.js
 js1_5/extensions/regress-341956-03.js
 js1_5/extensions/regress-346494-01.js
-js1_5/extensions/regress-347306-02.js
 js1_5/extensions/regress-350312-01.js
 js1_5/extensions/regress-350312-02.js
 js1_5/extensions/regress-350312-03.js
@@ -2408,3 +2397,4 @@ lc3/JavaObject/JavaObjectToShort-003-n.js
 lc3/JavaObject/JavaObjectToShort-004-n.js
 lc3/StringMethods/string-001.js
 lc3/instanceof/instanceof-001.js
+bigo-test.js

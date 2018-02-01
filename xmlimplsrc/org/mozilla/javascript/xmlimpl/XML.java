@@ -33,7 +33,7 @@ class XML extends XMLObjectImpl {
         //    We use the underlying document structure if the node is not
         //    "standalone," but we need to just replace the XmlNode instance
         //    otherwise
-        if (this.node.parent() != null || false) {
+        if (this.node.parent() != null) {
             this.node.replaceWith(value.node);
         } else {
             this.initialize(value.node);

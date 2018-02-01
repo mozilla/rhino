@@ -4,6 +4,7 @@
 
 package org.mozilla.javascript.tests;
 
+import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.ast.*;
 
 import org.mozilla.javascript.CompilerEnvirons;
@@ -1037,6 +1038,29 @@ public class ParserTest extends TestCase {
         assertNotNull(st.getJsDoc());
     }
 
+    public void testJSDocAttachment17() {
+      AstRoot root = parse(
+      "try { throw 'a'; } catch (/** @type {string} */ e) {\n" +
+      "}\n");
+      assertNotNull(root.getComments());
+      assertEquals(1, root.getComments().size());
+
+      TryStatement tryNode = (TryStatement) root.getFirstChild();
+      CatchClause catchNode = tryNode.getCatchClauses().get(0);
+      assertNotNull(catchNode.getVarName().getJsDoc());
+    }
+
+    public void testJSDocAttachment18() {
+      AstRoot root = parse(
+      "function f(/** @type {string} */ e) {}\n");
+      assertNotNull(root.getComments());
+      assertEquals(1, root.getComments().size());
+
+      FunctionNode function = (FunctionNode) root.getFirstChild();
+      AstNode param = function.getParams().get(0);
+      assertNotNull(param.getJsDoc());
+    }
+
     public void testParsingWithoutJSDoc() {
         AstRoot root = parse("var a = /** @type number */(x);", false);
         assertNotNull(root.getComments());
@@ -1181,6 +1205,56 @@ public class ParserTest extends TestCase {
 
       // reserved words ok.
       parse("({import:1}).import;");
+    }
+
+    public void testParseErrorRecovery() {
+        expectErrorWithRecovery(")", 1);
+    }
+
+    public void testParseErrorRecovery2() {
+        expectErrorWithRecovery("print('Hi');)foo('bar');Silly", 2);
+    }
+
+    public void testParseErrorRecovery3() {
+        expectErrorWithRecovery(")))", 5);
+    }
+
+    // Check that error recovery is working by returning a parsing exception, but only
+    // when thrown by runtimeError. This is testing a regression in which the error recovery in
+    // certain cases would trigger an infinite loop. We do this by counting the number
+    // of parsing errors that are expected.
+    private void expectErrorWithRecovery(String code, int maxErrors) {
+        environment.setRecoverFromErrors(true);
+        environment.setErrorReporter(new ErrorReporter()
+        {
+            private int errorCount = 0;
+
+            @Override
+            public void warning(String msg, String name, int line, String str, int col)
+            {
+                throw new AssertionError("Not expecting a warning");
+            }
+
+            @Override
+            public EvaluatorException runtimeError(String msg, String name, int line, String str, int col)
+            {
+                return new EvaluatorException(msg, name, line, str, col);
+            }
+
+            @Override
+            public void error(String msg, String name, int line, String str, int col)
+            {
+                assertTrue(++errorCount <= maxErrors);
+            }
+        });
+
+        Parser p = new Parser(environment);
+        try {
+            p.parse(code, code, 0);
+            assertFalse("Expected an EvaluatorException", true);
+        } catch (EvaluatorException ee) {
+            // Normal failure
+        }
     }
 
     public void testReportError() {

@@ -157,7 +157,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     @Override
     public String getTypeOf()
     {
-    	return "object";
+        return "object";
     }
 
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
@@ -606,7 +606,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     break;
                 case 'u':
                     nDigits += 2;
-                    // fall thru...
+                    // fallthru
                 case 'x':
                     n = 0;
                     for (i = 0; (i < nDigits) && (index < end); i++) {
@@ -948,9 +948,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 /* UnicodeEscapeSequence */
                 case 'u':
                     nDigits += 2;
-                    // fall thru...
-                /* HexEscapeSequence */
-                case 'x':
+                /* fallthru */ case 'x':  /* HexEscapeSequence */
                     {
                         int n = 0;
                         int i;
@@ -1144,32 +1142,33 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     ++state.cp;
                     min = getDecimalValue(c, state, 0xFFFF,
                                           "msg.overlarge.min");
-                    c = src[state.cp];
-                    if (c == ',') {
-                        c = src[++state.cp];
-                        if (isDigit(c)) {
-                            ++state.cp;
-                            max = getDecimalValue(c, state, 0xFFFF,
-                                                  "msg.overlarge.max");
+                    if (state.cp < src.length) {
+                        c = src[state.cp];
+                        if (c == ',' && ++state.cp < src.length) {
                             c = src[state.cp];
-                            if (min > max) {
-                                reportError("msg.max.lt.min",
-                                            String.valueOf(src[state.cp]));
-                                return false;
+                            if (isDigit(c) && ++state.cp < src.length) {
+                                max = getDecimalValue(c, state, 0xFFFF,
+                                                      "msg.overlarge.max");
+                                c = src[state.cp];
+                                if (min > max) {
+                                    reportError("msg.max.lt.min",
+                                                String.valueOf(src[state.cp]));
+                                    return false;
+                                }
                             }
+                        } else {
+                            max = min;
                         }
-                    } else {
-                        max = min;
-                    }
-                    /* balance '{' */
-                    if (c == '}') {
-                        state.result = new RENode(REOP_QUANT);
-                        state.result.min = min;
-                        state.result.max = max;
-                        // QUANT, <min>, <max>, <parencount>,
-                        // <parenindex>, <next> ... <ENDCHILD>
-                        state.progLength += 12;
-                        hasQ = true;
+                        /* balance '{' */
+                        if (c == '}') {
+                            state.result = new RENode(REOP_QUANT);
+                            state.result.min = min;
+                            state.result.max = max;
+                            // QUANT, <min>, <max>, <parencount>,
+                            // <parenindex>, <next> ... <ENDCHILD>
+                            state.progLength += 12;
+                            hasQ = true;
+                        }
                     }
                 }
                 if (!hasQ) {
@@ -1601,7 +1600,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     break;
                 case 'u':
                     nDigits += 2;
-                    // fall thru
+                    // fallthru
                 case 'x':
                     n = 0;
                     for (i = 0; (i < nDigits) && (src < end); i++) {
@@ -2007,6 +2006,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                         }
                     }
                     /* else false thru... */
+                    // fallthru
                     case REOP_ALT:
                     {
                         int nextpc = pc + getOffset(program, pc);
@@ -2401,7 +2401,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
             gData.cp = i;
             gData.skipped = i - start;
             for (int j = 0; j < re.parenCount; j++) {
-                gData.parens[j] = -1l;
+                gData.parens[j] = -1L;
             }
             boolean result = executeREBytecode(gData, input, end);
 
@@ -2471,14 +2471,13 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
         if (re.parenCount == 0) {
             res.parens = null;
-            res.lastParen = SubString.emptySubString;
+            res.lastParen = new SubString();
         } else {
             SubString parsub = null;
             int num;
             res.parens = new SubString[re.parenCount];
             for (num = 0; num < re.parenCount; num++) {
                 int cap_index = gData.parensIndex(num);
-                String parstr;
                 if (cap_index != -1) {
                     int cap_length = gData.parensLength(num);
                     parsub = new SubString(str, cap_index, cap_length);

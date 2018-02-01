@@ -74,12 +74,24 @@ class TokenStream
         return "";
     }
 
-    static boolean isKeyword(String s)
+    static boolean isKeyword(String s, int version, boolean isStrict)
     {
-        return Token.EOF != stringToKeyword(s);
+        return Token.EOF != stringToKeyword(s, version, isStrict);
     }
 
-    private static int stringToKeyword(String name)
+    private static int stringToKeyword(String name, int version, boolean isStrict)
+    {
+        if (version < Context.VERSION_ES6) {
+            return stringToKeywordForJS(name);
+        } else {
+            return stringToKeywordForES(name, isStrict);
+        }
+    }
+
+    /**
+     * JavaScript 1.8 and earlier
+     */
+    private static int stringToKeywordForJS(String name)
     {
 // #string_id_map#
 // The following assumes that Token.EOF == 0
@@ -255,6 +267,173 @@ class TokenStream
         return id & 0xff;
     }
 
+    /**
+     * ECMAScript 6.
+     */
+    private static int stringToKeywordForES(String name, boolean isStrict)
+    {
+// #string_id_map#
+// The following assumes that Token.EOF == 0
+        final int
+            // 11.6.2.1 Keywords (ECMAScript2015)
+            Id_break         = Token.BREAK,
+            Id_case          = Token.CASE,
+            Id_catch         = Token.CATCH,
+            Id_class         = Token.RESERVED,
+            Id_const         = Token.CONST,
+            Id_continue      = Token.CONTINUE,
+            Id_debugger      = Token.DEBUGGER,
+            Id_default       = Token.DEFAULT,
+            Id_delete        = Token.DELPROP,
+            Id_do            = Token.DO,
+            Id_else          = Token.ELSE,
+            Id_export        = Token.RESERVED,
+            Id_extends       = Token.RESERVED,
+            Id_finally       = Token.FINALLY,
+            Id_for           = Token.FOR,
+            Id_function      = Token.FUNCTION,
+            Id_if            = Token.IF,
+            Id_import        = Token.RESERVED,
+            Id_in            = Token.IN,
+            Id_instanceof    = Token.INSTANCEOF,
+            Id_new           = Token.NEW,
+            Id_return        = Token.RETURN,
+            Id_super         = Token.RESERVED,
+            Id_switch        = Token.SWITCH,
+            Id_this          = Token.THIS,
+            Id_throw         = Token.THROW,
+            Id_try           = Token.TRY,
+            Id_typeof        = Token.TYPEOF,
+            Id_var           = Token.VAR,
+            Id_void          = Token.VOID,
+            Id_while         = Token.WHILE,
+            Id_with          = Token.WITH,
+            Id_yield         = Token.YIELD,
+
+            // 11.6.2.2 Future Reserved Words
+            Id_await         = Token.RESERVED,
+            Id_enum          = Token.RESERVED,
+
+            // 11.6.2.2 NOTE Strict Future Reserved Words
+            Id_implements    = Token.RESERVED,
+            Id_interface     = Token.RESERVED,
+            Id_package       = Token.RESERVED,
+            Id_private       = Token.RESERVED,
+            Id_protected     = Token.RESERVED,
+            Id_public        = Token.RESERVED,
+
+            // 11.8 Literals
+            Id_false         = Token.FALSE,
+            Id_null          = Token.NULL,
+            Id_true          = Token.TRUE,
+
+            // Non ReservedWord, but Non IdentifierName in strict mode code.
+            // 12.1.1 Static Semantics: Early Errors
+            Id_let           = Token.LET,   // TODO : Valid IdentifierName in non-strict mode.
+            Id_static        = Token.RESERVED; 
+
+        int id;
+        String s = name;
+// #generated# Last update: 2007-04-18 13:53:30 PDT
+        L0: { id = 0; String X = null; int c;
+            L: switch (s.length()) {
+            case 2: c=s.charAt(1);
+                if (c=='f') { if (s.charAt(0)=='i') {id=Id_if; break L0;} }
+                else if (c=='n') { if (s.charAt(0)=='i') {id=Id_in; break L0;} }
+                else if (c=='o') { if (s.charAt(0)=='d') {id=Id_do; break L0;} }
+                break L;
+            case 3: switch (s.charAt(0)) {
+                case 'f': if (s.charAt(2)=='r' && s.charAt(1)=='o') {id=Id_for; break L0;} break L;
+                case 'l': if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_let; break L0;} break L;
+                case 'n': if (s.charAt(2)=='w' && s.charAt(1)=='e') {id=Id_new; break L0;} break L;
+                case 't': if (s.charAt(2)=='y' && s.charAt(1)=='r') {id=Id_try; break L0;} break L;
+                case 'v': if (s.charAt(2)=='r' && s.charAt(1)=='a') {id=Id_var; break L0;} break L;
+                } break L;
+            case 4: switch (s.charAt(0)) {
+                case 'c': c=s.charAt(3);
+                    if (c=='e') { if (s.charAt(2)=='s' && s.charAt(1)=='a') {id=Id_case; break L0;} }
+                    break L;
+                case 'e': c=s.charAt(3);
+                    if (c=='e') { if (s.charAt(2)=='s' && s.charAt(1)=='l') {id=Id_else; break L0;} }
+                    else if (c=='m') { if (s.charAt(2)=='u' && s.charAt(1)=='n') {id=Id_enum; break L0;} }
+                    break L;
+                case 'n': X="null";id=Id_null; break L;
+                case 't': c=s.charAt(3);
+                    if (c=='e') { if (s.charAt(2)=='u' && s.charAt(1)=='r') {id=Id_true; break L0;} }
+                    else if (c=='s') { if (s.charAt(2)=='i' && s.charAt(1)=='h') {id=Id_this; break L0;} }
+                    break L;
+                case 'v': X="void";id=Id_void; break L;
+                case 'w': X="with";id=Id_with; break L;
+                } break L;
+            case 5: switch (s.charAt(2)) {
+                case 'a': c=s.charAt(0);
+                    if (c=='c') { X="class";id=Id_class; }
+                    else if (c=='a') { X="await";id=Id_await; }
+                    break L;
+                case 'e': c=s.charAt(0);
+                    if (c=='b') { X="break";id=Id_break; }
+                    else if (c=='y') { X="yield";id=Id_yield; }
+                    break L;
+                case 'i': X="while";id=Id_while; break L;
+                case 'l': X="false";id=Id_false; break L;
+                case 'n': X="const";id=Id_const; break L;
+                case 'p': X="super";id=Id_super; break L;
+                case 'r': X="throw";id=Id_throw; break L;
+                case 't': X="catch";id=Id_catch; break L;
+                } break L;
+            case 6: switch (s.charAt(1)) {
+                case 'e': c=s.charAt(0);
+                    if (c=='d') { X="delete";id=Id_delete; }
+                    else if (c=='r') { X="return";id=Id_return; }
+                    break L;
+                case 'm': X="import";id=Id_import; break L;
+                case 't': if (isStrict) {
+                    X="static";id=Id_static; break L;
+                }
+                // fallthru
+                case 'u': if (isStrict) {
+                    X="public";id=Id_public; break L;
+                }
+                // fallthru
+                case 'w': X="switch";id=Id_switch; break L;
+                case 'x': X="export";id=Id_export; break L;
+                case 'y': X="typeof";id=Id_typeof; break L;
+                } break L;
+            case 7: switch (s.charAt(1)) {
+                case 'a': if (isStrict) {
+                    X="package";id=Id_package; break L;
+                }
+                // fallthru
+                case 'e': X="default";id=Id_default; break L;
+                case 'i': X="finally";id=Id_finally; break L;
+                case 'r': if (isStrict) {
+                    X="private";id=Id_private; break L;
+                }
+                // fallthru
+                case 'x': X="extends";id=Id_extends; break L;
+                } break L;
+            case 8: switch (s.charAt(0)) {
+                case 'c': X="continue";id=Id_continue; break L;
+                case 'd': X="debugger";id=Id_debugger; break L;
+                case 'f': X="function";id=Id_function; break L;
+                } break L;
+            case 9: c=s.charAt(0);
+                if (c=='i' && isStrict) { X="interface";id=Id_interface; }
+                else if (c=='p' && isStrict) { X="protected";id=Id_protected; }
+                break L;
+            case 10: c=s.charAt(1);
+                if (c=='m' && isStrict) { X="implements";id=Id_implements; }
+                else if (c=='n') { X="instanceof";id=Id_instanceof; }
+                break L;
+            }
+            if (X!=null && X!=s && !X.equals(s)) id = 0;
+        }
+// #/generated#
+// #/string_id_map#
+        if (id == 0) { return Token.EOF; }
+        return id & 0xff;
+    }
+
     final String getSourceString() { return sourceString; }
 
     final int getLineno() { return lineno; }
@@ -266,6 +445,8 @@ class TokenStream
     }
 
     final double getNumber() { return number; }
+    final boolean isNumberBinary() { return isBinary; }
+    final boolean isNumberOldOctal() { return isOldOctal; }
     final boolean isNumberOctal() { return isOctal; }
     final boolean isNumberHex() { return isHex; }
 
@@ -378,7 +559,7 @@ class TokenStream
                     // check if it's a keyword.
 
                     // Return the corresponding token if it's a keyword
-                    int result = stringToKeyword(str);
+                    int result = stringToKeyword(str, parser.compilerEnv.getLanguageVersion(), parser.inUseStrictDirective());
                     if (result != Token.EOF) {
                         if ((result == Token.LET || result == Token.YIELD) &&
                             parser.compilerEnv.getLanguageVersion()
@@ -393,13 +574,13 @@ class TokenStream
                         this.string = (String)allStrings.intern(str);
                         if (result != Token.RESERVED) {
                             return result;
-                        } else if (!parser.compilerEnv.
-                                        isReservedKeywordAsIdentifier())
-                        {
+                        } else if (parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            return result;
+                        } else if (!parser.compilerEnv.isReservedKeywordAsIdentifier()) {
                             return result;
                         }
                     }
-                } else if (isKeyword(str)) {
+                } else if (isKeyword(str, parser.compilerEnv.getLanguageVersion(), parser.inUseStrictDirective())) {
                     // If a string contains unicodes, and converted to a keyword,
                     // we convert the last character back to unicode
                     str = convertLastCharToHex(str);
@@ -410,10 +591,10 @@ class TokenStream
 
             // is it a number?
             if (isDigit(c) || (c == '.' && isDigit(peekChar()))) {
-                isOctal = false;
                 stringBufferTop = 0;
                 int base = 10;
-                isHex = isOctal = false;
+                isHex = isOldOctal = isOctal = isBinary = false;
+                boolean es6 = parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6;
 
                 if (c == '0') {
                     c = getChar();
@@ -421,35 +602,58 @@ class TokenStream
                         base = 16;
                         isHex = true;
                         c = getChar();
-                    } else if (isDigit(c)) {
+                    } else if (es6 && (c == 'o' || c == 'O')) {
                         base = 8;
                         isOctal = true;
+                        c = getChar();
+                    } else if (es6 && (c == 'b' || c == 'B')) {
+                        base = 2;
+                        isBinary = true;
+                        c = getChar();
+                    } else if (isDigit(c)) {
+                        base = 8;
+                        isOldOctal = true;
                     } else {
                         addToString('0');
                     }
                 }
 
+                boolean isEmpty = true;
                 if (base == 16) {
                     while (0 <= Kit.xDigitToInt(c, 0)) {
                         addToString(c);
                         c = getChar();
+                        isEmpty = false;
                     }
                 } else {
                     while ('0' <= c && c <= '9') {
-                        /*
-                         * We permit 08 and 09 as decimal numbers, which
-                         * makes our behavior a superset of the ECMA
-                         * numeric grammar.  We might not always be so
-                         * permissive, so we warn about it.
-                         */
                         if (base == 8 && c >= '8') {
-                            parser.addWarning("msg.bad.octal.literal",
-                                              c == '8' ? "8" : "9");
-                            base = 10;
+                            if (isOldOctal) {
+                                /*
+                                 * We permit 08 and 09 as decimal numbers, which
+                                 * makes our behavior a superset of the ECMA
+                                 * numeric grammar.  We might not always be so
+                                 * permissive, so we warn about it.
+                                 */
+                                parser.addWarning("msg.bad.octal.literal",
+                                                  c == '8' ? "8" : "9");
+                                base = 10;
+                            } else {
+                                parser.addError("msg.caught.nfe");
+                                return Token.ERROR;
+                            }
+                        } else if (base == 2 && c >= '2') {
+                            parser.addError("msg.caught.nfe");
+                            return Token.ERROR;
                         }
                         addToString(c);
                         c = getChar();
+                        isEmpty = false;
                     }
+                }
+                if (isEmpty && (isBinary || isOctal || isHex)) {
+                    parser.addError("msg.caught.nfe");
+                    return Token.ERROR;
                 }
 
                 boolean isInteger = true;
@@ -494,7 +698,7 @@ class TokenStream
                         return Token.ERROR;
                     }
                 } else {
-                    dval = ScriptRuntime.stringToNumber(numString, 0, base);
+                    dval = ScriptRuntime.stringPrefixToNumber(numString, 0, base);
                 }
 
                 this.number = dval;
@@ -1593,7 +1797,7 @@ class TokenStream
 
     private String convertLastCharToHex(String str) {
       int lastIndex = str.length()-1;
-      StringBuffer buf = new StringBuffer(
+      StringBuilder buf = new StringBuilder(
           str.substring(0, lastIndex));
       buf.append("\\u");
       String hexCode = Integer.toHexString(str.charAt(lastIndex));
@@ -1615,6 +1819,8 @@ class TokenStream
     // code.
     private String string = "";
     private double number;
+    private boolean isBinary;
+    private boolean isOldOctal;
     private boolean isOctal;
     private boolean isHex;
 

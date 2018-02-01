@@ -16,6 +16,9 @@ import java.util.TimeZone;
  * This class implements the Date native object.
  * See ECMA 15.9.
  * @author Mike McCabe
+ *
+ * Significant parts of this code are adapted from the venerable jsdate.cpp (also Mozilla):
+ * https://dxr.mozilla.org/mozilla-central/source/js/src/jsdate.cpp
  */
 final class NativeDate extends IdScriptableObject
 {
@@ -429,35 +432,25 @@ final class NativeDate extends IdScriptableObject
 
     private static int YearFromTime(double t)
     {
-        int lo = (int) Math.floor((t / msPerDay) / 366) + 1970;
-        int hi = (int) Math.floor((t / msPerDay) / 365) + 1970;
-        int mid;
-
-        /* above doesn't work for negative dates... */
-        if (hi < lo) {
-            int temp = lo;
-            lo = hi;
-            hi = temp;
+        if (Double.isInfinite(t) || Double.isNaN(t)) {
+            return 0;
         }
 
-        /* Use a simple binary search algorithm to find the right
-           year.  This seems like brute force... but the computation
-           of hi and lo years above lands within one year of the
-           correct answer for years within a thousand years of
-           1970; the loop below only requires six iterations
-           for year 270000. */
-        while (hi > lo) {
-            mid = (hi + lo) / 2;
-            if (TimeFromYear(mid) > t) {
-                hi = mid - 1;
-            } else {
-                lo = mid + 1;
-                if (TimeFromYear(lo) > t) {
-                    return mid;
-                }
-            }
+        double y = Math.floor(t / (msPerDay * 365.2425)) + 1970;
+        double t2 = TimeFromYear(y);
+
+        /*
+         * Adjust the year if the approximation was wrong.  Since the year was
+         * computed using the average number of ms per year, it will usually
+         * be wrong for dates within several hours of a year transition.
+         */
+        if (t2 > t) {
+            y--;
+        } else {
+            if (t2 + msPerDay * DaysInYear(y) <= t)
+                y++;
         }
-        return lo;
+        return (int)y;
     }
 
     private static double DayFromMonth(int m, int year)
@@ -471,6 +464,14 @@ final class NativeDate extends IdScriptableObject
         if (m >= 2 && IsLeapYear(year)) { ++day; }
 
         return day;
+    }
+
+    private static double DaysInYear(double year)
+    {
+        if (Double.isInfinite(year) || Double.isNaN(year)) {
+            return ScriptRuntime.NaN;
+        }
+        return IsLeapYear((int)year) ? 366.0 : 365.0;
     }
 
     private static int DaysInMonth(int year, int month)
@@ -538,7 +539,7 @@ final class NativeDate extends IdScriptableObject
 
         // d: date count from 1 March
         int mdays, mstart;
-        switch (d / 30) { // approx number of month since March
+        switch (Math.round(d / 30)) { // approx number of month since March
             case 0: return d + 1;
             case 1: mdays = 31; mstart = 31; break;
             case 2: mdays = 30; mstart = 31+30; break;
@@ -1782,5 +1783,4 @@ final class NativeDate extends IdScriptableObject
 
     private double date;
 }
-
 

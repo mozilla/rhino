@@ -219,7 +219,7 @@ public class Codegen implements Evaluator
 
         OptTransformer ot = new OptTransformer(possibleDirectCalls,
                                                directCallTargets);
-        ot.transform(tree);
+        ot.transform(tree, compilerEnv);
 
         if (optLevel > 0) {
             (new Optimizer()).optimize(tree);
@@ -407,7 +407,7 @@ public class Codegen implements Evaluator
         boolean hasGenerators = false;
         for (int i=0; i < scriptOrFnNodes.length; i++) {
             if (isGenerator(scriptOrFnNodes[i]))
-            	hasGenerators = true;
+                hasGenerators = true;
         }
 
         // if there are no generators defined, we don't implement a
@@ -2561,7 +2561,7 @@ class BodyCodegen
                 }
                 else {
                     cfw.addALoad(variableObjectLocal);
-                	addScriptRuntimeInvoke(
+                    addScriptRuntimeInvoke(
                         "getObjectElem",
                         "(Ljava/lang/Object;"
                         +"Ljava/lang/Object;"
@@ -4465,10 +4465,10 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 } else {
                     cfw.addALoad(reg);
                 }
-                if (post) {
-                    cfw.add(ByteCode.DUP);
-                }
                 addObjectToDouble();
+                if (post) {
+                    cfw.add(ByteCode.DUP2);
+                }
                 cfw.addPush(1.0);
                 if ((incrDecrMask & Node.DECR_FLAG) == 0) {
                     cfw.add(ByteCode.DADD);
@@ -4480,6 +4480,9 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                     cfw.add(ByteCode.DUP);
                 }
                 cfw.addAStore(reg);
+                if (post) {
+                    addDoubleWrap();
+                }
             }
             break;
           case Token.NAME:
