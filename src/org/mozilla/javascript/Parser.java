@@ -2253,6 +2253,13 @@ public class Parser
             tt = peekToken();
         }
         if (Token.FIRST_ASSIGN <= tt && tt <= Token.LAST_ASSIGN) {
+            if (inDestructuringAssignment) {
+                // default values inside destructuring assignments,
+                // like 'var [a = 10] = b' or 'var {a: b = 10} = c',
+                // are not supported
+                reportError("msg.destruct.default.vals");
+            }
+
             consumeToken();
 
             // Pull out JSDoc info and reset it before recursing.
