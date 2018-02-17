@@ -196,14 +196,24 @@ public class EmbeddedSlotMap
 
                 newSlot.value = slot.value;
                 newSlot.next = slot.next;
-                // add new slot to linked list
-                if (lastAdded != null) {
-                    lastAdded.orderedNext = newSlot;
-                }
-                if (firstAdded == null) {
+
+                // Replace new slot in linked list, keeping same order
+                if (slot == firstAdded) {
                     firstAdded = newSlot;
+                } else {
+                    ScriptableObject.Slot ps = firstAdded;
+                    while ((ps != null) && (ps.orderedNext != slot)) {
+                        ps = ps.orderedNext;
+                    }
+                    if (ps != null) {
+                        ps.orderedNext = newSlot;
+                    }
                 }
-                lastAdded = newSlot;
+                newSlot.orderedNext = slot.orderedNext;
+                if (slot == lastAdded) {
+                    lastAdded = newSlot;
+                }
+
                 // add new slot to hash table
                 if (prev == slot) {
                     slots[insertPos] = newSlot;
