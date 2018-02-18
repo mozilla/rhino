@@ -3084,7 +3084,7 @@ public class Parser
 
           case Token.RESERVED:
               consumeToken();
-              reportError("msg.reserved.id");
+              reportError("msg.reserved.id", ts.getString());
               break;
 
           case Token.ERROR:
