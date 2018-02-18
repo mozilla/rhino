@@ -237,6 +237,12 @@ public class Parser
                  ts.tokenEnd - ts.tokenBeg);
     }
 
+    void addError(String messageId, int c) {
+        String messageArg = Character.toString ((char) c);
+        addError(messageId, messageArg, ts.tokenBeg,
+                 ts.tokenEnd - ts.tokenBeg);
+    }
+
     void addError(String messageId, String messageArg, int position, int length)
     {
         ++syntaxErrorCount;
