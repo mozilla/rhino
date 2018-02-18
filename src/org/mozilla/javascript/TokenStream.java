@@ -538,7 +538,7 @@ class TokenStream
                                 isUnicodeEscapeStart = true;
                                 containsEscape = true;
                             } else {
-                                parser.addError("msg.illegal.character");
+                                parser.addError("msg.illegal.character", c);
                                 return Token.ERROR;
                             }
                         } else {
@@ -1035,7 +1035,7 @@ class TokenStream
                 return c;
 
             default:
-                parser.addError("msg.illegal.character");
+                parser.addError("msg.illegal.character", c);
                 return Token.ERROR;
             }
         }
