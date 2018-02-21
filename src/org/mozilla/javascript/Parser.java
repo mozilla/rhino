@@ -233,8 +233,12 @@ public class Parser
     }
 
     void addError(String messageId, String messageArg) {
-        addError(messageId, messageArg, ts.tokenBeg,
-                 ts.tokenEnd - ts.tokenBeg);
+        int beg = -1, end = -1;
+        if (ts != null) {
+            beg = ts.tokenBeg;
+            end = ts.tokenEnd - ts.tokenBeg;
+        }
+        addError(messageId, messageArg, beg, end);
     }
 
     void addError(String messageId, String messageArg, int position, int length)

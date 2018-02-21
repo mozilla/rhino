@@ -438,7 +438,6 @@ final class NativeDate extends IdScriptableObject
 
         double y = Math.floor(t / (msPerDay * 365.2425)) + 1970;
         double t2 = TimeFromYear(y);
-
         /*
          * Adjust the year if the approximation was wrong.  Since the year was
          * computed using the average number of ms per year, it will usually
