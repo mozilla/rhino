@@ -1219,6 +1219,12 @@ public class ParserTest extends TestCase {
         expectErrorWithRecovery(")))", 5);
     }
 
+    public void testIdentifierIsReservedWordMessage() {
+        environment.setReservedKeywordAsIdentifier(false);
+        expectParseErrors("interface: while (true){ }",
+                new String[] { "identifier is a reserved word: interface" });
+    }
+
     // Check that error recovery is working by returning a parsing exception, but only
     // when thrown by runtimeError. This is testing a regression in which the error recovery in
     // certain cases would trigger an infinite loop. We do this by counting the number
