@@ -1219,9 +1219,10 @@ public class ParserTest extends TestCase {
         expectErrorWithRecovery(")))", 5);
     }
 
-    public void testIllegalCharacterMessage() {
-        expectParseErrors("\u0060",
-                new String[] { "illegal character: \u0060" });
+    public void testIdentifierIsReservedWordMessage() {
+        environment.setReservedKeywordAsIdentifier(false);
+        expectParseErrors("interface: while (true){ }",
+                new String[] { "identifier is a reserved word: interface" });
     }
 
     // Check that error recovery is working by returning a parsing exception, but only
