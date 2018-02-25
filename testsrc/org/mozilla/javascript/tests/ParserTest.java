@@ -1219,6 +1219,11 @@ public class ParserTest extends TestCase {
         expectErrorWithRecovery(")))", 5);
     }
 
+    public void testIllegalCharacterMessage() {
+        expectParseErrors("\u0060",
+                new String[] { "illegal character: \u0060" });
+    }
+
     // Check that error recovery is working by returning a parsing exception, but only
     // when thrown by runtimeError. This is testing a regression in which the error recovery in
     // certain cases would trigger an infinite loop. We do this by counting the number
