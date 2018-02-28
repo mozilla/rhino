@@ -373,12 +373,12 @@ public class ScriptRuntime {
         return new Double(x);
     }
 
-	public static Number wrapNumber(long x) {
-		if (x != x) {
-			return ScriptRuntime.NaNobj;
-		}
-		return new Long(x);
-	}
+    public static Number wrapNumber(long x) {
+        if (x != x) {
+            return ScriptRuntime.NaNobj;
+        }
+        return new Long(x);
+    }
 
     /**
      * Convert the value to a boolean.
