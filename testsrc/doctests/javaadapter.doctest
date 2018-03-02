@@ -32,7 +32,7 @@ null
 js> x.get("foo")
 2bar
 js> x.get("bar")
-2.0
+2
 js> x = new JavaAdapter({}); x.class.superclass
 class java.lang.Object
 js> x.class.interfaces.length
@@ -71,17 +71,17 @@ js> // test extending abstract base class
 js> x = new java.util.AbstractList({get: function(i) { return i + 1; }})
 []
 js> x.get(0)
-1.0
+1
 js> x.get(1)
-2.0
+2
 js> x.get(2)
-3.0
+3
 js> // test implementing an interface
 js> x = new java.util.List({get: function(i) { return i + 1; }, toString: function() { return "[]"; }})
 []
 js> x.get(0)
-1.0
+1
 js> x.get(1)
-2.0
+2
 js> x.get(2)
-3.0
+3
