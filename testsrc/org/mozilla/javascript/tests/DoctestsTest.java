@@ -48,7 +48,8 @@ public class DoctestsTest {
         return TestUtils.recursiveListFiles(new File(baseDirectory),
                 new FileFilter() {
                     public boolean accept(File f) {
-                        return f.getName().endsWith(doctestsExtension);
+                        String name = f.getName();
+                        return !name.contains("feature18enabled") && name.endsWith(doctestsExtension);
                     }
             });
     }

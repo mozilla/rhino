@@ -12,7 +12,7 @@ true
 js> map.put("c",1)
 null
 js> map.put("c",1)
-1
+1.0
 js> map.put("d",1)
 null
 js> map.get("c") == map.get("d")

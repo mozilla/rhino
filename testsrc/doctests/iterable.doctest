@@ -7,10 +7,10 @@
 js> m = new java.util.LinkedHashMap()
 {}
 js> m.put("a",1); m.put("b",2); m
-{a=1, b=2}
+{a=1.0, b=2.0}
 js> for (i in Iterator(m.values())) print(i)
-1
-2
+1.0
+2.0
 js> for (i in Iterator(m.values().iterator())) print(i)
-1
-2
+1.0
+2.0
