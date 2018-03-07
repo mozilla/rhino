@@ -516,10 +516,13 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
                 return ScriptRuntime.toString(value);
             }
             else if (type == ScriptRuntime.ObjectClass) {
-                //to process numbers like 2.0 as 2 without decimal place
-                long roundedValue = Math.round(toDouble(value));
-                if(roundedValue == toDouble(value)) {
-                    return coerceToNumber(Long.TYPE, value);
+                Context context = Context.getCurrentContext();
+                if(context.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
+                    //to process numbers like 2.0 as 2 without decimal place
+                    long roundedValue = Math.round(toDouble(value));
+                    if(roundedValue == toDouble(value)) {
+                        return coerceToNumber(Long.TYPE, value);
+                    }
                 }
                 return coerceToNumber(Double.TYPE, value);
             }

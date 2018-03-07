@@ -327,6 +327,14 @@ public class Context
      */
     public static final int FEATURE_THREAD_SAFE_OBJECTS = 17;
 
+    /**
+     * If set, then all integer numbers will be returned without decimal place. For instance
+     * assume there is a function like this:
+     * <code>function foo() {return 5;}</code>
+     * 5 will be returned if feature is set, 5.0 otherwise.
+     */
+    public static final int FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE = 18;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
