@@ -22,7 +22,7 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 [Release Notes](./RELEASE-NOTES.md) for recent releases.
 
-[Compatability table](http://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
+[Compatibility table](http://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
 features from ES5, 6, and 7 are implemented in Rhino.
 
 ## Documentation
