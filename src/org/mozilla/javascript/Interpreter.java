@@ -2688,7 +2688,7 @@ switch (op) {
             CallFrame x = cjump.capturedFrame;
             for (int i = 0; i != rewindCount; ++i) {
                 if (!x.frozen) Kit.codeBug();
-                if (isFrameEnterExitRequired(x)) {
+                if (x.useActivation) {
                     if (enterFrames == null) {
                         // Allocate enough space to store the rest
                         // of rewind frames in case all of them
@@ -2826,11 +2826,6 @@ switch (op) {
         frame.initializeArgs(cx, callerScope, args, argsDbl, argShift, argCount);
         enterFrame(cx, frame, args, false);
         return frame;
-    }
-
-    private static boolean isFrameEnterExitRequired(CallFrame frame)
-    {
-        return frame.debuggerFrame != null || frame.idata.itsNeedsActivation;
     }
 
     private static void enterFrame(Context cx, CallFrame frame, Object[] args,
