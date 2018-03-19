@@ -4524,9 +4524,9 @@ public class ClassFileWriter {
 
     private final static int FileHeaderConstant = 0xCAFEBABE;
     // Set DEBUG flags to true to get better checking and progress info.
-    private static final boolean DEBUGSTACK = true;
+    private static final boolean DEBUGSTACK = false;
     private static final boolean DEBUGLABELS = false;
-    private static final boolean DEBUGCODE = true;
+    private static final boolean DEBUGCODE = false;
 
     private String generatedClassName;
 

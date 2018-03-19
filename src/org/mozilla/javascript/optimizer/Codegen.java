@@ -2858,7 +2858,7 @@ class BodyCodegen
 
     private void generateYieldPoint(Node node, boolean exprContext) {
         // save stack state
-        System.out.println("** Start YieldPoint");
+        //System.out.println("** Start YieldPoint");
         int top = cfw.getStackTop();
         maxStack = maxStack > top ? maxStack : top;
         if (cfw.getStackTop() != 0) {
@@ -2908,7 +2908,7 @@ class BodyCodegen
         if (exprContext) {
             cfw.addALoad(argsLocal);
         }
-        System.out.println("** End YieldPoint");
+        //System.out.println("** End YieldPoint");
     }
 
     private void generateCheckForThrowOrClose(int label,
@@ -3772,7 +3772,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
     private void visitTryCatchFinally(Jump node, Node child)
     {
-        System.out.println("** Start TryCatchFinally");
+        //System.out.println("** Start TryCatchFinally");
         /* Save the variable object, in case there are with statements
          * enclosed by the try block and we catch some exception.
          * We'll restore it for the catch block so that catch block
@@ -3933,7 +3933,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         if (!isGenerator) {
             exceptionManager.popExceptionInfo();
         }
-        System.out.println("** End TryCatchFinally");
+        //System.out.println("** End TryCatchFinally");
     }
 
     private static final int JAVASCRIPT_EXCEPTION  = 0;
