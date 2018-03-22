@@ -112,10 +112,10 @@ public abstract class IdScriptableObject extends ScriptableObject
                 return;
             }
 
-            initSlot(id, "", value, attributes);
+            initSlot(id, key, value, attributes);
         }
 
-        private void initSlot(int id, String name, Object value,
+        private void initSlot(int id, Object name, Object value,
                               int attributes)
         {
             Object[] array = valueArray;
@@ -253,7 +253,7 @@ public abstract class IdScriptableObject extends ScriptableObject
             }
         }
 
-        final Object[] getNames(boolean getAll, Object[] extraEntries)
+        final Object[] getNames(boolean getAll, boolean getSymbols, Object[] extraEntries)
         {
             Object[] names = null;
             int count = 0;
@@ -262,11 +262,18 @@ public abstract class IdScriptableObject extends ScriptableObject
                 if (getAll || (attributeArray[id - 1] & DONTENUM) == 0) {
                     if (value != NOT_FOUND) {
                         int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
-                        String name = (String)valueArray[nameSlot];
-                        if (names == null) {
-                            names = new Object[maxId];
+                        Object name = valueArray[nameSlot];
+                        if (name instanceof String) {
+                            if (names == null) {
+                                names = new Object[maxId];
+                            }
+                            names[count++] = name;
+                        } else if (getSymbols && (name instanceof Symbol)) {
+                            if (names == null) {
+                                names = new Object[maxId];
+                            }
+                            names[count++] = name.toString();
                         }
-                        names[count++] = name;
                     }
                 }
             }
@@ -634,7 +641,7 @@ public abstract class IdScriptableObject extends ScriptableObject
         Object[] result = super.getIds(getNonEnumerable, getSymbols);
 
         if (prototypeValues != null) {
-            result = prototypeValues.getNames(getNonEnumerable, result);
+            result = prototypeValues.getNames(getNonEnumerable, getSymbols, result);
         }
 
         int maxInstanceId = getMaxInstanceId();

@@ -259,6 +259,10 @@ public class ScriptRuntime {
 
         if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
             NativeSymbol.init(cx, scope, sealed);
+            NativeCollectionIterator.init(scope, NativeSet.ITERATOR_TAG, sealed);
+            NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
+            NativeMap.init(cx, scope, sealed);
+            NativeSet.init(cx, scope, sealed);
         }
 
         if (scope instanceof TopLevel) {
@@ -2605,6 +2609,19 @@ public class ScriptRuntime {
     }
 
     /**
+     * Given an object, get the "Symbol.iterator" element, throw a TypeError if it
+     * is not present, then call the result, (throwing a TypeError if the result is
+     * not a function), and return that result, whatever it is.
+     */
+    public static Object callIterator(Object obj, Context cx, Scriptable scope)
+    {
+        final Callable getIterator =
+                ScriptRuntime.getElemFunctionAndThis(obj, SymbolKey.ITERATOR, cx, scope);
+        final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
+        return getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
+    }
+
+    /**
      * Perform function call in reference context. Should always
      * return value that can be passed to
      * {@link #refGet(Ref, Context)} or {@link #refSet(Ref, Object, Context)}
@@ -3205,6 +3222,30 @@ public class ScriptRuntime {
                 return true;
             }
             return x.equals(y);
+        }
+        return eq(x, y);
+    }
+
+    /**
+     * Implement "SameValueZero" from ECMA 7.2.9
+     */
+    public static boolean sameZero(Object x, Object y) {
+        if (!typeof(x).equals(typeof(y))) {
+            return false;
+        }
+        if (x instanceof Number) {
+            if (isNaN(x) && isNaN(y)) {
+                return true;
+            }
+            final double dx = ((Number)x).doubleValue();
+            if (y instanceof Number) {
+                final double dy = ((Number)y).doubleValue();
+                if (((dx == negativeZero) && (dy == 0.0)) ||
+                    ((dx == 0.0) && dy == negativeZero)) {
+                        return true;
+                }
+            }
+            return eqNumber(dx, y);
         }
         return eq(x, y);
     }

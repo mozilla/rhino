@@ -22,7 +22,7 @@ public final class NativeStringIterator extends ES6Iterator {
     }
 
     NativeStringIterator(Scriptable scope, Scriptable stringLike) {
-        super(scope);
+        super(scope, ITERATOR_TAG);
         this.index = 0;
         this.string  = ScriptRuntime.toString(stringLike);
     }
