@@ -22,7 +22,7 @@ public final class NativeArrayIterator extends ES6Iterator {
     }
 
     public NativeArrayIterator(Scriptable scope, Scriptable arrayLike) {
-        super(scope);
+        super(scope, ITERATOR_TAG);
         this.index = 0;
         this.arrayLike = arrayLike;
     }
