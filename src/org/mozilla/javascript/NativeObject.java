@@ -181,20 +181,31 @@ public class NativeObject extends IdScriptableObject implements Map
                 }
             } else {
                 String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-                if (s == null) {
-                    int index = ScriptRuntime.lastIndexResult(cx);
-                    result = thisObj.has(index, thisObj);
-                    if (result && thisObj instanceof ScriptableObject) {
-                        ScriptableObject so = (ScriptableObject) thisObj;
-                        int attrs = so.getAttributes(index);
-                        result = ((attrs & ScriptableObject.DONTENUM) == 0);
+                // When checking if a property is enumerable, a missing property should return "false" instead of
+                // throwing an exception.  See: https://github.com/mozilla/rhino/issues/415
+                try {
+                    if (s == null) {
+                        int index = ScriptRuntime.lastIndexResult(cx);
+                        result = thisObj.has(index, thisObj);
+                        s = Integer.toString(index);
+                        if (result && thisObj instanceof ScriptableObject) {
+                            ScriptableObject so = (ScriptableObject) thisObj;
+                            int attrs = so.getAttributes(index);
+                            result = ((attrs & ScriptableObject.DONTENUM) == 0);
+                        }
+                    } else {
+                        result = thisObj.has(s, thisObj);
+                        if (result && thisObj instanceof ScriptableObject) {
+                            ScriptableObject so = (ScriptableObject) thisObj;
+                            int attrs = so.getAttributes(s);
+                            result = ((attrs & ScriptableObject.DONTENUM) == 0);
+                        }
                     }
-                } else {
-                    result = thisObj.has(s, thisObj);
-                    if (result && thisObj instanceof ScriptableObject) {
-                        ScriptableObject so = (ScriptableObject) thisObj;
-                        int attrs = so.getAttributes(s);
-                        result = ((attrs & ScriptableObject.DONTENUM) == 0);
+                } catch (EvaluatorException ee) {
+                    if (ee.getMessage().startsWith(ScriptRuntime.getMessage1("msg.prop.not.found", s))) {
+                        result = false;
+                    } else {
+                        throw ee;
                     }
                 }
             }
