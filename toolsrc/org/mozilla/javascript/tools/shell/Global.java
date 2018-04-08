@@ -248,6 +248,7 @@ public class Global extends ImporterTopLevel
         if (args.length > 0) {
             double d = Context.toNumber(args[0]);
             cx.setLanguageVersion((int) d);
+            result = cx.getLanguageVersion();
         }
         return result;
     }
