@@ -71,6 +71,15 @@ public class Context
     public static final int VERSION_UNKNOWN =   -1;
 
     /**
+     * The default version.
+     * <p>Be aware, this version will not support many of the newer
+     * language features and will not change in the future.</p>
+     * <p>Please use one of the other constants like VERSION_ES6 to
+     * get support for recent language features.</p>
+     */
+    public static final int VERSION_DEFAULT =    0;
+
+    /**
      * JavaScript 1.0
      */
     public static final int VERSION_1_0 =      100;
@@ -119,12 +128,6 @@ public class Context
      * ECMAScript 6.
      */
     public static final int VERSION_ES6 =      200;
-
-    /**
-     * The default version.
-     * Same as VERSION_1_8.
-     */
-    public static final int VERSION_DEFAULT =    VERSION_1_8;
 
     /**
      * Controls behaviour of <tt>Date.prototype.getYear()</tt>.
@@ -690,6 +693,7 @@ public class Context
     public static boolean isValidLanguageVersion(int version)
     {
         switch (version) {
+            case VERSION_DEFAULT:
             case VERSION_1_0:
             case VERSION_1_1:
             case VERSION_1_2:
@@ -2653,7 +2657,7 @@ public class Context
 
     final boolean isVersionECMA1()
     {
-        return version >= VERSION_1_3;
+        return version == VERSION_DEFAULT || version >= VERSION_1_3;
     }
 
 // The method must NOT be public or protected

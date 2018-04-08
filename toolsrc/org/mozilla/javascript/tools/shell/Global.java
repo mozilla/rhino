@@ -250,6 +250,7 @@ public class Global extends ImporterTopLevel
                 d = Context.VERSION_DEFAULT;
             }
             cx.setLanguageVersion((int) d);
+            result = cx.getLanguageVersion();
         }
         return cx.getLanguageVersion();
     }
