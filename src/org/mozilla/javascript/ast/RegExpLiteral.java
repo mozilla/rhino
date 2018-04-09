@@ -10,7 +10,7 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for a RegExp literal.
- * Node type is {@link Token#REGEXP}.<p>
+ * Node type is {@link Token#REGEXP}.
  */
 public class RegExpLiteral extends AstNode {
 

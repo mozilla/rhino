@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * New expression. Node type is {@link Token#NEW}.<p>
+ * New expression. Node type is {@link Token#NEW}.
  *
  * <pre><i>NewExpression</i> :
  *      MemberExpression

@@ -29,7 +29,7 @@ public interface ConstProperties {
      * object's responsibility to modify <i>o</i>. <p>
      * This design allows properties to be defined in prototypes and implemented
      * in terms of getters and setters of Java values without consuming slots
-     * in each instance.<p>
+     * in each instance.
      * <p>
      * The values that may be set are limited to the following:
      * <UL>

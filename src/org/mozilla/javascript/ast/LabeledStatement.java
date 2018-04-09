@@ -14,9 +14,9 @@ import java.util.List;
 /**
  * A labeled statement.  A statement can have more than one label.  In
  * this AST representation, all labels for a statement are collapsed into
- * the "labels" list of a single {@link LabeledStatement} node. <p>
+ * the "labels" list of a single {@link LabeledStatement} node.
  *
- * Node type is {@link Token#EXPR_VOID}. <p>
+ * <p>Node type is {@link Token#EXPR_VOID}.</p>
  */
 public class LabeledStatement extends AstNode {
 

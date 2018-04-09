@@ -12,7 +12,8 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
-Base class for native object implementation that uses IdFunctionObject to export its methods to script via <class-name>.prototype object.
+Base class for native object implementation that uses IdFunctionObject to export its methods
+to script via &lt;class-name&gt;.prototype object.
 
 Any descendant should implement at least the following methods:
     findInstanceIdInfo

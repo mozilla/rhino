@@ -2580,8 +2580,8 @@ public class ScriptRuntime {
     }
 
     /**
-     * Prepare for calling <expression>(...): return function corresponding to
-     * <expression> and make parent scope of the function available
+     * Prepare for calling &lt;expression&gt;(...): return function corresponding to
+     * &lt;expression&gt; and make parent scope of the function available
      * as ScriptRuntime.lastStoredScriptable() for consumption as thisObj.
      * The caller must call ScriptRuntime.lastStoredScriptable() immediately
      * after calling this method.

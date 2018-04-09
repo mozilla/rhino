@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for a Number literal. Node type is {@link Token#NUMBER}.<p>
+ * AST node for a Number literal. Node type is {@link Token#NUMBER}.
  */
 public class NumberLiteral extends AstNode {
 

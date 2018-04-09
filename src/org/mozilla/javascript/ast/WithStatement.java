@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * With statement.  Node type is {@link Token#WITH}.<p>
+ * With statement.  Node type is {@link Token#WITH}.
  *
  * <pre><i>WithStatement</i> :
  *      <b>with</b> ( Expression ) Statement ;</pre>

@@ -10,7 +10,7 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node representing a parse error or a warning.  Node type is
- * {@link Token#ERROR}.<p>
+ * {@link Token#ERROR}.
  */
 public class ErrorNode extends AstNode {
 

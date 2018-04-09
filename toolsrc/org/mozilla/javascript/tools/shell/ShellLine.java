@@ -13,8 +13,8 @@ import org.mozilla.javascript.Scriptable;
 
 /**
  * Provides a specialized input stream for consoles to handle line
- * editing, history and completion. Relies on the JLine library (see
- * <http://jline.sourceforge.net>).
+ * editing, history and completion. Relies on the JLine library
+ * (see <a href="http://jline.sourceforge.net">http://jline.sourceforge.net</a>).
  */
 @Deprecated
 public class ShellLine {

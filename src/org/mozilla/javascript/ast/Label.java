@@ -11,7 +11,7 @@ import org.mozilla.javascript.Token;
 /**
  * AST node representing a label.  It is a distinct node type so it can
  * record its length and position for code-processing tools.
- * Node type is {@link Token#LABEL}.<p>
+ * Node type is {@link Token#LABEL}.
  */
 public class Label extends Jump {
 

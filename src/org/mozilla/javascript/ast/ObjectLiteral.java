@@ -15,9 +15,9 @@ import java.util.List;
 /**
  * AST node for an Object literal (also called an Object initialiser in
  * Ecma-262).  The elements list will always be non-{@code null}, although
- * the list will have no elements if the Object literal is empty.<p>
+ * the list will have no elements if the Object literal is empty.
  *
- * Node type is {@link Token#OBJECTLIT}.<p>
+ * <p>Node type is {@link Token#OBJECTLIT}.</p>
  *
  * <pre><i>ObjectLiteral</i> :
  *       <b>{}</b>

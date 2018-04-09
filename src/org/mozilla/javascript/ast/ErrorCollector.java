@@ -34,7 +34,7 @@ public class ErrorCollector implements IdeErrorReporter {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void warning(String message, String sourceName, int offset, int length)
     {
@@ -55,7 +55,7 @@ public class ErrorCollector implements IdeErrorReporter {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public void error(String message, String sourceName,
                       int fileOffset, int length)
@@ -66,7 +66,7 @@ public class ErrorCollector implements IdeErrorReporter {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public EvaluatorException runtimeError(String message, String sourceName,
                                            int line, String lineSource,

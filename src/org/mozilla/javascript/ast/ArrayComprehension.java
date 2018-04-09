@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * AST node for a JavaScript 1.7 Array comprehension.
- * Node type is {@link Token#ARRAYCOMP}.<p>
+ * Node type is {@link Token#ARRAYCOMP}.
  */
 public class ArrayComprehension extends Scope {
 

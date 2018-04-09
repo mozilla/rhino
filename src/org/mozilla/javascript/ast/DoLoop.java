@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * Do statement.  Node type is {@link Token#DO}.<p>
+ * Do statement.  Node type is {@link Token#DO}.
  *
  * <pre><i>DoLoop</i>:
  * <b>do</b> Statement <b>while</b> <b>(</b> Expression <b>)</b> <b>;</b></pre>

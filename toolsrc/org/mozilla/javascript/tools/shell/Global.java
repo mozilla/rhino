@@ -413,7 +413,7 @@ public class Global extends ImporterTopLevel
     }
 
     /**
-     * Example: doctest("js> function f() {\n  >   return 3;\n  > }\njs> f();\n3\n"); returns 2
+     * Example: doctest("js&gt; function f() {\n  &gt;   return 3;\n  &gt; }\njs&gt; f();\n3\n"); returns 2
      * (since 2 tests were executed).
      */
     public static Object doctest(Context cx, Scriptable thisObj,
@@ -552,12 +552,12 @@ public class Global extends ImporterTopLevel
      * The spawn function runs a given function or script in a different
      * thread.
      *
-     * js> function g() { a = 7; }
-     * js> a = 3;
+     * js&gt; function g() { a = 7; }
+     * js&gt; a = 3;
      * 3
-     * js> spawn(g)
+     * js&gt; spawn(g)
      * Thread[Thread-1,5,main]
-     * js> a
+     * js&gt; a
      * 3
      */
     public static Object spawn(Context cx, Scriptable thisObj, Object[] args,
@@ -589,17 +589,17 @@ public class Global extends ImporterTopLevel
      * new function synchronizes on the the second argument if it is
      * defined, or otherwise the <code>this</code> object of
      * its invocation.
-     * js> var o = { f : sync(function(x) {
+     * js&gt; var o = { f : sync(function(x) {
      *       print("entry");
      *       Packages.java.lang.Thread.sleep(x*1000);
      *       print("exit");
      *     })};
-     * js> spawn(function() {o.f(5);});
+     * js&gt; spawn(function() {o.f(5);});
      * Thread[Thread-0,5,main]
      * entry
-     * js> spawn(function() {o.f(5);});
+     * js&gt; spawn(function() {o.f(5);});
      * Thread[Thread-1,5,main]
-     * js>
+     * js&gt;
      * exit
      * entry
      * exit

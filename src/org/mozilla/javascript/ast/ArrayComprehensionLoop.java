@@ -10,9 +10,9 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for a single 'for (foo in bar)' loop construct in a JavaScript 1.7
- * Array comprehension.  This node type is almost equivalent to a
+ * Array comprehension. This node type is almost equivalent to a
  * {@link ForInLoop}, except that it has no body statement.
- * Node type is {@link Token#FOR}.<p>
+ * Node type is {@link Token#FOR}.
  */
 public class ArrayComprehensionLoop extends ForInLoop {
 

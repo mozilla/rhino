@@ -326,8 +326,8 @@ public abstract class ShellConsole {
 
     /**
      * Provides a specialized {@link ShellConsole} to handle line editing,
-     * history and completion. Relies on the JLine library (see
-     * <http://jline.sourceforge.net>).
+     * history and completion. Relies on the JLine library
+     * (see <a href="http://jline.sourceforge.net">http://jline.sourceforge.net</a>).
      */
     public static ShellConsole getConsole(Scriptable scope, Charset cs) {
         // We don't want a compile-time dependency on the JLine jar, so use

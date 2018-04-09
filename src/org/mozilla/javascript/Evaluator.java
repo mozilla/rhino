@@ -64,7 +64,7 @@ public interface Evaluator {
     /**
      * Get the source position information by examining the stack.
      * @param cx Context
-     * @param linep Array object of length >= 1; getSourcePositionFromStack
+     * @param linep Array object of length &gt;= 1; getSourcePositionFromStack
      *              will assign the line number to linep[0].
      * @return the name of the file or other source container
      */

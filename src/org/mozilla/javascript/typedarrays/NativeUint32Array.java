@@ -13,7 +13,7 @@ import org.mozilla.javascript.Undefined;
 
 /**
  * An array view that stores 32-bit quantities and implements the JavaScript "Uint32Array" interface.
- * It also implements List<Long> for direct manipulation in Java.
+ * It also implements List&lt;Long&gt; for direct manipulation in Java.
  */
 
 public class NativeUint32Array

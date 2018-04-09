@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A JavaScript function declaration or expression.<p>
- * Node type is {@link Token#FUNCTION}.<p>
+ * A JavaScript function declaration or expression.
+ * <p>Node type is {@link Token#FUNCTION}.</p>
  *
  * <pre><i>FunctionDeclaration</i> :
  *        <b>function</b> Identifier ( FormalParameterListopt ) { FunctionBody }
@@ -58,7 +58,7 @@ public class FunctionNode extends ScriptNode {
      * top-level expression in an expression statement.<p>
      *
      * The three types of functions have different treatment and must be
-     * distinguished.<p>
+     * distinguished.
      */
     public static final int FUNCTION_STATEMENT            = 1;
     public static final int FUNCTION_EXPRESSION           = 2;

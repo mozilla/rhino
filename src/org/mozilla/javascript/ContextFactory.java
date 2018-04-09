@@ -80,7 +80,7 @@ import java.security.PrivilegedAction;
  *     {
  *         MyContext mcx = (MyContext)cx;
  *         long currentTime = System.currentTimeMillis();
- *         if (currentTime - mcx.startTime > 10*1000) {
+ *         if (currentTime - mcx.startTime &gt; 10*1000) {
  *             // More then 10 seconds from Context creation time:
  *             // it is time to stop the script.
  *             // Throw Error instance to ensure that script will never
@@ -103,7 +103,6 @@ import java.security.PrivilegedAction;
  *     }
  *
  * }
- *
  * </pre>
  */
 

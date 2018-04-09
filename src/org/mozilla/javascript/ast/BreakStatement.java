@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * A break statement.  Node type is {@link Token#BREAK}.<p>
+ * A break statement.  Node type is {@link Token#BREAK}.
  *
  * <pre><i>BreakStatement</i> :
  *   <b>break</b> [<i>no LineTerminator here</i>] [Identifier] ;</pre>

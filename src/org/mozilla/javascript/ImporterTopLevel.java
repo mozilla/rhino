@@ -29,12 +29,13 @@ package org.mozilla.javascript;
  * </ul>
  * The following code from the shell illustrates this use:
  * <pre>
- * js> importClass(java.io.File)
- * js> f = new File('help.txt')
+ * js&gt; importClass(java.io.File)
+ * js&gt; f = new File('help.txt')
  * help.txt
- * js> importPackage(java.util)
- * js> v = new Vector()
+ * js&gt; importPackage(java.util)
+ * js&gt; v = new Vector()
  * []
+ * </pre>
  *
  * @author Norris Boyd
  */

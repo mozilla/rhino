@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * AST node for a function call.  Node type is {@link Token#CALL}.<p>
+ * AST node for a function call.  Node type is {@link Token#CALL}.
  */
 public class FunctionCall extends AstNode {
 

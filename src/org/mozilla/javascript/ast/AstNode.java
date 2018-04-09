@@ -59,7 +59,7 @@ import java.util.Map;
  *
  * This hierarchy does not have separate branches for expressions and
  * statements, as the distinction in JavaScript is not as clear-cut as in
- * Java or C++. <p>
+ * Java or C++.
  */
 public abstract class AstNode extends Node implements Comparable<AstNode> {
 

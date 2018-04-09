@@ -15,7 +15,7 @@ import org.mozilla.javascript.Token;
  * <pre><i>ConditionalExpression</i> :
  *        LogicalORExpression
  *        LogicalORExpression ? AssignmentExpression
- *                            : AssignmentExpression</pre>
+ *                            : AssignmentExpression
  *
  * <i>ConditionalExpressionNoIn</i> :
  *        LogicalORExpressionNoIn

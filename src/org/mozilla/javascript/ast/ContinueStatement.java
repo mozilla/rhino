@@ -10,7 +10,7 @@ import org.mozilla.javascript.Token;
 
 /**
  * A continue statement.
- * Node type is {@link Token#CONTINUE}.<p>
+ * Node type is {@link Token#CONTINUE}.
  *
  * <pre><i>ContinueStatement</i> :
  *   <b>continue</b> [<i>no LineTerminator here</i>] [Identifier] ;</pre>

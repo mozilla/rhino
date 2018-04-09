@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for an empty statement.  Node type is {@link Token#EMPTY}.<p>
+ * AST node for an empty statement.  Node type is {@link Token#EMPTY}.
  *
  */
 public class EmptyStatement extends AstNode {

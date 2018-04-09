@@ -54,7 +54,7 @@ public interface Scriptable {
      * Depending on the property selector, the runtime will call
      * this method or the form of <code>get</code> that takes an
      * integer:
-     * <table>
+     * <table summary='mapping js code to java code'>
      * <tr><th>JavaScript code</th><th>Java code</th></tr>
      * <tr><td>a.b      </td><td>a.get("b", a)</td></tr>
      * <tr><td>a["foo"] </td><td>a.get("foo", a)</td></tr>
@@ -148,7 +148,7 @@ public interface Scriptable {
      * object's responsibility to modify <i>o</i>. <p>
      * This design allows properties to be defined in prototypes and implemented
      * in terms of getters and setters of Java values without consuming slots
-     * in each instance.<p>
+     * in each instance.
      * <p>
      * The values that may be set are limited to the following:
      * <UL>

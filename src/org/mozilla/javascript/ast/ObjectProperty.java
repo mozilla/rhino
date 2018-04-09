@@ -12,16 +12,16 @@ import org.mozilla.javascript.Token;
  * AST node for a single name:value entry in an Object literal.
  * For simple entries, the node type is {@link Token#COLON}, and
  * the name (left side expression) is either a {@link Name}, a
- * {@link StringLiteral} or a {@link NumberLiteral}.<p>
+ * {@link StringLiteral} or a {@link NumberLiteral}.
  *
- * This node type is also used for getter/setter properties in object
+ * <p>This node type is also used for getter/setter properties in object
  * literals.  In this case the node bounds include the "get" or "set"
  * keyword.  The left-hand expression in this case is always a
  * {@link Name}, and the overall node type is {@link Token#GET} or
- * {@link Token#SET}, as appropriate.<p>
+ * {@link Token#SET}, as appropriate.</p>
  *
  * The {@code operatorPosition} field is meaningless if the node is
- * a getter or setter.<p>
+ * a getter or setter.
  *
  * <pre><i>ObjectProperty</i> :
  *       PropertyName <b>:</b> AssignmentExpression

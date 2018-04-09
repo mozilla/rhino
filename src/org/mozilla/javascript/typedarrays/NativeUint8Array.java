@@ -13,7 +13,7 @@ import org.mozilla.javascript.Undefined;
 
 /**
  * An array view that stores 8-bit quantities and implements the JavaScript "Uint8Array" interface.
- * It also implements List<Integer> for direct manipulation in Java.
+ * It also implements List&lt;Integer&gt; for direct manipulation in Java.
  */
 
 public class NativeUint8Array
