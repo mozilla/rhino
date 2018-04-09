@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 js> version()
-0
+180
 js> version(100)
 100
 js> version(110)
@@ -22,5 +22,8 @@ js> version(170)
 170
 js> version(180)
 180
+
+js> version(130)
+130
 js> version(0)
-0
+180

@@ -5,6 +5,7 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.mozilla.javascript.tests.Utils.runWithAllOptimizationLevels;
 
@@ -392,12 +393,17 @@ public class Bug783797Test {
         String fn = "function test(){ return this }";
         runWithAllOptimizationLevels(action(fn, new Action() {
             public void run(Context cx, ScriptableObject scope1, ScriptableObject scope2) {
-                assertSame(scope2, eval(cx, scope2, "test()"));
-                assertSame(scope2, eval(cx, scope2, "test.call(null)"));
-                assertSame(scope2, eval(cx, scope1, "scope2.test()"));
-                assertSame(scope1, eval(cx, scope1, "scope2.test.call(null)"));
-                assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t()"));
-                assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t.call(null)"));
+                cx.setLanguageVersion(Context.VERSION_1_7);
+                try {
+                    assertSame(scope2, eval(cx, scope2, "test()"));
+                    assertSame(scope2, eval(cx, scope2, "test.call(null)"));
+                    assertSame(scope2, eval(cx, scope1, "scope2.test()"));
+                    assertSame(scope1, eval(cx, scope1, "scope2.test.call(null)"));
+                    assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t()"));
+                    assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t.call(null)"));
+                } finally {
+                    cx.setLanguageVersion(Context.VERSION_DEFAULT);
+                }
             }
         }));
     }
@@ -422,20 +428,25 @@ public class Bug783797Test {
         String fn = "function test(o){ return (function(){ return this }).call(o) }";
         runWithAllOptimizationLevels(action(fn, new Action() {
             public void run(Context cx, ScriptableObject scope1, ScriptableObject scope2) {
-                assertSame(scope2, eval(cx, scope2, "test()"));
-                assertSame(scope2, eval(cx, scope2, "test(null)"));
-                assertSame(scope2, eval(cx, scope2, "test.call(null)"));
-                assertSame(scope2, eval(cx, scope2, "test.call(null, null)"));
+                cx.setLanguageVersion(Context.VERSION_1_7);
+                try {
+                    assertSame(scope2, eval(cx, scope2, "test()"));
+                    assertSame(scope2, eval(cx, scope2, "test(null)"));
+                    assertSame(scope2, eval(cx, scope2, "test.call(null)"));
+                    assertSame(scope2, eval(cx, scope2, "test.call(null, null)"));
 
-                assertSame(scope1, eval(cx, scope1, "scope2.test()"));
-                assertSame(scope1, eval(cx, scope1, "scope2.test(null)"));
-                assertSame(scope1, eval(cx, scope1, "scope2.test.call(null)"));
-                assertSame(scope1, eval(cx, scope1, "scope2.test.call(null, null)"));
+                    assertSame(scope1, eval(cx, scope1, "scope2.test()"));
+                    assertSame(scope1, eval(cx, scope1, "scope2.test(null)"));
+                    assertSame(scope1, eval(cx, scope1, "scope2.test.call(null)"));
+                    assertSame(scope1, eval(cx, scope1, "scope2.test.call(null, null)"));
 
-                assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t()"));
-                assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t(null)"));
-                assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t.call(null)"));
-                assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t.call(null, null)"));
+                    assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t()"));
+                    assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t(null)"));
+                    assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t.call(null)"));
+                    assertSame(scope1, eval(cx, scope1, "var t=scope2.test; t.call(null, null)"));
+                } finally {
+                    cx.setLanguageVersion(Context.VERSION_DEFAULT);
+                }
             }
         }));
     }
@@ -475,12 +486,17 @@ public class Bug783797Test {
         String fn = "function test(){ return this.String.prototype }";
         runWithAllOptimizationLevels(action(fn, new Action() {
             public void run(Context cx, ScriptableObject scope1, ScriptableObject scope2) {
-                assertTRUE(eval(cx, scope2, "String.prototype === test()"));
-                assertTRUE(eval(cx, scope2, "String.prototype === test.call(null)"));
-                assertFALSE(eval(cx, scope1, "String.prototype === scope2.test()"));
-                assertTRUE(eval(cx, scope1, "String.prototype === scope2.test.call(null)"));
-                assertTRUE(eval(cx, scope1, "var t=scope2.test; String.prototype === t()"));
-                assertTRUE(eval(cx, scope1, "var t=scope2.test; String.prototype === t.call(null)"));
+                cx.setLanguageVersion(Context.VERSION_1_7);
+                try {
+                    assertTRUE(eval(cx, scope2, "String.prototype === test()"));
+                    assertTRUE(eval(cx, scope2, "String.prototype === test.call(null)"));
+                    assertFALSE(eval(cx, scope1, "String.prototype === scope2.test()"));
+                    assertTRUE(eval(cx, scope1, "String.prototype === scope2.test.call(null)"));
+                    assertTRUE(eval(cx, scope1, "var t=scope2.test; String.prototype === t()"));
+                    assertTRUE(eval(cx, scope1, "var t=scope2.test; String.prototype === t.call(null)"));
+                } finally {
+                    cx.setLanguageVersion(Context.VERSION_DEFAULT);
+                }
             }
         }));
     }

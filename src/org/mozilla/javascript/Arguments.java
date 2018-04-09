@@ -35,8 +35,7 @@ final class Arguments extends IdScriptableObject
         calleeObj = f;
 
         int version = f.getLanguageVersion();
-        if (version <= Context.VERSION_1_3
-            && version != Context.VERSION_DEFAULT)
+        if (version <= Context.VERSION_1_3)
         {
             callerObj = null;
         } else {
