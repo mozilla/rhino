@@ -4070,7 +4070,7 @@ public class ScriptRuntime {
 
     static void checkDeprecated(Context cx, String name) {
         int version = cx.getLanguageVersion();
-        if (version >= Context.VERSION_1_4 || version == Context.VERSION_DEFAULT) {
+        if (version >= Context.VERSION_1_4) {
             String msg = getMessage1("msg.deprec.ctor", name);
             if (version == Context.VERSION_DEFAULT)
                 Context.reportWarning(msg);
