@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * For-in or for-each-in or for-of statement.  Node type is {@link Token#FOR}.<p>
+ * For-in or for-each-in or for-of statement.  Node type is {@link Token#FOR}.
  *
  * <pre><b>for</b> [<b>each</b>] ( LeftHandSideExpression <b>in</b> Expression ) Statement</pre>
  * <pre><b>for</b> [<b>each</b>] ( <b>var</b> VariableDeclarationNoIn <b>in</b> Expression ) Statement</pre>

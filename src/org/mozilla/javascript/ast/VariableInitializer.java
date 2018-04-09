@@ -11,10 +11,10 @@ import org.mozilla.javascript.Token;
 /**
  * A variable declaration or initializer, part of a {@link VariableDeclaration}
  * expression.  The variable "target" can be a simple name or a destructuring
- * form.  The initializer, if present, can be any expression.<p>
+ * form.  The initializer, if present, can be any expression.<br>
  *
  * Node type is one of {@link Token#VAR}, {@link Token#CONST}, or
- * {@link Token#LET}.<p>
+ * {@link Token#LET}.
  */
 public class VariableInitializer extends AstNode {
 

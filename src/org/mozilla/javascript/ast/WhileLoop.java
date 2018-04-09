@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * While statement.  Node type is {@link Token#WHILE}.<p>
+ * While statement.  Node type is {@link Token#WHILE}.
  *
  * <pre><i>WhileStatement</i>:
  *     <b>while</b> <b>(</b> Expression <b>)</b> Statement</pre>

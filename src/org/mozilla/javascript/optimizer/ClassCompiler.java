@@ -37,7 +37,7 @@ public class ClassCompiler
      * <tt>public static void main(Script sc, String[] args)</tt>, it will be
      * called when <tt>main(String[] args)</tt> is called in the generated
      * class. The class name should be fully qulified name and include the
-     * package name like in <tt>org.foo.Bar<tt>.
+     * package name like in <tt>org.foo.Bar</tt>.
      */
     public void setMainMethodClass(String className)
     {

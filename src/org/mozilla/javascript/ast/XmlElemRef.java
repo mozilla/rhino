@@ -12,8 +12,7 @@ import org.mozilla.javascript.Token;
  * AST node for an E4X XML {@code [expr]} member-ref expression.
  * The node type is {@link Token#REF_MEMBER}.<p>
  *
- * Syntax:<p>
- *
+ * Syntax:
  * <pre> @<i><sub>opt</sub></i> ns:: <i><sub>opt</sub></i> [ expr ]</pre>
  *
  * Examples include {@code ns::[expr]}, {@code @ns::[expr]}, {@code @[expr]},
@@ -29,7 +28,7 @@ import org.mozilla.javascript.Token;
  * The node starts at the {@code @} token, if present.  Otherwise it starts
  * at the namespace name.  The node bounds extend through the closing
  * right-bracket, or if it is missing due to a syntax error, through the
- * end of the index expression.<p>
+ * end of the index expression.
  */
 public class XmlElemRef extends XmlRef {
 

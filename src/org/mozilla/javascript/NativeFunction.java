@@ -117,14 +117,14 @@ public abstract class NativeFunction extends BaseFunction
 
     /**
      * Get parameter or variable name.
-     * If <tt>index < {@link #getParamCount()}</tt>, then return the name of the
+     * If <tt>index &lt; {@link #getParamCount()}</tt>, then return the name of the
      * corresponding parameter. Otherwise return the name of variable.
      */
     protected abstract String getParamOrVarName(int index);
 
     /**
      * Get parameter or variable const-ness.
-     * If <tt>index < {@link #getParamCount()}</tt>, then return the const-ness
+     * If <tt>index &lt; {@link #getParamCount()}</tt>, then return the const-ness
      * of the corresponding parameter. Otherwise return whether the variable is
      * const.
      */

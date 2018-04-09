@@ -15,9 +15,9 @@ import java.util.TreeSet;
 /**
  * Node for the root of a parse tree.  It contains the statements and functions
  * in the script, and a list of {@link Comment} nodes associated with the script
- * as a whole.  Node type is {@link Token#SCRIPT}. <p>
+ * as a whole.  Node type is {@link Token#SCRIPT}.
  *
- * Note that the tree itself does not store errors.  To collect the parse errors
+ * <p>Note that the tree itself does not store errors. To collect the parse errors
  * and warnings, pass an {@link org.mozilla.javascript.ErrorReporter} to the
  * {@link org.mozilla.javascript.Parser} via the
  * {@link org.mozilla.javascript.CompilerEnvirons}.

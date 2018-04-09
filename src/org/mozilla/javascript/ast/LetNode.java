@@ -10,7 +10,7 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for let statements and expressions.
- * Node type is {@link Token#LET} or {@link Token#LETEXPR}.<p>
+ * Node type is {@link Token#LET} or {@link Token#LETEXPR}.
  *
  * <pre> <i>LetStatement</i>:
  *     <b>let</b> ( VariableDeclarationList ) Block
@@ -20,7 +20,7 @@ import org.mozilla.javascript.Token;
  * Note that standalone let-statements with no parens or body block,
  * such as {@code let x=6, y=7;}, are represented as a
  * {@link VariableDeclaration} node of type {@code Token.LET},
- * wrapped with an {@link ExpressionStatement}.<p>
+ * wrapped with an {@link ExpressionStatement}.
  */
 public class LetNode extends Scope {
 

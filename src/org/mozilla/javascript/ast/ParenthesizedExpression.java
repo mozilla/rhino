@@ -10,7 +10,7 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for a parenthesized expression.
- * Node type is {@link Token#LP}.<p>
+ * Node type is {@link Token#LP}.
  */
 public class ParenthesizedExpression extends AstNode {
 

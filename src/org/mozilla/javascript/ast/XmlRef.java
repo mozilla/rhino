@@ -9,10 +9,9 @@ package org.mozilla.javascript.ast;
 /**
  * Base class for E4X XML attribute-access or property-get expressions.
  * Such expressions can take a variety of forms. The general syntax has
- * three parts:<p>
- *
+ * three parts:
  * <ol>
- *  <li>optional: an {@code @}</li>  (specifying an attribute access)</li>
+ *  <li>optional: an {@code @} (specifying an attribute access)</li>
  *  <li>optional: a namespace (a {@code Name}) and double-colon</li>
  *  <li>required:  either a {@code Name} or a bracketed [expression]</li>
  * </ol>
@@ -29,7 +28,7 @@ package org.mozilla.javascript.ast;
  * is valid in certain expression contexts such as
  * {@code company..employee.(@id &lt; 100)} - in this case, the {@code @id}
  * is an {@code XmlRef} that is part of an infix '&lt;' expression
- * whose parent is an {@code XmlDotQuery} node.<p>
+ * whose parent is an {@code XmlDotQuery} node.
  */
 public abstract class XmlRef extends AstNode {
 

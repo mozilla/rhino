@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * Switch statement AST node type.
- * Node type is {@link Token#SWITCH}.<p>
+ * Node type is {@link Token#SWITCH}.
  *
  * <pre><i>SwitchStatement</i> :
  *        <b>switch</b> ( Expression ) CaseBlock

@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * Return statement.  Node type is {@link Token#RETURN}.<p>
+ * Return statement.  Node type is {@link Token#RETURN}.
  *
  * <pre><i>ReturnStatement</i> :
  *      <b>return</b> [<i>no LineTerminator here</i>] [Expression] ;</pre>

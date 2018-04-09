@@ -72,7 +72,7 @@ public interface DebuggableScript
 
     /**
      * Get array containing the line numbers that
-     * that can be passed to <code>DebugFrame.onLineChange()<code>.
+     * that can be passed to <code>DebugFrame.onLineChange()</code>.
      * Note that line order in the resulting array is arbitrary
      */
     public int[] getLineNumbers();

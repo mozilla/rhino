@@ -10,7 +10,7 @@ import org.mozilla.javascript.Token;
 
 /**
  * C-style for-loop statement.
- * Node type is {@link Token#FOR}.<p>
+ * Node type is {@link Token#FOR}.
  *
  * <pre><b>for</b> ( ExpressionNoInopt; Expressionopt ; Expressionopt ) Statement</pre>
  * <pre><b>for</b> ( <b>var</b> VariableDeclarationListNoIn; Expressionopt ; Expressionopt ) Statement</pre>

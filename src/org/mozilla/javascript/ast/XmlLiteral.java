@@ -16,7 +16,7 @@ import java.util.List;
  * {@link Token#XML}.  The parser generates a simple list of strings and
  * expressions.  In the future we may parse the XML and produce a richer set of
  * nodes, but for now it's just a set of expressions evaluated to produce a
- * string to pass to the {@code XML} constructor function.<p>
+ * string to pass to the {@code XML} constructor function.
  */
 public class XmlLiteral extends AstNode {
 

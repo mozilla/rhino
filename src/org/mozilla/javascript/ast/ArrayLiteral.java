@@ -15,9 +15,9 @@ import java.util.List;
 /**
  * AST node for an Array literal.  The elements list will always be
  * non-{@code null}, although the list will have no elements if the Array literal
- * is empty.<p>
+ * is empty.
  *
- * Node type is {@link Token#ARRAYLIT}.<p>
+ * <p>Node type is {@link Token#ARRAYLIT}.
  *
  * <pre><i>ArrayLiteral</i> :
  *        <b>[</b> Elisionopt <b>]</b>

@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Switch-case AST node type.  The switch case is always part of a
  * switch statement.
- * Node type is {@link Token#CASE}.<p>
+ * Node type is {@link Token#CASE}.
  *
  * <pre><i>CaseBlock</i> :
  *        { [CaseClauses] }

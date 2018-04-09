@@ -13,7 +13,7 @@ import org.mozilla.javascript.Undefined;
 
 /**
  * An array view that stores 16-bit quantities and implements the JavaScript "Int16Array" interface.
- * It also implements List<Short> for direct manipulation in Java.
+ * It also implements List&lt;Short&gt; for direct manipulation in Java.
  */
 
 public class NativeInt16Array

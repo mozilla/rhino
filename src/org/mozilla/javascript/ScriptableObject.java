@@ -1644,6 +1644,9 @@ public abstract class ScriptableObject implements Scriptable,
 
     /**
      * A version of defineProperty that uses a Symbol key.
+     * @param key symbol of the property to define.
+     * @param value the initial value of the property
+     * @param attributes the attributes of the JavaScript property
      */
     public void defineProperty(Symbol key, Object value,
                                int attributes)
@@ -1658,6 +1661,10 @@ public abstract class ScriptableObject implements Scriptable,
      * If destination is instance of ScriptableObject, calls
      * defineProperty there, otherwise calls put in destination
      * ignoring attributes
+     * @param destination ScriptableObject to define the property on
+     * @param propertyName the name of the property to define.
+     * @param value the initial value of the property
+     * @param attributes the attributes of the JavaScript property
      */
     public static void defineProperty(Scriptable destination,
                                       String propertyName, Object value,
@@ -1676,6 +1683,8 @@ public abstract class ScriptableObject implements Scriptable,
      * If destination is instance of ScriptableObject, calls
      * defineProperty there, otherwise calls put in destination
      * ignoring attributes
+     * @param destination ScriptableObject to define the property on
+     * @param propertyName the name of the property to define.
      */
     public static void defineConstProperty(Scriptable destination,
                                            String propertyName)
@@ -2159,6 +2168,7 @@ public abstract class ScriptableObject implements Scriptable,
     /**
      * Get the Object.prototype property.
      * See ECMA 15.2.4.
+     * @param scope an object in the scope chain
      */
     public static Scriptable getObjectPrototype(Scriptable scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope),
@@ -2168,6 +2178,7 @@ public abstract class ScriptableObject implements Scriptable,
     /**
      * Get the Function.prototype property.
      * See ECMA 15.3.4.
+     * @param scope an object in the scope chain
      */
     public static Scriptable getFunctionPrototype(Scriptable scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope),

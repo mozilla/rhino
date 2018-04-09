@@ -48,14 +48,6 @@ dependencies {
     testCompile "net.trajano.caliper:caliper:1.2.1"
 }
 
-if (JavaVersion.current().isJava8Compatible()) {
-    allprojects {
-        tasks.withType(Javadoc) {
-            options.addStringOption('Xdoclint:none', '-quiet')
-        }
-    }
-}
-
 test {
     useJUnit()
     exclude "**/benchmarks/**"
@@ -131,20 +123,24 @@ jar {
     }
 }
 
+
+
+javadoc {
+    options.addBooleanOption("-allow-script-in-comments", true)
+    options.addStringOption('Xdoclint:html', '-quiet')
+
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
-task rhinoJavadoc(type: Javadoc) {
-    source = sourceSets.main.allJava
-    if (JavaVersion.current().isJava8Compatible()) {
-        options.addStringOption('Xdoclint:none', '-quiet')
-    }
-}
-
-task rhinoJavadocJar(type: Jar, dependsOn: rhinoJavadoc) {
-    from rhinoJavadoc.destinationDir
-}
 
 publishing {
     publications {
@@ -184,7 +180,7 @@ publishing {
             artifact sourceJar {
                 classifier "sources"
             }
-            artifact rhinoJavadocJar {
+            artifact javadocJar {
                 classifier "javadoc"
             }
         }

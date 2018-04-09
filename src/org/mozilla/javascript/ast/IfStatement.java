@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * If-else statement.  Node type is {@link Token#IF}.<p>
+ * If-else statement.  Node type is {@link Token#IF}.
  *
  * <pre><i>IfStatement</i> :
  *       <b>if</b> ( Expression ) Statement <b>else</b> Statement

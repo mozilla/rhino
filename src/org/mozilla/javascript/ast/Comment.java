@@ -10,13 +10,13 @@ import org.mozilla.javascript.Token;
 
 /**
  * Node representing comments.
- * Node type is {@link Token#COMMENT}.<p>
+ * Node type is {@link Token#COMMENT}.
  *
  * <p>JavaScript effectively has five comment types:
  *   <ol>
  *     <li>// line comments</li>
- *     <li>/<span class="none">* block comments *\/</li>
- *     <li>/<span class="none">** jsdoc comments *\/</li>
+ *     <li>/* block comments *\/</li>
+ *     <li>/** jsdoc comments *\/</li>
  *     <li>&lt;!-- html-open line comments</li>
  *     <li>^\\s*--&gt; html-close line comments</li>
  *   </ol>
@@ -24,7 +24,7 @@ import org.mozilla.javascript.Token;
  * <p>The first three should be familiar to Java programmers.  JsDoc comments
  * are really just block comments with some conventions about the formatting
  * within the comment delimiters.  Line and block comments are described in the
- * Ecma-262 specification. <p>
+ * Ecma-262 specification.
  *
  * <p>SpiderMonkey and Rhino also support HTML comment syntax, but somewhat
  * counterintuitively, the syntax does not produce a block comment.  Instead,
@@ -32,9 +32,9 @@ import org.mozilla.javascript.Token;
  * a comment, and if the token --&gt; is the first non-whitespace on the line,
  * then the line is considered a line comment.  This is to support parsing
  * JavaScript in &lt;script&gt; HTML tags that has been "hidden" from very old
- * browsers by surrounding it with HTML comment delimiters. <p>
+ * browsers by surrounding it with HTML comment delimiters.
  *
- * Note the node start position for Comment nodes is still relative to the
+ * <p>Note the node start position for Comment nodes is still relative to the
  * parent, but Comments are always stored directly in the AstRoot node, so
  * they are also effectively absolute offsets.
  */

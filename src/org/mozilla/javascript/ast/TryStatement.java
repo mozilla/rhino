@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Try/catch/finally statement.  Node type is {@link Token#TRY}.<p>
+ * Try/catch/finally statement.  Node type is {@link Token#TRY}.
  *
  * <pre><i>TryStatement</i> :
  *        <b>try</b> Block Catch

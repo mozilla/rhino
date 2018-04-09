@@ -14,7 +14,7 @@ import org.mozilla.javascript.Undefined;
 
 /**
  * An array view that stores 64-bit quantities and implements the JavaScript "Float64Array" interface.
- * It also implements List<Double> for direct manipulation in Java.
+ * It also implements List&lt;Double&gt; for direct manipulation in Java.
  */
 
 public class NativeFloat64Array

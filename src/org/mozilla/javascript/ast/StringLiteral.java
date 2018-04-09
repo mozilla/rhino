@@ -11,7 +11,7 @@ import org.mozilla.javascript.ScriptRuntime;
 
 /**
  * AST node for a single- or double-quoted string literal.
- * Node type is {@link Token#STRING}.<p>
+ * Node type is {@link Token#STRING}.
  */
 public class StringLiteral extends AstNode {
 

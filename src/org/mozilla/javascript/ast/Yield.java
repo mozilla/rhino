@@ -10,7 +10,7 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for JavaScript 1.7 {@code yield} expression or statement.
- * Node type is {@link Token#YIELD}.<p>
+ * Node type is {@link Token#YIELD}.
  *
  * <pre><i>Yield</i> :
  *   <b>yield</b> [<i>no LineTerminator here</i>] [non-paren Expression] ;</pre>

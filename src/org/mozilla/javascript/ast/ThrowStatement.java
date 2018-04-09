@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * Throw statement.  Node type is {@link Token#THROW}.<p>
+ * Throw statement.  Node type is {@link Token#THROW}.
  *
  * <pre><i>ThrowStatement</i> :
  *      <b>throw</b> [<i>no LineTerminator here</i>] Expression ;</pre>

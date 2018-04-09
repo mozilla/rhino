@@ -128,7 +128,7 @@ public class Context
     /**
      * Controls behaviour of <tt>Date.prototype.getYear()</tt>.
      * If <tt>hasFeature(FEATURE_NON_ECMA_GET_YEAR)</tt> returns true,
-     * Date.prototype.getYear subtructs 1900 only if 1900 <= date < 2000.
+     * Date.prototype.getYear subtructs 1900 only if 1900 &lt;= date &lt; 2000.
      * The default behavior of {@link #hasFeature(int)} is always to subtruct
      * 1900 as rquired by ECMAScript B.2.4.
      */
@@ -304,7 +304,7 @@ public class Context
     /**
      * Defines how an undefined  "this" parameter is handled in certain calls. Previously Rhino
      * would convert an undefined "this" to null, whereas recent specs call for it to be treated
-     * differently. Default is to be set if language version <= 1.7.
+     * differently. Default is to be set if language version &lt;= 1.7.
      * @since 1.7.7
      */
     public static final int FEATURE_OLD_UNDEF_NULL_THIS = 15;
@@ -312,7 +312,7 @@ public class Context
     /**
      * If set, then the order of property key enumeration will be first numeric keys in numeric order,
      * followed by string keys in order of creation, and finally Symbol keys, as specified in ES6.
-     * Default is true for language version >= "ES6" and false otherwise.
+     * Default is true for language version &gt;= "ES6" and false otherwise.
      * @since 1.7.7.1
      */
     public static final int FEATURE_ENUMERATE_IDS_FIRST = 16;
@@ -2353,7 +2353,7 @@ public class Context
      * When the threshold is zero, instruction counting is disabled,
      * otherwise each time the run-time executes at least the threshold value
      * of script instructions, <code>observeInstructionCount()</code> will
-     * be called.<p/>
+     * be called.<br>
      * Note that the meaning of "instruction" is not guaranteed to be
      * consistent between compiled and interpretive modes: executing a given
      * script or function in the different modes will result in different
