@@ -244,12 +244,11 @@ public class Global extends ImporterTopLevel
     public static double version(Context cx, Scriptable thisObj,
                                  Object[] args, Function funObj)
     {
-        double result = cx.getLanguageVersion();
         if (args.length > 0) {
             double d = Context.toNumber(args[0]);
             cx.setLanguageVersion((int) d);
         }
-        return result;
+        return cx.getLanguageVersion();
     }
 
     /**

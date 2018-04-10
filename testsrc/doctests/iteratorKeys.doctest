@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 js> version(170)
-0
+170
 js> var foo = {
   >   __iterator__ : function(onlyKeys) {
   >     print(onlyKeys);
