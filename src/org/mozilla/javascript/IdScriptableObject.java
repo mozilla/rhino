@@ -939,6 +939,13 @@ public abstract class IdScriptableObject extends ScriptableObject
                   }
                 }
                 prototypeValues.setAttributes(id, applyDescriptorToAttributeBitset(attr, desc));
+
+                // Handle the regular slot that was created if this property was previously replaced
+                // with an accessor descriptor.
+                if (super.has(name, this)) {
+                  super.delete(name);
+                }
+
                 return;
               }
             }
