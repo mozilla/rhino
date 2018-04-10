@@ -72,6 +72,10 @@ public class Context
 
     /**
      * The default version.
+     * <p>Be aware, this version will not support many of the newer
+     * language features and will not change in the future.</p>
+     * <p>Please use one of the other constants like VERSION_ES6 to
+     * get support for recent language features.</p>
      */
     public static final int VERSION_DEFAULT =    0;
 

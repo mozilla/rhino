@@ -390,8 +390,7 @@ public class RegExpImpl implements RegExpProxy {
 
         /* Allow a real backslash (literal "\\") to escape "$1" etc. */
         int version = cx.getLanguageVersion();
-        if (version != Context.VERSION_DEFAULT
-            && version <= Context.VERSION_1_4)
+        if (version <= Context.VERSION_1_4)
         {
             if (dp > 0 && da.charAt(dp - 1) == '\\')
                 return null;
@@ -403,8 +402,7 @@ public class RegExpImpl implements RegExpProxy {
         dc = da.charAt(dp + 1);
         if (NativeRegExp.isDigit(dc)) {
             int cp;
-            if (version != Context.VERSION_DEFAULT
-                && version <= Context.VERSION_1_4)
+            if (version <= Context.VERSION_1_4)
             {
                 if (dc == '0')
                     return null;
@@ -591,8 +589,7 @@ public class RegExpImpl implements RegExpProxy {
             }
             ip[0] = match + matchlen[0];
 
-            if (version < Context.VERSION_1_3
-                && version != Context.VERSION_DEFAULT)
+            if (version < Context.VERSION_1_3)
             {
         /*
          * Deviate from ECMA to imitate Perl, which omits a final
@@ -688,8 +685,7 @@ public class RegExpImpl implements RegExpProxy {
          * string into a non-empty array (an array of length 1 that contains the
          * empty string).
          */
-        if (version != Context.VERSION_DEFAULT && version < Context.VERSION_1_3
-            && length == 0)
+        if (version < Context.VERSION_1_3 && length == 0)
             return -1;
 
         /*
