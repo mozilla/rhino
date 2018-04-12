@@ -41,7 +41,7 @@ public class WriteReadOnlyPropertyTest {
 			Assert.fail();
 		}
 		catch (EcmaError e) {
-			Assert.assertTrue(e.getMessage(), e.getMessage().contains("Cannot set property myProp that has only a getter"));
+			Assert.assertTrue(e.getMessage(), e.getMessage().contains("Cannot set property [Foo].myProp that has only a getter to value '123'"));
 		}
 	}
 

@@ -276,7 +276,12 @@ public abstract class ScriptableObject implements Scriptable,
                         // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
                         // we should throw a TypeError in this case.
                         cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
-                        throw ScriptRuntime.typeError1("msg.set.prop.no.setter", name);
+
+                        String prop = "";
+                        if (name != null) {
+                            prop = "[" + start.getClassName() + "]." + name.toString();
+                        }
+                        throw ScriptRuntime.typeError2("msg.set.prop.no.setter", prop, Context.toString(value));
                     }
                     // Assignment to a property with only a getter defined. The
                     // assignment is ignored. See bug 478047.
