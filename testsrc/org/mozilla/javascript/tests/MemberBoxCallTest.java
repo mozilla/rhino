@@ -7,7 +7,6 @@ package org.mozilla.javascript.tests;
 import org.junit.Test;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.annotations.*;
@@ -18,17 +17,54 @@ public class MemberBoxCallTest {
 
     @Test
     public void testPrototypeProperty() {
-		Context cx = Context.enter();
-		try {
-			assertEquals(evaluate(cx, 
-				"var hostObj = new AnnotatedHostObject(); " +
-				"var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");" +
-				"var result = 'failed';" +
-				"if( valueProperty.get && valueProperty.set ) {" +
-					"valueProperty.set.call(hostObj, 'superVal');" +
-					"result = valueProperty.get.call(hostObj);" +
-				"}"+
-				"result;"), "SUPERVAL");
+        Context cx = Context.enter();
+        try {
+            assertEquals("SUPERVAL",
+                evaluate(cx, 
+                    "var hostObj = new AnnotatedHostObject(); " +
+                    "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");" +
+                    "var result = 'failed';" +
+                    "if( valueProperty.get && valueProperty.set ) {" +
+                        "valueProperty.set.call(hostObj, 'superVal');" +
+                        "result = valueProperty.get.call(hostObj);" +
+                    "}" +
+                    "result;"));
+        } finally {
+            Context.exit();
+        }
+    }
+
+    @Test
+    public void testPropertyGetterName() {
+        Context cx = Context.enter();
+        try {
+            assertEquals("foo",
+                evaluate(cx, 
+                    "var hostObj = new AnnotatedHostObject(); " +
+                    "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");" +
+                    "var result = 'failed';" +
+                    "if( valueProperty.get && valueProperty.set ) {" +
+                        "result = '' + valueProperty.get.name;" +
+                    "}" +
+                    "result;"));
+        } finally {
+            Context.exit();
+        }
+    }
+
+    @Test
+    public void testPropertySetterName() {
+        Context cx = Context.enter();
+        try {
+            assertEquals("foo",
+                evaluate(cx, 
+                    "var hostObj = new AnnotatedHostObject(); " +
+                    "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");" +
+                    "var result = 'failed';" +
+                    "if( valueProperty.get && valueProperty.set ) {" +
+                        "result = '' + valueProperty.set.name;" +
+                    "}" +
+                    "result;"));
         } finally {
             Context.exit();
         }
