@@ -41,6 +41,7 @@ import java.util.EventObject;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.io.*;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
@@ -122,7 +123,7 @@ public class SwingGui extends JFrame implements GuiCallback {
      * Hash table of script URLs to their internal frames.
      */
     private final Map<String,FileWindow> fileWindows =
-        Collections.synchronizedMap(new HashMap<String,FileWindow>());
+        Collections.synchronizedMap(new TreeMap<String,FileWindow>());
 
 
     /**
@@ -449,7 +450,19 @@ public class SwingGui extends JFrame implements GuiCallback {
      * @param lineNumber the line number to select, or -1
      */
     protected void showFileWindow(String sourceUrl, int lineNumber) {
-        FileWindow w = getFileWindow(sourceUrl);
+        FileWindow w;
+        if (sourceUrl != null) {
+            w = getFileWindow(sourceUrl);
+        }
+        else {
+            JInternalFrame f = getSelectedFrame();
+            if (f != null && f instanceof FileWindow) {
+                w = (FileWindow) f;
+            }
+            else {
+                w = currentWindow;
+            }
+        }
         if (w == null) {
             Dim.SourceInfo si = dim.sourceInfo(sourceUrl);
             createFileWindow(si, -1);
@@ -458,6 +471,9 @@ public class SwingGui extends JFrame implements GuiCallback {
         if (lineNumber > -1) {
             int start = w.getPosition(lineNumber-1);
             int end = w.getPosition(lineNumber)-1;
+            if (start <= 0) {
+                return;
+            }
             w.textArea.select(start);
             w.textArea.setCaretPosition(start);
             w.textArea.moveCaretPosition(end);
@@ -860,6 +876,25 @@ public class SwingGui extends JFrame implements GuiCallback {
             FindFunction dlg = new FindFunction(this, "Go to function",
                                                 "Function");
             dlg.showDialog(this);
+        } else if (cmd.equals("Go to line...")) {
+            final String s = (String) JOptionPane.showInputDialog(
+                    this,
+                    "Line number",
+                    "Go to line...",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    null,
+                    null);
+            if (s == null) {
+                return;
+            }
+            try {
+                final int line = Integer.parseInt(s);
+                showFileWindow(null, line);
+            }
+            catch (final NumberFormatException nfe) {
+                // ignore
+            }
         } else if (cmd.equals("Tile")) {
             JInternalFrame[] frames = desk.getAllFrames();
             int count = frames.length;
@@ -3219,8 +3254,9 @@ class Menubar extends JMenuBar implements ActionListener {
                                   KeyEvent.VK_N,
                                   0,
                                   KeyEvent.VK_Q};
-        String[] editItems = {"Cut", "Copy", "Paste", "Go to function..."};
-        char[] editShortCuts = {'T', 'C', 'P', 'F'};
+        String[] editItems = {"Cut", "Copy", "Paste", "Go to function...", "Go to line..."};
+        char[] editShortCuts = {'T', 'C', 'P', 'F', 'L'};
+        int[] editAccelerators = {0, 0, 0, 0, KeyEvent.VK_L };
         String[] debugItems = {"Break", "Go", "Step Into", "Step Over", "Step Out"};
         char[] debugShortCuts = {'B', 'G', 'I', 'O', 'T'};
         String[] plafItems = {"Metal", "Windows", "Motif"};
@@ -3262,6 +3298,10 @@ class Menubar extends JMenuBar implements ActionListener {
                                            editShortCuts[i]);
             item.addActionListener(this);
             editMenu.add(item);
+            if (editAccelerators[i] != 0) {
+                KeyStroke k = KeyStroke.getKeyStroke(editAccelerators[i], Event.CTRL_MASK);
+                item.setAccelerator(k);
+            }
         }
         for (int i = 0; i < plafItems.length; ++i) {
             JMenuItem item = new JMenuItem(plafItems[i],
