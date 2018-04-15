@@ -246,20 +246,22 @@ public abstract class ScriptableObject implements Scriptable,
             if (getter == null && setter == null) {
                 desc.defineProperty("writable", (attr & READONLY) == 0, EMPTY);
             }
+
+            String fName = name == null ? "f" : name.toString();
             if (getter != null) {
-                if( getter instanceof MemberBox ) {
-                    desc.defineProperty("get", new FunctionObject("f", ((MemberBox)getter).member(),scope), EMPTY);
-                } else if( getter instanceof Member ) {
-                    desc.defineProperty("get", new FunctionObject("f",(Member)getter,scope), EMPTY);
+                if ( getter instanceof MemberBox ) {
+                    desc.defineProperty("get", new FunctionObject(fName, ((MemberBox)getter).member(), scope), EMPTY);
+                } else if ( getter instanceof Member ) {
+                    desc.defineProperty("get", new FunctionObject(fName, (Member)getter, scope), EMPTY);
                 } else {
                     desc.defineProperty("get", getter, EMPTY);
                 }
             }
             if (setter != null) {
-                if( setter instanceof MemberBox ) {
-                    desc.defineProperty("set", new FunctionObject("f", ((MemberBox)setter).member(),scope), EMPTY);
-                } else if( setter instanceof Member ) {
-                    desc.defineProperty("set", new FunctionObject("f",(Member)setter,scope), EMPTY);
+                if ( setter instanceof MemberBox ) {
+                    desc.defineProperty("set", new FunctionObject(fName, ((MemberBox) setter).member(), scope), EMPTY);
+                } else if ( setter instanceof Member ) {
+                    desc.defineProperty("set", new FunctionObject(fName, (Member) setter, scope), EMPTY);
                 } else {
                     desc.defineProperty("set", setter, EMPTY);
                 }
