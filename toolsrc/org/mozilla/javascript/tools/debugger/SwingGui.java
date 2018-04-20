@@ -463,10 +463,13 @@ public class SwingGui extends JFrame implements GuiCallback {
                 w = currentWindow;
             }
         }
-        if (w == null) {
+        if (w == null && sourceUrl != null) {
             Dim.SourceInfo si = dim.sourceInfo(sourceUrl);
             createFileWindow(si, -1);
             w = getFileWindow(sourceUrl);
+        }
+        if (w == null) {
+            return;
         }
         if (lineNumber > -1) {
             int start = w.getPosition(lineNumber-1);
@@ -885,7 +888,7 @@ public class SwingGui extends JFrame implements GuiCallback {
                     null,
                     null,
                     null);
-            if (s == null) {
+            if (s == null || s.trim().length() == 0) {
                 return;
             }
             try {
