@@ -22,7 +22,6 @@ public class IdFunctionObject extends BaseFunction
         this.tag = tag;
         this.methodId = id;
         this.arity = arity;
-        if (arity < 0) throw new IllegalArgumentException();
     }
 
     public IdFunctionObject(IdFunctionCall idcall, Object tag, int id,
