@@ -278,7 +278,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
                 return ((HttpURLConnection)urlConnection).getResponseCode() ==
                     HttpURLConnection.HTTP_NOT_MODIFIED;
             }
-            return lastModified == urlConnection.getLastModified();
+            return lastModified != urlConnection.getLastModified();
         }
 
         private long calculateExpiry(URLConnection urlConnection,
