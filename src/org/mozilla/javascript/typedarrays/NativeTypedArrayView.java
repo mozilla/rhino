@@ -59,7 +59,7 @@ public abstract class NativeTypedArrayView<T>
     @Override
     public boolean has(int index, Scriptable start)
     {
-        return ((index > 0) && (index < length));
+        return !checkIndex(index);
     }
 
     @Override
