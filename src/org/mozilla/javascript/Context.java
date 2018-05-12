@@ -339,6 +339,13 @@ public class Context
      */
     public static final int FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE = 18;
 
+    /**
+     * TypedArray buffer uses little/big endian depending on the platform.
+     * The default is big endian for Rhino.
+     * @since 1.7 Release 11
+     */
+    public static final int FEATURE_LITTLE_ENDIAN = 19;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 

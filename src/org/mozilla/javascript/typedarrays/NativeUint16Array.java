@@ -77,7 +77,7 @@ public class NativeUint16Array
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readUint16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
+        return ByteIo.readUint16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, useLittleEndian());
     }
 
     @Override
@@ -87,7 +87,7 @@ public class NativeUint16Array
             return Undefined.instance;
         }
         int val = Conversions.toUint16(c);
-        ByteIo.writeUint16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
+        ByteIo.writeUint16(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
         return null;
     }
 
