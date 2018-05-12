@@ -99,10 +99,7 @@ public class NativeDataView
         int pos = ScriptRuntime.toInt32(args[0]);
         rangeCheck(pos, bytes);
 
-        boolean littleEndian = useLittleEndian();
-        if (isArg(args, 1) && (bytes > 1)) {
-            littleEndian = ScriptRuntime.toBoolean(args[1]);
-        }
+        boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
 
         switch (bytes) {
         case 1:
@@ -126,8 +123,7 @@ public class NativeDataView
         int pos = ScriptRuntime.toInt32(args[0]);
         rangeCheck(pos, bytes);
 
-        boolean littleEndian =
-            (isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]));
+        boolean littleEndian = isArg(args, 1) && (bytes > 1) && ScriptRuntime.toBoolean(args[1]);
 
         switch (bytes) {
         case 4:
@@ -147,10 +143,7 @@ public class NativeDataView
         int pos = ScriptRuntime.toInt32(args[0]);
         rangeCheck(pos, bytes);
 
-        boolean littleEndian = useLittleEndian();
-        if (isArg(args, 2) && (bytes > 1)) {
-            littleEndian = ScriptRuntime.toBoolean(args[2]);
-        }
+        boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
 
         switch (bytes) {
         case 1:
@@ -187,10 +180,7 @@ public class NativeDataView
         int pos = ScriptRuntime.toInt32(args[0]);
         rangeCheck(pos, bytes);
 
-        boolean littleEndian = useLittleEndian();
-        if (isArg(args, 2) && (bytes > 1)) {
-            littleEndian = ScriptRuntime.toBoolean(args[2]);
-        }
+        boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
         double val = ScriptRuntime.toNumber(args[1]);
 
         switch (bytes) {
