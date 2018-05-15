@@ -91,7 +91,7 @@ public class FunctionObject extends BaseFunction
         }
         String methodName = member.getName();
         this.functionName = name;
-        Class<?>[] types = member.argTypes;
+        Class<?>[] types = member.argTypes();
         int arity = types.length;
         if (arity == 4 && (types[1].isArray() || types[2].isArray())) {
             // Either variable args or an error.
@@ -134,8 +134,7 @@ public class FunctionObject extends BaseFunction
         }
 
         if (member.isMethod()) {
-            Method method = member.method();
-            Class<?> returnType = method.getReturnType();
+            Class<?> returnType = member.getReturnType();
             if (returnType == Void.TYPE) {
                 hasVoidReturn = true;
             } else {
@@ -235,13 +234,9 @@ public class FunctionObject extends BaseFunction
     /**
      * Get Java method or constructor this function represent.
      */
-    public Member getMethodOrConstructor()
+    public Executable getMethodOrConstructor()
     {
-        if (member.isMethod()) {
-            return member.method();
-        } else {
-            return member.ctor();
-        }
+        return member.member();
     }
 
     static Method findSingleMethod(Method[] methods, String name)
@@ -506,15 +501,14 @@ public class FunctionObject extends BaseFunction
     {
         in.defaultReadObject();
         if (parmsLength > 0) {
-            Class<?>[] types = member.argTypes;
+            Class<?>[] types = member.argTypes();
             typeTags = new byte[parmsLength];
             for (int i = 0; i != parmsLength; ++i) {
                 typeTags[i] = (byte)getTypeTag(types[i]);
             }
         }
         if (member.isMethod()) {
-            Method method = member.method();
-            Class<?> returnType = method.getReturnType();
+            Class<?> returnType = member.getReturnType();
             if (returnType == Void.TYPE) {
                 hasVoidReturn = true;
             } else {
