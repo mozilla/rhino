@@ -706,7 +706,7 @@ class TokenStream
             }
 
             // is it a string?
-            if (c == '"' || c == '\'') {
+            if (c == '"' || c == '\'' || c == '`') {
                 // We attempt to accumulate a string the fast way, by
                 // building it directly out of the reader.  But if there
                 // are any escaped characters in the string, we revert to

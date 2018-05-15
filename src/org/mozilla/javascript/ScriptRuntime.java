@@ -764,7 +764,7 @@ public class ScriptRuntime {
      */
     public static String escapeString(String s, char escapeQuote)
     {
-        if (!(escapeQuote == '"' || escapeQuote == '\'')) Kit.codeBug();
+        if (!(escapeQuote == '"' || escapeQuote == '\'' || escapeQuote == '`')) Kit.codeBug();
         StringBuilder sb = null;
 
         for(int i = 0, L = s.length(); i != L; ++i) {
