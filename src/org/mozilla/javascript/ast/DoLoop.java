@@ -70,6 +70,9 @@ public class DoLoop extends Loop {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         sb.append("do ");
+        if(this.getInlineComment() != null) {
+            sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
+        }
         sb.append(body.toSource(depth).trim());
         sb.append(" while (");
         sb.append(condition.toSource(0));

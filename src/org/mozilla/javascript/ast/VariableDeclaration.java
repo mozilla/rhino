@@ -136,7 +136,12 @@ public class VariableDeclaration extends AstNode {
         sb.append(" ");
         printList(variables, sb);
         if (isStatement()) {
-            sb.append(";\n");
+            sb.append(";");
+        }
+        if(this.getInlineComment() != null) {
+        	sb.append(this.getInlineComment().toSource(depth)).append("\n");
+        } else if (isStatement()) {
+        	sb.append("\n");
         }
         return sb.toString();
     }

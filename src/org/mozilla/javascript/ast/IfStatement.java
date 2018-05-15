@@ -21,6 +21,7 @@ public class IfStatement extends AstNode {
     private AstNode thenPart;
     private int elsePosition = -1;
     private AstNode elsePart;
+    private AstNode elseKeyWordInlineComment;
     private int lp = -1;
     private int rp = -1;
 
@@ -149,9 +150,15 @@ public class IfStatement extends AstNode {
         sb.append("if (");
         sb.append(condition.toSource(0));
         sb.append(") ");
-        if (thenPart.getType() != Token.BLOCK) {
-            sb.append("\n").append(makeIndent(depth + 1));
+        if(this.getInlineComment() != null) {
+        	sb.append("    ").append(this.getInlineComment().toSource()).append("\n");
         }
+        if (thenPart.getType() != Token.BLOCK) {
+        	if(this.getInlineComment() == null) {
+        		sb.append("\n");
+        	}
+            sb.append(makeIndent(depth + 1));
+        } 
         sb.append(thenPart.toSource(depth).trim());
         if (elsePart != null) {
             if (thenPart.getType() != Token.BLOCK) {
@@ -159,9 +166,15 @@ public class IfStatement extends AstNode {
             } else {
                 sb.append(" else ");
             }
+            if(this.getElseKeyWordInlineComment() != null) {
+            	sb.append("    ").append(this.getElseKeyWordInlineComment().toSource()).append("\n");
+            }
             if (elsePart.getType() != Token.BLOCK
                     && elsePart.getType() != Token.IF) {
-                sb.append("\n").append(makeIndent(depth + 1));
+            	if(this.getElseKeyWordInlineComment() == null) {
+            		sb.append("\n");
+            	}
+                sb.append(makeIndent(depth + 1));
             }
             sb.append(elsePart.toSource(depth).trim());
         }
@@ -183,4 +196,13 @@ public class IfStatement extends AstNode {
             }
         }
     }
+
+	public AstNode getElseKeyWordInlineComment() {
+		return elseKeyWordInlineComment;
+	}
+
+	public void setElseKeyWordInlineComment(AstNode elseKeyWordInlineComment) {
+		this.elseKeyWordInlineComment = elseKeyWordInlineComment;
+	}
+    
 }

@@ -107,7 +107,11 @@ public class ExpressionStatement extends AstNode {
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
         sb.append(expr.toSource(depth));
-        sb.append(";\n");
+        sb.append(";");
+        if(this.getInlineComment() != null) {
+        	sb.append(this.getInlineComment().toSource(depth));
+        }
+        sb.append("\n");
         return sb.toString();
     }
 

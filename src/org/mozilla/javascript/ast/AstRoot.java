@@ -107,6 +107,9 @@ public class AstRoot extends ScriptNode {
         StringBuilder sb = new StringBuilder();
         for (Node node : this) {
             sb.append(((AstNode)node).toSource(depth));
+            if(node.getType() == Token.COMMENT) {
+            	sb.append("\n");
+            }
         }
         return sb.toString();
     }
