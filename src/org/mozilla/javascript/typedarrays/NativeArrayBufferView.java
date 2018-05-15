@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Undefined;
@@ -19,6 +20,8 @@ public abstract class NativeArrayBufferView
     extends IdScriptableObject
 {
     private static final long serialVersionUID = 6884475582973958419L;
+
+    private static Boolean useLittleEndian = null;
 
     /** Many view objects can share the same backing array */
     protected final NativeArrayBuffer arrayBuffer;
@@ -60,6 +63,18 @@ public abstract class NativeArrayBufferView
      */
     public int getByteLength() {
         return byteLength;
+    }
+
+    protected static boolean useLittleEndian() {
+        if (useLittleEndian == null) {
+            Context ctx = Context.getCurrentContext();
+            // for some unit tests this might be null
+            if (ctx == null) {
+                return false;
+            }
+            useLittleEndian = ctx.hasFeature(Context.FEATURE_LITTLE_ENDIAN);
+        }
+        return useLittleEndian.booleanValue();
     }
 
     protected static boolean isArg(Object[] args, int i)

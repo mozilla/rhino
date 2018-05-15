@@ -59,7 +59,7 @@ public abstract class NativeTypedArrayView<T>
     @Override
     public boolean has(int index, Scriptable start)
     {
-        return ((index > 0) && (index < length));
+        return !checkIndex(index);
     }
 
     @Override
@@ -245,6 +245,19 @@ public abstract class NativeTypedArrayView<T>
         case Id_constructor:
             return js_constructor(cx, scope, args);
 
+        case Id_toString:
+            NativeTypedArrayView realThis = realThis(thisObj, f);
+            final int arrayLength = realThis.getArrayLength();
+            final StringBuilder builder = new StringBuilder();
+            if (arrayLength > 0) {
+                builder.append(ScriptRuntime.toString(realThis.js_get(0)));
+            }
+            for (int i = 1; i < arrayLength; i++) {
+                builder.append(',');
+                builder.append(ScriptRuntime.toString(realThis.js_get(i)));
+            }
+            return builder.toString();
+
         case Id_get:
             if (args.length > 0) {
                 return realThis(thisObj, f).js_get(ScriptRuntime.toInt32(args[0]));
@@ -303,6 +316,7 @@ public abstract class NativeTypedArrayView<T>
         int arity;
         switch (id) {
         case Id_constructor:        arity = 1; s = "constructor"; break;
+        case Id_toString:           arity = 0; s = "toString"; break;
         case Id_get:                arity = 1; s = "get"; break;
         case Id_set:                arity = 2; s = "set"; break;
         case Id_subarray:           arity = 2; s = "subarray"; break;
@@ -326,7 +340,7 @@ public abstract class NativeTypedArrayView<T>
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2016-03-04 20:59:23 GMT
+// #generated# Last update: 2018-05-13 12:51:10 MESZ
         L0: { id = 0; String X = null; int c;
             int s_length = s.length();
             if (s_length==3) {
@@ -334,7 +348,11 @@ public abstract class NativeTypedArrayView<T>
                 if (c=='g') { if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_get; break L0;} }
                 else if (c=='s') { if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_set; break L0;} }
             }
-            else if (s_length==8) { X="subarray";id=Id_subarray; }
+            else if (s_length==8) {
+                c=s.charAt(0);
+                if (c=='s') { X="subarray";id=Id_subarray; }
+                else if (c=='t') { X="toString";id=Id_toString; }
+            }
             else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
@@ -346,10 +364,11 @@ public abstract class NativeTypedArrayView<T>
     // Table of all functions
     private static final int
         Id_constructor          = 1,
-        Id_get                  = 2,
-        Id_set                  = 3,
-        Id_subarray             = 4,
-        SymbolId_iterator       = 5;
+        Id_toString             = 2,
+        Id_get                  = 3,
+        Id_set                  = 4,
+        Id_subarray             = 5,
+        SymbolId_iterator       = 6;
 
     protected static final int
         MAX_PROTOTYPE_ID        = SymbolId_iterator;
@@ -401,7 +420,7 @@ public abstract class NativeTypedArrayView<T>
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2014-12-08 17:33:28 PST
+// #generated# Last update: 2018-05-13 12:51:10 MESZ
         L0: { id = 0; String X = null;
             int s_length = s.length();
             if (s_length==6) { X="length";id=Id_length; }

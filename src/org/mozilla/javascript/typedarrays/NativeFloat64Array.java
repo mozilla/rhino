@@ -78,7 +78,7 @@ public class NativeFloat64Array
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        long base = ByteIo.readUint64Primitive(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
+        long base = ByteIo.readUint64Primitive(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, useLittleEndian());
         return Double.longBitsToDouble(base);
     }
 
@@ -90,7 +90,7 @@ public class NativeFloat64Array
         }
         double val = ScriptRuntime.toNumber(c);
         long base = Double.doubleToLongBits(val);
-        ByteIo.writeUint64(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, base, false);
+        ByteIo.writeUint64(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, base, useLittleEndian());
         return null;
     }
 

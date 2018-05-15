@@ -78,7 +78,7 @@ public class NativeInt32Array
         if (checkIndex(index)) {
             return Undefined.instance;
         }
-        return ByteIo.readInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, false);
+        return ByteIo.readInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, useLittleEndian());
     }
 
     @Override
@@ -88,7 +88,7 @@ public class NativeInt32Array
             return Undefined.instance;
         }
         int val = ScriptRuntime.toInt32(c);
-        ByteIo.writeInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, false);
+        ByteIo.writeInt32(arrayBuffer.buffer, (index * BYTES_PER_ELEMENT) + offset, val, useLittleEndian());
         return null;
     }
 
