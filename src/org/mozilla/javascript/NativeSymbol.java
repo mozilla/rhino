@@ -59,9 +59,14 @@ public class NativeSymbol
         }
     }
 
+    /**
+     * This has to be used only for constructing the prototype instance.
+     * This sets symbolData to null (see isSymbol() for more).
+     * @param desc the description
+     */
     private NativeSymbol(String desc) {
         this.key = new SymbolKey(desc);
-        this.symbolData = this;
+        this.symbolData = null;
     }
 
     private NativeSymbol(SymbolKey key) {
@@ -233,7 +238,7 @@ public class NativeSymbol
             return new NativeSymbol((SymbolKey) args[1]);
         }
 
-        return new NativeSymbol(desc);
+        return new NativeSymbol(new SymbolKey(desc));
     }
 
     private Object js_valueOf() {

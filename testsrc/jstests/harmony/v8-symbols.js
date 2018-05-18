@@ -164,8 +164,7 @@ function TestEquality() {
   for (var i in symbols) {
     assertSame(symbols[i], symbols[i])
     assertEquals(symbols[i], symbols[i])
-    // TODO Rhino no "is"
-    //assertTrue(Object.is(symbols[i], symbols[i]))
+    assertTrue(Object.is(symbols[i], symbols[i]))
     assertTrue(symbols[i] === symbols[i])
     assertTrue(symbols[i] == symbols[i])
     assertFalse(symbols[i] === Object(symbols[i]))
@@ -239,8 +238,7 @@ Symbol.prototype.getThisProto = function () {
 }
 function TestCall() {
   for (var i in symbols) {
-    //assertTrue(symbols[i].getThisProto() === Symbol.prototype)
-    // TODO something going on with the above
+    assertTrue(symbols[i].getThisProto() === Symbol.prototype)
     assertTrue(Object.getPrototypeOf(symbols[i]) === Symbol.prototype)
   }
 }
