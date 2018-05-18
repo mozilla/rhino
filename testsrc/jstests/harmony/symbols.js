@@ -85,4 +85,11 @@ obj[callMeSym] = callMeTwice;
 assertEquals("maybe", obj.callMe());
 assertEquals("maybemaybe", obj[callMeSym]());
 
+// Symbol prototype 
+assertEquals("object", typeof Symbol.prototype);
+
+Symbol.prototype.myCustomFunction = function() {};
+assertEquals("function", typeof Symbol.prototype.myCustomFunction);
+
+
 "success";
