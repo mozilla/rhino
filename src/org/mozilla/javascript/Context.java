@@ -512,7 +512,7 @@ public class Context
      * @return The result of {@link ContextAction#run(Context)}.
      */
     @Deprecated
-    public static Object call(ContextAction action)
+    public static <T> T call(ContextAction<T> action)
     {
         return call(ContextFactory.getGlobal(), action);
     }
@@ -545,7 +545,7 @@ public class Context
     /**
      * The method implements {@link ContextFactory#call(ContextAction)} logic.
      */
-    static Object call(ContextFactory factory, ContextAction action) {
+    static <T> T call(ContextFactory factory, ContextAction<T> action) {
         Context cx = enter(null, factory);
         try {
             return action.run(cx);

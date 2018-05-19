@@ -11,8 +11,9 @@ package org.mozilla.javascript;
 /**
  * Interface to represent arbitrary action that requires to have Context
  * object associated with the current thread for its execution.
+ * @param T the type of the return value of action execution
  */
-public interface ContextAction
+public interface ContextAction<T>
 {
     /**
      * Execute action using the supplied Context instance.
@@ -21,6 +22,6 @@ public interface ContextAction
      *
      * @see ContextFactory#call(ContextAction)
      */
-    public Object run(Context cx);
+    public T run(Context cx);
 }
 

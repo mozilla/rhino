@@ -23,7 +23,7 @@ public class Bug783797Test {
         void run(Context cx, ScriptableObject scope1, ScriptableObject scope2);
     }
 
-    private static ContextAction action(final String fn, final Action a) {
+    private static ContextAction<Void> action(final String fn, final Action a) {
         return cx -> {
             ScriptableObject scope1 = cx.initStandardObjects();
             ScriptableObject scope2 = cx.initStandardObjects();
