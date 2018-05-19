@@ -512,7 +512,7 @@ public class ContextFactory
      *                   Scriptable scope, Scriptable thisObj,
      *                   Object[] args)
      */
-    public final Object call(ContextAction action)
+    public final <T> T call(ContextAction<T> action)
     {
         return Context.call(this, action);
     }

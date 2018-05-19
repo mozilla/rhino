@@ -50,7 +50,7 @@ public class Bug708801Test {
         }
     };
 
-    private static abstract class Action implements ContextAction {
+    private static abstract class Action implements ContextAction<Object> {
         protected Context cx;
         protected ScriptableObject scope;
 

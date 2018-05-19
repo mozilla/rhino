@@ -76,7 +76,7 @@ public class Main
     /**
      * Proxy class to avoid proliferation of anonymous classes.
      */
-    private static class IProxy implements ContextAction, QuitAction
+    private static class IProxy implements ContextAction<Object>, QuitAction
     {
         private static final int PROCESS_FILES = 1;
         private static final int EVAL_INLINE_SCRIPT = 2;

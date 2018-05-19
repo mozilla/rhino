@@ -1214,7 +1214,7 @@ public class Global extends ImporterTopLevel
 }
 
 
-class Runner implements Runnable, ContextAction {
+class Runner implements Runnable, ContextAction<Object> {
 
     Runner(Scriptable scope, Function func, Object[] args) {
         this.scope = scope;
