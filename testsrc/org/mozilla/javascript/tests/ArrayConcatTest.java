@@ -7,7 +7,6 @@ package org.mozilla.javascript.tests;
 import junit.framework.TestCase;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
@@ -23,17 +22,11 @@ public class ArrayConcatTest extends TestCase {
 			+ "var b = ['b1', 'b2'];\n"
 			+ "b.concat(a)";
 
-		final ContextAction action = new ContextAction()
-		{
-			public Object run(final Context _cx)
-			{
-				final ScriptableObject scope = _cx.initStandardObjects();
-				final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-				assertEquals("b1,b2,a0,a1,,a3", Context.toString(result));
-				return null;
-			}
-		};
-
-		Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllOptimizationLevels(_cx -> {
+			final ScriptableObject scope = _cx.initStandardObjects();
+			final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
+			assertEquals("b1,b2,a0,a1,,a3", Context.toString(result));
+			return null;
+		});
     }
 }

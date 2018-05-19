@@ -276,26 +276,23 @@ public class ShellTest {
             {
                 try
                 {
-                    shellContextFactory.call(new ContextAction()
+                    shellContextFactory.call(cx ->
                     {
-                        public Object run(Context cx)
-                        {
-                            status.running(jsFile);
-                            testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
-                            cx.setErrorReporter( testState.errors );
-                            global.init(cx);
-                            try {
-                                runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile().getParentFile(), "shell.js"));
-                                runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile(), "shell.js"));
-                                runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
-                                runFileIfExists(cx, global, jsFile);
-                                status.hadErrors(jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
-                            } catch (ThreadDeath e) {
-                            } catch (Throwable t) {
-                                status.threw(t);
-                            }
-                            return null;
+                        status.running(jsFile);
+                        testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
+                        cx.setErrorReporter( testState.errors );
+                        global.init(cx);
+                        try {
+                            runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile().getParentFile(), "shell.js"));
+                            runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile(), "shell.js"));
+                            runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
+                            runFileIfExists(cx, global, jsFile);
+                            status.hadErrors(jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
+                        } catch (ThreadDeath e) {
+                        } catch (Throwable t) {
+                            status.threw(t);
                         }
+                        return null;
                     });
                 }
                 catch (Error t)

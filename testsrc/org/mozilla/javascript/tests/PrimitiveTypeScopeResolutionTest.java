@@ -5,8 +5,6 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -64,23 +62,18 @@ public class PrimitiveTypeScopeResolutionTest
     private void testWithTwoScopes(final String scriptScope1,
                                    final String scriptScope2)
     {
-    	final ContextAction action = new ContextAction()
-    	{
-    		public Object run(final Context cx)
-    		{
-    	        final Scriptable scope1 = cx.initStandardObjects(
-    	            new MySimpleScriptableObject("scope1"));
-    	        final Scriptable scope2 = cx.initStandardObjects(
-    	            new MySimpleScriptableObject("scope2"));
-    	        cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
+        Utils.runWithAllOptimizationLevels(cx -> {
+	        final Scriptable scope1 = cx.initStandardObjects(
+	            new MySimpleScriptableObject("scope1"));
+	        final Scriptable scope2 = cx.initStandardObjects(
+	            new MySimpleScriptableObject("scope2"));
+	        cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
 
-    	        scope1.put("scope2", scope1, scope2);
+	        scope1.put("scope2", scope1, scope2);
 
-    	        return cx.evaluateString(scope1, scriptScope1, "source1", 1,
-    	                                 null);
-    		}
-    	};
-    	Utils.runWithAllOptimizationLevels(action);
+	        return cx.evaluateString(scope1, scriptScope1, "source1", 1,
+	                                 null);
+		});
     }
 
 	/**
@@ -144,23 +137,18 @@ public class PrimitiveTypeScopeResolutionTest
 
       final String scriptScope1 = "String.prototype.foo = 'from 1'; scope2.f()";
 
-      final ContextAction action = new ContextAction()
-      {
-          public Object run(final Context cx)
-          {
-              final Scriptable scope1 = cx.initStandardObjects(
-                  new MySimpleScriptableObject("scope1"));
-              final Scriptable scope2 = cx.initStandardObjects(
-                  new MySimpleScriptableObject("scope2"));
+      Utils.runWithAllOptimizationLevels(cx -> {
+          final Scriptable scope1 = cx.initStandardObjects(
+              new MySimpleScriptableObject("scope1"));
+          final Scriptable scope2 = cx.initStandardObjects(
+              new MySimpleScriptableObject("scope2"));
 
-              scope2.put("myObject", scope2, myObject);
-              cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
+          scope2.put("myObject", scope2, myObject);
+          cx.evaluateString(scope2, scriptScope2, "source2", 1, null);
 
-              scope1.put("scope2", scope1, scope2);
+          scope1.put("scope2", scope1, scope2);
 
-              return cx.evaluateString(scope1, scriptScope1, "source1", 1, null);
-          }
-      };
-      Utils.runWithAllOptimizationLevels(action);
+          return cx.evaluateString(scope1, scriptScope1, "source1", 1, null);
+      });
   }
 }

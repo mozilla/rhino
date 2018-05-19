@@ -22,19 +22,17 @@ public class Bug496585Test {
 
     @Test
     public void callOverloadedFunction() {
-        new ContextFactory().call(new ContextAction() {
-            public Object run(Context cx) {
-                cx.getWrapFactory().setJavaPrimitiveWrap(false);
-                Assert.assertEquals("string[]", cx.evaluateString(
-                        cx.initStandardObjects(),
-                        "new org.mozilla.javascript.tests.Bug496585Test().method('one', 'two', 'three')",
-                        "<test>", 1, null));
-                Assert.assertEquals("string+function", cx.evaluateString(
+        new ContextFactory().call(cx -> {
+            cx.getWrapFactory().setJavaPrimitiveWrap(false);
+            Assert.assertEquals("string[]", cx.evaluateString(
                     cx.initStandardObjects(),
-                    "new org.mozilla.javascript.tests.Bug496585Test().method('one', function() {})",
+                    "new org.mozilla.javascript.tests.Bug496585Test().method('one', 'two', 'three')",
                     "<test>", 1, null));
-                return null;
-            }
+            Assert.assertEquals("string+function", cx.evaluateString(
+                cx.initStandardObjects(),
+                "new org.mozilla.javascript.tests.Bug496585Test().method('one', function() {})",
+                "<test>", 1, null));
+            return null;
         });
     }
 }

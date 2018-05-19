@@ -66,13 +66,9 @@ public class Utils
 	 * @param script the script code
 	 */
 	static void executeScript(final String script, final int optimizationLevel) {
-		final ContextAction action = new ContextAction()
-		{
-			public Object run(Context cx) {
-				final Scriptable scope = cx.initStandardObjects();
-				return cx.evaluateString(scope, script, "myScript.js", 1, null);
-			}
-		};
-		Utils.runWithOptimizationLevel(action, optimizationLevel);
+        Utils.runWithOptimizationLevel(cx -> {
+            final Scriptable scope = cx.initStandardObjects();
+            return cx.evaluateString(scope, script, "myScript.js", 1, null);
+        }, optimizationLevel);
 	}
 }

@@ -6,7 +6,6 @@ package org.mozilla.javascript.tests;
 
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.EvaluatorException;
@@ -55,11 +54,7 @@ public class StrictModeApiTest {
   }
 
   private Object runScript(final String scriptSourceText) {
-    return this.contextFactory.call(new ContextAction() {
-      public Object run(Context context) {
-          return context.evaluateString(global, scriptSourceText,
-                  "test source", 1, null);
-      }
-    });
+    return this.contextFactory.call(context -> 
+        context.evaluateString(global, scriptSourceText, "test source", 1, null));
   }
 }

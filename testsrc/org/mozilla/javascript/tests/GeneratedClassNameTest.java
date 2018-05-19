@@ -4,8 +4,6 @@
 
 package org.mozilla.javascript.tests;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
 
@@ -34,12 +32,7 @@ public class GeneratedClassNameTest extends TestCase
 	private void doTest(final String expectedName, final String scriptName)
 	    throws Exception
 	{
-	    final Script script = (Script) ContextFactory.getGlobal().call(
-	      new ContextAction() {
-	        public Object run(final Context context) {
-	          return context.compileString("var f = 1", scriptName, 1, null);
-	        }
-	      });
+	    final Script script = (Script)ContextFactory.getGlobal().call(cx -> cx.compileString("var f = 1", scriptName, 1, null));
 
 	    // remove serial number
 	    String name = script.getClass().getSimpleName();

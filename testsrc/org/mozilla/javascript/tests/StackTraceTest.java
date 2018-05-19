@@ -9,8 +9,6 @@ package org.mozilla.javascript.tests;
 
 import junit.framework.TestCase;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
@@ -39,20 +37,17 @@ public class StackTraceTest extends TestCase {
 
 	private void runWithExpectedStackTrace(final String _source, final String _expectedStackTrace)
 	{
-        final ContextAction action = new ContextAction() {
-        	public Object run(Context cx) {
-        		final Scriptable scope = cx.initStandardObjects();
-        		try {
-        			cx.evaluateString(scope, _source, "test.js", 0, null);
-        		}
-        		catch (final JavaScriptException e)
-        		{
-        			assertEquals(_expectedStackTrace, e.getScriptStackTrace());
-        			return null;
-        		}
-        		throw new RuntimeException("Exception expected!");
-        	}
-        };
-        Utils.runWithOptimizationLevel(action, -1);
+        Utils.runWithOptimizationLevel(cx -> {
+            final Scriptable scope = cx.initStandardObjects();
+            try {
+                cx.evaluateString(scope, _source, "test.js", 0, null);
+            }
+            catch (final JavaScriptException e)
+            {
+                assertEquals(_expectedStackTrace, e.getScriptStackTrace());
+                return null;
+            }
+            throw new RuntimeException("Exception expected!");
+        }, -1);
 	}
  }

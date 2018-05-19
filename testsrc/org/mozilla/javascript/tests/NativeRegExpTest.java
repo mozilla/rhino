@@ -7,23 +7,17 @@ package org.mozilla.javascript.tests;
 import junit.framework.TestCase;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.regexp.NativeRegExp;
 
 public class NativeRegExpTest extends TestCase {
 
     public void testOpenBrace() {
         final String script = "/0{0/";
-        final ContextAction action = new ContextAction() {
-            public Object run(final Context _cx) {
-                final ScriptableObject scope = _cx.initStandardObjects();
-                final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-                assertEquals(script, Context.toString(result));
-                return null;
-            }
-        };
-
-        Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            final ScriptableObject scope = _cx.initStandardObjects();
+            final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
+            assertEquals(script, Context.toString(result));
+            return null;
+        });
     }
 }

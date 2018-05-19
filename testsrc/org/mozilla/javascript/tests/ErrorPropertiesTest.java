@@ -6,8 +6,6 @@ package org.mozilla.javascript.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 
@@ -75,24 +73,20 @@ public class ErrorPropertiesTest {
     }
 
     private void testIt(final String script, final Object expected) {
-        final ContextAction action = new ContextAction() {
-            public Object run(final Context cx) {
-                try {
-                    final ScriptableObject scope = cx.initStandardObjects();
-                    final Object o = cx.evaluateString(scope, script,
-                            "myScript.js", 1, null);
-                    Assert.assertEquals(expected, o);
-                    return o;
-                }
-                catch (final RuntimeException e) {
-                    throw e;
-                }
-                catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
+        Utils.runWithAllOptimizationLevels(cx -> {
+            try {
+                final ScriptableObject scope = cx.initStandardObjects();
+                final Object o = cx.evaluateString(scope, script,
+                        "myScript.js", 1, null);
+                Assert.assertEquals(expected, o);
+                return o;
             }
-        };
-
-        Utils.runWithAllOptimizationLevels(action);
+            catch (final RuntimeException e) {
+                throw e;
+            }
+            catch (final Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

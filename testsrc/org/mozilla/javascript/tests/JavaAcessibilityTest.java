@@ -10,7 +10,6 @@ package org.mozilla.javascript.tests;
 import junit.framework.TestCase;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Script;
@@ -122,11 +121,9 @@ public class JavaAcessibilityTest extends TestCase {
 
 
   private Object runScript(final String scriptSourceText) {
-    return contextFactory.call(new ContextAction() {
-      public Object run(Context context) {
+    return contextFactory.call(context -> {
         Script script = context.compileString(scriptSourceText, "", 1, null);
         return script.exec(context, global);
-      }
     });
   }
 }

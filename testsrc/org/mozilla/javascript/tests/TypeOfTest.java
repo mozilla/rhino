@@ -67,30 +67,20 @@ public class TypeOfTest extends TestCase
         		return _args[0].getClass().getName();
         	}
         };
-		final ContextAction action = new ContextAction()
-		{
-			public Object run(final Context context)
-			{
-				final Scriptable scope = context.initStandardObjects();
-				scope.put("myObj", scope, f);
-				return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
-			}
-		};
-		doTest("function", action);
+        doTest("function", context -> {
+			final Scriptable scope = context.initStandardObjects();
+			scope.put("myObj", scope, f);
+			return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
+		});
 	}
 
 	private void testCustomizeTypeOf(final String expected, final Scriptable obj)
 	{
-		final ContextAction action = new ContextAction()
-		{
-			public Object run(final Context context)
-			{
-				final Scriptable scope = context.initStandardObjects();
-				scope.put("myObj", scope, obj);
-				return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
-			}
-		};
-		doTest(expected, action);
+        doTest(expected, context -> {
+			final Scriptable scope = context.initStandardObjects();
+			scope.put("myObj", scope, obj);
+			return context.evaluateString(scope, "typeof myObj", "test script", 1, null);
+		});
 	}
 
 	/**
@@ -104,15 +94,10 @@ public class TypeOfTest extends TestCase
 
 	private void doTest(String expected, final String script)
 	{
-		final ContextAction action = new ContextAction()
-		{
-			public Object run(final Context context)
-			{
-				final Scriptable scope = context.initStandardObjects();
-				return context.evaluateString(scope, script, "test script", 1, null);
-			}
-		};
-		doTest(expected, action);
+        doTest(expected, context -> {
+			final Scriptable scope = context.initStandardObjects();
+			return context.evaluateString(scope, script, "test script", 1, null);
+		});
 	}
 
 	private void doTest(final String expected, final ContextAction action)
@@ -124,14 +109,10 @@ public class TypeOfTest extends TestCase
 
 	private void doTest(final int optimizationLevel, final String expected, final ContextAction action)
 	{
-		Object o = new ContextFactory().call(new ContextAction()
-			{
-				public Object run(final Context context)
-				{
-					context.setOptimizationLevel(optimizationLevel);
-					return Context.toString(action.run(context));
-				}
-			});
+		Object o = new ContextFactory().call(context -> {
+			context.setOptimizationLevel(optimizationLevel);
+			return Context.toString(action.run(context));
+		});
 		assertEquals(expected, o);
 	}
 }

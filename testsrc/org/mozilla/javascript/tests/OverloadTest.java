@@ -50,31 +50,25 @@ public class OverloadTest {
     }
 
     private void assertEvaluates(final Object expected, final String source) {
-        final ContextAction action = new ContextAction() {
-            public Object run(Context cx) {
-                final Scriptable scope = cx.initStandardObjects();
-                final Object rep = cx.evaluateString(scope, source, "test.js",
-                        0, null);
-                assertEquals(expected, rep);
-                return null;
-            }
-        };
-        Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllOptimizationLevels(cx -> {
+            final Scriptable scope = cx.initStandardObjects();
+            final Object rep = cx.evaluateString(scope, source, "test.js",
+                    0, null);
+            assertEquals(expected, rep);
+            return null;
+        });
     }
 
     private void assertThrows(final Class<? extends Exception> exceptionClass, final String source) {
-        final ContextAction action = new ContextAction() {
-            public Object run(Context cx) {
-                final Scriptable scope = cx.initStandardObjects();
-                try {
-                    cx.evaluateString(scope, source, "test.js", 0, null);
-                    fail("Did not throw exception");
-                } catch (Exception e) {
-                    assertTrue(exceptionClass.isInstance(e));
-                }
-                return null;
+        Utils.runWithAllOptimizationLevels(cx -> {
+            final Scriptable scope = cx.initStandardObjects();
+            try {
+                cx.evaluateString(scope, source, "test.js", 0, null);
+                fail("Did not throw exception");
+            } catch (Exception e) {
+                assertTrue(exceptionClass.isInstance(e));
             }
-        };
-        Utils.runWithAllOptimizationLevels(action);
+            return null;
+        });
     }
  }

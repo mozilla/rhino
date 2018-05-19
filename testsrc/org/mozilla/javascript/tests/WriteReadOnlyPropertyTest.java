@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
@@ -52,17 +51,6 @@ public class WriteReadOnlyPropertyTest {
 
 		final String script = "foo.myProp = 123; foo.myProp";
 
-		final ContextAction action = new ContextAction() {
-			public Object run(final Context cx) {
-
-				final ScriptableObject top = cx.initStandardObjects();
-				ScriptableObject.putProperty(top, "foo", foo);
-
-				cx.evaluateString(top, script, "script", 0, null);
-				return null;
-			}
-		};
-
 		final ContextFactory contextFactory = new ContextFactory() {
 			@Override
 			protected boolean hasFeature(final Context cx, final int featureIndex) {
@@ -72,7 +60,13 @@ public class WriteReadOnlyPropertyTest {
 				return super.hasFeature(cx, featureIndex);
 			}
 		};
-		contextFactory.call(action);
+		contextFactory.call(cx -> {
+            final ScriptableObject top = cx.initStandardObjects();
+            ScriptableObject.putProperty(top, "foo", foo);
+
+            cx.evaluateString(top, script, "script", 0, null);
+            return null;
+		});
 	}
 
 	/**

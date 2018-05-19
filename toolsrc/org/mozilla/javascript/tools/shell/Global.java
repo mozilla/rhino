@@ -74,13 +74,10 @@ public class Global extends ImporterTopLevel
 
     public void init(ContextFactory factory)
     {
-        factory.call(new ContextAction() {
-                public Object run(Context cx)
-                {
-                    init(cx);
-                    return null;
-                }
-            });
+        factory.call(cx -> {
+            init(cx);
+            return null;
+        });
     }
 
     public void init(Context cx)
