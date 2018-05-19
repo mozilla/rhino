@@ -539,11 +539,7 @@ public class Context
         if(factory == null) {
             factory = ContextFactory.getGlobal();
         }
-        return call(factory, new ContextAction() {
-            public Object run(Context cx) {
-                return callable.call(cx, scope, thisObj, args);
-            }
-        });
+        return call(factory, cx -> callable.call(cx, scope, thisObj, args));
     }
 
     /**

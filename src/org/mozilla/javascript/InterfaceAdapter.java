@@ -77,13 +77,7 @@ public class InterfaceAdapter
                          final Method method,
                          final Object[] args)
     {
-        ContextAction action = new ContextAction() {
-                public Object run(Context cx)
-                {
-                    return invokeImpl(cx, target, topScope, thisObject, method, args);
-                }
-            };
-        return cf.call(action);
+        return cf.call(cx -> invokeImpl(cx, target, topScope, thisObject, method, args));
     }
 
     Object invokeImpl(Context cx,

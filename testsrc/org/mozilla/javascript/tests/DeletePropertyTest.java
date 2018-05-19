@@ -8,8 +8,6 @@ import junit.framework.TestCase;
 
 
 import org.junit.Test;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
@@ -31,16 +29,10 @@ public class DeletePropertyTest extends TestCase {
 			+ "[].foo();\n"
 			+ "[][1]();\n";
 
-		final ContextAction action = new ContextAction()
-		{
-			public Object run(final Context _cx)
-			{
-				final ScriptableObject scope = _cx.initStandardObjects();
-				final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-				return null;
-			}
-		};
-
-		Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllOptimizationLevels(_cx -> {
+			final ScriptableObject scope = _cx.initStandardObjects();
+			final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
+			return null;
+		});
 	}
 }

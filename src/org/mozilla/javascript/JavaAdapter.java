@@ -581,12 +581,7 @@ public final class JavaAdapter implements IdFunctionCall
         if (cx != null) {
             return doCall(cx, scope, thisObj, f, args, argsToWrap);
         } else {
-            return factory.call(new ContextAction() {
-                public Object run(Context cx)
-                {
-                    return doCall(cx, scope, thisObj, f, args, argsToWrap);
-                }
-            });
+            return factory.call(cx2 -> doCall(cx2, scope, thisObj, f, args, argsToWrap));
         }
     }
 
@@ -609,15 +604,11 @@ public final class JavaAdapter implements IdFunctionCall
 
     public static Scriptable runScript(final Script script)
     {
-        return (Scriptable)ContextFactory.getGlobal().call(
-            new ContextAction() {
-                public Object run(Context cx)
-                {
-                    ScriptableObject global = ScriptRuntime.getGlobal(cx);
-                    script.exec(cx, global);
-                    return global;
-                }
-            });
+        return (Scriptable)ContextFactory.getGlobal().call(cx -> {
+            ScriptableObject global = ScriptRuntime.getGlobal(cx);
+            script.exec(cx, global);
+            return global;
+        });
     }
 
     private static void generateCtor(ClassFileWriter cfw, String adapterName,

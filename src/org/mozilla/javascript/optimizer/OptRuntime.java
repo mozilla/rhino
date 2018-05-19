@@ -219,21 +219,18 @@ public final class OptRuntime extends ScriptRuntime
 
     public static void main(final Script script, final String[] args)
     {
-        ContextFactory.getGlobal().call(new ContextAction() {
-            public Object run(Context cx)
-            {
-                ScriptableObject global = getGlobal(cx);
-
-                // get the command line arguments and define "arguments"
-                // array in the top-level object
-                Object[] argsCopy = new Object[args.length];
-                System.arraycopy(args, 0, argsCopy, 0, args.length);
-                Scriptable argsObj = cx.newArray(global, argsCopy);
-                global.defineProperty("arguments", argsObj,
-                                      ScriptableObject.DONTENUM);
-                script.exec(cx, global);
-                return null;
-            }
+        ContextFactory.getGlobal().call(cx -> {
+            ScriptableObject global = getGlobal(cx);
+    
+            // get the command line arguments and define "arguments"
+            // array in the top-level object
+            Object[] argsCopy = new Object[args.length];
+            System.arraycopy(args, 0, argsCopy, 0, args.length);
+            Scriptable argsObj = cx.newArray(global, argsCopy);
+            global.defineProperty("arguments", argsObj,
+                                  ScriptableObject.DONTENUM);
+            script.exec(cx, global);
+            return null;
         });
     }
 

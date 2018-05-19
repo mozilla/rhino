@@ -8,7 +8,6 @@ package org.mozilla.javascript.tests;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Script;
 
 /**
@@ -25,13 +24,10 @@ public class DecompileTest {
 	public void newObject0Arg()
 	{
 		final String source = "var x = new Date().getTime();";
-		final ContextAction action = new ContextAction() {
-			public Object run(final Context cx) {
-				final Script script = cx.compileString(source, "my script", 0, null);
-				Assert.assertEquals(source, cx.decompileScript(script, 4).trim());
-				return null;
-			}
-		};
-		Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllOptimizationLevels(cx -> {
+    		final Script script = cx.compileString(source, "my script", 0, null);
+    		Assert.assertEquals(source, cx.decompileScript(script, 4).trim());
+    		return null;
+		});
 	}
 }

@@ -9,8 +9,6 @@ package org.mozilla.javascript.tests;
 
 import junit.framework.TestCase;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Scriptable;
 
 /**
@@ -78,15 +76,12 @@ public class GlobalParseXTest extends TestCase {
     }
 
     private void assertEvaluates(final Object expected, final String source) {
-        final ContextAction action = new ContextAction() {
-            public Object run(Context cx) {
-                final Scriptable scope = cx.initStandardObjects();
-                final Object rep = cx.evaluateString(scope, source, "test.js",
-                        0, null);
-                assertEquals(expected, rep);
-                return null;
-            }
-        };
-        Utils.runWithAllOptimizationLevels(action);
+        Utils.runWithAllOptimizationLevels(cx -> {
+            final Scriptable scope = cx.initStandardObjects();
+            final Object rep = cx.evaluateString(scope, source, "test.js",
+                    0, null);
+            assertEquals(expected, rep);
+            return null;
+        });
     }
  }
