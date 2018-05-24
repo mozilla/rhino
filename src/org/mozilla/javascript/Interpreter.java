@@ -94,7 +94,7 @@ public final class Interpreter extends Icode implements Evaluator
             this.fnOrScript = fnOrScript;
             varSource = this;
             localShift = idata.itsMaxVars;
-            this.thisObj = thisObj;
+            this.thisObj = idata.isStrict ? thisObj : ScriptRuntime.getNonStrictThis(cx, thisObj);
 
             this.parentFrame = parentFrame;
             frameIndex = (parentFrame == null) ? 0 : parentFrame.frameIndex + 1;
@@ -2781,10 +2781,6 @@ switch (op) {
         }
         else {
             applyThis = null;
-        }
-        if (applyThis == null) {
-            // This covers the case of args[0] == (null|undefined) as well.
-            applyThis = ScriptRuntime.getTopCallScope(cx);
         }
         if(op == Icode_TAIL_CALL) {
             exitFrame(cx, frame, null);

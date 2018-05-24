@@ -1526,6 +1526,19 @@ class BodyCodegen
             }
         }
 
+        if (!scriptOrFn.isInStrictMode()) {
+            // ES5.1, section 10.4.3 step 2 "Else if thisArg is null or undefined, set the ThisBinding to the global object."
+            cfw.addALoad(1);
+            cfw.addALoad(3);
+            cfw.addInvoke(ByteCode.INVOKESTATIC,
+                    "org/mozilla/javascript/ScriptRuntime",
+                    "getNonStrictThis",
+                    "(Lorg/mozilla/javascript/Context;"
+                    +"Lorg/mozilla/javascript/Scriptable;"
+                    +")Lorg/mozilla/javascript/Scriptable;");
+            cfw.addAStore(3);
+        }
+
         // Compile RegExp literals if this is a script. For functions
         // this is performed during instantiation in functionInit
         if (fnCurrent == null && scriptOrFn.getRegexpCount() != 0) {

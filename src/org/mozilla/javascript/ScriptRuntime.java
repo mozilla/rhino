@@ -3479,6 +3479,19 @@ public class ScriptRuntime {
         }
         return scope;
     }
+    
+    /**
+     * ES5.1, section 10.4.3 step 2 "Else if thisArg is null or undefined, set the ThisBinding to the global object."
+     * @param cx current context, for top scope
+     * @param thisArg the this argument 
+     * @return appropriate this binding
+     */
+    public static Scriptable getNonStrictThis(Context cx, Scriptable thisArg) {
+        if (thisArg == null || thisArg == Undefined.SCRIPTABLE_UNDEFINED) {
+            return getTopCallScope(cx);
+        }
+        return thisArg;
+    }
 
     /**
      * @deprecated Use {@link #doTopCall(Callable, Context, Scriptable, Scriptable, Object[], boolean)} instead
