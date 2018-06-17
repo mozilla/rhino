@@ -9,8 +9,9 @@ package org.mozilla.javascript;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 import java.util.ArrayList;
-
+import java.util.Arrays;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ScriptRuntime.NoSuchMethodShim;
@@ -199,8 +200,98 @@ public final class Interpreter extends Icode implements Evaluator
             copy.frozen = false;
             return copy;
         }
+        
+        @Override
+        public boolean equals(Object other) {
+            // Overridden for semantic equality comparison. These objects
+            // are typically exposed as NativeContinuation.implementation,
+            // comparing them allows establishing whether the continuations
+            // are semantically equal.
+            if (other instanceof CallFrame) {
+                // If the call is not within a Context with a top call, we force
+                // one. It is required as some objects within fully initialized 
+                // global scopes (notably, XMLLibImpl) need to have a top scope
+                // in order to evaluate their attributes.  
+                final Context cx = Context.enter();
+                try {
+                    if (ScriptRuntime.hasTopCall(cx)) {
+                        return equalsInTopScope(other);
+                    }
+                    final Scriptable top = ScriptableObject.getTopLevelScope(scope);
+                    return (Boolean)ScriptRuntime.doTopCall(
+                            (Callable)(c, scope, thisObj, args) -> equalsInTopScope(other),
+                            cx, top, top, ScriptRuntime.emptyArgs, isStrictTopFrame());
+                } finally {
+                    Context.exit();
+                }
+            }
+            return false;
+        }
+        
+        @Override
+        public int hashCode() {
+            // Overridden for consistency with equals.
+            // Trying to strike a balance between speed of calculation and
+            // distribution. Not hashing stack variables as those could have
+            // unbounded computational cost and limit it to topmost 8 frames.
+            int depth = 0;
+            CallFrame f = this;
+            int h = 0;
+            do {
+                h = 31 * (31 * h + f.pc) + f.idata.icodeHashCode();
+                f = f.parentFrame;
+            } while(f != null && depth++ < 8);
+            return h;
+        }
+
+        private boolean equalsInTopScope(Object other) {
+            return EqualObjectGraphs.withThreadLocal(eq -> equals(this, (CallFrame)other, eq));
+        }
+        
+        private boolean isStrictTopFrame() {
+            CallFrame f = this;
+            for(;;) {
+                final CallFrame p = f.parentFrame;
+                if (p == null) {
+                    return f.idata.isStrict;
+                }
+                f = p;
+            }
+        }
+        
+        private static boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal) {
+            // Iterative instead of recursive, as interpreter stack depth can
+            // be larger than JVM stack depth.
+            for(;;) {
+                if (f1 == f2) {
+                    return true;
+                } else if (f1 == null || f2 == null) {
+                    return false;
+                } else if (!f1.fieldsEqual(f2, equal)) {
+                    return false;
+                } else {
+                    f1 = f1.parentFrame;
+                    f2 = f2.parentFrame;
+                }
+            }
+        }
+        
+        private boolean fieldsEqual(CallFrame other, EqualObjectGraphs equal) {
+            return frameIndex == other.frameIndex && 
+                    pc == other.pc && 
+                    compareIdata(idata, other.idata) &&
+                    equal.equalGraphs(varSource.stack, other.varSource.stack) &&
+                    Arrays.equals(varSource.sDbl, other.varSource.sDbl) &&
+                    equal.equalGraphs(thisObj, other.thisObj) &&
+                    equal.equalGraphs(fnOrScript, other.fnOrScript) &&
+                    equal.equalGraphs(scope, other.scope);
+        }
     }
 
+    private static boolean compareIdata(InterpreterData i1, InterpreterData i2) {
+        return i1 == i2 || Objects.equals(getEncodedSource(i1), getEncodedSource(i2)); 
+    }
+    
     private static final class ContinuationJump implements Serializable
     {
         static final long serialVersionUID = 7687739156004308247L;
