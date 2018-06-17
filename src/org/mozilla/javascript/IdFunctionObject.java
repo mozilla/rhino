@@ -158,6 +158,10 @@ public class IdFunctionObject extends BaseFunction
             "BAD FUNCTION ID="+methodId+" MASTER="+idcall);
     }
 
+    static boolean equalObjectGraphs(IdFunctionObject f1, IdFunctionObject f2, EqualObjectGraphs eq) {
+        return f1.methodId == f2.methodId && f1.hasTag(f2.tag) && eq.equalGraphs(f1.idcall, f2.idcall);
+    }
+
     private final IdFunctionCall idcall;
     private final Object tag;
     private final int methodId;

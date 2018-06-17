@@ -80,4 +80,8 @@ public class BoundFunction extends BaseFunction {
     System.arraycopy(second, 0, args, first.length, second.length);
     return args;
   }
+  
+  static boolean equalObjectGraphs(BoundFunction f1, BoundFunction f2, EqualObjectGraphs eq) {
+      return  eq.equalGraphs(f1.boundThis, f2.boundThis) && eq.equalGraphs(f1.targetFunction, f2.targetFunction) && eq.equalGraphs(f1.boundArgs, f2.boundArgs);
+  }
 }
