@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.Objects;
+
 public final class NativeContinuation extends IdScriptableObject
     implements Function
 {
@@ -54,6 +56,17 @@ public final class NativeContinuation extends IdScriptableObject
             return true;
         }
         return false;
+    }
+    
+    /**
+     * Returns true if both continuations have equal implementations.
+     * @param c1 one continuation
+     * @param c2 another continuation
+     * @return true if the implementations of both continuations are equal, or they are both null.
+     * @throws NullPointerException if either continuation is null
+     */
+    public static boolean equalImplementations(NativeContinuation c1, NativeContinuation c2) {
+        return Objects.equals(c1.implementation, c2.implementation);
     }
 
     @Override
