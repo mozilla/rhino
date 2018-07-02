@@ -14,33 +14,14 @@ import org.mozilla.javascript.ScriptRuntime;
 
 public class Conversions
 {
-    public static final int EIGHT_BIT = 1 << 8;
-    public static final int SIXTEEN_BIT = 1 << 16;
-    public static final long THIRTYTWO_BIT = 1L << 32L;
-
     public static int toInt8(Object arg)
     {
-        int iv;
-        if (arg instanceof Integer) {
-            iv = (Integer)arg;
-        } else {
-            iv = ScriptRuntime.toInt32(arg);
-        }
-
-        int int8Bit = iv % EIGHT_BIT;
-        return (int8Bit >= (1 << 7)) ? (int8Bit - EIGHT_BIT) : int8Bit;
+        return (int)(byte)ScriptRuntime.toInt32(arg);
     }
 
     public static int toUint8(Object arg)
     {
-        int iv;
-        if (arg instanceof Integer) {
-            iv = ((Integer)arg);
-        } else {
-            iv = ScriptRuntime.toInt32(arg);
-        }
-
-        return iv % EIGHT_BIT;
+        return ScriptRuntime.toInt32(arg) & 0xff;
     }
 
     public static int toUint8Clamp(Object arg)
@@ -69,39 +50,21 @@ public class Conversions
 
     public static int toInt16(Object arg)
     {
-        int iv;
-        if (arg instanceof Integer) {
-            iv = ((Integer)arg);
-        } else {
-            iv = ScriptRuntime.toInt32(arg);
-        }
-
-        int int16Bit = iv % SIXTEEN_BIT;
-        return (int16Bit >= (1 << 15)) ? (int16Bit - SIXTEEN_BIT) : int16Bit;
+        return (int)(short)ScriptRuntime.toInt32(arg);
     }
 
     public static int toUint16(Object arg)
     {
-        int iv;
-        if (arg instanceof Integer) {
-            iv = ((Integer)arg);
-        } else {
-            iv = ScriptRuntime.toInt32(arg);
-        }
-
-        return iv % SIXTEEN_BIT;
+        return ScriptRuntime.toInt32(arg) & 0xffff;
     }
 
     public static int toInt32(Object arg)
     {
-        long lv = (long)ScriptRuntime.toNumber(arg);
-        long int32Bit = lv % THIRTYTWO_BIT;
-        return (int)((int32Bit >= (1L << 31L)) ? (int32Bit - THIRTYTWO_BIT) : int32Bit);
+        return ScriptRuntime.toInt32(arg);
     }
 
     public static long toUint32(Object arg)
     {
-        long lv = (long)ScriptRuntime.toNumber(arg);
-        return lv % THIRTYTWO_BIT;
+        return ScriptRuntime.toUint32(arg);
     }
 }
