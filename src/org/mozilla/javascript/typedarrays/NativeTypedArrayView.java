@@ -6,6 +6,14 @@
 
 package org.mozilla.javascript.typedarrays;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.RandomAccess;
+
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ExternalArrayData;
 import org.mozilla.javascript.IdFunctionObject;
@@ -16,13 +24,6 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
-
-import java.lang.reflect.Array;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.RandomAccess;
 
 /**
  * This class is the abstract parent for all of the various typed arrays. Each one
@@ -156,9 +157,11 @@ public abstract class NativeTypedArrayView<T>
 
             return construct(na, byteOff, byteLen / getBytesPerElement());
 
-        } else if (args[0] instanceof NativeArray) {
+        } else if (ScriptRuntime.isArrayObject(args[0])) {
             // Copy elements of the array and convert them to the correct type
-            List l = (List)args[0];
+            List l = args[0] instanceof NativeArray ? (List)args[0]
+                              : Arrays.asList(ScriptRuntime.getArrayElements((Scriptable)args[0]));
+
             NativeArrayBuffer na = makeArrayBuffer(cx, scope, l.size() * getBytesPerElement());
             NativeTypedArrayView v = construct(na, 0, l.size());
             int p = 0;
