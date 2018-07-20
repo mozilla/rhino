@@ -442,8 +442,8 @@ public abstract class NativeTypedArrayView<T>
      * These must not conflict with ids in the parent since we delegate there for property dispatching.
      */
     private static final int
-        Id_length               = 10,
-        Id_BYTES_PER_ELEMENT    = 11,
+        Id_length               = NativeArrayBufferView.MAX_INSTANCE_ID + 1,
+        Id_BYTES_PER_ELEMENT    = Id_length + 1,
         MAX_INSTANCE_ID         = Id_BYTES_PER_ELEMENT;
 
 // #/string_id_map#
