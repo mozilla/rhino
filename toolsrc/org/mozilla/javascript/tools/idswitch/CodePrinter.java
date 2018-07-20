@@ -10,7 +10,7 @@ class CodePrinter {
 // length of u-type escape like \u12AB
     private static final int LITERAL_CHAR_MAX_SIZE = 6;
 
-    private String lineTerminator = "\n";
+    private String lineTerminator = System.lineSeparator();
 
     private int indentStep = 4;
     private int indentTabSize = 8;
@@ -159,7 +159,7 @@ class CodePrinter {
     }
 
     public void nl() {
-        p('\n');
+        p(getLineTerminator());
     }
 
     public void line(int indent_level, String s) {
@@ -175,7 +175,4 @@ class CodePrinter {
     public String toString() {
         return new String(buffer, 0, offset);
     }
-
-
-
 }
