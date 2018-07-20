@@ -17,7 +17,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.mozilla.javascript.debug.DebuggableObject;
-import org.mozilla.javascript.typedarrays.NativeTypedArrayView;
 
 /**
  * An object that implements deep equality test of objects, including their 
@@ -300,15 +299,7 @@ final class EqualObjectGraphs  {
     private static Object[] getIds(final Scriptable s) {
         if (s instanceof ScriptableObject) {
             // Grabs symbols too
-            try {
-                return ((ScriptableObject)s).getIds(true, true);
-            } catch (IllegalArgumentException e) {
-                if (s instanceof NativeTypedArrayView) {
-                    // TODO: remove this once https://github.com/mozilla/rhino/issues/449 is fixed
-                    return s.getIds();
-                }
-                throw e;
-            }
+            return ((ScriptableObject)s).getIds(true, true);
         } else if (s instanceof DebuggableObject) {
             return ((DebuggableObject)s).getAllIds();
         } else {

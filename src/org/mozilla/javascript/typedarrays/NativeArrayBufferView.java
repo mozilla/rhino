@@ -144,7 +144,10 @@ public abstract class NativeArrayBufferView
     private static final int
         Id_buffer               = 1,
         Id_byteOffset           = 2,
-        Id_byteLength           = 3,
+        Id_byteLength           = 3;
+
+    // to be visible by subclasses
+    protected static final int
         MAX_INSTANCE_ID         = Id_byteLength;
 
 // #/string_id_map#
