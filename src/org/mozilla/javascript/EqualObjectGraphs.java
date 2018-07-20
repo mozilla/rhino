@@ -15,8 +15,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
 import org.mozilla.javascript.debug.DebuggableObject;
-import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
 import org.mozilla.javascript.typedarrays.NativeTypedArrayView;
 
 /**
@@ -303,10 +303,7 @@ final class EqualObjectGraphs  {
             try {
                 return ((ScriptableObject)s).getIds(true, true);
             } catch (IllegalArgumentException e) {
-                if (s instanceof NativeArrayBuffer) {
-                    // TODO: remove this once https://github.com/mozilla/rhino/issues/437 is fixed
-                    return new String[0];
-                } else if (s instanceof NativeTypedArrayView) {
+                if (s instanceof NativeTypedArrayView) {
                     // TODO: remove this once https://github.com/mozilla/rhino/issues/449 is fixed
                     return s.getIds();
                 }
