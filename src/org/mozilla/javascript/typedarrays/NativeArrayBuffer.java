@@ -164,11 +164,10 @@ public class NativeArrayBuffer
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated#
+// #generated# Last update: 2018-07-20 08:21:54 MESZ
         L0: { id = 0; String X = null;
             int s_length = s.length();
             if (s_length==5) { X="slice";id=Id_slice; }
-            else if (s_length==6) { X="isView";id=Id_isView; }
             else if (s_length==11) { X="constructor";id=Id_constructor; }
             if (X!=null && X!=s && !X.equals(s)) id = 0;
             break L0;
@@ -181,14 +180,13 @@ public class NativeArrayBuffer
     private static final int
         Id_constructor          = 1,
         Id_slice                = 2,
-        Id_isView               = 3,
-        MAX_PROTOTYPE_ID        = Id_isView;
+        MAX_PROTOTYPE_ID        = Id_slice;
 
 // #/string_id_map#
 
     // Constructor (aka static) functions here
 
-    private static final int ConstructorId_isView = -Id_isView;
+    private static final int ConstructorId_isView = -1;
 
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
