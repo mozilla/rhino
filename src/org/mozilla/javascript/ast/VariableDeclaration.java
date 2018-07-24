@@ -139,9 +139,9 @@ public class VariableDeclaration extends AstNode {
             sb.append(";");
         }
         if(this.getInlineComment() != null) {
-        	sb.append(this.getInlineComment().toSource(depth)).append("\n");
+            sb.append(this.getInlineComment().toSource(depth)).append("\n");
         } else if (isStatement()) {
-        	sb.append("\n");
+            sb.append("\n");
         }
         return sb.toString();
     }

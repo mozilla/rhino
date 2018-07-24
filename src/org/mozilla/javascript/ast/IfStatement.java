@@ -151,12 +151,12 @@ public class IfStatement extends AstNode {
         sb.append(condition.toSource(0));
         sb.append(") ");
         if(this.getInlineComment() != null) {
-        	sb.append("    ").append(this.getInlineComment().toSource()).append("\n");
+            sb.append("    ").append(this.getInlineComment().toSource()).append("\n");
         }
         if (thenPart.getType() != Token.BLOCK) {
-        	if(this.getInlineComment() == null) {
-        		sb.append("\n");
-        	}
+            if(this.getInlineComment() == null) {
+                sb.append("\n");
+            }
             sb.append(makeIndent(depth + 1));
         } 
         sb.append(thenPart.toSource(depth).trim());
@@ -167,13 +167,13 @@ public class IfStatement extends AstNode {
                 sb.append(" else ");
             }
             if(this.getElseKeyWordInlineComment() != null) {
-            	sb.append("    ").append(this.getElseKeyWordInlineComment().toSource()).append("\n");
+                sb.append("    ").append(this.getElseKeyWordInlineComment().toSource()).append("\n");
             }
             if (elsePart.getType() != Token.BLOCK
                     && elsePart.getType() != Token.IF) {
-            	if(this.getElseKeyWordInlineComment() == null) {
-            		sb.append("\n");
-            	}
+                if(this.getElseKeyWordInlineComment() == null) {
+                    sb.append("\n");
+                }
                 sb.append(makeIndent(depth + 1));
             }
             sb.append(elsePart.toSource(depth).trim());
@@ -197,12 +197,12 @@ public class IfStatement extends AstNode {
         }
     }
 
-	public AstNode getElseKeyWordInlineComment() {
-		return elseKeyWordInlineComment;
-	}
+    public AstNode getElseKeyWordInlineComment() {
+        return elseKeyWordInlineComment;
+    }
 
-	public void setElseKeyWordInlineComment(AstNode elseKeyWordInlineComment) {
-		this.elseKeyWordInlineComment = elseKeyWordInlineComment;
-	}
+    public void setElseKeyWordInlineComment(AstNode elseKeyWordInlineComment) {
+        this.elseKeyWordInlineComment = elseKeyWordInlineComment;
+    }
     
 }

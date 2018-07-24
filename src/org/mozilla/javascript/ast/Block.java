@@ -47,16 +47,16 @@ public class Block extends AstNode {
         sb.append(makeIndent(depth));
         sb.append("{\n");
         for (Node kid : this) {
-        	AstNode astNodeKid = (AstNode)kid;
+            AstNode astNodeKid = (AstNode)kid;
             sb.append(astNodeKid.toSource(depth+1));
             if(astNodeKid.getType() == Token.COMMENT) {
-            	sb.append("\n");
+                sb.append("\n");
             }
         }
         sb.append(makeIndent(depth));
         sb.append("}");
         if(this.getInlineComment() != null) {
-        	sb.append(this.getInlineComment().toSource(depth));
+            sb.append(this.getInlineComment().toSource(depth));
         }
         sb.append("\n");
         return sb.toString();

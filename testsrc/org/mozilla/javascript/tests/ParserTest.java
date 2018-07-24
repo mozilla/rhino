@@ -45,11 +45,21 @@ public class ParserTest extends TestCase {
     public void testParseAutoSemiColonBeforeNewlineAndComments() throws IOException {
         AstRoot root = parseAsReader(
         		"var s = 3\n"
-        		+ "/* */var t = 1;");
+        		+ "/* */ /*  test comment */ var t = 1;");
         assertNotNull(root.getComments());
-        assertEquals(1, root.getComments().size());
+        assertEquals(2, root.getComments().size());
 
-        assertEquals("var s = 3;\n/* */\n\nvar t = 1;\n", root.toSource());
+        assertEquals("var s = 3;\nvar t = 1;\n", root.toSource());
+    }
+
+    public void testNewlineAndComments() throws IOException {
+        AstRoot root = parseAsReader(
+        		"var s = 3;\n"
+        		+ "/* */ /* txt */var t = 1");
+        assertNotNull(root.getComments());
+        assertEquals(2, root.getComments().size());
+
+        assertEquals("var s = 3;\n/* */\n\n/* txt */\n\nvar t = 1;\n", root.toSource());
     }
 
     public void testAutoSemiBeforeComment1() {

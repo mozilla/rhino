@@ -147,7 +147,7 @@ public class FunctionCall extends AstNode {
         }
         sb.append(")");
         if(this.getInlineComment() != null) {
-        	sb.append(this.getInlineComment().toSource(depth)).append("\n");
+            sb.append(this.getInlineComment().toSource(depth)).append("\n");
         }
         return sb.toString();
     }

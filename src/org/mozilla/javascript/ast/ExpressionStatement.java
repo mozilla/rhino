@@ -109,7 +109,7 @@ public class ExpressionStatement extends AstNode {
         sb.append(expr.toSource(depth));
         sb.append(";");
         if(this.getInlineComment() != null) {
-        	sb.append(this.getInlineComment().toSource(depth));
+            sb.append(this.getInlineComment().toSource(depth));
         }
         sb.append("\n");
         return sb.toString();
