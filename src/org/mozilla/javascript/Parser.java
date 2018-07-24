@@ -348,7 +348,7 @@ public class Parser
                                           ts.commentType,
                                           comment);
         if (ts.commentType == Token.CommentType.JSDOC &&
-            compilerEnv.isRecordingLocalJsDocComments()) {
+                compilerEnv.isRecordingLocalJsDocComments()) {
             Comment jsDocCommentNode = new Comment(ts.tokenBeg,
                     ts.getTokenLength(),
                     ts.commentType,
@@ -421,7 +421,7 @@ public class Parser
                     lineno += getNumberOfEols(comment);
                     break;
                 } else {
-                	tt = ts.getToken();
+                    tt = ts.getToken();
                 }
             }
         }
@@ -462,11 +462,11 @@ public class Parser
     private boolean matchToken(int toMatch, boolean ignoreComment)
         throws IOException
     {
-    	int tt = peekToken();
-    	while(tt == Token.COMMENT && ignoreComment) {
-    		consumeToken();
-    		tt = peekToken();
-    	}
+        int tt = peekToken();
+        while(tt == Token.COMMENT && ignoreComment) {
+            consumeToken();
+            tt = peekToken();
+        }
         if (tt != toMatch) {
             return false;
         }
@@ -658,8 +658,8 @@ public class Parser
                         break;
                     }
                 } else if(tt == Token.COMMENT) {
-                	n = scannedComments.get(scannedComments.size()-1);
-                	consumeToken();
+                    n = scannedComments.get(scannedComments.size()-1);
+                    consumeToken();
                 } else {
                     n = statement();
                     if (inDirectivePrologue) {
@@ -671,7 +671,6 @@ public class Parser
                             root.setInStrictMode(true);
                         }
                     }
-
                 }
                 end = getNodeEnd(n);
                 root.addChildToBack(n);
@@ -754,9 +753,9 @@ public class Parser
                         case Token.RC:
                             break bodyLoop;
                         case Token.COMMENT:
-                        	consumeToken();
-                        	n = scannedComments.get(scannedComments.size()-1);
-                        	break;
+                            consumeToken();
+                            n = scannedComments.get(scannedComments.size()-1);
+                            break;
                         case Token.FUNCTION:
                             consumeToken();
                             n = function(FunctionNode.FUNCTION_STATEMENT);
@@ -1137,8 +1136,8 @@ public class Parser
                 }
                 int ntt = peekToken();
                 if(ntt == Token.COMMENT && pn.getLineno() == scannedComments.get(scannedComments.size()-1).getLineno()) {
-                	pn.setInlineComment(scannedComments.get(scannedComments.size()-1));
-                	consumeToken();
+                    pn.setInlineComment(scannedComments.get(scannedComments.size()-1));
+                    consumeToken();
                 }
                 return pn;
             }
@@ -1266,9 +1265,9 @@ public class Parser
                   break;
               return pn;  // LabeledStatement
           case Token.COMMENT:
-        	  //Do not consume token here
-        	  pn = scannedComments.get(scannedComments.size()-1);
-        	  return pn;
+              //Do not consume token here
+              pn = scannedComments.get(scannedComments.size()-1);
+              return pn;
           default:
               lineno = ts.lineno;
               pn = new ExpressionStatement(expr(), !insideFunction());
@@ -1319,8 +1318,8 @@ public class Parser
         if (matchToken(Token.ELSE, true)) {
             int tt = peekToken();
             if(tt == Token.COMMENT) {
-            	pn.setElseKeyWordInlineComment(scannedComments.get(scannedComments.size()-1));
-            	consumeToken();
+                pn.setElseKeyWordInlineComment(scannedComments.get(scannedComments.size()-1));
+                consumeToken();
             }
             elsePos = ts.tokenBeg - pos;
             ifFalse = statement();
@@ -1384,9 +1383,9 @@ public class Parser
                         mustMatchToken(Token.COLON, "msg.no.colon.case", true);
                         break;
                     case Token.COMMENT:
-                    	AstNode n = scannedComments.get(scannedComments.size()-1);
-                    	pn.addChild(n);
-                    	continue switchLoop;
+                        AstNode n = scannedComments.get(scannedComments.size()-1);
+                        pn.addChild(n);
+                        continue switchLoop;
                     default:
                         reportError("msg.bad.switch");
                         break switchLoop;
@@ -1404,7 +1403,7 @@ public class Parser
                 {
                     if(tt == Token.COMMENT) {
                         Comment inlineComment = scannedComments.get(scannedComments.size() - 1);
-                        if(caseNode.getInlineComment() == null && inlineComment.getLineno() == caseNode.getLineno()) {
+                        if (caseNode.getInlineComment() == null && inlineComment.getLineno() == caseNode.getLineno()) {
                             caseNode.setInlineComment(inlineComment);
                         } else {
                             caseNode.addStatement(inlineComment);
@@ -1476,19 +1475,27 @@ public class Parser
         return pn;
     }
 
-	private AstNode getNextStatementAfterInlineComments(AstNode pn) throws IOException {
-		AstNode body = statement();
-		if(Token.COMMENT == body.getType()) {
-			AstNode commentNode = body;
-			body = statement();
-			if(pn != null) {
-				pn.setInlineComment(commentNode);
-			} else {
-				body.setInlineComment(commentNode);
-			}
-		}
-		return body;
-	}
+    private int peekUntilNonComment(int tt) throws IOException {
+        while (tt == Token.COMMENT) {
+            consumeToken();
+            tt = peekToken();
+        }
+        return tt;
+    }
+
+    private AstNode getNextStatementAfterInlineComments(AstNode pn) throws IOException {
+        AstNode body = statement();
+        if (Token.COMMENT == body.getType()) {
+            AstNode commentNode = body;
+            body = statement();
+            if (pn != null) {
+                pn.setInlineComment(commentNode);
+            } else {
+                body.setInlineComment(commentNode);
+            }
+        }
+        return body;
+    }
 
     private Loop forLoop()
         throws IOException
@@ -2076,8 +2083,8 @@ public class Parser
                 stmt = statementHelper();
                 int ntt = peekToken();
                 if(ntt == Token.COMMENT && stmt.getLineno() == scannedComments.get(scannedComments.size()-1).getLineno()) {
-                	stmt.setInlineComment(scannedComments.get(scannedComments.size()-1));
-                	consumeToken();
+                    stmt.setInlineComment(scannedComments.get(scannedComments.size() - 1));
+                    consumeToken();
                 }
             }
         } finally {
@@ -2563,8 +2570,8 @@ public class Parser
         AstNode node;
         int tt = peekToken();
         if(tt == Token.COMMENT) {
-        	consumeToken();
-        	tt = peekToken();
+            consumeToken();
+            tt = peekToken();
         }
         int line = ts.lineno;
 
@@ -2851,7 +2858,13 @@ public class Parser
                   f.setLength(ts.tokenEnd - pos);
                   pn = f;
                   break;
-
+              case Token.COMMENT:
+                  //Ignoring all the comments, because previous statement may not be terminated properly.
+                  int currentFlagTOken = (currentFlaggedToken & TI_AFTER_EOL) != 0 ? currentFlaggedToken : Token.EOF;
+                  consumeToken();
+                  peekUntilNonComment(tt);
+                  currentFlaggedToken = currentFlagTOken;
+                  break;
               default:
                   break tailLoop;
             }
@@ -3531,8 +3544,8 @@ public class Parser
             int tt = peekToken();
             Comment jsdocNode = getAndResetJsDoc();
             if(tt == Token.COMMENT) {
-            	consumeToken();
-            	continue commaLoop;
+                consumeToken();
+                tt = peekUntilNonComment(tt);
             }
             if (tt == Token.RC) {
                 if (afterComma != -1)

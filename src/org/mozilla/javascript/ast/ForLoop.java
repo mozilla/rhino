@@ -111,18 +111,18 @@ public class ForLoop extends Loop {
         sb.append(increment.toSource(0));
         sb.append(") ");
         if(this.getInlineComment() != null) {
-        	sb.append(this.getInlineComment().toSource()).append("\n");
+            sb.append(this.getInlineComment().toSource()).append("\n");
         }
         if (body.getType() == Token.BLOCK) {
-        	String bodySource = body.toSource(depth);
-        	if(this.getInlineComment() == null) {
-        		bodySource = bodySource.trim();
-        	}
+            String bodySource = body.toSource(depth);
+            if(this.getInlineComment() == null) {
+                bodySource = bodySource.trim();
+            }
             sb.append(bodySource).append("\n");
         } else {
-        	if(this.getInlineComment() == null) {
-        		sb.append("\n");
-        	}
+            if(this.getInlineComment() == null) {
+                sb.append("\n");
+            }
             sb.append(body.toSource(depth+1));
         }
         return sb.toString();

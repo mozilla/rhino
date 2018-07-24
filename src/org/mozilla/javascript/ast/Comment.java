@@ -98,7 +98,7 @@ public class Comment extends AstNode {
         sb.append(makeIndent(depth));
         sb.append(value);
         if(Token.CommentType.BLOCK_COMMENT == this.getCommentType()) {
-        	sb.append("\n");
+            sb.append("\n");
         }
         return sb.toString();
     }

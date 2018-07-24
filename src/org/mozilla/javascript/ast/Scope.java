@@ -237,10 +237,10 @@ public class Scope extends Jump {
         sb.append(makeIndent(depth));
         sb.append("{\n");
         for (Node kid : this) {
-        	AstNode astNodeKid = (AstNode)kid;
+            AstNode astNodeKid = (AstNode) kid;
             sb.append(astNodeKid.toSource(depth+1));
             if(astNodeKid.getType() == Token.COMMENT) {
-            	sb.append("\n");
+                sb.append("\n");
             }
         }
         sb.append(makeIndent(depth));

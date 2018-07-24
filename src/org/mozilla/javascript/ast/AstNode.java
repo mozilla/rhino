@@ -69,14 +69,14 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
     /*
      * Holds comments that are on same line as of actual statement e.g.
      * For a for loop
-     * 		1) for(var i=0; i<10; i++) //test comment { }
-     * 		2) for(var i=0; i<10; i++) 
-     * 			//test comment
-     *			//test comment 2 
-     * 			{ }
+     *      1) for(var i=0; i<10; i++) //test comment { }
+     *      2) for(var i=0; i<10; i++)
+     *          //test comment
+     *          //test comment 2
+     *          { }
      * For If Statement
-     * 		1) if (x == 2) //test if comment
-     * 				a = 3 + 4; //then comment
+     *      1) if (x == 2) //test if comment
+     *             a = 3 + 4; //then comment
      * and so on
      */
     protected AstNode inlineComment;
@@ -585,7 +585,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             if (tt == Token.NAME) {
                 buffer.append(" ").append(((Name)node).getIdentifier());
             } else if(tt == Token.STRING) {
-            	buffer.append(" ").append(((StringLiteral)node).getValue(true));
+                buffer.append(" ").append(((StringLiteral)node).getValue(true));
             }
             buffer.append("\n");
             return true;  // process kids
@@ -618,11 +618,11 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         return dpv.toString();
     }
 
-	public AstNode getInlineComment() {
-		return inlineComment;
-	}
+    public AstNode getInlineComment() {
+        return inlineComment;
+    }
 
-	public void setInlineComment(AstNode inlineComment) {
-		this.inlineComment = inlineComment;
-	}
+    public void setInlineComment(AstNode inlineComment) {
+        this.inlineComment = inlineComment;
+    }
 }
