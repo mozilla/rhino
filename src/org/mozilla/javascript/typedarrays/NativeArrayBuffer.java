@@ -56,14 +56,17 @@ public class NativeArrayBuffer
      */
     public NativeArrayBuffer(double len)
     {
-        if (len < 0) {
-            throw ScriptRuntime.constructError("RangeError", "Negative array length " + len);
-        }
-        if (len >= 9007199254740992.0) {
+        if (len >= Integer.MAX_VALUE) {
             throw ScriptRuntime.constructError("RangeError", "length parameter (" + len + ") is too large ");
+        }
+        if (len == Double.NEGATIVE_INFINITY) {
+            throw ScriptRuntime.constructError("RangeError", "Negative array length " + len);
         }
 
         int intLen = ScriptRuntime.toInt32(len);
+        if (intLen < 0) {
+            throw ScriptRuntime.constructError("RangeError", "Negative array length " + len);
+        }
         if (intLen == 0) {
             buffer = EMPTY_BUF;
         } else {
@@ -98,12 +101,12 @@ public class NativeArrayBuffer
      * @param s the position where the new buffer will start
      * @param e the position where it will end
      */
-    public NativeArrayBuffer slice(int s, int e)
+    public NativeArrayBuffer slice(double s, double e)
     {
-        // Handle negative start and and as relative to start
+        // Handle negative start as relative to start
         // Clamp as per the spec to between 0 and length
-        int end = Math.max(0, Math.min(buffer.length, (e < 0 ? buffer.length + e : e)));
-        int start = Math.min(end, Math.max(0, (s < 0 ? buffer.length + s : s)));
+        int end = ScriptRuntime.toInt32(Math.max(0, Math.min(buffer.length, (e < 0 ? buffer.length + e : e))));
+        int start = ScriptRuntime.toInt32(Math.min(end, Math.max(0, (s < 0 ? buffer.length + s : s))));
         int len = end - start;
 
         NativeArrayBuffer newBuf = new NativeArrayBuffer(len);
@@ -131,8 +134,8 @@ public class NativeArrayBuffer
 
         case Id_slice:
             NativeArrayBuffer self = realThis(thisObj, f);
-            int start = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
-            int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.buffer.length;
+            double start = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
+            double end = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : self.buffer.length;
             return self.slice(start, end);
         }
         throw new IllegalArgumentException(String.valueOf(id));
