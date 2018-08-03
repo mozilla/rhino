@@ -54,15 +54,20 @@ public class NativeArrayBuffer
     /**
      * Create a buffer of the specified length in bytes.
      */
-    public NativeArrayBuffer(int len)
+    public NativeArrayBuffer(double len)
     {
         if (len < 0) {
             throw ScriptRuntime.constructError("RangeError", "Negative array length " + len);
         }
-        if (len == 0) {
+        if (len >= 9007199254740992.0) {
+            throw ScriptRuntime.constructError("RangeError", "length parameter (" + len + ") is too large ");
+        }
+
+        int intLen = ScriptRuntime.toInt32(len);
+        if (intLen == 0) {
             buffer = EMPTY_BUF;
         } else {
-            buffer = new byte[len];
+            buffer = new byte[intLen];
         }
     }
 
@@ -121,7 +126,7 @@ public class NativeArrayBuffer
             return (isArg(args, 0) && (args[0] instanceof NativeArrayBufferView));
 
         case Id_constructor:
-            int length = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
+            double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
             return new NativeArrayBuffer(length);
 
         case Id_slice:
