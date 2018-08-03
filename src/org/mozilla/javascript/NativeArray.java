@@ -727,6 +727,11 @@ public class NativeArray extends IdScriptableObject implements List
             // toUint32(undefined) == 0
             return 0;
         }
+
+        double doubleLen = ScriptRuntime.toNumber(len);
+        if (doubleLen < 0) {
+            return 0;
+        }
         return ScriptRuntime.toUint32(len);
     }
 
