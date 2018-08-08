@@ -8,6 +8,10 @@ import org.junit.Test;
 import org.junit.Before;
 
 import static org.junit.Assert.assertThat;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import static org.hamcrest.core.Is.is;
 
 import org.mozilla.javascript.NativeArray;
@@ -74,44 +78,44 @@ public class NativeArrayTest {
 
   @Test
   public void getIndexIdsShouldBeEmptyForEmptyArray() {
-    assertThat(new NativeArray(0).getIndexIds(), is(new Integer[]{}));
+    assertThat(new NativeArray(0).getIndexIds(), is(new ArrayList<Integer>()));
   }
 
   @Test
   public void getIndexIdsShouldBeAZeroForSimpleSingletonArray() {
     array.put(0, array, "a");
-    assertThat(array.getIndexIds(), is(new Integer[]{ 0 }));
+    assertThat(array.getIndexIds(), is(Arrays.asList(0)));
   }
 
   @Test
   public void getIndexIdsShouldWorkWhenIndicesSetAsString() {
     array.put("0", array, "a");
-    assertThat(array.getIndexIds(), is(new Integer[]{ 0 }));
+    assertThat(array.getIndexIds(), is(Arrays.asList(0)));
   }
 
   @Test
   public void getIndexIdsShouldNotIncludeNegativeIds() {
     array.put(-1, array, "a");
-    assertThat(array.getIndexIds(), is(new Integer[]{}));
+    assertThat(array.getIndexIds(), is(new ArrayList<Integer>()));
   }
 
   @Test
   public void getIndexIdsShouldIncludeIdsLessThan2ToThe32() {
     int maxIndex = (int) (1L << 31) - 1;
     array.put(maxIndex, array, "a");
-    assertThat(array.getIndexIds(), is(new Integer[]{ maxIndex }));
+    assertThat(array.getIndexIds(), is(Arrays.asList(maxIndex)));
   }
 
   @Test
   public void getIndexIdsShouldNotIncludeIdsGreaterThanOrEqualTo2ToThe32() {
     array.put((1L<<31)+"", array, "a");
-    assertThat(array.getIndexIds(), is(new Integer[]{}));
+    assertThat(array.getIndexIds(), is(new ArrayList<Integer>()));
   }
 
   @Test
   public void getIndexIdsShouldNotReturnNonNumericIds() {
     array.put("x", array, "a");
-    assertThat(array.getIndexIds(), is(new Integer[]{}));
+    assertThat(array.getIndexIds(), is(new ArrayList<Integer>()));
   }
 
 }

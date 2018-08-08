@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import org.mozilla.javascript.regexp.NativeRegExp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -515,16 +516,16 @@ public class NativeArray extends IdScriptableObject implements List
         return ids;
     }
 
-    public Integer[] getIndexIds() {
+    public List<Integer> getIndexIds() {
       Object[] ids = getIds();
-      java.util.List<Integer> indices = new java.util.ArrayList<Integer>(ids.length);
+      List<Integer> indices = new ArrayList<Integer>(ids.length);
       for (Object id : ids) {
         int int32Id = ScriptRuntime.toInt32(id);
         if (int32Id >= 0 && ScriptRuntime.toString(int32Id).equals(ScriptRuntime.toString(id))) {
           indices.add(int32Id);
         }
       }
-      return indices.toArray(new Integer[indices.size()]);
+      return indices;
     }
 
     @Override
@@ -725,6 +726,11 @@ public class NativeArray extends IdScriptableObject implements List
         Object len = ScriptableObject.getProperty(obj, "length");
         if (len == Scriptable.NOT_FOUND) {
             // toUint32(undefined) == 0
+            return 0;
+        }
+
+        double doubleLen = ScriptRuntime.toNumber(len);
+        if (doubleLen < 0) {
             return 0;
         }
         return ScriptRuntime.toUint32(len);
