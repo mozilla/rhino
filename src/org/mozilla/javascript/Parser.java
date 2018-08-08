@@ -1642,10 +1642,19 @@ public class Parser
         Comment jsdocNode = getAndResetJsDoc();
 
         int tryPos = ts.tokenBeg, lineno = ts.lineno, finallyPos = -1;
-        if (peekToken() != Token.LC) {
+
+        TryStatement pn = new TryStatement(tryPos);
+        //Hnadled comment here because there should not be try without LC
+        int lctt = peekToken();
+        if(lctt == Token.COMMENT) {
+            Comment commentNode = scannedComments.get(scannedComments.size()-1);
+            pn.setInlineComment(commentNode);
+            consumeToken();
+            lctt = peekToken();
+        }
+        if (lctt != Token.LC) {
             reportError("msg.no.brace.try");
         }
-        TryStatement pn = new TryStatement(tryPos);
         AstNode tryBlock = getNextStatementAfterInlineComments(pn);
         int tryEnd = getNodeEnd(tryBlock);
 
@@ -2860,10 +2869,9 @@ public class Parser
                   break;
               case Token.COMMENT:
                   //Ignoring all the comments, because previous statement may not be terminated properly.
-                  int currentFlagTOken = (currentFlaggedToken & TI_AFTER_EOL) != 0 ? currentFlaggedToken : Token.EOF;
-                  consumeToken();
+                  int currentFlagTOken = currentFlaggedToken;
                   peekUntilNonComment(tt);
-                  currentFlaggedToken = currentFlagTOken;
+                  currentFlaggedToken = (currentFlaggedToken & TI_AFTER_EOL) != 0 ? currentFlaggedToken : currentFlagTOken;
                   break;
               default:
                   break tailLoop;
