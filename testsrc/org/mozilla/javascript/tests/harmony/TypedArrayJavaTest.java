@@ -1,16 +1,9 @@
 package org.mozilla.javascript.tests.harmony;
 
-import org.junit.Test;
-import org.mozilla.javascript.typedarrays.NativeFloat32Array;
-import org.mozilla.javascript.typedarrays.NativeFloat64Array;
-import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
-import org.mozilla.javascript.typedarrays.NativeInt16Array;
-import org.mozilla.javascript.typedarrays.NativeInt32Array;
-import org.mozilla.javascript.typedarrays.NativeInt8Array;
-import org.mozilla.javascript.typedarrays.NativeUint16Array;
-import org.mozilla.javascript.typedarrays.NativeUint32Array;
-import org.mozilla.javascript.typedarrays.NativeUint8Array;
-import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,7 +12,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.typedarrays.NativeArrayBuffer;
+import org.mozilla.javascript.typedarrays.NativeFloat32Array;
+import org.mozilla.javascript.typedarrays.NativeFloat64Array;
+import org.mozilla.javascript.typedarrays.NativeInt16Array;
+import org.mozilla.javascript.typedarrays.NativeInt32Array;
+import org.mozilla.javascript.typedarrays.NativeInt8Array;
+import org.mozilla.javascript.typedarrays.NativeUint16Array;
+import org.mozilla.javascript.typedarrays.NativeUint32Array;
+import org.mozilla.javascript.typedarrays.NativeUint8Array;
+import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
 
 /**
  * Ensure that the "List" contract is valid for a typed array.
@@ -291,5 +297,36 @@ public class TypedArrayJavaTest
             assertFalse("Expected exception", true);
         } catch (UnsupportedOperationException e) {
         }
+    }
+
+    /**
+     * Test case for {@link https://github.com/mozilla/rhino/issues/449}
+     *
+     * @throws Exception if test failed
+     */
+    @Test
+    public void getAllIds() throws Exception {
+        String[] allNativeTypes = {
+                "Float32Array",
+                "Float64Array",
+                "Int8Array",
+                "Int16Array",
+                "Int32Array",
+                "Uint8Array",
+                "Uint16Array",
+                "Uint32Array",
+                "Uint8ClampedArray"
+        };
+
+        Context cx = Context.enter();
+        cx.setLanguageVersion(Context.VERSION_ES6);
+        Scriptable global = cx.initStandardObjects();
+
+        for (String type : allNativeTypes) {
+            ScriptableObject obj = (ScriptableObject)cx.evaluateString(global, "new " + type + "(5)", "", 1, null);
+            obj.getAllIds();
+        }
+
+        Context.exit();
     }
 }
