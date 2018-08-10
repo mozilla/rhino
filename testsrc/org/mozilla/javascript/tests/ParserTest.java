@@ -45,11 +45,21 @@ public class ParserTest extends TestCase {
     public void testParseAutoSemiColonBeforeNewlineAndComments() throws IOException {
         AstRoot root = parseAsReader(
         		"var s = 3\n"
-        		+ "/* */var t = 1;");
+        		+ "/* */ /*  test comment */ var t = 1;");
         assertNotNull(root.getComments());
-        assertEquals(1, root.getComments().size());
+        assertEquals(2, root.getComments().size());
 
         assertEquals("var s = 3;\nvar t = 1;\n", root.toSource());
+    }
+
+    public void testNewlineAndComments() throws IOException {
+        AstRoot root = parseAsReader(
+        		"var s = 3;\n"
+        		+ "/* */ /* txt */var t = 1");
+        assertNotNull(root.getComments());
+        assertEquals(2, root.getComments().size());
+
+        assertEquals("var s = 3;\n/* */\n\n/* txt */\n\nvar t = 1;\n", root.toSource());
     }
 
     public void testAutoSemiBeforeComment1() {
@@ -862,7 +872,7 @@ public class ParserTest extends TestCase {
         assertEquals(1, root.getComments().size());
         assertEquals("/** @type number */",
                      root.getComments().first().getValue());
-        assertNotNull(root.getFirstChild().getJsDoc());
+        assertNotNull(root.getFirstChild().getNext().getJsDoc());
     }
 
     public void testJSDocAttachment2() {
@@ -871,7 +881,7 @@ public class ParserTest extends TestCase {
         assertEquals(1, root.getComments().size());
         assertEquals("/** @type number */",
                      root.getComments().first().getValue());
-        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild().getNext();
         assertNotNull(st.getExpression().getJsDoc());
     }
 
@@ -1022,7 +1032,7 @@ public class ParserTest extends TestCase {
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
 
-        ExpressionStatement st = (ExpressionStatement) root.getFirstChild();
+        ExpressionStatement st = (ExpressionStatement) root.getFirstChild().getNext();
         assertNotNull(st.getExpression().getJsDoc());
     }
 
@@ -1034,7 +1044,7 @@ public class ParserTest extends TestCase {
         assertNotNull(root.getComments());
         assertEquals(1, root.getComments().size());
 
-        WithStatement st = (WithStatement) root.getFirstChild();
+        WithStatement st = (WithStatement) root.getFirstChild().getNext();
         assertNotNull(st.getJsDoc());
     }
 

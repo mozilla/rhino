@@ -138,6 +138,9 @@ public class TryStatement extends AstNode {
         StringBuilder sb = new StringBuilder(250);
         sb.append(makeIndent(depth));
         sb.append("try ");
+        if(this.getInlineComment() != null) {
+            sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
+        }
         sb.append(tryBlock.toSource(depth).trim());
         for (CatchClause cc : getCatchClauses()) {
             sb.append(cc.toSource(depth));

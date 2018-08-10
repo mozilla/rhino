@@ -57,11 +57,17 @@ public class WhileLoop extends Loop {
         sb.append("while (");
         sb.append(condition.toSource(0));
         sb.append(") ");
+        if(this.getInlineComment() != null) {
+            sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
+        }
         if (body.getType() == Token.BLOCK) {
             sb.append(body.toSource(depth).trim());
             sb.append("\n");
         } else {
-            sb.append("\n").append(body.toSource(depth+1));
+            if(this.getInlineComment() == null) {
+                sb.append("\n");
+            }
+            sb.append(body.toSource(depth+1));
         }
         return sb.toString();
     }

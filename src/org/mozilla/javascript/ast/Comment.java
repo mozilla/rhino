@@ -83,11 +83,23 @@ public class Comment extends AstNode {
         return value;
     }
 
+    /**
+     * Set the comment Value with the new commentString. and updates the length with new Length.
+     * @param commentString
+     */
+    public void setValue(String commentString) {
+        this.value = commentString;
+        this.setLength(this.value.length());
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder(getLength() + 10);
         sb.append(makeIndent(depth));
         sb.append(value);
+        if(Token.CommentType.BLOCK_COMMENT == this.getCommentType()) {
+            sb.append("\n");
+        }
         return sb.toString();
     }
 

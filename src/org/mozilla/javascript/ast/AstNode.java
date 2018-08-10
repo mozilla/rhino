@@ -66,6 +66,20 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
     protected int position = -1;
     protected int length = 1;
     protected AstNode parent;
+    /*
+     * Holds comments that are on same line as of actual statement e.g.
+     * For a for loop
+     *      1) for(var i=0; i<10; i++) //test comment { }
+     *      2) for(var i=0; i<10; i++)
+     *          //test comment
+     *          //test comment 2
+     *          { }
+     * For If Statement
+     *      1) if (x == 2) //test if comment
+     *             a = 3 + 4; //then comment
+     * and so on
+     */
+    protected AstNode inlineComment;
 
     private static Map<Integer,String> operatorNames =
             new HashMap<Integer,String>();
@@ -570,6 +584,8 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
             buffer.append(node.getLength());
             if (tt == Token.NAME) {
                 buffer.append(" ").append(((Name)node).getIdentifier());
+            } else if(tt == Token.STRING) {
+                buffer.append(" ").append(((StringLiteral)node).getValue(true));
             }
             buffer.append("\n");
             return true;  // process kids
@@ -600,5 +616,13 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         DebugPrintVisitor dpv = new DebugPrintVisitor(new StringBuilder(1000));
         visit(dpv);
         return dpv.toString();
+    }
+
+    public AstNode getInlineComment() {
+        return inlineComment;
+    }
+
+    public void setInlineComment(AstNode inlineComment) {
+        this.inlineComment = inlineComment;
     }
 }
