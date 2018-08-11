@@ -1026,44 +1026,11 @@ public abstract class ScriptableObject implements Scriptable,
             }
 
             String methodName;
-            Object[] args;
+            Object[] args = ScriptRuntime.emptyArgs;
             if (tryToString) {
                 methodName = "toString";
-                args = ScriptRuntime.emptyArgs;
             } else {
                 methodName = "valueOf";
-                args = new Object[1];
-                String hint;
-                if (typeHint == null) {
-                    hint = "undefined";
-                } else if (typeHint == ScriptRuntime.StringClass) {
-                    hint = "string";
-                } else if (typeHint == ScriptRuntime.ScriptableClass) {
-                    hint = "object";
-                } else if (typeHint == ScriptRuntime.FunctionClass) {
-                    hint = "function";
-                } else if (typeHint == ScriptRuntime.BooleanClass
-                           || typeHint == Boolean.TYPE)
-                {
-                    hint = "boolean";
-                } else if (typeHint == ScriptRuntime.NumberClass ||
-                         typeHint == ScriptRuntime.ByteClass ||
-                         typeHint == Byte.TYPE ||
-                         typeHint == ScriptRuntime.ShortClass ||
-                         typeHint == Short.TYPE ||
-                         typeHint == ScriptRuntime.IntegerClass ||
-                         typeHint == Integer.TYPE ||
-                         typeHint == ScriptRuntime.FloatClass ||
-                         typeHint == Float.TYPE ||
-                         typeHint == ScriptRuntime.DoubleClass ||
-                         typeHint == Double.TYPE)
-                {
-                    hint = "number";
-                } else {
-                    throw Context.reportRuntimeError1(
-                        "msg.invalid.type", typeHint.toString());
-                }
-                args[0] = hint;
             }
             Object v = getProperty(object, methodName);
             if (!(v instanceof Function))
