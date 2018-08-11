@@ -239,9 +239,8 @@ final class MemberBox implements Serializable
         try {
             if (isMethod) {
                 return declaring.getMethod(name, parms);
-            } else {
-                return declaring.getConstructor(parms);
             }
+            return declaring.getConstructor(parms);
         } catch (NoSuchMethodException e) {
             throw new IOException("Cannot find member: " + e);
         }

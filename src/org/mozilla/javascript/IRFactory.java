@@ -153,9 +153,8 @@ public final class IRFactory extends Parser
           case Token.FOR:
               if (node instanceof ForInLoop) {
                   return transformForInLoop((ForInLoop)node);
-              } else {
-                  return transformForLoop((ForLoop)node);
               }
+              return transformForLoop((ForLoop)node);
           case Token.FUNCTION:
               return transformFunction((FunctionNode)node);
           case Token.GENEXPR:
@@ -1286,8 +1285,7 @@ public final class IRFactory extends Parser
         Node kid = node.getValue() == null ? null : transform(node.getValue());
         if (kid != null)
             return new Node(Token.YIELD, kid, node.getLineno());
-        else
-            return new Node(Token.YIELD, node.getLineno());
+        return new Node(Token.YIELD, node.getLineno());
     }
 
     private Node transformXmlLiteral(XmlLiteral node) {
@@ -1375,12 +1373,11 @@ public final class IRFactory extends Parser
             String name = ((XmlPropRef)node).getPropName().getIdentifier();
             decompiler.addName(name);
             return createPropertyGet(pn, ns, name, memberTypeFlags);
-        } else {
-            decompiler.addToken(Token.LB);
-            Node expr = transform(((XmlElemRef)node).getExpression());
-            decompiler.addToken(Token.RB);
-            return createElementGet(pn, ns, expr, memberTypeFlags);
         }
+        decompiler.addToken(Token.LB);
+        Node expr = transform(((XmlElemRef)node).getExpression());
+        decompiler.addToken(Token.RB);
+        return createElementGet(pn, ns, expr, memberTypeFlags);
     }
 
     private Node transformDefaultXmlNamepace(UnaryExpression node) {
@@ -2330,9 +2327,8 @@ public final class IRFactory extends Parser
             double num = node.getDouble();
             if (num == num && num != 0.0) {
                 return ALWAYS_TRUE_BOOLEAN;
-            } else {
-                return ALWAYS_FALSE_BOOLEAN;
             }
+            return ALWAYS_FALSE_BOOLEAN;
           }
         }
         return 0;

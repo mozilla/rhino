@@ -260,101 +260,99 @@ class DToA {
         if (d == dfloor) {
             // No fraction part
             return intDigits;
-        } else {
-            /* We have a fraction. */
+        }
+        /* We have a fraction. */
 
-            StringBuilder buffer;       /* The output string */
-            int digit;
-            double df;           /* The fractional part of d */
-            BigInteger b;
+        StringBuilder buffer;       /* The output string */
+        int digit;
+        double df;           /* The fractional part of d */
+        BigInteger b;
 
-            buffer = new StringBuilder();
-            buffer.append(intDigits).append('.');
-            df = d - dfloor;
+        buffer = new StringBuilder();
+        buffer.append(intDigits).append('.');
+        df = d - dfloor;
 
-            long dBits = Double.doubleToLongBits(d);
-            int word0 = (int)(dBits >> 32);
-            int word1 = (int)(dBits);
+        long dBits = Double.doubleToLongBits(d);
+        int word0 = (int)(dBits >> 32);
+        int word1 = (int)(dBits);
 
-            int[] e = new int[1];
-            int[] bbits = new int[1];
+        int[] e = new int[1];
+        int[] bbits = new int[1];
 
-            b = d2b(df, e, bbits);
+        b = d2b(df, e, bbits);
 //            JS_ASSERT(e < 0);
-            /* At this point df = b * 2^e.  e must be less than zero because 0 < df < 1. */
+        /* At this point df = b * 2^e.  e must be less than zero because 0 < df < 1. */
 
-            int s2 = -(word0 >>> Exp_shift1 & Exp_mask >> Exp_shift1);
-            if (s2 == 0)
-                s2 = -1;
-            s2 += Bias + P;
-            /* 1/2^s2 = (nextDouble(d) - d)/2 */
+        int s2 = -(word0 >>> Exp_shift1 & Exp_mask >> Exp_shift1);
+        if (s2 == 0)
+            s2 = -1;
+        s2 += Bias + P;
+        /* 1/2^s2 = (nextDouble(d) - d)/2 */
 //            JS_ASSERT(-s2 < e);
-            BigInteger mlo = BigInteger.valueOf(1);
-            BigInteger mhi = mlo;
-            if ((word1 == 0) && ((word0 & Bndry_mask) == 0)
-                && ((word0 & (Exp_mask & Exp_mask << 1)) != 0)) {
-                /* The special case.  Here we want to be within a quarter of the last input
-                   significant digit instead of one half of it when the output string's value is less than d.  */
-                s2 += Log2P;
-                mhi = BigInteger.valueOf(1<<Log2P);
-            }
-
-            b = b.shiftLeft(e[0] + s2);
-            BigInteger s = BigInteger.valueOf(1);
-            s = s.shiftLeft(s2);
-            /* At this point we have the following:
-             *   s = 2^s2;
-             *   1 > df = b/2^s2 > 0;
-             *   (d - prevDouble(d))/2 = mlo/2^s2;
-             *   (nextDouble(d) - d)/2 = mhi/2^s2. */
-            BigInteger bigBase = BigInteger.valueOf(base);
-
-            boolean done = false;
-            do {
-                b = b.multiply(bigBase);
-                BigInteger[] divResult = b.divideAndRemainder(s);
-                b = divResult[1];
-                digit = (char)(divResult[0].intValue());
-                if (mlo == mhi)
-                    mlo = mhi = mlo.multiply(bigBase);
-                else {
-                    mlo = mlo.multiply(bigBase);
-                    mhi = mhi.multiply(bigBase);
-                }
-
-                /* Do we yet have the shortest string that will round to d? */
-                int j = b.compareTo(mlo);
-                /* j is b/2^s2 compared with mlo/2^s2. */
-                BigInteger delta = s.subtract(mhi);
-                int j1 = (delta.signum() <= 0) ? 1 : b.compareTo(delta);
-                /* j1 is b/2^s2 compared with 1 - mhi/2^s2. */
-                if (j1 == 0 && ((word1 & 1) == 0)) {
-                    if (j > 0)
-                        digit++;
-                    done = true;
-                } else
-                if (j < 0 || (j == 0 && ((word1 & 1) == 0))) {
-                    if (j1 > 0) {
-                        /* Either dig or dig+1 would work here as the least significant digit.
-                           Use whichever would produce an output value closer to d. */
-                        b = b.shiftLeft(1);
-                        j1 = b.compareTo(s);
-                        if (j1 > 0) /* The even test (|| (j1 == 0 && (digit & 1))) is not here because it messes up odd base output
-                                     * such as 3.5 in base 3.  */
-                            digit++;
-                    }
-                    done = true;
-                } else if (j1 > 0) {
-                    digit++;
-                    done = true;
-                }
-//                JS_ASSERT(digit < (uint32)base);
-                buffer.append(BASEDIGIT(digit));
-            } while (!done);
-
-            return buffer.toString();
+        BigInteger mlo = BigInteger.valueOf(1);
+        BigInteger mhi = mlo;
+        if ((word1 == 0) && ((word0 & Bndry_mask) == 0)
+            && ((word0 & (Exp_mask & Exp_mask << 1)) != 0)) {
+            /* The special case.  Here we want to be within a quarter of the last input
+               significant digit instead of one half of it when the output string's value is less than d.  */
+            s2 += Log2P;
+            mhi = BigInteger.valueOf(1<<Log2P);
         }
 
+        b = b.shiftLeft(e[0] + s2);
+        BigInteger s = BigInteger.valueOf(1);
+        s = s.shiftLeft(s2);
+        /* At this point we have the following:
+         *   s = 2^s2;
+         *   1 > df = b/2^s2 > 0;
+         *   (d - prevDouble(d))/2 = mlo/2^s2;
+         *   (nextDouble(d) - d)/2 = mhi/2^s2. */
+        BigInteger bigBase = BigInteger.valueOf(base);
+
+        boolean done = false;
+        do {
+            b = b.multiply(bigBase);
+            BigInteger[] divResult = b.divideAndRemainder(s);
+            b = divResult[1];
+            digit = (char)(divResult[0].intValue());
+            if (mlo == mhi)
+                mlo = mhi = mlo.multiply(bigBase);
+            else {
+                mlo = mlo.multiply(bigBase);
+                mhi = mhi.multiply(bigBase);
+            }
+
+            /* Do we yet have the shortest string that will round to d? */
+            int j = b.compareTo(mlo);
+            /* j is b/2^s2 compared with mlo/2^s2. */
+            BigInteger delta = s.subtract(mhi);
+            int j1 = (delta.signum() <= 0) ? 1 : b.compareTo(delta);
+            /* j1 is b/2^s2 compared with 1 - mhi/2^s2. */
+            if (j1 == 0 && ((word1 & 1) == 0)) {
+                if (j > 0)
+                    digit++;
+                done = true;
+            } else
+            if (j < 0 || (j == 0 && ((word1 & 1) == 0))) {
+                if (j1 > 0) {
+                    /* Either dig or dig+1 would work here as the least significant digit.
+                       Use whichever would produce an output value closer to d. */
+                    b = b.shiftLeft(1);
+                    j1 = b.compareTo(s);
+                    if (j1 > 0) /* The even test (|| (j1 == 0 && (digit & 1))) is not here because it messes up odd base output
+                                 * such as 3.5 in base 3.  */
+                        digit++;
+                }
+                done = true;
+            } else if (j1 > 0) {
+                digit++;
+                done = true;
+            }
+//                JS_ASSERT(digit < (uint32)base);
+            buffer.append(BASEDIGIT(digit));
+        } while (!done);
+
+        return buffer.toString();
     }
 
     /* dtoa for IEEE arithmetic (dmg): convert double to ASCII string.

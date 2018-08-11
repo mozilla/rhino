@@ -210,9 +210,8 @@ public class Require extends BaseFunction
                     if (sandboxed) {
                         throw ScriptRuntime.throwError(cx, scope,
                             "Module \"" + id + "\" is not contained in sandbox.");
-                    } else {
-                        id = uri.toString();
                     }
+                    id = uri.toString();
                 }
             }
         }

@@ -195,9 +195,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
         if(contentType != null && contentType.startsWith("text/")) {
             return "8859_1";
         }
-        else {
-            return "utf-8";
-        }
+        return "utf-8";
     }
 
     private Object getSecurityDomain(URLConnection urlConnection) {

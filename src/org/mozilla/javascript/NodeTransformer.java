@@ -278,9 +278,8 @@ public class NodeTransformer
                       || ((FunctionNode)tree).requiresActivation();
                   node = visitLet(createWith, parent, previous, node);
                   break;
-                } else {
-                  // fall through to process let declaration...
                 }
+                // fall through to process let declaration...
               }
               /* fall through */
               case Token.CONST:

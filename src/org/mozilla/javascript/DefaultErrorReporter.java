@@ -28,6 +28,7 @@ class DefaultErrorReporter implements ErrorReporter
         return r;
     }
 
+    @Override
     public void warning(String message, String sourceURI, int line,
                         String lineText, int lineOffset)
     {
@@ -39,6 +40,7 @@ class DefaultErrorReporter implements ErrorReporter
         }
     }
 
+    @Override
     public void error(String message, String sourceURI, int line,
                       String lineText, int lineOffset)
     {
@@ -66,16 +68,14 @@ class DefaultErrorReporter implements ErrorReporter
         }
     }
 
+    @Override
     public EvaluatorException runtimeError(String message, String sourceURI,
                                            int line, String lineText,
                                            int lineOffset)
     {
         if (chainedReporter != null) {
-            return chainedReporter.runtimeError(
-                message, sourceURI, line, lineText, lineOffset);
-        } else {
-            return new EvaluatorException(
-                message, sourceURI, line, lineText, lineOffset);
+            return chainedReporter.runtimeError(message, sourceURI, line, lineText, lineOffset);
         }
+        return new EvaluatorException(message, sourceURI, line, lineText, lineOffset);
     }
 }

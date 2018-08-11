@@ -346,12 +346,14 @@ public class BaseFunction extends IdScriptableObject implements Function
     /**
      * Should be overridden.
      */
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
         return Undefined.instance;
     }
 
+    @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     {
         Scriptable result = createObject(cx, scope);

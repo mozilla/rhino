@@ -103,9 +103,8 @@ public class InterfaceAdapter
                 Class<?> resultType = method.getReturnType();
                 if (resultType == Void.TYPE) {
                     return null;
-                } else {
-                    return Context.jsToJava(null, resultType);
                 }
+                return Context.jsToJava(null, resultType);
             }
             if (!(value instanceof Callable)) {
                 throw Context.reportRuntimeError1(

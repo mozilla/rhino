@@ -464,11 +464,10 @@ public class NativeJavaMethod extends BaseFunction
             throw Context.reportRuntimeError3(
                 "msg.constructor.ambiguous",
                 memberName, scriptSignature(args), buf.toString());
-        } else {
-            throw Context.reportRuntimeError4(
-                "msg.method.ambiguous", memberClass,
-                memberName, scriptSignature(args), buf.toString());
         }
+        throw Context.reportRuntimeError4(
+            "msg.method.ambiguous", memberClass,
+            memberName, scriptSignature(args), buf.toString());
     }
 
     /** Types are equal */

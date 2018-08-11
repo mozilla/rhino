@@ -398,7 +398,6 @@ public class ClassFileWriter {
         if (stackMapTableLength > 0) {
             int stackMapTableAttrIndex =
                 itsConstantPool.addUtf8("StackMapTable");
-            int start = index;
             index = putInt16(stackMapTableAttrIndex, codeAttribute, index);
             index = stackMap.write(codeAttribute, index);
         }
@@ -2349,9 +2348,8 @@ public class ClassFileWriter {
         private int getLocal(int localIndex) {
             if (localIndex < localsTop) {
                 return locals[localIndex];
-            } else {
-                return TypeInfo.TOP;
             }
+            return TypeInfo.TOP;
         }
 
         private void setLocal(int localIndex, int typeInfo) {
@@ -2402,9 +2400,8 @@ public class ClassFileWriter {
             long type = pop();
             if (TypeInfo.isTwoWords((int) type)) {
                 return type;
-            } else {
-                return type << 32 | (pop() & 0xFFFFFF);
             }
+            return type << 32 | (pop() & 0xFFFFFF);
         }
 
         private void clearStack() {
@@ -2577,7 +2574,6 @@ public class ClassFileWriter {
         }
 
         private int writeTypes(int[] types, int start) {
-            int startOffset = rawStackMapTop;
             for (int i = start; i < types.length; i++) {
                 rawStackMapTop = writeType(types[i]);
             }

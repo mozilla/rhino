@@ -50,7 +50,7 @@ public class NativeUint8Array
     }
 
     @Override
-    protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
+    protected NativeUint8Array construct(NativeArrayBuffer ab, int off, int len)
     {
         return new NativeUint8Array(ab, off, len);
     }
@@ -62,7 +62,7 @@ public class NativeUint8Array
     }
 
     @Override
-    protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
+    protected NativeUint8Array realThis(Scriptable thisObj, IdFunctionObject f)
     {
         if (!(thisObj instanceof NativeUint8Array)) {
             throw incompatibleCallError(f);

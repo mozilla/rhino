@@ -85,16 +85,14 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
         {
             return AccessController.doPrivileged(new PrivilegedAction<Object>()
             {
+                @Override
                 public Object run()
                 {
                     return buildValue0();
                 }
             });
         }
-        else
-        {
-            return buildValue0();
-        }
+        return buildValue0();
     }
 
     private Object buildValue0()
@@ -107,13 +105,11 @@ public final class LazilyLoadedCtor implements java.io.Serializable {
                 if (value != null) {
                     return value;
                 }
-                else {
-                    // cl has own static initializer which is expected
-                    // to set the property on its own.
-                    value = scope.get(propertyName, scope);
-                    if (value != Scriptable.NOT_FOUND)
-                        return value;
-                }
+                // cl has own static initializer which is expected
+                // to set the property on its own.
+                value = scope.get(propertyName, scope);
+                if (value != Scriptable.NOT_FOUND)
+                    return value;
             } catch (InvocationTargetException ex) {
                 Throwable target = ex.getTargetException();
                 if (target instanceof RuntimeException) {

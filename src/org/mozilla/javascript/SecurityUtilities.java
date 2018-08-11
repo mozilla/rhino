@@ -26,6 +26,7 @@ public class SecurityUtilities
         return AccessController.doPrivileged(
             new PrivilegedAction<String>()
             {
+                @Override
                 public String run()
                 {
                     return System.getProperty(name);
@@ -38,6 +39,7 @@ public class SecurityUtilities
         return AccessController.doPrivileged(
                 new PrivilegedAction<ProtectionDomain>()
                 {
+                    @Override
                     public ProtectionDomain run()
                     {
                         return clazz.getProtectionDomain();
@@ -57,6 +59,7 @@ public class SecurityUtilities
         if (securityManager instanceof RhinoSecurityManager) {
             return AccessController.doPrivileged(
                 new PrivilegedAction<ProtectionDomain>() {
+                    @Override
                     public ProtectionDomain run() {
                         Class<?> c = ((RhinoSecurityManager) securityManager)
                                     .getCurrentScriptClass();

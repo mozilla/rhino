@@ -311,9 +311,8 @@ public class JsonParser {
         final int ival = (int)dval;
         if (ival == dval) {
             return Integer.valueOf(ival);
-        } else {
-            return Double.valueOf(dval);
         }
+        return Double.valueOf(dval);
     }
 
     private ParseException numberError(int start, int end) {
@@ -394,9 +393,8 @@ public class JsonParser {
         char c = src.charAt(pos++);
         if (c == token) {
             return;
-        } else {
-            throw new ParseException("Expected " + token + " found " + c);
         }
+        throw new ParseException("Expected " + token + " found " + c);
     }
 
     public static class ParseException extends Exception {

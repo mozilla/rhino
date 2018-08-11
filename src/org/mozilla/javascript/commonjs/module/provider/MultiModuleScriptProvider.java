@@ -35,6 +35,7 @@ public class MultiModuleScriptProvider implements ModuleScriptProvider
         this.providers = l.toArray(new ModuleScriptProvider[l.size()]);
     }
 
+    @Override
     public ModuleScript getModuleScript(Context cx, String moduleId, URI uri,
                                         URI base, Scriptable paths) throws Exception {
         for (ModuleScriptProvider provider : providers) {

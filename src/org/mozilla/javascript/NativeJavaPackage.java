@@ -96,15 +96,14 @@ public class NativeJavaPackage extends ScriptableObject
         Object cached = super.get(name, this);
         if (cached != null && cached instanceof NativeJavaPackage) {
             return (NativeJavaPackage) cached;
-        } else {
-            String newPackage = packageName.length() == 0
-                                ? name
-                                : packageName + "." + name;
-            NativeJavaPackage pkg = new NativeJavaPackage(true, newPackage, classLoader);
-            ScriptRuntime.setObjectProtoAndParent(pkg, scope);
-            super.put(name, this, pkg);
-            return pkg;
         }
+        String newPackage = packageName.length() == 0
+                            ? name
+                            : packageName + "." + name;
+        NativeJavaPackage pkg = new NativeJavaPackage(true, newPackage, classLoader);
+        ScriptRuntime.setObjectProtoAndParent(pkg, scope);
+        super.put(name, this, pkg);
+        return pkg;
     }
 
     synchronized Object getPkgProperty(String name, Scriptable start,

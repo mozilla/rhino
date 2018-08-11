@@ -61,6 +61,7 @@ implements ModuleScriptProvider, Serializable
         this.moduleSourceProvider = moduleSourceProvider;
     }
 
+    @Override
     public ModuleScript getModuleScript(Context cx, String moduleId,
             URI moduleUri, URI baseUri, Scriptable paths) throws Exception
     {

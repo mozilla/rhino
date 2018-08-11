@@ -84,9 +84,8 @@ public final class NativeJSON extends IdScriptableObject
                 }
                 if (reviver instanceof Callable) {
                   return parse(cx, scope, jtext, (Callable) reviver);
-                } else {
-                  return parse(cx, scope, jtext);
                 }
+                return parse(cx, scope, jtext);
             }
 
             case Id_stringify: {
@@ -312,9 +311,8 @@ public final class NativeJSON extends IdScriptableObject
                 d != Double.NEGATIVE_INFINITY)
             {
                 return ScriptRuntime.toString(value);
-            } else {
-                return "null";
             }
+            return "null";
         }
 
         if (value instanceof Scriptable && !(value instanceof Callable)) {

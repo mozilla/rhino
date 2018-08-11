@@ -57,14 +57,17 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             = members.getFieldAndMethodsObjects(this, javaObject, false);
     }
 
+    @Override
     public boolean has(String name, Scriptable start) {
         return members.has(name, false);
     }
 
+    @Override
     public boolean has(int index, Scriptable start) {
         return false;
     }
 
+    @Override
     public Object get(String name, Scriptable start) {
         if (fieldAndMethods != null) {
             Object result = fieldAndMethods.get(name);
@@ -77,10 +80,12 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         return members.get(this, name, javaObject, false);
     }
 
+    @Override
     public Object get(int index, Scriptable start) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
+    @Override
     public void put(String name, Scriptable start, Object value) {
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
@@ -91,21 +96,26 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             prototype.put(name, prototype, value);
     }
 
+    @Override
     public void put(int index, Scriptable start, Object value) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }
 
+    @Override
     public boolean hasInstance(Scriptable value) {
         // This is an instance of a Java class, so always return false
         return false;
     }
 
+    @Override
     public void delete(String name) {
     }
 
+    @Override
     public void delete(int index) {
     }
 
+    @Override
     public Scriptable getPrototype() {
         if (prototype == null && javaObject instanceof String) {
             return TopLevel.getBuiltinPrototype(
@@ -118,6 +128,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     /**
      * Sets the prototype of the object.
      */
+    @Override
     public void setPrototype(Scriptable m) {
         prototype = m;
     }
@@ -125,6 +136,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     /**
      * Returns the parent (enclosing) scope of the object.
      */
+    @Override
     public Scriptable getParentScope() {
         return parent;
     }
@@ -132,10 +144,12 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     /**
      * Sets the parent (enclosing) scope of the object.
      */
+    @Override
     public void setParentScope(Scriptable m) {
         parent = m;
     }
 
+    @Override
     public Object[] getIds() {
         return members.getIds(false);
     }
@@ -151,14 +165,17 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         return cx.getWrapFactory().wrap(cx, scope, obj, staticType);
     }
 
+    @Override
     public Object unwrap() {
         return javaObject;
     }
 
+    @Override
     public String getClassName() {
         return "JavaObject";
     }
 
+    @Override
     public Object getDefaultValue(Class<?> hint)
     {
         Object value;
@@ -449,9 +466,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             if (valueClass.isArray()) {
                 return JSTYPE_JAVA_ARRAY;
             }
-            else {
-                return JSTYPE_JAVA_OBJECT;
-            }
+            return JSTYPE_JAVA_OBJECT;
         }
     }
 
@@ -491,9 +506,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
                 type == ScriptRuntime.ObjectClass) {
                 return "undefined";
             }
-            else {
-                reportConversionError("undefined", type);
-            }
+            reportConversionError("undefined", type);
             break;
 
         case JSTYPE_BOOLEAN:
@@ -549,9 +562,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
                 if (((CharSequence)value).length() == 1) {
                     return Character.valueOf(((CharSequence)value).charAt(0));
                 }
-                else {
-                    return coerceToNumber(type, value);
-                }
+                return coerceToNumber(type, value);
             }
             else if ((type.isPrimitive() && type != Boolean.TYPE)
                      || ScriptRuntime.NumberClass.isAssignableFrom(type))
@@ -591,19 +602,13 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
                 }
                 return coerceToNumber(type, value);
             }
-            else {
-              if (type == ScriptRuntime.StringClass) {
-                    return value.toString();
-                }
-                else {
-                    if (type.isInstance(value)) {
-                        return value;
-                    }
-                    else {
-                        reportConversionError(value, type);
-                    }
-                }
+          if (type == ScriptRuntime.StringClass) {
+                return value.toString();
             }
+            if (type.isInstance(value)) {
+                return value;
+            }
+            reportConversionError(value, type);
             break;
 
         case JSTYPE_OBJECT:
@@ -711,26 +716,23 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             if (valueClass == ScriptRuntime.FloatClass) {
                 return value;
             }
+            double number = toDouble(value);
+            if (Double.isInfinite(number) || Double.isNaN(number)
+                || number == 0.0) {
+                return new Float((float)number);
+            }
+
+            double absNumber = Math.abs(number);
+            if (absNumber < Float.MIN_VALUE) {
+                return new Float((number > 0.0) ? +0.0 : -0.0);
+            }
+            else if (absNumber > Float.MAX_VALUE) {
+                return new Float((number > 0.0) ?
+                                 Float.POSITIVE_INFINITY :
+                                 Float.NEGATIVE_INFINITY);
+            }
             else {
-                double number = toDouble(value);
-                if (Double.isInfinite(number) || Double.isNaN(number)
-                    || number == 0.0) {
-                    return new Float((float)number);
-                }
-                else {
-                    double absNumber = Math.abs(number);
-                    if (absNumber < Float.MIN_VALUE) {
-                        return new Float((number > 0.0) ? +0.0 : -0.0);
-                    }
-                    else if (absNumber > Float.MAX_VALUE) {
-                        return new Float((number > 0.0) ?
-                                         Float.POSITIVE_INFINITY :
-                                         Float.NEGATIVE_INFINITY);
-                    }
-                    else {
-                        return new Float((float)number);
-                    }
-                }
+                return new Float((float)number);
             }
         }
 
@@ -739,56 +741,49 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             if (valueClass == ScriptRuntime.IntegerClass) {
                 return value;
             }
-            else {
-                return Integer.valueOf((int)toInteger(value,
-                                                  ScriptRuntime.IntegerClass,
-                                                  Integer.MIN_VALUE,
-                                                  Integer.MAX_VALUE));
-            }
+            return Integer.valueOf((int)toInteger(value,
+                                              ScriptRuntime.IntegerClass,
+                                              Integer.MIN_VALUE,
+                                              Integer.MAX_VALUE));
         }
 
         if (type == ScriptRuntime.LongClass || type == Long.TYPE) {
             if (valueClass == ScriptRuntime.LongClass) {
                 return value;
-            } else {
-                /* Long values cannot be expressed exactly in doubles.
-                 * We thus use the largest and smallest double value that
-                 * has a value expressible as a long value. We build these
-                 * numerical values from their hexidecimal representations
-                 * to avoid any problems caused by attempting to parse a
-                 * decimal representation.
-                 */
-                final double max = Double.longBitsToDouble(0x43dfffffffffffffL);
-                final double min = Double.longBitsToDouble(0xc3e0000000000000L);
-                return Long.valueOf(toInteger(value,
-                                          ScriptRuntime.LongClass,
-                                          min,
-                                          max));
             }
+            /* Long values cannot be expressed exactly in doubles.
+             * We thus use the largest and smallest double value that
+             * has a value expressible as a long value. We build these
+             * numerical values from their hexidecimal representations
+             * to avoid any problems caused by attempting to parse a
+             * decimal representation.
+             */
+            final double max = Double.longBitsToDouble(0x43dfffffffffffffL);
+            final double min = Double.longBitsToDouble(0xc3e0000000000000L);
+            return Long.valueOf(toInteger(value,
+                                      ScriptRuntime.LongClass,
+                                      min,
+                                      max));
         }
 
         if (type == ScriptRuntime.ShortClass || type == Short.TYPE) {
             if (valueClass == ScriptRuntime.ShortClass) {
                 return value;
             }
-            else {
-                return Short.valueOf((short)toInteger(value,
-                                                  ScriptRuntime.ShortClass,
-                                                  Short.MIN_VALUE,
-                                                  Short.MAX_VALUE));
-            }
+            return Short.valueOf((short)toInteger(value,
+                                              ScriptRuntime.ShortClass,
+                                              Short.MIN_VALUE,
+                                              Short.MAX_VALUE));
         }
 
         if (type == ScriptRuntime.ByteClass || type == Byte.TYPE) {
             if (valueClass == ScriptRuntime.ByteClass) {
                 return value;
             }
-            else {
-                return Byte.valueOf((byte)toInteger(value,
-                                                ScriptRuntime.ByteClass,
-                                                Byte.MIN_VALUE,
-                                                Byte.MAX_VALUE));
-            }
+            return Byte.valueOf((byte)toInteger(value,
+                                            ScriptRuntime.ByteClass,
+                                            Byte.MIN_VALUE,
+                                            Byte.MAX_VALUE));
         }
 
         return new Double(toDouble(value));
@@ -808,9 +803,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
                 // XXX: optimize tail-recursion?
                 return toDouble(((Wrapper)value).unwrap());
             }
-            else {
-                return ScriptRuntime.toNumber(value);
-            }
+            return ScriptRuntime.toNumber(value);
         }
         else {
             Method meth;

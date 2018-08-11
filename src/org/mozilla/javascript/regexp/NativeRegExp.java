@@ -160,12 +160,14 @@ public class NativeRegExp extends IdScriptableObject implements Function
         return "object";
     }
 
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
         return execSub(cx, scope, args, MATCH);
     }
 
+    @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     {
         return (Scriptable)execSub(cx, scope, args, MATCH);
@@ -1004,11 +1006,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 }
                 break;
             }
-            else {
-                /* a trailing '\' is an error */
-                reportError("msg.trail.backslash", "");
-                return false;
-            }
+            /* a trailing '\' is an error */
+            reportError("msg.trail.backslash", "");
+            return false;
         case '(': {
             RENode result = null;
             termStart = state.cp;
@@ -2279,47 +2279,45 @@ public class NativeRegExp extends IdScriptableObject implements Function
                                 }
                                 op = program[pc++];
                                 continue;
-                            } else {
-                                // Don't need to adjust pc since we're going to pop.
-                                continuationPc = state.continuationPc;
-                                continuationOp = state.continuationOp;
-                                break;
                             }
-                        } else {
-                            if (state.min == 0 && gData.cp == state.index) {
-                                // Matched an empty string, that'll get us nowhere.
-                                result = false;
-                                continuationPc = state.continuationPc;
-                                continuationOp = state.continuationOp;
-                                break;
-                            }
-                            int new_min = state.min, new_max = state.max;
-                            if (new_min != 0) new_min--;
-                            if (new_max != -1) new_max--;
-                            pushProgState(gData, new_min, new_max, gData.cp, null,
-                                    state.continuationOp, state.continuationPc);
-                            if (new_min != 0) {
-                                continuationOp = REOP_MINIMALREPEAT;
-                                continuationPc = pc;
-                                int parenCount = getIndex(program, pc);
-                                pc += INDEX_LEN;
-                                int parenIndex = getIndex(program, pc);
-                                pc += 2 * INDEX_LEN;
-                                for (int k = 0; k < parenCount; k++) {
-                                    gData.setParens(parenIndex + k, -1, 0);
-                                }
-                                op = program[pc++];
-                            } else {
-                                continuationPc = state.continuationPc;
-                                continuationOp = state.continuationOp;
-                                pushBackTrackState(gData, REOP_MINIMALREPEAT, pc);
-                                popProgState(gData);
-                                pc += 2 * INDEX_LEN;
-                                pc = pc + getOffset(program, pc);
-                                op = program[pc++];
-                            }
-                            continue;
+                            // Don't need to adjust pc since we're going to pop.
+                            continuationPc = state.continuationPc;
+                            continuationOp = state.continuationOp;
+                            break;
                         }
+                        if (state.min == 0 && gData.cp == state.index) {
+                            // Matched an empty string, that'll get us nowhere.
+                            result = false;
+                            continuationPc = state.continuationPc;
+                            continuationOp = state.continuationOp;
+                            break;
+                        }
+                        int new_min = state.min, new_max = state.max;
+                        if (new_min != 0) new_min--;
+                        if (new_max != -1) new_max--;
+                        pushProgState(gData, new_min, new_max, gData.cp, null,
+                                state.continuationOp, state.continuationPc);
+                        if (new_min != 0) {
+                            continuationOp = REOP_MINIMALREPEAT;
+                            continuationPc = pc;
+                            int parenCount = getIndex(program, pc);
+                            pc += INDEX_LEN;
+                            int parenIndex = getIndex(program, pc);
+                            pc += 2 * INDEX_LEN;
+                            for (int k = 0; k < parenCount; k++) {
+                                gData.setParens(parenIndex + k, -1, 0);
+                            }
+                            op = program[pc++];
+                        } else {
+                            continuationPc = state.continuationPc;
+                            continuationOp = state.continuationOp;
+                            pushBackTrackState(gData, REOP_MINIMALREPEAT, pc);
+                            popProgState(gData);
+                            pc += 2 * INDEX_LEN;
+                            pc = pc + getOffset(program, pc);
+                            op = program[pc++];
+                        }
+                        continue;
                     }
 
                     case REOP_END:
@@ -2347,8 +2345,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     op = backTrackData.op;
                     continue;
                 }
-                else
-                    return false;
+                return false;
             }
 
             op = program[pc++];

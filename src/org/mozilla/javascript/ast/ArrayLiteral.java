@@ -153,6 +153,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
      * in a context such as {@code for ([a, b] in ...)} where it's the
      * target of a destructuring assignment.
      */
+    @Override
     public void setIsDestructuring(boolean destructuring) {
         isDestructuring = destructuring;
     }
@@ -162,6 +163,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
      * a function parameter, the target of a variable initializer, the
      * iterator of a for..in loop, etc.
      */
+    @Override
     public boolean isDestructuring() {
         return isDestructuring;
     }

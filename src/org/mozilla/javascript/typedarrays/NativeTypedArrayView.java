@@ -97,10 +97,10 @@ public abstract class NativeTypedArrayView<T>
      */
     public abstract int getBytesPerElement();
 
-    protected abstract NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len);
+    protected abstract NativeTypedArrayView<T> construct(NativeArrayBuffer ab, int off, int len);
     protected abstract Object js_get(int index);
     protected abstract Object js_set(int index, Object c);
-    protected abstract NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f);
+    protected abstract NativeTypedArrayView<T> realThis(Scriptable thisObj, IdFunctionObject f);
 
     private NativeArrayBuffer makeArrayBuffer(Context cx, Scriptable scope, int length)
     {
@@ -108,7 +108,7 @@ public abstract class NativeTypedArrayView<T>
                                                new Object[] { length });
     }
 
-    private NativeTypedArrayView js_constructor(Context cx, Scriptable scope, Object[] args)
+    private NativeTypedArrayView<T> js_constructor(Context cx, Scriptable scope, Object[] args)
     {
         if (!isArg(args, 0)) {
             return construct(NativeArrayBuffer.EMPTY_BUFFER, 0, 0);
@@ -121,9 +121,9 @@ public abstract class NativeTypedArrayView<T>
 
         } else if (args[0] instanceof NativeTypedArrayView) {
             // Copy elements from the old array and convert them into our own
-            NativeTypedArrayView src = (NativeTypedArrayView)args[0];
+            NativeTypedArrayView<T> src = (NativeTypedArrayView<T>)args[0];
             NativeArrayBuffer na = makeArrayBuffer(cx, scope, src.length * getBytesPerElement());
-            NativeTypedArrayView v = construct(na, 0, src.length);
+            NativeTypedArrayView<T> v = construct(na, 0, src.length);
 
             for (int i = 0; i < src.length; i++) {
                 v.js_set(i, src.js_get(i));
@@ -163,7 +163,7 @@ public abstract class NativeTypedArrayView<T>
                               : Arrays.asList(ScriptRuntime.getArrayElements((Scriptable)args[0]));
 
             NativeArrayBuffer na = makeArrayBuffer(cx, scope, l.size() * getBytesPerElement());
-            NativeTypedArrayView v = construct(na, 0, l.size());
+            NativeTypedArrayView<T> v = construct(na, 0, l.size());
             int p = 0;
             for (Object o : l) {
                 v.js_set(p, o);
@@ -176,7 +176,7 @@ public abstract class NativeTypedArrayView<T>
         }
     }
 
-    private void setRange(NativeTypedArrayView v, int off)
+    private void setRange(NativeTypedArrayView<T> v, int off)
     {
         if (off >= length) {
             throw ScriptRuntime.constructError("RangeError", "offset out of range");
@@ -249,7 +249,7 @@ public abstract class NativeTypedArrayView<T>
             return js_constructor(cx, scope, args);
 
         case Id_toString:
-            NativeTypedArrayView realThis = realThis(thisObj, f);
+            NativeTypedArrayView<T> realThis = realThis(thisObj, f);
             final int arrayLength = realThis.getArrayLength();
             final StringBuilder builder = new StringBuilder();
             if (arrayLength > 0) {
@@ -264,16 +264,15 @@ public abstract class NativeTypedArrayView<T>
         case Id_get:
             if (args.length > 0) {
                 return realThis(thisObj, f).js_get(ScriptRuntime.toInt32(args[0]));
-            } else {
-                throw ScriptRuntime.constructError("Error", "invalid arguments");
             }
+            throw ScriptRuntime.constructError("Error", "invalid arguments");
 
         case Id_set:
             if (args.length > 0) {
-                NativeTypedArrayView self = realThis(thisObj, f);
+                NativeTypedArrayView<T> self = realThis(thisObj, f);
                 if (args[0] instanceof NativeTypedArrayView) {
                     int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
-                    self.setRange((NativeTypedArrayView)args[0], offset);
+                    self.setRange((NativeTypedArrayView<T>)args[0], offset);
                     return Undefined.instance;
                 }
                 if (args[0] instanceof NativeArray) {
@@ -293,13 +292,12 @@ public abstract class NativeTypedArrayView<T>
 
         case Id_subarray:
             if (args.length > 0) {
-                NativeTypedArrayView self = realThis(thisObj, f);
+                NativeTypedArrayView<T> self = realThis(thisObj, f);
                 int start = ScriptRuntime.toInt32(args[0]);
                 int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.length;
                 return self.js_subarray(cx, scope, start, end);
-            } else {
-                throw ScriptRuntime.constructError("Error", "invalid arguments");
             }
+            throw ScriptRuntime.constructError("Error", "invalid arguments");
 
         case SymbolId_iterator:
             return new NativeArrayIterator(scope, thisObj);
@@ -470,24 +468,28 @@ public abstract class NativeTypedArrayView<T>
     // Abstract List implementation
 
     @SuppressWarnings("unused")
+    @Override
     public int size()
     {
         return length;
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean isEmpty()
     {
         return (length == 0);
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean contains(Object o)
     {
         return (indexOf(o) >= 0);
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean containsAll(Collection<?> objects)
     {
         for (Object o : objects) {
@@ -499,6 +501,7 @@ public abstract class NativeTypedArrayView<T>
     }
 
     @SuppressWarnings("unused")
+    @Override
     public int indexOf(Object o)
     {
         for (int i = 0; i < length; i++) {
@@ -510,6 +513,7 @@ public abstract class NativeTypedArrayView<T>
     }
 
     @SuppressWarnings("unused")
+    @Override
     public int lastIndexOf(Object o)
     {
         for (int i = length - 1; i >= 0; i--) {
@@ -521,6 +525,7 @@ public abstract class NativeTypedArrayView<T>
     }
 
     @SuppressWarnings("unused")
+    @Override
     public Object[] toArray()
     {
         Object[] a = new Object[length];
@@ -531,6 +536,7 @@ public abstract class NativeTypedArrayView<T>
     }
 
     @SuppressWarnings("unused")
+    @Override
     public <U> U[] toArray(U[] ts)
     {
         U[] a;
@@ -581,18 +587,21 @@ public abstract class NativeTypedArrayView<T>
     }
 
     @SuppressWarnings("unused")
+    @Override
     public Iterator<T> iterator()
     {
         return new NativeTypedArrayIterator<T>(this, 0);
     }
 
     @SuppressWarnings("unused")
+    @Override
     public ListIterator<T> listIterator()
     {
         return new NativeTypedArrayIterator<T>(this, 0);
     }
 
     @SuppressWarnings("unused")
+    @Override
     public ListIterator<T> listIterator(int start)
     {
         if (checkIndex(start)) {
@@ -602,60 +611,70 @@ public abstract class NativeTypedArrayView<T>
     }
 
     @SuppressWarnings("unused")
+    @Override
     public List<T> subList(int i, int i2)
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean add(T aByte)
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public void add(int i, T aByte)
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean addAll(Collection<? extends T> bytes)
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean addAll(int i, Collection<? extends T> bytes)
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public void clear()
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public T remove(int i)
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean remove(Object o)
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean removeAll(Collection<?> objects)
     {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @Override
     public boolean retainAll(Collection<?> objects)
     {
         throw new UnsupportedOperationException();

@@ -68,9 +68,8 @@ public class JavaScriptException extends RhinoException
             // ScriptRuntime.toString may throw a RuntimeException
             if (value instanceof Scriptable) {
                 return ScriptRuntime.defaultObjectToString((Scriptable)value);
-            } else {
-                return value.toString();
             }
+            return value.toString();
         }
     }
 

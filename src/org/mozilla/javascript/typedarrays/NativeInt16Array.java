@@ -51,7 +51,7 @@ public class NativeInt16Array
     }
 
     @Override
-    protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
+    protected NativeInt16Array construct(NativeArrayBuffer ab, int off, int len)
     {
         return new NativeInt16Array(ab, off, len);
     }
@@ -63,7 +63,7 @@ public class NativeInt16Array
     }
 
     @Override
-    protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
+    protected NativeInt16Array realThis(Scriptable thisObj, IdFunctionObject f)
     {
         if (!(thisObj instanceof NativeInt16Array)) {
             throw incompatibleCallError(f);
