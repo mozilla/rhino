@@ -212,9 +212,8 @@ public class NativeDataView
                 int off = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
                 int len = isArg(args, 2) ? ScriptRuntime.toInt32(args[2]) : ab.getLength() - off;
                 return js_constructor(ab, off, len);
-            } else {
-                throw ScriptRuntime.constructError("TypeError", "Missing parameters");
             }
+            throw ScriptRuntime.constructError("TypeError", "Missing parameters");
         case Id_getInt8:
             return realThis(thisObj, f).js_getInt(1, true, args);
         case Id_getUint8:

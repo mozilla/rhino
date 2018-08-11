@@ -52,7 +52,7 @@ public class NativeFloat64Array
     }
 
     @Override
-    protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
+    protected NativeFloat64Array construct(NativeArrayBuffer ab, int off, int len)
     {
         return new NativeFloat64Array(ab, off, len);
     }
@@ -64,7 +64,7 @@ public class NativeFloat64Array
     }
 
     @Override
-    protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
+    protected NativeFloat64Array realThis(Scriptable thisObj, IdFunctionObject f)
     {
         if (!(thisObj instanceof NativeFloat64Array)) {
             throw incompatibleCallError(f);

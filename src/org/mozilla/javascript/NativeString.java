@@ -277,11 +277,11 @@ final class NativeString extends IdScriptableObject
                     double pos = ScriptRuntime.toInteger(args, 0);
                     if (pos < 0 || pos >= target.length()) {
                         if (id == Id_charAt) return "";
-                        else return ScriptRuntime.NaNobj;
+                        return ScriptRuntime.NaNobj;
                     }
                     char c = target.charAt((int) pos);
                     if (id == Id_charAt) return String.valueOf(c);
-                    else return ScriptRuntime.wrapInt(c);
+                    return ScriptRuntime.wrapInt(c);
                 }
 
                 case Id_indexOf:
@@ -594,19 +594,19 @@ final class NativeString extends IdScriptableObject
 
         if (position > target.length() && methodId != Id_startsWith && methodId != Id_endsWith) {
             return -1;
-        } else {
-            if (position < 0) position = 0;
-            else if (position > target.length()) position = target.length();
-            else if (methodId == Id_endsWith && (position != position  || position > target.length())) position = target.length();
-
-            if (Id_endsWith == methodId) {
-                if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance)) position = target.length();
-                return target.substring(0, (int)position).endsWith(searchStr) ? 0 : -1;
-            }
-            return methodId == Id_startsWith
-                    ? target.startsWith(searchStr, (int)position) ? 0 : -1
-                    : target.indexOf(searchStr, (int)position);
         }
+
+        if (position < 0) position = 0;
+        else if (position > target.length()) position = target.length();
+        else if (methodId == Id_endsWith && (position != position  || position > target.length())) position = target.length();
+
+        if (Id_endsWith == methodId) {
+            if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance)) position = target.length();
+            return target.substring(0, (int)position).endsWith(searchStr) ? 0 : -1;
+        }
+        return methodId == Id_startsWith
+                ? target.startsWith(searchStr, (int)position) ? 0 : -1
+                : target.indexOf(searchStr, (int)position);
     }
 
     /*

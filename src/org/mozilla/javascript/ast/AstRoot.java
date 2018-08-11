@@ -131,6 +131,7 @@ public class AstRoot extends ScriptNode {
      */
     public void checkParentLinks() {
         this.visit(new NodeVisitor() {
+            @Override
             public boolean visit(AstNode node) {
                 int type = node.getType();
                 if (type == Token.SCRIPT)

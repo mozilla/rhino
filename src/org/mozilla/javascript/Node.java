@@ -355,10 +355,12 @@ public class Node implements Iterable<Node>
             cursor = Node.this.first;
         }
 
+        @Override
         public boolean hasNext() {
             return cursor != null;
         }
 
+        @Override
         public Node next() {
             if (cursor == null) {
                 throw new NoSuchElementException();
@@ -370,6 +372,7 @@ public class Node implements Iterable<Node>
             return prev;
         }
 
+        @Override
         public void remove() {
             if (prev == NOT_SET) {
                 throw new IllegalStateException("next() has not been called");
@@ -392,6 +395,7 @@ public class Node implements Iterable<Node>
     /**
      * Returns an {@link java.util.Iterator} over the node's children.
      */
+    @Override
     public Iterator<Node> iterator() {
         return new NodeIterator();
     }
@@ -875,14 +879,12 @@ public class Node implements Iterable<Node>
             case Token.RETURN:
                 if (this.first != null)
                     return END_RETURNS_VALUE;
-                else
-                    return END_RETURNS;
+                return END_RETURNS;
 
             case Token.TARGET:
                 if (next != null)
                     return next.endCheck();
-                else
-                    return END_DROPS_OFF;
+                return END_DROPS_OFF;
 
             case Token.LOOP:
                 return endCheckLoop();
@@ -922,8 +924,7 @@ public class Node implements Iterable<Node>
           case Token.COMMA:
             if (last != null)
                 return last.hasSideEffects();
-            else
-                return true;
+            return true;
 
           case Token.HOOK:
             if (first == null ||

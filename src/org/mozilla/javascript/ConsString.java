@@ -84,15 +84,18 @@ public class ConsString implements CharSequence, Serializable {
         return (String)left;
     }
 
+    @Override
     public int length() {
         return length;
     }
 
+    @Override
     public char charAt(int index) {
         String str = isFlat ? (String)left : flatten();
         return str.charAt(index);
     }
 
+    @Override
     public CharSequence subSequence(int start, int end) {
         String str = isFlat ? (String)left : flatten();
         return str.substring(start, end);

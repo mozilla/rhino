@@ -87,6 +87,7 @@ public class ScriptRuntime {
          * @param args the array of arguments
          * @return the result of the call
          */
+        @Override
         public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                            Object[] args)
         {
@@ -144,11 +145,10 @@ public class ScriptRuntime {
     {
         if (cl.isPrimitive()) {
             return (cl != Character.TYPE);
-        } else {
-            return (cl == StringClass || cl == BooleanClass
-                    || NumberClass.isAssignableFrom(cl)
-                    || ScriptableClass.isAssignableFrom(cl));
         }
+        return (cl == StringClass || cl == BooleanClass
+                || NumberClass.isAssignableFrom(cl)
+                || ScriptableClass.isAssignableFrom(cl));
     }
 
     public static ScriptableObject initSafeStandardObjects(Context cx,
@@ -921,18 +921,16 @@ public class ScriptRuntime {
 
         if (base != 10) {
             return DToA.JS_dtobasestr(base, d);
-        } else {
-            // V8 FastDtoa can't convert all numbers, so try it first but
-            // fall back to old DToA in case it fails
-            String result = FastDtoa.numberToString(d);
-            if (result != null) {
-                return result;
-            }
-            StringBuilder buffer = new StringBuilder();
-            DToA.JS_dtostr(buffer, DToA.DTOSTR_STANDARD, 0, d);
-            return buffer.toString();
         }
-
+        // V8 FastDtoa can't convert all numbers, so try it first but
+        // fall back to old DToA in case it fails
+        String result = FastDtoa.numberToString(d);
+        if (result != null) {
+            return result;
+        }
+        StringBuilder buffer = new StringBuilder();
+        DToA.JS_dtostr(buffer, DToA.DTOSTR_STANDARD, 0, d);
+        return buffer.toString();
     }
 
     static String uneval(Context cx, Scriptable scope, Object value)
@@ -1221,8 +1219,8 @@ public class ScriptRuntime {
 
         if (d > 0.0)
             return Math.floor(d);
-        else
-            return Math.ceil(d);
+
+        return Math.ceil(d);
     }
 
     public static double toInteger(Object[] args, int index) {
@@ -1338,10 +1336,8 @@ public class ScriptRuntime {
         if (ctorVal == Scriptable.NOT_FOUND) {
             throw Context.reportRuntimeError1(
                 "msg.ctor.not.found", constructorName);
-        } else {
-            throw Context.reportRuntimeError1(
-                "msg.not.ctor", constructorName);
         }
+        throw Context.reportRuntimeError1("msg.not.ctor", constructorName);
     }
 
     /**
@@ -1479,20 +1475,19 @@ public class ScriptRuntime {
                 return null;
             }
             return toString(id);
-        } else {
-            String s;
-            if (id instanceof String) {
-                s = (String)id;
-            } else {
-                s = toString(id);
-            }
-            long indexTest = indexFromString(s);
-            if (indexTest >= 0) {
-                storeIndexResult(cx, (int)indexTest);
-                return null;
-            }
-            return s;
         }
+        String s;
+        if (id instanceof String) {
+            s = (String)id;
+        } else {
+            s = toString(id);
+        }
+        long indexTest = indexFromString(s);
+        if (indexTest >= 0) {
+            storeIndexResult(cx, (int)indexTest);
+            return null;
+        }
+        return s;
     }
 
     /**
@@ -1640,10 +1635,9 @@ public class ScriptRuntime {
         int index = (int)dblIndex;
         if (index == dblIndex) {
             return getObjectIndex(sobj, index, cx);
-        } else {
-            String s = toString(dblIndex);
-            return getObjectProp(sobj, s, cx);
         }
+        String s = toString(dblIndex);
+        return getObjectProp(sobj, s, cx);
     }
 
     public static Object getObjectIndex(Scriptable obj, int index,
@@ -1764,10 +1758,9 @@ public class ScriptRuntime {
         int index = (int)dblIndex;
         if (index == dblIndex) {
             return setObjectIndex(sobj, index, value, cx);
-        } else {
-            String s = toString(dblIndex);
-            return setObjectProp(sobj, s, value, cx);
         }
+        String s = toString(dblIndex);
+        return setObjectProp(sobj, s, value, cx);
     }
 
     public static Object setObjectIndex(Scriptable obj, int index, Object value,
@@ -1791,10 +1784,9 @@ public class ScriptRuntime {
             int index = lastIndexResult(cx);
             target.delete(index);
             return !target.has(index, target);
-        } else {
-            target.delete(s);
-            return !target.has(s, target);
         }
+        target.delete(s);
+        return !target.has(s, target);
     }
 
     public static boolean hasObjectElem(Scriptable target, Object elem,
@@ -2128,11 +2120,10 @@ public class ScriptRuntime {
             // seems to work for E4X and we should optimize  the common case
             ScriptableObject.putProperty(bound, id, value);
             return value;
-        } else {
-            // See ES5 8.7.2
-            String msg = "Assignment to undefined \"" + id + "\" in strict mode";
-            throw constructError("ReferenceError", msg);
         }
+        // See ES5 8.7.2
+        String msg = "Assignment to undefined \"" + id + "\" in strict mode";
+        throw constructError("ReferenceError", msg);
     }
 
     public static Object setConst(Scriptable bound, Object value,
@@ -2449,9 +2440,8 @@ public class ScriptRuntime {
             if (!(result instanceof Callable)) {
                 if (result == Scriptable.NOT_FOUND) {
                     throw notFoundError(scope, name);
-                } else {
-                    throw notFunctionError(result, name);
                 }
+                throw notFunctionError(result, name);
             }
             // Top scope is not NativeWith or NativeCall => thisObj == scope
             Scriptable thisObj = scope;
@@ -2902,12 +2892,12 @@ public class ScriptRuntime {
             val1 = ((Scriptable) val1).getDefaultValue(null);
         if (val2 instanceof Scriptable)
             val2 = ((Scriptable) val2).getDefaultValue(null);
-        if (!(val1 instanceof CharSequence) && !(val2 instanceof CharSequence))
-            if ((val1 instanceof Number) && (val2 instanceof Number))
-                return wrapNumber(((Number)val1).doubleValue() +
-                                  ((Number)val2).doubleValue());
-            else
-                return wrapNumber(toNumber(val1) + toNumber(val2));
+        if (!(val1 instanceof CharSequence) && !(val2 instanceof CharSequence)) {
+            if ((val1 instanceof Number) && (val2 instanceof Number)) {
+                return wrapNumber(((Number)val1).doubleValue() + ((Number)val2).doubleValue());
+            }
+            return wrapNumber(toNumber(val1) + toNumber(val2));
+        }
         return new ConsString(toCharSequence(val1), toCharSequence(val2));
     }
 
@@ -3023,9 +3013,8 @@ public class ScriptRuntime {
         target.put(id, protoChainStart, result);
         if (post) {
             return value;
-        } else {
-            return result;
         }
+        return result;
     }
 
     /**
@@ -3063,9 +3052,8 @@ public class ScriptRuntime {
         setObjectElem(obj, index, result, cx, scope);
         if (post) {
             return value;
-        } else {
-            return result;
         }
+        return result;
     }
 
     /**
@@ -3101,9 +3089,8 @@ public class ScriptRuntime {
         ref.set(cx, scope, result);
         if (post) {
             return value;
-        } else {
-            return result;
         }
+        return result;
     }
 
     public static Object toPrimitive(Object val) {
@@ -4057,15 +4044,14 @@ public class ScriptRuntime {
         int len = (int) longLen;
         if (len == 0) {
             return ScriptRuntime.emptyArgs;
-        } else {
-            Object[] result = new Object[len];
-            for (int i=0; i < len; i++) {
-                Object elem = ScriptableObject.getProperty(object, i);
-                result[i] = (elem == Scriptable.NOT_FOUND) ? Undefined.instance
-                                                           : elem;
-            }
-            return result;
         }
+        Object[] result = new Object[len];
+        for (int i=0; i < len; i++) {
+            Object elem = ScriptableObject.getProperty(object, i);
+            result[i] = (elem == Scriptable.NOT_FOUND) ? Undefined.instance
+                                                       : elem;
+        }
+        return result;
     }
 
     static void checkDeprecated(Context cx, String name) {
@@ -4141,6 +4127,7 @@ public class ScriptRuntime {
      * file to avoid (synchronized) text parsing.
      */
     private static class DefaultMessageProvider implements MessageProvider {
+        @Override
         public String getMessage(String messageId, Object[] arguments) {
             final String defaultResource
                 = "org.mozilla.javascript.resources.Messages";
@@ -4465,9 +4452,8 @@ public class ScriptRuntime {
     {
         if (isEval) {
             return masterScriptUrl+'#'+masterScriptLine+"(eval)";
-        } else {
-            return masterScriptUrl+'#'+masterScriptLine+"(Function)";
         }
+        return masterScriptUrl+'#'+masterScriptLine+"(Function)";
     }
 
     static boolean isGeneratedScript(String sourceUrl) {

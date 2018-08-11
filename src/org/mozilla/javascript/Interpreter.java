@@ -373,6 +373,7 @@ public final class Interpreter extends Icode implements Evaluator
         }
     }
 
+    @Override
     public Object compile(CompilerEnvirons compilerEnv,
                           ScriptNode tree,
                           String encodedSource,
@@ -383,6 +384,7 @@ public final class Interpreter extends Icode implements Evaluator
         return itsData;
     }
 
+    @Override
     public Script createScriptObject(Object bytecode, Object staticSecurityDomain)
     {
         if(bytecode != itsData)
@@ -393,11 +395,12 @@ public final class Interpreter extends Icode implements Evaluator
                                                 staticSecurityDomain);
     }
 
+    @Override
     public void setEvalScriptFlag(Script script) {
         ((InterpretedFunction)script).idata.evalScriptFlag = true;
     }
 
-
+    @Override
     public Function createFunctionObject(Context cx, Scriptable scope,
             Object bytecode, Object staticSecurityDomain)
     {
@@ -779,6 +782,7 @@ public final class Interpreter extends Icode implements Evaluator
         return presentLines.getKeys();
     }
 
+    @Override
     public void captureStackInfo(RhinoException ex)
     {
         Context cx = Context.getCurrentContext();
@@ -834,6 +838,7 @@ public final class Interpreter extends Icode implements Evaluator
         ex.interpreterLineData = linePC;
     }
 
+    @Override
     public String getSourcePositionFromStack(Context cx, int[] linep)
     {
         CallFrame frame = (CallFrame)cx.lastInterpreterFrame;
@@ -846,6 +851,7 @@ public final class Interpreter extends Icode implements Evaluator
         return idata.itsSourceFile;
     }
 
+    @Override
     public String getPatchedStack(RhinoException ex,
                                   String nativeStackTrace)
     {
@@ -905,6 +911,7 @@ public final class Interpreter extends Icode implements Evaluator
         return sb.toString();
     }
 
+    @Override
     public List<String> getScriptStack(RhinoException ex) {
         ScriptStackElement[][] stack = getScriptStackElements(ex);
         List<String> list = new ArrayList<String>(stack.length);
@@ -1170,22 +1177,20 @@ switch (op) {
               generatorFrame.fnOrScript, generatorFrame);
           frame.result = generator;
           break Loop;
-        } else {
-          // We are now resuming execution. Fall through to YIELD case.
         }
+        // We are now resuming execution. Fall through to YIELD case.
     }
     // fall through...
     case Token.YIELD: {
         if (!frame.frozen) {
             return freezeGenerator(cx, frame, stackTop, generatorState);
-        } else {
-            Object obj = thawGenerator(frame, stackTop, generatorState, op);
-            if (obj != Scriptable.NOT_FOUND) {
-                throwable = obj;
-                break withoutExceptions;
-            }
-            continue Loop;
         }
+        Object obj = thawGenerator(frame, stackTop, generatorState, op);
+        if (obj != Scriptable.NOT_FOUND) {
+            throwable = obj;
+            break withoutExceptions;
+        }
+        continue Loop;
     }
     case Icode_GENERATOR_END: {
       // throw StopIteration
@@ -2268,10 +2273,9 @@ switch (op) {
         if (throwable != null) {
             if (throwable instanceof RuntimeException) {
                 throw (RuntimeException)throwable;
-            } else {
-                // Must be instance of Error or code bug
-                throw (Error)throwable;
             }
+            // Must be instance of Error or code bug
+            throw (Error)throwable;
         }
 
         return (interpreterResult != DBL_MRK)
@@ -2677,16 +2681,13 @@ switch (op) {
         if (rhs == DOUBLE_MARK) {
             if (lhs == DOUBLE_MARK) {
                 return (sDbl[stackTop] == sDbl[stackTop + 1]);
-            } else {
-                return ScriptRuntime.eqNumber(sDbl[stackTop + 1], lhs);
             }
-        } else {
-            if (lhs == DOUBLE_MARK) {
-                return ScriptRuntime.eqNumber(sDbl[stackTop], rhs);
-            } else {
-                return ScriptRuntime.eq(lhs, rhs);
-            }
+            return ScriptRuntime.eqNumber(sDbl[stackTop + 1], lhs);
         }
+        if (lhs == DOUBLE_MARK) {
+            return ScriptRuntime.eqNumber(sDbl[stackTop], rhs);
+        }
+        return ScriptRuntime.eq(lhs, rhs);
     }
 
     private static boolean doShallowEquals(Object[] stack, double[] sDbl,
@@ -3087,9 +3088,8 @@ switch (op) {
         Object x = frame.stack[i];
         if (x == UniqueTag.DOUBLE_MARK) {
             return ScriptRuntime.toInt32(frame.sDbl[i]);
-        } else {
-            return ScriptRuntime.toInt32(x);
         }
+        return ScriptRuntime.toInt32(x);
     }
 
     private static double stack_double(CallFrame frame, int i)
@@ -3097,9 +3097,8 @@ switch (op) {
         Object x = frame.stack[i];
         if (x != UniqueTag.DOUBLE_MARK) {
             return ScriptRuntime.toNumber(x);
-        } else {
-            return frame.sDbl[i];
         }
+        return frame.sDbl[i];
     }
 
     private static boolean stack_boolean(CallFrame frame, int i)

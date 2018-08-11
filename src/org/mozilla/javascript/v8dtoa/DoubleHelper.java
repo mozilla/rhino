@@ -72,9 +72,8 @@ public class DoubleHelper {
         long significand = d64 & kSignificandMask;
         if (!isDenormal(d64)) {
             return significand + kHiddenBit;
-        } else {
-            return significand;
         }
+        return significand;
     }
 
     // Returns true if the double is a denormal.

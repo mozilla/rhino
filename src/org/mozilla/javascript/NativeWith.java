@@ -42,20 +42,24 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         this.prototype = prototype;
     }
 
+    @Override
     public String getClassName() {
         return "With";
     }
 
+    @Override
     public boolean has(String id, Scriptable start)
     {
         return prototype.has(id, prototype);
     }
 
+    @Override
     public boolean has(int index, Scriptable start)
     {
         return prototype.has(index, prototype);
     }
 
+    @Override
     public Object get(String id, Scriptable start)
     {
         if (start == this)
@@ -63,6 +67,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         return prototype.get(id, start);
     }
 
+    @Override
     public Object get(int index, Scriptable start)
     {
         if (start == this)
@@ -70,6 +75,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         return prototype.get(index, start);
     }
 
+    @Override
     public void put(String id, Scriptable start, Object value)
     {
         if (start == this)
@@ -77,6 +83,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         prototype.put(id, start, value);
     }
 
+    @Override
     public void put(int index, Scriptable start, Object value)
     {
         if (start == this)
@@ -84,40 +91,49 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         prototype.put(index, start, value);
     }
 
+    @Override
     public void delete(String id)
     {
         prototype.delete(id);
     }
 
+    @Override
     public void delete(int index)
     {
         prototype.delete(index);
     }
 
+    @Override
     public Scriptable getPrototype() {
         return prototype;
     }
 
+    @Override
     public void setPrototype(Scriptable prototype) {
         this.prototype = prototype;
     }
 
+    @Override
     public Scriptable getParentScope() {
         return parent;
     }
 
+    @Override
     public void setParentScope(Scriptable parent) {
         this.parent = parent;
     }
 
+    @Override
     public Object[] getIds() {
         return prototype.getIds();
     }
 
+    @Override
     public Object getDefaultValue(Class<?> typeHint) {
         return prototype.getDefaultValue(typeHint);
     }
 
+    @Override
     public boolean hasInstance(Scriptable value) {
         return prototype.hasInstance(value);
     }
@@ -131,6 +147,7 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
         throw new IllegalStateException();
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {

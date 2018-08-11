@@ -221,9 +221,7 @@ public class ObjToIntMap implements Serializable
         if (shift >= 0) {
             return ((fraction >>> shift) & mask) | 1;
         }
-        else {
-            return (fraction & (mask >>> -shift)) | 1;
-        }
+        return (fraction & (mask >>> -shift)) | 1;
     }
 
     private int findIndex(Object key) {

@@ -90,32 +90,38 @@ final class InterpreterData implements Serializable, DebuggableScript
     boolean evalScriptFlag; // true if script corresponds to eval() code
 
     private int icodeHashCode = 0;
-           
+
+    @Override
     public boolean isTopLevel()
     {
         return topLevel;
     }
 
+    @Override
     public boolean isFunction()
     {
         return itsFunctionType != 0;
     }
 
+    @Override
     public String getFunctionName()
     {
         return itsName;
     }
 
+    @Override
     public int getParamCount()
     {
         return argCount;
     }
 
+    @Override
     public int getParamAndVarCount()
     {
         return argNames.length;
     }
 
+    @Override
     public String getParamOrVarName(int index)
     {
         return argNames[index];
@@ -126,31 +132,37 @@ final class InterpreterData implements Serializable, DebuggableScript
         return argIsConst[index];
     }
 
+    @Override
     public String getSourceName()
     {
         return itsSourceFile;
     }
 
+    @Override
     public boolean isGeneratedScript()
     {
         return ScriptRuntime.isGeneratedScript(itsSourceFile);
     }
 
+    @Override
     public int[] getLineNumbers()
     {
         return Interpreter.getLineNumbers(this);
     }
 
+    @Override
     public int getFunctionCount()
     {
         return (itsNestedFunctions == null) ? 0 : itsNestedFunctions.length;
     }
 
+    @Override
     public DebuggableScript getFunction(int index)
     {
         return itsNestedFunctions[index];
     }
 
+    @Override
     public DebuggableScript getParent()
     {
          return parentData;

@@ -78,6 +78,7 @@ public final class JavaAdapter implements IdFunctionCall
         ctor.exportAsScopeProperty();
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {
@@ -580,9 +581,8 @@ public final class JavaAdapter implements IdFunctionCall
         Context cx = Context.getCurrentContext();
         if (cx != null) {
             return doCall(cx, scope, thisObj, f, args, argsToWrap);
-        } else {
-            return factory.call(cx2 -> doCall(cx2, scope, thisObj, f, args, argsToWrap));
         }
+        return factory.call(cx2 -> doCall(cx2, scope, thisObj, f, args, argsToWrap));
     }
 
     private static Object doCall(Context cx, Scriptable scope,

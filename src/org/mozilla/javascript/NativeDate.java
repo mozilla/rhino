@@ -591,8 +591,7 @@ final class NativeDate extends IdScriptableObject
         Date date = new Date((long) t);
         if (thisTimeZone.inDaylightTime(date))
             return msPerHour;
-        else
-            return 0;
+        return 0;
     }
 
     /*
@@ -717,8 +716,7 @@ final class NativeDate extends IdScriptableObject
         }
         if (d > 0.0)
             return Math.floor(d + 0.);
-        else
-            return Math.ceil(d + 0.);
+        return Math.ceil(d + 0.);
     }
 
     /* end of ECMA helper functions */
@@ -1137,9 +1135,8 @@ final class NativeDate extends IdScriptableObject
         double msec = date_msecFromDate(year, mon, mday, hour, min, sec, 0);
         if (tzoffset == -1) { /* no time zone specified, have to use local */
             return internalUTC(msec);
-        } else {
-            return msec + tzoffset * msPerMinute;
         }
+        return msec + tzoffset * msPerMinute;
     }
 
     private static String date_format(double t, int methodId)
@@ -1557,9 +1554,8 @@ final class NativeDate extends IdScriptableObject
         if (date != date) {
             if (maxargs < 3) {
                 return ScriptRuntime.NaN;
-            } else {
-                lorutime = 0;
             }
+            lorutime = 0;
         } else {
             if (local)
                 lorutime = LocalTime(date);

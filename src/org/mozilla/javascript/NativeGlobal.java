@@ -125,6 +125,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
         }
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {

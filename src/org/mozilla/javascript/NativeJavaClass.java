@@ -126,6 +126,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         return this;
     }
 
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
@@ -147,6 +148,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         return construct(cx, scope, args);
     }
 
+    @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     {
         Class<?> classObject = getClassObject();
@@ -164,39 +166,38 @@ public class NativeJavaClass extends NativeJavaObject implements Function
 
             // Found the constructor, so try invoking it.
             return constructSpecific(cx, scope, args, ctors.methods[index]);
-        } else {
-            if (args.length == 0) {
-                throw Context.reportRuntimeError0("msg.adapter.zero.args");
-            }
-            Scriptable topLevel = ScriptableObject.getTopLevelScope(this);
-            String msg = "";
-            try {
-                // When running on Android create an InterfaceAdapter since our
-                // bytecode generation won't work on Dalvik VM.
-                if ("Dalvik".equals(System.getProperty("java.vm.name"))
-                        && classObject.isInterface()) {
-                    Object obj = createInterfaceAdapter(classObject,
-                            ScriptableObject.ensureScriptableObject(args[0]));
-                    return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
-                }
-                // use JavaAdapter to construct a new class on the fly that
-                // implements/extends this interface/abstract class.
-                Object v = topLevel.get("JavaAdapter", topLevel);
-                if (v != NOT_FOUND) {
-                    Function f = (Function) v;
-                    // Args are (interface, js object)
-                    Object[] adapterArgs = { this, args[0] };
-                    return f.construct(cx, topLevel, adapterArgs);
-                }
-            } catch (Exception ex) {
-                // fall through to error
-                String m = ex.getMessage();
-                if (m != null)
-                    msg = m;
-            }
-            throw Context.reportRuntimeError2(
-                "msg.cant.instantiate", msg, classObject.getName());
         }
+        if (args.length == 0) {
+            throw Context.reportRuntimeError0("msg.adapter.zero.args");
+        }
+        Scriptable topLevel = ScriptableObject.getTopLevelScope(this);
+        String msg = "";
+        try {
+            // When running on Android create an InterfaceAdapter since our
+            // bytecode generation won't work on Dalvik VM.
+            if ("Dalvik".equals(System.getProperty("java.vm.name"))
+                    && classObject.isInterface()) {
+                Object obj = createInterfaceAdapter(classObject,
+                        ScriptableObject.ensureScriptableObject(args[0]));
+                return cx.getWrapFactory().wrapAsJavaObject(cx, scope, obj, null);
+            }
+            // use JavaAdapter to construct a new class on the fly that
+            // implements/extends this interface/abstract class.
+            Object v = topLevel.get("JavaAdapter", topLevel);
+            if (v != NOT_FOUND) {
+                Function f = (Function) v;
+                // Args are (interface, js object)
+                Object[] adapterArgs = { this, args[0] };
+                return f.construct(cx, topLevel, adapterArgs);
+            }
+        } catch (Exception ex) {
+            // fall through to error
+            String m = ex.getMessage();
+            if (m != null)
+                msg = m;
+        }
+        throw Context.reportRuntimeError2(
+            "msg.cant.instantiate", msg, classObject.getName());
     }
 
     static Scriptable constructSpecific(Context cx, Scriptable scope,
@@ -302,9 +303,8 @@ public class NativeJavaClass extends NativeJavaObject implements Function
             // loader that brought Rhino classes that Class.forName() would
             // use, but ClassLoader.getSystemClassLoader() is Java 2 only
             return Kit.classOrNull(nestedClassName);
-        } else {
-            return Kit.classOrNull(loader, nestedClassName);
         }
+        return Kit.classOrNull(loader, nestedClassName);
     }
 
     private Map<String,FieldAndMethods> staticFieldAndMethods;

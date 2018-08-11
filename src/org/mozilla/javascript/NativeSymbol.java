@@ -196,13 +196,11 @@ public class NativeSymbol
                 if (cx.getThreadLocal(CONSTRUCTOR_SLOT) == null) {
                     // We should never get to this via "new".
                     throw ScriptRuntime.typeError0("msg.no.symbol.new");
-                } else {
-                    // Unless we are being called by our own internal "new"
-                    return js_constructor(args);
                 }
-            } else {
-                return construct(cx, scope, args);
+                // Unless we are being called by our own internal "new"
+                return js_constructor(args);
             }
+            return construct(cx, scope, args);
 
         case Id_toString:
             return getSelf(thisObj).toString();

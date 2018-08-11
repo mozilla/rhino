@@ -154,9 +154,7 @@ final class NativeNumber extends IdScriptableObject
                   if(value >= 0) {
                       return "Infinity";
                   }
-                  else {
-                      return "-Infinity";
-                  }
+                  return "-Infinity";
               }
               // General case
               return num_to(value, args, DToA.DTOSTR_STANDARD_EXPONENTIAL,
@@ -176,9 +174,7 @@ final class NativeNumber extends IdScriptableObject
                   if(value >= 0) {
                       return "Infinity";
                   }
-                  else {
-                      return "-Infinity";
-                  }
+                  return "-Infinity";
               }
               return num_to(value, args, DToA.DTOSTR_STANDARD,
                       DToA.DTOSTR_PRECISION, 1, 0);
@@ -316,10 +312,9 @@ final class NativeNumber extends IdScriptableObject
     {
         if (val instanceof Double) {
             return (Double)val;
-        } else {
-            double d = val.doubleValue();
-            return Double.valueOf(d);
         }
+        double d = val.doubleValue();
+        return Double.valueOf(d);
     }
 
 // #string_id_map#

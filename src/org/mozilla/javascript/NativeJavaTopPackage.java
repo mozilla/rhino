@@ -42,12 +42,14 @@ public class NativeJavaTopPackage
         super(true, "", loader);
     }
 
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
         return construct(cx, scope, args);
     }
 
+    @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     {
         ClassLoader loader = null;
@@ -111,6 +113,7 @@ public class NativeJavaTopPackage
         }
     }
 
+    @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
     {

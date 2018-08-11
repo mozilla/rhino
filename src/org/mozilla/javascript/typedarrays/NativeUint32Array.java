@@ -51,7 +51,7 @@ public class NativeUint32Array
     }
 
     @Override
-    protected NativeTypedArrayView construct(NativeArrayBuffer ab, int off, int len)
+    protected NativeUint32Array construct(NativeArrayBuffer ab, int off, int len)
     {
         return new NativeUint32Array(ab, off, len);
     }
@@ -63,7 +63,7 @@ public class NativeUint32Array
     }
 
     @Override
-    protected NativeTypedArrayView realThis(Scriptable thisObj, IdFunctionObject f)
+    protected NativeUint32Array realThis(Scriptable thisObj, IdFunctionObject f)
     {
         if (!(thisObj instanceof NativeUint32Array)) {
             throw incompatibleCallError(f);

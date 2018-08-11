@@ -172,27 +172,25 @@ class JavaMembers
     {
         if (!type.isArray()) {
             return type.getName();
-        } else {
-            int arrayDimension = 0;
-            do {
-                ++arrayDimension;
-                type = type.getComponentType();
-            } while (type.isArray());
-            String name = type.getName();
-            String suffix = "[]";
-            if (arrayDimension == 1) {
-                return name.concat(suffix);
-            } else {
-                int length = name.length() + arrayDimension * suffix.length();
-                StringBuilder sb = new StringBuilder(length);
-                sb.append(name);
-                while (arrayDimension != 0) {
-                    --arrayDimension;
-                    sb.append(suffix);
-                }
-                return sb.toString();
-            }
         }
+        int arrayDimension = 0;
+        do {
+            ++arrayDimension;
+            type = type.getComponentType();
+        } while (type.isArray());
+        String name = type.getName();
+        String suffix = "[]";
+        if (arrayDimension == 1) {
+            return name.concat(suffix);
+        }
+        int length = name.length() + arrayDimension * suffix.length();
+        StringBuilder sb = new StringBuilder(length);
+        sb.append(name);
+        while (arrayDimension != 0) {
+            --arrayDimension;
+            sb.append(suffix);
+        }
+        return sb.toString();
     }
 
     static String liveConnectSignature(Class<?>[] argTypes)

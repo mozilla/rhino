@@ -16,7 +16,7 @@ public class Conversions
 {
     public static int toInt8(Object arg)
     {
-        return (int)(byte)ScriptRuntime.toInt32(arg);
+        return (byte)ScriptRuntime.toInt32(arg);
     }
 
     public static int toUint8(Object arg)
@@ -50,7 +50,7 @@ public class Conversions
 
     public static int toInt16(Object arg)
     {
-        return (int)(short)ScriptRuntime.toInt32(arg);
+        return (short)ScriptRuntime.toInt32(arg);
     }
 
     public static int toUint16(Object arg)

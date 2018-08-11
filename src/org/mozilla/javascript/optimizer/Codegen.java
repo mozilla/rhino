@@ -32,26 +32,32 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 
 public class Codegen implements Evaluator
 {
+    @Override
     public void captureStackInfo(RhinoException ex) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public String getSourcePositionFromStack(Context cx, int[] linep) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public List<String> getScriptStack(RhinoException ex) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setEvalScriptFlag(Script script) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public Object compile(CompilerEnvirons compilerEnv,
                           ScriptNode tree,
                           String encodedSource,
@@ -79,6 +85,7 @@ public class Codegen implements Evaluator
         return new Object[] { mainClassName, mainClassBytes };
     }
 
+    @Override
     public Script createScriptObject(Object bytecode,
                                      Object staticSecurityDomain)
     {
@@ -94,6 +101,7 @@ public class Codegen implements Evaluator
         return script;
     }
 
+    @Override
     public Function createFunctionObject(Context cx, Scriptable scope,
                                          Object bytecode,
                                          Object staticSecurityDomain)
@@ -1129,9 +1137,8 @@ public class Codegen implements Evaluator
         int inum = (int)num;
         if (inum == num) {
             return "Ljava/lang/Integer;";
-        } else {
-            return "Ljava/lang/Double;";
         }
+        return "Ljava/lang/Double;";
     }
     static void pushUndefined(ClassFileWriter cfw)
     {
@@ -3925,8 +3932,6 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         cfw.addALoad(savedVariableObject);
         cfw.addAStore(variableObjectLocal);
 
-        String exceptionName = exceptionTypeToName(exceptionType);
-
         cfw.add(ByteCode.GOTO, catchLabel);
     }
 
@@ -4018,7 +4023,6 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
          */
         void setHandlers(int[] handlerLabels, int startLabel)
         {
-            ExceptionInfo top = getTop();
             for (int i = 0; i < handlerLabels.length; i++) {
                 if (handlerLabels[i] != 0) {
                     addHandler(i, handlerLabels[i], startLabel);

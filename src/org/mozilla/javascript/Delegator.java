@@ -86,6 +86,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#getClassName
      */
+    @Override
     public String getClassName() {
         return getDelegee().getClassName();
     }
@@ -93,6 +94,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#get(String, Scriptable)
      */
+    @Override
     public Object get(String name, Scriptable start) {
         return getDelegee().get(name,start);
     }
@@ -100,6 +102,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      */
+    @Override
     public Object get(int index, Scriptable start) {
         return getDelegee().get(index,start);
     }
@@ -107,6 +110,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#has(String, Scriptable)
      */
+    @Override
     public boolean has(String name, Scriptable start) {
         return getDelegee().has(name,start);
     }
@@ -114,6 +118,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#has(int, Scriptable)
      */
+    @Override
     public boolean has(int index, Scriptable start) {
         return getDelegee().has(index,start);
     }
@@ -121,6 +126,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#put(String, Scriptable, Object)
      */
+    @Override
     public void put(String name, Scriptable start, Object value) {
         getDelegee().put(name,start,value);
     }
@@ -128,6 +134,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object)
      */
+    @Override
     public void put(int index, Scriptable start, Object value) {
         getDelegee().put(index,start,value);
     }
@@ -135,6 +142,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#delete(String)
      */
+    @Override
     public void delete(String name) {
         getDelegee().delete(name);
     }
@@ -142,6 +150,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#delete(int)
      */
+    @Override
     public void delete(int index) {
         getDelegee().delete(index);
     }
@@ -149,6 +158,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#getPrototype
      */
+    @Override
     public Scriptable getPrototype() {
         return getDelegee().getPrototype();
     }
@@ -156,6 +166,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#setPrototype
      */
+    @Override
     public void setPrototype(Scriptable prototype) {
         getDelegee().setPrototype(prototype);
     }
@@ -163,6 +174,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#getParentScope
      */
+    @Override
     public Scriptable getParentScope() {
         return getDelegee().getParentScope();
     }
@@ -170,6 +182,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#setParentScope
      */
+    @Override
     public void setParentScope(Scriptable parent) {
         getDelegee().setParentScope(parent);
     }
@@ -177,6 +190,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#getIds
      */
+    @Override
     public Object[] getIds() {
         return getDelegee().getIds();
     }
@@ -193,6 +207,7 @@ public class Delegator implements Function {
      *
      * @see org.mozilla.javascript.Scriptable#getDefaultValue
      */
+    @Override
     public Object getDefaultValue(Class<?> hint) {
         return (hint == null ||
                 hint == ScriptRuntime.ScriptableClass ||
@@ -203,6 +218,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Scriptable#hasInstance
      */
+    @Override
     public boolean hasInstance(Scriptable instance) {
         return getDelegee().hasInstance(instance);
     }
@@ -210,6 +226,7 @@ public class Delegator implements Function {
     /**
      * @see org.mozilla.javascript.Function#call
      */
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                        Object[] args)
     {
@@ -231,6 +248,7 @@ public class Delegator implements Function {
      *
      * @see Function#construct(Context, Scriptable, Object[])
      */
+    @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     {
         Scriptable myDelegee = getDelegee();
@@ -246,8 +264,6 @@ public class Delegator implements Function {
             n.setDelegee(delegee);
             return n;
         }
-        else {
-            return ((Function)myDelegee).construct(cx, scope, args);
-        }
+        return ((Function)myDelegee).construct(cx, scope, args);
     }
 }

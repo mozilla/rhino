@@ -83,9 +83,8 @@ class TokenStream
     {
         if (version < Context.VERSION_ES6) {
             return stringToKeywordForJS(name);
-        } else {
-            return stringToKeywordForES(name, isStrict);
         }
+        return stringToKeywordForES(name, isStrict);
     }
 
     /**
@@ -768,19 +767,17 @@ class TokenStream
                             if (escapeVal < 0) {
                                 addToString('x');
                                 continue strLoop;
-                            } else {
-                                int c1 = c;
-                                c = getChar();
-                                escapeVal = Kit.xDigitToInt(c, escapeVal);
-                                if (escapeVal < 0) {
-                                    addToString('x');
-                                    addToString(c1);
-                                    continue strLoop;
-                                } else {
-                                    // got 2 hex digits
-                                    c = escapeVal;
-                                }
                             }
+                            int c1 = c;
+                            c = getChar();
+                            escapeVal = Kit.xDigitToInt(c, escapeVal);
+                            if (escapeVal < 0) {
+                                addToString('x');
+                                addToString(c1);
+                                continue strLoop;
+                            }
+                            // got 2 hex digits
+                            c = escapeVal;
                             break;
 
                         case '\n':
@@ -830,9 +827,8 @@ class TokenStream
             case ':':
                 if (matchChar(':')) {
                     return Token.COLONCOLON;
-                } else {
-                    return Token.COLON;
                 }
+                return Token.COLON;
             case '.':
                 if (matchChar('.')) {
                     return Token.DOTDOT;
@@ -854,9 +850,8 @@ class TokenStream
             case '^':
                 if (matchChar('=')) {
                     return Token.ASSIGN_BITXOR;
-                } else {
-                    return Token.BITXOR;
                 }
+                return Token.BITXOR;
 
             case '&':
                 if (matchChar('&')) {
@@ -871,9 +866,8 @@ class TokenStream
                 if (matchChar('=')) {
                     if (matchChar('=')) {
                         return Token.SHEQ;
-                    } else {
-                        return Token.EQ;
                     }
+                    return Token.EQ;
                 } else if (matchChar('>')) {
                     return Token.ARROW;
                 } else {
@@ -884,12 +878,10 @@ class TokenStream
                 if (matchChar('=')) {
                     if (matchChar('=')) {
                         return Token.SHNE;
-                    } else {
-                        return Token.NE;
                     }
-                } else {
-                    return Token.NOT;
+                    return Token.NE;
                 }
+                return Token.NOT;
 
             case '<':
                 /* NB:treat HTML begin-comment as comment-till-eol */
@@ -908,46 +900,37 @@ class TokenStream
                 if (matchChar('<')) {
                     if (matchChar('=')) {
                         return Token.ASSIGN_LSH;
-                    } else {
-                        return Token.LSH;
                     }
-                } else {
-                    if (matchChar('=')) {
-                        return Token.LE;
-                    } else {
-                        return Token.LT;
-                    }
+                    return Token.LSH;
                 }
+                if (matchChar('=')) {
+                    return Token.LE;
+                }
+                return Token.LT;
 
             case '>':
                 if (matchChar('>')) {
                     if (matchChar('>')) {
                         if (matchChar('=')) {
                             return Token.ASSIGN_URSH;
-                        } else {
-                            return Token.URSH;
                         }
-                    } else {
-                        if (matchChar('=')) {
-                            return Token.ASSIGN_RSH;
-                        } else {
-                            return Token.RSH;
-                        }
+                        return Token.URSH;
                     }
-                } else {
                     if (matchChar('=')) {
-                        return Token.GE;
-                    } else {
-                        return Token.GT;
+                        return Token.ASSIGN_RSH;
                     }
+                    return Token.RSH;
                 }
+                if (matchChar('=')) {
+                    return Token.GE;
+                }
+                return Token.GT;
 
             case '*':
                 if (matchChar('=')) {
                     return Token.ASSIGN_MUL;
-                } else {
-                    return Token.MUL;
                 }
+                return Token.MUL;
 
             case '/':
                 markCommentStart();
@@ -990,16 +973,14 @@ class TokenStream
 
                 if (matchChar('=')) {
                     return Token.ASSIGN_DIV;
-                } else {
-                    return Token.DIV;
                 }
+                return Token.DIV;
 
             case '%':
                 if (matchChar('=')) {
                     return Token.ASSIGN_MOD;
-                } else {
-                    return Token.MOD;
                 }
+                return Token.MOD;
 
             case '~':
                 return Token.BITNOT;
@@ -1046,9 +1027,8 @@ class TokenStream
         // Use 'Z' < 'a'
         if (c <= 'Z') {
             return 'A' <= c;
-        } else {
-            return 'a' <= c && c <= 'z';
         }
+        return 'a' <= c && c <= 'z';
     }
 
     static boolean isDigit(int c)
@@ -1064,10 +1044,9 @@ class TokenStream
     {
         if (c <= 127) {
             return c == 0x20 || c == 0x9 || c == 0xC || c == 0xB;
-        } else {
-            return c == 0xA0 || c == BYTE_ORDER_MARK
-                || Character.getType((char)c) == Character.SPACE_SEPARATOR;
         }
+        return c == 0xA0 || c == BYTE_ORDER_MARK
+            || Character.getType((char)c) == Character.SPACE_SEPARATOR;
     }
 
     private static boolean isJSFormatChar(int c)
@@ -1339,9 +1318,8 @@ class TokenStream
                     c = getChar(); // Skip >
                     addToString(c);
                     return true;
-                } else {
-                    continue;
                 }
+                continue;
             }
             c = getChar();
         }
@@ -1366,9 +1344,8 @@ class TokenStream
                     c = getChar(); // Skip >
                     addToString(c);
                     return true;
-                } else {
-                    continue;
                 }
+                continue;
             }
             c = getChar();
         }
@@ -1461,10 +1438,9 @@ class TokenStream
         if (c == test) {
             tokenEnd = cursor;
             return true;
-        } else {
-            ungetCharIgnoreLineEnd(c);
-            return false;
         }
+        ungetCharIgnoreLineEnd(c);
+        return false;
     }
 
     private int peekChar() throws IOException
@@ -1615,30 +1591,28 @@ class TokenStream
                 return EOF_CHAR;
             }
             return sourceString.charAt(index);
-        } else {
-            if (index >= sourceEnd) {
-                int oldSourceCursor = sourceCursor;
-                try {
-                    if (!fillSourceBuffer()) { return EOF_CHAR; }
-                } catch (IOException ioe) {
-                    // ignore it, we're already displaying an error...
-                    return EOF_CHAR;
-                }
-                // index recalculuation as fillSourceBuffer can move saved
-                // line buffer and change sourceCursor
-                index -= (oldSourceCursor - sourceCursor);
-            }
-            return sourceBuffer[index];
         }
+        if (index >= sourceEnd) {
+            int oldSourceCursor = sourceCursor;
+            try {
+                if (!fillSourceBuffer()) { return EOF_CHAR; }
+            } catch (IOException ioe) {
+                // ignore it, we're already displaying an error...
+                return EOF_CHAR;
+            }
+            // index recalculuation as fillSourceBuffer can move saved
+            // line buffer and change sourceCursor
+            index -= (oldSourceCursor - sourceCursor);
+        }
+        return sourceBuffer[index];
     }
 
     private final String substring(int beginIndex, int endIndex) {
         if (sourceString != null) {
             return sourceString.substring(beginIndex, endIndex);
-        } else {
-            int count = endIndex - beginIndex;
-            return new String(sourceBuffer, beginIndex, count);
         }
+        int count = endIndex - beginIndex;
+        return new String(sourceBuffer, beginIndex, count);
     }
 
     final String getLine() {
@@ -1700,9 +1674,8 @@ class TokenStream
         linep[1] = offset;
         if (lines == 0) {
             return getLine();
-        } else {
-            return substring(start, end);
         }
+        return substring(start, end);
     }
 
     private boolean fillSourceBuffer() throws IOException
@@ -1785,14 +1758,13 @@ class TokenStream
         if (sourceString != null) {
             if (isMarkingComment()) Kit.codeBug();
             return sourceString.substring(tokenBeg, tokenEnd);
-        } else {
-            if (!isMarkingComment()) Kit.codeBug();
-            StringBuilder comment = new StringBuilder(commentPrefix);
-            comment.append(sourceBuffer, commentCursor,
-                getTokenLength() - commentPrefix.length());
-            commentCursor = -1;
-            return comment.toString();
         }
+        if (!isMarkingComment()) Kit.codeBug();
+        StringBuilder comment = new StringBuilder(commentPrefix);
+        comment.append(sourceBuffer, commentCursor,
+            getTokenLength() - commentPrefix.length());
+        commentCursor = -1;
+        return comment.toString();
     }
 
     private String convertLastCharToHex(String str) {

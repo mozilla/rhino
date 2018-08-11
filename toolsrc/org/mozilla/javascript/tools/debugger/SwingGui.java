@@ -402,13 +402,12 @@ public class SwingGui extends JFrame implements GuiCallback {
                             text = thisItem.getText();
                             if (text.equals("More Windows...")) {
                                 break;
-                            } else {
-                                pos = text.indexOf(' ');
-                                thisItem.setText((char)('0' + j) + " " +
-                                                 text.substring(pos + 1));
-                                thisItem.setMnemonic('0' + j);
-                                j++;
                             }
+                            pos = text.indexOf(' ');
+                            thisItem.setText((char)('0' + j) + " " +
+                                             text.substring(pos + 1));
+                            thisItem.setMnemonic('0' + j);
+                            j++;
                         }
                     }
                     if (count - 6 == 0 && lastItem != item) {
@@ -761,6 +760,7 @@ public class SwingGui extends JFrame implements GuiCallback {
     /**
      * Called when the source text for a script has been updated.
      */
+    @Override
     public void updateSourceText(Dim.SourceInfo sourceInfo) {
         RunProxy proxy = new RunProxy(this, RunProxy.UPDATE_SOURCE_TEXT);
         proxy.sourceInfo = sourceInfo;
@@ -770,6 +770,7 @@ public class SwingGui extends JFrame implements GuiCallback {
     /**
      * Called when the interrupt loop has been entered.
      */
+    @Override
     public void enterInterrupt(Dim.StackFrame lastFrame,
                                String threadTitle,
                                String alertMessage) {
@@ -787,6 +788,7 @@ public class SwingGui extends JFrame implements GuiCallback {
     /**
      * Returns whether the current thread is the GUI event thread.
      */
+    @Override
     public boolean isGuiEventThread() {
         return SwingUtilities.isEventDispatchThread();
     }
@@ -794,6 +796,7 @@ public class SwingGui extends JFrame implements GuiCallback {
     /**
      * Processes the next GUI event.
      */
+    @Override
     public void dispatchNextGuiEvent() throws InterruptedException {
         EventQueue queue = awtEventQueue;
         if (queue == null) {
@@ -1118,6 +1121,7 @@ class EvalTextArea
     /**
      * Called when a key is pressed.
      */
+    @Override
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
         if (code == KeyEvent.VK_BACK_SPACE || code == KeyEvent.VK_LEFT) {
@@ -1183,6 +1187,7 @@ class EvalTextArea
     /**
      * Called when a key is typed.
      */
+    @Override
     public void keyTyped(KeyEvent e) {
         int keyChar = e.getKeyChar();
         if (keyChar == 0x8 /* KeyEvent.VK_BACK_SPACE */) {
@@ -1197,6 +1202,7 @@ class EvalTextArea
     /**
      * Called when a key is released.
      */
+    @Override
     public synchronized void keyReleased(KeyEvent e) {
     }
 
@@ -1205,6 +1211,7 @@ class EvalTextArea
     /**
      * Called when text was inserted into the text area.
      */
+    @Override
     public synchronized void insertUpdate(DocumentEvent e) {
         int len = e.getLength();
         int off = e.getOffset();
@@ -1216,6 +1223,7 @@ class EvalTextArea
     /**
      * Called when text was removed from the text area.
      */
+    @Override
     public synchronized void removeUpdate(DocumentEvent e) {
         int len = e.getLength();
         int off = e.getOffset();
@@ -1240,6 +1248,7 @@ class EvalTextArea
     /**
      * Called when text has changed in the text area.
      */
+    @Override
     public synchronized void changedUpdate(DocumentEvent e) {
     }
 }
@@ -1288,6 +1297,7 @@ class EvalWindow extends JInternalFrame implements ActionListener {
     /**
      * Performs an action on the text area.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if (cmd.equals("Cut")) {
@@ -1364,6 +1374,7 @@ class JSInternalConsole extends JInternalFrame implements ActionListener {
     /**
      * Performs an action on the text area.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if (cmd.equals("Cut")) {
@@ -1505,6 +1516,7 @@ class FileTextArea
     /**
      * Called when a mouse button is pressed.
      */
+    @Override
     public void mousePressed(MouseEvent e) {
         checkPopup(e);
     }
@@ -1512,6 +1524,7 @@ class FileTextArea
     /**
      * Called when the mouse is clicked.
      */
+    @Override
     public void mouseClicked(MouseEvent e) {
         checkPopup(e);
         requestFocus();
@@ -1521,18 +1534,21 @@ class FileTextArea
     /**
      * Called when the mouse enters the component.
      */
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
     /**
      * Called when the mouse exits the component.
      */
+    @Override
     public void mouseExited(MouseEvent e) {
     }
 
     /**
      * Called when a mouse button is released.
      */
+    @Override
     public void mouseReleased(MouseEvent e) {
         checkPopup(e);
     }
@@ -1542,18 +1558,21 @@ class FileTextArea
     /**
      * Called before the popup menu will become visible.
      */
+    @Override
     public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
     }
 
     /**
      * Called before the popup menu will become invisible.
      */
+    @Override
     public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
     }
 
     /**
      * Called when the popup menu is cancelled.
      */
+    @Override
     public void popupMenuCanceled(PopupMenuEvent e) {
     }
 
@@ -1562,6 +1581,7 @@ class FileTextArea
     /**
      * Performs an action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         int pos = viewToModel(new Point(popup.x, popup.y));
         popup.setVisible(false);
@@ -1585,6 +1605,7 @@ class FileTextArea
     /**
      * Called when a key is pressed.
      */
+    @Override
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
         case KeyEvent.VK_BACK_SPACE:
@@ -1599,6 +1620,7 @@ class FileTextArea
     /**
      * Called when a key is typed.
      */
+    @Override
     public void keyTyped(KeyEvent e) {
         e.consume();
     }
@@ -1606,6 +1628,7 @@ class FileTextArea
     /**
      * Called when a key is released.
      */
+    @Override
     public void keyReleased(KeyEvent e) {
         e.consume();
     }
@@ -1735,6 +1758,7 @@ class MoreWindows extends JDialog implements ActionListener {
     /**
      * Performs an action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if (cmd.equals("Cancel")) {
@@ -1882,6 +1906,7 @@ class FindFunction extends JDialog implements ActionListener {
     /**
      * Performs an action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if (cmd.equals("Cancel")) {
@@ -2042,12 +2067,14 @@ class FileHeader extends JPanel implements MouseListener {
     /**
      * Called when the mouse enters the component.
      */
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
     /**
      * Called when a mouse button is pressed.
      */
+    @Override
     public void mousePressed(MouseEvent e) {
         Font font = fileWindow.textArea.getFont();
         FontMetrics metrics = getFontMetrics(font);
@@ -2058,18 +2085,21 @@ class FileHeader extends JPanel implements MouseListener {
     /**
      * Called when the mouse is clicked.
      */
+    @Override
     public void mouseClicked(MouseEvent e) {
     }
 
     /**
      * Called when the mouse exits the component.
      */
+    @Override
     public void mouseExited(MouseEvent e) {
     }
 
     /**
      * Called when a mouse button is released.
      */
+    @Override
     public void mouseReleased(MouseEvent e) {
         if (e.getComponent() == this
                 && (e.getModifiers() & MouseEvent.BUTTON1_MASK) != 0) {
@@ -2293,6 +2323,7 @@ class FileWindow extends JInternalFrame implements ActionListener {
     /**
      * Performs an action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if (cmd.equals("Cut")) {
@@ -2344,6 +2375,7 @@ class MyTableModel extends AbstractTableModel {
     /**
      * Returns the number of columns in the table (2).
      */
+    @Override
     public int getColumnCount() {
         return 2;
     }
@@ -2351,6 +2383,7 @@ class MyTableModel extends AbstractTableModel {
     /**
      * Returns the number of rows in the table.
      */
+    @Override
     public int getRowCount() {
         return expressions.size();
     }
@@ -2380,6 +2413,7 @@ class MyTableModel extends AbstractTableModel {
     /**
      * Returns the value in the given cell.
      */
+    @Override
     public Object getValueAt(int row, int column) {
         switch (column) {
         case 0:
@@ -2512,6 +2546,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns the root node of the tree.
      */
+    @Override
     public Object getRoot() {
         if (debugger == null) {
             return null;
@@ -2522,6 +2557,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns the number of children of the given node.
      */
+    @Override
     public int getChildCount(Object nodeObj) {
         if (debugger == null) {
             return 0;
@@ -2533,6 +2569,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns a child of the given node.
      */
+    @Override
     public Object getChild(Object nodeObj, int i) {
         if (debugger == null) {
             return null;
@@ -2544,6 +2581,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns whether the given node is a leaf node.
      */
+    @Override
     public boolean isLeaf(Object nodeObj) {
         if (debugger == null) {
             return true;
@@ -2555,6 +2593,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns the index of a node under its parent.
      */
+    @Override
     public int getIndexOfChild(Object parentObj, Object childObj) {
         if (debugger == null) {
             return -1;
@@ -2573,6 +2612,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns whether the given cell is editable.
      */
+    @Override
     public boolean isCellEditable(Object node, int column) {
         return column == 0;
     }
@@ -2580,18 +2620,22 @@ class VariableModel implements TreeTableModel {
     /**
      * Sets the value at the given cell.
      */
+    @Override
     public void setValueAt(Object value, Object node, int column) { }
 
     /**
      * Adds a TreeModelListener to this tree.
      */
+    @Override
     public void addTreeModelListener(TreeModelListener l) { }
 
     /**
      * Removes a TreeModelListener from this tree.
      */
+    @Override
     public void removeTreeModelListener(TreeModelListener l) { }
 
+    @Override
     public void valueForPathChanged(TreePath path, Object newValue) { }
 
     // TreeTableNode
@@ -2599,6 +2643,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns the number of columns.
      */
+    @Override
     public int getColumnCount() {
         return cNames.length;
     }
@@ -2606,6 +2651,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns the name of the given column.
      */
+    @Override
     public String getColumnName(int column) {
         return cNames[column];
     }
@@ -2613,6 +2659,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns the type of value stored in the given column.
      */
+    @Override
     public Class<?> getColumnClass(int column) {
         return cTypes[column];
     }
@@ -2620,6 +2667,7 @@ class VariableModel implements TreeTableModel {
     /**
      * Returns the value at the given cell.
      */
+    @Override
     public Object getValueAt(Object nodeObj, int column) {
         if (debugger == null) { return null; }
         VariableNode node = (VariableNode)nodeObj;
@@ -2663,6 +2711,7 @@ class VariableModel implements TreeTableModel {
             children = CHILDLESS;
         } else {
             Arrays.sort(ids, new Comparator<Object>() {
+                @Override
                     public int compare(Object l, Object r)
                     {
                         if (l instanceof String) {
@@ -2670,14 +2719,13 @@ class VariableModel implements TreeTableModel {
                                 return -1;
                             }
                             return ((String)l).compareToIgnoreCase((String)r);
-                        } else {
-                            if (r instanceof String) {
-                                return 1;
-                            }
-                            int lint = ((Integer)l).intValue();
-                            int rint = ((Integer)r).intValue();
-                            return lint - rint;
                         }
+                        if (r instanceof String) {
+                            return 1;
+                        }
+                        int lint = ((Integer)l).intValue();
+                        int rint = ((Integer)r).intValue();
+                        return lint - rint;
                     }
             });
             children = new VariableNode[ids.length];
@@ -3089,20 +3137,29 @@ class ContextWindow extends JPanel implements ActionListener {
                         split.setDividerLocation(1.0);
                     }
                 }
+
+                @Override
                 public void componentHidden(ComponentEvent e) {
                     check(e.getComponent());
                 }
+
+                @Override
                 public void componentMoved(ComponentEvent e) {
                     check(e.getComponent());
                 }
+
+                @Override
                 public void componentResized(ComponentEvent e) {
                     check(e.getComponent());
                 }
+
+                @Override
                 public void componentShown(ComponentEvent e) {
                     check(e.getComponent());
                 }
             };
         p1.addContainerListener(new ContainerListener() {
+            @Override
             public void componentAdded(ContainerEvent e) {
                 Component thisParent = finalThis.getParent();
                 JSplitPane split = (JSplitPane)thisParent;
@@ -3117,6 +3174,8 @@ class ContextWindow extends JPanel implements ActionListener {
                     split.setDividerLocation(0.66);
                 }
             }
+
+            @Override
             public void componentRemoved(ContainerEvent e) {
                 Component thisParent = finalThis.getParent();
                 JSplitPane split = (JSplitPane)thisParent;
@@ -3168,6 +3227,7 @@ class ContextWindow extends JPanel implements ActionListener {
     /**
      * Performs an action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (!enabled) return;
         if (e.getActionCommand().equals("ContextSwitch")) {
@@ -3395,6 +3455,7 @@ class Menubar extends JMenuBar implements ActionListener {
     /**
      * Performs an action.
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         String plaf_name = null;
@@ -3548,6 +3609,7 @@ class RunProxy implements Runnable {
     /**
      * Runs this Runnable.
      */
+    @Override
     public void run() {
         switch (type) {
           case OPEN_FILE:
