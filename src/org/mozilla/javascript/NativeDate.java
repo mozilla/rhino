@@ -1224,8 +1224,13 @@ final class NativeDate extends IdScriptableObject
         // if called with just one arg -
         if (args.length == 1) {
             Object arg0 = args[0];
-            if (arg0 instanceof Scriptable)
+            if (arg0 instanceof NativeDate) {
+                obj.date = ((NativeDate) arg0).date;
+                return obj;
+            }
+            if (arg0 instanceof Scriptable) {
                 arg0 = ((Scriptable) arg0).getDefaultValue(null);
+            }
             double date;
             if (arg0 instanceof CharSequence) {
                 // it's a string; parse it.
