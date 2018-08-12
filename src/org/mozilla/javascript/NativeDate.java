@@ -771,6 +771,9 @@ final class NativeDate extends IdScriptableObject
 
     private static double jsStaticFunction_UTC(Object[] args)
     {
+        if (args.length == 0) {
+            return ScriptRuntime.NaN;
+        }
         return TimeClip(date_msecFromArgs(args));
     }
 
