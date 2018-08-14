@@ -1048,7 +1048,6 @@ public abstract class ScriptableObject implements Scriptable,
             }
 
             String methodName;
-            Object[] args = ScriptRuntime.emptyArgs;
             if (tryToString) {
                 methodName = "toString";
             } else {
@@ -1058,9 +1057,10 @@ public abstract class ScriptableObject implements Scriptable,
             if (!(v instanceof Function))
                 continue;
             Function fun = (Function) v;
-            if (cx == null)
+            if (cx == null) {
                 cx = Context.getContext();
-            v = fun.call(cx, fun.getParentScope(), object, args);
+            }
+            v = fun.call(cx, fun.getParentScope(), object, ScriptRuntime.emptyArgs);
             if (v != null) {
                 if (!(v instanceof Scriptable)) {
                     return v;
