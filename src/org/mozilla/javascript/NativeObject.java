@@ -241,7 +241,7 @@ public class NativeObject extends IdScriptableObject implements Map
                 if (!(thisObj instanceof ScriptableObject)) {
                     throw Context.reportRuntimeError2(
                         "msg.extend.scriptable",
-                        thisObj.getClass().getName(),
+                        thisObj == null ? "null" : thisObj.getClass().getName(),
                         String.valueOf(args[0]));
                 }
                 ScriptableObject so = (ScriptableObject)thisObj;
