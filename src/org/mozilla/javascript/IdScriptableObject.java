@@ -589,6 +589,23 @@ public abstract class IdScriptableObject extends ScriptableObject
     }
 
     @Override
+    public int getAttributes(Symbol key)
+    {
+        int info = findInstanceIdInfo(key);
+        if (info != 0) {
+            int attr = (info >>> 16);
+            return attr;
+        }
+        if (prototypeValues != null) {
+            int id = prototypeValues.findId(key);
+            if (id != 0) {
+                return prototypeValues.getAttributes(id);
+            }
+        }
+        return super.getAttributes(key);
+    }
+
+    @Override
     public void setAttributes(String name, int attributes)
     {
         ScriptableObject.checkValidAttributes(attributes);
