@@ -7,7 +7,6 @@
 package org.mozilla.javascript.typedarrays;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +23,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
 
 /**
  * This class is the abstract parent for all of the various typed arrays. Each one
@@ -112,16 +112,23 @@ public abstract class NativeTypedArrayView<T>
     {
         if (!isArg(args, 0)) {
             return construct(NativeArrayBuffer.EMPTY_BUFFER, 0, 0);
+        }
 
-        } else if ((args[0] instanceof Number) || (args[0] instanceof String)) {
+        final Object arg0 = args[0];
+        if (arg0 == null) {
+            return construct(NativeArrayBuffer.EMPTY_BUFFER, 0, 0);
+        }
+
+        if ((arg0 instanceof Number) || (arg0 instanceof String)) {
             // Create a zeroed-out array of a certain length
-            int length = ScriptRuntime.toInt32(args[0]);
+            int length = ScriptRuntime.toInt32(arg0);
             NativeArrayBuffer buffer = makeArrayBuffer(cx, scope, length * getBytesPerElement());
             return construct(buffer, 0, length);
+        }
 
-        } else if (args[0] instanceof NativeTypedArrayView) {
+        if (arg0 instanceof NativeTypedArrayView) {
             // Copy elements from the old array and convert them into our own
-            NativeTypedArrayView<T> src = (NativeTypedArrayView<T>)args[0];
+            NativeTypedArrayView<T> src = (NativeTypedArrayView<T>)arg0;
             NativeArrayBuffer na = makeArrayBuffer(cx, scope, src.length * getBytesPerElement());
             NativeTypedArrayView<T> v = construct(na, 0, src.length);
 
@@ -129,10 +136,11 @@ public abstract class NativeTypedArrayView<T>
                 v.js_set(i, src.js_get(i));
             }
             return v;
+        }
 
-        } else if (args[0] instanceof NativeArrayBuffer) {
+        if (arg0 instanceof NativeArrayBuffer) {
             // Make a slice of an existing buffer, with shared storage
-            NativeArrayBuffer na = (NativeArrayBuffer)args[0];
+            NativeArrayBuffer na = (NativeArrayBuffer)arg0;
             int byteOff = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
 
             int byteLen;
@@ -156,24 +164,43 @@ public abstract class NativeTypedArrayView<T>
             }
 
             return construct(na, byteOff, byteLen / getBytesPerElement());
+        }
 
-        } else if (ScriptRuntime.isArrayObject(args[0])) {
+        if (arg0 instanceof NativeArray) {
             // Copy elements of the array and convert them to the correct type
-            List l = args[0] instanceof NativeArray ? (List)args[0]
-                              : Arrays.asList(ScriptRuntime.getArrayElements((Scriptable)args[0]));
+            NativeArray array = (NativeArray) arg0;
 
-            NativeArrayBuffer na = makeArrayBuffer(cx, scope, l.size() * getBytesPerElement());
-            NativeTypedArrayView<T> v = construct(na, 0, l.size());
-            int p = 0;
-            for (Object o : l) {
-                v.js_set(p, o);
-                p++;
+            NativeArrayBuffer na = makeArrayBuffer(cx, scope, array.size() * getBytesPerElement());
+            NativeTypedArrayView<T> v = construct(na, 0, array.size());
+            for (int i = 0; i < array.size(); i++) {
+                // we have to call this here to get the raw value;
+                // null has to be forewoded as null
+                final Object value = array.get(i, array);
+                if (value == Scriptable.NOT_FOUND || value == Undefined.instance) {
+                    v.js_set(i, Double.NaN);
+                }
+                else if (value instanceof Wrapper) {
+                    v.js_set(i, ((Wrapper) value).unwrap());
+                }
+                else {
+                    v.js_set(i, value);
+                }
             }
             return v;
-
-        } else {
-            throw ScriptRuntime.constructError("Error", "invalid argument");
         }
+
+        if (ScriptRuntime.isArrayObject(arg0)) {
+            // Copy elements of the array and convert them to the correct type
+            Object[] arrayElements = ScriptRuntime.getArrayElements((Scriptable)arg0);
+
+            NativeArrayBuffer na = makeArrayBuffer(cx, scope, arrayElements.length * getBytesPerElement());
+            NativeTypedArrayView<T> v = construct(na, 0, arrayElements.length);
+            for (int i = 0; i < arrayElements.length; i++) {
+                v.js_set(i, arrayElements[i]);
+            }
+            return v;
+        }
+        throw ScriptRuntime.constructError("Error", "invalid argument");
     }
 
     private void setRange(NativeTypedArrayView<T> v, int off)
