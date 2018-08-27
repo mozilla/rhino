@@ -1,3 +1,9 @@
+/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.javascript;
 
 import java.util.Iterator;
@@ -7,6 +13,8 @@ public class NativeMap
 {
     private static final Object MAP_TAG = "Map";
     static final String ITERATOR_TAG = "Map Iterator";
+
+    private static final Object NULL_VALUE = new Object();
 
     private final Hashtable entries = new Hashtable();
 
@@ -47,7 +55,7 @@ public class NativeMap
                     NativeMap nm = new NativeMap();
                     nm.instanceOfMap = true;
                     if (args.length > 0) {
-                        nm.js_load(cx, scope, args[0]);
+                        loadFromIterable(cx, scope, nm, args[0]);
                     }
                     return nm;
                 } else {
@@ -81,9 +89,18 @@ public class NativeMap
         throw new IllegalArgumentException("Map.prototype has no method: " + f.getFunctionName());
     }
 
-    private Object js_set(Object arg1, Object arg2)
+    private Object js_set(Object k, Object v)
     {
-        entries.put(arg1, arg2);
+        // Map.get() does not distinguish between "not found" and a null value. So,
+        // replace true null here with a marker so that we can re-convert in "get".
+        final Object value = (v == null ? NULL_VALUE : v);
+        // Special handling of "negative zero" from the spec.
+        Object key = k;
+        if ((key instanceof Number) &&
+            ((Number)key).doubleValue() == ScriptRuntime.negativeZero) {
+            key = 0.0;
+        }
+        entries.put(key, value);
         return this;
     }
 
@@ -96,7 +113,13 @@ public class NativeMap
     private Object js_get(Object arg)
     {
         final Object val = entries.get(arg);
-        return val == null ? Undefined.instance : val;
+        if (val == null) {
+            return Undefined.instance;
+        }
+        if (val == NULL_VALUE) {
+            return null;
+        }
+        return val;
     }
 
     private Object js_has(Object arg)
@@ -143,9 +166,9 @@ public class NativeMap
 
     /**
      * If an "iterable" object was passed to the constructor, there are many many things
-     * to do...
+     * to do... Make this static because NativeWeakMap has the exact same requirement.
      */
-    private void js_load(Context cx, Scriptable scope, Object arg1)
+    static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject map, Object arg1)
     {
         if ((arg1 == null) || Undefined.instance.equals(arg1)) {
             return;
@@ -161,7 +184,7 @@ public class NativeMap
         // Find the "add" function of our own prototype, since it might have
         // been replaced. Since we're not fully constructed yet, create a dummy instance
         // so that we can get our own prototype.
-        ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, getClassName()));
+        ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, map.getClassName()));
         final Callable set =
                 ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "set", cx, scope);
         ScriptRuntime.lastStoredScriptable(cx);
@@ -175,7 +198,7 @@ public class NativeMap
                 }
                 Object finalKey = sVal.get(0, sVal);
                 Object finalVal = sVal.get(1, sVal);
-                set.call(cx, scope, this, new Object[] { finalKey, finalVal });
+                set.call(cx, scope, map, new Object[] { finalKey, finalVal });
             }
         }
     }

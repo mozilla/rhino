@@ -43,7 +43,7 @@ function TestValidSetCalls(m) {
   assertDoesNotThrow(function () { m.delete(new Object) });
 }
 TestValidSetCalls(new Set);
-//TestValidSetCalls(new WeakSet);
+TestValidSetCalls(new WeakSet);
 
 
 // Test valid getter and setter calls on Maps and WeakMaps
@@ -69,7 +69,7 @@ function TestValidMapCalls(m) {
   assertDoesNotThrow(function () { m.delete(Symbol()) });
 }
 TestValidMapCalls(new Map);
-//TestValidMapCalls(new WeakMap);
+TestValidMapCalls(new WeakMap);
 
 
 // Test invalid getter and setter calls for WeakMap only
@@ -80,7 +80,7 @@ function TestInvalidCalls(m) {
   assertThrows(function () { m.set('a-key', 0) }, TypeError);
   assertThrows(function () { m.set(Symbol(), 0) }, TypeError);
 }
-//TestInvalidCalls(new WeakMap);
+TestInvalidCalls(new WeakMap);
 
 
 // Test expected behavior for Sets and WeakSets
@@ -115,7 +115,7 @@ function TestSetBehavior(set) {
   }
 }
 TestSetBehavior(new Set);
-//TestSetBehavior(new WeakSet);
+TestSetBehavior(new WeakSet);
 
 
 // Test expected mapping behavior for Maps and WeakMaps
@@ -123,12 +123,12 @@ function TestMapping(map, key, value) {
   assertFalse(map.has(key));
   assertSame(undefined, map.get(key));
   assertFalse(map.delete(key));
-  /*if (typeof key === 'object' && !(map instanceof WeakMap)) {
+  if (typeof key === 'object' && !(map instanceof WeakMap)) {
     assertSame(map, map.set(key, value));
     assertSame(value, map.get(key));
     assertTrue(map.has(key));
     assertTrue(map.delete(key));
-  }*/
+  }
   assertFalse(map.has(key));
   assertSame(undefined, map.get(key));
   assertFalse(map.delete(key));
@@ -158,7 +158,7 @@ function TestMapBehavior(m) {
   }
 }
 TestMapBehavior(new Map);
-//TestMapBehavior(new WeakMap);
+TestMapBehavior(new WeakMap);
 
 
 // Test expected querying behavior of Maps and WeakMaps
@@ -170,7 +170,7 @@ function TestQuery(m) {
   }
 }
 TestQuery(new Map);
-//TestQuery(new WeakMap);
+TestQuery(new WeakMap);
 
 
 // Test expected deletion behavior of Maps and WeakMaps
@@ -182,7 +182,7 @@ function TestDelete(m) {
   assertSame(m.get(key), undefined);
 }
 TestDelete(new Map);
-//TestDelete(new WeakMap);
+TestDelete(new WeakMap);
 
 
 // Test GC of Maps and WeakMaps with entry
@@ -193,7 +193,7 @@ function TestGC1(m) {
   assertSame('not-collected', m.get(key));
 }
 TestGC1(new Map);
-//TestGC1(new WeakMap);
+TestGC1(new WeakMap);
 
 
 // Test GC of Maps and WeakMaps with chained entries
@@ -210,7 +210,7 @@ function TestGC2(m) {
   assertEquals(11, count);
 }
 TestGC2(new Map);
-//TestGC2(new WeakMap);
+TestGC2(new WeakMap);
 
 
 // Test property attribute [[Enumerable]]
@@ -226,8 +226,8 @@ function TestEnumerable(func) {
 }
 TestEnumerable(Set);
 TestEnumerable(Map);
-//TestEnumerable(WeakMap);
-//TestEnumerable(WeakSet);
+TestEnumerable(WeakMap);
+TestEnumerable(WeakSet);
 
 
 // Test arbitrary properties on Maps and WeakMaps
@@ -243,14 +243,14 @@ function TestArbitrary(m) {
   TestMapping(m, new Object, 'foobar');
 }
 TestArbitrary(new Map);
-//TestArbitrary(new WeakMap);
+TestArbitrary(new WeakMap);
 
 
 // Test direct constructor call
 assertThrows(function() { Set(); }, TypeError);
 assertThrows(function() { Map(); }, TypeError);
-//assertThrows(function() { WeakMap(); }, TypeError);
-//assertThrows(function() { WeakSet(); }, TypeError);
+assertThrows(function() { WeakMap(); }, TypeError);
+assertThrows(function() { WeakSet(); }, TypeError);
 
 
 // Test whether NaN values as keys are treated correctly.
@@ -291,7 +291,7 @@ assertTrue(Map.prototype.delete instanceof Function)
 assertTrue(Map.prototype.clear instanceof Function)
 
 
-/*
+
 // Test some common JavaScript idioms for WeakMaps
 var m = new WeakMap;
 assertTrue(m instanceof WeakMap);
@@ -307,14 +307,13 @@ assertTrue(s instanceof WeakSet);
 assertTrue(WeakSet.prototype.add instanceof Function)
 assertTrue(WeakSet.prototype.has instanceof Function)
 assertTrue(WeakSet.prototype.delete instanceof Function)
-*/
 
 
 // Test name of constructor.
 assertEquals("Set", Set.name);
 assertEquals("Map", Map.name);
-//assertEquals("WeakMap", WeakMap.name);
-//assertEquals("WeakSet", WeakSet.name);
+assertEquals("WeakMap", WeakMap.name);
+assertEquals("WeakSet", WeakSet.name);
 
 
 // Test prototype property of Set, Map, WeakMap and WeakSet.
@@ -329,8 +328,8 @@ function TestPrototype(C) {
 }
 TestPrototype(Set);
 TestPrototype(Map);
-//TestPrototype(WeakMap);
-//TestPrototype(WeakSet);
+TestPrototype(WeakMap);
+TestPrototype(WeakSet);
 
 
 // Test constructor property of the Set, Map, WeakMap and WeakSet prototype.
@@ -342,8 +341,8 @@ function TestConstructor(C) {
 }
 TestConstructor(Set);
 TestConstructor(Map);
-//TestConstructor(WeakMap);
-//TestConstructor(WeakSet);
+TestConstructor(WeakMap);
+TestConstructor(WeakSet);
 
 
 // Test the Set, Map, WeakMap and WeakSet global properties themselves.
@@ -364,13 +363,13 @@ TestDescriptor(this, Map);
 */
 
 // Regression test for WeakMap prototype.
-//assertTrue(WeakMap.prototype.constructor === WeakMap)
-//assertTrue(Object.getPrototypeOf(WeakMap.prototype) === Object.prototype)
+assertTrue(WeakMap.prototype.constructor === WeakMap)
+assertTrue(Object.getPrototypeOf(WeakMap.prototype) === Object.prototype)
 
 
 // Regression test for issue 1617: The prototype of the WeakMap constructor
 // needs to be unique (i.e. different from the one of the Object constructor).
-//assertFalse(WeakMap.prototype === Object.prototype);
+assertFalse(WeakMap.prototype === Object.prototype);
 var o = Object.create({});
 assertFalse("get" in o);
 assertFalse("set" in o);
@@ -1110,7 +1109,7 @@ function TestSetConstructor(ctor) {
   assertTrue(s.has(k2));
 }
 TestSetConstructor(Set);
-//TestSetConstructor(WeakSet);
+TestSetConstructor(WeakSet);
 
 
 function TestSetConstructorAddNotCallable(ctor) {
@@ -1122,7 +1121,7 @@ function TestSetConstructorAddNotCallable(ctor) {
   ctor.prototype.add = originalPrototypeAdd;
 }
 TestSetConstructorAddNotCallable(Set);
-//TestSetConstructorAddNotCallable(WeakSet);
+TestSetConstructorAddNotCallable(WeakSet);
 
 function TestSetConstructorGetAddOnce(ctor) {
   var originalPrototypeAdd = ctor.prototype.add;
@@ -1144,7 +1143,7 @@ function TestSetConstructorGetAddOnce(ctor) {
   });
 }
 TestSetConstructorGetAddOnce(Set);
-//TestSetConstructorGetAddOnce(WeakSet);
+TestSetConstructorGetAddOnce(WeakSet);
 
 
 function TestSetConstructorAddReplaced(ctor) {
@@ -1161,7 +1160,7 @@ function TestSetConstructorAddReplaced(ctor) {
   ctor.prototype.add = originalPrototypeAdd;
 }
 TestSetConstructorAddReplaced(Set);
-//TestSetConstructorAddReplaced(WeakSet);
+TestSetConstructorAddReplaced(WeakSet);
 
 
 function TestSetConstructorOrderOfDoneValue(ctor) {
@@ -1189,7 +1188,7 @@ function TestSetConstructorOrderOfDoneValue(ctor) {
   assertEquals(0, valueCount);
 }
 TestSetConstructorOrderOfDoneValue(Set);
-//TestSetConstructorOrderOfDoneValue(WeakSet);
+TestSetConstructorOrderOfDoneValue(WeakSet);
 
 function TestSetConstructorNextNotAnObject(ctor) {
   var iterator = {
@@ -1205,15 +1204,13 @@ function TestSetConstructorNextNotAnObject(ctor) {
   }, TypeError);
 }
 TestSetConstructorNextNotAnObject(Set);
-//TestSetConstructorNextNotAnObject(WeakSet);
+TestSetConstructorNextNotAnObject(WeakSet);
 
-/*
 (function TestWeakSetConstructorNonObjectKeys() {
   assertThrows(function() {
     new WeakSet([1]);
   }, TypeError);
 })();
-*/
 
 /*
  * TODO missing stuff around strict mode
@@ -1293,7 +1290,7 @@ function TestMapConstructor(ctor) {
   assertEquals('c', m.get(k2));
 }
 TestMapConstructor(Map);
-//TestMapConstructor(WeakMap);
+TestMapConstructor(WeakMap);
 
 
 function TestMapConstructorSetNotCallable(ctor) {
@@ -1305,7 +1302,7 @@ function TestMapConstructorSetNotCallable(ctor) {
   ctor.prototype.set = originalPrototypeSet;
 }
 TestMapConstructorSetNotCallable(Map);
-//TestMapConstructorSetNotCallable(WeakMap);
+TestMapConstructorSetNotCallable(WeakMap);
 
 function TestMapConstructorGetAddOnce(ctor) {
   var originalPrototypeSet = ctor.prototype.set;
@@ -1327,7 +1324,7 @@ function TestMapConstructorGetAddOnce(ctor) {
   });
 }
 TestMapConstructorGetAddOnce(Map);
-//TestMapConstructorGetAddOnce(WeakMap);
+TestMapConstructorGetAddOnce(WeakMap);
 
 function TestMapConstructorSetReplaced(ctor) {
   var originalPrototypeSet = ctor.prototype.set;
@@ -1343,7 +1340,7 @@ function TestMapConstructorSetReplaced(ctor) {
   ctor.prototype.set = originalPrototypeSet;
 }
 TestMapConstructorSetReplaced(Map);
-//TestMapConstructorSetReplaced(WeakMap);
+TestMapConstructorSetReplaced(WeakMap);
 
 
 function TestMapConstructorOrderOfDoneValue(ctor) {
@@ -1372,7 +1369,7 @@ function TestMapConstructorOrderOfDoneValue(ctor) {
   assertEquals(0, valueCount);
 }
 TestMapConstructorOrderOfDoneValue(Map);
-//TestMapConstructorOrderOfDoneValue(WeakMap);
+TestMapConstructorOrderOfDoneValue(WeakMap);
 
 
 function TestMapConstructorNextNotAnObject(ctor) {
@@ -1389,7 +1386,7 @@ function TestMapConstructorNextNotAnObject(ctor) {
   }, TypeError);
 }
 TestMapConstructorNextNotAnObject(Map);
-//TestMapConstructorNextNotAnObject(WeakMap);
+TestMapConstructorNextNotAnObject(WeakMap);
 
 
 function TestMapConstructorIteratorNotObjectValues(ctor) {
@@ -1398,15 +1395,13 @@ function TestMapConstructorIteratorNotObjectValues(ctor) {
   }, TypeError);
 }
 TestMapConstructorIteratorNotObjectValues(Map);
-//TestMapConstructorIteratorNotObjectValues(WeakMap);
+TestMapConstructorIteratorNotObjectValues(WeakMap);
 
-/*
 (function TestWeakMapConstructorNonObjectKeys() {
   assertThrows(function() {
     new WeakMap([[1, 2]])
   }, TypeError);
 })();
-*/
 
 /*
  * TODO Rhino this kind of overriding of the iterator just isnt' available yet.
@@ -1432,7 +1427,7 @@ function TestMapConstructorIterableValue(ctor) {
   delete Number.prototype[Symbol.iterator];
 }
 TestMapConstructorIterableValue(Map);
-//TestMapConstructorIterableValue(WeakMap);
+TestMapConstructorIterableValue(WeakMap);
 */
 
 function TestCollectionToString(C) {
@@ -1441,8 +1436,8 @@ function TestCollectionToString(C) {
 }
 TestCollectionToString(Map);
 TestCollectionToString(Set);
-//TestCollectionToString(WeakMap);
-//TestCollectionToString(WeakSet);
+TestCollectionToString(WeakMap);
+TestCollectionToString(WeakSet);
 
 
 /*
@@ -1478,8 +1473,8 @@ function TestConstructorOrderOfAdderIterator(ctor, adderName) {
 }
 TestConstructorOrderOfAdderIterator(Map, 'set');
 TestConstructorOrderOfAdderIterator(Set, 'add');
-//TestConstructorOrderOfAdderIterator(WeakMap, 'set');
-//TestConstructorOrderOfAdderIterator(WeakSet, 'add');
+TestConstructorOrderOfAdderIterator(WeakMap, 'set');
+TestConstructorOrderOfAdderIterator(WeakSet, 'add');
 */
 
 "success";
