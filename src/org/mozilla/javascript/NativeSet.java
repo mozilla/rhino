@@ -1,3 +1,9 @@
+/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.javascript;
 
 import java.util.Iterator;
@@ -49,7 +55,7 @@ public class NativeSet
                     NativeSet ns = new NativeSet();
                     ns.instanceOfSet = true;
                     if (args.length > 0) {
-                        ns.js_load(cx, scope, args[0]);
+                        loadFromIterable(cx, scope, ns, args[0]);
                     }
                     return ns;
                 } else {
@@ -77,9 +83,15 @@ public class NativeSet
         throw new IllegalArgumentException("Set.prototype has no method: " + f.getFunctionName());
     }
 
-    private Object js_add(Object arg)
+    private Object js_add(Object k)
     {
-        entries.put(arg, arg);
+        // Special handling of "negative zero" from the spec.
+        Object key = k;
+        if ((key instanceof Number) &&
+            ((Number)key).doubleValue() == ScriptRuntime.negativeZero) {
+            key = 0.0;
+        }
+        entries.put(key, key);
         return this;
     }
 
@@ -133,9 +145,9 @@ public class NativeSet
 
     /**
      * If an "iterable" object was passed to the constructor, there are many many things
-     * to do...
+     * to do. This is common code with NativeWeakSet.
      */
-    private void js_load(Context cx, Scriptable scope, Object arg1)
+    static void loadFromIterable(Context cx, Scriptable scope, ScriptableObject set, Object arg1)
     {
         if ((arg1 == null) || Undefined.instance.equals(arg1)) {
             return;
@@ -144,23 +156,24 @@ public class NativeSet
         // Call the "[Symbol.iterator]" property as a function.
         Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
         if (Undefined.instance.equals(ito)) {
-            // Per spec, ignore if the iterator is undefined
+            // Per spec, ignore if the iterator returns undefined
             return;
         }
 
         // Find the "add" function of our own prototype, since it might have
         // been replaced. Since we're not fully constructed yet, create a dummy instance
         // so that we can get our own prototype.
-        ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, getClassName()));
+        ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, set.getClassName()));
         final Callable add =
             ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "add", cx, scope);
+        // Clean up the value left around by the previous function
         ScriptRuntime.lastStoredScriptable(cx);
 
         // Finally, run through all the iterated values and add them!
         try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
             for (Object val : it) {
                 final Object finalVal = val == Scriptable.NOT_FOUND ? Undefined.instance : val;
-                add.call(cx, scope, this, new Object[]{finalVal});
+                add.call(cx, scope, set, new Object[]{finalVal});
             }
         }
     }

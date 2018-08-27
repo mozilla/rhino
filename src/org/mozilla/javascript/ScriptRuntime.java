@@ -263,6 +263,8 @@ public class ScriptRuntime {
             NativeCollectionIterator.init(scope, NativeMap.ITERATOR_TAG, sealed);
             NativeMap.init(cx, scope, sealed);
             NativeSet.init(cx, scope, sealed);
+            NativeWeakMap.init(scope, sealed);
+            NativeWeakSet.init(scope, sealed);
         }
 
         if (scope instanceof TopLevel) {
@@ -2870,6 +2872,23 @@ public class ScriptRuntime {
         if (val == null)
             return "undefined";
         return typeof(getObjectProp(val, id, cx));
+    }
+
+    public static boolean isObject(Object value)
+    {
+        if (value == null) {
+            return false;
+        }
+        if (Undefined.instance.equals(value)) {
+            return false;
+        }
+        if (value instanceof ScriptableObject) {
+            return "object".equals(((ScriptableObject)value).getTypeOf());
+        }
+        if (value instanceof Scriptable) {
+            return (!(value instanceof Callable));
+        }
+        return false;
     }
 
     // neg:
