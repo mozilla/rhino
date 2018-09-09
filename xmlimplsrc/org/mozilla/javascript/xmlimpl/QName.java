@@ -262,8 +262,6 @@ final class QName extends IdScriptableObject
             ns = XmlNode.Namespace.create(q_prefix, q_uri);
         } else if (q_uri != null) {
             ns = XmlNode.Namespace.create(q_uri);
-        } else {
-            ns = null;
         }
         if (q_localName != null && q_localName.equals("*")) q_localName = null;
         return create(lib, this.getParentScope(), prototype, XmlNode.QName.create(ns, q_localName));

@@ -76,8 +76,7 @@ implements ModuleScriptProvider, Serializable
         if(moduleSource == null) {
             return null;
         }
-        final Reader reader = moduleSource.getReader();
-        try {
+        try (Reader reader = moduleSource.getReader()) {
             final int idHash = moduleId.hashCode();
             synchronized(loadLocks[(idHash >>> loadLockShift) & loadLockMask]) {
                 final CachedModuleScript cachedModule2 = getLoadedModule(moduleId);
@@ -95,9 +94,6 @@ implements ModuleScriptProvider, Serializable
                         moduleSource.getValidator());
                 return moduleScript;
             }
-        }
-        finally {
-            reader.close();
         }
     }
 

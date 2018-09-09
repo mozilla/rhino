@@ -364,7 +364,7 @@ final class NativeMath extends IdScriptableObject
     }
 
     // See Ecma 15.8.2.13
-    private double js_pow(double x, double y) {
+    private static double js_pow(double x, double y) {
         double result;
         if (y != y) {
             // y is NaN, result is always NaN
@@ -419,7 +419,7 @@ final class NativeMath extends IdScriptableObject
     }
 
     // Based on code from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/hypot
-    private double js_hypot(Object[] args)
+    private static double js_hypot(Object[] args)
     {
         if (args == null) {
             return 0.0;
@@ -439,13 +439,13 @@ final class NativeMath extends IdScriptableObject
         return Math.sqrt(y);
     }
 
-    private double js_trunc(double d)
+    private static double js_trunc(double d)
     {
         return ((d < 0.0) ? Math.ceil(d) : Math.floor(d));
     }
 
     // From EcmaScript 6 section 20.2.2.19
-    private int js_imul(Object[] args)
+    private static int js_imul(Object[] args)
     {
         if (args == null) {
             return 0;

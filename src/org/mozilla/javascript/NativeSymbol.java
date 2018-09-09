@@ -212,7 +212,7 @@ public class NativeSymbol
         }
     }
 
-    private NativeSymbol getSelf(Object thisObj) {
+    private static NativeSymbol getSelf(Object thisObj) {
         try {
             return (NativeSymbol)thisObj;
         } catch (ClassCastException cce) {
