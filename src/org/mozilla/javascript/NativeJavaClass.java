@@ -212,9 +212,9 @@ public class NativeJavaClass extends NativeJavaObject implements Function
 
     static Object constructInternal(Object[] args, MemberBox ctor)
     {
-        Class<?>[] argTypes = ctor.argTypes();
+        Class<?>[] argTypes = ctor.getParameterTypes();
 
-        if (ctor.vararg()) {
+        if (ctor.isVarArgs()) {
             // marshall the explicit parameter
             Object[] newArgs = new Object[argTypes.length];
             for (int i = 0; i < argTypes.length-1; i++) {

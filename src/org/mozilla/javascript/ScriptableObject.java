@@ -292,7 +292,7 @@ public abstract class ScriptableObject implements Scriptable,
                 Context cx = Context.getContext();
                 if (setter instanceof MemberBox) {
                     MemberBox nativeSetter = (MemberBox)setter;
-                    Class<?> pTypes[] = nativeSetter.argTypes();
+                    Class<?> pTypes[] = nativeSetter.getParameterTypes();
                     // XXX: cache tag since it is already calculated in
                     // defineProperty ?
                     Class<?> valueType = pTypes[pTypes.length - 1];

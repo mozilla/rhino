@@ -121,7 +121,7 @@ public class NativeJavaMethod extends BaseFunction
             } else {
                 sb.append(member.getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(member.argTypes()));
+            sb.append(JavaMembers.liveConnectSignature(member.getParameterTypes()));
             sb.append('\n');
         }
         return sb.toString();
@@ -145,9 +145,9 @@ public class NativeJavaMethod extends BaseFunction
         }
 
         MemberBox meth = methods[index];
-        Class<?>[] argTypes = meth.argTypes();
+        Class<?>[] argTypes = meth.getParameterTypes();
 
-        if (meth.vararg()) {
+        if (meth.isVarArgs()) {
             // marshall the explicit parameters
             Object[] newArgs = new Object[argTypes.length];
             for (int i = 0; i < argTypes.length-1; i++) {
@@ -287,10 +287,10 @@ public class NativeJavaMethod extends BaseFunction
             return -1;
         } else if (methodsOrCtors.length == 1) {
             MemberBox member = methodsOrCtors[0];
-            Class<?>[] argTypes = member.argTypes();
+            Class<?>[] argTypes = member.getParameterTypes();
             int alength = argTypes.length;
 
-            if (member.vararg()) {
+            if (member.isVarArgs()) {
                 alength--;
                 if ( alength > args.length) {
                     return -1;
@@ -318,9 +318,9 @@ public class NativeJavaMethod extends BaseFunction
       search:
         for (int i = 0; i < methodsOrCtors.length; i++) {
             MemberBox member = methodsOrCtors[i];
-            Class<?>[] argTypes = member.argTypes();
+            Class<?>[] argTypes = member.getParameterTypes();
             int alength = argTypes.length;
-            if (member.vararg()) {
+            if (member.isVarArgs()) {
                 alength--;
                 if ( alength > args.length) {
                     continue search;
@@ -358,21 +358,20 @@ public class NativeJavaMethod extends BaseFunction
                     }
                     MemberBox bestFit = methodsOrCtors[bestFitIndex];
                     if (cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS) &&
-                        (bestFit.member().getModifiers() & Modifier.PUBLIC) !=
-                            (member.member().getModifiers() & Modifier.PUBLIC))
+                        bestFit.isPublic() != member.isPublic())
                     {
                         // When FEATURE_ENHANCED_JAVA_ACCESS gives us access
                         // to non-public members, continue to prefer public
                         // methods in overloading
-                        if ((bestFit.member().getModifiers() & Modifier.PUBLIC) == 0)
+                        if (bestFit.isPublic())
                             ++betterCount;
                         else
                             ++worseCount;
                     } else {
                         int preference = preferSignature(args, argTypes,
-                                                         member.vararg(),
-                                                         bestFit.argTypes(),
-                                                         bestFit.vararg() );
+                                                         member.isVarArgs(),
+                                                         bestFit.getParameterTypes(),
+                                                         bestFit.isVarArgs() );
                         if (preference == PREFERENCE_AMBIGUOUS) {
                             break;
                         } else if (preference == PREFERENCE_FIRST_ARG) {
@@ -546,7 +545,7 @@ public class NativeJavaMethod extends BaseFunction
             if (member.isMethod()) {
                 sb.append(member.getName());
             }
-            sb.append(JavaMembers.liveConnectSignature(member.argTypes()));
+            sb.append(JavaMembers.liveConnectSignature(member.getParameterTypes()));
             sb.append(" for arguments (");
             sb.append(scriptSignature(args));
             sb.append(')');
