@@ -123,7 +123,7 @@ class JavaMembers
             // main setter. Otherwise, let the NativeJavaMethod decide which
             // setter to use:
             if (bp.setters == null || value == null) {
-                Class<?> setType = bp.setter.argTypes()[0];
+                Class<?> setType = bp.setter.getParameterTypes()[0];
                 Object[] args = { Context.jsToJava(value, setType) };
                 try {
                     bp.setter.invoke(javaObject, args);
@@ -237,7 +237,7 @@ class JavaMembers
 
         if (methodsOrCtors != null) {
             for (MemberBox methodsOrCtor : methodsOrCtors) {
-                Class<?>[] type = methodsOrCtor.argTypes();
+                Class<?>[] type = methodsOrCtor.getParameterTypes();
                 String sig = liveConnectSignature(type);
                 if (sigStart + sig.length() == name.length()
                         && name.regionMatches(sigStart, sig, 0, sig.length()))
@@ -711,7 +711,7 @@ class JavaMembers
         for (MemberBox method : methods) {
             // Does getter method have an empty parameter list with a return
             // value (eg. a getSomething() or isSomething())?
-            if (method.member().getParameterCount() == 0 && (!isStatic || method.isStatic())) {
+            if (method.getParameterCount() == 0 && (!isStatic || method.isStatic())) {
                 Class<?> type = method.getReturnType();
                 if (type != Void.TYPE) {
                     return method;
@@ -736,7 +736,7 @@ class JavaMembers
         for (int pass = 1; pass <= 2; ++pass) {
             for (MemberBox method : methods) {
                 if (!isStatic || method.isStatic()) {
-                    Class<?>[] params = method.argTypes();
+                    Class<?>[] params = method.getParameterTypes();
                     if (params.length == 1) {
                         if (pass == 1) {
                             if (params[0] == type) {
@@ -762,7 +762,7 @@ class JavaMembers
         for (MemberBox method : methods) {
             if (!isStatic || method.isStatic()) {
                 if (method.getReturnType() == Void.TYPE) {
-                    if (method.member().getParameterCount() == 1) {
+                    if (method.getParameterCount() == 1) {
                         return method;
                     }
                 }
