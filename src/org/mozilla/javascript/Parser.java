@@ -1377,7 +1377,6 @@ public class Parser
                             reportError("msg.double.switch.default");
                         }
                         hasDefault = true;
-                        caseExpression = null;
                         mustMatchToken(Token.COLON, "msg.no.colon.case", true);
                         break;
                     case Token.COMMENT:
@@ -1804,9 +1803,7 @@ public class Parser
 
         if (breakTarget == null && breakLabel == null) {
             if (loopAndSwitchSet == null || loopAndSwitchSet.size() == 0) {
-                if (breakLabel == null) {
-                    reportError("msg.bad.break", pos, end - pos);
-                }
+                reportError("msg.bad.break", pos, end - pos);
             } else {
                 breakTarget = loopAndSwitchSet.get(loopAndSwitchSet.size() - 1);
             }
@@ -3358,7 +3355,7 @@ public class Parser
         if (nextToken() != Token.FOR) codeBug();
         int pos = ts.tokenBeg;
         int eachPos = -1, lp = -1, rp = -1, inPos = -1;
-        boolean isForIn = false, isForOf = false;
+        boolean isForOf = false;
         ArrayComprehensionLoop pn = new ArrayComprehensionLoop(pos);
 
         pushScope(pn);
@@ -3399,7 +3396,6 @@ public class Parser
             switch (nextToken()) {
             case Token.IN:
                 inPos = ts.tokenBeg - pos;
-                isForIn = true;
                 break;
             case Token.NAME:
                 if ("of".equals(ts.getString())) {
@@ -3558,7 +3554,6 @@ public class Parser
             }
             AstNode pname = objliteralProperty();
             if (pname == null) {
-                propertyName = null;
                 reportError("msg.bad.prop");
             } else {
                 propertyName = ts.getString();
@@ -3931,8 +3926,7 @@ public class Parser
 
 
     private String readFully(Reader reader) throws IOException {
-        BufferedReader in = new BufferedReader(reader);
-        try {
+        try (BufferedReader in = new BufferedReader(reader)) {
             char[] cbuf = new char[1024];
             StringBuilder sb = new StringBuilder(1024);
             int bytes_read;
@@ -3940,8 +3934,6 @@ public class Parser
                 sb.append(cbuf, 0, bytes_read);
             }
             return sb.toString();
-        } finally {
-            in.close();
         }
     }
 

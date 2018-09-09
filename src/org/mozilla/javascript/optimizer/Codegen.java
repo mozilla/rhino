@@ -4163,14 +4163,12 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         {
             ExceptionInfo(Jump node, Node finallyBlock)
             {
-                this.node = node;
                 this.finallyBlock = finallyBlock;
                 handlerLabels = new int[EXCEPTION_MAX];
                 exceptionStarts = new int[EXCEPTION_MAX];
                 currentFinally = null;
             }
 
-            Jump node;
             Node finallyBlock;
             int[] handlerLabels;
             int[] exceptionStarts;
@@ -4239,9 +4237,11 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private Node getFinallyAtTarget(Node node) {
         if (node == null) {
             return null;
-        } else if (node.getType() == Token.FINALLY) {
+        }
+        if (node.getType() == Token.FINALLY) {
             return node;
-        } else if (node != null && node.getType() == Token.TARGET) {
+        }
+        if (node.getType() == Token.TARGET) {
             Node fBlock = node.getNext();
             if (fBlock != null && fBlock.getType() == Token.FINALLY) {
                 return fBlock;

@@ -257,10 +257,9 @@ public abstract class ShellConsole {
             if (line != null) {
                 buffer = line.getBytes(cs);
                 return buffer.length;
-            } else {
-                buffer = EMPTY;
-                return -1;
             }
+            buffer = EMPTY;
+            return -1;
         }
     }
 
@@ -426,6 +425,7 @@ class FlexibleCompletor implements java.lang.reflect.InvocationHandler {
     }
 
     @SuppressWarnings({"unchecked"})
+    @Override
     public Object invoke(Object proxy, Method method, Object[] args) {
         if (method.equals(this.completeMethod)) {
             int result = complete((String)args[0], ((Integer) args[1]).intValue(),

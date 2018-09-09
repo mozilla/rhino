@@ -1478,7 +1478,7 @@ public abstract class ScriptableObject implements Scriptable,
                     prefix = staticFunctionPrefix;
                 } else if (name.startsWith(getterPrefix)) {
                     prefix = getterPrefix;
-                } else if (annotation == null) {
+                } else {
                     // note that setterPrefix is among the unhandled names here -
                     // we deal with that when we see the getter
                     continue;

@@ -441,7 +441,7 @@ class Block
                               itsUseBeforeDefSet, itsNotDefSet);
     }
 
-    private boolean updateEntrySet(BitSet entrySet, BitSet exitSet,
+    private static boolean updateEntrySet(BitSet entrySet, BitSet exitSet,
                                    BitSet useBeforeDef, BitSet notDef) {
         int card = entrySet.cardinality();
         entrySet.or(exitSet);

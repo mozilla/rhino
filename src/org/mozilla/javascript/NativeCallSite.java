@@ -94,15 +94,15 @@ public class NativeCallSite extends IdScriptableObject
         case Id_getTypeName:
         case Id_getFunction:
         case Id_getColumnNumber:
-            return getUndefined();
+            return Undefined.instance;
         case Id_getMethodName:
-            return getNull();
+            return null;
         case Id_getEvalOrigin:
         case Id_isEval:
         case Id_isConstructor:
         case Id_isNative:
         case Id_isToplevel:
-            return getFalse();
+            return Boolean.FALSE;
         case Id_toString:
             return js_toString(thisObj);
         default:
@@ -119,7 +119,7 @@ public class NativeCallSite extends IdScriptableObject
         return element.toString();
     }
 
-    private Object js_toString(Scriptable obj)
+    private static Object js_toString(Scriptable obj)
     {
         while(obj != null && !(obj instanceof NativeCallSite)) {
             obj = obj.getPrototype();
@@ -133,22 +133,7 @@ public class NativeCallSite extends IdScriptableObject
         return sb.toString();
     }
 
-    private Object getUndefined()
-    {
-        return Undefined.instance;
-    }
-
-    private Object getNull()
-    {
-        return null;
-    }
-
-    private Object getFalse()
-    {
-        return Boolean.FALSE;
-    }
-
-    private Object getFunctionName(Scriptable obj)
+    private static Object getFunctionName(Scriptable obj)
     {
         while(obj != null && !(obj instanceof NativeCallSite)) {
             obj = obj.getPrototype();
@@ -160,7 +145,7 @@ public class NativeCallSite extends IdScriptableObject
         return (cs.element == null ? null : cs.element.functionName);
     }
 
-    private Object getFileName(Scriptable obj)
+    private static Object getFileName(Scriptable obj)
     {
         while(obj != null && !(obj instanceof NativeCallSite)) {
             obj = obj.getPrototype();
@@ -172,7 +157,7 @@ public class NativeCallSite extends IdScriptableObject
         return (cs.element == null ? null : cs.element.fileName);
     }
 
-    private Object getLineNumber(Scriptable obj)
+    private static Object getLineNumber(Scriptable obj)
     {
         while(obj != null && !(obj instanceof NativeCallSite)) {
             obj = obj.getPrototype();
