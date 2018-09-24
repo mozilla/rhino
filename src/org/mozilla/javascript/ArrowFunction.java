@@ -65,6 +65,11 @@ public class ArrowFunction extends BaseFunction {
     }
 
     @Override
+    public int getArity() {
+        return getLength();
+    }
+
+    @Override
     String decompile(int indent, int flags)
     {
         if (targetFunction instanceof BaseFunction) {
