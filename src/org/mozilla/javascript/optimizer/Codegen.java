@@ -167,26 +167,9 @@ public class Codegen implements Evaluator
         initScriptNodesData(scriptOrFn);
 
         this.mainClassName = mainClassName;
-        this.mainClassSignature
-            = ClassFileWriter.classNameToSignature(mainClassName);
+        this.mainClassSignature = ClassFileWriter.classNameToSignature(mainClassName);
 
-        try {
-            return generateCode(encodedSource);
-        } catch (ClassFileWriter.ClassFileFormatException e) {
-            throw reportClassFileFormatException(scriptOrFn, e.getMessage());
-        }
-    }
-
-    private RuntimeException reportClassFileFormatException(
-        ScriptNode scriptOrFn,
-        String message)
-    {
-        String msg = scriptOrFn instanceof FunctionNode
-        ? ScriptRuntime.getMessage2("msg.while.compiling.fn",
-            ((FunctionNode)scriptOrFn).getFunctionName(), message)
-        : ScriptRuntime.getMessage1("msg.while.compiling.script", message);
-        return Context.reportRuntimeError(msg, scriptOrFn.getSourceName(),
-            scriptOrFn.getLineno(), null, 0);
+        return generateCode(encodedSource);
     }
 
     private void transform(ScriptNode tree)
@@ -311,11 +294,7 @@ public class Codegen implements Evaluator
             bodygen.scriptOrFn = n;
             bodygen.scriptOrFnIndex = i;
 
-            try {
-                bodygen.generateBodyCode();
-            } catch (ClassFileWriter.ClassFileFormatException e) {
-                throw reportClassFileFormatException(n, e.getMessage());
-            }
+            bodygen.generateBodyCode();
 
             if (n.getType() == Token.FUNCTION) {
                 OptFunctionNode ofn = OptFunctionNode.get(n);
@@ -4163,14 +4142,12 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         {
             ExceptionInfo(Jump node, Node finallyBlock)
             {
-                this.node = node;
                 this.finallyBlock = finallyBlock;
                 handlerLabels = new int[EXCEPTION_MAX];
                 exceptionStarts = new int[EXCEPTION_MAX];
                 currentFinally = null;
             }
 
-            Jump node;
             Node finallyBlock;
             int[] handlerLabels;
             int[] exceptionStarts;
@@ -4239,9 +4216,11 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
     private Node getFinallyAtTarget(Node node) {
         if (node == null) {
             return null;
-        } else if (node.getType() == Token.FINALLY) {
+        }
+        if (node.getType() == Token.FINALLY) {
             return node;
-        } else if (node != null && node.getType() == Token.TARGET) {
+        }
+        if (node.getType() == Token.TARGET) {
             Node fBlock = node.getNext();
             if (fBlock != null && fBlock.getType() == Token.FINALLY) {
                 return fBlock;

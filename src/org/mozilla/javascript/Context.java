@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
@@ -2558,13 +2559,19 @@ public class Context
         ast = null;
         irf = null;
 
-        if (compiler == null) {
-            compiler = createCompiler();
+        Object bytecode;
+        try {
+            if (compiler == null) {
+                compiler = createCompiler();
+            }
+
+            bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
+        } catch (ClassFileFormatException e) {
+            // we hit some class file limit, fall back to interpreter or report
+            compiler = createInterpreter();
+            bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
         }
 
-        Object bytecode = compiler.compile(compilerEnv,
-                                           tree, tree.getEncodedSource(),
-                                           returnFunction);
         if (debugger != null) {
             if (sourceString == null) Kit.codeBug();
             if (bytecode instanceof DebuggableScript) {
