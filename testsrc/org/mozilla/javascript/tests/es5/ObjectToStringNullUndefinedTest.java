@@ -11,7 +11,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.mozilla.javascript.*;
 
-import static org.mozilla.javascript.tests.Evaluator.eval;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;

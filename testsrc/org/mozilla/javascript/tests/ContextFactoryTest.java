@@ -7,15 +7,10 @@
  */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.RhinoException;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,7 +30,7 @@ public class ContextFactoryTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         CTX.setLanguageVersion(LV);
-        CTX.exit();
+        Context.exit();
     }
 
     @Test
