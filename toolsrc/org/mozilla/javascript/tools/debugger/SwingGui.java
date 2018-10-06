@@ -739,11 +739,8 @@ public class SwingGui extends JFrame implements GuiCallback {
     private String readFile(String fileName) {
         String text;
         try {
-            Reader r = new FileReader(fileName);
-            try {
+            try (Reader r = new FileReader(fileName)) {
                 text = Kit.readReader(r);
-            } finally {
-                r.close();
             }
         } catch (IOException ex) {
             MessageDialogWrapper.showMessageDialog(this,

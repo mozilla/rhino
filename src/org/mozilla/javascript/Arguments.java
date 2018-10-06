@@ -314,7 +314,7 @@ final class Arguments extends IdScriptableObject
                 ids = tmp;
                 int offset = 0;
                 for (int i = 0; i != args.length; ++i) {
-                    if (present == null || !present[i]) {
+                    if (!present[i]) {
                         ids[offset] = Integer.valueOf(i);
                         ++offset;
                     }

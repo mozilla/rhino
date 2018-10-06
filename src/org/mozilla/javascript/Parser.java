@@ -1377,7 +1377,6 @@ public class Parser
                             reportError("msg.double.switch.default");
                         }
                         hasDefault = true;
-                        caseExpression = null;
                         mustMatchToken(Token.COLON, "msg.no.colon.case", true);
                         break;
                     case Token.COMMENT:
@@ -1804,9 +1803,7 @@ public class Parser
 
         if (breakTarget == null && breakLabel == null) {
             if (loopAndSwitchSet == null || loopAndSwitchSet.size() == 0) {
-                if (breakLabel == null) {
-                    reportError("msg.bad.break", pos, end - pos);
-                }
+                reportError("msg.bad.break", pos, end - pos);
             } else {
                 breakTarget = loopAndSwitchSet.get(loopAndSwitchSet.size() - 1);
             }
@@ -3558,7 +3555,6 @@ public class Parser
             }
             AstNode pname = objliteralProperty();
             if (pname == null) {
-                propertyName = null;
                 reportError("msg.bad.prop");
             } else {
                 propertyName = ts.getString();
