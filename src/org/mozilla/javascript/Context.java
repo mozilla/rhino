@@ -2525,39 +2525,8 @@ public class Context
             }
         }
 
-        Parser p = new Parser(compilerEnv, compilationErrorReporter);
-        if (returnFunction) {
-            p.calledByCompileFunction = true;
-        }
-        if (isStrictMode()) {
-            p.setDefaultUseStrictDirective(true);
-        }
-        AstRoot ast;
-        if (sourceString != null) {
-            ast = p.parse(sourceString, sourceName, lineno);
-        } else {
-            ast = p.parse(sourceReader, sourceName, lineno);
-        }
-        if (returnFunction) {
-            // parser no longer adds function to script node
-            if (!(ast.getFirstChild() != null
-                  && ast.getFirstChild().getType() == Token.FUNCTION))
-            {
-                // XXX: the check just looks for the first child
-                // and allows for more nodes after it for compatibility
-                // with sources like function() {};;;
-                throw new IllegalArgumentException(
-                    "compileFunction only accepts source with single JS function: "+sourceString);
-            }
-        }
-
-        IRFactory irf = new IRFactory(compilerEnv, compilationErrorReporter);
-        ScriptNode tree = irf.transformTree(ast);
-
-        // discard everything but the IR tree
-        p = null;
-        ast = null;
-        irf = null;
+        ScriptNode tree = parse(sourceReader, sourceString, sourceName, lineno,
+                                    compilerEnv, compilationErrorReporter, returnFunction);
 
         Object bytecode;
         try {
@@ -2569,6 +2538,10 @@ public class Context
         } catch (ClassFileFormatException e) {
             // we hit some class file limit, fall back to interpreter or report
             compiler = createInterpreter();
+
+            // we have to recreate the tree because the compile call might have changed the tree already
+            tree = parse(sourceReader, sourceString, sourceName, lineno,
+                            compilerEnv, compilationErrorReporter, returnFunction);
             bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
         }
 
@@ -2590,6 +2563,42 @@ public class Context
         }
 
         return result;
+    }
+
+    private ScriptNode parse(Reader sourceReader, String sourceString,
+            String sourceName, int lineno,
+            CompilerEnvirons compilerEnv, ErrorReporter compilationErrorReporter,
+            boolean returnFunction) throws IOException {
+        Parser p = new Parser(compilerEnv, compilationErrorReporter);
+        if (returnFunction) {
+            p.calledByCompileFunction = true;
+        }
+        if (isStrictMode()) {
+            p.setDefaultUseStrictDirective(true);
+        }
+
+        AstRoot ast;
+        if (sourceString != null) {
+            ast = p.parse(sourceString, sourceName, lineno);
+        } else {
+            ast = p.parse(sourceReader, sourceName, lineno);
+        }
+        if (returnFunction) {
+            // parser no longer adds function to script node
+            if (!(ast.getFirstChild() != null
+                  && ast.getFirstChild().getType() == Token.FUNCTION))
+            {
+                // XXX: the check just looks for the first child
+                // and allows for more nodes after it for compatibility
+                // with sources like function() {};;;
+                throw new IllegalArgumentException(
+                    "compileFunction only accepts source with single JS function: "+sourceString);
+            }
+        }
+
+        IRFactory irf = new IRFactory(compilerEnv, compilationErrorReporter);
+        ScriptNode tree = irf.transformTree(ast);
+        return tree;
     }
 
     private static void notifyDebugger_r(Context cx, DebuggableScript dscript,

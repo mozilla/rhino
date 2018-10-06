@@ -24,9 +24,9 @@ public class CodegenTest extends TestCase {
         }
 
         Utils.runWithAllOptimizationLevels(_cx -> {
-            Script a = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
             if (_cx.getOptimizationLevel() > -1) {
-                Assert.assertTrue(a.getClass().getName(), a.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
+                Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
             }
             return null;
         });
@@ -37,8 +37,8 @@ public class CodegenTest extends TestCase {
         }
 
         Utils.runWithAllOptimizationLevels(_cx -> {
-            Script a = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
-            Assert.assertTrue(a.getClass().getName(), a.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
             return null;
         });
     }
@@ -52,9 +52,9 @@ public class CodegenTest extends TestCase {
         }
 
         Utils.runWithAllOptimizationLevels(_cx -> {
-            Script a = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
             if (_cx.getOptimizationLevel() > -1) {
-                Assert.assertTrue(a.getClass().getName(), a.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
+                Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
             }
             return null;
         });
@@ -65,8 +65,8 @@ public class CodegenTest extends TestCase {
         }
 
         Utils.runWithAllOptimizationLevels(_cx -> {
-            Script a = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
-            Assert.assertTrue(a.getClass().getName(), a.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
             return null;
         });
     }
@@ -76,14 +76,14 @@ public class CodegenTest extends TestCase {
 
         scriptSource.append("function foo() {");
         for (int i = 0; i < 1000; i++) {
-            scriptSource.append("a" + i + "= {};");
+            scriptSource.append("a" + i + "= " + i + ";");
         }
         scriptSource.append("return 'done'; }");
 
         Utils.runWithAllOptimizationLevels(_cx -> {
-            Script a = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
             if (_cx.getOptimizationLevel() > -1) {
-                Assert.assertTrue(a.getClass().getName(), a.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
+                Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
             }
             return null;
         });
@@ -91,14 +91,14 @@ public class CodegenTest extends TestCase {
         // now with code that is too large
         scriptSource.setLength(0);
         scriptSource.append("function foo() {");
-        for (int i = 0; i < 2000; i++) {
-            scriptSource.append("a" + i + "= {};");
+        for (int i = 0; i < 5000; i++) {
+            scriptSource.append("a" + i + "= " + i + ";");
         }
         scriptSource.append("return 'done'; }");
 
         Utils.runWithAllOptimizationLevels(_cx -> {
-            Script a = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
-            Assert.assertTrue(a.getClass().getName(), a.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
             return null;
         });
     }
@@ -108,20 +108,20 @@ public class CodegenTest extends TestCase {
 
         int i = 0;
         for (; i < 1000; i++) {
-            scriptSource.append("function foo" + i + "() { return {}; }\n");
+            scriptSource.append("function foo" + i + "() { return 7; }\n");
         }
 
         Utils.runWithAllOptimizationLevels(_cx -> {
-            Script a = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
             if (_cx.getOptimizationLevel() > -1) {
-                Assert.assertTrue(a.getClass().getName(), a.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
+                Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
             }
             return null;
         });
 
         // now with code that is too large
         for (; i < 5000; i++) {
-            scriptSource.append("function foo" + i + "() { return {}; }\n");
+            scriptSource.append("function foo" + i + "() { return 7; }\n");
         }
 
         Utils.runWithAllOptimizationLevels(_cx -> {
