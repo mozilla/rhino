@@ -1519,9 +1519,9 @@ public class Context
             return (Script) compileImpl(null, null, source, sourceName, lineno,
                                         securityDomain, false,
                                         compiler, compilationErrorReporter);
-        } catch (IOException ex) {
+        } catch (IOException ioe) {
             // Should not happen when dealing with source as string
-            throw new RuntimeException();
+            throw new RuntimeException(ioe);
         }
     }
 
@@ -1564,7 +1564,7 @@ public class Context
         catch (IOException ioe) {
             // Should never happen because we just made the reader
             // from a String
-            throw new RuntimeException();
+            throw new RuntimeException(ioe);
         }
     }
 

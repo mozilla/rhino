@@ -1301,7 +1301,7 @@ public class ClassFileWriter {
             int pc = itsLabelTable[label];
             if (pc == -1) {
                 // Unlocated label
-                throw new RuntimeException();
+                throw new RuntimeException("unlocated label");
             }
             // -1 to get delta from instruction start
             addSuperBlockStart(pc);
