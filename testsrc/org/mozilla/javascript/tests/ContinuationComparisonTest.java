@@ -12,10 +12,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.TestCase;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Interpreter;
 import org.mozilla.javascript.NativeContinuation;
-import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
 
 public class ContinuationComparisonTest extends TestCase {

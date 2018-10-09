@@ -15,8 +15,6 @@ import static org.junit.Assert.fail;
 import java.util.Collection;
 import java.util.Map;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 
