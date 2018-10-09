@@ -66,7 +66,7 @@ public class Bug482203Test extends TestCase {
             assertEquals(counter, 5);
             assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));
         } finally {
-        	Context.exit();
+            Context.exit();
         }
     }
 }

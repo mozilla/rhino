@@ -21,7 +21,7 @@ public class JSObjectEval {
      *
      */
     public static Object eval(JSObject obj, String code) {
-    	obj.eval(code);
-	    return null;
+        obj.eval(code);
+        return null;
     }
 }

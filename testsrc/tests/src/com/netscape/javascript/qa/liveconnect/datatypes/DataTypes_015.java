@@ -44,34 +44,34 @@ public class DataTypes_015 extends LiveConnectTest {
         super.setupTestEnvironment();
         global.eval( "var DT = "+
             "Packages.com.netscape.javascript.qa.liveconnect.DataTypeClass;");
-		global.eval( "var dt = new DT();" );			
-	}
+        global.eval( "var dt = new DT();" );            
+    }
 
-	public void	executeTest() {
-		doArrayTest( "DT.staticGetObjectArray();", true );
-		doArrayTest( "DT.PUB_STATIC_ARRAY_OBJECT;", true);
-		doArrayTest( "dt.getObjectArray();", true );
-		doArrayTest( "dt.PUB_ARRAY_OBJECT;", false );
-	}
-	/**
-	 *	Assign a java object array to a JavaScript variable in the following ways:
-	 *	<ul>
-	 *	<li>	Call a static method
-	 *	<li>	Get	the	value of a static field
-	 *	<li>	Call an	instance method
-	 *	<li>	Get	the	value of an	instance field.
-	 *
-	 *	@param command the command to eval to get the object array
-	 */
-	
-	public void	doArrayTest( String	command, boolean shouldEqual	) {
-		Object	array[]	 = DataTypeClass.PUB_STATIC_ARRAY_OBJECT;
-		Object	jsArray[];
-		int		jsArray_length;
-		
-		try	{
-			//	assign the array to	a JavaScript variable
-			global.eval( "var jsArray =	" +	command	);
+    public void    executeTest() {
+        doArrayTest( "DT.staticGetObjectArray();", true );
+        doArrayTest( "DT.PUB_STATIC_ARRAY_OBJECT;", true);
+        doArrayTest( "dt.getObjectArray();", true );
+        doArrayTest( "dt.PUB_ARRAY_OBJECT;", false );
+    }
+    /**
+     *    Assign a java object array to a JavaScript variable in the following ways:
+     *    <ul>
+     *    <li>    Call a static method
+     *    <li>    Get    the    value of a static field
+     *    <li>    Call an    instance method
+     *    <li>    Get    the    value of an    instance field.
+     *
+     *    @param command the command to eval to get the object array
+     */
+    
+    public void    doArrayTest( String    command, boolean shouldEqual    ) {
+        Object    array[]     = DataTypeClass.PUB_STATIC_ARRAY_OBJECT;
+        Object    jsArray[];
+        int        jsArray_length;
+        
+        try    {
+            //    assign the array to    a JavaScript variable
+            global.eval( "var jsArray =    " +    command    );
 
             // get the jsArray object, which should be the java array
             jsArray = (Object[]) global.getMember( "jsArray" );
@@ -90,9 +90,9 @@ public class DataTypes_015 extends LiveConnectTest {
                 Object item = (Object) global.eval( "jsArray[" + i +"];" );
 
                 addTestCase(
-					"[jsArray = " + command +"] "+
+                    "[jsArray = " + command +"] "+
                     "global.eval(\"jsArray["+i+"]\").equals( array["+i+"])",
-			        shouldEqual+"",
+                    shouldEqual+"",
                     item.equals(array[i]) +"",
                     "" );
             }
@@ -106,12 +106,12 @@ public class DataTypes_015 extends LiveConnectTest {
 
         // verify that jsArray is the same as the original array
 
-		addTestCase(
-			"[jsArray = "+ command +"] "+		
-			"jsArray = global.getMember( \"jsArray\"); "+
-			"jsArray == array",
-			( shouldEqual )+"",
-			(jsArray == array )	+"",
-			exception );
-	}
+        addTestCase(
+            "[jsArray = "+ command +"] "+        
+            "jsArray = global.getMember( \"jsArray\"); "+
+            "jsArray == array",
+            ( shouldEqual )+"",
+            (jsArray == array )    +"",
+            exception );
+    }
  }

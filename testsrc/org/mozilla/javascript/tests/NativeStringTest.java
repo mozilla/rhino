@@ -16,12 +16,12 @@ import junit.framework.TestCase;
  */
 public class NativeStringTest extends TestCase {
 
-	/**
-	 * Test for bug #492359
-	 * https://bugzilla.mozilla.org/show_bug.cgi?id=492359
-	 * Calling generic String or Array functions without arguments was causing ArrayIndexOutOfBoundsException
-	 * in 1.7R2
-	 */
+    /**
+     * Test for bug #492359
+     * https://bugzilla.mozilla.org/show_bug.cgi?id=492359
+     * Calling generic String or Array functions without arguments was causing ArrayIndexOutOfBoundsException
+     * in 1.7R2
+     */
     public void testtoLowerCaseApply() {
         assertEvaluates("hello", "var x = String.toLowerCase; x.apply('HELLO')");
         assertEvaluates("hello", "String.toLowerCase('HELLO')"); // first patch proposed to #492359 was breaking this
