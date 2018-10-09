@@ -8,6 +8,7 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.mozilla.javascript.Token;
 
 /**

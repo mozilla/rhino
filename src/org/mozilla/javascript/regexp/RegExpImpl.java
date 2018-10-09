@@ -6,7 +6,14 @@
 
 package org.mozilla.javascript.regexp;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.RegExpProxy;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 
 /**
  *

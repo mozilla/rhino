@@ -1,6 +1,13 @@
 package org.mozilla.javascript.tests.commonjs.module;
 
-import junit.framework.AssertionFailedError;
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mozilla.javascript.Context;
@@ -11,13 +18,7 @@ import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import junit.framework.AssertionFailedError;
 
 @RunWith(Parameterized.class)
 public class ComplianceTest {

@@ -38,9 +38,9 @@ public class DataTypes_018 extends LiveConnectTest {
         p( "BUGNUMBER: " + file.bugnumber );
     }
 
-	public void	executeTest() {
-	    p( "executing test" );
-	    
+    public void    executeTest() {
+        p( "executing test" );
+        
         String expectedFieldValue = "FIELD!";
         String expectedMethodValue = "METHOD!";
 
@@ -49,12 +49,12 @@ public class DataTypes_018 extends LiveConnectTest {
 
         String ambiguousReference = "amIAFieldOrAMethod";
 
-		try	{
-		    // From JavaScript, call the setter
-			actualFieldValue =
-			    (String) global.eval( "dt." + ambiguousReference );
-			actualMethodValue =
-			    (String) global.eval( "dt." + ambiguousReference +"()" );
+        try    {
+            // From JavaScript, call the setter
+            actualFieldValue =
+                (String) global.eval( "dt." + ambiguousReference );
+            actualMethodValue =
+                (String) global.eval( "dt." + ambiguousReference +"()" );
 
         } catch ( Exception e ) {
             e.printStackTrace();

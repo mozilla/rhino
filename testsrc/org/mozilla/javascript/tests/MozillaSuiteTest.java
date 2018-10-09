@@ -17,8 +17,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -27,6 +25,8 @@ import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.ShellTest;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
+
+import junit.framework.Assert;
 
 /**
  * This JUnit suite runs the Mozilla test suite (in mozilla.org CVS

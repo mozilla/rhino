@@ -6,8 +6,16 @@
 
 package org.mozilla.javascript.xmlimpl;
 
-import org.mozilla.javascript.*;
-import org.mozilla.javascript.xml.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.IdFunctionObject;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.NativeWith;
+import org.mozilla.javascript.Node;
+import org.mozilla.javascript.Ref;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.xml.XMLObject;
 
 /**
  *  This abstract class describes what all XML objects (XML, XMLList) should

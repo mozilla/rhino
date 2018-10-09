@@ -36,7 +36,7 @@ public class DataTypes_019 extends LiveConnectTest {
         file.bugnumber = "302019";
     }
 
-	public void	executeTest() {
+    public void    executeTest() {
         String expectedStringValue = DataTypeClass.PUB_STRING_REPRESENTATION;
         int expectedNumberValue = DataTypeClass.PUB_NUMBER_REPRESENTATION;
         double expectedDoubleValue = DataTypeClass.PUB_DOUBLE_REPRESENTATION;
@@ -48,14 +48,14 @@ public class DataTypes_019 extends LiveConnectTest {
         String jsString = "";
         double jsNumber = 0;
 
-		try	{
-			actualStringValue =
-			    (String) global.eval( "dt.toString()");
-			actualNumberValue =
-			    ((Double) global.eval( "dt.toNumber()")).doubleValue();
+        try    {
+            actualStringValue =
+                (String) global.eval( "dt.toString()");
+            actualNumberValue =
+                ((Double) global.eval( "dt.toNumber()")).doubleValue();
             actualDoubleValue = 
                 ((Double) global.eval( "dt.doubleValue()")).doubleValue();
-			    
+                
             jsString = 
                 (String) global.eval( "var jsString = String(dt); jsString" );
             jsNumber = 

@@ -7,11 +7,11 @@
  */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
+
+import junit.framework.TestCase;
 
 /**
  * @author Marc Guillemot
@@ -19,10 +19,10 @@ import org.mozilla.javascript.Scriptable;
 public class StackTraceTest extends TestCase {
     final static String LS = System.getProperty("line.separator");
 
-	/**
-	 * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some
-	 * native function has been made.
-	 */
+    /**
+     * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some
+     * native function has been made.
+     */
     public void testFailureStackTrace() {
         RhinoException.useMozillaStackStyle(false);
         final String source1 = "function f2() { throw 'hello'; }; f2();";
@@ -35,8 +35,8 @@ public class StackTraceTest extends TestCase {
         runWithExpectedStackTrace(source3, result);
     }
 
-	private void runWithExpectedStackTrace(final String _source, final String _expectedStackTrace)
-	{
+    private void runWithExpectedStackTrace(final String _source, final String _expectedStackTrace)
+    {
         Utils.runWithOptimizationLevel(cx -> {
             final Scriptable scope = cx.initStandardObjects();
             try {
@@ -49,5 +49,5 @@ public class StackTraceTest extends TestCase {
             }
             throw new RuntimeException("Exception expected!");
         }, -1);
-	}
+    }
  }

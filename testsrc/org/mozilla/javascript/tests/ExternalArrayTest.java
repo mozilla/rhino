@@ -1,5 +1,10 @@
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertFalse;
+
+import java.io.FileReader;
+import java.io.IOException;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,11 +16,6 @@ import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.typedarrays.NativeFloat64Array;
 import org.mozilla.javascript.typedarrays.NativeInt16Array;
 import org.mozilla.javascript.typedarrays.NativeInt32Array;
-
-import java.io.FileReader;
-import java.io.IOException;
-
-import static org.junit.Assert.assertFalse;
 
 public class ExternalArrayTest
 {

@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.util.Iterator;
+
 import org.mozilla.javascript.ScriptableObject.Slot;
 import org.mozilla.javascript.ScriptableObject.SlotAccess;
 

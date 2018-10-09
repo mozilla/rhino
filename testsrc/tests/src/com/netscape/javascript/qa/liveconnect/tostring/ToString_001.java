@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package	com.netscape.javascript.qa.liveconnect.tostring;
+package    com.netscape.javascript.qa.liveconnect.tostring;
 
 import com.netscape.javascript.qa.liveconnect.*;
 import netscape.javascript.*;
@@ -23,32 +23,32 @@ import netscape.javascript.*;
  *
  *  ie it should return the JavaScript string representation of that object.
  *
- *	@see netscape.javascript.JSObject
+ *    @see netscape.javascript.JSObject
  *
- *	@author	christine m	begle
+ *    @author    christine m    begle
  */
-public class ToString_001	extends	LiveConnectTest	{
-	public ToString_001()	{
-		super();
-	}
+public class ToString_001    extends    LiveConnectTest    {
+    public ToString_001()    {
+        super();
+    }
 
-	public static void main( String[] args ) {
-		ToString_001 test	= new ToString_001();
-		test.start();
-	}
+    public static void main( String[] args ) {
+        ToString_001 test    = new ToString_001();
+        test.start();
+    }
 
-	public void	setupTestEnvironment() {
-		super.setupTestEnvironment();
-	}
+    public void    setupTestEnvironment() {
+        super.setupTestEnvironment();
+    }
 
-	public void	executeTest() {
-		Object data[] =	getDataArray();
+    public void    executeTest() {
+        Object data[] =    getDataArray();
 
-		for	( int i	= 0; i < data.length; i++ )	{
-			JSObject jsObject =	getJSObject( (Object[]) data[i] );
+        for    ( int i    = 0; i < data.length; i++ )    {
+            JSObject jsObject =    getJSObject( (Object[]) data[i] );
             getStrings( jsObject, (Object[]) data[i] );
-		}
-	}
+        }
+    }
     
     public void getStrings( JSObject jsObject, Object[] data ) {
         String eString = (String) data[2];
@@ -81,44 +81,44 @@ public class ToString_001	extends	LiveConnectTest	{
         }            
     }
 
-	/**
-	 *  Create and return a JSObject using data in the data array.
-	 *
-	 *  @param data Object array containing name of JSObject, and assignment
-	 *  expression
-	 *  @return the JSObject
-	 */
-	public JSObject	getJSObject( Object[] data ) {
-	    global.eval( (String) data[1] );
-	    JSObject theThis = (JSObject) global.getMember( (String) data[0] );
-		return theThis;
-	}
+    /**
+     *  Create and return a JSObject using data in the data array.
+     *
+     *  @param data Object array containing name of JSObject, and assignment
+     *  expression
+     *  @return the JSObject
+     */
+    public JSObject    getJSObject( Object[] data ) {
+        global.eval( (String) data[1] );
+        JSObject theThis = (JSObject) global.getMember( (String) data[0] );
+        return theThis;
+    }
 
-	/**
-	 *	Get	the	data array,	which is an	object array data arrays, which	are
-	 *	also object	arrays.	  The data arrays consist of 8 items
-	 *
-	 *	<ul>
-	 *	<li>	Identifier for JavaScript object
-	 *	<li>	Assignment expression to initialize JavaScript object
-	 *  <li>    expected string value of the object
-	 *	</ul>
-	 *
-	 *	To add test	cases to this test,	modify this	method.
-	 *
-	 *	@return	the	data array.
-	 */
-	public Object[]	getDataArray() {
-		Object d0[]	= {
-		    new String( "o" ),            // 0 identifier
-			new	String(	"var o = new Object()"),	// 1 complete expression for instantiation or assignment
-			new String( "[object Object]" )
-		};
+    /**
+     *    Get    the    data array,    which is an    object array data arrays, which    are
+     *    also object    arrays.      The data arrays consist of 8 items
+     *
+     *    <ul>
+     *    <li>    Identifier for JavaScript object
+     *    <li>    Assignment expression to initialize JavaScript object
+     *  <li>    expected string value of the object
+     *    </ul>
+     *
+     *    To add test    cases to this test,    modify this    method.
+     *
+     *    @return    the    data array.
+     */
+    public Object[]    getDataArray() {
+        Object d0[]    = {
+            new String( "o" ),            // 0 identifier
+            new    String(    "var o = new Object()"),    // 1 complete expression for instantiation or assignment
+            new String( "[object Object]" )
+        };
 
-		Object d1[] = {
-		    new String( "num" ),
-		    new String( "num = new Number(12345)" ),
-	        new String( "12345" )
+        Object d1[] = {
+            new String( "num" ),
+            new String( "num = new Number(12345)" ),
+            new String( "12345" )
         };
 
         Object d2[] = {
@@ -139,7 +139,7 @@ public class ToString_001	extends	LiveConnectTest	{
             new String( "1,2,3,4,5")
         };            
 
-	    Object dataArray[] = { d0, d1, d2, d3, d4 };
-		return dataArray;
-	}
+        Object dataArray[] = { d0, d1, d2, d3, d4 };
+        return dataArray;
+    }
  }

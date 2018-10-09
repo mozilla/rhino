@@ -106,8 +106,7 @@
 
         <!-- Checks for imports                              -->
         <!-- See http://checkstyle.sf.net/config_import.html -->
-        <!-- Unfortunately there's a lot of code to change with star imports... -->
-        <!-- <module name="AvoidStarImport"/> -->
+        <module name="AvoidStarImport"/>
         <module name="IllegalImport"/>
         <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>

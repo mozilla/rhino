@@ -4,16 +4,16 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.Objects;
+
 import org.junit.Test;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.NodeVisitor;
 import org.mozilla.javascript.ast.ReturnStatement;
-
-import java.util.Objects;
-
-import static org.junit.Assert.assertEquals;
 
 public class ArrowFnPositionBugTest {
     /**

@@ -6,11 +6,19 @@
 
 package org.mozilla.javascript.tools;
 
-import org.mozilla.javascript.*;
-
+import java.io.PrintStream;
 import java.text.MessageFormat;
-import java.io.*;
-import java.util.*;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.EcmaError;
+import org.mozilla.javascript.ErrorReporter;
+import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.JavaScriptException;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.SecurityUtilities;
+import org.mozilla.javascript.WrappedException;
 
 /**
  * Error reporter for tools.

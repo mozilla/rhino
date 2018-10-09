@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.util.Iterator;
 import java.util.concurrent.locks.StampedLock;
+
 import org.mozilla.javascript.ScriptableObject.Slot;
 import org.mozilla.javascript.ScriptableObject.SlotAccess;
 

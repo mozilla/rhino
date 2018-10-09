@@ -1,10 +1,10 @@
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
-
-import static org.junit.Assert.*;
 
 public class InitializationTest
 {

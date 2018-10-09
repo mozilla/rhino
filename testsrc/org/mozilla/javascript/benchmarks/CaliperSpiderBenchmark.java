@@ -1,19 +1,19 @@
 package org.mozilla.javascript.benchmarks;
 
-import com.google.caliper.AfterExperiment;
-import com.google.caliper.BeforeExperiment;
-import com.google.caliper.Benchmark;
-import com.google.caliper.Param;
-import com.google.caliper.api.Macrobenchmark;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
+import com.google.caliper.AfterExperiment;
+import com.google.caliper.BeforeExperiment;
+import com.google.caliper.Param;
+import com.google.caliper.api.Macrobenchmark;
 
 @SuppressWarnings("unused")
 public class CaliperSpiderBenchmark

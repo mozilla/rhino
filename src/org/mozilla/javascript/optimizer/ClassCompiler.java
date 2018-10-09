@@ -6,7 +6,12 @@
 
 package org.mozilla.javascript.optimizer;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.IRFactory;
+import org.mozilla.javascript.JavaAdapter;
+import org.mozilla.javascript.ObjToIntMap;
+import org.mozilla.javascript.Parser;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;

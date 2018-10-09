@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.EvaluatorException;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mozilla.javascript.EvaluatorException;
 
 /**
  * An error reporter that gathers the errors and warnings for later display.

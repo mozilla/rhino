@@ -1,16 +1,14 @@
 package org.mozilla.javascript.benchmarks;
 
-import com.google.caliper.api.ResultProcessor;
-import com.google.caliper.model.Measurement;
-import com.google.caliper.model.Trial;
-import com.google.caliper.model.Value;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.Map;
+
+import com.google.caliper.api.ResultProcessor;
+import com.google.caliper.model.Measurement;
+import com.google.caliper.model.Trial;
 
 public class ResultPlotter
     implements ResultProcessor

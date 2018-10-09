@@ -5,11 +5,9 @@
 package org.mozilla.javascript.tests;
 
 import org.junit.Assert;
-import org.mozilla.javascript.Function;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.ContextAction;
-import org.mozilla.javascript.Context;
 import org.junit.Test;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Function;
 
 public class Bug496585Test {
     public String method(String one, Function function) {

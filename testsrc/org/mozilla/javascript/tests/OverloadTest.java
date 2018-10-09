@@ -7,7 +7,6 @@
  */
 package org.mozilla.javascript.tests;
 
-import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -15,8 +14,7 @@ import static org.junit.Assert.fail;
 import java.util.Collection;
 import java.util.Map;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
+import org.junit.Test;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 

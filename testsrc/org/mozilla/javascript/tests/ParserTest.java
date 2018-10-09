@@ -4,21 +4,51 @@
 
 package org.mozilla.javascript.tests;
 
-import org.mozilla.javascript.ErrorReporter;
-import org.mozilla.javascript.ast.*;
-
-import org.mozilla.javascript.CompilerEnvirons;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.EvaluatorException;
-import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.Token;
-import org.mozilla.javascript.testing.TestErrorReporter;
-
-import junit.framework.TestCase;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+
+import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ErrorReporter;
+import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.Parser;
+import org.mozilla.javascript.Token;
+import org.mozilla.javascript.ast.Assignment;
+import org.mozilla.javascript.ast.AstNode;
+import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.Block;
+import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.Comment;
+import org.mozilla.javascript.ast.ConditionalExpression;
+import org.mozilla.javascript.ast.ElementGet;
+import org.mozilla.javascript.ast.ExpressionStatement;
+import org.mozilla.javascript.ast.ForLoop;
+import org.mozilla.javascript.ast.FunctionCall;
+import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.IfStatement;
+import org.mozilla.javascript.ast.InfixExpression;
+import org.mozilla.javascript.ast.LabeledStatement;
+import org.mozilla.javascript.ast.Name;
+import org.mozilla.javascript.ast.NumberLiteral;
+import org.mozilla.javascript.ast.ObjectLiteral;
+import org.mozilla.javascript.ast.ObjectProperty;
+import org.mozilla.javascript.ast.ParenthesizedExpression;
+import org.mozilla.javascript.ast.PropertyGet;
+import org.mozilla.javascript.ast.RegExpLiteral;
+import org.mozilla.javascript.ast.ReturnStatement;
+import org.mozilla.javascript.ast.Scope;
+import org.mozilla.javascript.ast.StringLiteral;
+import org.mozilla.javascript.ast.SwitchCase;
+import org.mozilla.javascript.ast.SwitchStatement;
+import org.mozilla.javascript.ast.TryStatement;
+import org.mozilla.javascript.ast.UnaryExpression;
+import org.mozilla.javascript.ast.VariableDeclaration;
+import org.mozilla.javascript.ast.VariableInitializer;
+import org.mozilla.javascript.ast.WithStatement;
+import org.mozilla.javascript.testing.TestErrorReporter;
+
+import junit.framework.TestCase;
 
 public class ParserTest extends TestCase {
     CompilerEnvirons environment;
@@ -44,8 +74,8 @@ public class ParserTest extends TestCase {
 
     public void testParseAutoSemiColonBeforeNewlineAndComments() throws IOException {
         AstRoot root = parseAsReader(
-        		"var s = 3\n"
-        		+ "/* */ /*  test comment */ var t = 1;");
+                "var s = 3\n"
+                + "/* */ /*  test comment */ var t = 1;");
         assertNotNull(root.getComments());
         assertEquals(2, root.getComments().size());
 
@@ -54,8 +84,8 @@ public class ParserTest extends TestCase {
 
     public void testNewlineAndComments() throws IOException {
         AstRoot root = parseAsReader(
-        		"var s = 3;\n"
-        		+ "/* */ /* txt */var t = 1");
+                "var s = 3;\n"
+                + "/* */ /* txt */var t = 1");
         assertNotNull(root.getComments());
         assertEquals(2, root.getComments().size());
 

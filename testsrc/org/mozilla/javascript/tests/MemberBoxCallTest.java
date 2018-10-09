@@ -4,12 +4,18 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Test;
-import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 
-import org.mozilla.javascript.*;
-import org.mozilla.javascript.annotations.*;
+import org.junit.Before;
+import org.junit.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.annotations.JSConstructor;
+import org.mozilla.javascript.annotations.JSFunction;
+import org.mozilla.javascript.annotations.JSGetter;
+import org.mozilla.javascript.annotations.JSSetter;
+import org.mozilla.javascript.annotations.JSStaticFunction;
 
 public class MemberBoxCallTest {
 

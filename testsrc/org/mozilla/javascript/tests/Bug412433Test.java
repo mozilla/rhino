@@ -7,9 +7,10 @@
  */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptableObject;
 
-import org.mozilla.javascript.*;
+import junit.framework.TestCase;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=412433
@@ -20,8 +21,8 @@ public class Bug412433Test extends TestCase {
     {
         Context context = Context.enter();
         try {
-	        ScriptableObject scope = context.initStandardObjects();
-	        context.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
+            ScriptableObject scope = context.initStandardObjects();
+            context.evaluateString(scope, "\"\".split(/[/?,/&]/)", "", 0, null);
         } finally {
             Context.exit();
         }

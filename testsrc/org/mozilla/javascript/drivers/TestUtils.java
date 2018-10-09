@@ -4,11 +4,15 @@
 
 package org.mozilla.javascript.drivers;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.Arrays;
 
 import org.mozilla.javascript.ContextFactory;
 

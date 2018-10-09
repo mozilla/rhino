@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.Token;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mozilla.javascript.Token;
 
 /**
  * Switch-case AST node type.  The switch case is always part of a

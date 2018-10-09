@@ -6,13 +6,13 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.regexp.NativeRegExp;
+import static org.mozilla.javascript.ScriptRuntime.rangeError;
+import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 import java.text.Collator;
 import java.text.Normalizer;
 
-import static org.mozilla.javascript.ScriptRuntime.rangeError;
-import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
+import org.mozilla.javascript.regexp.NativeRegExp;
 
 /**
  * This class implements the String native object.

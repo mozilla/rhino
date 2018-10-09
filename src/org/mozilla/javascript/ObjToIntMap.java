@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript;
 
-import java.io.Serializable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 /**
  * Map to associate objects to integers.

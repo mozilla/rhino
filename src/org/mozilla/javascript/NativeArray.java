@@ -6,7 +6,7 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.regexp.NativeRegExp;
+import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
+import org.mozilla.javascript.regexp.NativeRegExp;
 
 /**
  * This class implements the Array native object.

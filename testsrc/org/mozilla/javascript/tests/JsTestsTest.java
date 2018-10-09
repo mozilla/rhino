@@ -9,8 +9,8 @@ import java.io.FileFilter;
 import java.io.IOException;
 
 import org.junit.Test;
-import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.drivers.JsTestsBase;
+import org.mozilla.javascript.drivers.TestUtils;
 
 public class JsTestsTest extends JsTestsBase {
     static final String baseDirectory = "testsrc" + File.separator + "jstests";

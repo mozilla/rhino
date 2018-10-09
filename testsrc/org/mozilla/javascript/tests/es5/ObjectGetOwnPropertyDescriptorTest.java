@@ -6,10 +6,12 @@
  * Tests for the Object.getOwnPropertyDescriptor(obj, prop) method
  */
 package org.mozilla.javascript.tests.es5;
-import org.mozilla.javascript.*;
-import static org.mozilla.javascript.tests.Evaluator.eval;
 import static org.junit.Assert.assertEquals;
+import static org.mozilla.javascript.tests.Evaluator.eval;
+
 import org.junit.Test;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.ScriptableObject;
 
 public class ObjectGetOwnPropertyDescriptorTest {
 

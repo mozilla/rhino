@@ -7,13 +7,13 @@
  */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
+import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.drivers.TestUtils;
+
+import junit.framework.TestCase;
 
 /**
  * @author Norris Boyd

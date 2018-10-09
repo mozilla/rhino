@@ -6,13 +6,13 @@ package org.mozilla.javascript.tests;
 
 import java.io.InputStreamReader;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+
+import junit.framework.TestCase;
 
 public class Bug482203Test extends TestCase {
     
@@ -66,7 +66,7 @@ public class Bug482203Test extends TestCase {
             assertEquals(counter, 5);
             assertEquals(Double.valueOf(3), ScriptableObject.getProperty(scope, "result"));
         } finally {
-        	Context.exit();
+            Context.exit();
         }
     }
 }

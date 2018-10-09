@@ -1,15 +1,17 @@
 package org.mozilla.javascript.tests.backwardcompat;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.tools.shell.Global;
-
-import static org.junit.Assert.*;
 
 public class BackwardUseStrict {
   private static String source;

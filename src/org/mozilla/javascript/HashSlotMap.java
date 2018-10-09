@@ -8,7 +8,8 @@ package org.mozilla.javascript;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import static org.mozilla.javascript.ScriptableObject.SlotAccess.*;
+
+import org.mozilla.javascript.ScriptableObject.SlotAccess;
 
 /**
  * This class implements the SlotMap interface using a java.util.HashMap. This class has more
@@ -72,13 +73,13 @@ public class HashSlotMap
         if (slot != null) {
             ScriptableObject.Slot newSlot;
 
-            if (accessType == MODIFY_GETTER_SETTER
+            if (accessType == SlotAccess.MODIFY_GETTER_SETTER
                     && !(slot instanceof ScriptableObject.GetterSlot)) {
                 newSlot = new ScriptableObject.GetterSlot(name, slot.indexOrHash, slot.getAttributes());
-            } else if (accessType == CONVERT_ACCESSOR_TO_DATA
+            } else if (accessType == SlotAccess.CONVERT_ACCESSOR_TO_DATA
                     && (slot instanceof ScriptableObject.GetterSlot)) {
                 newSlot = new ScriptableObject.Slot(name, slot.indexOrHash, slot.getAttributes());
-            } else if (accessType == MODIFY_CONST) {
+            } else if (accessType == SlotAccess.MODIFY_CONST) {
                 return null;
             } else {
                 return slot;
@@ -88,10 +89,10 @@ public class HashSlotMap
             return newSlot;
         }
 
-        ScriptableObject.Slot newSlot = (accessType == MODIFY_GETTER_SETTER
+        ScriptableObject.Slot newSlot = (accessType == SlotAccess.MODIFY_GETTER_SETTER
                 ? new ScriptableObject.GetterSlot(key, index, 0)
                 : new ScriptableObject.Slot(key, index, 0));
-        if (accessType == MODIFY_CONST) {
+        if (accessType == SlotAccess.MODIFY_CONST) {
             newSlot.setAttributes(ScriptableObject.CONST);
         }
         addSlot(newSlot);

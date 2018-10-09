@@ -6,15 +6,21 @@
 
 package org.mozilla.javascript.jdk15;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.Iterator;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.Iterator;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.InterfaceAdapter;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.VMBridge;
+import org.mozilla.javascript.Wrapper;
 
 public class VMBridge_jdk15 extends VMBridge
 {

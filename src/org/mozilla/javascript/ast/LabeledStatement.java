@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.Token;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mozilla.javascript.Token;
 
 /**
  * A labeled statement.  A statement can have more than one label.  In

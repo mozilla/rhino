@@ -1,5 +1,11 @@
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -7,12 +13,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test cases for ToNumber conversion applied to a String type.

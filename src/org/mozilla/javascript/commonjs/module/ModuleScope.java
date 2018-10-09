@@ -4,10 +4,10 @@
 
 package org.mozilla.javascript.commonjs.module;
 
+import java.net.URI;
+
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
-
-import java.net.URI;
 
 /**
  * A top-level module scope. This class provides methods to retrieve the

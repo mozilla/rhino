@@ -4,19 +4,24 @@
 
 package org.mozilla.javascript.tests.es6;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Iterator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Hashtable;
 import org.mozilla.javascript.Hashtable.Entry;
 import org.mozilla.javascript.Undefined;
-
-import static org.junit.Assert.*;
 
 /**
  * These are some tests for the Hashtable implementation that's used by the collection

@@ -7,13 +7,13 @@
  */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ClassShutter;
-import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Scriptable;
+
+import junit.framework.TestCase;
 
 /**
  * @author Norris Boyd

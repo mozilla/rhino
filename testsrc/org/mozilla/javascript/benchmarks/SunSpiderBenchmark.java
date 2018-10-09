@@ -1,12 +1,17 @@
 package org.mozilla.javascript.benchmarks;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.HashMap;
+
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.tools.shell.Global;
-
-import java.io.*;
-import java.util.HashMap;
 
 public class SunSpiderBenchmark
 {

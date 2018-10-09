@@ -6,12 +6,17 @@
 
 package org.mozilla.javascript.serialize;
 
-import java.util.Map;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
-import java.io.*;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.UniqueTag;
 
 /**
  * Class ScriptableOutputStream is an ObjectOutputStream used

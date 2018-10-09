@@ -6,11 +6,11 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.Token;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.mozilla.javascript.Token;
 
 /**
  * Switch statement AST node type.

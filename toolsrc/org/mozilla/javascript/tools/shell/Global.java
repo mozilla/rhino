@@ -6,23 +6,54 @@
 
 package org.mozilla.javascript.tools.shell;
 
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
-import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import org.mozilla.javascript.*;
+import java.util.regex.Pattern;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextAction;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.ErrorReporter;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Synchronizer;
+import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.RequireBuilder;
 import org.mozilla.javascript.commonjs.module.provider.SoftCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
+import org.mozilla.javascript.serialize.ScriptableInputStream;
+import org.mozilla.javascript.serialize.ScriptableOutputStream;
 import org.mozilla.javascript.tools.ToolErrorReporter;
-import org.mozilla.javascript.serialize.*;
 
 /**
  * This class provides for sharing functions across multiple threads.

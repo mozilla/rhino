@@ -45,27 +45,27 @@ public class DataTypes_009 extends LiveConnectTest {
         super.setupTestEnvironment();
         global.eval( "var DT = "+
             "Packages.com.netscape.javascript.qa.liveconnect.DataTypeClass");
-		global.eval( "var dt = new DT();" );			            
+        global.eval( "var dt = new DT();" );                        
     }
 
-	public void	executeTest() {
-		doArrayTest( "DT.staticGetCharArray();", true );
-		doArrayTest( "DT.PUB_STATIC_ARRAY_CHAR;", true);
-		doArrayTest( "dt.getCharArray();", true );
-		doArrayTest( "dt.PUB_ARRAY_CHAR;", false );
-	}
-	/**
-	 *	Assign a java array to a JavaScript variable in the following ways:
-	 *	<ul>
-	 *	<li>	Call a static method
-	 *	<li>	Get	the	value of a static field
-	 *	<li>	Call an	instance method
-	 *	<li>	Get	the	value of an	instance field.
-	 *
-	 *	@param command the command to eval to get the array
-	 */
-	
-	public void	doArrayTest( String	command, boolean shouldEqual ) {
+    public void    executeTest() {
+        doArrayTest( "DT.staticGetCharArray();", true );
+        doArrayTest( "DT.PUB_STATIC_ARRAY_CHAR;", true);
+        doArrayTest( "dt.getCharArray();", true );
+        doArrayTest( "dt.PUB_ARRAY_CHAR;", false );
+    }
+    /**
+     *    Assign a java array to a JavaScript variable in the following ways:
+     *    <ul>
+     *    <li>    Call a static method
+     *    <li>    Get    the    value of a static field
+     *    <li>    Call an    instance method
+     *    <li>    Get    the    value of an    instance field.
+     *
+     *    @param command the command to eval to get the array
+     */
+    
+    public void    doArrayTest( String    command, boolean shouldEqual ) {
         char    array[]  = DataTypeClass.PUB_STATIC_ARRAY_CHAR;
         char    jsArray[];
         int     jsArray_length;
@@ -91,7 +91,7 @@ public class DataTypes_009 extends LiveConnectTest {
                 Double item = (Double) global.eval( "jsArray[" + i +"];" );
 
                 addTestCase(
-					"[ jsArray = " + command +"] "+                
+                    "[ jsArray = " + command +"] "+                
                     "global.eval(\"jsArray["+i+"]\").equals( array["+i+"])",
                     "true",
                     (item.equals(new Double(array[i]))) +"",
@@ -108,7 +108,7 @@ public class DataTypes_009 extends LiveConnectTest {
         // verify that jsArray is the same as the original array
 
         addTestCase(
-			"[jsArray = "+ command +"] "+		        
+            "[jsArray = "+ command +"] "+                
             "jsArray = global.getMember( \"jsArray\"); "+
             "jsArray == array",
             (shouldEqual) ? "true" : "false",
