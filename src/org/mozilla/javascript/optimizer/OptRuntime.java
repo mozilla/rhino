@@ -7,6 +7,7 @@ package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.ArrowFunction;
 import org.mozilla.javascript.Callable;
+import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
@@ -18,8 +19,6 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-
-import jdk.nashorn.internal.runtime.ConsString;
 
 public final class OptRuntime extends ScriptRuntime
 {
