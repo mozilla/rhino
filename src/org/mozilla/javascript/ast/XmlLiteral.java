@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.Token;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mozilla.javascript.Token;
 
 /**
  * AST node for an E4X (Ecma-357) embedded XML literal.  Node type is

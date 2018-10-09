@@ -6,12 +6,12 @@
 
 package org.mozilla.javascript.json;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptRuntime;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
 
 /**
  * This class converts a stream of JSON tokens into a JSON value.

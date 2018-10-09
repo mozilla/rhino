@@ -6,11 +6,11 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.Node;
-import org.mozilla.javascript.Token;
-
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.mozilla.javascript.Node;
+import org.mozilla.javascript.Token;
 
 /**
  * Node for the root of a parse tree.  It contains the statements and functions

@@ -6,9 +6,9 @@
 
 package org.mozilla.javascript;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.io.Serializable;
 
 /**
  * Cache of generated classes and data structures to access Java runtime

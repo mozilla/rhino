@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.Token;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mozilla.javascript.Token;
 
 /**
  * A list of one or more var, const or let declarations.

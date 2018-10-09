@@ -6,12 +6,12 @@
 
 package org.mozilla.javascript.serialize;
 
-import java.util.Map;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.mozilla.javascript.Scriptable;

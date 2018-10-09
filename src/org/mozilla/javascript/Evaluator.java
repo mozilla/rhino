@@ -6,9 +6,9 @@
 
 package org.mozilla.javascript;
 
-import org.mozilla.javascript.ast.ScriptNode;
-
 import java.util.List;
+
+import org.mozilla.javascript.ast.ScriptNode;
 
 /**
  * Abstraction of evaluation, which can be implemented either by an

@@ -4,10 +4,10 @@
 
 package org.mozilla.javascript.commonjs.module;
 
+import java.net.URI;
+
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
-
-import java.net.URI;
 
 /**
  * Should be implemented by Rhino embeddings to allow the require() function to

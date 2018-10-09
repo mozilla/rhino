@@ -9,10 +9,10 @@ package org.mozilla.classfile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+
 import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.UintMap;
-
-import java.util.Arrays;
 
 /**
  * ClassFileWriter

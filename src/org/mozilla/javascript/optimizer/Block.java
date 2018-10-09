@@ -4,18 +4,17 @@
 
 package org.mozilla.javascript.optimizer;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.ObjToIntMap;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.Jump;
-
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 class Block
 {
