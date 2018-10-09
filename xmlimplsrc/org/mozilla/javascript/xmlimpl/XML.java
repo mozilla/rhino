@@ -6,7 +6,10 @@
 
 package org.mozilla.javascript.xmlimpl;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.xml.XMLObject;
 
 class XML extends XMLObjectImpl {
