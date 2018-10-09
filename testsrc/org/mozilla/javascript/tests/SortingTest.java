@@ -1,14 +1,15 @@
 package org.mozilla.javascript.tests;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mozilla.javascript.Sorting;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mozilla.javascript.Sorting;
 
 public class SortingTest {
     private static final int BIG_ARRAY = 100000;

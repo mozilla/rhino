@@ -1,7 +1,8 @@
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
 import org.mozilla.javascript.ConsString;
+
+import junit.framework.TestCase;
 
 public class ConsStringTest extends TestCase {
 

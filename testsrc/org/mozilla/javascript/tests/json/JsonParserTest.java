@@ -6,16 +6,14 @@ package org.mozilla.javascript.tests.json;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeObject;
-
 import org.mozilla.javascript.json.JsonParser;
 import org.mozilla.javascript.json.JsonParser.ParseException;
-
-import org.junit.Before;
-import org.junit.After;
-import org.junit.Test;
 
 public class JsonParserTest {
     private JsonParser parser;

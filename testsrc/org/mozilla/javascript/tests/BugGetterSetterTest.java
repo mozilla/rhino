@@ -4,16 +4,16 @@
 
 package org.mozilla.javascript.tests;
 
+import static junit.framework.Assert.assertEquals;
+
+import java.io.IOException;
+import java.io.StringReader;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
-
-import java.io.IOException;
-import java.io.StringReader;
-
-import static junit.framework.Assert.assertEquals;
 
 public class BugGetterSetterTest {
     private CompilerEnvirons environment = new CompilerEnvirons();

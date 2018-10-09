@@ -4,6 +4,8 @@
 
 package org.mozilla.javascript.drivers;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,8 +14,6 @@ import org.junit.BeforeClass;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
-
-import static org.junit.Assert.*;
 
 public abstract class JsTestsBase {
     private int optimizationLevel;

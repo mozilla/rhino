@@ -4,13 +4,14 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.EvaluatorException;
-
-import static org.junit.Assert.*;
+import org.mozilla.javascript.ScriptableObject;
 
 /**
  * Test of strict mode APIs.

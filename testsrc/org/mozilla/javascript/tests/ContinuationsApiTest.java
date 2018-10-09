@@ -6,19 +6,24 @@
 
 package org.mozilla.javascript.tests;
 
-import java.io.*;
-
-import junit.framework.TestCase;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ContinuationPending;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.WrappedException;
 import org.mozilla.javascript.serialize.ScriptableInputStream;
 import org.mozilla.javascript.serialize.ScriptableOutputStream;
+
+import junit.framework.TestCase;
 
 
 /**

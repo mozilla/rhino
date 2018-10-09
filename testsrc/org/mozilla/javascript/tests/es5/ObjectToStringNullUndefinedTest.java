@@ -7,14 +7,13 @@
  */
 package org.mozilla.javascript.tests.es5;
 
-import org.junit.After;
-import org.junit.Before;
-import org.mozilla.javascript.*;
-
-import static org.mozilla.javascript.tests.Evaluator.eval;
 import static org.junit.Assert.assertEquals;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptableObject;
 
 public class ObjectToStringNullUndefinedTest {
     private Context cx;

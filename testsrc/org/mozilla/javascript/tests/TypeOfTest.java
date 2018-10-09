@@ -4,8 +4,6 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
@@ -13,6 +11,8 @@ import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+
+import junit.framework.TestCase;
 
 /**
  * Takes care that it's possible to customize the result of the typeof operator.

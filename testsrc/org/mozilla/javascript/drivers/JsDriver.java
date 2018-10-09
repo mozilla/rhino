@@ -4,12 +4,21 @@
 
 package org.mozilla.javascript.drivers;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
-import org.w3c.dom.*;
-
-import org.mozilla.javascript.tools.shell.*;
+import org.mozilla.javascript.tools.shell.ShellContextFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * @version $Id: JsDriver.java,v 1.10 2009/05/15 12:30:45 nboyd%atg.com Exp $

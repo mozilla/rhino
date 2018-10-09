@@ -3,12 +3,11 @@ package org.mozilla.javascript.tests;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringWriter;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.tools.shell.Global;
-
-import static org.junit.Assert.*;
 
 public class HashCollisionTest {
   private static final String mediumInput = "testsrc/jstests/collisions.json";

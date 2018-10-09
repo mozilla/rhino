@@ -7,8 +7,6 @@
  */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.NativeJavaObject;
@@ -16,6 +14,8 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
+
+import junit.framework.TestCase;
 
 /**
  * @author donnamalayeri

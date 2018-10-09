@@ -7,7 +7,7 @@
  */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.After;
 import org.junit.Before;

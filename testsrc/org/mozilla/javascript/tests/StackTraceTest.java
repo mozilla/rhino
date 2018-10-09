@@ -7,11 +7,11 @@
  */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
+
+import junit.framework.TestCase;
 
 /**
  * @author Marc Guillemot

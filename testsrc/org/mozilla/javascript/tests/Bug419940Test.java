@@ -4,9 +4,11 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Scriptable;
 
-import org.mozilla.javascript.*;
+import junit.framework.TestCase;
 
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=419940

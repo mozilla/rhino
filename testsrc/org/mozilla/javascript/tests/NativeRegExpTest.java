@@ -4,10 +4,10 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
+
+import junit.framework.TestCase;
 
 public class NativeRegExpTest extends TestCase {
 

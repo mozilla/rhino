@@ -6,12 +6,14 @@
  * Tests for Function.prototype.apply method
  */
 package org.mozilla.javascript.tests.es5;
-import org.mozilla.javascript.*;
-
 import static org.junit.Assert.assertEquals;
-import org.junit.Test;
-import org.junit.Before;
+
 import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
 
 public class FunctionApplyArrayLikeArguments {
     

@@ -4,11 +4,11 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ScriptableObject;
+
+import junit.framework.TestCase;
 
 /**
  * Primitive numbers are not wrapped before calling apply.

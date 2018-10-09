@@ -4,6 +4,8 @@
 
 package org.mozilla.javascript.tests.es5;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,8 +15,6 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author André Bargull

@@ -4,11 +4,10 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
-
 import org.junit.Test;
 import org.mozilla.javascript.ScriptableObject;
+
+import junit.framework.TestCase;
 
 /**
  * Test for delete that should apply for properties defined in prototype chain.

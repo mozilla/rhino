@@ -7,9 +7,9 @@
  */
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.Scriptable;
+
+import junit.framework.TestCase;
 
 /**
  * Tests for global functions parseFloat and parseInt.

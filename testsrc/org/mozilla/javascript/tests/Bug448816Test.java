@@ -4,11 +4,15 @@
 
 package org.mozilla.javascript.tests;
 
-import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.Context;
-import junit.framework.TestCase;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import java.util.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptableObject;
+
+import junit.framework.TestCase;
 
 
 /**

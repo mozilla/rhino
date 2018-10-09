@@ -3,9 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript.tests;
-import org.mozilla.javascript.*;
 import java.util.Collections;
 import java.util.Map;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Scriptable;
 
 public class Evaluator {
 

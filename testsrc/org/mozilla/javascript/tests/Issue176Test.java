@@ -6,12 +6,12 @@ package org.mozilla.javascript.tests;
 
 import java.io.InputStreamReader;
 
-import junit.framework.TestCase;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+
+import junit.framework.TestCase;
 
 public class Issue176Test extends TestCase {
 

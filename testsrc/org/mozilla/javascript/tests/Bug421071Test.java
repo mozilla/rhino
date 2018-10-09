@@ -9,12 +9,13 @@
 
 package org.mozilla.javascript.tests;
 
-import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
+
+import junit.framework.TestCase;
 
 public class Bug421071Test extends TestCase {
     private ContextFactory factory;

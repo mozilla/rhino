@@ -4,16 +4,14 @@
 
 package org.mozilla.javascript.tests;
 
-import org.junit.Test;
-import org.junit.Before;
-
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.hamcrest.core.Is.is;
-
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.NativeArray;
 
 public class NativeArrayTest {
