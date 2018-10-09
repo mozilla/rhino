@@ -6,7 +6,8 @@
 
 package org.mozilla.javascript;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
 
 /**
  * This class implements the JavaScript scanner.

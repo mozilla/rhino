@@ -6,7 +6,12 @@
 
 package org.mozilla.javascript.regexp;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.BaseFunction;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.TopLevel;
+import org.mozilla.javascript.Undefined;
 
 /**
  * This class implements the RegExp constructor native object.

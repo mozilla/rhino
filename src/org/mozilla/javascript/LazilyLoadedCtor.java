@@ -6,7 +6,7 @@
 
 package org.mozilla.javascript;
 
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 

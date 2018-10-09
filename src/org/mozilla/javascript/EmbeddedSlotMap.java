@@ -14,7 +14,8 @@ package org.mozilla.javascript;
  */
 
 import java.util.Iterator;
-import static org.mozilla.javascript.ScriptableObject.SlotAccess.*;
+
+import org.mozilla.javascript.ScriptableObject.SlotAccess;
 
 public class EmbeddedSlotMap
     implements SlotMap {
@@ -106,7 +107,7 @@ public class EmbeddedSlotMap
     @Override
     public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType)
     {
-        if (slots == null && accessType == QUERY) {
+        if (slots == null && accessType == SlotAccess.QUERY) {
             return null;
         }
 
@@ -181,14 +182,14 @@ public class EmbeddedSlotMap
                 // accessType flag and return the appropriate slot instance.
                 ScriptableObject.Slot newSlot;
 
-                if (accessType == MODIFY_GETTER_SETTER
+                if (accessType == SlotAccess.MODIFY_GETTER_SETTER
                     && !(slot instanceof ScriptableObject.GetterSlot)) {
                     newSlot = new ScriptableObject.GetterSlot(key, indexOrHash,
                         slot.getAttributes());
-                } else if (accessType == CONVERT_ACCESSOR_TO_DATA
+                } else if (accessType == SlotAccess.CONVERT_ACCESSOR_TO_DATA
                     && (slot instanceof ScriptableObject.GetterSlot)) {
                     newSlot = new ScriptableObject.Slot(key, indexOrHash, slot.getAttributes());
-                } else if (accessType == MODIFY_CONST) {
+                } else if (accessType == SlotAccess.MODIFY_CONST) {
                     return null;
                 } else {
                     return slot;
@@ -233,10 +234,10 @@ public class EmbeddedSlotMap
             slots = newSlots;
         }
 
-        ScriptableObject.Slot newSlot = (accessType == MODIFY_GETTER_SETTER
+        ScriptableObject.Slot newSlot = (accessType == SlotAccess.MODIFY_GETTER_SETTER
                 ? new ScriptableObject.GetterSlot(key, indexOrHash, 0)
                 : new ScriptableObject.Slot(key, indexOrHash, 0));
-        if (accessType == MODIFY_CONST) {
+        if (accessType == SlotAccess.MODIFY_CONST) {
             newSlot.setAttributes(ScriptableObject.CONST);
         }
         insertNewSlot(newSlot);
