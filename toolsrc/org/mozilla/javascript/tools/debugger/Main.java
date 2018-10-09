@@ -11,7 +11,10 @@ import java.io.PrintStream;
 
 import javax.swing.JFrame;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Kit;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**

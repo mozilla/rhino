@@ -7,12 +7,23 @@
 package org.mozilla.javascript.tools.shell;
 
 import java.io.IOException;
-import java.security.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessControlException;
+import java.security.AccessController;
+import java.security.CodeSource;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.Policy;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.Enumeration;
 
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Callable;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.Scriptable;
 
 public class JavaPolicySecurity extends SecurityProxy
 {
