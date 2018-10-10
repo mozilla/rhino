@@ -206,7 +206,7 @@ public class NativeSet
             case Id_clear:             arity=0; s="clear";             break;
             case Id_entries:           arity=0; s="entries";           break;
             case Id_values:            arity=0; s="values";            break;
-            case Id_forEach:           arity=1; s="forEach";           break;
+            case Id_forEach:           arity=2; s="forEach";           break;
             default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(SET_TAG, id, s, fnName, arity);
