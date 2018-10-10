@@ -58,7 +58,7 @@ public class NativeCollectionIterator
 
     @Override
     protected boolean isDone(Context cx, Scriptable scope) {
-        return false; // !iterator.hasNext();
+        return !iterator.hasNext();
     }
 
     @Override
