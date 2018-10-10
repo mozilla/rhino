@@ -246,7 +246,7 @@ public class NativeMap
             case Id_keys:              arity=0; s="keys";              break;
             case Id_values:            arity=0; s="values";            break;
             case Id_entries:           arity=0; s="entries";           break;
-            case Id_forEach:           arity=1; s="forEach";           break;
+            case Id_forEach:           arity=2; s="forEach";           break;
             default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(MAP_TAG, id, s, fnName, arity);

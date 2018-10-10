@@ -1,6 +1,6 @@
 package org.mozilla.javascript;
 
-import java.util.Collections;
+import java.io.Serializable;
 import java.util.Iterator;
 
 public class NativeCollectionIterator
@@ -9,6 +9,24 @@ public class NativeCollectionIterator
     private final Iterator<Hashtable.Entry> iterator;
     private final String className;
     private final Type type;
+
+    private static final EmptyIterator EMPTY_ITERATOR = new EmptyIterator();
+
+    /**
+     * Collections.emptyIterator() is not serializable.
+     */
+    private static final class EmptyIterator implements Iterator, Serializable
+    {
+        @Override
+        public Object next() { throw new AssertionError("EmptyIterator: Method next() called"); }
+
+        @Override
+        public boolean hasNext() { return false; }
+
+        @Override
+        public void remove() { throw new UnsupportedOperationException("EmptyIterator: Method remove() not supported"); }
+    }
+
 
     enum Type { KEYS, VALUES, BOTH };
 
@@ -19,7 +37,7 @@ public class NativeCollectionIterator
     public NativeCollectionIterator(String tag)
     {
         this.className = tag;
-        this.iterator = Collections.emptyIterator();
+        this.iterator = EMPTY_ITERATOR;
         this.type = Type.BOTH;
     }
 
