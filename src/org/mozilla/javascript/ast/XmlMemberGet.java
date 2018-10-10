@@ -87,8 +87,24 @@ public class XmlMemberGet extends InfixExpression {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         sb.append(getLeft().toSource(0));
-        sb.append(operatorToString(getType()));
+        sb.append(dotsToString());
         sb.append(getRight().toSource(0));
         return sb.toString();
+    }
+
+    /**
+     * Gives string representation of inner dots token.
+     * @return  String representation of inner dots token (e.g. '.' or '..')
+     * @throws IllegalArgumentException on unexpected token type
+     */
+    private String dotsToString() {
+        switch (getType()) {
+            case Token.DOT:
+                return ".";
+            case Token.DOTDOT:
+                return "..";
+            default:
+                throw new IllegalArgumentException("Invalid type of XmlMemberGet: " + getType());
+        }
     }
 }
