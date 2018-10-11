@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
@@ -1518,9 +1519,9 @@ public class Context
             return (Script) compileImpl(null, null, source, sourceName, lineno,
                                         securityDomain, false,
                                         compiler, compilationErrorReporter);
-        } catch (IOException ex) {
+        } catch (IOException ioe) {
             // Should not happen when dealing with source as string
-            throw new RuntimeException();
+            throw new RuntimeException(ioe);
         }
     }
 
@@ -1563,7 +1564,7 @@ public class Context
         catch (IOException ioe) {
             // Should never happen because we just made the reader
             // from a String
-            throw new RuntimeException();
+            throw new RuntimeException(ioe);
         }
     }
 
@@ -2524,6 +2525,50 @@ public class Context
             }
         }
 
+        ScriptNode tree = parse(sourceReader, sourceString, sourceName, lineno,
+                                    compilerEnv, compilationErrorReporter, returnFunction);
+
+        Object bytecode;
+        try {
+            if (compiler == null) {
+                compiler = createCompiler();
+            }
+
+            bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
+        } catch (ClassFileFormatException e) {
+            // we hit some class file limit, fall back to interpreter or report
+            compiler = createInterpreter();
+
+            // we have to recreate the tree because the compile call might have changed the tree already
+            tree = parse(sourceReader, sourceString, sourceName, lineno,
+                            compilerEnv, compilationErrorReporter, returnFunction);
+            bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
+        }
+
+        if (debugger != null) {
+            if (sourceString == null) Kit.codeBug();
+            if (bytecode instanceof DebuggableScript) {
+                DebuggableScript dscript = (DebuggableScript)bytecode;
+                notifyDebugger_r(this, dscript, sourceString);
+            } else {
+                throw new RuntimeException("NOT SUPPORTED");
+            }
+        }
+
+        Object result;
+        if (returnFunction) {
+            result = compiler.createFunctionObject(this, scope, bytecode, securityDomain);
+        } else {
+            result = compiler.createScriptObject(bytecode, securityDomain);
+        }
+
+        return result;
+    }
+
+    private ScriptNode parse(Reader sourceReader, String sourceString,
+            String sourceName, int lineno,
+            CompilerEnvirons compilerEnv, ErrorReporter compilationErrorReporter,
+            boolean returnFunction) throws IOException {
         Parser p = new Parser(compilerEnv, compilationErrorReporter);
         if (returnFunction) {
             p.calledByCompileFunction = true;
@@ -2531,6 +2576,7 @@ public class Context
         if (isStrictMode()) {
             p.setDefaultUseStrictDirective(true);
         }
+
         AstRoot ast;
         if (sourceString != null) {
             ast = p.parse(sourceString, sourceName, lineno);
@@ -2552,37 +2598,7 @@ public class Context
 
         IRFactory irf = new IRFactory(compilerEnv, compilationErrorReporter);
         ScriptNode tree = irf.transformTree(ast);
-
-        // discard everything but the IR tree
-        p = null;
-        ast = null;
-        irf = null;
-
-        if (compiler == null) {
-            compiler = createCompiler();
-        }
-
-        Object bytecode = compiler.compile(compilerEnv,
-                                           tree, tree.getEncodedSource(),
-                                           returnFunction);
-        if (debugger != null) {
-            if (sourceString == null) Kit.codeBug();
-            if (bytecode instanceof DebuggableScript) {
-                DebuggableScript dscript = (DebuggableScript)bytecode;
-                notifyDebugger_r(this, dscript, sourceString);
-            } else {
-                throw new RuntimeException("NOT SUPPORTED");
-            }
-        }
-
-        Object result;
-        if (returnFunction) {
-            result = compiler.createFunctionObject(this, scope, bytecode, securityDomain);
-        } else {
-            result = compiler.createScriptObject(bytecode, securityDomain);
-        }
-
-        return result;
+        return tree;
     }
 
     private static void notifyDebugger_r(Context cx, DebuggableScript dscript,
