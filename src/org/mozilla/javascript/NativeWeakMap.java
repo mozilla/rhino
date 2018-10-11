@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.WeakHashMap;
 
 /**
@@ -23,7 +25,7 @@ public class NativeWeakMap
 
     private boolean instanceOfWeakMap = false;
 
-    private final WeakHashMap<Scriptable, Object> map = new WeakHashMap<>();
+    private transient WeakHashMap<Scriptable, Object> map = new WeakHashMap<>();
 
     private static final Object NULL_VALUE = new Object();
 
@@ -54,9 +56,8 @@ public class NativeWeakMap
                         NativeMap.loadFromIterable(cx, scope, nm, args[0]);
                     }
                     return nm;
-                } else {
-                    throw ScriptRuntime.typeError1("msg.no.new", "WeakMap");
                 }
+                throw ScriptRuntime.typeError1("msg.no.new", "WeakMap");
             case Id_delete:
                 return realThis(thisObj, f).js_delete(args.length > 0 ? args[0] : Undefined.instance);
             case Id_get:
@@ -75,7 +76,7 @@ public class NativeWeakMap
         if (!ScriptRuntime.isObject(key)) {
             return false;
         }
-        final Object oldVal = map.remove((Scriptable)key);
+        final Object oldVal = map.remove(key);
         return (oldVal != null);
     }
 
@@ -83,7 +84,7 @@ public class NativeWeakMap
         if (!ScriptRuntime.isObject(key)) {
             return Undefined.instance;
         }
-        Object result = map.get((Scriptable)key);
+        Object result = map.get(key);
         if (result == null) {
             return Undefined.instance;
         } else if (result == NULL_VALUE) {
@@ -96,7 +97,7 @@ public class NativeWeakMap
         if (!ScriptRuntime.isObject(key)) {
             return false;
         }
-        return map.containsKey((Scriptable)key);
+        return map.containsKey(key);
     }
 
     private Object js_set(Object key, Object v) {
@@ -193,4 +194,11 @@ public class NativeWeakMap
         MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 // #/string_id_map#
+
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException
+    {
+        stream.defaultReadObject();
+        map = new WeakHashMap<>();
+    }
 }
