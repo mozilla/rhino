@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.WeakHashMap;
 
 /**
@@ -22,7 +24,7 @@ public class NativeWeakSet
 
     private boolean instanceOfWeakSet = false;
 
-    private final WeakHashMap<Scriptable, Boolean> map = new WeakHashMap<>();
+    private transient WeakHashMap<Scriptable, Boolean> map = new WeakHashMap<>();
 
     static void init(Scriptable scope, boolean sealed) {
         NativeWeakSet m = new NativeWeakSet();
@@ -51,9 +53,8 @@ public class NativeWeakSet
                         NativeSet.loadFromIterable(cx, scope, ns, args[0]);
                     }
                     return ns;
-                } else {
-                    throw ScriptRuntime.typeError1("msg.no.new", "WeakSet");
                 }
+                throw ScriptRuntime.typeError1("msg.no.new", "WeakSet");
             case Id_add:
                 return realThis(thisObj, f).js_add(args.length > 0 ? args[0] : Undefined.instance);
             case Id_delete:
@@ -82,7 +83,7 @@ public class NativeWeakSet
         if (!ScriptRuntime.isObject(key)) {
             return false;
         }
-        final Object oldVal = map.remove((Scriptable)key);
+        final Object oldVal = map.remove(key);
         return (oldVal != null);
     }
 
@@ -90,7 +91,7 @@ public class NativeWeakSet
         if (!ScriptRuntime.isObject(key)) {
             return false;
         }
-        return map.containsKey((Scriptable)key);
+        return map.containsKey(key);
     }
 
     private NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f) {
@@ -169,4 +170,11 @@ public class NativeWeakSet
         MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
 // #/string_id_map#
+
+    private void readObject(ObjectInputStream stream)
+        throws IOException, ClassNotFoundException
+    {
+        stream.defaultReadObject();
+        map = new WeakHashMap<>();
+    }
 }
