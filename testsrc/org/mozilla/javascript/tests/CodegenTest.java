@@ -1,0 +1,134 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.javascript.tests;
+
+import org.junit.Assert;
+import org.mozilla.javascript.Script;
+
+import junit.framework.TestCase;
+
+/**
+ * Test for falling back to the interpreter if generated code is too large.
+ * @author RBRi
+ */
+public class CodegenTest extends TestCase {
+
+    public void testLargeMethod() {
+        final StringBuilder scriptSource = new StringBuilder();
+
+        scriptSource.append("var a = 0;");
+        for (int i = 0; i < 1000; i++) {
+            scriptSource.append("a = a + 1;");
+        }
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            if (_cx.getOptimizationLevel() > -1) {
+                Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
+            }
+            return null;
+        });
+
+        // now with code that is too large
+        for (int i = 0; i < 1000; i++) {
+            scriptSource.append("a = a + 1;");
+        }
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
+            return null;
+        });
+    }
+
+    public void testLargeVarList() {
+        final StringBuilder scriptSource = new StringBuilder();
+
+        int i = 0;
+        for (; i < 1000; i++) {
+            scriptSource.append("var a" + i + ";");
+        }
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            if (_cx.getOptimizationLevel() > -1) {
+                Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
+            }
+            return null;
+        });
+
+        // now with code that is too large
+        for (; i < 10000; i++) {
+            scriptSource.append("var a" + i + ";");
+        }
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
+            return null;
+        });
+    }
+
+    public void testLargeLocalVarList() {
+        final StringBuilder scriptSource = new StringBuilder();
+
+        scriptSource.append("function foo() {");
+        for (int i = 0; i < 1000; i++) {
+            scriptSource.append("a" + i + "= " + i + ";");
+        }
+        scriptSource.append("return 'done'; }");
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            if (_cx.getOptimizationLevel() > -1) {
+                Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
+            }
+            return null;
+        });
+
+        // now with code that is too large
+        scriptSource.setLength(0);
+        scriptSource.append("function foo() {");
+        for (int i = 0; i < 5000; i++) {
+            scriptSource.append("a" + i + "= " + i + ";");
+        }
+        scriptSource.append("return 'done'; }");
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
+            return null;
+        });
+    }
+
+    public void testTooManyMethods() {
+        final StringBuilder scriptSource = new StringBuilder();
+
+        int i = 0;
+        for (; i < 1000; i++) {
+            scriptSource.append("function foo" + i + "() { return 7; }\n");
+        }
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            Script script = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            if (_cx.getOptimizationLevel() > -1) {
+                Assert.assertTrue(script.getClass().getName(), script.getClass().getName().startsWith("org.mozilla.javascript.gen.test_source_"));
+            }
+            return null;
+        });
+
+        // now with code that is too large
+        for (; i < 5000; i++) {
+            scriptSource.append("function foo" + i + "() { return 7; }\n");
+        }
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            Script a = _cx.compileString(scriptSource.toString(), "test-source", 1, null);
+            Assert.assertTrue(a.getClass().getName(), a.getClass().getName().startsWith("org.mozilla.javascript.InterpretedFunction"));
+            return null;
+        });
+    }
+
+}
