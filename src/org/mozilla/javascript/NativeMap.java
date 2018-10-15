@@ -150,16 +150,26 @@ public class NativeMap
         }
         final Callable f = (Callable)arg1;
 
+        boolean isStrict = cx.isStrictMode();
         Iterator<Hashtable.Entry> i = entries.iterator();
         while (i.hasNext()) {
             // Per spec must convert every time so that primitives are always regenerated...
             Scriptable thisObj = ScriptRuntime.toObjectOrNull(cx, arg2, scope);
+
+            if (thisObj == null && !isStrict) {
+                thisObj = scope;
+            }
             if (thisObj == null) {
                 thisObj = Undefined.SCRIPTABLE_UNDEFINED;
             }
+
             final Hashtable.Entry e = i.next();
-            f.call(cx, scope, thisObj,
-                    new Object[] { e.value, e.key, this });
+            Object val = e.value;
+            if (val == NULL_VALUE) {
+                val = null;
+            }
+
+            f.call(cx, scope, thisObj, new Object[] { val, e.key, this });
         }
         return Undefined.instance;
     }
