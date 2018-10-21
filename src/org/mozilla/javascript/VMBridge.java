@@ -22,7 +22,6 @@ public abstract class VMBridge
         String[] classNames = {
             "org.mozilla.javascript.VMBridge_custom",
             "org.mozilla.javascript.jdk18.VMBridge_jdk18",
-            "org.mozilla.javascript.jdk15.VMBridge_jdk15",
         };
         for (int i = 0; i != classNames.length; ++i) {
             String className = classNames[i];
@@ -115,9 +114,4 @@ public abstract class VMBridge
      * This method is in VMBridge since Iterable is a JDK 1.5 addition.
      */
     protected abstract Iterator<?> getJavaIterator(Context cx, Scriptable scope, Object obj);
-
-    /**
-     * Support checking to see if this is the default method for Java 8.
-     */
-    public abstract boolean isDefaultMethod(Method method);
 }
