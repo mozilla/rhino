@@ -207,7 +207,13 @@ public class NativeMap
                     throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(sVal));
                 }
                 Object finalKey = sVal.get(0, sVal);
+                if (finalKey == NOT_FOUND) {
+                    finalKey = Undefined.instance;
+                }
                 Object finalVal = sVal.get(1, sVal);
+                if (finalVal == NOT_FOUND) {
+                    finalVal = Undefined.instance;
+                }
                 set.call(cx, scope, map, new Object[] { finalKey, finalVal });
             }
         }
