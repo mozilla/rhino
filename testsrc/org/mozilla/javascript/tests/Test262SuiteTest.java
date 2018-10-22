@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,7 @@ public class Test262SuiteTest {
     private static final String testProperties = "testsrc/test262.properties";
 
     static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<>();
-    static Map<File, Integer> EXCLUDED_TESTS = new HashMap<>();
+    static Map<File, Integer> EXCLUDED_TESTS = new LinkedHashMap<>();
 
     static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
 
