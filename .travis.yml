@@ -10,4 +10,4 @@ cache:
   directories:
     - $HOME/.gradle/caches
     - $HOME/.gradle/wrapper
-
+install: travis_wait mvn install
