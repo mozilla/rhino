@@ -1,18 +1,20 @@
-package org.mozilla.javascript.tests;
+package org.mozilla.javascript;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mozilla.javascript.Kit;
+import org.junit.*;
+
+import java.lang.reflect.Field;
 
 import static org.mozilla.javascript.Kit.*;
 import static junit.framework.TestCase.*;
 
 public class KitTest {
+    static Field enabledFld;
 
     @BeforeClass
-    public static void e
+    public static void enableCaching() throws Exception {
+        enabledFld = Kit.class.getDeclaredField("enabledNonClassCaching");
+        enabledFld.set(null, true);
+    }
 
     @Test
     public void testNonClassUsages() {
@@ -29,6 +31,11 @@ public class KitTest {
 
     @After
     public void after() {
-        Kit.reinitNonClassCache();
+        reinitNonClassCache();
+    }
+
+    @AfterClass
+    public static void disableCaching() throws Exception {
+        enabledFld.set(null, false);
     }
 }

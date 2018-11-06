@@ -10,10 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Collection of utilities
@@ -21,7 +20,30 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class Kit
 {
-    static Map<ClassLoader, Set<String>> notClassMap = new ConcurrentHashMap<ClassLoader, Set<String>>(16);
+    /**
+     *
+     */
+    static String CACHE_USE_PROPERTY_NAME = "rhino.kit.cache.usage";
+
+    /**
+     *
+     */
+    static String CACHE_USE_PROPERTY_NAME_YES = "yes";
+
+    /**
+     *
+     */
+    private static boolean enabledNonClassCaching = false;
+
+    /**
+     * TBD
+     */
+    static String CACHE_SIZE_PROPERTY_NAME = "rhino.kit.cache.size";
+
+    /**
+     * nonClass Cache
+     */
+    private static Map<ClassLoader, LRUCache> notClassMap = new ConcurrentHashMap<ClassLoader, LRUCache>();
 
     /**
      * Reflection of Throwable.initCause(Throwable) from JDK 1.4
@@ -39,7 +61,15 @@ public class Kit
         } catch (Exception ex) {
             // Assume any exceptions means the method does not exist.
         }
+
+        //identify enabling of non-class cache
+        try {
+            enabledNonClassCaching = CACHE_USE_PROPERTY_NAME_YES.equals(System.getProperty(CACHE_USE_PROPERTY_NAME));
+        } catch (Exception e) {
+            enabledNonClassCaching = false;
+        }
     }
+
 
     public static Class<?> classOrNull(String className)
     {
@@ -54,19 +84,24 @@ public class Kit
     public static Class<?> classOrNull(ClassLoader loader, String className)
     {
 
-        Set<String> currentNotClassSet = notClassMap.get(Thread.currentThread().getContextClassLoader());
+        LRUCache lruCache = null;
+        if (enabledNonClassCaching) {
+            lruCache = notClassMap.get(Thread.currentThread().getContextClassLoader());
 
-        if (currentNotClassSet != null && currentNotClassSet.contains(className))
-            return null;
+            if (lruCache != null && lruCache.containsKey(className))
+                return null;
+        }
 
         try {
             return loader.loadClass(className);
         } catch  (ClassNotFoundException ex) {
-            if (currentNotClassSet == null) {
-                currentNotClassSet = new ConcurrentSkipListSet<String>();
-                notClassMap.put(loader, currentNotClassSet);
+            if (enabledNonClassCaching) {
+                if (lruCache == null) {
+                    lruCache = new LRUCache();
+                    notClassMap.put(loader, lruCache);
+                }
+                lruCache.add(className);
             }
-            currentNotClassSet.add(className);
         } catch  (SecurityException ex) {
         } catch  (LinkageError ex) {
         } catch (IllegalArgumentException e) {
@@ -150,6 +185,23 @@ public class Kit
             return -1;
         }
         return (accumulator << 4) | c;
+    }
+
+    public static void reinitNonClassCache() {
+        notClassMap = new ConcurrentHashMap<ClassLoader, LRUCache>();
+    }
+
+    public static int getNonClassCacheSize() {
+        int result = 0;
+
+        for (Map.Entry<ClassLoader, LRUCache> entry : notClassMap.entrySet())
+            result += entry.getValue().size();
+
+        return result;
+    }
+
+    public static int getNonClassCacheSize(ClassLoader classLoader) {
+        return notClassMap.get(classLoader).size();
     }
 
     /**
@@ -442,5 +494,31 @@ public class Kit
         // Print stack trace ASAP
         ex.printStackTrace(System.err);
         throw ex;
+    }
+
+    /**
+     * simple LRU implementation
+     */
+    private final static class LRUCache extends LinkedHashMap<String, String> {
+        private static int MAX_CAPACITY_DEFAULT = 1024;
+
+        private int maxCapacity;
+
+        public LRUCache() {
+            try {
+                this.maxCapacity = Integer.valueOf(System.getProperty(CACHE_SIZE_PROPERTY_NAME));
+            } catch (Exception e) {
+                this.maxCapacity = MAX_CAPACITY_DEFAULT;
+            }
+        }
+
+        public void add(String nonClassName) {
+            put(nonClassName, nonClassName);
+        }
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+            return size() > maxCapacity;
+        }
     }
 }
