@@ -13,6 +13,7 @@ public class KitTest {
     @BeforeClass
     public static void enableCaching() throws Exception {
         enabledFld = Kit.class.getDeclaredField("enabledNonClassCaching");
+        enabledFld.setAccessible(true);
         enabledFld.set(null, true);
     }
 
