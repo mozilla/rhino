@@ -2,6 +2,9 @@ language: java
 dist: trusty
 jdk: 
   - openjdk8
+script:
+  - travis_wait 20 ./gradlew check
+
 # Took this stuff from the travis docs:
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
