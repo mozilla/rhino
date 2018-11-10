@@ -13,12 +13,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,12 @@ public class Test262SuiteTest {
 
     static final int[] OPT_LEVELS = {-1, 0, 9};
 
+    private static final File testDir = new File("test262/test");
+    private static final String testHarnessDir = "test262/harness/";
+    private static final String testProperties = "testsrc/test262.properties";
+
     static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<>();
+    static Map<File, Integer> EXCLUDED_TESTS = new LinkedHashMap<>();
 
     static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
 
@@ -79,6 +85,7 @@ public class Test262SuiteTest {
             "regexp-dotall",
             "regexp-lookbehind",
             "regexp-named-groups",
+            "regexp-unicode-property-escapes",
             "super",
             "tail-call-optimization",
             "u180e"
@@ -97,6 +104,12 @@ public class Test262SuiteTest {
     @AfterClass
     public static void tearDownClass() {
         TestUtils.setGlobalContextFactory(null);
+
+        for (Map.Entry<File, Integer> entry : EXCLUDED_TESTS.entrySet()) {
+            if (entry.getValue() == 0) {
+                System.out.println(String.format("Test is marked as failing but it does not: %s", entry.getKey()));
+            }
+        }
     }
 
     private static final Pattern EXCLUDE_PATTERN = Pattern.compile("!\\s*(.+)");
@@ -105,23 +118,25 @@ public class Test262SuiteTest {
     private final int optLevel;
     private final boolean useStrict;
     private final Test262Case testCase;
+    private final boolean fails;
 
-    public Test262SuiteTest(String testFilePath, int optLevel, boolean useStrict, Test262Case testCase) {
+    public Test262SuiteTest(String testFilePath, int optLevel, boolean useStrict, Test262Case testCase, boolean fails) {
         this.testFilePath = testFilePath;
         this.optLevel = optLevel;
         this.useStrict = useStrict;
         this.testCase = testCase;
+        this.fails = fails;
     }
 
     private Scriptable buildScope(Context cx) throws IOException {
         Scriptable scope = cx.initSafeStandardObjects();
         for (String harnessFile : testCase.harnessFiles) {
             if (!HARNESS_SCRIPT_CACHE.get(optLevel).containsKey(harnessFile)) {
-                String harnessPath = "test262/harness/" + harnessFile;
-                HARNESS_SCRIPT_CACHE.get(optLevel).put(
-                        harnessFile,
-                        cx.compileReader(new FileReader(harnessPath), harnessPath, 1, null)
-                );
+                String harnessPath = testHarnessDir + harnessFile;
+                try (Reader reader = new FileReader(harnessPath)) {
+                    HARNESS_SCRIPT_CACHE.get(optLevel).put(harnessFile,
+                            cx.compileReader(reader, harnessPath, 1, null));
+                }
             }
             HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
         }
@@ -173,7 +188,19 @@ public class Test262SuiteTest {
                         testCase.expectedError,
                         testCase.hasEarlyError ? "early" : "runtime"));
             }
+
+            if (fails) {
+                Integer count = EXCLUDED_TESTS.get(testCase.file);
+                if (count != null) {
+                    count -= 1;
+                    EXCLUDED_TESTS.put(testCase.file, count);
+                }
+            }
         } catch (RhinoException ex) {
+            if (fails) {
+                return;
+            }
+
             if (!testCase.isNegative()) {
                 fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
             }
@@ -188,115 +215,114 @@ public class Test262SuiteTest {
             }
 
             assertEquals(ex.details(), testCase.expectedError, errorName);
+        } catch (Exception ex) {
+            if (fails) {
+                return;
+            }
+            throw ex;
         } finally {
             Context.exit();
         }
     }
 
-    private static final File testDir = new File("test262/test");
-    private static List<File> getTestFiles() throws IOException {
-        List<File> testFiles = new LinkedList<File>();
-
+    private static void addTestFiles(List<File> testFiles, Set<File> failingFiles) throws IOException {
         List<File> dirFiles = new LinkedList<File>();
 
-        Scanner scanner = new Scanner(new File("testsrc/test262.properties"));
-
-        int lineNo = 0;
-        String line = null;
-        while (line != null || scanner.hasNextLine()) {
-            // Note, here line could be not null when it
-            // wasn't handled on the previous iteration
-            if (line == null) {
-                line = scanner.nextLine().trim();
-                lineNo++;
-            }
-
-            if (line.isEmpty() || line.startsWith("#")) {
-                line = null; // consume the line
-                continue;
-            }
-
-            File target = new File(testDir, line);
-            if (!target.exists()) {
-                if (line.startsWith("!")) {
-                    throw new RuntimeException(
+        try (Scanner scanner = new Scanner(new File(testProperties))) {
+            int lineNo = 0;
+            String line = null;
+            while (line != null || scanner.hasNextLine()) {
+                // Note, here line could be not null when it
+                // wasn't handled on the previous iteration
+                if (line == null) {
+                    line = scanner.nextLine().trim();
+                    lineNo++;
+                }
+    
+                if (line.isEmpty() || line.startsWith("#")) {
+                    line = null; // consume the line
+                    continue;
+                }
+    
+                File target = new File(testDir, line);
+                if (!target.exists()) {
+                    if (line.startsWith("!")) {
+                        throw new RuntimeException(
                             "Unexpected exclusion '" + line + "' at the line #" + lineNo);
-                } else {
+                    }
                     throw new FileNotFoundException(
                             "File " + line + " declared at line #" + lineNo + " doesn't exist");
                 }
-            }
-
-            if (target.isFile()) {
-                testFiles.add(target);
-            } else if (target.isDirectory()) {
-                String curDirectory = line;
-                recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
-
-                // start handling exclusions that could follow
-                while (scanner.hasNextLine()) {
-                    line = scanner.nextLine().trim();
-                    lineNo++;
-
-                    if (line.isEmpty() || line.startsWith("#")) {
-                        line = null; // consume the line
+    
+                if (target.isFile()) {
+                    testFiles.add(target);
+                } else if (target.isDirectory()) {
+                    String curDirectory = line;
+                    recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
+    
+                    // start handling exclusions that could follow
+                    while (scanner.hasNextLine()) {
+                        line = scanner.nextLine().trim();
+                        lineNo++;
+    
+                        if (line.isEmpty() || line.startsWith("#")) {
+                            line = null; // consume the line
+                            continue;
+                        }
+    
+                        Matcher m = EXCLUDE_PATTERN.matcher(line);
+                        if (!m.matches()) {
+                            // stop an exclusion handling loop
+                            break;
+                        }
+    
+                        String excludeSubstr = m.group(1);
+                        int excludeCount = 0;
+                        for (File file : dirFiles) {
+                            String path = file.getPath().replaceAll("\\\\", "/");
+                            if (path.contains(excludeSubstr)) {
+                                failingFiles.add(file);
+                                excludeCount++;
+                            }
+                        }
+                        if (excludeCount == 0) {
+                            System.err.format(
+                                    "WARN: Exclusion '%s' at line #%d doesn't exclude anything%n",
+                                    excludeSubstr, lineNo);
+                        }
+                        // exclusion handled
+                        line = null;
+                    }
+    
+                    testFiles.addAll(dirFiles);
+                    dirFiles.clear();
+    
+                    if (line != null && !line.equals(curDirectory)) {
+                        // saw a different line and it isn't an exclusion,
+                        // so it wasn't handled, let the main loop deal with it
                         continue;
                     }
-
-                    Matcher m = EXCLUDE_PATTERN.matcher(line);
-                    if (!m.matches()) {
-                        // stop an exclusion handling loop
-                        break;
-                    }
-
-                    String excludeSubstr = m.group(1);
-                    Iterator<File> it = dirFiles.iterator();
-                    int excludeCount = 0;
-                    while (it.hasNext()) {
-                        String path = it.next().getPath().replaceAll("\\\\", "/");
-                        if (path.contains(excludeSubstr)) {
-                            it.remove();
-                            excludeCount++;
-                        }
-                    }
-                    if (excludeCount == 0) {
-                        System.err.format(
-                                "WARN: Exclusion '%s' at line #%d doesn't exclude anything%n",
-                                excludeSubstr, lineNo);
-                    }
-                    // exclusion handled
-                    line = null;
                 }
-
-                testFiles.addAll(dirFiles);
-                dirFiles.clear();
-
-                if (line != null && !line.equals(curDirectory)) {
-                    // saw a different line and it isn't an exclusion,
-                    // so it wasn't handled, let the main loop deal with it
-                    continue;
-                }
+    
+                // this line was handled
+                line = null;
             }
-
-            // this line was handled
-            line = null;
         }
-
-        scanner.close();
-
-        return testFiles;
     }
 
     @Parameters(name = "js={0}, opt={1}, strict={2}")
     public static Collection<Object[]> test262SuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<>();
 
-        fileLoop:
-        for (File testFile : getTestFiles()) {
+        List<File> testFiles = new LinkedList<File>();
+        Set<File> failingFiles = new HashSet<File>();
+        addTestFiles(testFiles, failingFiles);
 
+        fileLoop:
+        for (File testFile : testFiles) {
             Test262Case testCase;
             try {
-                testCase = Test262Case.fromSource(testFile.getPath());
+                testCase = Test262Case.fromSource(testFile);
             } catch (YAMLException ex) {
                 throw new RuntimeException("Error while parsing metadata of " + testFile.getPath(), ex);
             }
@@ -317,11 +343,22 @@ public class Test262SuiteTest {
 
             String caseShortPath = testDir.toPath().relativize(testFile.toPath()).toString();
             for (int optLevel : OPT_LEVELS) {
+                boolean markedAsFailing = failingFiles.contains(testFile);
                 if (!testCase.hasFlag("onlyStrict") || testCase.hasFlag("raw")) {
-                    result.add(new Object[]{caseShortPath, optLevel, false, testCase});
+                    result.add(new Object[]{caseShortPath, optLevel, false, testCase, markedAsFailing});
+                    if (markedAsFailing) {
+                        Integer count = EXCLUDED_TESTS.computeIfAbsent(testCase.file, k -> 0);
+                        count += 1;
+                        EXCLUDED_TESTS.put(testCase.file, count);
+                    }
                 }
                 if (!testCase.hasFlag("noStrict") && !testCase.hasFlag("raw")) {
-                    result.add(new Object[]{caseShortPath, optLevel, true, testCase});
+                    result.add(new Object[]{caseShortPath, optLevel, true, testCase, markedAsFailing});
+                    if (markedAsFailing) {
+                        Integer count = EXCLUDED_TESTS.computeIfAbsent(testCase.file, k -> 0);
+                        count += 1;
+                        EXCLUDED_TESTS.put(testCase.file, count);
+                    }
                 }
             }
         }
@@ -331,16 +368,18 @@ public class Test262SuiteTest {
     private static class Test262Case {
         private static final Yaml YAML = new Yaml();
 
-        final String source;
+        private final File file;
+        private final String source;
 
-        final String expectedError;
-        final boolean hasEarlyError;
+        private final String expectedError;
+        private final boolean hasEarlyError;
 
-        final Set<String> flags;
-        final Set<String> harnessFiles;
-        final Set<String> features;
+        private final Set<String> flags;
+        private final Set<String> harnessFiles;
+        private final Set<String> features;
 
         Test262Case(
+                File file,
                 String source,
                 Set<String> harnessFiles,
                 String expectedError,
@@ -348,6 +387,7 @@ public class Test262SuiteTest {
                 Set<String> flags,
                 Set<String> features) {
 
+            this.file = file;
             this.source = source;
             this.harnessFiles = harnessFiles;
             this.expectedError = expectedError;
@@ -365,8 +405,8 @@ public class Test262SuiteTest {
         }
 
         @SuppressWarnings("unchecked")
-        static Test262Case fromSource(String testFilePath) throws IOException {
-            String testSource = (String) SourceReader.readFileOrUrl(testFilePath, true, "UTF-8");
+        static Test262Case fromSource(File testFile) throws IOException {
+            String testSource = (String) SourceReader.readFileOrUrl(testFile.getPath(), true, "UTF-8");
 
             Set<String> harnessFiles = new HashSet<>();
 
@@ -404,10 +444,10 @@ public class Test262SuiteTest {
             } else if (!harnessFiles.isEmpty()) {
                 System.err.format(
                         "WARN: case '%s' is flagged as 'raw' but also has defined includes%n",
-                        testFilePath);
+                        testFile.getPath());
             }
 
-            return new Test262Case(testSource, harnessFiles, expectedError, isEarly, flags, features);
+            return new Test262Case(testFile, testSource, harnessFiles, expectedError, isEarly, flags, features);
         }
     }
 }
