@@ -58,7 +58,7 @@ test {
     systemProperty 'user.country', 'US'
     systemProperty 'user.timezone', 'America/Los_Angeles'
     systemProperty 'file.encoding', 'UTF-8'
-    maxHeapSize = "256m"
+    maxHeapSize = "1g"
     testLogging.showStandardStreams = true
     // Many tests do not clean up contexts properly. This makes the tests much
     // more resilient at the expense of performance.
@@ -81,7 +81,7 @@ task v8Benchmark(type: Test) {
     systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
     systemProperty 'file.encoding', 'UTF-8'
     workingDir = file("testsrc/benchmarks")
-    maxHeapSize = "256m"
+    maxHeapSize = "1g"
     testLogging.showStandardStreams = true
     forkEvery = 1
 }
