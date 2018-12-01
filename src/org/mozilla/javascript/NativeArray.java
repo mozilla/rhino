@@ -221,6 +221,9 @@ public class NativeArray extends IdScriptableObject implements List
           case Id_reduce:         arity=1; s="reduce";         break;
           case Id_reduceRight:    arity=1; s="reduceRight";    break;
           case Id_fill:           arity=1; s="fill";           break;
+          case Id_keys:           arity=0; s="keys";           break;
+          case Id_values:         arity=0; s="values";         break;
+          case Id_entries:        arity=0; s="entries";        break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
 
@@ -334,7 +337,7 @@ public class NativeArray extends IdScriptableObject implements List
                 return js_lastIndexOf(cx, thisObj, args);
 
               case Id_fill:
-                  return js_fill(cx, scope, thisObj, args);
+                return js_fill(cx, scope, thisObj, args);
 
               case Id_every:
               case Id_filter:
@@ -348,8 +351,18 @@ public class NativeArray extends IdScriptableObject implements List
               case Id_reduceRight:
                 return reduceMethod(cx, id, scope, thisObj, args);
 
+              case Id_keys:
+                thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+                return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.KEYS);
+
+              case Id_entries:
+                thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+                return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.ENTRIES);
+
+              case Id_values:
               case SymbolId_iterator:
-                return new NativeArrayIterator(scope, thisObj);
+                thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+                return new NativeArrayIterator(scope, thisObj, NativeArrayIterator.ARRAY_ITERATOR_TYPE.VALUES);
             }
             throw new IllegalArgumentException("Array.prototype has no method: " + f.getFunctionName());
         }
@@ -1578,8 +1591,6 @@ public class NativeArray extends IdScriptableObject implements List
 
     private static Object js_fill(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
     {
-        thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
-
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
         long len = getLengthProperty(cx, o);
 
@@ -2079,7 +2090,7 @@ public class NativeArray extends IdScriptableObject implements List
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2018-11-30 19:45:01 MEZ
+// #generated# Last update: 2018-12-01 13:46:56 MEZ
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(0);
@@ -2093,6 +2104,7 @@ public class NativeArray extends IdScriptableObject implements List
                 case 'n': X="find";id=Id_find; break L;
                 case 'r': X="sort";id=Id_sort; break L;
                 case 's': X="push";id=Id_push; break L;
+                case 'y': X="keys";id=Id_keys; break L;
                 } break L;
             case 5: c=s.charAt(1);
                 if (c=='h') { X="shift";id=Id_shift; }
@@ -2104,8 +2116,10 @@ public class NativeArray extends IdScriptableObject implements List
                 case 'f': X="filter";id=Id_filter; break L;
                 case 'r': X="reduce";id=Id_reduce; break L;
                 case 's': X="splice";id=Id_splice; break L;
+                case 'v': X="values";id=Id_values; break L;
                 } break L;
             case 7: switch (s.charAt(0)) {
+                case 'e': X="entries";id=Id_entries; break L;
                 case 'f': X="forEach";id=Id_forEach; break L;
                 case 'i': X="indexOf";id=Id_indexOf; break L;
                 case 'r': X="reverse";id=Id_reverse; break L;
@@ -2157,7 +2171,10 @@ public class NativeArray extends IdScriptableObject implements List
         Id_reduce               = 24,
         Id_reduceRight          = 25,
         Id_fill                 = 26,
-        SymbolId_iterator       = 27,
+        Id_keys                 = 27,
+        Id_values               = 28,
+        Id_entries              = 29,
+        SymbolId_iterator       = 30,
 
         MAX_PROTOTYPE_ID        = SymbolId_iterator;
 

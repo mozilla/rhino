@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
+
 /**
  * This class implements the "arguments" object.
  *
@@ -409,7 +411,7 @@ final class Arguments extends IdScriptableObject
             // 9.4.4.6 CreateUnmappedArgumentsObject(argumentsList)
             //  1. Perform DefinePropertyOrThrow(obj, @@iterator, PropertyDescriptor {[[Value]]:%ArrayProto_values%,
             //     [[Writable]]: true, [[Enumerable]]: false, [[Configurable]]: true}).
-            return new NativeArrayIterator(scope, thisObj);
+            return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);
         }
     };
 

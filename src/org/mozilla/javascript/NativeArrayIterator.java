@@ -7,8 +7,16 @@
 package org.mozilla.javascript;
 
 public final class NativeArrayIterator extends ES6Iterator {
+    public enum ARRAY_ITERATOR_TYPE {
+            ENTRIES,
+            KEYS,
+            VALUES
+    }
+
     private static final long serialVersionUID = 1L;
     private static final String ITERATOR_TAG = "ArrayIterator";
+
+    private ARRAY_ITERATOR_TYPE type;
 
     static void init(ScriptableObject scope, boolean sealed) {
         ES6Iterator.init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG);
@@ -21,10 +29,11 @@ public final class NativeArrayIterator extends ES6Iterator {
         super();
     }
 
-    public NativeArrayIterator(Scriptable scope, Scriptable arrayLike) {
+    public NativeArrayIterator(Scriptable scope, Scriptable arrayLike, ARRAY_ITERATOR_TYPE type) {
         super(scope, ITERATOR_TAG);
         this.index = 0;
         this.arrayLike = arrayLike;
+        this.type = type;
     }
 
     @Override
@@ -39,10 +48,20 @@ public final class NativeArrayIterator extends ES6Iterator {
 
     @Override
     protected Object nextValue(Context cx, Scriptable scope) {
-        Object value = arrayLike.get(index++, arrayLike);
+        if (type == ARRAY_ITERATOR_TYPE.KEYS) {
+            return index++;
+        }
+
+        Object value = arrayLike.get(index, arrayLike);
         if (value == ScriptableObject.NOT_FOUND) {
             value = Undefined.instance;
         }
+
+        if (type == ARRAY_ITERATOR_TYPE.ENTRIES) {
+            value = cx.newArray(scope, new Object[] {index, value});
+        }
+
+        index++;
         return value;
     }
 
