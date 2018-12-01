@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArrayIterator;
+import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
@@ -49,7 +50,7 @@ public class NativeArrayIteratorTest
     public void testSerialization()
         throws IOException, ClassNotFoundException {
 
-        NativeArrayIterator iter = new NativeArrayIterator(root, null);
+        NativeArrayIterator iter = new NativeArrayIterator(root, null, ARRAY_ITERATOR_TYPE.VALUES);
 
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 ObjectOutputStream oout = new ObjectOutputStream(bos)) {

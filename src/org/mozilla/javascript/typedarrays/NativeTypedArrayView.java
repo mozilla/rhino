@@ -24,6 +24,7 @@ import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.Wrapper;
+import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 
 /**
  * This class is the abstract parent for all of the various typed arrays. Each one
@@ -327,7 +328,7 @@ public abstract class NativeTypedArrayView<T>
             throw ScriptRuntime.constructError("Error", "invalid arguments");
 
         case SymbolId_iterator:
-            return new NativeArrayIterator(scope, thisObj);
+            return new NativeArrayIterator(scope, thisObj, ARRAY_ITERATOR_TYPE.VALUES);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
