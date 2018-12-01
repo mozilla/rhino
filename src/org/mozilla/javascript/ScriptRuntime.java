@@ -1110,6 +1110,13 @@ public class ScriptRuntime {
      */
     public static Scriptable toObject(Context cx, Scriptable scope, Object val)
     {
+        if (val == null) {
+            throw typeError0("msg.null.to.object");
+        }
+        if (Undefined.isUndefined(val)) {
+            throw typeError0("msg.undef.to.object");
+        }
+
         if (isSymbol(val)) {
             NativeSymbol result = new NativeSymbol((NativeSymbol)val);
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Symbol);
@@ -1133,12 +1140,6 @@ public class ScriptRuntime {
             NativeBoolean result = new NativeBoolean(((Boolean)val).booleanValue());
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Boolean);
             return result;
-        }
-        if (val == null) {
-            throw typeError0("msg.null.to.object");
-        }
-        if (val == Undefined.instance) {
-            throw typeError0("msg.undef.to.object");
         }
 
         // Extension: Wrap as a LiveConnect object.
@@ -2747,7 +2748,7 @@ public class ScriptRuntime {
 
         return function.call(cx, scope, callThis, callArgs);
     }
-    
+
     /**
       * @return true if the passed in Scriptable looks like an array
       */

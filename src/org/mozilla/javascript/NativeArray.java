@@ -220,6 +220,7 @@ public class NativeArray extends IdScriptableObject implements List
           case Id_findIndex:      arity=1; s="findIndex";      break;
           case Id_reduce:         arity=1; s="reduce";         break;
           case Id_reduceRight:    arity=1; s="reduceRight";    break;
+          case Id_fill:           arity=1; s="fill";           break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
 
@@ -331,6 +332,9 @@ public class NativeArray extends IdScriptableObject implements List
 
               case Id_lastIndexOf:
                 return js_lastIndexOf(cx, thisObj, args);
+
+              case Id_fill:
+                  return js_fill(cx, scope, thisObj, args);
 
               case Id_every:
               case Id_filter:
@@ -1572,6 +1576,45 @@ public class NativeArray extends IdScriptableObject implements List
         return NEGATIVE_ONE;
     }
 
+    private static Object js_fill(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
+    {
+        thisObj = ScriptRuntime.toObject(cx, scope, thisObj);
+
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        long len = getLengthProperty(cx, o);
+
+        long relativeStart = 0;
+        if (args.length >= 2) {
+            relativeStart = (long) ScriptRuntime.toInteger(args[1]);
+        }
+        final long k;
+        if (relativeStart < 0) {
+            k = Math.max((len + relativeStart), 0);
+        }
+        else {
+            k = Math.min(relativeStart, len);
+        }
+
+        long relativeEnd = len;
+        if (args.length >= 3 && !Undefined.isUndefined(args[2])) {
+            relativeEnd = (long) ScriptRuntime.toInteger(args[2]);
+        }
+        final long fin;
+        if (relativeEnd < 0) {
+            fin = Math.max((len + relativeEnd), 0);
+        }
+        else {
+            fin = Math.min(relativeEnd, len);
+        }
+
+        Object value = args.length > 0 ? args[0] : Undefined.instance;
+        for (long i = k; i < fin; i++) {
+            setRawElem(cx, thisObj, i, value);
+        }
+
+        return thisObj;
+    }
+
     /**
      * Implements the methods "every", "filter", "forEach", "map", and "some".
      */
@@ -2036,7 +2079,7 @@ public class NativeArray extends IdScriptableObject implements List
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2016-03-04 20:46:26 GMT
+// #generated# Last update: 2018-11-30 19:45:01 MEZ
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(0);
@@ -2045,6 +2088,7 @@ public class NativeArray extends IdScriptableObject implements List
                 break L;
             case 4: switch (s.charAt(2)) {
                 case 'i': X="join";id=Id_join; break L;
+                case 'l': X="fill";id=Id_fill; break L;
                 case 'm': X="some";id=Id_some; break L;
                 case 'n': X="find";id=Id_find; break L;
                 case 'r': X="sort";id=Id_sort; break L;
@@ -2112,7 +2156,8 @@ public class NativeArray extends IdScriptableObject implements List
         Id_findIndex            = 23,
         Id_reduce               = 24,
         Id_reduceRight          = 25,
-        SymbolId_iterator       = 26,
+        Id_fill                 = 26,
+        SymbolId_iterator       = 27,
 
         MAX_PROTOTYPE_ID        = SymbolId_iterator;
 
