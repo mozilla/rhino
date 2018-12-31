@@ -92,7 +92,16 @@ public class NativeDataView
             pos = 0;
         }
 
-        int len = isArg(args, 2) ? ScriptRuntime.toInt32(args[2]) : ab.getLength() - pos;
+        int len;
+        if (isArg(args, 2)) {
+            double doublePos = ScriptRuntime.toNumber(args[2]);
+            if (Double.isInfinite(doublePos)) {
+                throw ScriptRuntime.constructError("RangeError", "offset out of range");
+            }
+            len = ScriptRuntime.toInt32(doublePos);
+        } else {
+            len = ab.getLength() - pos;
+        }
 
         if (len < 0) {
             throw ScriptRuntime.constructError("RangeError", "length out of range");
