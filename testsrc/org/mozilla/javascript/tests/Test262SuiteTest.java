@@ -220,6 +220,11 @@ public class Test262SuiteTest {
                 return;
             }
             throw ex;
+        } catch (AssertionError ex) {
+            if (fails) {
+                return;
+            }
+            throw ex;
         } finally {
             Context.exit();
         }
@@ -238,12 +243,12 @@ public class Test262SuiteTest {
                     line = scanner.nextLine().trim();
                     lineNo++;
                 }
-    
+
                 if (line.isEmpty() || line.startsWith("#")) {
                     line = null; // consume the line
                     continue;
                 }
-    
+
                 File target = new File(testDir, line);
                 if (!target.exists()) {
                     if (line.startsWith("!")) {
@@ -253,34 +258,34 @@ public class Test262SuiteTest {
                     throw new FileNotFoundException(
                             "File " + line + " declared at line #" + lineNo + " doesn't exist");
                 }
-    
+
                 if (target.isFile()) {
                     testFiles.add(target);
                 } else if (target.isDirectory()) {
                     String curDirectory = line;
                     recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
-    
+
                     // start handling exclusions that could follow
                     while (scanner.hasNextLine()) {
                         line = scanner.nextLine().trim();
                         lineNo++;
-    
+
                         if (line.isEmpty() || line.startsWith("#")) {
                             line = null; // consume the line
                             continue;
                         }
-    
+
                         Matcher m = EXCLUDE_PATTERN.matcher(line);
                         if (!m.matches()) {
                             // stop an exclusion handling loop
                             break;
                         }
-    
+
                         String excludeSubstr = m.group(1);
                         int excludeCount = 0;
                         for (File file : dirFiles) {
                             String path = file.getPath().replaceAll("\\\\", "/");
-                            if (path.contains(excludeSubstr)) {
+                            if (path.endsWith(excludeSubstr)) {
                                 failingFiles.add(file);
                                 excludeCount++;
                             }
@@ -293,17 +298,17 @@ public class Test262SuiteTest {
                         // exclusion handled
                         line = null;
                     }
-    
+
                     testFiles.addAll(dirFiles);
                     dirFiles.clear();
-    
+
                     if (line != null && !line.equals(curDirectory)) {
                         // saw a different line and it isn't an exclusion,
                         // so it wasn't handled, let the main loop deal with it
                         continue;
                     }
                 }
-    
+
                 // this line was handled
                 line = null;
             }
