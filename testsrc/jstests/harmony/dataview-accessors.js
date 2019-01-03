@@ -402,9 +402,17 @@ function TestGeneralAccessors() {
     assertThrows(function() { f(); }, TypeError);
     f.call(a, 0, 0); // should not throw
     assertThrows(function() { f.call({}, 0, 0); }, TypeError);
-    assertThrows(function() { f.call(a); }, TypeError);
+
+    // this does not throw any more (tested in 2018)
+    // assertThrows(function() { f.call(a); }, TypeError);
+    f.call(a);
+
     if (name.indexOf("set") == 0) {
-      assertThrows(function() { f.call(a, 1); }, TypeError);
+
+      // this does not throw any more (tested in 2018)
+      // assertThrows(function() { f.call(a, 1); }, TypeError);
+      f.call(a, 1);
+
     } else {
       f.call(a, 1); // should not throw
     }
@@ -432,32 +440,58 @@ TestGeneralAccessors();
 function TestInsufficientArguments() {
   var a = new DataView(new ArrayBuffer(256));
 
-  assertThrows(function() { a.getUint8(); }, TypeError);
-  assertThrows(function() { a.getInt8(); }, TypeError);
-  assertThrows(function() { a.getUint16(); }, TypeError);
-  assertThrows(function() { a.getInt16(); }, TypeError);
-  assertThrows(function() { a.getUint32(); }, TypeError);
-  assertThrows(function() { a.getInt32(); }, TypeError);
-  assertThrows(function() { a.getFloat32(); }, TypeError);
-  assertThrows(function() { a.getFloat64(); }, TypeError);
+  // this does not throw any more (tested in 2018)
+  // assertThrows(function() { a.getUint8(); }, TypeError);
+  assertEquals(0, a.getUint8());
+  // assertThrows(function() { a.getInt8(); }, TypeError);
+  assertEquals(0, a.getInt8());
+  // assertThrows(function() { a.getUint16(); }, TypeError);
+  assertEquals(0, a.getUint16());
+  // assertThrows(function() { a.getInt16(); }, TypeError);
+  assertEquals(0, a.getInt16());
+  // assertThrows(function() { a.getUint32(); }, TypeError);
+  assertEquals(0, a.getUint32());
+  // assertThrows(function() { a.getInt32(); }, TypeError);
+  assertEquals(0, a.getInt32());
+  // assertThrows(function() { a.getFloat32(); }, TypeError);
+  assertEquals(0, a.getFloat32());
+  // assertThrows(function() { a.getFloat64(); }, TypeError);
+  assertEquals(0, a.getFloat64());
 
-  assertThrows(function() { a.setUint8(); }, TypeError);
-  assertThrows(function() { a.setInt8(); }, TypeError);
-  assertThrows(function() { a.setUint16(); }, TypeError);
-  assertThrows(function() { a.setInt16(); }, TypeError);
-  assertThrows(function() { a.setUint32(); }, TypeError);
-  assertThrows(function() { a.setInt32(); }, TypeError);
-  assertThrows(function() { a.setFloat32(); }, TypeError);
-  assertThrows(function() { a.setFloat64(); }, TypeError);
+  // this does not throw any more (tested in 2018)
+  // assertThrows(function() { a.setUint8(); }, TypeError);
+  a.setUint8();
+  // assertThrows(function() { a.setInt8(); }, TypeError);
+  a.setInt8();
+  // assertThrows(function() { a.setUint16(); }, TypeError);
+  a.setUint16();
+  // assertThrows(function() { a.setInt16(); }, TypeError);
+  a.setInt16();
+  // assertThrows(function() { a.setUint32(); }, TypeError);
+  a.setUint32();
+  // assertThrows(function() { a.setInt32(); }, TypeError);
+  a.setInt32();
+  // assertThrows(function() { a.setFloat32(); }, TypeError);
+  a.setFloat32();
+  // assertThrows(function() { a.setFloat64(); }, TypeError);
+  a.setFloat64();
 
-  assertThrows(function() { a.setUint8(1) }, TypeError);
-  assertThrows(function() { a.setInt8(1) }, TypeError);
-  assertThrows(function() { a.setUint16(1) }, TypeError);
-  assertThrows(function() { a.setInt16(1) }, TypeError);
-  assertThrows(function() { a.setUint32(1) }, TypeError);
-  assertThrows(function() { a.setInt32(1) }, TypeError);
-  assertThrows(function() { a.setFloat32(1) }, TypeError);
-  assertThrows(function() { a.setFloat64(1) }, TypeError);
+  // assertThrows(function() { a.setUint8(1) }, TypeError);
+  a.setUint8(1);
+  // assertThrows(function() { a.setInt8(1) }, TypeError);
+  a.setInt8(1);
+  // assertThrows(function() { a.setUint16(1) }, TypeError);
+  a.setUint16(1);
+  // assertThrows(function() { a.setInt16(1) }, TypeError);
+  a.setInt16(1);
+  // assertThrows(function() { a.setUint32(1) }, TypeError);
+  a.setUint32(1);
+  // assertThrows(function() { a.setInt32(1) }, TypeError);
+  a.setInt32(1);
+  // assertThrows(function() { a.setFloat32(1) }, TypeError);
+  a.setFloat32(1);
+  // assertThrows(function() { a.setFloat64(1) }, TypeError);
+  a.setFloat64(1);
 }
 
 TestInsufficientArguments();
