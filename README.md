@@ -49,6 +49,8 @@ Rhino builds with `Gradle`. Here are some useful tasks:
 ```
 Build and create `Rhino` jar in the `buildGradle/libs` directory.
 ```
+git submodule init
+git submodule update
 ./gradlew test
 ```
 Build and run all the tests.
