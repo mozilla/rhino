@@ -130,7 +130,7 @@ public final class OptRuntime extends ScriptRuntime
                                       Context cx, Scriptable scope,
                                       int incrDecrMask)
     {
-        return ScriptRuntime.elemIncrDecr(obj, new Double(index), cx, scope,
+        return ScriptRuntime.elemIncrDecr(obj, Double.valueOf(index), cx, scope,
                                           incrDecrMask);
     }
 
@@ -183,7 +183,7 @@ public final class OptRuntime extends ScriptRuntime
         } else if (num != num) {
             return NaNobj;
         }
-        return new Double(num);
+        return Double.valueOf(num);
     }
 
     static String encodeIntArray(int[] array)
@@ -234,7 +234,7 @@ public final class OptRuntime extends ScriptRuntime
     {
         ContextFactory.getGlobal().call(cx -> {
             ScriptableObject global = getGlobal(cx);
-    
+
             // get the command line arguments and define "arguments"
             // array in the top-level object
             Object[] argsCopy = new Object[args.length];
