@@ -726,7 +726,7 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             type == ScriptRuntime.DoubleClass || type == Double.TYPE) {
             return valueClass == ScriptRuntime.DoubleClass
                 ? value
-                : new Double(toDouble(value));
+                : Double.valueOf(toDouble(value));
         }
 
         if (type == ScriptRuntime.FloatClass || type == Float.TYPE) {
@@ -736,20 +736,20 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
             double number = toDouble(value);
             if (Double.isInfinite(number) || Double.isNaN(number)
                 || number == 0.0) {
-                return new Float((float)number);
+                return Float.valueOf((float)number);
             }
 
             double absNumber = Math.abs(number);
             if (absNumber < Float.MIN_VALUE) {
-                return new Float((number > 0.0) ? +0.0 : -0.0);
+                return Float.valueOf((number > 0.0) ? +0.0f : -0.0f);
             }
             else if (absNumber > Float.MAX_VALUE) {
-                return new Float((number > 0.0) ?
+                return Float.valueOf((number > 0.0) ?
                                  Float.POSITIVE_INFINITY :
                                  Float.NEGATIVE_INFINITY);
             }
             else {
-                return new Float((float)number);
+                return Float.valueOf((float)number);
             }
         }
 
