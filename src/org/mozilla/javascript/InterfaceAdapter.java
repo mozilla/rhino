@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * Adapter to use JS function as implementation of Java interfaces with
@@ -46,9 +47,20 @@ public class InterfaceAdapter
                         "msg.no.empty.interface.conversion", cl.getName());
                 }
                 if (length > 1) {
-                    String methodName = methods[0].getName();
+                    String methodName = null;
+                    for (Method method : methods) {
+                        if (Modifier.isAbstract(method.getModifiers())) {
+                            methodName = method.getName();
+                            break;
+                        }
+                    }
+                    // there are no abstract methods
+                    if (methodName == null) {
+                        throw Context.reportRuntimeError1(
+                                "msg.no.empty.interface.conversion", cl.getName());
+                    }
                     for (int i = 1; i < length; i++) {
-                        if (!methodName.equals(methods[i].getName())) {
+                        if (!methodName.equals(methods[i].getName()) && Modifier.isAbstract(methods[i].getModifiers())) {
                             throw Context.reportRuntimeError1(
                                     "msg.no.function.interface.conversion",
                                     cl.getName());
