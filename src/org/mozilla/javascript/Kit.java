@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -213,7 +214,7 @@ public class Kit
         try {
             String propValue = System.getProperty(CACHE_USE_PROPERTY_NAME);
             if (propValue != null && propValue.length() != 0)
-                return Integer.valueOf(System.getProperty(CACHE_SIZE_PROPERTY_NAME));
+                return Integer.valueOf(propValue);
             else return MAX_CAPACITY_DEFAULT;
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -225,8 +226,15 @@ public class Kit
     public static int getNonClassCacheSize() {
         int result = 0;
 
-        for (Map.Entry<ClassLoader, LRUCache> entry : notClassMap.entrySet())
-            result += entry.getValue().size();
+        for (Map.Entry<ClassLoader, LRUCache> entry : notClassMap.entrySet()) {
+            if (entry instanceof WeakReference) {
+                WeakReference<ClassLoader> weak = (WeakReference<ClassLoader>)entry;
+                if (!weak.isEnqueued())
+                    result += entry.getValue().size();
+            } else {
+                System.err.println("strange entry type");
+            }
+        }
 
         return result;
     }
