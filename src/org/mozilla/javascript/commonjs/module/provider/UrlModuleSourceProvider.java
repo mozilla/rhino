@@ -152,7 +152,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase
         try {
             urlConnection.connect();
             if(applicableValidator != null &&
-                    applicableValidator.updateValidator(urlConnection,
+                    !applicableValidator.updateValidator(urlConnection,
                             request_time, urlConnectionExpiryCalculator))
             {
                 close(urlConnection);
