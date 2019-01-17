@@ -1247,6 +1247,11 @@ public class ParserTest extends TestCase {
       parse("({import:1}).import;");
     }
 
+    public void testThrowStatement() {
+        environment.setStrictMode(true);
+        parse("function A(a) { switch (a) { default: throw \"some error\" } }", null, new String[]{"missing ; after statement"}, true);
+    }
+
     public void testParseErrorRecovery() {
         expectErrorWithRecovery(")", 1);
     }
