@@ -3212,20 +3212,20 @@ public class Parser
             if (peekToken() == Token.FOR) {
                 return generatorExpression(e, begin);
             }
-            ParenthesizedExpression pn = new ParenthesizedExpression(e);
+            mustMatchToken(Token.RP, "msg.no.paren", true);
+            if (e.getType() == Token.EMPTY && peekToken() != Token.ARROW) {
+              reportError("msg.syntax");
+              return makeErrorNode();
+            }
+            int length = ts.tokenEnd - begin;
+            ParenthesizedExpression pn = new ParenthesizedExpression(begin, length, e);
+            pn.setLineno(lineno);
             if (jsdocNode == null) {
                 jsdocNode = getAndResetJsDoc();
             }
             if (jsdocNode != null) {
                 pn.setJsDocNode(jsdocNode);
             }
-            mustMatchToken(Token.RP, "msg.no.paren", true);
-            if (e.getType() == Token.EMPTY && peekToken() != Token.ARROW) {
-              reportError("msg.syntax");
-              return makeErrorNode();
-            }
-            pn.setLength(ts.tokenEnd - pn.getPosition());
-            pn.setLineno(lineno);
             return pn;
         } finally {
             inForInit = wasInForInit;
