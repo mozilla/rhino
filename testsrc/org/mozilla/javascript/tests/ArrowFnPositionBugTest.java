@@ -63,12 +63,8 @@ public class ArrowFnPositionBugTest {
     @Test
     public void testArrowFnWithArgsPosition() {
         FunctionNode arrowFn = parseAndExtractArrowFn("var a = (b, c) => b + c;");
-        // ParenthesisedExpression copies position from its child, so
-        // with an EmptyExpression it will be a position of opening paren,
-        // but when there's parameters it's a start of parameters list
-        // (i.e. it's shifted by one char compared to no-parameters case)
-        assertEquals(5, arrowFn.getPosition());
-        assertEquals(9, arrowFn.getAbsolutePosition());
+        assertEquals(4, arrowFn.getPosition());
+        assertEquals(8, arrowFn.getAbsolutePosition());
     }
 
     @Test
