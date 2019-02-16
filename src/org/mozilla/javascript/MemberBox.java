@@ -26,7 +26,7 @@ import java.lang.reflect.Modifier;
 
 final class MemberBox implements Serializable
 {
-    static final long serialVersionUID = 6358550398665688245L;
+    private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Executable memberObject;
     Object delegateTo;
@@ -59,7 +59,7 @@ final class MemberBox implements Serializable
     int getParameterCount() {
         return memberObject.getParameterCount();
     }
-    
+
     boolean isMethod()
     {
         return memberObject instanceof Method;

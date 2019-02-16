@@ -22,7 +22,7 @@ import java.util.Set;
  */
 public class NativeObject extends IdScriptableObject implements Map
 {
-    static final long serialVersionUID = -6345305608474346996L;
+    private static final long serialVersionUID = -6345305608474346996L;
 
     private static final Object OBJECT_TAG = "Object";
 

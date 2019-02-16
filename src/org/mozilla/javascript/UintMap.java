@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 public class UintMap implements Serializable
 {
-    static final long serialVersionUID = 4242698212885848444L;
+    private static final long serialVersionUID = 4242698212885848444L;
 
 // Map implementation via hashtable,
 // follows "The Art of Computer Programming" by Donald E. Knuth

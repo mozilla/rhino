@@ -16,7 +16,7 @@ package org.mozilla.javascript;
  */
 public class WrappedException extends EvaluatorException
 {
-    static final long serialVersionUID = -1551979216966520648L;
+    private static final long serialVersionUID = -1551979216966520648L;
 
     /**
      * @see Context#throwAsScriptRuntimeEx(Throwable e)

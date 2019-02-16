@@ -11,7 +11,7 @@ import java.util.Objects;
 public final class NativeContinuation extends IdScriptableObject
     implements Function
 {
-    static final long serialVersionUID = 1794167133757605367L;
+    private static final long serialVersionUID = 1794167133757605367L;
 
     private static final Object FTAG = "Continuation";
 
@@ -59,7 +59,7 @@ public final class NativeContinuation extends IdScriptableObject
         }
         return false;
     }
-    
+
     /**
      * Returns true if both continuations have equal implementations.
      * @param c1 one continuation

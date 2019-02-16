@@ -12,7 +12,7 @@ import java.io.Serializable;
 public class SymbolKey
     implements Symbol, Serializable
 {
-    static final long serialVersionUID = -6019782713330994754L;
+    private static final long serialVersionUID = -6019782713330994754L;
 
     // These are common SymbolKeys that are equivalent to well-known symbols
     // defined in ECMAScript.

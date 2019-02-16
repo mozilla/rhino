@@ -17,7 +17,7 @@ import java.lang.reflect.Method;
  */
 final class NativeError extends IdScriptableObject
 {
-    static final long serialVersionUID = -5338413581437645187L;
+    private static final long serialVersionUID = -5338413581437645187L;
 
     private static final Object ERROR_TAG = "Error";
 

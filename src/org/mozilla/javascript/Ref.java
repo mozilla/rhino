@@ -14,9 +14,9 @@ import java.io.Serializable;
  */
 public abstract class Ref implements Serializable
 {
-    
-    static final long serialVersionUID = 4044540354730911424L;
-    
+
+    private static final long serialVersionUID = 4044540354730911424L;
+
     public boolean has(Context cx)
     {
         return true;

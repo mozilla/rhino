@@ -416,7 +416,7 @@ public abstract class RhinoException extends RuntimeException
         return stackStyle;
     }
 
-    static final long serialVersionUID = 1883500631321581169L;
+    private static final long serialVersionUID = 1883500631321581169L;
 
     // Just for testing!
     private static StackStyle stackStyle = StackStyle.RHINO;

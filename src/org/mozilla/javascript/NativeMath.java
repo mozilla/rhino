@@ -14,7 +14,7 @@ package org.mozilla.javascript;
 
 final class NativeMath extends IdScriptableObject
 {
-    static final long serialVersionUID = -8838847185801131569L;
+    private static final long serialVersionUID = -8838847185801131569L;
 
     private static final Object MATH_TAG = "Math";
     private static final double LOG2E = 1.4426950408889634;

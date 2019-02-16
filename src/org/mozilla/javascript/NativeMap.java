@@ -58,9 +58,8 @@ public class NativeMap
                         loadFromIterable(cx, scope, nm, args[0]);
                     }
                     return nm;
-                } else {
-                    throw ScriptRuntime.typeError1("msg.no.new", "Map");
                 }
+                throw ScriptRuntime.typeError1("msg.no.new", "Map");
             case Id_set:
                 return realThis(thisObj, f).js_set(
                     args.length > 0 ? args[0] : Undefined.instance,

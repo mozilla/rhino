@@ -19,7 +19,7 @@ import java.lang.reflect.Array;
 
 public class NativeJavaArray extends NativeJavaObject
 {
-    static final long serialVersionUID = -924022554283675333L;
+    private static final long serialVersionUID = -924022554283675333L;
 
     @Override
     public String getClassName() {

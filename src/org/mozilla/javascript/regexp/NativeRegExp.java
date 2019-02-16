@@ -37,7 +37,7 @@ import org.mozilla.javascript.Undefined;
 
 public class NativeRegExp extends IdScriptableObject implements Function
 {
-    static final long serialVersionUID = 4965263491464903264L;
+    private static final long serialVersionUID = 4965263491464903264L;
 
     private static final Object REGEXP_TAG = new Object();
 
@@ -2778,7 +2778,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
 class RECompiled implements Serializable
 {
-    static final long serialVersionUID = -6144956577595844213L;
+    private static final long serialVersionUID = -6144956577595844213L;
 
     final char[] source;    /* locked source string, sans // */
     int parenCount;         /* number of parenthesized submatches */
@@ -2958,7 +2958,7 @@ class REGlobalData {
  */
 final class RECharSet implements Serializable
 {
-    static final long serialVersionUID = 7931787979395898394L;
+    private static final long serialVersionUID = 7931787979395898394L;
 
     RECharSet(int length, int startIndex, int strlength, boolean sense)
     {

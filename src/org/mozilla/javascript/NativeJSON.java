@@ -22,7 +22,7 @@ import org.mozilla.javascript.json.JsonParser;
  */
 public final class NativeJSON extends IdScriptableObject
 {
-    static final long serialVersionUID = -4567599697595654984L;
+    private static final long serialVersionUID = -4567599697595654984L;
 
     private static final Object JSON_TAG = "JSON";
 

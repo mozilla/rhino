@@ -26,7 +26,7 @@ import org.mozilla.javascript.regexp.NativeRegExp;
  */
 public class NativeArray extends IdScriptableObject implements List
 {
-    static final long serialVersionUID = 7331366857676127338L;
+    private static final long serialVersionUID = 7331366857676127338L;
 
     /*
      * Optimization possibilities and open issues:

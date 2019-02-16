@@ -53,8 +53,8 @@ public abstract class ScriptableObject implements Scriptable,
                                                   ConstProperties
 {
 
-    static final long serialVersionUID = 2829861078851942586L;
-    
+    private static final long serialVersionUID = 2829861078851942586L;
+
     /**
      * The empty property attribute.
      *
@@ -225,7 +225,7 @@ public abstract class ScriptableObject implements Scriptable,
      */
     static final class GetterSlot extends Slot
     {
-        static final long serialVersionUID = -4900574849788797588L;
+        private static final long serialVersionUID = -4900574849788797588L;
 
         Object getter;
         Object setter;

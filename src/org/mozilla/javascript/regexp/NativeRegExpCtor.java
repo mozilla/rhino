@@ -28,7 +28,7 @@ import org.mozilla.javascript.Undefined;
  */
 class NativeRegExpCtor extends BaseFunction
 {
-    static final long serialVersionUID = -5733330028285400526L;
+    private static final long serialVersionUID = -5733330028285400526L;
 
     NativeRegExpCtor()
     {
