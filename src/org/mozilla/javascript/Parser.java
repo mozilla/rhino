@@ -161,7 +161,7 @@ public class Parser
     // Exception to unwind
     private static class ParserException extends RuntimeException
     {
-        static final long serialVersionUID = 5882582646773765630L;
+        private static final long serialVersionUID = 5882582646773765630L;
     }
 
     public Parser() {
@@ -1008,7 +1008,7 @@ public class Parser
                 }
                 fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
             }
-                
+
             fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode));
             fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
             fnNode.setLength(ts.tokenEnd - functionSourceStart);
@@ -3432,11 +3432,11 @@ public class Parser
     {
         return generatorExpression(result, pos, false);
     }
-    
+
     private AstNode generatorExpression(AstNode result, int pos, boolean inFunctionParams)
         throws IOException
     {
-        
+
         List<GeneratorExpressionLoop> loops =
                 new ArrayList<GeneratorExpressionLoop>();
         while (peekToken() == Token.FOR) {
@@ -3463,7 +3463,7 @@ public class Parser
         }
         return pn;
     }
-        
+
     private GeneratorExpressionLoop generatorExpressionLoop()
         throws IOException
     {

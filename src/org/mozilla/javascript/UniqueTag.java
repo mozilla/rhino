@@ -19,7 +19,7 @@ import java.io.Serializable;
  */
 public final class UniqueTag implements Serializable
 {
-    static final long serialVersionUID = -4320556826714577259L;
+    private static final long serialVersionUID = -4320556826714577259L;
 
     private static final int ID_NOT_FOUND    = 1;
     private static final int ID_NULL_VALUE   = 2;

@@ -10,7 +10,7 @@ import org.mozilla.javascript.debug.DebuggableScript;
 
 final class InterpretedFunction extends NativeFunction implements Script
 {
-    static final long serialVersionUID = 541475680333911468L;
+    private static final long serialVersionUID = 541475680333911468L;
 
     InterpreterData idata;
     SecurityController securityController;

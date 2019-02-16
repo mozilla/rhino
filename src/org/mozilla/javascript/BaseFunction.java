@@ -14,7 +14,7 @@ package org.mozilla.javascript;
 public class BaseFunction extends IdScriptableObject implements Function
 {
 
-    static final long serialVersionUID = 5311394446546053859L;
+    private static final long serialVersionUID = 5311394446546053859L;
 
     private static final Object FUNCTION_TAG = "Function";
 

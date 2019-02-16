@@ -16,7 +16,7 @@ package org.mozilla.javascript;
  */
 public final class NativeCall extends IdScriptableObject
 {
-    static final long serialVersionUID = -7471457301304454454L;
+    private static final long serialVersionUID = -7471457301304454454L;
 
     private static final Object CALL_TAG = "Call";
 

@@ -23,7 +23,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NativeJavaMethod extends BaseFunction
 {
-    static final long serialVersionUID = -3440381785576412928L;
+    private static final long serialVersionUID = -3440381785576412928L;
 
     NativeJavaMethod(MemberBox[] methods)
     {

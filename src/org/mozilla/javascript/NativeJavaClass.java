@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class NativeJavaClass extends NativeJavaObject implements Function
 {
-    static final long serialVersionUID = -6460763940409461664L;
+    private static final long serialVersionUID = -6460763940409461664L;
 
     // Special property for getting the underlying Java class object.
     static final String javaClassPropertyName = "__javaObject__";

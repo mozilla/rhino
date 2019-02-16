@@ -14,7 +14,7 @@ package org.mozilla.javascript;
  */
 public class EcmaError extends RhinoException
 {
-    static final long serialVersionUID = -6261226256957286699L;
+    private static final long serialVersionUID = -6261226256957286699L;
 
     private String errorName;
     private String errorMessage;

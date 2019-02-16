@@ -13,7 +13,7 @@ public class NativeCollectionIterator
     private Type type;
     private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
 
-    enum Type { KEYS, VALUES, BOTH };
+    enum Type { KEYS, VALUES, BOTH }
 
     static void init(ScriptableObject scope, String tag, boolean sealed) {
         ES6Iterator.init(scope, sealed, new NativeCollectionIterator(tag), tag);

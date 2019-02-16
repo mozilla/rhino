@@ -21,7 +21,7 @@ import java.util.TimeZone;
  */
 final class NativeDate extends IdScriptableObject
 {
-    static final long serialVersionUID = -8307438915861678966L;
+    private static final long serialVersionUID = -8307438915861678966L;
 
     private static final Object DATE_TAG = "Date";
 

@@ -40,11 +40,11 @@ public final class Interpreter extends Icode implements Evaluator
      */
     private static class CallFrame implements Cloneable, Serializable
     {
-        static final long serialVersionUID = -2843792508994958978L;
+        private static final long serialVersionUID = -2843792508994958978L;
 
         // fields marked "final" in a comment are effectively final except when they're modified immediately after cloning.
-        
-        /*final*/ CallFrame parentFrame; 
+
+        /*final*/ CallFrame parentFrame;
         // amount of stack frames before this one on the interpretation stack
         /*final*/ int frameIndex;
         // If true indicates read-only frame that is a part of continuation
@@ -201,7 +201,7 @@ public final class Interpreter extends Icode implements Evaluator
             copy.frozen = false;
             return copy;
         }
-        
+
         @Override
         public boolean equals(Object other) {
             // Overridden for semantic equality comparison. These objects
@@ -210,9 +210,9 @@ public final class Interpreter extends Icode implements Evaluator
             // are semantically equal.
             if (other instanceof CallFrame) {
                 // If the call is not within a Context with a top call, we force
-                // one. It is required as some objects within fully initialized 
+                // one. It is required as some objects within fully initialized
                 // global scopes (notably, XMLLibImpl) need to have a top scope
-                // in order to evaluate their attributes.  
+                // in order to evaluate their attributes.
                 final Context cx = Context.enter();
                 try {
                     if (ScriptRuntime.hasTopCall(cx)) {
@@ -228,7 +228,7 @@ public final class Interpreter extends Icode implements Evaluator
             }
             return false;
         }
-        
+
         @Override
         public int hashCode() {
             // Overridden for consistency with equals.
@@ -248,7 +248,7 @@ public final class Interpreter extends Icode implements Evaluator
         private boolean equalsInTopScope(Object other) {
             return EqualObjectGraphs.withThreadLocal(eq -> equals(this, (CallFrame)other, eq));
         }
-        
+
         private boolean isStrictTopFrame() {
             CallFrame f = this;
             for(;;) {
@@ -259,7 +259,7 @@ public final class Interpreter extends Icode implements Evaluator
                 f = p;
             }
         }
-        
+
         private static boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal) {
             // Iterative instead of recursive, as interpreter stack depth can
             // be larger than JVM stack depth.
@@ -276,10 +276,10 @@ public final class Interpreter extends Icode implements Evaluator
                 }
             }
         }
-        
+
         private boolean fieldsEqual(CallFrame other, EqualObjectGraphs equal) {
-            return frameIndex == other.frameIndex && 
-                    pc == other.pc && 
+            return frameIndex == other.frameIndex &&
+                    pc == other.pc &&
                     compareIdata(idata, other.idata) &&
                     equal.equalGraphs(varSource.stack, other.varSource.stack) &&
                     Arrays.equals(varSource.sDbl, other.varSource.sDbl) &&
@@ -290,12 +290,12 @@ public final class Interpreter extends Icode implements Evaluator
     }
 
     private static boolean compareIdata(InterpreterData i1, InterpreterData i2) {
-        return i1 == i2 || Objects.equals(getEncodedSource(i1), getEncodedSource(i2)); 
+        return i1 == i2 || Objects.equals(getEncodedSource(i1), getEncodedSource(i2));
     }
-    
+
     private static final class ContinuationJump implements Serializable
     {
-        static final long serialVersionUID = 7687739156004308247L;
+        private static final long serialVersionUID = 7687739156004308247L;
 
         CallFrame capturedFrame;
         CallFrame branchFrame;

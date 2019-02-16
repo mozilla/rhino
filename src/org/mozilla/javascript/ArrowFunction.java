@@ -11,9 +11,9 @@ package org.mozilla.javascript;
  * EcmaScript 6 Rev 14, March 8, 2013 Draft spec , 13.2
  */
 public class ArrowFunction extends BaseFunction {
-    
-    static final long serialVersionUID = -7377989503697220633L;
-    
+
+    private static final long serialVersionUID = -7377989503697220633L;
+
     private final Callable targetFunction;
     private final Scriptable boundThis;
 
@@ -77,7 +77,7 @@ public class ArrowFunction extends BaseFunction {
         }
         return super.decompile(indent, flags);
     }
-    
+
     static boolean equalObjectGraphs(ArrowFunction f1, ArrowFunction f2, EqualObjectGraphs eq) {
         return  eq.equalGraphs(f1.boundThis, f2.boundThis) && eq.equalGraphs(f1.targetFunction, f2.targetFunction);
     }

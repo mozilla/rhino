@@ -18,7 +18,7 @@ import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
  */
 final class Arguments extends IdScriptableObject
 {
-    static final long serialVersionUID = 4275508002492040609L;
+    private static final long serialVersionUID = 4275508002492040609L;
 
     private static final String FTAG = "Arguments";
 
