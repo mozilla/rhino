@@ -39,14 +39,12 @@ public abstract class ModuleSourceProviderBase implements
             return NOT_MODIFIED;
         }
 
-        ModuleSource moduleSource = loadFromPrivilegedLocations(
-                moduleId, validator);
+        ModuleSource moduleSource = loadFromPrivilegedLocations(moduleId, validator);
         if(moduleSource != null) {
             return moduleSource;
         }
         if(paths != null) {
-            moduleSource = loadFromPathArray(moduleId, paths,
-                    validator);
+            moduleSource = loadFromPathArray(moduleId, paths, validator);
             if(moduleSource != null) {
                 return moduleSource;
             }

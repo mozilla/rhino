@@ -31,6 +31,7 @@ public class UrlModuleSourceProviderTest {
             final UrlModuleSourceProvider sourceProvider =
                     new UrlModuleSourceProvider(null, null, ALWAYS_CHECK_EXPIRED, null);
             final ModuleSource moduleSource = sourceProvider.loadSource(moduleURI, null, null);
+            moduleSource.getReader().close();
 
             // when
             result = sourceProvider.loadSource(moduleURI, null, moduleSource.getValidator());
@@ -52,10 +53,12 @@ public class UrlModuleSourceProviderTest {
             final UrlModuleSourceProvider sourceProvider =
                     new UrlModuleSourceProvider(null, null, ALWAYS_CHECK_EXPIRED, null);
             final ModuleSource moduleSource = sourceProvider.loadSource(moduleURI, null, null);
+            moduleSource.getReader().close();
 
             // when
             Files.setLastModifiedTime(filePath, FileTime.fromMillis(Long.MAX_VALUE));
             result = sourceProvider.loadSource(moduleURI, null, moduleSource.getValidator());
+            result.getReader().close();
         } finally {
             Files.deleteIfExists(filePath);
         }
@@ -65,7 +68,7 @@ public class UrlModuleSourceProviderTest {
         Assert.assertNotEquals("Modified", ModuleSourceProvider.NOT_MODIFIED, result);
     }
 
-    private URI getModuleURI(final Path filePath) throws URISyntaxException {
+    private static URI getModuleURI(final Path filePath) throws URISyntaxException {
         final String uriString = filePath.toUri().toASCIIString();
         return new URI(uriString.substring(0, uriString.lastIndexOf('.')));
     }
