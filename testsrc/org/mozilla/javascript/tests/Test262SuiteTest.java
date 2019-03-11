@@ -256,7 +256,7 @@ public class Test262SuiteTest {
                             "Unexpected exclusion '" + line + "' at the line #" + lineNo);
                     }
                     throw new FileNotFoundException(
-                            "File " + line + " declared at line #" + lineNo + " doesn't exist");
+                            "File " + target.getAbsolutePath() + " declared at line #" + lineNo + "('" + line + "') doesn't exist");
                 }
 
                 if (target.isFile()) {
