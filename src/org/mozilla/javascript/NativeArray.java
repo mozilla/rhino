@@ -41,7 +41,7 @@ public class NativeArray extends IdScriptableObject implements List
      */
 
     private static final Object ARRAY_TAG = "Array";
-    private static final Integer NEGATIVE_ONE = Integer.valueOf(-1);
+    private static final Long NEGATIVE_ONE = Long.valueOf(-1);
 
     static void init(Scriptable scope, boolean sealed)
     {
@@ -739,9 +739,11 @@ public class NativeArray extends IdScriptableObject implements List
         // These will both give numeric lengths within Uint32 range.
         if (obj instanceof NativeString) {
             return ((NativeString)obj).getLength();
-        } else if (obj instanceof NativeArray) {
+        }
+        if (obj instanceof NativeArray) {
             return ((NativeArray)obj).getLength();
         }
+
         Object len = ScriptableObject.getProperty(obj, "length");
         if (len == Scriptable.NOT_FOUND) {
             // toUint32(undefined) == 0
