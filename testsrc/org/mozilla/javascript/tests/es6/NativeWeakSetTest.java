@@ -4,38 +4,13 @@
 
 package org.mozilla.javascript.tests.es6;
 
-import static org.junit.Assert.assertEquals;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.drivers.LanguageVersion;
+import org.mozilla.javascript.drivers.RhinoTest;
+import org.mozilla.javascript.drivers.ScriptTestsBase;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
-import org.junit.Test;
-import org.mozilla.javascript.NativeWeakSet;
-
-public class NativeWeakSetTest
+@RhinoTest("testsrc/jstests/es6/weakset.js")
+@LanguageVersion(Context.VERSION_ES6)
+public class NativeWeakSetTest extends ScriptTestsBase
 {
-
-    /**
-     * Test serialization of an empty object.
-     */
-    @Test
-    public void testSerialization()
-        throws IOException, ClassNotFoundException {
-
-        NativeWeakSet weakSet = new NativeWeakSet();
-
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                ObjectOutputStream oout = new ObjectOutputStream(bos)) {
-            oout.writeObject(weakSet);
-
-            try (ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-                    ObjectInputStream oin = new ObjectInputStream(bis)) {
-                NativeWeakSet result = (NativeWeakSet)oin.readObject();
-                assertEquals(0, result.getIds().length);
-            }
-        }
-    }
 }
