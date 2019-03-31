@@ -34,15 +34,4 @@ function logElement(value, key, m) {
   assertEquals("c) map[key1] = '' map[key2] = 'undefined' map[key3] = 'undefined' map[key4] = 'null' ", res);
 })();
 
-
-function key() {
-}
-
-(function TestUseFunctAsKey() {
-  var myMap = new Map();
-  myMap.set(key, 'foo');
-
-  assertEquals(myMap.get(key), 'foo');
-})();
-
 "success";
