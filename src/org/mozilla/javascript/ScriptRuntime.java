@@ -2892,7 +2892,8 @@ public class ScriptRuntime {
             return false;
         }
         if (value instanceof ScriptableObject) {
-            return "object".equals(((ScriptableObject)value).getTypeOf());
+            String type = ((ScriptableObject)value).getTypeOf();
+            return "object".equals(type) || "function".equals(type);
         }
         if (value instanceof Scriptable) {
             return (!(value instanceof Callable));
