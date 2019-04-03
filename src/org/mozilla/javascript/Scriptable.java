@@ -178,6 +178,21 @@ public interface Scriptable {
     public void put(String name, Scriptable start, Object value);
 
     /**
+     * Sets an property named by an symbol in this object.
+     * <p>
+     * The property is specified by an symbol
+     * as defined for <code>get</code>.<p>
+     *
+     * Identical to <code>put(String, Scriptable, Object)</code> except that
+     * an symbol is used to select the property.
+     *
+     * @param symbol the symbol for the property
+     * @param start the object whose property is being set
+     * @param value value to set the property to
+     */
+    public void put(Symbol symbol, Scriptable start, Object value);
+
+    /**
      * Sets an indexed property in this object.
      * <p>
      * The property is specified by an integral index

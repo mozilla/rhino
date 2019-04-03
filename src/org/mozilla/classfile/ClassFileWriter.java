@@ -4365,7 +4365,7 @@ public class ClassFileWriter {
         if (GenerateStackMap) {
             for (int i = 0; i < itsExceptionTableTop; i++) {
                 ExceptionTableEntry ete = itsExceptionTable[i];
-                short handlerPC = (short) getLabelPC(ete.itsHandlerLabel);
+                int handlerPC = getLabelPC(ete.itsHandlerLabel);
                 addSuperBlockStart(handlerPC);
             }
             Arrays.sort(itsSuperBlockStarts, 0, itsSuperBlockStartsTop);

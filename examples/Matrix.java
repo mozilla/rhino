@@ -10,6 +10,7 @@ import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Symbol;
 
 /**
  * Matrix: An example host object class that implements the Scriptable interface.
@@ -72,6 +73,7 @@ public class Matrix implements Scriptable {
     /**
      * Returns the name of this JavaScript class, "Matrix".
      */
+    @Override
     public String getClassName() {
         return "Matrix";
     }
@@ -86,6 +88,7 @@ public class Matrix implements Scriptable {
      * @param name the name of the property
      * @param start the object where lookup began
      */
+    @Override
     public boolean has(String name, Scriptable start) {
         return name.equals("dim");
     }
@@ -96,6 +99,7 @@ public class Matrix implements Scriptable {
      * @param index the index of the property
      * @param start the object where lookup began
      */
+    @Override
     public boolean has(int index, Scriptable start) {
         return true;
     }
@@ -108,6 +112,7 @@ public class Matrix implements Scriptable {
      * @param name the property name
      * @param start the object where the lookup began
      */
+    @Override
     public Object get(String name, Scriptable start) {
         if (name.equals("dim"))
             return new Integer(dim);
@@ -123,6 +128,7 @@ public class Matrix implements Scriptable {
      * @param index the index of the integral property
      * @param start the object where the lookup began
      */
+    @Override
     public Object get(int index, Scriptable start) {
         while (index >= list.size()) {
             list.add(null);
@@ -149,7 +155,18 @@ public class Matrix implements Scriptable {
      *
      * We do nothing here, so all properties are effectively read-only.
      */
+    @Override
     public void put(String name, Scriptable start, Object value) {
+    }
+
+
+    /**
+     * Set a named property.
+     *
+     * We do nothing here, so all properties are effectively read-only.
+     */
+    @Override
+    public void put(Symbol symbol, Scriptable start, Object value) {
     }
 
     /**
@@ -157,6 +174,7 @@ public class Matrix implements Scriptable {
      *
      * We do nothing here, so all properties are effectively read-only.
      */
+    @Override
     public void put(int index, Scriptable start, Object value) {
     }
 
@@ -166,6 +184,7 @@ public class Matrix implements Scriptable {
      * This method shouldn't even be called since we define all properties
      * as PERMANENT.
      */
+    @Override
     public void delete(String id) {
     }
 
@@ -175,12 +194,14 @@ public class Matrix implements Scriptable {
      * This method shouldn't even be called since we define all properties
      * as PERMANENT.
      */
+    @Override
     public void delete(int index) {
     }
 
     /**
      * Get prototype.
      */
+    @Override
     public Scriptable getPrototype() {
         return prototype;
     }
@@ -188,6 +209,7 @@ public class Matrix implements Scriptable {
     /**
      * Set prototype.
      */
+    @Override
     public void setPrototype(Scriptable prototype) {
         this.prototype = prototype;
     }
@@ -195,6 +217,7 @@ public class Matrix implements Scriptable {
     /**
      * Get parent.
      */
+    @Override
     public Scriptable getParentScope() {
         return parent;
     }
@@ -202,6 +225,7 @@ public class Matrix implements Scriptable {
     /**
      * Set parent.
      */
+    @Override
     public void setParentScope(Scriptable parent) {
         this.parent = parent;
     }
@@ -211,6 +235,7 @@ public class Matrix implements Scriptable {
      *
      * We return an empty array since we define all properties to be DONTENUM.
      */
+    @Override
     public Object[] getIds() {
         return new Object[0];
     }
@@ -221,6 +246,7 @@ public class Matrix implements Scriptable {
      * Use the convenience method from Context that takes care of calling
      * toString, etc.
      */
+    @Override
     public Object getDefaultValue(Class<?> typeHint) {
         return "[object Matrix]";
     }
@@ -232,6 +258,7 @@ public class Matrix implements Scriptable {
      * true if <code>this</code> appears in <code>value</code>'s prototype
      * chain.
      */
+    @Override
     public boolean hasInstance(Scriptable value) {
         Scriptable proto = value.getPrototype();
         while (proto != null) {

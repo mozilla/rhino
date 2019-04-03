@@ -84,6 +84,14 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     }
 
     @Override
+    public void put(Symbol symbol, Scriptable start, Object value)
+    {
+        if (start == this)
+            start = prototype;
+        prototype.put(symbol, start, value);
+    }
+
+    @Override
     public void put(int index, Scriptable start, Object value)
     {
         if (start == this)

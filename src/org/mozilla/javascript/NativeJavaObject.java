@@ -102,6 +102,18 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     }
 
     @Override
+    public void put(Symbol symbol, Scriptable start, Object value) {
+        // We could be asked to modify the value of a property in the
+        // prototype. Since we can't add a property to a Java object,
+        // we modify it in the prototype rather than copy it down.
+        String name = symbol.toString();
+        if (prototype == null || members.has(name, false))
+            members.put(this, name, javaObject, value, false);
+        else
+            prototype.put(symbol, prototype, value);
+    }
+
+    @Override
     public void put(int index, Scriptable start, Object value) {
         throw members.reportMemberNotFound(Integer.toString(index));
     }

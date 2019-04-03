@@ -132,6 +132,14 @@ public class Delegator implements Function {
     }
 
     /**
+     * @see org.mozilla.javascript.Scriptable#put(Symbol, Scriptable, Object)
+     */
+    @Override
+    public void put(Symbol symbol, Scriptable start, Object value) {
+        getDelegee().put(symbol,start,value);
+    }
+
+    /**
      * @see org.mozilla.javascript.Scriptable#put(int, Scriptable, Object)
      */
     @Override
