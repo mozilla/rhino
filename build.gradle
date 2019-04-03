@@ -51,6 +51,9 @@ dependencies {
 test {
     useJUnit()
     exclude "**/benchmarks/**"
+
+    jacoco.excludes = ['**/testsrc_tests_ecma_3_RegExp_perlstress*']
+
     systemProperty 'java.awt.headless', 'true'
     systemProperty 'mozilla.js.tests', 'testsrc/tests'
     systemProperty 'mozilla.js.tests.timeout', 60000
