@@ -895,7 +895,7 @@ public class Parser
             }
         } else if (matchToken(Token.LP, true)) {
             // Anonymous function:  leave name as null
-        } else if (matchToken(Token.MUL) &&
+        } else if (matchToken(Token.MUL, true) &&
                 (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6)) {
             // ES6 generator syntax
             return function(type, true);

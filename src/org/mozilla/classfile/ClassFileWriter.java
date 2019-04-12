@@ -2609,7 +2609,7 @@ public class ClassFileWriter {
 
         private boolean wide;
 
-        static final boolean DEBUGSTACKMAP = true;
+        static final boolean DEBUGSTACKMAP = false;
     }
 
     /**
