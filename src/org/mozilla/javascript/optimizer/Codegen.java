@@ -1828,8 +1828,9 @@ class BodyCodegen
 
             // throw StopIteration
             cfw.addALoad(variableObjectLocal);
+            cfw.addALoad(variableObjectLocal);
             addOptRuntimeInvoke("throwStopIteration",
-                    "(Ljava/lang/Object;)V");
+                    "(Ljava/lang/Object;Ljava/lang/Object;)V");
 
             Codegen.pushUndefined(cfw);
             cfw.add(ByteCode.ARETURN);
