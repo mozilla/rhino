@@ -254,12 +254,12 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 
         // Convert position back to absolute.
         if (this.parent != null) {
-            setRelative(-this.parent.getPosition());
+            setRelative(-this.parent.getAbsolutePosition());
         }
 
         this.parent = parent;
         if (parent != null) {
-            setRelative(parent.getPosition());
+            setRelative(parent.getAbsolutePosition());
         }
     }
 
