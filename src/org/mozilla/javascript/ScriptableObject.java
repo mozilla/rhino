@@ -15,6 +15,7 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -250,8 +251,8 @@ public abstract class ScriptableObject implements Scriptable,
             if (getter != null) {
                 if ( getter instanceof MemberBox ) {
                     desc.defineProperty("get", new FunctionObject(fName, ((MemberBox)getter).member(), scope), EMPTY);
-                } else if ( getter instanceof Member ) {
-                    desc.defineProperty("get", new FunctionObject(fName, (Member)getter, scope), EMPTY);
+                } else if ( getter instanceof Executable ) {
+                    desc.defineProperty("get", new FunctionObject(fName, ((Executable)getter), scope), EMPTY);
                 } else {
                     desc.defineProperty("get", getter, EMPTY);
                 }
@@ -259,8 +260,8 @@ public abstract class ScriptableObject implements Scriptable,
             if (setter != null) {
                 if ( setter instanceof MemberBox ) {
                     desc.defineProperty("set", new FunctionObject(fName, ((MemberBox) setter).member(), scope), EMPTY);
-                } else if ( setter instanceof Member ) {
-                    desc.defineProperty("set", new FunctionObject(fName, (Member) setter, scope), EMPTY);
+                } else if ( setter instanceof Executable ) {
+                    desc.defineProperty("set", new FunctionObject(fName, (Executable) setter, scope), EMPTY);
                 } else {
                     desc.defineProperty("set", setter, EMPTY);
                 }
@@ -1404,32 +1405,32 @@ public abstract class ScriptableObject implements Scriptable,
         final String setterPrefix = "jsSet_";
         final String ctorName = "jsConstructor";
 
-        Member ctorMember = findAnnotatedMember(methods, JSConstructor.class);
-        if (ctorMember == null) {
-            ctorMember = findAnnotatedMember(ctors, JSConstructor.class);
+        Executable executable = findAnnotatedExecutables(methods, JSConstructor.class);
+        if (executable == null) {
+            executable = findAnnotatedExecutables(ctors, JSConstructor.class);
         }
-        if (ctorMember == null) {
-            ctorMember = FunctionObject.findSingleMethod(methods, ctorName);
+        if (executable == null) {
+            executable = FunctionObject.findSingleMethod(methods, ctorName);
         }
-        if (ctorMember == null) {
+        if (executable == null) {
             if (ctors.length == 1) {
-                ctorMember = ctors[0];
+                executable = ctors[0];
             } else if (ctors.length == 2) {
                 if (ctors[0].getParameterTypes().length == 0)
-                    ctorMember = ctors[1];
+                    executable = ctors[1];
                 else if (ctors[1].getParameterTypes().length == 0)
-                    ctorMember = ctors[0];
+                    executable = ctors[0];
             }
-            if (ctorMember == null) {
+            if (executable == null) {
                 throw Context.reportRuntimeError1(
                           "msg.ctor.multiple.parms", clazz.getName());
             }
         }
 
-        FunctionObject ctor = new FunctionObject(className, ctorMember, scope);
+        FunctionObject ctor = new FunctionObject(className, executable, scope);
         if (ctor.isVarArgsMethod()) {
             throw Context.reportRuntimeError1
-                ("msg.varargs.ctor", ctorMember.getName());
+                ("msg.varargs.ctor", executable.getName());
         }
         ctor.initAsConstructor(scope, proto);
 
@@ -1437,7 +1438,7 @@ public abstract class ScriptableObject implements Scriptable,
         HashSet<String> staticNames = new HashSet<String>(),
                         instanceNames = new HashSet<String>();
         for (Method method : methods) {
-            if (method == ctorMember) {
+            if (method == executable) {
                 continue;
             }
             String name = method.getName();
@@ -1521,7 +1522,7 @@ public abstract class ScriptableObject implements Scriptable,
             FunctionObject f = new FunctionObject(name, method, proto);
             if (f.isVarArgsConstructor()) {
                 throw Context.reportRuntimeError1
-                    ("msg.varargs.fun", ctorMember.getName());
+                    ("msg.varargs.fun", executable.getName());
             }
             defineProperty(isStatic ? ctor : proto, name, f, DONTENUM);
             if (sealed) {
@@ -1546,11 +1547,11 @@ public abstract class ScriptableObject implements Scriptable,
         return ctor;
     }
 
-    private static Member findAnnotatedMember(AccessibleObject[] members,
+    private static Executable findAnnotatedExecutables(AccessibleObject[] members,
                                               Class<? extends Annotation> annotation) {
         for (AccessibleObject member : members) {
             if (member.isAnnotationPresent(annotation)) {
-                return (Member) member;
+                return (Executable) member;
             }
         }
         return null;
