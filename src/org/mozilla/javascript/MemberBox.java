@@ -28,66 +28,61 @@ final class MemberBox implements Serializable
 {
     private static final long serialVersionUID = 6358550398665688245L;
 
-    private transient Executable memberObject;
+    private transient Executable executableObject;
     Object delegateTo;
 
     MemberBox(Executable executable)
     {
-        this.memberObject = executable;
+        this.executableObject = executable;
     }
 
     Executable member()
     {
-        return memberObject;
+        return executableObject;
     }
 
     Class<?>[] getParameterTypes()
     {
-        return memberObject.getParameterTypes();
+        return executableObject.getParameterTypes();
     }
 
     Class<?> getReturnType()
     {
-        return ((Method)memberObject).getReturnType();
+        return ((Method)executableObject).getReturnType();
     }
 
     boolean isVarArgs()
     {
-        return memberObject.isVarArgs();
+        return executableObject.isVarArgs();
     }
 
     int getParameterCount() {
-        return memberObject.getParameterCount();
+        return executableObject.getParameterCount();
     }
 
     boolean isMethod()
     {
-        return memberObject instanceof Method;
-    }
-
-    boolean isCtor()
-    {
-        return memberObject instanceof Constructor;
+        return executableObject instanceof Method;
     }
 
     boolean isStatic()
     {
-        return Modifier.isStatic(memberObject.getModifiers());
+        return Modifier.isStatic(executableObject.getModifiers());
     }
 
     boolean isPublic()
     {
-        return Modifier.isPublic(memberObject.getModifiers());
+        return Modifier.isPublic(executableObject.getModifiers());
     }
 
     String getName()
     {
-        return memberObject.getName();
+        return executableObject.getName();
     }
 
     Class<?> getDeclaringClass()
     {
-        return memberObject.getDeclaringClass();
+        return executableObject.getDeclaringClass();
     }
 
     String toJavaDeclaration()
@@ -96,9 +91,9 @@ final class MemberBox implements Serializable
         if (isMethod()) {
             sb.append(getReturnType());
             sb.append(' ');
-            sb.append(memberObject.getName());
+            sb.append(executableObject.getName());
         } else {
-            String name = memberObject.getDeclaringClass().getName();
+            String name = executableObject.getDeclaringClass().getName();
             int lastDot = name.lastIndexOf('.');
             if (lastDot >= 0) {
                 name = name.substring(lastDot + 1);
@@ -112,19 +107,19 @@ final class MemberBox implements Serializable
     @Override
     public String toString()
     {
-        return memberObject.toString();
+        return executableObject.toString();
     }
 
     Object invoke(Object target, Object[] args)
     {
-        Method method = (Method)memberObject;
+        Method method = (Method)executableObject;
         try {
             try {
                 return method.invoke(target, args);
             } catch (IllegalAccessException ex) {
                 Method accessible = searchAccessibleMethod(method, getParameterTypes());
                 if (accessible != null) {
-                    memberObject = accessible;
+                    executableObject = accessible;
                     method = accessible;
                 } else {
                     if (!VMBridge.instance.tryToMakeAccessible(method)) {
@@ -150,7 +145,7 @@ final class MemberBox implements Serializable
 
     Object newInstance(Object[] args)
     {
-        Constructor<?> ctor = (Constructor<?>)memberObject;
+        Constructor<?> ctor = (Constructor<?>)executableObject;
         try {
             try {
                 return ctor.newInstance(args);
@@ -207,14 +202,14 @@ final class MemberBox implements Serializable
         throws IOException, ClassNotFoundException
     {
         in.defaultReadObject();
-        memberObject = readMember(in);
+        executableObject = readMember(in);
     }
 
     private void writeObject(ObjectOutputStream out)
         throws IOException
     {
         out.defaultWriteObject();
-        writeMember(out, memberObject);
+        writeMember(out, executableObject);
     }
 
     /**

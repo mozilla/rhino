@@ -270,13 +270,7 @@ class JavaMembers
             Scriptable prototype =
                 ScriptableObject.getFunctionPrototype(scope);
 
-            if (methodOrCtor.isCtor()) {
-                NativeJavaConstructor fun =
-                    new NativeJavaConstructor(methodOrCtor);
-                fun.setPrototype(prototype);
-                member = fun;
-                ht.put(name, fun);
-            } else {
+            if (methodOrCtor.isMethod()) {
                 String trueName = methodOrCtor.getName();
                 member = ht.get(trueName);
 
@@ -288,6 +282,12 @@ class JavaMembers
                     ht.put(name, fun);
                     member = fun;
                 }
+            } else {
+                NativeJavaConstructor fun =
+                        new NativeJavaConstructor(methodOrCtor);
+                    fun.setPrototype(prototype);
+                    member = fun;
+                    ht.put(name, fun);
             }
         }
 
