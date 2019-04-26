@@ -151,8 +151,7 @@ public final class NativeIterator extends IdScriptableObject {
             // For objects that implement java.lang.Iterable or
             // java.util.Iterator, have JavaScript Iterator call the underlying
             // iteration methods
-            Iterator<?> iterator =
-                VMBridge.instance.getJavaIterator(cx, scope, obj);
+            Iterator<?> iterator = getJavaIterator(obj);
             if (iterator != null) {
                 scope = ScriptableObject.getTopLevelScope(scope);
                 return cx.getWrapFactory().wrap(cx, scope,
@@ -189,6 +188,24 @@ public final class NativeIterator extends IdScriptableObject {
                 NativeIterator.getStopIterationObject(scope), null, 0);
         }
         return ScriptRuntime.enumId(this.objectIterator, cx);
+    }
+
+    /**
+     * If "obj" is a java.util.Iterator or a java.lang.Iterable, return a
+     * wrapping as a JavaScript Iterator. Otherwise, return null.
+     * This method is in VMBridge since Iterable is a JDK 1.5 addition.
+     */
+    static private Iterator<?> getJavaIterator(Object obj) {
+        if (obj instanceof Wrapper) {
+            Object unwrapped = ((Wrapper) obj).unwrap();
+            Iterator<?> iterator = null;
+            if (unwrapped instanceof Iterator)
+                iterator = (Iterator<?>) unwrapped;
+            if (unwrapped instanceof Iterable)
+                iterator = ((Iterable<?>)unwrapped).iterator();
+            return iterator;
+        }
+        return null;
     }
 
     static public class WrappedJavaIterator
