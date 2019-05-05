@@ -9,8 +9,12 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Collection of utilities
@@ -18,6 +22,41 @@ import java.util.Map;
 
 public class Kit
 {
+    /**
+     * System property that indicate usage of non-class definitions.
+     * @link CACHE_USE_PROPERTY_NAME_YES means that caching is enabled.
+     * All other values will be treats as cache is disable
+     */
+    static String CACHE_USE_PROPERTY_NAME = "rhino.kit.cache.usage";
+
+    /**
+     * @link CACHE_USE_PROPERTY_NAME
+     * System property's value that means that caching is enable.
+     */
+    static String CACHE_USE_PROPERTY_NAME_YES = "yes";
+
+    /**
+     * Boolean flag to cache or not non-class entities
+     */
+    private static boolean enabledNonClassCaching = false;
+
+    /**
+     * System property's name that indicates maximum count of non-class entities (per classloader)
+     */
+    static String CACHE_SIZE_PROPERTY_NAME = "rhino.kit.cache.size";
+
+
+    /**
+     *  Default cache size for LRU instance
+     */
+    static int MAX_CAPACITY_DEFAULT = 4096;
+
+
+    /**
+     * nonClass Cache - synchronized wrap of {@link WeakHashMap}
+     */
+    private static Map<ClassLoader, LRUCache> notClassMap;
+
     /**
      * Reflection of Throwable.initCause(Throwable) from JDK 1.4
      * or nul if it is not available.
@@ -34,20 +73,22 @@ public class Kit
         } catch (Exception ex) {
             // Assume any exceptions means the method does not exist.
         }
+
+        reinitNonClassCache();
+
+        //identify enabling of non-class cache
+        try {
+            enabledNonClassCaching = CACHE_USE_PROPERTY_NAME_YES.equals(System.getProperty(CACHE_USE_PROPERTY_NAME));
+        } catch (Exception e) {
+            enabledNonClassCaching = false;
+        }
     }
+
 
     public static Class<?> classOrNull(String className)
     {
-        try {
-            return Class.forName(className);
-        } catch  (ClassNotFoundException ex) {
-        } catch  (SecurityException ex) {
-        } catch  (LinkageError ex) {
-        } catch (IllegalArgumentException e) {
-            // Can be thrown if name has characters that a class name
-            // can not contain
-        }
-        return null;
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        return classOrNull(classLoader, className);
     }
 
     /**
@@ -56,11 +97,23 @@ public class Kit
      */
     public static Class<?> classOrNull(ClassLoader loader, String className)
     {
+
+        LRUCache lruCache = null;
+        if (enabledNonClassCaching) {
+            lruCache = getOrCreateCache(loader);
+
+            if (lruCache.containsKey(className))
+                return null;
+        }
+
         try {
             return loader.loadClass(className);
-        } catch (ClassNotFoundException ex) {
-        } catch (SecurityException ex) {
-        } catch (LinkageError ex) {
+        } catch  (ClassNotFoundException ex) {
+            if (enabledNonClassCaching && lruCache != null) {
+                lruCache.add(className);
+            }
+        } catch  (SecurityException ex) {
+        } catch  (LinkageError ex) {
         } catch (IllegalArgumentException e) {
             // Can be thrown if name has characters that a class name
             // can not contain
@@ -142,6 +195,52 @@ public class Kit
             return -1;
         }
         return (accumulator << 4) | c;
+    }
+
+    public static void reinitNonClassCache() {
+        notClassMap = Collections.synchronizedMap(new WeakHashMap<ClassLoader, LRUCache>());
+    }
+
+    private static synchronized LRUCache getOrCreateCache(ClassLoader loader) {
+        LRUCache lruCache = notClassMap.get(loader);
+        if (lruCache == null) {
+            lruCache = new LRUCache(getDefaultNonClassCacheSize());
+            notClassMap.put(loader, lruCache);
+        }
+        return lruCache;
+    }
+
+    private static int getDefaultNonClassCacheSize() {
+        try {
+            String propValue = System.getProperty(CACHE_USE_PROPERTY_NAME);
+            if (propValue != null && propValue.length() != 0)
+                return Integer.valueOf(propValue);
+            else return MAX_CAPACITY_DEFAULT;
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            return MAX_CAPACITY_DEFAULT;
+        }
+
+    }
+
+    public static int getNonClassCacheSize() {
+        int result = 0;
+
+        for (Map.Entry<ClassLoader, LRUCache> entry : notClassMap.entrySet()) {
+            if (entry instanceof WeakReference) {
+                WeakReference<ClassLoader> weak = (WeakReference<ClassLoader>)entry;
+                if (!weak.isEnqueued())
+                    result += entry.getValue().size();
+            } else {
+                System.err.println("strange entry type");
+            }
+        }
+
+        return result;
+    }
+
+    public static int getNonClassCacheSize(ClassLoader classLoader) {
+        return notClassMap.get(classLoader).size();
     }
 
     /**
@@ -434,5 +533,25 @@ public class Kit
         // Print stack trace ASAP
         ex.printStackTrace(System.err);
         throw ex;
+    }
+
+    /**
+     * simple LRU implementation
+     */
+    private final static class LRUCache extends LinkedHashMap<String, String> {
+        private int maxCapacity;
+
+        LRUCache(int maxCapacity) {
+            this.maxCapacity = maxCapacity;
+        }
+
+        void add(String nonClassName) {
+            put(nonClassName, nonClassName);
+        }
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+            return size() > maxCapacity;
+        }
     }
 }
