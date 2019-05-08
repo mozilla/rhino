@@ -16,7 +16,6 @@ import java.lang.reflect.Proxy;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.InterfaceAdapter;
-import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.VMBridge;
 
@@ -84,7 +83,7 @@ public class VMBridge_jdk18 extends VMBridge
             c = cl.getConstructor(new Class[] { InvocationHandler.class });
         } catch (NoSuchMethodException ex) {
             // Should not happen
-            throw Kit.initCause(new IllegalStateException(), ex);
+            throw new IllegalStateException(ex);
         }
         return c;
     }
@@ -134,10 +133,10 @@ public class VMBridge_jdk18 extends VMBridge
             throw Context.throwAsScriptRuntimeEx(ex);
         } catch (IllegalAccessException ex) {
             // Should not happen
-            throw Kit.initCause(new IllegalStateException(), ex);
+            throw new IllegalStateException(ex);
         } catch (InstantiationException ex) {
             // Should not happen
-            throw Kit.initCause(new IllegalStateException(), ex);
+            throw new IllegalStateException(ex);
         }
         return proxy;
     }

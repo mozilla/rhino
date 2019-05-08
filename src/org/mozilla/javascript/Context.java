@@ -576,9 +576,7 @@ public class Context
                 Method m = cl.getMethod("attachTo", sig);
                 m.invoke(listener, args);
             } catch (Exception ex) {
-                RuntimeException rex = new RuntimeException();
-                Kit.initCause(rex, ex);
-                throw rex;
+                throw new RuntimeException(ex);
             }
             return;
         }
@@ -1891,10 +1889,7 @@ public class Context
         try {
             return jsToJava(value, desiredType);
         } catch (EvaluatorException ex) {
-            IllegalArgumentException
-                ex2 = new IllegalArgumentException(ex.getMessage());
-            Kit.initCause(ex2, ex);
-            throw ex2;
+            throw new IllegalArgumentException(ex.getMessage(), ex);
         }
     }
 
