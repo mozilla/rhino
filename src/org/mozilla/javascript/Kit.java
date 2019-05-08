@@ -9,7 +9,6 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
@@ -18,24 +17,6 @@ import java.util.Map;
 
 public class Kit
 {
-    /**
-     * Reflection of Throwable.initCause(Throwable) from JDK 1.4
-     * or nul if it is not available.
-     */
-    private static Method Throwable_initCause = null;
-
-    static {
-        // Are we running on a JDK 1.4 or later system?
-        try {
-            Class<?> ThrowableClass = Kit.classOrNull("java.lang.Throwable");
-            Class<?>[] signature = { ThrowableClass };
-            Throwable_initCause
-                = ThrowableClass.getMethod("initCause", signature);
-        } catch (Exception ex) {
-            // Assume any exceptions means the method does not exist.
-        }
-    }
-
     public static Class<?> classOrNull(String className)
     {
         try {
@@ -95,25 +76,6 @@ public class Kit
             return false;
         }
         return true;
-    }
-
-    /**
-     * If initCause methods exists in Throwable, call
-     * <tt>ex.initCause(cause)</tt> or otherwise do nothing.
-     * @return The <tt>ex</tt> argument.
-     */
-    public static RuntimeException initCause(RuntimeException ex,
-                                             Throwable cause)
-    {
-        if (Throwable_initCause != null) {
-            Object[] args = { cause };
-            try {
-                Throwable_initCause.invoke(ex, args);
-            } catch (Exception e) {
-                // Ignore any exceptions
-            }
-        }
-        return ex;
     }
 
     /**
