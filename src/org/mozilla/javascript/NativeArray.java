@@ -1355,6 +1355,19 @@ public class NativeArray extends IdScriptableObject implements List
         return result;
     }
 
+    private static boolean isConcatSpreadable(Object val) {
+      if ((val instanceof SymbolScriptable) && (val instanceof Scriptable)) {
+        final Object spreadable =
+            ((SymbolScriptable)val).get(SymbolKey.IS_CONCAT_SPREADABLE, (Scriptable)val);
+        if ((spreadable != Scriptable.NOT_FOUND) && (Undefined.instance != spreadable)) {
+          // We found some value (could be null or NaN) for @@isConcatSpreadable.
+          return ScriptRuntime.toBoolean(spreadable);
+        }
+      }
+      // Otherise, it's only spreadable if it's a native array
+      return js_isArray(val);
+    }
+
     /*
      * See Ecma 262v3 15.4.4.4
      */
@@ -1367,18 +1380,20 @@ public class NativeArray extends IdScriptableObject implements List
         if (thisObj instanceof NativeArray && result instanceof NativeArray) {
             NativeArray denseThis = (NativeArray) thisObj;
             NativeArray denseResult = (NativeArray) result;
-            if (denseThis.denseOnly && denseResult.denseOnly) {
+            if (denseThis.denseOnly && denseResult.denseOnly && isConcatSpreadable(thisObj)) {
                 // First calculate length of resulting array
                 boolean canUseDense = true;
                 int length = (int) denseThis.length;
                 for (int i = 0; i < args.length && canUseDense; i++) {
-                    if (args[i] instanceof NativeArray) {
+                    if ((args[i] instanceof NativeArray) && isConcatSpreadable(args[i])) {
                         // only try to use dense approach for Array-like
-                        // objects that are actually NativeArrays
+                        // objects that are actually NativeArrays, and which don't
+                        // explicitly have @@isConcatSpreadable set to a falsy value.
                         final NativeArray arg = (NativeArray) args[i];
                         canUseDense = arg.denseOnly;
                         length += arg.length;
                     } else {
+                        canUseDense = false;
                         length++;
                     }
                 }
@@ -1386,15 +1401,15 @@ public class NativeArray extends IdScriptableObject implements List
                     System.arraycopy(denseThis.dense, 0, denseResult.dense,
                                      0, (int) denseThis.length);
                     int cursor = (int) denseThis.length;
-                    for (int i = 0; i < args.length && canUseDense; i++) {
-                        if (args[i] instanceof NativeArray) {
-                            NativeArray arg = (NativeArray) args[i];
+                    for (Object a : args) {
+                        if (a instanceof NativeArray) {
+                            NativeArray arg = (NativeArray) a;
                             System.arraycopy(arg.dense, 0,
                                     denseResult.dense, cursor,
                                     (int)arg.length);
                             cursor += (int)arg.length;
                         } else {
-                            denseResult.dense[cursor++] = args[i];
+                            denseResult.dense[cursor++] = a;
                         }
                     }
                     denseResult.length = length;
@@ -1409,7 +1424,7 @@ public class NativeArray extends IdScriptableObject implements List
         /* Put the target in the result array; only add it as an array
          * if it looks like one.
          */
-        if (js_isArray(thisObj)) {
+        if (isConcatSpreadable(thisObj)) {
             length = getLengthProperty(cx, thisObj, false);
 
             // Copy from the target object into the result
@@ -1423,14 +1438,13 @@ public class NativeArray extends IdScriptableObject implements List
             defineElem(cx, result, slot++, thisObj);
         }
 
-        /* Copy from the arguments into the result.  If any argument
-         * has a numeric length property, treat it as an array and add
-         * elements separately; otherwise, just copy the argument.
+        /* Copy from the arguments into the result. Native arrays and things that are
+         * @@isConcatSpreadable get broken up into elements.
          */
-        for (int i = 0; i < args.length; i++) {
-            if (js_isArray(args[i])) {
+        for (Object a : args) {
+            if (isConcatSpreadable(a)) {
                 // js_isArray => instanceof Scriptable
-                Scriptable arg = (Scriptable)args[i];
+                Scriptable arg = (Scriptable)a;
                 length = getLengthProperty(cx, arg, false);
                 for (long j = 0; j < length; j++, slot++) {
                     Object temp = getRawElem(arg, j);
@@ -1439,7 +1453,7 @@ public class NativeArray extends IdScriptableObject implements List
                     }
                 }
             } else {
-                defineElem(cx, result, slot++, args[i]);
+                defineElem(cx, result, slot++, a);
             }
         }
         setLengthProperty(cx, result, slot);
