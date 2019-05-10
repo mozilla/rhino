@@ -1335,7 +1335,11 @@ public class NativeArray extends IdScriptableObject implements List
                 Object temp = getRawElem(thisObj, last);
                 setRawElem(cx, thisObj, last + delta, temp);
             }
-            for (long k = length + delta; k < length; ++k) {
+            // Do this backwards because some implementations might use a
+            // non-sparse array and therefore might not be able to handle
+            // deleting elements "in the middle". This makes us compatible
+            // with older Rhino releases.
+            for (long k = length - 1; k >= length + delta; --k) {
                 deleteElem(thisObj, k);
             }
         }
