@@ -5,28 +5,18 @@
 package org.mozilla.javascript.tests;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ScriptableObject;
 
-import junit.framework.TestCase;
+import org.mozilla.javascript.drivers.LanguageVersion;
+import org.mozilla.javascript.drivers.RhinoTest;
+import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 /**
  * Test for overloaded array concat with non-dense arg.
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=477604
  * @author Marc Guillemot
  */
-public class ArrayConcatTest extends TestCase {
-
-    public void testArrayConcat() {
-        final String script = "var a = ['a0', 'a1'];\n"
-            + "a[3] = 'a3';\n"
-            + "var b = ['b1', 'b2'];\n"
-            + "b.concat(a)";
-
-        Utils.runWithAllOptimizationLevels(_cx -> {
-            final ScriptableObject scope = _cx.initStandardObjects();
-            final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-            assertEquals("b1,b2,a0,a1,,a3", Context.toString(result));
-            return null;
-        });
-    }
+@RhinoTest("testsrc/jstests/array-concat-pre-es6.js")
+@LanguageVersion(Context.VERSION_1_8)
+public class ArrayConcatTest extends ScriptTestsBase {
+    // Original test case code moved to the JS file above.
 }
