@@ -1242,7 +1242,12 @@ public class ClassFileWriter {
         if (!(label < 0))
             throw new IllegalArgumentException("Bad label, no biscuit");
 
+        if (DEBUGLABELS) {
+            System.out.println("(" + itsCodeBufferTop + ") LABEL " + Integer.toHexString(label));
+        }
+
         label &= 0x7FFFFFFF;
+
         if (label > itsLabelTableTop)
             throw new IllegalArgumentException("Bad label");
 
@@ -1331,6 +1336,11 @@ public class ClassFileWriter {
 
     public void setStackTop(short n) {
         itsStackTop = n;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString();
     }
 
     public void adjustStackTop(int delta) {
@@ -1859,6 +1869,11 @@ public class ClassFileWriter {
             int length = 0;
             long lType, lType2;
             String className;
+
+            if (DEBUGCODE) {
+                System.out.println("(" + bci + " stack " + stackTop +
+                    "): " + bytecodeStr(bc) + ')');
+            }
 
             switch (bc) {
                 case ByteCode.NOP:
@@ -2602,7 +2617,7 @@ public class ClassFileWriter {
 
         private boolean wide;
 
-        static final boolean DEBUGSTACKMAP = false;
+        static final boolean DEBUGSTACKMAP = true;
     }
 
     /**
@@ -4517,9 +4532,9 @@ public class ClassFileWriter {
 
     private final static int FileHeaderConstant = 0xCAFEBABE;
     // Set DEBUG flags to true to get better checking and progress info.
-    private static final boolean DEBUGSTACK = false;
-    private static final boolean DEBUGLABELS = false;
-    private static final boolean DEBUGCODE = false;
+    private static final boolean DEBUGSTACK = true;
+    private static final boolean DEBUGLABELS = true;
+    private static final boolean DEBUGCODE = true;
 
     private String generatedClassName;
 

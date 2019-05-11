@@ -25,7 +25,7 @@ public class Token
     }
 
     // debug flags
-    public static final boolean printTrees = false;
+    public static final boolean printTrees = true;
     static final boolean printICode = false;
     static final boolean printNames = printTrees || printICode;
 

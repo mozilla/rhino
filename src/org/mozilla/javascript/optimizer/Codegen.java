@@ -1983,6 +1983,11 @@ class BodyCodegen
                     if (!hasVarsInRegs) throw Codegen.badTree();
                     epilogueLabel = cfw.acquireLabel();
                 }
+                /*if (isGenerator) {
+                    // This seems to be necessary because where we jump to expects
+                    // nothing on the stack!
+                    cfw.add(ByteCode.POP);
+                }*/
                 cfw.add(ByteCode.GOTO, epilogueLabel);
                 break;
 
@@ -2101,7 +2106,7 @@ class BodyCodegen
                     if (!isGenerator) {
                         break;
                     }
-
+/*
                     if (compilerEnv.isGenerateObserverCount())
                         saveCurrentCodeOffset();
                     // there is exactly one value on the stack when enterring
@@ -2132,6 +2137,8 @@ class BodyCodegen
 
                     releaseWordLocal((short)finallyRegister);
                     cfw.markLabel(finallyEnd);
+                    // At this point stack is 1. Should it be?
+                    */
                 }
                 break;
 
@@ -2183,6 +2190,7 @@ class BodyCodegen
 
     private void generateExpression(Node node, Node parent)
     {
+        System.out.println("** " + node + " **");
         int type = node.getType();
         Node child = node.getFirstChild();
         switch (type) {
@@ -2907,6 +2915,7 @@ class BodyCodegen
             cfw.markLabel(label);
         if (!hasLocals) {
             // jump here directly if there are no locals
+            // jump here directly if there are no locals
             cfw.markTableSwitchCase(generatorSwitch, nextState);
         }
 
@@ -3037,12 +3046,12 @@ class BodyCodegen
             cfw.markLabel(fallThruLabel);
         } else {
             if (type == Token.JSR) {
-                if (isGenerator) {
+                /*if (isGenerator) {
                     addGotoWithReturn(target);
-                } else {
+                } else {*/
                     // This assumes that JSR is only ever used for finally
                     inlineFinally(target);
-                }
+                //}
             } else {
                 addGoto(target, ByteCode.GOTO);
             }
@@ -3788,6 +3797,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         exceptionManager.setHandlers(handlerLabels, startLabel);
 
         // create a table for the equivalent of JSR returns
+        /*
         if (isGenerator && finallyTarget != null) {
             FinallyReturnPoint ret = new FinallyReturnPoint();
             if (finallys == null) {
@@ -3798,6 +3808,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             // add the finally node as well to the hash table
             finallys.put(finallyTarget.getNext(), ret);
         }
+        */
 
         while (child != null) {
             if (child == catchTarget) {
@@ -3866,9 +3877,9 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             int finallyHandler = cfw.acquireLabel();
             int finallyEnd = cfw.acquireLabel();
             cfw.markHandler(finallyHandler);
-            if (!isGenerator) {
+            //if (!isGenerator) {
                 cfw.markLabel(handlerLabels[FINALLY_EXCEPTION]);
-            }
+            //}
             cfw.addAStore(exceptionLocal);
 
             // reset the variable object local
@@ -3877,12 +3888,12 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
             // get the label to JSR to
             int finallyLabel = finallyTarget.labelId();
-            if (isGenerator)
+            /*if (isGenerator)
                 addGotoWithReturn(finallyTarget);
-            else {
+            else {*/
                 inlineFinally(finallyTarget, handlerLabels[FINALLY_EXCEPTION],
                               finallyEnd);
-            }
+            //}
 
             // rethrow
             cfw.addALoad(exceptionLocal);
@@ -3890,19 +3901,20 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                 cfw.add(ByteCode.CHECKCAST, "java/lang/Throwable");
             cfw.add(ByteCode.ATHROW);
 
-            cfw.markLabel(finallyEnd);
             // mark the handler
             if (isGenerator) {
                 cfw.addExceptionHandler(startLabel, finallyLabel,
                                         finallyHandler, null); // catch any
-            }
+            }// else {
+                cfw.markLabel(finallyEnd);
+            //}
         }
         releaseWordLocal(savedVariableObject);
         cfw.markLabel(realEnd);
 
-        if (!isGenerator) {
+        //if (!isGenerator) {
             exceptionManager.popExceptionInfo();
-        }
+        //}
     }
 
     private static final int JAVASCRIPT_EXCEPTION  = 0;
