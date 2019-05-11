@@ -225,6 +225,7 @@ public class NativeArray extends IdScriptableObject implements List
           case Id_values:         arity=0; s="values";         break;
           case Id_entries:        arity=0; s="entries";        break;
           case Id_includes:       arity=1; s="includes";       break;
+          case Id_copyWithin:     arity=2; s="copyWithin";     break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
 
@@ -342,6 +343,9 @@ public class NativeArray extends IdScriptableObject implements List
 
               case Id_fill:
                 return js_fill(cx, scope, thisObj, args);
+
+              case Id_copyWithin:
+                  return js_copyWithin(cx, scope, thisObj, args);
 
               case Id_every:
               case Id_filter:
@@ -1447,18 +1451,18 @@ public class NativeArray extends IdScriptableObject implements List
     {
         Scriptable scope = getTopLevelScope(this);
         Scriptable result = cx.newArray(scope, 0);
-        long length = getLengthProperty(cx, thisObj, false);
+        long len = getLengthProperty(cx, thisObj, false);
 
         long begin, end;
         if (args.length == 0) {
             begin = 0;
-            end = length;
+            end = len;
         } else {
-            begin = toSliceIndex(ScriptRuntime.toInteger(args[0]), length);
+            begin = toSliceIndex(ScriptRuntime.toInteger(args[0]), len);
             if (args.length == 1 || args[1] == Undefined.instance) {
-                end = length;
+                end = len;
             } else {
-                end = toSliceIndex(ScriptRuntime.toInteger(args[1]), length);
+                end = toSliceIndex(ScriptRuntime.toInteger(args[1]), len);
             }
         }
 
@@ -1633,6 +1637,91 @@ public class NativeArray extends IdScriptableObject implements List
         Object value = args.length > 0 ? args[0] : Undefined.instance;
         for (long i = k; i < fin; i++) {
             setRawElem(cx, thisObj, i, value);
+        }
+
+        return thisObj;
+    }
+
+    private static Object js_copyWithin(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
+    {
+        if(args == null || args.length < 2) {
+            throw ScriptRuntime.typeError("copyWithin() needs two arguments");
+        }
+
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        long len = getLengthProperty(cx, o, false);
+
+        long relativeTarget = (long) ScriptRuntime.toInteger(args[0]);
+        long to;
+        if (relativeTarget < 0) {
+            to = Math.max((len + relativeTarget), 0);
+        }
+        else {
+            to = Math.min(relativeTarget, len);
+        }
+
+        long relativeStart = (long) ScriptRuntime.toInteger(args[1]);
+        long from;
+        if (relativeStart < 0) {
+            from = Math.max((len + relativeStart), 0);
+        }
+        else {
+            from = Math.min(relativeStart, len);
+        }
+
+        long relativeEnd = len;
+        if (args.length >= 3 && !Undefined.isUndefined(args[2])) {
+            relativeEnd = (long) ScriptRuntime.toInteger(args[2]);
+        }
+        final long fin;
+        if (relativeEnd < 0) {
+            fin = Math.max((len + relativeEnd), 0);
+        }
+        else {
+            fin = Math.min(relativeEnd, len);
+        }
+
+        long count = Math.min(fin - from, len - to);
+        int direction = 1;
+        if (from < to && to < from + count) {
+            direction = -1;
+            from = from + count - 1;
+            to = to + count - 1;
+        }
+
+        if (o instanceof NativeArray) {
+            NativeArray na = (NativeArray) o;
+            if (na.denseOnly) {
+                while (count > 0) {
+                    na.dense[(int)to] = na.dense[(int)from];
+                    from = from + direction;
+                    to = to + direction;
+                    count--;
+                }
+
+                return thisObj;
+            }
+        }
+
+        // TODO support array-likes
+        while (count > 0) {
+            String fromKey = ScriptRuntime.toString(from);
+            String toKey = ScriptRuntime.toString(to);
+
+            //        Let fromPresent be HasProperty(O, fromKey).
+            //            ReturnIfAbrupt(fromPresent).
+            //        If fromPresent is true, then
+            //            Let fromVal be Get(O, fromKey).
+            //            ReturnIfAbrupt(fromVal).
+            //            Let setStatus be Set(O, toKey, fromVal, true).
+            //            ReturnIfAbrupt(setStatus).
+            //        Else fromPresent is false,
+            //            Let deleteStatus be DeletePropertyOrThrow(O, toKey).
+            //            ReturnIfAbrupt(deleteStatus).
+
+            from = from + direction;
+            to = to + direction;
+            count--;
         }
 
         return thisObj;
@@ -2106,7 +2195,7 @@ public class NativeArray extends IdScriptableObject implements List
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2019-03-10 12:44:45 MEZ
+// #generated# Last update: 2019-05-11 10:25:01 MESZ
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(0);
@@ -2147,6 +2236,7 @@ public class NativeArray extends IdScriptableObject implements List
                 else if (c=='t') { X="toString";id=Id_toString; }
                 break L;
             case 9: X="findIndex";id=Id_findIndex; break L;
+            case 10: X="copyWithin";id=Id_copyWithin; break L;
             case 11: c=s.charAt(0);
                 if (c=='c') { X="constructor";id=Id_constructor; }
                 else if (c=='l') { X="lastIndexOf";id=Id_lastIndexOf; }
@@ -2192,7 +2282,8 @@ public class NativeArray extends IdScriptableObject implements List
         Id_values               = 28,
         Id_entries              = 29,
         Id_includes             = 30,
-        SymbolId_iterator       = 31,
+        Id_copyWithin           = 31,
+        SymbolId_iterator       = 32,
 
         MAX_PROTOTYPE_ID        = SymbolId_iterator;
 
