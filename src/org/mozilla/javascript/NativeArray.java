@@ -181,6 +181,8 @@ public class NativeArray extends IdScriptableObject implements List
                 "reduceRight", 1);
         addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_isArray,
                 "isArray", 1);
+        addIdFunctionProperty(ctor, ARRAY_TAG, ConstructorId_of,
+                "of", 0);
         super.fillConstructorProperties(ctor);
     }
 
@@ -282,6 +284,10 @@ public class NativeArray extends IdScriptableObject implements List
 
               case ConstructorId_isArray:
                 return args.length > 0 && js_isArray(args[0]);
+
+              case ConstructorId_of: {
+                  return jsOf(cx, scope, thisObj, args);
+                }
 
               case Id_constructor: {
                 boolean inNewExpr = (thisObj == null);
@@ -643,6 +649,17 @@ public class NativeArray extends IdScriptableObject implements List
             throw ScriptRuntime.constructError("RangeError", msg);
         }
         return new NativeArray(len);
+    }
+
+    private static Object jsOf(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
+    {
+        Scriptable result = cx.newArray(scope, 0);
+
+        for (int i = 0; i < args.length; i++) {
+            defineElem(cx, result, i, args[i]);
+        }
+
+        return result;
     }
 
     public long getLength() {
@@ -1702,11 +1719,13 @@ public class NativeArray extends IdScriptableObject implements List
             }
         }
 
-        // TODO support array-likes
-        while (count > 0) {
-            String fromKey = ScriptRuntime.toString(from);
-            String toKey = ScriptRuntime.toString(to);
 
+        while (count > 0) {
+            // TODO first hack, finally we have to impl the spec below
+            setElem(cx, o, to, getRawElem(o, from));
+
+            // String fromKey = ScriptRuntime.toString(from);
+            // String toKey = ScriptRuntime.toString(to);
             //        Let fromPresent be HasProperty(O, fromKey).
             //            ReturnIfAbrupt(fromPresent).
             //        If fromPresent is true, then
@@ -2310,7 +2329,8 @@ public class NativeArray extends IdScriptableObject implements List
         ConstructorId_findIndex            = -Id_findIndex,
         ConstructorId_reduce               = -Id_reduce,
         ConstructorId_reduceRight          = -Id_reduceRight,
-        ConstructorId_isArray              = -26;
+        ConstructorId_isArray              = -26,
+        ConstructorId_of                   = -27;
 
     /**
      * Internal representation of the JavaScript array's length property.
