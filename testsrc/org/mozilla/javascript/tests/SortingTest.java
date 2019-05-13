@@ -18,17 +18,19 @@ public class SortingTest {
     private static final Random rand = new Random();
 
     private static Object[] bigRandom;
+    private static Sorting sorter;
 
     @BeforeClass
     public static void init()
     {
         bigRandom = randomArray(BIG_ARRAY);
+        sorter = Sorting.get();
     }
 
     private void insertionSort(Object[] expected)
     {
         Object[] after = Arrays.copyOf(expected, expected.length);
-        Sorting.insertionSort(after, new IntComparator());
+        sorter.insertionSort(after, new IntComparator());
         Arrays.sort(expected, new IntComparator());
         assertArrayEquals(expected, after);
     }
@@ -47,7 +49,7 @@ public class SortingTest {
     private void hybridSort(Object[] expected)
     {
         Object[] after = Arrays.copyOf(expected, expected.length);
-        Sorting.hybridSort(after, new IntComparator());
+        sorter.hybridSort(after, new IntComparator());
         Arrays.sort(expected, new IntComparator());
         assertArrayEquals(expected, after);
     }
@@ -68,13 +70,13 @@ public class SortingTest {
     public void testMedian()
     {
         Object[] a = new Object[] { 1, 2, 3, 4, 5 };
-        assertEquals(2, Sorting.median(a, 0, 4, new IntComparator()));
+        assertEquals(2, sorter.median(a, 0, 4, new IntComparator()));
         a = new Object[] { 5, 4, 3, 2, 1 };
-        assertEquals(2, Sorting.median(a, 0, 4, new IntComparator()));
+        assertEquals(2, sorter.median(a, 0, 4, new IntComparator()));
         a = new Object[] { 3, 4, 5, 2, 1 };
-        assertEquals(0, Sorting.median(a, 0, 4, new IntComparator()));
+        assertEquals(0, sorter.median(a, 0, 4, new IntComparator()));
         a = new Object[] { 4, 5, 1, 2, 3 };
-        assertEquals(4, Sorting.median(a, 0, 4, new IntComparator()));
+        assertEquals(4, sorter.median(a, 0, 4, new IntComparator()));
     }
 
     /*
@@ -91,7 +93,7 @@ public class SortingTest {
     {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = Arrays.copyOf(bigRandom, bigRandom.length);
-            Sorting.hybridSort(a, new IntComparator());
+            sorter.hybridSort(a, new IntComparator());
         }
     }
 
@@ -120,7 +122,7 @@ public class SortingTest {
     {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = reverseArray(BIG_ARRAY);
-            Sorting.hybridSort(a, new IntComparator());
+            sorter.hybridSort(a, new IntComparator());
         }
     }
 
@@ -138,7 +140,7 @@ public class SortingTest {
     {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = forwardArray(BIG_ARRAY);
-            Sorting.insertionSort(a, new IntComparator());
+            sorter.insertionSort(a, new IntComparator());
         }
     }
 
@@ -147,7 +149,7 @@ public class SortingTest {
     {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = forwardArray(BIG_ARRAY);
-            Sorting.hybridSort(a, new IntComparator());
+            sorter.hybridSort(a, new IntComparator());
         }
     }
 

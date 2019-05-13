@@ -1065,7 +1065,7 @@ public class NativeArray extends IdScriptableObject implements List
             working[i] = getRawElem(thisObj, i);
         }
 
-        Sorting.hybridSort(working, comparator);
+        Sorting.get().hybridSort(working, comparator);
 
         // copy the working array back into thisObj
         for (int i = 0; i < length; ++i) {
