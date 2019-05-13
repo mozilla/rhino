@@ -89,7 +89,10 @@ public class NativeJavaArray
 
     @Override
     public Object get(Symbol key, Scriptable start) {
-        return (SymbolKey.IS_CONCAT_SPREADABLE.equals(key));
+        if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
+            return true;
+        }
+        return Scriptable.NOT_FOUND;
     }
 
     @Override

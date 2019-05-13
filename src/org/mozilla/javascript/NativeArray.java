@@ -1359,8 +1359,9 @@ public class NativeArray extends IdScriptableObject implements List
       if ((val instanceof SymbolScriptable) && (val instanceof Scriptable)) {
         final Object spreadable =
             ((SymbolScriptable)val).get(SymbolKey.IS_CONCAT_SPREADABLE, (Scriptable)val);
-        if ((spreadable != Scriptable.NOT_FOUND) && (Undefined.instance != spreadable)) {
-          // We found some value (could be null or NaN) for @@isConcatSpreadable.
+        if ((spreadable != Scriptable.NOT_FOUND) && !Undefined.isUndefined(spreadable)) {
+          // If @@isConcatSpreadable was undefined, we have to fall back to testing for an array.
+          // Otherwise, we found some value
           return ScriptRuntime.toBoolean(spreadable);
         }
       }
@@ -1441,19 +1442,18 @@ public class NativeArray extends IdScriptableObject implements List
         /* Copy from the arguments into the result. Native arrays and things that are
          * @@isConcatSpreadable get broken up into elements.
          */
-        for (Object a : args) {
-            if (isConcatSpreadable(a)) {
-                // js_isArray => instanceof Scriptable
-                Scriptable arg = (Scriptable)a;
-                length = getLengthProperty(cx, arg, false);
+        for (Object arg : args) {
+            if (isConcatSpreadable(arg)) {
+                final Scriptable sarg = (Scriptable)arg;
+                length = getLengthProperty(cx, sarg, false);
                 for (long j = 0; j < length; j++, slot++) {
-                    Object temp = getRawElem(arg, j);
+                    Object temp = getRawElem(sarg, j);
                     if (temp != NOT_FOUND) {
                         defineElem(cx, result, slot, temp);
                     }
                 }
             } else {
-                defineElem(cx, result, slot++, a);
+                defineElem(cx, result, slot++, arg);
             }
         }
         setLengthProperty(cx, result, slot);
