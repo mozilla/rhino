@@ -27,7 +27,8 @@ import java.util.Map;
  * @see NativeJavaClass
  */
 
-public class NativeJavaObject implements Scriptable, Wrapper, Serializable
+public class NativeJavaObject
+    implements Scriptable, SymbolScriptable, Wrapper, Serializable
 {
     private static final long serialVersionUID = -6948590651130498591L;
 
@@ -73,6 +74,11 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
     }
 
     @Override
+    public boolean has(Symbol key, Scriptable start) {
+        return false;
+    }
+
+    @Override
     public Object get(String name, Scriptable start) {
         if (fieldAndMethods != null) {
             Object result = fieldAndMethods.get(name);
@@ -83,6 +89,12 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         // TODO: passing 'this' as the scope is bogus since it has
         //  no parent scope
         return members.get(this, name, javaObject, false);
+    }
+
+    @Override
+    public Object get(Symbol key, Scriptable start) {
+        // Native Java objects have no Symbol members
+        return Scriptable.NOT_FOUND;
     }
 
     @Override
@@ -107,10 +119,11 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
         String name = symbol.toString();
-        if (prototype == null || members.has(name, false))
+        if (prototype == null || members.has(name, false)) {
             members.put(this, name, javaObject, value, false);
-        else
-            prototype.put(symbol, prototype, value);
+        } else if (prototype instanceof SymbolScriptable) {
+            ((SymbolScriptable)prototype).put(symbol, prototype, value);
+        }
     }
 
     @Override
@@ -126,6 +139,10 @@ public class NativeJavaObject implements Scriptable, Wrapper, Serializable
 
     @Override
     public void delete(String name) {
+    }
+
+    @Override
+    public void delete(Symbol key) {
     }
 
     @Override

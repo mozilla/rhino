@@ -23,7 +23,8 @@ package org.mozilla.javascript;
  * @author Matthias Radestock
  */
 
-public class Delegator implements Function {
+public class Delegator
+    implements Function, SymbolScriptable {
 
     protected Scriptable obj = null;
 
@@ -99,6 +100,15 @@ public class Delegator implements Function {
         return getDelegee().get(name,start);
     }
 
+    @Override
+    public Object get(Symbol key, Scriptable start) {
+        final Scriptable delegee = getDelegee();
+        if (delegee instanceof SymbolScriptable) {
+            return ((SymbolScriptable) delegee).get(key, start);
+        }
+        return Scriptable.NOT_FOUND;
+    }
+
     /**
      * @see org.mozilla.javascript.Scriptable#get(int, Scriptable)
      */
@@ -113,6 +123,15 @@ public class Delegator implements Function {
     @Override
     public boolean has(String name, Scriptable start) {
         return getDelegee().has(name,start);
+    }
+
+    @Override
+    public boolean has(Symbol key, Scriptable start) {
+        final Scriptable delegee = getDelegee();
+        if (delegee instanceof SymbolScriptable) {
+            return ((SymbolScriptable) delegee).has(key, start);
+        }
+        return false;
     }
 
     /**
@@ -136,7 +155,10 @@ public class Delegator implements Function {
      */
     @Override
     public void put(Symbol symbol, Scriptable start, Object value) {
-        getDelegee().put(symbol,start,value);
+        final Scriptable delegee = getDelegee();
+        if (delegee instanceof SymbolScriptable) {
+            ((SymbolScriptable) delegee).put(symbol, start, value);
+        }
     }
 
     /**
@@ -153,6 +175,14 @@ public class Delegator implements Function {
     @Override
     public void delete(String name) {
         getDelegee().delete(name);
+    }
+
+    @Override
+    public void delete(Symbol key) {
+        final Scriptable delegee = getDelegee();
+        if (delegee instanceof SymbolScriptable) {
+            ((SymbolScriptable) delegee).delete(key);
+        }
     }
 
     /**
