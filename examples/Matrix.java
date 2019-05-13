@@ -159,16 +159,6 @@ public class Matrix implements Scriptable {
     public void put(String name, Scriptable start, Object value) {
     }
 
-
-    /**
-     * Set a named property.
-     *
-     * We do nothing here, so all properties are effectively read-only.
-     */
-    @Override
-    public void put(Symbol symbol, Scriptable start, Object value) {
-    }
-
     /**
      * Set an indexed property.
      *

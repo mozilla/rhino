@@ -14,7 +14,8 @@ import java.io.Serializable;
  * It simply delegates every action to its prototype except
  * for operations on its parent.
  */
-public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
+public class NativeWith
+    implements Scriptable, SymbolScriptable, IdFunctionCall, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -54,6 +55,15 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     }
 
     @Override
+    public boolean has(Symbol key, Scriptable start)
+    {
+        if (prototype instanceof SymbolScriptable) {
+            return ((SymbolScriptable)prototype).has(key, prototype);
+        }
+        return false;
+    }
+
+    @Override
     public boolean has(int index, Scriptable start)
     {
         return prototype.has(index, prototype);
@@ -62,16 +72,30 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     @Override
     public Object get(String id, Scriptable start)
     {
-        if (start == this)
+        if (start == this) {
             start = prototype;
+        }
         return prototype.get(id, start);
+    }
+
+    @Override
+    public Object get(Symbol key, Scriptable start)
+    {
+        if (start == this) {
+            start = prototype;
+        }
+        if (prototype instanceof SymbolScriptable) {
+            return ((SymbolScriptable)prototype).get(key, start);
+        }
+        return Scriptable.NOT_FOUND;
     }
 
     @Override
     public Object get(int index, Scriptable start)
     {
-        if (start == this)
+        if (start == this) {
             start = prototype;
+        }
         return prototype.get(index, start);
     }
 
@@ -86,9 +110,12 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     @Override
     public void put(Symbol symbol, Scriptable start, Object value)
     {
-        if (start == this)
+        if (start == this) {
             start = prototype;
-        prototype.put(symbol, start, value);
+        }
+        if (prototype instanceof SymbolScriptable) {
+            ((SymbolScriptable)prototype).put(symbol, start, value);
+        }
     }
 
     @Override
@@ -104,6 +131,15 @@ public class NativeWith implements Scriptable, IdFunctionCall, Serializable {
     {
         prototype.delete(id);
     }
+
+    @Override
+    public void delete(Symbol key)
+    {
+        if (prototype instanceof SymbolScriptable) {
+            ((SymbolScriptable)prototype).delete(key);
+        }
+    }
+
 
     @Override
     public void delete(int index)

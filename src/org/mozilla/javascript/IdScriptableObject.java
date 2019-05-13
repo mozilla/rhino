@@ -213,7 +213,9 @@ public abstract class IdScriptableObject extends ScriptableObject
                     int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
                     Object name = valueArray[nameSlot];
                     if (name instanceof Symbol) {
-                        start.put((Symbol)name, start, value);
+                        if (start instanceof SymbolScriptable) {
+                            ((SymbolScriptable)start).put((Symbol) name, start, value);
+                        }
                     } else {
                         start.put((String)name, start, value);
                     }
