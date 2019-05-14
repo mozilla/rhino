@@ -1355,18 +1355,73 @@ public class NativeArray extends IdScriptableObject implements List
         return result;
     }
 
-    private static boolean isConcatSpreadable(Object val) {
+    private static boolean isConcatSpreadable(Context cx, Scriptable scope, Object val) {
+      // First, look for the new @@isConcatSpreadable test as per ECMAScript 6 and up
       if ((val instanceof SymbolScriptable) && (val instanceof Scriptable)) {
         final Object spreadable =
-            ((SymbolScriptable)val).get(SymbolKey.IS_CONCAT_SPREADABLE, (Scriptable)val);
-        if ((spreadable != Scriptable.NOT_FOUND) && !Undefined.isUndefined(spreadable)) {
+            ScriptableObject.getProperty((Scriptable)val, SymbolKey.IS_CONCAT_SPREADABLE);
+         if ((spreadable != Scriptable.NOT_FOUND) && !Undefined.isUndefined(spreadable)) {
           // If @@isConcatSpreadable was undefined, we have to fall back to testing for an array.
           // Otherwise, we found some value
           return ScriptRuntime.toBoolean(spreadable);
         }
       }
-      // Otherise, it's only spreadable if it's a native array
+
+      if (cx.getLanguageVersion() < Context.VERSION_ES6) {
+        // Otherwise, for older Rhino versions, fall back to the old algorithm, which treats things with
+        // the Array constructor as arrays. However, this is contrary to ES6!
+        final Function ctor = ScriptRuntime.getExistingCtor(cx, scope, "Array");
+        if (ScriptRuntime.instanceOf(val, ctor, cx)) {
+          return true;
+        }
+      }
+
+      // Otherwise, it's only spreadable if it's a native array
       return js_isArray(val);
+    }
+
+    // Concat elements of "arg" into the destination, with optimizations for native,
+    // dense arrays.
+    private static long concatSpreadArg(Context cx,
+        Scriptable result, Scriptable arg, long offset) {
+      long srclen = getLengthProperty(cx, arg, false);
+      long newlen = srclen + offset;
+
+      // First, optimize for a pair of native, dense arrays
+      if ((newlen <= Integer.MAX_VALUE) && (result instanceof NativeArray)) {
+        final NativeArray denseResult = (NativeArray) result;
+        if (denseResult.denseOnly && (arg instanceof NativeArray)) {
+          final NativeArray denseArg = (NativeArray) arg;
+          if (denseArg.denseOnly) {
+            // Now we can optimize
+            denseResult.ensureCapacity((int) newlen);
+            System.arraycopy(denseArg.dense, 0, denseResult.dense, (int) offset, (int) srclen);
+            return newlen;
+          }
+          // We could also optimize here if we are copying to a dense target from a non-dense
+          // native array. However, if the source array is very sparse then the result will be
+          // very bad -- so don't.
+        }
+      }
+
+      // If we get here then we have to do things the generic way
+      long dstpos = offset;
+      for (long srcpos = 0; srcpos < srclen; srcpos++, dstpos++) {
+        final Object temp = getRawElem(arg, srcpos);
+        if (temp != Scriptable.NOT_FOUND) {
+          defineElem(cx, result, dstpos, temp);
+        }
+      }
+      return newlen;
+    }
+
+    private static long doConcat(Context cx, Scriptable scope,
+      Scriptable result, Object arg, long offset) {
+      if (isConcatSpreadable(cx, scope, arg)) {
+        return concatSpreadArg(cx, result, (Scriptable) arg, offset);
+      }
+      defineElem(cx, result, offset, arg);
+      return offset + 1;
     }
 
     /*
@@ -1377,86 +1432,14 @@ public class NativeArray extends IdScriptableObject implements List
     {
         // create an empty Array to return.
         scope = getTopLevelScope(scope);
-        Scriptable result = cx.newArray(scope, 0);
-        if (thisObj instanceof NativeArray && result instanceof NativeArray) {
-            NativeArray denseThis = (NativeArray) thisObj;
-            NativeArray denseResult = (NativeArray) result;
-            if (denseThis.denseOnly && denseResult.denseOnly && isConcatSpreadable(thisObj)) {
-                // First calculate length of resulting array
-                boolean canUseDense = true;
-                int length = (int) denseThis.length;
-                for (int i = 0; i < args.length && canUseDense; i++) {
-                    if ((args[i] instanceof NativeArray) && isConcatSpreadable(args[i])) {
-                        // only try to use dense approach for Array-like
-                        // objects that are actually NativeArrays, and which don't
-                        // explicitly have @@isConcatSpreadable set to a falsy value.
-                        final NativeArray arg = (NativeArray) args[i];
-                        canUseDense = arg.denseOnly;
-                        length += arg.length;
-                    } else {
-                        canUseDense = false;
-                        length++;
-                    }
-                }
-                if (canUseDense && denseResult.ensureCapacity(length)) {
-                    System.arraycopy(denseThis.dense, 0, denseResult.dense,
-                                     0, (int) denseThis.length);
-                    int cursor = (int) denseThis.length;
-                    for (Object a : args) {
-                        if (a instanceof NativeArray) {
-                            NativeArray arg = (NativeArray) a;
-                            System.arraycopy(arg.dense, 0,
-                                    denseResult.dense, cursor,
-                                    (int)arg.length);
-                            cursor += (int)arg.length;
-                        } else {
-                            denseResult.dense[cursor++] = a;
-                        }
-                    }
-                    denseResult.length = length;
-                    return result;
-                }
-            }
-        }
+        final Scriptable result = cx.newArray(scope, 0);
 
-        long length;
-        long slot = 0;
-
-        /* Put the target in the result array; only add it as an array
-         * if it looks like one.
-         */
-        if (isConcatSpreadable(thisObj)) {
-            length = getLengthProperty(cx, thisObj, false);
-
-            // Copy from the target object into the result
-            for (slot = 0; slot < length; slot++) {
-                Object temp = getRawElem(thisObj, slot);
-                if (temp != NOT_FOUND) {
-                    defineElem(cx, result, slot, temp);
-                }
-            }
-        } else {
-            defineElem(cx, result, slot++, thisObj);
-        }
-
-        /* Copy from the arguments into the result. Native arrays and things that are
-         * @@isConcatSpreadable get broken up into elements.
-         */
+        long length = doConcat(cx, scope, result, thisObj, 0);
         for (Object arg : args) {
-            if (isConcatSpreadable(arg)) {
-                final Scriptable sarg = (Scriptable)arg;
-                length = getLengthProperty(cx, sarg, false);
-                for (long j = 0; j < length; j++, slot++) {
-                    Object temp = getRawElem(sarg, j);
-                    if (temp != NOT_FOUND) {
-                        defineElem(cx, result, slot, temp);
-                    }
-                }
-            } else {
-                defineElem(cx, result, slot++, arg);
-            }
+          length = doConcat(cx, scope, result, arg, length);
         }
-        setLengthProperty(cx, result, slot);
+
+        setLengthProperty(cx, result, length);
         return result;
     }
 

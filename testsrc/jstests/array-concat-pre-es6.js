@@ -5,13 +5,18 @@
  */
 load("testsrc/assert.js");
 
-function makeArrayLike(len) {
-  var al = {
-    length: len
-  };
+function makeArrayLike(len, fromArray) {
+  var al;
+  if (fromArray) {
+    // Create an object that has the Array constructor
+    al = Object.create([]);
+  } else {
+    al = {};
+  }
   for (var i = 0; i < len; i++) {
     al[i] = i + 1;
   }
+  al.length = len;
   return al;
 }
 
@@ -45,15 +50,28 @@ var no = {
 cr = ['foo'].concat(no);
 assertArrayEquals(['foo', no], cr);
 
-// Native array plus array-like object
+// Native array plus array-like object -- do not concat
 var al = makeArrayLike(4);
-cr = [1, 2, 3].concat(makeArrayLike(4));
+cr = [1, 2, 3].concat(al);
 assertArrayEquals([1, 2, 3, al], cr);
 
-// Array-like object plus native array. Only "real" arrays get copied this way...
+// Array-like object plus native array -- do not concat
 al = makeArrayLike(2);
 cr = Array.prototype.concat.call(al, [3, 4]);
 assertArrayEquals([al, 3, 4], cr);
+
+// Array-like object with an array constructor, concatenated in various ways.
+// Concat, which is not correct for ES6 but is for older language versions.
+cr = Array.prototype.concat.call(makeArrayLike(2, true));
+assertArrayEquals([1, 2], cr);
+cr = makeArrayLike(2, true).concat([3, 4]);
+assertArrayEquals([1, 2, 3, 4], cr);
+cr = makeArrayLike(2, true).concat(makeArrayLike(2, true));
+assertArrayEquals([1, 2, 1, 2], cr);
+cr = makeArrayLike(2, true).concat(1, 2);
+assertArrayEquals([1, 2, 1, 2], cr);
+cr = [1, 2].concat(makeArrayLike(2, true));
+assertArrayEquals([1, 2, 1, 2], cr);
 
 // Non-array plus native array
 cr = Array.prototype.concat.call('one', [2, 3]);
