@@ -564,7 +564,8 @@ public class NativeJavaObject
             }
             else if (type == ScriptRuntime.ObjectClass) {
                 Context context = Context.getCurrentContext();
-                if(context.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
+                if ((context != null) &&
+                    context.hasFeature(Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE)) {
                     //to process numbers like 2.0 as 2 without decimal place
                     long roundedValue = Math.round(toDouble(value));
                     if(roundedValue == toDouble(value)) {
