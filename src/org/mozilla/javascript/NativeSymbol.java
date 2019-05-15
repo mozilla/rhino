@@ -280,12 +280,17 @@ public class NativeSymbol
 
     // Symbol objects have a special property that one cannot add properties.
 
+    private boolean isStrictMode() {
+        final Context cx = Context.getCurrentContext();
+        return (cx != null) && cx.isStrictMode();
+    }
+
     @Override
     public void put(String name, Scriptable start, Object value)
     {
         if (!isSymbol()) {
             super.put(name, start, value);
-        } else if (Context.getCurrentContext().isStrictMode()) {
+        } else if (isStrictMode()) {
             throw ScriptRuntime.typeError0("msg.no.assign.symbol.strict");
         }
     }
@@ -295,7 +300,7 @@ public class NativeSymbol
     {
         if (!isSymbol()) {
             super.put(index, start, value);
-        } else if (Context.getCurrentContext().isStrictMode()) {
+        } else if (isStrictMode()) {
             throw ScriptRuntime.typeError0("msg.no.assign.symbol.strict");
         }
     }
@@ -305,7 +310,7 @@ public class NativeSymbol
     {
         if (!isSymbol()) {
             super.put(key, start, value);
-        } else if (Context.getCurrentContext().isStrictMode()) {
+        } else if (isStrictMode()) {
             throw ScriptRuntime.typeError0("msg.no.assign.symbol.strict");
         }
     }
