@@ -1328,34 +1328,39 @@ public class ParserTest extends TestCase {
     private AstRoot parse(
         String string, final String [] errors, final String [] warnings,
         boolean jsdoc) {
+        return parse(string, errors, warnings, jsdoc, environment);
+    }
+
+    static AstRoot parse(String string, final String [] errors, final String [] warnings,
+        boolean jsdoc, CompilerEnvirons env) {
         TestErrorReporter testErrorReporter =
             new TestErrorReporter(errors, warnings) {
-          @Override
-          public EvaluatorException runtimeError(
-               String message, String sourceName, int line, String lineSource,
-               int lineOffset) {
-             if (errors == null) {
-               throw new UnsupportedOperationException();
-             }
-             return new EvaluatorException(
-               message, sourceName, line, lineSource, lineOffset);
-           }
-        };
-        environment.setErrorReporter(testErrorReporter);
+                @Override
+                public EvaluatorException runtimeError(
+                    String message, String sourceName, int line, String lineSource,
+                    int lineOffset) {
+                    if (errors == null) {
+                        throw new UnsupportedOperationException();
+                    }
+                    return new EvaluatorException(
+                        message, sourceName, line, lineSource, lineOffset);
+                }
+            };
+        env.setErrorReporter(testErrorReporter);
 
-        environment.setRecordingComments(true);
-        environment.setRecordingLocalJsDocComments(jsdoc);
+        env.setRecordingComments(true);
+        env.setRecordingLocalJsDocComments(jsdoc);
 
-        Parser p = new Parser(environment, testErrorReporter);
+        Parser p = new Parser(env, testErrorReporter);
         AstRoot script = null;
         try {
-          script = p.parse(string, null, 0);
+            script = p.parse(string, null, 0);
         } catch (EvaluatorException e) {
-          if (errors == null) {
-            // EvaluationExceptions should not occur when we aren't expecting
-            // errors.
-            throw e;
-          }
+            if (errors == null) {
+                // EvaluationExceptions should not occur when we aren't expecting
+                // errors.
+                throw e;
+            }
         }
 
         assertTrue(testErrorReporter.hasEncounteredAllErrors());
