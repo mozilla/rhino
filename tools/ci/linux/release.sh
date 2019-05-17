@@ -2,6 +2,6 @@
 
 BUILDROOT=${BUILDROOT:-github/rhino}
 
-(cd $BUILDROOT; ./gradlew clean jar sourceJar rhinoJavadocJar distZip)
+(cd $BUILDROOT; ./gradlew clean jar sourceJar javadocJar distZip)
 testStatus=$?
 exit ${testStatus}
