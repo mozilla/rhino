@@ -364,7 +364,7 @@ public class NativeJavaMethod extends BaseFunction
                         // When FEATURE_ENHANCED_JAVA_ACCESS gives us access
                         // to non-public members, continue to prefer public
                         // methods in overloading
-                        if (bestFit.isPublic())
+                        if (!bestFit.isPublic())
                             ++betterCount;
                         else
                             ++worseCount;
