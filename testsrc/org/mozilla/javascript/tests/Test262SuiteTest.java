@@ -48,7 +48,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 @RunWith(Parameterized.class)
 public class Test262SuiteTest {
 
-    static final int[] OPT_LEVELS = {-1, 0, 9};
+    static final int[] OPT_LEVELS;
 
     private static final File testDir = new File("test262/test");
     private static final String testHarnessDir = "test262/harness/";
@@ -90,6 +90,16 @@ public class Test262SuiteTest {
             "tail-call-optimization",
             "u180e"
     ));
+
+    static {
+        // Reduce the number of tests that we run by a factor of three...
+        String optLevel = System.getenv("TEST_262_OPTLEVEL");
+        if (optLevel != null) {
+            OPT_LEVELS = new int[]{Integer.valueOf(optLevel)};
+        } else {
+            OPT_LEVELS = new int[]{-1, 0, 9};
+        }
+    }
 
     @BeforeClass
     public static void setUpClass() {
@@ -161,6 +171,7 @@ public class Test262SuiteTest {
     public void test262Case() {
         Context cx = Context.enter();
         cx.setOptimizationLevel(optLevel);
+        cx.setGeneratingDebug(true);
 
         Scriptable scope;
         try {
