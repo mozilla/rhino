@@ -5,6 +5,8 @@ import org.junit.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ast.AstRoot;
 
+import static org.junit.Assert.*;
+
 /**
  * Tests for specific parser features targeted at IDE environments, namely the ability
  * to warn about missing semicolons for JavaScript programmers who follow that style.
@@ -20,6 +22,10 @@ public class ParserIDETest {
 
   private AstRoot parse(String script, String[] errors, String[] warnings) {
     return ParserTest.parse(script, errors, warnings, false, environment);
+  }
+
+  private AstRoot parse(String script) {
+    return ParserTest.parse(script, new String[]{}, new String[]{}, false, environment);
   }
 
   @Test
@@ -81,5 +87,38 @@ public class ParserIDETest {
     };
 
     parse("var a = [1, 2, 3,];", errors, warnings);
+  }
+
+  @Test
+  public void testNewlineAndCommentsFunction() {
+    AstRoot root = parse(
+        "f('1234', // Before\n'2345' // Second arg\n);");
+    assertNotNull(root.getComments());
+    assertEquals(2, root.getComments().size());
+  }
+
+  @Test
+  public void testNewlineAndCommentsFunction2() {
+    AstRoot root = parse(
+        "f('1234', // Before\n// Middle\n'2345' // Second arg\n);");
+    assertNotNull(root.getComments());
+    assertEquals(3, root.getComments().size());
+  }
+
+  @Test
+  public void testNewlineAndCommentsFunction3() {
+    AstRoot root = parse(
+        "f('1234', // Before\n// Middle\n// Middler\n'2345' // Second arg\n);");
+    assertNotNull(root.getComments());
+    assertEquals(4, root.getComments().size());
+  }
+
+  @Test
+  public void testObjectLiteralComments() {
+    AstRoot root = parse(
+        //"var o = {foo: '1234', // Before\nbar: '2345' // Second arg};\n);");
+        "var o = {foo: 1 // One\n, // Two\n bar: // bar\n2 // Two\n};");
+    assertNotNull(root.getComments());
+    assertEquals(4, root.getComments().size());
   }
 }
