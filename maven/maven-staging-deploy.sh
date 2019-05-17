@@ -1,6 +1,6 @@
 #!/bin/sh
 
-vers=`egrep '^version:' ../build.properties | awk '{print $2}'`
+vers=`egrep '^version=' ../gradle.properties | awk -F = '{print $2}'`
 
 echo "Deploying ${vers}"
 
