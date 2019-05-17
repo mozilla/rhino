@@ -693,7 +693,7 @@ public class NativeArray extends IdScriptableObject implements List
 
         if (mapping) {
             if (!(mapArg instanceof Function)) {
-                throw ScriptRuntime.typeError("TODO map function is not a function");
+                throw ScriptRuntime.typeError0("msg.map.function.not");
             }
             mapFn = (Function)mapArg;
             if (args.length >= 3) {
