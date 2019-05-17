@@ -92,6 +92,20 @@ public class ParserTest extends TestCase {
         assertEquals("var s = 3;\n/* */\n\n/* txt */\n\nvar t = 1;\n", root.toSource());
     }
 
+    public void testNewlineAndCommentsFunction() {
+        AstRoot root = parse(
+            "f('2345' // Second arg\n);");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+    }
+
+    public void testNewlineAndCommentsFunction2() {
+        AstRoot root = parse(
+            "f('1234',\n// Before\n'2345' // Second arg\n);");
+        assertNotNull(root.getComments());
+        assertEquals(2, root.getComments().size());
+    }
+
     public void testAutoSemiBeforeComment1() {
         parse("var a = 1\n/** a */ var b = 2");
     }

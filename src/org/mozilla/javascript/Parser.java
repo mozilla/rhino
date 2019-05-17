@@ -2573,9 +2573,9 @@ public class Parser
     {
         AstNode node;
         int tt = peekToken();
-        if(tt == Token.COMMENT) {
+        if (tt == Token.COMMENT) {
             consumeToken();
-            tt = peekToken();
+            tt = peekUntilNonComment(tt);
         }
         int line = ts.lineno;
 
