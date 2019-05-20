@@ -62,6 +62,7 @@ Gregory Brail (18):
 *     Fix a regression introduced recently to MemberBox.
 *     More compatibility fixes for Array.prototype.concat.
 *     Work on Array.of, from, and copyWithin.
+*     Fix a parsing regression.
 
 Igor Kuzmanenko (2):
 *     fixes XmlMemberGet toSource implementation (#483)
@@ -76,32 +77,6 @@ Nedelcho Delchev (1):
 RBRi (2):
 *     some fixes/enhancements for the typed array support (#436)
 *     Array fixes (#467)
-
-Raphaël Jakse (1):
-*     Test function arity and length properties
-
-Ravi Kishore (1):
-*     Retain of comments and their position in the actual code after parsing. (#465)
-
-Stijn Kliemesch (1):
-*     Added testcase for #510
-
-Sébastien Doeraene (2):
-*     Fix #448: Correctly wrap the result of Math.imul as an Int32.
-*     Fix the conversions in typedarrays.Conversions.
-
-Travis Haagen (2):
-*     Fix bug that caused modified JavaScript files to never be reloaded
-*     Created UrlModuleSourceProviderTest
-
-nabice (2):
-*     Fix #533 AstNode.setParent() causes a position error
-*     test for #533
-
-raphj (1):
-*     Override getArity
-
-rbri (58):
 *     fix all javadoc errors and all javadoc html warnings
 *     method Global#version(xxx) should return the new version identifier if the version was updated
 *     add more info to the error message
@@ -160,6 +135,30 @@ rbri (58):
 *     add (modified) test case from #135
 *     first simple version of copyWithin
 *     first array.of impl
+
+Raphaël Jakse (1):
+*     Test function arity and length properties
+
+Ravi Kishore (1):
+*     Retain of comments and their position in the actual code after parsing. (#465)
+
+Stijn Kliemesch (1):
+*     Added testcase for #510
+
+Sébastien Doeraene (2):
+*     Fix #448: Correctly wrap the result of Math.imul as an Int32.
+*     Fix the conversions in typedarrays.Conversions.
+
+Travis Haagen (2):
+*     Fix bug that caused modified JavaScript files to never be reloaded
+*     Created UrlModuleSourceProviderTest
+
+nabice (2):
+*     Fix #533 AstNode.setParent() causes a position error
+*     test for #533
+
+raphj (1):
+*     Override getArity
 
 stijnkliemesch (1):
 *     Fixes Parser.throwStatement()
