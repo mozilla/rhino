@@ -162,7 +162,8 @@ public class NativeJavaMethod extends BaseFunction
             if (args.length == argTypes.length &&
                 (args[args.length-1] == null ||
                  args[args.length-1] instanceof NativeArray ||
-                 args[args.length-1] instanceof NativeJavaArray))
+                 args[args.length-1] instanceof NativeJavaArray ||
+                 args[args.length-1] instanceof NativeJavaList))
             {
                 // convert the ECMA array into a native array
                 varArgs = Context.jsToJava(args[args.length-1],
