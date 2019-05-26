@@ -7,9 +7,7 @@
 package org.mozilla.javascript;
 
 
-import java.lang.reflect.Array;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * This class reflects Java Lists into the JavaScript environment.

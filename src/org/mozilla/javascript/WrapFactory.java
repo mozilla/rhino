@@ -9,7 +9,6 @@
 package org.mozilla.javascript;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Embeddings that wish to provide their own custom wrappings for Java
