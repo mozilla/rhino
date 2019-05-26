@@ -117,7 +117,11 @@ jar {
             "Implementation-Vendor": "Mozilla Foundation",
             "Implementation-URL": "http://www.mozilla.org/rhino",
             "Built-Date": new Date().format("yyyy-MM-dd"),
-            "Built-Time": new Date().format("HH:mm:ss")
+            "Built-Time": new Date().format("HH:mm:ss"),
+			"Bundle-ManifestVersion": "2",
+			"Bundle-SymbolicName": "org.mozilla.rhino",
+			"Bundle-Version": project.version.replaceAll("-.*", ""),
+			"Export-Package": "org.mozilla.javascript,org.mozilla.javascript.ast,org.mozilla.javascript.annotations"
         )
     }
 }
