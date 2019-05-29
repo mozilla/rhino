@@ -11,7 +11,7 @@ package org.mozilla.javascript;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Executable;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -83,18 +83,19 @@ public class FunctionObject extends BaseFunction
      * @param scope enclosing scope of function
      * @see org.mozilla.javascript.Scriptable
      */
-    public FunctionObject(String name, Executable methodOrConstructor, Scriptable scope)
+    public FunctionObject(String name, Member methodOrConstructor,
+                          Scriptable scope)
     {
         if (methodOrConstructor instanceof Constructor) {
-            member = new MemberBox(methodOrConstructor);
+            member = new MemberBox((Constructor<?>) methodOrConstructor);
             isStatic = true; // well, doesn't take a 'this'
         } else {
-            member = new MemberBox(methodOrConstructor);
+            member = new MemberBox((Method) methodOrConstructor);
             isStatic = member.isStatic();
         }
         String methodName = member.getName();
         this.functionName = name;
-        Class<?>[] types = member.getParameterTypes();
+        Class<?>[] types = member.argTypes;
         int arity = types.length;
         if (arity == 4 && (types[1].isArray() || types[2].isArray())) {
             // Either variable args or an error.
@@ -137,7 +138,8 @@ public class FunctionObject extends BaseFunction
         }
 
         if (member.isMethod()) {
-            Class<?> returnType = member.getReturnType();
+            Method method = member.method();
+            Class<?> returnType = method.getReturnType();
             if (returnType == Void.TYPE) {
                 hasVoidReturn = true;
             } else {
@@ -237,9 +239,13 @@ public class FunctionObject extends BaseFunction
     /**
      * Get Java method or constructor this function represent.
      */
-    public Executable getMethodOrConstructor()
+    public Member getMethodOrConstructor()
     {
-        return member.member();
+        if (member.isMethod()) {
+            return member.method();
+        } else {
+            return member.ctor();
+        }
     }
 
     static Method findSingleMethod(Method[] methods, String name)
@@ -388,9 +394,9 @@ public class FunctionObject extends BaseFunction
                 boolean inNewExpr = (thisObj == null);
                 Boolean b = inNewExpr ? Boolean.TRUE : Boolean.FALSE;
                 Object[] invokeArgs = { cx, args, this, b };
-                result = (member.isMethod())
-                         ? member.invoke(null, invokeArgs)
-                         : member.newInstance(invokeArgs);
+                result = (member.isCtor())
+                         ? member.newInstance(invokeArgs)
+                         : member.invoke(null, invokeArgs);
             }
 
         } else {
@@ -476,7 +482,7 @@ public class FunctionObject extends BaseFunction
      */
     @Override
     public Scriptable createObject(Context cx, Scriptable scope) {
-        if (!member.isMethod() || parmsLength == VARARGS_CTOR) {
+        if (member.isCtor() || parmsLength == VARARGS_CTOR) {
             return null;
         }
         Scriptable result;
@@ -504,14 +510,15 @@ public class FunctionObject extends BaseFunction
     {
         in.defaultReadObject();
         if (parmsLength > 0) {
-            Class<?>[] types = member.getParameterTypes();
+            Class<?>[] types = member.argTypes;
             typeTags = new byte[parmsLength];
             for (int i = 0; i != parmsLength; ++i) {
                 typeTags[i] = (byte)getTypeTag(types[i]);
             }
         }
         if (member.isMethod()) {
-            Class<?> returnType = member.getReturnType();
+            Method method = member.method();
+            Class<?> returnType = method.getReturnType();
             if (returnType == Void.TYPE) {
                 hasVoidReturn = true;
             } else {
