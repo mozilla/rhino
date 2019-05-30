@@ -2130,6 +2130,9 @@ class BodyCodegen
                     ret.tableLabel = cfw.acquireLabel();
                     cfw.add(ByteCode.GOTO, ret.tableLabel);
 
+                    // After this GOTO we expect stack to be empty again!
+                    cfw.setStackTop((short)0);
+
                     releaseWordLocal((short)finallyRegister);
                     cfw.markLabel(finallyEnd);
                 }
@@ -3053,6 +3056,8 @@ class BodyCodegen
         FinallyReturnPoint ret = finallys.get(target);
         cfw.addLoadConstant(ret.jsrPoints.size());
         addGoto(target, ByteCode.GOTO);
+        // Don't leave something on the stack here!
+        cfw.add(ByteCode.POP);
         int retLabel = cfw.acquireLabel();
         cfw.markLabel(retLabel);
         ret.jsrPoints.add(Integer.valueOf(retLabel));
