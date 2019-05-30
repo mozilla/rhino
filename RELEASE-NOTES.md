@@ -1,5 +1,5 @@
 # Rhino 1.7.11
-## MONTH DAY, YEAR
+## May 30, 2019
 
 This release includes implementations of a number of missing JavaScript language features,
 including:
@@ -67,6 +67,9 @@ Gregory Brail (18):
 Igor Kuzmanenko (2):
 *     fixes XmlMemberGet toSource implementation (#483)
 *     fixes position for ParenthesizedExpression nodes (#129)
+
+Markus Sunela (1):
+*     Add manual OSGi manifest
 
 Mozilla-GitHub-Standards (1):
 *     Add Mozilla Code of Conduct file

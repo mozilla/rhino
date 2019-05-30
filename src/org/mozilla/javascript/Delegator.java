@@ -151,7 +151,7 @@ public class Delegator
     }
 
     /**
-     * @see org.mozilla.javascript.Scriptable#put(Symbol, Scriptable, Object)
+     * @see org.mozilla.javascript.SymbolScriptable#put(Symbol, Scriptable, Object)
      */
     @Override
     public void put(Symbol symbol, Scriptable start, Object value) {

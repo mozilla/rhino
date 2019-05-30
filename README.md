@@ -19,7 +19,7 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_8_Release">Rhino 1.7.8</a></td><td>January 22, 2018</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_9_Release">Rhino 1.7.9</a></td><td>March 15, 2018</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_10_Release">Rhino 1.7.10</a></td><td>April 9, 2018</td></tr>
-<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_11_Release">Rhino 1.7.11</a></td><td>TBD</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_11_Release">Rhino 1.7.11</a></td><td>May 30, 2019</td></tr>
 </table>
 
 [Release Notes](./RELEASE-NOTES.md) for recent releases.
