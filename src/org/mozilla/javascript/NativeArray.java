@@ -351,7 +351,7 @@ public class NativeArray extends IdScriptableObject implements List
                 return js_lastIndexOf(cx, scope, thisObj, args);
 
               case Id_includes:
-                return ScriptRuntime.toObject(cx, scope, ((long) js_indexOf(cx, scope, thisObj, args)) > -1);
+                return Boolean.valueOf(((long) js_indexOf(cx, scope, thisObj, args)) > -1);
 
               case Id_fill:
                 return js_fill(cx, scope, thisObj, args);
