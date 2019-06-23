@@ -351,7 +351,7 @@ public class NativeArray extends IdScriptableObject implements List
                 return js_lastIndexOf(cx, scope, thisObj, args);
 
               case Id_includes:
-                return Boolean.valueOf(((long) js_indexOf(cx, scope, thisObj, args)) > -1);
+                return js_includes(cx, scope, thisObj, args);
 
               case Id_fill:
                 return js_fill(cx, scope, thisObj, args);
@@ -1709,6 +1709,59 @@ public class NativeArray extends IdScriptableObject implements List
             }
         }
         return NEGATIVE_ONE;
+    }
+
+    /*
+       See ECMA-262 22.1.3.13
+    */
+    private static Boolean js_includes(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
+
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        long len = ScriptRuntime.toLength(new Object[]{getProperty(thisObj, "length")}, 0);
+        if (len == 0) return Boolean.FALSE;
+
+        long k;
+        if (args.length < 2) {
+            k = 0;
+        } else {
+            k = (long) ScriptRuntime.toInteger(args[1]);
+            if (k < 0) {
+                k += len;
+                if (k < 0)
+                    k = 0;
+            }
+            if (k > len - 1) return Boolean.FALSE;
+        }
+        if (o instanceof NativeArray) {
+            NativeArray na = (NativeArray) o;
+            if (na.denseOnly) {
+                Scriptable proto = na.getPrototype();
+                for (int i = (int) k; i < len; i++) {
+                    Object elementK = na.dense[i];
+                    if (elementK == NOT_FOUND && proto != null) {
+                        elementK = ScriptableObject.getProperty(proto, i);
+                    }
+                    if (elementK == NOT_FOUND) {
+                        elementK = Undefined.instance;
+                    }
+                    if (ScriptRuntime.sameZero(elementK, compareTo)) {
+                        return Boolean.TRUE;
+                    }
+                }
+                return Boolean.FALSE;
+            }
+        }
+        for (; k < len; k++) {
+            Object elementK = getRawElem(o, k);
+            if (elementK == NOT_FOUND) {
+                elementK = Undefined.instance;
+            }
+            if (ScriptRuntime.sameZero(elementK, compareTo)) {
+                return Boolean.TRUE;
+            }
+        }
+        return Boolean.FALSE;
     }
 
     private static Object js_fill(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
