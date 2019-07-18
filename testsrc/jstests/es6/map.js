@@ -34,4 +34,46 @@ function logElement(value, key, m) {
   assertEquals("c) map[key1] = '' map[key2] = 'undefined' map[key3] = 'undefined' map[key4] = 'null' ", res);
 })();
 
+(function TestGetConcatenatedStrings() {
+  var myMap = new Map([['key1', 'value1'], ['key2', 17]]);
+  for(let i = 1; i <= 1; i++) {
+    let key = 'key' + i;
+
+    assertEquals("value1", myMap.get(key));
+    assertEquals("value1", myMap.get('key1'));
+  }
+})();
+
+(function TestSetConcatenatedStrings() {
+  var myMap = new Map([['key1', 'value1'], ['key2', 17]]);
+  for(let i = 1; i <= 1; i++) {
+    let key = 'key' + i;
+
+    myMap.set(key, 'value2')
+    assertEquals("value2", myMap.get(key));
+    assertEquals("value2", myMap.get('key1'));
+  }
+})();
+
+(function TestHasConcatenatedStrings() {
+  var myMap = new Map([['key1', 'value1'], ['key2', 17]]);
+  for(let i = 1; i <= 1; i++) {
+    let key = 'key' + i;
+
+    assertTrue(myMap.has(key));
+    assertTrue(myMap.has('key1'));
+  }
+})();
+
+(function TestDeleteConcatenatedStrings() {
+  var myMap = new Map([['key1', 'value1'], ['key2', 17]]);
+  for(let i = 1; i <= 1; i++) {
+    let key = 'key' + i;
+
+    assertEquals(2, myMap.size);
+    myMap.delete(key)
+    assertEquals(1, myMap.size);
+  }
+})();
+
 "success";
