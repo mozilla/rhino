@@ -10,4 +10,16 @@ load("testsrc/assert.js");
   assertTrue(obj.propertyIsEnumerable('0'));
 })();
 
+(function TestReplaceNotUsedArguments() {
+  assertEquals("axdefg", "abcdefg".replace("bc", "x", "not used"));
+})();
+
+(function TestMatchNotUsedArguments() {
+  assertNull("abcdefg".match("AB", "not used"));
+})();
+
+(function TestSearchNotUsedArguments() {
+  assertEquals(2, "abcdEfg".search("cd", "not used"));
+})();
+
 "success";
