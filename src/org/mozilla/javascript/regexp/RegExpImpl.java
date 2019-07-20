@@ -50,23 +50,36 @@ public class RegExpImpl implements RegExpProxy {
         switch (actionType) {
           case RA_MATCH:
             {
-                NativeRegExp re = createRegExp(cx, scope, args, 1, false);
-                Object rval = matchOrReplace(cx, scope, thisObj, args,
-                                             this, data, re);
+                int optarg = Integer.MAX_VALUE;
+                if (cx.getLanguageVersion() < Context.VERSION_1_6) {
+                    optarg = 1;
+                }
+
+                NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
+                Object rval = matchOrReplace(cx, scope, thisObj, args, this, data, re);
                 return data.arrayobj == null ? rval : data.arrayobj;
             }
 
           case RA_SEARCH:
             {
-                NativeRegExp re = createRegExp(cx, scope, args, 1, false);
-                return matchOrReplace(cx, scope, thisObj, args,
-                                      this, data, re);
+                int optarg = Integer.MAX_VALUE;
+                if (cx.getLanguageVersion() < Context.VERSION_1_6) {
+                    optarg = 1;
+                }
+
+                NativeRegExp re = createRegExp(cx, scope, args, optarg, false);
+                return matchOrReplace(cx, scope, thisObj, args, this, data, re);
             }
 
           case RA_REPLACE:
             {
-                boolean useRE = (args.length > 0 && args[0] instanceof NativeRegExp)
-                                || args.length > 2;
+                boolean useRE = args.length > 0 && args[0] instanceof NativeRegExp;
+
+                // ignore other parameters
+                if (cx.getLanguageVersion() < Context.VERSION_1_6) {
+                    useRE |= args.length > 2;
+                }
+
                 NativeRegExp re = null;
                 String search = null;
                 if (useRE) {
