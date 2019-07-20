@@ -934,13 +934,16 @@ public abstract class IdScriptableObject extends ScriptableObject
         int info = findInstanceIdInfo(name);
         if (info != 0) {
             int id = (info & 0xFFFF);
+            int attr = (info >>> 16);
             if (isAccessorDescriptor(desc)) {
+              if ((attr & PERMANENT) != 0) {
+                throw ScriptRuntime.typeError1("msg.redefine.permanent", name);
+              }
               delete(id); // it will be replaced with a slot
             } else {
               checkPropertyDefinition(desc);
               ScriptableObject current = getOwnPropertyDescriptor(cx, key);
               checkPropertyChange(name, current, desc);
-              int attr = (info >>> 16);
               Object value = getProperty(desc, "value");
               if (value != NOT_FOUND && (attr & READONLY) == 0) {
                 Object currentValue = getInstanceIdValue(id);
