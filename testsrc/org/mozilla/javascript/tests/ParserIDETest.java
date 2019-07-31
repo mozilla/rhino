@@ -1,11 +1,12 @@
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ast.AstRoot;
-
-import static org.junit.Assert.*;
 
 /**
  * Tests for specific parser features targeted at IDE environments, namely the ability
