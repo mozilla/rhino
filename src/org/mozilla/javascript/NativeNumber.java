@@ -146,8 +146,8 @@ final class NativeNumber extends IdScriptableObject
             return ScriptRuntime.wrapNumber(value);
 
           case Id_toFixed:
-            return num_to(value, args, DToA.DTOSTR_FIXED,
-                          DToA.DTOSTR_FIXED, -20, 0);
+            int precisionMin = cx.version < Context.VERSION_ES6 ? -20 : 0;
+            return num_to(value, args, DToA.DTOSTR_FIXED, DToA.DTOSTR_FIXED, precisionMin, 0);
 
           case Id_toExponential: {
               // Handle special values before range check
