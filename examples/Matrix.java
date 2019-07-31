@@ -10,7 +10,6 @@ import java.util.List;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.Symbol;
 
 /**
  * Matrix: An example host object class that implements the Scriptable interface.
