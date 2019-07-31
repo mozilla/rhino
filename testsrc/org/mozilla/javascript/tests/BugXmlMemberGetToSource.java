@@ -3,13 +3,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript.tests;
 
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.XmlMemberGet;
-
-import static org.junit.Assert.*;
 
 /**
  * Test resembles issue #483 with {@link XmlMemberGet#toSource()} implementation.

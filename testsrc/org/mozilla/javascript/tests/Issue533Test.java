@@ -3,16 +3,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript.tests;
 
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
+
+import java.util.SortedSet;
+
+import org.junit.Before;
+import org.junit.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Comment;
-
-import java.util.SortedSet;
-
-import static org.junit.Assert.*;
 
 /**
  * Tests position of Comment node in source code.
@@ -36,7 +37,7 @@ public class Issue533Test {
         SortedSet<Comment> comments = root.getComments();
         assertEquals(2, comments.size());
         for(Comment comment:comments) {
-            assertEquals(comment.getValue(), getFromSource(script, comment));                    
+            assertEquals(comment.getValue(), getFromSource(script, comment));
         }
     }
 
