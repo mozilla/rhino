@@ -2532,11 +2532,21 @@ public class Context
             bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
         } catch (ClassFileFormatException e) {
             // we hit some class file limit, fall back to interpreter or report
-            compiler = createInterpreter();
 
             // we have to recreate the tree because the compile call might have changed the tree already
-            tree = parse(sourceReader, sourceString, sourceName, lineno,
-                            compilerEnv, compilationErrorReporter, returnFunction);
+            // if the input was a stream we have to reset the stream
+            if (sourceReader != null) {
+                try {
+                    sourceReader.reset();
+                }
+                catch (IOException ioe) {
+                    // reset not possible - no chance to switch to the interpreter
+                    throw e;
+                }
+            }
+            compiler = createInterpreter();
+
+            tree = parse(sourceReader, sourceString, sourceName, lineno, compilerEnv, compilationErrorReporter, returnFunction);
             bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
         }
 

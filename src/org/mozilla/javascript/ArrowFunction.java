@@ -24,7 +24,7 @@ public class ArrowFunction extends BaseFunction {
 
         ScriptRuntime.setFunctionProtoAndParent(this, scope);
 
-        Function thrower = ScriptRuntime.typeErrorThrower();
+        Function thrower = ScriptRuntime.typeErrorThrower(cx);
         NativeObject throwing = new NativeObject();
         throwing.put("get", throwing, thrower);
         throwing.put("set", throwing, thrower);
