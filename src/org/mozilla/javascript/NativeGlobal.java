@@ -244,9 +244,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                 if (c == 'x' || c == 'X') {
                     radix = 16;
                     start += 2;
-                } else if ('0' <= c && c <= '9') {
-                    radix = 8;
-                    start++;
                 }
             }
         }
