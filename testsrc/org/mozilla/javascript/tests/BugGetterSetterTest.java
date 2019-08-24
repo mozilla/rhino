@@ -7,7 +7,6 @@ package org.mozilla.javascript.tests;
 import static junit.framework.Assert.assertEquals;
 
 import java.io.IOException;
-import java.io.StringReader;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class BugGetterSetterTest {
                 "};\n";
 
         Parser parser = new Parser(environment);
-        AstRoot astRoot = parser.parse(new StringReader(script), null, 1);
+        AstRoot astRoot = parser.parse(script, null, 1);
         assertEquals(script, astRoot.toSource());
     }
 }
