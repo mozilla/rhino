@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -322,22 +323,17 @@ public class Kit
         return new ComplexKey(key1, key2);
     }
 
-    public static String readReader(Reader r)
-        throws IOException
+    public static String readReader(Reader reader) throws IOException
     {
-        char[] buffer = new char[512];
-        int cursor = 0;
-        for (;;) {
-            int n = r.read(buffer, cursor, buffer.length - cursor);
-            if (n < 0) { break; }
-            cursor += n;
-            if (cursor == buffer.length) {
-                char[] tmp = new char[buffer.length * 2];
-                System.arraycopy(buffer, 0, tmp, 0, cursor);
-                buffer = tmp;
+        try (BufferedReader in = new BufferedReader(reader)) {
+            char[] cbuf = new char[1024];
+            StringBuilder sb = new StringBuilder(1024);
+            int bytes_read;
+            while ((bytes_read = in.read(cbuf, 0, 1024)) != -1) {
+                sb.append(cbuf, 0, bytes_read);
             }
+            return sb.toString();
         }
-        return new String(buffer, 0, cursor);
     }
 
     public static byte[] readStream(InputStream is, int initialBufferCapacity)

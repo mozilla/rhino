@@ -1391,7 +1391,7 @@ public class ParserTest extends TestCase {
         environment.setRecordingLocalJsDocComments(true);
 
         Parser p = new Parser(environment, testErrorReporter);
-        AstRoot script = p.parse(new StringReader(string), null, 0);
+        AstRoot script = p.parse(string, null, 0);
 
         assertTrue(testErrorReporter.hasEncounteredAllErrors());
         assertTrue(testErrorReporter.hasEncounteredAllWarnings());
