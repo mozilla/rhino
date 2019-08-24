@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
