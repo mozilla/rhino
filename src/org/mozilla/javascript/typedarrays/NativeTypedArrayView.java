@@ -31,12 +31,12 @@ import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
  * shows a view of a specific NativeArrayBuffer, and modifications here will affect the rest.
  */
 
-public abstract class NativeTypedArrayView<T>
-    extends NativeArrayBufferView
-    implements List<T>, RandomAccess, ExternalArrayData
-{
-    /** The length, in elements, of the array */
-    protected final int length;
+public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
+		implements List<T>, RandomAccess, ExternalArrayData {
+	/** The length, in elements, of the array */
+
+	private static final long serialVersionUID = 1L;
+	protected final int length;
 
     protected NativeTypedArrayView()
     {
@@ -497,27 +497,6 @@ public abstract class NativeTypedArrayView<T>
 
     @SuppressWarnings("unused")
     @Override
-    public int size()
-    {
-        return length;
-    }
-
-    @SuppressWarnings("unused")
-    @Override
-    public boolean isEmpty()
-    {
-        return (length == 0);
-    }
-
-    @SuppressWarnings("unused")
-    @Override
-    public boolean contains(Object o)
-    {
-        return (indexOf(o) >= 0);
-    }
-
-    @SuppressWarnings("unused")
-    @Override
     public boolean containsAll(Collection<?> objects)
     {
         for (Object o : objects) {
@@ -584,6 +563,29 @@ public abstract class NativeTypedArrayView<T>
         }
         return a;
     }
+    
+
+    @SuppressWarnings("unused")
+    @Override
+    public int size()
+    {
+        return length;
+    }
+
+    @SuppressWarnings("unused")
+    @Override
+    public boolean isEmpty()
+    {
+        return (length == 0);
+    }
+
+    @SuppressWarnings("unused")
+    @Override
+    public boolean contains(Object o)
+    {
+        return (indexOf(o) >= 0);
+    }
+
 
     @Override
     public boolean equals(Object o)

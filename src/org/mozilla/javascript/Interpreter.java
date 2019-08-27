@@ -669,7 +669,6 @@ public final class Interpreter extends Icode implements Evaluator
                 int handlerStart   = table[i + EXCEPTION_HANDLER_SLOT];
                 int type           = table[i + EXCEPTION_TYPE_SLOT];
                 int exceptionLocal = table[i + EXCEPTION_LOCAL_SLOT];
-                int scopeLocal     = table[i + EXCEPTION_SCOPE_SLOT];
 
                 out.println(" tryStart="+tryStart+" tryEnd="+tryEnd
                             +" handlerStart="+handlerStart

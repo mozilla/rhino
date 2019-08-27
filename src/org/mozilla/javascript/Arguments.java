@@ -404,7 +404,10 @@ final class Arguments extends IdScriptableObject
     }
 
     private static BaseFunction iteratorMethod = new BaseFunction() {
-        @Override
+    
+		private static final long serialVersionUID = 1L;
+
+		@Override
         public Object call(Context cx, Scriptable scope, Scriptable thisObj,
                            Object[] args) {
             // TODO : call %ArrayProto_values%
@@ -416,7 +419,8 @@ final class Arguments extends IdScriptableObject
     };
 
     private static class ThrowTypeError extends BaseFunction {
-        private String propertyName;
+		private static final long serialVersionUID = 1L;
+		private String propertyName;
 
         ThrowTypeError(String propertyName) {
             this.propertyName = propertyName;

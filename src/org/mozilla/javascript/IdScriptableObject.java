@@ -12,32 +12,26 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
-Base class for native object implementation that uses IdFunctionObject to export its methods
-to script via &lt;class-name&gt;.prototype object.
+ * Base class for native object implementation that uses IdFunctionObject to
+ * export its methods to script via &lt;class-name&gt;.prototype object.
+ * 
+ * Any descendant should implement at least the following methods:
+ * findInstanceIdInfo getInstanceIdName execIdCall methodArity
+ * 
+ * To define non-function properties, the descendant should override
+ * getInstanceIdValue setInstanceIdValue to get/set property value and provide
+ * its default attributes.
+ * 
+ * 
+ * To customize initialization of constructor and prototype objects, descendant
+ * may override scopeInit or fillConstructorProperties methods.
+ * 
+ */
+public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
+	private static final long serialVersionUID = 1L;
+	private transient PrototypeValues prototypeValues;
 
-Any descendant should implement at least the following methods:
-    findInstanceIdInfo
-    getInstanceIdName
-    execIdCall
-    methodArity
-
-To define non-function properties, the descendant should override
-    getInstanceIdValue
-    setInstanceIdValue
-to get/set property value and provide its default attributes.
-
-
-To customize initialization of constructor and prototype objects, descendant
-may override scopeInit or fillConstructorProperties methods.
-
-*/
-public abstract class IdScriptableObject extends ScriptableObject
-    implements IdFunctionCall
-{
-    private transient PrototypeValues prototypeValues;
-
-    private static final class PrototypeValues implements Serializable
-    {
+	private static final class PrototypeValues implements Serializable {
         private static final long serialVersionUID = 3038645279153854371L;
 
         private static final int NAME_SLOT = 1;

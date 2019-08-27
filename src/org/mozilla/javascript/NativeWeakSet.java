@@ -17,10 +17,9 @@ import java.util.WeakHashMap;
  * than the weak reference. That means that it is important that the "value"
  * that we put in the WeakHashMap here is not one that contains the key.
  */
-public class NativeWeakSet
-  extends IdScriptableObject
-{
-    private static final Object MAP_TAG = "WeakSet";
+public class NativeWeakSet extends IdScriptableObject {
+	private static final long serialVersionUID = 1L;
+	private static final Object MAP_TAG = "WeakSet";
 
     private boolean instanceOfWeakSet = false;
 

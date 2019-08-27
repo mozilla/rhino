@@ -8,10 +8,9 @@ package org.mozilla.javascript;
 
 import java.util.Iterator;
 
-public class NativeMap
-    extends IdScriptableObject
-{
-    private static final Object MAP_TAG = "Map";
+public class NativeMap extends IdScriptableObject {
+	private static final long serialVersionUID = 1L;
+	private static final Object MAP_TAG = "Map";
     static final String ITERATOR_TAG = "Map Iterator";
 
     private static final Object NULL_VALUE = new Object();

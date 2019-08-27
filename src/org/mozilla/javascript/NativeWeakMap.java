@@ -18,10 +18,9 @@ import java.util.WeakHashMap;
  * remaining reference to the key is a weak reference. Therefore, we can use
  * WeakHashMap as the basis of this implementation and preserve the same semantics.
  */
-public class NativeWeakMap
-  extends IdScriptableObject
-{
-    private static final Object MAP_TAG = "WeakMap";
+public class NativeWeakMap extends IdScriptableObject {
+	private static final long serialVersionUID = 1L;
+	private static final Object MAP_TAG = "WeakMap";
 
     private boolean instanceOfWeakMap = false;
 

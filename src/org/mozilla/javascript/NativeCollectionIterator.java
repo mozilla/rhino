@@ -6,10 +6,9 @@ import java.io.ObjectOutputStream;
 import java.util.Collections;
 import java.util.Iterator;
 
-public class NativeCollectionIterator
-    extends ES6Iterator
-{
-    private String className;
+public class NativeCollectionIterator extends ES6Iterator {
+	private static final long serialVersionUID = 1L;
+	private String className;
     private Type type;
     private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
 
