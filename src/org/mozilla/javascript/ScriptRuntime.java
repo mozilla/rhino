@@ -2271,15 +2271,11 @@ public class ScriptRuntime {
     }
 
     private static Object enumInitInOrder(Context cx, IdEnumeration x) {
-        if (!(x.obj instanceof ScriptableObject)) {
+        if (!(x.obj instanceof SymbolScriptable) || !ScriptableObject.hasProperty(x.obj, SymbolKey.ITERATOR)) {
             throw typeError1("msg.not.iterable", toString(x.obj));
         }
 
-        ScriptableObject xo = (ScriptableObject)x.obj;
-        if (!ScriptableObject.hasProperty(xo, SymbolKey.ITERATOR)) {
-            throw typeError1("msg.not.iterable", toString(x.obj));
-        }
-        Object iterator = ScriptableObject.getProperty(xo, SymbolKey.ITERATOR);
+        Object iterator = ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR);
         if (!(iterator instanceof Callable)) {
             throw typeError1("msg.not.iterable", toString(x.obj));
         }
