@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.mozilla.javascript.Context;
@@ -45,12 +47,62 @@ class XmlProcessor implements Serializable {
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        this.dom = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        this.dom = getSecureDBF();
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
+        //create TF and set settings to secure it from XSLT attacks if given a malicious node in toXMLString
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
+        this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         int poolSize = Runtime.getRuntime().availableProcessors() * 2;
         this.documentBuilderPool = new LinkedBlockingDeque<DocumentBuilder>(poolSize);
+    }
+    
+    /*
+     * Secure implementation of a DocumentBuilderFactory to prevent XXE and SSRF attacks
+     * Copied directly from OWASP: https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
+     */
+    private DocumentBuilderFactory getSecureDBF(){
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        String FEATURE = null;
+        try {
+            // This is the PRIMARY defense. If DTDs (doctypes) are disallowed, almost all 
+            // XML entity attacks are prevented
+            // Xerces 2 only - http://xerces.apache.org/xerces2-j/features.html#disallow-doctype-decl
+            FEATURE = "http://apache.org/xml/features/disallow-doctype-decl";
+            dbf.setFeature(FEATURE, true);
+
+            // If you can't completely disable DTDs, then at least do the following:
+            // Xerces 1 - http://xerces.apache.org/xerces-j/features.html#external-general-entities
+            // Xerces 2 - http://xerces.apache.org/xerces2-j/features.html#external-general-entities
+            // JDK7+ - http://xml.org/sax/features/external-general-entities
+            FEATURE = "http://xml.org/sax/features/external-general-entities";
+            dbf.setFeature(FEATURE, false);
+
+            // Xerces 1 - http://xerces.apache.org/xerces-j/features.html#external-parameter-entities
+            // Xerces 2 - http://xerces.apache.org/xerces2-j/features.html#external-parameter-entities
+            // JDK7+ - http://xml.org/sax/features/external-parameter-entities
+            FEATURE = "http://xml.org/sax/features/external-parameter-entities";
+            dbf.setFeature(FEATURE, false);
+
+            // Disable external DTDs as well
+            FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+            dbf.setFeature(FEATURE, false);
+			
+            // and these as well, per Timothy Morgan's 2014 paper: "XML Schema, DTD, and Entity Attacks"
+            dbf.setXIncludeAware(false);
+            dbf.setExpandEntityReferences(false);
+
+            // And, per Timothy Morgan: "If for some reason support for inline DOCTYPEs are a requirement, then
+            // ensure the entity settings are disabled (as shown above) and beware that SSRF attacks
+            // (http://cwe.mitre.org/data/definitions/918.html) and denial
+            // of service attacks (such as billion laughs or decompression bombs via "jar:") are a risk."
+
+        } catch (ParserConfigurationException e) {
+            // Following the other config exception handling0
+			throw new RuntimeException("XML parser cannot be securely configured.", e);
+        }
+        return dbf;
     }
 
     private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
@@ -77,10 +129,13 @@ class XmlProcessor implements Serializable {
 
     XmlProcessor() {
         setDefault();
-        this.dom = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        this.dom = getSecureDBF();
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
+        //create TF and set settings to secure it from XSLT attacks if given a malicious node in toXMLString
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
+        this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         int poolSize = Runtime.getRuntime().availableProcessors() * 2;
         this.documentBuilderPool = new LinkedBlockingDeque<DocumentBuilder>(poolSize);
     }
