@@ -88,7 +88,7 @@ class XmlProcessor implements Serializable {
             // Disable external DTDs as well
             FEATURE = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
             dbf.setFeature(FEATURE, false);
-			
+
             // and these as well, per Timothy Morgan's 2014 paper: "XML Schema, DTD, and Entity Attacks"
             dbf.setXIncludeAware(false);
             dbf.setExpandEntityReferences(false);
@@ -100,7 +100,7 @@ class XmlProcessor implements Serializable {
 
         } catch (ParserConfigurationException e) {
             // Following the other config exception handling0
-			throw new RuntimeException("XML parser cannot be securely configured.", e);
+            throw new RuntimeException("XML parser cannot be securely configured.", e);
         }
         return dbf;
     }
