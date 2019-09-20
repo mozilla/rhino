@@ -47,13 +47,17 @@ class XmlProcessor implements Serializable {
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        this.dom = getSecureDBF();
+        this.dom = DocumentBuilderFactory.newInstance();
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
         //create TF and set settings to secure it from XSLT attacks if given a malicious node in toXMLString
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
-        this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        Context ctx = Context.getCurrentContext();
+        if(ctx == null || ctx.hasFeature(Context.FEATURE_ENABLE_XML_SECURE_PARSING)) {
+            configureSecureDBF(this.dom);
+            this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        }
         int poolSize = Runtime.getRuntime().availableProcessors() * 2;
         this.documentBuilderPool = new LinkedBlockingDeque<DocumentBuilder>(poolSize);
     }
@@ -62,8 +66,7 @@ class XmlProcessor implements Serializable {
      * Secure implementation of a DocumentBuilderFactory to prevent XXE and SSRF attacks
      * Copied directly from OWASP: https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
      */
-    private DocumentBuilderFactory getSecureDBF(){
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    private void configureSecureDBF(DocumentBuilderFactory dbf){
         String FEATURE = null;
         try {
             // This is the PRIMARY defense. If DTDs (doctypes) are disallowed, almost all 
@@ -99,10 +102,9 @@ class XmlProcessor implements Serializable {
             // of service attacks (such as billion laughs or decompression bombs via "jar:") are a risk."
 
         } catch (ParserConfigurationException e) {
-            // Following the other config exception handling0
+            // Following the other config exception handling
             throw new RuntimeException("XML parser cannot be securely configured.", e);
         }
-        return dbf;
     }
 
     private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
@@ -129,13 +131,17 @@ class XmlProcessor implements Serializable {
 
     XmlProcessor() {
         setDefault();
-        this.dom = getSecureDBF();
+        this.dom = DocumentBuilderFactory.newInstance();
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
         //create TF and set settings to secure it from XSLT attacks if given a malicious node in toXMLString
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
-        this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        Context ctx = Context.getCurrentContext();
+        if(ctx == null || ctx.hasFeature(Context.FEATURE_ENABLE_XML_SECURE_PARSING)) {
+            configureSecureDBF(this.dom);
+            this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            this.xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        }
         int poolSize = Runtime.getRuntime().availableProcessors() * 2;
         this.documentBuilderPool = new LinkedBlockingDeque<DocumentBuilder>(poolSize);
     }

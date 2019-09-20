@@ -347,6 +347,13 @@ public class Context
      */
     public static final int FEATURE_LITTLE_ENDIAN = 19;
 
+    /**
+     * Configure the XMLProcessor to parse XML with security features or not.
+     * Security features include not fetching remote entity references and disabling XIncludes
+     * @since 1.7 Release 12
+     */
+    public static final int FEATURE_ENABLE_XML_SECURE_PARSING = 20;
+    
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
