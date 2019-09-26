@@ -36,13 +36,9 @@ public class CustomTestDBF extends DocumentBuilderFactory {
 
     @Override
     public void setFeature(String name, boolean value) throws ParserConfigurationException {
-        // TODO Auto-generated method stub
+        if("http://apache.org/xml/features/disallow-doctype-decl".equals(name)){
+            org.mozilla.javascript.tests.XMLSecureParserTest.CALLED_BY_XML_PARSER = true;
+        }
     }
     
-    @Override
-    public void setExpandEntityReferences(boolean expandEntityRef) {
-        super.setExpandEntityReferences(expandEntityRef);
-        org.mozilla.javascript.tests.XMLSecureParserTest.CALLED_BY_XML_PARSER = true;
-    } 
-
 }
