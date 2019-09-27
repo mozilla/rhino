@@ -11,8 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptRuntime;
@@ -45,12 +48,55 @@ class XmlProcessor implements Serializable {
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
-        this.dom = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        this.dom = DocumentBuilderFactory.newInstance();
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
+        //create TF and set settings to secure it from XSLT attacks if given a malicious node in toXMLString
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
+        Context ctx = Context.getCurrentContext();
+        if(ctx == null || ctx.hasFeature(Context.FEATURE_ENABLE_XML_SECURE_PARSING)) {
+            configureSecureDBF(this.dom);
+            configureSecureTF(this.xform);
+        }
         int poolSize = Runtime.getRuntime().availableProcessors() * 2;
         this.documentBuilderPool = new LinkedBlockingDeque<DocumentBuilder>(poolSize);
+    }
+    
+    /*
+     * Secure implementation of a DocumentBuilderFactory to prevent XXE and SSRF attacks 
+     */
+    private void configureSecureDBF(DocumentBuilderFactory dbf){
+        try {
+            //Prevent File attacks in DBF
+            //Disallow all doctypes, removing all ENTITY-type tags as a vector
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+
+            //Prevent SSRF attacks in DBF
+            //Do not load external dtds, if the underlying DocBuilderFactory is set for a validation mode
+            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+            //Disallow XIncludeAware as it is an SSRF target using xi:include
+            dbf.setXIncludeAware(false);
+            
+        } catch (ParserConfigurationException e) {
+            // Following the other config exception handling
+            throw new RuntimeException("XML parser (DocumentBuilderFactory) cannot be securely configured.", e);
+        }
+    }
+
+    /*
+     * Secure implementation of a TransformerFactory to prevent XXE and SSRF attacks 
+     */
+    private void configureSecureTF(javax.xml.transform.TransformerFactory xform){
+        try {
+            //Disallow all XXEs and SSRF via external calls for DTDs or Stylesheets
+            xform.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        } catch (TransformerConfigurationException e) {
+            // Following the other config exception handling
+            throw new RuntimeException("XML parser (TransformerFactory) cannot be securely configured.", e);
+        }
     }
 
     private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
@@ -77,10 +123,16 @@ class XmlProcessor implements Serializable {
 
     XmlProcessor() {
         setDefault();
-        this.dom = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        this.dom = DocumentBuilderFactory.newInstance();
         this.dom.setNamespaceAware(true);
         this.dom.setIgnoringComments(false);
+        //create TF and set settings to secure it from XSLT attacks if given a malicious node in toXMLString
         this.xform = javax.xml.transform.TransformerFactory.newInstance();
+        Context ctx = Context.getCurrentContext();
+        if(ctx == null || ctx.hasFeature(Context.FEATURE_ENABLE_XML_SECURE_PARSING)) {
+            configureSecureDBF(this.dom);
+            configureSecureTF(this.xform);
+        }
         int poolSize = Runtime.getRuntime().availableProcessors() * 2;
         this.documentBuilderPool = new LinkedBlockingDeque<DocumentBuilder>(poolSize);
     }
