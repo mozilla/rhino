@@ -26,11 +26,11 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     //    EXPERIMENTAL Java interface
     //
    
-	private static final long serialVersionUID = 3519443689172208557L;
+    private static final long serialVersionUID = 3519443689172208557L;
 
-	/**
-        This experimental interface is undocumented.
-     */
+    /**
+      This experimental interface is undocumented.
+    */
     public static org.w3c.dom.Node toDomNode(Object xmlObject) {
         //    Could return DocumentFragment for XMLList
         //    Probably a single node for XMLList with one element
