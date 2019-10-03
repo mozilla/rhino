@@ -21,7 +21,7 @@ import org.mozilla.javascript.xml.XMLObject;
 import org.xml.sax.SAXException;
 
 public final class XMLLibImpl extends XMLLib implements Serializable {
-	
+
     //
     //    EXPERIMENTAL Java interface
     //
