@@ -13,7 +13,7 @@ public final class NativeArrayIterator extends ES6Iterator {
             VALUES
     }
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -2051497571989274095L;
     private static final String ITERATOR_TAG = "ArrayIterator";
 
     private ARRAY_ITERATOR_TYPE type;

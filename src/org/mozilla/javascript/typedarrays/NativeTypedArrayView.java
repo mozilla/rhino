@@ -31,12 +31,11 @@ import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
  * shows a view of a specific NativeArrayBuffer, and modifications here will affect the rest.
  */
 
-public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
-		implements List<T>, RandomAccess, ExternalArrayData {
-	/** The length, in elements, of the array */
+public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView implements List<T>, RandomAccess, ExternalArrayData {
+    private static final long serialVersionUID = -4963053773152251274L;
 
-	private static final long serialVersionUID = 1L;
-	protected final int length;
+    /** The length, in elements, of the array */
+    protected final int length;
 
     protected NativeTypedArrayView()
     {

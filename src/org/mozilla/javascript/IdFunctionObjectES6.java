@@ -2,16 +2,13 @@ package org.mozilla.javascript;
 
 public class IdFunctionObjectES6 extends IdFunctionObject{
 
-	private static final long serialVersionUID = 1L;
-	
-	public IdFunctionObjectES6(IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {
+    private static final long serialVersionUID = -8023088662589035261L;
+
+    public IdFunctionObjectES6(IdFunctionCall idcall, Object tag, int id, String name, int arity, Scriptable scope) {
         super(idcall, tag, id, name, arity, scope);
     }
 
-    private static final int
-        Id_length       = 1,
-        Id_name         = 3;
-
+    private static final int Id_length = 1, Id_name = 3;
     private boolean myLength = true;
     private boolean myName = true;
 

@@ -21,13 +21,14 @@ import org.mozilla.javascript.xml.XMLObject;
 import org.xml.sax.SAXException;
 
 public final class XMLLibImpl extends XMLLib implements Serializable {
-    private static final long serialVersionUID = 1L;
-
+	
     //
     //    EXPERIMENTAL Java interface
     //
+   
+	private static final long serialVersionUID = 3519443689172208557L;
 
-    /**
+	/**
         This experimental interface is undocumented.
      */
     public static org.w3c.dom.Node toDomNode(Object xmlObject) {

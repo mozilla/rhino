@@ -15,11 +15,8 @@ import java.net.URLConnection;
  * @author Attila Szegedi
  * @version $Id: DefaultUrlConnectionExpiryCalculator.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
-public class DefaultUrlConnectionExpiryCalculator
-implements UrlConnectionExpiryCalculator, Serializable
-{
-    private static final long serialVersionUID = 1L;
-
+public class DefaultUrlConnectionExpiryCalculator implements UrlConnectionExpiryCalculator, Serializable {
+    private static final long serialVersionUID = 6649125723317726741L;
     private final long relativeExpiry;
 
     /**

@@ -7,11 +7,10 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class NativeCollectionIterator extends ES6Iterator {
-	private static final long serialVersionUID = 1L;
-	private String className;
+    private static final long serialVersionUID = 7094840979404373443L;
+    private String className;
     private Type type;
     private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
-
     enum Type { KEYS, VALUES, BOTH }
 
     static void init(ScriptableObject scope, String tag, boolean sealed) {

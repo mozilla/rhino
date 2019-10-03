@@ -9,14 +9,14 @@ package org.mozilla.javascript;
 import java.util.Iterator;
 
 public class NativeSet extends IdScriptableObject {
-	private static final long serialVersionUID = 1L;
-	private static final Object SET_TAG = "Set";
-	static final String ITERATOR_TAG = "Set Iterator";
-
-	static final SymbolKey GETSIZE = new SymbolKey("[Symbol.getSize]");
-
+    private static final long serialVersionUID = -8442212766987072986L;
+    private static final Object SET_TAG = "Set";
+    static final String ITERATOR_TAG = "Set Iterator";
+    
+    static final SymbolKey GETSIZE = new SymbolKey("[Symbol.getSize]");
+    
     private final Hashtable entries = new Hashtable();
-
+    
     private boolean instanceOfSet = false;
 
     static void init(Context cx, Scriptable scope, boolean sealed)

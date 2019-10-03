@@ -2167,19 +2167,18 @@ public class ScriptRuntime {
      * to see if a given property has already been enumerated.
      *
      */
-    private static class IdEnumeration implements Serializable
-    {
-        private static final long serialVersionUID = 1L;
+    private static class IdEnumeration implements Serializable {
+        private static final long serialVersionUID = 3052885577094294244L;
         Scriptable obj;
         Object[] ids;
-        int index;
         ObjToIntMap used;
         Object currentId;
+        int index;
         int enumType; /* one of ENUM_INIT_KEYS, ENUM_INIT_VALUES,
                          ENUM_INIT_ARRAY, ENUMERATE_VALUES_IN_ORDER */
 
         // if true, integer ids will be returned as numbers rather than strings
-        boolean enumNumbers;
+       boolean enumNumbers;
 
         Scriptable iterator;
     }

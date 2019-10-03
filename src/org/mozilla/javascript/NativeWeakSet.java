@@ -18,13 +18,14 @@ import java.util.WeakHashMap;
  * that we put in the WeakHashMap here is not one that contains the key.
  */
 public class NativeWeakSet extends IdScriptableObject {
-	private static final long serialVersionUID = 1L;
-	private static final Object MAP_TAG = "WeakSet";
-
+    private static final long serialVersionUID = 2065753364224029534L;
+    
+    private static final Object MAP_TAG = "WeakSet";
+    
     private boolean instanceOfWeakSet = false;
-
+    
     private transient WeakHashMap<Scriptable, Boolean> map = new WeakHashMap<>();
-
+    
     static void init(Scriptable scope, boolean sealed) {
         NativeWeakSet m = new NativeWeakSet();
         m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);

@@ -13,9 +13,8 @@ package org.mozilla.javascript;
  */
 
 public class NativeCallSite extends IdScriptableObject {
-	private static final long serialVersionUID = 1L;
-	private static final String CALLSITE_TAG = "CallSite";
-
+    private static final long serialVersionUID = 2688372752566593594L;
+    private static final String CALLSITE_TAG = "CallSite";
     private ScriptStackElement element;
 
     static void init(Scriptable scope, boolean sealed)

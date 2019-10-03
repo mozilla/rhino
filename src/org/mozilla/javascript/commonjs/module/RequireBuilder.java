@@ -20,10 +20,8 @@ import org.mozilla.javascript.Scriptable;
  * @author Attila Szegedi
  * @version $Id: RequireBuilder.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
-public class RequireBuilder implements Serializable
-{
-    private static final long serialVersionUID = 1L;
-
+public class RequireBuilder implements Serializable {
+    private static final long serialVersionUID = -8686999731177566941L;
     private boolean sandboxed = true;
     private ModuleScriptProvider moduleScriptProvider;
     private Script preExec;

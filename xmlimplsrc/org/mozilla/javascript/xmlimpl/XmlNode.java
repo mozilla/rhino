@@ -21,12 +21,14 @@ import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.UserDataHandler;
 
 class XmlNode implements Serializable {
+    private static final long serialVersionUID = 7498300745525888082L;
+    
     private static final String XML_NAMESPACES_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
-
+    
     private static final String USER_DATA_XMLNODE_KEY = XmlNode.class.getName();
-
+    
     private static final boolean DOM_LEVEL_3 = true;
-
+    
     private static XmlNode getUserData(Node node) {
         if (DOM_LEVEL_3) {
             return (XmlNode)node.getUserData(USER_DATA_XMLNODE_KEY);
@@ -94,8 +96,6 @@ class XmlNode implements Serializable {
     private static XmlNode copy(XmlNode other) {
         return createImpl( other.dom.cloneNode(true) );
     }
-
-    private static final long serialVersionUID = 1L;
 
     private UserDataHandler events = new XmlNodeUserDataHandler();
 

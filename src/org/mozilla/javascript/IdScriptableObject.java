@@ -28,10 +28,10 @@ import java.io.Serializable;
  * 
  */
 public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
-	private static final long serialVersionUID = 1L;
-	private transient PrototypeValues prototypeValues;
+    private static final long serialVersionUID = -3744239272168621609L;
+    private transient PrototypeValues prototypeValues;
 
-	private static final class PrototypeValues implements Serializable {
+    private static final class PrototypeValues implements Serializable {
         private static final long serialVersionUID = 3038645279153854371L;
 
         private static final int NAME_SLOT = 1;

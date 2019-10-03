@@ -17,12 +17,10 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  * @author Attila Szegedi
  * @version $Id: StrongCachingModuleScriptProvider.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
-public class StrongCachingModuleScriptProvider extends CachingModuleScriptProviderBase
-{
-    private static final long serialVersionUID = 1L;
+public class StrongCachingModuleScriptProvider extends CachingModuleScriptProviderBase {
 
-    private final Map<String, CachedModuleScript> modules =
-        new ConcurrentHashMap<String, CachedModuleScript>(16, .75f, getConcurrencyLevel());
+    private static final long serialVersionUID = -8435427841788350515L;
+    private final Map<String, CachedModuleScript> modules = new ConcurrentHashMap<String, CachedModuleScript>(16, .75f, getConcurrencyLevel());
 
     /**
      * Creates a new module provider with the specified module source provider.
