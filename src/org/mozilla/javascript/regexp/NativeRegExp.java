@@ -608,7 +608,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     break;
                 case 'u':
                     nDigits += 2;
-                    // fallthru
+                    // fall through
                 case 'x':
                     n = 0;
                     for (i = 0; (i < nDigits) && (index < end); i++) {
@@ -950,7 +950,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 /* UnicodeEscapeSequence */
                 case 'u':
                     nDigits += 2;
-                /* fallthru */ case 'x':  /* HexEscapeSequence */
+                /* fall through */ case 'x':  /* HexEscapeSequence */
                     {
                         int n = 0;
                         int i;
@@ -1600,7 +1600,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     break;
                 case 'u':
                     nDigits += 2;
-                    // fallthru
+                    // fall through
                 case 'x':
                     n = 0;
                     for (i = 0; (i < nDigits) && (src < end); i++) {
@@ -2006,7 +2006,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
                         }
                     }
                     /* else false thru... */
-                    // fallthru
+                    // fall through
                     case REOP_ALT:
                     {
                         int nextpc = pc + getOffset(program, pc);
