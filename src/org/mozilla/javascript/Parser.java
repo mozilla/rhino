@@ -2629,7 +2629,7 @@ public class Parser
                   return memberExprTail(true, xmlInitializer());
               }
               // Fall thru to the default handling of RELOP
-              // fallthru
+              // fall through
 
           default:
               AstNode pn = memberExpr(true);
@@ -3408,7 +3408,7 @@ public class Parser
                     isForOf = true;
                     break;
                 }
-                // fallthru
+                // fall through
             default:
                 reportError("msg.in.after.for.name");
             }

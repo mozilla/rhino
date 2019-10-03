@@ -390,11 +390,11 @@ class TokenStream
                 case 't': if (isStrict) {
                     X="static";id=Id_static; break L;
                 }
-                // fallthru
+                // fall through
                 case 'u': if (isStrict) {
                     X="public";id=Id_public; break L;
                 }
-                // fallthru
+                // fall through
                 case 'w': X="switch";id=Id_switch; break L;
                 case 'x': X="export";id=Id_export; break L;
                 case 'y': X="typeof";id=Id_typeof; break L;
@@ -403,13 +403,13 @@ class TokenStream
                 case 'a': if (isStrict) {
                     X="package";id=Id_package; break L;
                 }
-                // fallthru
+                // fall through
                 case 'e': X="default";id=Id_default; break L;
                 case 'i': X="finally";id=Id_finally; break L;
                 case 'r': if (isStrict) {
                     X="private";id=Id_private; break L;
                 }
-                // fallthru
+                // fall through
                 case 'x': X="extends";id=Id_extends; break L;
                 } break L;
             case 8: switch (s.charAt(0)) {

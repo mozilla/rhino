@@ -273,7 +273,7 @@ class CodeGenerator extends Icode {
           case Token.EMPTY:
           case Token.WITH:
             updateLineNumber(node);
-            // fallthru
+            // fall through
           case Token.SCRIPT:
             while (child != null) {
                 visitStatement(child, initialStackDepth);
