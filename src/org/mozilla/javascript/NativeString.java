@@ -619,7 +619,7 @@ final class NativeString extends IdScriptableObject
 
         if (position < 0) position = 0;
         else if (position > target.length()) position = target.length();
-        else if (methodId == Id_endsWith && (position != position  || position > target.length())) position = target.length();
+        else if (methodId == Id_endsWith && (Double.isNaN(position) || position > target.length())) position = target.length();
 
         if (Id_endsWith == methodId) {
             if (args.length == 0 || args.length == 1 || (args.length == 2 && args[1] == Undefined.instance)) position = target.length();
