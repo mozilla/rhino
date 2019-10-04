@@ -2168,7 +2168,7 @@ public class ScriptRuntime {
      *
      */
     private static class IdEnumeration implements Serializable {
-        private static final long serialVersionUID = 3052885577094294244L;
+        private static final long serialVersionUID = 1L;
         Scriptable obj;
         Object[] ids;
         ObjToIntMap used;

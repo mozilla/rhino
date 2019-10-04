@@ -21,7 +21,7 @@ import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.UserDataHandler;
 
 class XmlNode implements Serializable {
-    private static final long serialVersionUID = 7498300745525888082L;
+    private static final long serialVersionUID = 1L;
     
     private static final String XML_NAMESPACES_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
     

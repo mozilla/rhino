@@ -30,7 +30,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  * @version $Id: SoftCachingModuleScriptProvider.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public class SoftCachingModuleScriptProvider extends CachingModuleScriptProviderBase {
-    private static final long serialVersionUID = 523398435792363456L;
+    private static final long serialVersionUID = 1L;
     private transient ReferenceQueue<Script> scriptRefQueue = new ReferenceQueue<Script>();
     private transient ConcurrentMap<String, ScriptReference> scripts = new ConcurrentHashMap<String, ScriptReference>(16, .75f, getConcurrencyLevel());
 

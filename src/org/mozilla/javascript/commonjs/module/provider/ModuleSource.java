@@ -31,7 +31,7 @@ import java.net.URI;
  * @version $Id: ModuleSource.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public class ModuleSource implements Serializable {
-    private static final long serialVersionUID = 7183957145984428890L;
+    private static final long serialVersionUID = 1L;
     private final Reader reader;
     private final Object securityDomain;
     private final URI uri;

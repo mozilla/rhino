@@ -39,7 +39,7 @@ import org.mozilla.javascript.ScriptableObject;
  * @version $Id: Require.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
 public class Require extends BaseFunction {
-    private static final long serialVersionUID = 1880457728609216212L;
+    private static final long serialVersionUID = 1L;
     private final ModuleScriptProvider moduleScriptProvider;
     private final Scriptable nativeScope;
     private final Scriptable paths;

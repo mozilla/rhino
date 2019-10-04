@@ -24,7 +24,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
  * @version $Id: CachingModuleScriptProviderBase.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public abstract class CachingModuleScriptProviderBase implements ModuleScriptProvider, Serializable {
-    private static final long serialVersionUID = -3212148720202920385L;
+    private static final long serialVersionUID = -1L;
     private static final int loadConcurrencyLevel = Runtime.getRuntime().availableProcessors() * 8;
     private static final int loadLockShift;
     private static final int loadLockMask;

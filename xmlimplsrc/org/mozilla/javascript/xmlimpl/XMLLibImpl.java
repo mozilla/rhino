@@ -26,7 +26,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
     //    EXPERIMENTAL Java interface
     //
    
-    private static final long serialVersionUID = 3519443689172208557L;
+    private static final long serialVersionUID = 1L;
 
     /**
       This experimental interface is undocumented.

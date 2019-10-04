@@ -14,7 +14,7 @@ import java.util.StringTokenizer;
  * @version $Id: ParsedContentType.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public final class ParsedContentType implements Serializable {
-    private static final long serialVersionUID = 2660291075921848672L;
+    private static final long serialVersionUID = 1L;
     private final String contentType;
     private final String encoding;
 

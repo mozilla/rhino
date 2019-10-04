@@ -7,7 +7,7 @@
 package org.mozilla.javascript;
 
 public final class NativeStringIterator extends ES6Iterator {
-    private static final long serialVersionUID = 5890115206182483238L;
+    private static final long serialVersionUID = 1L;
     private static final String ITERATOR_TAG = "StringIterator";
 
     static void init(ScriptableObject scope, boolean sealed) {
