@@ -923,7 +923,7 @@ public class NativeJavaObject
         }
 
         if (staticType != null) {
-            out.writeObject(staticType.getClass().getName());
+            out.writeObject(staticType.getName());
         } else {
             out.writeObject(null);
         }
