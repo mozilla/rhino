@@ -165,7 +165,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                         result = true;
                     } else {
                         double d = ScriptRuntime.toNumber(args[0]);
-                        result = (d != d);
+                        result = Double.isNaN(d);
                     }
                     return ScriptRuntime.wrapBoolean(result);
                 }
