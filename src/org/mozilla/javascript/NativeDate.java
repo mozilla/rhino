@@ -348,10 +348,10 @@ final class NativeDate extends IdScriptableObject
             {
                 double year = ScriptRuntime.toNumber(args, 0);
 
-                if (year != year || Double.isInfinite(year)) {
+                if (Double.isNaN(year) || Double.isInfinite(year)) {
                     t = ScriptRuntime.NaN;
                 } else {
-                    if (t != t) {
+                    if (Double.isNaN(t)) {
                         t = 0;
                     } else {
                         t = LocalTime(t);
@@ -538,7 +538,7 @@ final class NativeDate extends IdScriptableObject
 
         // d: date count from 1 March
         int mdays, mstart;
-        switch (Math.round(d / 30)) { // approx number of month since March
+        switch (d / 30) { // approx number of month since March
             case 0: return d + 1;
             case 1: mdays = 31; mstart = 31; break;
             case 2: mdays = 30; mstart = 31+30; break;
