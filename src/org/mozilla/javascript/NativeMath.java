@@ -102,6 +102,7 @@ final class NativeMath extends IdScriptableObject
         }
     }
 
+    @SuppressWarnings("SelfAssignment")
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
                              Scriptable thisObj, Object[] args)
@@ -124,7 +125,7 @@ final class NativeMath extends IdScriptableObject
             case Id_acos:
             case Id_asin:
                 x = ScriptRuntime.toNumber(args, 0);
-                if (x == x && -1.0 <= x && x <= 1.0) {
+                if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0) {
                     x = (methodId == Id_acos) ? Math.acos(x) : Math.asin(x);
                 } else {
                     x = Double.NaN;
@@ -133,7 +134,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_acosh:
                 x = ScriptRuntime.toNumber(args, 0);
-                if (x == x) {
+                if (!Double.isNaN(x)) {
                     return Math.log(x + Math.sqrt(x*x - 1.0));
                 }
                 return Double.NaN;
@@ -144,7 +145,7 @@ final class NativeMath extends IdScriptableObject
                         || x == Double.NEGATIVE_INFINITY) {
                     return x;
                 }
-                if (x == x) {
+                if (!Double.isNaN(x)) {
                     if (x == 0) {
                         if (1 / x > 0) {
                             return 0.0;
@@ -162,7 +163,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_atanh:
                 x = ScriptRuntime.toNumber(args, 0);
-                if (x == x && -1.0 <= x && x <= 1.0) {
+                if (!Double.isNaN(x) && -1.0 <= x && x <= 1.0) {
                     if (x == 0) {
                         if (1 / x > 0) {
                             return 0.0;
@@ -191,7 +192,7 @@ final class NativeMath extends IdScriptableObject
             case Id_clz32:
                 x = ScriptRuntime.toNumber(args, 0);
                 if (x == 0
-                        || x != x
+                        || Double.isNaN(x)
                         || x == Double.POSITIVE_INFINITY
                         || x == Double.NEGATIVE_INFINITY) {
                     return 32;
@@ -237,6 +238,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_fround:
                 x = ScriptRuntime.toNumber(args, 0);
+                // Rely on Java to truncate down to a "float" here"
                 x = (float) x;
                 break;
 
@@ -271,7 +273,7 @@ final class NativeMath extends IdScriptableObject
                     ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
                 for (int i = 0; i != args.length; ++i) {
                     double d = ScriptRuntime.toNumber(args[i]);
-                    if (d != d) {
+                    if (Double.isNaN(d)) {
                         x = d; // NaN
                         break;
                     }
@@ -295,7 +297,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_round:
                 x = ScriptRuntime.toNumber(args, 0);
-                if (x == x && x != Double.POSITIVE_INFINITY
+                if (!Double.isNaN(x) && x != Double.POSITIVE_INFINITY
                     && x != Double.NEGATIVE_INFINITY)
                 {
                     // Round only finite x
@@ -315,7 +317,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_sign:
                 x = ScriptRuntime.toNumber(args, 0);
-                if (x == x) {
+                if (!Double.isNaN(x)) {
                     if (x == 0) {
                         if (1 / x > 0) {
                             return 0.0;
@@ -366,7 +368,7 @@ final class NativeMath extends IdScriptableObject
     // See Ecma 15.8.2.13
     private static double js_pow(double x, double y) {
         double result;
-        if (y != y) {
+        if (Double.isNaN(y)) {
             // y is NaN, result is always NaN
             result = y;
         } else if (y == 0) {
@@ -387,7 +389,7 @@ final class NativeMath extends IdScriptableObject
             }
         } else {
             result = Math.pow(x, y);
-            if (result != result) {
+            if (Double.isNaN(result)) {
                 // Check for broken Java implementations that gives NaN
                 // when they should return something else
                 if (y == Double.POSITIVE_INFINITY) {
