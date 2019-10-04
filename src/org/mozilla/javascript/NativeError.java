@@ -379,12 +379,42 @@ final class NativeError extends IdScriptableObject
         private int stackTraceLimit = DEFAULT_STACK_LIMIT;
         private Function prepareStackTrace;
 
+        public Object getStackTraceLimit(Scriptable thisObj) {
+            if (stackTraceLimit >= 0) {
+                return stackTraceLimit;
+            }
+            return Double.POSITIVE_INFINITY;
+        }
+
         public int getStackTraceLimit() {
             return stackTraceLimit;
         }
 
+        public void setStackTraceLimit(Scriptable thisObj, Object value) {
+            double limit = Context.toNumber(value);
+            if (Double.isNaN(limit) || Double.isInfinite(limit)) {
+                stackTraceLimit = -1;
+            } else {
+                stackTraceLimit = (int)limit;
+            }
+        }
+
+        public Object getPrepareStackTrace(Scriptable thisObj)
+        {
+            Object ps = getPrepareStackTrace();
+            return (ps == null ? Undefined.instance : ps);
+        }
+
         public Function getPrepareStackTrace() {
             return prepareStackTrace;
+        }
+
+        public void setPrepareStackTrace(Scriptable thisObj, Object value) {
+            if ((value == null) || Undefined.instance.equals(value)) {
+                prepareStackTrace = null;
+            } else if (value instanceof Function) {
+                prepareStackTrace = (Function)value;
+            }
         }
     }
 }
