@@ -15,7 +15,7 @@ import java.io.Serializable;
  * for operations on its parent.
  */
 public class NativeWith implements Scriptable, SymbolScriptable, IdFunctionCall, Serializable {
-    private static final long serialVersionUID = 5581345585553901804L;
+    private static final long serialVersionUID = 1L;
 
     static void init(Scriptable scope, boolean sealed) {
         NativeWith obj = new NativeWith();
