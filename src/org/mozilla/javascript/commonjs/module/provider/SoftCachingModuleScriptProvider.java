@@ -29,16 +29,10 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  * @author Attila Szegedi
  * @version $Id: SoftCachingModuleScriptProvider.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
-public class SoftCachingModuleScriptProvider extends CachingModuleScriptProviderBase
-{
+public class SoftCachingModuleScriptProvider extends CachingModuleScriptProviderBase {
     private static final long serialVersionUID = 1L;
-
-    private transient ReferenceQueue<Script> scriptRefQueue =
-        new ReferenceQueue<Script>();
-
-    private transient ConcurrentMap<String, ScriptReference> scripts =
-        new ConcurrentHashMap<String, ScriptReference>(16, .75f,
-                getConcurrencyLevel());
+    private transient ReferenceQueue<Script> scriptRefQueue = new ReferenceQueue<Script>();
+    private transient ConcurrentMap<String, ScriptReference> scripts = new ConcurrentHashMap<String, ScriptReference>(16, .75f, getConcurrencyLevel());
 
     /**
      * Creates a new module provider with the specified module source provider.

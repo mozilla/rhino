@@ -18,17 +18,17 @@ import java.util.WeakHashMap;
  * remaining reference to the key is a weak reference. Therefore, we can use
  * WeakHashMap as the basis of this implementation and preserve the same semantics.
  */
-public class NativeWeakMap
-  extends IdScriptableObject
-{
+public class NativeWeakMap extends IdScriptableObject {
+    private static final long serialVersionUID = 8670434366883930453L;
+    
     private static final Object MAP_TAG = "WeakMap";
-
+    
     private boolean instanceOfWeakMap = false;
-
+    
     private transient WeakHashMap<Scriptable, Object> map = new WeakHashMap<>();
-
+    
     private static final Object NULL_VALUE = new Object();
-
+    
     static void init(Scriptable scope, boolean sealed) {
         NativeWeakMap m = new NativeWeakMap();
         m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);

@@ -21,15 +21,16 @@ import org.mozilla.javascript.xml.XMLObject;
 import org.xml.sax.SAXException;
 
 public final class XMLLibImpl extends XMLLib implements Serializable {
-    private static final long serialVersionUID = 1L;
 
     //
     //    EXPERIMENTAL Java interface
     //
+   
+    private static final long serialVersionUID = 1L;
 
     /**
-        This experimental interface is undocumented.
-     */
+      This experimental interface is undocumented.
+    */
     public static org.w3c.dom.Node toDomNode(Object xmlObject) {
         //    Could return DocumentFragment for XMLList
         //    Probably a single node for XMLList with one element

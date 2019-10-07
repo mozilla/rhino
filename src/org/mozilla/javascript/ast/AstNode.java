@@ -80,9 +80,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
      * and so on
      */
     protected AstNode inlineComment;
-
-    private static Map<Integer,String> operatorNames =
-            new HashMap<Integer,String>();
+    private static Map<Integer, String> operatorNames = new HashMap<Integer, String>();
 
     static {
         operatorNames.put(Token.IN, "in");
@@ -135,8 +133,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
 
     public static class PositionComparator implements Comparator<AstNode>, Serializable {
         private static final long serialVersionUID = 1L;
-
-        /**
+       /**
          * Sorts nodes by (relative) start position.  The start positions are
          * relative to their parent, so this comparator is only meaningful for
          * comparing siblings.

@@ -24,6 +24,7 @@ import org.mozilla.javascript.xml.XMLObject;
  * @see XML
  */
 abstract class XMLObjectImpl extends XMLObject {
+    private static final long serialVersionUID = -2553684605738101761L;
     private static final Object XMLOBJECT_TAG = "XMLObject";
     private XMLLibImpl lib;
     private boolean prototypeFlag;
