@@ -26,9 +26,7 @@ import org.mozilla.javascript.ScriptableObject;
  * @author Attila Szegedi
  * @version $Id: ModuleSourceProviderBase.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
-public abstract class ModuleSourceProviderBase implements
-        ModuleSourceProvider, Serializable
-{
+public abstract class ModuleSourceProviderBase implements ModuleSourceProvider, Serializable {
     private static final long serialVersionUID = 1L;
 
     @Override

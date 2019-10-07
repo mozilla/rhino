@@ -26,26 +26,27 @@ import java.util.NoSuchElementException;
  * exist, and even lets an iterator keep on iterating on a collection that was
  * empty when it was created..
  */
-public class Hashtable
-    implements Serializable, Iterable<Hashtable.Entry>
-{
+public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
+
+    private static final long serialVersionUID = -7151554912419543747L;
     private final HashMap<Object, Entry> map = new HashMap<>();
     private Entry first = null;
     private Entry last = null;
 
     /**
-     * One entry in the hash table. Override equals and hashcode because
-     * this is another area in which JavaScript and Java differ. This entry
-     * also becomes a node in the linked list.
+     * One entry in the hash table. Override equals and hashcode because this is
+     * another area in which JavaScript and Java differ. This entry also becomes a
+     * node in the linked list.
      */
-    public static final class Entry
-        implements Serializable {
-        protected Object key;
-        protected Object value;
-        protected boolean deleted;
-        protected Entry next;
-        protected Entry prev;
-        private final int hashCode;
+
+      public static final class Entry implements Serializable {
+      private static final long serialVersionUID = 4086572107122965503L;
+      protected Object key;
+      protected Object value;
+      protected boolean deleted;
+      protected Entry next;
+      protected Entry prev;
+      private final int hashCode;
 
         Entry() {
             hashCode = 0;

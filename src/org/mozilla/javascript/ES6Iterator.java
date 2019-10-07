@@ -8,6 +8,8 @@ package org.mozilla.javascript;
 
 public abstract class ES6Iterator extends IdScriptableObject {
 
+    private static final long serialVersionUID = 2438373029140003950L;
+
     static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);

@@ -446,15 +446,6 @@ public class Parser
         return tt;
     }
 
-    private int nextFlaggedToken()
-        throws IOException
-    {
-        peekToken();
-        int ttFlagged = currentFlaggedToken;
-        consumeToken();
-        return ttFlagged;
-    }
-
     private boolean matchToken(int toMatch, boolean ignoreComment)
         throws IOException
     {
