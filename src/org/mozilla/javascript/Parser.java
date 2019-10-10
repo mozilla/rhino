@@ -3272,10 +3272,9 @@ public class Parser
                     elements.add(new EmptyExpression(ts.tokenBeg, 1));
                     skipCount++;
                 }
-            }else if(tt == Token.COMMENT) {
+            } else if(tt == Token.COMMENT) {
                 consumeToken();
-            }
-            else if (tt == Token.RB) {
+            } else if (tt == Token.RB) {
                 consumeToken();
                 // for ([a,] in obj) is legal, but for ([a] in obj) is
                 // not since we have both key and value supplied. The
