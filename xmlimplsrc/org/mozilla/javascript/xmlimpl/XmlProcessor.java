@@ -67,20 +67,33 @@ class XmlProcessor implements Serializable {
      */
     private void configureSecureDBF(DocumentBuilderFactory dbf){
         try {
+            // This feature is required to be supported by all DocumentBuilderFactories.
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            // Disallow XIncludeAware as it is an SSRF target using xi:include.
+            // This should also be supported on all XML processors.
+            dbf.setXIncludeAware(false);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException("XML parser (DocumentBuilderFactory) cannot be securely configured.", e);
+        }
+
+        // The rest of these features should be set for the best security by default.
+        // However, not all XML processing implementations support them.
+        // So we will attempt to set each one but continue if we can't.
+        
+        try {
             //Prevent File attacks in DBF
             //Disallow all doctypes, removing all ENTITY-type tags as a vector
             dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        } catch (ParserConfigurationException e) {
+            // Ignore this, because it will not work on all implementations
+        }
 
+        try {
             //Prevent SSRF attacks in DBF
             //Do not load external dtds, if the underlying DocBuilderFactory is set for a validation mode
             dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-
-            //Disallow XIncludeAware as it is an SSRF target using xi:include
-            dbf.setXIncludeAware(false);
-            
         } catch (ParserConfigurationException e) {
-            // Following the other config exception handling
-            throw new RuntimeException("XML parser (DocumentBuilderFactory) cannot be securely configured.", e);
+            // Ignore this, because it will not work on all implementations
         }
     }
 
@@ -89,13 +102,25 @@ class XmlProcessor implements Serializable {
      */
     private void configureSecureTF(javax.xml.transform.TransformerFactory xform){
         try {
-            //Disallow all XXEs and SSRF via external calls for DTDs or Stylesheets
+            // Disallow all XXEs and SSRF via external calls for DTDs or Stylesheets.
+            // This feature is required to be supported by all TransformerFactory implementations.
             xform.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         } catch (TransformerConfigurationException e) {
-            // Following the other config exception handling
             throw new RuntimeException("XML parser (TransformerFactory) cannot be securely configured.", e);
+        }
+
+        // These next parameters make extra-sure that we have a secure configuration,
+        // but are not supported on all implementations.
+        try {
+            xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        } catch (IllegalArgumentException e) {
+            // Ignore this, because it will not work on all implementations
+        }
+       
+        try {
+            xform.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+        } catch (IllegalArgumentException e) {
+            // Ignore this, because it will not work on all implementations
         }
     }
 
