@@ -81,6 +81,32 @@ public class ParserTest extends TestCase {
 
         assertEquals("var s = 3;\nvar t = 1;\n", root.toSource());
     }
+    
+    public void testCommentInArray() throws IOException{
+        //Test a single comment
+        AstRoot root = parseAsReader(
+                "var array = [/**/];");
+        assertNotNull(root.getComments());
+        assertEquals(1, root.getComments().size());
+        assertEquals(root.toSource(),"var array = [];\n");
+        //Test multiple comments
+        root = parseAsReader(
+                "var array = [/*Hello*/ /*World*/ 1,2];");
+        assertNotNull(root.getComments());
+        assertEquals(2, root.getComments().size());
+        assertEquals(root.toSource(),"var array = [1, 2];\n");
+        //Test no comments
+        root = parseAsReader(
+                "var array = [1,2];");
+        assertNull(root.getComments());
+        assertEquals(root.toSource(),"var array = [1, 2];\n");
+        root = parseAsReader(
+                "var array = [1,/*hello*/2,/*World*/3];");
+        //Test comments in middle
+        assertNotNull(root.getComments());
+        assertEquals(2, root.getComments().size());
+        assertEquals(root.toSource(),"var array = [1, 2, 3];\n");
+    }
 
     public void testNewlineAndComments() throws IOException {
         AstRoot root = parseAsReader(
