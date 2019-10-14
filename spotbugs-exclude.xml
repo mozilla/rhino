@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<FindBugsFilter>
+  <Match>
+    <Class name="org.mozilla.javascript.Interpreter" />
+    <Bug pattern="INT_BAD_COMPARISON_WITH_SIGNED_BYTE" />
+  </Match>
+  <Match>
+    <Class name="org.mozilla.classfile.ClassFileWriter" />
+    <Bug pattern="INT_BAD_COMPARISON_WITH_NONNEGATIVE_VALUE" />
+  </Match>
+  <Match>
+    <Class name="org.mozilla.javascript.NativeArray" />
+    <Bug pattern="UC_USELESS_CONDITION" />
+  </Match>
+  <Match>
+    <Bug pattern="FE_FLOATING_POINT_EQUALITY" />
+  </Match>
+  <Match>
+    <Bug pattern="JLM_JSR166_UTILCONCURRENT_MONITORENTER" />
+  </Match>
+  <Match>
+    <Bug pattern="DM_DEFAULT_ENCODING" />
+  </Match>
+  <Match>
+    <Bug pattern="MS_SHOULD_BE_FINAL" />
+  </Match>
+  <Match>
+    <Bug pattern="EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS" />
+  </Match>
+</FindBugsFilter>
