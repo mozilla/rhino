@@ -8,18 +8,12 @@ plugins {
     id 'checkstyle'
     id 'com.github.spotbugs' version '2.0.0'
 }
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
-apply plugin: 'jacoco'
-apply plugin: 'distribution'
-apply plugin: 'checkstyle'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-tasks.withType(JavaCompile) { options.encoding = "UTF-8" }
+tasks.withType(JavaCompile) {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    options.encoding = "UTF-8"
+}
 
 repositories {
     mavenCentral()

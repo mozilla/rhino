@@ -141,8 +141,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_asinh:
                 x = ScriptRuntime.toNumber(args, 0);
-                if (x == Double.POSITIVE_INFINITY
-                        || x == Double.NEGATIVE_INFINITY) {
+                if (Double.isInfinite(x)) {
                     return x;
                 }
                 if (!Double.isNaN(x)) {
@@ -193,8 +192,7 @@ final class NativeMath extends IdScriptableObject
                 x = ScriptRuntime.toNumber(args, 0);
                 if (x == 0
                         || Double.isNaN(x)
-                        || x == Double.POSITIVE_INFINITY
-                        || x == Double.NEGATIVE_INFINITY) {
+                        || Double.isInfinite(x)) {
                     return 32;
                 }
                 long n = ScriptRuntime.toUint32(x);
@@ -205,9 +203,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_cos:
                 x = ScriptRuntime.toNumber(args, 0);
-                x = (x == Double.POSITIVE_INFINITY
-                     || x == Double.NEGATIVE_INFINITY)
-                    ? Double.NaN : Math.cos(x);
+                x = Double.isInfinite(x) ? Double.NaN : Math.cos(x);
                 break;
 
             case Id_cosh:
@@ -297,8 +293,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_round:
                 x = ScriptRuntime.toNumber(args, 0);
-                if (!Double.isNaN(x) && x != Double.POSITIVE_INFINITY
-                    && x != Double.NEGATIVE_INFINITY)
+                if (!Double.isNaN(x) && !Double.isInfinite(x))
                 {
                     // Round only finite x
                     long l = Math.round(x);
@@ -330,9 +325,7 @@ final class NativeMath extends IdScriptableObject
 
             case Id_sin:
                 x = ScriptRuntime.toNumber(args, 0);
-                x = (x == Double.POSITIVE_INFINITY
-                     || x == Double.NEGATIVE_INFINITY)
-                    ? Double.NaN : Math.sin(x);
+                x = Double.isInfinite(x) ? Double.NaN : Math.sin(x);
                 break;
 
             case Id_sinh:
@@ -428,15 +421,26 @@ final class NativeMath extends IdScriptableObject
         }
         double y = 0.0;
 
+        // Spec and tests say that any "Infinity" result takes precedence.
+        boolean hasNaN = false;
+        boolean hasInfinity = false;
+
         for (Object o : args) {
             double d = ScriptRuntime.toNumber(o);
-            if (d == ScriptRuntime.NaN) {
-                return d;
+            if (Double.isNaN(d)) {
+                hasNaN = true;
+            } else if (Double.isInfinite(d)) {
+                hasInfinity = true;
+            } else {
+                y += d * d;
             }
-            if ((d == Double.POSITIVE_INFINITY) || (d == Double.NEGATIVE_INFINITY)) {
-                return Double.POSITIVE_INFINITY;
-            }
-            y += d * d;
+        }
+
+        if (hasInfinity) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (hasNaN) {
+            return Double.NaN;
         }
         return Math.sqrt(y);
     }

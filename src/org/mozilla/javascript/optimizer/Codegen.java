@@ -1766,9 +1766,9 @@ class BodyCodegen
 
             // generate dispatch tables for finally
             if (finallys != null) {
-                for (Node n: finallys.keySet()) {
-                    if (n.getType() == Token.FINALLY) {
-                        FinallyReturnPoint ret = finallys.get(n);
+                for (Map.Entry<Node, FinallyReturnPoint> e : finallys.entrySet()) {
+                    if (e.getKey().getType() == Token.FINALLY) {
+                        FinallyReturnPoint ret = e.getValue();
                         // the finally will jump here
                         cfw.markLabel(ret.tableLabel, (short)1);
 

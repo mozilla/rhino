@@ -589,6 +589,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     @Override
     public boolean equals(Object o)
     {
+        if (o == null) {
+            return false;
+        }
         try {
             NativeTypedArrayView<T> v = (NativeTypedArrayView<T>)o;
             if (length != v.length) {

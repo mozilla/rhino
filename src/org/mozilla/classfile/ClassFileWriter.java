@@ -694,7 +694,7 @@ public class ClassFileWriter {
             if (theOperand2 < 0 ||  65536 <= theOperand2)
                 throw new ClassFileFormatException("out of range increment");
 
-            if (theOperand1 > 255 || theOperand2 < -128 || theOperand2 > 127) {
+            if (theOperand1 > 255 || theOperand2 > 127) {
                 addToCodeBuffer(ByteCode.WIDE);
                 addToCodeBuffer(ByteCode.IINC);
                 addToCodeInt16(theOperand1);

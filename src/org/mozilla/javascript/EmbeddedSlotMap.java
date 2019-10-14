@@ -14,6 +14,7 @@ package org.mozilla.javascript;
  */
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.mozilla.javascript.ScriptableObject.SlotAccess;
 
@@ -48,6 +49,9 @@ public class EmbeddedSlotMap
         @Override
         public ScriptableObject.Slot next() {
             ScriptableObject.Slot ret = next;
+            if (ret == null) {
+                throw new NoSuchElementException();
+            }
             next = next.orderedNext;
             return ret;
         }

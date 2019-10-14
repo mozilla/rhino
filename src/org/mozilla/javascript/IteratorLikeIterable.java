@@ -2,6 +2,7 @@ package org.mozilla.javascript;
 
 import java.io.Closeable;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * This is a class that makes it easier to iterate over "iterator-like" objects as defined
@@ -59,6 +60,7 @@ public class IteratorLikeIterable
         implements Iterator<Object>
     {
         private Object nextVal;
+        private boolean isDone;
 
         @Override
         public boolean hasNext() {
@@ -68,6 +70,7 @@ public class IteratorLikeIterable
                 throw ScriptRuntime.undefReadError(val, "done");
             }
             if (Boolean.TRUE.equals(doneval)) {
+                isDone = true;
                 return false;
             }
             nextVal = ScriptRuntime.getObjectProp(val, "value", cx, scope);
@@ -76,6 +79,9 @@ public class IteratorLikeIterable
 
         @Override
         public Object next() {
+            if (isDone) {
+                throw new NoSuchElementException();
+            }
             return nextVal;
         }
     }
