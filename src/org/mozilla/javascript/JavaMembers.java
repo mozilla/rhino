@@ -16,6 +16,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.AccessControlContext;
+import java.security.AccessControlException;
 import java.security.AllPermission;
 import java.security.Permission;
 import java.util.ArrayList;
@@ -42,10 +43,17 @@ class JavaMembers {
 
     private static final Permission allPermission = new AllPermission();
 
+    // rhino_JavaMembers_lazyInit=true for enable
+    private static final boolean LAZY_INIT =
+            "true".equals(getProperty("rhino_JavaMembers_lazyInit", "true"));
+
+    // rhino_JavaMembers_reflect_cache_on=false for disable
+    private static final boolean CACHE_ON =
+            !"false".equals(getProperty("rhino_JavaMembers_reflect_cache_on", "true"));
+
     // private final boolean includeProtected;
     private final boolean includePrivate;
     private final ClassReflectBean cfCache;
-    private final boolean lazyInit;
     private final Scriptable javaMemberScope;
 
     JavaMembers(Scriptable scope, Class<?> cl) {
@@ -64,7 +72,6 @@ class JavaMembers {
             this.staticMembers = new HashMap<String, Object>();
             this.cl = cl;
             includePrivate = cx.hasFeature(Context.FEATURE_ENHANCED_JAVA_ACCESS);
-            lazyInit = true;
             cfCache = reflect(scope, includeProtected, includePrivate);
         } finally {
             Context.exit();
@@ -128,7 +135,7 @@ class JavaMembers {
             final Scriptable scope, final String name, final boolean isStatic) {
         final Map<String, Object> ht = isStatic ? staticMembers : members;
         Object member = ht.get(name);
-        if (lazyInit && member == null) {
+        if (LAZY_INIT && member == null) {
             final Object m1 = initFieldAndMethod(name, ht, isStatic);
             Map<String, String> props =
                     isStatic ? cfCache.staticBeanProperties : cfCache.instBeanProperties;
@@ -523,7 +530,7 @@ class JavaMembers {
     private ClassReflectBean createClassReflectBean(
             Class<?> clazz, boolean includeProtected, boolean includePrivate) {
         final Map<Class, ClassReflectBean> cache =
-                getCache(clazz, includeProtected, includePrivate);
+                CACHE_ON ? getCache(clazz, includeProtected, includePrivate) : null;
         ClassReflectBean ret = null;
         if (cache != null) {
             ret = cache.get(clazz);
@@ -673,7 +680,7 @@ class JavaMembers {
         // gets in the way.
         final ClassReflectBean cfCache =
                 createClassReflectBean(cl, includeProtected, includePrivate);
-        if (!lazyInit) {
+        if (!LAZY_INIT) {
             // replace Method instances by wrapped NativeJavaMethod objects
             // first in staticMembers and then in members
             for (int tableCursor = 0; tableCursor != 2; ++tableCursor) {
@@ -793,7 +800,7 @@ class JavaMembers {
         String setterName = "set".concat(nameComponent);
         // Is this value a method?
         Object member = ht.get(setterName);
-        if (member == null && lazyInit) {
+        if (member == null && LAZY_INIT) {
             member = initFieldAndMethod(setterName, ht, isStatic);
         }
         if (member instanceof NativeJavaMethod) {
@@ -961,7 +968,7 @@ class JavaMembers {
         String getterName = prefix.concat(propertyName);
         // Check that the getter is a method.
         Object member = ht.get(getterName);
-        if (member == null && lazyInit) {
+        if (member == null && LAZY_INIT) {
             member = initFieldAndMethod(getterName, ht, isStatic);
         }
         if (member instanceof NativeJavaMethod) {
@@ -1031,6 +1038,14 @@ class JavaMembers {
             }
         }
         return null;
+    }
+
+    protected static final String getProperty(final String key, final String defaultValue) {
+        try {
+            return System.getProperty(key, defaultValue);
+        } catch (AccessControlException ex) {
+            return defaultValue;
+        }
     }
 
     Map<String, FieldAndMethods> getFieldAndMethodsObjects(
