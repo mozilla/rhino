@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -996,14 +997,7 @@ public class NativeArray extends IdScriptableObject implements List
                         result.append(ScriptRuntime.uneval(cx, scope, elem));
 
                     } else if (elem instanceof String) {
-                        String s = (String)elem;
-                        if (toSource) {
-                            result.append('\"');
-                            result.append(ScriptRuntime.escapeString(s));
-                            result.append('\"');
-                        } else {
-                            result.append(s);
-                        }
+                        result.append((String)elem);
 
                     } else {
                         if (toLocale) {
@@ -1149,13 +1143,14 @@ public class NativeArray extends IdScriptableObject implements List
                     cmpBuf[1] = y;
                     Object ret = jsCompareFunction.call(cx, scope, funThis,
                         cmpBuf);
-                    final double d = ScriptRuntime.toNumber(ret);
-                    if (d < 0) {
+                    double d = ScriptRuntime.toNumber(ret);
+                    int cmp = Double.compare(d, 0);
+                    if (cmp < 0) {
                       return -1;
-                    } else if (d > 0) {
+                    } else if (cmp > 0) {
                       return +1;
                     }
-                    return 0; // ??? double and 0???
+                    return 0;
                   }
                 });
         } else {
@@ -2288,8 +2283,10 @@ public class NativeArray extends IdScriptableObject implements List
     private static final Comparator<Object> DEFAULT_COMPARATOR = new ElementComparator();
 
     public static final class StringLikeComparator
-      implements Comparator<Object> {
+      implements Comparator<Object>, Serializable {
 
+      private static final long serialVersionUID = 5299017659728190979L;
+    
       @Override
       public int compare(final Object x, final Object y) {
         final String a = ScriptRuntime.toString(x);
@@ -2299,7 +2296,9 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     public static final class ElementComparator
-      implements Comparator<Object> {
+      implements Comparator<Object>, Serializable {
+
+      private static final long serialVersionUID = -1189948017688708858L;
 
       private final Comparator<Object> child;
 

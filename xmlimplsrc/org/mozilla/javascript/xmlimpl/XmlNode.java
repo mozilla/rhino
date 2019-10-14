@@ -342,9 +342,8 @@ class XmlNode implements Serializable {
 
         Namespace[] getNamespaces() {
             ArrayList<Namespace> rv = new ArrayList<Namespace>();
-            for (String prefix: map.keySet()) {
-                String uri = map.get(prefix);
-                Namespace n = Namespace.create(prefix, uri);
+            for (Map.Entry<String, String> e : map.entrySet()) {
+                Namespace n = Namespace.create(e.getKey(), e.getValue());
                 if (!n.isEmpty()) {
                     rv.add(n);
                 }

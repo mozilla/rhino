@@ -136,9 +136,6 @@ public class ScriptRuntime {
     public static final Class<Scriptable> ScriptableClass =
         Scriptable.class;
 
-    // Locale object used to request locale-neutral operations.
-    public static Locale ROOT_LOCALE = new Locale("");
-
     private static final Object LIBRARY_SCOPE_KEY = "LIBRARY_SCOPE";
 
     public static boolean isRhinoRuntimeType(Class<?> cl)
@@ -455,16 +452,10 @@ public class ScriptRuntime {
         return (index < args.length) ? toNumber(args[index]) : NaN;
     }
 
-    // Can not use Double.NaN defined as 0.0d / 0.0 as under the Microsoft VM,
-    // versions 2.01 and 3.0P1, that causes some uses (returns at least) of
-    // Double.NaN to be converted to 1.0.
-    // So we use ScriptRuntime.NaN instead of Double.NaN.
-    public static final double
-        NaN = Double.longBitsToDouble(0x7ff8000000000000L);
+    public static final double NaN = Double.NaN;
 
-    // A similar problem exists for negative zero.
-    public static final double
-        negativeZero = Double.longBitsToDouble(0x8000000000000000L);
+    // Preserve backward-compatibility with historical value of this.
+    public static final double negativeZero = Double.longBitsToDouble(0x8000000000000000L);
 
     public static final Double NaNobj = new Double(NaN);
 
@@ -1219,9 +1210,7 @@ public class ScriptRuntime {
         if (Double.isNaN(d))
             return +0.0;
 
-        if (d == 0.0 ||
-            d == Double.POSITIVE_INFINITY ||
-            d == Double.NEGATIVE_INFINITY)
+        if ((d == 0.0) || Double.isInfinite(d))
             return d;
 
         if (d > 0.0)
@@ -3275,16 +3264,11 @@ public class ScriptRuntime {
     }
 
     public static boolean isNaN(Object n) {
-        if (n == NaNobj) {
-            return true;
-        }
         if (n instanceof Double) {
-            Double d = (Double)n;
-            return ((d == NaN) || Double.isNaN(d));
+            return Double.isNaN((Double)n);
         }
         if (n instanceof Float) {
-            Float f = (Float)n;
-            return ((f == NaN) || Float.isNaN(f));
+            return Float.isNaN((Float)n);
         }
         return false;
     }
@@ -4182,7 +4166,7 @@ public class ScriptRuntime {
         String getMessage(String messageId, Object[] arguments);
     }
 
-    public static MessageProvider messageProvider = new DefaultMessageProvider();
+    public static final MessageProvider messageProvider = new DefaultMessageProvider();
 
     public static String getMessage(String messageId, Object[] arguments)
     {

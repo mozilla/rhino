@@ -3043,8 +3043,10 @@ public abstract class ScriptableObject implements Scriptable,
      * method is defined to be stable.
      */
     public static final class KeyComparator
-        implements Comparator<Object>
+        implements Comparator<Object>, Serializable
     {
+        private static final long serialVersionUID = 6411335891523988149L;
+
         @Override
         public int compare(Object o1, Object o2)
         {
