@@ -630,10 +630,7 @@ class JavaMembers
             }
 
             // Add the new bean properties.
-            for (String key: toAdd.keySet()) {
-                Object value = toAdd.get(key);
-                ht.put(key, value);
-            }
+            ht.putAll(toAdd);
         }
 
         // Reflect constructors

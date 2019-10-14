@@ -11,6 +11,7 @@ import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
 import java.text.Collator;
 import java.text.Normalizer;
+import java.util.Locale;
 
 import org.mozilla.javascript.regexp.NativeRegExp;
 
@@ -330,12 +331,12 @@ final class NativeString extends IdScriptableObject
                 case Id_toLowerCase:
                     // See ECMA 15.5.4.11
                     return ScriptRuntime.toString(thisObj).toLowerCase(
-                        ScriptRuntime.ROOT_LOCALE);
+                        Locale.ROOT);
 
                 case Id_toUpperCase:
                     // See ECMA 15.5.4.12
                     return ScriptRuntime.toString(thisObj).toUpperCase(
-                        ScriptRuntime.ROOT_LOCALE);
+                        Locale.ROOT);
 
                 case Id_substr:
                     return js_substr(ScriptRuntime.toCharSequence(thisObj), args);

@@ -99,6 +99,9 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
         @Override
         public boolean equals(Object o) {
+            if (o == null) {
+                return false;
+            }
             try {
                 return ScriptRuntime.sameZero(key, ((Entry)o).key);
             } catch (ClassCastException cce) {

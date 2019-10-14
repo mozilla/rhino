@@ -37,12 +37,6 @@ final class NativeDate extends IdScriptableObject
 
     private NativeDate()
     {
-        if (thisTimeZone == null) {
-            // j.u.TimeZone is synchronized, so setting class statics from it
-            // should be OK.
-            thisTimeZone = TimeZone.getDefault();
-            LocalTZA = thisTimeZone.getRawOffset();
-        }
     }
 
     @Override
@@ -1188,9 +1182,6 @@ final class NativeDate extends IdScriptableObject
             }
             append0PaddedUint(result, offset, 4);
 
-            if (timeZoneFormatter == null)
-                timeZoneFormatter = new SimpleDateFormat("zzz");
-
             // Find an equivalent year before getting the timezone
             // comment.  See DaylightSavingTA.
             if (t < 0.0) {
@@ -1257,25 +1248,12 @@ final class NativeDate extends IdScriptableObject
         DateFormat formatter;
         switch (methodId) {
           case Id_toLocaleString:
-            if (localeDateTimeFormatter == null) {
-                localeDateTimeFormatter
-                    = DateFormat.getDateTimeInstance(DateFormat.LONG,
-                                                     DateFormat.LONG);
-            }
             formatter = localeDateTimeFormatter;
             break;
           case Id_toLocaleTimeString:
-            if (localeTimeFormatter == null) {
-                localeTimeFormatter
-                    = DateFormat.getTimeInstance(DateFormat.LONG);
-            }
             formatter = localeTimeFormatter;
             break;
           case Id_toLocaleDateString:
-            if (localeDateFormatter == null) {
-                localeDateFormatter
-                    = DateFormat.getDateInstance(DateFormat.LONG);
-            }
             formatter = localeDateFormatter;
             break;
           default: throw new AssertionError(); // unreachable
@@ -1777,12 +1755,15 @@ final class NativeDate extends IdScriptableObject
 // #/string_id_map#
 
     /* cached values */
-    private static TimeZone thisTimeZone;
-    private static double LocalTZA;
-    private static DateFormat timeZoneFormatter;
-    private static DateFormat localeDateTimeFormatter;
-    private static DateFormat localeDateFormatter;
-    private static DateFormat localeTimeFormatter;
+    private static final TimeZone thisTimeZone = TimeZone.getDefault();
+    private static final double LocalTZA = thisTimeZone.getRawOffset();
+    private static final DateFormat timeZoneFormatter = new SimpleDateFormat("zzz");
+    private static final DateFormat localeDateTimeFormatter =
+        DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG);
+    private static final DateFormat localeDateFormatter =
+        DateFormat.getDateInstance(DateFormat.LONG);
+    private static final DateFormat localeTimeFormatter =
+        DateFormat.getTimeInstance(DateFormat.LONG);
 
     private double date;
 }
