@@ -1,3 +1,13 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'maven-publish'
+    id 'jacoco'
+    id 'distribution'
+    id 'checkstyle'
+    id 'com.github.spotbugs' version '2.0.0'
+}
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
@@ -208,6 +218,14 @@ publishing {
 
 jacoco {
     toolVersion = "0.8.3"
+}
+
+spotbugs {
+    toolVersion = "3.1.12"
+    effort = "min"
+    reportLevel = "high"
+    sourceSets = [sourceSets.main]
+    excludeFilter = file("./spotbugs-exclude.xml")
 }
 
 jacocoTestReport.dependsOn test
