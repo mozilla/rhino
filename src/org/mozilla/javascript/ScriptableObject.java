@@ -2804,20 +2804,18 @@ public abstract class ScriptableObject implements Scriptable,
     {
         // This method is very hot (basically called on each assignment)
         // so we inline the extensible/sealed checks below.
-        if (!isExtensible) {
-            Context cx = Context.getContext();
-            if (cx.isStrictMode()) {
-                throw ScriptRuntime.typeError0("msg.not.extensible");
-            }
-        }
         Slot slot;
         if (this != start) {
             slot = slotMap.query(key, index);
+            if(!isExtensible && Context.getContext().isStrictMode() && (slot == null || !(slot instanceof GetterSlot)))
+                throw ScriptRuntime.typeError0("msg.not.extensible");
             if (slot == null) {
                 return false;
             }
         } else if (!isExtensible) {
             slot = slotMap.query(key, index);
+            if(Context.getContext().isStrictMode() && (slot == null || !(slot instanceof GetterSlot)))
+                throw ScriptRuntime.typeError0("msg.not.extensible");
             if (slot == null) {
                 return true;
             }
