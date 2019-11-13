@@ -160,9 +160,15 @@ public class NativeObject extends IdScriptableObject implements Map
           }
 
           case Id_valueOf:
+              if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+                  throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+              }
             return thisObj;
 
           case Id_hasOwnProperty: {
+              if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+                  throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+              }
               boolean result;
               Object arg = args.length < 1 ? Undefined.instance : args[0];
               if (arg instanceof Symbol) {
@@ -180,6 +186,10 @@ public class NativeObject extends IdScriptableObject implements Map
           }
 
           case Id_propertyIsEnumerable: {
+              if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+                  throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+              }
+              
             boolean result;
             Object arg = args.length < 1 ? Undefined.instance : args[0];
 
@@ -224,6 +234,10 @@ public class NativeObject extends IdScriptableObject implements Map
           }
 
           case Id_isPrototypeOf: {
+              if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+                  throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+              }
+              
             boolean result = false;
             if (args.length != 0 && args[0] instanceof Scriptable) {
                 Scriptable v = (Scriptable) args[0];
