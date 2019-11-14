@@ -21,6 +21,8 @@ import org.mozilla.javascript.Token;
  * such as {@code let x=6, y=7;}, are represented as a
  * {@link VariableDeclaration} node of type {@code Token.LET},
  * wrapped with an {@link ExpressionStatement}.
+ *
+ * TODO: What in the world does this mean? What is a LetNode??
  */
 public class LetNode extends Scope {
 
