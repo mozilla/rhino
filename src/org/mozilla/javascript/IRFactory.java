@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.mozilla.javascript.ast.ArrayComprehension;
 import org.mozilla.javascript.ast.ArrayComprehensionLoop;
@@ -2353,8 +2354,16 @@ public final class IRFactory extends Parser
             decompiler.addToken(Token.LP);
         }
         List<AstNode> params = fn.getParams();
+        Map<Integer, AstNode> defaultParams = fn.getDefaultParams();
+
         for (int i = 0; i < params.size(); i++) {
             decompile(params.get(i));
+
+            if (defaultParams.containsKey(i)) {
+                decompiler.addToken(Token.ASSIGN);
+                decompile(defaultParams.get(i));
+            }
+
             if (i < params.size() - 1) {
                 decompiler.addToken(Token.COMMA);
             }
