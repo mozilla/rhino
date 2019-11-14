@@ -120,18 +120,18 @@ jar {
     from "LICENSE.txt"
     manifest {
         attributes(
-            "Manifest-Version": "1.0",
-            "Main-Class": "org.mozilla.javascript.tools.shell.Main",
-            "Implementation-Version": project.version,
-            "Implementation-Title":  "Mozilla Rhino",
-            "Implementation-Vendor": "Mozilla Foundation",
-            "Implementation-URL": "http://www.mozilla.org/rhino",
-            "Built-Date": new Date().format("yyyy-MM-dd"),
-            "Built-Time": new Date().format("HH:mm:ss"),
-            "Bundle-ManifestVersion": "2",
-            "Bundle-SymbolicName": "org.mozilla.rhino",
-            "Bundle-Version": project.version.replaceAll("-.*", ""),
-            "Export-Package": "org.mozilla.javascript,org.mozilla.javascript.ast,org.mozilla.javascript.annotations"
+                "Manifest-Version": "1.0",
+                "Main-Class": "org.mozilla.javascript.tools.shell.Main",
+                "Implementation-Version": project.version,
+                "Implementation-Title":  "Mozilla Rhino",
+                "Implementation-Vendor": "Mozilla Foundation",
+                "Implementation-URL": "http://www.mozilla.org/rhino",
+                "Built-Date": new Date().format("yyyy-MM-dd"),
+                "Built-Time": new Date().format("HH:mm:ss"),
+                "Bundle-ManifestVersion": "2",
+                "Bundle-SymbolicName": "org.mozilla.rhino",
+                "Bundle-Version": project.version.replaceAll("-.*", ""),
+                "Export-Package": "org.mozilla.javascript,org.mozilla.javascript.ast,org.mozilla.javascript.annotations"
         )
     }
 }
@@ -264,7 +264,7 @@ distributions {
             from(file(".")) {
                 include '*.txt', '*.md', 'build.gradle', 'build.properties', 'gradle.properties',
                         'gradle/**', 'gradlew'
-                into 'rhino' + project.version 
+                into 'rhino' + project.version
             }
             into "/"
         }
