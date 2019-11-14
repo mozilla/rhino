@@ -21,13 +21,19 @@ function test()
   printBugNumber(BUGNUMBER);
   printStatus (summary);
 
-  expect = '1';
+  expect = 'error';
 
 // ------- Comment #74 From Jesse Ruderman
 
-  const [d] = [1]; [d] = [2]; print(actual = d);
+  const [d] = [1];
 
-  actual = String(actual);
+  try {
+    [d] = [2];
+    print(actual = d);
+    actual = String(actual);
+  } catch (e) {
+    actual = 'error';
+  }
 
   reportCompare(expect, actual, summary);
 

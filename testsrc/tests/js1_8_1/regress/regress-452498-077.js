@@ -13,23 +13,31 @@ var expect = '';
 
 //-----------------------------------------------------------------------------
 test();
+
 //-----------------------------------------------------------------------------
 
-function test()
-{
-  enterFunc ('test');
-  printBugNumber(BUGNUMBER);
-  printStatus (summary);
+function test() {
+    enterFunc('test');
+    printBugNumber(BUGNUMBER);
+    printStatus(summary);
 
-  expect = '1';
+    expect = 'error';
 
 // ------- Comment #77 From Brendan Eich
 
-  (function () { const [d] = [1]; [d] = [2]; print(actual = d);})();
+    (function () {
+        const [d] = [1];
+        try {
+          [d] = [2];
+          print(actual = d);
+        } catch (e) {
+          actual = 'error';
+        }
+    })();
 
-  actual = String(actual);
+    actual = String(actual);
 
-  reportCompare(expect, actual, summary);
+    reportCompare(expect, actual, summary);
 
-  exitFunc ('test');
+    exitFunc('test');
 }

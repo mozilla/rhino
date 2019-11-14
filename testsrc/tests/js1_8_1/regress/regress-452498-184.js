@@ -24,7 +24,7 @@ function test()
 
   expect = '11';
 
-  const e = 8; print(actual = '' + ((e += 3)));
+  let e = 8; print(actual = '' + ((e += 3)));
 
   reportCompare(expect, actual, summary);
 

@@ -23,13 +23,17 @@ function test()
  
   const e = 8; 
 
-  expect = e;
+  expect = 'error';
 
   jit (true);
 
-  let (f = function() { for (var h=0;h<6;++h) ++e; }) { f(); }
+  try {
+    let (f = function() { for (var h=0;h<6;++h) ++e; }) { f(); }
 
-  actual = e;
+    actual = e;
+  } catch (e) {
+    actual = 'error';
+  }
 
   jit(false);
 

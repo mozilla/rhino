@@ -13,47 +13,51 @@ var expect = '';
 
 //-----------------------------------------------------------------------------
 test();
+
 //-----------------------------------------------------------------------------
 
-function test()
-{
-  enterFunc ('test');
-  printBugNumber(BUGNUMBER);
-  printStatus (summary);
-    
-  options("strict");
-  options("werror");
+function test() {
+    enterFunc('test');
+    printBugNumber(BUGNUMBER);
+    printStatus(summary);
 
-  expect = 'toString called';
-  actual = 'toString not called';
-  try
-  {
-    var x = {toString: function() { 
-        actual = 'toString called'; 
-        print(actual); 
-      } 
-    }; 
-    var f = function() { var j = x; j + ""; }
-    f();
-    reportCompare(expect, actual, summary + ': 1');
-  }
-  catch(ex)
-  {
-    reportCompare("No Error", ex + "", summary + ': 1');
-  }
+    options("strict");
+    options("werror");
 
-  actual = 'toString not called';
-  try
-  {
-    (function() { const a = 
-         ({toString: function(){
-             actual = 'toString called'; print(actual)} }); a += ""; })();
-    reportCompare(expect, actual, summary + ': 2');
-  }
-  catch(ex)
-  {
-    reportCompare("No Error", ex + "", summary + ': 2');
-  }
+    expect = 'toString called';
+    actual = 'toString not called';
+    try {
+        var x = {
+            toString: function () {
+                actual = 'toString called';
+                print(actual);
+            }
+        };
+        var f = function () {
+            var j = x;
+            j + "";
+        }
+        f();
+        reportCompare(expect, actual, summary + ': 1');
+    } catch (ex) {
+        reportCompare("No Error", ex + "", summary + ': 1');
+    }
 
-  exitFunc ('test');
+    actual = 'toString not called';
+    try {
+        (function () {
+            let a = {
+                toString: function () {
+                    actual = 'toString called';
+                    print(actual)
+                }
+            };
+            a += "";
+        })();
+        reportCompare(expect, actual, summary + ': 2');
+    } catch (ex) {
+        reportCompare("No Error", ex + "", summary + ': 2');
+    }
+
+    exitFunc('test');
 }

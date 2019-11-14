@@ -68,10 +68,10 @@ js> (v1 = 3, v1)
 3
 js> (v2 = 3, v2)
 3
-js> (c1 = 3, c1)
-1
-js> (c2 = 3, c2)
-1
+js> try{ c1 = 1; }catch(e){e instanceof TypeError}
+true
+js> try{ c2 = 1; }catch(e){e instanceof TypeError}
+true
 js> delete v1
 false
 js> delete v2

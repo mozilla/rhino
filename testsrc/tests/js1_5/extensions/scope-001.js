@@ -32,9 +32,13 @@ function test()
   expect=5;
   reportCompare (expect, actual, status);
 
-  obj.five=1;
-  actual = obj.five;
-  expect=5;
+  try {
+    obj.five = 1;
+    actual = obj.five;
+  } catch (e) {
+    actual = 'error';
+  }
+  expect='error';
   reportCompare (expect, actual, status);
 
 

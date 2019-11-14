@@ -21,10 +21,11 @@ function test()
   printBugNumber(BUGNUMBER);
   printStatus (summary);
 
-  expect = /TypeError: redeclaration of const b/;
+  actual = 'No error';
+  expect = /No error/;
   try
   {
-    eval('(function() { let(x = 1) { const b = 2 }; let b = 3; })');
+    eval('(function() { let(x = 1) { const b = 2; } let b = 3; })');
   }
   catch(ex)
   {
