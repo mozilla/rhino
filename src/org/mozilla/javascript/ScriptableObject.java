@@ -68,8 +68,7 @@ public abstract class ScriptableObject implements Scriptable,
     /**
      * Property attribute indicating assignment to this property is ignored.
      *
-     * @see org.mozilla.javascript.ScriptableObject
-     *      #put(String, Scriptable, Object)
+     * @see org.mozilla.javascript.ScriptableObject#put(String, Scriptable, Object)
      * @see org.mozilla.javascript.ScriptableObject#getAttributes(String)
      * @see org.mozilla.javascript.ScriptableObject#setAttributes(String, int)
      */
@@ -173,11 +172,7 @@ public abstract class ScriptableObject implements Scriptable,
 
         boolean setValue(Object value, Scriptable owner, Scriptable start) {
             if ((attributes & READONLY) != 0) {
-                Context cx = Context.getContext();
-                if (cx.isStrictMode()) {
-                    throw ScriptRuntime.typeError1("msg.modify.readonly", name);
-                }
-                return true;
+                throw ScriptRuntime.typeError1("msg.modify.readonly", name);
             }
             if (owner == start) {
                 this.value = value;

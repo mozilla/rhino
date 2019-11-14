@@ -2527,6 +2527,8 @@ switch (op) {
             if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
                 vars[indexReg] = stack[stackTop];
                 varDbls[indexReg] = sDbl[stackTop];
+            } else {
+                throw ScriptRuntime.typeError1("msg.modify.readonly", frame.idata.argNames[indexReg]);
             }
         } else {
             Object val = stack[stackTop];
