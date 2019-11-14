@@ -101,6 +101,16 @@ public abstract class ScriptableObject implements Scriptable,
      */
     public static final int UNINITIALIZED_CONST = 0x08;
 
+    /**
+     * Property attribute indicating that this property is a const,
+     * and has already been initialized.
+     *
+     * The READONLY and PERMANENT attributes do not suffice to describe a const
+     * variable, because properties such as Number.MAX_VALUE can be reassigned without
+     * error (although it does nothing) in non-strict mode, unlike consts.
+     */
+    public static final int INITIALIZED_CONST = 0x10;
+
     public static final int CONST = PERMANENT|READONLY|UNINITIALIZED_CONST;
     /**
      * The prototype of this object.
@@ -172,7 +182,14 @@ public abstract class ScriptableObject implements Scriptable,
 
         boolean setValue(Object value, Scriptable owner, Scriptable start) {
             if ((attributes & READONLY) != 0) {
-                throw ScriptRuntime.typeError1("msg.modify.readonly", name);
+                Context cx = Context.getContext();
+                if ((attributes & INITIALIZED_CONST) != 0) {
+                    throw ScriptRuntime.typeError1("msg.const.inval.assign", name);
+                } else if (cx.isStrictMode()) {
+                    throw ScriptRuntime.typeError1("msg.modify.readonly", name);
+                }
+
+                return true;
             }
             if (owner == start) {
                 this.value = value;
@@ -351,7 +368,7 @@ public abstract class ScriptableObject implements Scriptable,
 
     static void checkValidAttributes(int attributes)
     {
-        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST;
+        final int mask = READONLY | DONTENUM | PERMANENT | UNINITIALIZED_CONST | INITIALIZED_CONST;
         if ((attributes & ~mask) != 0) {
             throw new IllegalArgumentException(String.valueOf(attributes));
         }
@@ -2864,8 +2881,9 @@ public abstract class ScriptableObject implements Scriptable,
             if ((attr & UNINITIALIZED_CONST) != 0) {
                 slot.value = value;
                 // clear the bit on const initialization
-                if (constFlag != UNINITIALIZED_CONST)
-                    slot.setAttributes(attr & ~UNINITIALIZED_CONST);
+                if (constFlag != UNINITIALIZED_CONST) {
+                    slot.setAttributes(attr & ~UNINITIALIZED_CONST | INITIALIZED_CONST);
+                }
             }
             return true;
         }

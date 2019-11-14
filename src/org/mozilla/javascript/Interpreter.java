@@ -2504,6 +2504,7 @@ switch (op) {
             {
                 vars[indexReg] = stack[stackTop];
                 varAttributes[indexReg] &= ~ScriptableObject.UNINITIALIZED_CONST;
+                varAttributes[indexReg] |= ScriptableObject.INITIALIZED_CONST;
                 varDbls[indexReg] = sDbl[stackTop];
             }
         } else {
