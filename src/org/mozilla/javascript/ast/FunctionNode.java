@@ -36,10 +36,10 @@ import org.mozilla.javascript.Token;
  * <i>SourceElement</i> :
  *        Statement
  *        FunctionDeclaration</pre>
- *
+ * <p>
  * JavaScript 1.8 introduces "function closures" of the form
- *  <pre>function ([params] ) Expression</pre>
- *
+ * <pre>function ([params] ) Expression</pre>
+ * <p>
  * In this case the FunctionNode node will have no body but will have an
  * expression.
  */
@@ -50,28 +50,32 @@ public class FunctionNode extends ScriptNode {
      * is a function statement. This is a function appearing as a top-level
      * statement (i.e., not nested inside some other statement) in either a
      * script or a function.<p>
-     *
+     * <p>
      * The second is a function expression, which is a function appearing in
      * an expression except for the third type, which is...<p>
-     *
+     * <p>
      * The third type is a function expression where the expression is the
      * top-level expression in an expression statement.<p>
-     *
+     * <p>
      * The three types of functions have different treatment and must be
      * distinguished.
      */
-    public static final int FUNCTION_STATEMENT            = 1;
-    public static final int FUNCTION_EXPRESSION           = 2;
+    public static final int FUNCTION_STATEMENT = 1;
+    public static final int FUNCTION_EXPRESSION = 2;
     public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
-    public static final int ARROW_FUNCTION                = 4;
+    public static final int ARROW_FUNCTION = 4;
 
-    public static enum Form { FUNCTION, GETTER, SETTER, METHOD }
+    public static enum Form {FUNCTION, GETTER, SETTER, METHOD}
 
     private static final List<AstNode> NO_PARAMS =
-        Collections.unmodifiableList(new ArrayList<AstNode>());
+            Collections.unmodifiableList(new ArrayList<AstNode>());
+
+    private static final Map<Integer, AstNode> NO_DEFAULT_PARAMS =
+            Collections.unmodifiableMap(new HashMap<>());
 
     private Name functionName;
     private List<AstNode> params;
+    private Map<Integer, AstNode> defaultParams;
     private AstNode body;
     private boolean isExpressionClosure;
     private Form functionForm = Form.FUNCTION;
@@ -83,7 +87,7 @@ public class FunctionNode extends ScriptNode {
     private boolean needsActivation;
     private boolean isGenerator;
     private List<Node> generatorResumePoints;
-    private Map<Node,int[]> liveLocals;
+    private Map<Node, int[]> liveLocals;
     private AstNode memberExprNode;
 
     {
@@ -104,6 +108,7 @@ public class FunctionNode extends ScriptNode {
 
     /**
      * Returns function name
+     *
      * @return function name, {@code null} for anonymous functions
      */
     public Name getFunctionName() {
@@ -112,6 +117,7 @@ public class FunctionNode extends ScriptNode {
 
     /**
      * Sets function name, and sets its parent to this node.
+     *
      * @param name function name, {@code null} for anonymous functions
      */
     public void setFunctionName(Name name) {
@@ -122,6 +128,7 @@ public class FunctionNode extends ScriptNode {
 
     /**
      * Returns the function name as a string
+     *
      * @return the function name, {@code ""} if anonymous
      */
     public String getName() {
@@ -130,16 +137,28 @@ public class FunctionNode extends ScriptNode {
 
     /**
      * Returns the function parameter list
+     *
      * @return the function parameter list.  Returns an immutable empty
-     *         list if there are no parameters.
+     * list if there are no parameters.
      */
     public List<AstNode> getParams() {
         return params != null ? params : NO_PARAMS;
     }
 
     /**
+     * Returns the function parameter list
+     *
+     * @return the function parameter list.  Returns an immutable empty
+     * list if there are no parameters.
+     */
+    public Map<Integer, AstNode> getDefaultParams() {
+        return defaultParams != null ? defaultParams : NO_DEFAULT_PARAMS;
+    }
+
+    /**
      * Sets the function parameter list, and sets the parent for
      * each element of the list.
+     *
      * @param params the function parameter list, or {@code null} if no params
      */
     public void setParams(List<AstNode> params) {
@@ -156,16 +175,26 @@ public class FunctionNode extends ScriptNode {
     /**
      * Adds a parameter to the function parameter list.
      * Sets the parent of the param node to this node.
+     *
      * @param param the parameter
      * @throws IllegalArgumentException if param is {@code null}
      */
     public void addParam(AstNode param) {
         assertNotNull(param);
         if (params == null) {
-            params = new ArrayList<AstNode>();
+            params = new ArrayList<>();
         }
         params.add(param);
         param.setParent(this);
+    }
+
+    public void addDefaultParam(int index, AstNode defaultParam) {
+        assertNotNull(defaultParam);
+        if (defaultParams == null) {
+            defaultParams = new HashMap<>();
+        }
+        defaultParams.put(index, defaultParam);
+        defaultParam.setParent(this);
     }
 
     /**
@@ -194,8 +223,7 @@ public class FunctionNode extends ScriptNode {
      * and the body node's absolute position and length are set.<p>
      *
      * @param body function body.  Its parent is set to this node, and its
-     * position is updated to be relative to this node.
-     *
+     *             position is updated to be relative to this node.
      * @throws IllegalArgumentException if body is {@code null}
      */
     public void setBody(AstNode body) {
@@ -279,7 +307,7 @@ public class FunctionNode extends ScriptNode {
     }
 
     public boolean isGenerator() {
-      return isGenerator;
+        return isGenerator;
     }
 
     public void setIsGenerator() {
@@ -296,13 +324,13 @@ public class FunctionNode extends ScriptNode {
         return generatorResumePoints;
     }
 
-    public Map<Node,int[]> getLiveLocals() {
+    public Map<Node, int[]> getLiveLocals() {
         return liveLocals;
     }
 
     public void addLiveLocals(Node node, int[] locals) {
         if (liveLocals == null)
-            liveLocals = new HashMap<Node,int[]>();
+            liveLocals = new HashMap<Node, int[]>();
         liveLocals.put(node, locals);
     }
 
@@ -438,6 +466,9 @@ public class FunctionNode extends ScriptNode {
             }
             for (AstNode param : getParams()) {
                 param.visit(v);
+            }
+            for (AstNode defaultParam : getDefaultParams().values()) {
+                defaultParam.visit(v);
             }
             getBody().visit(v);
             if (!isExpressionClosure) {

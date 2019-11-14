@@ -730,6 +730,7 @@ public class Parser {
         // but the symbol definitions have to happen now, before body is parsed.
         Map<String, Node> destructuring = null;
         Set<String> paramNames = new HashSet<String>();
+        int i = 0;
         do {
             int tt = peekToken();
             if (tt == Token.LB || tt == Token.LC) {
@@ -740,7 +741,7 @@ public class Parser {
                 // parameter name, and add a statement to the body to initialize
                 // variables from the destructuring assignment
                 if (destructuring == null) {
-                    destructuring = new HashMap<String, Node>();
+                    destructuring = new HashMap<>();
                 }
                 String pname = currentScriptOrFn.getNextTempName();
                 defineSymbol(Token.LP, pname, false);
@@ -764,10 +765,16 @@ public class Parser {
                             addError("msg.dup.param.strict", paramName);
                         paramNames.add(paramName);
                     }
+
+                    if (matchToken(Token.ASSIGN, true)) {
+                        AstNode expr = assignExpr();
+                        fnNode.addDefaultParam(i, expr);
+                    }
                 } else {
                     fnNode.addParam(makeErrorNode());
                 }
             }
+            i++;
         } while (matchToken(Token.COMMA, true));
 
         if (destructuring != null) {
