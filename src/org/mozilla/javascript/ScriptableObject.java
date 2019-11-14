@@ -2861,8 +2861,6 @@ public abstract class ScriptableObject implements Scriptable,
             // either const hoisted declaration or initialization
             slot = slotMap.get(name, index, SlotAccess.MODIFY_CONST);
             int attr = slot.getAttributes();
-            if ((attr & READONLY) == 0)
-                throw Context.reportRuntimeError1("msg.var.redecl", name);
             if ((attr & UNINITIALIZED_CONST) != 0) {
                 slot.value = value;
                 // clear the bit on const initialization

@@ -2128,14 +2128,11 @@ public class Parser {
                 : null;
         int symDeclType = symbol != null ? symbol.getDeclType() : -1;
         if (symbol != null
-                && (symDeclType == Token.CONST
-                || declType == Token.CONST
-                || (definingScope == currentScope && symDeclType == Token.LET))) {
-            addError(symDeclType == Token.CONST ? "msg.const.redecl" :
-                    symDeclType == Token.LET ? "msg.let.redecl" :
-                            symDeclType == Token.VAR ? "msg.var.redecl" :
-                                    symDeclType == Token.FUNCTION ? "msg.fn.redecl" :
-                                            "msg.parm.redecl", name);
+                && (definingScope == currentScope
+                    && (symDeclType == Token.CONST || symDeclType == Token.LET)
+                )
+        ) {
+            addError(symDeclType == Token.CONST ? "msg.const.redecl" : "msg.let.redecl", name);
             return;
         }
         switch (declType) {
@@ -2149,8 +2146,11 @@ public class Parser {
                 currentScope.putSymbol(new Symbol(declType, name));
                 return;
 
-            case Token.VAR:
             case Token.CONST:
+                currentScope.putSymbol(new Symbol(declType, name));
+                return;
+
+            case Token.VAR:
             case Token.FUNCTION:
                 if (symbol != null) {
                     if (symDeclType == Token.VAR)
