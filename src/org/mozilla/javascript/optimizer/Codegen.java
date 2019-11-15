@@ -112,9 +112,16 @@ public class Codegen implements Evaluator {
                 StringBuilder sb = new StringBuilder();
 
                 for (int i = 0; i < encodedSource.length(); i++) {
+                    int token = encodedSource.charAt(i);
                     if (!Token.isValidToken(encodedSource.charAt(i))) continue;
 
-                    sb.append(Token.typeToName(encodedSource.charAt(i))).append("\n");
+                    if (token == Token.NAME || token == Token.STRING || token == Token.REGEXP) {
+                        sb.append(Token.typeToName(token)).append(": ");
+                        i = Decompiler.printSourceString(encodedSource, i + 1, true, sb);
+                        sb.append("\n");
+                    } else {
+                        sb.append(Token.typeToName(token)).append("\n");
+                    }
                 }
                 fos.write(sb.toString().getBytes());
             } catch (Exception e) {
