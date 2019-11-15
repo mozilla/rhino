@@ -10,11 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 
 /**
  * Wrapper class for Method and Constructor instances to cache
@@ -24,8 +20,7 @@ import java.lang.reflect.Modifier;
  * @author Igor Bukanov
  */
 
-final class MemberBox implements Serializable
-{
+final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
@@ -34,77 +29,63 @@ final class MemberBox implements Serializable
     transient boolean vararg;
 
 
-    MemberBox(Method method)
-    {
+    MemberBox(Method method) {
         init(method);
     }
 
-    MemberBox(Constructor<?> constructor)
-    {
+    MemberBox(Constructor<?> constructor) {
         init(constructor);
     }
 
-    private void init(Method method)
-    {
+    private void init(Method method) {
         this.memberObject = method;
         this.argTypes = method.getParameterTypes();
         this.vararg = method.isVarArgs();
     }
 
-    private void init(Constructor<?> constructor)
-    {
+    private void init(Constructor<?> constructor) {
         this.memberObject = constructor;
         this.argTypes = constructor.getParameterTypes();
         this.vararg = constructor.isVarArgs();
     }
 
-    Method method()
-    {
-        return (Method)memberObject;
+    Method method() {
+        return (Method) memberObject;
     }
 
-    Constructor<?> ctor()
-    {
-        return (Constructor<?>)memberObject;
+    Constructor<?> ctor() {
+        return (Constructor<?>) memberObject;
     }
 
-    Member member()
-    {
+    Member member() {
         return memberObject;
     }
 
-    boolean isMethod()
-    {
+    boolean isMethod() {
         return memberObject instanceof Method;
     }
 
-    boolean isCtor()
-    {
+    boolean isCtor() {
         return memberObject instanceof Constructor;
     }
 
-    boolean isStatic()
-    {
+    boolean isStatic() {
         return Modifier.isStatic(memberObject.getModifiers());
     }
 
-    boolean isPublic()
-    {
+    boolean isPublic() {
         return Modifier.isPublic(memberObject.getModifiers());
     }
 
-    String getName()
-    {
+    String getName() {
         return memberObject.getName();
     }
 
-    Class<?> getDeclaringClass()
-    {
+    Class<?> getDeclaringClass() {
         return memberObject.getDeclaringClass();
     }
 
-    String toJavaDeclaration()
-    {
+    String toJavaDeclaration() {
         StringBuilder sb = new StringBuilder();
         if (isMethod()) {
             Method method = method();
@@ -125,13 +106,11 @@ final class MemberBox implements Serializable
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return memberObject.toString();
     }
 
-    Object invoke(Object target, Object[] args)
-    {
+    Object invoke(Object target, Object[] args) {
         Method method = method();
         try {
             try {
@@ -163,8 +142,7 @@ final class MemberBox implements Serializable
         }
     }
 
-    Object newInstance(Object[] args)
-    {
+    Object newInstance(Object[] args) {
         Constructor<?> ctor = ctor();
         try {
             try {
@@ -180,8 +158,7 @@ final class MemberBox implements Serializable
         }
     }
 
-    private static Method searchAccessibleMethod(Method method, Class<?>[] params)
-    {
+    private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
         int modifiers = method.getModifiers();
         if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
             Class<?> c = method.getDeclaringClass();
@@ -194,23 +171,26 @@ final class MemberBox implements Serializable
                         try {
                             return intf.getMethod(name, params);
                         } catch (NoSuchMethodException ex) {
-                        } catch (SecurityException ex) {  }
+                        } catch (SecurityException ex) {
+                        }
                     }
                 }
-                for (;;) {
+                for (; ; ) {
                     c = c.getSuperclass();
-                    if (c == null) { break; }
+                    if (c == null) {
+                        break;
+                    }
                     if (Modifier.isPublic(c.getModifiers())) {
                         try {
                             Method m = c.getMethod(name, params);
                             int mModifiers = m.getModifiers();
                             if (Modifier.isPublic(mModifiers)
-                                && !Modifier.isStatic(mModifiers))
-                            {
+                                    && !Modifier.isStatic(mModifiers)) {
                                 return m;
                             }
                         } catch (NoSuchMethodException ex) {
-                        } catch (SecurityException ex) {  }
+                        } catch (SecurityException ex) {
+                        }
                     }
                 }
             }
@@ -219,34 +199,31 @@ final class MemberBox implements Serializable
     }
 
     private void readObject(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
+            throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         Member member = readMember(in);
         if (member instanceof Method) {
-            init((Method)member);
+            init((Method) member);
         } else {
-            init((Constructor<?>)member);
+            init((Constructor<?>) member);
         }
     }
 
     private void writeObject(ObjectOutputStream out)
-        throws IOException
-    {
+            throws IOException {
         out.defaultWriteObject();
         writeMember(out, memberObject);
     }
 
     /**
      * Writes a Constructor or Method object.
-     *
+     * <p>
      * Methods and Constructors are not serializable, so we must serialize
      * information about the class, the name, and the parameters and
      * recreate upon deserialization.
      */
     private static void writeMember(ObjectOutputStream out, Member member)
-        throws IOException
-    {
+            throws IOException {
         if (member == null) {
             out.writeBoolean(false);
             return;
@@ -268,8 +245,7 @@ final class MemberBox implements Serializable
      * Reads a Method or a Constructor from the stream.
      */
     private static Member readMember(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
+            throws IOException, ClassNotFoundException {
         if (!in.readBoolean())
             return null;
         boolean isMethod = in.readBoolean();
@@ -287,29 +263,28 @@ final class MemberBox implements Serializable
     }
 
     private static final Class<?>[] primitives = {
-        Boolean.TYPE,
-        Byte.TYPE,
-        Character.TYPE,
-        Double.TYPE,
-        Float.TYPE,
-        Integer.TYPE,
-        Long.TYPE,
-        Short.TYPE,
-        Void.TYPE
+            Boolean.TYPE,
+            Byte.TYPE,
+            Character.TYPE,
+            Double.TYPE,
+            Float.TYPE,
+            Integer.TYPE,
+            Long.TYPE,
+            Short.TYPE,
+            Void.TYPE
     };
 
     /**
      * Writes an array of parameter types to the stream.
-     *
+     * <p>
      * Requires special handling because primitive types cannot be
      * found upon deserialization by the default Java implementation.
      */
     private static void writeParameters(ObjectOutputStream out, Class<?>[] parms)
-        throws IOException
-    {
+            throws IOException {
         out.writeShort(parms.length);
-    outer:
-        for (int i=0; i < parms.length; i++) {
+        outer:
+        for (int i = 0; i < parms.length; i++) {
             Class<?> parm = parms[i];
             boolean primitive = parm.isPrimitive();
             out.writeBoolean(primitive);
@@ -317,14 +292,14 @@ final class MemberBox implements Serializable
                 out.writeObject(parm);
                 continue;
             }
-            for (int j=0; j < primitives.length; j++) {
+            for (int j = 0; j < primitives.length; j++) {
                 if (parm.equals(primitives[j])) {
                     out.writeByte(j);
                     continue outer;
                 }
             }
             throw new IllegalArgumentException("Primitive " + parm +
-                                               " not found");
+                    " not found");
         }
     }
 
@@ -332,10 +307,9 @@ final class MemberBox implements Serializable
      * Reads an array of parameter types from the stream.
      */
     private static Class<?>[] readParameters(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
+            throws IOException, ClassNotFoundException {
         Class<?>[] result = new Class[in.readShort()];
-        for (int i=0; i < result.length; i++) {
+        for (int i = 0; i < result.length; i++) {
             if (!in.readBoolean()) {
                 result[i] = (Class<?>) in.readObject();
                 continue;

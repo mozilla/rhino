@@ -45,6 +45,7 @@ public class WithStatement extends AstNode {
 
     /**
      * Sets object expression (and its parent link)
+     *
      * @throws IllegalArgumentException} if expression is {@code null}
      */
     public void setExpression(AstNode expression) {
@@ -62,6 +63,7 @@ public class WithStatement extends AstNode {
 
     /**
      * Sets the statement (and sets its parent link)
+     *
      * @throws IllegalArgumentException} if statement is {@code null}
      */
     public void setStatement(AstNode statement) {
@@ -74,28 +76,28 @@ public class WithStatement extends AstNode {
      * Returns left paren offset
      */
     public int getLp() {
-      return lp;
+        return lp;
     }
 
     /**
      * Sets left paren offset
      */
     public void setLp(int lp) {
-      this.lp = lp;
+        this.lp = lp;
     }
 
     /**
      * Returns right paren offset
      */
     public int getRp() {
-      return rp;
+        return rp;
     }
 
     /**
      * Sets right paren offset
      */
     public void setRp(int rp) {
-      this.rp = rp;
+        this.rp = rp;
     }
 
     /**
@@ -113,11 +115,11 @@ public class WithStatement extends AstNode {
         sb.append("with (");
         sb.append(expression.toSource(0));
         sb.append(") ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth + 1));
         }
         if (statement.getType() == Token.BLOCK) {
-            if(this.getInlineComment() != null) {
+            if (this.getInlineComment() != null) {
                 sb.append("\n");
             }
             sb.append(statement.toSource(depth).trim());

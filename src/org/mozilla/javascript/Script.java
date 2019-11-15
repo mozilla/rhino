@@ -13,8 +13,9 @@ package org.mozilla.javascript;
  * <p>
  * This class encapsulates script execution relative to an
  * object scope.
- * @since 1.3
+ *
  * @author Norris Boyd
+ * @since 1.3
  */
 
 public interface Script {
@@ -31,11 +32,11 @@ public interface Script {
      * as a global object using <code>Context.initStandardObjects</code>.
      * <p>
      *
-     * @param cx the Context associated with the current thread
+     * @param cx    the Context associated with the current thread
      * @param scope the scope to execute relative to
      * @return the result of executing the script
      * @see org.mozilla.javascript.Context#initStandardObjects()
      */
-    public Object exec(Context cx, Scriptable scope);
+    Object exec(Context cx, Scriptable scope);
 
 }

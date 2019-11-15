@@ -10,7 +10,7 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for an empty expression.  Node type is {@link Token#EMPTY}.<p>
- *
+ * <p>
  * To create an empty statement, wrap it with an {@link ExpressionStatement}.
  */
 public class EmptyExpression extends AstNode {

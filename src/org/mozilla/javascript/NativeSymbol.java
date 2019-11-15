@@ -16,9 +16,8 @@ import java.util.Map;
  */
 
 public class NativeSymbol
-    extends IdScriptableObject
-    implements Symbol
-{
+        extends IdScriptableObject
+        implements Symbol {
     private static final long serialVersionUID = -589539749749830003L;
 
     public static final String CLASS_NAME = "Symbol";
@@ -62,6 +61,7 @@ public class NativeSymbol
     /**
      * This has to be used only for constructing the prototype instance.
      * This sets symbolData to null (see isSymbol() for more).
+     *
      * @param desc the description
      */
     private NativeSymbol(String desc) {
@@ -83,11 +83,10 @@ public class NativeSymbol
      * Use this when we need to create symbols internally because of the convoluted way we have to
      * construct them.
      */
-    public static NativeSymbol construct(Context cx, Scriptable scope, Object[] args)
-    {
+    public static NativeSymbol construct(Context cx, Scriptable scope, Object[] args) {
         cx.putThreadLocal(CONSTRUCTOR_SLOT, Boolean.TRUE);
         try {
-            return (NativeSymbol)cx.newObject(scope, CLASS_NAME, args);
+            return (NativeSymbol) cx.newObject(scope, CLASS_NAME, args);
         } finally {
             cx.removeThreadLocal(CONSTRUCTOR_SLOT);
         }
@@ -107,9 +106,8 @@ public class NativeSymbol
 
     private static void createStandardSymbol(Context cx, Scriptable scope,
                                              ScriptableObject ctor,
-                                             String name, SymbolKey key)
-    {
-        Scriptable sym = cx.newObject(scope, CLASS_NAME, new Object[] { name, key });
+                                             String name, SymbolKey key) {
+        Scriptable sym = cx.newObject(scope, CLASS_NAME, new Object[]{name, key});
         ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
     }
 
@@ -119,12 +117,22 @@ public class NativeSymbol
     protected int findPrototypeId(String s) {
         int id = 0;
 //  #generated# Last update: 2016-01-26 16:39:41 PST
-        L0: { id = 0; String X = null;
+        L0:
+        {
+            id = 0;
+            String X = null;
             int s_length = s.length();
-            if (s_length==7) { X="valueOf";id=Id_valueOf; }
-            else if (s_length==8) { X="toString";id=Id_toString; }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            if (s_length == 7) {
+                X = "valueOf";
+                id = Id_valueOf;
+            } else if (s_length == 8) {
+                X = "toString";
+                id = Id_toString;
+            } else if (s_length == 11) {
+                X = "constructor";
+                id = Id_constructor;
+            }
+            if (X != null && X != s && !X.equals(s)) id = 0;
             break L0;
         }
 //  #/generated#
@@ -142,40 +150,39 @@ public class NativeSymbol
     }
 
     private static final int
-        ConstructorId_keyFor    = -2,
-        ConstructorId_for       = -1,
-        Id_constructor          = 1,
-        Id_toString             = 2,
-        Id_valueOf              = 4,
-        SymbolId_toStringTag    = 3,
-        SymbolId_toPrimitive    = 5,
-        MAX_PROTOTYPE_ID        = SymbolId_toPrimitive;
+            ConstructorId_keyFor = -2,
+            ConstructorId_for = -1,
+            Id_constructor = 1,
+            Id_toString = 2,
+            Id_valueOf = 4,
+            SymbolId_toStringTag = 3,
+            SymbolId_toPrimitive = 5,
+            MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
 
     // #/string_id_map#
 
 
     @Override
-    protected void initPrototypeId(int id)
-    {
+    protected void initPrototypeId(int id) {
         switch (id) {
-        case Id_constructor:
-            initPrototypeMethod(CLASS_NAME, id, "constructor", 1);
-            break;
-        case Id_toString:
-            initPrototypeMethod(CLASS_NAME, id, "toString", 0);
-            break;
-        case Id_valueOf:
-            initPrototypeMethod(CLASS_NAME, id, "valueOf", 0);
-            break;
-        case SymbolId_toStringTag:
-            initPrototypeValue(id, SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
-            break;
-        case SymbolId_toPrimitive:
-            initPrototypeMethod(CLASS_NAME, id, SymbolKey.TO_PRIMITIVE, "Symbol.toPrimitive", 1);
-            break;
-        default:
-            super.initPrototypeId(id);
-            break;
+            case Id_constructor:
+                initPrototypeMethod(CLASS_NAME, id, "constructor", 1);
+                break;
+            case Id_toString:
+                initPrototypeMethod(CLASS_NAME, id, "toString", 0);
+                break;
+            case Id_valueOf:
+                initPrototypeMethod(CLASS_NAME, id, "valueOf", 0);
+                break;
+            case SymbolId_toStringTag:
+                initPrototypeValue(id, SymbolKey.TO_STRING_TAG, CLASS_NAME, DONTENUM | READONLY);
+                break;
+            case SymbolId_toPrimitive:
+                initPrototypeMethod(CLASS_NAME, id, SymbolKey.TO_PRIMITIVE, "Symbol.toPrimitive", 1);
+                break;
+            default:
+                super.initPrototypeId(id);
+                break;
         }
     }
 
@@ -186,35 +193,35 @@ public class NativeSymbol
         }
         int id = f.methodId();
         switch (id) {
-        case ConstructorId_for:
-            return js_for(cx, scope, args);
-        case ConstructorId_keyFor:
-            return js_keyFor(cx, scope, args);
+            case ConstructorId_for:
+                return js_for(cx, scope, args);
+            case ConstructorId_keyFor:
+                return js_keyFor(cx, scope, args);
 
-        case Id_constructor:
-            if (thisObj == null) {
-                if (cx.getThreadLocal(CONSTRUCTOR_SLOT) == null) {
-                    // We should never get to this via "new".
-                    throw ScriptRuntime.typeError0("msg.no.symbol.new");
+            case Id_constructor:
+                if (thisObj == null) {
+                    if (cx.getThreadLocal(CONSTRUCTOR_SLOT) == null) {
+                        // We should never get to this via "new".
+                        throw ScriptRuntime.typeError0("msg.no.symbol.new");
+                    }
+                    // Unless we are being called by our own internal "new"
+                    return js_constructor(args);
                 }
-                // Unless we are being called by our own internal "new"
-                return js_constructor(args);
-            }
-            return construct(cx, scope, args);
+                return construct(cx, scope, args);
 
-        case Id_toString:
-            return getSelf(thisObj).toString();
-        case Id_valueOf:
-        case SymbolId_toPrimitive:
-            return getSelf(thisObj).js_valueOf();
-        default:
-            return super.execIdCall(f, cx, scope, thisObj, args);
+            case Id_toString:
+                return getSelf(thisObj).toString();
+            case Id_valueOf:
+            case SymbolId_toPrimitive:
+                return getSelf(thisObj).js_valueOf();
+            default:
+                return super.execIdCall(f, cx, scope, thisObj, args);
         }
     }
 
     private static NativeSymbol getSelf(Object thisObj) {
         try {
-            return (NativeSymbol)thisObj;
+            return (NativeSymbol) thisObj;
         } catch (ClassCastException cce) {
             throw ScriptRuntime.typeError1("msg.invalid.type", thisObj.getClass().getName());
         }
@@ -262,7 +269,7 @@ public class NativeSymbol
         if (!(s instanceof NativeSymbol)) {
             throw ScriptRuntime.throwCustomError(cx, scope, "TypeError", "Not a Symbol");
         }
-        NativeSymbol sym = (NativeSymbol)s;
+        NativeSymbol sym = (NativeSymbol) s;
 
         Map<String, NativeSymbol> table = getGlobalMap();
         for (Map.Entry<String, NativeSymbol> e : table.entrySet()) {
@@ -286,8 +293,7 @@ public class NativeSymbol
     }
 
     @Override
-    public void put(String name, Scriptable start, Object value)
-    {
+    public void put(String name, Scriptable start, Object value) {
         if (!isSymbol()) {
             super.put(name, start, value);
         } else if (isStrictMode()) {
@@ -296,8 +302,7 @@ public class NativeSymbol
     }
 
     @Override
-    public void put(int index, Scriptable start, Object value)
-    {
+    public void put(int index, Scriptable start, Object value) {
         if (!isSymbol()) {
             super.put(index, start, value);
         } else if (isStrictMode()) {
@@ -306,8 +311,7 @@ public class NativeSymbol
     }
 
     @Override
-    public void put(Symbol key, Scriptable start, Object value)
-    {
+    public void put(Symbol key, Scriptable start, Object value) {
         if (!isSymbol()) {
             super.put(key, start, value);
         } else if (isStrictMode()) {
@@ -320,14 +324,12 @@ public class NativeSymbol
      * that is. Furthermore, such an object has the Symbol prototype so this particular object is still used.
      * Account for that here: an "Object" that was created from a Symbol has a different value of the slot.
      */
-    public boolean isSymbol()
-    {
+    public boolean isSymbol() {
         return (symbolData == this);
     }
 
     @Override
-    public String getTypeOf()
-    {
+    public String getTypeOf() {
         return (isSymbol() ? TYPE_NAME : super.getTypeOf());
     }
 
@@ -346,8 +348,8 @@ public class NativeSymbol
     }
 
     private Map<String, NativeSymbol> getGlobalMap() {
-        ScriptableObject top = (ScriptableObject)getTopLevelScope(this);
-        Map<String, NativeSymbol> map = (Map<String, NativeSymbol>)top.getAssociatedValue(GLOBAL_TABLE_KEY);
+        ScriptableObject top = (ScriptableObject) getTopLevelScope(this);
+        Map<String, NativeSymbol> map = (Map<String, NativeSymbol>) top.getAssociatedValue(GLOBAL_TABLE_KEY);
         if (map == null) {
             map = new HashMap<String, NativeSymbol>();
             top.associateValue(GLOBAL_TABLE_KEY, map);

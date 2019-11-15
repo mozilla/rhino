@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.mozilla.javascript.Token;
 
 /**
  * A labeled statement.  A statement can have more than one label.  In
@@ -48,6 +48,7 @@ public class LabeledStatement extends AstNode {
     /**
      * Sets label list, setting the parent of each label
      * in the list.  Replaces any existing labels.
+     *
      * @throws IllegalArgumentException} if labels is {@code null}
      */
     public void setLabels(List<Label> labels) {
@@ -61,6 +62,7 @@ public class LabeledStatement extends AstNode {
 
     /**
      * Adds a label and sets its parent to this node.
+     *
      * @throws IllegalArgumentException} if label is {@code null}
      */
     public void addLabel(Label label) {
@@ -92,6 +94,7 @@ public class LabeledStatement extends AstNode {
 
     /**
      * Sets the labeled statement, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if {@code statement} is {@code null}
      */
     public void setStatement(AstNode statement) {

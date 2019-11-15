@@ -39,7 +39,7 @@ public class DoubleHelper {
     static final long kHiddenBit = 0x0010000000000000L;
 
     static DiyFp asDiyFp(long d64) {
-        assert(!isSpecial(d64));
+        assert (!isSpecial(d64));
         return new DiyFp(significand(d64), exponent(d64));
     }
 
@@ -48,7 +48,7 @@ public class DoubleHelper {
         long f = significand(d64);
         int e = exponent(d64);
 
-        assert(f != 0);
+        assert (f != 0);
 
         // The current double could be a denormal.
         while ((f & kHiddenBit) == 0) {
@@ -64,7 +64,7 @@ public class DoubleHelper {
     static int exponent(long d64) {
         if (isDenormal(d64)) return kDenormalExponent;
 
-        int biased_e = (int)(((d64 & kExponentMask) >>> kSignificandSize) & 0xffffffffL);
+        int biased_e = (int) (((d64 & kExponentMask) >>> kSignificandSize) & 0xffffffffL);
         return biased_e - kExponentBias;
     }
 
@@ -100,7 +100,7 @@ public class DoubleHelper {
 
 
     static int sign(long d64) {
-        return (d64 & kSignMask) == 0L? 1: -1;
+        return (d64 & kSignMask) == 0L ? 1 : -1;
     }
 
 

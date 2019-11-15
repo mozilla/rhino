@@ -10,8 +10,7 @@ package org.mozilla.javascript;
  * Implement this interface in order to allow external data to be attached to a ScriptableObject.
  */
 
-public interface ExternalArrayData
-{
+public interface ExternalArrayData {
     /**
      * Return the element at the specified index. The result must be a type that is valid in JavaScript:
      * Number, String, or Scriptable. This method will not be called unless "index" is in

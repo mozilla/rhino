@@ -18,9 +18,8 @@ import java.lang.reflect.Array;
  */
 
 public class NativeJavaArray
-    extends NativeJavaObject
-    implements SymbolScriptable
-{
+        extends NativeJavaObject
+        implements SymbolScriptable {
     private static final long serialVersionUID = -924022554283675333L;
 
     @Override
@@ -69,10 +68,9 @@ public class NativeJavaArray
             return Integer.valueOf(length);
         Object result = super.get(id, start);
         if (result == NOT_FOUND &&
-            !ScriptableObject.hasProperty(getPrototype(), id))
-        {
+                !ScriptableObject.hasProperty(getPrototype(), id)) {
             throw Context.reportRuntimeError2(
-                "msg.java.member.not.found", array.getClass().getName(), id);
+                    "msg.java.member.not.found", array.getClass().getName(), id);
         }
         return result;
     }
@@ -100,18 +98,17 @@ public class NativeJavaArray
         // Ignore assignments to "length"--it's readonly.
         if (!id.equals("length"))
             throw Context.reportRuntimeError1(
-                "msg.java.array.member.not.found", id);
+                    "msg.java.array.member.not.found", id);
     }
 
     @Override
     public void put(int index, Scriptable start, Object value) {
         if (0 <= index && index < length) {
             Array.set(array, index, Context.jsToJava(value, cls));
-        }
-        else {
+        } else {
             throw Context.reportRuntimeError2(
-                "msg.java.array.index.out.of.bounds", String.valueOf(index),
-                String.valueOf(length - 1));
+                    "msg.java.array.index.out.of.bounds", String.valueOf(index),
+                    String.valueOf(length - 1));
         }
     }
 
@@ -144,7 +141,7 @@ public class NativeJavaArray
     public boolean hasInstance(Scriptable value) {
         if (!(value instanceof Wrapper))
             return false;
-        Object instance = ((Wrapper)value).unwrap();
+        Object instance = ((Wrapper) value).unwrap();
         return cls.isInstance(instance);
     }
 
@@ -152,7 +149,7 @@ public class NativeJavaArray
     public Scriptable getPrototype() {
         if (prototype == null) {
             prototype =
-                ScriptableObject.getArrayPrototype(this.getParentScope());
+                    ScriptableObject.getArrayPrototype(this.getParentScope());
         }
         return prototype;
     }

@@ -14,18 +14,17 @@ package org.mozilla.javascript;
  * {@link ContextFactory.Listener}.
  */
 @Deprecated
-public interface ContextListener extends ContextFactory.Listener
-{
+public interface ContextListener extends ContextFactory.Listener {
 
     /**
      * @deprecated Rhino runtime never calls the method.
      */
     @Deprecated
-    public void contextEntered(Context cx);
+    void contextEntered(Context cx);
 
     /**
      * @deprecated Rhino runtime never calls the method.
      */
     @Deprecated
-    public void contextExited(Context cx);
+    void contextExited(Context cx);
 }

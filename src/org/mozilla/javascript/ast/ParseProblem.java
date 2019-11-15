@@ -11,7 +11,7 @@ package org.mozilla.javascript.ast;
  */
 public class ParseProblem {
 
-    public static enum Type {Error, Warning}
+    public enum Type {Error, Warning}
 
     private Type type;
     private String message;

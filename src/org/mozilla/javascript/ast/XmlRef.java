@@ -15,12 +15,12 @@ package org.mozilla.javascript.ast;
  *  <li>optional: a namespace (a {@code Name}) and double-colon</li>
  *  <li>required:  either a {@code Name} or a bracketed [expression]</li>
  * </ol>
- *
+ * <p>
  * The property-name expressions (examples:  {@code ns::name}, {@code @name})
  * are represented as {@link XmlPropRef} nodes.  The bracketed-expression
  * versions (examples:  {@code ns::[name]}, {@code @[name]}) become
  * {@link XmlElemRef} nodes.<p>
- *
+ * <p>
  * This node type (or more specifically, its subclasses) will
  * sometimes be the right-hand child of a {@link PropertyGet} node or
  * an {@link XmlMemberGet} node.  The {@code XmlRef} node may also

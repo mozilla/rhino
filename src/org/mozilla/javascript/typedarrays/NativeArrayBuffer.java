@@ -6,12 +6,7 @@
 
 package org.mozilla.javascript.typedarrays;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.IdScriptableObject;
-import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.Undefined;
+import org.mozilla.javascript.*;
 
 /**
  * A NativeArrayBuffer is the backing buffer for a typed array. Used inside JavaScript code,
@@ -19,8 +14,7 @@ import org.mozilla.javascript.Undefined;
  */
 
 public class NativeArrayBuffer
-    extends IdScriptableObject
-{
+        extends IdScriptableObject {
     private static final long serialVersionUID = 3110411773054879549L;
 
     public static final String CLASS_NAME = "ArrayBuffer";
@@ -32,13 +26,11 @@ public class NativeArrayBuffer
     final byte[] buffer;
 
     @Override
-    public String getClassName()
-    {
+    public String getClassName() {
         return CLASS_NAME;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed)
-    {
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeArrayBuffer na = new NativeArrayBuffer();
         na.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
@@ -46,16 +38,14 @@ public class NativeArrayBuffer
     /**
      * Create an empty buffer.
      */
-    public NativeArrayBuffer()
-    {
+    public NativeArrayBuffer() {
         buffer = EMPTY_BUF;
     }
 
     /**
      * Create a buffer of the specified length in bytes.
      */
-    public NativeArrayBuffer(double len)
-    {
+    public NativeArrayBuffer(double len) {
         if (len >= Integer.MAX_VALUE) {
             throw ScriptRuntime.constructError("RangeError", "length parameter (" + len + ") is too large ");
         }
@@ -101,8 +91,7 @@ public class NativeArrayBuffer
      * @param s the position where the new buffer will start
      * @param e the position where it will end
      */
-    public NativeArrayBuffer slice(double s, double e)
-    {
+    public NativeArrayBuffer slice(double s, double e) {
         // Handle negative start as relative to start
         // Clamp as per the spec to between 0 and length
         int end = ScriptRuntime.toInt32(Math.max(0, Math.min(buffer.length, (e < 0 ? buffer.length + e : e))));
@@ -118,50 +107,53 @@ public class NativeArrayBuffer
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
-    {
+                             Scriptable thisObj, Object[] args) {
         if (!f.hasTag(CLASS_NAME)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
         switch (id) {
-        case ConstructorId_isView:
-            return (isArg(args, 0) && (args[0] instanceof NativeArrayBufferView));
+            case ConstructorId_isView:
+                return (isArg(args, 0) && (args[0] instanceof NativeArrayBufferView));
 
-        case Id_constructor:
-            double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
-            return new NativeArrayBuffer(length);
+            case Id_constructor:
+                double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
+                return new NativeArrayBuffer(length);
 
-        case Id_slice:
-            NativeArrayBuffer self = realThis(thisObj, f);
-            double start = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
-            double end = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : self.buffer.length;
-            return self.slice(start, end);
+            case Id_slice:
+                NativeArrayBuffer self = realThis(thisObj, f);
+                double start = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;
+                double end = isArg(args, 1) ? ScriptRuntime.toNumber(args[1]) : self.buffer.length;
+                return self.slice(start, end);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private static NativeArrayBuffer realThis(Scriptable thisObj, IdFunctionObject f)
-    {
+    private static NativeArrayBuffer realThis(Scriptable thisObj, IdFunctionObject f) {
         if (!(thisObj instanceof NativeArrayBuffer))
             throw incompatibleCallError(f);
-        return (NativeArrayBuffer)thisObj;
+        return (NativeArrayBuffer) thisObj;
     }
 
-    private static boolean isArg(Object[] args, int i)
-    {
+    private static boolean isArg(Object[] args, int i) {
         return ((args.length > i) && !Undefined.instance.equals(args[i]));
     }
 
     @Override
-    protected void initPrototypeId(int id)
-    {
+    protected void initPrototypeId(int id) {
         String s;
         int arity;
         switch (id) {
-        case Id_constructor:            arity = 1; s = "constructor"; break;
-        case Id_slice:                  arity = 1; s = "slice"; break;
-        default: throw new IllegalArgumentException(String.valueOf(id));
+            case Id_constructor:
+                arity = 1;
+                s = "constructor";
+                break;
+            case Id_slice:
+                arity = 1;
+                s = "slice";
+                break;
+            default:
+                throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(CLASS_NAME, id, s, arity);
     }
@@ -169,15 +161,22 @@ public class NativeArrayBuffer
 // #string_id_map#
 
     @Override
-    protected int findPrototypeId(String s)
-    {
+    protected int findPrototypeId(String s) {
         int id;
 // #generated# Last update: 2018-07-20 08:21:54 MESZ
-        L0: { id = 0; String X = null;
+        L0:
+        {
+            id = 0;
+            String X = null;
             int s_length = s.length();
-            if (s_length==5) { X="slice";id=Id_slice; }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            if (s_length == 5) {
+                X = "slice";
+                id = Id_slice;
+            } else if (s_length == 11) {
+                X = "constructor";
+                id = Id_constructor;
+            }
+            if (X != null && X != s && !X.equals(s)) id = 0;
             break L0;
         }
 // #/generated#
@@ -186,9 +185,9 @@ public class NativeArrayBuffer
 
     // Table of all functions
     private static final int
-        Id_constructor          = 1,
-        Id_slice                = 2,
-        MAX_PROTOTYPE_ID        = Id_slice;
+            Id_constructor = 1,
+            Id_slice = 2,
+            MAX_PROTOTYPE_ID = Id_slice;
 
 // #/string_id_map#
 
@@ -197,29 +196,27 @@ public class NativeArrayBuffer
     private static final int ConstructorId_isView = -1;
 
     @Override
-    protected void fillConstructorProperties(IdFunctionObject ctor)
-    {
+    protected void fillConstructorProperties(IdFunctionObject ctor) {
         addIdFunctionProperty(ctor, CLASS_NAME, ConstructorId_isView, "isView", 1);
     }
 
     // Properties here
 
     @Override
-    protected int getMaxInstanceId()
-    {
+    protected int getMaxInstanceId() {
         return MAX_INSTANCE_ID;
     }
 
     @Override
-    protected String getInstanceIdName(int id)
-    {
-        if (id == Id_byteLength) { return "byteLength"; }
+    protected String getInstanceIdName(int id) {
+        if (id == Id_byteLength) {
+            return "byteLength";
+        }
         return super.getInstanceIdName(id);
     }
 
     @Override
-    protected Object getInstanceIdValue(int id)
-    {
+    protected Object getInstanceIdValue(int id) {
         if (id == Id_byteLength) {
             return ScriptRuntime.wrapInt(buffer.length);
         }
@@ -227,8 +224,7 @@ public class NativeArrayBuffer
     }
 
     @Override
-    protected int findInstanceIdInfo(String s)
-    {
+    protected int findInstanceIdInfo(String s) {
         if ("byteLength".equals(s)) {
             return instanceIdInfo(READONLY | PERMANENT, Id_byteLength);
         }
@@ -237,6 +233,6 @@ public class NativeArrayBuffer
 
     // Table of all properties
     private static final int
-        Id_byteLength           = 1,
-        MAX_INSTANCE_ID         = Id_byteLength;
+            Id_byteLength = 1,
+            MAX_INSTANCE_ID = Id_byteLength;
 }

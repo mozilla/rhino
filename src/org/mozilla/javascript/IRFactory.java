@@ -6,84 +6,24 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ast.Symbol;
+import org.mozilla.javascript.ast.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.mozilla.javascript.ast.ArrayComprehension;
-import org.mozilla.javascript.ast.ArrayComprehensionLoop;
-import org.mozilla.javascript.ast.ArrayLiteral;
-import org.mozilla.javascript.ast.Assignment;
-import org.mozilla.javascript.ast.AstNode;
-import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.Block;
-import org.mozilla.javascript.ast.BreakStatement;
-import org.mozilla.javascript.ast.CatchClause;
-import org.mozilla.javascript.ast.ConditionalExpression;
-import org.mozilla.javascript.ast.ContinueStatement;
-import org.mozilla.javascript.ast.DestructuringForm;
-import org.mozilla.javascript.ast.DoLoop;
-import org.mozilla.javascript.ast.ElementGet;
-import org.mozilla.javascript.ast.EmptyExpression;
-import org.mozilla.javascript.ast.ExpressionStatement;
-import org.mozilla.javascript.ast.ForInLoop;
-import org.mozilla.javascript.ast.ForLoop;
-import org.mozilla.javascript.ast.FunctionCall;
-import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.ast.GeneratorExpression;
-import org.mozilla.javascript.ast.GeneratorExpressionLoop;
-import org.mozilla.javascript.ast.IfStatement;
-import org.mozilla.javascript.ast.InfixExpression;
-import org.mozilla.javascript.ast.Jump;
-import org.mozilla.javascript.ast.Label;
-import org.mozilla.javascript.ast.LabeledStatement;
-import org.mozilla.javascript.ast.LetNode;
-import org.mozilla.javascript.ast.Loop;
-import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.NewExpression;
-import org.mozilla.javascript.ast.NumberLiteral;
-import org.mozilla.javascript.ast.ObjectLiteral;
-import org.mozilla.javascript.ast.ObjectProperty;
-import org.mozilla.javascript.ast.ParenthesizedExpression;
-import org.mozilla.javascript.ast.PropertyGet;
-import org.mozilla.javascript.ast.RegExpLiteral;
-import org.mozilla.javascript.ast.ReturnStatement;
-import org.mozilla.javascript.ast.Scope;
-import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.ast.StringLiteral;
-import org.mozilla.javascript.ast.SwitchCase;
-import org.mozilla.javascript.ast.SwitchStatement;
-import org.mozilla.javascript.ast.Symbol;
-import org.mozilla.javascript.ast.ThrowStatement;
-import org.mozilla.javascript.ast.TryStatement;
-import org.mozilla.javascript.ast.UnaryExpression;
-import org.mozilla.javascript.ast.VariableDeclaration;
-import org.mozilla.javascript.ast.VariableInitializer;
-import org.mozilla.javascript.ast.WhileLoop;
-import org.mozilla.javascript.ast.WithStatement;
-import org.mozilla.javascript.ast.XmlDotQuery;
-import org.mozilla.javascript.ast.XmlElemRef;
-import org.mozilla.javascript.ast.XmlExpression;
-import org.mozilla.javascript.ast.XmlFragment;
-import org.mozilla.javascript.ast.XmlLiteral;
-import org.mozilla.javascript.ast.XmlMemberGet;
-import org.mozilla.javascript.ast.XmlPropRef;
-import org.mozilla.javascript.ast.XmlRef;
-import org.mozilla.javascript.ast.XmlString;
-import org.mozilla.javascript.ast.Yield;
-
 /**
  * This class rewrites the parse tree into an IR suitable for codegen.
  *
- * @see Node
  * @author Mike McCabe
  * @author Norris Boyd
+ * @see Node
  */
-public final class IRFactory extends Parser
-{
+public final class IRFactory extends Parser {
     private static final int LOOP_DO_WHILE = 0;
-    private static final int LOOP_WHILE    = 1;
-    private static final int LOOP_FOR      = 2;
+    private static final int LOOP_WHILE = 1;
+    private static final int LOOP_FOR = 2;
 
     private static final int ALWAYS_TRUE_BOOLEAN = 1;
     private static final int ALWAYS_FALSE_BOOLEAN = -1;
@@ -115,11 +55,11 @@ public final class IRFactory extends Parser
             System.out.println("IRFactory.transformTree");
             System.out.println(root.debugPrint());
         }
-        ScriptNode script = (ScriptNode)transform(root);
+        ScriptNode script = (ScriptNode) transform(root);
 
         int sourceEndOffset = decompiler.getCurrentOffset();
         script.setEncodedSourceBounds(sourceStartOffset,
-                                      sourceEndOffset);
+                sourceEndOffset);
 
         if (compilerEnv.isGeneratingSource()) {
             script.setEncodedSource(decompiler.getEncodedSource());
@@ -135,110 +75,110 @@ public final class IRFactory extends Parser
     // Another possibility:  create AstTransformer interface and adapter.
     public Node transform(AstNode node) {
         switch (node.getType()) {
-          case Token.ARRAYCOMP:
-              return transformArrayComp((ArrayComprehension)node);
-          case Token.ARRAYLIT:
-              return transformArrayLiteral((ArrayLiteral)node);
-          case Token.BLOCK:
-              return transformBlock(node);
-          case Token.BREAK:
-              return transformBreak((BreakStatement)node);
-          case Token.CALL:
-              return transformFunctionCall((FunctionCall)node);
-          case Token.CONTINUE:
-              return transformContinue((ContinueStatement)node);
-          case Token.DO:
-              return transformDoLoop((DoLoop)node);
-          case Token.EMPTY:
-              return node;
-          case Token.FOR:
-              if (node instanceof ForInLoop) {
-                  return transformForInLoop((ForInLoop)node);
-              }
-              return transformForLoop((ForLoop)node);
-          case Token.FUNCTION:
-              return transformFunction((FunctionNode)node);
-          case Token.GENEXPR:
-              return transformGenExpr((GeneratorExpression)node);
-          case Token.GETELEM:
-              return transformElementGet((ElementGet)node);
-          case Token.GETPROP:
-              return transformPropertyGet((PropertyGet)node);
-          case Token.HOOK:
-              return transformCondExpr((ConditionalExpression)node);
-          case Token.IF:
-              return transformIf((IfStatement)node);
+            case Token.ARRAYCOMP:
+                return transformArrayComp((ArrayComprehension) node);
+            case Token.ARRAYLIT:
+                return transformArrayLiteral((ArrayLiteral) node);
+            case Token.BLOCK:
+                return transformBlock(node);
+            case Token.BREAK:
+                return transformBreak((BreakStatement) node);
+            case Token.CALL:
+                return transformFunctionCall((FunctionCall) node);
+            case Token.CONTINUE:
+                return transformContinue((ContinueStatement) node);
+            case Token.DO:
+                return transformDoLoop((DoLoop) node);
+            case Token.EMPTY:
+                return node;
+            case Token.FOR:
+                if (node instanceof ForInLoop) {
+                    return transformForInLoop((ForInLoop) node);
+                }
+                return transformForLoop((ForLoop) node);
+            case Token.FUNCTION:
+                return transformFunction((FunctionNode) node);
+            case Token.GENEXPR:
+                return transformGenExpr((GeneratorExpression) node);
+            case Token.GETELEM:
+                return transformElementGet((ElementGet) node);
+            case Token.GETPROP:
+                return transformPropertyGet((PropertyGet) node);
+            case Token.HOOK:
+                return transformCondExpr((ConditionalExpression) node);
+            case Token.IF:
+                return transformIf((IfStatement) node);
 
-          case Token.TRUE:
-          case Token.FALSE:
-          case Token.THIS:
-          case Token.NULL:
-          case Token.DEBUGGER:
-              return transformLiteral(node);
+            case Token.TRUE:
+            case Token.FALSE:
+            case Token.THIS:
+            case Token.NULL:
+            case Token.DEBUGGER:
+                return transformLiteral(node);
 
-          case Token.NAME:
-              return transformName((Name)node);
-          case Token.NUMBER:
-              return transformNumber((NumberLiteral)node);
-          case Token.NEW:
-              return transformNewExpr((NewExpression)node);
-          case Token.OBJECTLIT:
-              return transformObjectLiteral((ObjectLiteral)node);
-          case Token.REGEXP:
-              return transformRegExp((RegExpLiteral)node);
-          case Token.RETURN:
-              return transformReturn((ReturnStatement)node);
-          case Token.SCRIPT:
-              return transformScript((ScriptNode)node);
-          case Token.STRING:
-              return transformString((StringLiteral)node);
-          case Token.SWITCH:
-              return transformSwitch((SwitchStatement)node);
-          case Token.THROW:
-              return transformThrow((ThrowStatement)node);
-          case Token.TRY:
-              return transformTry((TryStatement)node);
-          case Token.WHILE:
-              return transformWhileLoop((WhileLoop)node);
-          case Token.WITH:
-              return transformWith((WithStatement)node);
-          case Token.YIELD:
-              return transformYield((Yield)node);
-          default:
-              if (node instanceof ExpressionStatement) {
-                  return transformExprStmt((ExpressionStatement)node);
-              }
-              if (node instanceof Assignment) {
-                  return transformAssignment((Assignment)node);
-              }
-              if (node instanceof UnaryExpression) {
-                  return transformUnary((UnaryExpression)node);
-              }
-              if (node instanceof XmlMemberGet) {
-                  return transformXmlMemberGet((XmlMemberGet)node);
-              }
-              if (node instanceof InfixExpression) {
-                  return transformInfix((InfixExpression)node);
-              }
-              if (node instanceof VariableDeclaration) {
-                  return transformVariables((VariableDeclaration)node);
-              }
-              if (node instanceof ParenthesizedExpression) {
-                  return transformParenExpr((ParenthesizedExpression)node);
-              }
-              if (node instanceof LabeledStatement) {
-                  return transformLabeledStatement((LabeledStatement)node);
-              }
-              if (node instanceof LetNode) {
-                  return transformLetNode((LetNode)node);
-              }
-              if (node instanceof XmlRef) {
-                  return transformXmlRef((XmlRef)node);
-              }
-              if (node instanceof XmlLiteral) {
-                  return transformXmlLiteral((XmlLiteral)node);
-              }
-              throw new IllegalArgumentException("Can't transform: " + node);
+            case Token.NAME:
+                return transformName((Name) node);
+            case Token.NUMBER:
+                return transformNumber((NumberLiteral) node);
+            case Token.NEW:
+                return transformNewExpr((NewExpression) node);
+            case Token.OBJECTLIT:
+                return transformObjectLiteral((ObjectLiteral) node);
+            case Token.REGEXP:
+                return transformRegExp((RegExpLiteral) node);
+            case Token.RETURN:
+                return transformReturn((ReturnStatement) node);
+            case Token.SCRIPT:
+                return transformScript((ScriptNode) node);
+            case Token.STRING:
+                return transformString((StringLiteral) node);
+            case Token.SWITCH:
+                return transformSwitch((SwitchStatement) node);
+            case Token.THROW:
+                return transformThrow((ThrowStatement) node);
+            case Token.TRY:
+                return transformTry((TryStatement) node);
+            case Token.WHILE:
+                return transformWhileLoop((WhileLoop) node);
+            case Token.WITH:
+                return transformWith((WithStatement) node);
+            case Token.YIELD:
+                return transformYield((Yield) node);
+            default:
+                if (node instanceof ExpressionStatement) {
+                    return transformExprStmt((ExpressionStatement) node);
+                }
+                if (node instanceof Assignment) {
+                    return transformAssignment((Assignment) node);
+                }
+                if (node instanceof UnaryExpression) {
+                    return transformUnary((UnaryExpression) node);
+                }
+                if (node instanceof XmlMemberGet) {
+                    return transformXmlMemberGet((XmlMemberGet) node);
+                }
+                if (node instanceof InfixExpression) {
+                    return transformInfix((InfixExpression) node);
+                }
+                if (node instanceof VariableDeclaration) {
+                    return transformVariables((VariableDeclaration) node);
+                }
+                if (node instanceof ParenthesizedExpression) {
+                    return transformParenExpr((ParenthesizedExpression) node);
+                }
+                if (node instanceof LabeledStatement) {
+                    return transformLabeledStatement((LabeledStatement) node);
+                }
+                if (node instanceof LetNode) {
+                    return transformLetNode((LetNode) node);
+                }
+                if (node instanceof XmlRef) {
+                    return transformXmlRef((XmlRef) node);
+                }
+                if (node instanceof XmlLiteral) {
+                    return transformXmlLiteral((XmlLiteral) node);
+                }
+                throw new IllegalArgumentException("Can't transform: " + node);
         }
     }
 
@@ -272,10 +212,10 @@ public final class IRFactory extends Parser
             Node block = new Node(Token.BLOCK, lineno);
             Node newArray = createCallOrNew(Token.NEW, createName("Array"));
             Node init = new Node(Token.EXPR_VOID,
-                                 createAssignment(Token.ASSIGN,
-                                                  createName(arrayName),
-                                                  newArray),
-                                 lineno);
+                    createAssignment(Token.ASSIGN,
+                            createName(arrayName),
+                            newArray),
+                    lineno);
             block.addChildToBack(init);
             block.addChildToBack(arrayCompTransformHelper(node, arrayName));
             scopeNode.addChildToBack(block);
@@ -319,10 +259,10 @@ public final class IRFactory extends Parser
                 name = currentScriptOrFn.getNextTempName();
                 defineSymbol(Token.LP, name, false);
                 expr = createBinary(Token.COMMA,
-                                    createAssignment(Token.ASSIGN,
-                                                     iter,
-                                                     createName(name)),
-                                    expr);
+                        createAssignment(Token.ASSIGN,
+                                iter,
+                                createName(name)),
+                        expr);
             }
             Node init = createName(name);
             // Define as a let since we want the scope of the variable to
@@ -341,9 +281,9 @@ public final class IRFactory extends Parser
 
         // generate code for tmpArray.push(body)
         Node call = createCallOrNew(Token.CALL,
-                                    createPropertyGet(createName(arrayName),
-                                                      null,
-                                                      "push", 0));
+                createPropertyGet(createName(arrayName),
+                        null,
+                        "push", 0));
 
         Node body = new Node(Token.EXPR_VOID, call, lineno);
 
@@ -358,19 +298,19 @@ public final class IRFactory extends Parser
         // Now walk loops in reverse to build up the body statement.
         int pushed = 0;
         try {
-            for (int i = numLoops-1; i >= 0; i--) {
+            for (int i = numLoops - 1; i >= 0; i--) {
                 ArrayComprehensionLoop acl = loops.get(i);
                 Scope loop = createLoopNode(null,  // no label
-                                            acl.getLineno());
+                        acl.getLineno());
                 pushScope(loop);
                 pushed++;
                 body = createForIn(Token.LET,
-                                   loop,
-                                   iterators[i],
-                                   iteratedObjs[i],
-                                   body,
-                                   acl.isForEach(),
-                                   acl.isForOf());
+                        loop,
+                        iterators[i],
+                        iteratedObjs[i],
+                        body,
+                        acl.isForEach(),
+                        acl.isForOf());
             }
         } finally {
             for (int i = 0; i < pushed; i++) {
@@ -409,7 +349,7 @@ public final class IRFactory extends Parser
         }
         decompiler.addToken(Token.RB);
         array.putIntProp(Node.DESTRUCTURING_ARRAY_LENGTH,
-                         node.getDestructuringLength());
+                node.getDestructuringLength());
         if (skipIndexes != null) {
             int[] skips = new int[skipIndexes.size()];
             for (int i = 0; i < skipIndexes.size(); i++)
@@ -430,18 +370,18 @@ public final class IRFactory extends Parser
         }
         decompiler.addToken(node.getType());
         return createAssignment(node.getType(),
-                                target,
-                                transform(node.getRight()));
+                target,
+                transform(node.getRight()));
     }
 
     private Node transformBlock(AstNode node) {
         if (node instanceof Scope) {
-            pushScope((Scope)node);
+            pushScope((Scope) node);
         }
         try {
             List<Node> kids = new ArrayList<Node>();
             for (Node kid : node) {
-                kids.add(transform((AstNode)kid));
+                kids.add(transform((AstNode) kid));
             }
             node.removeChildren();
             for (Node kid : kids) {
@@ -496,7 +436,7 @@ public final class IRFactory extends Parser
             decompiler.addToken(Token.RP);
             decompiler.addEOL(Token.SEMI);
             return createLoop(loop, LOOP_DO_WHILE,
-                              body, cond, null, null);
+                    body, cond, null, null);
         } finally {
             popScope();
         }
@@ -530,7 +470,7 @@ public final class IRFactory extends Parser
             int declType = -1;
             AstNode iter = loop.getIterator();
             if (iter instanceof VariableDeclaration) {
-                declType = ((VariableDeclaration)iter).getType();
+                declType = iter.getType();
             }
             Node lhs = transform(iter);
             if (loop.isForOf()) {
@@ -544,7 +484,7 @@ public final class IRFactory extends Parser
             Node body = transform(loop.getBody());
             decompiler.addEOL(Token.RC);
             return createForIn(declType, loop, lhs, obj, body,
-                               loop.isForEach(), loop.isForOf());
+                    loop.isForEach(), loop.isForOf());
         } finally {
             popScope();
         }
@@ -584,7 +524,7 @@ public final class IRFactory extends Parser
         try {
             // If we start needing to record much more codegen metadata during
             // function parsing, we should lump it all into a helper class.
-            Node destructuring = (Node)fn.getProp(Node.DESTRUCTURING_PARAMS);
+            Node destructuring = (Node) fn.getProp(Node.DESTRUCTURING_PARAMS);
             fn.removeProp(Node.DESTRUCTURING_PARAMS);
 
             int lineno = fn.getBody().getLineno();
@@ -604,7 +544,7 @@ public final class IRFactory extends Parser
 
             if (destructuring != null) {
                 body.addChildToFront(new Node(Token.EXPR_VOID,
-                                              destructuring, lineno));
+                        destructuring, lineno));
             }
 
             int syntheticType = fn.getFunctionType();
@@ -638,16 +578,16 @@ public final class IRFactory extends Parser
         decompiler.addToken(Token.RP);
         return call;
     }
-    
+
     private Node transformGenExpr(GeneratorExpression node) {
         Node pn;
-        
+
         FunctionNode fn = new FunctionNode();
         fn.setSourceName(currentScriptOrFn.getNextTempName());
         fn.setIsGenerator();
         fn.setFunctionType(FunctionNode.FUNCTION_EXPRESSION);
         fn.setRequiresActivation();
-      
+
         int functionType = fn.getFunctionType();
         int start = decompiler.markFunctionStart(functionType);
         Node mexpr = decompileFunctionHeader(fn);
@@ -657,7 +597,7 @@ public final class IRFactory extends Parser
         try {
             // If we start needing to record much more codegen metadata during
             // function parsing, we should lump it all into a helper class.
-            Node destructuring = (Node)fn.getProp(Node.DESTRUCTURING_PARAMS);
+            Node destructuring = (Node) fn.getProp(Node.DESTRUCTURING_PARAMS);
             fn.removeProp(Node.DESTRUCTURING_PARAMS);
 
             int lineno = node.lineno;
@@ -677,7 +617,7 @@ public final class IRFactory extends Parser
 
             if (destructuring != null) {
                 body.addChildToFront(new Node(Token.EXPR_VOID,
-                                              destructuring, lineno));
+                        destructuring, lineno));
             }
 
             int syntheticType = fn.getFunctionType();
@@ -692,14 +632,14 @@ public final class IRFactory extends Parser
             --nestingOfFunction;
             savedVars.restore();
         }
-       
+
         Node call = createCallOrNew(Token.CALL, pn);
         call.setLineno(node.getLineno());
         decompiler.addToken(Token.LP);
         decompiler.addToken(Token.RP);
         return call;
     }
-    
+
     private Node genExprTransformHelper(GeneratorExpression node) {
         decompiler.addToken(Token.LP);
         int lineno = node.getLineno();
@@ -729,10 +669,10 @@ public final class IRFactory extends Parser
                 name = currentScriptOrFn.getNextTempName();
                 defineSymbol(Token.LP, name, false);
                 expr = createBinary(Token.COMMA,
-                                    createAssignment(Token.ASSIGN,
-                                                     iter,
-                                                     createName(name)),
-                                    expr);
+                        createAssignment(Token.ASSIGN,
+                                iter,
+                                createName(name)),
+                        expr);
             }
             Node init = createName(name);
             // Define as a let since we want the scope of the variable to
@@ -765,19 +705,19 @@ public final class IRFactory extends Parser
         // Now walk loops in reverse to build up the body statement.
         int pushed = 0;
         try {
-            for (int i = numLoops-1; i >= 0; i--) {
+            for (int i = numLoops - 1; i >= 0; i--) {
                 GeneratorExpressionLoop acl = loops.get(i);
                 Scope loop = createLoopNode(null,  // no label
-                                            acl.getLineno());
+                        acl.getLineno());
                 pushScope(loop);
                 pushed++;
                 body = createForIn(Token.LET,
-                                   loop,
-                                   iterators[i],
-                                   iteratedObjs[i],
-                                   body,
-                                   acl.isForEach(),
-                                   acl.isForOf());
+                        loop,
+                        iterators[i],
+                        iteratedObjs[i],
+                        body,
+                        acl.isForEach(),
+                        acl.isForOf());
             }
         } finally {
             for (int i = 0; i < pushed; i++) {
@@ -967,15 +907,15 @@ public final class IRFactory extends Parser
     private Object getPropKey(Node id) {
         Object key;
         if (id instanceof Name) {
-            String s = ((Name)id).getIdentifier();
+            String s = ((Name) id).getIdentifier();
             decompiler.addName(s);
             key = ScriptRuntime.getIndexObject(s);
         } else if (id instanceof StringLiteral) {
-            String s = ((StringLiteral)id).getValue();
+            String s = ((StringLiteral) id).getValue();
             decompiler.addString(s);
             key = ScriptRuntime.getIndexObject(s);
         } else if (id instanceof NumberLiteral) {
-            double n = ((NumberLiteral)id).getNumber();
+            double n = ((NumberLiteral) id).getNumber();
             decompiler.addNumber(n);
             key = ScriptRuntime.getIndexObject(n);
         } else {
@@ -991,7 +931,7 @@ public final class IRFactory extends Parser
         while (expr instanceof ParenthesizedExpression) {
             decompiler.addToken(Token.LP);
             count++;
-            expr = ((ParenthesizedExpression)expr).getExpression();
+            expr = ((ParenthesizedExpression) expr).getExpression();
         }
         Node result = transform(expr);
         for (int i = 0; i < count; i++) {
@@ -1029,8 +969,8 @@ public final class IRFactory extends Parser
         Node value = rv == null ? null : transform(rv);
         if (!expClosure) decompiler.addEOL(Token.SEMI);
         return rv == null
-            ? new Node(Token.RETURN, node.getLineno())
-            : new Node(Token.RETURN, value, node.getLineno());
+                ? new Node(Token.RETURN, node.getLineno())
+                : new Node(Token.RETURN, value, node.getLineno());
     }
 
     private Node transformScript(ScriptNode node) {
@@ -1039,7 +979,7 @@ public final class IRFactory extends Parser
         currentScope = node;
         Node body = new Node(Token.BLOCK);
         for (Node kid : node) {
-            body.addChildToBack(transform((AstNode)kid));
+            body.addChildToBack(transform((AstNode) kid));
         }
         node.removeChildren();
         Node children = body.getFirstChild();
@@ -1166,7 +1106,7 @@ public final class IRFactory extends Parser
             decompiler.addEOL(Token.RC);
 
             catchBlocks.addChildToBack(createCatch(varName, catchCond,
-                                                   body, cc.getLineno()));
+                    body, cc.getLineno()));
         }
         Node finallyBlock = null;
         if (node.getFinallyBlock() != null) {
@@ -1176,7 +1116,7 @@ public final class IRFactory extends Parser
             decompiler.addEOL(Token.RC);
         }
         return createTryCatchFinally(tryBlock, catchBlocks,
-                                     finallyBlock, node.getLineno());
+                finallyBlock, node.getLineno());
     }
 
     private Node transformUnary(UnaryExpression node) {
@@ -1205,7 +1145,7 @@ public final class IRFactory extends Parser
         // a variable declaration statement, possibly as a node property.
         AstNode parent = node.getParent();
         if (!(parent instanceof Loop)
-            && !(parent instanceof LetNode)) {
+                && !(parent instanceof LetNode)) {
             decompiler.addEOL(Token.SEMI);
         }
         return node;
@@ -1237,7 +1177,7 @@ public final class IRFactory extends Parser
                     node.addChildToBack(left);
                 } else {
                     Node d = createDestructuringAssignment(node.getType(),
-                                                           left, right);
+                            left, right);
                     node.addChildToBack(d);
                 }
             } else {
@@ -1246,7 +1186,7 @@ public final class IRFactory extends Parser
                 }
                 node.addChildToBack(left);
             }
-            if (i++ < size-1) {
+            if (i++ < size - 1) {
                 decompiler.addToken(Token.COMMA);
             }
         }
@@ -1296,14 +1236,14 @@ public final class IRFactory extends Parser
         Node pnXML = new Node(Token.NEW, node.getLineno());
         List<XmlFragment> frags = node.getFragments();
 
-        XmlString first = (XmlString)frags.get(0);
+        XmlString first = (XmlString) frags.get(0);
         boolean anon = first.getXml().trim().startsWith("<>");
         pnXML.addChildToBack(createName(anon ? "XMLList" : "XML"));
 
         Node pn = null;
         for (XmlFragment frag : frags) {
             if (frag instanceof XmlString) {
-                String xml = ((XmlString)frag).getXml();
+                String xml = ((XmlString) frag).getXml();
                 decompiler.addName(xml);
                 if (pn == null) {
                     pn = createString(xml);
@@ -1311,7 +1251,7 @@ public final class IRFactory extends Parser
                     pn = createBinary(Token.ADD, pn, createString(xml));
                 }
             } else {
-                XmlExpression xexpr = (XmlExpression)frag;
+                XmlExpression xexpr = (XmlExpression) frag;
                 boolean isXmlAttr = xexpr.isXmlAttribute();
                 Node expr;
                 decompiler.addToken(Token.LC);
@@ -1325,11 +1265,11 @@ public final class IRFactory extends Parser
                     // Need to put the result in double quotes
                     expr = createUnary(Token.ESCXMLATTR, expr);
                     Node prepend = createBinary(Token.ADD,
-                                                createString("\""),
-                                                expr);
+                            createString("\""),
+                            expr);
                     expr = createBinary(Token.ADD,
-                                        prepend,
-                                        createString("\""));
+                            prepend,
+                            createString("\""));
                 } else {
                     expr = createUnary(Token.ESCXMLTEXT, expr);
                 }
@@ -1357,7 +1297,7 @@ public final class IRFactory extends Parser
     // We get here if we weren't a child of a . or .. infix node
     private Node transformXmlRef(XmlRef node) {
         int memberTypeFlags = node.isAttributeAccess()
-            ? Node.ATTRIBUTE_FLAG : 0;
+                ? Node.ATTRIBUTE_FLAG : 0;
         return transformXmlRef(null, node, memberTypeFlags);
     }
 
@@ -1371,12 +1311,12 @@ public final class IRFactory extends Parser
             decompiler.addToken(Token.COLONCOLON);
         }
         if (node instanceof XmlPropRef) {
-            String name = ((XmlPropRef)node).getPropName().getIdentifier();
+            String name = ((XmlPropRef) node).getPropName().getIdentifier();
             decompiler.addName(name);
             return createPropertyGet(pn, ns, name, memberTypeFlags);
         }
         decompiler.addToken(Token.LB);
-        Node expr = transform(((XmlElemRef)node).getExpression());
+        Node expr = transform(((XmlElemRef) node).getExpression());
         decompiler.addToken(Token.RB);
         return createElementGet(pn, ns, expr, memberTypeFlags);
     }
@@ -1394,10 +1334,9 @@ public final class IRFactory extends Parser
      * If caseExpression argument is null it indicates a default label.
      */
     private void addSwitchCase(Node switchBlock, Node caseExpression,
-                               Node statements)
-    {
+                               Node statements) {
         if (switchBlock.getType() != Token.BLOCK) throw Kit.codeBug();
-        Jump switchNode = (Jump)switchBlock.getFirstChild();
+        Jump switchNode = (Jump) switchBlock.getFirstChild();
         if (switchNode.getType() != Token.SWITCH) throw Kit.codeBug();
 
         Node gotoTarget = Node.newTarget();
@@ -1412,10 +1351,9 @@ public final class IRFactory extends Parser
         switchBlock.addChildToBack(statements);
     }
 
-    private void closeSwitch(Node switchBlock)
-    {
+    private void closeSwitch(Node switchBlock) {
         if (switchBlock.getType() != Token.BLOCK) throw Kit.codeBug();
-        Jump switchNode = (Jump)switchBlock.getFirstChild();
+        Jump switchNode = (Jump) switchBlock.getFirstChild();
         if (switchNode.getType() != Token.SWITCH) throw Kit.codeBug();
 
         Node switchBreakTarget = Node.newTarget();
@@ -1429,7 +1367,7 @@ public final class IRFactory extends Parser
         }
 
         switchBlock.addChildAfter(makeJump(Token.GOTO, defaultTarget),
-                                  switchNode);
+                switchNode);
         switchBlock.addChildToBack(switchBreakTarget);
     }
 
@@ -1443,11 +1381,12 @@ public final class IRFactory extends Parser
 
     /**
      * Catch clause of try/catch/finally
-     * @param varName the name of the variable to bind to the exception
+     *
+     * @param varName   the name of the variable to bind to the exception
      * @param catchCond the condition under which to catch the exception.
      *                  May be null if no condition is given.
-     * @param stmts the statements in the catch clause
-     * @param lineno the starting line number of the catch clause
+     * @param stmts     the statements in the catch clause
+     * @param lineno    the starting line number of the catch clause
      */
     private Node createCatch(String varName, Node catchCond, Node stmts,
                              int lineno) {
@@ -1455,7 +1394,7 @@ public final class IRFactory extends Parser
             catchCond = new Node(Token.EMPTY);
         }
         return new Node(Token.CATCH, createName(varName),
-                        catchCond, stmts, lineno);
+                catchCond, stmts, lineno);
     }
 
     private Node initFunction(FunctionNode fnNode, int functionIndex,
@@ -1482,10 +1421,10 @@ public final class IRFactory extends Parser
                 // or nested function with the same name.
                 fnNode.putSymbol(new Symbol(Token.FUNCTION, name.getIdentifier()));
                 Node setFn = new Node(Token.EXPR_VOID,
-                                 new Node(Token.SETNAME,
-                                          Node.newString(Token.BINDNAME,
-                                                         name.getIdentifier()),
-                                     new Node(Token.THISFN)));
+                        new Node(Token.SETNAME,
+                                Node.newString(Token.BINDNAME,
+                                        name.getIdentifier()),
+                                new Node(Token.THISFN)));
                 statements.addChildrenToFront(setFn);
             }
         }
@@ -1509,7 +1448,7 @@ public final class IRFactory extends Parser
     private Scope createLoopNode(Node loopLabel, int lineno) {
         Scope result = createScopeNode(Token.LOOP, lineno);
         if (loopLabel != null) {
-            ((Jump)loopLabel).setLoop(result);
+            ((Jump) loopLabel).setLoop(result);
         }
         return result;
     }
@@ -1524,15 +1463,14 @@ public final class IRFactory extends Parser
             let.setType(Token.LET);
             let.addChildrenToBack(init);
             let.addChildToBack(createLoop(loop, LOOP_FOR, body, test,
-                new Node(Token.EMPTY), incr));
+                    new Node(Token.EMPTY), incr));
             return let;
         }
         return createLoop(loop, LOOP_FOR, body, test, init, incr);
     }
 
     private Node createLoop(Jump loop, int loopType, Node body,
-                            Node cond, Node init, Node incr)
-    {
+                            Node cond, Node init, Node incr) {
         Node bodyTarget = Node.newTarget();
         Node condTarget = Node.newTarget();
         if (loopType == LOOP_FOR && cond.getType() == Token.EMPTY) {
@@ -1585,8 +1523,7 @@ public final class IRFactory extends Parser
      * Generate IR for a for..in loop.
      */
     private Node createForIn(int declType, Node loop, Node lhs,
-                             Node obj, Node body, boolean isForEach, boolean isForOf)
-    {
+                             Node obj, Node body, boolean isForEach, boolean isForOf) {
         int destructuring = -1;
         int destructuringLen = 0;
         Node lvalue;
@@ -1594,8 +1531,7 @@ public final class IRFactory extends Parser
         if (type == Token.VAR || type == Token.LET) {
             Node kid = lhs.getLastChild();
             int kidType = kid.getType();
-            if (kidType == Token.ARRAYLIT || kidType == Token.OBJECTLIT)
-            {
+            if (kidType == Token.ARRAYLIT || kidType == Token.OBJECTLIT) {
                 type = destructuring = kidType;
                 lvalue = kid;
                 destructuringLen = 0;
@@ -1623,10 +1559,10 @@ public final class IRFactory extends Parser
 
         Node localBlock = new Node(Token.LOCAL_BLOCK);
         int initType = isForEach ? Token.ENUM_INIT_VALUES
-                       : isForOf ? Token.ENUM_INIT_VALUES_IN_ORDER
-                                 : (destructuring != -1
-                                    ? Token.ENUM_INIT_ARRAY
-                                    : Token.ENUM_INIT_KEYS);
+                : isForOf ? Token.ENUM_INIT_VALUES_IN_ORDER
+                : (destructuring != -1
+                ? Token.ENUM_INIT_ARRAY
+                : Token.ENUM_INIT_KEYS);
         Node init = new Node(initType, obj);
         init.putProp(Node.LOCAL_BLOCK_PROP, localBlock);
         Node cond = new Node(Token.ENUM_NEXT);
@@ -1639,9 +1575,8 @@ public final class IRFactory extends Parser
         if (destructuring != -1) {
             assign = createDestructuringAssignment(declType, lvalue, id);
             if (!isForEach && !isForOf &&
-                (destructuring == Token.OBJECTLIT ||
-                 destructuringLen != 2))
-            {
+                    (destructuring == Token.OBJECTLIT ||
+                            destructuringLen != 2)) {
                 // destructuring assignment is only allowed in for..each or
                 // with an array type of length 2 (to hold key and value)
                 reportError("msg.bad.for.in.destruct");
@@ -1652,7 +1587,7 @@ public final class IRFactory extends Parser
         newBody.addChildToBack(new Node(Token.EXPR_VOID, assign));
         newBody.addChildToBack(body);
 
-        loop = createLoop((Jump)loop, LOOP_WHILE, newBody, cond, null, null);
+        loop = createLoop((Jump) loop, LOOP_WHILE, newBody, cond, null, null);
         loop.addChildToFront(init);
         if (type == Token.VAR || type == Token.LET)
             loop.addChildToFront(lhs);
@@ -1663,42 +1598,40 @@ public final class IRFactory extends Parser
 
     /**
      * Try/Catch/Finally
-     *
+     * <p>
      * The IRFactory tries to express as much as possible in the tree;
      * the responsibilities remaining for Codegen are to add the Java
      * handlers: (Either (but not both) of TARGET and FINALLY might not
      * be defined)
-     *
+     * <p>
      * - a catch handler for javascript exceptions that unwraps the
      * exception onto the stack and GOTOes to the catch target
-     *
+     * <p>
      * - a finally handler
-     *
+     * <p>
      * ... and a goto to GOTO around these handlers.
      */
     private Node createTryCatchFinally(Node tryBlock, Node catchBlocks,
-                                       Node finallyBlock, int lineno)
-    {
+                                       Node finallyBlock, int lineno) {
         boolean hasFinally = (finallyBlock != null)
-                             && (finallyBlock.getType() != Token.BLOCK
-                                 || finallyBlock.hasChildren());
+                && (finallyBlock.getType() != Token.BLOCK
+                || finallyBlock.hasChildren());
 
         // short circuit
         if (tryBlock.getType() == Token.BLOCK && !tryBlock.hasChildren()
-            && !hasFinally)
-        {
+                && !hasFinally) {
             return tryBlock;
         }
 
         boolean hasCatch = catchBlocks.hasChildren();
 
         // short circuit
-        if (!hasFinally && !hasCatch)  {
+        if (!hasFinally && !hasCatch) {
             // bc finally might be an empty block...
             return tryBlock;
         }
 
-        Node handlerBlock  = new Node(Token.LOCAL_BLOCK);
+        Node handlerBlock = new Node(Token.LOCAL_BLOCK);
         Jump pn = new Jump(Token.TRY, tryBlock, lineno);
         pn.putProp(Node.LOCAL_BLOCK_PROP, handlerBlock);
 
@@ -1791,21 +1724,21 @@ public final class IRFactory extends Parser
                     hasDefault = true;
                 } else {
                     condStmt = createIf(cond, catchStatement, null,
-                                        catchLineNo);
+                            catchLineNo);
                 }
 
                 // Generate code to create the scope object and store
                 // it in catchScopeBlock register
                 Node catchScope = new Node(Token.CATCH_SCOPE, name,
-                                           createUseLocal(handlerBlock));
+                        createUseLocal(handlerBlock));
                 catchScope.putProp(Node.LOCAL_BLOCK_PROP, catchScopeBlock);
                 catchScope.putIntProp(Node.CATCH_SCOPE_PROP, scopeIndex);
                 catchScopeBlock.addChildToBack(catchScope);
 
                 // Add with statement based on catch scope object
                 catchScopeBlock.addChildToBack(
-                    createWith(createUseLocal(catchScopeBlock), condStmt,
-                               catchLineNo));
+                        createWith(createUseLocal(catchScopeBlock), condStmt,
+                                catchLineNo));
 
                 // move to next cb
                 cb = cb.getNext();
@@ -1854,8 +1787,7 @@ public final class IRFactory extends Parser
         return result;
     }
 
-    private Node createIf(Node cond, Node ifTrue, Node ifFalse, int lineno)
-    {
+    private Node createIf(Node cond, Node ifTrue, Node ifFalse, int lineno) {
         int condStatus = isAlwaysDefinedBoolean(cond);
         if (condStatus == ALWAYS_TRUE_BOOLEAN) {
             return ifTrue;
@@ -1898,73 +1830,71 @@ public final class IRFactory extends Parser
         return new Node(Token.HOOK, cond, ifTrue, ifFalse);
     }
 
-    private Node createUnary(int nodeType, Node child)
-    {
+    private Node createUnary(int nodeType, Node child) {
         int childType = child.getType();
         switch (nodeType) {
-          case Token.DELPROP: {
-            Node n;
-            if (childType == Token.NAME) {
-                // Transform Delete(Name "a")
-                //  to Delete(Bind("a"), String("a"))
-                child.setType(Token.BINDNAME);
-                Node left = child;
-                Node right = Node.newString(child.getString());
-                n = new Node(nodeType, left, right);
-            } else if (childType == Token.GETPROP ||
-                       childType == Token.GETELEM)
-            {
-                Node left = child.getFirstChild();
-                Node right = child.getLastChild();
-                child.removeChild(left);
-                child.removeChild(right);
-                n = new Node(nodeType, left, right);
-            } else if (childType == Token.GET_REF) {
-                Node ref = child.getFirstChild();
-                child.removeChild(ref);
-                n = new Node(Token.DEL_REF, ref);
-            } else {
-                // Always evaluate delete operand, see ES5 11.4.1 & bug #726121
-                n = new Node(nodeType, new Node(Token.TRUE), child);
-            }
-            return n;
-          }
-          case Token.TYPEOF:
-            if (childType == Token.NAME) {
-                child.setType(Token.TYPEOFNAME);
-                return child;
-            }
-            break;
-          case Token.BITNOT:
-            if (childType == Token.NUMBER) {
-                int value = ScriptRuntime.toInt32(child.getDouble());
-                child.setDouble(~value);
-                return child;
-            }
-            break;
-          case Token.NEG:
-            if (childType == Token.NUMBER) {
-                child.setDouble(-child.getDouble());
-                return child;
-            }
-            break;
-          case Token.NOT: {
-            int status = isAlwaysDefinedBoolean(child);
-            if (status != 0) {
-                int type;
-                if (status == ALWAYS_TRUE_BOOLEAN) {
-                    type = Token.FALSE;
+            case Token.DELPROP: {
+                Node n;
+                if (childType == Token.NAME) {
+                    // Transform Delete(Name "a")
+                    //  to Delete(Bind("a"), String("a"))
+                    child.setType(Token.BINDNAME);
+                    Node left = child;
+                    Node right = Node.newString(child.getString());
+                    n = new Node(nodeType, left, right);
+                } else if (childType == Token.GETPROP ||
+                        childType == Token.GETELEM) {
+                    Node left = child.getFirstChild();
+                    Node right = child.getLastChild();
+                    child.removeChild(left);
+                    child.removeChild(right);
+                    n = new Node(nodeType, left, right);
+                } else if (childType == Token.GET_REF) {
+                    Node ref = child.getFirstChild();
+                    child.removeChild(ref);
+                    n = new Node(Token.DEL_REF, ref);
                 } else {
-                    type = Token.TRUE;
+                    // Always evaluate delete operand, see ES5 11.4.1 & bug #726121
+                    n = new Node(nodeType, new Node(Token.TRUE), child);
                 }
-                if (childType == Token.TRUE || childType == Token.FALSE) {
-                    child.setType(type);
+                return n;
+            }
+            case Token.TYPEOF:
+                if (childType == Token.NAME) {
+                    child.setType(Token.TYPEOFNAME);
                     return child;
                 }
-                return new Node(type);
+                break;
+            case Token.BITNOT:
+                if (childType == Token.NUMBER) {
+                    int value = ScriptRuntime.toInt32(child.getDouble());
+                    child.setDouble(~value);
+                    return child;
+                }
+                break;
+            case Token.NEG:
+                if (childType == Token.NUMBER) {
+                    child.setDouble(-child.getDouble());
+                    return child;
+                }
+                break;
+            case Token.NOT: {
+                int status = isAlwaysDefinedBoolean(child);
+                if (status != 0) {
+                    int type;
+                    if (status == ALWAYS_TRUE_BOOLEAN) {
+                        type = Token.FALSE;
+                    } else {
+                        type = Token.TRUE;
+                    }
+                    if (childType == Token.TRUE || childType == Token.FALSE) {
+                        child.setType(type);
+                        return child;
+                    }
+                    return new Node(type);
+                }
+                break;
             }
-            break;
-          }
         }
         return new Node(nodeType, child);
     }
@@ -1993,34 +1923,32 @@ public final class IRFactory extends Parser
         return node;
     }
 
-    private Node createIncDec(int nodeType, boolean post, Node child)
-    {
+    private Node createIncDec(int nodeType, boolean post, Node child) {
         child = makeReference(child);
         int childType = child.getType();
 
         switch (childType) {
-          case Token.NAME:
-          case Token.GETPROP:
-          case Token.GETELEM:
-          case Token.GET_REF: {
-            Node n = new Node(nodeType, child);
-            int incrDecrMask = 0;
-            if (nodeType == Token.DEC) {
-                incrDecrMask |= Node.DECR_FLAG;
+            case Token.NAME:
+            case Token.GETPROP:
+            case Token.GETELEM:
+            case Token.GET_REF: {
+                Node n = new Node(nodeType, child);
+                int incrDecrMask = 0;
+                if (nodeType == Token.DEC) {
+                    incrDecrMask |= Node.DECR_FLAG;
+                }
+                if (post) {
+                    incrDecrMask |= Node.POST_FLAG;
+                }
+                n.putIntProp(Node.INCRDECR_PROP, incrDecrMask);
+                return n;
             }
-            if (post) {
-                incrDecrMask |= Node.POST_FLAG;
-            }
-            n.putIntProp(Node.INCRDECR_PROP, incrDecrMask);
-            return n;
-          }
         }
         throw Kit.codeBug();
     }
 
     private Node createPropertyGet(Node target, String namespace, String name,
-                                   int memberTypeFlags)
-    {
+                                   int memberTypeFlags) {
         if (namespace == null && memberTypeFlags == 0) {
             if (target == null) {
                 return createName(name);
@@ -2039,14 +1967,13 @@ public final class IRFactory extends Parser
     }
 
     /**
-     * @param target the node before the LB
-     * @param namespace optional namespace
-     * @param elem the node in the brackets
+     * @param target          the node before the LB
+     * @param namespace       optional namespace
+     * @param elem            the node in the brackets
      * @param memberTypeFlags E4X flags
      */
     private Node createElementGet(Node target, String namespace, Node elem,
-                                  int memberTypeFlags)
-    {
+                                  int memberTypeFlags) {
         // OPT: could optimize to createPropertyGet
         // iff elem is string that can not be number
         if (namespace == null && memberTypeFlags == 0) {
@@ -2059,8 +1986,7 @@ public final class IRFactory extends Parser
     }
 
     private Node createMemberRefGet(Node target, String namespace, Node elem,
-                                    int memberTypeFlags)
-    {
+                                    int memberTypeFlags) {
         Node nsNode = null;
         if (namespace != null) {
             // See 11.1.2 in ECMA 357
@@ -2093,139 +2019,137 @@ public final class IRFactory extends Parser
     private Node createBinary(int nodeType, Node left, Node right) {
         switch (nodeType) {
 
-          case Token.ADD:
-            // numerical addition and string concatenation
-            if (left.type == Token.STRING) {
-                String s2;
-                if (right.type == Token.STRING) {
-                    s2 = right.getString();
-                } else if (right.type == Token.NUMBER) {
-                    s2 = ScriptRuntime.numberToString(right.getDouble(), 10);
-                } else {
-                    break;
-                }
-                String s1 = left.getString();
-                left.setString(s1.concat(s2));
-                return left;
-            } else if (left.type == Token.NUMBER) {
-                if (right.type == Token.NUMBER) {
-                    left.setDouble(left.getDouble() + right.getDouble());
+            case Token.ADD:
+                // numerical addition and string concatenation
+                if (left.type == Token.STRING) {
+                    String s2;
+                    if (right.type == Token.STRING) {
+                        s2 = right.getString();
+                    } else if (right.type == Token.NUMBER) {
+                        s2 = ScriptRuntime.numberToString(right.getDouble(), 10);
+                    } else {
+                        break;
+                    }
+                    String s1 = left.getString();
+                    left.setString(s1.concat(s2));
                     return left;
-                } else if (right.type == Token.STRING) {
-                    String s1, s2;
-                    s1 = ScriptRuntime.numberToString(left.getDouble(), 10);
-                    s2 = right.getString();
-                    right.setString(s1.concat(s2));
+                } else if (left.type == Token.NUMBER) {
+                    if (right.type == Token.NUMBER) {
+                        left.setDouble(left.getDouble() + right.getDouble());
+                        return left;
+                    } else if (right.type == Token.STRING) {
+                        String s1, s2;
+                        s1 = ScriptRuntime.numberToString(left.getDouble(), 10);
+                        s2 = right.getString();
+                        right.setString(s1.concat(s2));
+                        return right;
+                    }
+                }
+                // can't do anything if we don't know  both types - since
+                // 0 + object is supposed to call toString on the object and do
+                // string concantenation rather than addition
+                break;
+
+            case Token.SUB:
+                // numerical subtraction
+                if (left.type == Token.NUMBER) {
+                    double ld = left.getDouble();
+                    if (right.type == Token.NUMBER) {
+                        //both numbers
+                        left.setDouble(ld - right.getDouble());
+                        return left;
+                    } else if (ld == 0.0) {
+                        // first 0: 0-x -> -x
+                        return new Node(Token.NEG, right);
+                    }
+                } else if (right.type == Token.NUMBER) {
+                    if (right.getDouble() == 0.0) {
+                        //second 0: x - 0 -> +x
+                        // can not make simply x because x - 0 must be number
+                        return new Node(Token.POS, left);
+                    }
+                }
+                break;
+
+            case Token.MUL:
+                // numerical multiplication
+                if (left.type == Token.NUMBER) {
+                    double ld = left.getDouble();
+                    if (right.type == Token.NUMBER) {
+                        //both numbers
+                        left.setDouble(ld * right.getDouble());
+                        return left;
+                    } else if (ld == 1.0) {
+                        // first 1: 1 *  x -> +x
+                        return new Node(Token.POS, right);
+                    }
+                } else if (right.type == Token.NUMBER) {
+                    if (right.getDouble() == 1.0) {
+                        //second 1: x * 1 -> +x
+                        // can not make simply x because x - 0 must be number
+                        return new Node(Token.POS, left);
+                    }
+                }
+                // can't do x*0: Infinity * 0 gives NaN, not 0
+                break;
+
+            case Token.DIV:
+                // number division
+                if (right.type == Token.NUMBER) {
+                    double rd = right.getDouble();
+                    if (left.type == Token.NUMBER) {
+                        // both constants -- just divide, trust Java to handle x/0
+                        left.setDouble(left.getDouble() / rd);
+                        return left;
+                    } else if (rd == 1.0) {
+                        // second 1: x/1 -> +x
+                        // not simply x to force number convertion
+                        return new Node(Token.POS, left);
+                    }
+                }
+                break;
+
+            case Token.AND: {
+                // Since x && y gives x, not false, when Boolean(x) is false,
+                // and y, not Boolean(y), when Boolean(x) is true, x && y
+                // can only be simplified if x is defined. See bug 309957.
+
+                int leftStatus = isAlwaysDefinedBoolean(left);
+                if (leftStatus == ALWAYS_FALSE_BOOLEAN) {
+                    // if the first one is false, just return it
+                    return left;
+                } else if (leftStatus == ALWAYS_TRUE_BOOLEAN) {
+                    // if first is true, set to second
                     return right;
                 }
+                break;
             }
-            // can't do anything if we don't know  both types - since
-            // 0 + object is supposed to call toString on the object and do
-            // string concantenation rather than addition
-            break;
 
-          case Token.SUB:
-            // numerical subtraction
-            if (left.type == Token.NUMBER) {
-                double ld = left.getDouble();
-                if (right.type == Token.NUMBER) {
-                    //both numbers
-                    left.setDouble(ld - right.getDouble());
+            case Token.OR: {
+                // Since x || y gives x, not true, when Boolean(x) is true,
+                // and y, not Boolean(y), when Boolean(x) is false, x || y
+                // can only be simplified if x is defined. See bug 309957.
+
+                int leftStatus = isAlwaysDefinedBoolean(left);
+                if (leftStatus == ALWAYS_TRUE_BOOLEAN) {
+                    // if the first one is true, just return it
                     return left;
-                } else if (ld == 0.0) {
-                    // first 0: 0-x -> -x
-                    return new Node(Token.NEG, right);
+                } else if (leftStatus == ALWAYS_FALSE_BOOLEAN) {
+                    // if first is false, set to second
+                    return right;
                 }
-            } else if (right.type == Token.NUMBER) {
-                if (right.getDouble() == 0.0) {
-                    //second 0: x - 0 -> +x
-                    // can not make simply x because x - 0 must be number
-                    return new Node(Token.POS, left);
-                }
+                break;
             }
-            break;
-
-          case Token.MUL:
-            // numerical multiplication
-            if (left.type == Token.NUMBER) {
-                double ld = left.getDouble();
-                if (right.type == Token.NUMBER) {
-                    //both numbers
-                    left.setDouble(ld * right.getDouble());
-                    return left;
-                } else if (ld == 1.0) {
-                    // first 1: 1 *  x -> +x
-                    return new Node(Token.POS, right);
-                }
-            } else if (right.type == Token.NUMBER) {
-                if (right.getDouble() == 1.0) {
-                    //second 1: x * 1 -> +x
-                    // can not make simply x because x - 0 must be number
-                    return new Node(Token.POS, left);
-                }
-            }
-            // can't do x*0: Infinity * 0 gives NaN, not 0
-            break;
-
-          case Token.DIV:
-            // number division
-            if (right.type == Token.NUMBER) {
-                double rd = right.getDouble();
-                if (left.type == Token.NUMBER) {
-                    // both constants -- just divide, trust Java to handle x/0
-                    left.setDouble(left.getDouble() / rd);
-                    return left;
-               } else if (rd == 1.0) {
-                    // second 1: x/1 -> +x
-                    // not simply x to force number convertion
-                    return new Node(Token.POS, left);
-                }
-            }
-            break;
-
-          case Token.AND: {
-            // Since x && y gives x, not false, when Boolean(x) is false,
-            // and y, not Boolean(y), when Boolean(x) is true, x && y
-            // can only be simplified if x is defined. See bug 309957.
-
-            int leftStatus = isAlwaysDefinedBoolean(left);
-            if (leftStatus == ALWAYS_FALSE_BOOLEAN) {
-                // if the first one is false, just return it
-                return left;
-            } else if (leftStatus == ALWAYS_TRUE_BOOLEAN) {
-                // if first is true, set to second
-                return right;
-            }
-            break;
-          }
-
-          case Token.OR: {
-            // Since x || y gives x, not true, when Boolean(x) is true,
-            // and y, not Boolean(y), when Boolean(x) is false, x || y
-            // can only be simplified if x is defined. See bug 309957.
-
-            int leftStatus = isAlwaysDefinedBoolean(left);
-            if (leftStatus == ALWAYS_TRUE_BOOLEAN) {
-                // if the first one is true, just return it
-                return left;
-            } else if (leftStatus == ALWAYS_FALSE_BOOLEAN) {
-                // if first is false, set to second
-                return right;
-            }
-            break;
-          }
         }
 
         return new Node(nodeType, left, right);
     }
 
-    private Node createAssignment(int assignType, Node left, Node right)
-    {
+    private Node createAssignment(int assignType, Node left, Node right) {
         Node ref = makeReference(left);
         if (ref == null) {
             if (left.getType() == Token.ARRAYLIT ||
-                left.getType() == Token.OBJECTLIT)
-            {
+                    left.getType() == Token.OBJECTLIT) {
                 if (assignType != Token.ASSIGN) {
                     reportError("msg.bad.destruct.op");
                     return right;
@@ -2239,49 +2163,72 @@ public final class IRFactory extends Parser
 
         int assignOp;
         switch (assignType) {
-          case Token.ASSIGN:
-            return simpleAssignment(left, right);
-          case Token.ASSIGN_BITOR:  assignOp = Token.BITOR;  break;
-          case Token.ASSIGN_BITXOR: assignOp = Token.BITXOR; break;
-          case Token.ASSIGN_BITAND: assignOp = Token.BITAND; break;
-          case Token.ASSIGN_LSH:    assignOp = Token.LSH;    break;
-          case Token.ASSIGN_RSH:    assignOp = Token.RSH;    break;
-          case Token.ASSIGN_URSH:   assignOp = Token.URSH;   break;
-          case Token.ASSIGN_ADD:    assignOp = Token.ADD;    break;
-          case Token.ASSIGN_SUB:    assignOp = Token.SUB;    break;
-          case Token.ASSIGN_MUL:    assignOp = Token.MUL;    break;
-          case Token.ASSIGN_DIV:    assignOp = Token.DIV;    break;
-          case Token.ASSIGN_MOD:    assignOp = Token.MOD;    break;
-          default: throw Kit.codeBug();
+            case Token.ASSIGN:
+                return simpleAssignment(left, right);
+            case Token.ASSIGN_BITOR:
+                assignOp = Token.BITOR;
+                break;
+            case Token.ASSIGN_BITXOR:
+                assignOp = Token.BITXOR;
+                break;
+            case Token.ASSIGN_BITAND:
+                assignOp = Token.BITAND;
+                break;
+            case Token.ASSIGN_LSH:
+                assignOp = Token.LSH;
+                break;
+            case Token.ASSIGN_RSH:
+                assignOp = Token.RSH;
+                break;
+            case Token.ASSIGN_URSH:
+                assignOp = Token.URSH;
+                break;
+            case Token.ASSIGN_ADD:
+                assignOp = Token.ADD;
+                break;
+            case Token.ASSIGN_SUB:
+                assignOp = Token.SUB;
+                break;
+            case Token.ASSIGN_MUL:
+                assignOp = Token.MUL;
+                break;
+            case Token.ASSIGN_DIV:
+                assignOp = Token.DIV;
+                break;
+            case Token.ASSIGN_MOD:
+                assignOp = Token.MOD;
+                break;
+            default:
+                throw Kit.codeBug();
         }
 
         int nodeType = left.getType();
         switch (nodeType) {
-          case Token.NAME: {
-            Node op = new Node(assignOp, left, right);
-            Node lvalueLeft = Node.newString(Token.BINDNAME, left.getString());
-            return new Node(Token.SETNAME, lvalueLeft, op);
-          }
-          case Token.GETPROP:
-          case Token.GETELEM: {
-            Node obj = left.getFirstChild();
-            Node id = left.getLastChild();
+            case Token.NAME: {
+                Node op = new Node(assignOp, left, right);
+                Node lvalueLeft = Node.newString(Token.BINDNAME, left.getString());
+                return new Node(Token.SETNAME, lvalueLeft, op);
+            }
+            case Token.GETPROP:
+            case Token.GETELEM: {
+                Node obj = left.getFirstChild();
+                Node id = left.getLastChild();
 
-            int type = nodeType == Token.GETPROP
-                       ? Token.SETPROP_OP
-                       : Token.SETELEM_OP;
+                int type = nodeType == Token.GETPROP
+                        ? Token.SETPROP_OP
+                        : Token.SETELEM_OP;
 
-            Node opLeft = new Node(Token.USE_STACK);
-            Node op = new Node(assignOp, opLeft, right);
-            return new Node(type, obj, id, op);
-          }
-          case Token.GET_REF: {
-            ref = left.getFirstChild();
-            checkMutableReference(ref);
-            Node opLeft = new Node(Token.USE_STACK);
-            Node op = new Node(assignOp, opLeft, right);
-            return new Node(Token.SET_REF_OP, ref, op);
-          }
+                Node opLeft = new Node(Token.USE_STACK);
+                Node op = new Node(assignOp, opLeft, right);
+                return new Node(type, obj, id, op);
+            }
+            case Token.GET_REF: {
+                ref = left.getFirstChild();
+                checkMutableReference(ref);
+                Node opLeft = new Node(Token.USE_STACK);
+                Node op = new Node(assignOp, opLeft, right);
+                return new Node(Token.SET_REF_OP, ref, op);
+            }
         }
 
         throw Kit.codeBug();
@@ -2303,14 +2250,14 @@ public final class IRFactory extends Parser
     private Node makeReference(Node node) {
         int type = node.getType();
         switch (type) {
-          case Token.NAME:
-          case Token.GETPROP:
-          case Token.GETELEM:
-          case Token.GET_REF:
-            return node;
-          case Token.CALL:
-            node.setType(Token.REF_CALL);
-            return new Node(Token.GET_REF, node);
+            case Token.NAME:
+            case Token.GETPROP:
+            case Token.GETELEM:
+            case Token.GET_REF:
+                return node;
+            case Token.CALL:
+                node.setType(Token.REF_CALL);
+                return new Node(Token.GET_REF, node);
         }
         // Signal caller to report error
         return null;
@@ -2319,18 +2266,18 @@ public final class IRFactory extends Parser
     // Check if Node always mean true or false in boolean context
     private static int isAlwaysDefinedBoolean(Node node) {
         switch (node.getType()) {
-          case Token.FALSE:
-          case Token.NULL:
-            return ALWAYS_FALSE_BOOLEAN;
-          case Token.TRUE:
-            return ALWAYS_TRUE_BOOLEAN;
-          case Token.NUMBER: {
-            double num = node.getDouble();
-            if (!Double.isNaN(num) && num != 0.0) {
+            case Token.FALSE:
+            case Token.NULL:
+                return ALWAYS_FALSE_BOOLEAN;
+            case Token.TRUE:
                 return ALWAYS_TRUE_BOOLEAN;
+            case Token.NUMBER: {
+                double num = node.getDouble();
+                if (!Double.isNaN(num) && num != 0.0) {
+                    return ALWAYS_TRUE_BOOLEAN;
+                }
+                return ALWAYS_FALSE_BOOLEAN;
             }
-            return ALWAYS_FALSE_BOOLEAN;
-          }
         }
         return 0;
     }
@@ -2338,7 +2285,7 @@ public final class IRFactory extends Parser
     // Check if node is the target of a destructuring bind.
     boolean isDestructuring(Node n) {
         return n instanceof DestructuringForm
-            && ((DestructuringForm)n).isDestructuring();
+                && ((DestructuringForm) n).isDestructuring();
     }
 
     Node decompileFunctionHeader(FunctionNode fn) {
@@ -2382,35 +2329,35 @@ public final class IRFactory extends Parser
 
     void decompile(AstNode node) {
         switch (node.getType()) {
-          case Token.ARRAYLIT:
-              decompileArrayLiteral((ArrayLiteral)node);
-              break;
-          case Token.OBJECTLIT:
-              decompileObjectLiteral((ObjectLiteral)node);
-              break;
-          case Token.STRING:
-              decompiler.addString(((StringLiteral)node).getValue());
-              break;
-          case Token.NAME:
-              decompiler.addName(((Name)node).getIdentifier());
-              break;
-          case Token.NUMBER:
-              decompiler.addNumber(((NumberLiteral)node).getNumber());
-              break;
-          case Token.GETPROP:
-              decompilePropertyGet((PropertyGet)node);
-              break;
-          case Token.EMPTY:
-              break;
-          case Token.GETELEM:
-              decompileElementGet((ElementGet) node);
-              break;
-          case Token.THIS:
-              decompiler.addToken(node.getType());
-              break;
-          default:
-              Kit.codeBug("unexpected token: "
-                          + Token.typeToName(node.getType()));
+            case Token.ARRAYLIT:
+                decompileArrayLiteral((ArrayLiteral) node);
+                break;
+            case Token.OBJECTLIT:
+                decompileObjectLiteral((ObjectLiteral) node);
+                break;
+            case Token.STRING:
+                decompiler.addString(((StringLiteral) node).getValue());
+                break;
+            case Token.NAME:
+                decompiler.addName(((Name) node).getIdentifier());
+                break;
+            case Token.NUMBER:
+                decompiler.addNumber(((NumberLiteral) node).getNumber());
+                break;
+            case Token.GETPROP:
+                decompilePropertyGet((PropertyGet) node);
+                break;
+            case Token.EMPTY:
+                break;
+            case Token.GETELEM:
+                decompileElementGet((ElementGet) node);
+                break;
+            case Token.THIS:
+                decompiler.addToken(node.getType());
+                break;
+            default:
+                Kit.codeBug("unexpected token: "
+                        + Token.typeToName(node.getType()));
         }
     }
 

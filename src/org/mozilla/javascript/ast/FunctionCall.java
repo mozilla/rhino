@@ -6,11 +6,11 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.mozilla.javascript.Token;
 
 /**
  * AST node for a function call.  Node type is {@link Token#CALL}.
@@ -18,7 +18,7 @@ import org.mozilla.javascript.Token;
 public class FunctionCall extends AstNode {
 
     protected static final List<AstNode> NO_ARGS =
-        Collections.unmodifiableList(new ArrayList<AstNode>());
+            Collections.unmodifiableList(new ArrayList<AstNode>());
 
     protected AstNode target;
     protected List<AstNode> arguments;
@@ -50,6 +50,7 @@ public class FunctionCall extends AstNode {
     /**
      * Sets node evaluating to the function to call, and sets
      * its parent to this node.
+     *
      * @param target node evaluating to the function to call.
      * @throws IllegalArgumentException} if target is {@code null}
      */
@@ -61,8 +62,9 @@ public class FunctionCall extends AstNode {
 
     /**
      * Returns function argument list
+     *
      * @return function argument list, or an empty immutable list if
-     *         there are no arguments.
+     * there are no arguments.
      */
     public List<AstNode> getArguments() {
         return arguments != null ? arguments : NO_ARGS;
@@ -70,8 +72,9 @@ public class FunctionCall extends AstNode {
 
     /**
      * Sets function argument list
+     *
      * @param arguments function argument list.  Can be {@code null},
-     *        in which case any existing args are removed.
+     *                  in which case any existing args are removed.
      */
     public void setArguments(List<AstNode> arguments) {
         if (arguments == null) {
@@ -87,6 +90,7 @@ public class FunctionCall extends AstNode {
 
     /**
      * Adds an argument to the list, and sets its parent to this node.
+     *
      * @param arg the argument node to add to the list
      * @throws IllegalArgumentException} if arg is {@code null}
      */
@@ -108,6 +112,7 @@ public class FunctionCall extends AstNode {
 
     /**
      * Sets left paren position
+     *
      * @param lp left paren position
      */
     public void setLp(int lp) {
@@ -146,7 +151,7 @@ public class FunctionCall extends AstNode {
             printList(arguments, sb);
         }
         sb.append(")");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth)).append("\n");
         }
         return sb.toString();

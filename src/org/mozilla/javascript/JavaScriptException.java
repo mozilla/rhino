@@ -14,18 +14,15 @@ package org.mozilla.javascript;
  *
  * @author Mike McCabe
  */
-public class JavaScriptException extends RhinoException
-{
+public class JavaScriptException extends RhinoException {
     private static final long serialVersionUID = -7666130513694669293L;
 
     /**
-     * @deprecated
-     * Use {@link WrappedException#WrappedException(Throwable)} to report
+     * @deprecated Use {@link WrappedException#WrappedException(Throwable)} to report
      * exceptions in Java code.
      */
     @Deprecated
-    public JavaScriptException(Object value)
-    {
+    public JavaScriptException(Object value) {
         this(value, "", 0);
     }
 
@@ -34,8 +31,7 @@ public class JavaScriptException extends RhinoException
      *
      * @param value the JavaScript value thrown.
      */
-    public JavaScriptException(Object value, String sourceName, int lineNumber)
-    {
+    public JavaScriptException(Object value, String sourceName, int lineNumber) {
         recordErrorOrigin(sourceName, lineNumber, null, 0);
         this.value = value;
         // Fill in fileName and lineNumber automatically when not specified
@@ -55,8 +51,7 @@ public class JavaScriptException extends RhinoException
     }
 
     @Override
-    public String details()
-    {
+    public String details() {
         if (value == null) {
             return "null";
         } else if (value instanceof NativeError) {
@@ -67,7 +62,7 @@ public class JavaScriptException extends RhinoException
         } catch (RuntimeException rte) {
             // ScriptRuntime.toString may throw a RuntimeException
             if (value instanceof Scriptable) {
-                return ScriptRuntime.defaultObjectToString((Scriptable)value);
+                return ScriptRuntime.defaultObjectToString((Scriptable) value);
             }
             return value.toString();
         }
@@ -76,8 +71,7 @@ public class JavaScriptException extends RhinoException
     /**
      * @return the value wrapped by this exception
      */
-    public Object getValue()
-    {
+    public Object getValue() {
         return value;
     }
 
@@ -85,8 +79,7 @@ public class JavaScriptException extends RhinoException
      * @deprecated Use {@link RhinoException#sourceName()} from the super class.
      */
     @Deprecated
-    public String getSourceName()
-    {
+    public String getSourceName() {
         return sourceName();
     }
 
@@ -94,8 +87,7 @@ public class JavaScriptException extends RhinoException
      * @deprecated Use {@link RhinoException#lineNumber()} from the super class.
      */
     @Deprecated
-    public int getLineNumber()
-    {
+    public int getLineNumber() {
         return lineNumber();
     }
 

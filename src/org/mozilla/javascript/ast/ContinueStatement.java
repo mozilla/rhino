@@ -61,6 +61,7 @@ public class ContinueStatement extends Jump {
     /**
      * Sets continue target.  Does NOT set the parent of the target node:
      * the target node is an ancestor of this node.
+     *
      * @param target continue target
      * @throws IllegalArgumentException if target is {@code null}
      */
@@ -72,6 +73,7 @@ public class ContinueStatement extends Jump {
 
     /**
      * Returns the intended label of this continue statement
+     *
      * @return the continue label.  Will be {@code null} if the statement
      * consisted only of the keyword "continue".
      */
@@ -82,6 +84,7 @@ public class ContinueStatement extends Jump {
     /**
      * Sets the intended label of this continue statement.
      * Only applies if the statement was of the form "continue &lt;label&gt;".
+     *
      * @param label the continue label, or {@code null} if not present.
      */
     public void setLabel(Name label) {

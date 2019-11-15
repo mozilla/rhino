@@ -49,6 +49,7 @@ public class IfStatement extends AstNode {
 
     /**
      * Sets if condition.
+     *
      * @throws IllegalArgumentException if {@code condition} is {@code null}.
      */
     public void setCondition(AstNode condition) {
@@ -66,6 +67,7 @@ public class IfStatement extends AstNode {
 
     /**
      * Sets statement to execute if condition is true
+     *
      * @throws IllegalArgumentException if thenPart is {@code null}
      */
     public void setThenPart(AstNode thenPart) {
@@ -83,8 +85,9 @@ public class IfStatement extends AstNode {
 
     /**
      * Sets statement to execute if condition is false
+     *
      * @param elsePart statement to execute if condition is false.
-     * Can be {@code null}.
+     *                 Can be {@code null}.
      */
     public void setElsePart(AstNode elsePart) {
         this.elsePart = elsePart;
@@ -150,15 +153,15 @@ public class IfStatement extends AstNode {
         sb.append("if (");
         sb.append(condition.toSource(0));
         sb.append(") ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append("    ").append(this.getInlineComment().toSource()).append("\n");
         }
         if (thenPart.getType() != Token.BLOCK) {
-            if(this.getInlineComment() == null) {
+            if (this.getInlineComment() == null) {
                 sb.append("\n");
             }
             sb.append(makeIndent(depth + 1));
-        } 
+        }
         sb.append(thenPart.toSource(depth).trim());
         if (elsePart != null) {
             if (thenPart.getType() != Token.BLOCK) {
@@ -166,12 +169,12 @@ public class IfStatement extends AstNode {
             } else {
                 sb.append(" else ");
             }
-            if(this.getElseKeyWordInlineComment() != null) {
+            if (this.getElseKeyWordInlineComment() != null) {
                 sb.append("    ").append(this.getElseKeyWordInlineComment().toSource()).append("\n");
             }
             if (elsePart.getType() != Token.BLOCK
                     && elsePart.getType() != Token.IF) {
-                if(this.getElseKeyWordInlineComment() == null) {
+                if (this.getElseKeyWordInlineComment() == null) {
                     sb.append("\n");
                 }
                 sb.append(makeIndent(depth + 1));
@@ -204,5 +207,5 @@ public class IfStatement extends AstNode {
     public void setElseKeyWordInlineComment(AstNode elseKeyWordInlineComment) {
         this.elseKeyWordInlineComment = elseKeyWordInlineComment;
     }
-    
+
 }

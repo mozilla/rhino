@@ -12,9 +12,9 @@ import org.mozilla.javascript.Token;
  * AST node for an indexed property reference, such as {@code foo['bar']} or
  * {@code foo[2]}.  This is sometimes called an "element-get" operation, hence
  * the name of the node.<p>
- *
+ * <p>
  * Node type is {@link Token#GETELEM}.<p>
- *
+ * <p>
  * The node bounds extend from the beginning position of the target through the
  * closing right-bracket.  In the presence of a syntax error, the right bracket
  * position is -1, and the node ends at the end of the element expression.
@@ -55,8 +55,9 @@ public class ElementGet extends AstNode {
 
     /**
      * Sets target object, and sets its parent to this node.
+     *
      * @param target expression evaluating to the object upon which
-     * to do the element lookup
+     *               to do the element lookup
      * @throws IllegalArgumentException if target is {@code null}
      */
     public void setTarget(AstNode target) {
@@ -74,6 +75,7 @@ public class ElementGet extends AstNode {
 
     /**
      * Sets the element being accessed, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if element is {@code null}
      */
     public void setElement(AstNode element) {

@@ -12,8 +12,7 @@ import java.lang.reflect.Method;
  * Adapter to use JS function as implementation of Java interfaces with
  * single method or multiple methods with the same signature.
  */
-public class InterfaceAdapter
-{
+public class InterfaceAdapter {
     private final Object proxyHelper;
 
     /**
@@ -22,20 +21,19 @@ public class InterfaceAdapter
      * Only interfaces were all methods have the same signature is supported.
      *
      * @return The glue object or null if <tt>cl</tt> is not interface or
-     *         has methods with different signatures.
+     * has methods with different signatures.
      */
-    static Object create(Context cx, Class<?> cl, ScriptableObject object)
-    {
+    static Object create(Context cx, Class<?> cl, ScriptableObject object) {
         if (!cl.isInterface()) throw new IllegalArgumentException();
 
         Scriptable topScope = ScriptRuntime.getTopCallScope(cx);
         ClassCache cache = ClassCache.get(topScope);
         InterfaceAdapter adapter;
-        adapter = (InterfaceAdapter)cache.getInterfaceAdapter(cl);
+        adapter = (InterfaceAdapter) cache.getInterfaceAdapter(cl);
         ContextFactory cf = cx.getFactory();
         if (adapter == null) {
             Method[] methods = cl.getMethods();
-            if ( object instanceof Callable) {
+            if (object instanceof Callable) {
                 // Check if interface can be implemented by a single function.
                 // We allow this if the interface has only one method or multiple 
                 // methods with the same name (in which case they'd result in 
@@ -43,7 +41,7 @@ public class InterfaceAdapter
                 int length = methods.length;
                 if (length == 0) {
                     throw Context.reportRuntimeError1(
-                        "msg.no.empty.interface.conversion", cl.getName());
+                            "msg.no.empty.interface.conversion", cl.getName());
                 }
                 if (length > 1) {
                     String methodName = methods[0].getName();
@@ -60,14 +58,13 @@ public class InterfaceAdapter
             cache.cacheInterfaceAdapter(cl, adapter);
         }
         return VMBridge.instance.newInterfaceProxy(
-            adapter.proxyHelper, cf, adapter, object, topScope);
+                adapter.proxyHelper, cf, adapter, object, topScope);
     }
 
-    private InterfaceAdapter(ContextFactory cf, Class<?> cl)
-    {
+    private InterfaceAdapter(ContextFactory cf, Class<?> cl) {
         this.proxyHelper
-            = VMBridge.instance.getInterfaceProxyHelper(
-                cf, new Class[] { cl });
+                = VMBridge.instance.getInterfaceProxyHelper(
+                cf, new Class[]{cl});
     }
 
     public Object invoke(ContextFactory cf,
@@ -75,8 +72,7 @@ public class InterfaceAdapter
                          final Scriptable topScope,
                          final Object thisObject,
                          final Method method,
-                         final Object[] args)
-    {
+                         final Object[] args) {
         return cf.call(cx -> invokeImpl(cx, target, topScope, thisObject, method, args));
     }
 
@@ -85,13 +81,12 @@ public class InterfaceAdapter
                       Scriptable topScope,
                       Object thisObject,
                       Method method,
-                      Object[] args)
-    {
+                      Object[] args) {
         Callable function;
         if (target instanceof Callable) {
-            function = (Callable)target;
+            function = (Callable) target;
         } else {
-            Scriptable s = (Scriptable)target;
+            Scriptable s = (Scriptable) target;
             String methodName = method.getName();
             Object value = ScriptableObject.getProperty(s, methodName);
             if (value == ScriptableObject.NOT_FOUND) {
@@ -108,9 +103,9 @@ public class InterfaceAdapter
             }
             if (!(value instanceof Callable)) {
                 throw Context.reportRuntimeError1(
-                        "msg.not.function.interface",methodName);
+                        "msg.not.function.interface", methodName);
             }
-            function = (Callable)value;
+            function = (Callable) value;
         }
         WrapFactory wf = cx.getWrapFactory();
         if (args == null) {

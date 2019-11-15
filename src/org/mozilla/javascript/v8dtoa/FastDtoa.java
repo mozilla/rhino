@@ -164,7 +164,6 @@ public class FastDtoa {
     }
 
 
-
     static final int kTen4 = 10000;
     static final int kTen5 = 100000;
     static final int kTen6 = 1000000;
@@ -273,7 +272,7 @@ public class FastDtoa {
                 exponent = 0;
                 // UNREACHABLE();
         }
-        return ((long)power << 32) | (0xffffffffL & exponent);
+        return ((long) power << 32) | (0xffffffffL & exponent);
     }
 
     private static boolean uint64_lte(long a, long b) {
@@ -324,13 +323,13 @@ public class FastDtoa {
     // represents w. However we have to pay attention to low, high and w's
     // imprecision.
     static boolean digitGen(DiyFp low,
-                     DiyFp w,
-                     DiyFp high,
-                     FastDtoaBuilder buffer,
-                     int mk) {
-        assert(low.e() == w.e() && w.e() == high.e());
+                            DiyFp w,
+                            DiyFp high,
+                            FastDtoaBuilder buffer,
+                            int mk) {
+        assert (low.e() == w.e() && w.e() == high.e());
         assert uint64_lte(low.f() + 1, high.f() - 1);
-        assert(minimal_target_exponent <= w.e() && w.e() <= maximal_target_exponent);
+        assert (minimal_target_exponent <= w.e() && w.e() <= maximal_target_exponent);
         // low, w and high are imprecise, but by less than one ulp (unit in the last
         // place).
         // If we remove (resp. add) 1 ulp from low (resp. high) we are certain that
@@ -357,7 +356,7 @@ public class FastDtoa {
         // If we stop early we effectively round down.
         DiyFp one = new DiyFp(1L << -w.e(), w.e());
         // Division by one is a shift.
-        int integrals = (int)((too_high.f() >>> -one.e()) & 0xffffffffL);
+        int integrals = (int) ((too_high.f() >>> -one.e()) & 0xffffffffL);
         // Modulo by one is an and.
         long fractionals = too_high.f() & (one.f() - 1);
         long result = biggestPowerTen(integrals, DiyFp.kSignificandSize - (-one.e()));
@@ -376,7 +375,7 @@ public class FastDtoa {
             // Note that kappa now equals the exponent of the divider and that the
             // invariant thus holds again.
             long rest =
-                    ((long)integrals << -one.e()) + fractionals;
+                    ((long) integrals << -one.e()) + fractionals;
             // Invariant: too_high = buffer * 10^kappa + DiyFp(rest, one.e())
             // Reminder: unsafe_interval.e() == one.e()
             if (rest < unsafe_interval.f()) {
@@ -385,7 +384,7 @@ public class FastDtoa {
                 buffer.point = buffer.end - mk + kappa;
                 return roundWeed(buffer, DiyFp.minus(too_high, w).f(),
                         unsafe_interval.f(), rest,
-                        (long)divider << -one.e(), unit);
+                        (long) divider << -one.e(), unit);
             }
             divider /= 10;
         }
@@ -412,7 +411,7 @@ public class FastDtoa {
             one.setF(one.f() >>> 1);
             one.setE(one.e() + 1);
             // Integer division by one.
-            int digit = (int)((fractionals >>> -one.e()) & 0xffffffffL);
+            int digit = (int) ((fractionals >>> -one.e()) & 0xffffffffL);
             buffer.append((char) ('0' + digit));
             fractionals &= one.f() - 1;  // Modulo by one.
             kappa--;
@@ -445,11 +444,11 @@ public class FastDtoa {
         // Grisu3 will never output representations that lie exactly on a boundary.
         DiyFp boundary_minus = new DiyFp(), boundary_plus = new DiyFp();
         DoubleHelper.normalizedBoundaries(bits, boundary_minus, boundary_plus);
-        assert(boundary_plus.e() == w.e());
+        assert (boundary_plus.e() == w.e());
         DiyFp ten_mk = new DiyFp();  // Cached power of ten: 10^-k
-        int mk =  CachedPowers.getCachedPower(w.e() + DiyFp.kSignificandSize,
+        int mk = CachedPowers.getCachedPower(w.e() + DiyFp.kSignificandSize,
                 minimal_target_exponent, maximal_target_exponent, ten_mk);
-        assert(minimal_target_exponent <= w.e() + ten_mk.e() +
+        assert (minimal_target_exponent <= w.e() + ten_mk.e() +
                 DiyFp.kSignificandSize &&
                 maximal_target_exponent >= w.e() + ten_mk.e() +
                         DiyFp.kSignificandSize);
@@ -463,7 +462,7 @@ public class FastDtoa {
         // In other words: let f = scaled_w.f() and e = scaled_w.e(), then
         //           (f-1) * 2^e < w*10^k < (f+1) * 2^e
         DiyFp scaled_w = DiyFp.times(w, ten_mk);
-        assert(scaled_w.e() ==
+        assert (scaled_w.e() ==
                 boundary_plus.e() + ten_mk.e() + DiyFp.kSignificandSize);
         // In theory it would be possible to avoid some recomputations by computing
         // the difference between w and boundary_minus/plus (a power of 2) and to
@@ -471,7 +470,7 @@ public class FastDtoa {
         // scaled_w. However the code becomes much less readable and the speed
         // enhancements are not terriffic.
         DiyFp scaled_boundary_minus = DiyFp.times(boundary_minus, ten_mk);
-        DiyFp scaled_boundary_plus  = DiyFp.times(boundary_plus,  ten_mk);
+        DiyFp scaled_boundary_plus = DiyFp.times(boundary_plus, ten_mk);
 
         // DigitGen will generate the digits of scaled_w. Therefore we have
         // v == (double) (scaled_w * 10^-mk).
@@ -485,9 +484,9 @@ public class FastDtoa {
 
 
     public static boolean dtoa(double v, FastDtoaBuilder buffer) {
-        assert(v > 0);
-        assert(!Double.isNaN(v));
-        assert(!Double.isInfinite(v));
+        assert (v > 0);
+        assert (!Double.isNaN(v));
+        assert (!Double.isInfinite(v));
 
         return grisu3(v, buffer);
     }

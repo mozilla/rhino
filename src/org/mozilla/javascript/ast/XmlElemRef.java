@@ -11,20 +11,20 @@ import org.mozilla.javascript.Token;
 /**
  * AST node for an E4X XML {@code [expr]} member-ref expression.
  * The node type is {@link Token#REF_MEMBER}.<p>
- *
+ * <p>
  * Syntax:
  * <pre> @<i><sub>opt</sub></i> ns:: <i><sub>opt</sub></i> [ expr ]</pre>
- *
+ * <p>
  * Examples include {@code ns::[expr]}, {@code @ns::[expr]}, {@code @[expr]},
  * {@code *::[expr]} and {@code @*::[expr]}.<p>
- *
+ * <p>
  * Note that the form {@code [expr]} (i.e. no namespace or
  * attribute-qualifier) is not a legal {@code XmlElemRef} expression,
  * since it's already used for standard JavaScript {@link ElementGet}
  * array-indexing.  Hence, an {@code XmlElemRef} node always has
  * either the attribute-qualifier, a non-{@code null} namespace node,
  * or both.<p>
- *
+ * <p>
  * The node starts at the {@code @} token, if present.  Otherwise it starts
  * at the namespace name.  The node bounds extend through the closing
  * right-bracket, or if it is missing due to a syntax error, through the
@@ -61,6 +61,7 @@ public class XmlElemRef extends XmlRef {
 
     /**
      * Sets index expression, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if {@code expr} is {@code null}
      */
     public void setExpression(AstNode expr) {

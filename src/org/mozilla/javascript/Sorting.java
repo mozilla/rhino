@@ -11,19 +11,18 @@ public final class Sorting {
 
     private static final Sorting sorting = new Sorting();
 
-    private Sorting() {}
+    private Sorting() {
+    }
 
     public static Sorting get() {
         return sorting;
     }
 
-    public void insertionSort(Object[] a, Comparator<Object> cmp)
-    {
+    public void insertionSort(Object[] a, Comparator<Object> cmp) {
         insertionSort(a, 0, a.length - 1, cmp);
     }
 
-    private void insertionSort(Object[] a, int start, int end, Comparator<Object> cmp)
-    {
+    private void insertionSort(Object[] a, int start, int end, Comparator<Object> cmp) {
         int i = start;
         while (i <= end) {
             Object x = a[i];
@@ -43,13 +42,11 @@ public final class Sorting {
     recursion is too deep, and then use insertion sort for the rest.
     This is the same basic algorithm used by the GNU Standard C++ library.
     */
-    public void hybridSort(Object[] a, Comparator<Object> cmp)
-    {
+    public void hybridSort(Object[] a, Comparator<Object> cmp) {
         hybridSort(a, 0, a.length - 1, cmp, log2(a.length) * 2);
     }
 
-    private void hybridSort(Object[] a, int start, int end, Comparator<Object> cmp, int maxdepth)
-    {
+    private void hybridSort(Object[] a, int start, int end, Comparator<Object> cmp, int maxdepth) {
         if (start < end) {
             if ((maxdepth == 0) || ((end - start) <= SMALLSORT)) {
                 insertionSort(a, start, end, cmp);
@@ -97,24 +94,21 @@ public final class Sorting {
         return j;
     }
 
-    private void swap(Object[] a, int l, int h)
-    {
+    private void swap(Object[] a, int l, int h) {
         final Object tmp = a[l];
         a[l] = a[h];
         a[h] = tmp;
     }
 
-    private int log2(int n)
-    {
-        return (int)(Math.log10(n) / Math.log10(2.0));
+    private int log2(int n) {
+        return (int) (Math.log10(n) / Math.log10(2.0));
     }
 
     /*
     Return the index of the median of three elements in the specified array range -- the
     first, the last, and the one in the middle.
     */
-    public int median(final Object[] a, int start, int end, Comparator<Object> cmp)
-    {
+    public int median(final Object[] a, int start, int end, Comparator<Object> cmp) {
         final int m = start + ((end - start) / 2);
         int smallest = start;
 

@@ -6,11 +6,11 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.mozilla.javascript.Token;
 
 /**
  * Try/catch/finally statement.  Node type is {@link Token#TRY}.
@@ -27,7 +27,7 @@ import org.mozilla.javascript.Token;
 public class TryStatement extends AstNode {
 
     private static final List<CatchClause> NO_CATCHES =
-        Collections.unmodifiableList(new ArrayList<CatchClause>());
+            Collections.unmodifiableList(new ArrayList<CatchClause>());
 
     private AstNode tryBlock;
     private List<CatchClause> catchClauses;
@@ -55,6 +55,7 @@ public class TryStatement extends AstNode {
 
     /**
      * Sets try block.  Also sets its parent to this node.
+     *
      * @throws IllegalArgumentException} if {@code tryBlock} is {@code null}
      */
     public void setTryBlock(AstNode tryBlock) {
@@ -91,6 +92,7 @@ public class TryStatement extends AstNode {
     /**
      * Add a catch-clause to the end of the list, and sets its parent to
      * this node.
+     *
      * @throws IllegalArgumentException} if {@code clause} is {@code null}
      */
     public void addCatchClause(CatchClause clause) {
@@ -138,7 +140,7 @@ public class TryStatement extends AstNode {
         StringBuilder sb = new StringBuilder(250);
         sb.append(makeIndent(depth));
         sb.append("try ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
         }
         sb.append(tryBlock.toSource(depth).trim());

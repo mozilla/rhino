@@ -13,7 +13,7 @@ import org.mozilla.javascript.Token;
  * {@code foo..bar}, {@code foo..@bar}, {@code @foo.@bar}, and
  * {@code foo..@ns::*}.  The right-hand node is always an
  * {@link XmlRef}. <p>
- *
+ * <p>
  * Node type is {@link Token#DOT} or {@link Token#DOTDOT}.
  */
 public class XmlMemberGet extends InfixExpression {
@@ -59,6 +59,7 @@ public class XmlMemberGet extends InfixExpression {
 
     /**
      * Sets target object, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if {@code target} is {@code null}
      */
     public void setTarget(AstNode target) {
@@ -70,12 +71,13 @@ public class XmlMemberGet extends InfixExpression {
      * Should never be {@code null} unless the code is malformed.
      */
     public XmlRef getMemberRef() {
-        return (XmlRef)getRight();
+        return (XmlRef) getRight();
     }
 
     /**
      * Sets the XML member-ref expression, and sets its parent
      * to this node.
+     *
      * @throws IllegalArgumentException if property is {@code null}
      */
     public void setProperty(XmlRef ref) {
@@ -94,7 +96,8 @@ public class XmlMemberGet extends InfixExpression {
 
     /**
      * Gives string representation of inner dots token.
-     * @return  String representation of inner dots token (e.g. '.' or '..')
+     *
+     * @return String representation of inner dots token (e.g. '.' or '..')
      * @throws IllegalArgumentException on unexpected token type
      */
     private String dotsToString() {

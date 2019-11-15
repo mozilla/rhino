@@ -6,31 +6,25 @@
 
 package org.mozilla.javascript.optimizer;
 
-import org.mozilla.javascript.CompilerEnvirons;
-import org.mozilla.javascript.IRFactory;
-import org.mozilla.javascript.JavaAdapter;
-import org.mozilla.javascript.ObjToIntMap;
-import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.ScriptRuntime;
+import org.mozilla.javascript.*;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.ScriptNode;
 
 /**
  * Generates class files from script sources.
- *
+ * <p>
  * since 1.5 Release 5
+ *
  * @author Igor Bukanov
  */
 
-public class ClassCompiler
-{
+public class ClassCompiler {
     /**
      * Construct ClassCompiler that uses the specified compiler environment
      * when generating classes.
      */
-    public ClassCompiler(CompilerEnvirons compilerEnv)
-    {
+    public ClassCompiler(CompilerEnvirons compilerEnv) {
         if (compilerEnv == null) throw new IllegalArgumentException();
         this.compilerEnv = compilerEnv;
         this.mainMethodClassName = Codegen.DEFAULT_MAIN_METHOD_CLASS;
@@ -44,34 +38,31 @@ public class ClassCompiler
      * class. The class name should be fully qulified name and include the
      * package name like in <tt>org.foo.Bar</tt>.
      */
-    public void setMainMethodClass(String className)
-    {
+    public void setMainMethodClass(String className) {
         // XXX Should this check for a valid class name?
         mainMethodClassName = className;
     }
 
     /**
      * Get the name of the class for main method implementation.
+     *
      * @see #setMainMethodClass(String)
      */
-    public String getMainMethodClass()
-    {
+    public String getMainMethodClass() {
         return mainMethodClassName;
     }
 
     /**
      * Get the compiler environment the compiler uses.
      */
-    public CompilerEnvirons getCompilerEnv()
-    {
+    public CompilerEnvirons getCompilerEnv() {
         return compilerEnv;
     }
 
     /**
      * Get the class that the generated target will extend.
      */
-    public Class<?> getTargetExtends()
-    {
+    public Class<?> getTargetExtends() {
         return targetExtends;
     }
 
@@ -80,17 +71,15 @@ public class ClassCompiler
      *
      * @param extendsClass the class it extends
      */
-    public void setTargetExtends(Class<?> extendsClass)
-    {
+    public void setTargetExtends(Class<?> extendsClass) {
         targetExtends = extendsClass;
     }
 
     /**
      * Get the interfaces that the generated target will implement.
      */
-    public Class<?>[] getTargetImplements()
-    {
-        return targetImplements == null ? null : (Class[])targetImplements.clone();
+    public Class<?>[] getTargetImplements() {
+        return targetImplements == null ? null : targetImplements.clone();
     }
 
     /**
@@ -99,9 +88,8 @@ public class ClassCompiler
      * @param implementsClasses an array of Class objects, one for each
      *                          interface the target will extend
      */
-    public void setTargetImplements(Class<?>[] implementsClasses)
-    {
-        targetImplements = implementsClasses == null ? null : (Class[])implementsClasses.clone();
+    public void setTargetImplements(Class<?>[] implementsClasses) {
+        targetImplements = implementsClasses == null ? null : implementsClasses.clone();
     }
 
     /**
@@ -112,9 +100,8 @@ public class ClassCompiler
      * but this can be overridden.
      */
     protected String makeAuxiliaryClassName(String mainClassName,
-                                            String auxMarker)
-    {
-        return mainClassName+auxMarker;
+                                            String auxMarker) {
+        return mainClassName + auxMarker;
     }
 
     /**
@@ -126,15 +113,14 @@ public class ClassCompiler
      * specified interfaces.
      *
      * @return array where elements with even indexes specifies class name
-     *         and the following odd index gives class file body as byte[]
-     *         array. The initial element of the array always holds
-     *         mainClassName and array[1] holds its byte code.
+     * and the following odd index gives class file body as byte[]
+     * array. The initial element of the array always holds
+     * mainClassName and array[1] holds its byte code.
      */
     public Object[] compileToClassFiles(String source,
                                         String sourceLocation,
                                         int lineno,
-                                        String mainClassName)
-    {
+                                        String mainClassName) {
         Parser p = new Parser(compilerEnv);
         AstRoot ast = p.parse(source, sourceLocation, lineno);
         IRFactory irf = new IRFactory(compilerEnv);
@@ -158,12 +144,12 @@ public class ClassCompiler
         Codegen codegen = new Codegen();
         codegen.setMainMethodClass(mainMethodClassName);
         byte[] scriptClassBytes
-            = codegen.compileToClassFile(compilerEnv, scriptClassName,
-                                         tree, tree.getEncodedSource(),
-                                         false);
+                = codegen.compileToClassFile(compilerEnv, scriptClassName,
+                tree, tree.getEncodedSource(),
+                false);
 
         if (isPrimary) {
-            return new Object[] { scriptClassName, scriptClassBytes };
+            return new Object[]{scriptClassName, scriptClassBytes};
         }
         int functionCount = tree.getFunctionCount();
         ObjToIntMap functionNames = new ObjToIntMap(functionCount);
@@ -178,12 +164,12 @@ public class ClassCompiler
             superClass = ScriptRuntime.ObjectClass;
         }
         byte[] mainClassBytes
-            = JavaAdapter.createAdapterCode(
+                = JavaAdapter.createAdapterCode(
                 functionNames, mainClassName,
                 superClass, interfaces, scriptClassName);
 
-        return new Object[] { mainClassName, mainClassBytes,
-                              scriptClassName, scriptClassBytes };
+        return new Object[]{mainClassName, mainClassBytes,
+                scriptClassName, scriptClassBytes};
     }
 
     private String mainMethodClassName;

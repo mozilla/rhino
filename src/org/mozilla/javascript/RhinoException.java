@@ -19,19 +19,16 @@ import java.util.regex.Pattern;
 /**
  * The class of exceptions thrown by the JavaScript engine.
  */
-public abstract class RhinoException extends RuntimeException
-{
+public abstract class RhinoException extends RuntimeException {
     private static final Pattern JAVA_STACK_PATTERN = Pattern.compile("_c_(.*)_\\d+");
 
-    RhinoException()
-    {
+    RhinoException() {
         Evaluator e = Context.createInterpreter();
         if (e != null)
             e.captureStackInfo(this);
     }
 
-    RhinoException(String details)
-    {
+    RhinoException(String details) {
         super(details);
         Evaluator e = Context.createInterpreter();
         if (e != null)
@@ -39,8 +36,7 @@ public abstract class RhinoException extends RuntimeException
     }
 
     @Override
-    public final String getMessage()
-    {
+    public final String getMessage() {
         String details = details();
         if (sourceName == null || lineNumber <= 0) {
             return details;
@@ -58,8 +54,7 @@ public abstract class RhinoException extends RuntimeException
         return buf.toString();
     }
 
-    public String details()
-    {
+    public String details() {
         return super.getMessage();
     }
 
@@ -67,8 +62,7 @@ public abstract class RhinoException extends RuntimeException
      * Get the uri of the script source containing the error, or null
      * if that information is not available.
      */
-    public final String sourceName()
-    {
+    public final String sourceName() {
         return sourceName;
     }
 
@@ -77,11 +71,9 @@ public abstract class RhinoException extends RuntimeException
      *
      * @param sourceName the uri of the script source responsible for the error.
      *                   It should not be <tt>null</tt>.
-     *
      * @throws IllegalStateException if the method is called more then once.
      */
-    public final void initSourceName(String sourceName)
-    {
+    public final void initSourceName(String sourceName) {
         if (sourceName == null) throw new IllegalArgumentException();
         if (this.sourceName != null) throw new IllegalStateException();
         this.sourceName = sourceName;
@@ -91,8 +83,7 @@ public abstract class RhinoException extends RuntimeException
      * Returns the line number of the statement causing the error,
      * or zero if not available.
      */
-    public final int lineNumber()
-    {
+    public final int lineNumber() {
         return lineNumber;
     }
 
@@ -101,11 +92,9 @@ public abstract class RhinoException extends RuntimeException
      *
      * @param lineNumber the line number in the script source.
      *                   It should be positive number.
-     *
      * @throws IllegalStateException if the method is called more then once.
      */
-    public final void initLineNumber(int lineNumber)
-    {
+    public final void initLineNumber(int lineNumber) {
         if (lineNumber <= 0) throw new IllegalArgumentException(String.valueOf(lineNumber));
         if (this.lineNumber > 0) throw new IllegalStateException();
         this.lineNumber = lineNumber;
@@ -114,8 +103,7 @@ public abstract class RhinoException extends RuntimeException
     /**
      * The column number of the location of the error, or zero if unknown.
      */
-    public final int columnNumber()
-    {
+    public final int columnNumber() {
         return columnNumber;
     }
 
@@ -124,11 +112,9 @@ public abstract class RhinoException extends RuntimeException
      *
      * @param columnNumber the column number in the script source.
      *                     It should be positive number.
-     *
      * @throws IllegalStateException if the method is called more then once.
      */
-    public final void initColumnNumber(int columnNumber)
-    {
+    public final void initColumnNumber(int columnNumber) {
         if (columnNumber <= 0) throw new IllegalArgumentException(String.valueOf(columnNumber));
         if (this.columnNumber > 0) throw new IllegalStateException();
         this.columnNumber = columnNumber;
@@ -137,8 +123,7 @@ public abstract class RhinoException extends RuntimeException
     /**
      * The source text of the line causing the error, or null if unknown.
      */
-    public final String lineSource()
-    {
+    public final String lineSource() {
         return lineSource;
     }
 
@@ -147,19 +132,16 @@ public abstract class RhinoException extends RuntimeException
      *
      * @param lineSource the text of the source line responsible for the error.
      *                   It should not be <tt>null</tt>.
-     *
      * @throws IllegalStateException if the method is called more then once.
      */
-    public final void initLineSource(String lineSource)
-    {
+    public final void initLineSource(String lineSource) {
         if (lineSource == null) throw new IllegalArgumentException();
         if (this.lineSource != null) throw new IllegalStateException();
         this.lineSource = lineSource;
     }
 
     final void recordErrorOrigin(String sourceName, int lineNumber,
-                                 String lineSource, int columnNumber)
-    {
+                                 String lineSource, int columnNumber) {
         // XXX: for compatibility allow for now -1 to mean 0
         if (lineNumber == -1) {
             lineNumber = 0;
@@ -179,8 +161,7 @@ public abstract class RhinoException extends RuntimeException
         }
     }
 
-    private String generateStackTrace()
-    {
+    private String generateStackTrace() {
         // Get stable reference to work properly with concurrent access
         CharArrayWriter writer = new CharArrayWriter();
         super.printStackTrace(new PrintWriter(writer));
@@ -196,11 +177,11 @@ public abstract class RhinoException extends RuntimeException
      * If optimization is enabled, this includes java stack elements
      * whose source and method names suggest they have been generated
      * by the Rhino script compiler.
+     *
      * @return a script stack dump
      * @since 1.6R6
      */
-    public String getScriptStackTrace()
-    {
+    public String getScriptStackTrace() {
         return getScriptStackTrace(NativeError.DEFAULT_STACK_LIMIT, null);
     }
 
@@ -213,19 +194,17 @@ public abstract class RhinoException extends RuntimeException
      * The "functionName" parameter will exclude any stack frames "below" the
      * specified function on the stack.
      *
-     * @param limit the number of stack frames returned
+     * @param limit        the number of stack frames returned
      * @param functionName the name of a function on the stack -- frames below it will be ignored
      * @return a script stack dump
      * @since 1.8.0
      */
-    public String getScriptStackTrace(int limit, String functionName)
-    {
+    public String getScriptStackTrace(int limit, String functionName) {
         ScriptStackElement[] stack = getScriptStack(limit, functionName);
         return formatStackTrace(stack, details());
     }
 
-    static String formatStackTrace(ScriptStackElement[] stack, String message)
-    {
+    static String formatStackTrace(ScriptStackElement[] stack, String message) {
         StringBuilder buffer = new StringBuilder();
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
 
@@ -237,15 +216,15 @@ public abstract class RhinoException extends RuntimeException
 
         for (ScriptStackElement elem : stack) {
             switch (stackStyle) {
-            case MOZILLA:
-                elem.renderMozillaStyle(buffer);
-                break;
-            case V8:
-                elem.renderV8Style(buffer);
-                break;
-            case RHINO:
-                elem.renderJavaStyle(buffer);
-                break;
+                case MOZILLA:
+                    elem.renderMozillaStyle(buffer);
+                    break;
+                case V8:
+                    elem.renderV8Style(buffer);
+                    break;
+                case RHINO:
+                    elem.renderJavaStyle(buffer);
+                    break;
             }
             buffer.append(lineSeparator);
         }
@@ -254,16 +233,16 @@ public abstract class RhinoException extends RuntimeException
 
     /**
      * Get a string representing the script stack of this exception.
-     * @deprecated the filter argument is ignored as we are able to
-     * recognize script stack elements by our own. Use
-     * #getScriptStackTrace() instead.
+     *
      * @param filter ignored
      * @return a script stack dump
      * @since 1.6R6
+     * @deprecated the filter argument is ignored as we are able to
+     * recognize script stack elements by our own. Use
+     * #getScriptStackTrace() instead.
      */
     @Deprecated
-    public String getScriptStackTrace(FilenameFilter filter)
-    {
+    public String getScriptStackTrace(FilenameFilter filter) {
         return getScriptStackTrace();
     }
 
@@ -273,6 +252,7 @@ public abstract class RhinoException extends RuntimeException
      * If optimization is enabled, this includes java stack elements
      * whose source and method names suggest they have been generated
      * by the Rhino script compiler.
+     *
      * @return the script stack for this exception
      * @since 1.7R3
      */
@@ -287,7 +267,7 @@ public abstract class RhinoException extends RuntimeException
      * whose source and method names suggest they have been generated
      * by the Rhino script compiler.
      *
-     * @param limit the number of stack frames returned, or -1 for unlimited
+     * @param limit        the number of stack frames returned, or -1 for unlimited
      * @param hideFunction the name of a function on the stack -- frames below it will be ignored, or null
      * @return the script stack for this exception
      * @since 1.8.0
@@ -349,8 +329,7 @@ public abstract class RhinoException extends RuntimeException
 
 
     @Override
-    public void printStackTrace(PrintWriter s)
-    {
+    public void printStackTrace(PrintWriter s) {
         if (interpreterStackInfo == null) {
             super.printStackTrace(s);
         } else {
@@ -359,8 +338,7 @@ public abstract class RhinoException extends RuntimeException
     }
 
     @Override
-    public void printStackTrace(PrintStream s)
-    {
+    public void printStackTrace(PrintStream s) {
         if (interpreterStackInfo == null) {
             super.printStackTrace(s);
         } else {
@@ -374,6 +352,7 @@ public abstract class RhinoException extends RuntimeException
      * (<code>functionName()@fileName:lineNumber</code>)
      * instead of Rhino's own Java-inspired format
      * (<code>    at fileName:lineNumber (functionName)</code>).
+     *
      * @return true if stack is rendered in Mozilla/Firefox style
      * @see ScriptStackElement
      * @since 1.7R3
@@ -389,6 +368,7 @@ public abstract class RhinoException extends RuntimeException
      * instead of Rhino's own Java-inspired format
      * (<code>    at fileName:lineNumber (functionName)</code>).
      * Use "setStackStyle" to select between more than just the "Mozilla" and "Rhino" formats.
+     *
      * @param flag whether to render stacks in Mozilla/Firefox style
      * @see ScriptStackElement
      * @since 1.7R3
@@ -400,6 +380,7 @@ public abstract class RhinoException extends RuntimeException
     /**
      * Specify the stack style to use from between three different formats: "Rhino" (the default),
      * "Mozilla", and "V8." See StackStyle for information about each.
+     *
      * @param style the style to select -- an instance of the StackStyle class
      * @see StackStyle
      * @since 1.8.0

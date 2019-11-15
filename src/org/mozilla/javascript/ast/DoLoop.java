@@ -43,6 +43,7 @@ public class DoLoop extends Loop {
 
     /**
      * Sets loop condition, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if condition is null
      */
     public void setCondition(AstNode condition) {
@@ -70,7 +71,7 @@ public class DoLoop extends Loop {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         sb.append("do ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
         }
         sb.append(body.toSource(depth).trim());

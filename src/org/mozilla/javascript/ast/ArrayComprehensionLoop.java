@@ -26,9 +26,10 @@ public class ArrayComprehensionLoop extends ForInLoop {
     public ArrayComprehensionLoop(int pos, int len) {
         super(pos, len);
     }
-    
+
     /**
      * Returns {@code null} for loop body
+     *
      * @return loop body (always {@code null} for this node type)
      */
     @Override
@@ -38,6 +39,7 @@ public class ArrayComprehensionLoop extends ForInLoop {
 
     /**
      * Throws an exception on attempts to set the loop body.
+     *
      * @param body loop body
      * @throws UnsupportedOperationException
      */
@@ -50,10 +52,10 @@ public class ArrayComprehensionLoop extends ForInLoop {
     public String toSource(int depth) {
         return makeIndent(depth)
                 + " for "
-                + (isForEach()?"each ":"")
+                + (isForEach() ? "each " : "")
                 + "("
                 + iterator.toSource(0)
-                + (isForOf()?" of ":" in ")
+                + (isForOf() ? " of " : " in ")
                 + iteratedObject.toSource(0)
                 + ")";
     }

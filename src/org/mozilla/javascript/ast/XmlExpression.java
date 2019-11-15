@@ -43,6 +43,7 @@ public class XmlExpression extends XmlFragment {
 
     /**
      * Sets the expression embedded in {}, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if {@code expression} is {@code null}
      */
     public void setExpression(AstNode expression) {
@@ -55,14 +56,14 @@ public class XmlExpression extends XmlFragment {
      * Returns whether this is part of an xml attribute value
      */
     public boolean isXmlAttribute() {
-      return isXmlAttribute;
+        return isXmlAttribute;
     }
 
     /**
      * Sets whether this is part of an xml attribute value
      */
     public void setIsXmlAttribute(boolean isXmlAttribute) {
-      this.isXmlAttribute = isXmlAttribute;
+        this.isXmlAttribute = isXmlAttribute;
     }
 
     @Override

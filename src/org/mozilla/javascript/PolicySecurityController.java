@@ -4,20 +4,14 @@
 
 package org.mozilla.javascript;
 
-import java.lang.ref.SoftReference;
-import java.lang.reflect.UndeclaredThrowableException;
-import java.security.AccessController;
-import java.security.CodeSource;
-import java.security.Policy;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.security.SecureClassLoader;
-import java.util.Map;
-import java.util.WeakHashMap;
-
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
+
+import java.lang.ref.SoftReference;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.security.*;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * A security controller relying on Java {@link Policy} in effect. When you use
@@ -28,19 +22,19 @@ import org.mozilla.classfile.ClassFileWriter;
  * within your {@link CodeSource} objects, it is your responsibility to verify
  * (or not) that the script source files are signed in whatever
  * implementation-specific way you're using.
+ *
  * @author Attila Szegedi
  */
-public class PolicySecurityController extends SecurityController
-{
+public class PolicySecurityController extends SecurityController {
     private static final byte[] secureCallerImplBytecode = loadBytecode();
 
     // We're storing a CodeSource -> (ClassLoader -> SecureRenderer), since we
     // need to have one renderer per class loader. We're using weak hash maps
     // and soft references all the way, since we don't want to interfere with
     // cleanup of either CodeSource or ClassLoader objects.
-    private static final Map<CodeSource,Map<ClassLoader,SoftReference<SecureCaller>>>
-        callers =
-            new WeakHashMap<CodeSource,Map<ClassLoader,SoftReference<SecureCaller>>>();
+    private static final Map<CodeSource, Map<ClassLoader, SoftReference<SecureCaller>>>
+            callers =
+            new WeakHashMap<CodeSource, Map<ClassLoader, SoftReference<SecureCaller>>>();
 
     @Override
     public Class<?> getStaticSecurityDomainClassInternal() {
@@ -48,47 +42,39 @@ public class PolicySecurityController extends SecurityController
     }
 
     private static class Loader extends SecureClassLoader
-    implements GeneratedClassLoader
-    {
+            implements GeneratedClassLoader {
         private final CodeSource codeSource;
 
-        Loader(ClassLoader parent, CodeSource codeSource)
-        {
+        Loader(ClassLoader parent, CodeSource codeSource) {
             super(parent);
             this.codeSource = codeSource;
         }
 
         @Override
-        public Class<?> defineClass(String name, byte[] data)
-        {
+        public Class<?> defineClass(String name, byte[] data) {
             return defineClass(name, data, 0, data.length, codeSource);
         }
 
         @Override
-        public void linkClass(Class<?> cl)
-        {
+        public void linkClass(Class<?> cl) {
             resolveClass(cl);
         }
     }
 
     @Override
     public GeneratedClassLoader createClassLoader(final ClassLoader parent,
-            final Object securityDomain)
-    {
-        return (Loader)AccessController.doPrivileged(
-            new PrivilegedAction<Object>()
-            {
-                @Override
-                public Object run()
-                {
-                    return new Loader(parent, (CodeSource)securityDomain);
-                }
-            });
+                                                  final Object securityDomain) {
+        return (Loader) AccessController.doPrivileged(
+                new PrivilegedAction<Object>() {
+                    @Override
+                    public Object run() {
+                        return new Loader(parent, (CodeSource) securityDomain);
+                    }
+                });
     }
 
     @Override
-    public Object getDynamicSecurityDomain(Object securityDomain)
-    {
+    public Object getDynamicSecurityDomain(Object securityDomain) {
         // No separate notion of dynamic security domain - just return what was
         // passed in.
         return securityDomain;
@@ -96,24 +82,23 @@ public class PolicySecurityController extends SecurityController
 
     @Override
     public Object callWithDomain(final Object securityDomain, final Context cx,
-            Callable callable, Scriptable scope, Scriptable thisObj,
-            Object[] args)
-    {
+                                 Callable callable, Scriptable scope, Scriptable thisObj,
+                                 Object[] args) {
         // Run in doPrivileged as we might be checked for "getClassLoader"
         // runtime permission
-        final ClassLoader classLoader = (ClassLoader)AccessController.doPrivileged(
-            new PrivilegedAction<Object>() {
-                @Override
-                public Object run() {
-                    return cx.getApplicationClassLoader();
-                }
-            });
-        final CodeSource codeSource = (CodeSource)securityDomain;
-        Map<ClassLoader,SoftReference<SecureCaller>> classLoaderMap;
+        final ClassLoader classLoader = (ClassLoader) AccessController.doPrivileged(
+                new PrivilegedAction<Object>() {
+                    @Override
+                    public Object run() {
+                        return cx.getApplicationClassLoader();
+                    }
+                });
+        final CodeSource codeSource = (CodeSource) securityDomain;
+        Map<ClassLoader, SoftReference<SecureCaller>> classLoaderMap;
         synchronized (callers) {
             classLoaderMap = callers.get(codeSource);
-            if(classLoaderMap == null) {
-                classLoaderMap = new WeakHashMap<ClassLoader,SoftReference<SecureCaller>>();
+            if (classLoaderMap == null) {
+                classLoaderMap = new WeakHashMap<ClassLoader, SoftReference<SecureCaller>>();
                 callers.put(codeSource, classLoaderMap);
             }
         }
@@ -125,30 +110,24 @@ public class PolicySecurityController extends SecurityController
             } else {
                 caller = null;
             }
-            if (caller == null)
-            {
-                try
-                {
+            if (caller == null) {
+                try {
                     // Run in doPrivileged as we'll be checked for
                     // "createClassLoader" runtime permission
-                    caller = (SecureCaller)AccessController.doPrivileged(
-                            new PrivilegedExceptionAction<Object>()
-                    {
-                        @Override
-                        public Object run() throws Exception
-                        {
-                            Loader loader = new Loader(classLoader,
-                                    codeSource);
-                            Class<?> c = loader.defineClass(
-                                    SecureCaller.class.getName() + "Impl",
-                                    secureCallerImplBytecode);
-                            return c.newInstance();
-                        }
-                    });
+                    caller = (SecureCaller) AccessController.doPrivileged(
+                            new PrivilegedExceptionAction<Object>() {
+                                @Override
+                                public Object run() throws Exception {
+                                    Loader loader = new Loader(classLoader,
+                                            codeSource);
+                                    Class<?> c = loader.defineClass(
+                                            SecureCaller.class.getName() + "Impl",
+                                            secureCallerImplBytecode);
+                                    return c.newInstance();
+                                }
+                            });
                     classLoaderMap.put(classLoader, new SoftReference<SecureCaller>(caller));
-                }
-                catch(PrivilegedActionException ex)
-                {
+                } catch (PrivilegedActionException ex) {
                     throw new UndeclaredThrowableException(ex.getCause());
                 }
             }
@@ -156,15 +135,13 @@ public class PolicySecurityController extends SecurityController
         return caller.call(callable, cx, scope, thisObj, args);
     }
 
-    public abstract static class SecureCaller
-    {
+    public abstract static class SecureCaller {
         public abstract Object call(Callable callable, Context cx, Scriptable scope,
-                Scriptable thisObj, Object[] args);
+                                    Scriptable thisObj, Object[] args);
     }
 
 
-    private static byte[] loadBytecode()
-    {
+    private static byte[] loadBytecode() {
         String secureCallerClassName = SecureCaller.class.getName();
         ClassFileWriter cfw = new ClassFileWriter(
                 secureCallerClassName + "Impl", secureCallerClassName,
@@ -174,25 +151,25 @@ public class PolicySecurityController extends SecurityController
         cfw.addInvoke(ByteCode.INVOKESPECIAL, secureCallerClassName,
                 "<init>", "()V");
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short)1);
+        cfw.stopMethod((short) 1);
         String callableCallSig =
-            "Lorg/mozilla/javascript/Context;" +
-            "Lorg/mozilla/javascript/Scriptable;" +
-            "Lorg/mozilla/javascript/Scriptable;" +
-            "[Ljava/lang/Object;)Ljava/lang/Object;";
+                "Lorg/mozilla/javascript/Context;" +
+                        "Lorg/mozilla/javascript/Scriptable;" +
+                        "Lorg/mozilla/javascript/Scriptable;" +
+                        "[Ljava/lang/Object;)Ljava/lang/Object;";
 
         cfw.startMethod("call",
                 "(Lorg/mozilla/javascript/Callable;" + callableCallSig,
-                (short)(ClassFileWriter.ACC_PUBLIC
+                (short) (ClassFileWriter.ACC_PUBLIC
                         | ClassFileWriter.ACC_FINAL));
-        for(int i = 1; i < 6; ++i) {
+        for (int i = 1; i < 6; ++i) {
             cfw.addALoad(i);
         }
         cfw.addInvoke(ByteCode.INVOKEINTERFACE,
                 "org/mozilla/javascript/Callable", "call",
                 "(" + callableCallSig);
         cfw.add(ByteCode.ARETURN);
-        cfw.stopMethod((short)6);
+        cfw.stopMethod((short) 6);
         return cfw.toByteArray();
     }
 }

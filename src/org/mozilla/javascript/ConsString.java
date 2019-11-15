@@ -44,10 +44,10 @@ public class ConsString implements CharSequence, Serializable {
     private Object writeReplace() {
         return this.toString();
     }
-    
+
     @Override
     public String toString() {
-        return isFlat ? (String)left : flatten();
+        return isFlat ? (String) left : flatten();
     }
 
     private synchronized String flatten() {
@@ -81,7 +81,7 @@ public class ConsString implements CharSequence, Serializable {
             right = "";
             isFlat = true;
         }
-        return (String)left;
+        return (String) left;
     }
 
     @Override
@@ -91,13 +91,13 @@ public class ConsString implements CharSequence, Serializable {
 
     @Override
     public char charAt(int index) {
-        String str = isFlat ? (String)left : flatten();
+        String str = isFlat ? (String) left : flatten();
         return str.charAt(index);
     }
 
     @Override
     public CharSequence subSequence(int start, int end) {
-        String str = isFlat ? (String)left : flatten();
+        String str = isFlat ? (String) left : flatten();
         return str.substring(start, end);
     }
 }

@@ -38,6 +38,7 @@ public class BreakStatement extends Jump {
 
     /**
      * Returns the intended label of this break statement
+     *
      * @return the break label.  {@code null} if the source code did
      * not specify a specific break label via "break &lt;target&gt;".
      */
@@ -48,8 +49,9 @@ public class BreakStatement extends Jump {
     /**
      * Sets the intended label of this break statement, e.g.  'foo'
      * in "break foo". Also sets the parent of the label to this node.
+     *
      * @param label the break label, or {@code null} if the statement is
-     * just the "break" keyword by itself.
+     *              just the "break" keyword by itself.
      */
     public void setBreakLabel(Name label) {
         breakLabel = label;
@@ -59,6 +61,7 @@ public class BreakStatement extends Jump {
 
     /**
      * Returns the statement to break to
+     *
      * @return the break target.  Only {@code null} if the source
      * code has an error in it.
      */
@@ -68,6 +71,7 @@ public class BreakStatement extends Jump {
 
     /**
      * Sets the statement to break to.
+     *
      * @param target the statement to break to
      * @throws IllegalArgumentException if target is {@code null}
      */

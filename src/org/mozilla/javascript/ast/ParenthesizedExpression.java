@@ -33,8 +33,8 @@ public class ParenthesizedExpression extends AstNode {
 
     public ParenthesizedExpression(AstNode expr) {
         this(expr != null ? expr.getPosition() : 0,
-             expr != null ? expr.getLength() : 1,
-             expr);
+                expr != null ? expr.getLength() : 1,
+                expr);
     }
 
     public ParenthesizedExpression(int pos, int len, AstNode expr) {
@@ -52,6 +52,7 @@ public class ParenthesizedExpression extends AstNode {
     /**
      * Sets the expression between the parens, and sets the parent
      * to this node.
+     *
      * @param expression the expression between the parens
      * @throws IllegalArgumentException} if expression is {@code null}
      */

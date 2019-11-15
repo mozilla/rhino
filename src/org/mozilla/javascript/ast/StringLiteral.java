@@ -31,6 +31,7 @@ public class StringLiteral extends AstNode {
 
     /**
      * Creates a string literal node at the specified position.
+     *
      * @param len the length <em>including</em> the enclosing quotes
      */
     public StringLiteral(int pos, int len) {
@@ -39,6 +40,7 @@ public class StringLiteral extends AstNode {
 
     /**
      * Returns the node's value:  the parsed string without the enclosing quotes
+     *
      * @return the node's value, a {@link String} of unescaped characters
      * that includes the delimiter quotes.
      */
@@ -57,6 +59,7 @@ public class StringLiteral extends AstNode {
 
     /**
      * Sets the node's value.  Do not include the enclosing quotes.
+     *
      * @param value the node's value
      * @throws IllegalArgumentException} if value is {@code null}
      */

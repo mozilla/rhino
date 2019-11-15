@@ -6,21 +6,21 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.mozilla.javascript.Token;
 
 /**
  * A list of one or more var, const or let declarations.
  * Node type is {@link Token#VAR}, {@link Token#CONST} or
  * {@link Token#LET}.<p>
- *
+ * <p>
  * If the node is for {@code var} or {@code const}, the node position
  * is the beginning of the {@code var} or {@code const} keyword.
  * For {@code let} declarations, the node position coincides with the
  * first {@link VariableInitializer} child.<p>
- *
+ * <p>
  * A standalone variable declaration in a statement context returns {@code true}
  * from its {@link #isStatement()} method.
  */
@@ -53,6 +53,7 @@ public class VariableDeclaration extends AstNode {
 
     /**
      * Sets variable list
+     *
      * @throws IllegalArgumentException if variables list is {@code null}
      */
     public void setVariables(List<VariableInitializer> variables) {
@@ -66,6 +67,7 @@ public class VariableDeclaration extends AstNode {
     /**
      * Adds a variable initializer node to the child list.
      * Sets initializer node's parent to this node.
+     *
      * @throws IllegalArgumentException if v is {@code null}
      */
     public void addVariable(VariableInitializer v) {
@@ -76,13 +78,14 @@ public class VariableDeclaration extends AstNode {
 
     /**
      * Sets the node type and returns this node.
+     *
      * @throws IllegalArgumentException if {@code declType} is invalid
      */
     @Override
     public org.mozilla.javascript.Node setType(int type) {
         if (type != Token.VAR
-            && type != Token.CONST
-            && type != Token.LET)
+                && type != Token.CONST
+                && type != Token.LET)
             throw new IllegalArgumentException("invalid decl type: " + type);
         return super.setType(type);
     }
@@ -90,6 +93,7 @@ public class VariableDeclaration extends AstNode {
     /**
      * Returns true if this is a {@code var} (not
      * {@code const} or {@code let}) declaration.
+     *
      * @return true if {@code declType} is {@link Token#VAR}
      */
     public boolean isVar() {
@@ -138,7 +142,7 @@ public class VariableDeclaration extends AstNode {
         if (isStatement()) {
             sb.append(";");
         }
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth)).append("\n");
         } else if (isStatement()) {
             sb.append("\n");

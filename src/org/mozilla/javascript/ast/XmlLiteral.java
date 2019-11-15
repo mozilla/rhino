@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.mozilla.javascript.Token;
 
 /**
  * AST node for an E4X (Ecma-357) embedded XML literal.  Node type is
@@ -47,6 +47,7 @@ public class XmlLiteral extends AstNode {
     /**
      * Sets fragment list, removing any existing fragments first.
      * Sets the parent pointer for each fragment in the list to this node.
+     *
      * @param fragments fragment list.  Replaces any existing fragments.
      * @throws IllegalArgumentException} if {@code fragments} is {@code null}
      */
@@ -59,6 +60,7 @@ public class XmlLiteral extends AstNode {
 
     /**
      * Adds a fragment to the fragment list.  Sets its parent to this node.
+     *
      * @throws IllegalArgumentException} if {@code fragment} is {@code null}
      */
     public void addFragment(XmlFragment fragment) {

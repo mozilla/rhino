@@ -47,6 +47,7 @@ public class InfixExpression extends AstNode {
 
     /**
      * Constructs a new {@code InfixExpression}.
+     *
      * @param operatorPos the <em>absolute</em> position of the operator
      */
     public InfixExpression(int operator, AstNode left,
@@ -79,8 +80,9 @@ public class InfixExpression extends AstNode {
     /**
      * Sets operator token &ndash; like {@link #setType}, but throws
      * an exception if the operator is invalid.
+     *
      * @throws IllegalArgumentException if operator is not a valid token
-     * code
+     *                                  code
      */
     public void setOperator(int operator) {
         if (!Token.isValidToken(operator))
@@ -98,6 +100,7 @@ public class InfixExpression extends AstNode {
     /**
      * Sets the left-hand side of the expression, and sets its
      * parent to this node.
+     *
      * @param left the left-hand side of the expression
      * @throws IllegalArgumentException} if left is {@code null}
      */
@@ -111,6 +114,7 @@ public class InfixExpression extends AstNode {
 
     /**
      * Returns the right-hand side of the expression
+     *
      * @return the right-hand side.  It's usually an
      * {@link AstNode} node, but can also be a {@link FunctionNode}
      * representing Function expressions.
@@ -122,6 +126,7 @@ public class InfixExpression extends AstNode {
     /**
      * Sets the right-hand side of the expression, and sets its parent to this
      * node.
+     *
      * @throws IllegalArgumentException} if right is {@code null}
      */
     public void setRight(AstNode right) {
@@ -139,6 +144,7 @@ public class InfixExpression extends AstNode {
 
     /**
      * Sets operator token's relative offset
+     *
      * @param operatorPosition offset in parent of operator token
      */
     public void setOperatorPosition(int operatorPosition) {
@@ -149,14 +155,14 @@ public class InfixExpression extends AstNode {
     public boolean hasSideEffects() {
         // the null-checks are for malformed expressions in IDE-mode
         switch (getType()) {
-          case Token.COMMA:
-              return right != null && right.hasSideEffects();
-          case Token.AND:
-          case Token.OR:
-              return left != null && left.hasSideEffects()
-                      || (right != null && right.hasSideEffects());
-          default:
-              return super.hasSideEffects();
+            case Token.COMMA:
+                return right != null && right.hasSideEffects();
+            case Token.AND:
+            case Token.OR:
+                return left != null && left.hasSideEffects()
+                        || (right != null && right.hasSideEffects());
+            default:
+                return super.hasSideEffects();
         }
     }
 

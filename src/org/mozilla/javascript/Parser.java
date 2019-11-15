@@ -2136,8 +2136,8 @@ public class Parser {
         int symDeclType = symbol != null ? symbol.getDeclType() : -1;
         if (symbol != null
                 && (definingScope == currentScope
-                    && (symDeclType == Token.CONST || symDeclType == Token.LET)
-                )
+                && (symDeclType == Token.CONST || symDeclType == Token.LET)
+        )
         ) {
             addError(symDeclType == Token.CONST ? "msg.const.redecl" : "msg.let.redecl", name);
             return;

@@ -6,10 +6,10 @@
 
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ScriptableObject.SlotAccess;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-
-import org.mozilla.javascript.ScriptableObject.SlotAccess;
 
 /**
  * This class implements the SlotMap interface using a java.util.HashMap. This class has more
@@ -20,10 +20,10 @@ import org.mozilla.javascript.ScriptableObject.SlotAccess;
  */
 
 public class HashSlotMap
-    implements SlotMap {
+        implements SlotMap {
 
     private final LinkedHashMap<Object, ScriptableObject.Slot> map =
-        new LinkedHashMap<Object, ScriptableObject.Slot>();
+            new LinkedHashMap<Object, ScriptableObject.Slot>();
 
     @Override
     public int size() {
@@ -36,8 +36,7 @@ public class HashSlotMap
     }
 
     @Override
-    public ScriptableObject.Slot query(Object key, int index)
-    {
+    public ScriptableObject.Slot query(Object key, int index) {
         Object name = key == null ? String.valueOf(index) : key;
         return map.get(name);
     }
@@ -59,7 +58,7 @@ public class HashSlotMap
                     return slot;
                 break;
             case CONVERT_ACCESSOR_TO_DATA:
-                if ( !(slot instanceof ScriptableObject.GetterSlot) )
+                if (!(slot instanceof ScriptableObject.GetterSlot))
                     return slot;
                 break;
         }
@@ -68,7 +67,7 @@ public class HashSlotMap
     }
 
     private ScriptableObject.Slot createSlot(Object key, int index,
-        Object name, ScriptableObject.SlotAccess accessType) {
+                                             Object name, ScriptableObject.SlotAccess accessType) {
         ScriptableObject.Slot slot = map.get(name);
         if (slot != null) {
             ScriptableObject.Slot newSlot;

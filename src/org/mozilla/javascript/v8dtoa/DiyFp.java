@@ -111,7 +111,7 @@ class DiyFp {
     }
 
     void normalize() {
-        assert(f != 0);
+        assert (f != 0);
         long f = this.f;
         int e = this.e;
 
@@ -136,11 +136,21 @@ class DiyFp {
         return result;
     }
 
-    long f() { return f; }
-    int e() { return e; }
+    long f() {
+        return f;
+    }
 
-    void setF(long new_value) { f = new_value; }
-    void setE(int new_value) { e = new_value; }
+    int e() {
+        return e;
+    }
+
+    void setF(long new_value) {
+        f = new_value;
+    }
+
+    void setE(int new_value) {
+        e = new_value;
+    }
 
     @Override
     public String toString() {

@@ -11,22 +11,20 @@ package org.mozilla.javascript;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 
-public abstract class VMBridge
-{
+public abstract class VMBridge {
 
     static final VMBridge instance = makeInstance();
 
-    private static VMBridge makeInstance()
-    {
+    private static VMBridge makeInstance() {
         String[] classNames = {
-            "org.mozilla.javascript.VMBridge_custom",
-            "org.mozilla.javascript.jdk18.VMBridge_jdk18",
+                "org.mozilla.javascript.VMBridge_custom",
+                "org.mozilla.javascript.jdk18.VMBridge_jdk18",
         };
         for (int i = 0; i != classNames.length; ++i) {
             String className = classNames[i];
             Class<?> cl = Kit.classOrNull(className);
             if (cl != null) {
-                VMBridge bridge = (VMBridge)Kit.newInstanceOrNull(cl);
+                VMBridge bridge = (VMBridge) Kit.newInstanceOrNull(cl);
                 if (bridge != null) {
                     return bridge;
                 }
@@ -73,7 +71,7 @@ public abstract class VMBridge
      * like SecurityException if the workaround is not available.
      *
      * @return true if it was possible to make method accessible
-     *         or false otherwise.
+     * or false otherwise.
      */
     protected abstract boolean tryToMakeAccessible(AccessibleObject accessible);
 
@@ -89,21 +87,21 @@ public abstract class VMBridge
      * @param interfaces Array with one or more interface class objects.
      */
     protected abstract Object getInterfaceProxyHelper(ContextFactory cf,
-                                             Class<?>[] interfaces);
+                                                      Class<?>[] interfaces);
 
     /**
      * Create proxy object for {@link InterfaceAdapter}. The proxy should call
      * {@link InterfaceAdapter#invoke(ContextFactory, Object, Scriptable,
-     *                                Object, Method, Object[])}
+     * Object, Method, Object[])}
      * as implementation of interface methods associated with
      * <tt>proxyHelper</tt>. {@link Method}
      *
      * @param proxyHelper The result of the previous call to
-     *        {@link #getInterfaceProxyHelper(ContextFactory, Class[])}.
+     *                    {@link #getInterfaceProxyHelper(ContextFactory, Class[])}.
      */
     protected abstract Object newInterfaceProxy(Object proxyHelper,
-                                       ContextFactory cf,
-                                       InterfaceAdapter adapter,
-                                       Object target,
-                                       Scriptable topScope);
+                                                ContextFactory cf,
+                                                InterfaceAdapter adapter,
+                                                Object target,
+                                                Scriptable topScope);
 }

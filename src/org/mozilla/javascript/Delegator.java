@@ -14,23 +14,23 @@ package org.mozilla.javascript;
  * invocations to a delegee Scriptable object. The normal use of this
  * class involves creating a sub-class and overriding one or more of
  * the methods.
- *
+ * <p>
  * A useful application is the implementation of interceptors,
  * pre/post conditions, debugging.
  *
+ * @author Matthias Radestock
  * @see Function
  * @see Scriptable
- * @author Matthias Radestock
  */
 
 public class Delegator
-    implements Function, SymbolScriptable {
+        implements Function, SymbolScriptable {
 
     protected Scriptable obj = null;
 
     /**
      * Create a Delegator prototype.
-     *
+     * <p>
      * This constructor should only be used for creating prototype
      * objects of Delegator.
      *
@@ -56,8 +56,7 @@ public class Delegator
      *
      * @see #construct(Context cx, Scriptable scope, Object[] args)
      */
-    protected Delegator newInstance()
-    {
+    protected Delegator newInstance() {
         try {
             return this.getClass().newInstance();
         } catch (Exception ex) {
@@ -97,7 +96,7 @@ public class Delegator
      */
     @Override
     public Object get(String name, Scriptable start) {
-        return getDelegee().get(name,start);
+        return getDelegee().get(name, start);
     }
 
     @Override
@@ -114,7 +113,7 @@ public class Delegator
      */
     @Override
     public Object get(int index, Scriptable start) {
-        return getDelegee().get(index,start);
+        return getDelegee().get(index, start);
     }
 
     /**
@@ -122,7 +121,7 @@ public class Delegator
      */
     @Override
     public boolean has(String name, Scriptable start) {
-        return getDelegee().has(name,start);
+        return getDelegee().has(name, start);
     }
 
     @Override
@@ -139,7 +138,7 @@ public class Delegator
      */
     @Override
     public boolean has(int index, Scriptable start) {
-        return getDelegee().has(index,start);
+        return getDelegee().has(index, start);
     }
 
     /**
@@ -147,7 +146,7 @@ public class Delegator
      */
     @Override
     public void put(String name, Scriptable start, Object value) {
-        getDelegee().put(name,start,value);
+        getDelegee().put(name, start, value);
     }
 
     /**
@@ -166,7 +165,7 @@ public class Delegator
      */
     @Override
     public void put(int index, Scriptable start, Object value) {
-        getDelegee().put(index,start,value);
+        getDelegee().put(index, start, value);
     }
 
     /**
@@ -242,7 +241,6 @@ public class Delegator
      *
      * @param hint the type hint
      * @return the default value
-     *
      * @see org.mozilla.javascript.Scriptable#getDefaultValue
      */
     @Override
@@ -250,7 +248,7 @@ public class Delegator
         return (hint == null ||
                 hint == ScriptRuntime.ScriptableClass ||
                 hint == ScriptRuntime.FunctionClass) ?
-            this : getDelegee().getDefaultValue(hint);
+                this : getDelegee().getDefaultValue(hint);
     }
 
     /**
@@ -266,9 +264,8 @@ public class Delegator
      */
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                       Object[] args)
-    {
-        return ((Function)getDelegee()).call(cx,scope,thisObj,args);
+                       Object[] args) {
+        return ((Function) getDelegee()).call(cx, scope, thisObj, args);
     }
 
     /**
@@ -278,17 +275,15 @@ public class Delegator
      * <code>delegee</code>. This permits the use of Delegator
      * prototypes.
      *
-     * @param cx the current Context for this thread
+     * @param cx    the current Context for this thread
      * @param scope an enclosing scope of the caller except
      *              when the function is called from a closure.
-     * @param args the array of arguments
+     * @param args  the array of arguments
      * @return the allocated object
-     *
      * @see Function#construct(Context, Scriptable, Object[])
      */
     @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args)
-    {
+    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
         Scriptable myDelegee = getDelegee();
         if (myDelegee == null) {
             //this little trick allows us to declare prototype objects for Delegators
@@ -302,6 +297,6 @@ public class Delegator
             n.setDelegee(delegee);
             return n;
         }
-        return ((Function)myDelegee).construct(cx, scope, args);
+        return ((Function) myDelegee).construct(cx, scope, args);
     }
 }

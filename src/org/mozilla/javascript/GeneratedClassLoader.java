@@ -21,14 +21,14 @@ public interface GeneratedClassLoader {
      * @param data class byte code
      * @return new class object
      */
-    public Class<?> defineClass(String name, byte[] data);
+    Class<?> defineClass(String name, byte[] data);
 
     /**
      * Link the given class.
      *
      * @param cl Class instance returned from the previous call to
-     *        {@link #defineClass(String, byte[])}
+     *           {@link #defineClass(String, byte[])}
      * @see java.lang.ClassLoader
      */
-    public void linkClass(Class<?> cl);
+    void linkClass(Class<?> cl);
 }

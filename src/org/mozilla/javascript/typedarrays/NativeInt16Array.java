@@ -17,63 +17,53 @@ import org.mozilla.javascript.Undefined;
  */
 
 public class NativeInt16Array
-    extends NativeTypedArrayView<Short>
-{
+        extends NativeTypedArrayView<Short> {
     private static final long serialVersionUID = -8592870435287581398L;
 
     private static final String CLASS_NAME = "Int16Array";
     private static final int BYTES_PER_ELEMENT = 2;
 
-    public NativeInt16Array()
-    {
+    public NativeInt16Array() {
     }
 
-    public NativeInt16Array(NativeArrayBuffer ab, int off, int len)
-    {
+    public NativeInt16Array(NativeArrayBuffer ab, int off, int len) {
         super(ab, off, len, len * BYTES_PER_ELEMENT);
     }
 
-    public NativeInt16Array(int len)
-    {
+    public NativeInt16Array(int len) {
         this(new NativeArrayBuffer(len * BYTES_PER_ELEMENT), 0, len);
     }
 
     @Override
-    public String getClassName()
-    {
+    public String getClassName() {
         return CLASS_NAME;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed)
-    {
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeInt16Array a = new NativeInt16Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
-    protected NativeInt16Array construct(NativeArrayBuffer ab, int off, int len)
-    {
+    protected NativeInt16Array construct(NativeArrayBuffer ab, int off, int len) {
         return new NativeInt16Array(ab, off, len);
     }
 
     @Override
-    public int getBytesPerElement()
-    {
+    public int getBytesPerElement() {
         return BYTES_PER_ELEMENT;
     }
 
     @Override
-    protected NativeInt16Array realThis(Scriptable thisObj, IdFunctionObject f)
-    {
+    protected NativeInt16Array realThis(Scriptable thisObj, IdFunctionObject f) {
         if (!(thisObj instanceof NativeInt16Array)) {
             throw incompatibleCallError(f);
         }
-        return (NativeInt16Array)thisObj;
+        return (NativeInt16Array) thisObj;
     }
 
     @Override
-    protected Object js_get(int index)
-    {
+    protected Object js_get(int index) {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
@@ -81,8 +71,7 @@ public class NativeInt16Array
     }
 
     @Override
-    protected Object js_set(int index, Object c)
-    {
+    protected Object js_set(int index, Object c) {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
@@ -92,20 +81,18 @@ public class NativeInt16Array
     }
 
     @Override
-    public Short get(int i)
-    {
+    public Short get(int i) {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Short)js_get(i);
+        return (Short) js_get(i);
     }
 
     @Override
-    public Short set(int i, Short aByte)
-    {
+    public Short set(int i, Short aByte) {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Short)js_set(i, aByte);
+        return (Short) js_set(i, aByte);
     }
 }

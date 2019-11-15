@@ -49,9 +49,10 @@ public class Comment extends AstNode {
 
     /**
      * Constructs a new Comment
-     * @param pos the start position
-     * @param len the length including delimiter(s)
-     * @param type the comment type
+     *
+     * @param pos   the start position
+     * @param len   the length including delimiter(s)
+     * @param type  the comment type
      * @param value the value of the comment, as a string
      */
     public Comment(int pos, int len, Token.CommentType type, String value) {
@@ -69,8 +70,9 @@ public class Comment extends AstNode {
 
     /**
      * Sets the comment style
+     *
      * @param type the comment style, a
-     * {@link org.mozilla.javascript.Token.CommentType}
+     *             {@link org.mozilla.javascript.Token.CommentType}
      */
     public void setCommentType(Token.CommentType type) {
         this.commentType = type;
@@ -85,6 +87,7 @@ public class Comment extends AstNode {
 
     /**
      * Set the comment Value with the new commentString. and updates the length with new Length.
+     *
      * @param commentString
      */
     public void setValue(String commentString) {
@@ -97,7 +100,7 @@ public class Comment extends AstNode {
         StringBuilder sb = new StringBuilder(getLength() + 10);
         sb.append(makeIndent(depth));
         sb.append(value);
-        if(Token.CommentType.BLOCK_COMMENT == this.getCommentType()) {
+        if (Token.CommentType.BLOCK_COMMENT == this.getCommentType()) {
             sb.append("\n");
         }
         return sb.toString();
