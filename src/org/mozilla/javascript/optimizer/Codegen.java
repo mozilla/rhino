@@ -7,15 +7,26 @@
 
 package org.mozilla.javascript.optimizer;
 
+import static org.mozilla.classfile.ClassFileWriter.ACC_FINAL;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
+import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
+import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.*;
 import org.mozilla.javascript.ast.*;
-
-import java.lang.reflect.Constructor;
-import java.util.*;
-
-import static org.mozilla.classfile.ClassFileWriter.*;
 
 /**
  * This class generates code for a given IR tree.
@@ -25,6 +36,9 @@ import static org.mozilla.classfile.ClassFileWriter.*;
  */
 
 public class Codegen implements Evaluator {
+    private static final boolean DEBUG_CODEGEN = true;
+
+
     @Override
     public void captureStackInfo(RhinoException ex) {
         throw new UnsupportedOperationException();
@@ -73,6 +87,40 @@ public class Codegen implements Evaluator {
         byte[] mainClassBytes = compileToClassFile(compilerEnv, mainClassName,
                 tree, encodedSource,
                 returnFunction);
+
+        if (DEBUG_CODEGEN) {
+            File output = new File("./out/compiled(" + mainClassName + ").class");
+            File outputDecomp = new File("./out/compiled(" + mainClassName + ").js");
+            File outputTokens = new File("./out/compiled(" + mainClassName + ").tokens");
+
+            try (FileOutputStream fos = new FileOutputStream(output)) {
+                fos.write(mainClassBytes);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(outputDecomp)) {
+                UintMap properties = new UintMap(1);
+                properties.put(Decompiler.INITIAL_INDENT_PROP, 4);
+                String source = Decompiler.decompile(encodedSource, Decompiler.TO_SOURCE_FLAG, properties);
+                fos.write(source.getBytes());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(outputTokens)) {
+                StringBuilder sb = new StringBuilder();
+
+                for (int i = 0; i < encodedSource.length(); i++) {
+                    if (!Token.isValidToken(encodedSource.charAt(i))) continue;
+
+                    sb.append(Token.typeToName(encodedSource.charAt(i))).append("\n");
+                }
+                fos.write(sb.toString().getBytes());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         return new Object[]{mainClassName, mainClassBytes};
     }
