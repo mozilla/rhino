@@ -722,6 +722,17 @@ public class ScriptRuntime {
         }
     }
 
+    public static Object[] mixDefaultArguments(Object[] args, Object[] defaultArgs) {
+        // defaultArgs.length will always equal args.length
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] == Undefined.instance) {
+                args[i] = defaultArgs[i];
+            }
+        }
+
+        return args;
+    }
+
     /**
      * Helper function for builtin objects that use the varargs form.
      * ECMA function formal arguments are undefined if not supplied;

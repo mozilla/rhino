@@ -10,10 +10,7 @@ package org.mozilla.javascript.optimizer;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.*;
-import org.mozilla.javascript.ast.FunctionNode;
-import org.mozilla.javascript.ast.Jump;
-import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.*;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -735,33 +732,27 @@ public class Codegen implements Evaluator {
             switch (methodIndex) {
                 case Do_getFunctionName:
                     methodLocals = 1; // Only this
-                    cfw.startMethod("getFunctionName", "()Ljava/lang/String;",
-                            ACC_PUBLIC);
+                    cfw.startMethod("getFunctionName", "()Ljava/lang/String;", ACC_PUBLIC);
                     break;
                 case Do_getParamCount:
                     methodLocals = 1; // Only this
-                    cfw.startMethod("getParamCount", "()I",
-                            ACC_PUBLIC);
+                    cfw.startMethod("getParamCount", "()I", ACC_PUBLIC);
                     break;
                 case Do_getParamAndVarCount:
                     methodLocals = 1; // Only this
-                    cfw.startMethod("getParamAndVarCount", "()I",
-                            ACC_PUBLIC);
+                    cfw.startMethod("getParamAndVarCount", "()I", ACC_PUBLIC);
                     break;
                 case Do_getParamOrVarName:
                     methodLocals = 1 + 1; // this + paramOrVarIndex
-                    cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;",
-                            ACC_PUBLIC);
+                    cfw.startMethod("getParamOrVarName", "(I)Ljava/lang/String;", ACC_PUBLIC);
                     break;
                 case Do_getParamOrVarConst:
                     methodLocals = 1 + 1 + 1; // this + paramOrVarName
-                    cfw.startMethod("getParamOrVarConst", "(I)Z",
-                            ACC_PUBLIC);
+                    cfw.startMethod("getParamOrVarConst", "(I)Z", ACC_PUBLIC);
                     break;
                 case Do_getEncodedSource:
                     methodLocals = 1; // Only this
-                    cfw.startMethod("getEncodedSource", "()Ljava/lang/String;",
-                            ACC_PUBLIC);
+                    cfw.startMethod("getEncodedSource", "()Ljava/lang/String;", ACC_PUBLIC);
                     cfw.addPush(encodedSource);
                     break;
                 default:
@@ -795,7 +786,7 @@ public class Codegen implements Evaluator {
                             switchStackTop);
                 }
 
-                // Impelemnet method-specific switch code
+                // Implement method-specific switch code
                 switch (methodIndex) {
                     case Do_getFunctionName:
                         // Push function name
@@ -1479,25 +1470,61 @@ class BodyCodegen {
 
         if (hasVarsInRegs) {
             // No need to create activation. Pad arguments if need be.
-            int parmCount = scriptOrFn.getParamCount();
-            if (parmCount > 0 && !inDirectCallFunction) {
+            int paramCount = scriptOrFn.getParamCount();
+            if (paramCount > 0 && !inDirectCallFunction) {
                 // Set up args array
                 // check length of arguments, pad if need be
                 cfw.addALoad(argsLocal);
                 cfw.add(ByteCode.ARRAYLENGTH);
-                cfw.addPush(parmCount);
+                cfw.addPush(paramCount);
                 int label = cfw.acquireLabel();
                 cfw.add(ByteCode.IF_ICMPGE, label);
                 cfw.addALoad(argsLocal);
-                cfw.addPush(parmCount);
-                addScriptRuntimeInvoke("padArguments",
-                        "([Ljava/lang/Object;I"
-                                + ")[Ljava/lang/Object;");
+                cfw.addPush(paramCount);
+                addScriptRuntimeInvoke(
+                        "padArguments",
+                        "([Ljava/lang/Object;I)[Ljava/lang/Object;"
+                );
                 cfw.addAStore(argsLocal);
                 cfw.markLabel(label);
+
+                // Mix default args
+                if (scriptOrFn instanceof FunctionNode) {
+                    final FunctionNode fn = (FunctionNode) scriptOrFn;
+                    final Map<Integer, AstNode> defaultParamMap = fn.getDefaultParams();
+
+                    // function outer(a = function inner(){}) { return a; }
+
+                    // cfw.addALoad(0);
+                    cfw.addALoad(argsLocal);
+
+                    cfw.addPush(paramCount);
+                    cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+
+                    for (int i = 0; i != paramCount; ++i) {
+                        cfw.add(ByteCode.DUP);
+                        cfw.addPush(i);
+
+                        if (!defaultParamMap.containsKey(i)) {
+                            Codegen.pushUndefined(cfw);
+                        } else {
+                            final AstNode node = defaultParamMap.get(i);
+                            generateExpression(node, node.getParent());
+                            // Codegen.pushUndefined(cfw);
+                        }
+
+                        cfw.add(ByteCode.AASTORE);
+                    }
+
+                    addScriptRuntimeInvoke(
+                            "mixDefaultArguments",
+                            "([Ljava/lang/Object;[Ljava/lang/Object;)[Ljava/lang/Object;"
+                    );
+                    cfw.addAStore(argsLocal);
+                }
             }
 
-            int paramCount = fnCurrent.fnode.getParamCount();
+            paramCount = fnCurrent.fnode.getParamCount();
             int varCount = fnCurrent.fnode.getParamAndVarCount();
             boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
 
@@ -2152,10 +2179,10 @@ class BodyCodegen {
                 } else {
                     visitSpecialCall(node, type, specialType, child);
                 }
+                break;
             }
-            break;
 
-            case Token.REF_CALL:
+            case Token.REF_CALL: {
                 generateFunctionAndThisObj(child, node);
                 // stack: ... functionObj thisObj
                 child = child.getNext();
@@ -2169,6 +2196,7 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + ")Lorg/mozilla/javascript/Ref;");
                 break;
+            }
 
             case Token.NUMBER: {
                 double num = node.getDouble();
@@ -2221,8 +2249,8 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Scriptable;"
                                 + "Ljava/lang/Object;"
                                 + ")Lorg/mozilla/javascript/Scriptable;");
+                break;
             }
-            break;
 
             case Token.COMMA: {
                 Node next = child.getNext();
@@ -2279,7 +2307,7 @@ class BodyCodegen {
                 break;
             }
 
-            case Token.BITNOT:
+            case Token.BITNOT: {
                 generateExpression(child, node);
                 addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
                 cfw.addPush(-1);         // implement ~a as (a ^ -1)
@@ -2287,19 +2315,22 @@ class BodyCodegen {
                 cfw.add(ByteCode.I2D);
                 addDoubleWrap();
                 break;
+            }
 
-            case Token.VOID:
+            case Token.VOID: {
                 generateExpression(child, node);
                 cfw.add(ByteCode.POP);
                 Codegen.pushUndefined(cfw);
                 break;
+            }
 
-            case Token.TYPEOF:
+            case Token.TYPEOF: {
                 generateExpression(child, node);
                 addScriptRuntimeInvoke("typeof",
                         "(Ljava/lang/Object;"
                                 + ")Ljava/lang/String;");
                 break;
+            }
 
             case Token.TYPEOFNAME:
                 visitTypeofname(node);
@@ -2393,9 +2424,7 @@ class BodyCodegen {
 
             case Token.DIV:
             case Token.MOD:
-                visitArithmetic(node, type == Token.DIV
-                        ? ByteCode.DDIV
-                        : ByteCode.DREM, child, parent);
+                visitArithmetic(node, type == Token.DIV ? ByteCode.DDIV : ByteCode.DREM, child, parent);
                 break;
 
             case Token.BITOR:
@@ -2408,7 +2437,7 @@ class BodyCodegen {
                 break;
 
             case Token.POS:
-            case Token.NEG:
+            case Token.NEG: {
                 generateExpression(child, node);
                 addObjectToDouble();
                 if (type == Token.NEG) {
@@ -2416,12 +2445,14 @@ class BodyCodegen {
                 }
                 addDoubleWrap();
                 break;
+            }
 
-            case Token.TO_DOUBLE:
+            case Token.TO_DOUBLE: {
                 // cnvt to double (not Double)
                 generateExpression(child, node);
                 addObjectToDouble();
                 break;
+            }
 
             case Token.TO_OBJECT: {
                 // convert from double
@@ -2469,7 +2500,7 @@ class BodyCodegen {
                 visitGetProp(node, child);
                 break;
 
-            case Token.GETELEM:
+            case Token.GETELEM: {
                 generateExpression(child, node); // object
                 generateExpression(child.getNext(), node);  // id
                 cfw.addALoad(contextLocal);
@@ -2490,8 +2521,9 @@ class BodyCodegen {
                                     + ")Ljava/lang/Object;");
                 }
                 break;
+            }
 
-            case Token.GET_REF:
+            case Token.GET_REF: {
                 generateExpression(child, node); // reference
                 cfw.addALoad(contextLocal);
                 addScriptRuntimeInvoke(
@@ -2500,6 +2532,7 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + ")Ljava/lang/Object;");
                 break;
+            }
 
             case Token.GETVAR:
                 visitGetVar(node);
@@ -2558,10 +2591,10 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "Lorg/mozilla/javascript/Scriptable;"
                                 + ")Ljava/lang/Object;");
+                break;
             }
-            break;
 
-            case Token.DEL_REF:
+            case Token.DEL_REF: {
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 addScriptRuntimeInvoke("refDel",
@@ -2569,8 +2602,9 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + ")Ljava/lang/Object;");
                 break;
+            }
 
-            case Token.DELPROP:
+            case Token.DELPROP: {
                 boolean isName = child.getType() == Token.BINDNAME;
                 generateExpression(child, node);
                 child = child.getNext();
@@ -2583,6 +2617,7 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + "Z)Ljava/lang/Object;");
                 break;
+            }
 
             case Token.BINDNAME: {
                 while (child != null) {
@@ -2684,7 +2719,7 @@ class BodyCodegen {
                 visitDotQuery(node, child);
                 break;
 
-            case Token.ESCXMLATTR:
+            case Token.ESCXMLATTR: {
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 addScriptRuntimeInvoke("escapeAttributeValue",
@@ -2692,8 +2727,9 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + ")Ljava/lang/String;");
                 break;
+            }
 
-            case Token.ESCXMLTEXT:
+            case Token.ESCXMLTEXT: {
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 addScriptRuntimeInvoke("escapeTextValue",
@@ -2701,8 +2737,9 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + ")Ljava/lang/String;");
                 break;
+            }
 
-            case Token.DEFAULTNAMESPACE:
+            case Token.DEFAULTNAMESPACE: {
                 generateExpression(child, node);
                 cfw.addALoad(contextLocal);
                 addScriptRuntimeInvoke("setDefaultNamespace",
@@ -2710,6 +2747,7 @@ class BodyCodegen {
                                 + "Lorg/mozilla/javascript/Context;"
                                 + ")Ljava/lang/Object;");
                 break;
+            }
 
             case Token.YIELD:
                 generateYieldPoint(node, true);

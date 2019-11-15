@@ -2463,6 +2463,8 @@ public class Context {
             bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
         }
 
+        new FileOutputStream("TestClass.class").write((byte[]) ((Object[]) bytecode)[1]);
+
         if (debugger != null) {
             if (sourceString == null) Kit.codeBug();
             if (bytecode instanceof DebuggableScript) {

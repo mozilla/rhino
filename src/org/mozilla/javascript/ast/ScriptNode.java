@@ -29,7 +29,7 @@ public class ScriptNode extends Scope {
     private List<RegExpLiteral> regexps;
     private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
-    private List<Symbol> symbols = new ArrayList<Symbol>(4);
+    private List<Symbol> symbols = new ArrayList<>(4);
     private int paramCount = 0;
     private String[] variableNames;
     private boolean[] isConsts;
@@ -184,7 +184,7 @@ public class ScriptNode extends Scope {
     public int addFunction(FunctionNode fnNode) {
         if (fnNode == null) codeBug();
         if (functions == null)
-            functions = new ArrayList<FunctionNode>();
+            functions = new ArrayList<>();
         functions.add(fnNode);
         return functions.size() - 1;
     }

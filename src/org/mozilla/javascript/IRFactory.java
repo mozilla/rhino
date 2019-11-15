@@ -10,6 +10,7 @@ import org.mozilla.javascript.ast.Symbol;
 import org.mozilla.javascript.ast.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
