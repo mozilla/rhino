@@ -1544,31 +1544,33 @@ class BodyCodegen {
                     // function outer(a = function inner(){}) { return a; }
 
                     // cfw.addALoad(0);
-                    cfw.addALoad(argsLocal);
+                    if (defaultParamMap.size() > 0) {
+                        cfw.addALoad(argsLocal);
 
-                    cfw.addPush(paramCount);
-                    cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+                        cfw.addPush(paramCount);
+                        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
 
-                    for (int i = 0; i != paramCount; ++i) {
-                        cfw.add(ByteCode.DUP);
-                        cfw.addPush(i);
+                        for (int i = 0; i != paramCount; ++i) {
+                            cfw.add(ByteCode.DUP);
+                            cfw.addPush(i);
 
-                        if (!defaultParamMap.containsKey(i)) {
-                            Codegen.pushUndefined(cfw);
-                        } else {
-                            final AstNode node = defaultParamMap.get(i);
-                            generateExpression(node, node.getParent());
-                            // Codegen.pushUndefined(cfw);
+                            if (!defaultParamMap.containsKey(i)) {
+                                Codegen.pushUndefined(cfw);
+                            } else {
+                                final AstNode node = defaultParamMap.get(i);
+                                generateExpression(node, node.getParent());
+                                // Codegen.pushUndefined(cfw);
+                            }
+
+                            cfw.add(ByteCode.AASTORE);
                         }
 
-                        cfw.add(ByteCode.AASTORE);
+                        addScriptRuntimeInvoke(
+                                "mixDefaultArguments",
+                                "([Ljava/lang/Object;[Ljava/lang/Object;)[Ljava/lang/Object;"
+                        );
+                        cfw.addAStore(argsLocal);
                     }
-
-                    addScriptRuntimeInvoke(
-                            "mixDefaultArguments",
-                            "([Ljava/lang/Object;[Ljava/lang/Object;)[Ljava/lang/Object;"
-                    );
-                    cfw.addAStore(argsLocal);
                 }
             }
 
