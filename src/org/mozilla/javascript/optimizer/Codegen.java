@@ -117,7 +117,7 @@ public class Codegen implements Evaluator {
 
                     if (token == Token.NAME || token == Token.STRING || token == Token.REGEXP) {
                         sb.append(Token.typeToName(token)).append(": ");
-                        i = Decompiler.printSourceString(encodedSource, i + 1, true, sb);
+                        i = Decompiler.printSourceString(encodedSource, i + 1, true, sb) - 1;
                         sb.append("\n");
                     } else {
                         sb.append(Token.typeToName(token)).append("\n");
