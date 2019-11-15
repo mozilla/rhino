@@ -807,7 +807,7 @@ public class Decompiler {
         return printSourceString(source, offset, false, null);
     }
 
-    private static int printSourceString(String source, int offset,
+    public static int printSourceString(String source, int offset,
                                          boolean asQuotedString,
                                          StringBuilder sb) {
         int length = source.charAt(offset);
