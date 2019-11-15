@@ -27,8 +27,9 @@ public class Symbol {
 
     /**
      * Constructs a new Symbol with a specific name and declaration type
+     *
      * @param declType {@link Token#FUNCTION}, {@link Token#LP}
-     * (for params), {@link Token#VAR}, {@link Token#LET} or {@link Token#CONST}
+     *                 (for params), {@link Token#VAR}, {@link Token#LET} or {@link Token#CONST}
      */
     public Symbol(int declType, String name) {
         setName(name);
@@ -47,10 +48,10 @@ public class Symbol {
      */
     public void setDeclType(int declType) {
         if (!(declType == Token.FUNCTION
-              || declType == Token.LP
-              || declType == Token.VAR
-              || declType == Token.LET
-              || declType == Token.CONST))
+                || declType == Token.LP
+                || declType == Token.VAR
+                || declType == Token.LET
+                || declType == Token.CONST))
             throw new IllegalArgumentException("Invalid declType: " + declType);
         this.declType = declType;
     }

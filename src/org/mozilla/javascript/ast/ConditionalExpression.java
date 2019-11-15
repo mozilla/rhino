@@ -54,6 +54,7 @@ public class ConditionalExpression extends AstNode {
 
     /**
      * Sets test expression, and sets its parent.
+     *
      * @param testExpression test expression
      * @throws IllegalArgumentException if testExpression is {@code null}
      */
@@ -73,6 +74,7 @@ public class ConditionalExpression extends AstNode {
     /**
      * Sets expression to evaluate if test is true, and
      * sets its parent to this node.
+     *
      * @param trueExpression expression to evaluate if test is true
      * @throws IllegalArgumentException if expression is {@code null}
      */
@@ -92,9 +94,10 @@ public class ConditionalExpression extends AstNode {
     /**
      * Sets expression to evaluate if test is false, and sets its
      * parent to this node.
+     *
      * @param falseExpression expression to evaluate if test is false
      * @throws IllegalArgumentException if {@code falseExpression}
-     * is {@code null}
+     *                                  is {@code null}
      */
     public void setFalseExpression(AstNode falseExpression) {
         assertNotNull(falseExpression);
@@ -111,6 +114,7 @@ public class ConditionalExpression extends AstNode {
 
     /**
      * Sets position of ? token
+     *
      * @param questionMarkPosition position of ? token
      */
     public void setQuestionMarkPosition(int questionMarkPosition) {
@@ -126,6 +130,7 @@ public class ConditionalExpression extends AstNode {
 
     /**
      * Sets position of : token
+     *
      * @param colonPosition position of : token
      */
     public void setColonPosition(int colonPosition) {
@@ -135,10 +140,10 @@ public class ConditionalExpression extends AstNode {
     @Override
     public boolean hasSideEffects() {
         if (testExpression == null
-            || trueExpression == null
-            || falseExpression == null) codeBug();
+                || trueExpression == null
+                || falseExpression == null) codeBug();
         return trueExpression.hasSideEffects()
-               && falseExpression.hasSideEffects();
+                && falseExpression.hasSideEffects();
     }
 
     @Override

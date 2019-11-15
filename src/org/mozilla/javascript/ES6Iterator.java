@@ -32,7 +32,8 @@ public abstract class ES6Iterator extends IdScriptableObject {
     protected boolean exhausted = false;
     private String tag;
 
-    ES6Iterator() {}
+    ES6Iterator() {
+    }
 
     ES6Iterator(Scriptable scope, String tag) {
         // Set parent and prototype properties. Since we don't have a
@@ -42,13 +43,12 @@ public abstract class ES6Iterator extends IdScriptableObject {
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
         IdScriptableObject prototype = (IdScriptableObject)
-            ScriptableObject.getTopScopeValue(top, tag);
+                ScriptableObject.getTopScopeValue(top, tag);
         setPrototype(prototype);
     }
 
     @Override
-    protected void initPrototypeId(int id)
-    {
+    protected void initPrototypeId(int id) {
         switch (id) {
             case Id_next:
                 initPrototypeMethod(getTag(), id, NEXT_METHOD, 0);
@@ -59,14 +59,14 @@ public abstract class ES6Iterator extends IdScriptableObject {
             case SymbolId_toStringTag:
                 initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG, getClassName(), DONTENUM | READONLY);
                 return;
-            default: throw new IllegalArgumentException(String.valueOf(id));
+            default:
+                throw new IllegalArgumentException(String.valueOf(id));
         }
     }
 
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
-    {
+                             Scriptable thisObj, Object[] args) {
         if (!f.hasTag(getTag())) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -78,12 +78,12 @@ public abstract class ES6Iterator extends IdScriptableObject {
         ES6Iterator iterator = (ES6Iterator) thisObj;
 
         switch (id) {
-        case Id_next:
-            return iterator.next(cx, scope);
-        case SymbolId_iterator:
-            return iterator;
-        default:
-            throw new IllegalArgumentException(String.valueOf(id));
+            case Id_next:
+                return iterator.next(cx, scope);
+            case SymbolId_iterator:
+                return iterator;
+            default:
+                throw new IllegalArgumentException(String.valueOf(id));
         }
     }
 
@@ -133,10 +133,10 @@ public abstract class ES6Iterator extends IdScriptableObject {
     }
 
     private static final int
-        Id_next              = 1,
-        SymbolId_iterator    = 2,
-        SymbolId_toStringTag = 3,
-        MAX_PROTOTYPE_ID     = SymbolId_toStringTag;
+            Id_next = 1,
+            SymbolId_iterator = 2,
+            SymbolId_toStringTag = 3,
+            MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
     public static final String NEXT_METHOD = "next";
     public static final String DONE_PROPERTY = "done";

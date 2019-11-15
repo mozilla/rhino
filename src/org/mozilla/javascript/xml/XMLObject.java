@@ -6,27 +6,19 @@
 
 package org.mozilla.javascript.xml;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdScriptableObject;
-import org.mozilla.javascript.NativeWith;
-import org.mozilla.javascript.Ref;
-import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.*;
 
 /**
- *  This Interface describes what all XML objects (XML, XMLList) should have in common.
- *
+ * This Interface describes what all XML objects (XML, XMLList) should have in common.
  */
-public abstract class XMLObject extends IdScriptableObject
-{
+public abstract class XMLObject extends IdScriptableObject {
 
     private static final long serialVersionUID = 8455156490438576500L;
 
-    public XMLObject()
-    {
+    public XMLObject() {
     }
 
-    public XMLObject(Scriptable scope, Scriptable prototype)
-    {
+    public XMLObject(Scriptable scope, Scriptable prototype) {
         super(scope, prototype);
     }
 
@@ -92,24 +84,23 @@ public abstract class XMLObject extends IdScriptableObject
      * The default implementation returns {@link Scriptable#NOT_FOUND}
      * to indicate no custom addition operation.
      *
-     * @param cx the Context object associated with the current thread.
+     * @param cx         the Context object associated with the current thread.
      * @param thisIsLeft if true, the object should calculate this + value
      *                   if false, the object should calculate value + this.
-     * @param value the second argument for addition operation.
+     * @param value      the second argument for addition operation.
      */
-    public Object addValues(Context cx, boolean thisIsLeft, Object value)
-    {
+    public Object addValues(Context cx, boolean thisIsLeft, Object value) {
         return Scriptable.NOT_FOUND;
     }
 
     /**
      * Gets the value returned by calling the typeof operator on this object.
-     * @see org.mozilla.javascript.ScriptableObject#getTypeOf()
+     *
      * @return "xml" or "undefined" if {@link #avoidObjectDetection()} returns <code>true</code>
+     * @see org.mozilla.javascript.ScriptableObject#getTypeOf()
      */
     @Override
-    public String getTypeOf()
-    {
+    public String getTypeOf() {
         return avoidObjectDetection() ? "undefined" : "xml";
     }
 }

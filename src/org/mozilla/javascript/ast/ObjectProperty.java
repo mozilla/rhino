@@ -19,7 +19,7 @@ import org.mozilla.javascript.Token;
  * keyword.  The left-hand expression in this case is always a
  * {@link Name}, and the overall node type is {@link Token#GET} or
  * {@link Token#SET}, as appropriate.</p>
- *
+ * <p>
  * The {@code operatorPosition} field is meaningless if the node is
  * a getter or setter.
  *
@@ -39,15 +39,16 @@ public class ObjectProperty extends InfixExpression {
     /**
      * Sets the node type.  Must be one of
      * {@link Token#COLON}, {@link Token#GET}, or {@link Token#SET}.
+     *
      * @throws IllegalArgumentException if {@code nodeType} is invalid
      */
     public void setNodeType(int nodeType) {
         if (nodeType != Token.COLON
-            && nodeType != Token.GET
-            && nodeType != Token.SET
-            && nodeType != Token.METHOD)
+                && nodeType != Token.GET
+                && nodeType != Token.SET
+                && nodeType != Token.METHOD)
             throw new IllegalArgumentException("invalid node type: "
-                                               + nodeType);
+                    + nodeType);
         setType(nodeType);
     }
 
@@ -106,17 +107,17 @@ public class ObjectProperty extends InfixExpression {
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
-        sb.append(makeIndent(depth+1));
+        sb.append(makeIndent(depth + 1));
         if (isGetterMethod()) {
             sb.append("get ");
         } else if (isSetterMethod()) {
             sb.append("set ");
         }
-        sb.append(left.toSource(getType()==Token.COLON ? 0 : depth));
+        sb.append(left.toSource(getType() == Token.COLON ? 0 : depth));
         if (type == Token.COLON) {
             sb.append(": ");
         }
-        sb.append(right.toSource(getType()==Token.COLON ? 0 : depth+1));
+        sb.append(right.toSource(getType() == Token.COLON ? 0 : depth + 1));
         return sb.toString();
     }
 }

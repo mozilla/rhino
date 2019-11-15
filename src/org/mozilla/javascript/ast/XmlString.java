@@ -30,6 +30,7 @@ public class XmlString extends XmlFragment {
     /**
      * Sets the string for this XML component.  Sets the length of the
      * component to the length of the passed string.
+     *
      * @param s a string of xml text
      * @throws IllegalArgumentException} if {@code s} is {@code null}
      */

@@ -14,7 +14,7 @@ import org.mozilla.javascript.Token;
  * <pre><i>NewExpression</i> :
  *      MemberExpression
  *      <b>new</b> NewExpression</pre>
- *
+ * <p>
  * This node is a subtype of {@link FunctionCall}, mostly for internal code
  * sharing.  Structurally a {@code NewExpression} node is very similar to a
  * {@code FunctionCall}, so it made a certain amount of sense.
@@ -40,11 +40,12 @@ public class NewExpression extends FunctionCall {
 
     /**
      * Returns initializer object, if any.
+     *
      * @return extra initializer object-literal expression, or {@code null} if
      * not specified.
      */
     public ObjectLiteral getInitializer() {
-      return initializer;
+        return initializer;
     }
 
     /**
@@ -54,12 +55,12 @@ public class NewExpression extends FunctionCall {
      * additional properties on the newly-created {@code expr} object.
      *
      * @param initializer extra initializer object.
-     * Can be {@code null}.
+     *                    Can be {@code null}.
      */
     public void setInitializer(ObjectLiteral initializer) {
-      this.initializer = initializer;
-      if (initializer != null)
-          initializer.setParent(this);
+        this.initializer = initializer;
+        if (initializer != null)
+            initializer.setParent(this);
     }
 
     @Override

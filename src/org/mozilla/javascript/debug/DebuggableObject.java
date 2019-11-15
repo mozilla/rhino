@@ -25,5 +25,5 @@ public interface DebuggableObject {
      * Integer entry in the returned array. Properties accessed by
      * a String will have a String entry in the returned array.
      */
-    public Object[] getAllIds();
+    Object[] getAllIds();
 }

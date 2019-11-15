@@ -27,6 +27,7 @@ import java.net.URI;
  * considered opaque and should only make sure to implement
  * {@link Object#equals(Object)} as caches themselves can rely on it to compare
  * them semantically. Also, it is advisable to have them be serializable.
+ *
  * @author Attila Szegedi
  * @version $Id: ModuleSource.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
@@ -40,12 +41,13 @@ public class ModuleSource implements Serializable {
 
     /**
      * Creates a new module source.
-     * @param reader the reader returning the source text of the module.
+     *
+     * @param reader         the reader returning the source text of the module.
      * @param securityDomain the object representing the security domain for
-     * the module's source (passed to Rhino script compiler).
-     * @param uri the URI of the module's source text
-     * @param validator a validator that can be used for subsequent cache
-     * validation of the source text.
+     *                       the module's source (passed to Rhino script compiler).
+     * @param uri            the URI of the module's source text
+     * @param validator      a validator that can be used for subsequent cache
+     *                       validation of the source text.
      */
     public ModuleSource(Reader reader, Object securityDomain, URI uri,
                         URI base, Object validator) {
@@ -60,6 +62,7 @@ public class ModuleSource implements Serializable {
      * Returns the reader returning the source text of the module. Note that
      * subsequent calls to this method return the same object, thus it is not
      * possible to read the source twice.
+     *
      * @return the reader returning the source text of the module.
      */
     public Reader getReader() {
@@ -69,6 +72,7 @@ public class ModuleSource implements Serializable {
     /**
      * Returns the object representing the security domain for the module's
      * source.
+     *
      * @return the object representing the security domain for the module's
      * source.
      */
@@ -78,6 +82,7 @@ public class ModuleSource implements Serializable {
 
     /**
      * Returns the URI of the module source text.
+     *
      * @return the URI of the module source text.
      */
     public URI getUri() {
@@ -87,6 +92,7 @@ public class ModuleSource implements Serializable {
     /**
      * Returns the base URI from which this module source was loaded, or null
      * if it was loaded from an absolute URI.
+     *
      * @return the base URI, or null.
      */
     public URI getBase() {
@@ -96,6 +102,7 @@ public class ModuleSource implements Serializable {
     /**
      * Returns the validator that can be used for subsequent cache validation
      * of the source text.
+     *
      * @return the validator that can be used for subsequent cache validation
      * of the source text.
      */

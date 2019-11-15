@@ -8,17 +8,16 @@ import java.util.Iterator;
  * in the ECMAScript spec. The caller is responsible for retrieving an object that implements
  * the "iterator" pattern. This class will follow that pattern and throw appropriate
  * JavaScript exceptions.
- *
+ * <p>
  * The pattern that the target class should follow is:
  * * It should have a function property called "next"
  * * The property should return an object with a boolean value called "done".
  * * If "done" is true, then the returned object should also contain a "value" property.
  * * If it has a function property called "return" then it will be called
- *   when the caller is done iterating.
+ * when the caller is done iterating.
  */
 public class IteratorLikeIterable
-    implements Iterable<Object>, Closeable
-{
+        implements Iterable<Object>, Closeable {
     private final Context cx;
     private final Scriptable scope;
     private final Callable next;
@@ -56,8 +55,7 @@ public class IteratorLikeIterable
     }
 
     public final class Itr
-        implements Iterator<Object>
-    {
+            implements Iterator<Object> {
         private Object nextVal;
 
         @Override

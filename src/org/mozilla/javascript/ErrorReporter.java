@@ -19,14 +19,14 @@ public interface ErrorReporter {
 
     /**
      * Report a warning.
-     *
+     * <p>
      * The implementing class may choose to ignore the warning
      * if it desires.
      *
-     * @param message a String describing the warning
+     * @param message    a String describing the warning
      * @param sourceName a String describing the JavaScript source
-     * where the warning occured; typically a filename or URL
-     * @param line the line number associated with the warning
+     *                   where the warning occured; typically a filename or URL
+     * @param line       the line number associated with the warning
      * @param lineSource the text of the line (may be null)
      * @param lineOffset the offset into lineSource where problem was detected
      */
@@ -35,19 +35,19 @@ public interface ErrorReporter {
 
     /**
      * Report an error.
-     *
+     * <p>
      * The implementing class is free to throw an exception if
      * it desires.
-     *
+     * <p>
      * If execution has not yet begun, the JavaScript engine is
      * free to find additional errors rather than terminating
      * the translation. It will not execute a script that had
      * errors, however.
      *
-     * @param message a String describing the error
+     * @param message    a String describing the error
      * @param sourceName a String describing the JavaScript source
-     * where the error occured; typically a filename or URL
-     * @param line the line number associated with the error
+     *                   where the error occured; typically a filename or URL
+     * @param line       the line number associated with the error
      * @param lineSource the text of the line (may be null)
      * @param lineOffset the offset into lineSource where problem was detected
      */
@@ -56,14 +56,14 @@ public interface ErrorReporter {
 
     /**
      * Creates an EvaluatorException that may be thrown.
-     *
+     * <p>
      * runtimeErrors, unlike errors, will always terminate the
      * current script.
      *
-     * @param message a String describing the error
+     * @param message    a String describing the error
      * @param sourceName a String describing the JavaScript source
-     * where the error occured; typically a filename or URL
-     * @param line the line number associated with the error
+     *                   where the error occured; typically a filename or URL
+     * @param line       the line number associated with the error
      * @param lineSource the text of the line (may be null)
      * @param lineOffset the offset into lineSource where problem was detected
      * @return an EvaluatorException that will be thrown.

@@ -1,6 +1,6 @@
 package org.mozilla.javascript;
 
-public class IdFunctionObjectES6 extends IdFunctionObject{
+public class IdFunctionObjectES6 extends IdFunctionObject {
 
     private static final long serialVersionUID = -8023088662589035261L;
 

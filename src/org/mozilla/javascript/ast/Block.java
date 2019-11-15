@@ -47,15 +47,15 @@ public class Block extends AstNode {
         sb.append(makeIndent(depth));
         sb.append("{\n");
         for (Node kid : this) {
-            AstNode astNodeKid = (AstNode)kid;
-            sb.append(astNodeKid.toSource(depth+1));
-            if(astNodeKid.getType() == Token.COMMENT) {
+            AstNode astNodeKid = (AstNode) kid;
+            sb.append(astNodeKid.toSource(depth + 1));
+            if (astNodeKid.getType() == Token.COMMENT) {
                 sb.append("\n");
             }
         }
         sb.append(makeIndent(depth));
         sb.append("}");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth));
         }
         sb.append("\n");
@@ -66,7 +66,7 @@ public class Block extends AstNode {
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
             for (Node kid : this) {
-                ((AstNode)kid).visit(v);
+                ((AstNode) kid).visit(v);
             }
         }
     }

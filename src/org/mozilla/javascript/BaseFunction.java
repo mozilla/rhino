@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.util.Arrays;
 import java.util.Map;
 
 /**

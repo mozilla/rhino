@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
- package org.mozilla.javascript;
+package org.mozilla.javascript;
 
 import java.util.EnumMap;
 
@@ -43,23 +43,41 @@ public class TopLevel extends IdScriptableObject {
      * An enumeration of built-in ECMAScript objects.
      */
     public enum Builtins {
-        /** The built-in Object type. */
+        /**
+         * The built-in Object type.
+         */
         Object,
-        /** The built-in Array type. */
+        /**
+         * The built-in Array type.
+         */
         Array,
-        /** The built-in Function type. */
+        /**
+         * The built-in Function type.
+         */
         Function,
-        /** The built-in String type. */
+        /**
+         * The built-in String type.
+         */
         String,
-        /** The built-in Number type. */
+        /**
+         * The built-in Number type.
+         */
         Number,
-        /** The built-in Boolean type. */
+        /**
+         * The built-in Boolean type.
+         */
         Boolean,
-        /** The built-in RegExp type. */
+        /**
+         * The built-in RegExp type.
+         */
         RegExp,
-        /** The built-in Error type. */
+        /**
+         * The built-in Error type.
+         */
         Error,
-        /** The built-in Symbol type. */
+        /**
+         * The built-in Symbol type.
+         */
         Symbol
     }
 
@@ -67,23 +85,41 @@ public class TopLevel extends IdScriptableObject {
      * An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6]
      */
     enum NativeErrors {
-        /** Basic Error */
+        /**
+         * Basic Error
+         */
         Error,
-        /** The native EvalError. */
+        /**
+         * The native EvalError.
+         */
         EvalError,
-        /** The native RangeError. */
+        /**
+         * The native RangeError.
+         */
         RangeError,
-        /** The native ReferenceError. */
+        /**
+         * The native ReferenceError.
+         */
         ReferenceError,
-        /** The native SyntaxError. */
+        /**
+         * The native SyntaxError.
+         */
         SyntaxError,
-        /** The native TypeError. */
+        /**
+         * The native TypeError.
+         */
         TypeError,
-        /** The native URIError. */
+        /**
+         * The native URIError.
+         */
         URIError,
-        /** The native InternalError (non-standard). */
+        /**
+         * The native InternalError (non-standard).
+         */
         InternalError,
-        /** The native JavaException (non-standard). */
+        /**
+         * The native JavaException (non-standard).
+         */
         JavaException
     }
 
@@ -108,14 +144,14 @@ public class TopLevel extends IdScriptableObject {
         for (Builtins builtin : Builtins.values()) {
             Object value = ScriptableObject.getProperty(this, builtin.name());
             if (value instanceof BaseFunction) {
-                ctors.put(builtin, (BaseFunction)value);
+                ctors.put(builtin, (BaseFunction) value);
             }
         }
         errors = new EnumMap<NativeErrors, BaseFunction>(NativeErrors.class);
         for (NativeErrors error : NativeErrors.values()) {
             Object value = ScriptableObject.getProperty(this, error.name());
             if (value instanceof BaseFunction) {
-                errors.put(error, (BaseFunction)value);
+                errors.put(error, (BaseFunction) value);
             }
         }
     }
@@ -126,9 +162,9 @@ public class TopLevel extends IdScriptableObject {
      * an instance of this class or does have a cache of built-ins,
      * the constructor is looked up via normal property lookup.
      *
-     * @param cx the current Context
+     * @param cx    the current Context
      * @param scope the top-level scope
-     * @param type the built-in type
+     * @param type  the built-in type
      * @return the built-in constructor
      */
     public static Function getBuiltinCtor(Context cx,
@@ -137,7 +173,7 @@ public class TopLevel extends IdScriptableObject {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
-            Function result = ((TopLevel)scope).getBuiltinCtor(type);
+            Function result = ((TopLevel) scope).getBuiltinCtor(type);
             if (result != null) {
                 return result;
             }
@@ -152,9 +188,9 @@ public class TopLevel extends IdScriptableObject {
      * an instance of this class or does have a cache of native errors,
      * the constructor is looked up via normal property lookup.
      *
-     * @param cx the current Context
+     * @param cx    the current Context
      * @param scope the top-level scope
-     * @param type the native error type
+     * @param type  the native error type
      * @return the native error constructor
      */
     static Function getNativeErrorCtor(Context cx, Scriptable scope,
@@ -162,7 +198,7 @@ public class TopLevel extends IdScriptableObject {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
-            Function result = ((TopLevel)scope).getNativeErrorCtor(type);
+            Function result = ((TopLevel) scope).getNativeErrorCtor(type);
             if (result != null) {
                 return result;
             }
@@ -178,7 +214,7 @@ public class TopLevel extends IdScriptableObject {
      * the prototype is looked up via normal property lookup.
      *
      * @param scope the top-level scope
-     * @param type the built-in type
+     * @param type  the built-in type
      * @return the built-in prototype
      */
     public static Scriptable getBuiltinPrototype(Scriptable scope,
@@ -186,7 +222,7 @@ public class TopLevel extends IdScriptableObject {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
-            Scriptable result = ((TopLevel)scope)
+            Scriptable result = ((TopLevel) scope)
                     .getBuiltinPrototype(type);
             if (result != null) {
                 return result;
@@ -200,6 +236,7 @@ public class TopLevel extends IdScriptableObject {
      * Get the cached built-in object constructor from this scope with the
      * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
      * been called on this object.
+     *
      * @param type the built-in type
      * @return the built-in constructor
      */
@@ -211,6 +248,7 @@ public class TopLevel extends IdScriptableObject {
      * Get the cached native error constructor from this scope with the
      * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
      * been called on this object.
+     *
      * @param type the native error type
      * @return the native error constructor
      */
@@ -222,6 +260,7 @@ public class TopLevel extends IdScriptableObject {
      * Get the cached built-in object prototype from this scope with the
      * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
      * been called on this object.
+     *
      * @param type the built-in type
      * @return the built-in prototype
      */

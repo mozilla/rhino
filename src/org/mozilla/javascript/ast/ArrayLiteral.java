@@ -6,11 +6,11 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.mozilla.javascript.Token;
 
 /**
  * AST node for an Array literal.  The elements list will always be
@@ -33,7 +33,7 @@ import org.mozilla.javascript.Token;
 public class ArrayLiteral extends AstNode implements DestructuringForm {
 
     private static final List<AstNode> NO_ELEMS =
-        Collections.unmodifiableList(new ArrayList<AstNode>());
+            Collections.unmodifiableList(new ArrayList<AstNode>());
 
     private List<AstNode> elements;
     private int destructuringLength;
@@ -57,9 +57,10 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
 
     /**
      * Returns the element list
+     *
      * @return the element list.  If there are no elements, returns an immutable
-     *         empty list.  Elisions are represented as {@link EmptyExpression}
-     *         nodes.
+     * empty list.  Elisions are represented as {@link EmptyExpression}
+     * nodes.
      */
     public List<AstNode> getElements() {
         return elements != null ? elements : NO_ELEMS;
@@ -67,6 +68,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
 
     /**
      * Sets the element list, and sets each element's parent to this node.
+     *
      * @param elements the element list.  Can be {@code null}.
      */
     public void setElements(List<AstNode> elements) {
@@ -82,9 +84,10 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
 
     /**
      * Adds an element to the list, and sets its parent to this node.
+     *
      * @param element the element to add
      * @throws IllegalArgumentException if element is {@code null}.  To indicate
-     *         an empty element, use an {@link EmptyExpression} node.
+     *                                  an empty element, use an {@link EmptyExpression} node.
      */
     public void addElement(AstNode element) {
         assertNotNull(element);
@@ -104,6 +107,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
 
     /**
      * Returns element at specified index.
+     *
      * @param index the index of the element to retrieve
      * @return the element
      * @throws IndexOutOfBoundsException if the index is invalid
@@ -118,7 +122,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
      * Returns destructuring length
      */
     public int getDestructuringLength() {
-      return destructuringLength;
+        return destructuringLength;
     }
 
     /**
@@ -129,11 +133,12 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
      * used in destructuring-assignment contexts.
      */
     public void setDestructuringLength(int destructuringLength) {
-      this.destructuringLength = destructuringLength;
+        this.destructuringLength = destructuringLength;
     }
 
     /**
      * Used by code generator.
+     *
      * @return the number of empty elements
      */
     public int getSkipCount() {
@@ -142,6 +147,7 @@ public class ArrayLiteral extends AstNode implements DestructuringForm {
 
     /**
      * Used by code generator.
+     *
      * @param count the count of empty elements
      */
     public void setSkipCount(int count) {

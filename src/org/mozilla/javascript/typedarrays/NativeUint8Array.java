@@ -17,62 +17,52 @@ import org.mozilla.javascript.Undefined;
  */
 
 public class NativeUint8Array
-    extends NativeTypedArrayView<Integer>
-{
+        extends NativeTypedArrayView<Integer> {
     private static final long serialVersionUID = -3349419704390398895L;
 
     private static final String CLASS_NAME = "Uint8Array";
 
-    public NativeUint8Array()
-    {
+    public NativeUint8Array() {
     }
 
-    public NativeUint8Array(NativeArrayBuffer ab, int off, int len)
-    {
+    public NativeUint8Array(NativeArrayBuffer ab, int off, int len) {
         super(ab, off, len, len);
     }
 
-    public NativeUint8Array(int len)
-    {
+    public NativeUint8Array(int len) {
         this(new NativeArrayBuffer(len), 0, len);
     }
 
     @Override
-    public String getClassName()
-    {
+    public String getClassName() {
         return CLASS_NAME;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed)
-    {
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeUint8Array a = new NativeUint8Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
-    protected NativeUint8Array construct(NativeArrayBuffer ab, int off, int len)
-    {
+    protected NativeUint8Array construct(NativeArrayBuffer ab, int off, int len) {
         return new NativeUint8Array(ab, off, len);
     }
 
     @Override
-    public int getBytesPerElement()
-    {
+    public int getBytesPerElement() {
         return 1;
     }
 
     @Override
-    protected NativeUint8Array realThis(Scriptable thisObj, IdFunctionObject f)
-    {
+    protected NativeUint8Array realThis(Scriptable thisObj, IdFunctionObject f) {
         if (!(thisObj instanceof NativeUint8Array)) {
             throw incompatibleCallError(f);
         }
-        return (NativeUint8Array)thisObj;
+        return (NativeUint8Array) thisObj;
     }
 
     @Override
-    protected Object js_get(int index)
-    {
+    protected Object js_get(int index) {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
@@ -80,8 +70,7 @@ public class NativeUint8Array
     }
 
     @Override
-    protected Object js_set(int index, Object c)
-    {
+    protected Object js_set(int index, Object c) {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
@@ -91,20 +80,18 @@ public class NativeUint8Array
     }
 
     @Override
-    public Integer get(int i)
-    {
+    public Integer get(int i) {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Integer)js_get(i);
+        return (Integer) js_get(i);
     }
 
     @Override
-    public Integer set(int i, Integer aByte)
-    {
+    public Integer set(int i, Integer aByte) {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Integer)js_set(i, aByte);
+        return (Integer) js_set(i, aByte);
     }
 }

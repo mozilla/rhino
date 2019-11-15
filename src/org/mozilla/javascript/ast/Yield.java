@@ -48,6 +48,7 @@ public class Yield extends AstNode {
 
     /**
      * Sets yielded expression, and sets its parent to this node.
+     *
      * @param expr the value to yield. Can be {@code null}.
      */
     public void setValue(AstNode expr) {

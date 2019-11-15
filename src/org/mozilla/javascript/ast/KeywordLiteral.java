@@ -33,6 +33,7 @@ public class KeywordLiteral extends AstNode {
 
     /**
      * Constructs a new KeywordLiteral
+     *
      * @param nodeType the token type
      */
     public KeywordLiteral(int pos, int len, int nodeType) {
@@ -42,17 +43,18 @@ public class KeywordLiteral extends AstNode {
 
     /**
      * Sets node token type
+     *
      * @throws IllegalArgumentException if {@code nodeType} is unsupported
      */
     @Override
     public KeywordLiteral setType(int nodeType) {
         if (!(nodeType == Token.THIS
-              || nodeType == Token.NULL
-              || nodeType == Token.TRUE
-              || nodeType == Token.FALSE
-              || nodeType == Token.DEBUGGER))
+                || nodeType == Token.NULL
+                || nodeType == Token.TRUE
+                || nodeType == Token.FALSE
+                || nodeType == Token.DEBUGGER))
             throw new IllegalArgumentException("Invalid node type: "
-                                               + nodeType);
+                    + nodeType);
         type = nodeType;
         return this;
     }
@@ -70,24 +72,24 @@ public class KeywordLiteral extends AstNode {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         switch (getType()) {
-        case Token.THIS:
-            sb.append("this");
-            break;
-        case Token.NULL:
-            sb.append("null");
-            break;
-        case Token.TRUE:
-            sb.append("true");
-            break;
-        case Token.FALSE:
-            sb.append("false");
-            break;
-        case Token.DEBUGGER:
-            sb.append("debugger;\n");
-            break;
-        default:
-            throw new IllegalStateException("Invalid keyword literal type: "
-                                            + getType());
+            case Token.THIS:
+                sb.append("this");
+                break;
+            case Token.NULL:
+                sb.append("null");
+                break;
+            case Token.TRUE:
+                sb.append("true");
+                break;
+            case Token.FALSE:
+                sb.append("false");
+                break;
+            case Token.DEBUGGER:
+                sb.append("debugger;\n");
+                break;
+            default:
+                throw new IllegalStateException("Invalid keyword literal type: "
+                        + getType());
         }
         return sb.toString();
     }

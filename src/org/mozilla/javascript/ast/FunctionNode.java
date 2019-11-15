@@ -6,14 +6,10 @@
 
 package org.mozilla.javascript.ast;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
+
+import java.util.*;
 
 /**
  * A JavaScript function declaration or expression.
@@ -65,7 +61,7 @@ public class FunctionNode extends ScriptNode {
     public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
     public static final int ARROW_FUNCTION = 4;
 
-    public static enum Form {FUNCTION, GETTER, SETTER, METHOD}
+    public enum Form {FUNCTION, GETTER, SETTER, METHOD}
 
     private static final List<AstNode> NO_PARAMS =
             Collections.unmodifiableList(new ArrayList<AstNode>());
@@ -203,7 +199,7 @@ public class FunctionNode extends ScriptNode {
      * to disambiguate the function name node from the parameter nodes.
      */
     public boolean isParam(AstNode node) {
-        return params == null ? false : params.contains(node);
+        return params != null && params.contains(node);
     }
 
     /**

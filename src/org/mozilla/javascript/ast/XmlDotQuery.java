@@ -13,7 +13,7 @@ import org.mozilla.javascript.Token;
  * The node type (operator) is {@link Token#DOTQUERY}.
  * Its {@code getLeft} node is the target ("foo" in the example),
  * and the {@code getRight} node is the filter expression node.<p>
- *
+ * <p>
  * This class exists separately from {@link InfixExpression} largely because it
  * has different printing needs.  The position of the left paren is just after
  * the dot (operator) position, and the right paren is the final position in the
@@ -41,7 +41,7 @@ public class XmlDotQuery extends InfixExpression {
 
     /**
      * Returns right-paren position, -1 if missing.<p>
-     *
+     * <p>
      * Note that the left-paren is automatically the character
      * immediately after the "." in the operator - no whitespace is
      * permitted between the dot and lp by the scanner.

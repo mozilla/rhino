@@ -54,8 +54,9 @@ public class PropertyGet extends InfixExpression {
 
     /**
      * Sets target object, and sets its parent to this node.
+     *
      * @param target expression evaluating to the object upon which
-     * to do the property lookup
+     *               to do the property lookup
      * @throws IllegalArgumentException} if {@code target} is {@code null}
      */
     public void setTarget(AstNode target) {
@@ -66,11 +67,12 @@ public class PropertyGet extends InfixExpression {
      * Returns the property being accessed.
      */
     public Name getProperty() {
-        return (Name)getRight();
+        return (Name) getRight();
     }
 
     /**
      * Sets the property being accessed, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException} if {@code property} is {@code null}
      */
     public void setProperty(Name property) {

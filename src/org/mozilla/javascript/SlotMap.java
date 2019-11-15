@@ -11,14 +11,14 @@ package org.mozilla.javascript;
  * that back a ScriptableObject. It is the primary property map in Rhino. It is
  * Iterable but does not implement java.util.Map because that comes with a bunch
  * of overhead that we do not need.
- *
+ * <p>
  * This class generally has a bit of a strange interface, and its interactions with
  * ScriptableObject are complex. Many attempts to make this interface more elegant have
  * resulted in substantial performance regressions so we are doing the best that we can.
  */
 
 public interface SlotMap
-    extends Iterable<ScriptableObject.Slot> {
+        extends Iterable<ScriptableObject.Slot> {
 
     /**
      * Return the size of the map.

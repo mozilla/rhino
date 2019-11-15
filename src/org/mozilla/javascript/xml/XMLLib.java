@@ -6,41 +6,35 @@
 
 package org.mozilla.javascript.xml;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Ref;
-import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.*;
 
-public abstract class XMLLib
-{
+public abstract class XMLLib {
     private static final Object XML_LIB_KEY = new Object();
 
-  /**
-   * An object which specifies an XMLLib implementation to be used at runtime.
-   *
-   * This interface should be considered experimental.  It may be better
-   * (and certainly more flexible) to write an interface that returns an
-   * XMLLib object rather than a class name, for example.  But that would
-   * cause many more ripple effects in the code, all the way back to
-   * {@link ScriptRuntime}.
-   */
-  public static abstract class Factory {
+    /**
+     * An object which specifies an XMLLib implementation to be used at runtime.
+     * <p>
+     * This interface should be considered experimental.  It may be better
+     * (and certainly more flexible) to write an interface that returns an
+     * XMLLib object rather than a class name, for example.  But that would
+     * cause many more ripple effects in the code, all the way back to
+     * {@link ScriptRuntime}.
+     */
+    public static abstract class Factory {
 
-    public static Factory create(final String className) {
-      return new Factory() {
-        @Override
-        public String getImplementationClassName() {
-          return className;
+        public static Factory create(final String className) {
+            return new Factory() {
+                @Override
+                public String getImplementationClassName() {
+                    return className;
+                }
+            };
         }
-      };
+
+        public abstract String getImplementationClassName();
     }
 
-    public abstract String getImplementationClassName();
-  }
-
-    public static XMLLib extractFromScopeOrNull(Scriptable scope)
-    {
+    public static XMLLib extractFromScopeOrNull(Scriptable scope) {
         ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // If library is not yet initialized, return null
@@ -51,11 +45,10 @@ public abstract class XMLLib
         // which is done on first access to XML property
         ScriptableObject.getProperty(so, "XML");
 
-        return (XMLLib)so.getAssociatedValue(XML_LIB_KEY);
+        return (XMLLib) so.getAssociatedValue(XML_LIB_KEY);
     }
 
-    public static XMLLib extractFromScope(Scriptable scope)
-    {
+    public static XMLLib extractFromScope(Scriptable scope) {
         XMLLib lib = extractFromScopeOrNull(scope);
         if (lib != null) {
             return lib;
@@ -64,14 +57,13 @@ public abstract class XMLLib
         throw Context.reportRuntimeError(msg);
     }
 
-    protected final XMLLib bindToScope(Scriptable scope)
-    {
+    protected final XMLLib bindToScope(Scriptable scope) {
         ScriptableObject so = ScriptRuntime.getLibraryScopeOrNull(scope);
         if (so == null) {
             // standard library should be initialized at this point
             throw new IllegalStateException();
         }
-        return (XMLLib)so.associateValue(XML_LIB_KEY, this);
+        return (XMLLib) so.associateValue(XML_LIB_KEY, this);
     }
 
     public abstract boolean isXMLName(Context cx, Object name);
@@ -109,7 +101,7 @@ public abstract class XMLLib
     }
 
     public void setIgnoreWhitespace(boolean b) {
-      throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
     public void setIgnoreProcessingInstructions(boolean b) {

@@ -16,8 +16,7 @@ package org.mozilla.javascript;
  * @since 1.7.8
  */
 
-public interface SymbolScriptable
-{
+public interface SymbolScriptable {
     /**
      * Return the value of the property with the specified key, or
      * NOT_FOUND.

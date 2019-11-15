@@ -41,6 +41,7 @@ public class RegExpLiteral extends AstNode {
 
     /**
      * Sets the regexp string without delimiters
+     *
      * @throws IllegalArgumentException} if value is {@code null}
      */
     public void setValue(String value) {

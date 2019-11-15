@@ -10,8 +10,7 @@ package org.mozilla.javascript;
  * @author Norris Boyd
  */
 public class DefiningClassLoader extends ClassLoader
-    implements GeneratedClassLoader
-{
+        implements GeneratedClassLoader {
     public DefiningClassLoader() {
         this.parentLoader = getClass().getClassLoader();
     }
@@ -36,8 +35,7 @@ public class DefiningClassLoader extends ClassLoader
 
     @Override
     public Class<?> loadClass(String name, boolean resolve)
-        throws ClassNotFoundException
-    {
+            throws ClassNotFoundException {
         Class<?> cl = findLoadedClass(name);
         if (cl == null) {
             if (parentLoader != null) {

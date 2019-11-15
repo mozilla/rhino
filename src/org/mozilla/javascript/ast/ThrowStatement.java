@@ -57,6 +57,7 @@ public class ThrowStatement extends AstNode {
     /**
      * Sets the expression being thrown, and sets its parent
      * to this node.
+     *
      * @throws IllegalArgumentException} if expression is {@code null}
      */
     public void setExpression(AstNode expression) {

@@ -41,6 +41,7 @@ public class CatchClause extends AstNode {
 
     /**
      * Returns catch variable node
+     *
      * @return catch variable
      */
     public Name getVarName() {
@@ -49,6 +50,7 @@ public class CatchClause extends AstNode {
 
     /**
      * Sets catch variable node, and sets its parent to this node.
+     *
      * @param varName catch variable
      * @throws IllegalArgumentException if varName is {@code null}
      */
@@ -60,6 +62,7 @@ public class CatchClause extends AstNode {
 
     /**
      * Returns catch condition node, if present
+     *
      * @return catch condition node, {@code null} if not present
      */
     public AstNode getCatchCondition() {
@@ -68,6 +71,7 @@ public class CatchClause extends AstNode {
 
     /**
      * Sets catch condition node, and sets its parent to this node.
+     *
      * @param catchCondition catch condition node.  Can be {@code null}.
      */
     public void setCatchCondition(AstNode catchCondition) {
@@ -85,6 +89,7 @@ public class CatchClause extends AstNode {
 
     /**
      * Sets catch body, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if body is {@code null}
      */
     public void setBody(Block body) {
@@ -131,6 +136,7 @@ public class CatchClause extends AstNode {
 
     /**
      * Returns position of "if" keyword
+     *
      * @return position of "if" keyword, if present, or -1
      */
     public int getIfPosition() {
@@ -139,6 +145,7 @@ public class CatchClause extends AstNode {
 
     /**
      * Sets position of "if" keyword
+     *
      * @param ifPosition position of "if" keyword, if present, or -1
      */
     public void setIfPosition(int ifPosition) {

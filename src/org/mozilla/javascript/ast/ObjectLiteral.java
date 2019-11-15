@@ -6,11 +6,11 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.mozilla.javascript.Token;
 
 /**
  * AST node for an Object literal (also called an Object initialiser in
@@ -33,7 +33,7 @@ import org.mozilla.javascript.Token;
 public class ObjectLiteral extends AstNode implements DestructuringForm {
 
     private static final List<ObjectProperty> NO_ELEMS =
-        Collections.unmodifiableList(new ArrayList<ObjectProperty>());
+            Collections.unmodifiableList(new ArrayList<ObjectProperty>());
 
     private List<ObjectProperty> elements;
     boolean isDestructuring;
@@ -64,6 +64,7 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
     /**
      * Sets the element list, and updates the parent of each element.
      * Replaces any existing elements.
+     *
      * @param elements the element list.  Can be {@code null}.
      */
     public void setElements(List<ObjectProperty> elements) {
@@ -79,6 +80,7 @@ public class ObjectLiteral extends AstNode implements DestructuringForm {
 
     /**
      * Adds an element to the list, and sets its parent to this node.
+     *
      * @param element the property node to append to the end of the list
      * @throws IllegalArgumentException} if element is {@code null}
      */

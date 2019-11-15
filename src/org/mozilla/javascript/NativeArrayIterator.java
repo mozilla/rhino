@@ -8,9 +8,9 @@ package org.mozilla.javascript;
 
 public final class NativeArrayIterator extends ES6Iterator {
     public enum ARRAY_ITERATOR_TYPE {
-            ENTRIES,
-            KEYS,
-            VALUES
+        ENTRIES,
+        KEYS,
+        VALUES
     }
 
     private static final long serialVersionUID = 1L;
@@ -58,7 +58,7 @@ public final class NativeArrayIterator extends ES6Iterator {
         }
 
         if (type == ARRAY_ITERATOR_TYPE.ENTRIES) {
-            value = cx.newArray(scope, new Object[] {index, value});
+            value = cx.newArray(scope, new Object[]{index, value});
         }
 
         index++;

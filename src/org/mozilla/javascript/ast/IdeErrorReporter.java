@@ -17,7 +17,7 @@ import org.mozilla.javascript.ErrorReporter;
  * set to an instance of this interface, then this interface's
  * {@link #warning} and {@link #error} methods are called instead
  * of the {@link org.mozilla.javascript.ErrorReporter} versions. <p>
- *
+ * <p>
  * These methods take a source char offset and a length.  The
  * rationale is that in interactive IDE-type environments, the source
  * is available and the IDE will want to indicate where the error
@@ -33,34 +33,34 @@ public interface IdeErrorReporter extends ErrorReporter {
 
     /**
      * Report a warning.<p>
-     *
+     * <p>
      * The implementing class may choose to ignore the warning
      * if it desires.
      *
-     * @param message a {@code String} describing the warning
+     * @param message    a {@code String} describing the warning
      * @param sourceName a {@code String} describing the JavaScript source
-     * where the warning occured; typically a filename or URL
-     * @param offset the warning's 0-indexed char position in the input stream
-     * @param length the length of the region contributing to the warning
+     *                   where the warning occured; typically a filename or URL
+     * @param offset     the warning's 0-indexed char position in the input stream
+     * @param length     the length of the region contributing to the warning
      */
     void warning(String message, String sourceName, int offset, int length);
 
     /**
      * Report an error.<p>
-     *
+     * <p>
      * The implementing class is free to throw an exception if
      * it desires.<p>
-     *
+     * <p>
      * If execution has not yet begun, the JavaScript engine is
      * free to find additional errors rather than terminating
      * the translation. It will not execute a script that had
      * errors, however.<p>
      *
-     * @param message a String describing the error
+     * @param message    a String describing the error
      * @param sourceName a String describing the JavaScript source
-     * where the error occured; typically a filename or URL
-     * @param offset 0-indexed char position of the error in the input stream
-     * @param length the length of the region contributing to the error
+     *                   where the error occured; typically a filename or URL
+     * @param offset     0-indexed char position of the error in the input stream
+     * @param length     the length of the region contributing to the error
      */
     void error(String message, String sourceName, int offset, int length);
 }

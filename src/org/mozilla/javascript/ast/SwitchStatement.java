@@ -6,11 +6,11 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.mozilla.javascript.Token;
 
 /**
  * Switch statement AST node type.
@@ -32,7 +32,7 @@ import org.mozilla.javascript.Token;
 public class SwitchStatement extends Jump {
 
     private static final List<SwitchCase> NO_CASES =
-        Collections.unmodifiableList(new ArrayList<SwitchCase>());
+            Collections.unmodifiableList(new ArrayList<SwitchCase>());
 
     private AstNode expression;
     private List<SwitchCase> cases;
@@ -66,6 +66,7 @@ public class SwitchStatement extends Jump {
     /**
      * Sets the switch discriminant expression, and sets its parent
      * to this node.
+     *
      * @throws IllegalArgumentException} if expression is {@code null}
      */
     public void setExpression(AstNode expression) {
@@ -85,6 +86,7 @@ public class SwitchStatement extends Jump {
     /**
      * Sets case statement list, and sets the parent of each child
      * case to this node.
+     *
      * @param cases list, which may be {@code null} to remove all the cases
      */
     public void setCases(List<SwitchCase> cases) {
@@ -100,6 +102,7 @@ public class SwitchStatement extends Jump {
 
     /**
      * Adds a switch case statement to the end of the list.
+     *
      * @throws IllegalArgumentException} if switchCase is {@code null}
      */
     public void addCase(SwitchCase switchCase) {
@@ -173,7 +176,7 @@ public class SwitchStatement extends Jump {
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
             expression.visit(v);
-            for (SwitchCase sc: getCases()) {
+            for (SwitchCase sc : getCases()) {
                 sc.visit(v);
             }
         }

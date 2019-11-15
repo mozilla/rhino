@@ -62,6 +62,7 @@ public class NumberLiteral extends AstNode {
 
     /**
      * Sets the node's value
+     *
      * @throws IllegalArgumentException} if value is {@code null}
      */
     public void setValue(String value) {

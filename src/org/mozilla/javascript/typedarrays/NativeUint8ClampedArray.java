@@ -18,62 +18,52 @@ import org.mozilla.javascript.Undefined;
  */
 
 public class NativeUint8ClampedArray
-    extends NativeTypedArrayView<Integer>
-{
+        extends NativeTypedArrayView<Integer> {
     private static final long serialVersionUID = -3349419704390398895L;
 
     private static final String CLASS_NAME = "Uint8ClampedArray";
 
-    public NativeUint8ClampedArray()
-    {
+    public NativeUint8ClampedArray() {
     }
 
-    public NativeUint8ClampedArray(NativeArrayBuffer ab, int off, int len)
-    {
+    public NativeUint8ClampedArray(NativeArrayBuffer ab, int off, int len) {
         super(ab, off, len, len);
     }
 
-    public NativeUint8ClampedArray(int len)
-    {
+    public NativeUint8ClampedArray(int len) {
         this(new NativeArrayBuffer(len), 0, len);
     }
 
     @Override
-    public String getClassName()
-    {
+    public String getClassName() {
         return CLASS_NAME;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed)
-    {
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeUint8ClampedArray a = new NativeUint8ClampedArray();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
-    protected NativeUint8ClampedArray construct(NativeArrayBuffer ab, int off, int len)
-    {
+    protected NativeUint8ClampedArray construct(NativeArrayBuffer ab, int off, int len) {
         return new NativeUint8ClampedArray(ab, off, len);
     }
 
     @Override
-    public int getBytesPerElement()
-    {
+    public int getBytesPerElement() {
         return 1;
     }
 
     @Override
-    protected NativeUint8ClampedArray realThis(Scriptable thisObj, IdFunctionObject f)
-    {
+    protected NativeUint8ClampedArray realThis(Scriptable thisObj, IdFunctionObject f) {
         if (!(thisObj instanceof NativeUint8ClampedArray)) {
             throw incompatibleCallError(f);
         }
-        return (NativeUint8ClampedArray)thisObj;
+        return (NativeUint8ClampedArray) thisObj;
     }
 
     @Override
-    protected Object js_get(int index)
-    {
+    protected Object js_get(int index) {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
@@ -81,8 +71,7 @@ public class NativeUint8ClampedArray
     }
 
     @Override
-    protected Object js_set(int index, Object c)
-    {
+    protected Object js_set(int index, Object c) {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
@@ -92,20 +81,18 @@ public class NativeUint8ClampedArray
     }
 
     @Override
-    public Integer get(int i)
-    {
+    public Integer get(int i) {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Integer)js_get(i);
+        return (Integer) js_get(i);
     }
 
     @Override
-    public Integer set(int i, Integer aByte)
-    {
+    public Integer set(int i, Integer aByte) {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Integer)js_set(i, aByte);
+        return (Integer) js_set(i, aByte);
     }
 }

@@ -20,8 +20,7 @@ package org.mozilla.javascript;
  * @see org.mozilla.javascript.Context#setWrapFactory(WrapFactory)
  * @since 1.5 Release 4
  */
-public class WrapFactory
-{
+public class WrapFactory {
     /**
      * Wrap the object.
      * <p>
@@ -34,19 +33,18 @@ public class WrapFactory
      * <LI>The value returned by Context.getUndefinedValue()</LI>
      * <LI>null</LI>
      * </UL>
-     * @param cx the current Context for this thread
-     * @param scope the scope of the executing script
-     * @param obj the object to be wrapped. Note it can be null.
+     *
+     * @param cx         the current Context for this thread
+     * @param scope      the scope of the executing script
+     * @param obj        the object to be wrapped. Note it can be null.
      * @param staticType type hint. If security restrictions prevent to wrap
-              object based on its class, staticType will be used instead.
+     *                   object based on its class, staticType will be used instead.
      * @return the wrapped value.
      */
     public Object wrap(Context cx, Scriptable scope,
-                       Object obj, Class<?> staticType)
-    {
+                       Object obj, Class<?> staticType) {
         if (obj == null || obj == Undefined.instance
-            || obj instanceof Scriptable)
-        {
+                || obj instanceof Scriptable) {
             return obj;
         }
         if (staticType != null && staticType.isPrimitive()) {
@@ -58,16 +56,15 @@ public class WrapFactory
         }
         if (!isJavaPrimitiveWrap()) {
             if (obj instanceof String ||
-                obj instanceof Boolean ||
-                obj instanceof Integer ||
-                obj instanceof Short ||
-                obj instanceof Long ||
-                obj instanceof Float ||
-                obj instanceof Double)
-            {
+                    obj instanceof Boolean ||
+                    obj instanceof Integer ||
+                    obj instanceof Short ||
+                    obj instanceof Long ||
+                    obj instanceof Float ||
+                    obj instanceof Double) {
                 return obj;
             } else if (obj instanceof Character) {
-                return String.valueOf(((Character)obj).charValue());
+                return String.valueOf(((Character) obj).charValue());
             }
         }
         Class<?> cls = obj.getClass();
@@ -79,15 +76,15 @@ public class WrapFactory
 
     /**
      * Wrap an object newly created by a constructor call.
-     * @param cx the current Context for this thread
+     *
+     * @param cx    the current Context for this thread
      * @param scope the scope of the executing script
-     * @param obj the object to be wrapped
+     * @param obj   the object to be wrapped
      * @return the wrapped value.
      */
-    public Scriptable wrapNewObject(Context cx, Scriptable scope, Object obj)
-    {
+    public Scriptable wrapNewObject(Context cx, Scriptable scope, Object obj) {
         if (obj instanceof Scriptable) {
-            return (Scriptable)obj;
+            return (Scriptable) obj;
         }
         Class<?> cls = obj.getClass();
         if (cls.isArray()) {
@@ -107,16 +104,16 @@ public class WrapFactory
      * <p>
      * Subclasses can override the method to provide custom wrappers
      * for Java objects.
-     * @param cx the current Context for this thread
-     * @param scope the scope of the executing script
+     *
+     * @param cx         the current Context for this thread
+     * @param scope      the scope of the executing script
      * @param javaObject the object to be wrapped
      * @param staticType type hint. If security restrictions prevent to wrap
-                object based on its class, staticType will be used instead.
+     *                   object based on its class, staticType will be used instead.
      * @return the wrapped value which shall not be null
      */
     public Scriptable wrapAsJavaObject(Context cx, Scriptable scope,
-                                       Object javaObject, Class<?> staticType)
-    {
+                                       Object javaObject, Class<?> staticType) {
         return new NativeJavaObject(scope, javaObject, staticType);
     }
 
@@ -127,15 +124,14 @@ public class WrapFactory
      * Subclasses can override this method to provide custom wrappers for
      * Java classes.
      *
-     * @param cx the current Context for this thread
-     * @param scope the scope of the executing script
+     * @param cx        the current Context for this thread
+     * @param scope     the scope of the executing script
      * @param javaClass the class to be wrapped
      * @return the wrapped value which shall not be null
      * @since 1.7R3
      */
     public Scriptable wrapJavaClass(Context cx, Scriptable scope,
-                                    Class<?> javaClass)
-    {
+                                    Class<?> javaClass) {
         return new NativeJavaClass(scope, javaClass);
     }
 
@@ -150,16 +146,14 @@ public class WrapFactory
      * scripts can access any Java method available in these objects.
      * Use {@link #setJavaPrimitiveWrap(boolean)} to change this.
      */
-    public final boolean isJavaPrimitiveWrap()
-    {
+    public final boolean isJavaPrimitiveWrap() {
         return javaPrimitiveWrap;
     }
 
     /**
      * @see #isJavaPrimitiveWrap()
      */
-    public final void setJavaPrimitiveWrap(boolean value)
-    {
+    public final void setJavaPrimitiveWrap(boolean value) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.isSealed()) {
             Context.onSealedMutation();

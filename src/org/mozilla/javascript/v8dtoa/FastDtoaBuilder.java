@@ -97,7 +97,7 @@ public class FastDtoaBuilder {
         end = charPos + 1;
 
         // code below is needed because Integer.getChars() is not public
-        for (;;) {
+        for (; ; ) {
             int r = exp % 10;
             chars[charPos--] = digits[r];
             exp = exp / 10;
@@ -106,6 +106,6 @@ public class FastDtoaBuilder {
     }
 
     final static char[] digits = {
-        '0' , '1' , '2' , '3' , '4' , '5' , '6' , '7' , '8' , '9'
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     };
 }

@@ -6,23 +6,24 @@
 
 package org.mozilla.javascript.ast;
 
+import org.mozilla.javascript.Token;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mozilla.javascript.Token;
-
 /**
+ *
  */
 public class GeneratorExpression extends Scope {
-    
+
     private AstNode result;
     private List<GeneratorExpressionLoop> loops =
-        new ArrayList<GeneratorExpressionLoop>();
+            new ArrayList<GeneratorExpressionLoop>();
     private AstNode filter;
     private int ifPosition = -1;
     private int lp = -1;
     private int rp = -1;
-    
+
     {
         type = Token.GENEXPR;
     }
@@ -37,7 +38,7 @@ public class GeneratorExpression extends Scope {
     public GeneratorExpression(int pos, int len) {
         super(pos, len);
     }
-    
+
     /**
      * Returns result expression node (just after opening bracket)
      */
@@ -47,6 +48,7 @@ public class GeneratorExpression extends Scope {
 
     /**
      * Sets result expression, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if result is {@code null}
      */
     public void setResult(AstNode result) {
@@ -64,6 +66,7 @@ public class GeneratorExpression extends Scope {
 
     /**
      * Sets loop list
+     *
      * @throws IllegalArgumentException if loops is {@code null}
      */
     public void setLoops(List<GeneratorExpressionLoop> loops) {
@@ -76,6 +79,7 @@ public class GeneratorExpression extends Scope {
 
     /**
      * Adds a child loop node, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if acl is {@code null}
      */
     public void addLoop(GeneratorExpressionLoop acl) {
@@ -83,7 +87,7 @@ public class GeneratorExpression extends Scope {
         loops.add(acl);
         acl.setParent(this);
     }
-    
+
     /**
      * Returns filter expression, or {@code null} if not present
      */

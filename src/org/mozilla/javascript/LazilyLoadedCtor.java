@@ -21,7 +21,7 @@ public final class LazilyLoadedCtor implements Serializable {
     private static final int STATE_BEFORE_INIT = 0;
     private static final int STATE_INITIALIZING = 1;
     private static final int STATE_WITH_VALUE = 2;
-    
+
     private final ScriptableObject scope;
     private final String propertyName;
     private final String className;
@@ -31,14 +31,12 @@ public final class LazilyLoadedCtor implements Serializable {
     private int state;
 
     public LazilyLoadedCtor(ScriptableObject scope, String propertyName,
-            String className, boolean sealed)
-    {
+                            String className, boolean sealed) {
         this(scope, propertyName, className, sealed, false);
     }
 
     LazilyLoadedCtor(ScriptableObject scope, String propertyName,
-            String className, boolean sealed, boolean privileged)
-    {
+                     String className, boolean sealed, boolean privileged) {
 
         this.scope = scope;
         this.propertyName = propertyName;
@@ -51,12 +49,11 @@ public final class LazilyLoadedCtor implements Serializable {
                 ScriptableObject.DONTENUM);
     }
 
-    void init()
-    {
+    void init() {
         synchronized (this) {
             if (state == STATE_INITIALIZING)
                 throw new IllegalStateException(
-                    "Recursive initialization for "+propertyName);
+                        "Recursive initialization for " + propertyName);
             if (state == STATE_BEFORE_INIT) {
                 state = STATE_INITIALIZING;
                 // Set value now to have something to set in finally block if
@@ -72,22 +69,17 @@ public final class LazilyLoadedCtor implements Serializable {
         }
     }
 
-    Object getValue()
-    {
+    Object getValue() {
         if (state != STATE_WITH_VALUE)
             throw new IllegalStateException(propertyName);
         return initializedValue;
     }
 
-    private Object buildValue()
-    {
-        if(privileged)
-        {
-            return AccessController.doPrivileged(new PrivilegedAction<Object>()
-            {
+    private Object buildValue() {
+        if (privileged) {
+            return AccessController.doPrivileged(new PrivilegedAction<Object>() {
                 @Override
-                public Object run()
-                {
+                public Object run() {
                     return buildValue0();
                 }
             });
@@ -95,13 +87,12 @@ public final class LazilyLoadedCtor implements Serializable {
         return buildValue0();
     }
 
-    private Object buildValue0()
-    {
+    private Object buildValue0() {
         Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
         if (cl != null) {
             try {
                 Object value = ScriptableObject.buildClassCtor(scope, cl,
-                                                               sealed, false);
+                        sealed, false);
                 if (value != null) {
                     return value;
                 }
@@ -113,7 +104,7 @@ public final class LazilyLoadedCtor implements Serializable {
             } catch (InvocationTargetException ex) {
                 Throwable target = ex.getTargetException();
                 if (target instanceof RuntimeException) {
-                    throw (RuntimeException)target;
+                    throw (RuntimeException) target;
                 }
             } catch (RhinoException ex) {
             } catch (InstantiationException ex) {
@@ -126,7 +117,7 @@ public final class LazilyLoadedCtor implements Serializable {
 
     @SuppressWarnings({"unchecked"})
     private Class<? extends Scriptable> cast(Class<?> cl) {
-        return (Class<? extends Scriptable>)cl;
+        return (Class<? extends Scriptable>) cl;
     }
 
 }
