@@ -2259,7 +2259,10 @@ class BodyCodegen {
             break;
 
             case Token.STRING:
-                cfw.addPush(node.getString());
+                if (node instanceof Name)
+                    cfw.addPush(node.getString());
+                else if (node instanceof StringLiteral)
+                    cfw.addPush(((StringLiteral) node).getValue());
                 break;
 
             case Token.THIS:
