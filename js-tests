@@ -1,0 +1,3 @@
+function strCmp(a = 'default func str') {
+    let b = 'body str';
+}
