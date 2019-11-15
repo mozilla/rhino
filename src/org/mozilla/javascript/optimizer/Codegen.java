@@ -13,6 +13,10 @@ import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,23 +27,7 @@ import java.util.Map;
 
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
-import org.mozilla.javascript.CompilerEnvirons;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Evaluator;
-import org.mozilla.javascript.Function;
-import org.mozilla.javascript.GeneratedClassLoader;
-import org.mozilla.javascript.Kit;
-import org.mozilla.javascript.NativeFunction;
-import org.mozilla.javascript.NativeGenerator;
-import org.mozilla.javascript.Node;
-import org.mozilla.javascript.ObjArray;
-import org.mozilla.javascript.ObjToIntMap;
-import org.mozilla.javascript.RhinoException;
-import org.mozilla.javascript.Script;
-import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.SecurityController;
-import org.mozilla.javascript.Token;
+import org.mozilla.javascript.*;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
@@ -53,6 +41,9 @@ import org.mozilla.javascript.ast.ScriptNode;
  */
 
 public class Codegen implements Evaluator {
+    private static final boolean DEBUG_CODEGEN = true;
+
+
     @Override
     public void captureStackInfo(RhinoException ex) {
         throw new UnsupportedOperationException();
@@ -101,6 +92,40 @@ public class Codegen implements Evaluator {
         byte[] mainClassBytes = compileToClassFile(compilerEnv, mainClassName,
                 tree, encodedSource,
                 returnFunction);
+
+        if (DEBUG_CODEGEN) {
+            File output = new File("./out/compiled(" + mainClassName + ").class");
+            File outputDecomp = new File("./out/compiled(" + mainClassName + ").js");
+            File outputTokens = new File("./out/compiled(" + mainClassName + ").tokens");
+
+            try (FileOutputStream fos = new FileOutputStream(output)) {
+                fos.write(mainClassBytes);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(outputDecomp)) {
+                UintMap properties = new UintMap(1);
+                properties.put(Decompiler.INITIAL_INDENT_PROP, 4);
+                String source = Decompiler.decompile(encodedSource, Decompiler.TO_SOURCE_FLAG, properties);
+                fos.write(source.getBytes());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(outputTokens)) {
+                StringBuilder sb = new StringBuilder();
+
+                for (int i = 0; i < encodedSource.length(); i++) {
+                    if (!Token.isValidToken(encodedSource.charAt(i))) continue;
+
+                    sb.append(Token.typeToName(encodedSource.charAt(i))).append("\n");
+                }
+                fos.write(sb.toString().getBytes());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         return new Object[]{mainClassName, mainClassBytes};
     }
