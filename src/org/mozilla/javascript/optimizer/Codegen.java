@@ -1594,6 +1594,17 @@ class BodyCodegen {
                         cfw.add(ByteCode.AALOAD);
 
                         if (defaultParams.containsKey(i)) {
+                            // TODO Default parameters can refer to themselves, resulting
+                            //  in some quite excellent class output:
+                            // private static Object _c_test2_1(_stdin__1 var0, Context var1, Scriptable var2, Scriptable var3, Object[] var4) {
+                            //     var2 = var0.getParentScope();
+                            //     if (var4.length < 1) {
+                            //         var4 = ScriptRuntime.padArguments(var4, 1);
+                            //     }
+                            //
+                            //     Object a = ScriptRuntime.mixDefaultArgument(var4[0], var0);
+                            //     return a;
+                            // }
                             generateExpression(defaultParams.get(i), fnCurrent.fnode);
                             addScriptRuntimeInvoke(
                                     "mixDefaultArgument",
