@@ -722,15 +722,12 @@ public class ScriptRuntime {
         }
     }
 
-    public static Object[] mixDefaultArguments(Object[] args, Object[] defaultArgs) {
-        // defaultArgs.length will always equal args.length
-        for (int i = 0; i < args.length; i++) {
-            if (args[i] == Undefined.instance) {
-                args[i] = defaultArgs[i];
-            }
+    public static Object mixDefaultArgument(Object arg, Object defaultArg) {
+        if (arg == Undefined.instance) {
+            return defaultArg;
+        } else {
+            return arg;
         }
-
-        return args;
     }
 
     /**

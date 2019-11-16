@@ -1,3 +1,7 @@
 function strCmp(a = 'default func str') {
     let b = 'body str';
 }
+
+(function (a, b = a) { return a === 5 && b === 5; })(5);
+
+function test(a, b = a) { return a === 5 && b === 5; }

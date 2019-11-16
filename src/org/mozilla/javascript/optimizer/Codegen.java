@@ -1573,48 +1573,13 @@ class BodyCodegen {
                 );
                 cfw.addAStore(argsLocal);
                 cfw.markLabel(label);
-
-                // Mix default args
-                if (scriptOrFn instanceof FunctionNode) {
-                    final FunctionNode fn = (FunctionNode) scriptOrFn;
-                    final Map<Integer, Node> defaultParamMap = fn.getDefaultParams();
-
-                    // function outer(a = function inner(){}) { return a; }
-
-                    // cfw.addALoad(0);
-                    if (defaultParamMap.size() > 0) {
-                        cfw.addALoad(argsLocal);
-
-                        cfw.addPush(paramCount);
-                        cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
-
-                        for (int i = 0; i != paramCount; ++i) {
-                            cfw.add(ByteCode.DUP);
-                            cfw.addPush(i);
-
-                            if (!defaultParamMap.containsKey(i)) {
-                                Codegen.pushUndefined(cfw);
-                            } else {
-                                final Node node = defaultParamMap.get(i);
-                                generateExpression(node, scriptOrFn);
-                                // Codegen.pushUndefined(cfw);
-                            }
-
-                            cfw.add(ByteCode.AASTORE);
-                        }
-
-                        addScriptRuntimeInvoke(
-                                "mixDefaultArguments",
-                                "([Ljava/lang/Object;[Ljava/lang/Object;)[Ljava/lang/Object;"
-                        );
-                        cfw.addAStore(argsLocal);
-                    }
-                }
             }
 
             paramCount = fnCurrent.fnode.getParamCount();
             int varCount = fnCurrent.fnode.getParamAndVarCount();
             boolean[] constDeclarations = fnCurrent.fnode.getParamAndVarConst();
+
+            Map<Integer, Node> defaultParams = fnCurrent.fnode.getDefaultParams();
 
             // REMIND - only need to initialize the vars that don't get a value
             // before the next call and are used in the function
@@ -1627,6 +1592,15 @@ class BodyCodegen {
                         cfw.addALoad(argsLocal);
                         cfw.addPush(i);
                         cfw.add(ByteCode.AALOAD);
+
+                        if (defaultParams.containsKey(i)) {
+                            generateExpression(defaultParams.get(i), fnCurrent.fnode);
+                            addScriptRuntimeInvoke(
+                                    "mixDefaultArgument",
+                                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+                            );
+                        }
+
                         cfw.addAStore(reg);
                     }
                 } else if (fnCurrent.isNumberVar(i)) {

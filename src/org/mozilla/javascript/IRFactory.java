@@ -2302,8 +2302,6 @@ public final class IRFactory extends Parser {
             decompiler.addToken(Token.LP);
         }
 
-//        transformVariables()
-
         List<AstNode> params = fn.getParams();
         Map<Integer, Node> defaultParams = fn.getDefaultParams();
 
@@ -2313,7 +2311,9 @@ public final class IRFactory extends Parser {
             if (defaultParams.containsKey(i)) {
                 decompiler.addToken(Token.ASSIGN);
                 AstNode node = (AstNode) defaultParams.get(i);
-                fn.setDefaultParam(i, transform(node));
+                Node transformed = transform(node);
+                fn.setDefaultParam(i, transformed);
+                fn.addChildrenToBack(transformed);
             }
 
             if (i < params.size() - 1) {
