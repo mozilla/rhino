@@ -1577,7 +1577,7 @@ class BodyCodegen {
                 // Mix default args
                 if (scriptOrFn instanceof FunctionNode) {
                     final FunctionNode fn = (FunctionNode) scriptOrFn;
-                    final Map<Integer, AstNode> defaultParamMap = fn.getDefaultParams();
+                    final Map<Integer, Node> defaultParamMap = fn.getDefaultParams();
 
                     // function outer(a = function inner(){}) { return a; }
 
@@ -1595,8 +1595,8 @@ class BodyCodegen {
                             if (!defaultParamMap.containsKey(i)) {
                                 Codegen.pushUndefined(cfw);
                             } else {
-                                final AstNode node = defaultParamMap.get(i);
-                                generateExpression(node, node.getParent());
+                                final Node node = defaultParamMap.get(i);
+                                generateExpression(node, scriptOrFn);
                                 // Codegen.pushUndefined(cfw);
                             }
 

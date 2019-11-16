@@ -66,12 +66,15 @@ public class FunctionNode extends ScriptNode {
     private static final List<AstNode> NO_PARAMS =
             Collections.unmodifiableList(new ArrayList<AstNode>());
 
-    private static final Map<Integer, AstNode> NO_DEFAULT_PARAMS =
+    private static final Map<Integer, Node> NO_DEFAULT_PARAMS =
             Collections.unmodifiableMap(new HashMap<>());
 
     private Name functionName;
     private List<AstNode> params;
-    private Map<Integer, AstNode> defaultParams;
+    private Map<Integer, Node> defaultParams;
+
+    private VariableDeclaration parameters;
+
     private AstNode body;
     private boolean isExpressionClosure;
     private Form functionForm = Form.FUNCTION;
@@ -131,6 +134,10 @@ public class FunctionNode extends ScriptNode {
         return functionName != null ? functionName.getIdentifier() : "";
     }
 
+    public void setParams(VariableDeclaration vd) {
+        this.parameters = vd;
+    }
+
     /**
      * Returns the function parameter list
      *
@@ -147,8 +154,12 @@ public class FunctionNode extends ScriptNode {
      * @return the function parameter list.  Returns an immutable empty
      * list if there are no parameters.
      */
-    public Map<Integer, AstNode> getDefaultParams() {
+    public Map<Integer, Node> getDefaultParams() {
         return defaultParams != null ? defaultParams : NO_DEFAULT_PARAMS;
+    }
+
+    public void setDefaultParam(int index, Node transformed) {
+        defaultParams.put(index, transformed);
     }
 
     /**
@@ -463,9 +474,9 @@ public class FunctionNode extends ScriptNode {
             for (AstNode param : getParams()) {
                 param.visit(v);
             }
-            for (AstNode defaultParam : getDefaultParams().values()) {
-                defaultParam.visit(v);
-            }
+//            for (AstNode defaultParam : getDefaultParams().values()) {
+//                defaultParam.visit(v);
+//            }
             getBody().visit(v);
             if (!isExpressionClosure) {
                 if (memberExprNode != null) {

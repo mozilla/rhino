@@ -737,6 +737,8 @@ public class Parser {
 
 
         final VariableDeclaration vd = variables(Token.LP, ts.tokenEnd, false);
+        fnNode.setParams(vd);
+
         List<VariableInitializer> variables = vd.getVariables();
 
         for (int i1 = 0, variablesSize = variables.size(); i1 < variablesSize; i1++) {

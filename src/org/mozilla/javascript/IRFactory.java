@@ -2301,21 +2301,26 @@ public final class IRFactory extends Parser {
         if (!noParen) {
             decompiler.addToken(Token.LP);
         }
+
+//        transformVariables()
+
         List<AstNode> params = fn.getParams();
-        Map<Integer, AstNode> defaultParams = fn.getDefaultParams();
+        Map<Integer, Node> defaultParams = fn.getDefaultParams();
 
         for (int i = 0; i < params.size(); i++) {
             decompile(params.get(i));
 
             if (defaultParams.containsKey(i)) {
                 decompiler.addToken(Token.ASSIGN);
-                decompile(defaultParams.get(i));
+                AstNode node = (AstNode) defaultParams.get(i);
+                fn.setDefaultParam(i, transform(node));
             }
 
             if (i < params.size() - 1) {
                 decompiler.addToken(Token.COMMA);
             }
         }
+
         if (!noParen) {
             decompiler.addToken(Token.RP);
         }
