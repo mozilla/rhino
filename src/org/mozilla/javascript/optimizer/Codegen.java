@@ -2266,10 +2266,7 @@ class BodyCodegen {
             break;
 
             case Token.STRING:
-                if (node instanceof Name)
-                    cfw.addPush(node.getString());
-                else if (node instanceof StringLiteral)
-                    cfw.addPush(((StringLiteral) node).getValue());
+                cfw.addPush(node.getString());
                 break;
 
             case Token.THIS:

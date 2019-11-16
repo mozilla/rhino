@@ -621,6 +621,8 @@ public class Parser {
 
     private AstNode parseFunctionBody(int type, FunctionNode fnNode)
             throws IOException {
+        // Tracks whether this function is a special rhino-specific "infix" function
+        // e.g.: function square(x) x*x
         boolean isExpressionClosure = false;
         if (!matchToken(Token.LC, true)) {
             if (compilerEnv.getLanguageVersion() < Context.VERSION_1_8 && type != FunctionNode.ARROW_FUNCTION) {
@@ -731,63 +733,80 @@ public class Parser {
         Map<String, Node> destructuring = null;
         Set<String> paramNames = new HashSet<String>();
         int i = 0;
-        do {
-            int tt = peekToken();
-            if (tt == Token.LB || tt == Token.LC) {
-                AstNode expr = destructuringPrimaryExpr();
-                markDestructuring(expr);
-                fnNode.addParam(expr);
-                // Destructuring assignment for parameters: add a dummy
-                // parameter name, and add a statement to the body to initialize
-                // variables from the destructuring assignment
-                if (destructuring == null) {
-                    destructuring = new HashMap<>();
-                }
-                String pname = currentScriptOrFn.getNextTempName();
-                defineSymbol(Token.LP, pname, false);
-                destructuring.put(pname, expr);
-            } else {
-                if (mustMatchToken(Token.NAME, "msg.no.parm", true)) {
-                    Name paramNameNode = createNameNode();
-                    Comment jsdocNodeForName = getAndResetJsDoc();
-                    if (jsdocNodeForName != null) {
-                        paramNameNode.setJsDocNode(jsdocNodeForName);
-                    }
-                    fnNode.addParam(paramNameNode);
-                    String paramName = ts.getString();
-                    defineSymbol(Token.LP, paramName);
-                    if (this.inUseStrictDirective) {
-                        if ("eval".equals(paramName) ||
-                                "arguments".equals(paramName)) {
-                            reportError("msg.bad.id.strict", paramName);
-                        }
-                        if (paramNames.contains(paramName))
-                            addError("msg.dup.param.strict", paramName);
-                        paramNames.add(paramName);
-                    }
 
-                    if (matchToken(Token.ASSIGN, true)) {
-                        AstNode expr = assignExpr();
-                        fnNode.addDefaultParam(i, expr);
-                    }
-                } else {
-                    fnNode.addParam(makeErrorNode());
-                }
-            }
-            i++;
-        } while (matchToken(Token.COMMA, true));
 
-        if (destructuring != null) {
-            Node destructuringNode = new Node(Token.COMMA);
-            // Add assignment helper for each destructuring parameter
-            for (Map.Entry<String, Node> param : destructuring.entrySet()) {
-                Node assign = createDestructuringAssignment(Token.VAR,
-                        param.getValue(), createName(param.getKey()));
-                destructuringNode.addChildToBack(assign);
 
-            }
-            fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
+        final VariableDeclaration vd = variables(Token.LP, ts.tokenEnd, false);
+        List<VariableInitializer> variables = vd.getVariables();
+
+        for (int i1 = 0, variablesSize = variables.size(); i1 < variablesSize; i1++) {
+            VariableInitializer variable = variables.get(i1);
+            fnNode.addParam(variable.getTarget());
+
+            final AstNode initializer = variable.getInitializer();
+            if (initializer != null)
+                fnNode.addDefaultParam(i1, initializer);
         }
+
+
+
+        // do {
+        //     int tt = peekToken();
+        //     if (tt == Token.LB || tt == Token.LC) {
+        //         AstNode expr = destructuringPrimaryExpr();
+        //         markDestructuring(expr);
+        //         fnNode.addParam(expr);
+        //         // Destructuring assignment for parameters: add a dummy
+        //         // parameter name, and add a statement to the body to initialize
+        //         // variables from the destructuring assignment
+        //         if (destructuring == null) {
+        //             destructuring = new HashMap<>();
+        //         }
+        //         String pname = currentScriptOrFn.getNextTempName();
+        //         defineSymbol(Token.LP, pname, false);
+        //         destructuring.put(pname, expr);
+        //     } else {
+        //         if (mustMatchToken(Token.NAME, "msg.no.parm", true)) {
+        //             Name paramNameNode = createNameNode();
+        //             Comment jsdocNodeForName = getAndResetJsDoc();
+        //             if (jsdocNodeForName != null) {
+        //                 paramNameNode.setJsDocNode(jsdocNodeForName);
+        //             }
+        //             fnNode.addParam(paramNameNode);
+        //             String paramName = ts.getString();
+        //             defineSymbol(Token.LP, paramName);
+        //             if (this.inUseStrictDirective) {
+        //                 if ("eval".equals(paramName) ||
+        //                         "arguments".equals(paramName)) {
+        //                     reportError("msg.bad.id.strict", paramName);
+        //                 }
+        //                 if (paramNames.contains(paramName))
+        //                     addError("msg.dup.param.strict", paramName);
+        //                 paramNames.add(paramName);
+        //             }
+        //
+        //             if (matchToken(Token.ASSIGN, true)) {
+        //                 AstNode expr = assignExpr();
+        //                 fnNode.addDefaultParam(i, expr);
+        //             }
+        //         } else {
+        //             fnNode.addParam(makeErrorNode());
+        //         }
+        //     }
+        //     i++;
+        // } while (matchToken(Token.COMMA, true));
+        //
+        // if (destructuring != null) {
+        //     Node destructuringNode = new Node(Token.COMMA);
+        //     // Add assignment helper for each destructuring parameter
+        //     for (Map.Entry<String, Node> param : destructuring.entrySet()) {
+        //         Node assign = createDestructuringAssignment(Token.VAR,
+        //                 param.getValue(), createName(param.getKey()));
+        //         destructuringNode.addChildToBack(assign);
+        //
+        //     }
+        //     fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
+        // }
 
         if (mustMatchToken(Token.RP, "msg.no.paren.after.parms", true)) {
             fnNode.setRp(ts.tokenBeg - fnNode.getPosition());
