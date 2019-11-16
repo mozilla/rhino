@@ -19,7 +19,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
     private static final long serialVersionUID = 5311394446546053859L;
 
     private static final Object FUNCTION_TAG = "Function";
-    protected Map<Integer, Object> defaultArguments = null;
 
     static void init(Scriptable scope, boolean sealed) {
         BaseFunction obj = new BaseFunction();
@@ -33,11 +32,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
     public BaseFunction(Scriptable scope, Scriptable prototype) {
         super(scope, prototype);
-    }
-
-    public Object setDefaultArguments(Map<Integer, Object> args) {
-        this.defaultArguments = args;
-        return this;
     }
 
     @Override
@@ -294,25 +288,9 @@ public class BaseFunction extends IdScriptableObject implements Function {
         return false;
     }
 
-    protected Object[] mixArgWithDefault(Object[] arguments) {
-        final int argLength = Math.max(arguments.length, defaultArguments.size());
-        Object[] args = new Object[argLength];
-
-        for (int i = 0; i < argLength; i++) {
-            if (i < arguments.length) {
-                args[i] = arguments[i];
-            } else {
-                args[i] = defaultArguments.getOrDefault(i, Undefined.instance);
-            }
-        }
-
-        return args;
-    }
-
     @Override
     public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] _args) {
-        Object[] args = mixArgWithDefault(_args);
+                             Scriptable thisObj, Object[] args) {
 
         if (!f.hasTag(FUNCTION_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
