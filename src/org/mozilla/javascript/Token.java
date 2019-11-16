@@ -563,6 +563,8 @@ public class Token {
                 return "CONST";
             case SETCONST:
                 return "SETCONST";
+            case SETCONSTVAR:
+                return "SETCONSTVAR";
             case ARRAYCOMP:
                 return "ARRAYCOMP";
             case WITHEXPR:

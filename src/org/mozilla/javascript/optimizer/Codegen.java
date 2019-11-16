@@ -127,9 +127,40 @@ public class Codegen implements Evaluator {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            for (int i = 0; i < scriptOrFnNodes.length; i++) {
+                File outputNodes = new File("./out/compiled(" + mainClassName + ")_" + i + ".nodes");
+
+                try (FileOutputStream fos = new FileOutputStream(outputNodes)) {
+                    StringBuilder sb = new StringBuilder();
+                    Node root = scriptOrFnNodes[i];
+
+                    printNodeTree(root, sb, "");
+
+                    fos.write(sb.toString().getBytes());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return new Object[]{mainClassName, mainClassBytes};
+    }
+
+    private void printNodeTree(Node root, StringBuilder sb, String currentIndent) {
+        sb.append(currentIndent)
+                .append(Token.typeToName(root.getType()))
+                .append("\n");
+
+        Node currentChild = root.getFirstChild();
+
+        do {
+            if (currentChild == null) return;
+
+            printNodeTree(currentChild, sb, currentIndent + "  ");
+
+            currentChild = currentChild.getNext();
+        } while (currentChild != root.getLastChild());
     }
 
     @Override
