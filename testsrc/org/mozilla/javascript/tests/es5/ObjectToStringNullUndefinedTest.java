@@ -22,7 +22,7 @@ public class ObjectToStringNullUndefinedTest {
     @Before
     public void setUp() {
         cx = Context.enter();
-        cx.setLanguageVersion(200);
+        cx.setLanguageVersion(Context.VERSION_ES6);
         scope = cx.initStandardObjects();
     }
 

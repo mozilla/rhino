@@ -9,7 +9,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.Wrapper;
 
 import junit.framework.TestCase;
 

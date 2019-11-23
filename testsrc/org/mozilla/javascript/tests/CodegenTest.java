@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import org.junit.Assert;
-import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
 import org.mozilla.javascript.NativeFunction;
 import org.mozilla.javascript.Script;
 
