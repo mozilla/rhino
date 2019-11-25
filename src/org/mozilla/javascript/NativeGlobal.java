@@ -245,8 +245,11 @@ public class NativeGlobal implements Serializable, IdFunctionCall
                     radix = 16;
                     start += 2;
                 } else if ('0' <= c && c <= '9') {
-                    radix = 8;
-                    start++;
+                    Context cx = Context.getCurrentContext();
+                    if (cx == null || cx.getLanguageVersion() < Context.VERSION_1_5) {
+                        radix = 8;
+                        start++;
+                    }
                 }
             }
         }

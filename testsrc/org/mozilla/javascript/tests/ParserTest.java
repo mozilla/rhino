@@ -5,7 +5,6 @@
 package org.mozilla.javascript.tests;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.List;
 
 import org.mozilla.javascript.CompilerEnvirons;

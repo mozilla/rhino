@@ -29,7 +29,7 @@ public class Bug714204Test {
     public void setUp() {
         cx = Context.enter();
         scope = cx.initStandardObjects();
-        cx.setLanguageVersion(170);
+        cx.setLanguageVersion(Context.VERSION_1_7);
     }
 
     @After

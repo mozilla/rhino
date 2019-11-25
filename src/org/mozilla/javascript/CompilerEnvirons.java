@@ -266,7 +266,7 @@ public class CompilerEnvirons
         env.setRecordingComments(true);
         env.setStrictMode(true);
         env.setWarnTrailingComma(true);
-        env.setLanguageVersion(170);
+        env.setLanguageVersion(Context.VERSION_1_7);
         env.setReservedKeywordAsIdentifier(true);
         env.setIdeMode(true);
         env.setErrorReporter(new ErrorCollector());
