@@ -5,7 +5,6 @@ package org.mozilla.javascript.tests;
 
 import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
-import static org.mozilla.javascript.Context.VERSION_ES6;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.Scriptable;
