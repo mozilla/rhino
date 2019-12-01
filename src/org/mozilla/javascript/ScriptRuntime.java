@@ -3635,10 +3635,11 @@ public class ScriptRuntime {
                     if (isConst) {
                         ScriptableObject.defineConstProperty(varScope, name);
                     } else if (!evalScript) {
-                        // Global var definitions are supposed to be DONTDELETE
-                        ScriptableObject.defineProperty(
-                            varScope, name, Undefined.instance,
-                            ScriptableObject.PERMANENT);
+                        if (!(funObj instanceof InterpretedFunction)
+                            || ((InterpretedFunction) funObj).hasFunctionNamed(name)) {
+                            // Global var definitions are supposed to be DONTDELETE
+                            ScriptableObject.defineProperty(varScope, name, Undefined.instance, ScriptableObject.PERMANENT);
+                        }
                     } else {
                         varScope.put(name, varScope, Undefined.instance);
                     }
