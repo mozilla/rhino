@@ -96,7 +96,7 @@ public class DoctestsTest {
             int testsPassed = global.runDoctest(cx, global, source, name, 1);
             assertTrue(testsPassed > 0);
         } catch (Exception ex) {
-          System.out.println(name + "(" + optimizationLevel + "): FAILED due to "+ex);
+          System.out.println(name + "(" + optimizationLevel + "): FAILED due to " + ex);
           throw ex;
         } finally {
             Context.exit();
