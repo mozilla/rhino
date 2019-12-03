@@ -325,9 +325,9 @@ public class ClassFileWriter {
             index = putInt16(itsExceptionTableTop, codeAttribute, index);
             for (int i = 0; i < itsExceptionTableTop; i++) {
                 ExceptionTableEntry ete = itsExceptionTable[i];
-                short startPC = (short) getLabelPC(ete.itsStartLabel);
-                short endPC = (short) getLabelPC(ete.itsEndLabel);
-                short handlerPC = (short) getLabelPC(ete.itsHandlerLabel);
+                int startPC = getLabelPC(ete.itsStartLabel);
+                int endPC = getLabelPC(ete.itsEndLabel);
+                int handlerPC = getLabelPC(ete.itsHandlerLabel);
                 short catchType = ete.itsCatchType;
                 if (startPC == -1)
                     throw new IllegalStateException("start label not defined");
@@ -1529,8 +1529,8 @@ public class ClassFileWriter {
 
             for (int i = 0; i < itsExceptionTableTop; i++) {
                 ExceptionTableEntry ete = itsExceptionTable[i];
-                short startPC = (short) getLabelPC(ete.itsStartLabel);
-                short handlerPC = (short) getLabelPC(ete.itsHandlerLabel);
+                int startPC = getLabelPC(ete.itsStartLabel);
+                int handlerPC = getLabelPC(ete.itsHandlerLabel);
                 SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
                 SuperBlock dep = getSuperBlockFromOffset(startPC);
                 deps[handlerSB.getIndex()] = dep;
@@ -1780,13 +1780,12 @@ public class ClassFileWriter {
 
                 for (int i = 0; i < itsExceptionTableTop; i++) {
                     ExceptionTableEntry ete = itsExceptionTable[i];
-                    short startPC = (short) getLabelPC(ete.itsStartLabel);
-                    short endPC = (short) getLabelPC(ete.itsEndLabel);
+                    int startPC = getLabelPC(ete.itsStartLabel);
+                    int endPC = getLabelPC(ete.itsEndLabel);
                     if (bci < startPC || bci >= endPC) {
                         continue;
                     }
-                    short handlerPC =
-                        (short) getLabelPC(ete.itsHandlerLabel);
+                    int handlerPC = getLabelPC(ete.itsHandlerLabel);
                     SuperBlock sb = getSuperBlockFromOffset(handlerPC);
                     int exceptionType;
 
