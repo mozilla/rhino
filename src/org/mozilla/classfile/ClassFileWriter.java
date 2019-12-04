@@ -337,6 +337,8 @@ public class ClassFileWriter {
                     throw new IllegalStateException(
                         "handler label not defined");
 
+                // no need to cast to short here, the putInt16 uses only
+                // the short part of the int
                 index = putInt16(startPC, codeAttribute, index);
                 index = putInt16(endPC, codeAttribute, index);
                 index = putInt16(handlerPC, codeAttribute, index);
