@@ -82,6 +82,7 @@ public class FunctionNode extends ScriptNode {
     private int functionType;
     private boolean needsActivation;
     private boolean isGenerator;
+    private boolean isES6Generator;
     private List<Node> generatorResumePoints;
     private Map<Node,int[]> liveLocals;
     private AstNode memberExprNode;
@@ -283,6 +284,15 @@ public class FunctionNode extends ScriptNode {
     }
 
     public void setIsGenerator() {
+        isGenerator = true;
+    }
+
+    public boolean isES6Generator() {
+        return isES6Generator;
+    }
+
+    public void setIsES6Generator() {
+        isES6Generator = true;
         isGenerator = true;
     }
 

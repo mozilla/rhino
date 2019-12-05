@@ -18,13 +18,17 @@ public final class NativeIterator extends IdScriptableObject {
     private static final long serialVersionUID = -4136968203581667681L;
     private static final Object ITERATOR_TAG = "Iterator";
 
-    static void init(ScriptableObject scope, boolean sealed) {
+    static void init(Context cx, ScriptableObject scope, boolean sealed) {
         // Iterator
         NativeIterator iterator = new NativeIterator();
         iterator.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
 
         // Generator
-        NativeGenerator.init(scope, sealed);
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            ES6Generator.init(scope, sealed);
+        } else {
+            NativeGenerator.init(scope, sealed);
+        }
 
         // StopIteration
         NativeObject obj = new StopIteration();
@@ -65,8 +69,20 @@ public final class NativeIterator extends IdScriptableObject {
     private static final String STOP_ITERATION = "StopIteration";
     public static final String ITERATOR_PROPERTY_NAME = "__iterator__";
 
-    static class StopIteration extends NativeObject {
+    public static class StopIteration extends NativeObject {
         private static final long serialVersionUID = 2485151085722377663L;
+
+        private Object value = Undefined.instance;
+
+        public StopIteration() {}
+
+        public StopIteration(Object val) {
+            this.value = val;
+        }
+
+        public Object getValue() {
+            return value;
+        }
 
         @Override
         public String getClassName() {

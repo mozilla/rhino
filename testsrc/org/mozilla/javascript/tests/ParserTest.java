@@ -1352,6 +1352,28 @@ public class ParserTest extends TestCase {
                         new String[] { "\"eval\" is not a valid identifier for this use in strict mode." });
     }
 
+    public void testBasicFunction() {
+      AstNode root = parse("function f() { return 1; }");
+      FunctionNode f = (FunctionNode)root.getFirstChild();
+      assertEquals("f", f.getName());
+      assertFalse(f.isGenerator());
+      assertFalse(f.isES6Generator());
+    }
+
+    public void testES6Generator() {
+      environment.setLanguageVersion(Context.VERSION_ES6);
+      AstNode root = parse("function * g() { return true; }");
+      FunctionNode f = (FunctionNode)root.getFirstChild();
+      assertEquals("g", f.getName());
+      assertTrue(f.isGenerator());
+      assertTrue(f.isES6Generator());
+    }
+
+    public void testES6GeneratorNot() {
+      expectParseErrors("function * notES6() { return true; }",
+        new String[] { "missing ( before function parameters." });
+    }
+
     private void expectParseErrors(String string, String [] errors) {
       parse(string, errors, null, false);
     }
