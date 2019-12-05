@@ -193,7 +193,7 @@ public class ScriptRuntime {
         NativeCall.init(scope, sealed);
         NativeScript.init(scope, sealed);
 
-        NativeIterator.init(scope, sealed); // Also initializes NativeGenerator
+        NativeIterator.init(cx, scope, sealed); // Also initializes NativeGenerator & ES6Generator
 
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
@@ -2636,6 +2636,19 @@ public class ScriptRuntime {
                 ScriptRuntime.getElemFunctionAndThis(obj, SymbolKey.ITERATOR, cx, scope);
         final Scriptable iterable = ScriptRuntime.lastStoredScriptable(cx);
         return getIterator.call(cx, scope, iterable, ScriptRuntime.emptyArgs);
+    }
+
+    /**
+     * Given an iterator result, return true if and only if there is a "done"
+     * property that's true.
+     */
+    public static boolean isIteratorDone(Context cx, Object result)
+    {
+        if (!(result instanceof Scriptable)) {
+            return false;
+        }
+        final Object prop = getObjectProp((Scriptable)result, ES6Iterator.DONE_PROPERTY, cx);
+        return toBoolean(prop);
     }
 
     /**

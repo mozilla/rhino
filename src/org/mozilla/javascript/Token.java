@@ -231,7 +231,9 @@ public class Token
         GENEXPR        = 163,
         METHOD         = 164,  // ES6 MethodDefinition
         ARROW          = 165,  // ES6 ArrowFunction
-        LAST_TOKEN     = 166;
+        YIELD_STAR     = 166,  // ES6 "yield *", a specialization of yield
+        LAST_TOKEN     = 167;
+        
 
     /**
      * Returns a name for the token.  If Rhino is compiled with certain
@@ -419,6 +421,7 @@ public class Token
           case GENEXPR:         return "GENEXPR";
           case METHOD:          return "METHOD";
           case ARROW:           return "ARROW";
+          case YIELD_STAR:      return "YIELD_STAR";
         }
 
         // Token without name

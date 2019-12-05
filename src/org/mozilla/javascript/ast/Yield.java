@@ -19,23 +19,23 @@ public class Yield extends AstNode {
 
     private AstNode value;
 
-    {
-        type = Token.YIELD;
-    }
-
     public Yield() {
+        type = Token.YIELD;
     }
 
     public Yield(int pos) {
         super(pos);
+        type = Token.YIELD;
     }
 
     public Yield(int pos, int len) {
         super(pos, len);
+        type = Token.YIELD;
     }
 
-    public Yield(int pos, int len, AstNode value) {
+    public Yield(int pos, int len, AstNode value, boolean isStar) {
         super(pos, len);
+        type = isStar ? Token.YIELD_STAR : Token.YIELD;
         setValue(value);
     }
 
