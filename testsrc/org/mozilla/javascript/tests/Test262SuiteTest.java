@@ -79,7 +79,6 @@ public class Test262SuiteTest {
             "cross-realm",
             "default-arg",
             "default-parameters",
-            "generators",
             "new.target",
             "object-rest",
             "regexp-dotall",

@@ -555,8 +555,10 @@ public final class Interpreter extends Icode implements Evaluator
                 break;
               case Token.THROW :
               case Token.YIELD :
+              case Icode_YIELD_STAR :
               case Icode_GENERATOR :
               case Icode_GENERATOR_END :
+              case Icode_GENERATOR_RETURN :
               {
                 int line = getIndex(iCode, pc);
                 out.println(tname + " : " + line);
@@ -684,8 +686,10 @@ public final class Interpreter extends Icode implements Evaluator
         switch (bytecode) {
             case Token.THROW :
             case Token.YIELD:
+            case Icode_YIELD_STAR:
             case Icode_GENERATOR:
             case Icode_GENERATOR_END:
+            case Icode_GENERATOR_RETURN:
                 // source line
                 return 1 + 2;
 
@@ -1173,17 +1177,21 @@ switch (op) {
           frame.pc--; // we want to come back here when we resume
           CallFrame generatorFrame = captureFrameForGenerator(frame);
           generatorFrame.frozen = true;
-          NativeGenerator generator = new NativeGenerator(frame.scope,
-              generatorFrame.fnOrScript, generatorFrame);
-          frame.result = generator;
+          if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+            frame.result = new ES6Generator(frame.scope, generatorFrame.fnOrScript, generatorFrame);
+          } else {
+              frame.result = new NativeGenerator(frame.scope,
+                generatorFrame.fnOrScript, generatorFrame);
+          }
           break Loop;
         }
         // We are now resuming execution. Fall through to YIELD case.
     }
     // fall through...
-    case Token.YIELD: {
+    case Token.YIELD:
+    case Icode_YIELD_STAR: {
         if (!frame.frozen) {
-            return freezeGenerator(cx, frame, stackTop, generatorState);
+            return freezeGenerator(cx, frame, stackTop, generatorState, op == Icode_YIELD_STAR);
         }
         Object obj = thawGenerator(frame, stackTop, generatorState, op);
         if (obj != Scriptable.NOT_FOUND) {
@@ -1200,6 +1208,21 @@ switch (op) {
           NativeIterator.getStopIterationObject(frame.scope),
           frame.idata.itsSourceFile, sourceLine);
       break Loop;
+    }
+    case Icode_GENERATOR_RETURN: {
+        // throw StopIteration with the value of "return"
+        frame.frozen = true;
+        frame.result = stack[stackTop];
+        frame.resultDbl = sDbl[stackTop];
+        --stackTop;
+
+        NativeIterator.StopIteration si = new NativeIterator.StopIteration(
+           (frame.result == DOUBLE_MARK) ? frame.resultDbl : frame.result);
+
+        int sourceLine = getIndex(iCode, frame.pc);
+        generatorState.returnedException =
+            new JavaScriptException(si, frame.idata.itsSourceFile, sourceLine);
+        break Loop;
     }
     case Token.THROW: {
         Object value = stack[stackTop];
@@ -2817,7 +2840,8 @@ switch (op) {
 
     private static Object freezeGenerator(Context cx, CallFrame frame,
                                           int stackTop,
-                                          GeneratorState generatorState)
+                                          GeneratorState generatorState,
+                                          boolean yieldStar)
     {
           if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
               // Error: no yields when generator is closing
@@ -2830,9 +2854,13 @@ switch (op) {
           frame.savedStackTop = stackTop;
           frame.pc--; // we want to come back here when we resume
           ScriptRuntime.exitActivationFunction(cx);
-          return (frame.result != DOUBLE_MARK)
+          final Object result = (frame.result != DOUBLE_MARK)
               ? frame.result
               : ScriptRuntime.wrapNumber(frame.resultDbl);
+          if (yieldStar) {
+              return new ES6Generator.YieldStarResult(result);
+          }
+          return result;
     }
 
     private static Object thawGenerator(CallFrame frame, int stackTop,
@@ -2844,7 +2872,7 @@ switch (op) {
           frame.pc += 2; // skip line number data
           if (generatorState.operation == NativeGenerator.GENERATOR_THROW) {
               // processing a call to <generator>.throw(exception): must
-              // act as if exception was thrown from resumption point
+              // act as if exception was thrown from resumption point.
               return new JavaScriptException(generatorState.value,
                                                   frame.idata.itsSourceFile,
                                                   sourceLine);
@@ -2854,8 +2882,9 @@ switch (op) {
           }
           if (generatorState.operation != NativeGenerator.GENERATOR_SEND)
               throw Kit.codeBug();
-          if (op == Token.YIELD)
+          if ((op == Token.YIELD) || (op == Icode_YIELD_STAR)) {
               frame.stack[stackTop] = generatorState.value;
+          }
           return Scriptable.NOT_FOUND;
     }
 

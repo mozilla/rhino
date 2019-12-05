@@ -437,6 +437,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
           case Token.WITH:
           case Token.WITHEXPR:
           case Token.YIELD:
+          case Token.YIELD_STAR:
             return true;
 
           default:

@@ -99,7 +99,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 
     @Override
     protected int findPrototypeId(String s) {
-        if ("next".equals(s)) {
+        if (NEXT_METHOD.equals(s)) {
             return Id_next;
         }
         return 0;
@@ -125,10 +125,14 @@ public abstract class ES6Iterator extends IdScriptableObject {
     }
 
     // 25.1.1.3 The IteratorResult Interface
-    private Scriptable makeIteratorResult(Context cx, Scriptable scope, boolean done, Object value) {
-        Scriptable iteratorResult = cx.newObject(scope);
-        ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
+    static Scriptable makeIteratorResult(Context cx, Scriptable scope, boolean done) {
+        return makeIteratorResult(cx, scope, done, Undefined.instance);
+    }
+
+    static Scriptable makeIteratorResult(Context cx, Scriptable scope, boolean done, Object value) {
+        final Scriptable iteratorResult = cx.newObject(scope);
         ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
+        ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);
         return iteratorResult;
     }
 
@@ -142,4 +146,5 @@ public abstract class ES6Iterator extends IdScriptableObject {
     public static final String DONE_PROPERTY = "done";
     public static final String RETURN_PROPERTY = "return";
     public static final String VALUE_PROPERTY = "value";
+    public static final String RETURN_METHOD = "return";
 }

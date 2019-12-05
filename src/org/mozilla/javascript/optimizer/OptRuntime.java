@@ -10,6 +10,7 @@ import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.ES6Generator;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.NativeFunction;
@@ -19,6 +20,7 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 
 public final class OptRuntime extends ScriptRuntime
 {
@@ -247,9 +249,13 @@ public final class OptRuntime extends ScriptRuntime
         });
     }
 
-    public static void throwStopIteration(Object obj) {
-        throw new JavaScriptException(
-            NativeIterator.getStopIterationObject((Scriptable)obj), "", 0);
+    public static void throwStopIteration(Object scope, Object genState) {
+        Object value = getGeneratorReturnValue(genState);
+        Object si =
+            (value == Undefined.instance) ?
+              NativeIterator.getStopIterationObject((Scriptable)scope) :
+              new NativeIterator.StopIteration(value);
+        throw new JavaScriptException(si, "", 0);
     }
 
     public static Scriptable createNativeGenerator(NativeFunction funObj,
@@ -258,8 +264,12 @@ public final class OptRuntime extends ScriptRuntime
                                                    int maxLocals,
                                                    int maxStack)
     {
-        return new NativeGenerator(scope, funObj,
-                new GeneratorState(thisObj, maxLocals, maxStack));
+        GeneratorState gs = new GeneratorState(thisObj, maxLocals, maxStack);
+        if (Context.getCurrentContext().getLanguageVersion() >= Context.VERSION_ES6) {
+            return new ES6Generator(scope, funObj, gs);
+        } else {
+            return new NativeGenerator(scope, funObj, gs);
+        }
     }
 
     public static Object[] getGeneratorStackState(Object obj) {
@@ -274,6 +284,16 @@ public final class OptRuntime extends ScriptRuntime
         if (rgs.localsState == null)
             rgs.localsState = new Object[rgs.maxLocals];
         return rgs.localsState;
+    }
+
+    public static void setGeneratorReturnValue(Object obj, Object val) {
+        GeneratorState rgs = (GeneratorState) obj;
+        rgs.returnValue = val;
+    }
+
+    public static Object getGeneratorReturnValue(Object obj) {
+        GeneratorState rgs = (GeneratorState) obj;
+        return (rgs.returnValue == null ? Undefined.instance : rgs.returnValue);
     }
 
     public static class GeneratorState {
@@ -293,6 +313,7 @@ public final class OptRuntime extends ScriptRuntime
         Object[] localsState;
         int maxLocals;
         int maxStack;
+        Object returnValue;
 
         GeneratorState(Scriptable thisObj, int maxLocals, int maxStack) {
             this.thisObj = thisObj;
