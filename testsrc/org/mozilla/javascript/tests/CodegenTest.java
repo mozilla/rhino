@@ -10,6 +10,7 @@ import java.io.StringReader;
 import org.junit.Assert;
 import org.mozilla.javascript.NativeFunction;
 import org.mozilla.javascript.Script;
+import org.mozilla.javascript.Scriptable;
 
 import junit.framework.TestCase;
 
@@ -56,6 +57,21 @@ public class CodegenTest extends TestCase {
                 Assert.fail(e.getMessage());
                 return null;
             }
+        });
+    }
+
+    public void testManyExceptionHandlers() {
+        final StringBuilder scriptSource = new StringBuilder();
+
+        scriptSource.append("var a = 0;");
+        for (int i = 0; i < 1000; i++) {
+            scriptSource.append("try { a = a + 1; } catch(e) { alert(e); }");
+        }
+
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            final Scriptable scope = _cx.initStandardObjects();
+            Assert.assertEquals(1000d, (double)_cx.evaluateString(scope, scriptSource.toString(), "myScript.js", 1, null), 0.001);
+            return null;
         });
     }
 
