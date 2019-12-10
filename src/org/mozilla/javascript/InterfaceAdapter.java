@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * Adapter to use JS function as implementation of Java interfaces with
@@ -46,12 +47,18 @@ public class InterfaceAdapter
                         "msg.no.empty.interface.conversion", cl.getName());
                 }
                 if (length > 1) {
-                    String methodName = methods[0].getName();
-                    for (int i = 1; i < length; i++) {
-                        if (!methodName.equals(methods[i].getName())) {
-                            throw Context.reportRuntimeError1(
+                    String methodName = null;
+                    for (Method method : methods) {
+                        // there are multiple methods in the interface we inspect 
+                        // only abstract ones, they must all have the same name.
+                        if (isFunctionalMethodCandidate(method)) {
+                            if (methodName == null) {
+                                methodName = method.getName();
+                            } else if (!methodName.equals(method.getName())) {
+                                throw Context.reportRuntimeError1(
                                     "msg.no.function.interface.conversion",
                                     cl.getName());
+                            }
                         }
                     }
                 }
@@ -61,6 +68,24 @@ public class InterfaceAdapter
         }
         return VMBridge.instance.newInterfaceProxy(
             adapter.proxyHelper, cf, adapter, object, topScope);
+    }
+    
+    /**
+     * We have to ignore java8 default methods and methods like 'equals', 'hashCode'
+     * and 'toString' as it occurs for example in the Comparator interface.
+     * 
+     * @return true, if the function
+     */
+    private static boolean isFunctionalMethodCandidate(Method method) {
+        if (method.getName().equals("equals")
+            || method.getName().equals("hashCode")
+            || method.getName().equals("toString")) {
+            // it should be safe to ignore them as there is also a special 
+            // case for these methods in VMBridge_jdk18.newInterfaceProxy
+            return false;
+        } else {
+            return Modifier.isAbstract(method.getModifiers());
+        }
     }
 
     private InterfaceAdapter(ContextFactory cf, Class<?> cl)
