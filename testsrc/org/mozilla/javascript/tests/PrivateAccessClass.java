@@ -44,6 +44,7 @@ public class PrivateAccessClass
   protected int protectedMethod() { return 5; }
 
   private int javaBeanProperty = 6;
+  private Object javaObjectProperty;
   public boolean getterCalled = false;
   public boolean setterCalled = false;
   public int getJavaBeanProperty() {
@@ -53,6 +54,14 @@ public class PrivateAccessClass
   public void setJavaBeanProperty(int i) {
       setterCalled = true;
       javaBeanProperty = i;
+  }
+  public Object getJavaObjectProperty() {
+      getterCalled = true;
+      return javaObjectProperty;
+  }
+  public void setJavaObjectProperty(Object o) {
+    setterCalled = true;
+    this.javaObjectProperty = o;
   }
 
   /*
