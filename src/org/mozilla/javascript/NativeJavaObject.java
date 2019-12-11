@@ -217,6 +217,9 @@ public class NativeJavaObject
             if (javaObject instanceof Boolean) {
                 hint = ScriptRuntime.BooleanClass;
             }
+            if (javaObject instanceof Number) {
+                hint = ScriptRuntime.NumberClass;
+            }
         }
         if (hint == null || hint == ScriptRuntime.StringClass) {
             value = javaObject.toString();

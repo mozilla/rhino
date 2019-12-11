@@ -48,8 +48,43 @@ a[i++] = new TestObject(
   "new java.lang.Integer(2134)",
   new java.lang.Integer(2134),
   "0 + ",
-  "21340",
-  "string" );
+  2134,
+  "number" );
+
+a[i++] = new TestObject(
+  "new java.lang.Integer(2134)",
+  new java.lang.Integer(2134),
+  "1 + ",
+  2135,
+  "number" );
+
+a[i++] = new TestObject(
+  "new java.lang.Integer(2134)",
+  new java.lang.Integer(2134),
+  "+ 1 ",
+  2135,
+  "number" );
+
+a[i++] = new TestObject(
+  "new java.lang.Double(21.34)",
+  new java.lang.Double(21.34),
+  "0 + ",
+  21.34,
+  "number" );
+
+a[i++] = new TestObject(
+  "new java.lang.Double(21.34)",
+  new java.lang.Double(21.34),
+  "1 + ",
+  22.34,
+  "number" );
+
+a[i++] = new TestObject(
+  "new java.lang.Double(21.34)",
+  new java.lang.Double(21.34),
+  "+ 1 ",
+  22.34,
+  "number" );
 
 a[i++] = new TestObject(
   "new java.lang.Integer(666)",
@@ -79,8 +114,8 @@ function CompareValues( t ) {
 }
 function TestObject( description, javaobject, converter, expect, type ) {
   this.description = description;
-  this.javavalue = javaobject
-    this.converter = converter;
+  this.javavalue = javaobject;
+  this.converter = converter;
   this.expect = expect;
   this.type = type;
 
@@ -88,6 +123,8 @@ function TestObject( description, javaobject, converter, expect, type ) {
   case( "Number" ) :  this.actual = Number( javaobject ); break;
   case( "String" ) :  this.actual = String( javaobject ); break;
   case( "Boolean") :  this.actual = Boolean(javaobject ); break;
+  case( "1 + " ) :    this.actual = 1 + javaobject; break;
+  case( "+ 1 " ) :    this.actual = javaobject + 1; break;
   default:            this.actual = javaobject + 0;
   }
   return this;
