@@ -6,6 +6,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.TopLevel;
 
 import junit.framework.TestCase;
+import org.mozilla.javascript.Scriptable;
 
 
 /**
@@ -22,6 +23,7 @@ public class DynamicScopeTest extends TestCase {
      */
     static class DynamicScopeContextFactory extends ContextFactory
     {
+        @Override
         protected boolean hasFeature(Context cx, int featureIndex)
         {
             if (featureIndex == Context.FEATURE_DYNAMIC_SCOPE ||
@@ -35,6 +37,15 @@ public class DynamicScopeTest extends TestCase {
             }
             return super.hasFeature(cx, featureIndex);
         }
+
+        @Override
+        protected Context makeContext() {
+            Context cx = super.makeContext();
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            cx.setOptimizationLevel(0);
+            return cx;
+        }
+        
     }
 
     
@@ -59,9 +70,6 @@ public class DynamicScopeTest extends TestCase {
         // This is what we do on initialization ...
         final Context cx = contextFactory.enterContext();
         try {
-            cx.setLanguageVersion(Context.VERSION_ES6);
-            cx.setOptimizationLevel(0);
-
             // Used to fail with org.mozilla.javascript.EvaluatorException: Cannot modify a property of a sealed object: iterator.
             final ScriptableObject scope = cx.initStandardObjects(new TopLevel(), true); 
             
@@ -76,9 +84,6 @@ public class DynamicScopeTest extends TestCase {
         // Almost the same code block as above
         final Context cx2 = new FreshContext(contextFactory);
         try {
-            cx2.setLanguageVersion(Context.VERSION_ES6);
-            cx2.setOptimizationLevel(0);
-            
             // Used to fail with org.mozilla.javascript.EvaluatorException: Cannot modify a property of a sealed object: iterator.
             final ScriptableObject scope = cx.initStandardObjects(new TopLevel(), true);
             
@@ -86,6 +91,36 @@ public class DynamicScopeTest extends TestCase {
             assertEquals(23, result);
         } finally {
             // cx.exit
+        }
+    }
+    
+    /**
+     * Standard method Object.create
+     */
+    public void testStandardMethodObjectCreate()
+    {
+        ContextFactory contextFactory = new DynamicScopeContextFactory();
+        
+        final Context cx = contextFactory.enterContext();
+        try {
+
+            // Used to fail with org.mozilla.javascript.EvaluatorException: Cannot modify a property of a sealed object: iterator.
+            final ScriptableObject someScope = cx.initStandardObjects(); 
+            
+            Scriptable someObj = (Scriptable) cx.evaluateString(someScope, "var obj = {}; obj;", "source1", 1, null);
+            
+            Scriptable subScope = (Scriptable) cx.evaluateString(someScope, "Object.create((0,eval)('this'));", "source2", 1, null);
+            subScope.setParentScope(null);
+            
+            Scriptable subObj = (Scriptable) cx.evaluateString(subScope, "var subObj = Object.create(obj); subObj;", "source3", 1, null);
+            
+            assertSame(subObj.getPrototype(), someObj);
+            assertSame(subScope.getPrototype(), someScope);
+            assertSame(someObj.getParentScope(), someScope);
+            assertSame(subObj.getParentScope(), subScope);
+            
+        } finally {
+             Context.exit();
         }
     }
     
