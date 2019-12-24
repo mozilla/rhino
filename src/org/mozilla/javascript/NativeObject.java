@@ -433,7 +433,7 @@ public class NativeObject extends IdScriptableObject implements Map
                 Object arg = args.length < 1 ? Undefined.instance : args[0];
                 ScriptableObject obj = ensureScriptableObject(arg);
                 Object propsObj = args.length < 2 ? Undefined.instance : args[1];
-                Scriptable props = Context.toObject(propsObj, getParentScope());
+                Scriptable props = Context.toObject(propsObj, scope);
                 obj.defineOwnProperties(cx, ensureScriptableObject(props));
                 return obj;
               }
@@ -443,11 +443,11 @@ public class NativeObject extends IdScriptableObject implements Map
                 Scriptable obj = (arg == null) ? null : ensureScriptable(arg);
 
                 ScriptableObject newObject = new NativeObject();
-                newObject.setParentScope(getParentScope());
+                newObject.setParentScope(scope);
                 newObject.setPrototype(obj);
 
                 if (args.length > 1 && args[1] != Undefined.instance) {
-                  Scriptable props = Context.toObject(args[1], getParentScope());
+                  Scriptable props = Context.toObject(args[1], scope);
                   newObject.defineOwnProperties(cx, ensureScriptableObject(props));
                 }
 
