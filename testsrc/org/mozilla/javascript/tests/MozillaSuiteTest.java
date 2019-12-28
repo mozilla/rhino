@@ -16,7 +16,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -25,8 +28,6 @@ import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.ShellTest;
 import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
-
-import junit.framework.Assert;
 
 /**
  * This JUnit suite runs the Mozilla test suite (in mozilla.org CVS
@@ -64,14 +65,20 @@ public class MozillaSuiteTest {
         } else {
             URL url = JsTestsBase.class.getResource(".");
             String path = url.getFile();
-            int jsIndex = path.lastIndexOf("/js");
-            if (jsIndex == -1) {
-                throw new IllegalStateException("You aren't running the tests "+
-                    "from within the standard mozilla/js directory structure");
+
+            // support running from eclipse
+            if (new File(path + "../../../../../testsrc/tests").exists()) {
+                testDir = new File(path + "../../../../../testsrc/tests").getCanonicalFile();
+            } else {
+                int jsIndex = path.lastIndexOf("/js");
+                if (jsIndex == -1) {
+                    throw new IllegalStateException("You aren't running the tests "+
+                        "from within the standard mozilla/js directory structure");
+                }
+                path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
+                path = path.replace("%20", " ");
+                testDir = new File(path, "tests");
             }
-            path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
-            path = path.replace("%20", " ");
-            testDir = new File(path, "tests");
         }
         if (!testDir.isDirectory()) {
             throw new FileNotFoundException(testDir + " is not a directory");
@@ -221,8 +228,7 @@ public class MozillaSuiteTest {
                     try {
                         (new MozillaSuiteTest(testFile, optLevel)).runMozillaTest();
                         // strip off testDir
-                        String canonicalized =
-                            testFile.getAbsolutePath().substring(absolutePathLength);
+                        String canonicalized = testFile.getAbsolutePath().substring(absolutePathLength);
                         canonicalized = canonicalized.replace('\\', '/');
                         skippedPassed.add(canonicalized);
                     } catch (Throwable t) {
