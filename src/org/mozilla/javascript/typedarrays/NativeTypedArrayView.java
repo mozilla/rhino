@@ -410,7 +410,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
         ctor.defineProperty("BYTES_PER_ELEMENT", ScriptRuntime.wrapInt(getBytesPerElement()),
-                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+                DONTENUM | PERMANENT | READONLY);
 
         super.fillConstructorProperties(ctor);
     }
@@ -463,6 +463,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 // #/generated#
         if (id == 0) {
             return super.findInstanceIdInfo(s);
+        }
+        if (id == Id_BYTES_PER_ELEMENT) {
+            return instanceIdInfo(DONTENUM | READONLY | PERMANENT, id);
         }
         return instanceIdInfo(READONLY | PERMANENT, id);
     }
