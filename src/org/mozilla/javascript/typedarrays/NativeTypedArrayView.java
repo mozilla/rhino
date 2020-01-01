@@ -20,6 +20,7 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
@@ -408,7 +409,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     @Override
     protected void fillConstructorProperties(IdFunctionObject ctor)
     {
-        ctor.put("BYTES_PER_ELEMENT", ctor, ScriptRuntime.wrapInt(getBytesPerElement()));
+        ctor.defineProperty("BYTES_PER_ELEMENT", ScriptRuntime.wrapInt(getBytesPerElement()),
+                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
+
+        super.fillConstructorProperties(ctor);
     }
 
     // Property dispatcher
