@@ -20,7 +20,6 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeArrayIterator;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Symbol;
 import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.Undefined;
@@ -344,7 +343,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
         String s, fnName = null;
         int arity;
         switch (id) {
-        case Id_constructor:        arity = 1; s = "constructor"; break;
+        case Id_constructor:        arity = 3; s = "constructor"; break;
         case Id_toString:           arity = 0; s = "toString"; break;
         case Id_get:                arity = 1; s = "get"; break;
         case Id_set:                arity = 2; s = "set"; break;
