@@ -7,7 +7,10 @@
 package org.mozilla.javascript;
 
 /**
- * The base class for Function objects
+ * The base class for Function objects. That is one of two purposes. It is also
+ * the prototype for every "function" defined except those that are used
+ * as GeneratorFunctions via the ES6 "function *" syntax.
+ * 
  * See ECMA 15.3.
  * @author Norris Boyd
  */
@@ -21,6 +24,11 @@ public class BaseFunction extends IdScriptableObject implements Function
     static void init(Scriptable scope, boolean sealed)
     {
         BaseFunction obj = new BaseFunction();
+        baseInit(obj, scope, sealed);
+    }
+
+    protected static void baseInit(BaseFunction obj, Scriptable scope, boolean sealed)
+    {
         // Function.prototype attributes: see ECMA 15.3.3.1
         obj.prototypePropertyAttributes = DONTENUM | READONLY | PERMANENT;
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
@@ -500,13 +508,17 @@ public class BaseFunction extends IdScriptableObject implements Function
              : activation.get("arguments", activation);
     }
 
-    private static Object jsConstructor(Context cx, Scriptable scope,
-                                        Object[] args)
+    // This is overridden for generator functions so that we can create a "function *" instead.
+    protected String getFunctionTag() {
+        return "function ";
+    }
+
+    private Object jsConstructor(Context cx, Scriptable scope, Object[] args)
     {
         int arglen = args.length;
         StringBuilder sourceBuf = new StringBuilder();
 
-        sourceBuf.append("function ");
+        sourceBuf.append(getFunctionTag());
         /* version != 1.2 Function constructor behavior -
          * print 'anonymous' as the function name if the
          * version (under which the function was compiled) is

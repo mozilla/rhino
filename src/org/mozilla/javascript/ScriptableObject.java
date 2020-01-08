@@ -2185,6 +2185,11 @@ public abstract class ScriptableObject implements Scriptable,
                 TopLevel.Builtins.Function);
     }
 
+    public static Scriptable getGeneratorFunctionPrototype(Scriptable scope) {
+        return TopLevel.getBuiltinPrototype(getTopLevelScope(scope),
+                TopLevel.Builtins.GeneratorFunction);
+    }
+
     public static Scriptable getArrayPrototype(Scriptable scope) {
         return TopLevel.getBuiltinPrototype(getTopLevelScope(scope),
                 TopLevel.Builtins.Array);

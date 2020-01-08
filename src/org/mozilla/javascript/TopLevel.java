@@ -60,7 +60,9 @@ public class TopLevel extends IdScriptableObject {
         /** The built-in Error type. */
         Error,
         /** The built-in Symbol type. */
-        Symbol
+        Symbol,
+        /** The built-in GeneratorFunction type. */
+        GeneratorFunction
     }
 
     /**
@@ -103,12 +105,14 @@ public class TopLevel extends IdScriptableObject {
      * called by the embedding if a top-level scope is not initialized through
      * <code>initStandardObjects()</code>.
      */
-    public void cacheBuiltins() {
+    public void cacheBuiltins(Scriptable scope, boolean sealed) {
         ctors = new EnumMap<Builtins, BaseFunction>(Builtins.class);
         for (Builtins builtin : Builtins.values()) {
             Object value = ScriptableObject.getProperty(this, builtin.name());
             if (value instanceof BaseFunction) {
                 ctors.put(builtin, (BaseFunction)value);
+            } else if (builtin == Builtins.GeneratorFunction) {
+                ctors.put(builtin, (BaseFunction)ES6GeneratorFunction.initConstructor(scope, sealed));
             }
         }
         errors = new EnumMap<NativeErrors, BaseFunction>(NativeErrors.class);
