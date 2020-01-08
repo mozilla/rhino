@@ -108,6 +108,9 @@ class CodeGenerator extends Icode {
         if (theFunction.isInStrictMode()) {
             itsData.isStrict = true;
         }
+        if (theFunction.isES6Generator()) {
+            itsData.isES6Generator = true;
+        }
 
         itsData.declaredAsVar = (theFunction.getParent() instanceof VariableInitializer);
 

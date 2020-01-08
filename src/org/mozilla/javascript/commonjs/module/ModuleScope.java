@@ -23,7 +23,7 @@ public class ModuleScope extends TopLevel {
         this.uri = uri;
         this.base = base;
         setPrototype(prototype);
-        cacheBuiltins();
+        cacheBuiltins(prototype, false);
     }
 
     public URI getUri() {

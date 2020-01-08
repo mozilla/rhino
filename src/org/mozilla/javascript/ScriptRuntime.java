@@ -265,7 +265,7 @@ public class ScriptRuntime {
         }
 
         if (scope instanceof TopLevel) {
-            ((TopLevel)scope).cacheBuiltins();
+            ((TopLevel)scope).cacheBuiltins(scope, sealed);
         }
 
         return scope;
@@ -3963,8 +3963,19 @@ public class ScriptRuntime {
     public static void setFunctionProtoAndParent(BaseFunction fn,
                                                  Scriptable scope)
     {
+        setFunctionProtoAndParent(fn, scope, false);
+    }
+
+    public static void setFunctionProtoAndParent(BaseFunction fn,
+                                                Scriptable scope,
+                                                boolean es6GeneratorFunction)
+    {
         fn.setParentScope(scope);
-        fn.setPrototype(ScriptableObject.getFunctionPrototype(scope));
+        if (es6GeneratorFunction) {
+            fn.setPrototype(ScriptableObject.getGeneratorFunctionPrototype(scope));
+        } else {
+            fn.setPrototype(ScriptableObject.getFunctionPrototype(scope));
+        }
     }
 
     public static void setObjectProtoAndParent(ScriptableObject object,
