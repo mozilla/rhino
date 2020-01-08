@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
 package org.mozilla.javascript;
 
 import java.io.Closeable;
@@ -11,8 +15,8 @@ import java.util.NoSuchElementException;
  * JavaScript exceptions.
  *
  * The pattern that the target class should follow is:
- * * It should have a function property called "next"
- * * The property should return an object with a boolean value called "done".
+ * * It must have a function property called "next"
+ * * The function must return an object with a boolean value called "done".
  * * If "done" is true, then the returned object should also contain a "value" property.
  * * If it has a function property called "return" then it will be called
  *   when the caller is done iterating.
@@ -30,12 +34,16 @@ public class IteratorLikeIterable
     public IteratorLikeIterable(Context cx, Scriptable scope, Object target) {
         this.cx = cx;
         this.scope = scope;
-        next = ScriptRuntime.getPropFunctionAndThis(target, "next", cx, scope);
+        // This will throw if "next" is not a function or undefined
+        next = ScriptRuntime.getPropFunctionAndThis(target, ES6Iterator.NEXT_METHOD, cx, scope);
         iterator = ScriptRuntime.lastStoredScriptable(cx);
-        Scriptable st = ScriptableObject.ensureScriptable(target);
-        if (st.has("return", st)) {
-            returnFunc = ScriptRuntime.getPropFunctionAndThis(target, "return", cx, scope);
-            ScriptRuntime.lastStoredScriptable(cx);
+        Object retObj = ScriptRuntime.getObjectPropNoWarn(target, ES6Iterator.RETURN_PROPERTY, cx, scope);
+        // We only care about "return" if it is not null or undefined
+        if ((retObj != null) && !Undefined.isUndefined(retObj)) {
+            if (!(retObj instanceof Callable)) {
+                throw ScriptRuntime.notFunctionError(target, retObj, ES6Iterator.RETURN_PROPERTY);
+            }
+            returnFunc = (Callable)retObj;
         } else {
             returnFunc = null;
         }
@@ -64,16 +72,20 @@ public class IteratorLikeIterable
 
         @Override
         public boolean hasNext() {
-            final Object val = next.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
-            final Object doneval = ScriptRuntime.getObjectProp(val, "done", cx, scope);
-            if (Undefined.instance.equals(doneval)) {
-                throw ScriptRuntime.undefReadError(val, "done");
+            Object val = next.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
+            // This will throw if "val" is not an object. 
+            // "getObjectPropNoWarn" won't, so do this as follows.
+            Object doneval = ScriptableObject.getProperty(
+                ScriptableObject.ensureScriptable(val), ES6Iterator.DONE_PROPERTY);
+            if (doneval == Scriptable.NOT_FOUND) {
+                doneval = Undefined.instance;
             }
-            if (Boolean.TRUE.equals(doneval)) {
+            // It's OK if done is undefined.
+            if (ScriptRuntime.toBoolean(doneval)) {
                 isDone = true;
                 return false;
             }
-            nextVal = ScriptRuntime.getObjectProp(val, "value", cx, scope);
+            nextVal = ScriptRuntime.getObjectPropNoWarn(val, ES6Iterator.VALUE_PROPERTY, cx, scope);
             return true;
         }
 

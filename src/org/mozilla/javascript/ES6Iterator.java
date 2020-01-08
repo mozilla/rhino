@@ -140,5 +140,6 @@ public abstract class ES6Iterator extends IdScriptableObject {
 
     public static final String NEXT_METHOD = "next";
     public static final String DONE_PROPERTY = "done";
+    public static final String RETURN_PROPERTY = "return";
     public static final String VALUE_PROPERTY = "value";
 }
