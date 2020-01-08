@@ -373,7 +373,6 @@ TestGenerator(
 })();
 
 // Generator function instances.
-/* Rhino TODO GeneratorFunction
 TestGenerator(GeneratorFunction(),
               [undefined],
               "foo",
@@ -394,7 +393,6 @@ TestGenerator(
     [3, undefined],
     "foo",
     [3, undefined]);
-*/
 
 // Access to this with formal arguments.
 TestGenerator(
