@@ -23,5 +23,10 @@
   <Match>
       <Class name="org.mozilla.javascript.NativeSymbol"/>
       <Bug pattern="EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS" />
-    </Match>
+  </Match>
+  <Match>
+      <!-- Legacy code depends on being able to reassign values in Main -->
+      <Class name="org.mozilla.javascript.tools.shell.Main"/>
+      <Bug pattern="MS_SHOULD_BE_FINAL"/>
+  </Match>
 </FindBugsFilter>
