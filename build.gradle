@@ -99,7 +99,6 @@ task microBenchmark(type: JavaExec) {
     classpath sourceSets.test.runtimeClasspath
 }
 
-
 idea {
     module {
         excludeDirs += file('testsrc/tests/src')
@@ -110,7 +109,31 @@ idea {
     }
 }
 
+task runtimeJar(type: Jar) {
+    dependsOn compileJava
+    archiveBaseName = 'rhino-runtime'
+    from (sourceSets.main.output) {
+        exclude 'org/mozilla/javascript/tools'
+    }
+    manifest {
+        attributes(
+            "Manifest-Version": "1.0",
+            "Implementation-Version": project.version,
+            "Implementation-Title":  "Mozilla Rhino",
+            "Implementation-Vendor": "Mozilla Foundation",
+            "Implementation-URL": "http://www.mozilla.org/rhino",
+            "Built-Date": new Date().format("yyyy-MM-dd"),
+            "Built-Time": new Date().format("HH:mm:ss"),
+            "Bundle-ManifestVersion": "2",
+            "Bundle-SymbolicName": "org.mozilla.rhino-runtime",
+            "Bundle-Version": project.version.replaceAll("-.*", ""),
+            "Export-Package": "org.mozilla.javascript,org.mozilla.javascript.ast,org.mozilla.javascript.annotations"
+        )
+    }
+}
+
 jar {
+    dependsOn runtimeJar
     from "LICENSE.txt"
     manifest {
         attributes(
@@ -130,8 +153,6 @@ jar {
     }
 }
 
-
-
 javadoc {
     options.addBooleanOption("-allow-script-in-comments", true)
     options.addStringOption('Xdoclint:html', '-quiet')
@@ -143,11 +164,21 @@ task javadocJar(type: Jar) {
     from javadoc
 }
 
+task runtimeJavadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+    exclude 'org/mozilla/javascript/tools'   
+}
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
+task runtimeSourceJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allJava
+    exclude 'org/mozilla/javascript/tools'   
+}
 
 publishing {
     publications {
@@ -189,6 +220,41 @@ publishing {
             }
             artifact javadocJar {
                 classifier "javadoc"
+            }
+        }
+
+        rhinoruntime(MavenPublication) {
+            groupId 'org.mozilla'
+            artifactId 'rhino-runtime'
+            artifacts = [runtimeJar, runtimeSourceJar, runtimeJavadocJar]
+
+            pom.withXml {
+                def root = asNode()
+
+                root.appendNode('description', """
+    Rhino is an open-source implementation of JavaScript written entirely in Java.
+    It is typically embedded into Java applications to provide scripting to end users.
+""")
+                root.appendNode("url", "https://developer.mozilla.org/en/Rhino")
+
+                def p = root.appendNode("parent")
+                p.appendNode("groupId", "org.sonatype.oss")
+                p.appendNode("artifactId", "oss-parent")
+                p.appendNode("version", "7")
+
+                def l = root.appendNode("licenses").appendNode("license")
+                l.appendNode("name", "Mozilla Public License, Version 2.0")
+                l.appendNode("url", "http://www.mozilla.org/MPL/2.0/index.txt")
+
+                def scm = root.appendNode("scm")
+                scm.appendNode("connection", "scm:git:git@github.com:mozilla/rhino.git")
+                scm.appendNode("developerConnection", "scm:git:git@github.com:mozilla/rhino.git")
+                scm.appendNode("url", "git@github.com:mozilla/rhino.git")
+
+                def o = root.appendNode("organization")
+                o.appendNode("name", "The Mozilla Foundation")
+                o.appendNode("url", "http://www.mozilla.org")
+
             }
         }
     }
