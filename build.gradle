@@ -331,4 +331,4 @@ distributions {
     }
 }
 
-distZip.dependsOn javadoc, jar
+distZip.dependsOn javadoc, jar, sourceJar, runtimeSourceJar

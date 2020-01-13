@@ -1,51 +1,37 @@
 #!/bin/sh
 
+function deploy {
+  if [ ! -f $1 ]
+  then
+    echo "Missing $1"
+    exit 1
+  fi
+
+  tf=/var/tmp/file.$$.jar
+  rm -f ${tf}
+  cp $1 ${tf}
+
+  mvn gpg:sign-and-deploy-file \
+  -Dfile=${tf} \
+  -DpomFile=${2} \
+  -DrepositoryId=sonatype-nexus-staging \
+  -Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/ \
+  -Dclassifier=${3}
+ 
+  rm ${tf}
+}
+
 vers=`egrep '^version=' ../gradle.properties | awk -F = '{print $2}'`
+base=${HOME}/.m2/repository/org/mozilla
 
 echo "Deploying ${vers}"
 
-pom=maven-pom.xml
-jsjar=../buildGradle/libs/rhino-${vers}.jar
-echo "Installing ${jsjar}"
-srczip=../buildGradle/libs/rhino-${vers}-sources.jar
-echo "Sources are ${srczip}"
-doczip=../buildGradle/libs/rhino-${vers}-javadoc.jar
-echo "Javadoc is ${doczip}"
+rb=${base}/rhino/${vers}
+deploy ${rb}/rhino-${vers}.jar maven-pom.xml
+deploy ${rb}/rhino-${vers}-sources.jar maven-pom.xml sources
+deploy ${rb}/rhino-${vers}-javadoc.jar maven-pom.xml javadoc
 
-if [ ! -f $jsjar ]
-then
-  echo "Missing js.jar"
-  exit 1
-fi
-
-if [ ! -f $srczip ]
-then
-  echo "Missing rhino-${vers}-sources.zip. Run \"ant source-zip\"."
-  exit 2
-fi
-
-if [ ! -f $doczip ]
-then
-  echo "Missing javadoc.zip. Run \"ant javadoc\"."
-  exit 3
-fi
-
-mvn gpg:sign-and-deploy-file \
-  -Dfile=${jsjar} \
-  -DpomFile=${pom} \
-  -DrepositoryId=sonatype-nexus-staging \
-  -Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/ 
-
-mvn gpg:sign-and-deploy-file \
-  -Dfile=${srczip} \
-  -DpomFile=${pom} \
-  -DrepositoryId=sonatype-nexus-staging \
-  -Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/  \
-  -Dclassifier=sources
-
-mvn gpg:sign-and-deploy-file \
-  -Dfile=${doczip} \
-  -DpomFile=${pom} \
-  -DrepositoryId=sonatype-nexus-staging \
-  -Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/  \
-  -Dclassifier=javadoc
+rb=${base}/rhino-runtime/${vers}
+deploy ${rb}/rhino-runtime-${vers}.jar maven-runtime-pom.xml
+deploy ${rb}/rhino-runtime-${vers}-sources.jar maven-runtime-pom.xml sources
+deploy ${rb}/rhino-runtime-${vers}-javadoc.jar maven-runtime-pom.xml javadoc
