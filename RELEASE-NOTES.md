@@ -5,8 +5,7 @@
 
 As of this release, Rhino makes "XML external entity injections" more difficult
 by disabling fetching of external DTDs and stylesheets by default,
-as recommended in the (OWASP Cheat Sheet)
-[https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.md]. 
+as recommended in the [OWASP Cheat Sheet](https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.md). 
 Even though this may break some existing projects, the fact that this
 vulnerability is in the OWASP top 10 makes it important enough to change
 the default.
