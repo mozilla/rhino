@@ -322,8 +322,7 @@ final class NativeString extends IdScriptableObject
 
                 case Id_split:
                     return ScriptRuntime.checkRegExpProxy(cx).
-                        js_split(cx, scope, ScriptRuntime.toString(thisObj),
-                            args);
+                        js_split(cx, scope, ScriptRuntime.toString(thisObj), args);
 
                 case Id_substring:
                     return js_substring(cx, ScriptRuntime.toCharSequence(thisObj), args);
