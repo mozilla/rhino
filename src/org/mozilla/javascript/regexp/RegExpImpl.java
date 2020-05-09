@@ -550,8 +550,12 @@ public class RegExpImpl implements RegExpProxy {
         if (limited) {
             /* Clamp limit between 0 and 1 + string length. */
             limit = ScriptRuntime.toUint32(args[1]);
-            if (limit > target.length())
+            if (limit == 0) {
+                return result;
+            }
+            if (limit > target.length()) {
                 limit = 1 + target.length();
+            }
         }
 
         // return an array consisting of the target if no separator given
