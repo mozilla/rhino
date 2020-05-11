@@ -161,16 +161,23 @@ public class NativeRegExp extends IdScriptableObject implements Function
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                       Object[] args)
+    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
     {
-        return execSub(cx, scope, args, MATCH);
+        if (cx.getLanguageVersion() < Context.VERSION_ES6) {
+            return execSub(cx, scope, args, MATCH);
+        }
+
+        throw ScriptRuntime.notFunctionError(thisObj);
     }
 
     @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     {
-        return (Scriptable)execSub(cx, scope, args, MATCH);
+        if (cx.getLanguageVersion() < Context.VERSION_ES6) {
+            return (Scriptable)execSub(cx, scope, args, MATCH);
+        }
+
+        throw ScriptRuntime.notFunctionError(this);
     }
 
     Scriptable compile(Context cx, Scriptable scope, Object[] args)
