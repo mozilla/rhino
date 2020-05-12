@@ -10,9 +10,12 @@ import static org.junit.Assert.assertThat;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.Scriptable;
 
 public class NativeArrayTest {
   private NativeArray array;
@@ -116,4 +119,25 @@ public class NativeArrayTest {
     assertThat(array.getIndexIds(), is(new ArrayList<Integer>()));
   }
 
+  @Test
+  public void testToString() {
+      String source =
+          "var f = function() {\n"
+          + "  var obj = [0,1];\n"
+          + "  var a = obj.map(function() {return obj;});\n"
+          + "  return a.toString();\n"
+          + "};\n"
+          + "f();";
+
+      Context cx = Context.enter();
+      try {
+          cx.setLanguageVersion(Context.VERSION_ES6);
+
+          Scriptable scope = cx.initStandardObjects();
+          String result = cx.evaluateString(scope, source, "source", 1, null).toString();
+          Assert.assertEquals("0,1,0,1", result);
+      } finally {
+          Context.exit();
+      }
+  }
 }
