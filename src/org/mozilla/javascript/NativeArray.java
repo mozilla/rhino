@@ -979,7 +979,9 @@ public class NativeArray extends IdScriptableObject implements List
         // so we don't leak memory
         try {
             if (!iterating) {
-                cx.iterating.put(thisObj, 0); // stop recursion.
+                // stop recursion
+                cx.iterating.put(thisObj, 0);
+
                 // make toSource print null and undefined values in recent versions
                 boolean skipUndefinedAndNull = !toSource
                         || cx.getLanguageVersion() < Context.VERSION_1_5;
@@ -1012,6 +1014,10 @@ public class NativeArray extends IdScriptableObject implements List
                         result.append(ScriptRuntime.toString(elem));
                     }
                 }
+
+                // processing of thisObj done, remove it from the recursion detector
+                // to allow thisObj to be again in the array later on
+                cx.iterating.remove(thisObj);
             }
         } finally {
             if (toplevel) {
@@ -2286,7 +2292,7 @@ public class NativeArray extends IdScriptableObject implements List
       implements Comparator<Object>, Serializable {
 
       private static final long serialVersionUID = 5299017659728190979L;
-    
+
       @Override
       public int compare(final Object x, final Object y) {
         final String a = ScriptRuntime.toString(x);
