@@ -695,8 +695,9 @@ final class NativeString extends IdScriptableObject
      * Non-ECMA methods.
      */
     private static CharSequence js_substr(CharSequence target, Object[] args) {
-        if (args.length < 1)
+        if (args.length < 1) {
             return target;
+        }
 
         double begin = ScriptRuntime.toInteger(args[0]);
         double end;
@@ -710,15 +711,20 @@ final class NativeString extends IdScriptableObject
             begin = length;
         }
 
-        if (args.length == 1) {
-            end = length;
-        } else {
-            end = ScriptRuntime.toInteger(args[1]);
-            if (end < 0)
-                end = 0;
-            end += begin;
-            if (end > length)
-                end = length;
+        end = length;
+        if (args.length > 1) {
+            Object lengthArg = args[1];
+
+            if (!Undefined.isUndefined(lengthArg)) {
+                end = ScriptRuntime.toInteger(lengthArg);
+                if (end < 0) {
+                    end = 0;
+                }
+                end += begin;
+                if (end > length) {
+                    end = length;
+                }
+            }
         }
 
         return target.subSequence((int)begin, (int)end);
