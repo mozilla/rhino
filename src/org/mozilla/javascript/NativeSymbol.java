@@ -159,7 +159,7 @@ public class NativeSymbol
     {
         switch (id) {
         case Id_constructor:
-            initPrototypeMethod(CLASS_NAME, id, "constructor", 1);
+            initPrototypeMethod(CLASS_NAME, id, "constructor", 0);
             break;
         case Id_toString:
             initPrototypeMethod(CLASS_NAME, id, "toString", 0);
