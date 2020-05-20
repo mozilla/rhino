@@ -4519,8 +4519,8 @@ public class ScriptRuntime {
      * by using an "instanceof" check.
      */
     static boolean isSymbol(Object obj) {
-        return (((obj instanceof NativeSymbol) &&
-                ((NativeSymbol)obj).isSymbol())) || (obj instanceof SymbolKey);
+        return (( (obj instanceof NativeSymbol) && ((NativeSymbol)obj).isSymbol()))
+                    || (obj instanceof SymbolKey);
     }
 
     private static RuntimeException errorWithClassName(String msg, Object val)

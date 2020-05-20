@@ -173,8 +173,7 @@ public abstract class ScriptableObject implements Scriptable,
 
         boolean setValue(Object value, Scriptable owner, Scriptable start) {
             if ((attributes & READONLY) != 0) {
-                Context cx = Context.getContext();
-                if (cx.isStrictMode()) {
+                if (Context.getContext().isStrictMode()) {
                     throw ScriptRuntime.typeError1("msg.modify.readonly", name);
                 }
                 return true;
@@ -2807,20 +2806,30 @@ public abstract class ScriptableObject implements Scriptable,
         Slot slot;
         if (this != start) {
             slot = slotMap.query(key, index);
-            if(!isExtensible && Context.getContext().isStrictMode() && (slot == null || !(slot instanceof GetterSlot)))
+            if(!isExtensible
+                    && (slot == null
+                        || (!(slot instanceof GetterSlot)
+                                && (slot.getAttributes() & READONLY) != 0))
+                    && Context.getContext().isStrictMode()) {
                 throw ScriptRuntime.typeError0("msg.not.extensible");
+            }
             if (slot == null) {
                 return false;
             }
         } else if (!isExtensible) {
             slot = slotMap.query(key, index);
-            if(Context.getContext().isStrictMode() && (slot == null || !(slot instanceof GetterSlot)))
+            if((slot == null
+                        || (!(slot instanceof GetterSlot) && (slot.getAttributes() & READONLY) != 0))
+                    && Context.getContext().isStrictMode()) {
                 throw ScriptRuntime.typeError0("msg.not.extensible");
+            }
             if (slot == null) {
                 return true;
             }
         } else {
-            if (isSealed) checkNotSealed(key, index);
+            if (isSealed) {
+                checkNotSealed(key, index);
+            }
             slot = slotMap.get(key, index, SlotAccess.MODIFY);
         }
         return slot.setValue(value, this, start);

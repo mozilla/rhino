@@ -189,7 +189,7 @@ public class NativeObject extends IdScriptableObject implements Map
               if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
                   throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
               }
-              
+
             boolean result;
             Object arg = args.length < 1 ? Undefined.instance : args[0];
 
@@ -234,10 +234,10 @@ public class NativeObject extends IdScriptableObject implements Map
           }
 
           case Id_isPrototypeOf: {
-              if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
-                  throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
-              }
-              
+            if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
+                throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+            }
+
             boolean result = false;
             if (args.length != 0 && args[0] instanceof Scriptable) {
                 Scriptable v = (Scriptable) args[0];
@@ -526,12 +526,14 @@ public class NativeObject extends IdScriptableObject implements Map
 
                 ScriptableObject obj = ensureScriptableObject(arg);
 
-                for (Object name: obj.getAllIds()) {
+                for (Object name: obj.getIds(true, true)) {
                   ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
-                  if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable")))
+                  if (isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable"))) {
                     desc.put("writable", desc, Boolean.FALSE);
-                  if (Boolean.TRUE.equals(desc.get("configurable")))
+                  }
+                  if (Boolean.TRUE.equals(desc.get("configurable"))) {
                     desc.put("configurable", desc, Boolean.FALSE);
+                  }
                   obj.defineOwnProperty(cx, name, desc, false);
                 }
                 obj.preventExtensions();
