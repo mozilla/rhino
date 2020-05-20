@@ -32,6 +32,6 @@ public class StringSearchTest {
     NativeObject object = new NativeObject();
 
     Object result = eval("String.prototype.search(1, 1)", "obj", object);
-    assertEquals("-1", result);
+    assertEquals(-1, result);
   }
 }
