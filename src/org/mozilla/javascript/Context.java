@@ -353,7 +353,7 @@ public class Context
      * @since 1.7 Release 12
      */
     public static final int FEATURE_ENABLE_XML_SECURE_PARSING = 20;
-    
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
@@ -429,7 +429,7 @@ public class Context
      */
     public static Context enter()
     {
-        return enter(null);
+        return enter(null, ContextFactory.getGlobal());
     }
 
     /**
