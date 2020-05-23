@@ -111,12 +111,12 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     private NativeTypedArrayView<T> js_constructor(Context cx, Scriptable scope, Object[] args)
     {
         if (!isArg(args, 0)) {
-            return construct(NativeArrayBuffer.EMPTY_BUFFER, 0, 0);
+            return construct(new NativeArrayBuffer(), 0, 0);
         }
 
         final Object arg0 = args[0];
         if (arg0 == null) {
-            return construct(NativeArrayBuffer.EMPTY_BUFFER, 0, 0);
+            return construct(new NativeArrayBuffer(), 0, 0);
         }
 
         if ((arg0 instanceof Number) || (arg0 instanceof String)) {
@@ -568,7 +568,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
         }
         return a;
     }
-    
+
 
     @SuppressWarnings("unused")
     @Override

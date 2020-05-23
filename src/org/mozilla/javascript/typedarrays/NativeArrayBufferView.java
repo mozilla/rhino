@@ -32,7 +32,7 @@ public abstract class NativeArrayBufferView
 
     public NativeArrayBufferView()
     {
-        arrayBuffer = NativeArrayBuffer.EMPTY_BUFFER;
+        arrayBuffer = new NativeArrayBuffer();
         offset = 0;
         byteLength = 0;
     }

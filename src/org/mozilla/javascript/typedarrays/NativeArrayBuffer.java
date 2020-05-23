@@ -27,8 +27,6 @@ public class NativeArrayBuffer
 
     private static final byte[] EMPTY_BUF = new byte[0];
 
-    public static final NativeArrayBuffer EMPTY_BUFFER = new NativeArrayBuffer();
-
     final byte[] buffer;
 
     @Override
