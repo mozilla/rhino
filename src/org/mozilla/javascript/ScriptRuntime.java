@@ -1465,20 +1465,41 @@ public class ScriptRuntime {
     }
 
     /**
+     * Helper to return a string or an integer.
+     * Always use a null check on s.stringId to determine
+     * if the result is string or integer.
+     *
+     * @see ScriptRuntime#toStringIdOrIndex(Context, Object)
+     */
+    static final class StringIdOrIndex {
+        final String stringId;
+        final int index;
+
+        StringIdOrIndex(String stringId) {
+            this.stringId = stringId;
+            this.index = -1;
+        }
+
+        StringIdOrIndex(int index) {
+            this.stringId = null;
+            this.index = index;
+        }
+    }
+
+    /**
      * If toString(id) is a decimal presentation of int32 value, then id
      * is index. In this case return null and make the index available
      * as ScriptRuntime.lastIndexResult(cx). Otherwise return toString(id).
      */
-    static String toStringIdOrIndex(Context cx, Object id)
+    static StringIdOrIndex toStringIdOrIndex(Context cx, Object id)
     {
         if (id instanceof Number) {
             double d = ((Number)id).doubleValue();
             int index = (int)d;
             if (index == d) {
-                storeIndexResult(cx, index);
-                return null;
+                return new StringIdOrIndex(index);
             }
-            return toString(id);
+            return new StringIdOrIndex(toString(id));
         }
         String s;
         if (id instanceof String) {
@@ -1488,10 +1509,9 @@ public class ScriptRuntime {
         }
         long indexTest = indexFromString(s);
         if (indexTest >= 0) {
-            storeIndexResult(cx, (int)indexTest);
-            return null;
+            return new StringIdOrIndex((int)indexTest);
         }
-        return s;
+        return new StringIdOrIndex(s);
     }
 
     /**
@@ -1528,12 +1548,12 @@ public class ScriptRuntime {
         } else if (isSymbol(elem)) {
             result = ScriptableObject.getProperty(obj, (Symbol)elem);
         } else {
-            String s = toStringIdOrIndex(cx, elem);
-            if (s == null) {
-                int index = lastIndexResult(cx);
+            StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+            if (s.stringId == null) {
+                int index = s.index;
                 result = ScriptableObject.getProperty(obj, index);
             } else {
-                result = ScriptableObject.getProperty(obj, s);
+                result = ScriptableObject.getProperty(obj, s.stringId);
             }
         }
 
@@ -1688,12 +1708,11 @@ public class ScriptRuntime {
         } else if (isSymbol(elem)) {
             ScriptableObject.putProperty(obj, (Symbol)elem, value);
         } else {
-            String s = toStringIdOrIndex(cx, elem);
-            if (s == null) {
-                int index = lastIndexResult(cx);
-                ScriptableObject.putProperty(obj, index, value);
+            StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+            if (s.stringId == null) {
+                ScriptableObject.putProperty(obj, s.index, value);
             } else {
-                ScriptableObject.putProperty(obj, s, value);
+                ScriptableObject.putProperty(obj, s.stringId, value);
             }
         }
 
@@ -1790,14 +1809,13 @@ public class ScriptRuntime {
             so.delete(s);
             return !so.has(s, target);
         }
-        String s = toStringIdOrIndex(cx, elem);
-        if (s == null) {
-            int index = lastIndexResult(cx);
-            target.delete(index);
-            return !target.has(index, target);
+        StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+        if (s.stringId == null) {
+            target.delete(s.index);
+            return !target.has(s.index, target);
         }
-        target.delete(s);
-        return !target.has(s, target);
+        target.delete(s.stringId);
+        return !target.has(s.stringId, target);
     }
 
     public static boolean hasObjectElem(Scriptable target, Object elem,
@@ -1808,12 +1826,11 @@ public class ScriptRuntime {
         if (isSymbol(elem)) {
             result = ScriptableObject.hasProperty(target, (Symbol)elem);
         } else {
-            String s = toStringIdOrIndex(cx, elem);
-            if (s == null) {
-                int index = lastIndexResult(cx);
-                result = ScriptableObject.hasProperty(target, index);
+            StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+            if (s.stringId == null) {
+                result = ScriptableObject.hasProperty(target, s.index);
             } else {
-                result = ScriptableObject.hasProperty(target, s);
+                result = ScriptableObject.hasProperty(target, s.stringId);
             }
         }
 
@@ -2393,12 +2410,11 @@ public class ScriptRuntime {
             SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(x.obj);
             result = so.get((Symbol)x.currentId, x.obj);
         } else {
-            String s = toStringIdOrIndex(cx, x.currentId);
-            if (s == null) {
-                int index = lastIndexResult(cx);
-                result = x.obj.get(index, x.obj);
+            StringIdOrIndex s = toStringIdOrIndex(cx, x.currentId);
+            if (s.stringId == null) {
+                result = x.obj.get(s.index, x.obj);
             } else {
-                result = x.obj.get(s, x.obj);
+                result = x.obj.get(s.stringId, x.obj);
             }
         }
 
@@ -2497,18 +2513,17 @@ public class ScriptRuntime {
             value = ScriptableObject.getProperty(thisObj, (Symbol)elem);
 
         } else {
-            String str = toStringIdOrIndex(cx, elem);
-            if (str != null) {
-                return getPropFunctionAndThis(obj, str, cx, scope);
+            StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+            if (s.stringId != null) {
+                return getPropFunctionAndThis(obj, s.stringId, cx, scope);
             }
-            int index = lastIndexResult(cx);
 
             thisObj = toObjectOrNull(cx, obj, scope);
             if (thisObj == null) {
                 throw undefCallError(obj, String.valueOf(elem));
             }
 
-            value = ScriptableObject.getProperty(thisObj, index);
+            value = ScriptableObject.getProperty(thisObj, s.index);
         }
 
         if (!(value instanceof Callable)) {
@@ -4463,16 +4478,6 @@ public class ScriptRuntime {
     {
         XMLLib xmlLib = currentXMLLib(cx);
         return xmlLib.nameRef(cx, namespace, name, scope, memberTypeFlags);
-    }
-
-    private static void storeIndexResult(Context cx, int index)
-    {
-        cx.scratchIndex = index;
-    }
-
-    static int lastIndexResult(Context cx)
-    {
-        return cx.scratchIndex;
     }
 
     public static void storeUint32Result(Context cx, long value)
