@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
+
 /**
  * This class implements the Object native object.
  * See ECMA 15.2.
@@ -174,12 +176,11 @@ public class NativeObject extends IdScriptableObject implements Map
               if (arg instanceof Symbol) {
                   result = ensureSymbolScriptable(thisObj).has((Symbol) arg, thisObj);
               } else {
-                  String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-                  if (s == null) {
-                      int index = ScriptRuntime.lastIndexResult(cx);
-                      result = thisObj.has(index, thisObj);
+                  StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
+                  if (s.stringId == null) {
+                      result = thisObj.has(s.index, thisObj);
                   } else {
-                      result = thisObj.has(s, thisObj);
+                      result = thisObj.has(s.stringId, thisObj);
                   }
               }
               return ScriptRuntime.wrapBoolean(result);
@@ -201,29 +202,28 @@ public class NativeObject extends IdScriptableObject implements Map
                     result = ((attrs & ScriptableObject.DONTENUM) == 0);
                 }
             } else {
-                String s = ScriptRuntime.toStringIdOrIndex(cx, arg);
+                StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
                 // When checking if a property is enumerable, a missing property should return "false" instead of
                 // throwing an exception.  See: https://github.com/mozilla/rhino/issues/415
                 try {
-                    if (s == null) {
-                        int index = ScriptRuntime.lastIndexResult(cx);
-                        result = thisObj.has(index, thisObj);
-                        s = Integer.toString(index);
+                    if (s.stringId == null) {
+                        result = thisObj.has(s.index, thisObj);
                         if (result && thisObj instanceof ScriptableObject) {
                             ScriptableObject so = (ScriptableObject) thisObj;
-                            int attrs = so.getAttributes(index);
+                            int attrs = so.getAttributes(s.index);
                             result = ((attrs & ScriptableObject.DONTENUM) == 0);
                         }
                     } else {
-                        result = thisObj.has(s, thisObj);
+                        result = thisObj.has(s.stringId, thisObj);
                         if (result && thisObj instanceof ScriptableObject) {
                             ScriptableObject so = (ScriptableObject) thisObj;
-                            int attrs = so.getAttributes(s);
+                            int attrs = so.getAttributes(s.stringId);
                             result = ((attrs & ScriptableObject.DONTENUM) == 0);
                         }
                     }
                 } catch (EvaluatorException ee) {
-                    if (ee.getMessage().startsWith(ScriptRuntime.getMessage1("msg.prop.not.found", s))) {
+                    if (ee.getMessage().startsWith(ScriptRuntime.getMessage1("msg.prop.not.found",
+                                                        s.stringId == null ? Integer.toString(s.index) : s.stringId))) {
                         result = false;
                     } else {
                         throw ee;
@@ -270,12 +270,11 @@ public class NativeObject extends IdScriptableObject implements Map
                         String.valueOf(args[0]));
                 }
                 ScriptableObject so = (ScriptableObject)thisObj;
-                String name = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
-                int index = (name != null ? 0
-                             : ScriptRuntime.lastIndexResult(cx));
+                StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
+                int index = s.stringId != null ? 0 : s.index;
                 Callable getterOrSetter = (Callable)args[1];
                 boolean isSetter = (id == Id___defineSetter__);
-                so.setGetterOrSetter(name, index, getterOrSetter, isSetter);
+                so.setGetterOrSetter(s.stringId, index, getterOrSetter, isSetter);
                 if (so instanceof NativeArray)
                     ((NativeArray)so).setDenseOnly(false);
             }
@@ -289,13 +288,12 @@ public class NativeObject extends IdScriptableObject implements Map
                       return Undefined.instance;
 
                   ScriptableObject so = (ScriptableObject)thisObj;
-                  String name = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
-                  int index = (name != null ? 0
-                               : ScriptRuntime.lastIndexResult(cx));
+                  StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
+                  int index = s.stringId != null ? 0 : s.index;
                   boolean isSetter = (id == Id___lookupSetter__);
                   Object gs;
                   for (;;) {
-                      gs = so.getGetterOrSetter(name, index, isSetter);
+                      gs = so.getGetterOrSetter(s.stringId, index, isSetter);
                       if (gs != null)
                           break;
                       // If there is no getter or setter for the object itself,
