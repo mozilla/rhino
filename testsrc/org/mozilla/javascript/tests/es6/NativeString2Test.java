@@ -15,6 +15,9 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 
+/**
+ * Test for handling const variables.
+ */
 public class NativeString2Test {
 
     private Context cx;
@@ -51,4 +54,32 @@ public class NativeString2Test {
         );
         assertEquals("true;h;false;true;false;", result);
     }
+  @Test
+  public void testNormalizeNoParam() {
+      Object result = cx.evaluateString(
+              scope, "'123'.normalize()",
+              "test", 1, null
+      );
+      assertEquals("123", result);
+  }
+
+  @Test
+  public void testNormalizeNoUndefined() {
+      Object result = cx.evaluateString(
+              scope, "'123'.normalize(undefined)",
+              "test", 1, null
+      );
+      assertEquals("123", result);
+  }
+
+  @Test
+  public void testNormalizeNoNull() {
+      Object result = cx.evaluateString(
+              scope, "try { "
+                      + "  '123'.normalize(null);"
+                      + "} catch (e) { e.message }",
+              "test", 1, null
+      );
+      assertEquals("The normalization form should be one of 'NFC', 'NFD', 'NFKC', 'NFKD'.", result);
+  }
 }
