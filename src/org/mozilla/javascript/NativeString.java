@@ -472,14 +472,18 @@ final class NativeString extends IdScriptableObject
                 }
                 case Id_normalize:
                 {
+                    final Normalizer.Form form;
+                    if (args.length > 0 && Undefined.isUndefined(args[0])) {
+                        return Normalizer.normalize(ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f)), Normalizer.Form.NFD);
+                    }
+
                     String formStr = ScriptRuntime.toString(args, 0);
 
-                    Normalizer.Form form;
                     if (Normalizer.Form.NFD.name().equals(formStr)) form = Normalizer.Form.NFD;
                     else if (Normalizer.Form.NFKC.name().equals(formStr)) form = Normalizer.Form.NFKC;
                     else if (Normalizer.Form.NFKD.name().equals(formStr)) form = Normalizer.Form.NFKD;
                     else if (Normalizer.Form.NFC.name().equals(formStr) || args.length == 0) form = Normalizer.Form.NFC;
-                    else throw rangeError("The normalization form should be one of NFC, NFD, NFKC, NFKD");
+                    else throw rangeError("The normalization form should be one of 'NFC', 'NFD', 'NFKC', 'NFKD'.");
 
                     return Normalizer.normalize(ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f)), form);
                 }
