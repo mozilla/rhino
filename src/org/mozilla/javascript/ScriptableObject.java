@@ -962,6 +962,7 @@ public abstract class ScriptableObject implements Scriptable,
     @Override
     public void setPrototype(Scriptable m)
     {
+        if (!isExtensible()) throw ScriptRuntime.typeError0("msg.not.extensible");
         prototypeObject = m;
     }
 
