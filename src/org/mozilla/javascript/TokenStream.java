@@ -330,7 +330,7 @@ class TokenStream
             // Non ReservedWord, but Non IdentifierName in strict mode code.
             // 12.1.1 Static Semantics: Early Errors
             Id_let           = Token.LET,   // TODO : Valid IdentifierName in non-strict mode.
-            Id_static        = Token.RESERVED; 
+            Id_static        = Token.RESERVED;
 
         int id;
         String s = name;
@@ -1068,6 +1068,12 @@ class TokenStream
             addToString('=');
         } else {
             if (startToken != Token.DIV) Kit.codeBug();
+            if (peekChar() == '*') {
+                tokenEnd = cursor - 1;
+                this.string = new String(stringBuffer, 0, stringBufferTop);
+                parser.reportError("msg.unterminated.re.lit");
+                return;
+            }
         }
 
         boolean inCharSet = false; // true if inside a '['..']' pair
@@ -1083,6 +1089,13 @@ class TokenStream
             if (c == '\\') {
                 addToString(c);
                 c = getChar();
+                if (c == '\n' || c == EOF_CHAR) {
+                    ungetChar(c);
+                    tokenEnd = cursor - 1;
+                    this.string = new String(stringBuffer, 0, stringBufferTop);
+                    parser.reportError("msg.unterminated.re.lit");
+                    return;
+                }
             } else if (c == '[') {
                 inCharSet = true;
             } else if (c == ']') {
