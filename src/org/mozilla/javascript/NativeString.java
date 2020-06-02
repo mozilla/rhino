@@ -312,7 +312,6 @@ final class NativeString extends IdScriptableObject
                         return idx != -1;
                     }
                     // fallthrough
-                }
 
                 case Id_padStart:
                 case Id_padEnd:
@@ -430,7 +429,7 @@ final class NativeString extends IdScriptableObject
                     // actually imagine that this'd be slower than caching them
                     // a la ClassCache, so we aren't trying to outsmart ourselves
                     // with a caching mechanism for now.
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     Collator collator = Collator.getInstance(cx.getLocale());
                     collator.setStrength(Collator.IDENTICAL);
                     collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
