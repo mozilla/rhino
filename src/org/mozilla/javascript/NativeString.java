@@ -13,6 +13,7 @@ import java.text.Collator;
 import java.text.Normalizer;
 import java.util.Locale;
 
+import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 import org.mozilla.javascript.regexp.NativeRegExp;
 
 /**
@@ -591,8 +592,7 @@ final class NativeString extends IdScriptableObject
     }
 
     @Override
-    protected Object[] getIds(boolean nonEnumerable, boolean getSymbols)
-    {
+    protected Object[] getIds(boolean nonEnumerable, boolean getSymbols) {
         // In ES6, Strings have entries in the property map for each character.
         Context cx = Context.getCurrentContext();
         if ((cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
@@ -607,6 +607,32 @@ final class NativeString extends IdScriptableObject
         }
         return super.getIds(nonEnumerable, getSymbols);
     }
+
+    @Override
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+       if (!(id instanceof Symbol)
+               && (cx != null) && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
+           StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
+           if (s.stringId == null
+                   && 0 <= s.index && s.index < string.length()) {
+               String value = String.valueOf(string.charAt(s.index));
+               return defaultIndexPropertyDescriptor(value);
+           }
+       }
+       return super.getOwnPropertyDescriptor(cx, id);
+    }
+
+    private ScriptableObject defaultIndexPropertyDescriptor(Object value) {
+        Scriptable scope = getParentScope();
+        if (scope == null) scope = this;
+        ScriptableObject desc = new NativeObject();
+        ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
+        desc.defineProperty("value", value, EMPTY);
+        desc.defineProperty("writable", false, EMPTY);
+        desc.defineProperty("enumerable", true, EMPTY);
+        desc.defineProperty("configurable", false, EMPTY);
+        return desc;
+      }
 
     /*
      *

@@ -98,7 +98,9 @@ class SpecialRef extends Ref
                     } while (search != null);
                 }
                 if (type == SPECIAL_PROTO) {
-                    target.setPrototype(obj);
+                    if (!(target instanceof BaseFunction)) {
+                        target.setPrototype(obj);
+                    }
                 } else {
                     target.setParentScope(obj);
                 }
