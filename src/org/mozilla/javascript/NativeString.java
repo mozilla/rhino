@@ -294,7 +294,7 @@ final class NativeString extends IdScriptableObject
 
                 case Id_includes:
                 case Id_startsWith:
-                case Id_endsWith: {
+                case Id_endsWith:
                     String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     if (args.length > 0 && args[0] instanceof NativeRegExp) {
                         throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), f.getFunctionName());
@@ -312,20 +312,19 @@ final class NativeString extends IdScriptableObject
                         return idx != -1;
                     }
                     // fallthrough
-                }
 
                 case Id_padStart:
                 case Id_padEnd:
                     return js_pad(cx, thisObj, f, args, id == Id_padStart);
 
                 case Id_lastIndexOf: {
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    return ScriptRuntime.wrapInt(js_lastIndexOf(thisString, args));
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    return ScriptRuntime.wrapInt(js_lastIndexOf(thisStr, args));
                 }
 
                 case Id_split: {
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    return ScriptRuntime.checkRegExpProxy(cx).js_split(cx, scope, thisString, args);
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    return ScriptRuntime.checkRegExpProxy(cx).js_split(cx, scope, thisStr, args);
                 }
 
                 case Id_substring: {
@@ -335,14 +334,14 @@ final class NativeString extends IdScriptableObject
 
                 case Id_toLowerCase: {
                     // See ECMA 15.5.4.11
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    return thisString.toLowerCase(Locale.ROOT);
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    return thisStr.toLowerCase(Locale.ROOT);
                 }
 
                 case Id_toUpperCase: {
                     // See ECMA 15.5.4.12
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    return thisString.toUpperCase(Locale.ROOT);
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    return thisStr.toUpperCase(Locale.ROOT);
                 }
 
                 case Id_substr: {
@@ -351,8 +350,8 @@ final class NativeString extends IdScriptableObject
                 }
 
                 case Id_concat: {
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    return js_concat(thisString, args);
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    return js_concat(thisStr, args);
                 }
 
                 case Id_slice: {
@@ -430,21 +429,21 @@ final class NativeString extends IdScriptableObject
                     // actually imagine that this'd be slower than caching them
                     // a la ClassCache, so we aren't trying to outsmart ourselves
                     // with a caching mechanism for now.
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     Collator collator = Collator.getInstance(cx.getLocale());
                     collator.setStrength(Collator.IDENTICAL);
                     collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
                     return ScriptRuntime.wrapNumber(collator.compare(
-                        thisString,
+                            thisStr,
                         ScriptRuntime.toString(args, 0)));
                 }
                 case Id_toLocaleLowerCase: {
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    return thisString.toLowerCase(cx.getLocale());
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    return thisStr.toLowerCase(cx.getLocale());
                 }
                 case Id_toLocaleUpperCase: {
-                    String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                    return thisString.toUpperCase(cx.getLocale());
+                    String thisStr = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
+                    return thisStr.toUpperCase(cx.getLocale());
                 }
                 case Id_trim: {
                     String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
@@ -462,7 +461,7 @@ final class NativeString extends IdScriptableObject
                     return str.substring(start, end);
                 }
                 case Id_trimLeft: {
-                    String str = ScriptRuntime.toString(thisObj);
+                    String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     char[] chars = str.toCharArray();
 
                     int start = 0;
@@ -475,7 +474,7 @@ final class NativeString extends IdScriptableObject
                 }
                 case Id_trimRight:
                 {
-                    String str = ScriptRuntime.toString(thisObj);
+                    String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     char[] chars = str.toCharArray();
 
                     int start = 0;
