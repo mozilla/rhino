@@ -112,9 +112,8 @@ idea {
 task runtimeJar(type: Jar) {
     dependsOn compileJava
     archiveBaseName = 'rhino-runtime'
-    from (sourceSets.main.output) {
-        exclude 'org/mozilla/javascript/tools'
-    }
+    from sourceSets.main.output
+    excludes = ["org/mozilla/javascript/tools", "org/mozilla/javascript/engine/**", "META-INF/services/**"]
     manifest {
         attributes(
             "Manifest-Version": "1.0",
@@ -132,9 +131,30 @@ task runtimeJar(type: Jar) {
     }
 }
 
+task engineJar(type: Jar) {
+    dependsOn compileJava
+    archiveBaseName = 'rhino-engine'
+    from (sourceSets.main.output) {
+        include 'org/mozilla/javascript/engine/**'
+        include 'META-INF/services/**'
+    }
+    manifest {
+        attributes(
+                "Manifest-Version": "1.0",
+                "Implementation-Version": project.version,
+                "Implementation-Title":  "Mozilla Rhino ScriptEngine",
+                "Implementation-Vendor": "Mozilla Foundation",
+                "Implementation-URL": "http://www.mozilla.org/rhino",
+                "Built-Date": new Date().format("yyyy-MM-dd"),
+                "Built-Time": new Date().format("HH:mm:ss"),
+        )
+    }
+}
+
 jar {
-    dependsOn runtimeJar
+    dependsOn runtimeJar, engineJar
     from "LICENSE.txt"
+    excludes = ["org/mozilla/javascript/engine/**", "META-INF/services/**"]
     manifest {
         attributes(
             "Manifest-Version": "1.0",
@@ -167,7 +187,13 @@ task javadocJar(type: Jar) {
 task runtimeJavadocJar(type: Jar) {
     classifier = 'javadoc'
     from javadoc
-    exclude 'org/mozilla/javascript/tools'   
+    exclude 'org/mozilla/javascript/tools', 'org/mozilla/javascript/engine'
+}
+
+task engineJavadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+    include 'org/mozilla/javascript/engine/**'
 }
 
 task sourceJar(type: Jar) {
@@ -177,7 +203,13 @@ task sourceJar(type: Jar) {
 task runtimeSourceJar(type: Jar) {
     classifier 'sources'
     from sourceSets.main.allJava
-    exclude 'org/mozilla/javascript/tools'
+    exclude 'org/mozilla/javascript/tools', 'org/mozilla/javascript/engine'
+}
+
+task engineSourceJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allJava
+    include 'org/mozilla/javascript/engine/**'
 }
 
 publishing {
@@ -257,6 +289,46 @@ publishing {
 
             }
         }
+
+        rhinoengine(MavenPublication) {
+            groupId 'org.mozilla'
+            artifactId 'rhino-engine'
+            artifacts = [engineJar, engineSourceJar, engineJavadocJar]
+
+            pom.withXml {
+                def root = asNode()
+
+                root.appendNode('description', """
+    Rhino is an open-source implementation of JavaScript written entirely in Java.
+    It is typically embedded into Java applications to provide scripting to end users.
+""")
+                root.appendNode("url", "https://developer.mozilla.org/en/Rhino")
+
+                def p = root.appendNode("parent")
+                p.appendNode("groupId", "org.sonatype.oss")
+                p.appendNode("artifactId", "oss-parent")
+                p.appendNode("version", "7")
+
+                def l = root.appendNode("licenses").appendNode("license")
+                l.appendNode("name", "Mozilla Public License, Version 2.0")
+                l.appendNode("url", "http://www.mozilla.org/MPL/2.0/index.txt")
+
+                def scm = root.appendNode("scm")
+                scm.appendNode("connection", "scm:git:git@github.com:mozilla/rhino.git")
+                scm.appendNode("developerConnection", "scm:git:git@github.com:mozilla/rhino.git")
+                scm.appendNode("url", "git@github.com:mozilla/rhino.git")
+
+                def o = root.appendNode("organization")
+                o.appendNode("name", "The Mozilla Foundation")
+                o.appendNode("url", "http://www.mozilla.org")
+
+                def deps = root.appendNode("dependencies")
+                def rhino = deps.appendNode("dependency")
+                rhino.appendNode("groupId", "org.mozilla")
+                rhino.appendNode("artifactId", "rhino")
+                rhino.appendNode("version", getVersion())
+            }
+        }
     }
 
     if (project.hasProperty("mavenPassword")) {
@@ -291,7 +363,7 @@ jacocoTestReport {
 
 checkstyle {
     configFile = file("${projectDir}/checkstyle.xml")
-    sourceSets = [project.sourceSets.main]
+    sourceSets = [ project.sourceSets.main ]
 }
 
 distributions {
