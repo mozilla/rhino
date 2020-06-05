@@ -6,7 +6,7 @@ plugins {
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
-    id 'com.github.spotbugs' version '2.0.0'
+    id 'com.github.spotbugs' version '4.2.4'
 }
 
 tasks.withType(JavaCompile) {
@@ -43,9 +43,9 @@ sourceSets {
 }
 
 dependencies {
-    testCompile "junit:junit:4.12"
-    testCompile "org.yaml:snakeyaml:1.15"
-    testCompile "net.trajano.caliper:caliper:1.2.1"
+    testImplementation "junit:junit:4.13"
+    testImplementation "org.yaml:snakeyaml:1.26"
+    testImplementation "net.trajano.caliper:caliper:1.2.1"
 }
 
 test {
@@ -66,7 +66,7 @@ test {
     // Many tests do not clean up contexts properly. This makes the tests much
     // more resilient at the expense of performance.
     forkEvery = 1
-    maxParallelForks = 10
+    maxParallelForks = 16
 }
 
 task sunSpiderBenchmark(type: JavaExec) {
@@ -177,7 +177,7 @@ task sourceJar(type: Jar) {
 task runtimeSourceJar(type: Jar) {
     classifier 'sources'
     from sourceSets.main.allJava
-    exclude 'org/mozilla/javascript/tools'   
+    exclude 'org/mozilla/javascript/tools'
 }
 
 publishing {
@@ -276,15 +276,9 @@ publishing {
     }
 }
 
-jacoco {
-    toolVersion = "0.8.3"
-}
-
 spotbugs {
-    toolVersion = "3.1.12"
     effort = "min"
     reportLevel = "high"
-    sourceSets = [sourceSets.main]
     excludeFilter = file("./spotbugs-exclude.xml")
 }
 

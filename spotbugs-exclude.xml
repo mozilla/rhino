@@ -2,6 +2,9 @@
 
 <FindBugsFilter>
   <Match>
+    <Class name="~org\.mozilla\.javascript\.tests.*"/>
+  </Match>
+  <Match>
     <!-- Existing "Token" constants have values to 255 -->
     <Class name="org.mozilla.javascript.Interpreter" />
     <Bug pattern="INT_BAD_COMPARISON_WITH_SIGNED_BYTE" />
