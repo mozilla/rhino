@@ -112,7 +112,9 @@ public class TopLevel extends IdScriptableObject {
             if (value instanceof BaseFunction) {
                 ctors.put(builtin, (BaseFunction)value);
             } else if (builtin == Builtins.GeneratorFunction) {
-                ctors.put(builtin, (BaseFunction)ES6GeneratorFunction.initConstructor(scope, sealed));
+                // Handle weird situation of "GeneratorFunction" being a real constructor
+                // which is never registered in the top-level scope
+                ctors.put(builtin, (BaseFunction)BaseFunction.initAsGeneratorFunction(scope, sealed));
             }
         }
         errors = new EnumMap<NativeErrors, BaseFunction>(NativeErrors.class);
@@ -147,7 +149,16 @@ public class TopLevel extends IdScriptableObject {
             }
         }
         // fall back to normal constructor lookup
-        return ScriptRuntime.getExistingCtor(cx, scope, type.name());
+        String typeName;
+        if (type == Builtins.GeneratorFunction) {
+            // GeneratorFunction isn't stored in scope with that name, but in case
+            // we end up falling back to this value then we have to
+            // look this up using a hidden name.
+            typeName = BaseFunction.GENERATOR_FUNCTION_CLASS;
+        } else {
+            typeName = type.name();
+        }
+        return ScriptRuntime.getExistingCtor(cx, scope, typeName);
     }
 
     /**
@@ -197,7 +208,16 @@ public class TopLevel extends IdScriptableObject {
             }
         }
         // fall back to normal prototype lookup
-        return ScriptableObject.getClassPrototype(scope, type.name());
+        String typeName;
+        if (type == Builtins.GeneratorFunction) {
+            // GeneratorFunction isn't stored in scope with that name, but in case
+            // we end up falling back to this value then we have to
+            // look this up using a hidden name.
+            typeName = BaseFunction.GENERATOR_FUNCTION_CLASS;
+        } else {
+            typeName = type.name();
+        }
+        return ScriptableObject.getClassPrototype(scope, typeName);
     }
 
     /**

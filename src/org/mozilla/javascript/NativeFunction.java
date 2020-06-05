@@ -20,7 +20,7 @@ public abstract class NativeFunction extends BaseFunction
 
     public final void initScriptFunction(Context cx, Scriptable scope)
     {
-        initScriptFunction(cx, scope, false);
+        initScriptFunction(cx, scope, isGeneratorFunction());
     }
 
     public final void initScriptFunction(Context cx, Scriptable scope, boolean es6GeneratorFunction)
