@@ -16,36 +16,49 @@ package org.mozilla.javascript;
  */
 public class BaseFunction extends IdScriptableObject implements Function
 {
-
     private static final long serialVersionUID = 5311394446546053859L;
 
     private static final Object FUNCTION_TAG = "Function";
+    private static final String FUNCTION_CLASS = "Function";
+    static final String GENERATOR_FUNCTION_CLASS = "__GeneratorFunction";
 
     static void init(Scriptable scope, boolean sealed)
     {
         BaseFunction obj = new BaseFunction();
-        baseInit(obj, scope, sealed);
-    }
-
-    protected static void baseInit(BaseFunction obj, Scriptable scope, boolean sealed)
-    {
         // Function.prototype attributes: see ECMA 15.3.3.1
         obj.prototypePropertyAttributes = DONTENUM | READONLY | PERMANENT;
         obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    public BaseFunction()
+    static Object initAsGeneratorFunction(Scriptable scope, boolean sealed)
     {
+        BaseFunction obj = new BaseFunction(true);
+        // Function.prototype attributes: see ECMA 15.3.3.1
+        obj.prototypePropertyAttributes = READONLY | PERMANENT;
+        obj.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
+        // The "GeneratorFunction" name actually never appears in the global scope.
+        // Return it here so it can be cached as a "builtin"
+        return ScriptableObject.getProperty(scope, GENERATOR_FUNCTION_CLASS);
     }
 
-    public BaseFunction(Scriptable scope, Scriptable prototype)
-    {
+    public BaseFunction() {}
+
+    public BaseFunction(boolean isGenerator) {
+        this.isGeneratorFunction = isGenerator;
+    }
+
+    public BaseFunction(Scriptable scope, Scriptable prototype) {
         super(scope, prototype);
     }
 
     @Override
     public String getClassName() {
-        return "Function";
+        return isGeneratorFunction() ? GENERATOR_FUNCTION_CLASS : FUNCTION_CLASS;
+    }
+
+    // Generated code will override this
+    protected boolean isGeneratorFunction() {
+        return isGeneratorFunction;
     }
 
     /**
@@ -508,17 +521,15 @@ public class BaseFunction extends IdScriptableObject implements Function
              : activation.get("arguments", activation);
     }
 
-    // This is overridden for generator functions so that we can create a "function *" instead.
-    protected String getFunctionTag() {
-        return "function ";
-    }
-
     private Object jsConstructor(Context cx, Scriptable scope, Object[] args)
     {
         int arglen = args.length;
         StringBuilder sourceBuf = new StringBuilder();
 
-        sourceBuf.append(getFunctionTag());
+        sourceBuf.append("function ");
+        if (isGeneratorFunction()) {
+            sourceBuf.append("* ");
+        }
         /* version != 1.2 Function constructor behavior -
          * print 'anonymous' as the function name if the
          * version (under which the function was compiled) is
@@ -613,6 +624,7 @@ public class BaseFunction extends IdScriptableObject implements Function
 
     private Object prototypeProperty;
     private Object argumentsObj = NOT_FOUND;
+    private boolean isGeneratorFunction = false;
 
     // For function object instances, attributes are
     //  {configurable:false, enumerable:false};

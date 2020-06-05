@@ -8,6 +8,7 @@ package org.mozilla.javascript.optimizer;
 
 import static org.mozilla.classfile.ClassFileWriter.ACC_FINAL;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PRIVATE;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PROTECTED;
 import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 import static org.mozilla.classfile.ClassFileWriter.ACC_VOLATILE;
@@ -766,7 +767,8 @@ public class Codegen implements Evaluator
         final int Do_getParamOrVarName    = 3;
         final int Do_getEncodedSource     = 4;
         final int Do_getParamOrVarConst   = 5;
-        final int SWITCH_COUNT            = 6;
+        final int Do_isGeneratorFunction  = 6;
+        final int SWITCH_COUNT            = 7;
 
         for (int methodIndex = 0; methodIndex != SWITCH_COUNT; ++methodIndex) {
             if (methodIndex == Do_getEncodedSource && encodedSource == null) {
@@ -810,6 +812,11 @@ public class Codegen implements Evaluator
                 cfw.startMethod("getEncodedSource", "()Ljava/lang/String;",
                                 ACC_PUBLIC);
                 cfw.addPush(encodedSource);
+                break;
+              case Do_isGeneratorFunction:
+                methodLocals = 1; // Only this
+                cfw.startMethod("isGeneratorFunction", "()Z",
+                                ACC_PROTECTED);
                 break;
               default:
                 throw Kit.codeBug();
@@ -940,6 +947,16 @@ public class Codegen implements Evaluator
                             }
                         }
                       break;
+
+                    case Do_isGeneratorFunction:
+                        // Push a boolean if it's a generator
+                        if (n instanceof FunctionNode) {
+                            cfw.addPush(((FunctionNode) n).isES6Generator());
+                        } else {
+                            cfw.addPush(false);
+                        }
+                        cfw.add(ByteCode.IRETURN);
+                        break;
 
                   case Do_getEncodedSource:
                     // Push number encoded source start and end
