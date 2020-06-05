@@ -28,7 +28,7 @@ jobs:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "build.gradle" }}
 
-      - run: ./gradlew check jar --max-workers=4
+      - run: ./gradlew check jar --max-workers=2
 
       - store_test_results:
           path: buildGradle/test-results
