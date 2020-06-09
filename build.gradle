@@ -6,7 +6,7 @@ plugins {
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
-    id 'com.github.spotbugs' version '4.2.4'
+    id 'com.github.spotbugs' version "4.2.4"
 }
 
 tasks.withType(JavaCompile) {
@@ -40,12 +40,23 @@ sourceSets {
             srcDirs "testsrc"
         }
     }
+
+    jmh {
+        java {
+            srcDirs "benchmarks"
+        }
+        compileClasspath += sourceSets.test.runtimeClasspath
+        runtimeClasspath += sourceSets.test.runtimeClasspath
+    }
 }
 
 dependencies {
     testImplementation "junit:junit:4.13"
     testImplementation "org.yaml:snakeyaml:1.26"
     testImplementation "net.trajano.caliper:caliper:1.2.1"
+    jmhImplementation project
+    jmhImplementation 'org.openjdk.jmh:jmh-core:1.23'
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.23'
 }
 
 test {
@@ -70,33 +81,31 @@ test {
 }
 
 task sunSpiderBenchmark(type: JavaExec) {
-    main "com.google.caliper.runner.CaliperMain"
-    systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
-    args "-Cresults.upload.class=org.mozilla.javascript.benchmarks.ResultPlotter", "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperSpiderBenchmark.Spider"
-    classpath sourceSets.test.runtimeClasspath
+    classpath = sourceSets.jmh.runtimeClasspath
+    main = 'org.openjdk.jmh.Main'
+    args '-f', '1', '-bm', 'avgt', '-tu', 'us', 'SunSpider'
 }
 
-task v8Benchmark(type: Test) {
-    jacoco {
-        enabled = false
-    }
-    include "**/benchmarks/V8Benchmark*"
-    systemProperty 'rhino.benchmark.report', "${buildDir.absolutePath}"
-    systemProperty 'file.encoding', 'UTF-8'
-    workingDir = file("testsrc/benchmarks")
-    maxHeapSize = "1g"
-    testLogging.showStandardStreams = true
-    forkEvery = 1
+task v8Benchmark(type: JavaExec) {
+    classpath = sourceSets.jmh.runtimeClasspath
+    main = 'org.openjdk.jmh.Main'
+    args '-f', '1', '-bm', 'avgt', '-tu', 'us', 'V8'
 }
 
 task testBenchmark() {}
 testBenchmark.dependsOn sunSpiderBenchmark
 testBenchmark.dependsOn v8Benchmark
 
-task microBenchmark(type: JavaExec) {
-    main "com.google.caliper.runner.CaliperMain"
-    args "-i", "runtime", "org.mozilla.javascript.benchmarks.CaliperObjectBenchmark.FieldAccess", "-DstringKeys=100,1000", "-DintKeys=100,1000"
-    classpath sourceSets.test.runtimeClasspath
+task microBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
+    classpath = sourceSets.jmh.runtimeClasspath
+    main = 'org.openjdk.jmh.Main'
+    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', 'ObjectCall'
+}
+
+task jmhHelp(type: JavaExec, description: 'JMH benchmarks') {
+    classpath = sourceSets.jmh.runtimeClasspath
+    main = 'org.openjdk.jmh.Main'
+    args '-help'
 }
 
 idea {
