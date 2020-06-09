@@ -92,7 +92,7 @@ public class ShellTest {
 
         public abstract void failed(String s);
         public abstract void threw(Throwable t);
-        public abstract void timedOut();
+        public abstract void timedOut(long timeoutMillis);
         public abstract void exitCodesWere(int expected, int actual);
         public abstract void outputWas(String s);
 
@@ -129,9 +129,9 @@ public class ShellTest {
                     }
                 }
                 @Override
-                public void timedOut() {
+                public void timedOut(long timeoutMillis) {
                     for (int i=0; i<array.length; i++) {
-                        array[i].timedOut();
+                        array[i].timedOut(timeoutMillis);
                     }
                 }
             };
@@ -323,7 +323,7 @@ public class ShellTest {
             if(!testState.finished)
             {
                 callStop(t);
-                status.timedOut();
+                status.timedOut(parameters.getTimeoutMilliseconds());
             }
         }
         int expectedExitCode = 0;

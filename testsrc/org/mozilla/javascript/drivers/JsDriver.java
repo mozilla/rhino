@@ -148,8 +148,8 @@ public class JsDriver {
         }
 
         @Override
-        public void timedOut() {
-            console.println("Failed: " + jsFile + ": timed out.");
+        public void timedOut(long timeoutMillis) {
+            console.println("Failed: " + jsFile + ": timed out (timeout = " + timeoutMillis + ")");
             failed = true;
         }
 
@@ -269,9 +269,10 @@ public class JsDriver {
         }
 
         @Override
-        public void timedOut() {
+        public void timedOut(long timeoutMillis) {
             failed = true;
-            setContent(failureHtml, "failureDetails.reason", "Timed out.");
+            setContent(failureHtml, "failureDetails.reason",
+                "Timed out (timeout = " + timeoutMillis + ")");
         }
 
         @Override
@@ -374,7 +375,7 @@ public class JsDriver {
         }
 
         @Override
-        public void timedOut() {
+        public void timedOut(long timeoutMillis) {
             finish();
             createElement(target, "timedOut");
         }
