@@ -181,8 +181,8 @@ public class MozillaSuiteTest {
         }
 
         @Override
-        public final void timedOut() {
-            failed("Timed out.");
+        public final void timedOut(long timeoutMillis) {
+            failed("Timed out (timeout = " + timeoutMillis + "(");
         }
     }
 
