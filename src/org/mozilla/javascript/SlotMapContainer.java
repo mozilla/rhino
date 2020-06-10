@@ -78,6 +78,11 @@ class SlotMapContainer
   }
 
   @Override
+  public void optimize() {
+    map.optimize();
+  }
+
+  @Override
   public Iterator<Slot> iterator() {
     return map.iterator();
   }

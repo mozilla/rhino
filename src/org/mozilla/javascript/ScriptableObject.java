@@ -387,6 +387,14 @@ public abstract class ScriptableObject implements Scriptable,
     }
 
     /**
+     * Optimize the storage of the properties table to reduce or eliminate the number of hash
+     * collisions, at the expense of memory.
+     */
+    public void optimizeStorage() {
+        slotMap.optimize();
+    }
+
+    /**
      * Gets the value that will be returned by calling the typeof operator on this object.
      * @return default is "object" unless {@link #avoidObjectDetection()} is <code>true</code> in which
      * case it returns "undefined"

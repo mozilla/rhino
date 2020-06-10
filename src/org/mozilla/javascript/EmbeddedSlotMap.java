@@ -32,6 +32,10 @@ public class EmbeddedSlotMap
     // initial slot array size, must be a power of 2
     private static final int INITIAL_SLOT_SIZE = 4;
 
+    // Maximum size that the array will grow to while trying to optimize
+    // for the least number of collisions
+    private static final int MAX_OPTIMIZE_SIZE = 256;
+
     private static final class Iter
         implements Iterator<ScriptableObject.Slot>
     {
@@ -337,6 +341,24 @@ public class EmbeddedSlotMap
                 slot = nextSlot;
             }
         }
+    }
+
+    @Override
+    public void optimize() {
+        while (slots.length < MAX_OPTIMIZE_SIZE && !isPerfect()) {
+            ScriptableObject.Slot[] newSlots = new ScriptableObject.Slot[slots.length * 2];
+            copyTable(slots, newSlots);
+            slots = newSlots;
+        }
+    }
+
+    private boolean isPerfect() {
+        for (ScriptableObject.Slot slot : slots) {
+            if ((slot != null) && (slot.next != null)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
