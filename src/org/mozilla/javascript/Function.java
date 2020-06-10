@@ -16,7 +16,7 @@ package org.mozilla.javascript;
  * @author Norris Boyd
  */
 
-public interface Function extends Scriptable, Callable
+public interface Function extends Scriptable, Callable, Constructable
 {
     /**
      * Call the function.
@@ -33,8 +33,8 @@ public interface Function extends Scriptable, Callable
      * @return the result of the call
      */
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                       Object[] args);
+    Object call(Context cx, Scriptable scope, Scriptable thisObj,
+                Object[] args);
 
     /**
      * Call the function as a constructor.
@@ -49,5 +49,6 @@ public interface Function extends Scriptable, Callable
      * @param args the array of arguments
      * @return the allocated object
      */
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args);
+    @Override
+    Scriptable construct(Context cx, Scriptable scope, Object[] args);
 }
