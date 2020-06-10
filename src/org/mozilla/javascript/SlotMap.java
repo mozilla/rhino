@@ -53,5 +53,11 @@ public interface SlotMap
      * Remove the slot at either "key" or "index".
      */
     void remove(Object key, int index);
+
+    /**
+     * Optimize the hash table to reduce the number of collisions at the expense of
+     * space.
+     */
+    void optimize();
 }
 

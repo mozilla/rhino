@@ -126,4 +126,7 @@ public class HashSlotMap
     public Iterator<ScriptableObject.Slot> iterator() {
         return map.values().iterator();
     }
+
+    @Override
+    public void optimize() {}
 }
