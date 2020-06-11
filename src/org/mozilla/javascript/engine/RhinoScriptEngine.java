@@ -89,9 +89,6 @@ public class RhinoScriptEngine
 
     if (topLevelScope == null) {
       topLevelScope = cx.initStandardObjects();
-      // We need to stash this away so that the built in functions can find
-      // this engine's specific stuff that they need to work.
-      topLevelScope.associateValue(Builtins.BUILTIN_KEY, builtins);
       builtins.register(cx, topLevelScope, sc);
     }
 

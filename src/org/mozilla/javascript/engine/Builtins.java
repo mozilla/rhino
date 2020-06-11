@@ -8,11 +8,13 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import javax.script.ScriptContext;
+import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Function;
+import org.mozilla.javascript.LambdaFunction;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 
 /**
  * <p>
@@ -25,35 +27,30 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class Builtins {
 
-  static final Object BUILTIN_KEY = new Object();
-
-  private Writer stdout;
-
   void register(Context cx, ScriptableObject scope, ScriptContext sc) {
+    Writer stdout;
     if (sc.getWriter() == null) {
       stdout = new OutputStreamWriter(System.out);
     } else {
       stdout = sc.getWriter();
     }
 
-    scope.defineFunctionProperties(new String[]{"print"},
-        Builtins.class,
-        ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
+    Callable printFunc = new LambdaFunction("print", 1,
+        (Context lcx, Scriptable lscope, Scriptable lthis, Object[] args) ->
+            print(lcx, lscope, stdout, args)
+    );
+    ScriptableObject.putProperty(scope, "print", printFunc);
   }
 
-  public static void print(Context cx, Scriptable thisObj, Object[] args, Function f)
-      throws IOException {
-    Builtins self = getSelf(thisObj);
-    for (Object arg : args) {
-      self.stdout.write(ScriptRuntime.toString(arg));
+  private Object print(Context cx, Scriptable scope, Writer writer, Object[] args) {
+    try {
+      for (Object arg : args) {
+        writer.write(ScriptRuntime.toString(arg));
+      }
+      writer.write('\n');
+      return Undefined.instance;
+    } catch (IOException ioe) {
+      throw ScriptRuntime.throwCustomError(cx, scope, "Error", ioe.getMessage());
     }
-    self.stdout.write('\n');
-  }
-
-  private static Builtins getSelf(Scriptable scope) {
-    // Since this class is invoked as a set of anonymous functions, "this"
-    // in JavaScript does not point to "this" in Java. We set a key on the
-    // top-level scope to address this.
-    return (Builtins) ScriptableObject.getTopScopeValue(scope, BUILTIN_KEY);
   }
 }
