@@ -360,6 +360,90 @@ public class ShellTest {
         }
     }
 
+    public static void runNoFork(final ShellContextFactory shellContextFactory,
+        final File jsFile, final Parameters parameters,
+        final Status status) throws Exception {
+        final Global global = new Global();
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final PrintStream p = new PrintStream(out);
+        global.setOut(p);
+        global.setErr(p);
+        global.defineFunctionProperties(
+            new String[] { "options" }, ShellTest.class,
+            ScriptableObject.DONTENUM | ScriptableObject.PERMANENT |
+                ScriptableObject.READONLY);
+        // test suite expects keywords to be disallowed as identifiers
+        shellContextFactory.setAllowReservedKeywords(false);
+        final TestState testState = new TestState();
+        if (jsFile.getName().endsWith("-n.js")) {
+            status.setNegative();
+        }
+        final Throwable thrown[] = {null};
+
+        try {
+            shellContextFactory.call(cx ->
+            {
+                status.running(jsFile);
+                testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
+                cx.setErrorReporter(testState.errors);
+                global.init(cx);
+                try {
+                    runFileIfExists(cx, global,
+                        new File(jsFile.getParentFile().getParentFile().getParentFile(),
+                            "shell.js"));
+                    runFileIfExists(cx, global,
+                        new File(jsFile.getParentFile().getParentFile(), "shell.js"));
+                    runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
+                    runFileIfExists(cx, global, jsFile);
+                    status
+                        .hadErrors(jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
+                } catch (Throwable t) {
+                    status.threw(t);
+                }
+                return null;
+            });
+        } catch (Error t) {
+            thrown[0] = t;
+        } catch (RuntimeException t) {
+            thrown[0] = t;
+        } finally {
+            testState.finished = true;
+        }
+
+        int expectedExitCode = 0;
+        p.flush();
+        status.outputWas(new String(out.toByteArray()));
+        BufferedReader r = new BufferedReader(new InputStreamReader(
+            new ByteArrayInputStream(out.toByteArray())));
+        String failures = "";
+        for(;;)
+        {
+            String s = r.readLine();
+            if(s == null)
+            {
+                break;
+            }
+            if(s.indexOf("FAILED!") != -1)
+            {
+                failures += s + '\n';
+            }
+            int expex = s.indexOf("EXPECT EXIT CODE ");
+            if(expex != -1)
+            {
+                expectedExitCode = s.charAt(expex + "EXPECT EXIT CODE ".length()) - '0';
+            }
+        }
+        if (thrown[0] != null)
+        {
+            status.threw(thrown[0]);
+        }
+        status.exitCodesWere(expectedExitCode, testState.exitCode);
+        if(failures != "")
+        {
+            status.failed(failures);
+        }
+    }
+
     // Global function to mimic options() function in spidermonkey.
     // It looks like this toggles jit compiler mode in spidermonkey
     // when called with "jit" as argument. Our version is a no-op

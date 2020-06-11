@@ -194,7 +194,7 @@ public class MozillaSuiteTest {
         shellContextFactory.setOptimizationLevel(optimizationLevel);
         ShellTestParameters params = new ShellTestParameters();
         JunitStatus status = new JunitStatus();
-        ShellTest.run(shellContextFactory, jsFile, params, status);
+        ShellTest.runNoFork(shellContextFactory, jsFile, params, status);
     }
 
 
