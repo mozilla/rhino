@@ -1,6 +1,8 @@
 package org.mozilla.javascript.tests.scriptengine;
 
+import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -9,6 +11,7 @@ import javax.script.SimpleScriptContext;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 
 import static org.junit.Assert.*;
@@ -50,5 +53,28 @@ public class BuiltinsTest {
     engine.getContext().setWriter(sw);
     engine.eval(engine.getFactory().getOutputStatement("Display This!"));
     assertEquals(sw.toString(), "Display This!\n");
+  }
+
+  @Test
+  public void testFailingWriter() {
+    Writer bogusWriter = new Writer() {
+      @Override
+      public void write(char[] cbuf, int off, int len) throws IOException {
+        throw new IOException("Can't write!");
+      }
+
+      @Override
+      public void flush() throws IOException {
+      }
+
+      @Override
+      public void close() throws IOException {
+      }
+    };
+
+    engine.getContext().setWriter(bogusWriter);
+    assertThrows(ScriptException.class, () -> {
+      engine.eval("print('This is going to fail.');");
+    });
   }
 }
