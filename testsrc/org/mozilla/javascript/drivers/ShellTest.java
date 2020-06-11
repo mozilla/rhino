@@ -9,6 +9,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -16,8 +18,11 @@ import java.util.ArrayList;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.tools.ToolErrorReporter;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
@@ -26,6 +31,24 @@ import org.mozilla.javascript.tools.shell.ShellContextFactory;
  * @version $Id: ShellTest.java,v 1.14 2011/03/29 15:17:49 hannes%helma.at Exp $
  */
 public class ShellTest {
+    private static File frameworkFile;
+    private static Script frameworkScript;
+
+    public static void cacheFramework() {
+        frameworkFile = new File("testsrc/tests/shell.js");
+        if (!frameworkFile.exists()) {
+            throw new AssertionError("Can't find test framework file " + frameworkFile);
+        }
+        Context cx = Context.enter();
+        try {
+            frameworkScript = cx.compileReader(new FileReader(frameworkFile), "shell.js", 1, null);
+        } catch (IOException ioe) {
+            throw new AssertionError("Can't read test framework file " + frameworkFile);
+        } finally {
+            Context.exit();
+        }
+    }
+
     public static final FileFilter DIRECTORY_FILTER = new FileFilter() {
         public boolean accept(File pathname)
         {
@@ -50,8 +73,17 @@ public class ShellTest {
     }
 
     private static void runFileIfExists(Context cx, Scriptable global, File f) {
-        if(f.isFile()) {
-            Main.processFileNoThrow(cx, global, f.getPath());
+        if (frameworkFile.equals(f)) {
+            try {
+                frameworkScript.exec(cx, global);
+            } catch (RhinoException re) {
+                // Error in test framework means that the whole world is broken.
+                throw new AssertionError(re);
+            }
+        } else {
+            if (f.isFile()) {
+                Main.processFileNoThrow(cx, global, f.getPath());
+            }
         }
     }
 
