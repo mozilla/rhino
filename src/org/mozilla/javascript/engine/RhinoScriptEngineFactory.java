@@ -50,12 +50,9 @@ public class RhinoScriptEngineFactory
 
   @Override
   public String getEngineVersion() {
-    Context cx = Context.enter();
-    try {
+    try (Context cx = Context.enter()) {
       String v = cx.getImplementationVersion();
       return (v == null ? "unknown" : v);
-    } finally {
-      Context.exit();
     }
   }
 
