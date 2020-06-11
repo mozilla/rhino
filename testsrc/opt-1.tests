@@ -19,7 +19,6 @@ e4x/Expressions/regress-301545.js
 e4x/Expressions/regress-302531.js
 e4x/Expressions/regress-340024.js
 e4x/Expressions/regress-496113.js
-e4x/GC/regress-280844-1.js
 e4x/GC/regress-292455.js
 e4x/GC/regress-313952-01.js
 e4x/GC/regress-324117.js
@@ -55,7 +54,6 @@ e4x/Regress/regress-301553.js
 e4x/Regress/regress-301573.js
 e4x/Regress/regress-301596.js
 e4x/Regress/regress-301692.js
-e4x/Regress/regress-309897.js
 e4x/Regress/regress-313799.js
 e4x/Regress/regress-318922.js
 e4x/Regress/regress-325425.js
@@ -74,7 +72,6 @@ e4x/Regress/regress-354145-03.js
 e4x/Regress/regress-354145-04.js
 e4x/Regress/regress-354145-05.js
 e4x/Regress/regress-354145-07.js
-e4x/Regress/regress-354998.js
 e4x/Regress/regress-355474-02.js
 e4x/Regress/regress-356238-01.js
 e4x/Regress/regress-369032.js
@@ -1333,7 +1330,6 @@ js1_5/Function/regress-292215.js
 js1_5/Function/regress-344052.js
 js1_5/Function/regress-364023.js
 js1_5/GC/regress-104584.js
-js1_5/GC/regress-203278-2.js
 js1_5/GC/regress-203278-3.js
 js1_5/GC/regress-278725.js
 js1_5/GC/regress-306788.js
@@ -1566,7 +1562,6 @@ js1_5/Regress/regress-449627.js
 js1_5/Regress/regress-449666.js
 js1_5/Regress/regress-450369.js
 js1_5/Regress/regress-450833.js
-js1_5/Regress/regress-451322.js
 js1_5/Regress/regress-451884.js
 js1_5/Regress/regress-451946.js
 js1_5/Regress/regress-452008.js
