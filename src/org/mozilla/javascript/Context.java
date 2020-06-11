@@ -10,6 +10,7 @@ package org.mozilla.javascript;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -54,6 +55,7 @@ import org.mozilla.javascript.xml.XMLLib;
  */
 
 public class Context
+    implements Closeable
 {
     /**
      * Language versions.
@@ -531,6 +533,11 @@ public class Context
             VMBridge.instance.setContext(helper, null);
             cx.factory.onContextReleased(cx);
         }
+    }
+
+    @Override
+    public void close() {
+        exit();
     }
 
     /**
