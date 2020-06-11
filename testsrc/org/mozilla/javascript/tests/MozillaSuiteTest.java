@@ -54,6 +54,7 @@ public class MozillaSuiteTest {
     public MozillaSuiteTest(File jsFile, int optimizationLevel) {
         this.jsFile = jsFile;
         this.optimizationLevel = optimizationLevel;
+        ShellTest.cacheFramework();
     }
 
     public static File getTestDir() throws IOException {
