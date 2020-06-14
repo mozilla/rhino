@@ -8,6 +8,9 @@
 
 package org.mozilla.javascript;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Embeddings that wish to provide their own custom wrappings for Java
  * objects may extend this class and call
@@ -117,6 +120,11 @@ public class WrapFactory
     public Scriptable wrapAsJavaObject(Context cx, Scriptable scope,
                                        Object javaObject, Class<?> staticType)
     {
+        if (List.class.isAssignableFrom(javaObject.getClass())) {
+            return new NativeJavaList(scope, javaObject);
+        } else if (Map.class.isAssignableFrom(javaObject.getClass())) {
+            return new NativeJavaMap(scope, javaObject);
+        }
         return new NativeJavaObject(scope, javaObject, staticType);
     }
 
