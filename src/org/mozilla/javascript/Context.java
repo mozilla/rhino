@@ -20,6 +20,7 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayDeque;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1276,10 +1277,12 @@ public class Context
     {
         Script script = compileString(source, sourceName, lineno,
                                       securityDomain);
+        Object ret = null;
         if (script != null) {
-            return script.exec(this, scope);
+            ret = script.exec(this, scope);
         }
-        return null;
+        processMicrotasks();
+        return ret;
     }
 
     /**
@@ -1306,10 +1309,12 @@ public class Context
     {
         Script script = compileReader(scope, in, sourceName, lineno,
                                       securityDomain);
+        Object ret = null;
         if (script != null) {
-            return script.exec(this, scope);
+            ret = script.exec(this, scope);
         }
-        return null;
+        processMicrotasks();
+        return ret;
     }
 
     /**
@@ -1335,8 +1340,10 @@ public class Context
             throw new IllegalArgumentException("Script argument was not" +
                     " a script or was not created by interpreted mode ");
         }
-        return callFunctionWithContinuations((InterpretedFunction) script,
+        Object ret = callFunctionWithContinuations((InterpretedFunction) script,
                 scope, ScriptRuntime.emptyArgs);
+        processMicrotasks();
+        return ret;
     }
 
     /**
@@ -2731,6 +2738,33 @@ public class Context
         return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
     }
 
+    /**
+     * Add a task that will be executed at the end of the current operation. The various
+     * "evaluate" functions will all call this before exiting to ensure that all microtasks
+     * run to completion. Otherwise, callers should call "processMicrotasks" to run them
+     * all. This feature is primarily used to implement Promises. This function is
+     * not thread-safe.
+     */
+    public void enqueueMicrotask(Runnable task) {
+        microtasks.add(task);
+    }
+
+    /**
+     * Run all the microtasks for the current context to completion. This is called by the various
+     * "evaluate" functions. Frameworks that call Function objects directly should call this
+     * function to ensure that everything completes if they want all Promises to eventually
+     * resolve. This function is idempotent and not thread-safe.
+     */
+    public void processMicrotasks() {
+        Runnable head;
+        do {
+            head = microtasks.poll();
+            if (head != null) {
+                head.run();
+            }
+        } while (head != null);
+    }
+
     private static String implementationVersion;
 
     private final ContextFactory factory;
@@ -2771,6 +2805,7 @@ public class Context
     private Object propertyListeners;
     private Map<Object,Object> threadLocalMap;
     private ClassLoader applicationClassLoader;
+    private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
 
     /**
      * This is the list of names of objects forcing the creation of

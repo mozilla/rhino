@@ -17,9 +17,14 @@ import java.io.StringReader;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
+import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.JavaScriptException;
+import org.mozilla.javascript.LambdaFunction;
+import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
@@ -59,6 +64,7 @@ public abstract class ScriptTestsBase {
             cx.setLanguageVersion(jsVersion);
 
             Global global = new Global(cx);
+            loadNatives(cx, global);
 
             Scriptable scope = cx.newObject(global);
             scope.setPrototype(global);
@@ -67,6 +73,9 @@ public abstract class ScriptTestsBase {
             return cx.evaluateReader(scope, script, suiteName, 1, null);
         } catch (JavaScriptException ex) {
             fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
+            return null;
+        } catch (TestFailureException tfe) {
+            fail(tfe.getMessage());
             return null;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -92,5 +101,24 @@ public abstract class ScriptTestsBase {
     @Test
     public void rhinoTestOpt9() {
         assertEquals("success", executeRhinoScript(9));
+    }
+
+    private void loadNatives(Context cx, Scriptable scope) {
+        ScriptableObject.putProperty(scope, "AbortJS", new LambdaFunction(scope, "AbortJS", 1,
+            (Context lcx, Scriptable lscope, Scriptable localThis, Object[] args) -> {
+                assert (args.length > 0);
+                throw new TestFailureException(ScriptRuntime.toString(args[0]));
+            }));
+
+        ScriptableObject
+            .putProperty(scope, "EnqueueMicrotask", new LambdaFunction(scope, "EnqueueMicrotask", 1,
+                (Context lcx, Scriptable lscope, Scriptable localThis, Object[] args) -> {
+                    assert (args.length > 0);
+                    assert (args[0] instanceof Callable);
+                    lcx.enqueueMicrotask(() -> {
+                        ((Callable) args[0]).call(lcx, lscope, localThis, args);
+                    });
+                    return Undefined.instance;
+                }));
     }
 }
