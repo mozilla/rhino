@@ -12,29 +12,22 @@ package org.mozilla.javascript;
  * using a lambda expression.
  */
 public class LambdaFunction
-    extends ScriptableObject
-    implements Callable {
+    extends BaseFunction {
 
   private final Callable target;
   private final String name;
+  private final int length;
 
   /**
    * Create a new function. The new object will have the Function prototype and no parent. The
    * caller is responsible for binding this object to the appropriate scope.
    */
-  public LambdaFunction(String name, int length, Callable target) {
+  public LambdaFunction(Scriptable scope, String name, int length, Callable target) {
     this.target = target;
     this.name = name;
-
-    defineProperty("length", length, DONTENUM | PERMANENT);
-    if (name != null) {
-      defineProperty("name", name, DONTENUM | PERMANENT);
-    }
-  }
-
-  @Override
-  public String getClassName() {
-    return (name == null ? "Function" : name);
+    this.length = length;
+    ScriptRuntime.setFunctionProtoAndParent(this, scope);
+    setupDefaultPrototype();
   }
 
   @Override
@@ -43,7 +36,17 @@ public class LambdaFunction
   }
 
   @Override
-  public String getTypeOf() {
-    return "function";
+  public int getLength() {
+    return length;
+  }
+
+  @Override
+  public int getArity() {
+    return length;
+  }
+
+  @Override
+  public String getFunctionName() {
+    return name;
   }
 }

@@ -1,5 +1,7 @@
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.assertThrows;
+
 import java.io.FileReader;
 import java.io.IOException;
 import org.junit.After;
@@ -8,6 +10,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.LambdaConstructor;
 import org.mozilla.javascript.LambdaFunction;
+import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -33,8 +36,21 @@ public class LambdaFunctionTest {
   }
 
   @Test
+  public void testNativeFunction() {
+    cx.evaluateString(root, "function foo() { return 'Hello'; }\n"
+            + "assertEquals(foo.name, 'foo');\n"
+            + "assertEquals(foo.length, 0);\n"
+            + "assertEquals(typeof foo, 'function');\n"
+            + "assertEquals(foo(), 'Hello');\n"
+            + "assertTrue(foo.toString().length > 0);\n"
+            + "assertTrue(foo.prototype !== undefined);\n"
+            + "assertTrue(foo.prototype.toString !== undefined);",
+        "test", 1, null);
+  }
+
+  @Test
   public void testNoArgLambdaFunction() {
-    LambdaFunction f = new LambdaFunction("foo", 0,
+    LambdaFunction f = new LambdaFunction(root, "foo", 0,
         (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
           return "Hello";
         });
@@ -42,7 +58,9 @@ public class LambdaFunctionTest {
     cx.evaluateString(root, "assertEquals(foo.name, 'foo');\n"
             + "assertEquals(foo.length, 0);\n"
             + "assertEquals(typeof foo, 'function');\n"
-            + "assertEquals(foo(), 'Hello');",
+            + "assertEquals(foo(), 'Hello');\n"
+            + "assertTrue(foo.toString().length > 0);\n"
+            + "assertTrue(foo.prototype.toString !== undefined);",
         "test", 1, null);
   }
 
@@ -63,17 +81,41 @@ public class LambdaFunctionTest {
   }
 
   @Test
+  public void testNativePrototypeFunctions() {
+    cx.evaluateString(root,
+        "function TestClass(v) { this.value = v; }\n"
+            + "TestClass.prototype.appendToValue = function(x) { return this.value + x; }\n"
+            + "let tc = new TestClass('foo');\n"
+            + "assertEquals(tc.value, 'foo');\n"
+            + "assertEquals(tc.appendToValue('bar'), 'foobar');\n"
+            + "tc.value = 'x';\n"
+            + "assertEquals(tc.appendToValue('x'), 'xx');\n"
+            + "assertEquals(TestClass.prototype.appendToValue.length, 1);\n"
+            + "assertEquals(typeof TestClass.prototype.appendToValue, 'function');",
+        "test", 1, null);
+  }
+
+  @Test
   public void testLambdaPrototypeFunctions() {
     TestClass.init(root);
     cx.evaluateString(root, "let tc = new TestClass('foo');\n"
+            + "assertEquals(typeof TestClass.prototype.appendToValue, 'function');\n"
             + "assertEquals(tc.value, 'foo');\n"
             + "assertEquals(tc.appendToValue('bar', 'baz'), 'foobarbaz');\n"
             + "tc.value = 'x';\n"
             + "assertEquals(tc.appendToValue('x'), 'xx');\n"
-            + "assertEquals(TestClass.prototype.appendToValue.name, 'appendToValue');\n"
-            + "assertEquals(TestClass.prototype.appendToValue.length, 1);\n"
-            + "assertEquals(typeof TestClass.prototype.appendToValue, 'function');",
+            + "assertEquals(TestClass.prototype.appendToValue.length, 1);\n",
         "test", 1, null);
+  }
+
+  @Test
+  public void testLambdaPrototypeFunctionNotFound() {
+    TestClass.init(root);
+    assertThrows(RhinoException.class, () -> {
+      cx.evaluateString(root, "let tc = new TestClass('foo');\n"
+              + "tc.notFound();",
+          "test", 1, null);
+    });
   }
 
   @Test
@@ -100,11 +142,11 @@ public class LambdaFunctionTest {
             }
             return tc;
           });
-      constructor.defineConstructorMethod("sayHello", 1,
+      constructor.defineConstructorMethod(scope, "sayHello", 1,
           (Context cx, Scriptable s, Scriptable thisObj, Object[] args) -> {
             return TestClass.sayHello(args);
           });
-      constructor.definePrototypeMethod("appendToValue", 1,
+      constructor.definePrototypeMethod(scope, "appendToValue", 1,
           (Context cx, Scriptable s, Scriptable thisObj, Object[] args) -> {
             TestClass self = (TestClass) thisObj;
             return self.appendToValue(args);

@@ -35,7 +35,7 @@ public class Builtins {
       stdout = sc.getWriter();
     }
 
-    Callable printFunc = new LambdaFunction("print", 1,
+    Callable printFunc = new LambdaFunction(scope, "print", 1,
         (Context lcx, Scriptable lscope, Scriptable lthis, Object[] args) ->
             print(lcx, lscope, stdout, args)
     );
