@@ -273,6 +273,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
         int id = f.methodId();
         switch (id) {
         case Id_constructor:
+            if (thisObj != null && cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                throw ScriptRuntime.typeError1("msg.only.from.new", getClassName());
+            }
             return js_constructor(cx, scope, args);
 
         case Id_toString:
