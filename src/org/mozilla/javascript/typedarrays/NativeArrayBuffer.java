@@ -61,6 +61,11 @@ public class NativeArrayBuffer
             throw ScriptRuntime.rangeError("Negative array length " + len);
         }
 
+        // support rounding
+        if (len <= -1) {
+            throw ScriptRuntime.rangeError("Negative array length " + len);
+        }
+
         int intLen = ScriptRuntime.toInt32(len);
         if (intLen < 0) {
             throw ScriptRuntime.rangeError("Negative array length " + len);
