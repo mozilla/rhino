@@ -345,6 +345,9 @@ public class EmbeddedSlotMap
 
     @Override
     public void optimize() {
+        if (slots == null) {
+            return;
+        }
         while (slots.length < MAX_OPTIMIZE_SIZE && !isPerfect()) {
             ScriptableObject.Slot[] newSlots = new ScriptableObject.Slot[slots.length * 2];
             copyTable(slots, newSlots);

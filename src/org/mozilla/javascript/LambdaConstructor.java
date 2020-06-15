@@ -12,73 +12,62 @@ package org.mozilla.javascript;
  * functions to the prototype that are also implemented as lambdas.
  */
 public class LambdaConstructor
-    extends ScriptableObject
-    implements Function {
+    extends LambdaFunction {
 
-  private final Constructable target;
-  private final String name;
+  private final Constructable targetConstructor;
 
   /**
    * Create a new function. The new object will have the Function prototype and no parent. The
    * caller is responsible for binding this object to the appropriate scope.
    */
   public LambdaConstructor(Scriptable scope, String name, int length, Constructable target) {
-    this.target = target;
-    this.name = name;
-
-    defineProperty("length", length, DONTENUM | PERMANENT);
-    if (name != null) {
-      defineProperty("name", name, DONTENUM | PERMANENT);
-    }
-
-    setPrototype(ScriptableObject.getFunctionPrototype(scope));
-    defineProperty("prototype", getPrototype(), DONTENUM | PERMANENT);
-
-    setParentScope(scope);
-  }
-
-  @Override
-  public String getClassName() {
-    return (name == null ? "Function" : name);
-  }
-
-  @Override
-  public String getTypeOf() {
-    return "function";
-  }
-
-  @Override
-  public boolean hasInstance(Scriptable instance)
-  {
-    return ScriptRuntime.jsDelegatesTo(instance, getPrototype());
+    super(scope, name, length, null);
+    this.targetConstructor = target;
   }
 
   @Override
   public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-    return target.construct(cx, scope, args);
+    return targetConstructor.construct(cx, scope, args);
   }
 
   @Override
   public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-    Scriptable obj = target.construct(cx, scope, args);
-    obj.setPrototype(getPrototype());
+    Scriptable obj = targetConstructor.construct(cx, scope, args);
+    obj.setPrototype(getClassPrototype());
     obj.setParentScope(scope);
     return obj;
   }
 
-  public void definePrototypeMethod(String name, int length, Callable target) {
-    LambdaFunction f = new LambdaFunction(name, length, target);
-    ScriptableObject.putProperty(getPrototype(), name, f);
+  public void definePrototypeMethod(Scriptable scope, String name, int length, Callable target) {
+    LambdaFunction f = new LambdaFunction(scope, name, length, target);
+    ScriptableObject.putProperty(getPrototypeScriptable(), name, f);
   }
 
-  public void defineConstructorMethod(String name, int length, Callable target) {
-    LambdaFunction f = new LambdaFunction(name, length, target);
+  public void defineConstructorMethod(Scriptable scope, String name, int length, Callable target) {
+    LambdaFunction f = new LambdaFunction(scope, name, length, target);
     ScriptableObject.putProperty(this, name, f);
+  }
+
+  public static <T> T convertThisObject(Scriptable thisObj, Class<T> targetClass) {
+    if (!targetClass.isInstance(thisObj)) {
+      throw ScriptRuntime.typeError0("msg.this.not.instance");
+    }
+    return (T)thisObj;
+  }
+
+  private Scriptable getPrototypeScriptable() {
+    Object prop = getPrototypeProperty();
+    if (!(prop instanceof Scriptable)) {
+      throw ScriptRuntime.typeError("Not properly a lambda constructor");
+    }
+    return (Scriptable)prop;
   }
 
   @Override
   public void optimizeStorage() {
-    ((ScriptableObject)getPrototype()).optimizeStorage();
+    if (getPrototype() != null) {
+      ((ScriptableObject) getPrototype()).optimizeStorage();
+    }
     super.optimizeStorage();
   }
 }
