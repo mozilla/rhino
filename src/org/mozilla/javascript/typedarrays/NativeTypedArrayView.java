@@ -151,16 +151,16 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
             }
 
             if ((byteOff < 0) || (byteOff > na.buffer.length)) {
-                throw ScriptRuntime.constructError("RangeError", "offset out of range");
+                throw ScriptRuntime.rangeError("offset out of range");
             }
             if ((byteLen < 0) || ((byteOff + byteLen) > na.buffer.length)) {
-                throw ScriptRuntime.constructError("RangeError", "length out of range");
+                throw ScriptRuntime.rangeError("length out of range");
             }
             if ((byteOff % getBytesPerElement()) != 0) {
-                throw ScriptRuntime.constructError("RangeError", "offset must be a multiple of the byte size");
+                throw ScriptRuntime.rangeError("offset must be a multiple of the byte size");
             }
             if ((byteLen % getBytesPerElement()) != 0) {
-                throw ScriptRuntime.constructError("RangeError", "offset and buffer must be a multiple of the byte size");
+                throw ScriptRuntime.rangeError("offset and buffer must be a multiple of the byte size");
             }
 
             return construct(na, byteOff, byteLen / getBytesPerElement());
@@ -206,11 +206,11 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     private void setRange(NativeTypedArrayView<T> v, int off)
     {
         if (off >= length) {
-            throw ScriptRuntime.constructError("RangeError", "offset out of range");
+            throw ScriptRuntime.rangeError("offset out of range");
         }
 
         if (v.length > (length - off)) {
-            throw ScriptRuntime.constructError("RangeError", "source array too long");
+            throw ScriptRuntime.rangeError("source array too long");
         }
 
         if (v.arrayBuffer == arrayBuffer) {
@@ -232,10 +232,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     private void setRange(NativeArray a, int off)
     {
         if (off > length) {
-            throw ScriptRuntime.constructError("RangeError", "offset out of range");
+            throw ScriptRuntime.rangeError("offset out of range");
         }
         if ((off + a.size()) > length) {
-            throw ScriptRuntime.constructError("RangeError", "offset + length out of range");
+            throw ScriptRuntime.rangeError("offset + length out of range");
         }
 
         int pos = off;

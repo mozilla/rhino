@@ -55,15 +55,15 @@ public class NativeArrayBuffer
     public NativeArrayBuffer(double len)
     {
         if (len >= Integer.MAX_VALUE) {
-            throw ScriptRuntime.constructError("RangeError", "length parameter (" + len + ") is too large ");
+            throw ScriptRuntime.rangeError("length parameter (" + len + ") is too large ");
         }
         if (len == Double.NEGATIVE_INFINITY) {
-            throw ScriptRuntime.constructError("RangeError", "Negative array length " + len);
+            throw ScriptRuntime.rangeError("Negative array length " + len);
         }
 
         int intLen = ScriptRuntime.toInt32(len);
         if (intLen < 0) {
-            throw ScriptRuntime.constructError("RangeError", "Negative array length " + len);
+            throw ScriptRuntime.rangeError("Negative array length " + len);
         }
         if (intLen == 0) {
             buffer = EMPTY_BUF;

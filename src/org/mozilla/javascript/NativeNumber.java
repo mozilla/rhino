@@ -260,7 +260,7 @@ final class NativeNumber extends IdScriptableObject
             if (p < precisionMin || p > MAX_PRECISION) {
                 String msg = ScriptRuntime.getMessage1(
                     "msg.bad.precision", ScriptRuntime.toString(args[0]));
-                throw ScriptRuntime.constructError("RangeError", msg);
+                throw ScriptRuntime.rangeError(msg);
             }
             precision = ScriptRuntime.toInt32(p);
         }
