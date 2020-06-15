@@ -105,7 +105,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     private NativeArrayBuffer makeArrayBuffer(Context cx, Scriptable scope, int length)
     {
         return (NativeArrayBuffer)cx.newObject(scope, NativeArrayBuffer.CLASS_NAME,
-                                               new Object[] { length });
+                                               new Object[] { (double)length * getBytesPerElement() });
     }
 
     private NativeTypedArrayView<T> js_constructor(Context cx, Scriptable scope, Object[] args)
@@ -122,14 +122,14 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
         if ((arg0 instanceof Number) || (arg0 instanceof String)) {
             // Create a zeroed-out array of a certain length
             int length = ScriptRuntime.toInt32(arg0);
-            NativeArrayBuffer buffer = makeArrayBuffer(cx, scope, length * getBytesPerElement());
+            NativeArrayBuffer buffer = makeArrayBuffer(cx, scope, length);
             return construct(buffer, 0, length);
         }
 
         if (arg0 instanceof NativeTypedArrayView) {
             // Copy elements from the old array and convert them into our own
             NativeTypedArrayView<T> src = (NativeTypedArrayView<T>)arg0;
-            NativeArrayBuffer na = makeArrayBuffer(cx, scope, src.length * getBytesPerElement());
+            NativeArrayBuffer na = makeArrayBuffer(cx, scope, src.length);
             NativeTypedArrayView<T> v = construct(na, 0, src.length);
 
             for (int i = 0; i < src.length; i++) {
@@ -170,7 +170,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
             // Copy elements of the array and convert them to the correct type
             NativeArray array = (NativeArray) arg0;
 
-            NativeArrayBuffer na = makeArrayBuffer(cx, scope, array.size() * getBytesPerElement());
+            NativeArrayBuffer na = makeArrayBuffer(cx, scope, array.size());
             NativeTypedArrayView<T> v = construct(na, 0, array.size());
             for (int i = 0; i < array.size(); i++) {
                 // we have to call this here to get the raw value;
@@ -193,7 +193,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
             // Copy elements of the array and convert them to the correct type
             Object[] arrayElements = ScriptRuntime.getArrayElements((Scriptable)arg0);
 
-            NativeArrayBuffer na = makeArrayBuffer(cx, scope, arrayElements.length * getBytesPerElement());
+            NativeArrayBuffer na = makeArrayBuffer(cx, scope, arrayElements.length);
             NativeTypedArrayView<T> v = construct(na, 0, arrayElements.length);
             for (int i = 0; i < arrayElements.length; i++) {
                 v.js_set(i, arrayElements[i]);

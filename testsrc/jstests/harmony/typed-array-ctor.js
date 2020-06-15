@@ -10,6 +10,14 @@ load("testsrc/assert.js");
   var init = new Int8Array(2);
   assertEquals("0,0", init.toString());
 
+  var msg = null;
+  try { new Int8Array(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -2.0", msg);
+
+  msg = null;
+  try { new Int8Array(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -2.68435457E8", msg);
+
   var one = new Int8Array([7]);
   assertEquals("7", one.toString());
 
@@ -46,6 +54,14 @@ load("testsrc/assert.js");
 
   init = new Uint8Array(2);
   assertEquals("0,0", init.toString());
+
+  msg = null;
+  try { new Uint8Array(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -2.0", msg);
+
+  msg = null;
+  try { new Uint8Array(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -2.68435457E8", msg);
 
   one = new Uint8Array([7]);
   assertEquals("7", one.toString());
@@ -85,6 +101,14 @@ load("testsrc/assert.js");
   init = new Int16Array(2);
   assertEquals("0,0", init.toString());
 
+  msg = null;
+  try { new Int16Array(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -4.0", msg);
+
+  msg = null;
+  try { new Int16Array(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -5.36870914E8", msg);
+
   one = new Int16Array([7]);
   assertEquals("7", one.toString());
 
@@ -122,6 +146,14 @@ load("testsrc/assert.js");
 
   init = new Uint16Array(2);
   assertEquals("0,0", init.toString());
+
+  msg = null;
+  try { new Uint16Array(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -4.0", msg);
+
+  msg = null;
+  try { new Uint16Array(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -5.36870914E8", msg);
 
   one = new Uint16Array([7]);
   assertEquals("7", one.toString());
@@ -161,6 +193,14 @@ load("testsrc/assert.js");
   init = new Int32Array(2);
   assertEquals("0,0", init.toString());
 
+  msg = null;
+  try { new Int32Array(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -8.0", msg);
+
+  msg = null;
+  try { new Int32Array(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -1.073741828E9", msg);
+
   one = new Int32Array([7]);
   assertEquals("7", one.toString());
 
@@ -198,6 +238,14 @@ load("testsrc/assert.js");
 
   init = new Uint32Array(2);
   assertEquals("0,0", init.toString());
+
+  msg = null;
+  try { new Uint32Array(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -8.0", msg);
+
+  msg = null;
+  try { new Uint32Array(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -1.073741828E9", msg);
 
   one = new Uint32Array([7]);
   assertEquals("7", one.toString());
@@ -237,6 +285,14 @@ load("testsrc/assert.js");
   init = new Uint8ClampedArray(2);
   assertEquals("0,0", init.toString());
 
+  msg = null;
+  try { new Uint8ClampedArray(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -2.0", msg);
+
+  msg = null;
+  try { new Uint8ClampedArray(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -2.68435457E8", msg);
+
   one = new Uint8ClampedArray([7]);
   assertEquals("7", one.toString());
 
@@ -275,6 +331,14 @@ load("testsrc/assert.js");
   init = new Float32Array(2);
   assertEquals("0,0", init.toString());
 
+  msg = null;
+  try { new Float32Array(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -8.0", msg);
+
+  msg = null;
+  try { new Float32Array(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -1.073741828E9", msg);
+
   one = new Float32Array([7]);
   assertEquals("7", one.toString());
 
@@ -312,6 +376,14 @@ load("testsrc/assert.js");
 
   init = new Float64Array(2);
   assertEquals("0,0", init.toString());
+
+  msg = null;
+  try { new Float64Array(-2); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -16.0", msg);
+
+  msg = null;
+  try { new Float64Array(-268435457); } catch (e) { msg = e.toString();}
+  assertEquals("RangeError: Negative array length -2.147483656E9", msg);
 
   one = new Float64Array([7]);
   assertEquals("7", one.toString());
