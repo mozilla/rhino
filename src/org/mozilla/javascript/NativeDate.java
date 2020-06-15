@@ -369,7 +369,7 @@ final class NativeDate extends IdScriptableObject
                 return js_toISOString(t);
             }
             String msg = ScriptRuntime.getMessage0("msg.invalid.date");
-            throw ScriptRuntime.constructError("RangeError", msg);
+            throw ScriptRuntime.rangeError(msg);
 
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
