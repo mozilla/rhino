@@ -30,9 +30,24 @@ public class LambdaFunction
     setupDefaultPrototype();
   }
 
+  /**
+   * Create a new built-in function, with no name, and no default prototype.
+   */
+  public LambdaFunction(Scriptable scope, int length, Callable target) {
+    this.target = target;
+    this.length = length;
+    this.name = "";
+    ScriptRuntime.setFunctionProtoAndParent(this, scope);
+  }
+
   @Override
   public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
     return target.call(cx, scope, thisObj, args);
+  }
+
+  @Override
+  public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    throw ScriptRuntime.typeError1("msg.no.new", getFunctionName());
   }
 
   @Override
