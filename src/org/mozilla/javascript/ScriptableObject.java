@@ -1687,6 +1687,20 @@ public abstract class ScriptableObject implements Scriptable,
         so.defineProperty(propertyName, value, attributes);
     }
 
+    public static void defineProperty(Scriptable destination,
+        Symbol propertyKey, Object value,
+        int attributes)
+    {
+        if (destination instanceof ScriptableObject) {
+            ScriptableObject so = (ScriptableObject)destination;
+            so.defineProperty(propertyKey, value, attributes);
+        } else if (destination instanceof SymbolScriptable) {
+            ((SymbolScriptable) destination).put(propertyKey, destination, value);
+        } else {
+            throw ScriptRuntime.typeError0("msg.bad.prop");
+        }
+    }
+
     /**
      * Utility method to add properties to arbitrary Scriptable object.
      * If destination is instance of ScriptableObject, calls

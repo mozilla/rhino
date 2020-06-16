@@ -1045,7 +1045,7 @@ public class ScriptRuntime {
 
     public static Scriptable toObject(Scriptable scope, Object val)
     {
-        if (val instanceof Scriptable) {
+        if ((val instanceof Scriptable) && !Undefined.isUndefined(val)) {
             return (Scriptable)val;
         }
         return toObject(Context.getContext(), scope, val);
@@ -1060,9 +1060,12 @@ public class ScriptRuntime {
     @Deprecated
     public static Scriptable toObjectOrNull(Context cx, Object obj)
     {
+        if (Undefined.isUndefined(obj)) {
+            return null;
+        }
         if (obj instanceof Scriptable) {
             return (Scriptable)obj;
-        } else if (obj != null && obj != Undefined.instance) {
+        } else if (obj != null) {
             return toObject(cx, getTopCallScope(cx), obj);
         }
         return null;
@@ -1074,9 +1077,12 @@ public class ScriptRuntime {
     public static Scriptable toObjectOrNull(Context cx, Object obj,
                                             Scriptable scope)
     {
+        if (Undefined.isUndefined(obj)) {
+            return null;
+        }
         if (obj instanceof Scriptable) {
             return (Scriptable)obj;
-        } else if (obj != null && obj != Undefined.instance) {
+        } else if (obj != null) {
             return toObject(cx, scope, obj);
         }
         return null;
@@ -1089,7 +1095,7 @@ public class ScriptRuntime {
     public static Scriptable toObject(Scriptable scope, Object val,
                                       Class<?> staticClass)
     {
-        if (val instanceof Scriptable) {
+        if ((val instanceof Scriptable) && !Undefined.isUndefined(val)) {
             return (Scriptable)val;
         }
         return toObject(Context.getContext(), scope, val);
@@ -2916,7 +2922,7 @@ public class ScriptRuntime {
             return "object".equals(type) || "function".equals(type);
         }
         if (value instanceof Scriptable) {
-            return (!(value instanceof Callable));
+            return (!(value instanceof Callable) && !(value instanceof Symbol));
         }
         return false;
     }

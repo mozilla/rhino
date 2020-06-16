@@ -70,8 +70,15 @@ public class IteratorLikeIterable
         private Object nextVal;
         private boolean isDone;
 
+        /**
+         * To support using this in a standard situation, this calls the appropriate
+         * "next" function to manipulate this.
+         */
         @Override
         public boolean hasNext() {
+            if (isDone) {
+                return false;
+            }
             Object val = next.call(cx, scope, iterator, ScriptRuntime.emptyArgs);
             // This will throw if "val" is not an object. 
             // "getObjectPropNoWarn" won't, so do this as follows.
@@ -95,6 +102,20 @@ public class IteratorLikeIterable
                 throw new NoSuchElementException();
             }
             return nextVal;
+        }
+
+        /**
+         * Find out if "hasNext" returned done without invoking the function again.
+         */
+        public boolean isDone() {
+            return isDone;
+        }
+
+        /**
+         * Sometimes we need to manually set "done" for exception handling.
+         */
+        public void setDone(boolean done) {
+            this.isDone = done;
         }
     }
 }

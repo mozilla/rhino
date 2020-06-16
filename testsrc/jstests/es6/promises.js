@@ -103,7 +103,7 @@ function assertAsyncRan() { ++asyncAssertsExpected }
 
 function assertAsync(b, s) {
   if (b) {
-    print(s, "succeeded")
+    //print(s, "succeeded")
   } else {
     AbortJS(s + " FAILED!")  // Simply throwing here will have no effect.
   }
@@ -116,7 +116,7 @@ function assertLater(f, name) {
   var iterations = 0;
   function runAssertion() {
     if (f()) {
-      print(name, "succeeded");
+      //print(name, "succeeded");
       --asyncAssertsExpected;
     } else if (iterations++ < 10) {
       EnqueueMicrotask(runAssertion);
@@ -139,11 +139,9 @@ function assertAsyncDone(iteration) {
   });
 }
 
-/* TODO Rhino requires new
 (function() {
   assertThrows(function() { Promise(function() {}) }, TypeError)
 })();
-*/
 
 (function() {
   assertTrue(new Promise(function() {}) instanceof Promise)
@@ -551,7 +549,8 @@ function assertAsyncDone(iteration) {
   deferred.resolve(p)
   p.then(
     assertUnreachable,
-    function(r) { assertAsync(r instanceof TypeError, "cyclic/deferred/then") }
+    function(r) {
+    assertAsync(r instanceof TypeError, "cyclic/deferred/then") }
   )
   assertAsyncRan()
 })();
@@ -562,7 +561,7 @@ function assertAsyncDone(iteration) {
   deferred.resolve(p)
   p.then(
     assertUnreachable,
-    function(r) { assertAsync(r instanceof TypeError, "cyclic/deferred/then") }
+    function(r) { assertAsync(r instanceof TypeError, "cyclic/deferred/then 2") }
   )
   assertAsyncRan()
 })();
@@ -589,18 +588,19 @@ function assertAsyncDone(iteration) {
   testPromiseAllNonIterable({});
   testPromiseAllNonIterable(42);
 })();
-/**/
-/* TODO Rhino syntax
+
 (function() {
-  Promise.all({[symbolIterator](){ return null; }}).then(
+  // Rhino slightly different syntax works
+  let o = {};
+  o[Symbol.iterator] = function() { return null; };
+  Promise.all(o).then(
     assertUnreachable,
     function(r) {
       assertAsync(r instanceof TypeError, 'all/non iterable');
     });
   assertAsyncRan();
 })();
-*/
-/*
+
 (function() {
   var deferred = defer(Promise);
   var p = deferred.promise;
@@ -678,7 +678,7 @@ function assertAsyncDone(iteration) {
   deferred2.reject(2)
   assertAsyncRan()
 })();
-
+/* TODO Rhino need to keep working on strict mode
 (function() {
   'use strict';
   var getCalls = 0;
@@ -722,7 +722,7 @@ function assertAsyncDone(iteration) {
   assertAsyncRan();
   assertAsyncRan();
 })();
-
+*/
 
 (function() {
   Promise.race([]).then(
@@ -873,6 +873,7 @@ function assertAsyncDone(iteration) {
   assertAsyncRan()
 })();
 
+/* TODO Rhino need to keep working on strict mode
 (function() {
   'use strict';
   var getCalls = 0;
@@ -910,7 +911,9 @@ function assertAsyncDone(iteration) {
   assertEquals(nextCalls, 3 + 1);  // + 1 for {done: true}
   assertAsyncRan();
 })();
+*/
 
+/* TODO Rhino need to keep working on subclassing.
 (function() {
   var log
   function MyPromise(resolver) {
@@ -974,6 +977,7 @@ function assertAsyncDone(iteration) {
              "subclass/all/self")
 })();
 */
+
 /* TODO Rhino no classes yet
 (function() {
   'use strict';
@@ -998,7 +1002,7 @@ function assertAsyncDone(iteration) {
              "subclass/resolve/descendant with transplanted own constructor");
 }());
 */
-/*
+
 (function() {
   var thenCalled = false;
 
@@ -1033,7 +1037,7 @@ function assertAsyncDone(iteration) {
   p.then();
   assertEquals(1, callCount);
 })();
-*/
+
 assertAsyncDone()
 
 'success';

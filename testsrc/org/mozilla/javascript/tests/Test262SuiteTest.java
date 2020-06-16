@@ -186,7 +186,7 @@ public class Test262SuiteTest {
 
             boolean failedEarly = true;
             try {
-                Script caseScript = cx.compileString(str, testFilePath, 0, null);
+                Script caseScript = cx.compileString(str, testFilePath, 1, null);
 
                 failedEarly = false; // not after this line
                 caseScript.exec(cx, scope);
