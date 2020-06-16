@@ -711,7 +711,6 @@ public class Main
     }
 
     static class ScriptCache extends LinkedHashMap<String, ScriptReference> {
-        private static final long serialVersionUID = -6866856136258508615L;
         ReferenceQueue<Script> queue;
         int capacity;
 

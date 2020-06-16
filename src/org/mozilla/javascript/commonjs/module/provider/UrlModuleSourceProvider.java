@@ -32,7 +32,6 @@ import java.util.List;
  * @version $Id: UrlModuleSourceProvider.java,v 1.4 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
 public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
-    private static final long serialVersionUID = 1L;
     private final Iterable<URI> privilegedUris;
     private final Iterable<URI> fallbackUris;
     private final UrlConnectionSecurityDomainProvider urlConnectionSecurityDomainProvider;

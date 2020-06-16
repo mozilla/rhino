@@ -8,10 +8,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
@@ -49,13 +45,9 @@ import org.mozilla.javascript.debug.DebuggableObject;
 
 public abstract class ScriptableObject implements Scriptable,
                                                   SymbolScriptable,
-                                                  Serializable,
                                                   DebuggableObject,
                                                   ConstProperties
 {
-
-    private static final long serialVersionUID = 2829861078851942586L;
-
     /**
      * The empty property attribute.
      *
@@ -146,9 +138,8 @@ public abstract class ScriptableObject implements Scriptable,
      * This is the object that is stored in the SlotMap. For historical reasons it remains
      * inside this class. SlotMap references a number of members of this class directly.
      */
-    static class Slot implements Serializable
+    static class Slot
     {
-        private static final long serialVersionUID = -6090581677123995491L;
         Object name; // This can change due to caching
         int indexOrHash;
         private short attributes;
@@ -161,15 +152,6 @@ public abstract class ScriptableObject implements Scriptable,
             this.name = name;
             this.indexOrHash = indexOrHash;
             this.attributes = (short)attributes;
-        }
-
-        private void readObject(ObjectInputStream in)
-            throws IOException, ClassNotFoundException
-        {
-            in.defaultReadObject();
-            if (name != null) {
-                indexOrHash = name.hashCode();
-            }
         }
 
         boolean setValue(Object value, Scriptable owner, Scriptable start) {
@@ -225,8 +207,6 @@ public abstract class ScriptableObject implements Scriptable,
      */
     static final class GetterSlot extends Slot
     {
-        private static final long serialVersionUID = -4900574849788797588L;
-
         Object getter;
         Object setter;
 
@@ -2971,39 +2951,6 @@ public abstract class ScriptableObject implements Scriptable,
         return result;
     }
 
-    private void writeObject(ObjectOutputStream out)
-        throws IOException
-    {
-        out.defaultWriteObject();
-        final long stamp = slotMap.readLock();
-        try {
-            int objectsCount = slotMap.dirtySize();
-            if (objectsCount == 0) {
-                out.writeInt(0);
-            } else {
-                out.writeInt(objectsCount);
-                for (Slot slot : slotMap) {
-                    out.writeObject(slot);
-                }
-            }
-        } finally {
-            slotMap.unlockRead(stamp);
-        }
-    }
-
-    private void readObject(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
-        in.defaultReadObject();
-
-        int tableSize = in.readInt();
-        slotMap = createSlotMap(tableSize);
-        for (int i = 0; i < tableSize; i++) {
-            Slot slot = (Slot)in.readObject();
-            slotMap.addSlot(slot);
-        }
-    }
-
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
         Slot slot = getSlot(cx, id, SlotAccess.QUERY);
         if (slot == null) return null;
@@ -3062,10 +3009,8 @@ public abstract class ScriptableObject implements Scriptable,
      * method is defined to be stable.
      */
     public static final class KeyComparator
-        implements Comparator<Object>, Serializable
+        implements Comparator<Object>
     {
-        private static final long serialVersionUID = 6411335891523988149L;
-
         @Override
         public int compare(Object o1, Object o2)
         {

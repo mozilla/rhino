@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -16,8 +15,7 @@ import java.security.PrivilegedAction;
  *
  * <p> This improves startup time and average memory usage.
  */
-public final class LazilyLoadedCtor implements Serializable {
-    private static final long serialVersionUID = 1L;
+public final class LazilyLoadedCtor {
     private static final int STATE_BEFORE_INIT = 0;
     private static final int STATE_INITIALIZING = 1;
     private static final int STATE_WITH_VALUE = 2;

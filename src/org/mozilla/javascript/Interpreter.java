@@ -9,7 +9,6 @@ package org.mozilla.javascript;
 import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 
 import java.io.PrintStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,10 +37,8 @@ public final class Interpreter extends Icode implements Evaluator
     /**
      * Class to hold data corresponding to one interpreted call stack frame.
      */
-    private static class CallFrame implements Cloneable, Serializable
+    private static class CallFrame implements Cloneable
     {
-        private static final long serialVersionUID = -2843792508994958978L;
-
         // fields marked "final" in a comment are effectively final except when they're modified immediately after cloning.
 
         /*final*/ CallFrame parentFrame;
@@ -293,10 +290,8 @@ public final class Interpreter extends Icode implements Evaluator
         return i1 == i2 || Objects.equals(getEncodedSource(i1), getEncodedSource(i2));
     }
 
-    private static final class ContinuationJump implements Serializable
+    private static final class ContinuationJump
     {
-        private static final long serialVersionUID = 7687739156004308247L;
-
         CallFrame capturedFrame;
         CallFrame branchFrame;
         Object result;

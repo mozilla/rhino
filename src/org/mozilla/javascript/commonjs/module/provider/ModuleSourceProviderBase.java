@@ -6,7 +6,6 @@ package org.mozilla.javascript.commonjs.module.provider;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -26,9 +25,7 @@ import org.mozilla.javascript.ScriptableObject;
  * @author Attila Szegedi
  * @version $Id: ModuleSourceProviderBase.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
-public abstract class ModuleSourceProviderBase implements ModuleSourceProvider, Serializable {
-    private static final long serialVersionUID = 1L;
-
+public abstract class ModuleSourceProviderBase implements ModuleSourceProvider {
     @Override
     public ModuleSource loadSource(String moduleId, Scriptable paths,
             Object validator) throws IOException, URISyntaxException

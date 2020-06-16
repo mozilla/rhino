@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript.xmlimpl;
 
-import java.io.Serializable;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Node;
@@ -20,13 +18,11 @@ import org.mozilla.javascript.xml.XMLLib;
 import org.mozilla.javascript.xml.XMLObject;
 import org.xml.sax.SAXException;
 
-public final class XMLLibImpl extends XMLLib implements Serializable {
+public final class XMLLibImpl extends XMLLib {
 
     //
     //    EXPERIMENTAL Java interface
     //
-   
-    private static final long serialVersionUID = 1L;
 
     /**
       This experimental interface is undocumented.

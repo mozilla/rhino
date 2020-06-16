@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript.regexp;
 
-import java.io.Serializable;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
@@ -37,8 +35,6 @@ import org.mozilla.javascript.Undefined;
 
 public class NativeRegExp extends IdScriptableObject implements Function
 {
-    private static final long serialVersionUID = 4965263491464903264L;
-
     private static final Object REGEXP_TAG = new Object();
 
     public static final int JSREG_GLOB = 0x1;       // 'g' flag: global
@@ -340,7 +336,6 @@ public class NativeRegExp extends IdScriptableObject implements Function
         regexp.program = new byte[state.progLength + 1];
         if (state.classCount != 0) {
             regexp.classList = new RECharSet[state.classCount];
-            regexp.classCount = state.classCount;
         }
         int endPC = emitREBytecode(state, regexp, 0, state.result);
         regexp.program[endPC++] = REOP_END;
@@ -2783,15 +2778,12 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
 }       // class NativeRegExp
 
-class RECompiled implements Serializable
+class RECompiled
 {
-    private static final long serialVersionUID = -6144956577595844213L;
-
     final char[] source;    /* locked source string, sans // */
     int parenCount;         /* number of parenthesized submatches */
     int flags;              /* flags  */
     byte[] program;         /* regular expression bytecode */
-    int classCount;         /* count [...] bitmaps */
     RECharSet[] classList;  /* list of [...] bitmaps */
     int anchorCh = -1;      /* if >= 0, then re starts with this literal char */
 
@@ -2963,10 +2955,8 @@ class REGlobalData {
  * use of the class converts the source representation into a bitmap.
  *
  */
-final class RECharSet implements Serializable
+final class RECharSet
 {
-    private static final long serialVersionUID = 7931787979395898394L;
-
     RECharSet(int length, int startIndex, int strlength, boolean sense)
     {
         this.length = length;

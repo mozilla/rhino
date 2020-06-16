@@ -6,10 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -28,10 +24,8 @@ import java.util.Map;
  */
 
 public class NativeJavaObject
-    implements Scriptable, SymbolScriptable, Wrapper, Serializable
+    implements Scriptable, SymbolScriptable, Wrapper
 {
-    private static final long serialVersionUID = -6948590651130498591L;
-
     public NativeJavaObject() { }
 
     public NativeJavaObject(Scriptable scope, Object javaObject,
@@ -904,62 +898,6 @@ public class NativeJavaObject
             "msg.conversion.not.allowed",
             String.valueOf(value),
             JavaMembers.javaSignature(type));
-    }
-
-    private void writeObject(ObjectOutputStream out)
-        throws IOException
-    {
-        out.defaultWriteObject();
-
-        out.writeBoolean(isAdapter);
-        if (isAdapter) {
-            if (adapter_writeAdapterObject == null) {
-                throw new IOException();
-            }
-            Object[] args = { javaObject, out };
-            try {
-                adapter_writeAdapterObject.invoke(null, args);
-            } catch (Exception ex) {
-                throw new IOException();
-            }
-        } else {
-            out.writeObject(javaObject);
-        }
-
-        if (staticType != null) {
-            out.writeObject(staticType.getName());
-        } else {
-            out.writeObject(null);
-        }
-    }
-
-    private void readObject(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
-        in.defaultReadObject();
-
-        isAdapter = in.readBoolean();
-        if (isAdapter) {
-            if (adapter_readAdapterObject == null)
-                throw new ClassNotFoundException();
-            Object[] args = { this, in };
-            try {
-                javaObject = adapter_readAdapterObject.invoke(null, args);
-            } catch (Exception ex) {
-                throw new IOException();
-            }
-        } else {
-            javaObject = in.readObject();
-        }
-
-        String className = (String)in.readObject();
-        if (className != null) {
-            staticType = Class.forName(className);
-        } else {
-            staticType = null;
-        }
-
-        initMembers();
     }
 
     /**

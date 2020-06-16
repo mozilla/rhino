@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript.ast;
 
-import java.io.Serializable;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -131,8 +130,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.VOID, "void");
     }
 
-    public static class PositionComparator implements Comparator<AstNode>, Serializable {
-        private static final long serialVersionUID = 1L;
+    public static class PositionComparator implements Comparator<AstNode> {
        /**
          * Sorts nodes by (relative) start position.  The start positions are
          * relative to their parent, so this comparator is only meaningful for

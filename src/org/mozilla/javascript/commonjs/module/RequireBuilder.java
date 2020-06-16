@@ -4,8 +4,6 @@
 
 package org.mozilla.javascript.commonjs.module;
 
-import java.io.Serializable;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
@@ -20,8 +18,7 @@ import org.mozilla.javascript.Scriptable;
  * @author Attila Szegedi
  * @version $Id: RequireBuilder.java,v 1.4 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
-public class RequireBuilder implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class RequireBuilder {
     private boolean sandboxed = true;
     private ModuleScriptProvider moduleScriptProvider;
     private Script preExec;
