@@ -14,7 +14,15 @@ package org.mozilla.javascript;
 public class LambdaConstructor
     extends LambdaFunction {
 
+  /** If this flag is set, the constructor may be invoked as an ordinary function */
+  public static final int CONSTRUCTOR_FUNCTION = 1 << 0;
+  /** If this flag is set, the constructor may be invoked using "new" */
+  public static final int CONSTRUCTOR_NEW = 1 << 1;
+  /** By default, the constructor may be invoked either way */
+  public static final int CONSTRUCTOR_DEFAULT = CONSTRUCTOR_FUNCTION | CONSTRUCTOR_NEW;
+
   private final Constructable targetConstructor;
+  private final int flags;
 
   /**
    * Create a new function. The new object will have the Function prototype and no parent. The
@@ -23,15 +31,33 @@ public class LambdaConstructor
   public LambdaConstructor(Scriptable scope, String name, int length, Constructable target) {
     super(scope, name, length, null);
     this.targetConstructor = target;
+    this.flags = CONSTRUCTOR_DEFAULT;
+  }
+
+  /**
+   * Create a new function and control whether it may be invoked using new, as a function,
+   * or both.
+   */
+  public LambdaConstructor(Scriptable scope, String name, int length, int flags,
+      Constructable target) {
+    super(scope, name, length, null);
+    this.targetConstructor = target;
+    this.flags = flags;
   }
 
   @Override
   public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
+      throw ScriptRuntime.typeError1("msg.constructor.no.function", getFunctionName());
+    }
     return targetConstructor.construct(cx, scope, args);
   }
 
   @Override
   public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+    if ((flags & CONSTRUCTOR_NEW) == 0) {
+      throw ScriptRuntime.typeError1("msg.no.new", getFunctionName());
+    }
     Scriptable obj = targetConstructor.construct(cx, scope, args);
     obj.setPrototype(getClassPrototype());
     obj.setParentScope(scope);
@@ -43,9 +69,17 @@ public class LambdaConstructor
     ScriptableObject.putProperty(getPrototypeScriptable(), name, f);
   }
 
+  public void definePrototypeProperty(String name, Object value, int attributes) {
+    ScriptableObject.defineProperty(getPrototypeScriptable(), name, value, attributes);
+  }
+
+  public void definePrototypeProperty(Symbol key, Object value, int attributes) {
+    ScriptableObject.defineProperty(getPrototypeScriptable(), key, value, attributes);
+  }
+
   public void defineConstructorMethod(Scriptable scope, String name, int length, Callable target) {
     LambdaFunction f = new LambdaFunction(scope, name, length, target);
-    ScriptableObject.putProperty(this, name, f);
+    ScriptableObject.defineProperty(this, name, f, DONTENUM);
   }
 
   public static <T> T convertThisObject(Scriptable thisObj, Class<T> targetClass) {
