@@ -3133,9 +3133,9 @@ switch (op) {
     private static boolean stack_boolean(CallFrame frame, int i)
     {
         Object x = frame.stack[i];
-        if (x == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(x)) {
             return true;
-        } else if (x == Boolean.FALSE) {
+        } else if (Boolean.FALSE.equals(x)) {
             return false;
         } else if (x == UniqueTag.DOUBLE_MARK) {
             double d = frame.sDbl[i];
@@ -3145,8 +3145,6 @@ switch (op) {
         } else if (x instanceof Number) {
             double d = ((Number)x).doubleValue();
             return (!Double.isNaN(d) && d != 0.0);
-        } else if (x instanceof Boolean) {
-            return ((Boolean)x).booleanValue();
         } else {
             return ScriptRuntime.toBoolean(x);
         }

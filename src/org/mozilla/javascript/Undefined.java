@@ -45,7 +45,7 @@ public class Undefined implements Serializable
     static {
         SCRIPTABLE_UNDEFINED = (Scriptable) Proxy.newProxyInstance(Undefined.class.getClassLoader(), new Class[]{Scriptable.class}, new InvocationHandler() {
             @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            public Object invoke(Object proxy, Method method, Object[] args) {
                 if (method.getName().equals("toString")) return "undefined";
                 if (method.getName().equals("equals")) {
                     return args.length > 0 && isUndefined(args[0]);

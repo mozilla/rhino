@@ -414,11 +414,9 @@ public class Parser
                 if (compilerEnv.isRecordingComments()) {
                     String comment = ts.getAndResetCurrentComment();
                     recordComment(lineno, comment);
-                    // Comments may contain multiple lines, get the number
-                    // of EoLs and increase the lineno
-                    lineno += getNumberOfEols(comment);
                     break;
-                }tt = ts.getToken();
+                }
+                tt = ts.getToken();
             }
         }
 

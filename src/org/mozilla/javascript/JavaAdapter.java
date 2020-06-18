@@ -918,8 +918,7 @@ public final class JavaAdapter implements IdFunctionCall
                 cfw.add(ByteCode.DRETURN);
                 break;
             default:
-                throw new RuntimeException("Unexpected return type " +
-                                           retType.toString());
+                throw new RuntimeException("Unexpected return type " + retType);
             }
 
         } else {

@@ -47,9 +47,7 @@ public abstract class RhinoException extends RuntimeException
         }
         StringBuilder buf = new StringBuilder(details);
         buf.append(" (");
-        if (sourceName != null) {
-            buf.append(sourceName);
-        }
+        buf.append(sourceName);
         if (lineNumber > 0) {
             buf.append('#');
             buf.append(lineNumber);

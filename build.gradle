@@ -13,6 +13,11 @@ tasks.withType(JavaCompile) {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
     options.encoding = "UTF-8"
+    options.compilerArgs = [ "-Xlint:deprecation,unchecked" ]
+}
+
+compileTestJava {
+    options.compilerArgs = [ ]
 }
 
 repositories {
@@ -53,7 +58,6 @@ sourceSets {
 dependencies {
     testImplementation "junit:junit:4.13"
     testImplementation "org.yaml:snakeyaml:1.26"
-    testImplementation "net.trajano.caliper:caliper:1.2.1"
     jmhImplementation project
     jmhImplementation 'org.openjdk.jmh:jmh-core:1.23'
     jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.23'
@@ -358,8 +362,8 @@ publishing {
 }
 
 spotbugs {
-    effort = "min"
-    reportLevel = "high"
+    effort = "less"
+    reportLevel = "medium"
     excludeFilter = file("./spotbugs-exclude.xml")
 }
 

@@ -744,13 +744,7 @@ class XmlNode implements Serializable {
                 if (node != null) {
                     lookupPrefix(node);
                 } else {
-                    if (namespace.getUri().equals("")) {
-                        namespace.setPrefix("");
-                    } else {
-                        //    TODO    I am not sure this is right, but if we are creating a standalone node, I think we can set the
-                        //            default namespace on the node itself and not worry about setting a prefix for that namespace.
-                        namespace.setPrefix("");
-                    }
+                    namespace.setPrefix("");
                 }
             }
             return qualify(namespace.getPrefix(), localName);

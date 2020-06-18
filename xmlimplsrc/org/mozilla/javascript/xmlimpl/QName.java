@@ -355,7 +355,7 @@ final class QName extends IdScriptableObject
             if (!"*".equals(localName)) {
                 sb.append("null, ");
             }
-        } else {
+        } else if (uri != null) {
             Namespace.toSourceImpl(prefix, uri, sb);
             sb.append(", ");
         }

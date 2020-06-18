@@ -334,6 +334,7 @@ class XMLName extends Ref {
         return xmlObject.getXMLProperty(this);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Object set(Context cx, Object value) {
         if (xmlObject == null) {

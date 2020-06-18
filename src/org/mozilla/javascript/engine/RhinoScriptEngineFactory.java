@@ -32,15 +32,15 @@ public class RhinoScriptEngineFactory
   implements ScriptEngineFactory {
 
   public static final String NAME = "rhino";
-  public static final String LANGUAGE = "javascript";
-  public static final List<String> NAMES =
+  private static final String LANGUAGE = "javascript";
+  private static final List<String> NAMES =
       Arrays.asList("rhino", "Rhino", "javascript", "JavaScript");
-  public static final List<String> EXTENSIONS =
+  private static final List<String> EXTENSIONS =
       Collections.singletonList("js");
-  public static final List<String> MIME_TYPES =
+  private static final List<String> MIME_TYPES =
       Arrays.asList("application/javascript", "application/ecmascript",
           "text/javascript", "text/ecmascript");
-  public static final String LANGUAGE_VERSION =
+  private static final String LANGUAGE_VERSION =
       String.valueOf(RhinoScriptEngine.DEFAULT_LANGUAGE_VERSION);
 
   @Override

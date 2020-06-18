@@ -245,6 +245,7 @@ public class RhinoScriptEngine
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getInterface(Class<T> clasz) {
     if ((clasz == null) || !clasz.isInterface()) {
@@ -265,6 +266,7 @@ public class RhinoScriptEngine
         new Class<?>[]{clasz}, new RhinoInvocationHandler(this, null));
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getInterface(Object thiz, Class<T> clasz) {
     if ((clasz == null) || !clasz.isInterface()) {

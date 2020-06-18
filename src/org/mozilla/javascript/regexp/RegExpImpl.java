@@ -243,7 +243,7 @@ public class RegExpImpl implements RegExpProxy {
             ip[0] = i;
             Object ret = re.executeRegExp(cx, scope, this, target, ip,
                                           NativeRegExp.TEST);
-            if (ret != Boolean.TRUE) {
+            if (!Boolean.TRUE.equals(ret)) {
                 // Mismatch: ensure our caller advances i past end of string.
                 ip[0] = ipsave;
                 matchlen[0] = 1;

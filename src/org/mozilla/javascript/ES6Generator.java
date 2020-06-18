@@ -278,7 +278,7 @@ public final class ES6Generator extends IdScriptableObject {
             throw re;
         } finally {
             if (state == State.COMPLETED) {
-                ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, true);
+                ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, Boolean.TRUE);
             } else {
                 state = State.SUSPENDED_YIELD;
             }
@@ -301,7 +301,7 @@ public final class ES6Generator extends IdScriptableObject {
             if (op == NativeGenerator.GENERATOR_THROW) {
                 throw new JavaScriptException(value, lineSource, lineNumber);
             }
-            ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, true);
+            ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, Boolean.TRUE);
             return result;
         }
 
@@ -351,7 +351,7 @@ public final class ES6Generator extends IdScriptableObject {
             // and we will never delegate to the delegee again
             if (state == State.COMPLETED) {
                 delegee = null;
-                ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, true);
+                ScriptableObject.putProperty(result, ES6Iterator.DONE_PROPERTY, Boolean.TRUE);
             }
         }
         return result;

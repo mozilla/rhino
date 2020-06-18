@@ -105,6 +105,7 @@ public class SoftCachingModuleScriptProvider extends CachingModuleScriptProvider
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream in) throws IOException,
     ClassNotFoundException
     {

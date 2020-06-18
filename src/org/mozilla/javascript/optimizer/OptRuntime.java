@@ -300,10 +300,12 @@ public final class OptRuntime extends ScriptRuntime
         static final String CLASS_NAME =
             "org/mozilla/javascript/optimizer/OptRuntime$GeneratorState";
 
+        @SuppressWarnings("unused")
         public int resumptionPoint;
         static final String resumptionPoint_NAME = "resumptionPoint";
         static final String resumptionPoint_TYPE = "I";
 
+        @SuppressWarnings("unused")
         public Scriptable thisObj;
         static final String thisObj_NAME = "thisObj";
         static final String thisObj_TYPE =

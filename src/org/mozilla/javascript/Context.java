@@ -11,22 +11,17 @@ package org.mozilla.javascript;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
 import org.mozilla.javascript.ast.AstRoot;
@@ -742,42 +737,8 @@ public class Context
      * @return a string that encodes the product, language version, release
      *         number, and date.
      */
-    public final String getImplementationVersion()
-    {
-        if (implementationVersion == null) {
-            Enumeration<URL> urls;
-            try {
-                urls = Context.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
-            } catch (IOException ioe) {
-                return null;
-            }
-
-            // There will be many manifests in the world -- enumerate all of them until we find the right one.
-            while (urls.hasMoreElements()) {
-                URL metaUrl = urls.nextElement();
-                InputStream is = null;
-                try {
-                    is = metaUrl.openStream();
-                    Manifest mf = new Manifest(is);
-                    Attributes attrs = mf.getMainAttributes();
-                    if ("Mozilla Rhino".equals(attrs.getValue("Implementation-Title"))) {
-                        implementationVersion =
-                            "Rhino " + attrs.getValue("Implementation-Version") + " " + attrs.getValue("Built-Date").replaceAll("-", " ");
-                        return implementationVersion;
-                    }
-                } catch (IOException e) {
-                    // Ignore this unlikely event
-                } finally {
-                    try {
-                        if (is != null) is.close();
-                    } catch (IOException e) {
-                        // Ignore this even unlikelier event
-                    }
-                }
-            }
-        }
-
-        return implementationVersion;
+    public final String getImplementationVersion() {
+        return ImplementationVersion.get();
     }
 
     /**
@@ -2723,8 +2684,6 @@ public class Context
     public final boolean isStrictMode() {
         return isTopLevelStrict || (currentActivationCall != null && currentActivationCall.isStrict);
     }
-
-    private static String implementationVersion;
 
     private final ContextFactory factory;
     private boolean sealed;

@@ -210,9 +210,10 @@ public class ScriptNode extends Scope {
     public int getIndexForNameNode(Node nameNode) {
         if (variableNames == null) codeBug();
         Scope node = nameNode.getScope();
-        Symbol symbol = node == null
-            ? null
-            : node.getSymbol(((Name)nameNode).getIdentifier());
+        Symbol symbol = null;
+        if (node != null && nameNode instanceof Name) {
+            symbol = node.getSymbol(((Name) nameNode).getIdentifier());
+        }
         return (symbol == null) ? -1 : symbol.getIndex();
     }
 

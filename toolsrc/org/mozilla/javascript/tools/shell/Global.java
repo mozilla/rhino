@@ -450,7 +450,7 @@ public class Global extends ImporterTopLevel
         }
         String session = Context.toString(args[0]);
         Global global = getInstance(funObj);
-        return new Integer(global.runDoctest(cx, global, session, null, 0));
+        return global.runDoctest(cx, global, session, null, 0);
     }
 
     public int runDoctest(Context cx, Scriptable scope, String session,
@@ -465,18 +465,19 @@ public class Global extends ImporterTopLevel
             i++; // skip lines that don't look like shell sessions
         }
         while (i < lines.length) {
-            String inputString = lines[i].trim().substring(prompt0.length());
-            inputString += "\n";
+            StringBuilder inputString =
+                new StringBuilder(lines[i].trim().substring(prompt0.length()));
+            inputString.append('\n');
             i++;
             while (i < lines.length && lines[i].trim().startsWith(prompt1)) {
-                inputString += lines[i].trim().substring(prompt1.length());
-                inputString += "\n";
+                inputString.append(lines[i].trim().substring(prompt1.length()));
+                inputString.append('\n');
                 i++;
             }
-            String expectedString = "";
+            StringBuilder expectedString = new StringBuilder();
             while (i < lines.length &&
                 !lines[i].trim().startsWith(prompt0)) {
-                expectedString += lines[i] + "\n";
+                expectedString.append(lines[i]).append('\n');
                 i++;
             }
             PrintStream savedOut = this.getOut();
@@ -490,11 +491,12 @@ public class Global extends ImporterTopLevel
             cx.setErrorReporter(new ToolErrorReporter(false, this.getErr()));
             try {
                 testCount++;
-                Object result = cx.evaluateString(scope, inputString,
+                String finalInputString = inputString.toString();
+                Object result = cx.evaluateString(scope, finalInputString,
                     "doctest input", 1, null);
                 if (result != Context.getUndefinedValue() &&
                     !(result instanceof Function &&
-                        inputString.trim().startsWith("function"))) {
+                        finalInputString.trim().startsWith("function"))) {
                     resultString = Context.toString(result);
                 }
             } catch (RhinoException e) {
@@ -505,7 +507,7 @@ public class Global extends ImporterTopLevel
                 cx.setErrorReporter(savedErrorReporter);
                 resultString += err.toString() + out.toString();
             }
-            if (!doctestOutputMatches(expectedString, resultString)) {
+            if (!doctestOutputMatches(expectedString.toString(), resultString)) {
                 String message = "doctest failure running:\n" +
                     inputString +
                     "expected: " + expectedString +
@@ -764,10 +766,10 @@ public class Global extends ImporterTopLevel
         }
         Global global = getInstance(funObj);
         if (out == null) {
-            out = (global != null) ? global.getOut() : System.out;
+            out = global.getOut();
         }
         if (err == null) {
-            err = (global != null) ? global.getErr() : System.err;
+            err = global.getErr();
         }
         // If no explicit input stream, do not send any input to process,
         // in particular, do not use System.in to avoid deadlocks
@@ -794,7 +796,7 @@ public class Global extends ImporterTopLevel
             ScriptableObject.putProperty(params, "err", s);
         }
 
-        return new Integer(exitCode);
+        return exitCode;
     }
 
     /**
