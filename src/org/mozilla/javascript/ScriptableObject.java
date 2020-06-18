@@ -280,7 +280,7 @@ public abstract class ScriptableObject implements Scriptable,
 
                         String prop = "";
                         if (name != null) {
-                            prop = "[" + start.getClassName() + "]." + name.toString();
+                            prop = "[" + start.getClassName() + "]." + name;
                         }
                         throw ScriptRuntime.typeError2("msg.set.prop.no.setter", prop, Context.toString(value));
                     }

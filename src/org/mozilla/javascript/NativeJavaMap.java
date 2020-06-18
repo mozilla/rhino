@@ -13,6 +13,7 @@ public class NativeJavaMap extends NativeJavaObject {
 
     private Map<Object, Object> map;
 
+    @SuppressWarnings("unchecked")
     public NativeJavaMap(Scriptable scope, Object map) {
         super(scope, map, map.getClass());
         assert map instanceof Map;

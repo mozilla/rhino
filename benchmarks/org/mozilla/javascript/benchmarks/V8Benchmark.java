@@ -14,7 +14,6 @@ public class V8Benchmark {
   static abstract class AbstractState {
     Context cx;
     Scriptable scope;
-    Callable runFunc;
 
     Callable getFunc(String name) {
       Object f = ScriptableObject.getProperty(scope, name);

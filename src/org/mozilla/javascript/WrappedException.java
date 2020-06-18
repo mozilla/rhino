@@ -23,7 +23,7 @@ public class WrappedException extends EvaluatorException
      */
     public WrappedException(Throwable exception)
     {
-        super("Wrapped " + exception.toString());
+        super("Wrapped " + exception);
         this.exception = exception;
         this.initCause(exception);
 

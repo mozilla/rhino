@@ -128,6 +128,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 
         if (arg0 instanceof NativeTypedArrayView) {
             // Copy elements from the old array and convert them into our own
+            @SuppressWarnings("unchecked")
             NativeTypedArrayView<T> src = (NativeTypedArrayView<T>)arg0;
             NativeArrayBuffer na = makeArrayBuffer(cx, scope, src.length);
             NativeTypedArrayView<T> v = construct(na, 0, src.length);
@@ -302,7 +303,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
                 NativeTypedArrayView<T> self = realThis(thisObj, f);
                 if (args[0] instanceof NativeTypedArrayView) {
                     int offset = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : 0;
-                    self.setRange((NativeTypedArrayView<T>)args[0], offset);
+                    @SuppressWarnings("unchecked")
+                    NativeTypedArrayView<T> nativeView = (NativeTypedArrayView<T>)args[0];
+                    self.setRange(nativeView, offset);
                     return Undefined.instance;
                 }
                 if (args[0] instanceof NativeArray) {
@@ -550,7 +553,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
         return a;
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "unchecked"})
     @Override
     public <U> U[] toArray(U[] ts)
     {
@@ -595,6 +598,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     }
 
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean equals(Object o)
     {

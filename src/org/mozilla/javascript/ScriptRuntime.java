@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -737,16 +738,11 @@ public class ScriptRuntime {
         if (count < args.length)
             return args;
 
-        int i;
         Object[] result = new Object[count];
-        for (i = 0; i < args.length; i++) {
-            result[i] = args[i];
+        System.arraycopy(args, 0, result, 0, args.length);
+        if (args.length < count) {
+            Arrays.fill(result, args.length, count, Undefined.instance);
         }
-
-        for (; i < count; i++) {
-            result[i] = Undefined.instance;
-        }
-
         return result;
     }
 
@@ -1163,7 +1159,7 @@ public class ScriptRuntime {
         Function function = (Function)fun;
         Scriptable thisObj = toObjectOrNull(cx, thisArg, scope);
         if (thisObj == null) {
-            throw undefCallError(thisObj, "function");
+            throw undefCallError(null, "function");
         }
         return function.call(cx, scope, thisObj, args);
     }
@@ -3010,7 +3006,7 @@ public class ScriptRuntime {
                 } while (target != null);
                 scopeChain = scopeChain.getParentScope();
             } while (scopeChain != null);
-            throw notFoundError(scopeChain, id);
+            throw notFoundError(null, id);
         }
         return doScriptableIncrDecr(target, id, scopeChain, value,
                                     incrDecrMask);

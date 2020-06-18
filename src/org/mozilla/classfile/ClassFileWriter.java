@@ -1471,8 +1471,6 @@ public class ClassFileWriter {
                 }
             }
 
-            superBlockDeps = getSuperBlockDependencies();
-
             verify();
 
             if (DEBUGSTACKMAP) {
@@ -2596,7 +2594,6 @@ public class ClassFileWriter {
         private int workListTop;
 
         private SuperBlock[] superBlocks;
-        private SuperBlock[] superBlockDeps;
 
         private byte[] rawStackMap;
         private int rawStackMapTop;

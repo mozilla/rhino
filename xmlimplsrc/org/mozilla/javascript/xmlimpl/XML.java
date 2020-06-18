@@ -195,6 +195,7 @@ class XML extends XMLObjectImpl {
     }
 
     //    See ECMA 357, 11_2_2_1, Semantics, 3_f.
+    @SuppressWarnings("deprecation")
     @Override
     public Scriptable getExtraMethodSource(Context cx) {
         if (hasSimpleContent()) {

@@ -195,7 +195,6 @@ public final class NativeJSON extends IdScriptableObject
             this.gap = gap;
             this.replacer = replacer;
             this.propertyList = propertyList;
-            this.space = space;
         }
 
         Stack<Scriptable> stack = new Stack<Scriptable>();
@@ -203,7 +202,6 @@ public final class NativeJSON extends IdScriptableObject
         String gap;
         Callable replacer;
         List<Object> propertyList;
-        Object space;
 
         Context cx;
         Scriptable scope;
@@ -333,7 +331,7 @@ public final class NativeJSON extends IdScriptableObject
         if (!iter.hasNext()) return "";
         StringBuilder builder = new StringBuilder(iter.next().toString());
         while (iter.hasNext()) {
-            builder.append(delimiter).append(iter.next().toString());
+            builder.append(delimiter).append(iter.next());
         }
         return builder.toString();
     }

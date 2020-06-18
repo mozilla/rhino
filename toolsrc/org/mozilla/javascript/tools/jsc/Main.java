@@ -264,8 +264,8 @@ public class Main {
             for (int j = 0; j != compiled.length; j += 2) {
                 String className = (String)compiled[j];
                 byte[] bytes = (byte[])compiled[j + 1];
-                File outfile = getOutputFile(targetTopDir, className);
                 try {
+                    File outfile = getOutputFile(targetTopDir, className);
                     FileOutputStream os = new FileOutputStream(outfile);
                     try {
                         os.write(bytes);
@@ -297,7 +297,7 @@ public class Main {
         return null;
     }
 
-    private File getOutputFile(File parentDir, String className)
+    private File getOutputFile(File parentDir, String className) throws IOException
     {
         String path = className.replace('.', File.separatorChar);
         path = path.concat(".class");
@@ -306,7 +306,9 @@ public class Main {
         if (dirPath != null) {
             File dir = new File(dirPath);
             if (!dir.exists()) {
-                dir.mkdirs();
+                if (!dir.mkdirs()) {
+                    throw new IOException("Error making output directory " + dirPath);
+                }
             }
         }
         return f;

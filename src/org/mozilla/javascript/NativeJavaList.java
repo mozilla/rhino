@@ -11,6 +11,7 @@ public class NativeJavaList extends NativeJavaObject {
 
     private List<Object> list;
 
+    @SuppressWarnings("unchecked")
     public NativeJavaList(Scriptable scope, Object list) {
         super(scope, list, list.getClass());
         assert list instanceof List;

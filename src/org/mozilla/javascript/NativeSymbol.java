@@ -345,6 +345,7 @@ public class NativeSymbol
         return key;
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, NativeSymbol> getGlobalMap() {
         ScriptableObject top = (ScriptableObject)getTopLevelScope(this);
         Map<String, NativeSymbol> map = (Map<String, NativeSymbol>)top.getAssociatedValue(GLOBAL_TABLE_KEY);

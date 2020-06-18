@@ -21,7 +21,7 @@ import org.mozilla.javascript.VMBridge;
 
 public class VMBridge_jdk18 extends VMBridge
 {
-    private ThreadLocal<Object[]> contextLocal = new ThreadLocal<Object[]>();
+    private static final ThreadLocal<Object[]> contextLocal = new ThreadLocal<Object[]>();
 
     @Override
     protected Object getThreadContextHelper()

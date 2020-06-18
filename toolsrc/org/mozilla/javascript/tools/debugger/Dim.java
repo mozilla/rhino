@@ -1018,6 +1018,7 @@ interruptedCheck:
          * Performs the action given by {@link #type} with the attached
          * {@link ContextFactory}.
          */
+        @SuppressWarnings("unchecked")
         private void withContext() {
             dim.contextFactory.call(this);
         }
