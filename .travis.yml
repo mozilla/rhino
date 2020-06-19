@@ -1,5 +1,5 @@
 language: java
-dist: trusty
+dist: xenial
 jdk: 
   - openjdk8
 script:
