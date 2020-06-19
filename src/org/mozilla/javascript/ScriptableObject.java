@@ -1693,6 +1693,29 @@ public abstract class ScriptableObject implements Scriptable,
      * defineProperty there, otherwise calls put in destination
      * ignoring attributes
      * @param destination ScriptableObject to define the property on
+     * @param key the symbol of the property to define.
+     * @param value the initial value of the property
+     * @param attributes the attributes of the JavaScript property
+     */
+    public static void defineProperty(Scriptable destination,
+        Symbol key, Object value,
+        int attributes)
+    {
+        if (destination instanceof ScriptableObject) {
+            ((ScriptableObject)destination).defineProperty(key, value, attributes);
+        } else if (destination instanceof SymbolScriptable) {
+            ((SymbolScriptable)destination).put(key, destination, value);
+        }
+        throw ScriptRuntime.typeError1("msg.object.not.symbolscriptable",
+            value.getClass().getName());
+    }
+
+    /**
+     * Utility method to add properties to arbitrary Scriptable object.
+     * If destination is instance of ScriptableObject, calls
+     * defineProperty there, otherwise calls put in destination
+     * ignoring attributes
+     * @param destination ScriptableObject to define the property on
      * @param propertyName the name of the property to define.
      */
     public static void defineConstProperty(Scriptable destination,
