@@ -1091,7 +1091,6 @@ ecma_3/RegExp/regress-225343.js
 ecma_3/RegExp/regress-24712.js
 ecma_3/RegExp/regress-285219.js
 ecma_3/RegExp/regress-28686.js
-ecma_3/RegExp/regress-289669.js
 ecma_3/RegExp/regress-309840.js
 ecma_3/RegExp/regress-312351.js
 ecma_3/RegExp/regress-31316.js
@@ -1508,7 +1507,6 @@ js1_5/Regress/regress-344804.js
 js1_5/Regress/regress-344959.js
 js1_5/Regress/regress-346237.js
 js1_5/Regress/regress-346801.js
-js1_5/Regress/regress-347306-01.js
 js1_5/Regress/regress-349482-01.js
 js1_5/Regress/regress-349482-02.js
 js1_5/Regress/regress-349592.js
@@ -1550,7 +1548,6 @@ js1_5/Regress/regress-406769.js
 js1_5/Regress/regress-407024.js
 js1_5/Regress/regress-407323.js
 js1_5/Regress/regress-407957.js
-js1_5/Regress/regress-416628.js
 js1_5/Regress/regress-416737-01.js
 js1_5/Regress/regress-416737-02.js
 js1_5/Regress/regress-417893.js
@@ -1691,12 +1688,7 @@ js1_5/Scope/scope-003.js
 js1_5/Scope/scope-004.js
 js1_5/String/regress-107771.js
 js1_5/String/regress-112626.js
-js1_5/String/regress-157334-01.js
 js1_5/String/regress-179068.js
-js1_5/String/regress-314890.js
-js1_5/String/regress-322772.js
-js1_5/String/regress-56940-01.js
-js1_5/String/regress-56940-02.js
 js1_5/decompilation/regress-344120.js
 js1_5/decompilation/regress-349489.js
 js1_5/decompilation/regress-349663.js
@@ -1774,7 +1766,6 @@ js1_5/extensions/regress-341956-01.js
 js1_5/extensions/regress-341956-02.js
 js1_5/extensions/regress-341956-03.js
 js1_5/extensions/regress-346494-01.js
-js1_5/extensions/regress-347306-02.js
 js1_5/extensions/regress-350312-01.js
 js1_5/extensions/regress-350312-02.js
 js1_5/extensions/regress-350312-03.js
