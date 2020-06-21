@@ -583,9 +583,9 @@ public class NativeArray extends IdScriptableObject implements List
       ScriptableObject desc = new NativeObject();
       ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
       desc.defineProperty("value", value, EMPTY);
-      desc.defineProperty("writable", true, EMPTY);
-      desc.defineProperty("enumerable", true, EMPTY);
-      desc.defineProperty("configurable", true, EMPTY);
+      desc.defineProperty("writable", Boolean.TRUE, EMPTY);
+      desc.defineProperty("enumerable", Boolean.TRUE, EMPTY);
+      desc.defineProperty("configurable", Boolean.TRUE, EMPTY);
       return desc;
     }
 
@@ -1573,7 +1573,7 @@ public class NativeArray extends IdScriptableObject implements List
         return result;
     }
 
-    private Scriptable js_slice(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
+    private static Scriptable js_slice(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
     {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 

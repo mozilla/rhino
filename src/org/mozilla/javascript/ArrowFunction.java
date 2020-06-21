@@ -28,8 +28,8 @@ public class ArrowFunction extends BaseFunction {
         NativeObject throwing = new NativeObject();
         throwing.put("get", throwing, thrower);
         throwing.put("set", throwing, thrower);
-        throwing.put("enumerable", throwing, false);
-        throwing.put("configurable", throwing, false);
+        throwing.put("enumerable", throwing, Boolean.FALSE);
+        throwing.put("configurable", throwing, Boolean.FALSE);
         throwing.preventExtensions();
 
         this.defineOwnProperty(cx, "caller", throwing, false);

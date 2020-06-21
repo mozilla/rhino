@@ -72,7 +72,7 @@ public abstract class NativeArrayBufferView
             if (ctx == null) {
                 return false;
             }
-            useLittleEndian = ctx.hasFeature(Context.FEATURE_LITTLE_ENDIAN);
+            useLittleEndian = Boolean.valueOf(ctx.hasFeature(Context.FEATURE_LITTLE_ENDIAN));
         }
         return useLittleEndian.booleanValue();
     }

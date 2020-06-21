@@ -77,7 +77,7 @@ public class NativeJavaMap extends NativeJavaObject {
         List<Object> ids = new ArrayList<>(map.size());
         for (Object key : map.keySet()) {
             if (key instanceof Integer) {
-                ids.add(ScriptRuntime.toInt32(key));
+                ids.add((Integer)key);
             } else {
                 ids.add(ScriptRuntime.toString(key));
             }

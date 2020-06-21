@@ -303,13 +303,13 @@ final class NativeString extends IdScriptableObject
                     int idx = js_indexOf(id, thisString, args);
 
                     if (id == Id_includes) {
-                        return idx != -1;
+                        return Boolean.valueOf(idx != -1);
                     }
                     if (id == Id_startsWith) {
-                        return idx == 0;
+                        return Boolean.valueOf(idx == 0);
                     }
                     if (id == Id_endsWith) {
-                        return idx != -1;
+                        return Boolean.valueOf(idx != -1);
                     }
                     // fallthrough
 
@@ -643,9 +643,9 @@ final class NativeString extends IdScriptableObject
         ScriptableObject desc = new NativeObject();
         ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
         desc.defineProperty("value", value, EMPTY);
-        desc.defineProperty("writable", false, EMPTY);
-        desc.defineProperty("enumerable", true, EMPTY);
-        desc.defineProperty("configurable", false, EMPTY);
+        desc.defineProperty("writable", Boolean.FALSE, EMPTY);
+        desc.defineProperty("enumerable", Boolean.TRUE, EMPTY);
+        desc.defineProperty("configurable", Boolean.FALSE, EMPTY);
         return desc;
       }
 
@@ -872,7 +872,7 @@ final class NativeString extends IdScriptableObject
      * @see https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padstart
      * @see https://www.ecma-international.org/ecma-262/8.0/#sec-string.prototype.padend
      */
-    private static String js_pad(Context cx, Scriptable thisObj, IdFunctionObject f, Object[] args, Boolean atStart)
+    private static String js_pad(Context cx, Scriptable thisObj, IdFunctionObject f, Object[] args, boolean atStart)
     {
         String pad = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
         long intMaxLength = ScriptRuntime.toLength(args, 0);

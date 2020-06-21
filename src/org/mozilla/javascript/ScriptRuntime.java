@@ -361,7 +361,7 @@ public class ScriptRuntime {
 
     public static Boolean wrapBoolean(boolean b)
     {
-        return b ? Boolean.TRUE : Boolean.FALSE;
+        return Boolean.valueOf(b);
     }
 
     public static Integer wrapInt(int i)
@@ -374,7 +374,7 @@ public class ScriptRuntime {
         if (Double.isNaN(x)) {
             return ScriptRuntime.NaNobj;
         }
-        return new Double(x);
+        return Double.valueOf(x);
     }
 
     /**
@@ -458,7 +458,10 @@ public class ScriptRuntime {
     // Preserve backward-compatibility with historical value of this.
     public static final double negativeZero = Double.longBitsToDouble(0x8000000000000000L);
 
-    public static final Double NaNobj = new Double(NaN);
+    public static final Double zeroObj = Double.valueOf(0.0);
+    public static final Double negativeZeroObj = Double.valueOf(-0.0);
+
+    public static final Double NaNobj = Double.valueOf(NaN);
 
     static double stringPrefixToNumber(String s, int start, int radix) {
         return stringToNumber(s, start, s.length() - 1, radix, true);
@@ -3054,7 +3057,7 @@ public class ScriptRuntime {
                                                Object value,
                                                int incrDecrMask)
     {
-        boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+        final boolean post = (incrDecrMask & Node.POST_FLAG) != 0;
         double number;
         if (value instanceof Number) {
             number = ((Number)value).doubleValue();
@@ -3093,7 +3096,7 @@ public class ScriptRuntime {
                                       int incrDecrMask)
     {
         Object value = getObjectElem(obj, index, cx, scope);
-        boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+        final boolean post = (incrDecrMask & Node.POST_FLAG) != 0;
         double number;
         if (value instanceof Number) {
             number = ((Number)value).doubleValue();
@@ -3296,10 +3299,10 @@ public class ScriptRuntime {
 
     public static boolean isNaN(Object n) {
         if (n instanceof Double) {
-            return Double.isNaN((Double)n);
+            return ((Double)n).isNaN();
         }
         if (n instanceof Float) {
-            return Float.isNaN((Float)n);
+            return ((Float)n).isNaN();
         }
         return false;
     }

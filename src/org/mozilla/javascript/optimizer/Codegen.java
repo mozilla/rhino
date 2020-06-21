@@ -610,7 +610,7 @@ public class Codegen implements Evaluator
         cfw.stopMethod((short)1);
     }
 
-    private void generateExecute(ClassFileWriter cfw)
+    private static void generateExecute(ClassFileWriter cfw)
     {
         cfw.startMethod("exec",
                         "(Lorg/mozilla/javascript/Context;"
@@ -640,7 +640,7 @@ public class Codegen implements Evaluator
         cfw.stopMethod((short)3);
     }
 
-    private void generateScriptCtor(ClassFileWriter cfw)
+    private static void generateScriptCtor(ClassFileWriter cfw)
     {
         cfw.startMethod("<init>", "()V", ACC_PUBLIC);
 
@@ -1085,7 +1085,7 @@ public class Codegen implements Evaluator
             if (1 / num > 0) {
                 // +0.0
                 cfw.add(ByteCode.GETSTATIC,
-                        "org/mozilla/javascript/optimizer/OptRuntime",
+                        "org/mozilla/javascript/ScriptRuntime",
                         "zeroObj", "Ljava/lang/Double;");
             } else {
                 cfw.addPush(num);
@@ -1103,7 +1103,7 @@ public class Codegen implements Evaluator
                     "org/mozilla/javascript/optimizer/OptRuntime",
                     "minusOneObj", "Ljava/lang/Double;");
 
-        } else if (Double.isNaN(num)) { 
+        } else if (Double.isNaN(num)) {
             cfw.add(ByteCode.GETSTATIC,
                     "org/mozilla/javascript/ScriptRuntime",
                     "NaNobj", "Ljava/lang/Double;");
@@ -2909,7 +2909,7 @@ class BodyCodegen
             cfw.addLoadConstant(nn);
             cfw.add(ByteCode.SWAP);
             cfw.addALoad(contextLocal);
-            
+
             addScriptRuntimeInvoke("setObjectProp",
               "(Lorg/mozilla/javascript/Scriptable;Ljava/lang/String;Ljava/lang/Object;"
               + "Lorg/mozilla/javascript/Context;)Ljava/lang/Object;");
@@ -4041,7 +4041,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         cfw.add(ByteCode.GOTO, catchLabel);
     }
 
-    private String exceptionTypeToName(int exceptionType)
+    private static String exceptionTypeToName(int exceptionType)
     {
         if (exceptionType == JAVASCRIPT_EXCEPTION) {
             return "org/mozilla/javascript/JavaScriptException";
@@ -4340,7 +4340,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
      * This is strongly dependent on the generated IR. If the node is a TARGET,
      * it only check the next node to see if it is a FINALLY node.
      */
-    private Node getFinallyAtTarget(Node node) {
+    private static Node getFinallyAtTarget(Node node) {
         if (node == null) {
             return null;
         }
@@ -5385,7 +5385,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         cfw.addAStore(variableObjectLocal);
     }
 
-    private int getLocalBlockRegister(Node node)
+    private static int getLocalBlockRegister(Node node)
     {
         Node localBlock = (Node)node.getProp(Node.LOCAL_BLOCK_PROP);
         int localSlot = localBlock.getExistingIntProp(Node.LOCAL_PROP);
@@ -5634,7 +5634,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         public List<Integer> jsrPoints  = new ArrayList<Integer>();
         public int tableLabel = 0;
     }
-    
+
     private int unnestedYieldCount = 0;
     private IdentityHashMap<Node, String> unnestedYields = new IdentityHashMap<>();
 }
