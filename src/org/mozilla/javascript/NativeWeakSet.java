@@ -19,13 +19,13 @@ import java.util.WeakHashMap;
  */
 public class NativeWeakSet extends IdScriptableObject {
     private static final long serialVersionUID = 2065753364224029534L;
-    
+
     private static final Object MAP_TAG = "WeakSet";
-    
+
     private boolean instanceOfWeakSet = false;
-    
+
     private transient WeakHashMap<Scriptable, Boolean> map = new WeakHashMap<>();
-    
+
     static void init(Scriptable scope, boolean sealed) {
         NativeWeakSet m = new NativeWeakSet();
         m.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
@@ -81,15 +81,14 @@ public class NativeWeakSet extends IdScriptableObject {
 
     private Object js_delete(Object key) {
         if (!ScriptRuntime.isObject(key)) {
-            return false;
+            return Boolean.FALSE;
         }
-        final Object oldVal = map.remove(key);
-        return (oldVal != null);
+        return map.remove(key) != null;
     }
 
     private Object js_has(Object key) {
         if (!ScriptRuntime.isObject(key)) {
-            return false;
+            return Boolean.FALSE;
         }
         return map.containsKey(key);
     }

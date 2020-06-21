@@ -309,7 +309,7 @@ public class RhinoScriptEngine
     }
   }
 
-  private int parseInteger(Object v) throws ScriptException {
+  private static int parseInteger(Object v) throws ScriptException {
     if (v instanceof String) {
       try {
         return Integer.parseInt((String) v);
@@ -317,7 +317,7 @@ public class RhinoScriptEngine
         throw new ScriptException("Invalid number " + v);
       }
     } else if (v instanceof Integer) {
-      return (Integer) v;
+      return ((Integer) v).intValue();
     } else {
       throw new ScriptException("Value must be a string or number");
     }

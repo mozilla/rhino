@@ -260,16 +260,16 @@ public final class Interpreter extends Icode implements Evaluator
             }
         }
 
-        private static boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal) {
+        private static Boolean equals(CallFrame f1, CallFrame f2, EqualObjectGraphs equal) {
             // Iterative instead of recursive, as interpreter stack depth can
             // be larger than JVM stack depth.
             for(;;) {
                 if (f1 == f2) {
-                    return true;
+                    return Boolean.TRUE;
                 } else if (f1 == null || f2 == null) {
-                    return false;
+                    return Boolean.FALSE;
                 } else if (!f1.fieldsEqual(f2, equal)) {
-                    return false;
+                    return Boolean.FALSE;
                 } else {
                     f1 = f1.parentFrame;
                     f2 = f2.parentFrame;
