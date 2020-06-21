@@ -293,7 +293,7 @@ final class NativeNumber extends IdScriptableObject
         return ScriptRuntime.toBoolean(isDoubleInteger(nd));
     }
 
-    private boolean isDoubleInteger(Double d)
+    private static boolean isDoubleInteger(Double d)
     {
         return (!d.isInfinite() && !d.isNaN() &&
                 (Math.floor(d.doubleValue()) == d.doubleValue()));
@@ -305,7 +305,7 @@ final class NativeNumber extends IdScriptableObject
         return ScriptRuntime.toBoolean(isDoubleSafeInteger(nd));
     }
 
-    private boolean isDoubleSafeInteger(Double d)
+    static boolean isDoubleSafeInteger(Double d)
     {
         return (isDoubleInteger(d) &&
                 (d.doubleValue() <= MAX_SAFE_INTEGER) &&

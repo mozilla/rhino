@@ -3008,8 +3008,7 @@ public class ScriptRuntime {
             } while (scopeChain != null);
             throw notFoundError(null, id);
         }
-        return doScriptableIncrDecr(target, id, scopeChain, value,
-                                    incrDecrMask);
+        return doScriptableIncrDecr(target, id, scopeChain, value, incrDecrMask);
     }
 
     /**
@@ -3044,8 +3043,7 @@ public class ScriptRuntime {
             start.put(id, start, NaNobj);
             return NaNobj;
         }
-        return doScriptableIncrDecr(target, id, start, value,
-                                    incrDecrMask);
+        return doScriptableIncrDecr(target, id, start, value, incrDecrMask);
     }
 
     private static Object doScriptableIncrDecr(Scriptable target,
@@ -3057,7 +3055,33 @@ public class ScriptRuntime {
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
         double number;
         if (value instanceof Number) {
+            // some code denormalization do avoid creation of short
+            // living Double objects at least in for loops
+            if (value instanceof Integer) {
+                int intNumber = ((Integer)value).intValue();
+                if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                    ++intNumber;
+                } else {
+                    --intNumber;
+                }
+                final Integer intResult = wrapInt(intNumber);
+                target.put(id, protoChainStart, intResult);
+                return post ? value : intResult;
+            }
+
             number = ((Number)value).doubleValue();
+
+            if (NativeNumber.isDoubleSafeInteger(number)) {
+                int intNumber = (int)number;
+                if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                    ++intNumber;
+                } else {
+                    --intNumber;
+                }
+                final Integer intResult = wrapInt(intNumber);
+                target.put(id, protoChainStart, intResult);
+                return post?value:intResult;
+            }
         } else {
             number = toNumber(value);
             if (post) {
@@ -3065,6 +3089,7 @@ public class ScriptRuntime {
                 value = wrapNumber(number);
             }
         }
+
         if ((incrDecrMask & Node.DECR_FLAG) == 0) {
             ++number;
         } else {
@@ -3082,8 +3107,7 @@ public class ScriptRuntime {
      * @deprecated Use {@link #elemIncrDecr(Object, Object, Context, Scriptable, int)} instead
      */
     @Deprecated
-    public static Object elemIncrDecr(Object obj, Object index,
-                                      Context cx, int incrDecrMask)
+    public static Object elemIncrDecr(Object obj, Object index, Context cx, int incrDecrMask)
     {
         return elemIncrDecr(obj, index, cx, getTopCallScope(cx), incrDecrMask);
     }
@@ -3096,7 +3120,33 @@ public class ScriptRuntime {
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
         double number;
         if (value instanceof Number) {
+            // some code denormalization do avoid creation of short
+            // living Double objects at least in for loops
+            if (value instanceof Integer) {
+                int intNumber = ((Integer)value).intValue();
+                if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                    ++intNumber;
+                } else {
+                    --intNumber;
+                }
+                final Integer intResult = wrapInt(intNumber);
+                setObjectElem(obj, index, intResult, cx, scope);
+                return post ? value : intResult;
+            }
+
             number = ((Number)value).doubleValue();
+
+            if (NativeNumber.isDoubleSafeInteger(number)) {
+                int intNumber = (int)number;
+                if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                    ++intNumber;
+                } else {
+                    --intNumber;
+                }
+                final Integer intResult = wrapInt(intNumber);
+                setObjectElem(obj, index, intResult, cx, scope);
+                return post?value:intResult;
+            }
         } else {
             number = toNumber(value);
             if (post) {
@@ -3104,6 +3154,7 @@ public class ScriptRuntime {
                 value = wrapNumber(number);
             }
         }
+
         if ((incrDecrMask & Node.DECR_FLAG) == 0) {
             ++number;
         } else {
