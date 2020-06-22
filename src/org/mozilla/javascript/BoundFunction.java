@@ -49,8 +49,7 @@ public class BoundFunction extends BaseFunction {
   @Override
   public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] extraArgs)
   {
-    Scriptable callThis = boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
-    return targetFunction.call(cx, scope, callThis, concat(boundArgs, extraArgs));
+    return targetFunction.call(cx, scope, boundThis, concat(boundArgs, extraArgs));
   }
 
   @Override
