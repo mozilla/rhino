@@ -67,7 +67,7 @@ test {
     useJUnit()
     exclude "**/benchmarks/**"
     
-    jvmArgs += '-Xss1152k'
+    jvmArgs += '-Xss1280k'
 
     jacoco.excludes = ['**/testsrc_tests_ecma_3_RegExp_perlstress*']
 
