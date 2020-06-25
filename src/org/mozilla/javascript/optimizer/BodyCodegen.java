@@ -3944,60 +3944,71 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
         Node nameChild = child.getNext();
         if (nameChild.getType() == Token.STRING) {
             // Constant property name. Do this using INDY.
-
-        }
-
-        /* Old code below
-
-        Node nameChild = child.getNext();
-        generateExpression(nameChild, node);  // the name
-        if (node.getType() == Token.GETPROPNOWARN) {
-            cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
-            addScriptRuntimeInvoke(
-                "getObjectPropNoWarn",
-                "(Ljava/lang/Object;"
-                    +"Ljava/lang/String;"
-                    +"Lorg/mozilla/javascript/Context;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;");
-            return;
-        }
-        /*
-            for 'this.foo' we call getObjectProp(Scriptable...) which can
-            skip some casting overhead.
-        */
-        /*
-        int childType = child.getType();
-        if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
-            cfw.addALoad(contextLocal);
-            addScriptRuntimeInvoke(
-                "getObjectProp",
-                "(Lorg/mozilla/javascript/Scriptable;"
-                    +"Ljava/lang/String;"
-                    +"Lorg/mozilla/javascript/Context;"
-                    +")Ljava/lang/Object;");
-        } else {
+            // Pass property name and whether to "warn" as constants to
+            // the bootstrap method
             ClassFileWriter.MHandle getObjPropBootstrap =
                 new MHandle(ByteCode.MH_INVOKESTATIC,
                     "org.mozilla.javascript.optimizer.DynamicRuntime",
                     "bootstrapGetObjectProp",
                     "(Ljava/lang/invoke/MethodHandles$Lookup;"
-                   + "Ljava/lang/String;"
-                   + "Ljava/lang/invoke/MethodType;"
-                   + ")Ljava/lang/invoke/CallSite;");
+                        + "Ljava/lang/String;"
+                        + "Ljava/lang/invoke/MethodType;"
+                        + "Ljava/lang/String;"
+                        + "I"
+                        + ")Ljava/lang/invoke/CallSite;");
 
             cfw.addALoad(contextLocal);
-            cfw.addALoad(variableObjectLocal);
+            if (child.getType() == Token.THIS) {
+                cfw.addALoad(thisObjLocal);
+            } else {
+                cfw.addALoad(variableObjectLocal);
+            }
             cfw.addInvokeDynamic("getFastObjectProp",
                 "(Ljava/lang/Object;"
-                    +"Ljava/lang/String;"
-                    +"Lorg/mozilla/javascript/Context;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;",
-                getObjPropBootstrap);
-        }
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;"
+                    + ")Ljava/lang/Object;",
+                getObjPropBootstrap,
+                nameChild.getString(), node.getType() != Token.GETPROPNOWARN);
+
+        } else {
+            generateExpression(nameChild, node);  // the name
+            if (node.getType() == Token.GETPROPNOWARN) {
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke(
+                    "getObjectPropNoWarn",
+                    "(Ljava/lang/Object;"
+                        + "Ljava/lang/String;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + ")Ljava/lang/Object;");
+                return;
+            }
+        /*
+            for 'this.foo' we call getObjectProp(Scriptable...) which can
+            skip some casting overhead.
         */
+            int childType = child.getType();
+            if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
+                cfw.addALoad(contextLocal);
+                addScriptRuntimeInvoke(
+                    "getObjectProp",
+                    "(Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/String;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + ")Ljava/lang/Object;");
+            } else {
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke("getObjectProp",
+                    "(Ljava/lang/Object;"
+                        + "Ljava/lang/String;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + ")Ljava/lang/Object;");
+            }
+        }
     }
 
     private void visitSetProp(int type, Node node, Node child)

@@ -104,6 +104,9 @@ public abstract class ScriptableObject implements Scriptable,
     public static final int UNINITIALIZED_CONST = 0x08;
 
     public static final int CONST = PERMANENT|READONLY|UNINITIALIZED_CONST;
+
+    private static final int NUM_FAST_SLOTS = 8;
+
     /**
      * The prototype of this object.
      */
@@ -126,11 +129,11 @@ public abstract class ScriptableObject implements Scriptable,
     /**
      * This holds possible optimized field values
      */
-    public transient Object[] fastValues = null;
+    private transient Object[] fastValues = null;
     /**
      * This holds their names, for testing during a "guard".
      */
-    public transient String[] fastNames = null;
+    private transient String[] fastNames = null;
 
     private volatile Map<Object,Object> associatedValues;
 
@@ -412,8 +415,8 @@ public abstract class ScriptableObject implements Scriptable,
         }
         // TODO greg constants and optimization level
         if (cx != null && cx.getOptimizationLevel() >= 0) {
-            fastValues = new Object[8];
-            fastNames = new String[8];
+            fastValues = new Object[NUM_FAST_SLOTS];
+            fastNames = new String[NUM_FAST_SLOTS];
         }
         return new SlotMapContainer(initialSize);
     }
@@ -2947,6 +2950,18 @@ public abstract class ScriptableObject implements Scriptable,
         if (fastValues == null) {
             return -1;
         }
+
+        // Hash trick also used in EmbeddedSlotMap
+        int hashIx = name.hashCode() & (NUM_FAST_SLOTS - 1);
+        // Use the hash value first so that if objects have the same set of property
+        // names they use the same index even if inserts are in a different order
+        if (fastNames[hashIx] == null) {
+            fastNames[hashIx] = name;
+            fastValues[hashIx] = Undefined.instance;
+            return hashIx;
+        }
+
+        // Fall back to a linear search if the preferred value isn't available
         for (int i = 0; i < fastNames.length; i++) {
             if (fastNames[i] == null) {
                 fastValues[i] = Undefined.instance;
@@ -2954,6 +2969,8 @@ public abstract class ScriptableObject implements Scriptable,
                 return i;
             }
         }
+
+        // No more fast slots available
         return -1;
     }
 
