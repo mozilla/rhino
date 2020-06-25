@@ -106,7 +106,6 @@ public class DynamicRuntime {
             }
             if (++misses > MAX_MISSES) {
                 // If the caching isn't working, give up.
-                System.out.println("Fast off for " + propertyName + " (" + index + ')');
                 setTarget(fallback);
             }
             return callFallback(obj, cx, scope);
@@ -120,7 +119,6 @@ public class DynamicRuntime {
         }
 
         private void switchToFastHandles(int ix) {
-            System.out.println("Fast on for " + propertyName + " (" + ix + ')');
             MethodHandle bound = MethodHandles.insertArguments(direct, 0, ix);
             setTarget(bound);
         }
