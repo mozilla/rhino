@@ -105,7 +105,7 @@ testBenchmark.dependsOn v8Benchmark
 task microBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
     classpath = sourceSets.jmh.runtimeClasspath
     main = 'org.openjdk.jmh.Main'
-    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', 'ObjectCall'
+    args '-f', '2', '-bm', 'avgt', '-tu', 'ns', '-foe', 'true', 'Property'
 }
 
 task jmhHelp(type: JavaExec, description: 'JMH benchmarks') {

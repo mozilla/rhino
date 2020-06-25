@@ -69,14 +69,14 @@ class ThreadSafeSlotMapContainer
   }
 
   @Override
-  public Slot get(Object key, int index, SlotAccess accessType)
+  public Slot get(Object key, int index, SlotAccess accessType, ScriptableObject parent)
   {
     final long stamp = lock.writeLock();
     try {
       if (accessType != SlotAccess.QUERY) {
         checkMapSize();
       }
-      return map.get(key, index, accessType);
+      return map.get(key, index, accessType, parent);
     } finally {
       lock.unlockWrite(stamp);
     }
@@ -112,11 +112,11 @@ class ThreadSafeSlotMapContainer
   }
 
   @Override
-  public void remove(Object key, int index)
+  public void remove(Object key, int index, ScriptableObject parent)
   {
     final long stamp = lock.writeLock();
     try {
-      map.remove(key, index);
+      map.remove(key, index, parent);
     } finally {
       lock.unlockWrite(stamp);
     }

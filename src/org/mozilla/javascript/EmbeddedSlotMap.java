@@ -16,6 +16,7 @@ package org.mozilla.javascript;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.mozilla.javascript.ScriptableObject.FastSlot;
 import org.mozilla.javascript.ScriptableObject.SlotAccess;
 
 public class EmbeddedSlotMap
@@ -109,7 +110,8 @@ public class EmbeddedSlotMap
      * @param index index or 0 if slot holds property name.
      */
     @Override
-    public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType)
+    public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType,
+        ScriptableObject parent)
     {
         if (slots == null && accessType == SlotAccess.QUERY) {
             return null;
@@ -154,11 +156,12 @@ public class EmbeddedSlotMap
 
         // A new slot has to be inserted or the old has to be replaced
         // by GetterSlot. Time to synchronize.
-        return createSlot(key, indexOrHash, accessType, slot);
+        return createSlot(key, indexOrHash, accessType, slot, parent);
     }
 
     private ScriptableObject.Slot createSlot(Object key, int indexOrHash,
-        ScriptableObject.SlotAccess accessType, ScriptableObject.Slot existingSlot) {
+        ScriptableObject.SlotAccess accessType, ScriptableObject.Slot existingSlot,
+        ScriptableObject parent) {
         if (count == 0) {
             // Always throw away old slots if any on empty insert.
             slots = new ScriptableObject.Slot[INITIAL_SLOT_SIZE];
@@ -238,11 +241,19 @@ public class EmbeddedSlotMap
             slots = newSlots;
         }
 
-        ScriptableObject.Slot newSlot = (accessType == SlotAccess.MODIFY_GETTER_SETTER
-                ? new ScriptableObject.GetterSlot(key, indexOrHash, 0)
-                : new ScriptableObject.Slot(key, indexOrHash, 0));
-        if (accessType == SlotAccess.MODIFY_CONST) {
-            newSlot.setAttributes(ScriptableObject.CONST);
+        ScriptableObject.Slot newSlot;
+        int attrs = (accessType == SlotAccess.MODIFY_CONST ? ScriptableObject.CONST : 0);
+        if (accessType == SlotAccess.MODIFY_GETTER_SETTER) {
+            newSlot = new ScriptableObject.GetterSlot(key, indexOrHash, attrs);
+        } else if (accessType != SlotAccess.MODIFY_CONST && key instanceof String) {
+            int fastIx = parent.createFastSlot((String)key);
+            if (fastIx >= 0) {
+                newSlot = new ScriptableObject.FastSlot(parent, fastIx, key, indexOrHash, attrs);
+            } else {
+                newSlot = new ScriptableObject.Slot(key, indexOrHash, attrs);
+            }
+        } else {
+            newSlot = new ScriptableObject.Slot(key, indexOrHash, attrs);
         }
         insertNewSlot(newSlot);
         return newSlot;
@@ -271,7 +282,7 @@ public class EmbeddedSlotMap
     }
 
     @Override
-    public void remove(Object key, int index) {
+    public void remove(Object key, int index, ScriptableObject parent) {
         int indexOrHash = (key != null ? key.hashCode() : index);
 
         if (count != 0) {
@@ -322,6 +333,9 @@ public class EmbeddedSlotMap
                 }
                 if (slot == lastAdded) {
                     lastAdded = prev;
+                }
+                if (slot instanceof FastSlot) {
+                    parent.freeFastValue(((FastSlot)slot).getSlotIndex());
                 }
             }
         }

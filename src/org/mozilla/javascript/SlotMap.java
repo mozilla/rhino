@@ -35,7 +35,8 @@ public interface SlotMap
      * if it is not null, and otherwise "index". "accessType" is one of the
      * constants defined in ScriptableObject.
      */
-    ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType);
+    ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType,
+                              ScriptableObject parent);
 
     /**
      * This is an optimization that is the same as get with an accessType of SLOT_QUERY.
@@ -52,6 +53,6 @@ public interface SlotMap
     /**
      * Remove the slot at either "key" or "index".
      */
-    void remove(Object key, int index);
+    void remove(Object key, int index, ScriptableObject parent);
 }
 

@@ -43,7 +43,8 @@ public class HashSlotMap
     }
 
     @Override
-    public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType) {
+    public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType,
+        ScriptableObject parent) {
         Object name = key == null ? String.valueOf(index) : key;
         ScriptableObject.Slot slot = map.get(name);
         switch (accessType) {
@@ -106,7 +107,7 @@ public class HashSlotMap
     }
 
     @Override
-    public void remove(Object key, int index) {
+    public void remove(Object key, int index, ScriptableObject parent) {
         Object name = key == null ? String.valueOf(index) : key;
         ScriptableObject.Slot slot = map.get(name);
         if (slot != null) {

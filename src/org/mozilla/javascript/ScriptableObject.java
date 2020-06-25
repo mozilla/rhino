@@ -123,6 +123,15 @@ public abstract class ScriptableObject implements Scriptable,
     // Where external array data is stored.
     private transient ExternalArrayData externalData;
 
+    /**
+     * This holds possible optimized field values
+     */
+    public transient Object[] fastValues = null;
+    /**
+     * This holds their names, for testing during a "guard".
+     */
+    public transient String[] fastNames = null;
+
     private volatile Map<Object,Object> associatedValues;
 
     enum SlotAccess {
@@ -152,7 +161,7 @@ public abstract class ScriptableObject implements Scriptable,
         Object name; // This can change due to caching
         int indexOrHash;
         private short attributes;
-        Object value;
+        protected Object value;
         transient Slot next; // next in hash table bucket
         transient Slot orderedNext; // next in linked list
 
@@ -180,10 +189,14 @@ public abstract class ScriptableObject implements Scriptable,
                 return true;
             }
             if (owner == start) {
-                this.value = value;
+                setDirectValue(value);
                 return true;
             }
             return false;
+        }
+
+        void setDirectValue(Object value) {
+            this.value = value;
         }
 
         Object getValue(Scriptable start) {
@@ -202,7 +215,7 @@ public abstract class ScriptableObject implements Scriptable,
         }
 
         ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-            return buildDataDescriptor(scope, value, attributes);
+            return buildDataDescriptor(scope, getValue(null), attributes);
         }
 
     }
@@ -220,7 +233,36 @@ public abstract class ScriptableObject implements Scriptable,
     }
 
     /**
-     * A GetterSlot is a specialication of a Slot for properties that are assigned functions
+     * A FastSlot is a specialization that points to optional "fast" storage.
+     */
+    static final class FastSlot extends Slot
+    {
+        private final int index;
+        private final ScriptableObject parent;
+
+        FastSlot(ScriptableObject parent, int index, Object name, int indexOrHash, int attributes) {
+            super(name, indexOrHash, attributes);
+            this.parent = parent;
+            this.index = index;
+        }
+
+        int getSlotIndex() {
+            return index;
+        }
+
+        @Override
+        void setDirectValue(Object value) {
+            parent.fastValues[index] = value;
+        }
+
+        @Override
+        Object getValue(Scriptable start) {
+            return parent.fastValues[index];
+        }
+    }
+
+    /**
+     * A GetterSlot is a specialization of a Slot for properties that are assigned functions
      * via Object.defineProperty() and its friends instead of regular values.
      */
     static final class GetterSlot extends Slot
@@ -365,8 +407,13 @@ public abstract class ScriptableObject implements Scriptable,
     private SlotMapContainer createSlotMap(int initialSize)
     {
         Context cx = Context.getCurrentContext();
-        if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
+        if (cx != null && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {
             return new ThreadSafeSlotMapContainer(initialSize);
+        }
+        // TODO greg constants and optimization level
+        if (cx != null && cx.getOptimizationLevel() >= 0) {
+            fastValues = new Object[8];
+            fastNames = new String[8];
         }
         return new SlotMapContainer(initialSize);
     }
@@ -580,7 +627,7 @@ public abstract class ScriptableObject implements Scriptable,
     public void delete(String name)
     {
         checkNotSealed(name, 0);
-        slotMap.remove(name, 0);
+        slotMap.remove(name, 0, this);
     }
 
     /**
@@ -595,7 +642,7 @@ public abstract class ScriptableObject implements Scriptable,
     public void delete(int index)
     {
         checkNotSealed(null, index);
-        slotMap.remove(null, index);
+        slotMap.remove(null, index, this);
     }
 
     /**
@@ -605,7 +652,7 @@ public abstract class ScriptableObject implements Scriptable,
     public void delete(Symbol key)
     {
         checkNotSealed(key, 0);
-        slotMap.remove(key, 0);
+        slotMap.remove(key, 0, this);
     }
 
     /**
@@ -826,7 +873,7 @@ public abstract class ScriptableObject implements Scriptable,
 
         final GetterSlot gslot;
         if (isExtensible()) {
-            gslot = (GetterSlot)slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
+            gslot = (GetterSlot)slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER, this);
         } else {
             Slot slot = slotMap.query(name, index);
             if (!(slot instanceof GetterSlot))
@@ -845,7 +892,7 @@ public abstract class ScriptableObject implements Scriptable,
         } else {
             gslot.getter = getterOrSetter;
         }
-        gslot.value = Undefined.instance;
+        gslot.setDirectValue(Undefined.instance);
     }
 
     /**
@@ -899,11 +946,11 @@ public abstract class ScriptableObject implements Scriptable,
             throw new IllegalArgumentException(name);
         checkNotSealed(name, index);
         GetterSlot gslot = (GetterSlot)slotMap.get(name, index,
-            SlotAccess.MODIFY_GETTER_SETTER);
+            SlotAccess.MODIFY_GETTER_SETTER, this);
         gslot.setAttributes(attributes);
         gslot.getter = null;
         gslot.setter = null;
-        gslot.value = init;
+        gslot.setDirectValue(init);
     }
 
     /**
@@ -1866,7 +1913,7 @@ public abstract class ScriptableObject implements Scriptable,
         }
 
         GetterSlot gslot = (GetterSlot)slotMap.get(propertyName, 0,
-            SlotAccess.MODIFY_GETTER_SETTER);
+            SlotAccess.MODIFY_GETTER_SETTER, this);
         gslot.setAttributes(attributes);
         gslot.getter = getterBox;
         gslot.setter = setterBox;
@@ -1952,7 +1999,7 @@ public abstract class ScriptableObject implements Scriptable,
                 gslot.setter = setter;
             }
 
-            gslot.value = Undefined.instance;
+            gslot.setDirectValue(Undefined.instance);
             gslot.setAttributes(attributes);
         } else {
             if (slot instanceof GetterSlot && isDataDescriptor(desc)) {
@@ -1961,9 +2008,9 @@ public abstract class ScriptableObject implements Scriptable,
 
             Object value = getProperty(desc, "value");
             if (value != NOT_FOUND) {
-                slot.value = value;
+                slot.setDirectValue(value);
             } else if (isNew) {
-                slot.value = Undefined.instance;
+                slot.setDirectValue(Undefined.instance);
             }
             slot.setAttributes(attributes);
         }
@@ -2272,13 +2319,13 @@ public abstract class ScriptableObject implements Scriptable,
             final long stamp = slotMap.readLock();
             try {
                 for (Slot slot : slotMap) {
-                    Object value = slot.value;
+                    Object value = slot.getValue(this);
                     if (value instanceof LazilyLoadedCtor) {
                         LazilyLoadedCtor initializer = (LazilyLoadedCtor) value;
                         try {
                             initializer.init();
                         } finally {
-                            slot.value = initializer.getValue();
+                            slot.setDirectValue(initializer.getValue());
                         }
                     }
                 }
@@ -2840,7 +2887,7 @@ public abstract class ScriptableObject implements Scriptable,
             if (isSealed) {
                 checkNotSealed(key, index);
             }
-            slot = slotMap.get(key, index, SlotAccess.MODIFY);
+            slot = slotMap.get(key, index, SlotAccess.MODIFY, this);
         }
         return slot.setValue(value, this, start);
     }
@@ -2881,12 +2928,12 @@ public abstract class ScriptableObject implements Scriptable,
         } else {
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
-            slot = slotMap.get(name, index, SlotAccess.MODIFY_CONST);
+            slot = slotMap.get(name, index, SlotAccess.MODIFY_CONST, this);
             int attr = slot.getAttributes();
             if ((attr & READONLY) == 0)
                 throw Context.reportRuntimeError1("msg.var.redecl", name);
             if ((attr & UNINITIALIZED_CONST) != 0) {
-                slot.value = value;
+                slot.setDirectValue(value);
                 // clear the bit on const initialization
                 if (constFlag != UNINITIALIZED_CONST)
                     slot.setAttributes(attr & ~UNINITIALIZED_CONST);
@@ -2896,9 +2943,63 @@ public abstract class ScriptableObject implements Scriptable,
         return slot.setValue(value, this, start);
     }
 
+    int createFastSlot(String name) {
+        if (fastValues == null) {
+            return -1;
+        }
+        for (int i = 0; i < fastNames.length; i++) {
+            if (fastNames[i] == null) {
+                fastValues[i] = Undefined.instance;
+                fastNames[i] = name;
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    void freeFastValue(int ix) {
+        if (fastValues != null && ix < fastValues.length) {
+            fastValues[ix] = null;
+            fastNames[ix] = null;
+        }
+    }
+
+    /**
+     * This is used as a "guard" by the optimized runtime to see if a fast index
+     * is valid for this particular object at this particular time.
+     */
+    public static boolean hasFastValue(Object obj, String name, int ix) {
+        if (obj instanceof ScriptableObject) {
+            ScriptableObject so = (ScriptableObject)obj;
+            return (so.fastNames != null && ix < so.fastNames.length &&
+                (name == so.fastNames[ix] || name.equals(so.fastNames[ix])));
+        }
+        return false;
+    }
+
+    /**
+     * This returns the value of a property in the fast index with no checking.
+     */
+    public Object getFastValue(int ix) {
+        return fastValues[ix];
+    }
+
+    /**
+     * This is invoked by the optimized runtime to see if a property has been stored with a
+     * permanent "fast index". It's intended to only be used once per call site. If it
+     * returns a value >= 0, then that value can be used later for "getFastValue" calls.
+     */
+    public int getFastIndex(String name) {
+        Slot slot = slotMap.query(name, 0);
+        if (slot instanceof FastSlot) {
+            return ((FastSlot)slot).getSlotIndex();
+        }
+        return -1;
+    }
+
     private Slot findAttributeSlot(String name, int index, SlotAccess accessType)
     {
-        Slot slot = slotMap.get(name, index, accessType);
+        Slot slot = slotMap.get(name, index, accessType, this);
         if (slot == null) {
             String str = (name != null ? name : Integer.toString(index));
             throw Context.reportRuntimeError1("msg.prop.not.found", str);
@@ -2908,7 +3009,7 @@ public abstract class ScriptableObject implements Scriptable,
 
     private Slot findAttributeSlot(Symbol key, SlotAccess accessType)
     {
-        Slot slot = slotMap.get(key, 0, accessType);
+        Slot slot = slotMap.get(key, 0, accessType, this);
         if (slot == null) {
             throw Context.reportRuntimeError1("msg.prop.not.found", key);
         }
@@ -3013,13 +3114,13 @@ public abstract class ScriptableObject implements Scriptable,
 
     protected Slot getSlot(Context cx, Object id, SlotAccess accessType) {
         if (id instanceof Symbol) {
-            return slotMap.get(id, 0, accessType);
+            return slotMap.get(id, 0, accessType, this);
         }
         StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
         if (s.stringId == null) {
-            return slotMap.get(null, s.index, accessType);
+            return slotMap.get(null, s.index, accessType, this);
         }
-        return slotMap.get(s.stringId, 0, accessType);
+        return slotMap.get(s.stringId, 0, accessType, this);
     }
 
     // Partial implementation of java.util.Map. See NativeObject for

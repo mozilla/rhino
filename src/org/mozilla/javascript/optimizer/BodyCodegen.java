@@ -12,6 +12,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
+import org.mozilla.classfile.ClassFileWriter.MHandle;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Kit;
@@ -3939,7 +3940,15 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
 
     private void visitGetProp(Node node, Node child)
     {
-        generateExpression(child, node); // object
+        generateExpression(child, node); // Load object in all cases
+        Node nameChild = child.getNext();
+        if (nameChild.getType() == Token.STRING) {
+            // Constant property name. Do this using INDY.
+
+        }
+
+        /* Old code below
+
         Node nameChild = child.getNext();
         generateExpression(nameChild, node);  // the name
         if (node.getType() == Token.GETPROPNOWARN) {
@@ -3958,6 +3967,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             for 'this.foo' we call getObjectProp(Scriptable...) which can
             skip some casting overhead.
         */
+        /*
         int childType = child.getType();
         if (childType == Token.THIS && nameChild.getType() == Token.STRING) {
             cfw.addALoad(contextLocal);
@@ -3968,16 +3978,26 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
                     +"Lorg/mozilla/javascript/Context;"
                     +")Ljava/lang/Object;");
         } else {
+            ClassFileWriter.MHandle getObjPropBootstrap =
+                new MHandle(ByteCode.MH_INVOKESTATIC,
+                    "org.mozilla.javascript.optimizer.DynamicRuntime",
+                    "bootstrapGetObjectProp",
+                    "(Ljava/lang/invoke/MethodHandles$Lookup;"
+                   + "Ljava/lang/String;"
+                   + "Ljava/lang/invoke/MethodType;"
+                   + ")Ljava/lang/invoke/CallSite;");
+
             cfw.addALoad(contextLocal);
             cfw.addALoad(variableObjectLocal);
-            addScriptRuntimeInvoke(
-                "getObjectProp",
+            cfw.addInvokeDynamic("getFastObjectProp",
                 "(Ljava/lang/Object;"
                     +"Ljava/lang/String;"
                     +"Lorg/mozilla/javascript/Context;"
                     +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;");
+                    +")Ljava/lang/Object;",
+                getObjPropBootstrap);
         }
+        */
     }
 
     private void visitSetProp(int type, Node node, Node child)

@@ -52,12 +52,12 @@ class SlotMapContainer
   }
 
   @Override
-  public Slot get(Object key, int index, SlotAccess accessType)
+  public Slot get(Object key, int index, SlotAccess accessType, ScriptableObject parent)
   {
     if (accessType != SlotAccess.QUERY) {
       checkMapSize();
     }
-    return map.get(key, index, accessType);
+    return map.get(key, index, accessType, parent);
   }
 
   @Override
@@ -73,8 +73,8 @@ class SlotMapContainer
   }
 
   @Override
-  public void remove(Object key, int index) {
-    map.remove(key, index);
+  public void remove(Object key, int index, ScriptableObject parent) {
+    map.remove(key, index, parent);
   }
 
   @Override
