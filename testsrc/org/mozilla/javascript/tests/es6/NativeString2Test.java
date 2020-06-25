@@ -82,4 +82,11 @@ public class NativeString2Test {
       );
       assertEquals("The normalization form should be one of 'NFC', 'NFD', 'NFKC', 'NFKD'.", result);
   }
+
+  @Test
+  public void testReplaceReplacementAsString() {
+      Object result = cx.evaluateString(scope, "'123'.replace('2', /x/);", "test", 1, null);
+
+      assertEquals("1/x/3", result);
+  }
 }
