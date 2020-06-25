@@ -92,7 +92,9 @@ public class RegExpImpl implements RegExpProxy {
                 Object arg1 = args.length < 2 ? Undefined.instance : args[1];
                 String repstr = null;
                 Function lambda = null;
-                if (arg1 instanceof Function) {
+                if (arg1 instanceof Function
+                        && (cx.getLanguageVersion() < Context.VERSION_ES6
+                                || !(arg1 instanceof NativeRegExp))) {
                     lambda = (Function) arg1;
                 } else {
                     repstr = ScriptRuntime.toString(arg1);
