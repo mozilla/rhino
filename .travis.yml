@@ -2,6 +2,7 @@ language: java
 dist: xenial
 jdk: 
   - openjdk8
+  - openjdk11
 script:
   - travis_wait 30 ./gradlew check
 
