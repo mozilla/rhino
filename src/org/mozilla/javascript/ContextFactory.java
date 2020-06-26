@@ -207,7 +207,7 @@ public class ContextFactory
      * thread.
      * This is a callback method used by Rhino to create {@link Context}
      * instance when it is necessary to associate one with the current
-     * execution thread. <tt>makeContext()</tt> is allowed to call
+     * execution thread. <code>makeContext()</code> is allowed to call
      * {@link Context#seal(Object)} on the result to prevent
      * {@link Context} changes by hostile scripts or applets.
      */
@@ -543,7 +543,7 @@ public class ContextFactory
      *          Context.exit();
      *      }
      * </pre>
-     * Instead of using <tt>enterContext()</tt>, <tt>exit()</tt> pair consider
+     * Instead of using <code>enterContext()</code>, <code>exit()</code> pair consider
      * using {@link #call(ContextAction)} which guarantees proper association
      * of Context instances with the current thread.
      * With this method the above example becomes:

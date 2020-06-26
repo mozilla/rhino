@@ -665,23 +665,23 @@ public class Global extends ImporterTopLevel
      * empty.
      * The following properties of the option object are processed:
      * <ul>
-     * <li><tt>args</tt> - provides an array of additional command arguments
-     * <li><tt>env</tt> - explicit environment object. All its enumerable
+     * <li><code>args</code> - provides an array of additional command arguments
+     * <li><code>env</code> - explicit environment object. All its enumerable
      *   properties define the corresponding environment variable names.
-     * <li><tt>input</tt> - the process input. If it is not
+     * <li><code>input</code> - the process input. If it is not
      *   java.io.InputStream, it is converted to string and sent to the process
      *   as its input. If not specified, no input is provided to the process.
-     * <li><tt>output</tt> - the process output instead of
+     * <li><code>output</code> - the process output instead of
      *   java.lang.System.out. If it is not instance of java.io.OutputStream,
      *   the process output is read, converted to a string, appended to the
      *   output property value converted to string and put as the new value of
      *   the output property.
-     * <li><tt>err</tt> - the process error output instead of
+     * <li><code>err</code> - the process error output instead of
      *   java.lang.System.err. If it is not instance of java.io.OutputStream,
      *   the process error output is read, converted to a string, appended to
      *   the err property value converted to string and put as the new
      *   value of the err property.
-     * <li><tt>dir</tt> - the working direcotry to run the commands.
+     * <li><code>dir</code> - the working direcotry to run the commands.
      * </ul>
      */
     public static Object runCommand(Context cx, Scriptable thisObj,

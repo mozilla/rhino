@@ -57,7 +57,7 @@ public abstract class VMBridge
 
     /**
      * Associate {@link Context} instance with the current thread or remove
-     * the current association if <tt>cx</tt> is null.
+     * the current association if <code>cx</code> is null.
      *
      * @param contextHelper The result of {@link #getThreadContextHelper()}
      *                      called from the current thread.
@@ -96,7 +96,7 @@ public abstract class VMBridge
      * {@link InterfaceAdapter#invoke(ContextFactory, Object, Scriptable,
      *                                Object, Method, Object[])}
      * as implementation of interface methods associated with
-     * <tt>proxyHelper</tt>. {@link Method}
+     * <code>proxyHelper</code>. {@link Method}
      *
      * @param proxyHelper The result of the previous call to
      *        {@link #getInterfaceProxyHelper(ContextFactory, Class[])}.

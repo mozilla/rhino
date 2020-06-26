@@ -527,7 +527,7 @@ public class Node implements Iterable<Node>
         this.lineno = lineno;
     }
 
-    /** Can only be called when <tt>getType() == Token.NUMBER</tt> */
+    /** Can only be called when <code>getType() == Token.NUMBER</code> */
     public final double getDouble() {
         return ((NumberLiteral)this).getNumber();
     }
