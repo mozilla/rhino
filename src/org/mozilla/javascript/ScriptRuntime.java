@@ -3593,10 +3593,10 @@ public class ScriptRuntime {
     }
 
     /**
-     * Return <tt>possibleDynamicScope</tt> if <tt>staticTopScope</tt>
-     * is present on its prototype chain and return <tt>staticTopScope</tt>
+     * Return <code>possibleDynamicScope</code> if <code>staticTopScope</code>
+     * is present on its prototype chain and return <code>staticTopScope</code>
      * otherwise.
-     * Should only be called when <tt>staticTopScope</tt> is top scope.
+     * Should only be called when <code>staticTopScope</code> is top scope.
      */
     static Scriptable checkDynamicScope(Scriptable possibleDynamicScope,
                                         Scriptable staticTopScope)

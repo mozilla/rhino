@@ -22,7 +22,7 @@ public class InterfaceAdapter
      * call the supplied JS function when called.
      * Only interfaces were all methods have the same signature is supported.
      *
-     * @return The glue object or null if <tt>cl</tt> is not interface or
+     * @return The glue object or null if <code>cl</code> is not interface or
      *         has methods with different signatures.
      */
     static Object create(Context cx, Class<?> cl, ScriptableObject object)

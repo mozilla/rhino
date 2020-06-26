@@ -84,7 +84,7 @@ public abstract class XMLObject extends IdScriptableObject
     public abstract NativeWith enterDotQuery(Scriptable scope);
 
     /**
-     * Custom <tt>+</tt> operator.
+     * Custom <code>+</code> operator.
      * Should return {@link Scriptable#NOT_FOUND} if this object does not have
      * custom addition operator for the given value,
      * or the result of the addition operation.

@@ -54,7 +54,7 @@ public interface Scriptable {
      * Depending on the property selector, the runtime will call
      * this method or the form of <code>get</code> that takes an
      * integer:
-     * <table summary='mapping js code to java code'>
+     * <table>
      * <tr><th>JavaScript code</th><th>Java code</th></tr>
      * <tr><td>a.b      </td><td>a.get("b", a)</td></tr>
      * <tr><td>a["foo"] </td><td>a.get("foo", a)</td></tr>

@@ -144,8 +144,8 @@ final class ConstantPool
   }
 
   /**
-   * Get maximum i such that <tt>start <= i <= end</tt> and
-   * <tt>s.substring(start, i)</tt> fits JVM UTF string encoding limit.
+   * Get maximum i such that <code>start <= i <= end</code> and
+   * <code>s.substring(start, i)</code> fits JVM UTF string encoding limit.
    */
   int getUtfEncodingLimit(String s, int start, int end)
   {

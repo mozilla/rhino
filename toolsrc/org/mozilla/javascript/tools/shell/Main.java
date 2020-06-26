@@ -687,9 +687,9 @@ public class Main
     }
 
     /**
-     * Read file or url specified by <tt>path</tt>.
-     * @return file or url content as <tt>byte[]</tt> or as <tt>String</tt> if
-     * <tt>convertToString</tt> is true.
+     * Read file or url specified by <code>path</code>.
+     * @return file or url content as <code>byte[]</code> or as <code>String</code> if
+     * <code>convertToString</code> is true.
      */
     private static Object readFileOrUrl(String path, boolean convertToString)
             throws IOException

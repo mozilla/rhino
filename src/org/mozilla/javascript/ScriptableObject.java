@@ -1123,17 +1123,17 @@ public abstract class ScriptableObject implements Scriptable,
     }
 
     /**
-     * Custom <tt>==</tt> operator.
+     * Custom <code>==</code> operator.
      * Must return {@link Scriptable#NOT_FOUND} if this object does not
      * have custom equality operator for the given value,
-     * <tt>Boolean.TRUE</tt> if this object is equivalent to <tt>value</tt>,
-     * <tt>Boolean.FALSE</tt> if this object is not equivalent to
-     * <tt>value</tt>.
+     * <code>Boolean.TRUE</code> if this object is equivalent to <code>value</code>,
+     * <code>Boolean.FALSE</code> if this object is not equivalent to
+     * <code>value</code>.
      * <p>
      * The default implementation returns Boolean.TRUE
-     * if <tt>this == value</tt> or {@link Scriptable#NOT_FOUND} otherwise.
+     * if <code>this == value</code> or {@link Scriptable#NOT_FOUND} otherwise.
      * It indicates that by default custom equality is available only if
-     * <tt>value</tt> is <tt>this</tt> in which case true is returned.
+     * <code>value</code> is <code>this</code> in which case true is returned.
      */
     protected Object equivalentValues(Object value)
     {

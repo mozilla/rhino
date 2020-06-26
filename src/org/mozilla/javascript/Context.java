@@ -126,8 +126,8 @@ public class Context
     public static final int VERSION_ES6 =      200;
 
     /**
-     * Controls behaviour of <tt>Date.prototype.getYear()</tt>.
-     * If <tt>hasFeature(FEATURE_NON_ECMA_GET_YEAR)</tt> returns true,
+     * Controls behaviour of <code>Date.prototype.getYear()</code>.
+     * If <code>hasFeature(FEATURE_NON_ECMA_GET_YEAR)</code> returns true,
      * Date.prototype.getYear subtructs 1900 only if 1900 &lt;= date &lt; 2000.
      * The default behavior of {@link #hasFeature(int)} is always to subtruct
      * 1900 as rquired by ECMAScript B.2.4.
@@ -136,9 +136,9 @@ public class Context
 
     /**
      * Control if member expression as function name extension is available.
-     * If <tt>hasFeature(FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)</tt> returns
-     * true, allow <tt>function memberExpression(args) { body }</tt> to be
-     * syntax sugar for <tt>memberExpression = function(args) { body }</tt>,
+     * If <code>hasFeature(FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)</code> returns
+     * true, allow <code>function memberExpression(args) { body }</code> to be
+     * syntax sugar for <code>memberExpression = function(args) { body }</code>,
      * when memberExpression is not a simple identifier.
      * See ECMAScript-262, section 11.2 for definition of memberExpression.
      * By default {@link #hasFeature(int)} returns false.
@@ -147,7 +147,7 @@ public class Context
 
     /**
      * Control if reserved keywords are treated as identifiers.
-     * If <tt>hasFeature(RESERVED_KEYWORD_AS_IDENTIFIER)</tt> returns true,
+     * If <code>hasFeature(RESERVED_KEYWORD_AS_IDENTIFIER)</code> returns true,
      * treat future reserved keyword (see  Ecma-262, section 7.5.3) as ordinary
      * identifiers but warn about this usage.
      *
@@ -156,14 +156,14 @@ public class Context
     public static final int FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER = 3;
 
     /**
-     * Control if <tt>toString()</tt> should returns the same result
-     * as  <tt>toSource()</tt> when applied to objects and arrays.
-     * If <tt>hasFeature(FEATURE_TO_STRING_AS_SOURCE)</tt> returns true,
-     * calling <tt>toString()</tt> on JS objects gives the same result as
-     * calling <tt>toSource()</tt>. That is it returns JS source with code
+     * Control if <code>toString()</code> should returns the same result
+     * as  <code>toSource()</code> when applied to objects and arrays.
+     * If <code>hasFeature(FEATURE_TO_STRING_AS_SOURCE)</code> returns true,
+     * calling <code>toString()</code> on JS objects gives the same result as
+     * calling <code>toSource()</code>. That is it returns JS source with code
      * to create an object with all enumeratable fields of the original object
-     * instead of printing <tt>[object <i>result of
-     * {@link Scriptable#getClassName()}</i>]</tt>.
+     * instead of printing <code>[object <i>result of
+     * {@link Scriptable#getClassName()}</i>]</code>.
      * <p>
      * By default {@link #hasFeature(int)} returns true only if
      * the current JS version is set to {@link #VERSION_1_2}.
@@ -171,18 +171,18 @@ public class Context
     public static final int FEATURE_TO_STRING_AS_SOURCE = 4;
 
     /**
-     * Control if properties <tt>__proto__</tt> and <tt>__parent__</tt>
+     * Control if properties <code>__proto__</code> and <code>__parent__</code>
      * are treated specially.
-     * If <tt>hasFeature(FEATURE_PARENT_PROTO_PROPERTIES)</tt> returns true,
-     * treat <tt>__parent__</tt> and <tt>__proto__</tt> as special properties.
+     * If <code>hasFeature(FEATURE_PARENT_PROTO_PROPERTIES)</code> returns true,
+     * treat <code>__parent__</code> and <code>__proto__</code> as special properties.
      * <p>
      * The properties allow to query and set scope and prototype chains for the
      * objects. The special meaning of the properties is available
      * only when they are used as the right hand side of the dot operator.
-     * For example, while <tt>x.__proto__ = y</tt> changes the prototype
-     * chain of the object <tt>x</tt> to point to <tt>y</tt>,
-     * <tt>x["__proto__"] = y</tt> simply assigns a new value to the property
-     * <tt>__proto__</tt> in <tt>x</tt> even when the feature is on.
+     * For example, while <code>x.__proto__ = y</code> changes the prototype
+     * chain of the object <code>x</code> to point to <code>y</code>,
+     * <code>x["__proto__"] = y</code> simply assigns a new value to the property
+     * <code>__proto__</code> in <code>x</code> even when the feature is on.
      *
      * By default {@link #hasFeature(int)} returns true.
      */
@@ -505,7 +505,7 @@ public class Context
      * Call {@link ContextAction#run(Context cx)}
      * using the Context instance associated with the current thread.
      * If no Context is associated with the thread, then
-     * <tt>ContextFactory.getGlobal().makeContext()</tt> will be called to
+     * <code>ContextFactory.getGlobal().makeContext()</code> will be called to
      * construct new Context instance. The instance will be temporary
      * associated with the thread during call to
      * {@link ContextAction#run(Context)}.
@@ -530,7 +530,7 @@ public class Context
      * new Context instance. The instance will be temporary associated
      * with the thread during call to {@link ContextAction#run(Context)}.
      * <p>
-     * It is allowed but not advisable to use null for <tt>factory</tt>
+     * It is allowed but not advisable to use null for <code>factory</code>
      * argument in which case the global static singleton ContextFactory
      * instance will be used to create new context instances.
      * @see ContextFactory#call(ContextAction)
@@ -621,9 +621,9 @@ public class Context
      * including calling {@link #enter()} and {@link #exit()} methods will
      * throw an exception.
      * <p>
-     * If <tt>sealKey</tt> is not null, calling
+     * If <code>sealKey</code> is not null, calling
      * {@link #unseal(Object sealKey)} with the same key unseals
-     * the object. If <tt>sealKey</tt> is null, unsealing is no longer possible.
+     * the object. If <code>sealKey</code> is null, unsealing is no longer possible.
      *
      * @see #isSealed()
      * @see #unseal(Object)
@@ -637,8 +637,8 @@ public class Context
 
     /**
      * Unseal previously sealed Context object.
-     * The <tt>sealKey</tt> argument should not be null and should match
-     * <tt>sealKey</tt> suplied with the last call to
+     * The <code>sealKey</code> argument should not be null and should match
+     * <code>sealKey</code> suplied with the last call to
      * {@link #seal(Object)} or an exception will be thrown.
      *
      * @see #isSealed()
@@ -1795,7 +1795,7 @@ public class Context
      * <p>
      * Note that for Number instances during any arithmetic operation in
      * JavaScript the engine will always use the result of
-     * <tt>Number.doubleValue()</tt> resulting in a precision loss if
+     * <code>Number.doubleValue()</code> resulting in a precision loss if
      * the number can not fit into double.
      * <p>
      * If value is an instance of Character, it will be converted to string of
@@ -2057,7 +2057,7 @@ public class Context
     /**
      * Set the security controller for this context.
      * <p> SecurityController may only be set if it is currently null
-     * and {@link SecurityController#hasGlobal()} is <tt>false</tt>.
+     * and {@link SecurityController#hasGlobal()} is <code>false</code>.
      * Otherwise a SecurityException is thrown.
      * @param controller a SecurityController object
      * @throws SecurityException if there is already a SecurityController

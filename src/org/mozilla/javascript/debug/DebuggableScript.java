@@ -48,8 +48,8 @@ public interface DebuggableScript
 
     /**
      * Get name of a declared parameter or local variable.
-     * <tt>index</tt> should be less then {@link #getParamAndVarCount()}.
-     * If <tt>index&nbsp;&lt;&nbsp;{@link #getParamCount()}</tt>, return
+     * <code>index</code> should be less then {@link #getParamAndVarCount()}.
+     * If <code>index&nbsp;&lt;&nbsp;{@link #getParamCount()}</code>, return
      * the name of the corresponding parameter, otherwise return the name
      * of variable.
      * If this script is not function, return the name of the declared
@@ -65,8 +65,8 @@ public interface DebuggableScript
 
     /**
      * Returns true if this script or function were runtime-generated
-     * from JavaScript using <tt>eval</tt> function or <tt>Function</tt>
-     * or <tt>Script</tt> constructors.
+     * from JavaScript using <code>eval</code> function or <code>Function</code>
+     * or <code>Script</code> constructors.
      */
     public boolean isGeneratedScript();
 

@@ -80,8 +80,8 @@ public class Kit
     }
 
     /**
-     * If character <tt>c</tt> is a hexadecimal digit, return
-     * <tt>accumulator</tt> * 16 plus corresponding
+     * If character <code>c</code> is a hexadecimal digit, return
+     * <code>accumulator</code> * 16 plus corresponding
      * number. Otherise return -1.
      */
     public static int xDigitToInt(int c, int accumulator)
@@ -366,8 +366,8 @@ public class Kit
     /**
      * Throws RuntimeException to indicate failed assertion.
      * The function never returns and its return type is RuntimeException
-     * only to be able to write <tt>throw Kit.codeBug()</tt> if plain
-     * <tt>Kit.codeBug()</tt> triggers unreachable code error.
+     * only to be able to write <code>throw Kit.codeBug()</code> if plain
+     * <code>Kit.codeBug()</code> triggers unreachable code error.
      */
     public static RuntimeException codeBug()
         throws RuntimeException
@@ -381,8 +381,8 @@ public class Kit
     /**
      * Throws RuntimeException to indicate failed assertion.
      * The function never returns and its return type is RuntimeException
-     * only to be able to write <tt>throw Kit.codeBug()</tt> if plain
-     * <tt>Kit.codeBug()</tt> triggers unreachable code error.
+     * only to be able to write <code>throw Kit.codeBug()</code> if plain
+     * <code>Kit.codeBug()</code> triggers unreachable code error.
      */
     public static RuntimeException codeBug(String msg)
         throws RuntimeException
