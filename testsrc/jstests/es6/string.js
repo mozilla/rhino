@@ -26,4 +26,14 @@ load("testsrc/assert.js");
     assertEquals('☃★♲你', String.fromCodePoint(9731, 9733, 9842, 0x2F804))
 })();
 
+(function TestTrimStart() {
+    assertEquals("abc ", " abc ".trimStart())
+    assertEquals("abc ", " abc ".trimLeft())
+})();
+
+(function TestTrimEnd() {
+    assertEquals(" abc", " abc ".trimEnd())
+    assertEquals(" abc", " abc ".trimRight())
+})();
+
 "success";

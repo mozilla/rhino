@@ -187,6 +187,8 @@ final class NativeString extends IdScriptableObject
           case Id_codePointAt:       arity=1; s="codePointAt";       break;
           case Id_padStart:          arity=1; s="padStart";          break;
           case Id_padEnd:            arity=1; s="padEnd";            break;
+          case Id_trimStart:         arity=0; s="trimStart";         break;
+          case Id_trimEnd:           arity=0; s="trimEnd";           break;
           default: throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(STRING_TAG, id, s, fnName, arity);
@@ -474,7 +476,8 @@ final class NativeString extends IdScriptableObject
 
                     return str.substring(start, end);
                 }
-                case Id_trimLeft: {
+                case Id_trimLeft:
+                case Id_trimStart: {
                     String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     char[] chars = str.toCharArray();
 
@@ -487,6 +490,7 @@ final class NativeString extends IdScriptableObject
                     return str.substring(start, end);
                 }
                 case Id_trimRight:
+                case Id_trimEnd:
                 {
                     String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     char[] chars = str.toCharArray();
@@ -932,7 +936,7 @@ final class NativeString extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2019-02-16 09:39:44 MEZ
+// #generated# Last update: 2020-06-27 11:15:47 CST
         L0: { id = 0; String X = null; int c;
             L: switch (s.length()) {
             case 3: c=s.charAt(2);
@@ -970,6 +974,7 @@ final class NativeString extends IdScriptableObject
                 case 'a': X="valueOf";id=Id_valueOf; break L;
                 case 'e': X="replace";id=Id_replace; break L;
                 case 'n': X="indexOf";id=Id_indexOf; break L;
+                case 'r': X="trimEnd";id=Id_trimEnd; break L;
                 case 't': X="italics";id=Id_italics; break L;
                 } break L;
             case 8: switch (s.charAt(6)) {
@@ -981,11 +986,12 @@ final class NativeString extends IdScriptableObject
                 case 't': X="endsWith";id=Id_endsWith; break L;
                 case 'z': X="fontsize";id=Id_fontsize; break L;
                 } break L;
-            case 9: switch (s.charAt(0)) {
-                case 'f': X="fontcolor";id=Id_fontcolor; break L;
-                case 'n': X="normalize";id=Id_normalize; break L;
-                case 's': X="substring";id=Id_substring; break L;
-                case 't': X="trimRight";id=Id_trimRight; break L;
+            case 9: switch (s.charAt(4)) {
+                case 'R': X="trimRight";id=Id_trimRight; break L;
+                case 'S': X="trimStart";id=Id_trimStart; break L;
+                case 'a': X="normalize";id=Id_normalize; break L;
+                case 'c': X="fontcolor";id=Id_fontcolor; break L;
+                case 't': X="substring";id=Id_substring; break L;
                 } break L;
             case 10: c=s.charAt(0);
                 if (c=='c') { X="charCodeAt";id=Id_charCodeAt; }
@@ -1064,7 +1070,9 @@ final class NativeString extends IdScriptableObject
         Id_padStart                  = 46,
         Id_padEnd                    = 47,
         SymbolId_iterator            = 48,
-        MAX_PROTOTYPE_ID             = SymbolId_iterator;
+        Id_trimStart                 = 49,
+        Id_trimEnd                   = 50,
+        MAX_PROTOTYPE_ID             = Id_trimEnd;
 
 // #/string_id_map#
 
