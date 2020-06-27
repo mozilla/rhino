@@ -90,6 +90,8 @@ final class NativeString extends IdScriptableObject
     {
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode,
                 "fromCharCode", 1);
+        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCodePoint,
+                "fromCodePoint", 1);
         addIdFunctionProperty(ctor, STRING_TAG,
                 ConstructorId_charAt, "charAt", 2);
         addIdFunctionProperty(ctor, STRING_TAG,
@@ -229,6 +231,18 @@ final class NativeString extends IdScriptableObject
                     }
                     id = -id;
                     continue again;
+                }
+
+                case ConstructorId_fromCodePoint: {
+                    int N = args.length;
+                    if (N < 1)
+                        return "";
+                    int[] codePoints = new int[N];
+                    StringBuilder sb = new StringBuilder(N);
+                    for (int i = 0; i != N; i++) {
+                        codePoints[i] = ScriptRuntime.toInt32(args[i]);
+                    }
+                    return new String(codePoints, 0, N);
                 }
 
                 case ConstructorId_fromCharCode: {
@@ -1000,6 +1014,7 @@ final class NativeString extends IdScriptableObject
 
     private static final int
         ConstructorId_fromCharCode   = -1,
+        ConstructorId_fromCodePoint   = -2,
 
         Id_constructor               = 1,
         Id_toString                  = 2,
