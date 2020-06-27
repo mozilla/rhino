@@ -22,4 +22,8 @@ load("testsrc/assert.js");
   assertEquals(2, "abcdEfg".search("cd", "not used"));
 })();
 
+(function TestFromCodePoint() {
+    assertEquals('☃★♲你', String.fromCodePoint(9731, 9733, 9842, 0x2F804))
+})();
+
 "success";
