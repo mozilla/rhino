@@ -235,11 +235,11 @@ final class NativeString extends IdScriptableObject
                     int N = args.length;
                     if (N < 1)
                         return "";
-                    StringBuilder sb = new StringBuilder(N);
+                    char[] chars = new char[N];
                     for (int i = 0; i != N; ++i) {
-                        sb.append(ScriptRuntime.toUint16(args[i]));
+                        chars[i] = ScriptRuntime.toUint16(args[i]);
                     }
-                    return sb.toString();
+                    return new String(chars);
                 }
 
                 case Id_constructor: {
