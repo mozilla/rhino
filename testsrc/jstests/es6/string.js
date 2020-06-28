@@ -23,7 +23,8 @@ load("testsrc/assert.js");
 })();
 
 (function TestFromCodePoint() {
-    assertEquals('☃★♲你', String.fromCodePoint(9731, 9733, 9842, 0x2F804))
+    // Text: ☃★♲你
+    assertEquals('\u2603\u2605\u2672\uD87E\uDC04', String.fromCodePoint(0x2603, 0x2605, 0x2672, 0x2F804))
 })();
 
 (function TestTrimStart() {
