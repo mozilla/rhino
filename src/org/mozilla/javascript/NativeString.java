@@ -236,23 +236,25 @@ final class NativeString extends IdScriptableObject
                 }
 
                 case ConstructorId_fromCodePoint: {
-                    int N = args.length;
-                    if (N < 1)
+                    int n = args.length;
+                    if (n < 1) {
                         return "";
-                    int[] codePoints = new int[N];
-                    StringBuilder sb = new StringBuilder(N);
-                    for (int i = 0; i != N; i++) {
+                    }
+                    int[] codePoints = new int[n];
+                    StringBuilder sb = new StringBuilder(n);
+                    for (int i = 0; i != n; i++) {
                         codePoints[i] = ScriptRuntime.toInt32(args[i]);
                     }
-                    return new String(codePoints, 0, N);
+                    return new String(codePoints, 0, n);
                 }
 
                 case ConstructorId_fromCharCode: {
-                    int N = args.length;
-                    if (N < 1)
+                    int n = args.length;
+                    if (n < 1) {
                         return "";
-                    char[] chars = new char[N];
-                    for (int i = 0; i != N; ++i) {
+                    }
+                    char[] chars = new char[n];
+                    for (int i = 0; i != n; ++i) {
                         chars[i] = ScriptRuntime.toUint16(args[i]);
                     }
                     return new String(chars);
