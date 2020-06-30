@@ -241,7 +241,6 @@ final class NativeString extends IdScriptableObject
                         return "";
                     }
                     int[] codePoints = new int[n];
-                    StringBuilder sb = new StringBuilder(n);
                     for (int i = 0; i != n; i++) {
                         codePoints[i] = ScriptRuntime.toInt32(args[i]);
                     }
