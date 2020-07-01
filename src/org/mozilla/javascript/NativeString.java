@@ -242,7 +242,13 @@ final class NativeString extends IdScriptableObject
                     }
                     int[] codePoints = new int[n];
                     for (int i = 0; i != n; i++) {
-                        codePoints[i] = ScriptRuntime.toInt32(args[i]);
+                        Object arg = args[i];
+                        int codePoint = ScriptRuntime.toInt32(arg);
+                        double num = ScriptRuntime.toNumber(arg);
+                        if (!ScriptRuntime.eqNumber(num, codePoint) || !Character.isValidCodePoint(codePoint)) {
+                            throw rangeError("Invalid code point " + ScriptRuntime.toString(arg));
+                        }
+                        codePoints[i] = codePoint;
                     }
                     return new String(codePoints, 0, n);
                 }
