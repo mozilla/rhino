@@ -43,6 +43,48 @@ public class NativeRegExpTest {
         Context.exit();
     }
 
+
+    @Test
+    public void regExMinusInRangeBorderCases() {
+        Context cx = Context.enter();
+        cx.setLanguageVersion(Context.VERSION_1_8);
+        ScriptableObject scope = cx.initStandardObjects();
+
+        String source = "var r = 'a-b_c d efg 1 23';\n"
+                + "r.replace(/[_-]+/g, 'x');";
+        assertEquals("axbxc d efg 1 23", cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "var r = 'a-b_c d efg 1 23';\n"
+                + "r.replace(/[_-\\s]+/g, 'x');";
+        assertEquals("axbxcxdxefgx1x23", cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "var r = 'a-b_c d efg 1 23';\n"
+                + "r.replace(/[_-\\S]+/g, 'x');";
+        assertEquals("x x x x x", cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "var r = 'a-b_c d efg 1 23';\n"
+                + "r.replace(/[_-\\w]+/g, 'x');";
+        assertEquals("x x x x x", cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "var r = 'a-b_c d efg 1 23';\n"
+                + "r.replace(/[_-\\W]+/g, 'x');";
+        assertEquals("axbxcxdxefgx1x23", cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "var r = 'a-b_c d efg 1 23';\n"
+                + "r.replace(/[_-\\d]+/g, 'x');";
+        assertEquals("axbxc d efg x x", cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "var r = 'a-b_c d efg 1 23';\n"
+                + "r.replace(/[_-\\D]+/g, 'x');";
+        assertEquals("x1x23", cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "var r = 'a-b_c d efg 1 23';\n"
+                + "r.replace(/[_-\\a]+/g, 'x');";
+        assertEquals("x-bxc d efg 1 23", cx.evaluateString(scope, source, "test", 0, null));
+
+        Context.exit();
+    }
+
     @Test
     public void regExIsNotCallable() {
         Context cx = Context.enter();

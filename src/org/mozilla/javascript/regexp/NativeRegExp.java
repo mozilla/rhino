@@ -633,22 +633,19 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     break;
                 case 'd':
                     if (inRange) {
-                        reportError("msg.bad.range", "");
-                        return false;
+                        target.bmsize = 65536;
+                        return true;
                     }
                     localMax = '9';
                     break;
                 case 'D':
-                case 's':
-                case 'S':
                 case 'w':
                 case 'W':
-                    if (inRange) {
-                        reportError("msg.bad.range", "");
-                        return false;
-                    }
+                case 'S':
+                case 's':
                     target.bmsize = 65536;
                     return true;
+
                 case '0':
                 case '1':
                 case '2':
@@ -1658,29 +1655,34 @@ public class NativeRegExp extends IdScriptableObject implements Function
                     break;
 
                 case 'd':
+                    if (inRange) { addCharacterToCharSet(charSet, '-'); inRange = false; }
                     addCharacterRangeToCharSet(charSet, '0', '9');
                     continue;   /* don't need range processing */
                 case 'D':
+                    if (inRange) { addCharacterToCharSet(charSet, '-'); inRange = false; }
                     addCharacterRangeToCharSet(charSet, (char)0, (char)('0' - 1));
-                    addCharacterRangeToCharSet(charSet, (char)('9' + 1),
-                                                (char)(charSet.length - 1));
+                    addCharacterRangeToCharSet(charSet, (char)('9' + 1), (char)(charSet.length - 1));
                     continue;
                 case 's':
+                    if (inRange) { addCharacterToCharSet(charSet, '-'); inRange = false; }
                     for (i = (charSet.length - 1); i >= 0; i--)
                         if (isREWhiteSpace(i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'S':
+                    if (inRange) { addCharacterToCharSet(charSet, '-'); inRange = false; }
                     for (i = (charSet.length - 1); i >= 0; i--)
                         if (!isREWhiteSpace(i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'w':
+                    if (inRange) { addCharacterToCharSet(charSet, '-'); inRange = false; }
                     for (i = (charSet.length - 1); i >= 0; i--)
                         if (isWord((char)i))
                             addCharacterToCharSet(charSet, (char)(i));
                     continue;
                 case 'W':
+                    if (inRange) { addCharacterToCharSet(charSet, '-'); inRange = false; }
                     for (i = (charSet.length - 1); i >= 0; i--)
                         if (!isWord((char)i))
                             addCharacterToCharSet(charSet, (char)(i));
@@ -1688,7 +1690,6 @@ public class NativeRegExp extends IdScriptableObject implements Function
                 default:
                     thisCh = c;
                     break;
-
                 }
                 break;
 
