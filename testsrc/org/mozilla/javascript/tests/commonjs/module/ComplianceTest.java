@@ -19,8 +19,9 @@ import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScript
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
 
 import junit.framework.AssertionFailedError;
+import org.mozilla.javascript.tests.ParallelParameterized;
 
-@RunWith(Parameterized.class)
+@RunWith(ParallelParameterized.class)
 public class ComplianceTest {
 
     private File testDir;

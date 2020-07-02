@@ -10,13 +10,12 @@ import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.tools.shell.Global;
 
-@RunWith(Parameterized.class)
+@RunWith(ParallelParameterized.class)
 public class DoctestFeature18EnabledTest extends DoctestsTest {
     public DoctestFeature18EnabledTest(String name, String source, int optimizationLevel) {
         super(name, source, optimizationLevel);

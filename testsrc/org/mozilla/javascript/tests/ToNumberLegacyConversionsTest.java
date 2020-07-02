@@ -30,7 +30,7 @@ import org.mozilla.javascript.Scriptable;
  *
  * This is only enabled with a language version < ES6 (200).
  */
-@RunWith(Parameterized.class)
+@RunWith(ParallelParameterized.class)
 public class ToNumberLegacyConversionsTest {
     private static final int[] OPT_LEVELS = {-1, 0, 9};
     private static final Object[][] TESTS = {

@@ -17,7 +17,6 @@ import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.ErrorReporter;
@@ -31,7 +30,7 @@ import org.mozilla.javascript.ast.IdeErrorReporter;
  * @author André Bargull
  */
 @SuppressWarnings("serial")
-@RunWith(Parameterized.class)
+@RunWith(ParallelParameterized.class)
 public class Bug789277Test {
     private static final String SOURCE_NAME = "<eval>";
     private static final String MISSING_SEMI = "missing ; after statement";
