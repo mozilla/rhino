@@ -162,6 +162,9 @@ public class JTreeTable extends JTable {
 
         public TreeTableCellRenderer(TreeModel model) {
             super(model);
+
+            // Make sure that there is no border.
+            setBorder(null);
         }
 
         /**
