@@ -110,7 +110,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         }
     }
 
-    private Entry makeDummy() {
+    private static Entry makeDummy() {
         final Entry d = new Entry();
         d.clear();
         return d;
@@ -205,8 +205,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         // will drive forward right into the new list. If they are not, then
         // nothing is referencing the old list and it'll get GCed.
         if (first != null) {
-            Entry dummy = new Entry();
-            dummy.clear();
+            Entry dummy = makeDummy();
             last.next = dummy;
             first = last = dummy;
         }

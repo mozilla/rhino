@@ -272,7 +272,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
             return lastModified != urlConnection.getLastModified();
         }
 
-        private long calculateExpiry(URLConnection urlConnection,
+        private static long calculateExpiry(URLConnection urlConnection,
                 long request_time, UrlConnectionExpiryCalculator
                 urlConnectionExpiryCalculator)
         {
@@ -309,7 +309,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
                 urlConnectionExpiryCalculator.calculateExpiry(urlConnection);
         }
 
-        private int getMaxAge(String cacheControl) {
+        private static int getMaxAge(String cacheControl) {
             final int maxAgeIndex = cacheControl.indexOf("max-age");
             if(maxAgeIndex == -1) {
                 return -1;
@@ -334,7 +334,7 @@ public class UrlModuleSourceProvider extends ModuleSourceProviderBase {
             }
         }
 
-        private String getEntityTags(URLConnection urlConnection) {
+        private static String getEntityTags(URLConnection urlConnection) {
             final List<String> etags = urlConnection.getHeaderFields().get("ETag");
             if(etags == null || etags.isEmpty()) {
                 return null;

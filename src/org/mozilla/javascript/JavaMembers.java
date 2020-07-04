@@ -694,7 +694,7 @@ class JavaMembers
         return cl.getFields();
     }
 
-    private MemberBox findGetter(boolean isStatic, Map<String,Object> ht, String prefix,
+    private static MemberBox findGetter(boolean isStatic, Map<String,Object> ht, String prefix,
                                  String propertyName)
     {
         String getterName = prefix.concat(propertyName);

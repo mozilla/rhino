@@ -22,7 +22,7 @@ public final class Sorting {
         insertionSort(a, 0, a.length - 1, cmp);
     }
 
-    private void insertionSort(Object[] a, int start, int end, Comparator<Object> cmp)
+    private static void insertionSort(Object[] a, int start, int end, Comparator<Object> cmp)
     {
         int i = start;
         while (i <= end) {
@@ -97,14 +97,14 @@ public final class Sorting {
         return j;
     }
 
-    private void swap(Object[] a, int l, int h)
+    private static void swap(Object[] a, int l, int h)
     {
         final Object tmp = a[l];
         a[l] = a[h];
         a[h] = tmp;
     }
 
-    private int log2(int n)
+    private static int log2(int n)
     {
         return (int)(Math.log10(n) / Math.log10(2.0));
     }

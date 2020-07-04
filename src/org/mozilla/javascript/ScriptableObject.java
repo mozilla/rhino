@@ -362,7 +362,7 @@ public abstract class ScriptableObject implements Scriptable,
         }
     }
 
-    private SlotMapContainer createSlotMap(int initialSize)
+    private static SlotMapContainer createSlotMap(int initialSize)
     {
         Context cx = Context.getCurrentContext();
         if ((cx != null) && cx.hasFeature(Context.FEATURE_THREAD_SAFE_OBJECTS)) {

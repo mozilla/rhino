@@ -260,7 +260,7 @@ public class JsonParser {
         throw new ParseException("Unterminated string literal");
     }
 
-    private int fromHex(char c) {
+    private static int fromHex(char c) {
         return c >= '0' && c <= '9' ? c - '0'
                 : c >= 'A' && c <= 'F' ? c - 'A' + 10
                 : c >= 'a' && c <= 'f' ? c - 'a' + 10

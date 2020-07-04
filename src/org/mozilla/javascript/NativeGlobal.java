@@ -372,7 +372,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      * for the strange constant names should be directed there.
      */
 
-    private Object js_escape(Object[] args) {
+    private static Object js_escape(Object[] args) {
         final int
             URL_XALPHAS = 1,
             URL_XPALPHAS = 2,
@@ -439,7 +439,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      * The global unescape method, as per ECMA-262 15.1.2.5.
      */
 
-    private Object js_unescape(Object[] args)
+    private static Object js_unescape(Object[] args)
     {
         String s = ScriptRuntime.toString(args, 0);
         int firstEscapePos = s.indexOf('%');
@@ -482,7 +482,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      * This is an indirect call to eval, and thus uses the global environment.
      * Direct calls are executed via ScriptRuntime.callSpecial().
      */
-    private Object js_eval(Context cx, Scriptable scope, Object[] args)
+    private static Object js_eval(Context cx, Scriptable scope, Object[] args)
     {
         Scriptable global = ScriptableObject.getTopLevelScope(scope);
         return ScriptRuntime.evalSpecial(cx, global, global, args, "eval code", 1);

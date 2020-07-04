@@ -188,7 +188,7 @@ final class NativeNumber extends IdScriptableObject
         }
     }
 
-    private Object execConstructorCall(int id, Object[] args)
+    private static Object execConstructorCall(int id, Object[] args)
     {
         switch (id) {
         case ConstructorId_isFinite:

@@ -333,7 +333,7 @@ public class Parser
     // Computes the absolute end offset of node N.
     // Use with caution!  Assumes n.getPosition() is -absolute-, which
     // is only true before the node is added to its parent.
-    private int getNodeEnd(AstNode n) {
+    private static int getNodeEnd(AstNode n) {
         return n.getPosition() + n.getLength();
     }
 
@@ -362,17 +362,6 @@ public class Parser
         Comment saved = currentJsDocComment;
         currentJsDocComment = null;
         return saved;
-    }
-
-
-    private int getNumberOfEols(String comment) {
-      int lines = 0;
-      for (int i = comment.length()-1; i >= 0; i--) {
-        if (comment.charAt(i) == '\n') {
-          lines++;
-        }
-      }
-      return lines;
     }
 
 
@@ -785,7 +774,7 @@ public class Parser
         return pn;
     }
 
-    private String getDirective(AstNode n) {
+    private static String getDirective(AstNode n) {
         if (n instanceof ExpressionStatement) {
             AstNode e = ((ExpressionStatement) n).getExpression();
             if (e instanceof StringLiteral) {
@@ -3874,7 +3863,7 @@ public class Parser
     }
 
     // Return end of node.  Assumes node does NOT have a parent yet.
-    private int nodeEnd(AstNode node) {
+    private static int nodeEnd(AstNode node) {
         return node.getPosition() + node.getLength();
     }
 

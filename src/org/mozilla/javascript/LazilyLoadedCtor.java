@@ -21,7 +21,7 @@ public final class LazilyLoadedCtor implements Serializable {
     private static final int STATE_BEFORE_INIT = 0;
     private static final int STATE_INITIALIZING = 1;
     private static final int STATE_WITH_VALUE = 2;
-    
+
     private final ScriptableObject scope;
     private final String propertyName;
     private final String className;
@@ -125,7 +125,7 @@ public final class LazilyLoadedCtor implements Serializable {
     }
 
     @SuppressWarnings({"unchecked"})
-    private Class<? extends Scriptable> cast(Class<?> cl) {
+    private static Class<? extends Scriptable> cast(Class<?> cl) {
         return (Class<? extends Scriptable>)cl;
     }
 

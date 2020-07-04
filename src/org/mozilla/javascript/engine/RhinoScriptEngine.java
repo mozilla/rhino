@@ -331,7 +331,7 @@ public class RhinoScriptEngine
     return DEFAULT_FILENAME;
   }
 
-  private boolean methodsMissing(Scriptable scope, Class<?> clasz) {
+  private static boolean methodsMissing(Scriptable scope, Class<?> clasz) {
     for (Method m : clasz.getMethods()) {
       if (m.getDeclaringClass() == Object.class) {
         continue;

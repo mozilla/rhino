@@ -280,7 +280,7 @@ public class NativeSymbol
 
     // Symbol objects have a special property that one cannot add properties.
 
-    private boolean isStrictMode() {
+    private static boolean isStrictMode() {
         final Context cx = Context.getCurrentContext();
         return (cx != null) && cx.isStrictMode();
     }
