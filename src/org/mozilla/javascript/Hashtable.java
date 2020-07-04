@@ -220,7 +220,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
     // The iterator for this class works directly on the linked list so that it implements
     // the specified iteration behavior, which is very different from Java.
-    private final class Iter
+    private final static class Iter
         implements Iterator<Entry>
     {
         private Entry pos;
