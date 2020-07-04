@@ -10,7 +10,7 @@ package org.mozilla.javascript;
  * The base class for Function objects. That is one of two purposes. It is also
  * the prototype for every "function" defined except those that are used
  * as GeneratorFunctions via the ES6 "function *" syntax.
- * 
+ *
  * See ECMA 15.3.
  * @author Norris Boyd
  */
@@ -329,7 +329,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f)
+    private static BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f)
     {
         Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
         if (x instanceof Delegator) {

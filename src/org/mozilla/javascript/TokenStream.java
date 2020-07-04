@@ -1781,7 +1781,7 @@ class TokenStream
         return comment.toString();
     }
 
-    private String convertLastCharToHex(String str) {
+    private static String convertLastCharToHex(String str) {
       int lastIndex = str.length()-1;
       StringBuilder buf = new StringBuilder(
           str.substring(0, lastIndex));

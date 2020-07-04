@@ -110,7 +110,7 @@ final class SuperBlock {
    * constraint that is imposed on merging operand stacks (the local variable
    * array is always the same size).
    */
-  private boolean mergeState(int[] current, int[] incoming, int size,
+  private static boolean mergeState(int[] current, int[] incoming, int size,
       ConstantPool pool) {
     boolean changed = false;
     for (int i = 0; i < size; i++) {
