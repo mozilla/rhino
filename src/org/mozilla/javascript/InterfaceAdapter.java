@@ -38,8 +38,8 @@ public class InterfaceAdapter
             Method[] methods = cl.getMethods();
             if ( object instanceof Callable) {
                 // Check if interface can be implemented by a single function.
-                // We allow this if the interface has only one method or multiple 
-                // methods with the same name (in which case they'd result in 
+                // We allow this if the interface has only one method or multiple
+                // methods with the same name (in which case they'd result in
                 // the same function to be invoked anyway).
                 int length = methods.length;
                 if (length == 0) {
@@ -49,7 +49,7 @@ public class InterfaceAdapter
                 if (length > 1) {
                     String methodName = null;
                     for (Method method : methods) {
-                        // there are multiple methods in the interface we inspect 
+                        // there are multiple methods in the interface we inspect
                         // only abstract ones, they must all have the same name.
                         if (isFunctionalMethodCandidate(method)) {
                             if (methodName == null) {
@@ -69,18 +69,18 @@ public class InterfaceAdapter
         return VMBridge.instance.newInterfaceProxy(
             adapter.proxyHelper, cf, adapter, object, topScope);
     }
-    
+
     /**
      * We have to ignore java8 default methods and methods like 'equals', 'hashCode'
      * and 'toString' as it occurs for example in the Comparator interface.
-     * 
+     *
      * @return true, if the function
      */
     private static boolean isFunctionalMethodCandidate(Method method) {
         if (method.getName().equals("equals")
             || method.getName().equals("hashCode")
             || method.getName().equals("toString")) {
-            // it should be safe to ignore them as there is also a special 
+            // it should be safe to ignore them as there is also a special
             // case for these methods in VMBridge_jdk18.newInterfaceProxy
             return false;
         } else {
@@ -119,7 +119,7 @@ public class InterfaceAdapter
             Scriptable s = (Scriptable)target;
             String methodName = method.getName();
             Object value = ScriptableObject.getProperty(s, methodName);
-            if (value == ScriptableObject.NOT_FOUND) {
+            if (value == Scriptable.NOT_FOUND) {
                 // We really should throw an error here, but for the sake of
                 // compatibility with JavaAdapter we silently ignore undefined
                 // methods.
