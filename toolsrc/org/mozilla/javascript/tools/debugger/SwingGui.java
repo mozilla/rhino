@@ -2738,6 +2738,9 @@ class VariableModel implements TreeTableModel {
                 result = debugger.objectToString(getValue(node));
             } catch (RuntimeException exc) {
                 result = exc.getMessage();
+                if (result == null) {
+                    result = exc.toString();
+                }
             }
             StringBuilder buf = new StringBuilder();
             int len = result.length();
