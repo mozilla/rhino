@@ -402,7 +402,7 @@ public final class IRFactory extends Parser
                 if (skipIndexes == null) {
                     skipIndexes = new ArrayList<Integer>();
                 }
-                skipIndexes.add(i);
+                skipIndexes.add(Integer.valueOf(i));
             }
             if (i < elems.size() - 1)
                 decompiler.addToken(Token.COMMA);
@@ -413,7 +413,7 @@ public final class IRFactory extends Parser
         if (skipIndexes != null) {
             int[] skips = new int[skipIndexes.size()];
             for (int i = 0; i < skipIndexes.size(); i++)
-                skips[i] = skipIndexes.get(i);
+                skips[i] = skipIndexes.get(i).intValue();
             array.putProp(Node.SKIP_INDEXES_PROP, skips);
         }
         return array;
@@ -638,16 +638,16 @@ public final class IRFactory extends Parser
         decompiler.addToken(Token.RP);
         return call;
     }
-    
+
     private Node transformGenExpr(GeneratorExpression node) {
         Node pn;
-        
+
         FunctionNode fn = new FunctionNode();
         fn.setSourceName(currentScriptOrFn.getNextTempName());
         fn.setIsGenerator();
         fn.setFunctionType(FunctionNode.FUNCTION_EXPRESSION);
         fn.setRequiresActivation();
-      
+
         int functionType = fn.getFunctionType();
         int start = decompiler.markFunctionStart(functionType);
         Node mexpr = decompileFunctionHeader(fn);
@@ -692,14 +692,14 @@ public final class IRFactory extends Parser
             --nestingOfFunction;
             savedVars.restore();
         }
-       
+
         Node call = createCallOrNew(Token.CALL, pn);
         call.setLineno(node.getLineno());
         decompiler.addToken(Token.LP);
         decompiler.addToken(Token.RP);
         return call;
     }
-    
+
     private Node genExprTransformHelper(GeneratorExpression node) {
         decompiler.addToken(Token.LP);
         int lineno = node.getLineno();

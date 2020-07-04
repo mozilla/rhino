@@ -245,7 +245,7 @@ final class NativeString extends IdScriptableObject
                         Object arg = args[i];
                         int codePoint = ScriptRuntime.toInt32(arg);
                         double num = ScriptRuntime.toNumber(arg);
-                        if (!ScriptRuntime.eqNumber(num, codePoint) || !Character.isValidCodePoint(codePoint)) {
+                        if (!ScriptRuntime.eqNumber(num, Integer.valueOf(codePoint)) || !Character.isValidCodePoint(codePoint)) {
                             throw rangeError("Invalid code point " + ScriptRuntime.toString(arg));
                         }
                         codePoints[i] = codePoint;
@@ -540,7 +540,7 @@ final class NativeString extends IdScriptableObject
 
                     return (cnt < 0 || cnt >= str.length())
                         ? Undefined.instance
-                        : str.codePointAt((int) cnt);
+                        : Integer.valueOf(str.codePointAt((int) cnt));
                 }
 
               case SymbolId_iterator:

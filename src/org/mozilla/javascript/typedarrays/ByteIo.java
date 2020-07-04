@@ -8,9 +8,9 @@ package org.mozilla.javascript.typedarrays;
 
 public class ByteIo
 {
-    public static Object readInt8(byte[] buf, int offset)
+    public static Byte readInt8(byte[] buf, int offset)
     {
-        return buf[offset];
+        return Byte.valueOf(buf[offset]);
     }
 
     public static void writeInt8(byte[] buf, int offset, int val)
@@ -18,9 +18,9 @@ public class ByteIo
         buf[offset] = (byte)val;
     }
 
-    public static Object readUint8(byte[] buf, int offset)
+    public static Integer readUint8(byte[] buf, int offset)
     {
-        return buf[offset] & 0xff;
+        return Integer.valueOf(buf[offset] & 0xff);
     }
 
     public static void writeUint8(byte[] buf, int offset, int val)
@@ -52,9 +52,9 @@ public class ByteIo
         }
     }
 
-    public static Object readInt16(byte[] buf, int offset, boolean littleEndian)
+    public static Short readInt16(byte[] buf, int offset, boolean littleEndian)
     {
-        return doReadInt16(buf, offset, littleEndian);
+        return Short.valueOf(doReadInt16(buf, offset, littleEndian));
     }
 
     public static void writeInt16(byte[] buf, int offset, int val, boolean littleEndian)
@@ -62,9 +62,9 @@ public class ByteIo
         doWriteInt16(buf, offset, val, littleEndian);
     }
 
-    public static Object readUint16(byte[] buf, int offset, boolean littleEndian)
+    public static Integer readUint16(byte[] buf, int offset, boolean littleEndian)
     {
-        return doReadInt16(buf, offset, littleEndian) & 0xffff;
+        return Integer.valueOf(doReadInt16(buf, offset, littleEndian) & 0xffff);
     }
 
     public static void writeUint16(byte[] buf, int offset, int val, boolean littleEndian)
@@ -72,20 +72,20 @@ public class ByteIo
         doWriteInt16(buf, offset, val & 0xffff, littleEndian);
     }
 
-    public static Object readInt32(byte[] buf, int offset, boolean littleEndian)
+    public static Integer readInt32(byte[] buf, int offset, boolean littleEndian)
     {
         if (littleEndian) {
-            return
+            return Integer.valueOf(
                 (buf[offset]      & 0xff) |
                 ((buf[offset + 1] & 0xff) << 8) |
                 ((buf[offset + 2] & 0xff) << 16) |
-                ((buf[offset + 3] & 0xff) << 24);
+                ((buf[offset + 3] & 0xff) << 24));
         }
-        return
+        return Integer.valueOf(
             ((buf[offset]     & 0xff) << 24) |
             ((buf[offset + 1] & 0xff) << 16) |
             ((buf[offset + 2] & 0xff) << 8) |
-            (buf[offset + 3]  & 0xff);
+            (buf[offset + 3]  & 0xff));
     }
 
     public static void writeInt32(byte[] buf, int offset, int val, boolean littleEndian)
@@ -138,7 +138,7 @@ public class ByteIo
 
     public static Object readUint32(byte[] buf, int offset, boolean littleEndian)
     {
-        return readUint32Primitive(buf, offset, littleEndian);
+        return Long.valueOf(readUint32Primitive(buf, offset, littleEndian));
     }
 
     public static long readUint64Primitive(byte[] buf, int offset, boolean littleEndian)
@@ -188,10 +188,10 @@ public class ByteIo
         }
     }
 
-    public static Object readFloat32(byte[] buf, int offset, boolean littleEndian)
+    public static Float readFloat32(byte[] buf, int offset, boolean littleEndian)
     {
         long base = readUint32Primitive(buf, offset, littleEndian);
-        return Float.intBitsToFloat((int)base);
+        return Float.valueOf(Float.intBitsToFloat((int)base));
     }
 
     public static void writeFloat32(byte[] buf, int offset, double val, boolean littleEndian)
@@ -200,10 +200,10 @@ public class ByteIo
         writeUint32(buf, offset, base, littleEndian);
     }
 
-    public static Object readFloat64(byte[] buf, int offset, boolean littleEndian)
+    public static Double readFloat64(byte[] buf, int offset, boolean littleEndian)
     {
         long base = readUint64Primitive(buf, offset, littleEndian);
-        return Double.longBitsToDouble(base);
+        return Double.valueOf(Double.longBitsToDouble(base));
     }
 
     public static void writeFloat64(byte[] buf, int offset, double val, boolean littleEndian)

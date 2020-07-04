@@ -19,34 +19,34 @@ import java.util.TreeMap;
 import org.mozilla.javascript.debug.DebuggableObject;
 
 /**
- * An object that implements deep equality test of objects, including their 
+ * An object that implements deep equality test of objects, including their
  * reference graph topology, that is in addition to establishing by-value
- * equality of objects, it also establishes that their reachable object graphs 
- * have identical shape. It is capable of custom-comparing a wide range of 
- * various objects, including various Rhino Scriptables, Java arrays, Java 
- * Lists, and to some degree Java Maps and Sets (sorted Maps are okay, as well 
- * as Sets with elements that can be sorted using their Comparable 
- * implementation, and Maps whose keysets work the same). The requirement for 
- * sortable maps and sets is to ensure deterministic order of traversal, which 
+ * equality of objects, it also establishes that their reachable object graphs
+ * have identical shape. It is capable of custom-comparing a wide range of
+ * various objects, including various Rhino Scriptables, Java arrays, Java
+ * Lists, and to some degree Java Maps and Sets (sorted Maps are okay, as well
+ * as Sets with elements that can be sorted using their Comparable
+ * implementation, and Maps whose keysets work the same). The requirement for
+ * sortable maps and sets is to ensure deterministic order of traversal, which
  * is necessary for establishing structural equality of object graphs.
- * 
+ *
  * An instance of this object is stateful in that it memoizes pairs of objects
- * that already compared equal, so reusing an instance for repeated equality 
+ * that already compared equal, so reusing an instance for repeated equality
  * tests of potentially overlapping object graph is beneficial for performance
- * as long as all equality test invocations returns true. Reuse is not advised 
+ * as long as all equality test invocations returns true. Reuse is not advised
  * after an equality test returned false since there is a heuristic in comparing
- * cyclic data structures that can memoize false equalities if two cyclic data 
+ * cyclic data structures that can memoize false equalities if two cyclic data
  * structures end up being unequal.
  */
 final class EqualObjectGraphs  {
     private static final ThreadLocal<EqualObjectGraphs> instance = new ThreadLocal<>();
-    
+
     // Object pairs already known to be equal. Used to short-circuit repeated traversals of objects reachable through
     // different paths as well as to detect structural inequality.
     private final Map<Object, Object> knownEquals = new IdentityHashMap<>();
     // Currently compared objects; used to avoid infinite recursion over cyclic object graphs.
     private final Map<Object, Object> currentlyCompared = new IdentityHashMap<>();
-    
+
     static <T> T withThreadLocal(java.util.function.Function<EqualObjectGraphs, T> action) {
         final EqualObjectGraphs currEq = instance.get();
         if (currEq == null) {
@@ -60,7 +60,7 @@ final class EqualObjectGraphs  {
         }
         return action.apply(currEq);
     }
-    
+
     boolean equalGraphs(Object o1, Object o2) {
         if (o1 == o2) {
             return true;
@@ -71,9 +71,9 @@ final class EqualObjectGraphs  {
         final Object curr2 = currentlyCompared.get(o1);
         if (curr2 == o2) {
             // Provisionally afford that if we're already recursively comparing
-            // (o1, o2) that they'll be equal. NOTE: this is the heuristic 
-            // mentioned in the class JavaDoc that can drive memoizing false 
-            // equalities if cyclic data structures end up being unequal. 
+            // (o1, o2) that they'll be equal. NOTE: this is the heuristic
+            // mentioned in the class JavaDoc that can drive memoizing false
+            // equalities if cyclic data structures end up being unequal.
             // While it would be possible to fix that with additional code, the
             // usual usage of equality comparisons is short-circuit-on-false anyway,
             // so this edge case should not arise in normal usage and the additional
@@ -84,7 +84,7 @@ final class EqualObjectGraphs  {
             // this comparison is structurally false.
             return false;
         }
-        
+
         final Object prev2 = knownEquals.get(o1);
         if (prev2 == o2) {
             // o1 known to be equal to o2.
@@ -93,7 +93,7 @@ final class EqualObjectGraphs  {
             // o1 known to be equal to something other than o2.
             return false;
         }
-        
+
         final Object prev1 = knownEquals.get(o2);
         assert prev1 != o1; // otherwise we would've already returned at prev2 == o2
         if (prev1 != null) {
@@ -110,7 +110,7 @@ final class EqualObjectGraphs  {
         currentlyCompared.remove(o1);
         return eq;
     }
-    
+
     private boolean equalGraphsNoMemo(Object o1, Object o2) {
         if (o1 instanceof Wrapper) {
             return o2 instanceof Wrapper && equalGraphs(((Wrapper)o1).unwrap(), ((Wrapper)o2).unwrap());
@@ -143,7 +143,7 @@ final class EqualObjectGraphs  {
         // Fallback case for everything else.
         return o1.equals(o2);
     }
-    
+
     private boolean equalScriptables(final Scriptable s1, final Scriptable s2) {
         final Object[] ids1 = getSortedIds(s1);
         final Object[] ids2 = getSortedIds(s2);
@@ -161,7 +161,7 @@ final class EqualObjectGraphs  {
         } else if (!equalGraphs(s1.getParentScope(), s2.getParentScope())) {
             return false;
         }
-        
+
         // Handle special Scriptable implementations
         if (s1 instanceof NativeContinuation) {
             return s2 instanceof NativeContinuation && NativeContinuation.equalImplementations((NativeContinuation)s1, (NativeContinuation)s2);
@@ -176,7 +176,7 @@ final class EqualObjectGraphs  {
         } else if (s1 instanceof BoundFunction) {
             return s2 instanceof BoundFunction && BoundFunction.equalObjectGraphs((BoundFunction)s1, (BoundFunction)s2, this);
         } else if (s1 instanceof NativeSymbol) {
-            return s2 instanceof NativeSymbol && equalGraphs(((NativeSymbol)s1).getKey(), ((NativeSymbol)s2).getKey()); 
+            return s2 instanceof NativeSymbol && equalGraphs(((NativeSymbol)s1).getKey(), ((NativeSymbol)s2).getKey());
         }
         return true;
     }
@@ -207,7 +207,7 @@ final class EqualObjectGraphs  {
         assert !(i1.hasNext() || i2.hasNext());
         return true;
     }
-    
+
     @SuppressWarnings("rawtypes")
     private boolean equalMaps(final Map<?, ?> m1, final Map<?, ?> m2) {
         if (m1.size() != m2.size()) {
@@ -215,7 +215,7 @@ final class EqualObjectGraphs  {
         }
         final Iterator<Map.Entry> i1 = sortedEntries(m1);
         final Iterator<Map.Entry> i2 = sortedEntries(m2);
-        
+
         while(i1.hasNext() && i2.hasNext()) {
             final Map.Entry kv1 = i1.next();
             final Map.Entry kv2 = i2.next();
@@ -226,21 +226,21 @@ final class EqualObjectGraphs  {
         assert !(i1.hasNext() || i2.hasNext());
         // TODO: assert linked maps traversal order?
         return true;
-        
+
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static Iterator<Map.Entry> sortedEntries(final Map m) {
-        // Yes, this throws ClassCastException if the keys aren't comparable. That's okay. We only support maps with 
+        // Yes, this throws ClassCastException if the keys aren't comparable. That's okay. We only support maps with
         // deterministic traversal order.
         final Map sortedMap = (m instanceof SortedMap<?, ?> ? m : new TreeMap(m));
-        return sortedMap.entrySet().iterator(); 
+        return sortedMap.entrySet().iterator();
     }
-    
+
     private boolean equalSets(final Set<?> s1, final Set<?> s2) {
         return equalObjectArrays(sortedSet(s1), sortedSet(s2));
     }
-    
+
     private static Object[] sortedSet(final Set<?> s) {
         final Object[] a = s.toArray();
         Arrays.sort(a); // ClassCastException possible
@@ -311,7 +311,7 @@ final class EqualObjectGraphs  {
         if (id instanceof Symbol) {
             return ScriptableObject.getProperty(s, (Symbol)id);
         } else if (id instanceof Integer) {
-            return ScriptableObject.getProperty(s, (Integer)id);
+            return ScriptableObject.getProperty(s, ((Integer)id).intValue());
         } else if (id instanceof String) {
             return ScriptableObject.getProperty(s, (String)id);
         } else {

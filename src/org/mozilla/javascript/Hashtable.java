@@ -55,7 +55,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         Entry(Object k, Object value) {
             if ((k instanceof Number) && ( ! ( k instanceof Double))) {
                 // Hash comparison won't work if we don't do this
-                this.key = ((Number)k).doubleValue();
+                this.key = Double.valueOf(((Number)k).doubleValue());
             } else if (k instanceof ConsString) {
                 this.key = k.toString();
             } else {
@@ -64,7 +64,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
             if (key == null) {
                 hashCode = 0;
-            } else if (k.equals(ScriptRuntime.negativeZero)) {
+            } else if (k.equals(ScriptRuntime.negativeZeroObj)) {
                 hashCode = 0;
             } else {
                 hashCode = key.hashCode();

@@ -381,9 +381,9 @@ final class NativeError extends IdScriptableObject
 
         public Object getStackTraceLimit(Scriptable thisObj) {
             if (stackTraceLimit >= 0) {
-                return stackTraceLimit;
+                return Integer.valueOf(stackTraceLimit);
             }
-            return Double.POSITIVE_INFINITY;
+            return Double.valueOf(Double.POSITIVE_INFINITY);
         }
 
         public int getStackTraceLimit() {

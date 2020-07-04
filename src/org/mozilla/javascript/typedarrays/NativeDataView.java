@@ -47,7 +47,7 @@ public class NativeDataView
         dv.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
-    private int determinePos(Object[] args)
+    private static int determinePos(Object[] args)
     {
         if (isArg(args, 0)) {
             double doublePos = ScriptRuntime.toNumber(args[0]);
@@ -73,7 +73,7 @@ public class NativeDataView
         return (NativeDataView)thisObj;
     }
 
-    private NativeDataView js_constructor(Object[] args)
+    private static NativeDataView js_constructor(Object[] args)
     {
         if (!isArg(args, 0) || !(args[0] instanceof NativeArrayBuffer)) {
             throw ScriptRuntime.constructError("TypeError", "Missing parameters");
@@ -121,14 +121,20 @@ public class NativeDataView
 
         switch (bytes) {
         case 1:
-            return (signed ? ByteIo.readInt8(arrayBuffer.buffer, offset + pos) :
-                             ByteIo.readUint8(arrayBuffer.buffer, offset + pos));
+            if (signed) {
+                return ByteIo.readInt8(arrayBuffer.buffer, offset + pos);
+            } else {
+                return ByteIo.readUint8(arrayBuffer.buffer, offset + pos);
+            }
         case 2:
-            return (signed ? ByteIo.readInt16(arrayBuffer.buffer, offset + pos, littleEndian) :
-                             ByteIo.readUint16(arrayBuffer.buffer, offset + pos, littleEndian));
+            if (signed) {
+                return ByteIo.readInt16(arrayBuffer.buffer, offset + pos, littleEndian);
+            } else {
+                return ByteIo.readUint16(arrayBuffer.buffer, offset + pos, littleEndian);
+            }
         case 4:
-            return (signed ? ByteIo.readInt32(arrayBuffer.buffer, offset + pos, littleEndian) :
-                             ByteIo.readUint32(arrayBuffer.buffer, offset + pos, littleEndian));
+            return signed ? ByteIo.readInt32(arrayBuffer.buffer, offset + pos, littleEndian) :
+                             ByteIo.readUint32(arrayBuffer.buffer, offset + pos, littleEndian);
         default:
             throw new AssertionError();
         }
@@ -160,7 +166,7 @@ public class NativeDataView
 
         boolean littleEndian = isArg(args, 2) && (bytes > 1) && ScriptRuntime.toBoolean(args[2]);
 
-        Object val = 0;
+        Object val = ScriptRuntime.zeroObj;
         if (args.length > 1) {
             val = args[1];
         }

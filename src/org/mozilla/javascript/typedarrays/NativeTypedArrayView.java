@@ -105,7 +105,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     private NativeArrayBuffer makeArrayBuffer(Context cx, Scriptable scope, int length)
     {
         return (NativeArrayBuffer)cx.newObject(scope, NativeArrayBuffer.CLASS_NAME,
-                                               new Object[] { (double)length * getBytesPerElement() });
+                                               new Object[] { Double.valueOf((double)length * getBytesPerElement()) });
     }
 
     private NativeTypedArrayView<T> js_constructor(Context cx, Scriptable scope, Object[] args)
@@ -178,7 +178,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
                 // null has to be forewoded as null
                 final Object value = array.get(i, array);
                 if (value == Scriptable.NOT_FOUND || value == Undefined.instance) {
-                    v.js_set(i, Double.NaN);
+                    v.js_set(i, ScriptRuntime.NaNobj);
                 }
                 else if (value instanceof Wrapper) {
                     v.js_set(i, ((Wrapper) value).unwrap());
@@ -259,7 +259,7 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
 
         return
             cx.newObject(scope, getClassName(),
-                         new Object[]{arrayBuffer, byteOff, len});
+                         new Object[]{arrayBuffer, Integer.valueOf(byteOff), Integer.valueOf(len)});
     }
 
     // Dispatcher

@@ -76,7 +76,7 @@ public class NativeWeakMap extends IdScriptableObject {
         if (!ScriptRuntime.isObject(key)) {
             return Boolean.FALSE;
         }
-        return map.remove(key) != null;
+        return Boolean.valueOf(map.remove(key) != null);
     }
 
     private Object js_get(Object key) {
@@ -96,7 +96,7 @@ public class NativeWeakMap extends IdScriptableObject {
         if (!ScriptRuntime.isObject(key)) {
             return Boolean.FALSE;
         }
-        return map.containsKey(key);
+        return Boolean.valueOf(map.containsKey(key));
     }
 
     private Object js_set(Object key, Object v) {
@@ -114,7 +114,7 @@ public class NativeWeakMap extends IdScriptableObject {
         return this;
     }
 
-    private NativeWeakMap realThis(Scriptable thisObj, IdFunctionObject f) {
+    private static NativeWeakMap realThis(Scriptable thisObj, IdFunctionObject f) {
         if (thisObj == null) {
             throw incompatibleCallError(f);
         }

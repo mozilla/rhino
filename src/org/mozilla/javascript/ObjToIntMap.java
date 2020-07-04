@@ -20,7 +20,7 @@ import java.io.Serializable;
  * @author Igor Bukanov
  *
  */
-
+@SuppressWarnings("unused")
 public class ObjToIntMap implements Serializable
 {
     private static final long serialVersionUID = -1542220580748809402L;

@@ -192,7 +192,7 @@ public class RegExpImpl implements RegExpProxy {
             else
                 result = Integer.valueOf(-1);
         } else if (data.global) {
-            re.lastIndex = 0d;
+            re.lastIndex = ScriptRuntime.zeroObj;
             for (int count = 0; indexp[0] <= str.length(); count++) {
                 result = re.executeRegExp(cx, scope, reImpl,
                                           str, indexp, NativeRegExp.TEST);

@@ -97,12 +97,12 @@ public class NativeSet extends IdScriptableObject {
     private Object js_delete(Object arg)
     {
         final Object ov = entries.delete(arg);
-        return ov != null;
+        return Boolean.valueOf(ov != null);
     }
 
     private Object js_has(Object arg)
     {
-        return entries.has(arg);
+        return Boolean.valueOf(entries.has(arg));
     }
 
     private Object js_clear()
@@ -113,7 +113,7 @@ public class NativeSet extends IdScriptableObject {
 
     private Object js_getSize()
     {
-        return entries.size();
+        return Integer.valueOf(entries.size());
     }
 
     private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type)

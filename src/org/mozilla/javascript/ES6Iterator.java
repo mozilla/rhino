@@ -117,7 +117,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
         } else {
             this.exhausted = true;
         }
-        return makeIteratorResult(cx, scope, done, value);
+        return makeIteratorResult(cx, scope, Boolean.valueOf(done), value);
     }
 
     protected String getTag() {
@@ -125,11 +125,11 @@ public abstract class ES6Iterator extends IdScriptableObject {
     }
 
     // 25.1.1.3 The IteratorResult Interface
-    static Scriptable makeIteratorResult(Context cx, Scriptable scope, boolean done) {
+    static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done) {
         return makeIteratorResult(cx, scope, done, Undefined.instance);
     }
 
-    static Scriptable makeIteratorResult(Context cx, Scriptable scope, boolean done, Object value) {
+    static Scriptable makeIteratorResult(Context cx, Scriptable scope, Boolean done, Object value) {
         final Scriptable iteratorResult = cx.newObject(scope);
         ScriptableObject.putProperty(iteratorResult, DONE_PROPERTY, done);
         ScriptableObject.putProperty(iteratorResult, VALUE_PROPERTY, value);

@@ -216,12 +216,12 @@ public final class Interpreter extends Icode implements Evaluator
                 final Context cx = Context.enter();
                 try {
                     if (ScriptRuntime.hasTopCall(cx)) {
-                        return equalsInTopScope(other);
+                        return equalsInTopScope(other).booleanValue();
                     }
                     final Scriptable top = ScriptableObject.getTopLevelScope(scope);
-                    return (Boolean)ScriptRuntime.doTopCall(
+                    return ((Boolean)ScriptRuntime.doTopCall(
                             (Callable)(c, scope, thisObj, args) -> equalsInTopScope(other),
-                            cx, top, top, ScriptRuntime.emptyArgs, isStrictTopFrame());
+                            cx, top, top, ScriptRuntime.emptyArgs, isStrictTopFrame())).booleanValue();
                 } finally {
                     Context.exit();
                 }
@@ -245,7 +245,7 @@ public final class Interpreter extends Icode implements Evaluator
             return h;
         }
 
-        private boolean equalsInTopScope(Object other) {
+        private Boolean equalsInTopScope(Object other) {
             return EqualObjectGraphs.withThreadLocal(eq -> equals(this, (CallFrame)other, eq));
         }
 
@@ -1217,7 +1217,7 @@ switch (op) {
         --stackTop;
 
         NativeIterator.StopIteration si = new NativeIterator.StopIteration(
-           (frame.result == DOUBLE_MARK) ? frame.resultDbl : frame.result);
+           (frame.result == DOUBLE_MARK) ? Double.valueOf(frame.resultDbl) : frame.result);
 
         int sourceLine = getIndex(iCode, frame.pc);
         generatorState.returnedException =
@@ -3173,10 +3173,19 @@ switch (op) {
         } else {
             if (lhs instanceof Scriptable || rhs instanceof Scriptable) {
                 stack[stackTop] = ScriptRuntime.add(lhs, rhs, cx);
-            } else if (lhs instanceof CharSequence || rhs instanceof CharSequence) {
-                CharSequence lstr = ScriptRuntime.toCharSequence(lhs);
-                CharSequence rstr = ScriptRuntime.toCharSequence(rhs);
-                stack[stackTop] = new ConsString(lstr, rstr);
+
+            // the next two else if branches are a bit more tricky
+            // to reduce method calls
+            } else if (lhs instanceof CharSequence) {
+                if (rhs instanceof CharSequence) {
+                    stack[stackTop] = new ConsString((CharSequence)lhs, (CharSequence)rhs);
+                }
+                else {
+                    stack[stackTop] = new ConsString((CharSequence)lhs, ScriptRuntime.toCharSequence(rhs));
+                }
+            } else if (rhs instanceof CharSequence) {
+                stack[stackTop] = new ConsString(ScriptRuntime.toCharSequence(lhs), (CharSequence)rhs);
+
             } else {
                 double lDbl = (lhs instanceof Number)
                     ? ((Number)lhs).doubleValue() : ScriptRuntime.toNumber(lhs);
@@ -3198,12 +3207,11 @@ switch (op) {
             }
             stack[stackTop] = ScriptRuntime.add(lhs, rhs, cx);
         } else if (lhs instanceof CharSequence) {
-            CharSequence lstr = (CharSequence)lhs;
-            CharSequence rstr = ScriptRuntime.toCharSequence(d);
+            CharSequence rstr = ScriptRuntime.numberToString(d, 10);
             if (leftRightOrder) {
-                stack[stackTop] = new ConsString(lstr, rstr);
+                stack[stackTop] = new ConsString((CharSequence)lhs, rstr);
             } else {
-                stack[stackTop] = new ConsString(rstr, lstr);
+                stack[stackTop] = new ConsString(rstr, (CharSequence)lhs);
             }
         } else {
             double lDbl = (lhs instanceof Number)

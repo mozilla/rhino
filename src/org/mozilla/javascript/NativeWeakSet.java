@@ -83,17 +83,17 @@ public class NativeWeakSet extends IdScriptableObject {
         if (!ScriptRuntime.isObject(key)) {
             return Boolean.FALSE;
         }
-        return map.remove(key) != null;
+        return Boolean.valueOf(map.remove(key) != null);
     }
 
     private Object js_has(Object key) {
         if (!ScriptRuntime.isObject(key)) {
             return Boolean.FALSE;
         }
-        return map.containsKey(key);
+        return Boolean.valueOf(map.containsKey(key));
     }
 
-    private NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f) {
+    private static NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f) {
         if (thisObj == null) {
             throw incompatibleCallError(f);
         }

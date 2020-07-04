@@ -49,7 +49,7 @@ public final class NativeArrayIterator extends ES6Iterator {
     @Override
     protected Object nextValue(Context cx, Scriptable scope) {
         if (type == ARRAY_ITERATOR_TYPE.KEYS) {
-            return index++;
+            return Integer.valueOf(index++);
         }
 
         Object value = arrayLike.get(index, arrayLike);
@@ -58,7 +58,7 @@ public final class NativeArrayIterator extends ES6Iterator {
         }
 
         if (type == ARRAY_ITERATOR_TYPE.ENTRIES) {
-            value = cx.newArray(scope, new Object[] {index, value});
+            value = cx.newArray(scope, new Object[] {Integer.valueOf(index), value});
         }
 
         index++;
