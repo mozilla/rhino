@@ -240,7 +240,7 @@ public final class ES6Generator extends IdScriptableObject {
                     return resumeAbruptLocal(cx, scope,
                         NativeGenerator.GENERATOR_THROW, re);
                 }
-                
+
                 Scriptable delResult;
                 try {
                     // Re-execute but update state in case we end up back here
@@ -415,7 +415,7 @@ public final class ES6Generator extends IdScriptableObject {
     private State state = State.SUSPENDED_START;
     private Object delegee;
 
-    enum State { SUSPENDED_START, SUSPENDED_YIELD, EXECUTING, COMPLETED };
+    enum State { SUSPENDED_START, SUSPENDED_YIELD, EXECUTING, COMPLETED }
 
     public static final class YieldStarResult {
         private Object result;
