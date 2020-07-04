@@ -169,7 +169,7 @@ public class NativeCallSite extends IdScriptableObject {
         if ((cs.element == null) || (cs.element.lineNumber < 0)) {
             return Undefined.instance;
         }
-        return cs.element.lineNumber;
+        return Integer.valueOf(cs.element.lineNumber);
     }
 
 // #string_id_map#

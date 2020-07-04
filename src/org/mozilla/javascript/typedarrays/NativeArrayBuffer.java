@@ -129,7 +129,7 @@ public class NativeArrayBuffer
         int id = f.methodId();
         switch (id) {
         case ConstructorId_isView:
-            return (isArg(args, 0) && (args[0] instanceof NativeArrayBufferView));
+            return Boolean.valueOf((isArg(args, 0) && (args[0] instanceof NativeArrayBufferView)));
 
         case Id_constructor:
             double length = isArg(args, 0) ? ScriptRuntime.toNumber(args[0]) : 0;

@@ -51,7 +51,7 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public Object get(String name, Scriptable start) {
         if ("length".equals(name)) {
-            return list.size();
+            return Integer.valueOf(list.size());
         }
         return super.get(name, start);
     }
@@ -69,7 +69,7 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public Object get(Symbol key, Scriptable start) {
         if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
-            return true;
+            return Boolean.TRUE;
         }
         return super.get(key, start);
     }

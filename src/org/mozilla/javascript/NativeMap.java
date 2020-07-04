@@ -104,7 +104,7 @@ public class NativeMap extends IdScriptableObject {
     private Object js_delete(Object arg)
     {
         final Object e = entries.delete(arg);
-        return e != null;
+        return Boolean.valueOf(e != null);
     }
 
     private Object js_get(Object arg)
@@ -121,12 +121,12 @@ public class NativeMap extends IdScriptableObject {
 
     private Object js_has(Object arg)
     {
-        return entries.has(arg);
+        return Boolean.valueOf(entries.has(arg));
     }
 
     private Object js_getSize()
     {
-        return entries.size();
+        return Integer.valueOf(entries.size());
     }
 
     private Object js_iterator(Scriptable scope, NativeCollectionIterator.Type type)

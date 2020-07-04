@@ -216,13 +216,13 @@ public final class ES6Generator extends IdScriptableObject {
     private Scriptable resumeLocal(Context cx, Scriptable scope, Object value)
     {
         if (state == State.COMPLETED) {
-            return ES6Iterator.makeIteratorResult(cx, scope, true);
+            return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
         }
         if (state == State.EXECUTING) {
             throw ScriptRuntime.typeError0("msg.generator.executing");
         }
 
-        Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, false);
+        Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, Boolean.FALSE);
         state = State.EXECUTING;
 
         try {
@@ -296,7 +296,7 @@ public final class ES6Generator extends IdScriptableObject {
             state = State.COMPLETED;
         }
 
-        Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, false);
+        Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, Boolean.FALSE);
         if (state == State.COMPLETED) {
             if (op == NativeGenerator.GENERATOR_THROW) {
                 throw new JavaScriptException(value, lineSource, lineNumber);

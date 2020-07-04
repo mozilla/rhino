@@ -20,7 +20,7 @@ import java.io.Serializable;
  * @author Igor Bukanov
  *
  */
-
+@SuppressWarnings("unused")
 public class UintMap implements Serializable
 {
     private static final long serialVersionUID = 4242698212885848444L;

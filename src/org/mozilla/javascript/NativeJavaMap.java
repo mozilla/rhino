@@ -36,7 +36,7 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public boolean has(int index, Scriptable start) {
-        if (map.containsKey(index)) {
+        if (map.containsKey(Integer.valueOf(index))) {
             return true;
         }
         return super.has(index, start);
@@ -54,9 +54,9 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public Object get(int index, Scriptable start) {
-        if (map.containsKey(index)) {
+        if (map.containsKey(Integer.valueOf(index))) {
             Context cx = Context.getContext();
-            Object obj = map.get(index);
+            Object obj = map.get(Integer.valueOf(index));
             return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
         }
         return super.get(index, start);
@@ -69,7 +69,7 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public void put(int index, Scriptable start, Object value) {
-        map.put(index, Context.jsToJava(value, Object.class));
+        map.put(Integer.valueOf(index), Context.jsToJava(value, Object.class));
     }
 
     @Override

@@ -48,7 +48,7 @@ public class Undefined implements Serializable
             public Object invoke(Object proxy, Method method, Object[] args) {
                 if (method.getName().equals("toString")) return "undefined";
                 if (method.getName().equals("equals")) {
-                    return args.length > 0 && isUndefined(args[0]);
+                    return Boolean.valueOf(args.length > 0 && isUndefined(args[0]));
                 }
                 throw new UnsupportedOperationException("undefined doesn't support " + method.getName());
             }
