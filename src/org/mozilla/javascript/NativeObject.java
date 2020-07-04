@@ -544,29 +544,29 @@ public class NativeObject extends IdScriptableObject implements Map
             if (args.length < 1) {
               throw ScriptRuntime.typeError1("msg.incompat.call", "assign");
             }
-            Scriptable t = ScriptRuntime.toObject(cx, thisObj, args[0]);
+            Scriptable targetObj = ScriptRuntime.toObject(cx, thisObj, args[0]);
             for (int i = 1; i < args.length; i++) {
               if ((args[i] == null) || Undefined.instance.equals(args[i])) {
                 continue;
               }
-              Scriptable s = ScriptRuntime.toObject(cx, thisObj, args[i]);
-              Object[] ids = s.getIds();
+              Scriptable sourceObj = ScriptRuntime.toObject(cx, thisObj, args[i]);
+              Object[] ids = sourceObj.getIds();
               for (Object key : ids) {
                 if (key instanceof String) {
-                  Object val = s.get((String) key, t);
+                  Object val = sourceObj.get((String) key, sourceObj);
                   if ((val != Scriptable.NOT_FOUND) && (val != Undefined.instance)) {
-                    t.put((String) key, t, val);
+                    targetObj.put((String) key, targetObj, val);
                   }
                 } else if (key instanceof Number) {
                   int ii = ScriptRuntime.toInt32(key);
-                  Object val = s.get(ii, t);
+                  Object val = sourceObj.get(ii, sourceObj);
                   if ((val != Scriptable.NOT_FOUND) && (val != Undefined.instance)) {
-                    t.put(ii, t, val);
+                    targetObj.put(ii, targetObj, val);
                   }
                 }
               }
             }
-            return t;
+            return targetObj;
           }
 
           case ConstructorId_is:
