@@ -714,9 +714,13 @@ public class Parser
         int pos = ts.tokenBeg;
         Block pn = new Block(pos);  // starts at LC position
 
+        // Function code that is supplied as the arguments to the built-in
+        // Function, Generator, and AsyncFunction constructors is strict mode code
+        // if the last argument is a String that when processed is a FunctionBody
+        // that begins with a Directive Prologue that contains a Use Strict Directive.
         boolean inDirectivePrologue = true;
         boolean savedStrictMode = inUseStrictDirective;
-        // Don't set 'inUseStrictDirective' to false: inherit strict mode.
+        inUseStrictDirective = false;
 
         pn.setLineno(ts.lineno);
         try {
@@ -860,7 +864,7 @@ public class Parser
         }
     }
 
-    private FunctionNode function(int type) 
+    private FunctionNode function(int type)
         throws IOException {
         return function(type, false);
     }
