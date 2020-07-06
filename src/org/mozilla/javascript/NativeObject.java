@@ -130,8 +130,9 @@ public class NativeObject extends IdScriptableObject implements Map
                 // BaseFunction.construct will set up parent, proto
                 return f.construct(cx, scope, args);
             }
-            if (args.length == 0 || args[0] == null
-                || args[0] == Undefined.instance)
+            if (args.length == 0
+                    || args[0] == null
+                    || Undefined.isUndefined(args[0]))
             {
                 return new NativeObject();
             }
@@ -259,8 +260,7 @@ public class NativeObject extends IdScriptableObject implements Map
           case Id___defineSetter__:
             {
                 if (args.length < 2 || !(args[1] instanceof Callable)) {
-                    Object badArg = (args.length >= 2 ? args[1]
-                                     : Undefined.instance);
+                    Object badArg = (args.length >= 2 ? args[1] : Undefined.instance);
                     throw ScriptRuntime.notFunctionError(badArg);
                 }
                 if (!(thisObj instanceof ScriptableObject)) {
@@ -444,7 +444,7 @@ public class NativeObject extends IdScriptableObject implements Map
                 newObject.setParentScope(scope);
                 newObject.setPrototype(obj);
 
-                if (args.length > 1 && args[1] != Undefined.instance) {
+                if (args.length > 1 && !Undefined.isUndefined(args[1])) {
                   Scriptable props = Context.toObject(args[1], scope);
                   newObject.defineOwnProperties(cx, ensureScriptableObject(props));
                 }
@@ -546,7 +546,7 @@ public class NativeObject extends IdScriptableObject implements Map
             }
             Scriptable targetObj = ScriptRuntime.toObject(cx, thisObj, args[0]);
             for (int i = 1; i < args.length; i++) {
-              if ((args[i] == null) || Undefined.instance.equals(args[i])) {
+              if ((args[i] == null) || Undefined.isUndefined(args[i])) {
                 continue;
               }
               Scriptable sourceObj = ScriptRuntime.toObject(cx, thisObj, args[i]);
@@ -554,13 +554,13 @@ public class NativeObject extends IdScriptableObject implements Map
               for (Object key : ids) {
                 if (key instanceof String) {
                   Object val = sourceObj.get((String) key, sourceObj);
-                  if ((val != Scriptable.NOT_FOUND) && (val != Undefined.instance)) {
+                  if ((val != Scriptable.NOT_FOUND) && !Undefined.isUndefined(val)) {
                     targetObj.put((String) key, targetObj, val);
                   }
                 } else if (key instanceof Number) {
                   int ii = ScriptRuntime.toInt32(key);
                   Object val = sourceObj.get(ii, sourceObj);
-                  if ((val != Scriptable.NOT_FOUND) && (val != Undefined.instance)) {
+                  if ((val != Scriptable.NOT_FOUND) && !Undefined.isUndefined(val)) {
                     targetObj.put(ii, targetObj, val);
                   }
                 }
