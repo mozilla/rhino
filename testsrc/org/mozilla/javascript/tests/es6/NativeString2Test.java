@@ -150,6 +150,7 @@ public class NativeString2Test {
       result = (Boolean) cx.evaluateString(scope, "'1234'.startsWith('', 42);", "test", 1, null);
       assertTrue(result);
   }
+
   @Test
   public void testEndsWithEmpty() {
       Boolean result = (Boolean) cx.evaluateString(scope, "'1234'.endsWith('');", "test", 1, null);
