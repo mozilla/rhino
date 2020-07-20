@@ -8,6 +8,7 @@
 package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -88,5 +89,85 @@ public class NativeString2Test {
       Object result = cx.evaluateString(scope, "'123'.replace('2', /x/);", "test", 1, null);
 
       assertEquals("1/x/3", result);
+  }
+
+  @Test
+  public void testIndexOfEmpty() {
+      Object result = cx.evaluateString(scope, "'1234'.indexOf('', 0);", "test", 1, null);
+      assertEquals(0, result);
+
+      result = cx.evaluateString(scope, "'1234'.indexOf('', 1);", "test", 1, null);
+      assertEquals(1, result);
+
+      result = cx.evaluateString(scope, "'1234'.indexOf('', 4);", "test", 1, null);
+      assertEquals(4, result);
+
+      result = cx.evaluateString(scope, "'1234'.indexOf('', 5);", "test", 1, null);
+      assertEquals(4, result);
+
+      result = cx.evaluateString(scope, "'1234'.indexOf('', 42);", "test", 1, null);
+      assertEquals(4, result);
+  }
+
+  @Test
+  public void testIncludesEmpty() {
+      Boolean result = (Boolean) cx.evaluateString(scope, "'1234'.includes('');", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.includes('', 0);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.includes('', 1);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.includes('', 4);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.includes('', 5);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.includes('', 42);", "test", 1, null);
+      assertTrue(result);
+  }
+
+  @Test
+  public void testStartsWithEmpty() {
+      Boolean result = (Boolean) cx.evaluateString(scope, "'1234'.startsWith('');", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.startsWith('', 0);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.startsWith('', 1);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.startsWith('', 4);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.startsWith('', 5);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.startsWith('', 42);", "test", 1, null);
+      assertTrue(result);
+  }
+  @Test
+  public void testEndsWithEmpty() {
+      Boolean result = (Boolean) cx.evaluateString(scope, "'1234'.endsWith('');", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.endsWith('', 0);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.endsWith('', 1);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.endsWith('', 4);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.endsWith('', 5);", "test", 1, null);
+      assertTrue(result);
+
+      result = (Boolean) cx.evaluateString(scope, "'1234'.endsWith('', 42);", "test", 1, null);
+      assertTrue(result);
   }
 }

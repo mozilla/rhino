@@ -679,11 +679,17 @@ final class NativeString extends IdScriptableObject
      * See ECMA 15.5.4.6.  Uses Java String.indexOf()
      * OPT to add - BMH searching from jsstr.c.
      */
-    private static int  js_indexOf(int methodId, String target, Object[] args) {
+    private static int js_indexOf(int methodId, String target, Object[] args) {
         String searchStr = ScriptRuntime.toString(args, 0);
         double position = ScriptRuntime.toInteger(args, 1);
 
-        if (position > target.length() && methodId != Id_startsWith && methodId != Id_endsWith) {
+        if (methodId != Id_startsWith && methodId != Id_endsWith
+                && searchStr.length() == 0) {
+            return position > target.length() ? target.length() : (int)position;
+        }
+
+        if (methodId != Id_startsWith && methodId != Id_endsWith
+        		&& position > target.length()) {
             return -1;
         }
 
