@@ -689,7 +689,7 @@ final class NativeString extends IdScriptableObject
         }
 
         if (methodId != Id_startsWith && methodId != Id_endsWith
-        		&& position > target.length()) {
+                && position > target.length()) {
             return -1;
         }
 
