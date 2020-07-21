@@ -16,6 +16,8 @@ import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Symbol;
+import org.mozilla.javascript.SymbolKey;
 import org.mozilla.javascript.TopLevel;
 import org.mozilla.javascript.Undefined;
 
@@ -2689,6 +2691,11 @@ public class NativeRegExp extends IdScriptableObject implements Function
     @Override
     protected void initPrototypeId(int id)
     {
+        if (id == SymbolId_match) {
+            initPrototypeMethod(REGEXP_TAG, id, SymbolKey.MATCH, "[Symbol.match]", 1);
+            return;
+        }
+
         String s;
         int arity;
         switch (id) {
@@ -2729,6 +2736,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
           case Id_prefix:
             return realThis(thisObj, f).execSub(cx, scope, args, PREFIX);
+
+          case SymbolId_match:
+              return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -2738,6 +2748,15 @@ public class NativeRegExp extends IdScriptableObject implements Function
         if (!(thisObj instanceof NativeRegExp))
             throw incompatibleCallError(f);
         return (NativeRegExp)thisObj;
+    }
+
+    @Override
+    protected int findPrototypeId(Symbol k)
+    {
+        if (SymbolKey.MATCH.equals(k)) {
+            return SymbolId_match;
+        }
+        return 0;
     }
 
 // #string_id_map#
@@ -2773,8 +2792,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
         Id_exec          = 4,
         Id_test          = 5,
         Id_prefix        = 6,
+        SymbolId_match   = 7,
 
-        MAX_PROTOTYPE_ID = 6;
+        MAX_PROTOTYPE_ID = SymbolId_match;
 
 // #/string_id_map#
 
