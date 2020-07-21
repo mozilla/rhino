@@ -327,10 +327,14 @@ public class NativeObject extends IdScriptableObject implements Map
                     throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(proto));
                 }
 
-                if ( !(args[0] instanceof ScriptableObject) ) {
-                    return args[0];
+                final Object arg0 = args[0];
+                if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
+                    ScriptRuntimeES6.requireObjectCoercible(cx, arg0, f);
                 }
-                ScriptableObject obj = (ScriptableObject) args[0];
+                if ( !(arg0 instanceof ScriptableObject) ) {
+                    return arg0;
+                }
+                ScriptableObject obj = (ScriptableObject) arg0;
                 if (!obj.isExtensible()) {
                     throw ScriptRuntime.typeError0("msg.not.extensible");
                 }

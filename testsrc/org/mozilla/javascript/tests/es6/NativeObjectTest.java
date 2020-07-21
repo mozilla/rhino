@@ -76,4 +76,28 @@ public class NativeObjectTest {
 
         assertEquals("obj[2] = 3, enumerable = false", result);
     }
+
+    @Test
+    public void testSetPrototypeOfNull() {
+        Object result = cx.evaluateString(
+                scope, "try { "
+                        + "  Object.setPrototypeOf(null, new Object());"
+                        + "} catch (e) { e.message }",
+                "test", 1, null
+        );
+
+        assertEquals("Object.prototype.setPrototypeOf method called on null or undefined", result);
+    }
+
+    @Test
+    public void testSetPrototypeOfUndefined() {
+        Object result = cx.evaluateString(
+                scope, "try { "
+                        + "  Object.setPrototypeOf(undefined, new Object());"
+                        + "} catch (e) { e.message }",
+                "test", 1, null
+        );
+
+        assertEquals("Object.prototype.setPrototypeOf method called on null or undefined", result);
+    }
 }
