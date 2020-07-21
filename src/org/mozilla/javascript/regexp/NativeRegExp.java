@@ -2695,6 +2695,10 @@ public class NativeRegExp extends IdScriptableObject implements Function
             initPrototypeMethod(REGEXP_TAG, id, SymbolKey.MATCH, "[Symbol.match]", 1);
             return;
         }
+        if (id == SymbolId_search) {
+            initPrototypeMethod(REGEXP_TAG, id, SymbolKey.SEARCH, "[Symbol.search]", 1);
+            return;
+        }
 
         String s;
         int arity;
@@ -2739,6 +2743,10 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
           case SymbolId_match:
               return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
+
+          case SymbolId_search:
+              Scriptable scriptable = (Scriptable) realThis(thisObj, f).execSub(cx, scope, args, MATCH);
+              return scriptable.get("index", scriptable);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -2755,6 +2763,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
     {
         if (SymbolKey.MATCH.equals(k)) {
             return SymbolId_match;
+        }
+        if (SymbolKey.SEARCH.equals(k)) {
+            return SymbolId_search;
         }
         return 0;
     }
@@ -2793,8 +2804,9 @@ public class NativeRegExp extends IdScriptableObject implements Function
         Id_test          = 5,
         Id_prefix        = 6,
         SymbolId_match   = 7,
+        SymbolId_search  = 8,
 
-        MAX_PROTOTYPE_ID = SymbolId_match;
+        MAX_PROTOTYPE_ID = SymbolId_search;
 
 // #/string_id_map#
 
