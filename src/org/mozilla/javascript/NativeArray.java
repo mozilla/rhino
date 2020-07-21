@@ -1910,7 +1910,9 @@ public class NativeArray extends IdScriptableObject implements List
         // as a result we have to handle ConstructorId_xxx calls (negative id)
         // the same way and always us the abs value of the id for method selection
         int id = Math.abs(idFunctionObject.methodId());
-        if (Id_find == id || Id_findIndex == id) o = requireObjectCoercible(cx, o, idFunctionObject);
+        if (Id_find == id || Id_findIndex == id) {
+            requireObjectCoercible(cx, o, idFunctionObject);
+        }
 
         long length = getLengthProperty(cx, o, id == Id_map);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
