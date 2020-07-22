@@ -5,18 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.javascript;
-
-import java.io.Serializable;
-
 /**
  * Generic notion of reference object that know how to query/modify the
  * target objects based on some property/index.
  */
-public abstract class Ref implements Serializable
+public abstract class Ref
 {
-
-    private static final long serialVersionUID = 4044540354730911424L;
-
     public boolean has(Context cx)
     {
         return true;

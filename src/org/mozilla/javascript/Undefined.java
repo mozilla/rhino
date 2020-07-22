@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -14,10 +13,8 @@ import java.lang.reflect.Proxy;
 /**
  * This class implements the Undefined value in JavaScript.
  */
-public class Undefined implements Serializable
+public class Undefined
 {
-    private static final long serialVersionUID = 9195680630202616767L;
-
     public static final Object instance = new Undefined();
 
     private Undefined()

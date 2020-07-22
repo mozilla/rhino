@@ -4,7 +4,6 @@
 
 package org.mozilla.javascript.xmlimpl;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,9 +19,8 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.UserDataHandler;
 
-class XmlNode implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
+class XmlNode {
+
     private static final String XML_NAMESPACES_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
     
     private static final String USER_DATA_XMLNODE_KEY = XmlNode.class.getName();
@@ -305,9 +303,7 @@ class XmlNode implements Serializable {
         return getNamespaceDeclaration(dom.getPrefix());
     }
 
-    static class XmlNodeUserDataHandler implements UserDataHandler, Serializable {
-        private static final long serialVersionUID = 4666895518900769588L;
-
+    static class XmlNodeUserDataHandler implements UserDataHandler {
         public void handle(short operation, String key, Object data, Node src, Node dest) {
         }
     }
@@ -559,13 +555,7 @@ class XmlNode implements Serializable {
         }
     }
 
-    static class Namespace implements Serializable {
-
-        /**
-         * Serial version id for Namespace with fields prefix and uri
-         */
-        private static final long serialVersionUID = 4073904386884677090L;
-
+    static class Namespace {
         static Namespace create(String prefix, String uri) {
             if (prefix == null) {
                 throw new IllegalArgumentException(
@@ -644,9 +634,7 @@ class XmlNode implements Serializable {
     }
 
     //    TODO    Where is this class used?  No longer using it in QName implementation
-    static class QName implements Serializable {
-        private static final long serialVersionUID = -6587069811691451077L;
-
+    static class QName {
         static QName create(Namespace namespace, String localName) {
             //    A null namespace indicates a wild-card match for any namespace
             //    A null localName indicates "*" from the point of view of ECMA357
@@ -764,8 +752,7 @@ class XmlNode implements Serializable {
         }
     }
 
-    static class InternalList implements Serializable {
-        private static final long serialVersionUID = -3633151157292048978L;
+    static class InternalList {
         private List<XmlNode> list;
 
         InternalList() {

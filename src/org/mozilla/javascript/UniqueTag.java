@@ -6,8 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.Serializable;
-
 /**
  * Class instances represent serializable tags to mark special Object values.
  * <p>
@@ -17,10 +15,8 @@ import java.io.Serializable;
  * ObjectInputStream would not restore them correctly as it lacks support
  * for readResolve method
  */
-public final class UniqueTag implements Serializable
+public final class UniqueTag
 {
-    private static final long serialVersionUID = -4320556826714577259L;
-
     private static final int ID_NOT_FOUND    = 1;
     private static final int ID_NULL_VALUE   = 2;
     private static final int ID_DOUBLE_MARK  = 3;

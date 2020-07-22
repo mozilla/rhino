@@ -13,7 +13,6 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
-import org.mozilla.javascript.ast.VariableInitializer;
 
 /**
  * Generates bytecode for the Interpreter.
@@ -111,8 +110,6 @@ class CodeGenerator extends Icode {
         if (theFunction.isES6Generator()) {
             itsData.isES6Generator = true;
         }
-
-        itsData.declaredAsVar = (theFunction.getParent() instanceof VariableInitializer);
 
         generateICodeFromTree(theFunction.getLastChild());
     }

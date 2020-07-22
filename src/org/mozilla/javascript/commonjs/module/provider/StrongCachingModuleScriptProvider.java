@@ -19,7 +19,6 @@ import org.mozilla.javascript.commonjs.module.ModuleScript;
  */
 public class StrongCachingModuleScriptProvider extends CachingModuleScriptProviderBase {
 
-    private static final long serialVersionUID = 1L;
     private final Map<String, CachedModuleScript> modules = new ConcurrentHashMap<String, CachedModuleScript>(16, .75f, getConcurrencyLevel());
 
     /**

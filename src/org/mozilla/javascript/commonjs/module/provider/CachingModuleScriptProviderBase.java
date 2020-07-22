@@ -5,7 +5,6 @@
 package org.mozilla.javascript.commonjs.module.provider;
 
 import java.io.Reader;
-import java.io.Serializable;
 import java.net.URI;
 
 import org.mozilla.javascript.Context;
@@ -23,8 +22,7 @@ import org.mozilla.javascript.commonjs.module.ModuleScriptProvider;
  * @author Attila Szegedi
  * @version $Id: CachingModuleScriptProviderBase.java,v 1.3 2011/04/07 20:26:12 hannes%helma.at Exp $
  */
-public abstract class CachingModuleScriptProviderBase implements ModuleScriptProvider, Serializable {
-    private static final long serialVersionUID = -1L;
+public abstract class CachingModuleScriptProviderBase implements ModuleScriptProvider {
     private static final int loadConcurrencyLevel = Runtime.getRuntime().availableProcessors() * 8;
     private static final int loadLockShift;
     private static final int loadLockMask;

@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
 
 /**
@@ -17,8 +16,6 @@ import java.lang.reflect.Method;
  */
 final class NativeError extends IdScriptableObject
 {
-    private static final long serialVersionUID = -5338413581437645187L;
-
     private static final Object ERROR_TAG = "Error";
 
     private static final Method ERROR_DELEGATE_GET_STACK;
@@ -354,7 +351,6 @@ final class NativeError extends IdScriptableObject
      * that are "global." We can't make them static because there can be many contexts in the same JVM.
      */
     private static final class ProtoProps
-        implements Serializable
     {
         static final String KEY = "_ErrorPrototypeProps";
 
@@ -373,8 +369,6 @@ final class NativeError extends IdScriptableObject
                 throw new RuntimeException(nsm);
             }
         }
-
-        private static final long serialVersionUID = 1907180507775337939L;
 
         private int stackTraceLimit = DEFAULT_STACK_LIMIT;
         private Function prepareStackTrace;

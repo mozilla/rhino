@@ -6,11 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-
 /**
  * Base class for native object implementation that uses IdFunctionObject to
  * export its methods to script via &lt;class-name&gt;.prototype object.
@@ -28,12 +23,9 @@ import java.io.Serializable;
  * 
  */
 public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
-    private static final long serialVersionUID = -3744239272168621609L;
     private transient PrototypeValues prototypeValues;
 
-    private static final class PrototypeValues implements Serializable {
-        private static final long serialVersionUID = 3038645279153854371L;
-
+    private static final class PrototypeValues {
         private static final int NAME_SLOT = 1;
         private static final int SLOT_SPAN = 2;
 
@@ -1039,27 +1031,5 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
       }
       return null;
     }
-
-    private void readObject(ObjectInputStream stream)
-        throws IOException, ClassNotFoundException
-    {
-        stream.defaultReadObject();
-        int maxPrototypeId = stream.readInt();
-        if (maxPrototypeId != 0) {
-            activatePrototypeMap(maxPrototypeId);
-        }
-    }
-
-    private void writeObject(ObjectOutputStream stream)
-        throws IOException
-    {
-        stream.defaultWriteObject();
-        int maxPrototypeId = 0;
-        if (prototypeValues != null) {
-            maxPrototypeId = prototypeValues.getMaxId();
-        }
-        stream.writeInt(maxPrototypeId);
-    }
-
 }
 

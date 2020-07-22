@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <FindBugsFilter>
-  <!-- In general, do not run this on tests or generated benchmark classes -->
   <Match>
+    <!-- In general, do not run this on tests or generated benchmark classes -->
     <Source name="~.*\/testsrc\/.*"/>
   </Match>
   <Match>
@@ -103,21 +103,22 @@
     <Class name="org.mozilla.javascript.optimizer.OptRuntime$GeneratorState"/>
     <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
   </Match>
-  <!-- Complex legacy stuff -->
-  <!--<Match>
-    <Class name="org.mozilla.javascript.regexp.RegExpImpl"/>
-    <Bug pattern="RC_REF_COMPARISON_BAD_PRACTICE_BOOLEAN"/>
-  </Match>-->
-
-  <!-- Things below are things that we aspire to fix! -->
   <Match>
-    <!-- We are planning to eliminate serialization -->
+    <!-- We are generally not making things serializable, so not comparators -->
+    <Bug pattern="SE_COMPARATOR_SHOULD_BE_SERIALIZABLE"/>
+  </Match>
+  <Match>
+    <!-- We aren't going to be serializing these inherited things -->
+    <Class name="org.mozilla.javascript.tools.shell.JavaPolicySecurity$ContextPermissions"/>
     <Bug pattern="SE_BAD_FIELD"/>
   </Match>
   <Match>
-    <!-- We are planning to eliminate serialization -->
-    <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
+    <!-- We aren't going to be serializing these inherited things -->
+    <Class name="org.mozilla.javascript.tools.shell.Main$ScriptCache"/>
+    <Bug pattern="SE_BAD_FIELD"/>
   </Match>
+
+  <!-- Things below are things that we aspire to fix! -->
   <Match>
     <!-- We are planning to get rid of synchronization -->
     <Bug pattern="DC_DOUBLECHECK"/>

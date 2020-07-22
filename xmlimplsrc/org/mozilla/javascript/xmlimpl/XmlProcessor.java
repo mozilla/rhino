@@ -6,7 +6,6 @@ package org.mozilla.javascript.xmlimpl;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -31,9 +30,7 @@ import org.w3c.dom.Text;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 
-class XmlProcessor implements Serializable {
-
-    private static final long serialVersionUID = 6903514433204808713L;
+class XmlProcessor {
 
     private boolean ignoreComments;
     private boolean ignoreProcessingInstructions;
@@ -124,7 +121,7 @@ class XmlProcessor implements Serializable {
         }
     }
 
-    private static class RhinoSAXErrorHandler implements ErrorHandler, Serializable {
+    private static class RhinoSAXErrorHandler implements ErrorHandler {
 
         private static final long serialVersionUID = 6918417235413084055L;
 

@@ -10,18 +10,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Iterator;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Hashtable;
 import org.mozilla.javascript.Hashtable.Entry;
-import org.mozilla.javascript.Undefined;
 
 /**
  * These are some tests for the Hashtable implementation that's used by the collection
@@ -246,75 +240,6 @@ public class CollectionHashtableTest
     assertEquals("ee", e.key());
     e = i.next();
     assertEquals("bb", e.key());
-    assertFalse(i.hasNext());
-  }
-
-  /**
-   * Test serialization of an empty object.
-   */
-  @Test
-  public void testEmptySerialization()
-      throws IOException, ClassNotFoundException {
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutputStream oout = new ObjectOutputStream(bos);
-    oout.writeObject(ht);
-    oout.close();
-
-    ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-    ObjectInputStream oin = new ObjectInputStream(bis);
-    Hashtable sht = (Hashtable)oin.readObject();
-    assertEquals(0, sht.size());
-  }
-
-  /**
-   * Test serialization of a non-empty object with a bunch of different data types,
-   * including the iteration order.
-   */
-  @Test
-  public void testSerialization()
-      throws IOException, ClassNotFoundException {
-
-    ht.put("one", 1);
-    ht.put("two", 2);
-    ht.put("three", 3);
-    ht.put(Undefined.instance, "undefined");
-    ht.put("undefined", Undefined.instance);
-    ht.put(null, "null");
-    ht.put("null", null);
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutputStream oout = new ObjectOutputStream(bos);
-    oout.writeObject(ht);
-    oout.close();
-
-    ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-    ObjectInputStream oin = new ObjectInputStream(bis);
-    Hashtable sht = (Hashtable)oin.readObject();
-
-    assertEquals(1, sht.get("one"));
-    assertEquals(2, sht.get("two"));
-    assertEquals(3, sht.get("three"));
-    assertEquals(Undefined.instance, sht.get("undefined"));
-    assertEquals("undefined", sht.get(Undefined.instance));
-    assertNull(sht.get("null"));
-    assertEquals("null", sht.get(null));
-
-    Iterator<Entry> i = ht.iterator();
-    Hashtable.Entry e = i.next();
-    assertEquals("one", e.key());
-    e = i.next();
-    assertEquals("two", e.key());
-    e = i.next();
-    assertEquals("three", e.key());
-    e = i.next();
-    assertEquals(Undefined.instance, e.key());
-    e = i.next();
-    assertEquals("undefined", e.key());
-    e = i.next();
-    assertNull(e.key());
-    e = i.next();
-    assertEquals("null", e.key());
     assertFalse(i.hasNext());
   }
 }

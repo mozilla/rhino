@@ -11,11 +11,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
@@ -51,8 +49,6 @@ import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.RequireBuilder;
 import org.mozilla.javascript.commonjs.module.provider.SoftCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
-import org.mozilla.javascript.serialize.ScriptableInputStream;
-import org.mozilla.javascript.serialize.ScriptableOutputStream;
 import org.mozilla.javascript.tools.ToolErrorReporter;
 
 /**
@@ -63,8 +59,6 @@ import org.mozilla.javascript.tools.ToolErrorReporter;
  */
 public class Global extends ImporterTopLevel
 {
-    static final long serialVersionUID = 4029130780977538005L;
-
     NativeArray history;
     boolean attemptedJLineLoad;
     private ShellConsole console;
@@ -118,7 +112,6 @@ public class Global extends ImporterTopLevel
         initStandardObjects(cx, sealedStdLib);
         String[] names = {
             "defineClass",
-            "deserialize",
             "doctest",
             "gc",
             "help",
@@ -131,7 +124,6 @@ public class Global extends ImporterTopLevel
             "readUrl",
             "runCommand",
             "seal",
-            "serialize",
             "spawn",
             "sync",
             "toint32",
@@ -375,41 +367,6 @@ public class Global extends ImporterTopLevel
         catch (ClassNotFoundException cnfe) {
             throw reportRuntimeError("msg.class.not.found", className);
         }
-    }
-
-    public static void serialize(Context cx, Scriptable thisObj,
-                                 Object[] args, Function funObj)
-        throws IOException
-    {
-        if (args.length < 2) {
-            throw Context.reportRuntimeError(
-                "Expected an object to serialize and a filename to write " +
-                "the serialization to");
-        }
-        Object obj = args[0];
-        String filename = Context.toString(args[1]);
-        FileOutputStream fos = new FileOutputStream(filename);
-        Scriptable scope = ScriptableObject.getTopLevelScope(thisObj);
-        ScriptableOutputStream out = new ScriptableOutputStream(fos, scope);
-        out.writeObject(obj);
-        out.close();
-    }
-
-    public static Object deserialize(Context cx, Scriptable thisObj,
-                                     Object[] args, Function funObj)
-        throws IOException, ClassNotFoundException
-    {
-        if (args.length < 1) {
-            throw Context.reportRuntimeError(
-                "Expected a filename to read the serialization from");
-        }
-        String filename = Context.toString(args[0]);
-        FileInputStream fis = new FileInputStream(filename);
-        Scriptable scope = ScriptableObject.getTopLevelScope(thisObj);
-        ObjectInputStream in = new ScriptableInputStream(fis, scope);
-        Object deserialized = in.readObject();
-        in.close();
-        return Context.toObject(deserialized, scope);
     }
 
     public String[] getPrompts(Context cx) {

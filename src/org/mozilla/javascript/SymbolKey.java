@@ -1,7 +1,5 @@
 package org.mozilla.javascript;
 
-import java.io.Serializable;
-
 /**
  * A SymbolKey is one of the implementations of Symbol. It is really there
  * so that we can easily use pre-defined symbols as keys in native code.
@@ -10,10 +8,8 @@ import java.io.Serializable;
  */
 
 public class SymbolKey
-    implements Symbol, Serializable
+    implements Symbol
 {
-    private static final long serialVersionUID = -6019782713330994754L;
-
     // These are common SymbolKeys that are equivalent to well-known symbols
     // defined in ECMAScript.
     public static final SymbolKey ITERATOR = new SymbolKey("Symbol.iterator");

@@ -8,7 +8,6 @@ package org.mozilla.javascript;
 
 import static org.mozilla.javascript.ScriptRuntimeES6.requireObjectCoercible;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,8 +26,6 @@ import org.mozilla.javascript.regexp.NativeRegExp;
  */
 public class NativeArray extends IdScriptableObject implements List
 {
-    private static final long serialVersionUID = 7331366857676127338L;
-
     /*
      * Optimization possibilities and open issues:
      * - Long vs. double schizophrenia.  I suspect it might be better
@@ -2309,9 +2306,7 @@ public class NativeArray extends IdScriptableObject implements List
     private static final Comparator<Object> DEFAULT_COMPARATOR = new ElementComparator();
 
     public static final class StringLikeComparator
-      implements Comparator<Object>, Serializable {
-
-      private static final long serialVersionUID = 5299017659728190979L;
+      implements Comparator<Object> {
 
       @Override
       public int compare(final Object x, final Object y) {
@@ -2322,9 +2317,7 @@ public class NativeArray extends IdScriptableObject implements List
     }
 
     public static final class ElementComparator
-      implements Comparator<Object>, Serializable {
-
-      private static final long serialVersionUID = -1189948017688708858L;
+      implements Comparator<Object> {
 
       private final Comparator<Object> child;
 

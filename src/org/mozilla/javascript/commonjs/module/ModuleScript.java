@@ -4,7 +4,6 @@
 
 package org.mozilla.javascript.commonjs.module;
 
-import java.io.Serializable;
 import java.net.URI;
 
 import org.mozilla.javascript.Script;
@@ -16,7 +15,7 @@ import org.mozilla.javascript.Script;
  * @author Attila Szegedi
  * @version $Id: ModuleScript.java,v 1.3 2011/04/07 20:26:11 hannes%helma.at Exp $
  */
-public class ModuleScript implements Serializable {
+public class ModuleScript {
     private static final long serialVersionUID = 1L;
     private final Script script;
     private final URI uri;

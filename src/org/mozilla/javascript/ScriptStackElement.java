@@ -4,18 +4,13 @@
 
 package org.mozilla.javascript;
 
-import java.io.Serializable;
-
 /**
  * This class represents an element on the script execution stack.
  * @see RhinoException#getScriptStack()
  * @author Hannes Wallnoefer
  * @since 1.7R3
  */
-public final class ScriptStackElement implements Serializable {
-
-    private static final long serialVersionUID = -6416688260860477449L;
-
+public final class ScriptStackElement {
     public final String fileName;
     public final String functionName;
     public final int lineNumber;
