@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.tests.Utils;
 
 /**
  * @author Ronald Brill
@@ -143,5 +144,20 @@ public class NativeRegExpTest {
         }
 
         Context.exit();
+    }
+
+    @Test
+    public void lastIndexReadonly() {
+        final String script = "try { "
+                + "  var r = /c/g;"
+                + "  Object.defineProperty(r, 'lastIndex', { writable: false });"
+                + "  r.exec('abc');"
+                + "} catch (e) { e.message }";
+        Utils.runWithAllOptimizationLevels(_cx -> {
+            final ScriptableObject scope = _cx.initStandardObjects();
+            final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
+            assertEquals("Cannot modify readonly property: lastIndex.", Context.toString(result));
+            return null;
+        });
     }
 }

@@ -141,7 +141,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     NativeRegExp(Scriptable scope, RECompiled regexpCompiled)
     {
         this.re = regexpCompiled;
-        this.lastIndex = ScriptRuntime.zeroObj;
+        setLastIndex(ScriptRuntime.zeroObj);
         ScriptRuntime.setBuiltinProtoAndParent(this, scope, TopLevel.Builtins.RegExp);
     }
 
@@ -191,7 +191,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
             }
             NativeRegExp thatObj = (NativeRegExp) args[0];
             this.re = thatObj.re;
-            this.lastIndex = thatObj.lastIndex;
+            setLastIndex(thatObj.lastIndex);
             return this;
         }
         String s = args.length == 0 || args[0] instanceof Undefined ? "" : escapeRegExp(args[0]);
@@ -199,7 +199,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
             ? ScriptRuntime.toString(args[1])
             : null;
         this.re = compileRE(cx, s, global, false);
-        this.lastIndex = ScriptRuntime.zeroObj;
+        setLastIndex(ScriptRuntime.zeroObj);
         return this;
     }
 
@@ -275,15 +275,18 @@ public class NativeRegExp extends IdScriptableObject implements Function
 
         Object rval;
         if (d < 0 || str.length() < d) {
-            lastIndex = ScriptRuntime.zeroObj;
+            setLastIndex(ScriptRuntime.zeroObj);
             rval = null;
         }
         else {
             int indexp[] = { (int)d };
             rval = executeRegExp(cx, scopeObj, reImpl, str, indexp, matchType);
             if ((re.flags & JSREG_GLOB) != 0) {
-                lastIndex = (rval == null || rval == Undefined.instance)
-                            ? ScriptRuntime.zeroObj : Double.valueOf((double)indexp[0]);
+                if (rval == null || rval == Undefined.instance) {
+                    setLastIndex(ScriptRuntime.zeroObj);
+                } else {
+                    setLastIndex(Double.valueOf(indexp[0]));
+                }
             }
         }
         return rval;
@@ -2662,12 +2665,19 @@ public class NativeRegExp extends IdScriptableObject implements Function
         return super.getInstanceIdValue(id);
     }
 
+    private void setLastIndex(Object value) {
+        if ((lastIndexAttr & READONLY) != 0) {
+            throw ScriptRuntime.typeError1("msg.modify.readonly", "lastIndex");
+        }
+        lastIndex = value;
+    }
+
+
     @Override
-    protected void setInstanceIdValue(int id, Object value)
-    {
+    protected void setInstanceIdValue(int id, Object value) {
         switch (id) {
           case Id_lastIndex:
-            lastIndex = value;
+            setLastIndex(value);
             return;
           case Id_source:
           case Id_global:
