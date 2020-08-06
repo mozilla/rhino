@@ -10,7 +10,7 @@ public abstract class ES6Iterator extends IdScriptableObject {
 
     private static final long serialVersionUID = 2438373029140003950L;
 
-    static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
+    protected static void init(ScriptableObject scope, boolean sealed, IdScriptableObject prototype, String tag) {
         if (scope != null) {
             prototype.setParentScope(scope);
             prototype.setPrototype(getObjectPrototype(scope));
@@ -32,9 +32,9 @@ public abstract class ES6Iterator extends IdScriptableObject {
     protected boolean exhausted = false;
     private String tag;
 
-    ES6Iterator() {}
+    protected ES6Iterator() {}
 
-    ES6Iterator(Scriptable scope, String tag) {
+    protected ES6Iterator(Scriptable scope, String tag) {
         // Set parent and prototype properties. Since we don't have a
         // "Iterator" constructor in the top scope, we stash the
         // prototype in the top scope's associated value.
