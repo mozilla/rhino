@@ -98,7 +98,8 @@ class SpecialRef extends Ref
                     } while (search != null);
                 }
                 if (type == SPECIAL_PROTO) {
-                    if (!(target instanceof BaseFunction)) {
+                    if (cx.getLanguageVersion() < Context.VERSION_ES6 ||
+                        !(target instanceof BaseFunction)) {
                         target.setPrototype(obj);
                     }
                 } else {

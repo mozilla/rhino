@@ -19,7 +19,7 @@ public class NativeFunctionTest {
     @Before
     public void setUp() {
         cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_1_8);
+        cx.setLanguageVersion(Context.VERSION_ES6);
         scope = cx.initStandardObjects();
     }
 
