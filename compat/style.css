@@ -45,6 +45,7 @@ label[for=flagged] {
   top: 2px;
 }
 label[for=flagged],
+label[for=showInfoCode],
 #credits {
   z-index: 101;
   position: fixed;
@@ -107,6 +108,35 @@ body.scrolled .headings {
 #flagged ~ article .unflagged,
 #flagged ~ header .unflagged { display:block; }
 
+#showInfoCode {
+  position: fixed;
+  z-index: 101;
+  top: 0;
+  right: 510px;
+}
+
+label[for=showInfoCode] {
+  cursor: pointer;
+  right: 390px;
+  font-size: 12px;
+  top: 2px;
+}
+
+#showInfoCode:checked ~ article .info {
+  display: none;
+}
+
+#showInfoCode:checked ~ article tr.codeExample {
+  display: table-row;
+  position: relative;
+}
+
+#showInfoCode:checked ~ article tr.codeExample .fn {
+  position: relative;
+  display: block;
+  z-index: initial;
+  margin-left: 0px;
+}
 
 article {
   position: relative;
@@ -273,4 +303,12 @@ table.results {
 .hash {
   position: absolute;
   margin-top: -46px;
+}
+.anchor {
+  margin-right: 5px;
+  font-size: 90%;
+  visibility: hidden;
+}
+tr:hover > td > .anchor {
+  visibility: visible;
 }
