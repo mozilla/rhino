@@ -3,6 +3,7 @@ plugins {
     id 'idea'
     id 'eclipse'
     id 'maven-publish'
+    id 'signing'
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
@@ -361,6 +362,13 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications.rhino
+    sign publishing.publications.rhinoengine
+    sign publishing.publications.rhinoruntime
 }
 
 spotbugs {
