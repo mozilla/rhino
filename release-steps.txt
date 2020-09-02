@@ -1,7 +1,6 @@
 Update version in:
 	src/manifest
 	gradle.properties
-	maven/maven-pom.xml
 
 Paste release notes into RELEASE_NOTES.md:
 	git shortlog LAST_TAG.. | sed 's/^ /*/'
@@ -10,15 +9,16 @@ Paste release info into README.md
 	Copy README into gh-pages
 	Extract build/*/javadoc.zip to gh-pages/javadoc
 
-Re-run compat-table "engine.js"
+Re-run compat-table "rhinoall.sh"
 	Copy HTML to gh-pages/compat
 
-./gradlew publishToMavenLocal distZip 
-cd maven
-./maven-staging-deploy.sh
+./gradlew publish
 
 Go to oss.sonatype.org
 	Find "org.mozilla" staging repo, close, release, and drop.
+
+./gradlew distZip
+	Publish that to the GitHub release page
 
 git tag for new release
 
@@ -28,7 +28,6 @@ Update release in GitHub
 Update to new snapshot version in:
 	src/manifest
 	gradle.properties
-	maven/maven-pom.xml
 
 Update the Homebrew formula. Submit a PR for:
 	Homebrew/homebrew
