@@ -221,7 +221,11 @@ public class Token {
             METHOD = 167, // ES6 MethodDefinition
             ARROW = 168, // ES6 ArrowFunction
             YIELD_STAR = 169, // ES6 "yield *", a specialization of yield
-            LAST_TOKEN = 170;
+            QUASI = 170, // quasi literal
+            QUASI_CHARS = 171, // quasi - literal section
+            QUASI_SUBST = 172, // quasi - substitution
+            QUASI_CALL = 173, // quasi - tagged/handler
+            LAST_TOKEN = 173;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -582,6 +586,14 @@ public class Token {
                 return "YIELD_STAR";
             case BIGINT:
                 return "BIGINT";
+            case QUASI:
+                return "QUASI";
+            case QUASI_CHARS:
+                return "QUASI_CHARS";
+            case QUASI_SUBST:
+                return "QUASI_SUBST";
+            case QUASI_CALL:
+                return "QUASI_CALL";
         }
 
         // Token without name

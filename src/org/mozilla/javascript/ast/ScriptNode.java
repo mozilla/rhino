@@ -27,6 +27,7 @@ public class ScriptNode extends Scope {
 
     private List<FunctionNode> functions;
     private List<RegExpLiteral> regexps;
+    private List<QuasiLiteral> quasis;
     private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
     private List<Symbol> symbols = new ArrayList<Symbol>(4);
@@ -205,6 +206,25 @@ public class ScriptNode extends Scope {
             regexps = new ArrayList<RegExpLiteral>();
         regexps.add(re);
         re.putIntProp(REGEXP_PROP, regexps.size() - 1);
+    }
+
+    public int getQuasiCount() {
+        return quasis == null ? 0 : quasis.size();
+    }
+
+    public List<QuasiCharacters> getQuasiStrings(int index) {
+        return quasis.get(index).getQuasiStrings();
+    }
+
+    /**
+     * Called by IRFactory to add a Quasi to the quasi table.
+     */
+    public void addQuasi(QuasiLiteral quasi) {
+        if (quasi == null) codeBug();
+        if (quasis == null)
+            quasis = new ArrayList<QuasiLiteral>();
+        quasis.add(quasi);
+        quasi.putIntProp(QUASI_PROP, quasis.size() - 1);
     }
 
     public int getIndexForNameNode(Node nameNode) {

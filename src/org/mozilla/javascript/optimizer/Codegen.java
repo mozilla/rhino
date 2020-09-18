@@ -36,6 +36,7 @@ import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
+import org.mozilla.javascript.ast.QuasiCharacters;
 import org.mozilla.javascript.ast.ScriptNode;
 
 /**
@@ -321,6 +322,7 @@ public class Codegen implements Evaluator
         }
 
         emitRegExpInit(cfw);
+        emitQuasiInit(cfw);
         emitConstantDudeInitializers(cfw);
 
         return cfw.toByteArray();
@@ -730,6 +732,11 @@ public class Codegen implements Evaluator
             cfw.addInvoke(ByteCode.INVOKESTATIC, mainClassName,
                           REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE);
         }
+        // emit all quasi literals
+        if (ofn.fnode.getQuasiCount() != 0) {;
+            cfw.addInvoke(ByteCode.INVOKESTATIC, mainClassName,
+                          QUASI_INIT_METHOD_NAME, QUASI_INIT_METHOD_SIGNATURE);
+        }
 
         cfw.add(ByteCode.RETURN);
         // 3 = (scriptThis/functionRef) + scope + context
@@ -1039,6 +1046,84 @@ public class Codegen implements Evaluator
         cfw.stopMethod((short)2);
     }
 
+    /**
+     * Overview:
+     * <pre>
+     * for each fn in functions(script) do
+     *   let field = []
+     *   for each quasi in quasis(fn) do
+     *     let values = concat([[cooked(s), raw(s)] | s <- strings(quasi)])
+     *     field.push(values)
+     *   end
+     *   class[getQuasiName(fn)] = field
+     * end
+     * </pre>
+     */
+    private void emitQuasiInit(ClassFileWriter cfw)
+    {
+        // emit all quasi literals
+
+        int totalQuasiCount = 0;
+        for (ScriptNode n : scriptOrFnNodes) {
+            totalQuasiCount += n.getQuasiCount();
+        }
+        if (totalQuasiCount == 0) {
+            return;
+        }
+
+        cfw.startMethod(QUASI_INIT_METHOD_NAME, QUASI_INIT_METHOD_SIGNATURE,
+                (short)(ACC_STATIC | ACC_PRIVATE));
+        cfw.addField("_qInitDone", "Z",
+                     (short)(ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
+
+        cfw.add(ByteCode.GETSTATIC, mainClassName, "_qInitDone", "Z");
+        int doInit = cfw.acquireLabel();
+        cfw.add(ByteCode.IFEQ, doInit);
+        cfw.add(ByteCode.RETURN);
+        cfw.markLabel(doInit);
+
+        // We could apply double-checked locking here but concurrency
+        // shouldn't be a problem in practice
+        for (ScriptNode n : scriptOrFnNodes) {
+            int qCount = n.getQuasiCount();
+            if (qCount == 0) continue;
+            String qFieldName = getQuasiName(n);
+            String qFieldType = "[Ljava/lang/Object;";
+            cfw.addField(qFieldName, qFieldType,
+                         (short)(ACC_STATIC | ACC_PRIVATE));
+            cfw.addPush(qCount);
+            cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
+            for (int j = 0; j < qCount; ++j) {
+                List<QuasiCharacters> strings = n.getQuasiStrings(j);
+                cfw.add(ByteCode.DUP);
+                cfw.addPush(j);
+                cfw.addPush(strings.size() * 2);
+                cfw.add(ByteCode.ANEWARRAY, "java/lang/String");
+                int k = 0;
+                for (QuasiCharacters s : strings) {
+                    // cooked value
+                    cfw.add(ByteCode.DUP);
+                    cfw.addPush(k++);
+                    cfw.addPush(s.getValue());
+                    cfw.add(ByteCode.AASTORE);
+                    // raw value
+                    cfw.add(ByteCode.DUP);
+                    cfw.addPush(k++);
+                    cfw.addPush(s.getRawValue());
+                    cfw.add(ByteCode.AASTORE);
+                }
+                cfw.add(ByteCode.AASTORE);
+            }
+            cfw.add(ByteCode.PUTSTATIC, mainClassName,
+                    qFieldName, qFieldType);
+        }
+
+        cfw.addPush(true);
+        cfw.add(ByteCode.PUTSTATIC, mainClassName, "_qInitDone", "Z");
+        cfw.add(ByteCode.RETURN);
+        cfw.stopMethod((short)0);
+    }
+
     private void emitConstantDudeInitializers(ClassFileWriter cfw)
     {
         int N = itsConstantListSize;
@@ -1221,6 +1306,11 @@ public class Codegen implements Evaluator
         return "_re"+getIndex(n)+"_"+regexpIndex;
     }
 
+    String getQuasiName(ScriptNode n)
+    {
+        return "_q"+getIndex(n);
+    }
+
     static RuntimeException badTree()
     {
         throw new RuntimeException("Bad tree in codegen");
@@ -1242,6 +1332,10 @@ public class Codegen implements Evaluator
     static final String REGEXP_INIT_METHOD_NAME = "_reInit";
     static final String REGEXP_INIT_METHOD_SIGNATURE
         =  "(Lorg/mozilla/javascript/Context;)V";
+
+    static final String QUASI_INIT_METHOD_NAME = "_qInit";
+    static final String QUASI_INIT_METHOD_SIGNATURE
+        =  "()V";
 
     static final String FUNCTION_INIT_SIGNATURE
         =  "(Lorg/mozilla/javascript/Context;"
