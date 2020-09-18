@@ -290,15 +290,24 @@ class BodyCodegen {
             }
         }
 
-        // Compile RegExp literals if this is a script. For functions
+        // Compile RegExp and Quasi literals if this is a script. For functions
         // this is performed during instantiation in functionInit
-        if (fnCurrent == null && scriptOrFn.getRegexpCount() != 0) {
-            cfw.addALoad(contextLocal);
-            cfw.addInvoke(
-                    ByteCode.INVOKESTATIC,
-                    codegen.mainClassName,
-                    Codegen.REGEXP_INIT_METHOD_NAME,
-                    Codegen.REGEXP_INIT_METHOD_SIGNATURE);
+        if (fnCurrent == null) {
+            if (scriptOrFn.getRegexpCount() != 0) {
+                cfw.addALoad(contextLocal);
+                cfw.addInvoke(
+                        ByteCode.INVOKESTATIC,
+                        codegen.mainClassName,
+                        Codegen.REGEXP_INIT_METHOD_NAME,
+                        Codegen.REGEXP_INIT_METHOD_SIGNATURE);
+            }
+            if (scriptOrFn.getQuasiCount() != 0) {
+                cfw.addInvoke(
+                        ByteCode.INVOKESTATIC,
+                        codegen.mainClassName,
+                        Codegen.QUASI_INIT_METHOD_NAME,
+                        Codegen.QUASI_INIT_METHOD_SIGNATURE);
+            }
         }
 
         if (compilerEnv.isGenerateObserverCount()) saveCurrentCodeOffset();
@@ -1597,6 +1606,10 @@ class BodyCodegen {
                     break;
                 }
 
+            case Token.QUASI:
+                visitQuasi(node);
+                break;
+
             default:
                 throw new RuntimeException("Unexpected node type " + type);
         }
@@ -1761,6 +1774,25 @@ class BodyCodegen {
         cfw.addILoad(operationLocal);
         cfw.addLoadConstant(NativeGenerator.GENERATOR_THROW);
         cfw.add(ByteCode.IF_ICMPEQ, throwLabel);
+    }
+
+    private void visitQuasi(Node node) {
+        // create the quasi call-site object for tagged quasis,
+        // default quasis are already handled earlier in IRFactory
+        int index = node.getExistingIntProp(Node.QUASI_PROP);
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        cfw.add(ByteCode.GETSTATIC, codegen.mainClassName,
+                codegen.getQuasiName(scriptOrFn),
+                "[Ljava/lang/Object;");
+        cfw.addPush(index);
+        cfw.addInvoke(ByteCode.INVOKESTATIC,
+                      "org/mozilla/javascript/ScriptRuntime",
+                      "getQuasiCallSite",
+                      "(Lorg/mozilla/javascript/Context;"
+                      +"Lorg/mozilla/javascript/Scriptable;"
+                      +"[Ljava/lang/Object;I"
+                      +")Lorg/mozilla/javascript/Scriptable;");
     }
 
     private void generateIfJump(Node node, Node parent, int trueLabel, int falseLabel) {

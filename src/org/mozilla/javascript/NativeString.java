@@ -1113,42 +1113,47 @@ final class NativeString extends IdScriptableObject {
     /**
      *
      *
-     * <h1>String.raw (template, ...substitutions)</h1>
-     *
-     * <p>22.1.2.4 String.raw [Draft ECMA-262 / April 28, 2021]
+     * <h1>String.raw (callSite, ...substitutions)</h1>
+     * <p>15.5.3.4 String.raw [ECMA 6 - draft]</p>
      */
     private static CharSequence js_raw(Context cx, Scriptable scope, Object[] args) {
-        /* step 1-2 */
-        Object arg0 = args.length > 0 ? args[0] : Undefined.instance;
+        final Object undefined = Undefined.instance;
+        /* step 1-3 */
+        Object arg0 = args.length > 0 ? args[0] : undefined;
         Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
-        /* step 3 */
-        Object rawValue = ScriptRuntime.getObjectProp(cooked, "raw", cx);
+        /* step 4-6 */
+        Object rawValue = cooked.get("raw", cooked);
+        if (rawValue == NOT_FOUND) rawValue = undefined;
         Scriptable raw = ScriptRuntime.toObject(cx, scope, rawValue);
-        /* step 4-5 */
-        long rawLength = NativeArray.getLengthProperty(cx, raw);
-        if (rawLength > Integer.MAX_VALUE) {
-            throw ScriptRuntime.rangeError("raw.length > " + Integer.toString(Integer.MAX_VALUE));
-        }
-        int literalSegments = (int) rawLength;
-        if (literalSegments <= 0) return "";
-        /* step 6-7 */
+        /* step 7-9 */
+        Object len = raw.get("length", raw);
+        if (len == NOT_FOUND) len = undefined;
+        long literalSegments = ScriptRuntime.toUint32(len);
+        /* step 10 */
+        if (literalSegments == 0) return "";
+        /* step 11-13 */
         StringBuilder elements = new StringBuilder();
-        int nextIndex = 0;
-        for (; ; ) {
-            /* step 8 a-i */
+        long nextIndex = 0;
+        for (;;) {
+            /* step 13 a-e */
             Object next;
-            next = ScriptRuntime.getObjectIndex(raw, nextIndex, cx);
+            if (nextIndex > Integer.MAX_VALUE) {
+                next = raw.get(Long.toString(nextIndex), raw);
+            } else {
+                next = raw.get((int) nextIndex, raw);
+            }
+            if (next == NOT_FOUND) next = undefined;
             String nextSeg = ScriptRuntime.toString(next);
             elements.append(nextSeg);
             nextIndex += 1;
             if (nextIndex == literalSegments) {
                 break;
             }
-            next = args.length > nextIndex ? args[nextIndex] : "";
+            next = args.length > nextIndex ? args[(int) nextIndex] : undefined;
             String nextSub = ScriptRuntime.toString(next);
             elements.append(nextSub);
         }
-        return elements;
+        return elements.toString();
     }
 
     @Override

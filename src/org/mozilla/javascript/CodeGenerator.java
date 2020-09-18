@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.math.BigInteger;
+import java.util.List;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -15,6 +16,7 @@ import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.VariableInitializer;
+import org.mozilla.javascript.ast.QuasiCharacters;
 
 /** Generates bytecode for the Interpreter. */
 class CodeGenerator extends Icode {
@@ -123,6 +125,8 @@ class CodeGenerator extends Icode {
 
         generateRegExpLiterals();
 
+        generateQuasiLiterals();
+
         visitStatement(tree, 0);
         fixLabelGotos();
         // add RETURN_RESULT only to scripts as function always ends with RETURN
@@ -230,6 +234,24 @@ class CodeGenerator extends Icode {
             array[i] = rep.compileRegExp(cx, string, flags);
         }
         itsData.itsRegExpLiterals = array;
+    }
+
+    private void generateQuasiLiterals() {
+        int N = scriptOrFn.getQuasiCount();
+        if (N == 0) return;
+
+        Object[] array = new Object[N];
+        for (int i = 0; i != N; i++) {
+            List<QuasiCharacters> strings = scriptOrFn.getQuasiStrings(i);
+            int j = 0;
+            String[] values = new String[strings.size() * 2];
+            for (QuasiCharacters s : strings) {
+                values[j++] = s.getValue();
+                values[j++] = s.getRawValue();
+            }
+            array[i] = values;
+        }
+        itsData.itsQuasiLiterals = array;
     }
 
     private void updateLineNumber(Node node) {
@@ -1008,6 +1030,10 @@ class CodeGenerator extends Icode {
                     break;
                 }
 
+            case Token.QUASI:
+              visitQuasi(node);
+              break;
+
             default:
                 throw badTree(node);
         }
@@ -1162,6 +1188,12 @@ class CodeGenerator extends Icode {
             addIndexOp(Token.OBJECTLIT, index);
         }
         stackChange(-1);
+    }
+
+    private void visitQuasi(Node node) {
+        int index = node.getExistingIntProp(Node.QUASI_PROP);
+        addIndexOp(Icode_QUASI_CALLSITE, index);
+        stackChange(1);
     }
 
     private void visitArrayComprehension(Node node, Node initStmt, Node expr) {

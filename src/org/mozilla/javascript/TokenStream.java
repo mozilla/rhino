@@ -1245,6 +1245,9 @@ class TokenStream {
                     dirtyLine = true;
                     return c;
 
+                case '`':
+                    return Token.QUASI;
+
                 default:
                     parser.addError("msg.illegal.character", c);
                     return Token.ERROR;
@@ -1412,6 +1415,209 @@ class TokenStream {
         String flags = this.regExpFlags;
         this.regExpFlags = null;
         return flags;
+    }
+
+    private StringBuilder rawString = new StringBuilder();
+
+    String getRawString() {
+        if (rawString.length() == 0) {
+            return "";
+        }
+        return rawString.toString();
+    }
+
+    private int getQuasiChar() throws IOException {
+        boolean unget = ungetCursor != 0;
+        int oldLineEnd = lineEndChar;
+        // getChar() skips past '\r\n' sequences, but we need a faithful
+        // representation of the complete input for quasis
+        int c = getCharIgnoreLineEnd(false);
+        if (c == '\n') {
+            c = lineEndChar;
+        }
+        // update lineno after passing line boundaries (cf. getChar())
+        // - unless this is a 'unget' character
+        // - unless this is a '\r\n' sequence
+        if (oldLineEnd >= 0 && !unget && !(oldLineEnd == '\r' && c == '\n')) {
+            lineEndChar = -1;
+            lineStart = sourceCursor - 1;
+            lineno++;
+        }
+        rawString.append((char) c);
+        return c;
+    }
+
+    private void ungetQuasiChar(int c) {
+        ungetCharIgnoreLineEnd(c);
+        rawString.setLength(rawString.length() - 1);
+    }
+
+    private boolean matchQuasiChar(int test) throws IOException {
+        int c = getQuasiChar();
+        if (c == test) {
+            return true;
+        }
+        ungetQuasiChar(c);
+        return false;
+    }
+
+    private int peekQuasiChar() throws IOException {
+        int c = getQuasiChar();
+        ungetQuasiChar(c);
+        return c;
+    }
+
+    int readQuasi() throws IOException {
+        rawString.setLength(0);
+        stringBufferTop = 0;
+        while (true) {
+            int c = getQuasiChar();
+            switch (c) {
+            case EOF_CHAR:
+                this.string = getStringFromBuffer();
+                tokenEnd = cursor - 1; // restore tokenEnd
+                parser.reportError("msg.unexpected.eof");
+                return Token.ERROR;
+            case '`':
+                rawString.setLength(rawString.length() - 1); // don't include "`"
+                this.string = getStringFromBuffer();
+                return Token.QUASI;
+            case '$':
+                if (matchQuasiChar('{')) {
+                    rawString.setLength(rawString.length() - 2); // don't include "${"
+                    this.string = getStringFromBuffer();
+                    this.tokenEnd = cursor - 1; // don't include "{"
+                    return Token.QUASI_SUBST;
+                } else {
+                    addToString(c);
+                    break;
+                }
+            case '\\':
+                // LineContinuation ::
+                //   \ LineTerminatorSequence
+                // EscapeSequence ::
+                //   CharacterEscapeSequence
+                //   0 [LA not DecimalDigit]
+                //   HexEscapeSequence
+                //   UnicodeEscapeSequence
+                // CharacterEscapeSequence ::
+                //   SingleEscapeCharacter
+                //   NonEscapeCharacter
+                // SingleEscapeCharacter ::
+                //   ' "  \  b f n r t v
+                // NonEscapeCharacter ::
+                //   SourceCharacter but not one of EscapeCharacter or LineTerminator
+                // EscapeCharacter ::
+                //   SingleEscapeCharacter
+                //   DecimalDigit
+                //   x
+                //   u
+                c = getQuasiChar();
+                switch (c) {
+                case '\r':
+                    // skip past \r\n sequence
+                    matchQuasiChar('\n');
+                    continue;
+                case '\n':
+                case '\u2028':
+                case '\u2029':
+                    continue;
+                case '\'':
+                case '"':
+                case '\\':
+                    // use as-is
+                    break;
+                case 'b':
+                    c = '\b';
+                    break;
+                case 'f':
+                    c = '\f';
+                    break;
+                case 'n':
+                    c = '\n';
+                    break;
+                case 'r':
+                    c = '\r';
+                    break;
+                case 't':
+                    c = '\t';
+                    break;
+                case 'v':
+                    c = 0xb;
+                    break;
+                case 'x': {
+                    int escapeVal = 0;
+                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
+                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
+                    if (escapeVal < 0) {
+                        parser.reportError("msg.syntax");
+                        return Token.ERROR;
+                    }
+                    c = escapeVal;
+                    break;
+                }
+                case 'u': {
+                    int escapeVal = 0;
+                    c = getQuasiChar();
+                    if (c == '{') {
+                        c = getQuasiChar();
+                        do {
+                            escapeVal = Kit.xDigitToInt(c, escapeVal);
+                            if (escapeVal < 0 || escapeVal > 0x10FFFF) {
+                                parser.reportError("msg.syntax");
+                                return Token.ERROR;
+                            }
+                        } while ((c = getQuasiChar()) != '}');
+                        if (escapeVal > 0xFFFF) {
+                            addToString(Character.highSurrogate(escapeVal));
+                            addToString(Character.lowSurrogate(escapeVal));
+                            continue;
+                        }
+                        c = escapeVal;
+                        break;
+                    }
+                    escapeVal = Kit.xDigitToInt(c, escapeVal);
+                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
+                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
+                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
+                    if (escapeVal < 0) {
+                        parser.reportError("msg.syntax");
+                        return Token.ERROR;
+                    }
+                    c = escapeVal;
+                    break;
+                }
+                case '0': {
+                    int d = peekQuasiChar();
+                    if (d >= '0' && d <= '9') {
+                        parser.reportError("msg.syntax");
+                        return Token.ERROR;
+                    }
+                    c = 0x00;
+                    break;
+                }
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    parser.reportError("msg.syntax");
+                    return Token.ERROR;
+                default:
+                    // use as-is
+                    break;
+                }
+                addToString(c);
+                break;
+            default:
+                addToString(c);
+                break;
+            }
+        }
     }
 
     boolean isXMLAttribute() {
@@ -1777,7 +1983,13 @@ class TokenStream {
         }
     }
 
-    private int getCharIgnoreLineEnd() throws IOException {
+    private int getCharIgnoreLineEnd() throws IOException
+    {
+        return getCharIgnoreLineEnd(true);
+    }
+
+    private int getCharIgnoreLineEnd(boolean skipFormattingChars) throws IOException
+    {
         if (ungetCursor != 0) {
             cursor++;
             return ungetBuffer[--ungetCursor];
