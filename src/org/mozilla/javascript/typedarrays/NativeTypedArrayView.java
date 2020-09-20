@@ -324,10 +324,10 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
             throw ScriptRuntime.constructError("Error", "invalid arguments");
 
         case Id_subarray:
-            if (args.length > 0) {
-                NativeTypedArrayView<T> self = realThis(thisObj, f);
-                int start = ScriptRuntime.toInt32(args[0]);
-                int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.length;
+            NativeTypedArrayView<T> self = realThis(thisObj, f);
+            int start = isArg(args, 0) ? ScriptRuntime.toInt32(args[0]) : 0;
+            int end = isArg(args, 1) ? ScriptRuntime.toInt32(args[1]) : self.length;
+            if (cx.getLanguageVersion() >= Context.VERSION_ES6 || args.length > 0) {
                 return self.js_subarray(cx, scope, start, end);
             }
             throw ScriptRuntime.constructError("Error", "invalid arguments");
