@@ -13,50 +13,50 @@ import java.util.List;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for a Quasi literal.
- * <p>Node type is {@link Token#QUASI}.</p>
+ * AST node for a Template literal.
+ * <p>Node type is {@link Token#TEMPLATE_LITERAL}.</p>
  */
-public class QuasiLiteral extends AstNode {
+public class TemplateLiteral extends AstNode {
 
     private List<AstNode> elements;
 
     {
-        type = Token.QUASI;
+        type = Token.TEMPLATE_LITERAL;
     }
 
-    public QuasiLiteral() {
+    public TemplateLiteral() {
     }
 
-    public QuasiLiteral(int pos) {
+    public TemplateLiteral(int pos) {
         super(pos);
     }
 
-    public QuasiLiteral(int pos, int len) {
+    public TemplateLiteral(int pos, int len) {
         super(pos, len);
     }
 
     /**
-     * Returns a list of all literal sections of this quasi
+     * Returns a list of all literal sections of this template literal
      */
-    public List<QuasiCharacters> getQuasiStrings() {
+    public List<TemplateCharacters> getTemplateStrings() {
         if (elements == null) return emptyList();
-        List<QuasiCharacters> strings = new ArrayList<QuasiCharacters>();
+        List<TemplateCharacters> strings = new ArrayList<TemplateCharacters>();
         for (AstNode e : elements) {
-            if (e.getType() == Token.QUASI_CHARS) {
-                strings.add((QuasiCharacters) e);
+            if (e.getType() == Token.TEMPLATE_CHARS) {
+                strings.add((TemplateCharacters) e);
             }
         }
         return unmodifiableList(strings);
     }
 
     /**
-     * Returns a list of all substitutions of this quasi
+     * Returns a list of all substitutions of this template literal
      */
     public List<AstNode> getSubstitutions() {
         if (elements == null) return emptyList();
         List<AstNode> subs = new ArrayList<AstNode>();
         for (AstNode e : elements) {
-            if (e.getType() != Token.QUASI_CHARS) {
+            if (e.getType() != Token.TEMPLATE_CHARS) {
                 subs.add(e);
             }
         }
@@ -102,7 +102,7 @@ public class QuasiLiteral extends AstNode {
     }
 
     /**
-     * Returns the number of elements in this {@code Quasi} literal.
+     * Returns the number of elements in this {@code TemplateLiteral} literal.
      */
     public int getSize() {
         return elements == null ? 0 : elements.size();
@@ -126,7 +126,7 @@ public class QuasiLiteral extends AstNode {
         sb.append(makeIndent(depth));
         sb.append("`");
         for (AstNode e : getElements()) {
-            if (e.getType() == Token.QUASI_CHARS) {
+            if (e.getType() == Token.TEMPLATE_CHARS) {
                 sb.append(e.toSource(0));
             } else {
                 sb.append("${").append(e.toSource(0)).append("}");

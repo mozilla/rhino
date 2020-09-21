@@ -17,6 +17,7 @@ import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.VariableInitializer;
 import org.mozilla.javascript.ast.QuasiCharacters;
+import org.mozilla.javascript.ast.TemplateCharacters;
 
 /** Generates bytecode for the Interpreter. */
 class CodeGenerator extends Icode {
@@ -125,7 +126,7 @@ class CodeGenerator extends Icode {
 
         generateRegExpLiterals();
 
-        generateQuasiLiterals();
+        generateTemplateLiterals();
 
         visitStatement(tree, 0);
         fixLabelGotos();
@@ -236,22 +237,22 @@ class CodeGenerator extends Icode {
         itsData.itsRegExpLiterals = array;
     }
 
-    private void generateQuasiLiterals() {
-        int N = scriptOrFn.getQuasiCount();
+    private void generateTemplateLiterals() {
+        int N = scriptOrFn.getTemplateLiteralCount();
         if (N == 0) return;
 
         Object[] array = new Object[N];
         for (int i = 0; i != N; i++) {
-            List<QuasiCharacters> strings = scriptOrFn.getQuasiStrings(i);
+            List<TemplateCharacters> strings = scriptOrFn.getTemplateLiteralStrings(i);
             int j = 0;
             String[] values = new String[strings.size() * 2];
-            for (QuasiCharacters s : strings) {
+            for (TemplateCharacters s : strings) {
                 values[j++] = s.getValue();
                 values[j++] = s.getRawValue();
             }
             array[i] = values;
         }
-        itsData.itsQuasiLiterals = array;
+        itsData.itsTemplateLiterals = array;
     }
 
     private void updateLineNumber(Node node) {
@@ -1030,9 +1031,9 @@ class CodeGenerator extends Icode {
                     break;
                 }
 
-            case Token.QUASI:
-              visitQuasi(node);
-              break;
+            case Token.TEMPLATE_LITERAL:
+                visitTemplateLiteral(node);
+                break;
 
             default:
                 throw badTree(node);
@@ -1190,9 +1191,9 @@ class CodeGenerator extends Icode {
         stackChange(-1);
     }
 
-    private void visitQuasi(Node node) {
-        int index = node.getExistingIntProp(Node.QUASI_PROP);
-        addIndexOp(Icode_QUASI_CALLSITE, index);
+    private void visitTemplateLiteral(Node node) {
+        int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+        addIndexOp(Icode_TEMPLATE_LITERAL_CALLSITE, index);
         stackChange(1);
     }
 

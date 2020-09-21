@@ -46,9 +46,9 @@ import org.mozilla.javascript.ast.ObjectLiteral;
 import org.mozilla.javascript.ast.ObjectProperty;
 import org.mozilla.javascript.ast.ParenthesizedExpression;
 import org.mozilla.javascript.ast.PropertyGet;
-import org.mozilla.javascript.ast.QuasiCall;
-import org.mozilla.javascript.ast.QuasiCharacters;
-import org.mozilla.javascript.ast.QuasiLiteral;
+import org.mozilla.javascript.ast.TaggedTemplateLiteral;
+import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.ast.TemplateLiteral;
 import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
@@ -189,10 +189,10 @@ public final class IRFactory extends Parser {
                 return transformNewExpr((NewExpression) node);
             case Token.OBJECTLIT:
                 return transformObjectLiteral((ObjectLiteral) node);
-            case Token.QUASI:
-                return transformQuasi((QuasiLiteral)node);
-            case Token.QUASI_CALL:
-                return transformQuasiCall((QuasiCall)node);
+            case Token.TEMPLATE_LITERAL:
+                return transformTemplateLiteral((TemplateLiteral)node);
+            case Token.TAGGED_TEMPLATE_LITERAL:
+                return transformTemplateLiteralCall((TaggedTemplateLiteral)node);
             case Token.REGEXP:
                 return transformRegExp((RegExpLiteral) node);
             case Token.RETURN:
@@ -1052,19 +1052,19 @@ public final class IRFactory extends Parser {
         return createPropertyGet(target, null, name, 0);
     }
 
-    private Node transformQuasi(QuasiLiteral node) {
-        decompiler.addToken(Token.QUASI);
+    private Node transformTemplateLiteral(QuasiLiteral node) {
+        decompiler.addToken(Token.TEMPLATE_LITERAL);
         List<AstNode> elems = node.getElements();
         // start with an empty string to ensure ToString() for each substitution
         Node pn = Node.newString("");
         for (int i = 0; i < elems.size(); ++i) {
             AstNode elem = elems.get(i);
-            if (elem.getType() != Token.QUASI_CHARS) {
-                decompiler.addToken(Token.QUASI_SUBST);
+            if (elem.getType() != Token.TEMPLATE_CHARS) {
+                decompiler.addToken(Token.TEMPLATE_LITERAL_SUBST);
                 pn = createBinary(Token.ADD, pn, transform(elem));
                 decompiler.addToken(Token.RC);
             } else {
-                QuasiCharacters chars = (QuasiCharacters) elem;
+                TemplateCharacters chars = (TemplateCharacters) elem;
                 decompiler.addQuasi(chars.getRawValue());
                 // skip empty parts, e.g. `ε${expr}ε` where ε denotes the empty string
                 String value = chars.getValue();
@@ -1073,33 +1073,33 @@ public final class IRFactory extends Parser {
                 }
             }
         }
-        decompiler.addToken(Token.QUASI);
+        decompiler.addToken(Token.TEMPLATE_LITERAL);
         return pn;
     }
 
-    private Node transformQuasiCall(QuasiCall node) {
+    private Node transformTemplateLiteralCall(TaggedTemplateLiteral node) {
         Node call = createCallOrNew(Token.CALL, transform(node.getTarget()));
         call.setLineno(node.getLineno());
-        decompiler.addToken(Token.QUASI);
-        QuasiLiteral quasi = (QuasiLiteral) node.getQuasi();
-        List<AstNode> elems = quasi.getElements();
-        // Node callSite = new Node(Token.QUASI_CALL);
+        decompiler.addToken(Token.TEMPLATE_LITERAL);
+        TemplateLiteral templateLiteral = (TemplateLiteral) node.getTemplateLiteral();
+        List<AstNode> elems = templateLiteral.getElements();
+        // Node callSite = new Node(Token.TEMPLATE_LITERAL_CALL);
         // call.addChildToBack(callSite);
-        call.addChildToBack(quasi);
+        call.addChildToBack(templateLiteral);
         for (int i = 0; i < elems.size(); ++i) {
             AstNode elem = elems.get(i);
-            if (elem.getType() != Token.QUASI_CHARS) {
-                decompiler.addToken(Token.QUASI_SUBST);
+            if (elem.getType() != Token.TEMPLATE_CHARS) {
+                decompiler.addToken(Token.TEMPLATE_LITERAL_SUBST);
                 call.addChildToBack(transform(elem));
                 decompiler.addToken(Token.RC);
             } else {
-                QuasiCharacters chars = (QuasiCharacters) elem;
-                decompiler.addQuasi(chars.getRawValue());
+                TemplateCharacters chars = (TemplateCharacters) elem;
+                decompiler.addTemplateLiteral(chars.getRawValue());
                 // callSite.addChildToBack(elem);
             }
         }
-        currentScriptOrFn.addQuasi(quasi);
-        decompiler.addToken(Token.QUASI);
+        currentScriptOrFn.addTemplateLiteral(templateLiteral);
+        decompiler.addToken(Token.TEMPLATE_LITERAL);
         return call;
     }
 
