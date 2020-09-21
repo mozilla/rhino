@@ -3087,6 +3087,7 @@ public class Parser {
                 return new KeywordLiteral(pos, end - pos, tt);
 
             case Token.QUASI:
+                consumeToken();
                 return quasiLiteral();
 
             case Token.RESERVED:
