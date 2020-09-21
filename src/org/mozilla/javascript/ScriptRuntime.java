@@ -4672,11 +4672,7 @@ public class ScriptRuntime {
         return cx.getRegExpProxy().wrapRegExp(cx, scope, compiled);
     }
 
-    /**
-     * <h1>Abstract Operation GetQuasiCallSite</h1>
-     * <p>11.1.9 Quasi Literals [ECMA 6 - draft]</p>
-     */
-    public static Scriptable getQuasiCallSite(Context cx, Scriptable scope,
+    public static Scriptable getTemplateLiteralCallSite(Context cx, Scriptable scope,
                                               Object[] strings, int index) {
         /* step 1 */
         Object callsite = strings[index];

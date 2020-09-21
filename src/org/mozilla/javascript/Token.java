@@ -221,10 +221,10 @@ public class Token {
             METHOD = 167, // ES6 MethodDefinition
             ARROW = 168, // ES6 ArrowFunction
             YIELD_STAR = 169, // ES6 "yield *", a specialization of yield
-            QUASI = 170, // quasi literal
-            QUASI_CHARS = 171, // quasi - literal section
-            QUASI_SUBST = 172, // quasi - substitution
-            QUASI_CALL = 173, // quasi - tagged/handler
+            TEMPLATE_LITERAL = 170, // template literal
+            TEMPLATE_CHARS = 171, // template literal - literal section
+            TEMPLATE_LITERAL_SUBST = 172, // template literal - substitution
+            TAGGED_TEMPLATE_LITERAL = 173, // template literal - tagged/handler
             LAST_TOKEN = 173;
 
     /**
@@ -586,14 +586,14 @@ public class Token {
                 return "YIELD_STAR";
             case BIGINT:
                 return "BIGINT";
-            case QUASI:
-                return "QUASI";
-            case QUASI_CHARS:
-                return "QUASI_CHARS";
-            case QUASI_SUBST:
-                return "QUASI_SUBST";
-            case QUASI_CALL:
-                return "QUASI_CALL";
+            case TEMPLATE_LITERAL:
+                return "TEMPLATE_LITERAL";
+            case TEMPLATE_CHARS:
+                return "TEMPLATE_CHARS";
+            case TEMPLATE_LITERAL_SUBST:
+                return "TEMPLATE_LITERAL_SUBST";
+            case TAGGED_TEMPLATE_LITERAL:
+                return "TAGGED_TEMPLATE_LITERAL";
         }
 
         // Token without name

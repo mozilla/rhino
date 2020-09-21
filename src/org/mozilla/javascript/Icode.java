@@ -141,8 +141,8 @@ abstract class Icode {
             Icode_REG_BIGINT2 = -72,
             Icode_REG_BIGINT4 = -73,
 
-            // Call to GetQuasiCallSite
-           Icode_QUASI_CALLSITE = -74,
+            // Call to GetTemplateLiteralCallSite
+            Icode_TEMPLATE_LITERAL_CALLSITE= -74,
 
             // Last icode
             MIN_ICODE = -74;
@@ -307,8 +307,8 @@ abstract class Icode {
                 return "LOAD_BIGINT2";
             case Icode_REG_BIGINT4:
                 return "LOAD_BIGINT4";
-            case Icode_QUASI_CALLSITE:
-                return "QUASI_CALLSITE";
+            case Icode_TEMPLATE_LITERAL_CALLSITE:
+                return "TEMPLATE_LITERAL_CALLSITE";
         }
 
         // icode without name

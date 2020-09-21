@@ -7,26 +7,26 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for a Tagged Quasi.
- * <p>Node type is {@link Token#QUASI_CALL}.</p>
+ * AST node for a Tagged Template Literal.
+ * <p>Node type is {@link Token#TAGGED_TEMPLATE_LITERAL}.</p>
  */
-public class QuasiCall extends AstNode {
+public class TaggedTemplateLiteral extends AstNode {
 
     private AstNode target;
-    private AstNode quasi;
+    private AstNode templateLiteral;
 
     {
-        type = Token.QUASI_CALL;
+        type = Token.TAGGED_TEMPLATE_LITERAL;
     }
 
-    public QuasiCall() {
+    public TaggedTemplateLiteral() {
     }
 
-    public QuasiCall(int pos) {
+    public TaggedTemplateLiteral(int pos) {
         super(pos);
     }
 
-    public QuasiCall(int pos, int len) {
+    public TaggedTemplateLiteral(int pos, int len) {
         super(pos, len);
     }
 
@@ -38,12 +38,12 @@ public class QuasiCall extends AstNode {
         this.target = target;
     }
 
-    public AstNode getQuasi() {
-        return quasi;
+    public AstNode getTemplateLiteral() {
+        return templateLiteral;
     }
 
-    public void setQuasi(AstNode quasi) {
-        this.quasi = quasi;
+    public void setTemplateLiteral(AstNode templateLiteral) {
+        this.templateLiteral = templateLiteral;
     }
 
     @Override
@@ -51,7 +51,7 @@ public class QuasiCall extends AstNode {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         sb.append(target.toSource(0));
-        sb.append(quasi.toSource(0));
+        sb.append(templateLiteral.toSource(0));
         return sb.toString();
     }
 
@@ -62,7 +62,7 @@ public class QuasiCall extends AstNode {
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
             target.visit(v);
-            quasi.visit(v);
+            templateLiteral.visit(v);
         }
     }
 }

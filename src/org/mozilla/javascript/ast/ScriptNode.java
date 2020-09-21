@@ -27,7 +27,7 @@ public class ScriptNode extends Scope {
 
     private List<FunctionNode> functions;
     private List<RegExpLiteral> regexps;
-    private List<QuasiLiteral> quasis;
+    private List<TemplateLiteral> templateLiterals;
     private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
     private List<Symbol> symbols = new ArrayList<Symbol>(4);
@@ -208,23 +208,23 @@ public class ScriptNode extends Scope {
         re.putIntProp(REGEXP_PROP, regexps.size() - 1);
     }
 
-    public int getQuasiCount() {
-        return quasis == null ? 0 : quasis.size();
+    public int getTemplateLiteralCount() {
+        return templateLiterals == null ? 0 : templateLiterals.size();
     }
 
-    public List<QuasiCharacters> getQuasiStrings(int index) {
-        return quasis.get(index).getQuasiStrings();
+    public List<TemplateCharacters> getTemplateLiteralStrings(int index) {
+        return templateLiterals.get(index).getTemplateStrings();
     }
 
     /**
-     * Called by IRFactory to add a Quasi to the quasi table.
+     * Called by IRFactory to add a Template Literal to the templateLiterals table.
      */
-    public void addQuasi(QuasiLiteral quasi) {
-        if (quasi == null) codeBug();
-        if (quasis == null)
-            quasis = new ArrayList<QuasiLiteral>();
-        quasis.add(quasi);
-        quasi.putIntProp(QUASI_PROP, quasis.size() - 1);
+    public void addTemplateLiteral(TemplateLiteral templateLiteral) {
+        if (templateLiteral == null) codeBug();
+        if (templateLiterals == null)
+            templateLiterals = new ArrayList<TemplateLiteral>();
+        templateLiterals.add(templateLiteral);
+        templateLiteral.putIntProp(TEMPLATE_LITERAL_PROP, templateLiterals.size() - 1);
     }
 
     public int getIndexForNameNode(Node nameNode) {

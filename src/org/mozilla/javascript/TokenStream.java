@@ -1246,7 +1246,7 @@ class TokenStream {
                     return c;
 
                 case '`':
-                    return Token.QUASI;
+                    return Token.TEMPLATE_LITERAL;
 
                 default:
                     parser.addError("msg.illegal.character", c);
@@ -1426,11 +1426,11 @@ class TokenStream {
         return rawString.toString();
     }
 
-    private int getQuasiChar() throws IOException {
+    private int getTemplateLiteralChar() throws IOException {
         boolean unget = ungetCursor != 0;
         int oldLineEnd = lineEndChar;
         // getChar() skips past '\r\n' sequences, but we need a faithful
-        // representation of the complete input for quasis
+        // representation of the complete input for template literals
         int c = getCharIgnoreLineEnd(false);
         if (c == '\n') {
             c = lineEndChar;
@@ -1447,31 +1447,31 @@ class TokenStream {
         return c;
     }
 
-    private void ungetQuasiChar(int c) {
+    private void ungetTemplateLiteralChar(int c) {
         ungetCharIgnoreLineEnd(c);
         rawString.setLength(rawString.length() - 1);
     }
 
-    private boolean matchQuasiChar(int test) throws IOException {
-        int c = getQuasiChar();
+    private boolean matchTemplateLiteralChar(int test) throws IOException {
+        int c = getTemplateLiteralChar();
         if (c == test) {
             return true;
         }
-        ungetQuasiChar(c);
+        ungetTemplateLiteralChar(c);
         return false;
     }
 
-    private int peekQuasiChar() throws IOException {
-        int c = getQuasiChar();
-        ungetQuasiChar(c);
+    private int peekTemplateLiteralChar() throws IOException {
+        int c = getTemplateLiteralChar();
+        ungetTemplateLiteralChar(c);
         return c;
     }
 
-    int readQuasi() throws IOException {
+    int readTemplateLiteral() throws IOException {
         rawString.setLength(0);
         stringBufferTop = 0;
         while (true) {
-            int c = getQuasiChar();
+            int c = getTemplateLiteralChar();
             switch (c) {
             case EOF_CHAR:
                 this.string = getStringFromBuffer();
@@ -1481,13 +1481,13 @@ class TokenStream {
             case '`':
                 rawString.setLength(rawString.length() - 1); // don't include "`"
                 this.string = getStringFromBuffer();
-                return Token.QUASI;
+                return Token.TEMPLATE_LITERAL;
             case '$':
-                if (matchQuasiChar('{')) {
+                if (matchTemplateLiteralChar('{')) {
                     rawString.setLength(rawString.length() - 2); // don't include "${"
                     this.string = getStringFromBuffer();
                     this.tokenEnd = cursor - 1; // don't include "{"
-                    return Token.QUASI_SUBST;
+                    return Token.TEMPLATE_LITERAL_SUBST;
                 } else {
                     addToString(c);
                     break;
@@ -1512,11 +1512,11 @@ class TokenStream {
                 //   DecimalDigit
                 //   x
                 //   u
-                c = getQuasiChar();
+                c = getTemplateLiteralChar();
                 switch (c) {
                 case '\r':
                     // skip past \r\n sequence
-                    matchQuasiChar('\n');
+                    matchTemplateLiteralChar('\n');
                     continue;
                 case '\n':
                 case '\u2028':
@@ -1547,8 +1547,8 @@ class TokenStream {
                     break;
                 case 'x': {
                     int escapeVal = 0;
-                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
-                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
+                    escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+                    escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
                     if (escapeVal < 0) {
                         parser.reportError("msg.syntax");
                         return Token.ERROR;
@@ -1558,16 +1558,16 @@ class TokenStream {
                 }
                 case 'u': {
                     int escapeVal = 0;
-                    c = getQuasiChar();
+                    c = getTemplateLiteralChar();
                     if (c == '{') {
-                        c = getQuasiChar();
+                        c = getTemplateLiteralChar();
                         do {
                             escapeVal = Kit.xDigitToInt(c, escapeVal);
                             if (escapeVal < 0 || escapeVal > 0x10FFFF) {
                                 parser.reportError("msg.syntax");
                                 return Token.ERROR;
                             }
-                        } while ((c = getQuasiChar()) != '}');
+                        } while ((c = getTemplateLiteralChar()) != '}');
                         if (escapeVal > 0xFFFF) {
                             addToString(Character.highSurrogate(escapeVal));
                             addToString(Character.lowSurrogate(escapeVal));
@@ -1577,9 +1577,9 @@ class TokenStream {
                         break;
                     }
                     escapeVal = Kit.xDigitToInt(c, escapeVal);
-                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
-                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
-                    escapeVal = Kit.xDigitToInt(getQuasiChar(), escapeVal);
+                    escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+                    escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+                    escapeVal = Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
                     if (escapeVal < 0) {
                         parser.reportError("msg.syntax");
                         return Token.ERROR;
@@ -1588,7 +1588,7 @@ class TokenStream {
                     break;
                 }
                 case '0': {
-                    int d = peekQuasiChar();
+                    int d = peekTemplateLiteralChar();
                     if (d >= '0' && d <= '9') {
                         parser.reportError("msg.syntax");
                         return Token.ERROR;

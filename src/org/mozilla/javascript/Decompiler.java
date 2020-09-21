@@ -102,8 +102,8 @@ public class Decompiler {
         appendString(str);
     }
 
-    void addQuasi(String str) {
-        addToken(Token.QUASI_CHARS);
+    void addTemplateLiteral(String str) {
+        addToken(Token.TEMPLATE_CHARS);
         appendString(str);
     }
 
@@ -746,15 +746,15 @@ public class Decompiler {
                     result.append(" ** ");
                     break;
 
-                case Token.QUASI:
+                case Token.TEMPLATE_LITERAL:
                     result.append("`");
                     break;
 
-                case Token.QUASI_SUBST:
+                case Token.TEMPLATE_LITERAL_SUBST:
                     result.append("${");
                     break;
 
-                case Token.QUASI_CHARS:
+                case Token.TEMPLATE_CHARS:
                     i = printSourceString(source, i + 1, false, result);
                     continue;
 

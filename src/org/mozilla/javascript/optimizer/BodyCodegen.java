@@ -290,7 +290,7 @@ class BodyCodegen {
             }
         }
 
-        // Compile RegExp and Quasi literals if this is a script. For functions
+        // Compile RegExp and template literals if this is a script. For functions
         // this is performed during instantiation in functionInit
         if (fnCurrent == null) {
             if (scriptOrFn.getRegexpCount() != 0) {
@@ -301,12 +301,12 @@ class BodyCodegen {
                         Codegen.REGEXP_INIT_METHOD_NAME,
                         Codegen.REGEXP_INIT_METHOD_SIGNATURE);
             }
-            if (scriptOrFn.getQuasiCount() != 0) {
+            if (scriptOrFn.getTemplateLiteralCount() != 0) {
                 cfw.addInvoke(
                         ByteCode.INVOKESTATIC,
                         codegen.mainClassName,
-                        Codegen.QUASI_INIT_METHOD_NAME,
-                        Codegen.QUASI_INIT_METHOD_SIGNATURE);
+                        Codegen.TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                        Codegen.TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
             }
         }
 
@@ -1606,8 +1606,8 @@ class BodyCodegen {
                     break;
                 }
 
-            case Token.QUASI:
-                visitQuasi(node);
+            case Token.TEMPLATE_LITERAL:
+                visitTemplateLiteral(node);
                 break;
 
             default:
@@ -1776,19 +1776,19 @@ class BodyCodegen {
         cfw.add(ByteCode.IF_ICMPEQ, throwLabel);
     }
 
-    private void visitQuasi(Node node) {
-        // create the quasi call-site object for tagged quasis,
-        // default quasis are already handled earlier in IRFactory
-        int index = node.getExistingIntProp(Node.QUASI_PROP);
+    private void visitTemplateLiteral(Node node) {
+        // create the template literal call-site object for tagged template literals,
+        // default template literals are already handled earlier in IRFactory
+        int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
         cfw.add(ByteCode.GETSTATIC, codegen.mainClassName,
-                codegen.getQuasiName(scriptOrFn),
+                codegen.getTemplateLiteralName(scriptOrFn),
                 "[Ljava/lang/Object;");
         cfw.addPush(index);
         cfw.addInvoke(ByteCode.INVOKESTATIC,
                       "org/mozilla/javascript/ScriptRuntime",
-                      "getQuasiCallSite",
+                      "getTemplateLiteralCallSite",
                       "(Lorg/mozilla/javascript/Context;"
                       +"Lorg/mozilla/javascript/Scriptable;"
                       +"[Ljava/lang/Object;I"

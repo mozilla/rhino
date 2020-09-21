@@ -7,31 +7,31 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for Quasi Characters.
- * <p>Node type is {@link Token#QUASI_CHARS}.</p>
+ * AST node for Template Literal Characters.
+ * <p>Node type is {@link Token#TEMPLATE_CHARS}.</p>
  */
-public class QuasiCharacters extends AstNode {
+public class TemplateCharacters extends AstNode {
 
     private String value;
     private String rawValue;
 
     {
-        type = Token.QUASI_CHARS;
+        type = Token.TEMPLATE_CHARS;
     }
 
-    public QuasiCharacters() {
+    public TemplateCharacters() {
     }
 
-    public QuasiCharacters(int pos) {
+    public TemplateCharacters(int pos) {
         super(pos);
     }
 
-    public QuasiCharacters(int pos, int len) {
+    public TemplateCharacters(int pos, int len) {
         super(pos, len);
     }
 
     /**
-     * Returns the node's value: the parsed quasi-value (QV)
+     * Returns the node's value: the parsed template-literal-value (QV)
      * @return the node's value
      */
     public String getValue() {
@@ -49,7 +49,7 @@ public class QuasiCharacters extends AstNode {
     }
 
     /**
-     * Returns the node's raw-value: the parsed quasi-raw-value (QRV)
+     * Returns the node's raw-value: the parsed template-literal-raw-value (QRV)
      * @return the node's raw-value
      */
     public String getRawValue() {
