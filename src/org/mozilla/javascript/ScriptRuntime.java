@@ -879,7 +879,7 @@ public class ScriptRuntime {
      * For escaping strings printed by object and array literals; not quite the same as 'escape.'
      */
     public static String escapeString(String s, char escapeQuote) {
-        if (!(escapeQuote == '"' || escapeQuote == '\'' || escapeQuote == '`')) Kit.codeBug();
+        if (!(escapeQuote == '"' || escapeQuote == '\'')) Kit.codeBug();
         StringBuilder sb = null;
 
         for (int i = 0, L = s.length(); i != L; ++i) {

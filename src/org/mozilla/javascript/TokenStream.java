@@ -905,7 +905,7 @@ class TokenStream {
             }
 
             // is it a string?
-            if (c == '"' || c == '\'' || c == '`') {
+            if (c == '"' || c == '\'') {
                 // We attempt to accumulate a string the fast way, by
                 // building it directly out of the reader.  But if there
                 // are any escaped characters in the string, we revert to
@@ -2022,7 +2022,7 @@ class TokenStream {
                 }
             } else {
                 if (c == BYTE_ORDER_MARK) return c; // BOM is considered whitespace
-                if (isJSFormatChar(c)) {
+                if (skipFormattingChars && isJSFormatChar(c)) {
                     continue;
                 }
                 if (ScriptRuntime.isJSLineTerminator(c)) {
