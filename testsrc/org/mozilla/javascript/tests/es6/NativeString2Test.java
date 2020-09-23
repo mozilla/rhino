@@ -171,4 +171,51 @@ public class NativeString2Test {
       result = (Boolean) cx.evaluateString(scope, "'1234'.endsWith('', 42);", "test", 1, null);
       assertTrue(result);
   }
+
+  @Test
+  public void testTagify() {
+      Object result = cx.evaluateString(scope, "'tester'.big()", "test", 1, null);
+      assertEquals("<big>tester</big>", result);
+
+      result = cx.evaluateString(scope, "'\"tester\"'.big()", "test", 1, null);
+      assertEquals("<big>\"tester\"</big>", result);
+
+      result = cx.evaluateString(scope, "'\"tester\"'.big()", "test", 1, null);
+      assertEquals("<big>\"tester\"</big>", result);
+
+      result = cx.evaluateString(scope, "'tester'.fontsize()", "test", 1, null);
+      assertEquals("<font size=\"undefined\">tester</font>", result);
+
+      result = cx.evaluateString(scope, "'tester'.fontsize(null)", "test", 1, null);
+      assertEquals("<font size=\"null\">tester</font>", result);
+
+      result = cx.evaluateString(scope, "'tester'.fontsize(undefined)", "test", 1, null);
+      assertEquals("<font size=\"undefined\">tester</font>", result);
+
+      result = cx.evaluateString(scope, "'tester'.fontsize(123)", "test", 1, null);
+      assertEquals("<font size=\"123\">tester</font>", result);
+
+      result = cx.evaluateString(scope, "'tester'.fontsize('\"123\"')", "test", 1, null);
+      assertEquals("<font size=\"&quot;123&quot;\">tester</font>", result);
+  }
+
+  @Test
+  public void testTagifyPrototypeNull() {
+      for (String call : new String[] {"big", "blink", "bold", "fixed", "fontcolor", "fontsize",
+              "italics", "link", "small", "strike", "sub", "sup"}) {
+          String code = "try { String.prototype." + call + ".call(null);} catch (e) { e.message }";
+          Object result = cx.evaluateString(scope, code, "test", 1, null);
+          assertEquals("String.prototype." + call + " method called on null or undefined", result);
+      }
+  }
+
+  @Test
+  public void testTagifyPrototypeUndefined() {
+      for (String call : new String[] {"big", "blink", "bold", "fixed", "fontcolor", "fontsize",
+              "italics", "link", "small", "strike", "sub", "sup"}) {
+          String code = "try { String.prototype." + call + ".call(undefined);} catch (e) { e.message }";
+          Object result = cx.evaluateString(scope, code, "test", 1, null);
+          assertEquals("String.prototype." + call + " method called on null or undefined", result);
+      }
+  }
 }

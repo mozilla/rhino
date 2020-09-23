@@ -383,43 +383,43 @@ final class NativeString extends IdScriptableObject
                 }
 
                 case Id_bold:
-                    return tagify(thisObj, "b", null, null);
+                    return tagify(cx, thisObj, f, "b", null, null);
 
                 case Id_italics:
-                    return tagify(thisObj, "i", null, null);
+                    return tagify(cx, thisObj, f, "i", null, null);
 
                 case Id_fixed:
-                    return tagify(thisObj, "tt", null, null);
+                    return tagify(cx, thisObj, f, "tt", null, null);
 
                 case Id_strike:
-                    return tagify(thisObj, "strike", null, null);
+                    return tagify(cx, thisObj, f, "strike", null, null);
 
                 case Id_small:
-                    return tagify(thisObj, "small", null, null);
+                    return tagify(cx, thisObj, f, "small", null, null);
 
                 case Id_big:
-                    return tagify(thisObj, "big", null, null);
+                    return tagify(cx, thisObj, f, "big", null, null);
 
                 case Id_blink:
-                    return tagify(thisObj, "blink", null, null);
+                    return tagify(cx, thisObj, f, "blink", null, null);
 
                 case Id_sup:
-                    return tagify(thisObj, "sup", null, null);
+                    return tagify(cx, thisObj, f, "sup", null, null);
 
                 case Id_sub:
-                    return tagify(thisObj, "sub", null, null);
+                    return tagify(cx, thisObj, f, "sub", null, null);
 
                 case Id_fontsize:
-                    return tagify(thisObj, "font", "size", args);
+                    return tagify(cx, thisObj, f, "font", "size", args);
 
                 case Id_fontcolor:
-                    return tagify(thisObj, "font", "color", args);
+                    return tagify(cx, thisObj, f, "font", "color", args);
 
                 case Id_link:
-                    return tagify(thisObj, "a", "href", args);
+                    return tagify(cx, thisObj, f, "a", "href", args);
 
                 case Id_anchor:
-                    return tagify(thisObj, "a", "name", args);
+                    return tagify(cx, thisObj, f, "a", "name", args);
 
                 case Id_equals:
                 case Id_equalsIgnoreCase: {
@@ -561,25 +561,25 @@ final class NativeString extends IdScriptableObject
     /*
      * HTML composition aids.
      */
-    private static String tagify(Scriptable thisObj, String tag,
-                                 String attribute, Object[] args)
+    private static String tagify(Context cx, Scriptable thisObj, IdFunctionObject f,
+                                    String tag, String attribute, Object[] args)
     {
-        String str = ScriptRuntime.toString(thisObj);
+        String str = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
         StringBuilder result = new StringBuilder();
-        result.append('<')
-            .append(tag);
-        if (attribute != null) {
+        result.append('<').append(tag);
+
+        if (attribute != null && attribute.length() > 0) {
+            String attributeValue = ScriptRuntime.toString(args, 0);
+            attributeValue = attributeValue.replace("\"", "&quot;");
             result.append(' ')
                 .append(attribute)
                 .append("=\"")
-                .append(ScriptRuntime.toString(args, 0))
+                .append(attributeValue)
                 .append('"');
         }
         result.append('>')
             .append(str)
-            .append("</")
-            .append(tag)
-            .append('>');
+            .append("</").append(tag).append('>');
         return result.toString();
     }
 
