@@ -198,4 +198,32 @@ public class ObjectSealFreezeTest {
         );
         assertEquals("Cannot add properties to this object because extensible is false.", result);
     }
+
+    @Test
+    public void testObjectConstructorForNonExtensibleFunctions() {
+        Object result = cx.evaluateString(
+                scope,
+                "foo = function() {"
+                + "  var res = '';\n"
+                + "  var a = JSON.stringify;\n"
+                + "  Object.preventExtensions(a);\n"
+                + "  res += 'a.isExtensible = ' + Object.isExtensible(a);\n"
+                + "  res += '\\n';\n"
+
+                + "  var b = Object(a);\n"
+                + "  res += typeof b;\n"
+                + "  res += '\\n';\n"
+
+                + "  res += a===b;\n"
+                + "  res += '\\n';\n"
+                + "  res += 'b.isExtensible = ' + Object.isExtensible(b);\n"
+                + "  return res;\n"
+                + "};"
+
+                + "  foo();",
+                "test", 1, null
+        );
+        assertEquals("a.isExtensible = false\nfunction\ntrue\nb.isExtensible = false" +
+                "", result);
+    }
 }
