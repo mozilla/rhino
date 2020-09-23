@@ -98,6 +98,12 @@ class SpecialRef extends Ref
                     } while (search != null);
                 }
                 if (type == SPECIAL_PROTO) {
+                    if (target instanceof ScriptableObject
+                            && !((ScriptableObject)target).isExtensible()
+                            && cx.getLanguageVersion() >= Context.VERSION_1_8) {
+                        throw ScriptRuntime.typeError0("msg.not.extensible");
+                    }
+
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
                         if ((value != null && !"object".equals(ScriptRuntime.typeof(value))) ||
                             !"object".equals(ScriptRuntime.typeof(target))) {
