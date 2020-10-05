@@ -3,7 +3,7 @@
 
 ### Script Engine support
 
-Now that Nashorn has been deprecated, a number of poeple have asked about using
+Now that Nashorn has been deprecated, a number of people have asked about using
 Rhino with the standard Java "ScriptEngine" interface. This release supports that.
 
 However, in order to avoid breaking existing code, the script engine is
