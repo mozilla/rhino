@@ -1,0 +1,2 @@
+/** @responseClass HttpAdapter */
+function httpResponse(){}
