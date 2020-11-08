@@ -1,7 +1,7 @@
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 // Zachary Carter (zaach)
 // Kris Kowal (kriskowal), original skeleton
-// Felix Geisendörfer (felixge), editions backported from NodeJS
+// Felix GeisendÃ¶rfer (felixge), editions backported from NodeJS
 // Karl Guertin, editions backported from NodeJS
 // Ash Berlin (ashb), contributions annotated
 
