@@ -1,4 +1,4 @@
-# Rhino: JavaScript in Java
+# Rhino: JavaScript in Java by eKuG
 
 ![Rhino](https://developer.mozilla.org/@api/deki/files/832/=Rhino.jpg)
 
