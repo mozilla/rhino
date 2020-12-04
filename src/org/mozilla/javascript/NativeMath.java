@@ -270,10 +270,6 @@ final class NativeMath extends IdScriptableObject
                     ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
                 for (int i = 0; i != args.length; ++i) {
                     double d = ScriptRuntime.toNumber(args[i]);
-                    if (Double.isNaN(d)) {
-                        x = d; // NaN
-                        break;
-                    }
                     if (methodId == Id_max) {
                         // if (x < d) x = d; does not work due to -0.0 >= +0.0
                         x = Math.max(x, d);
