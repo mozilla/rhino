@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Stack;
 
 import org.mozilla.javascript.json.JsonParser;
+import org.mozilla.javascript.regexp.NativeRegExp;
 
 /**
  * This class implements the JSON native object.
@@ -310,14 +311,22 @@ public final class NativeJSON extends IdScriptableObject
             return "null";
         }
 
-        if (value instanceof Scriptable && !(value instanceof Callable)) {
-            if (value instanceof NativeArray) {
-                return ja((NativeArray) value, state);
-            }
+        if (value instanceof NativeArray) {
+            return ja((NativeArray) value, state);
+        }
+
+        if (isObject(value)) {
             return jo((Scriptable) value, state);
         }
 
         return Undefined.instance;
+    }
+
+    private static boolean isObject(Object value) {
+        if (value instanceof NativeRegExp) {
+            return true;
+        }
+        return value instanceof Scriptable && !(value instanceof Callable);
     }
 
     private static String join(Collection<Object> objs, String delimiter) {
