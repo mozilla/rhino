@@ -59,6 +59,14 @@ git submodule update
 ```
 Build and run all the tests.
 ```
+./gradlew test -Dquick
+```
+The tests in Test262Suite and MozillaSuiteTest are run 3 times by default (at differing optimization levels).
+The `quick` parameter can be used to only run them once.
+
+It is also possible to limit the Test262Suite to 1 run by setting the environment variable 
+TEST_262_OPTLEVEL to for example -1.
+```
 ./gradlew testBenchmark
 ```
 Build and run benchmark tests.

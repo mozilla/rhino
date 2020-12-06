@@ -92,12 +92,20 @@ public class Test262SuiteTest {
 
     static {
         // Reduce the number of tests that we run by a factor of three...
-        String optLevel = System.getenv("TEST_262_OPTLEVEL");
-        if (optLevel != null) {
-            OPT_LEVELS = new int[]{Integer.valueOf(optLevel)};
+        String overriddenLevel = getOverriddenLevel();
+        if (overriddenLevel != null) {
+            OPT_LEVELS = new int[]{Integer.parseInt(overriddenLevel)};
         } else {
             OPT_LEVELS = new int[]{-1, 0, 9};
         }
+    }
+
+    private static String getOverriddenLevel() {
+        String optLevel = System.getenv("TEST_262_OPTLEVEL");
+        if (optLevel == null) {
+            optLevel = System.getProperty("TEST_OPTLEVEL");
+        }
+        return optLevel;
     }
 
     @BeforeClass
