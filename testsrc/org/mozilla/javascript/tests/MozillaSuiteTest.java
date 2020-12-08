@@ -49,7 +49,17 @@ public class MozillaSuiteTest {
     private final File jsFile;
     private final int optimizationLevel;
 
-    static final int[] OPT_LEVELS = { -1, 0, 9 };
+    private static final int[] OPT_LEVELS;
+
+    static {
+        // Reduce the number of tests that we run by a factor of three...
+        String overriddenLevel = System.getProperty("TEST_OPTLEVEL");
+        if (overriddenLevel != null) {
+            OPT_LEVELS = new int[]{Integer.parseInt(overriddenLevel)};
+        } else {
+            OPT_LEVELS = new int[]{-1, 0, 9};
+        }
+    }
 
     public MozillaSuiteTest(File jsFile, int optimizationLevel) {
         this.jsFile = jsFile;

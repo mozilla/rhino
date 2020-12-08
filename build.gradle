@@ -79,6 +79,9 @@ test {
     systemProperty 'user.country', 'US'
     systemProperty 'user.timezone', 'America/Los_Angeles'
     systemProperty 'file.encoding', 'UTF-8'
+    if (System.getProperty('quick') != null) {
+        systemProperty 'TEST_OPTLEVEL', -1
+    }
     maxHeapSize = "1g"
     testLogging.showStandardStreams = true
     // Many tests do not clean up contexts properly. This makes the tests much
