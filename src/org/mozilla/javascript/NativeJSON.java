@@ -310,23 +310,15 @@ public final class NativeJSON extends IdScriptableObject
             }
             return "null";
         }
-
-        if (value instanceof NativeArray) {
-            return ja((NativeArray) value, state);
-        }
-
-        if (isObject(value)) {
+        
+        if (value instanceof Scriptable && !(value instanceof Callable)) {
+            if (value instanceof NativeArray) {
+                return ja((NativeArray) value, state);
+            }
             return jo((Scriptable) value, state);
         }
 
         return Undefined.instance;
-    }
-
-    private static boolean isObject(Object value) {
-        if (value instanceof NativeRegExp) {
-            return true;
-        }
-        return value instanceof Scriptable && !(value instanceof Callable);
     }
 
     private static String join(Collection<Object> objs, String delimiter) {
