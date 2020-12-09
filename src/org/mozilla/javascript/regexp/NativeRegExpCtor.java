@@ -65,7 +65,7 @@ class NativeRegExpCtor extends BaseFunction
     @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args)
     {
-        NativeRegExp re = new NativeRegExp();
+        NativeRegExp re = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         re.compile(cx, scope, args);
         ScriptRuntime.setBuiltinProtoAndParent(re, scope, TopLevel.Builtins.RegExp);
         return re;

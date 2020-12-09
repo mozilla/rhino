@@ -35,7 +35,8 @@ public class RegExpImpl implements RegExpProxy {
     public Scriptable wrapRegExp(Context cx, Scriptable scope,
                                  Object compiled)
     {
-        return new NativeRegExp(scope, (RECompiled) compiled);
+        return NativeRegExpInstantiator
+                .withLanguageVersionScopeCompiled(cx.getLanguageVersion(), scope, (RECompiled) compiled);
     }
 
     @Override
@@ -154,7 +155,7 @@ public class RegExpImpl implements RegExpProxy {
         Scriptable topScope = ScriptableObject.getTopLevelScope(scope);
         if (args.length == 0 || args[0] == Undefined.instance) {
             RECompiled compiled = NativeRegExp.compileRE(cx, "", "", false);
-            re = new NativeRegExp(topScope, compiled);
+            re = NativeRegExpInstantiator.withLanguageVersionScopeCompiled(cx.getLanguageVersion(), topScope, compiled);
         } else if (args[0] instanceof NativeRegExp) {
             re = (NativeRegExp) args[0];
         } else {
@@ -167,7 +168,7 @@ public class RegExpImpl implements RegExpProxy {
                 opt = null;
             }
             RECompiled compiled = NativeRegExp.compileRE(cx, src, opt, forceFlat);
-            re = new NativeRegExp(topScope, compiled);
+            re = NativeRegExpInstantiator.withLanguageVersionScopeCompiled(cx.getLanguageVersion(), topScope, compiled);
         }
         return re;
     }

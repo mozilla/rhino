@@ -10,6 +10,6 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/stringify-on-regexp-object.js")
-@LanguageVersion(Context.VERSION_DEFAULT)
+@LanguageVersion(Context.VERSION_ES6)
 public class StringifyOnRegExpObject extends ScriptTestsBase {
 }

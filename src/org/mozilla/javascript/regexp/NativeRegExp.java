@@ -9,7 +9,6 @@ package org.mozilla.javascript.regexp;
 import java.io.Serializable;
 
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Function;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.IdScriptableObject;
 import org.mozilla.javascript.Kit;
@@ -37,7 +36,7 @@ import org.mozilla.javascript.Undefined;
 
 
 
-public class NativeRegExp extends IdScriptableObject implements Function
+public class NativeRegExp extends IdScriptableObject
 {
     private static final long serialVersionUID = 4965263491464903264L;
 
@@ -115,7 +114,7 @@ public class NativeRegExp extends IdScriptableObject implements Function
     public static void init(Context cx, Scriptable scope, boolean sealed)
     {
 
-        NativeRegExp proto = new NativeRegExp();
+        NativeRegExp proto = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
         proto.re = compileRE(cx, "", null, false);
         proto.activatePrototypeMap(MAX_PROTOTYPE_ID);
         proto.setParentScope(scope);
@@ -160,26 +159,6 @@ public class NativeRegExp extends IdScriptableObject implements Function
     public String getTypeOf()
     {
         return "object";
-    }
-
-    @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
-    {
-        if (cx.getLanguageVersion() < Context.VERSION_ES6) {
-            return execSub(cx, scope, args, MATCH);
-        }
-
-        throw ScriptRuntime.notFunctionError(thisObj);
-    }
-
-    @Override
-    public Scriptable construct(Context cx, Scriptable scope, Object[] args)
-    {
-        if (cx.getLanguageVersion() < Context.VERSION_ES6) {
-            return (Scriptable)execSub(cx, scope, args, MATCH);
-        }
-
-        throw ScriptRuntime.notFunctionError(this);
     }
 
     Scriptable compile(Context cx, Scriptable scope, Object[] args)
@@ -255,8 +234,8 @@ public class NativeRegExp extends IdScriptableObject implements Function
         return s;
     }
 
-    private Object execSub(Context cx, Scriptable scopeObj,
-                           Object[] args, int matchType)
+    Object execSub(Context cx, Scriptable scopeObj,
+                   Object[] args, int matchType)
     {
         RegExpImpl reImpl = getImpl(cx);
         String str;
