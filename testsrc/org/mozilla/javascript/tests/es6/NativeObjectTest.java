@@ -100,4 +100,25 @@ public class NativeObjectTest {
 
         assertEquals("Object.prototype.setPrototypeOf method called on null or undefined", result);
     }
+
+    @Test
+    public void testSetPrototypeOfMissingParameters() {
+        Object result = cx.evaluateString(
+                scope, "try { "
+                        + "  Object.setPrototypeOf();"
+                        + "} catch (e) { e.message }",
+                "test", 1, null
+        );
+
+        assertEquals("Object.setPrototypeOf: At least 2 arguments required, but only 0 passed", result);
+
+        result = cx.evaluateString(
+                scope, "try { "
+                        + "  Object.setPrototypeOf({});"
+                        + "} catch (e) { e.message }",
+                "test", 1, null
+        );
+
+        assertEquals("Object.setPrototypeOf: At least 2 arguments required, but only 1 passed", result);
+    }
 }

@@ -320,7 +320,7 @@ public class NativeObject extends IdScriptableObject implements Map
           case ConstructorId_setPrototypeOf:
               {
                 if (args.length < 2) {
-                  throw ScriptRuntime.typeError1("msg.incompat.call", "setPrototypeOf");
+                    throw ScriptRuntime.typeError3("msg.method.missing.parameter", "Object.setPrototypeOf", "2", Integer.toString(args.length));
                 }
                 Scriptable proto = (args[1] == null) ? null : ensureScriptable(args[1]);
                 if (proto instanceof Symbol) {
