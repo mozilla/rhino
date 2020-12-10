@@ -273,4 +273,13 @@ public class ScriptEngineTest {
     Object result = engine.eval("file.getAbsolutePath();");
     assertEquals(absVal, result);
   }
+  
+  @Test
+  public void testJsObjectDefinedNull() throws ScriptException {
+      String script = "" +
+          "var obj = null;" +
+          "if (obj === null) { print(\"null\"); }" +
+          "else { print(\"notnull\"); }";
+      engine.eval(script);
+  }
 }
