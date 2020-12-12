@@ -881,25 +881,20 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     /**
-     * Utility method to construct type error to indicate incompatible call
-     * when converting script thisObj to a particular type is not possible.
+     * Utility method to check the type and do the cast or throw an incompatible call
+     * error.
      * Possible usage would be to have a private function like realThis:
      * <pre>
-     *  private static NativeSomething realThis(Scriptable thisObj,
-     *                                          IdFunctionObject f)
+     *  private static NativeSomething realThis(Scriptable thisObj, IdFunctionObject f)
      *  {
-     *      if (!(thisObj instanceof NativeSomething))
-     *          throw incompatibleCallError(f);
-     *      return (NativeSomething)thisObj;
+     *      return ensureType(thisObj, NativeSomething.class, f);
      * }
      * </pre>
-     * Note that although such function can be implemented universally via
-     * java.lang.Class.isInstance(), it would be much more slower.
-     * @param f function that is attempting to convert 'this'
-     * object.
-     * @return Scriptable object suitable for a check by the instanceof
-     * operator.
-     * @throws RuntimeException if no more instanceof target can be found
+     * @param obj the object to check/cast
+     * @param clazz the target type
+     * @param f function that is attempting to convert 'this' object.
+     * @return obj casted to the target type
+     * @throws EcmaError if the cast failed.
      */
     protected static <T> T ensureType(Object obj, Class<T> clazz, IdFunctionObject f)
     {
