@@ -2742,9 +2742,7 @@ public class NativeRegExp extends IdScriptableObject
 
     private static NativeRegExp realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeRegExp))
-            throw incompatibleCallError(f);
-        return (NativeRegExp)thisObj;
+        return ensureType(thisObj, NativeRegExp.class, f);
     }
 
     @Override

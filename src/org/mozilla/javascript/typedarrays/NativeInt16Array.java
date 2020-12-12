@@ -65,10 +65,7 @@ public class NativeInt16Array
     @Override
     protected NativeInt16Array realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeInt16Array)) {
-            throw incompatibleCallError(f);
-        }
-        return (NativeInt16Array)thisObj;
+        return ensureType(thisObj, NativeInt16Array.class, f);
     }
 
     @Override

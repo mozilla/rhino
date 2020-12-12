@@ -251,9 +251,7 @@ public class ImporterTopLevel extends TopLevel {
             // function that ignore thisObj
             return this;
         }
-        if (!(thisObj instanceof ImporterTopLevel))
-            throw incompatibleCallError(f);
-        return (ImporterTopLevel)thisObj;
+        return ensureType(thisObj, ImporterTopLevel.class, f);
     }
 
 // #string_id_map#

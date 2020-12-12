@@ -14,18 +14,18 @@ import java.io.Serializable;
 /**
  * Base class for native object implementation that uses IdFunctionObject to
  * export its methods to script via &lt;class-name&gt;.prototype object.
- * 
+ *
  * Any descendant should implement at least the following methods:
  * findInstanceIdInfo getInstanceIdName execIdCall methodArity
- * 
+ *
  * To define non-function properties, the descendant should override
  * getInstanceIdValue setInstanceIdValue to get/set property value and provide
  * its default attributes.
- * 
- * 
+ *
+ *
  * To customize initialization of constructor and prototype objects, descendant
  * may override scopeInit or fillConstructorProperties methods.
- * 
+ *
  */
 public abstract class IdScriptableObject extends ScriptableObject implements IdFunctionCall {
     private static final long serialVersionUID = -3744239272168621609L;
@@ -901,10 +901,15 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
      * operator.
      * @throws RuntimeException if no more instanceof target can be found
      */
-    protected static EcmaError incompatibleCallError(IdFunctionObject f)
+    protected static <T> T ensureType(Object obj, Class<T> clazz, IdFunctionObject f)
     {
-        throw ScriptRuntime.typeError1("msg.incompat.call",
-                                       f.getFunctionName());
+        if (clazz.isInstance(obj)) {
+            return (T) obj;
+        }
+        if (obj == null) {
+            throw ScriptRuntime.typeError3("msg.incompat.call.details", f.getFunctionName(), "null", clazz.getName());
+        }
+        throw ScriptRuntime.typeError3("msg.incompat.call.details", f.getFunctionName(), obj.getClass().getName(), clazz.getName());
     }
 
     private IdFunctionObject newIdFunction(Object tag, int id, String name,

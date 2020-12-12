@@ -94,19 +94,13 @@ public class NativeWeakSet extends IdScriptableObject {
     }
 
     private static NativeWeakSet realThis(Scriptable thisObj, IdFunctionObject f) {
-        if (thisObj == null) {
-            throw incompatibleCallError(f);
+        final NativeWeakSet ns = ensureType(thisObj, NativeWeakSet.class, f);
+        if (!ns.instanceOfWeakSet) {
+            // Check for "Set internal data tag"
+            throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
         }
-        try {
-            final NativeWeakSet ns = (NativeWeakSet)thisObj;
-            if (!ns.instanceOfWeakSet) {
-                // Check for "Set internal data tag"
-                throw incompatibleCallError(f);
-            }
-            return ns;
-        } catch (ClassCastException cce) {
-            throw incompatibleCallError(f);
-        }
+
+        return ns;
     }
 
     @Override

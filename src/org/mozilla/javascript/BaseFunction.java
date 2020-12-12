@@ -335,11 +335,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         if (x instanceof Delegator) {
             x = ((Delegator)x).getDelegee();
         }
-        if (x instanceof BaseFunction) {
-            return (BaseFunction)x;
-        }
-        throw ScriptRuntime.typeError1("msg.incompat.call",
-                                       f.getFunctionName());
+        return ensureType(x, BaseFunction.class, f);
     }
 
     /**
