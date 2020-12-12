@@ -553,9 +553,7 @@ final class NativeString extends IdScriptableObject
 
     private static NativeString realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeString))
-            throw incompatibleCallError(f);
-        return (NativeString)thisObj;
+        return ensureType(thisObj, NativeString.class, f);
     }
 
     /*

@@ -224,9 +224,7 @@ class Namespace extends IdScriptableObject
     }
 
     private Namespace realThis(Scriptable thisObj, IdFunctionObject f) {
-        if(!(thisObj instanceof Namespace))
-            throw incompatibleCallError(f);
-        return (Namespace)thisObj;
+        return ensureType(thisObj, Namespace.class, f);
     }
 
     Namespace newNamespace(String uri) {

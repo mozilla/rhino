@@ -96,10 +96,7 @@ public final class NativeGenerator extends IdScriptableObject {
         }
         int id = f.methodId();
 
-        if (!(thisObj instanceof NativeGenerator))
-            throw incompatibleCallError(f);
-
-        NativeGenerator generator = (NativeGenerator) thisObj;
+        NativeGenerator generator = ensureType(thisObj, NativeGenerator.class, f);
 
         switch (id) {
 

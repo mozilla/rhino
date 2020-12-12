@@ -68,9 +68,7 @@ public class NativeDataView
 
     private static NativeDataView realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeDataView))
-            throw incompatibleCallError(f);
-        return (NativeDataView)thisObj;
+        return ensureType(thisObj, NativeDataView.class, f);
     }
 
     private static NativeDataView js_constructor(Object[] args)

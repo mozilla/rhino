@@ -141,9 +141,7 @@ class NativeScript extends BaseFunction
 
     private static NativeScript realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeScript))
-            throw incompatibleCallError(f);
-        return (NativeScript)thisObj;
+        return ensureType(thisObj, NativeScript.class, f);
     }
 
     private static Script compile(Context cx, String source)

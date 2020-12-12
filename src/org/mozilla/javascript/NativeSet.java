@@ -184,19 +184,13 @@ public class NativeSet extends IdScriptableObject {
 
     private static NativeSet realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (thisObj == null) {
-            throw incompatibleCallError(f);
+        final NativeSet ns = ensureType(thisObj, NativeSet.class, f);
+        if (!ns.instanceOfSet) {
+            // If we get here, then this object doesn't have the "Set internal data slot."
+            throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
         }
-        try {
-            final NativeSet ns = (NativeSet)thisObj;
-            if (!ns.instanceOfSet) {
-                // If we get here, then this object doesn't have the "Set internal data slot."
-                throw incompatibleCallError(f);
-            }
-            return ns;
-        } catch (ClassCastException cce) {
-            throw incompatibleCallError(f);
-        }
+
+        return ns;
     }
 
     @Override

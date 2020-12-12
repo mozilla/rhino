@@ -65,10 +65,7 @@ public class NativeUint16Array
     @Override
     protected NativeUint16Array realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeUint16Array)) {
-            throw incompatibleCallError(f);
-        }
-        return (NativeUint16Array)thisObj;
+        return ensureType(thisObj, NativeUint16Array.class, f);
     }
 
     @Override

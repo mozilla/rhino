@@ -64,10 +64,7 @@ public class NativeUint8Array
     @Override
     protected NativeUint8Array realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeUint8Array)) {
-            throw incompatibleCallError(f);
-        }
-        return (NativeUint8Array)thisObj;
+        return ensureType(thisObj, NativeUint8Array.class, f);
     }
 
     @Override

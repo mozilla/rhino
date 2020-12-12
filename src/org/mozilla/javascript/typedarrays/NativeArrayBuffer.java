@@ -146,9 +146,7 @@ public class NativeArrayBuffer
 
     private static NativeArrayBuffer realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeArrayBuffer))
-            throw incompatibleCallError(f);
-        return (NativeArrayBuffer)thisObj;
+        return ensureType(thisObj, NativeArrayBuffer.class, f);
     }
 
     private static boolean isArg(Object[] args, int i)

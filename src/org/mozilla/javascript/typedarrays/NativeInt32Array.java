@@ -66,10 +66,7 @@ public class NativeInt32Array
     @Override
     protected NativeInt32Array realThis(Scriptable thisObj, IdFunctionObject f)
     {
-        if (!(thisObj instanceof NativeInt32Array)) {
-            throw incompatibleCallError(f);
-        }
-        return (NativeInt32Array)thisObj;
+        return ensureType(thisObj, NativeInt32Array.class, f);
     }
 
     @Override
