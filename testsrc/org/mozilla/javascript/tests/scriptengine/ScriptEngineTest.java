@@ -1,6 +1,7 @@
 package org.mozilla.javascript.tests.scriptengine;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -275,11 +276,8 @@ public class ScriptEngineTest {
   }
   
   @Test
-  public void testJsObjectDefinedNull() throws ScriptException {
-      String script = "" +
-          "var obj = null;" +
-          "if (obj === null) { print(\"null\"); }" +
-          "else { print(\"notnull\"); }";
-      engine.eval(script);
+  public void testJsObjectDefinedNull() throws ScriptException, FileNotFoundException {
+      engine.eval(new FileReader("testsrc/assert.js"));
+      engine.eval("var obj = null; assertEquals(obj, null);");
   }
 }
