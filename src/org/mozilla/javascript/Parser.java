@@ -1639,7 +1639,7 @@ public class Parser
         TryStatement pn = new TryStatement(tryPos);
         //Hnadled comment here because there should not be try without LC
         int lctt = peekToken();
-        if(lctt == Token.COMMENT) {
+        while(lctt == Token.COMMENT) {
             Comment commentNode = scannedComments.get(scannedComments.size()-1);
             pn.setInlineComment(commentNode);
             consumeToken();
@@ -1655,6 +1655,12 @@ public class Parser
 
         boolean sawDefaultCatch = false;
         int peek = peekToken();
+        while(peek == Token.COMMENT) {
+            Comment commentNode = scannedComments.get(scannedComments.size()-1);
+            pn.setInlineComment(commentNode);
+            consumeToken();
+            peek = peekToken();
+        }
         if (peek == Token.CATCH) {
             while (matchToken(Token.CATCH, true)) {
                 int catchLineNum = ts.lineno;
