@@ -32,7 +32,7 @@ final class MemberBox implements Serializable
     transient Class<?>[] argTypes;
     transient Object delegateTo;
     transient boolean vararg;
-
+    transient Function asFunction;
 
     MemberBox(Method method)
     {
@@ -128,6 +128,36 @@ final class MemberBox implements Serializable
     public String toString()
     {
         return memberObject.toString();
+    }
+
+    /**
+     * Function returned by calls to __lookupGetter__/__lookupSetter__
+     */
+    Function asFunction(final String name, final Scriptable scope, final Scriptable prototype) {
+        if (asFunction == null) {
+            asFunction = new BaseFunction(scope, prototype) {
+                @Override
+                public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] originalArgs) {
+                    MemberBox nativeGetter = MemberBox.this;
+                    Object getterThis;
+                    Object[] args;
+                    if (nativeGetter.delegateTo == null) {
+                        getterThis = thisObj;
+                        args = ScriptRuntime.emptyArgs;
+                    } else {
+                        getterThis = nativeGetter.delegateTo;
+                        args = new Object[] { thisObj };
+                    }
+                    return nativeGetter.invoke(getterThis, args);
+                }
+
+                @Override
+                public String getFunctionName() {
+                    return name;
+                }
+            };
+        }
+        return asFunction;
     }
 
     Object invoke(Object target, Object[] args)
