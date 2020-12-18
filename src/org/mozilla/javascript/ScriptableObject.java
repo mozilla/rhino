@@ -249,7 +249,7 @@ public abstract class ScriptableObject implements Scriptable,
             String fName = name == null ? "f" : name.toString();
             if (getter != null) {
                 if ( getter instanceof MemberBox ) {
-                    desc.defineProperty("get", new FunctionObject(fName, ((MemberBox)getter).member(), scope), EMPTY);
+                    desc.defineProperty("get", ((MemberBox) getter).asGetterFunction(fName, scope, ScriptableObject.getFunctionPrototype(scope)), EMPTY);
                 } else if ( getter instanceof Member ) {
                     desc.defineProperty("get", new FunctionObject(fName, (Member)getter, scope), EMPTY);
                 } else {
@@ -258,7 +258,7 @@ public abstract class ScriptableObject implements Scriptable,
             }
             if (setter != null) {
                 if ( setter instanceof MemberBox ) {
-                    desc.defineProperty("set", new FunctionObject(fName, ((MemberBox) setter).member(), scope), EMPTY);
+                    desc.defineProperty("set", ((MemberBox) setter).asSetterFunction(fName, scope, ScriptableObject.getFunctionPrototype(scope)), EMPTY);
                 } else if ( setter instanceof Member ) {
                     desc.defineProperty("set", new FunctionObject(fName, (Member) setter, scope), EMPTY);
                 } else {
@@ -297,8 +297,7 @@ public abstract class ScriptableObject implements Scriptable,
                     // defineProperty ?
                     Class<?> valueType = pTypes[pTypes.length - 1];
                     int tag = FunctionObject.getTypeTag(valueType);
-                    Object actualArg = FunctionObject.convertArg(cx, start,
-                                                                 value, tag);
+                    Object actualArg = FunctionObject.convertArg(cx, start, value, tag);
                     Object setterThis;
                     Object[] args;
                     if (nativeSetter.delegateTo == null) {
@@ -311,8 +310,7 @@ public abstract class ScriptableObject implements Scriptable,
                     nativeSetter.invoke(setterThis, args);
                 } else if (setter instanceof Function) {
                     Function f = (Function)setter;
-                    f.call(cx, f.getParentScope(), start,
-                           new Object[] { value });
+                    f.call(cx, f.getParentScope(), start, new Object[] { value });
                 }
                 return true;
             }
