@@ -47,7 +47,8 @@ public class NativeObjectTest {
                 + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
                 + "'' + desc.get + '-' + desc.set + '-' + desc.value;",
                 "", 1, null);
-        Assert.assertEquals("undefined-undefined-\tat :2\r\n", result);
+        Assert.assertTrue(result instanceof String);
+        Assert.assertEquals("undefined-undefined-\tat :2", ((String) result).replaceAll("\\r|\\n", ""));
         Context.exit();
     }
 
