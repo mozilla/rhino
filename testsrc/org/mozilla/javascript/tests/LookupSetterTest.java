@@ -14,15 +14,16 @@ import org.mozilla.javascript.ScriptableObject;
 
 public class LookupSetterTest {
     private final String defineSetterAndGetterX =
-        "Foo.__defineSetter__('x', function() {}); \n"
-        + "Foo.__defineGetter__('x', function() {return 'hello' });\n";
+        "Foo.__defineSetter__('x', function(val) { Foo.value = val; }); \n"
+        + "Foo.__defineGetter__('x', function() {return 'hello' + value; });\n";
 
     @Test
     public void typeof() throws Exception {
-        test("function", "typeof Foo.__lookupSetter__('x');");
         test("function", "typeof Foo.__lookupGetter__('x');");
-        test("function", "typeof (new Foo()).__lookupSetter__('s')");
+        test("function", "typeof Foo.__lookupSetter__('x');");
+
         test("function", "typeof (new Foo()).__lookupGetter__('s')");
+        test("function", "typeof (new Foo()).__lookupSetter__('s')");
     }
 
     @Test
@@ -39,6 +40,23 @@ public class LookupSetterTest {
     @Test
     public void lookedUpGetter_equals() throws Exception {
         test("true", "new Foo().__lookupGetter__('s') == new Foo().__lookupGetter__('s')");
+    }
+
+
+    @Test
+    public void callLookedUpSetter() throws Exception {
+        test("newValue", "var f = new Foo(); f.s = 'newValue'; f.s");
+        test("newValue", "var f = new Foo(); f.__lookupSetter__('s').call(f, 'newValue'); f.s");
+    }
+
+    @Test
+    public void lookedUpSetter_toString() throws Exception {
+        test("function s() {\n\t[native code, arity=0]\n}\n", "new Foo().__lookupSetter__('s').toString()");
+    }
+
+    @Test
+    public void lookedUpSetter_equals() throws Exception {
+        test("true", "new Foo().__lookupSetter__('s') == new Foo().__lookupSetter__('s')");
     }
 
     private void test(final String expected, final String src) throws Exception {

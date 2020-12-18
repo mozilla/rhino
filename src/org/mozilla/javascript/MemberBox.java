@@ -32,7 +32,8 @@ final class MemberBox implements Serializable
     transient Class<?>[] argTypes;
     transient Object delegateTo;
     transient boolean vararg;
-    transient Function asFunction;
+    transient Function asGetterFunction;
+    transient Function asSetterFunction;
 
     MemberBox(Method method)
     {
@@ -131,11 +132,11 @@ final class MemberBox implements Serializable
     }
 
     /**
-     * Function returned by calls to __lookupGetter__/__lookupSetter__
+     * Function returned by calls to __lookupGetter__
      */
-    Function asFunction(final String name, final Scriptable scope, final Scriptable prototype) {
-        if (asFunction == null) {
-            asFunction = new BaseFunction(scope, prototype) {
+    Function asGetterFunction(final String name, final Scriptable scope, final Scriptable prototype) {
+        if (asGetterFunction == null) {
+            asGetterFunction = new BaseFunction(scope, prototype) {
                 @Override
                 public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] originalArgs) {
                     MemberBox nativeGetter = MemberBox.this;
@@ -147,6 +148,7 @@ final class MemberBox implements Serializable
                     } else {
                         getterThis = nativeGetter.delegateTo;
                         args = new Object[] { thisObj };
+
                     }
                     return nativeGetter.invoke(getterThis, args);
                 }
@@ -157,7 +159,38 @@ final class MemberBox implements Serializable
                 }
             };
         }
-        return asFunction;
+        return asGetterFunction;
+    }
+
+    /**
+     * Function returned by calls to __lookupSetter__
+     */
+    Function asSetterFunction(final String name, final Scriptable scope, final Scriptable prototype) {
+        if (asSetterFunction == null) {
+            asSetterFunction = new BaseFunction(scope, prototype) {
+                @Override
+                public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] originalArgs) {
+                    MemberBox nativeSetter = MemberBox.this;
+                    Object setterThis;
+                    Object[] args;
+                    Object value = originalArgs.length > 0 ? originalArgs[0] : Undefined.instance;
+                    if (nativeSetter.delegateTo == null) {
+                        setterThis = thisObj;
+                        args = new Object[] { value };
+                    } else {
+                        setterThis = nativeSetter.delegateTo;
+                        args = new Object[] { thisObj, value };
+                    }
+                    return nativeSetter.invoke(setterThis, args);
+                }
+
+                @Override
+                public String getFunctionName() {
+                    return name;
+                }
+            };
+        }
+        return asSetterFunction;
     }
 
     Object invoke(Object target, Object[] args)
@@ -375,4 +408,3 @@ final class MemberBox implements Serializable
         return result;
     }
 }
-
