@@ -311,11 +311,13 @@ final class NativeError extends IdScriptableObject
             }
         }
 
-        // Define a property on the specified object to get that stack
-        // that delegates to our new error. Build the stack trace lazily
-        // using the "getStack" code from NativeError.
-        obj.defineProperty("stack", err,
-                           ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK, 0);
+        // from https://v8.dev/docs/stack-trace-api
+        // Error.captureStackTrace(error, constructorOpt)
+        // adds a stack property to the given error object that yields the stack trace
+        // at the time captureStackTrace was called. Stack traces collected through
+        // Error.captureStackTrace are immediately collected, formatted,
+        // and attached to the given error object.
+        obj.defineProperty("stack", err.get("stack"), ScriptableObject.DONTENUM);
     }
 
     @Override

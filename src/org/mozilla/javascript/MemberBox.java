@@ -30,10 +30,11 @@ final class MemberBox implements Serializable
 
     private transient Member memberObject;
     transient Class<?>[] argTypes;
-    transient Object delegateTo;
     transient boolean vararg;
+
     transient Function asGetterFunction;
     transient Function asSetterFunction;
+    transient Object delegateTo;
 
     MemberBox(Method method)
     {
