@@ -135,11 +135,14 @@ final class MemberBox implements Serializable
     /**
      * Function returned by calls to __lookupGetter__
      */
-    Function asGetterFunction(final String name, final Scriptable scope, final Scriptable prototype) {
+    Function asGetterFunction(final String name, final Scriptable scope) {
+        // Note: scope is the scriptable this function is related to; therefore this function
+        // is constant for this member box.
+        // Because of this we can cache the function in the attribute
         if (asGetterFunction == null) {
-            asGetterFunction = new BaseFunction(scope, prototype) {
+            asGetterFunction = new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
                 @Override
-                public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] originalArgs) {
+                public Object call(Context cx, Scriptable callScope, Scriptable thisObj, Object[] originalArgs) {
                     MemberBox nativeGetter = MemberBox.this;
                     Object getterThis;
                     Object[] args;
@@ -166,11 +169,14 @@ final class MemberBox implements Serializable
     /**
      * Function returned by calls to __lookupSetter__
      */
-    Function asSetterFunction(final String name, final Scriptable scope, final Scriptable prototype) {
+    Function asSetterFunction(final String name, final Scriptable scope) {
+        // Note: scope is the scriptable this function is related to; therefore this function
+        // is constant for this member box.
+        // Because of this we can cache the function in the attribute
         if (asSetterFunction == null) {
-            asSetterFunction = new BaseFunction(scope, prototype) {
+            asSetterFunction = new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
                 @Override
-                public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] originalArgs) {
+                public Object call(Context cx, Scriptable callScope, Scriptable thisObj, Object[] originalArgs) {
                     MemberBox nativeSetter = MemberBox.this;
                     Object setterThis;
                     Object[] args;

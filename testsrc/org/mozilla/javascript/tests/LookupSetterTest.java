@@ -24,6 +24,12 @@ public class LookupSetterTest {
 
         test("function", "typeof (new Foo()).__lookupGetter__('s')");
         test("function", "typeof (new Foo()).__lookupSetter__('s')");
+
+        test("true", "Object.getPrototypeOf((new Foo()).__lookupGetter__('s')) === Function.prototype");
+        test("true", "Object.getPrototypeOf((new Foo()).__lookupSetter__('s')) === Function.prototype");
+
+        test("true", "Object.getPrototypeOf(Foo.__lookupGetter__('x')) === Function.prototype");
+        test("true", "Object.getPrototypeOf(Foo.__lookupSetter__('x')) === Function.prototype");
     }
 
     @Test
@@ -42,6 +48,15 @@ public class LookupSetterTest {
         test("true", "new Foo().__lookupGetter__('s') == new Foo().__lookupGetter__('s')");
     }
 
+
+    @Test
+    public void getOwnPropertyDescriptor_equals() throws Exception {
+        test("true", "Object.getOwnPropertyDescriptor(Foo, 'x').get === Object.getOwnPropertyDescriptor(Foo, 'x').get");
+        test("true", "Object.getOwnPropertyDescriptor(Foo, 'x').set === Object.getOwnPropertyDescriptor(Foo, 'x').set");
+
+        test("true", "Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').get === Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').get");
+        test("true", "Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').set === Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').set");
+    }
 
     @Test
     public void callLookedUpSetter() throws Exception {
