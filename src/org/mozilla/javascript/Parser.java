@@ -1597,9 +1597,9 @@ public class Parser
             try {
                 AstNode body = getNextStatementAfterInlineComments(pn);
                 pn.setLength(getNodeEnd(body) - forPos);
+                restoreRelativeLoopPosition(pn);
                 pn.setBody(body);
             } finally {
-                restoreRelativeLoopPosition(pn);
                 exitLoop();
             }
 
