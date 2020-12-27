@@ -526,7 +526,9 @@ public class Parser
             // This is the only time during parsing that we set a node's parent
             // before parsing the children.  In order for the child node offsets
             // to be correct, we adjust the loop's reported position back to an
-            // absolute source offset, and restore it when we call exitLoop().
+            // absolute source offset, and restore it when we call
+            // restoreRelativeLoopPosition() (invoked just before setBody() is
+            // called on the loop).
             loop.setRelative(-currentLabel.getPosition());
         }
     }
@@ -534,10 +536,13 @@ public class Parser
     private void exitLoop() {
         Loop loop = loopSet.remove(loopSet.size() - 1);
         loopAndSwitchSet.remove(loopAndSwitchSet.size() - 1);
+        popScope();
+    }
+
+    private void restoreRelativeLoopPosition(Loop loop) {
         if (loop.getParent() != null) {  // see comment in enterLoop
             loop.setRelative(loop.getParent().getPosition());
         }
-        popScope();
     }
 
     private void enterSwitch(SwitchStatement node) {
@@ -1430,6 +1435,7 @@ public class Parser
             pn.setParens(data.lp - pos, data.rp - pos);
             AstNode body = getNextStatementAfterInlineComments(pn);
             pn.setLength(getNodeEnd(body) - pos);
+            restoreRelativeLoopPosition(pn);
             pn.setBody(body);
         } finally {
             exitLoop();
@@ -1454,6 +1460,7 @@ public class Parser
             pn.setCondition(data.condition);
             pn.setParens(data.lp - pos, data.rp - pos);
             end = getNodeEnd(body);
+            restoreRelativeLoopPosition(pn);
             pn.setBody(body);
         } finally {
             exitLoop();
@@ -1592,6 +1599,7 @@ public class Parser
                 pn.setLength(getNodeEnd(body) - forPos);
                 pn.setBody(body);
             } finally {
+                restoreRelativeLoopPosition(pn);
                 exitLoop();
             }
 
