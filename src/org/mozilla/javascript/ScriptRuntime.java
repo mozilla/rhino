@@ -8,6 +8,9 @@ package org.mozilla.javascript;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Locale;
@@ -111,7 +114,8 @@ public class ScriptRuntime {
             ObjectClass = Kit.classOrNull("java.lang.Object"),
             ShortClass = Kit.classOrNull("java.lang.Short"),
             StringClass = Kit.classOrNull("java.lang.String"),
-            DateClass = Kit.classOrNull("java.util.Date");
+            DateClass = Kit.classOrNull("java.util.Date"),
+            BigIntegerClass = Kit.classOrNull("java.math.BigInteger");
     public static final Class<?> ContextClass = Kit.classOrNull("org.mozilla.javascript.Context"),
             ContextFactoryClass = Kit.classOrNull("org.mozilla.javascript.ContextFactory"),
             FunctionClass = Kit.classOrNull("org.mozilla.javascript.Function"),
@@ -164,6 +168,7 @@ public class ScriptRuntime {
         NativeString.init(scope, sealed);
         NativeBoolean.init(scope, sealed);
         NativeNumber.init(scope, sealed);
+        NativeBigInt.init(scope, sealed);
         NativeDate.init(scope, sealed);
         NativeMath.init(scope, sealed);
         NativeJSON.init(scope, sealed);
@@ -691,6 +696,128 @@ public class ScriptRuntime {
         }
     }
 
+    /** Convert the value to a BigInt. */
+    public static BigInteger toBigInt(Object val) {
+        for (; ; ) {
+            if (val instanceof BigInteger) {
+                return (BigInteger) val;
+            }
+            if (val instanceof BigDecimal) {
+                return ((BigDecimal) val).toBigInteger();
+            }
+            if (val instanceof Number) {
+                if (val instanceof Long) {
+                    return BigInteger.valueOf(((Long) val));
+                } else {
+                    double d = ((Number) val).doubleValue();
+                    if (Double.isNaN(d) || Double.isInfinite(d)) {
+                        throw rangeErrorById(
+                                "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                    }
+                    BigDecimal bd = new BigDecimal(d, MathContext.UNLIMITED);
+                    try {
+                        return bd.toBigIntegerExact();
+                    } catch (ArithmeticException e) {
+                        throw rangeErrorById(
+                                "msg.cant.convert.to.bigint.isnt.integer", toString(val));
+                    }
+                }
+            }
+            if (val == null || val == Undefined.instance) {
+                throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
+            }
+            if (val instanceof String) {
+                return toBigInt((String) val);
+            }
+            if (val instanceof CharSequence) {
+                return toBigInt(val.toString());
+            }
+            if (val instanceof Boolean) {
+                return ((Boolean) val).booleanValue() ? BigInteger.ONE : BigInteger.ZERO;
+            }
+            if (val instanceof Symbol) {
+                throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
+            }
+            if (val instanceof Scriptable) {
+                val = ((Scriptable) val).getDefaultValue(BigIntegerClass);
+                if ((val instanceof Scriptable) && !isSymbol(val)) {
+                    throw errorWithClassName("msg.primitive.expected", val);
+                }
+                continue;
+            }
+            warnAboutNonJSObject(val);
+            return BigInteger.ZERO;
+        }
+    }
+
+    /** ToBigInt applied to the String type */
+    public static BigInteger toBigInt(String s) {
+        final int len = s.length();
+
+        // Skip whitespace at the start
+        int start = 0;
+        char startChar;
+        for (; ; ) {
+            if (start == len) {
+                // empty or contains only whitespace
+                return BigInteger.ZERO;
+            }
+            startChar = s.charAt(start);
+            if (!ScriptRuntime.isStrWhiteSpaceChar(startChar)) {
+                // found first non-whitespace character
+                break;
+            }
+            start++;
+        }
+
+        // Skip whitespace at the end
+        int end = len - 1;
+        while (ScriptRuntime.isStrWhiteSpaceChar(s.charAt(end))) {
+            end--;
+        }
+
+        // Handle non-base10 numbers
+        if (startChar == '0') {
+            if (start + 2 <= end) {
+                final char radixC = s.charAt(start + 1);
+                int radix = -1;
+                if (radixC == 'x' || radixC == 'X') {
+                    radix = 16;
+                } else if (radixC == 'o' || radixC == 'O') {
+                    radix = 8;
+                } else if (radixC == 'b' || radixC == 'B') {
+                    radix = 2;
+                }
+                if (radix != -1) {
+                    try {
+                        return new BigInteger(s.substring(start + 2, end + 1), radix);
+                    } catch (NumberFormatException ex) {
+                        throw syntaxErrorById("msg.bigint.bad.form");
+                    }
+                }
+            }
+        }
+
+        // A base10, non-infinity bigint:
+        // just try a normal biginteger conversion
+        String sub = s.substring(start, end + 1);
+        for (int i = sub.length() - 1; i >= 0; i--) {
+            char c = sub.charAt(i);
+            if (i == 0 && (c == '+' || c == '-')) {
+                continue;
+            }
+            if ('0' <= c && c <= '9') {
+                continue;
+            }
+            throw syntaxErrorById("msg.bigint.bad.form");
+        }
+        try {
+            return new BigInteger(sub);
+        } catch (NumberFormatException ex) {
+            throw syntaxErrorById("msg.bigint.bad.form");
+        }
+    }
+
     /**
      * Helper function for builtin objects that use the varargs form. ECMA function formal arguments
      * are undefined if not supplied; this function pads the argument array out to the expected
@@ -883,6 +1010,14 @@ public class ScriptRuntime {
         StringBuilder buffer = new StringBuilder();
         DToA.JS_dtostr(buffer, DToA.DTOSTR_STANDARD, 0, d);
         return buffer.toString();
+    }
+
+    public static String bigIntToString(BigInteger n, int base) {
+        if ((base < 2) || (base > 36)) {
+            throw rangeErrorById("msg.bad.radix", Integer.toString(base));
+        }
+
+        return n.toString(base);
     }
 
     static String uneval(Context cx, Scriptable scope, Object value) {
@@ -3987,6 +4122,11 @@ public class ScriptRuntime {
         return constructError("RangeError", message);
     }
 
+    public static EcmaError rangeErrorById(String messageId, Object... args) {
+        String msg = getMessageById(messageId, args);
+        return rangeError(msg);
+    }
+
     public static EcmaError typeError(String message) {
         return constructError("TypeError", message);
     }
@@ -4079,6 +4219,15 @@ public class ScriptRuntime {
 
     private static RuntimeException notXmlError(Object value) {
         throw typeErrorById("msg.isnt.xml.object", toString(value));
+    }
+
+    public static EcmaError syntaxError(String message) {
+        return constructError("SyntaxError", message);
+    }
+
+    public static EcmaError syntaxErrorById(String messageId, Object... args) {
+        String msg = getMessageById(messageId, args);
+        return syntaxError(msg);
     }
 
     private static void warnAboutNonJSObject(Object nonJSObject) {
