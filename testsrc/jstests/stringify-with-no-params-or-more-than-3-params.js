@@ -6,5 +6,6 @@ load("testsrc/assert.js");
 
 assertEquals("[\n-\"a\"\n]" , JSON.stringify(['a'], ['a'], '-', undefined));
 assertEquals("[\n-\"a\"\n]" , JSON.stringify(['a'], ['a'], '-', {}));
+assertEquals(undefined, JSON.stringify())
 
 "success"
