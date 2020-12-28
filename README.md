@@ -33,7 +33,7 @@ features from ES6, and ES2016+ are implemented in Rhino.
 
 Information for script builders and embedders:
 
-[https://developer.mozilla.org/en-US/docs/Rhino_documentation](https://developer.mozilla.org/en-US/docs/Rhino_documentation)
+[https://developer.mozilla.org/en-US/docs/Rhino_documentation](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Documentation)
 
 JavaDoc for all the APIs:
 
