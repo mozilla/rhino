@@ -4217,6 +4217,11 @@ public class ScriptRuntime {
         return messageProvider.getMessage(messageId, arguments);
     }
 
+    public static String getMessageById(String messageId, Object... args)
+    {
+        return messageProvider.getMessage(messageId, args);
+    }
+
     /* OPT there's a noticable delay for the first error!  Maybe it'd
      * make sense to use a ListResourceBundle instead of a properties
      * file to avoid (synchronized) text parsing.
