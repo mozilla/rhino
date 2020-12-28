@@ -87,7 +87,7 @@ class SpecialRef extends Ref
                     Scriptable search = obj;
                     do {
                         if (search == target) {
-                            throw Context.reportRuntimeError1(
+                            throw Context.reportRuntimeErrorById(
                                 "msg.cyclic.value", name);
                         }
                         if (type == SPECIAL_PROTO) {

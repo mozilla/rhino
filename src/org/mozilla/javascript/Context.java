@@ -975,12 +975,26 @@ public class Context
         throw new EvaluatorException(message, sourceName, lineno, lineSource, lineOffset);
     }
 
+    static EvaluatorException reportRuntimeErrorById(String messageId, Object... args)
+    {
+        String msg = ScriptRuntime.getMessageById(messageId, args);
+        return reportRuntimeError(msg);
+    }
+
+    /**
+     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     static EvaluatorException reportRuntimeError0(String messageId)
     {
         String msg = ScriptRuntime.getMessageById(messageId);
         return reportRuntimeError(msg);
     }
 
+    /**
+     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     static EvaluatorException reportRuntimeError1(String messageId,
                                                   Object arg1)
     {
@@ -988,6 +1002,10 @@ public class Context
         return reportRuntimeError(msg);
     }
 
+    /**
+     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     static EvaluatorException reportRuntimeError2(String messageId,
                                                   Object arg1, Object arg2)
     {
@@ -995,6 +1013,10 @@ public class Context
         return reportRuntimeError(msg);
     }
 
+    /**
+     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     static EvaluatorException reportRuntimeError3(String messageId,
                                                   Object arg1, Object arg2,
                                                   Object arg3)
@@ -1003,6 +1025,10 @@ public class Context
         return reportRuntimeError(msg);
     }
 
+    /**
+     * @deprecated Use {@link #reportRuntimeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     static EvaluatorException reportRuntimeError4(String messageId,
                                                   Object arg1, Object arg2,
                                                   Object arg3, Object arg4)

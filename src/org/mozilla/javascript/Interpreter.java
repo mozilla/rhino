@@ -2519,7 +2519,7 @@ switch (op) {
                                      int[] varAttributes, int indexReg) {
         if (!frame.useActivation) {
             if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
-                throw Context.reportRuntimeError1("msg.var.redecl",
+                throw Context.reportRuntimeErrorById("msg.var.redecl",
                                                   frame.idata.argNames[indexReg]);
             }
             if ((varAttributes[indexReg] & ScriptableObject.UNINITIALIZED_CONST)

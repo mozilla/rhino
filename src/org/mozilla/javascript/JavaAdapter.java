@@ -203,7 +203,7 @@ public final class JavaAdapter implements IdFunctionCall
                 int index = ctors.findCachedFunction(cx, ctorArgs);
                 if (index < 0) {
                     String sig = NativeJavaMethod.scriptSignature(args);
-                    throw Context.reportRuntimeError2(
+                    throw Context.reportRuntimeErrorById(
                             "msg.no.java.ctor", adapterClass.getName(), sig);
                 }
 
@@ -984,7 +984,7 @@ public final class JavaAdapter implements IdFunctionCall
         if (parms.length > 64) {
             // If it will be an issue, then passing a static boolean array
             // can be an option, but for now using simple bitmask
-            throw Context.reportRuntimeError0(
+            throw Context.reportRuntimeErrorById(
                 "JavaAdapter can not subclass methods with more then"
                 +" 64 arguments.");
         }

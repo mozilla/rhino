@@ -114,7 +114,7 @@ public class ImporterTopLevel extends TopLevel {
                 if (result == NOT_FOUND) {
                     result = v;
                 } else {
-                    throw Context.reportRuntimeError2(
+                    throw Context.reportRuntimeErrorById(
                         "msg.ambig.import", result.toString(), v.toString());
                 }
             }
@@ -142,7 +142,7 @@ public class ImporterTopLevel extends TopLevel {
             } else if (arg instanceof NativeJavaPackage) {
                 result.importPackage((NativeJavaPackage)arg);
             } else {
-                throw Context.reportRuntimeError1(
+                throw Context.reportRuntimeErrorById(
                     "msg.not.class.not.pkg", Context.toString(arg));
             }
         }
@@ -161,7 +161,7 @@ public class ImporterTopLevel extends TopLevel {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaClass)) {
-                throw Context.reportRuntimeError1(
+                throw Context.reportRuntimeErrorById(
                     "msg.not.class", Context.toString(arg));
             }
             importClass((NativeJavaClass)arg);
@@ -174,7 +174,7 @@ public class ImporterTopLevel extends TopLevel {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
             if (!(arg instanceof NativeJavaPackage)) {
-                throw Context.reportRuntimeError1(
+                throw Context.reportRuntimeErrorById(
                     "msg.not.pkg", Context.toString(arg));
             }
             importPackage((NativeJavaPackage)arg);
@@ -203,7 +203,7 @@ public class ImporterTopLevel extends TopLevel {
         String n = s.substring(s.lastIndexOf('.')+1);
         Object val = get(n, this);
         if (val != NOT_FOUND && val != cl) {
-            throw Context.reportRuntimeError1("msg.prop.defined", n);
+            throw Context.reportRuntimeErrorById("msg.prop.defined", n);
         }
         //defineProperty(n, cl, DONTENUM);
         put(n, this, cl);
