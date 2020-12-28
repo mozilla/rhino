@@ -534,7 +534,7 @@ public class Parser
     }
 
     private void exitLoop() {
-        Loop loop = loopSet.remove(loopSet.size() - 1);
+        loopSet.remove(loopSet.size() - 1);
         loopAndSwitchSet.remove(loopAndSwitchSet.size() - 1);
         popScope();
     }
