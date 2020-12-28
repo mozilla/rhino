@@ -164,6 +164,7 @@ public class ScriptRuntime {
         NativeString.init(scope, sealed);
         NativeBoolean.init(scope, sealed);
         NativeNumber.init(scope, sealed);
+        NativeBigInt.init(scope, sealed);
         NativeDate.init(scope, sealed);
         NativeMath.init(scope, sealed);
         NativeJSON.init(scope, sealed);
