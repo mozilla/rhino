@@ -901,7 +901,7 @@ public class ScriptRuntime {
 
     public static String numberToString(double d, int base) {
         if ((base < 2) || (base > 36)) {
-            throw Context.reportRuntimeError1(
+            throw Context.reportRuntimeErrorById(
                 "msg.bad.radix", Integer.toString(base));
         }
 
@@ -1336,10 +1336,10 @@ public class ScriptRuntime {
             return (Function)ctorVal;
         }
         if (ctorVal == Scriptable.NOT_FOUND) {
-            throw Context.reportRuntimeError1(
+            throw Context.reportRuntimeErrorById(
                 "msg.ctor.not.found", constructorName);
         }
-        throw Context.reportRuntimeError1("msg.not.ctor", constructorName);
+        throw Context.reportRuntimeErrorById("msg.not.ctor", constructorName);
     }
 
     /**
@@ -2703,7 +2703,7 @@ public class ScriptRuntime {
             }
         } else if (callType == Node.SPECIALCALL_WITH) {
             if (NativeWith.isWithFunction(fun)) {
-                throw Context.reportRuntimeError1("msg.only.from.new",
+                throw Context.reportRuntimeErrorById("msg.only.from.new",
                                                   "With");
             }
         } else {
@@ -2830,7 +2830,7 @@ public class ScriptRuntime {
             if (cx.hasFeature(Context.FEATURE_STRICT_MODE) ||
                 cx.hasFeature(Context.FEATURE_STRICT_EVAL))
             {
-                throw Context.reportRuntimeError0("msg.eval.nonstring.strict");
+                throw Context.reportRuntimeErrorById("msg.eval.nonstring.strict");
             }
             String message = ScriptRuntime.getMessageById("msg.eval.nonstring");
             Context.reportWarning(message);
@@ -4468,7 +4468,7 @@ public class ScriptRuntime {
     {
         RegExpProxy result = getRegExpProxy(cx);
         if (result == null) {
-            throw Context.reportRuntimeError0("msg.no.regexp");
+            throw Context.reportRuntimeErrorById("msg.no.regexp");
         }
         return result;
     }
@@ -4610,7 +4610,7 @@ public class ScriptRuntime {
 
     private static RuntimeException errorWithClassName(String msg, Object val)
     {
-        return Context.reportRuntimeError1(msg, val.getClass().getName());
+        return Context.reportRuntimeErrorById(msg, val.getClass().getName());
     }
 
     /**

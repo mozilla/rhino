@@ -1047,7 +1047,7 @@ public class NativeArray extends IdScriptableObject implements List
         long llength = getLengthProperty(cx, o, false);
         int length = (int)llength;
         if (llength != length) {
-            throw Context.reportRuntimeError1(
+            throw Context.reportRuntimeErrorById(
                 "msg.arraylength.too.big", String.valueOf(llength));
         }
         // if no args, use "," as separator
@@ -1173,7 +1173,7 @@ public class NativeArray extends IdScriptableObject implements List
         long llength = getLengthProperty(cx, o, false);
         final int length = (int) llength;
         if (llength != length) {
-            throw Context.reportRuntimeError1(
+            throw Context.reportRuntimeErrorById(
                 "msg.arraylength.too.big", String.valueOf(llength));
         }
         // copy the JS array into a working array, so it can be

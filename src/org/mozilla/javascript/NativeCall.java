@@ -107,7 +107,7 @@ public final class NativeCall extends IdScriptableObject
         int id = f.methodId();
         if (id == Id_constructor) {
             if (thisObj != null) {
-                throw Context.reportRuntimeError1("msg.only.from.new", "Call");
+                throw Context.reportRuntimeErrorById("msg.only.from.new", "Call");
             }
             ScriptRuntime.checkDeprecated(cx, "Call");
             NativeCall result = new NativeCall();

@@ -106,7 +106,7 @@ public class FunctionObject extends BaseFunction
                     types[2] != ScriptRuntime.FunctionClass ||
                     types[3] != Boolean.TYPE)
                 {
-                    throw Context.reportRuntimeError1(
+                    throw Context.reportRuntimeErrorById(
                         "msg.varargs.ctor", methodName);
                 }
                 parmsLength = VARARGS_CTOR;
@@ -117,7 +117,7 @@ public class FunctionObject extends BaseFunction
                     types[2].getComponentType() != ScriptRuntime.ObjectClass ||
                     types[3] != ScriptRuntime.FunctionClass)
                 {
-                    throw Context.reportRuntimeError1(
+                    throw Context.reportRuntimeErrorById(
                         "msg.varargs.fun", methodName);
                 }
                 parmsLength = VARARGS_METHOD;
@@ -129,7 +129,7 @@ public class FunctionObject extends BaseFunction
                 for (int i = 0; i != arity; ++i) {
                     int tag = getTypeTag(types[i]);
                     if (tag == JAVA_UNSUPPORTED_TYPE) {
-                        throw Context.reportRuntimeError2(
+                        throw Context.reportRuntimeErrorById(
                             "msg.bad.parms", types[i].getName(), methodName);
                     }
                     typeTags[i] = (byte)tag;
@@ -148,7 +148,7 @@ public class FunctionObject extends BaseFunction
         } else {
             Class<?> ctorType = member.getDeclaringClass();
             if (!ScriptRuntime.ScriptableClass.isAssignableFrom(ctorType)) {
-                throw Context.reportRuntimeError1(
+                throw Context.reportRuntimeErrorById(
                     "msg.bad.ctor.return", ctorType.getName());
             }
         }
@@ -255,7 +255,7 @@ public class FunctionObject extends BaseFunction
             Method method = methods[i];
             if (method != null && name.equals(method.getName())) {
                 if (found != null) {
-                    throw Context.reportRuntimeError2(
+                    throw Context.reportRuntimeErrorById(
                         "msg.no.overload", name,
                         method.getDeclaringClass().getName());
                 }
@@ -355,7 +355,7 @@ public class FunctionObject extends BaseFunction
     {
         int tag = getTypeTag(desired);
         if (tag == JAVA_UNSUPPORTED_TYPE) {
-            throw Context.reportRuntimeError1
+            throw Context.reportRuntimeErrorById
                 ("msg.cant.convert", desired.getName());
         }
         return convertArg(cx, scope, arg, tag);

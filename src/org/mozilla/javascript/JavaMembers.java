@@ -41,7 +41,7 @@ class JavaMembers
             Context cx = ContextFactory.getGlobal().enterContext();
             ClassShutter shutter = cx.getClassShutter();
             if (shutter != null && !shutter.visibleToScripts(cl.getName())) {
-                throw Context.reportRuntimeError1("msg.access.prohibited",
+                throw Context.reportRuntimeErrorById("msg.access.prohibited",
                                                   cl.getName());
             }
             this.members = new HashMap<String,Object>();
@@ -150,7 +150,7 @@ class JavaMembers
             if (!(member instanceof Field)) {
                 String str = (member == null) ? "msg.java.internal.private"
                                               : "msg.java.method.assign";
-                throw Context.reportRuntimeError1(str, name);
+                throw Context.reportRuntimeErrorById(str, name);
             }
             Field field = (Field)member;
             Object javaValue = Context.jsToJava(value, field.getType());
@@ -163,7 +163,7 @@ class JavaMembers
                 }
                 throw Context.throwAsScriptRuntimeEx(accessEx);
             } catch (IllegalArgumentException argEx) {
-                throw Context.reportRuntimeError3(
+                throw Context.reportRuntimeErrorById(
                     "msg.java.internal.field.type",
                     value.getClass().getName(), field,
                     javaObject.getClass().getName());
@@ -852,7 +852,7 @@ class JavaMembers
 
     RuntimeException reportMemberNotFound(String memberName)
     {
-        return Context.reportRuntimeError2(
+        return Context.reportRuntimeErrorById(
             "msg.java.member.not.found", cl.getName(), memberName);
     }
 
@@ -901,7 +901,7 @@ class FieldAndMethods extends NativeJavaMethod
             rval = field.get(javaObject);
             type = field.getType();
         } catch (IllegalAccessException accEx) {
-            throw Context.reportRuntimeError1(
+            throw Context.reportRuntimeErrorById(
                 "msg.java.internal.private", field.getName());
         }
         Context cx  = Context.getContext();
