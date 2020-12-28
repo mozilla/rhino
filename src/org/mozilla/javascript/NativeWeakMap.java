@@ -57,7 +57,7 @@ public class NativeWeakMap extends IdScriptableObject {
                     }
                     return nm;
                 }
-                throw ScriptRuntime.typeError1("msg.no.new", "WeakMap");
+                throw ScriptRuntime.typeErrorById("msg.no.new", "WeakMap");
             case Id_delete:
                 return realThis(thisObj, f).js_delete(args.length > 0 ? args[0] : Undefined.instance);
             case Id_get:
@@ -105,7 +105,7 @@ public class NativeWeakMap extends IdScriptableObject {
         // equals or hashCode, which means that in effect we are only keying on object identity.
         // This is all correct according to the ECMAscript spec.
         if (!ScriptRuntime.isObject(key)) {
-            throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(key));
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(key));
         }
         // Map.get() does not distinguish between "not found" and a null value. So,
         // replace true null here with a marker so that we can re-convert in "get".
@@ -118,7 +118,7 @@ public class NativeWeakMap extends IdScriptableObject {
         final NativeWeakMap nm = ensureType(thisObj, NativeWeakMap.class, f);
         if (!nm.instanceOfWeakMap) {
             // Check for "Map internal data tag"
-            throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", f.getFunctionName());
         }
 
         return nm;

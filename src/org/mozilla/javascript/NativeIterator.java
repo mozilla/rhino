@@ -153,7 +153,7 @@ public final class NativeIterator extends IdScriptableObject {
             args[0] == Undefined.instance)
         {
             Object argument = args.length == 0 ? Undefined.instance : args[0];
-            throw ScriptRuntime.typeError1("msg.no.properties",
+            throw ScriptRuntime.typeErrorById("msg.no.properties",
                                            ScriptRuntime.toString(argument));
         }
         Scriptable obj = ScriptRuntime.toObject(cx, scope, args[0]);

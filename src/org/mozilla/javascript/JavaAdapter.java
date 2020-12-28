@@ -133,7 +133,7 @@ public final class JavaAdapter implements IdFunctionCall
     {
         int N = args.length;
         if (N == 0) {
-            throw ScriptRuntime.typeError0("msg.adapter.zero.args");
+            throw ScriptRuntime.typeErrorById("msg.adapter.zero.args");
         }
 
         // Expected arguments:
@@ -153,7 +153,7 @@ public final class JavaAdapter implements IdFunctionCall
                 break;
             }
             if (!(arg instanceof NativeJavaClass)) {
-                throw ScriptRuntime.typeError2("msg.not.java.class.arg",
+                throw ScriptRuntime.typeErrorById("msg.not.java.class.arg",
                                                String.valueOf(classCount),
                                                ScriptRuntime.toString(arg));
             }
@@ -165,7 +165,7 @@ public final class JavaAdapter implements IdFunctionCall
             Class<?> c = ((NativeJavaClass) args[i]).getClassObject();
             if (!c.isInterface()) {
                 if (superClass != null) {
-                    throw ScriptRuntime.typeError2("msg.only.one.super",
+                    throw ScriptRuntime.typeErrorById("msg.only.one.super",
                               superClass.getName(), c.getName());
                 }
                 superClass = c;

@@ -227,7 +227,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 if (cx.isStrictMode()) {
                     int nameSlot = (id  - 1) * SLOT_SPAN + NAME_SLOT;
                     String name = (String)valueArray[nameSlot];
-                    throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", name);
+                    throw ScriptRuntime.typeErrorById("msg.delete.property.with.configurable.false", name);
                 }
             } else {
                 int valueSlot = (id  - 1) * SLOT_SPAN;
@@ -524,7 +524,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 if ((attr & PERMANENT) != 0) {
                     Context cx = Context.getContext();
                     if (cx.isStrictMode()) {
-                        throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", name);
+                        throw ScriptRuntime.typeErrorById("msg.delete.property.with.configurable.false", name);
                     }
                 } else {
                     int id = (info & 0xFFFF);
@@ -557,7 +557,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 if ((attr & PERMANENT) != 0) {
                     Context cx = Context.getContext();
                     if (cx.isStrictMode()) {
-                        throw ScriptRuntime.typeError0("msg.delete.property.with.configurable.false");
+                        throw ScriptRuntime.typeErrorById("msg.delete.property.with.configurable.false");
                     }
                 } else {
                     int id = (info & 0xFFFF);
@@ -902,9 +902,9 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
             return (T) obj;
         }
         if (obj == null) {
-            throw ScriptRuntime.typeError3("msg.incompat.call.details", f.getFunctionName(), "null", clazz.getName());
+            throw ScriptRuntime.typeErrorById("msg.incompat.call.details", f.getFunctionName(), "null", clazz.getName());
         }
-        throw ScriptRuntime.typeError3("msg.incompat.call.details", f.getFunctionName(), obj.getClass().getName(), clazz.getName());
+        throw ScriptRuntime.typeErrorById("msg.incompat.call.details", f.getFunctionName(), obj.getClass().getName(), clazz.getName());
     }
 
     private IdFunctionObject newIdFunction(Object tag, int id, String name,

@@ -166,7 +166,7 @@ public class NativeRegExp extends IdScriptableObject
         if (args.length > 0 && args[0] instanceof NativeRegExp) {
             if (args.length > 1 && args[1] != Undefined.instance) {
                 // report error
-                throw ScriptRuntime.typeError0("msg.bad.regexp.compile");
+                throw ScriptRuntime.typeErrorById("msg.bad.regexp.compile");
             }
             NativeRegExp thatObj = (NativeRegExp) args[0];
             this.re = thatObj.re;
@@ -2646,7 +2646,7 @@ public class NativeRegExp extends IdScriptableObject
 
     private void setLastIndex(Object value) {
         if ((lastIndexAttr & READONLY) != 0) {
-            throw ScriptRuntime.typeError1("msg.modify.readonly", "lastIndex");
+            throw ScriptRuntime.typeErrorById("msg.modify.readonly", "lastIndex");
         }
         lastIndex = value;
     }

@@ -54,7 +54,7 @@ public class NativeWeakSet extends IdScriptableObject {
                     }
                     return ns;
                 }
-                throw ScriptRuntime.typeError1("msg.no.new", "WeakSet");
+                throw ScriptRuntime.typeErrorById("msg.no.new", "WeakSet");
             case Id_add:
                 return realThis(thisObj, f).js_add(args.length > 0 ? args[0] : Undefined.instance);
             case Id_delete:
@@ -71,7 +71,7 @@ public class NativeWeakSet extends IdScriptableObject {
         // equals or hashCode, which means that in effect we are only keying on object identity.
         // This is all correct according to the ECMAscript spec.
         if (!ScriptRuntime.isObject(key)) {
-            throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(key));
+            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(key));
         }
         // Add a value to the map, but don't make it the key -- otherwise the WeakHashMap
         // will never GC anything.
@@ -97,7 +97,7 @@ public class NativeWeakSet extends IdScriptableObject {
         final NativeWeakSet ns = ensureType(thisObj, NativeWeakSet.class, f);
         if (!ns.instanceOfWeakSet) {
             // Check for "Set internal data tag"
-            throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", f.getFunctionName());
         }
 
         return ns;

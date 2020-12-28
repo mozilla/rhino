@@ -417,7 +417,7 @@ public class FunctionObject extends BaseFunction
                     }
                     if (!compatible) {
                         // Couldn't find an object to call this on.
-                        throw ScriptRuntime.typeError1("msg.incompat.call", functionName);
+                        throw ScriptRuntime.typeErrorById("msg.incompat.call", functionName);
                     }
                 }
             }

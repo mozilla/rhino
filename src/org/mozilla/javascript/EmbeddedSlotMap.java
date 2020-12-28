@@ -293,7 +293,7 @@ public class EmbeddedSlotMap
                 if ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0) {
                     Context cx = Context.getContext();
                     if (cx.isStrictMode()) {
-                        throw ScriptRuntime.typeError1("msg.delete.property.with.configurable.false", key);
+                        throw ScriptRuntime.typeErrorById("msg.delete.property.with.configurable.false", key);
                     }
                     return;
                 }

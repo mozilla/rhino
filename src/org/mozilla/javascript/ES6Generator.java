@@ -215,7 +215,7 @@ public final class ES6Generator extends IdScriptableObject {
             return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
         }
         if (state == State.EXECUTING) {
-            throw ScriptRuntime.typeError0("msg.generator.executing");
+            throw ScriptRuntime.typeErrorById("msg.generator.executing");
         }
 
         Scriptable result = ES6Iterator.makeIteratorResult(cx, scope, Boolean.FALSE);
@@ -285,7 +285,7 @@ public final class ES6Generator extends IdScriptableObject {
     private Scriptable resumeAbruptLocal(Context cx, Scriptable scope, int op, Object value)
     {
         if (state == State.EXECUTING) {
-            throw ScriptRuntime.typeError0("msg.generator.executing");
+            throw ScriptRuntime.typeErrorById("msg.generator.executing");
         }
         if (state == State.SUSPENDED_START) {
             // Throw right away if we never started
@@ -361,7 +361,7 @@ public final class ES6Generator extends IdScriptableObject {
             delegee, ES6Iterator.RETURN_METHOD, cx, scope);
         if (!Undefined.instance.equals(retFnObj)) {
             if (!(retFnObj instanceof Callable)) {
-                throw ScriptRuntime.typeError2("msg.isnt.function", ES6Iterator.RETURN_METHOD,
+                throw ScriptRuntime.typeErrorById("msg.isnt.function", ES6Iterator.RETURN_METHOD,
                     ScriptRuntime.typeof(retFnObj));
             }
             return ((Callable)retFnObj).call(cx, scope, ensureScriptable(delegee), retArgs);
