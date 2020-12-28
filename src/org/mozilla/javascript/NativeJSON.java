@@ -339,7 +339,7 @@ public final class NativeJSON extends IdScriptableObject
 
     private static String jo(Scriptable value, StringifyState state) {
         if (state.stack.search(value) != -1) {
-            throw ScriptRuntime.typeError0("msg.cyclic.value");
+            throw ScriptRuntime.typeErrorById("msg.cyclic.value");
         }
         state.stack.push(value);
 
@@ -388,7 +388,7 @@ public final class NativeJSON extends IdScriptableObject
 
     private static String ja(NativeArray value, StringifyState state) {
         if (state.stack.search(value) != -1) {
-            throw ScriptRuntime.typeError0("msg.cyclic.value");
+            throw ScriptRuntime.typeErrorById("msg.cyclic.value");
         }
         state.stack.push(value);
 

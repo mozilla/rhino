@@ -2845,7 +2845,7 @@ switch (op) {
     {
           if (generatorState.operation == NativeGenerator.GENERATOR_CLOSE) {
               // Error: no yields when generator is closing
-              throw ScriptRuntime.typeError0("msg.yield.closing");
+              throw ScriptRuntime.typeErrorById("msg.yield.closing");
           }
           // return to our caller (which should be a method of NativeGenerator)
           frame.frozen = true;

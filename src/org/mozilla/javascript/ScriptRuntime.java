@@ -56,7 +56,7 @@ public class ScriptRuntime {
 
           @Override
           public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-            throw typeError0("msg.op.not.allowed");
+            throw typeErrorById("msg.op.not.allowed");
           }
           @Override
           public int getLength() {
@@ -437,7 +437,7 @@ public class ScriptRuntime {
             if (val instanceof Boolean)
                 return ((Boolean) val).booleanValue() ? 1 : +0.0;
             if (val instanceof Symbol)
-                throw typeError0("msg.not.a.number");
+                throw typeErrorById("msg.not.a.number");
             if (val instanceof Scriptable) {
                 val = ((Scriptable) val).getDefaultValue(NumberClass);
                 if ((val instanceof Scriptable) && !isSymbol(val))
@@ -865,7 +865,7 @@ public class ScriptRuntime {
                 return numberToString(((Number)val).doubleValue(), 10);
             }
             if (val instanceof Symbol) {
-                throw typeError0("msg.not.a.string");
+                throw typeErrorById("msg.not.a.string");
             }
             if (val instanceof Scriptable) {
                 val = ((Scriptable) val).getDefaultValue(StringClass);
@@ -1100,10 +1100,10 @@ public class ScriptRuntime {
     public static Scriptable toObject(Context cx, Scriptable scope, Object val)
     {
         if (val == null) {
-            throw typeError0("msg.null.to.object");
+            throw typeErrorById("msg.null.to.object");
         }
         if (Undefined.isUndefined(val)) {
-            throw typeError0("msg.undef.to.object");
+            throw typeErrorById("msg.undef.to.object");
         }
 
         if (isSymbol(val)) {
@@ -2203,14 +2203,14 @@ public class ScriptRuntime {
             Object v = ScriptableObject.getProperty(obj,
                 NativeIterator.ITERATOR_PROPERTY_NAME);
             if (!(v instanceof Callable)) {
-               throw typeError0("msg.invalid.iterator");
+               throw typeErrorById("msg.invalid.iterator");
             }
             Callable f = (Callable) v;
             Object[] args = new Object[] { keyOnly ? Boolean.TRUE
                                                    : Boolean.FALSE };
             v = f.call(cx, scope, obj, args);
             if (!(v instanceof Scriptable)) {
-                throw typeError0("msg.iterator.primitive");
+                throw typeErrorById("msg.iterator.primitive");
             }
             return (Scriptable) v;
         }
@@ -2282,19 +2282,19 @@ public class ScriptRuntime {
 
     private static Object enumInitInOrder(Context cx, IdEnumeration x) {
         if (!(x.obj instanceof SymbolScriptable) || !ScriptableObject.hasProperty(x.obj, SymbolKey.ITERATOR)) {
-            throw typeError1("msg.not.iterable", toString(x.obj));
+            throw typeErrorById("msg.not.iterable", toString(x.obj));
         }
 
         Object iterator = ScriptableObject.getProperty(x.obj, SymbolKey.ITERATOR);
         if (!(iterator instanceof Callable)) {
-            throw typeError1("msg.not.iterable", toString(x.obj));
+            throw typeErrorById("msg.not.iterable", toString(x.obj));
         }
         Callable f = (Callable) iterator;
         Scriptable scope = x.obj.getParentScope();
         Object[] args = new Object[] {};
         Object v = f.call(cx, scope, x.obj, args);
         if (!(v instanceof Scriptable)) {
-            throw typeError1("msg.not.iterable", toString(x.obj));
+            throw typeErrorById("msg.not.iterable", toString(x.obj));
         }
         x.iterator = (Scriptable) v;
         return x;
@@ -2719,7 +2719,7 @@ public class ScriptRuntime {
     {
         if (callType == Node.SPECIALCALL_EVAL) {
             if (NativeGlobal.isEvalFunction(fun)) {
-                throw typeError1("msg.not.ctor", "eval");
+                throw typeErrorById("msg.not.ctor", "eval");
             }
         } else if (callType == Node.SPECIALCALL_WITH) {
             if (NativeWith.isWithFunction(fun)) {
@@ -2795,7 +2795,7 @@ public class ScriptRuntime {
         } else if( arg1 instanceof ScriptableObject ) {
             return ScriptRuntime.emptyArgs;
         } else {
-            throw ScriptRuntime.typeError0("msg.arg.isnt.array");
+            throw ScriptRuntime.typeErrorById("msg.arg.isnt.array");
         }
     }
 
@@ -2949,7 +2949,7 @@ public class ScriptRuntime {
             }
         }
         if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
-            throw typeError0("msg.not.a.number");
+            throw typeErrorById("msg.not.a.number");
         }
         if (val1 instanceof Scriptable)
             val1 = ((Scriptable) val1).getDefaultValue(null);
@@ -3168,7 +3168,7 @@ public class ScriptRuntime {
         Scriptable s = (Scriptable)val;
         Object result = s.getDefaultValue(typeHint);
         if ((result instanceof Scriptable) && !isSymbol(result))
-            throw typeError0("msg.bad.default.value");
+            throw typeErrorById("msg.bad.default.value");
         return result;
     }
 
@@ -3416,7 +3416,7 @@ public class ScriptRuntime {
     {
         // Check RHS is an object
         if (! (b instanceof Scriptable)) {
-            throw typeError0("msg.instanceof.not.object");
+            throw typeErrorById("msg.instanceof.not.object");
         }
 
         // for primitive values on LHS, return false
@@ -3459,7 +3459,7 @@ public class ScriptRuntime {
     public static boolean in(Object a, Object b, Context cx)
     {
         if (!(b instanceof Scriptable)) {
-            throw typeError0("msg.in.not.object");
+            throw typeErrorById("msg.in.not.object");
         }
 
         return hasObjectElem((Scriptable)b, a, cx);
@@ -3473,7 +3473,7 @@ public class ScriptRuntime {
             d2 = ((Number)val2).doubleValue();
         } else {
             if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
-                throw typeError0("msg.compare.symbol");
+                throw typeErrorById("msg.compare.symbol");
             }
             if (val1 instanceof Scriptable)
                 val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
@@ -3496,7 +3496,7 @@ public class ScriptRuntime {
             d2 = ((Number)val2).doubleValue();
         } else {
             if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
-                throw typeError0("msg.compare.symbol");
+                throw typeErrorById("msg.compare.symbol");
             }
             if (val1 instanceof Scriptable)
                 val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
@@ -3921,7 +3921,7 @@ public class ScriptRuntime {
     {
         Scriptable sobj = toObjectOrNull(cx, obj, scope);
         if (sobj == null) {
-            throw typeError1("msg.undef.with", toString(obj));
+            throw typeErrorById("msg.undef.with", toString(obj));
         }
         if (sobj instanceof XMLObject) {
             XMLObject xmlObject = (XMLObject)sobj;
@@ -4296,18 +4296,36 @@ public class ScriptRuntime {
         return constructError("TypeError", message);
     }
 
+    public static EcmaError typeErrorById(String messageId, Object... args)
+    {
+        String msg = getMessageById(messageId, args);
+        return typeError(msg);
+    }
+
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static EcmaError typeError0(String messageId)
     {
         String msg = getMessage0(messageId);
         return typeError(msg);
     }
 
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static EcmaError typeError1(String messageId, Object arg1)
     {
         String msg = getMessage1(messageId, arg1);
         return typeError(msg);
     }
 
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static EcmaError typeError2(String messageId, Object arg1,
                                        Object arg2)
     {
@@ -4315,6 +4333,10 @@ public class ScriptRuntime {
         return typeError(msg);
     }
 
+    /**
+     * @deprecated Use {@link #typeErrorById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static EcmaError typeError3(String messageId, String arg1,
                                        String arg2, String arg3)
     {
@@ -4324,25 +4346,25 @@ public class ScriptRuntime {
 
     public static RuntimeException undefReadError(Object object, Object id)
     {
-        return typeError2("msg.undef.prop.read", toString(object), toString(id));
+        return typeErrorById("msg.undef.prop.read", toString(object), toString(id));
     }
 
     public static RuntimeException undefCallError(Object object, Object id)
     {
-        return typeError2("msg.undef.method.call", toString(object), toString(id));
+        return typeErrorById("msg.undef.method.call", toString(object), toString(id));
     }
 
     public static RuntimeException undefWriteError(Object object,
                                                    Object id,
                                                    Object value)
     {
-        return typeError3("msg.undef.prop.write", toString(object), toString(id),
+        return typeErrorById("msg.undef.prop.write", toString(object), toString(id),
                           toString(value));
     }
 
     private static RuntimeException undefDeleteError(Object object, Object id)
     {
-        throw typeError2("msg.undef.prop.delete", toString(object), toString(id));
+        throw typeErrorById("msg.undef.prop.delete", toString(object), toString(id));
     }
 
     public static RuntimeException notFoundError(Scriptable object,
@@ -4365,9 +4387,9 @@ public class ScriptRuntime {
         String msg = (messageHelper == null)
                      ? "null" : messageHelper.toString();
         if (value == Scriptable.NOT_FOUND) {
-            return typeError1("msg.function.not.found", msg);
+            return typeErrorById("msg.function.not.found", msg);
         }
-        return typeError2("msg.isnt.function", msg, typeof(value));
+        return typeErrorById("msg.isnt.function", msg, typeof(value));
     }
 
     public static RuntimeException notFunctionError(Object obj, Object value,
@@ -4384,16 +4406,16 @@ public class ScriptRuntime {
             }
         }
         if (value == Scriptable.NOT_FOUND) {
-            return typeError2("msg.function.not.found.in", propertyName,
+            return typeErrorById("msg.function.not.found.in", propertyName,
                     objString);
         }
-        return typeError3("msg.isnt.function.in", propertyName, objString,
+        return typeErrorById("msg.isnt.function.in", propertyName, objString,
                           typeof(value));
     }
 
     private static RuntimeException notXmlError(Object value)
     {
-        throw typeError1("msg.isnt.xml.object", toString(value));
+        throw typeErrorById("msg.isnt.xml.object", toString(value));
     }
 
     private static void warnAboutNonJSObject(Object nonJSObject)

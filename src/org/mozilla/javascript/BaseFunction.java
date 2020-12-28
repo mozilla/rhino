@@ -93,7 +93,7 @@ public class BaseFunction extends IdScriptableObject implements Function
         if (protoProp instanceof Scriptable) {
             return ScriptRuntime.jsDelegatesTo(instance, (Scriptable)protoProp);
         }
-        throw ScriptRuntime.typeError1("msg.instanceof.bad.prototype",
+        throw ScriptRuntime.typeErrorById("msg.instanceof.bad.prototype",
                                        getFunctionName());
     }
 

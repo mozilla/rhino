@@ -164,13 +164,13 @@ public class NativeObject extends IdScriptableObject implements Map
 
           case Id_valueOf:
               if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
-                  throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+                  throw ScriptRuntime.typeErrorById("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
               }
             return thisObj;
 
           case Id_hasOwnProperty: {
               if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
-                  throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+                  throw ScriptRuntime.typeErrorById("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
               }
               boolean result;
               Object arg = args.length < 1 ? Undefined.instance : args[0];
@@ -189,7 +189,7 @@ public class NativeObject extends IdScriptableObject implements Map
 
           case Id_propertyIsEnumerable: {
               if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
-                  throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+                  throw ScriptRuntime.typeErrorById("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
               }
 
             boolean result;
@@ -236,7 +236,7 @@ public class NativeObject extends IdScriptableObject implements Map
 
           case Id_isPrototypeOf: {
             if (cx.getLanguageVersion() >= Context.VERSION_1_8 && (thisObj == null || Undefined.isUndefined(thisObj))) {
-                throw ScriptRuntime.typeError0("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
+                throw ScriptRuntime.typeErrorById("msg." + (thisObj == null ? "null" : "undef") + ".to.object");
             }
 
             boolean result = false;
@@ -328,11 +328,11 @@ public class NativeObject extends IdScriptableObject implements Map
           case ConstructorId_setPrototypeOf:
               {
                 if (args.length < 2) {
-                    throw ScriptRuntime.typeError3("msg.method.missing.parameter", "Object.setPrototypeOf", "2", Integer.toString(args.length));
+                    throw ScriptRuntime.typeErrorById("msg.method.missing.parameter", "Object.setPrototypeOf", "2", Integer.toString(args.length));
                 }
                 Scriptable proto = (args[1] == null) ? null : ensureScriptable(args[1]);
                 if (proto instanceof Symbol) {
-                    throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(proto));
+                    throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(proto));
                 }
 
                 final Object arg0 = args[0];
@@ -344,14 +344,14 @@ public class NativeObject extends IdScriptableObject implements Map
                 }
                 ScriptableObject obj = (ScriptableObject) arg0;
                 if (!obj.isExtensible()) {
-                    throw ScriptRuntime.typeError0("msg.not.extensible");
+                    throw ScriptRuntime.typeErrorById("msg.not.extensible");
                 }
 
                 // cycle detection
                 Scriptable prototypeProto = proto;
                 while (prototypeProto != null) {
                     if (prototypeProto == obj) {
-                        throw ScriptRuntime.typeError1("msg.object.cyclic.prototype", obj.getClass().getSimpleName());
+                        throw ScriptRuntime.typeErrorById("msg.object.cyclic.prototype", obj.getClass().getSimpleName());
                     }
                     prototypeProto = prototypeProto.getPrototype();
                 }

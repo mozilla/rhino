@@ -101,7 +101,7 @@ class SpecialRef extends Ref
                     if (target instanceof ScriptableObject
                             && !((ScriptableObject)target).isExtensible()
                             && cx.getLanguageVersion() >= Context.VERSION_1_8) {
-                        throw ScriptRuntime.typeError0("msg.not.extensible");
+                        throw ScriptRuntime.typeErrorById("msg.not.extensible");
                     }
 
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6) {

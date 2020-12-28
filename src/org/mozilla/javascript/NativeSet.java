@@ -58,7 +58,7 @@ public class NativeSet extends IdScriptableObject {
                     }
                     return ns;
                 } else {
-                    throw ScriptRuntime.typeError1("msg.no.new", "Set");
+                    throw ScriptRuntime.typeErrorById("msg.no.new", "Set");
                 }
             case Id_add:
                 return realThis(thisObj, f).js_add(args.length > 0 ? args[0] : Undefined.instance);
@@ -187,7 +187,7 @@ public class NativeSet extends IdScriptableObject {
         final NativeSet ns = ensureType(thisObj, NativeSet.class, f);
         if (!ns.instanceOfSet) {
             // If we get here, then this object doesn't have the "Set internal data slot."
-            throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", f.getFunctionName());
         }
 
         return ns;

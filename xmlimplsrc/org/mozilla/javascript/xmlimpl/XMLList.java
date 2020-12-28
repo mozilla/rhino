@@ -720,7 +720,7 @@ class XMLList extends XMLObjectImpl implements Function {
         String methodName = isApply ? "apply" : "call";
         if(!(thisObj instanceof XMLList) ||
             ((XMLList)thisObj).targetProperty == null)
-            throw ScriptRuntime.typeError1("msg.isnt.function",
+            throw ScriptRuntime.typeErrorById("msg.isnt.function",
                 methodName);
 
         return ScriptRuntime.applyOrCall(isApply, cx, scope, thisObj, args);
@@ -767,7 +767,7 @@ class XMLList extends XMLObjectImpl implements Function {
             return applyOrCall(isApply, cx, scope, thisObj, args);
 
         if (!(thisObj instanceof XMLObject)) {
-            throw ScriptRuntime.typeError1("msg.incompat.call", methodName);
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", methodName);
         }
         Object func = null;
         Scriptable sobj = thisObj;
@@ -794,7 +794,7 @@ class XMLList extends XMLObjectImpl implements Function {
     }
 
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-        throw ScriptRuntime.typeError1("msg.not.ctor", "XMLList");
+        throw ScriptRuntime.typeErrorById("msg.not.ctor", "XMLList");
     }
 }
 

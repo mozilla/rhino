@@ -58,7 +58,7 @@ public class BoundFunction extends BaseFunction {
     if (targetFunction instanceof Function) {
       return ((Function) targetFunction).construct(cx, scope, concat(boundArgs, extraArgs));
     }
-    throw ScriptRuntime.typeError0("msg.not.ctor");
+    throw ScriptRuntime.typeErrorById("msg.not.ctor");
   }
 
   @Override
@@ -66,7 +66,7 @@ public class BoundFunction extends BaseFunction {
     if (targetFunction instanceof Function) {
       return ((Function) targetFunction).hasInstance(instance);
     }
-    throw ScriptRuntime.typeError0("msg.not.ctor");
+    throw ScriptRuntime.typeErrorById("msg.not.ctor");
   }
 
   @Override

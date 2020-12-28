@@ -110,7 +110,7 @@ public class IdFunctionObject extends BaseFunction
         // to satisfy ECMAScript standard (see bugzilla 202019).
         // To follow current (2003-05-01) SpiderMonkey behavior, change it to:
         // return super.createObject(cx, scope);
-        throw ScriptRuntime.typeError1("msg.not.ctor", functionName);
+        throw ScriptRuntime.typeErrorById("msg.not.ctor", functionName);
     }
 
     @Override

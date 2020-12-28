@@ -320,7 +320,7 @@ final class NativeString extends IdScriptableObject
                 case Id_endsWith:
                     String thisString = ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                     if (args.length > 0 && args[0] instanceof NativeRegExp) {
-                        throw ScriptRuntime.typeError2("msg.first.arg.not.regexp", String.class.getSimpleName(), f.getFunctionName());
+                        throw ScriptRuntime.typeErrorById("msg.first.arg.not.regexp", String.class.getSimpleName(), f.getFunctionName());
                     }
 
                     int idx = js_indexOf(id, thisString, args);

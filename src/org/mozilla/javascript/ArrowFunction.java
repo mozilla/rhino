@@ -45,7 +45,7 @@ public class ArrowFunction extends BaseFunction {
 
     @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
-        throw ScriptRuntime.typeError1("msg.not.ctor", decompile(0, 0));
+        throw ScriptRuntime.typeErrorById("msg.not.ctor", decompile(0, 0));
     }
 
     @Override
@@ -53,7 +53,7 @@ public class ArrowFunction extends BaseFunction {
         if (targetFunction instanceof Function) {
             return ((Function) targetFunction).hasInstance(instance);
         }
-        throw ScriptRuntime.typeError0("msg.not.ctor");
+        throw ScriptRuntime.typeErrorById("msg.not.ctor");
     }
 
     @Override

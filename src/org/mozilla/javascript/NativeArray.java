@@ -694,7 +694,7 @@ public class NativeArray extends IdScriptableObject implements List
 
         if (mapping) {
             if (!(mapArg instanceof Function)) {
-                throw ScriptRuntime.typeError0("msg.map.function.not");
+                throw ScriptRuntime.typeErrorById("msg.map.function.not");
             }
             mapFn = (Function)mapArg;
             if (args.length >= 3) {
@@ -2035,7 +2035,7 @@ public class NativeArray extends IdScriptableObject implements List
         }
         if (value == Scriptable.NOT_FOUND) {
             // reproduce spidermonkey error message
-            throw ScriptRuntime.typeError0("msg.empty.array.reduce");
+            throw ScriptRuntime.typeErrorById("msg.empty.array.reduce");
         }
         return value;
     }

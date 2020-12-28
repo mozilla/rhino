@@ -57,7 +57,7 @@ public class NativeMap extends IdScriptableObject {
                     }
                     return nm;
                 }
-                throw ScriptRuntime.typeError1("msg.no.new", "Map");
+                throw ScriptRuntime.typeErrorById("msg.no.new", "Map");
             case Id_set:
                 return realThis(thisObj, f).js_set(
                     args.length > 0 ? args[0] : Undefined.instance,
@@ -143,7 +143,7 @@ public class NativeMap extends IdScriptableObject {
     private Object js_forEach(Context cx, Scriptable scope, Object arg1, Object arg2)
     {
         if (!(arg1 instanceof Callable)) {
-            throw ScriptRuntime.typeError2("msg.isnt.function", arg1, ScriptRuntime.typeof(arg1));
+            throw ScriptRuntime.typeErrorById("msg.isnt.function", arg1, ScriptRuntime.typeof(arg1));
         }
         final Callable f = (Callable)arg1;
 
@@ -201,7 +201,7 @@ public class NativeMap extends IdScriptableObject {
             for (Object val : it) {
                 Scriptable sVal = ScriptableObject.ensureScriptable(val);
                 if (sVal instanceof Symbol) {
-                    throw ScriptRuntime.typeError1("msg.arg.not.object", ScriptRuntime.typeof(sVal));
+                    throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(sVal));
                 }
                 Object finalKey = sVal.get(0, sVal);
                 if (finalKey == NOT_FOUND) {
@@ -221,7 +221,7 @@ public class NativeMap extends IdScriptableObject {
         final NativeMap nm = ensureType(thisObj, NativeMap.class, f);
         if (!nm.instanceOfMap) {
             // Check for "Map internal data tag"
-            throw ScriptRuntime.typeError1("msg.incompat.call", f.getFunctionName());
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", f.getFunctionName());
         }
 
         return nm;
