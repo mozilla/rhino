@@ -567,6 +567,12 @@ public class NativeObject extends IdScriptableObject implements Map
               Scriptable sourceObj = ScriptRuntime.toObject(cx, thisObj, args[i]);
               Object[] ids = sourceObj.getIds();
               for (Object key : ids) {
+                if (targetObj instanceof ScriptableObject) {
+                  ScriptableObject desc = ((ScriptableObject) targetObj).getOwnPropertyDescriptor(cx, key);
+                  if (desc != null && isDataDescriptor(desc) && isFalse(desc.get("writable"))) {
+                      throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", key);
+                  }
+                }
                 if (key instanceof String) {
                   Object val = sourceObj.get((String) key, sourceObj);
                   if ((val != Scriptable.NOT_FOUND) && !Undefined.isUndefined(val)) {
