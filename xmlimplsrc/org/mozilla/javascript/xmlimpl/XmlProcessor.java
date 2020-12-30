@@ -247,6 +247,11 @@ class XmlProcessor implements Serializable {
     private void returnDocumentBuilderToPool(DocumentBuilder db) {
         try {
             db.reset();
+            // DocumentBuilders are supposed to be namespace-aware.
+            // This is a sanity check for DocumentBuilder's resettability (a known bug in Android).
+            if (!db.isNamespaceAware()) {
+                return;
+            }
             documentBuilderPool.offerFirst(db);
         } catch (UnsupportedOperationException e) {
             // document builders that don't support reset() can't be pooled
