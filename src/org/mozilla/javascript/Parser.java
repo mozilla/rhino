@@ -298,8 +298,8 @@ public class Parser
 
     String lookupMessage(String messageId, String messageArg) {
         return messageArg == null
-            ? ScriptRuntime.getMessage0(messageId)
-            : ScriptRuntime.getMessage1(messageId, messageArg);
+            ? ScriptRuntime.getMessageById(messageId)
+            : ScriptRuntime.getMessageById(messageId, messageArg);
     }
 
     void reportError(String messageId) {

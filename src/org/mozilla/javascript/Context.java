@@ -977,21 +977,21 @@ public class Context
 
     static EvaluatorException reportRuntimeError0(String messageId)
     {
-        String msg = ScriptRuntime.getMessage0(messageId);
+        String msg = ScriptRuntime.getMessageById(messageId);
         return reportRuntimeError(msg);
     }
 
     static EvaluatorException reportRuntimeError1(String messageId,
                                                   Object arg1)
     {
-        String msg = ScriptRuntime.getMessage1(messageId, arg1);
+        String msg = ScriptRuntime.getMessageById(messageId, arg1);
         return reportRuntimeError(msg);
     }
 
     static EvaluatorException reportRuntimeError2(String messageId,
                                                   Object arg1, Object arg2)
     {
-        String msg = ScriptRuntime.getMessage2(messageId, arg1, arg2);
+        String msg = ScriptRuntime.getMessageById(messageId, arg1, arg2);
         return reportRuntimeError(msg);
     }
 
@@ -999,7 +999,7 @@ public class Context
                                                   Object arg1, Object arg2,
                                                   Object arg3)
     {
-        String msg = ScriptRuntime.getMessage3(messageId, arg1, arg2, arg3);
+        String msg = ScriptRuntime.getMessageById(messageId, arg1, arg2, arg3);
         return reportRuntimeError(msg);
     }
 
@@ -1008,7 +1008,7 @@ public class Context
                                                   Object arg3, Object arg4)
     {
         String msg
-            = ScriptRuntime.getMessage4(messageId, arg1, arg2, arg3, arg4);
+            = ScriptRuntime.getMessageById(messageId, arg1, arg2, arg3, arg4);
         return reportRuntimeError(msg);
     }
 

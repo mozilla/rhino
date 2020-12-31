@@ -123,7 +123,7 @@ public class InterfaceAdapter
                 // We really should throw an error here, but for the sake of
                 // compatibility with JavaAdapter we silently ignore undefined
                 // methods.
-                Context.reportWarning(ScriptRuntime.getMessage1(
+                Context.reportWarning(ScriptRuntime.getMessageById(
                         "msg.undefined.function.interface", methodName));
                 Class<?> resultType = method.getReturnType();
                 if (resultType == Void.TYPE) {
