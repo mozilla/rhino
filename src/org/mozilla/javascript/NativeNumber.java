@@ -255,7 +255,7 @@ final class NativeNumber extends IdScriptableObject
                ECMA requires; this is permitted by ECMA. */
             double p = ScriptRuntime.toInteger(args[0]);
             if (p < precisionMin || p > MAX_PRECISION) {
-                String msg = ScriptRuntime.getMessage1(
+                String msg = ScriptRuntime.getMessageById(
                     "msg.bad.precision", ScriptRuntime.toString(args[0]));
                 throw ScriptRuntime.rangeError(msg);
             }

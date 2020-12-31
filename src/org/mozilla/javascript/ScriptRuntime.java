@@ -1596,7 +1596,7 @@ public class ScriptRuntime {
         Object result = ScriptableObject.getProperty(obj, property);
         if (result == Scriptable.NOT_FOUND) {
             if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
-                Context.reportWarning(ScriptRuntime.getMessage1(
+                Context.reportWarning(ScriptRuntime.getMessageById(
                     "msg.ref.undefined.prop", property));
             }
             result = Undefined.instance;
@@ -2121,7 +2121,7 @@ public class ScriptRuntime {
                 cx.hasFeature(Context.FEATURE_STRICT_VARS))
             {
                 Context.reportWarning(
-                    ScriptRuntime.getMessage1("msg.assn.create.strict", id));
+                    ScriptRuntime.getMessageById("msg.assn.create.strict", id));
             }
             // Find the top scope by walking up the scope chain.
             bound = ScriptableObject.getTopLevelScope(scope);
@@ -2670,7 +2670,7 @@ public class ScriptRuntime {
             return ref;
         }
         // No runtime support for now
-        String msg = getMessage1("msg.no.ref.from.function",
+        String msg = getMessageById("msg.no.ref.from.function",
                                  toString(function));
         throw constructError("ReferenceError", msg);
     }
@@ -2832,7 +2832,7 @@ public class ScriptRuntime {
             {
                 throw Context.reportRuntimeError0("msg.eval.nonstring.strict");
             }
-            String message = ScriptRuntime.getMessage0("msg.eval.nonstring");
+            String message = ScriptRuntime.getMessageById("msg.eval.nonstring");
             Context.reportWarning(message);
             return x;
         }
@@ -4152,7 +4152,7 @@ public class ScriptRuntime {
     static void checkDeprecated(Context cx, String name) {
         int version = cx.getLanguageVersion();
         if (version >= Context.VERSION_1_4 || version == Context.VERSION_DEFAULT) {
-            String msg = getMessage1("msg.deprec.ctor", name);
+            String msg = getMessageById("msg.deprec.ctor", name);
             if (version == Context.VERSION_DEFAULT)
                 Context.reportWarning(msg);
             else
@@ -4160,17 +4160,29 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static String getMessage0(String messageId)
     {
         return getMessage(messageId, null);
     }
 
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static String getMessage1(String messageId, Object arg1)
     {
         Object[] arguments = {arg1};
         return getMessage(messageId, arguments);
     }
 
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static String getMessage2(
         String messageId, Object arg1, Object arg2)
     {
@@ -4178,6 +4190,10 @@ public class ScriptRuntime {
         return getMessage(messageId, arguments);
     }
 
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static String getMessage3(
         String messageId, Object arg1, Object arg2, Object arg3)
     {
@@ -4185,6 +4201,10 @@ public class ScriptRuntime {
         return getMessage(messageId, arguments);
     }
 
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static String getMessage4(
         String messageId, Object arg1, Object arg2, Object arg3, Object arg4)
     {
@@ -4212,6 +4232,10 @@ public class ScriptRuntime {
 
     public static final MessageProvider messageProvider = new DefaultMessageProvider();
 
+    /**
+     * @deprecated Use {@link #getMessageById(String messageId, Object... args)} instead
+     */
+    @Deprecated
     public static String getMessage(String messageId, Object[] arguments)
     {
         return messageProvider.getMessage(messageId, arguments);
@@ -4371,7 +4395,7 @@ public class ScriptRuntime {
                                                  String property)
     {
         // XXX: use object to improve the error message
-        String msg = getMessage1("msg.is.not.defined", property);
+        String msg = getMessageById("msg.is.not.defined", property);
         throw constructError("ReferenceError", msg);
     }
 
@@ -4420,9 +4444,9 @@ public class ScriptRuntime {
 
     private static void warnAboutNonJSObject(Object nonJSObject)
     {
-        final String omitParam = ScriptRuntime.getMessage0("params.omit.non.js.object.warning");
+        final String omitParam = ScriptRuntime.getMessageById("params.omit.non.js.object.warning");
         if (!"true".equals(omitParam)) {
-            String message = ScriptRuntime.getMessage2("msg.non.js.object.warning",nonJSObject,nonJSObject.getClass().getName());
+            String message = ScriptRuntime.getMessageById("msg.non.js.object.warning",nonJSObject,nonJSObject.getClass().getName());
             Context.reportWarning(message);
             // Just to be sure that it would be noticed
             System.err.println(message);

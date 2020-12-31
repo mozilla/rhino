@@ -365,7 +365,7 @@ final class NativeDate extends IdScriptableObject
             if (!Double.isNaN(t)) {
                 return js_toISOString(t);
             }
-            String msg = ScriptRuntime.getMessage0("msg.invalid.date");
+            String msg = ScriptRuntime.getMessageById("msg.invalid.date");
             throw ScriptRuntime.rangeError(msg);
 
           default: throw new IllegalArgumentException(String.valueOf(id));

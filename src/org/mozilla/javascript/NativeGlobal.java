@@ -722,7 +722,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
 
     private static EcmaError uriError() {
         return ScriptRuntime.constructError("URIError",
-                ScriptRuntime.getMessage0("msg.bad.uri"));
+                ScriptRuntime.getMessageById("msg.bad.uri"));
     }
 
     private static final String URI_DECODE_RESERVED = ";/?:@&=+$,#";

@@ -2542,14 +2542,14 @@ public class NativeRegExp extends IdScriptableObject
     private static void reportWarning(Context cx, String messageId, String arg)
     {
         if (cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
-            String msg = ScriptRuntime.getMessage1(messageId, arg);
+            String msg = ScriptRuntime.getMessageById(messageId, arg);
             Context.reportWarning(msg);
         }
     }
 
     private static void reportError(String messageId, String arg)
     {
-        String msg = ScriptRuntime.getMessage1(messageId, arg);
+        String msg = ScriptRuntime.getMessageById(messageId, arg);
         throw ScriptRuntime.constructError("SyntaxError", msg);
     }
 

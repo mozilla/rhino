@@ -223,7 +223,7 @@ public class NativeObject extends IdScriptableObject implements Map
                         }
                     }
                 } catch (EvaluatorException ee) {
-                    if (ee.getMessage().startsWith(ScriptRuntime.getMessage1("msg.prop.not.found",
+                    if (ee.getMessage().startsWith(ScriptRuntime.getMessageById("msg.prop.not.found",
                                                         s.stringId == null ? Integer.toString(s.index) : s.stringId))) {
                         result = false;
                     } else {
