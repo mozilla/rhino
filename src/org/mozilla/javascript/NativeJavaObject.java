@@ -694,9 +694,9 @@ public class NativeJavaObject
                     return value;
                 reportConversionError(value, type);
             }
-            else if (type.isInterface() && (value instanceof NativeObject
-                    || value instanceof NativeFunction
-                    || value instanceof ArrowFunction)) {
+            else if (type.isInterface()
+                     && (value instanceof NativeObject
+                         || (value instanceof Callable && value instanceof ScriptableObject))) {
                 // Try to use function/object as implementation of Java interface.
                 return createInterfaceAdapter(type, (ScriptableObject) value);
             } else {
