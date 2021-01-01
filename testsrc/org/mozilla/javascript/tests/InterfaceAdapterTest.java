@@ -22,6 +22,10 @@ import junit.framework.TestCase;
  */
 public class InterfaceAdapterTest extends TestCase {
 
+    public static String joinString(String a) {
+        return a + "|";
+    }
+
     private void testIt(String js, Object expected) {
         Utils.runWithAllOptimizationLevels(cx -> {
             final ScriptableObject scope = cx.initStandardObjects();
@@ -55,15 +59,30 @@ public class InterfaceAdapterTest extends TestCase {
 
     @Test
     public void testArrowFunctionAsConsumer() {
-        List<String> list = new ArrayList<>();
-        list.add("foo");
-        list.add("bar");
-
         String js = "var ret = '';\n"
                 + "list.forEach(elem => ret += elem);\n"
                 + "ret";
 
         testIt(js, "foobar");
+    }
+
+    @Test
+    public void testBoundFunctionAsConsumer() {
+        String js = "var ret = '';\n"
+                + "list.forEach(((c, elem) => ret += elem + c).bind(null, ','));\n"
+                + "ret";
+
+        testIt(js, "foo,bar,");
+    }
+
+    @Test
+    public void testJavaMethodAsConsumer() {
+        String js = "var ret = '';\n"
+                + "list.stream().map(org.mozilla.javascript.tests.InterfaceAdapterTest.joinString)\n"
+                +     ".forEach(elem => ret += elem);\n"
+                + "ret";
+
+        testIt(js, "foo|bar|");
     }
 
     @Test
@@ -75,6 +94,7 @@ public class InterfaceAdapterTest extends TestCase {
                 + "list";
         testIt(js, Arrays.asList("bar", "foo"));
     }
+
     @Test
     public void testNativeFunctionAsComparator() {
         String js = "list";
