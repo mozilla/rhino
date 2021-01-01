@@ -3161,25 +3161,7 @@ public class Parser
 
           case Token.NUMBER: {
               consumeToken();
-              String s = ts.getString();
-              if (this.inUseStrictDirective && ts.isNumberOldOctal()) {
-                  reportError("msg.no.old.octal.strict");
-              }
-              if (ts.isNumberBinary()) {
-                  s = "0b"+s;
-              }
-              if (ts.isNumberOldOctal()) {
-                  s = "0"+s;
-              }
-              if (ts.isNumberOctal()) {
-                  s = "0o"+s;
-              }
-              if (ts.isNumberHex()) {
-                  s = "0x"+s;
-              }
-              return new NumberLiteral(ts.tokenBeg,
-                                       s,
-                                       ts.getNumber());
+              return createNumberLiteral(false);
           }
 
           case Token.STRING:
@@ -3693,8 +3675,7 @@ public class Parser
               break;
 
           case Token.NUMBER:
-              pname = new NumberLiteral(
-                      ts.tokenBeg, ts.getString(), ts.getNumber());
+              pname = createNumberLiteral(true);
               break;
 
           default:
@@ -3810,6 +3791,29 @@ public class Parser
         s.setValue(ts.getString());
         s.setQuoteCharacter(ts.getQuoteChar());
         return s;
+    }
+
+    private NumberLiteral createNumberLiteral(boolean isProperty) {
+        String s = ts.getString();
+        if (this.inUseStrictDirective && ts.isNumberOldOctal()) {
+            if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 || !isProperty) {
+                reportError("msg.no.old.octal.strict");
+            }
+        }
+        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 || !isProperty) {
+            if (ts.isNumberBinary()) {
+                s = "0b"+s;
+            } else if (ts.isNumberOldOctal()) {
+                s = "0"+s;
+            } else if (ts.isNumberOctal()) {
+                s = "0o"+s;
+            } else if (ts.isNumberHex()) {
+                s = "0x"+s;
+            }
+        }
+        return new NumberLiteral(ts.tokenBeg,
+                                 s,
+                                 ts.getNumber());
     }
 
     protected void checkActivationName(String name, int token) {
