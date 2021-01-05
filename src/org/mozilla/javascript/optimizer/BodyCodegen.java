@@ -1004,6 +1004,24 @@ class BodyCodegen {
                 }
                 break;
 
+            case Token.BIGINT:
+                {
+                    byte[] bytes = node.getBigInt().toByteArray();
+                    cfw.add(ByteCode.NEW, "java/math/BigInteger");
+                    cfw.add(ByteCode.DUP);
+                    cfw.addPush(bytes.length);
+                    cfw.add(ByteCode.NEWARRAY, ByteCode.T_BYTE);
+                    for (int i = 0; i < bytes.length; i++) {
+                        cfw.add(ByteCode.DUP);
+                        cfw.addPush(i);
+                        cfw.add(ByteCode.BIPUSH, bytes[i]);
+                        cfw.add(ByteCode.BASTORE);
+                    }
+                    cfw.addInvoke(
+                            ByteCode.INVOKESPECIAL, "java/math/BigInteger", "<init>", "([B)V");
+                }
+                break;
+
             case Token.STRING:
                 cfw.addPush(node.getString());
                 break;
