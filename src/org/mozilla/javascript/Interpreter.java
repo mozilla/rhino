@@ -3021,14 +3021,14 @@ public final class Interpreter extends Icode implements Evaluator {
             rdbl = sDbl[stackTop + 1];
             if (lhs == DBL_MRK) {
                 ldbl = sDbl[stackTop];
-            } else if (lhs instanceof Number) {
+            } else if (lhs instanceof Number && !(lhs instanceof BigInteger)) {
                 ldbl = ((Number) lhs).doubleValue();
             } else {
                 return false;
             }
         } else if (lhs == DBL_MRK) {
             ldbl = sDbl[stackTop];
-            if (rhs instanceof Number) {
+            if (rhs instanceof Number && !(rhs instanceof BigInteger)) {
                 rdbl = ((Number) rhs).doubleValue();
             } else {
                 return false;
