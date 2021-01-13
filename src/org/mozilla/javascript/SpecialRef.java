@@ -105,11 +105,8 @@ class SpecialRef extends Ref
 
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
                         final String typeOfValue = ScriptRuntime.typeof(value);
-                        if (value instanceof Number) {
-                            return value;
-                        }
                         if (!"object".equals(typeOfValue) && !"function".equals(typeOfValue)) {
-                            return obj;
+                            return value;
                         }
 
                         final String typeOfTarget = ScriptRuntime.typeof(target);
@@ -147,4 +144,3 @@ class SpecialRef extends Ref
         return false;
     }
 }
-
