@@ -87,8 +87,7 @@ class SpecialRef extends Ref
                     Scriptable search = obj;
                     do {
                         if (search == target) {
-                            throw Context.reportRuntimeErrorById(
-                                "msg.cyclic.value", name);
+                            throw Context.reportRuntimeErrorById("msg.cyclic.value", name);
                         }
                         if (type == SPECIAL_PROTO) {
                             search = search.getPrototype();
@@ -106,6 +105,9 @@ class SpecialRef extends Ref
 
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
                         final String typeOfValue = ScriptRuntime.typeof(value);
+                        if (value instanceof Double) {
+                            return value;
+                        }
                         if (!"object".equals(typeOfValue) && !"function".equals(typeOfValue)) {
                             return obj;
                         }

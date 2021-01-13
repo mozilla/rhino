@@ -30,7 +30,7 @@ var proto = target.__proto__
 
 res = (target.__proto__ = 42);
 assertEquals(proto, target.__proto__);
-assertTrue(42 == res)
+assertEquals(42, res)
 
 
 "success";
