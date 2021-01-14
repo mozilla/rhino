@@ -200,7 +200,7 @@ public final class NativeJSON extends IdScriptableObject
             this.propertyList = propertyList;
         }
 
-        Stack<Scriptable> stack = new Stack<Scriptable>();
+        Stack<Object> stack = new Stack<Object>();
         String indent;
         String gap;
         Callable replacer;
@@ -315,8 +315,8 @@ public final class NativeJSON extends IdScriptableObject
         }
 
         if (value instanceof Scriptable && !(value instanceof Callable)) {
-            if (value instanceof NativeArray) {
-                return ja((NativeArray) value, state);
+            if (value instanceof ArrayScriptable) {
+                return ja((ArrayScriptable) value, state);
             }
             return jo((Scriptable) value, state);
         }
@@ -338,10 +338,14 @@ public final class NativeJSON extends IdScriptableObject
     }
 
     private static String jo(Scriptable value, StringifyState state) {
-        if (state.stack.search(value) != -1) {
-            throw ScriptRuntime.typeErrorById("msg.cyclic.value");
+        Object trackValue = value;
+        if (value instanceof Wrapper) {
+            trackValue = ((Wrapper) value).unwrap();
         }
-        state.stack.push(value);
+        if (state.stack.search(trackValue) != -1) {
+            throw ScriptRuntime.typeErrorById("msg.cyclic.value", trackValue.getClass().getName());
+        }
+        state.stack.push(trackValue);
 
         String stepback = state.indent;
         state.indent = state.indent + state.gap;
@@ -386,11 +390,15 @@ public final class NativeJSON extends IdScriptableObject
         return finalValue;
     }
 
-    private static String ja(NativeArray value, StringifyState state) {
-        if (state.stack.search(value) != -1) {
-            throw ScriptRuntime.typeErrorById("msg.cyclic.value");
+    private static String ja(ArrayScriptable value, StringifyState state) {
+        Object trackValue = value;
+        if (value instanceof Wrapper) {
+            trackValue = ((Wrapper) value).unwrap();
         }
-        state.stack.push(value);
+        if (state.stack.search(trackValue) != -1) {
+            throw ScriptRuntime.typeErrorById("msg.cyclic.value", trackValue.getClass().getName());
+        }
+        state.stack.push(trackValue);
 
         String stepback = state.indent;
         state.indent = state.indent + state.gap;

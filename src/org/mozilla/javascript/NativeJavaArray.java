@@ -19,7 +19,7 @@ import java.lang.reflect.Array;
 
 public class NativeJavaArray
     extends NativeJavaObject
-    implements SymbolScriptable
+    implements SymbolScriptable, ArrayScriptable
 {
     private static final long serialVersionUID = -924022554283675333L;
 
@@ -138,6 +138,11 @@ public class NativeJavaArray
         while (--i >= 0)
             result[i] = Integer.valueOf(i);
         return result;
+    }
+    
+    @Override
+    public long getLength() {
+        return length;
     }
 
     @Override

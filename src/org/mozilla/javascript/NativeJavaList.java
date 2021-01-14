@@ -7,7 +7,7 @@ package org.mozilla.javascript;
 
 import java.util.List;
 
-public class NativeJavaList extends NativeJavaObject {
+public class NativeJavaList extends NativeJavaObject implements ArrayScriptable {
 
     private List<Object> list;
 
@@ -61,6 +61,9 @@ public class NativeJavaList extends NativeJavaObject {
         if (isWithValidIndex(index)) {
             Context cx = Context.getContext();
             Object obj = list.get(index);
+            if (obj == null) {
+                return null;
+            }
             return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
         }
         return Undefined.instance;
@@ -83,6 +86,11 @@ public class NativeJavaList extends NativeJavaObject {
         super.put(index, start, value);
     }
 
+    @Override
+    public long getLength() {
+        return list.size();
+    }
+    
     @Override
     public Object[] getIds() {
         List<?> list = (List<?>) javaObject;
