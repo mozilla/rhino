@@ -103,9 +103,13 @@ public class ImporterTopLevel extends TopLevel {
 
     private Object getPackageProperty(String name, Scriptable start) {
         Object result = NOT_FOUND;
-        Object[] elements;
-        synchronized (importedPackages) {
-            elements = importedPackages.toArray();
+        Scriptable scope = start;
+        if (topScopeFlag) {
+            scope = ScriptableObject.getTopLevelScope(scope);
+        }
+        Object[] elements = getNativeJavaPackages(scope);
+        if (elements == null) {
+            return result;
         }
         for (int i=0; i < elements.length; i++) {
             NativeJavaPackage p = (NativeJavaPackage) elements[i];
@@ -119,7 +123,23 @@ public class ImporterTopLevel extends TopLevel {
                 }
             }
         }
+        
         return result;
+    }
+
+    private static Object[] getNativeJavaPackages(Scriptable scope) {
+        // retrive the native java packages stored in top scope.
+        synchronized (scope) {
+            if (scope instanceof ScriptableObject) {
+                ScriptableObject so = (ScriptableObject) scope;
+                ObjArray importedPackages = (ObjArray) so
+                        .getAssociatedValue(AKEY);
+                if (importedPackages != null) {
+                    return importedPackages.toArray();
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -129,7 +149,7 @@ public class ImporterTopLevel extends TopLevel {
     public void importPackage(Context cx, Scriptable thisObj, Object[] args,
                               Function funObj)
     {
-        js_importPackage(args);
+        js_importPackage(this, args);
     }
 
     private Object js_construct(Scriptable scope, Object[] args)
@@ -138,9 +158,9 @@ public class ImporterTopLevel extends TopLevel {
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];
             if (arg instanceof NativeJavaClass) {
-                result.importClass((NativeJavaClass)arg);
+                result.importClass(result, (NativeJavaClass)arg);
             } else if (arg instanceof NativeJavaPackage) {
-                result.importPackage((NativeJavaPackage)arg);
+                result.importPackage(result, (NativeJavaPackage)arg);
             } else {
                 throw Context.reportRuntimeErrorById(
                     "msg.not.class.not.pkg", Context.toString(arg));
@@ -156,7 +176,7 @@ public class ImporterTopLevel extends TopLevel {
         return result;
     }
 
-    private Object js_importClass(Object[] args)
+    private static Object js_importClass(Scriptable scope, Object[] args)
     {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
@@ -164,12 +184,12 @@ public class ImporterTopLevel extends TopLevel {
                 throw Context.reportRuntimeErrorById(
                     "msg.not.class", Context.toString(arg));
             }
-            importClass((NativeJavaClass)arg);
+            importClass(scope, (NativeJavaClass)arg);
         }
         return Undefined.instance;
     }
 
-    private Object js_importPackage(Object[] args)
+    private static Object js_importPackage(ScriptableObject scope, Object[] args)
     {
         for (int i = 0; i != args.length; i++) {
             Object arg = args[i];
@@ -177,17 +197,22 @@ public class ImporterTopLevel extends TopLevel {
                 throw Context.reportRuntimeErrorById(
                     "msg.not.pkg", Context.toString(arg));
             }
-            importPackage((NativeJavaPackage)arg);
+            importPackage(scope, (NativeJavaPackage)arg);
         }
         return Undefined.instance;
     }
 
-    private void importPackage(NativeJavaPackage pkg)
+    private static void importPackage(ScriptableObject scope, NativeJavaPackage pkg)
     {
         if(pkg == null) {
             return;
         }
-        synchronized (importedPackages) {
+        synchronized (scope) {
+            ObjArray importedPackages = (ObjArray) scope.getAssociatedValue(AKEY);
+            if (importedPackages == null) {
+                importedPackages = new ObjArray();
+                scope.associateValue(AKEY, importedPackages);
+            }
             for (int j = 0; j != importedPackages.size(); j++) {
                 if (pkg.equals(importedPackages.get(j))) {
                     return;
@@ -197,16 +222,16 @@ public class ImporterTopLevel extends TopLevel {
         }
     }
 
-    private void importClass(NativeJavaClass cl)
+    private static void importClass(Scriptable scope, NativeJavaClass cl)
     {
         String s = cl.getClassObject().getName();
         String n = s.substring(s.lastIndexOf('.')+1);
-        Object val = get(n, this);
+        Object val = scope.get(n, scope);
         if (val != NOT_FOUND && val != cl) {
             throw Context.reportRuntimeErrorById("msg.prop.defined", n);
         }
         //defineProperty(n, cl, DONTENUM);
-        put(n, this, cl);
+        scope.put(n, scope, cl);
     }
 
     @Override
@@ -236,22 +261,23 @@ public class ImporterTopLevel extends TopLevel {
             return js_construct(scope, args);
 
           case Id_importClass:
-            return realThis(thisObj, f).js_importClass(args);
+            return js_importClass(realScope(scope, thisObj, f), args);
 
           case Id_importPackage:
-            return realThis(thisObj, f).js_importPackage(args);
+            return js_importPackage(realScope(scope, thisObj, f), args);
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private ImporterTopLevel realThis(Scriptable thisObj, IdFunctionObject f)
+    private ScriptableObject realScope(Scriptable scope, Scriptable thisObj, IdFunctionObject f)
     {
         if (topScopeFlag) {
             // when used as top scope importPackage and importClass are global
-            // function that ignore thisObj
-            return this;
+            // function that ignore thisObj. We use the the top level scope
+            // which might not be the same as 'this' when used shared scopes
+            thisObj = ScriptableObject.getTopLevelScope(scope);
         }
-        return ensureType(thisObj, ImporterTopLevel.class, f);
+        return ensureType(thisObj, ScriptableObject.class, f);
     }
 
 // #string_id_map#
@@ -283,7 +309,6 @@ public class ImporterTopLevel extends TopLevel {
         MAX_PROTOTYPE_ID        = 3;
 
 // #/string_id_map#
-
-    private ObjArray importedPackages = new ObjArray();
+    private static final String AKEY = "importedPackages";
     private boolean topScopeFlag;
 }
