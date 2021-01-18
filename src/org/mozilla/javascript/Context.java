@@ -1829,7 +1829,7 @@ public class Context
      * <p>
      * The rest of values will be wrapped as LiveConnect objects
      * by calling {@link WrapFactory#wrap(Context cx, Scriptable scope,
-     * Object obj, Class staticType)} as in:
+     * Object obj, Type staticType)} as in:
      * <pre>
      *    Context cx = Context.getCurrentContext();
      *    return cx.getWrapFactory().wrap(cx, scope, value, null);

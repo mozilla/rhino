@@ -26,6 +26,10 @@ public class NativeJavaMapTest extends TestCase {
     public NativeJavaMapTest() {
         global.init(ContextFactory.getGlobal());
     }
+    
+    public static enum MyEnum {
+      A, B, C, X, Y, Z
+    }
 
 
     public void testAccessingJavaMapIntegerValues() {
@@ -37,7 +41,60 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(2, runScriptAsInt("value[1]", map));
         assertEquals(3, runScriptAsInt("value[2]", map));
     }
+    public void testAccessingJavaMapLongValues() {
+      Map<Number, Number> map = new HashMap<>();
+      map.put(0L, 1);
+      map.put(1L, 2);
+      map.put(2L, 3);
+      
+      assertEquals(2, runScriptAsInt("value[1]", map));
+      assertEquals(3, runScriptAsInt("value[2]", map));
+      runScriptAsString("value[4] = 4.01", map);
+      assertEquals(Double.valueOf(4.01), map.get(4)); 
+      assertEquals(null, map.get(4L)); 
+    }
+    
+    public void testAccessingJavaMapEnumValuesWithGeneric() {
+      // genrate inner class, that contains type information.
+      Map<MyEnum, Integer> map = new HashMap<MyEnum, Integer>() {
+        private static final long serialVersionUID = 1L;
+      };
+      
+      map.put(MyEnum.A, 1);
+      map.put(MyEnum.B, 2);
+      map.put(MyEnum.C, 3);
+      
+      assertEquals(2, runScriptAsInt("value['B']", map));
+      assertEquals(3, runScriptAsInt("value['C']", map));
+      runScriptAsString("value['X'] = 4.01", map);
+      // we know the type info and can convert the key to Long and the value is rounded to Integer
+      assertEquals(Integer.valueOf(4),map.get(MyEnum.X)); 
+      
+      try {
+        runScriptAsString("value['D'] = 4.0", map);
+        fail();;
+      } catch (IllegalArgumentException ex) {
+        assertEquals("No enum constant org.mozilla.javascript.tests.NativeJavaMapTest.MyEnum.D", ex.getMessage());
+      }
+    }
 
+    public void testAccessingJavaMapLongValuesWithGeneric() {
+      // genrate inner class, that contains type information.
+      Map<Long, Integer> map = new HashMap<Long, Integer>() {
+        private static final long serialVersionUID = 1L;
+      };
+      
+      map.put(0L, 1);
+      map.put(1L, 2);
+      map.put(2L, 3);
+      
+      assertEquals(2, runScriptAsInt("value[1]", map));
+      assertEquals(3, runScriptAsInt("value[2]", map));
+      runScriptAsInt("value[4] = 4.0", map);
+      // we know the type info and can convert the key to Long and the value to Integer
+      assertEquals(Integer.valueOf(4),map.get(4L)); 
+      assertEquals(null, map.get(4));
+    }
     public void testJavaMethodCalls() {
         Map<String, Number> map = new HashMap<>();
         map.put("a", 1);
