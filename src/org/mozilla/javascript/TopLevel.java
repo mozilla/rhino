@@ -54,7 +54,9 @@ public class TopLevel extends IdScriptableObject {
         /** The built-in Symbol type. */
         Symbol,
         /** The built-in GeneratorFunction type. */
-        GeneratorFunction
+        GeneratorFunction,
+        /** The built-in BigInt type. */
+        BigInt
     }
 
     /** An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6] */
