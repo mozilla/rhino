@@ -1194,6 +1194,11 @@ public class ScriptRuntime {
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.String);
             return result;
         }
+        if (val instanceof BigInteger) {
+            NativeBigInt result = new NativeBigInt(((BigInteger) val));
+            setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.BigInt);
+            return result;
+        }
         if (val instanceof Number) {
             NativeNumber result = new NativeNumber(((Number) val).doubleValue());
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.Number);
