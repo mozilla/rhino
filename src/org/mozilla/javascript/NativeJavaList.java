@@ -103,7 +103,7 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public void put(String name, Scriptable start, Object value) {
         if ("length".equals(name)) {
-            setLength((Integer) Context.jsToJava(value, Integer.class));
+            setLength(value);
         }
         super.put(name, start, value);
     }
@@ -120,17 +120,17 @@ public class NativeJavaList extends NativeJavaObject {
     }
     
     
-    private void setLength(int length) {
-        if (length < 0) {
-            throw Context.reportRuntimeErrorById(
-                    "msg.java.array.index.out.of.bounds",
-                    String.valueOf(length),
-                    String.valueOf(list.size() - 1));
+    private void setLength(Object val) {
+        double d = ScriptRuntime.toNumber(val);
+        long longVal = ScriptRuntime.toUint32(d);
+        if (longVal != d || longVal > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
         }
-        if (length < list.size()) {
-            list.subList(length, list.size()).clear();
+        if (longVal < list.size()) {
+            list.subList((int) longVal, list.size()).clear();
         } else {
-            ensureCapacity(length);
+            ensureCapacity((int) longVal);
         }
     }
     

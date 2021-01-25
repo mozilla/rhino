@@ -9,6 +9,7 @@ package org.mozilla.javascript.tests;
 import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
@@ -101,6 +102,38 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("c", runScriptAsString("value[2]", list));
         // NativeList will return "a,,c"
         assertEquals("a,,c", runScriptAsString("value.join()", list));
+    }
+    
+    public void testLength() {
+        List<String> list = new ArrayList<>();
+        list.add("a");
+        list.add("b");
+        list.add("c");
+        runScriptAsString("value.length = 0", list);
+        assertEquals(0, list.size());
+        runScriptAsString("value.length = 10", list);
+        assertEquals(10, list.size());
+        
+        try {
+            runScriptAsString("value.length = -10", list);
+            fail();
+        } catch (EcmaError e) {
+            assertEquals("RangeError: Inappropriate array length. (#1)", e.getMessage());
+        }
+        
+        try {
+            runScriptAsString("value.length = 2.1", list);
+            fail();
+        } catch (EcmaError e) {
+            assertEquals("RangeError: Inappropriate array length. (#1)", e.getMessage());
+        }
+        
+        try {
+            runScriptAsString("value.length = 2147483648", list); // Integer.MAX_VALUE + 1
+            fail();
+        } catch (EcmaError e) {
+            assertEquals("RangeError: Inappropriate array length. (#1)", e.getMessage());
+        }
     }
     
     public void testDelete() {
