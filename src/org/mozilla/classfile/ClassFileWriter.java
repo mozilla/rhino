@@ -2176,8 +2176,12 @@ public class ClassFileWriter {
                         if (tag == TypeInfo.UNINITIALIZED_VARIABLE(0) ||
                             tag == TypeInfo.UNINITIALIZED_THIS) {
                             if ("<init>".equals(methodName)) {
-                                int newType =
-                                    TypeInfo.OBJECT(itsThisClassIndex);
+                                int newType;
+                                if (tag == TypeInfo.UNINITIALIZED_VARIABLE(0)) {
+                                    newType = TypeInfo.OBJECT(m.getClassName(), itsConstantPool);
+                                } else {
+                                    newType = TypeInfo.OBJECT(itsThisClassIndex);
+                                }
                                 initializeTypeInfo(instType, newType);
                             } else {
                                 throw new IllegalStateException("bad instance");
