@@ -3276,6 +3276,12 @@ public class ScriptRuntime {
      * Implement "SameValueZero" from ECMA 7.2.9
      */
     public static boolean sameZero(Object x, Object y) {
+        if (x instanceof Wrapper) {
+            x = ((Wrapper) x).unwrap();
+        }
+        if (y instanceof Wrapper) {
+            y = ((Wrapper) y).unwrap();
+        }
         if (!typeof(x).equals(typeof(y))) {
             return false;
         }
@@ -3372,6 +3378,12 @@ public class ScriptRuntime {
     }
     public static boolean shallowEq(Object x, Object y)
     {
+        if (x instanceof Wrapper) {
+            x = ((Wrapper) x).unwrap();
+        }
+        if (y instanceof Wrapper) {
+            y = ((Wrapper) y).unwrap();
+        }
         if (x == y) {
             if (!(x instanceof Number)) {
                 return true;

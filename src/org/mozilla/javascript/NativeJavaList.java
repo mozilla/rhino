@@ -5,10 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NativeJavaList extends NativeJavaObject {
-
+    private static final long serialVersionUID = 1L;
+    
     private List<Object> list;
 
     @SuppressWarnings("unchecked")
@@ -16,6 +18,7 @@ public class NativeJavaList extends NativeJavaObject {
         super(scope, list, list.getClass());
         assert list instanceof List;
         this.list = (List<Object>) list;
+        setPrototype(ScriptableObject.getClassPrototype(scope, "Array"));
     }
 
     @Override
@@ -39,6 +42,13 @@ public class NativeJavaList extends NativeJavaObject {
         }
         return super.has(index, start);
     }
+    
+    public void delete(int index) {
+        if (isWithValidIndex(index)) {
+            // TODO: what do we with "undefined" values?
+            list.set(index, null);
+        }
+    }
 
     @Override
     public boolean has(Symbol key, Scriptable start) {
@@ -61,6 +71,9 @@ public class NativeJavaList extends NativeJavaObject {
         if (isWithValidIndex(index)) {
             Context cx = Context.getContext();
             Object obj = list.get(index);
+            if (obj == null) {
+                return null;
+            }
             return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
         }
         return Undefined.instance;
@@ -76,13 +89,51 @@ public class NativeJavaList extends NativeJavaObject {
 
     @Override
     public void put(int index, Scriptable start, Object value) {
-        if (isWithValidIndex(index)) {
-            list.set(index, Context.jsToJava(value, Object.class));
+        if (index >= 0) {
+            ensureCapacity(index + 1);
+            if (value instanceof Wrapper) {
+                value = ((Wrapper) value).unwrap();
+            }
+            list.set(index, value);
             return;
         }
         super.put(index, start, value);
     }
 
+    @Override
+    public void put(String name, Scriptable start, Object value) {
+        if ("length".equals(name)) {
+            setLength(value);
+        }
+        super.put(name, start, value);
+    }
+    
+    private void ensureCapacity(int minCapacity) {
+        if (minCapacity > list.size()) {
+            if (list instanceof ArrayList) {
+                ((ArrayList<?>) list).ensureCapacity(minCapacity);
+            }
+            while (minCapacity > list.size()) {
+                list.add(null);
+            }
+        }
+    }
+    
+    
+    private void setLength(Object val) {
+        double d = ScriptRuntime.toNumber(val);
+        long longVal = ScriptRuntime.toUint32(d);
+        if (longVal != d || longVal > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        if (longVal < list.size()) {
+            list.subList((int) longVal, list.size()).clear();
+        } else {
+            ensureCapacity((int) longVal);
+        }
+    }
+    
     @Override
     public Object[] getIds() {
         List<?> list = (List<?>) javaObject;
