@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -224,7 +225,7 @@ public class NativeJavaMethod extends BaseFunction
         }
 
         Object retval = meth.invoke(javaObject, args);
-        Class<?> staticType = meth.method().getReturnType();
+        Type staticType = meth.method().getGenericReturnType();
 
         if (debug) {
             Class<?> actualType = (retval == null) ? null
