@@ -2964,10 +2964,32 @@ public class ScriptRuntime {
         return new ConsString(toCharSequence(val1), toCharSequence(val2));
     }
 
+    /**
+     * https://262.ecma-international.org/11.0/#sec-addition-operator-plus
+     * 5. Let lprim be ? ToPrimitive(lval).
+     * 7. If Type(lprim) is String or Type(rprim) is String, then
+     *   a. Let lstr be ? ToString(lprim).
+     *
+     * Should call toPrimitive before toCharSequence
+     *
+     * @deprecated Use {@link #add(Object, Object, Context)} instead
+     */
+    @Deprecated
     public static CharSequence add(CharSequence val1, Object val2) {
         return new ConsString(val1, toCharSequence(val2));
     }
 
+    /**
+     * https://262.ecma-international.org/11.0/#sec-addition-operator-plus
+     * 6. Let rprim be ? ToPrimitive(rval).
+     * 7. If Type(lprim) is String or Type(rprim) is String, then
+     *   b. Let rstr be ? ToString(rprim).
+     *
+     * Should call toPrimitive before toCharSequence
+     *
+     * @deprecated Use {@link #add(Object, Object, Context)} instead
+     */
+    @Deprecated
     public static CharSequence add(Object val1, CharSequence val2) {
         return new ConsString(toCharSequence(val1), val2);
     }
