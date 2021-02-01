@@ -120,17 +120,17 @@ public class JavaAcessibilityTest extends TestCase {
       // performs a bitxor, so integer/number is returned;
       result = runScript(importClass +
               "var x = new PrivateAccessClass(); x.javaObjectProperty ^= true; x.javaObjectProperty + ' ' + x.setterCalled;");
-      assertEquals("1.0 true", result);
+      assertEquals("1 true", result);
 
       // assume javaObjectProperty is '0'
       result = runScript(importClass +
               "var x = new PrivateAccessClass(); x.javaObjectProperty = x.javaObjectProperty + 7; x.javaObjectProperty + ' ' + x.setterCalled;");
-      assertEquals("7.0 true", result);
+      assertEquals("7 true", result);
 
-      // perform simple addition, shoud return "10.0" and not "3.0" + "7" = "3.07"
+      // perform simple addition, shoud return "10" and not "3" + "7" = "37"
       result = runScript(importClass +
               "var x = new PrivateAccessClass(); x.javaObjectProperty = 3; x.javaObjectProperty = x.javaObjectProperty + 7; x.javaObjectProperty + ' ' + x.setterCalled;");
-      assertEquals("10.0 true", result);
+      assertEquals("10 true", result);
   }
 
   public void testOverloadFunctionRegression() {
