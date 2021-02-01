@@ -1221,24 +1221,12 @@ class BodyCodegen
                             "(Ljava/lang/Object;D)Ljava/lang/Object;");
                         break;
                     default:
-                        if (child.getType() == Token.STRING) {
-                            addScriptRuntimeInvoke("add",
-                                "(Ljava/lang/CharSequence;"
-                                    +"Ljava/lang/Object;"
-                                    +")Ljava/lang/CharSequence;");
-                        } else if (child.getNext().getType() == Token.STRING) {
-                            addScriptRuntimeInvoke("add",
-                                "(Ljava/lang/Object;"
-                                    +"Ljava/lang/CharSequence;"
-                                    +")Ljava/lang/CharSequence;");
-                        } else {
-                            cfw.addALoad(contextLocal);
-                            addScriptRuntimeInvoke("add",
-                                "(Ljava/lang/Object;"
-                                    +"Ljava/lang/Object;"
-                                    +"Lorg/mozilla/javascript/Context;"
-                                    +")Ljava/lang/Object;");
-                        }
+                        cfw.addALoad(contextLocal);
+                        addScriptRuntimeInvoke("add",
+                            "(Ljava/lang/Object;"
+                                +"Ljava/lang/Object;"
+                                +"Lorg/mozilla/javascript/Context;"
+                                +")Ljava/lang/Object;");
                 }
             }
             break;
