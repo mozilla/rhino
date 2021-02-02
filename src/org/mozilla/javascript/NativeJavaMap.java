@@ -25,63 +25,86 @@ public class NativeJavaMap extends NativeJavaObject {
         return "JavaMap";
     }
 
-
     @Override
     public boolean has(String name, Scriptable start) {
-        if (map.containsKey(name)) {
-            return true;
+        Context cx = Context.getContext();
+        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            if (map.containsKey(name)) {
+                return true;
+            }
         }
         return super.has(name, start);
     }
 
     @Override
     public boolean has(int index, Scriptable start) {
-        if (map.containsKey(Integer.valueOf(index))) {
-            return true;
+        Context cx = Context.getContext();
+        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            if (map.containsKey(Integer.valueOf(index))) {
+                return true;
+            }
         }
         return super.has(index, start);
     }
 
     @Override
     public Object get(String name, Scriptable start) {
-        if (map.containsKey(name)) {
-            Context cx = Context.getContext();
-            Object obj = map.get(name);
-            return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+        Context cx = Context.getContext();
+        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            if (map.containsKey(name)) {
+                Object obj = map.get(name);
+                return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+            }
         }
         return super.get(name, start);
     }
 
     @Override
     public Object get(int index, Scriptable start) {
-        if (map.containsKey(Integer.valueOf(index))) {
-            Context cx = Context.getContext();
-            Object obj = map.get(Integer.valueOf(index));
-            return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+        Context cx = Context.getContext();
+        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            if (map.containsKey(Integer.valueOf(index))) {
+                Object obj = map.get(Integer.valueOf(index));
+                return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+            }
         }
         return super.get(index, start);
     }
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        map.put(name, Context.jsToJava(value, Object.class));
+        Context cx = Context.getContext();
+        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            map.put(name, Context.jsToJava(value, Object.class));
+        } else {
+            super.put(name, start, value);
+        }
     }
 
     @Override
     public void put(int index, Scriptable start, Object value) {
-        map.put(Integer.valueOf(index), Context.jsToJava(value, Object.class));
+        Context cx = Context.getContext();
+        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            map.put(Integer.valueOf(index), Context.jsToJava(value, Object.class));
+        } else {
+            super.put(index, start, value);
+        }
     }
 
     @Override
     public Object[] getIds() {
-        List<Object> ids = new ArrayList<>(map.size());
-        for (Object key : map.keySet()) {
-            if (key instanceof Integer) {
-                ids.add((Integer)key);
-            } else {
-                ids.add(ScriptRuntime.toString(key));
+        Context cx = Context.getContext();
+        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            List<Object> ids = new ArrayList<>(map.size());
+            for (Object key : map.keySet()) {
+                if (key instanceof Integer) {
+                    ids.add((Integer)key);
+                } else {
+                    ids.add(ScriptRuntime.toString(key));
+                }
             }
+            return ids.toArray();
         }
-        return ids.toArray();
+        return super.getIds();
     }
 }
