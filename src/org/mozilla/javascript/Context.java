@@ -349,6 +349,26 @@ public class Context
      */
     public static final int FEATURE_ENABLE_XML_SECURE_PARSING = 20;
 
+    /**
+     * Configure whether the entries in a Java Map can be accessed by properties.
+     *
+     * WARNING: This feature is similar to the one in Nashorn, but incomplete.
+     *
+     * 1. A entry has priority over method.
+     *
+     *   map.put("put", "abc");
+     *   map.put;  // abc
+     *   map.put("put", "efg"); // ERROR
+     *
+     * 2. The distinction between numeric keys and string keys is ambiguous.
+     *
+     *   map.put('1', 123);
+     *   map['1']; // Not found. This means `map[1]`.
+     *
+     * @since 1.7 Release 14
+     */
+    public static final int FEATURE_ENABLE_JAVA_MAP_ACCESS = 21;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty   = "error reporter";
 
