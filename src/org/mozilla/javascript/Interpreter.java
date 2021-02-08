@@ -2890,27 +2890,56 @@ public final class Interpreter extends Icode implements Evaluator {
         int incrDecrMask = frame.idata.itsICode[frame.pc];
         if (!frame.useActivation) {
             Object varValue = vars[indexReg];
-            double d;
+            double d = 0.0;
+            BigInteger bi = null;
             if (varValue == DOUBLE_MARK) {
                 d = varDbls[indexReg];
             } else {
-                d = ScriptRuntime.toNumber(varValue);
-            }
-            double d2 = ((incrDecrMask & Node.DECR_FLAG) == 0) ? d + 1.0 : d - 1.0;
-            boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-            if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
-                if (varValue != DOUBLE_MARK) {
-                    vars[indexReg] = DOUBLE_MARK;
-                }
-                varDbls[indexReg] = d2;
-                stack[stackTop] = DOUBLE_MARK;
-                sDbl[stackTop] = post ? d : d2;
-            } else {
-                if (post && varValue != DOUBLE_MARK) {
-                    stack[stackTop] = varValue;
+                Number num = ScriptRuntime.toNumeric(varValue);
+                if (num instanceof BigInteger) {
+                    bi = (BigInteger) num;
                 } else {
+                    d = num.doubleValue();
+                }
+            }
+            if (bi == null) {
+                // double
+                double d2 = ((incrDecrMask & Node.DECR_FLAG) == 0) ? d + 1.0 : d - 1.0;
+                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+                if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
+                    if (varValue != DOUBLE_MARK) {
+                        vars[indexReg] = DOUBLE_MARK;
+                    }
+                    varDbls[indexReg] = d2;
                     stack[stackTop] = DOUBLE_MARK;
                     sDbl[stackTop] = post ? d : d2;
+                } else {
+                    if (post && varValue != DOUBLE_MARK) {
+                        stack[stackTop] = varValue;
+                    } else {
+                        stack[stackTop] = DOUBLE_MARK;
+                        sDbl[stackTop] = post ? d : d2;
+                    }
+                }
+            } else {
+                // BigInt
+                BigInteger result;
+                if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                    result = bi.add(BigInteger.ONE);
+                } else {
+                    result = bi.subtract(BigInteger.ONE);
+                }
+
+                boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
+                if ((varAttributes[indexReg] & ScriptableObject.READONLY) == 0) {
+                    vars[indexReg] = result;
+                    stack[stackTop] = post ? bi : result;
+                } else {
+                    if (post && varValue != DOUBLE_MARK) {
+                        stack[stackTop] = varValue;
+                    } else {
+                        stack[stackTop] = post ? bi : result;
+                    }
                 }
             }
         } else {
