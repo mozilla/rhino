@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.Array;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -284,6 +285,14 @@ public final class NativeJSON extends IdScriptableObject {
             if (toJSON instanceof Callable) {
                 value = callMethod(state.cx, (Scriptable) value, "toJSON", new Object[] {key});
             }
+        } else if (value instanceof BigInteger) {
+            Scriptable bigInt = ScriptRuntime.toObject(state.cx, state.scope, value);
+            if (hasProperty(bigInt, "toJSON")) {
+                Object toJSON = getProperty(bigInt, "toJSON");
+                if (toJSON instanceof Callable) {
+                    value = callMethod(state.cx, bigInt, "toJSON", new Object[] {key});
+                }
+            }
         }
 
         if (state.replacer != null) {
@@ -296,6 +305,8 @@ public final class NativeJSON extends IdScriptableObject {
             value = ScriptRuntime.toString(value);
         } else if (value instanceof NativeBoolean) {
             value = ((NativeBoolean) value).getDefaultValue(ScriptRuntime.BooleanClass);
+        } else if (value instanceof NativeBigInt) {
+            value = ((NativeBigInt) value).getDefaultValue(ScriptRuntime.BigIntegerClass);
         } else if (value instanceof NativeJavaObject) {
             unwrappedJavaValue = ((NativeJavaObject) value).unwrap();
             if (!(unwrappedJavaValue instanceof Map
@@ -319,6 +330,9 @@ public final class NativeJSON extends IdScriptableObject {
         }
 
         if (value instanceof Number) {
+            if (value instanceof BigInteger) {
+                throw ScriptRuntime.typeErrorById("msg.json.cant.serialize", "BigInt");
+            }
             double d = ((Number) value).doubleValue();
             if (!Double.isNaN(d)
                     && d != Double.POSITIVE_INFINITY
