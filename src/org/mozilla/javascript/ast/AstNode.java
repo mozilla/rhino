@@ -110,6 +110,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.MUL, "*");
         operatorNames.put(Token.DIV, "/");
         operatorNames.put(Token.MOD, "%");
+        operatorNames.put(Token.EXP, "**");
         operatorNames.put(Token.NOT, "!");
         operatorNames.put(Token.BITNOT, "~");
         operatorNames.put(Token.POS, "+");
@@ -128,6 +129,7 @@ public abstract class AstNode extends Node implements Comparable<AstNode> {
         operatorNames.put(Token.ASSIGN_DIV, "/=");
         operatorNames.put(Token.ASSIGN_MOD, "%=");
         operatorNames.put(Token.ASSIGN_BITXOR, "^=");
+        operatorNames.put(Token.ASSIGN_EXP, "**=");
         operatorNames.put(Token.VOID, "void");
     }
 
