@@ -295,7 +295,8 @@ class Optimizer
             case Token.SUB :
             case Token.MUL :
             case Token.DIV :
-            case Token.MOD : {
+            case Token.MOD :
+            case Token.EXP : {
                     Node lChild = n.getFirstChild();
                     Node rChild = lChild.getNext();
                     int lType = rewriteForNumberVariables(lChild, NumberType);

@@ -484,6 +484,7 @@ class Block
             case Token.MUL:
             case Token.DIV:
             case Token.MOD:
+            case Token.EXP:
             case Token.BITOR:
             case Token.BITXOR:
             case Token.BITAND:
