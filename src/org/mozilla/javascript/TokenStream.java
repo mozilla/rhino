@@ -928,6 +928,14 @@ class TokenStream
                 return Token.GT;
 
             case '*':
+                if (parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                    if (matchChar('*')) {
+                        if (matchChar('=')) {
+                            return Token.ASSIGN_EXP;
+                        }
+                        return Token.EXP;
+                    }
+                }
                 if (matchChar('=')) {
                     return Token.ASSIGN_MUL;
                 }
