@@ -1246,6 +1246,10 @@ class BodyCodegen
                     : ByteCode.DREM, child, parent);
                 break;
 
+            case Token.EXP:
+                visitExponentiation(node, child, parent);
+                break;
+
             case Token.BITOR:
             case Token.BITXOR:
             case Token.BITAND:
@@ -3430,6 +3434,28 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             if (!childOfArithmetic) {
                 addDoubleWrap();
             }
+        }
+    }
+
+    private void visitExponentiation(Node node, Node child, Node parent)
+    {
+        int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
+        if (childNumberFlag != -1) {
+            generateExpression(child, node);
+            generateExpression(child.getNext(), node);
+            cfw.addInvoke(ByteCode.INVOKESTATIC, "java/lang/Math", "pow", "(DD)D");
+        } else {
+            generateExpression(child, node);
+            generateExpression(child.getNext(), node);
+
+            short reg = getNewWordLocal();
+            cfw.addAStore(reg);
+            addObjectToDouble();
+            cfw.addALoad(reg);
+            addObjectToDouble();
+
+            cfw.addInvoke(ByteCode.INVOKESTATIC, "java/lang/Math", "pow", "(DD)D");
+            addDoubleWrap();
         }
     }
 
