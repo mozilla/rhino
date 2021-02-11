@@ -694,6 +694,7 @@ class CodeGenerator extends Icode {
           case Token.MOD:
           case Token.DIV:
           case Token.MUL:
+          case Token.EXP:
           case Token.EQ:
           case Token.NE:
           case Token.SHEQ:

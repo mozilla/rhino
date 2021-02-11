@@ -1405,7 +1405,8 @@ switch (op) {
     case Token.SUB :
     case Token.MUL :
     case Token.DIV :
-    case Token.MOD : {
+    case Token.MOD :
+    case Token.EXP : {
         stackTop = doArithmetic(frame, op, stack, sDbl, stackTop);
         continue Loop;
     }
@@ -3223,9 +3224,9 @@ switch (op) {
 
     private static int doArithmetic(CallFrame frame, int op, Object[] stack,
                                     double[] sDbl, int stackTop) {
+        double lDbl = stack_double(frame, stackTop - 1);
         double rDbl = stack_double(frame, stackTop);
         --stackTop;
-        double lDbl = stack_double(frame, stackTop);
         stack[stackTop] = DOUBLE_MARK;
         switch (op) {
           case Token.SUB:
@@ -3239,6 +3240,9 @@ switch (op) {
             break;
           case Token.MOD:
             lDbl %= rDbl;
+            break;
+          case Token.EXP:
+            lDbl = Math.pow(lDbl, rDbl);
             break;
         }
         sDbl[stackTop] = lDbl;
