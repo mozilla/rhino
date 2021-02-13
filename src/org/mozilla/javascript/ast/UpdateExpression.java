@@ -9,50 +9,60 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node representing unary operators such as {@code typeof} and {@code delete}.
- * The type field is set to the appropriate Token type for the operator.
- * The node length spans from the operator to the end of the operand.<p>
- *
- * The {@code default xml namespace = &lt;expr&gt;} statement in E4X
- * (JavaScript 1.6) is represented as a {@code UnaryExpression} of node
- * type {@link Token#DEFAULTNAMESPACE}, wrapped with an
- * {@link ExpressionStatement}.
+ * AST node representing update operators such as {@code ++}. The type field
+ * is set to the appropriate Token type for the operator.  The node length spans
+ * from the operator to the end of the operand (for prefix operators) or from
+ * the start of the operand to the operator (for postfix).<p>
  */
-public class UnaryExpression extends AstNode {
+public class UpdateExpression extends AstNode {
 
     private AstNode operand;
+    private boolean isPostfix;
 
-    public UnaryExpression() {
+    public UpdateExpression() {
     }
 
-    public UnaryExpression(int pos) {
+    public UpdateExpression(int pos) {
         super(pos);
     }
 
     /**
-     * Constructs a new UnaryExpression
+     * Constructs a new postfix UpdateExpression
      */
-    public UnaryExpression(int pos, int len) {
+    public UpdateExpression(int pos, int len) {
         super(pos, len);
     }
 
     /**
-     * Constructs a new UnaryExpression with the specified operator
+     * Constructs a new prefix UpdateExpression.
+     */
+    public UpdateExpression(int operator, int operatorPosition,
+                           AstNode operand) {
+        this(operator, operatorPosition, operand, false);
+    }
+
+    /**
+     * Constructs a new UpdateExpression with the specified operator
      * and operand.  It sets the parent of the operand, and sets its own bounds
      * to encompass the operator and operand.
      * @param operator the node type
      * @param operatorPosition the absolute position of the operator.
      * @param operand the operand expression
+     * @param postFix true if the operator follows the operand.  Int
      * @throws IllegalArgumentException} if {@code operand} is {@code null}
      */
-    public UnaryExpression(int operator, int operatorPosition, AstNode operand) {
+    public UpdateExpression(int operator, int operatorPosition,
+                           AstNode operand, boolean postFix) {
         assertNotNull(operand);
-        int beg = operand.getPosition();
+        int beg = postFix ? operand.getPosition() : operatorPosition;
         // JavaScript only has ++ and -- postfix operators, so length is 2
-        int end = operand.getPosition() + operand.getLength();
+        int end = postFix
+                  ? operatorPosition + 2
+                  : operand.getPosition() + operand.getLength();
         setBounds(beg, end);
         setOperator(operator);
         setOperand(operand);
+        isPostfix = postFix;
     }
 
     /**
@@ -88,17 +98,39 @@ public class UnaryExpression extends AstNode {
         operand.setParent(this);
     }
 
+    /**
+     * Returns whether the operator is postfix
+     */
+    public boolean isPostfix() {
+        return isPostfix;
+    }
+
+    /**
+     * Returns whether the operator is prefix
+     */
+    public boolean isPrefix() {
+        return !isPostfix;
+    }
+
+    /**
+     * Sets whether the operator is postfix
+     */
+    public void setIsPostfix(boolean isPostfix) {
+        this.isPostfix = isPostfix;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         int type = getType();
-        sb.append(operatorToString(type));
-        if (type == Token.TYPEOF || type == Token.DELPROP || type == Token.VOID) {
-            sb.append(" ");
+        if (!isPostfix) {
+            sb.append(operatorToString(type));
         }
         sb.append(operand.toSource());
-
+        if (isPostfix) {
+            sb.append(operatorToString(type));
+        }
         return sb.toString();
     }
 
