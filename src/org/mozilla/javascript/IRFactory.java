@@ -57,6 +57,7 @@ import org.mozilla.javascript.ast.Symbol;
 import org.mozilla.javascript.ast.ThrowStatement;
 import org.mozilla.javascript.ast.TryStatement;
 import org.mozilla.javascript.ast.UnaryExpression;
+import org.mozilla.javascript.ast.UpdateExpression;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 import org.mozilla.javascript.ast.WhileLoop;
@@ -215,6 +216,9 @@ public final class IRFactory extends Parser
               }
               if (node instanceof UnaryExpression) {
                   return transformUnary((UnaryExpression)node);
+              }
+              if (node instanceof UpdateExpression) {
+                  return transformUpdate((UpdateExpression)node);
               }
               if (node instanceof XmlMemberGet) {
                   return transformXmlMemberGet((XmlMemberGet)node);
@@ -1211,6 +1215,14 @@ public final class IRFactory extends Parser
         if (type == Token.DEFAULTNAMESPACE) {
             return transformDefaultXmlNamepace(node);
         }
+        decompiler.addToken(type);
+
+        Node child = transform(node.getOperand());
+        return createUnary(type, child);
+    }
+
+    private Node transformUpdate(UpdateExpression node) {
+        int type = node.getType();
         if (node.isPrefix()) {
             decompiler.addToken(type);
         }
@@ -1218,10 +1230,7 @@ public final class IRFactory extends Parser
         if (node.isPostfix()) {
             decompiler.addToken(type);
         }
-        if (type == Token.INC || type == Token.DEC) {
-            return createIncDec(type, node.isPostfix(), child);
-        }
-        return createUnary(type, child);
+        return createIncDec(type, node.isPostfix(), child);
     }
 
     private Node transformVariables(VariableDeclaration node) {
