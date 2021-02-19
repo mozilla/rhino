@@ -352,6 +352,18 @@ public class Context
     /**
      * Configure whether the entries in a Java Map can be accessed by properties.
      *
+     * Not enabled:
+     *
+     *   var map = new java.util.HashMap();
+     *   map.put('foo', 1);
+     *   map.foo; // undefined
+     *
+     * Enabled:
+     *
+     *   var map = new java.util.HashMap();
+     *   map.put('foo', 1);
+     *   map.foo; // 1
+     *
      * WARNING: This feature is similar to the one in Nashorn, but incomplete.
      *
      * 1. A entry has priority over method.
