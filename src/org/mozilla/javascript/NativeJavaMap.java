@@ -27,8 +27,8 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public boolean has(String name, Scriptable start) {
-        Context cx = Context.getContext();
-        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(name)) {
                 return true;
             }
@@ -38,8 +38,8 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public boolean has(int index, Scriptable start) {
-        Context cx = Context.getContext();
-        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(Integer.valueOf(index))) {
                 return true;
             }
@@ -49,8 +49,8 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public Object get(String name, Scriptable start) {
-        Context cx = Context.getContext();
-        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(name)) {
                 Object obj = map.get(name);
                 return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
@@ -61,8 +61,8 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public Object get(int index, Scriptable start) {
-        Context cx = Context.getContext();
-        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(Integer.valueOf(index))) {
                 Object obj = map.get(Integer.valueOf(index));
                 return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
@@ -73,8 +73,8 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        Context cx = Context.getContext();
-        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             map.put(name, Context.jsToJava(value, Object.class));
         } else {
             super.put(name, start, value);
@@ -84,7 +84,7 @@ public class NativeJavaMap extends NativeJavaObject {
     @Override
     public void put(int index, Scriptable start, Object value) {
         Context cx = Context.getContext();
-        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             map.put(Integer.valueOf(index), Context.jsToJava(value, Object.class));
         } else {
             super.put(index, start, value);
@@ -93,8 +93,8 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public Object[] getIds() {
-        Context cx = Context.getContext();
-        if (cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             List<Object> ids = new ArrayList<>(map.size());
             for (Object key : map.keySet()) {
                 if (key instanceof Integer) {

@@ -59,9 +59,12 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public Object get(int index, Scriptable start) {
         if (isWithValidIndex(index)) {
-            Context cx = Context.getContext();
+            Context cx = Context.getCurrentContext();
             Object obj = list.get(index);
-            return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+            if (cx != null) {
+                return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+            }
+            return obj;
         }
         return Undefined.instance;
     }
