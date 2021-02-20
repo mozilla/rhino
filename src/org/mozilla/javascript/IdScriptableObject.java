@@ -896,6 +896,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
      * @return obj casted to the target type
      * @throws EcmaError if the cast failed.
      */
+    @SuppressWarnings("unchecked")
     protected static <T> T ensureType(Object obj, Class<T> clazz, IdFunctionObject f)
     {
         if (clazz.isInstance(obj)) {
