@@ -1930,8 +1930,7 @@ public class NativeArray extends IdScriptableObject implements List
         }
 
         long length = getLengthProperty(cx, o);
-        // TODO: In the case of Id_filter, CreateDataPropertyOrThrow throws a TypeError instead of ArraySpeciesCreate.
-        if ((id == Id_map || id == Id_filter) && length > Integer.MAX_VALUE) {
+        if (id == Id_map && length > Integer.MAX_VALUE) {
             String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
             throw ScriptRuntime.rangeError(msg);
         }
