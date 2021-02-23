@@ -1222,11 +1222,9 @@ class BodyCodegen
                         break;
                     default:
                         cfw.addALoad(contextLocal);
-                        addScriptRuntimeInvoke("add",
-                            "(Ljava/lang/Object;"
-                                +"Ljava/lang/Object;"
-                                +"Lorg/mozilla/javascript/Context;"
-                                +")Ljava/lang/Object;");
+                        cfw.addInvokeDynamic(DynamicMathRuntime.ADD_OP,
+                            DynamicMathRuntime.METHOD_SIGNATURE,
+                            DynamicMathRuntime.BOOTSTRAP_HANDLE);
                 }
             }
             break;
@@ -3421,19 +3419,31 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             generateExpression(child, node);
             generateExpression(child.getNext(), node);
             cfw.add(opCode);
-        }
-        else {
-            boolean childOfArithmetic = isArithmeticNode(parent);
-            generateExpression(child, node);
-            if (!isArithmeticNode(child))
-                addObjectToDouble();
-            generateExpression(child.getNext(), node);
-            if (!isArithmeticNode(child.getNext()))
-                addObjectToDouble();
-            cfw.add(opCode);
-            if (!childOfArithmetic) {
-                addDoubleWrap();
+
+        } else {
+            String bootstrapFunc;
+            switch (opCode) {
+                case ByteCode.DSUB:
+                    bootstrapFunc = DynamicMathRuntime.SUBTRACT_OP;
+                    break;
+                case ByteCode.DREM:
+                    bootstrapFunc = DynamicMathRuntime.MOD_OP;
+                    break;
+                case ByteCode.DDIV:
+                    bootstrapFunc = DynamicMathRuntime.DIVIDE_OP;
+                    break;
+                case ByteCode.DMUL:
+                    bootstrapFunc = DynamicMathRuntime.MULTIPLY_OP;
+                    break;
+                default:
+                    throw Kit.codeBug("Invalid opcode");
             }
+            generateExpression(child, node);
+            generateExpression(child.getNext(), node);
+            cfw.addALoad(contextLocal);
+            cfw.addInvokeDynamic(bootstrapFunc,
+                DynamicMathRuntime.METHOD_SIGNATURE,
+                DynamicMathRuntime.BOOTSTRAP_HANDLE);
         }
     }
 
@@ -3480,38 +3490,58 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             addDoubleWrap();
             return;
         }
-        if (childNumberFlag == -1) {
-            addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
-            generateExpression(child.getNext(), node);
-            addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
-        }
-        else {
+        if (childNumberFlag != -1) {
             addScriptRuntimeInvoke("toInt32", "(D)I");
             generateExpression(child.getNext(), node);
             addScriptRuntimeInvoke("toInt32", "(D)I");
-        }
-        switch (type) {
-            case Token.BITOR:
-                cfw.add(ByteCode.IOR);
-                break;
-            case Token.BITXOR:
-                cfw.add(ByteCode.IXOR);
-                break;
-            case Token.BITAND:
-                cfw.add(ByteCode.IAND);
-                break;
-            case Token.RSH:
-                cfw.add(ByteCode.ISHR);
-                break;
-            case Token.LSH:
-                cfw.add(ByteCode.ISHL);
-                break;
-            default:
-                throw Codegen.badTree();
-        }
-        cfw.add(ByteCode.I2D);
-        if (childNumberFlag == -1) {
-            addDoubleWrap();
+
+            switch (type) {
+                case Token.BITOR:
+                    cfw.add(ByteCode.IOR);
+                    break;
+                case Token.BITXOR:
+                    cfw.add(ByteCode.IXOR);
+                    break;
+                case Token.BITAND:
+                    cfw.add(ByteCode.IAND);
+                    break;
+                case Token.RSH:
+                    cfw.add(ByteCode.ISHR);
+                    break;
+                case Token.LSH:
+                    cfw.add(ByteCode.ISHL);
+                    break;
+                default:
+                    throw Codegen.badTree();
+            }
+            cfw.add(ByteCode.I2D);
+
+        } else {
+            String bootstrapFunc;
+            switch (type) {
+                case Token.BITOR:
+                    bootstrapFunc = DynamicMathRuntime.OR_OP;
+                    break;
+                case Token.BITXOR:
+                    bootstrapFunc = DynamicMathRuntime.XOR_OP;
+                    break;
+                case Token.BITAND:
+                    bootstrapFunc = DynamicMathRuntime.AND_OP;
+                    break;
+                case Token.RSH:
+                    bootstrapFunc = DynamicMathRuntime.RSH_OP;
+                    break;
+                case Token.LSH:
+                    bootstrapFunc = DynamicMathRuntime.LSH_OP;
+                    break;
+                default:
+                    throw Kit.codeBug("Invalid token type");
+            }
+            generateExpression(child.getNext(), node);
+            cfw.addALoad(contextLocal);
+            cfw.addInvokeDynamic(bootstrapFunc,
+                DynamicMathRuntime.METHOD_SIGNATURE,
+                DynamicMathRuntime.BOOTSTRAP_HANDLE);
         }
     }
 

@@ -9,6 +9,8 @@ import org.mozilla.javascript.ScriptableObject;
 import org.openjdk.jmh.annotations.*;
 
 public class V8Benchmark {
+  private static final int OPT_LEVEL = 9;
+
   static Object[] emptyArgs = new Object[]{};
 
   static abstract class AbstractState {
@@ -39,7 +41,7 @@ public class V8Benchmark {
     void initialize() {
       cx = Context.enter();
       cx.setLanguageVersion(Context.VERSION_ES6);
-      cx.setOptimizationLevel(9);
+      cx.setOptimizationLevel(OPT_LEVEL);
       scope = cx.initStandardObjects();
       evaluateSource(cx, scope, "testsrc/benchmarks/framework.js");
     }

@@ -63,7 +63,7 @@ function PrintScore(score) {
 }
 
 // Run more than once to warm up JVM
-var runs = 1;
+var runs = 10;
 
 
 for (var i = 1; i <= runs; i++) {
