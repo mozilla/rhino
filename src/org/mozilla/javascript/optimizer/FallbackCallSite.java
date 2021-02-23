@@ -17,19 +17,19 @@ public class FallbackCallSite
     super(type);
   }
 
-  boolean markFailure() {
+  void handleFailure() {
     failureCount++;
-    return failureCount >= MAX_FAILURES;
+    if (failureCount >= MAX_FAILURES) {
+      setTarget(fallbackHandle);
+    }
   }
 
   void setFallbackHandle(MethodHandle mh) {
     this.fallbackHandle = mh;
   }
 
-  MethodHandle getFallbackHandle() {
-    return fallbackHandle;
-  }
+  MethodHandle getFallbackHandle() { return fallbackHandle; }
 
-  private int failureCount = 0;
-  private MethodHandle fallbackHandle;
+  protected int failureCount = 0;
+  protected MethodHandle fallbackHandle;
 }

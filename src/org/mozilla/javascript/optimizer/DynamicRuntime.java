@@ -22,14 +22,12 @@ public class DynamicRuntime {
   public static Object fallback(MustFallbackException fe,
       Object o1, Object o2, Context cx,
       FallbackCallSite site) throws Throwable {
-    if (site.markFailure()) {
-      site.setTarget(site.getFallbackHandle());
-    }
+    site.handleFailure();
     return site.getFallbackHandle().invoke(o1, o2, cx);
   }
 
   private static CallSite makeCallSite(MethodHandles.Lookup lookup,
-      MethodHandle fastHandle,
+      MethodHandle fastHandle, MethodHandle slowerHandle,
       MethodHandle genericHandle, MethodType mType)
       throws NoSuchMethodException, IllegalAccessException {
 
@@ -38,13 +36,25 @@ public class DynamicRuntime {
     MethodHandle fallbackSub = lookup.findStatic(DynamicRuntime.class,
         "fallback", fallbackType);
 
-    FallbackCallSite site = new FallbackCallSite(mType);
+    FallbackCallSite site;
+
+    if (slowerHandle == null) {
+      site = new FallbackCallSite(mType);
+    } else {
+      site = new DoubleFallbackCallSite(mType);
+    }
 
     MethodHandle fallbackSubInvoke = MethodHandles.insertArguments(fallbackSub, 4, site);
     site.setFallbackHandle(genericHandle);
 
     site.setTarget(MethodHandles.catchException(fastHandle,
         MustFallbackException.class, fallbackSubInvoke));
+
+    if (slowerHandle != null) {
+      ((DoubleFallbackCallSite)site).setFirstFallbackHandle(MethodHandles.catchException(
+          slowerHandle, MustFallbackException.class, fallbackSubInvoke));
+    }
+
     return site;
   }
 
@@ -62,6 +72,16 @@ public class DynamicRuntime {
     }
   }
 
+  public static Object numberAdd(Object o1, Object o2, Context cx) {
+    try {
+      final double d1 = ((Number)o1).doubleValue();
+      final double d2 = ((Number)o2).doubleValue();
+      return ScriptRuntime.wrapNumber(d1 + d2);
+    } catch (ClassCastException | NullPointerException e) {
+      throw new MustFallbackException();
+    }
+  }
+
   public static Object integerSubtract(Object o1, Object o2, Context cx) {
     try {
       final long i1 = (Integer)o1;
@@ -71,6 +91,16 @@ public class DynamicRuntime {
         return ScriptRuntime.wrapNumber(r);
       }
       return ScriptRuntime.wrapInt((int)r);
+    } catch (ClassCastException | NullPointerException e) {
+      throw new MustFallbackException();
+    }
+  }
+
+  public static Object numberSubtract(Object o1, Object o2, Context cx) {
+    try {
+      final double d1 = ((Number)o1).doubleValue();
+      final double d2 = ((Number)o2).doubleValue();
+      return ScriptRuntime.wrapNumber(d1 - d2);
     } catch (ClassCastException | NullPointerException e) {
       throw new MustFallbackException();
     }
@@ -96,6 +126,16 @@ public class DynamicRuntime {
     }
   }
 
+  public static Object numberDivide(Object o1, Object o2, Context cx) {
+    try {
+      final double d1 = ((Number)o1).doubleValue();
+      final double d2 = ((Number)o2).doubleValue();
+      return ScriptRuntime.wrapNumber(d1 / d2);
+    } catch (ClassCastException | NullPointerException e) {
+      throw new MustFallbackException();
+    }
+  }
+
   public static Object genericDivide(Object o1, Object o2, Context cx) {
     final double d1 = ScriptRuntime.toNumber(o1);
     final double d2 = ScriptRuntime.toNumber(o2);
@@ -111,6 +151,16 @@ public class DynamicRuntime {
         return ScriptRuntime.wrapNumber(r);
       }
       return ScriptRuntime.wrapInt((int)r);
+    } catch (ClassCastException | NullPointerException e) {
+      throw new MustFallbackException();
+    }
+  }
+
+  public static Object numberMultiply(Object o1, Object o2, Context cx) {
+    try {
+      final double d1 = ((Number)o1).doubleValue();
+      final double d2 = ((Number)o2).doubleValue();
+      return ScriptRuntime.wrapNumber(d1 * d2);
     } catch (ClassCastException | NullPointerException e) {
       throw new MustFallbackException();
     }
@@ -148,9 +198,11 @@ public class DynamicRuntime {
       MethodType mType) throws NoSuchMethodException, IllegalAccessException {
     MethodHandle fast = lookup.findStatic(DynamicRuntime.class,
         "integerAdd", mType);
+    MethodHandle slower = lookup.findStatic(DynamicRuntime.class,
+      "numberAdd", mType);
     MethodHandle slow = lookup.findStatic(ScriptRuntime.class,
         "add", mType);
-    return makeCallSite(lookup, fast, slow, mType);
+    return makeCallSite(lookup, fast, slower, slow, mType);
   }
 
   @SuppressWarnings("unused")
@@ -159,9 +211,11 @@ public class DynamicRuntime {
       MethodType mType) throws NoSuchMethodException, IllegalAccessException {
     MethodHandle fast = lookup.findStatic(DynamicRuntime.class,
         "integerSubtract", mType);
+    MethodHandle slower = lookup.findStatic(DynamicRuntime.class,
+        "numberSubtract", mType);
     MethodHandle slow = lookup.findStatic(DynamicRuntime.class,
         "genericSubtract", mType);
-    return makeCallSite(lookup, fast, slow, mType);
+    return makeCallSite(lookup, fast, slower, slow, mType);
   }
 
   @SuppressWarnings("unused")
@@ -170,9 +224,11 @@ public class DynamicRuntime {
       MethodType mType) throws NoSuchMethodException, IllegalAccessException {
     MethodHandle fast = lookup.findStatic(DynamicRuntime.class,
         "integerMultiply", mType);
+    MethodHandle slower = lookup.findStatic(DynamicRuntime.class,
+        "numberMultiply", mType);
     MethodHandle slow = lookup.findStatic(DynamicRuntime.class,
         "genericMultiply", mType);
-    return makeCallSite(lookup, fast, slow, mType);
+    return makeCallSite(lookup, fast, slower, slow, mType);
   }
 
   @SuppressWarnings("unused")
@@ -181,9 +237,11 @@ public class DynamicRuntime {
       MethodType mType) throws NoSuchMethodException, IllegalAccessException {
     MethodHandle fast = lookup.findStatic(DynamicRuntime.class,
         "integerDivide", mType);
+    MethodHandle slower = lookup.findStatic(DynamicRuntime.class,
+        "numberDivide", mType);
     MethodHandle slow = lookup.findStatic(DynamicRuntime.class,
         "genericDivide", mType);
-    return makeCallSite(lookup, fast, slow, mType);
+    return makeCallSite(lookup, fast, slower, slow, mType);
   }
 
   @SuppressWarnings("unused")
@@ -194,6 +252,6 @@ public class DynamicRuntime {
         "integerMod", mType);
     MethodHandle slow = lookup.findStatic(DynamicRuntime.class,
         "genericMod", mType);
-    return makeCallSite(lookup, fast, slow, mType);
+    return makeCallSite(lookup, fast, null, slow, mType);
   }
 }
