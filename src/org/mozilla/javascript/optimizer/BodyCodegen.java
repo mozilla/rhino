@@ -1221,12 +1221,15 @@ class BodyCodegen
                             "(Ljava/lang/Object;D)Ljava/lang/Object;");
                         break;
                     default:
+                        ClassFileWriter.MHandle bootstrap =
+                            new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
+                                "org.mozilla.javascript.optimizer.DynamicRuntime",
+                                "bootstrapAdd",
+                                DynamicRuntime.BOOTSTRAP_SIGNATURE);
                         cfw.addALoad(contextLocal);
-                        addScriptRuntimeInvoke("add",
-                            "(Ljava/lang/Object;"
-                                +"Ljava/lang/Object;"
-                                +"Lorg/mozilla/javascript/Context;"
-                                +")Ljava/lang/Object;");
+                        cfw.addInvokeDynamic("bootstrapAdd",
+                            "(Ljava/lang/Object;Ljava/lang/Object;Lorg/mozilla/javascript/Context;)Ljava/lang/Object;",
+                            bootstrap);
                 }
             }
             break;
@@ -3421,8 +3424,38 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             generateExpression(child, node);
             generateExpression(child.getNext(), node);
             cfw.add(opCode);
-        }
-        else {
+
+        } else {
+            String bootstrapFunc;
+            switch (opCode) {
+                case ByteCode.DSUB:
+                    bootstrapFunc = "bootstrapSubtract";
+                    break;
+                case ByteCode.DREM:
+                    bootstrapFunc = "bootstrapMod";
+                    break;
+                case ByteCode.DDIV:
+                    bootstrapFunc = "bootstrapDivide";
+                    break;
+                case ByteCode.DMUL:
+                    bootstrapFunc = "bootstrapMultiply";
+                    break;
+                default:
+                    throw Kit.codeBug("Invalid opcode");
+            }
+            ClassFileWriter.MHandle bootstrap =
+                new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
+                    "org.mozilla.javascript.optimizer.DynamicRuntime",
+                    bootstrapFunc,
+                    DynamicRuntime.BOOTSTRAP_SIGNATURE);
+            generateExpression(child, node);
+            generateExpression(child.getNext(), node);
+            cfw.addALoad(contextLocal);
+            cfw.addInvokeDynamic(bootstrapFunc,
+                "(Ljava/lang/Object;Ljava/lang/Object;Lorg/mozilla/javascript/Context;)Ljava/lang/Object;",
+                bootstrap);
+
+            /*
             boolean childOfArithmetic = isArithmeticNode(parent);
             generateExpression(child, node);
             if (!isArithmeticNode(child))
@@ -3434,6 +3467,7 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             if (!childOfArithmetic) {
                 addDoubleWrap();
             }
+             */
         }
     }
 
