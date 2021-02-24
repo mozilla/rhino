@@ -9,7 +9,7 @@
     <Source name="~.*\/examples\/.*"/>
   </Match>
   <Match>
-    <Class name="~org\.mozilla\.javascript\.benchmarks\.generated.*"/>
+    <Class name="~org\.mozilla\.javascript\.benchmarks\.jmh_generated.*"/>
   </Match>
 
   <!-- Things below are legit exemptions -->
