@@ -55,7 +55,6 @@ public class ClassFileWriterTest {
         Method method = cl.getMethod(METHOD_NAME);
         Object ret = method.invoke(cl);
 
-        assertTrue(ret instanceof BigInteger);
         assertEquals(ret, new BigInteger(new byte[]{ 123 }));
     }
 }
