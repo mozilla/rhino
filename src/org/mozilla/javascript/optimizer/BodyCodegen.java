@@ -2327,11 +2327,12 @@ class BodyCodegen
                     +")Ljava/lang/Object;");
             return;
         } else {
-            int argCount = 0;
+            /*int argCount = 0;
             for (Node arg = firstArgChild; arg != null; arg = arg.getNext()) {
                 ++argCount;
-            }
+            }*/
             generateFunctionAndThisObj(child, node);
+            /*
             // stack: ... functionObj thisObj
             if (argCount == 1) {
                 cfw.addALoad(contextLocal);
@@ -2379,6 +2380,7 @@ class BodyCodegen
                     bh);
                 return;
             } else {
+             */
                 cfw.addALoad(contextLocal);
                 cfw.add(ByteCode.SWAP);
                 cfw.addALoad(variableObjectLocal);
@@ -2393,7 +2395,7 @@ class BodyCodegen
                         +"[Ljava/lang/Object;"
                         +")Ljava/lang/Object;");
                 return;
-            }
+            //}
         }
     }
 
