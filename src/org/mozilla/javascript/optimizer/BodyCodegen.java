@@ -2211,14 +2211,34 @@ class BodyCodegen
 
         if (firstArgChild == null) {
             if (childType == Token.NAME) {
-                // name() call
                 String name = child.getString();
                 cfw.addPush(name);
-                methodName = "callName0";
-                signature = "(Ljava/lang/String;"
-                    +"Lorg/mozilla/javascript/Context;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;";
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke("getNameFunctionAndThis",
+                    "(Ljava/lang/String;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;)"
+                    + "Lorg/mozilla/javascript/Callable;");
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                cfw.addALoad(contextLocal);
+                addScriptRuntimeInvoke(
+                    "lastStoredScriptable",
+                    "(Lorg/mozilla/javascript/Context;"
+                        +")Lorg/mozilla/javascript/Scriptable;");
+                cfw.add(ByteCode.GETSTATIC, "org/mozilla/javascript/ScriptRuntime",
+                    "emptyArgs", "[Ljava/lang/Object;");
+                // Now stack should have callable, context, scope, this, emptyArgs
+                cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/Callable",
+                    "call",
+                    "(Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"[Ljava/lang/Object;"
+                        +")Ljava/lang/Object;");
+                return;
             } else if (childType == Token.GETPROP) {
                 // x.name() call
                 Node propTarget = child.getFirstChild();
@@ -2226,22 +2246,52 @@ class BodyCodegen
                 Node id = propTarget.getNext();
                 String property = id.getString();
                 cfw.addPush(property);
-                methodName = "callProp0";
-                signature = "(Ljava/lang/Object;"
-                    +"Ljava/lang/String;"
-                    +"Lorg/mozilla/javascript/Context;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;";
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                addScriptRuntimeInvoke("getPropFunctionAndThis",
+                    "(Ljava/lang/Object;"
+                        + "Ljava/lang/String;"
+                        + "Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;)"
+                        + "Lorg/mozilla/javascript/Callable;");
+                cfw.addALoad(contextLocal);
+                cfw.addALoad(variableObjectLocal);
+                cfw.addALoad(contextLocal);
+                addScriptRuntimeInvoke(
+                    "lastStoredScriptable",
+                    "(Lorg/mozilla/javascript/Context;"
+                        +")Lorg/mozilla/javascript/Scriptable;");
+                cfw.add(ByteCode.GETSTATIC, "org/mozilla/javascript/ScriptRuntime",
+                    "emptyArgs", "[Ljava/lang/Object;");
+                // Now stack should have callable, context, scope, this, emptyArgs
+                cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/Callable",
+                    "call",
+                    "(Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"[Ljava/lang/Object;"
+                        +")Ljava/lang/Object;");
+                return;
             } else if (childType == Token.GETPROPNOWARN) {
                 throw Kit.codeBug();
             } else {
                 generateFunctionAndThisObj(child, node);
-                methodName = "call0";
-                signature = "(Lorg/mozilla/javascript/Callable;"
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                cfw.addALoad(variableObjectLocal);
+                cfw.add(ByteCode.SWAP);
+                cfw.add(ByteCode.GETSTATIC, "org/mozilla/javascript/ScriptRuntime",
+                    "emptyArgs", "[Ljava/lang/Object;");
+                cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/Callable",
+                "call",
+        "(Lorg/mozilla/javascript/Context;"
                     +"Lorg/mozilla/javascript/Scriptable;"
-                    +"Lorg/mozilla/javascript/Context;"
                     +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;";
+                    +"[Ljava/lang/Object;"
+                    +")Ljava/lang/Object;");
+                return;
             }
 
         } else if (childType == Token.NAME) {
@@ -2250,14 +2300,32 @@ class BodyCodegen
             // is not affected by arguments evaluation and currently
             // there are no checks for it
             String name = child.getString();
-            generateCallArgArray(node, firstArgChild, false);
             cfw.addPush(name);
-            methodName = "callName";
-            signature = "([Ljava/lang/Object;"
-                +"Ljava/lang/String;"
-                +"Lorg/mozilla/javascript/Context;"
-                +"Lorg/mozilla/javascript/Scriptable;"
-                +")Ljava/lang/Object;";
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            addScriptRuntimeInvoke("getNameFunctionAndThis",
+                "(Ljava/lang/String;"
+                    + "Lorg/mozilla/javascript/Context;"
+                    + "Lorg/mozilla/javascript/Scriptable;)"
+                    + "Lorg/mozilla/javascript/Callable;");
+            cfw.addALoad(contextLocal);
+            cfw.addALoad(variableObjectLocal);
+            cfw.addALoad(contextLocal);
+            addScriptRuntimeInvoke(
+                "lastStoredScriptable",
+                "(Lorg/mozilla/javascript/Context;"
+                    +")Lorg/mozilla/javascript/Scriptable;");
+            generateCallArgArray(node, firstArgChild, false);
+            // Now stack should have callable, context, scope, this, emptyArgs
+            cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                "org/mozilla/javascript/Callable",
+                "call",
+                "(Lorg/mozilla/javascript/Context;"
+                    +"Lorg/mozilla/javascript/Scriptable;"
+                    +"Lorg/mozilla/javascript/Scriptable;"
+                    +"[Ljava/lang/Object;"
+                    +")Ljava/lang/Object;");
+            return;
         } else {
             int argCount = 0;
             for (Node arg = firstArgChild; arg != null; arg = arg.getNext()) {
@@ -2266,40 +2334,67 @@ class BodyCodegen
             generateFunctionAndThisObj(child, node);
             // stack: ... functionObj thisObj
             if (argCount == 1) {
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                cfw.addALoad(variableObjectLocal);
+                cfw.add(ByteCode.SWAP);
                 generateExpression(firstArgChild, node);
-                methodName = "call1";
-                signature = "(Lorg/mozilla/javascript/Callable;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +"Ljava/lang/Object;"
-                    +"Lorg/mozilla/javascript/Context;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;";
+                ClassFileWriter.MHandle bh =
+                    new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
+                        "org/mozilla/javascript/optimizer/OptRuntime",
+                    "bootstrapCall1",
+                        "(Ljava/lang/invoke/MethodHandles$Lookup;"
+                            + "Ljava/lang/String;"
+                            + "Ljava/lang/invoke/MethodType;"
+                            + ")Ljava/lang/invoke/CallSite;");
+                cfw.addInvokeDynamic("call1",
+                    "(Lorg/mozilla/javascript/Callable;"
+                        +"Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Ljava/lang/Object;)Ljava/lang/Object;",
+                    bh);
+                return;
             } else if (argCount == 2) {
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                cfw.addALoad(variableObjectLocal);
+                cfw.add(ByteCode.SWAP);
                 generateExpression(firstArgChild, node);
                 generateExpression(firstArgChild.getNext(), node);
-                methodName = "call2";
-                signature = "(Lorg/mozilla/javascript/Callable;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +"Ljava/lang/Object;"
-                    +"Ljava/lang/Object;"
-                    +"Lorg/mozilla/javascript/Context;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;";
+                ClassFileWriter.MHandle bh =
+                    new ClassFileWriter.MHandle(ByteCode.MH_INVOKESTATIC,
+                        "org/mozilla/javascript/optimizer/OptRuntime",
+                        "bootstrapCall2",
+                        "(Ljava/lang/invoke/MethodHandles$Lookup;"
+                            + "Ljava/lang/String;"
+                            + "Ljava/lang/invoke/MethodType;"
+                            + ")Ljava/lang/invoke/CallSite;");
+                cfw.addInvokeDynamic("call2",
+                    "(Lorg/mozilla/javascript/Callable;"
+                        +"Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                    bh);
+                return;
             } else {
+                cfw.addALoad(contextLocal);
+                cfw.add(ByteCode.SWAP);
+                cfw.addALoad(variableObjectLocal);
+                cfw.add(ByteCode.SWAP);
                 generateCallArgArray(node, firstArgChild, false);
-                methodName = "callN";
-                signature = "(Lorg/mozilla/javascript/Callable;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +"[Ljava/lang/Object;"
-                    +"Lorg/mozilla/javascript/Context;"
-                    +"Lorg/mozilla/javascript/Scriptable;"
-                    +")Ljava/lang/Object;";
+                cfw.addInvoke(ByteCode.INVOKEINTERFACE,
+                    "org/mozilla/javascript/Callable",
+                    "call",
+                    "(Lorg/mozilla/javascript/Context;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"Lorg/mozilla/javascript/Scriptable;"
+                        +"[Ljava/lang/Object;"
+                        +")Ljava/lang/Object;");
+                return;
             }
         }
-
-        cfw.addALoad(contextLocal);
-        cfw.addALoad(variableObjectLocal);
-        addOptRuntimeInvoke(methodName, signature);
     }
 
     private void visitStandardNew(Node node, Node child)

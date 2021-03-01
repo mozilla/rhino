@@ -5,6 +5,11 @@
 
 package org.mozilla.javascript.optimizer;
 
+import java.lang.invoke.CallSite;
+import java.lang.invoke.ConstantCallSite;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import org.mozilla.javascript.ArrowFunction;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.ConsString;
@@ -96,6 +101,32 @@ public final class OptRuntime extends ScriptRuntime
         Callable f = getPropFunctionAndThis(value, property, cx, scope);
         Scriptable thisObj = lastStoredScriptable(cx);
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
+    }
+
+    /**
+     * Return a method that takes any call with the signature:
+     * (Context, Scriptable, Scriptable, Object)
+     * and turns the last object into an array suitable for calling
+     * "Callable.call".
+     */
+    public static CallSite bootstrapCall1(
+        MethodHandles.Lookup lookup,
+        String name, MethodType mType) throws NoSuchMethodException, IllegalAccessException {
+       MethodType callableType = MethodType.methodType(Object.class,
+           Context.class, Scriptable.class, Scriptable.class,
+           Object[].class);
+       MethodHandle target = lookup.findVirtual(Callable.class, "call", callableType);
+       return new ConstantCallSite(target.asCollector(Object[].class, 1));
+    }
+
+    public static CallSite bootstrapCall2(
+        MethodHandles.Lookup lookup,
+        String name, MethodType mType) throws NoSuchMethodException, IllegalAccessException {
+        MethodType callableType = MethodType.methodType(Object.class,
+            Context.class, Scriptable.class, Scriptable.class,
+            Object[].class);
+        MethodHandle target = lookup.findVirtual(Callable.class, "call", callableType);
+        return new ConstantCallSite(target.asCollector(Object[].class, 2));
     }
 
     public static Object add(Object val1, double val2)
