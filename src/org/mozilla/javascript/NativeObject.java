@@ -555,16 +555,16 @@ public class NativeObject extends IdScriptableObject implements Map
           {
             Scriptable targetObj;
             if (args.length > 0) {
-              targetObj = ScriptRuntime.toObject(cx, thisObj, args[0]);
+              targetObj = ScriptRuntime.toObject(cx, scope, args[0]);
             }
             else {
-              targetObj = ScriptRuntime.toObject(cx, thisObj, Undefined.instance);
+              targetObj = ScriptRuntime.toObject(cx, scope, Undefined.instance);
             }
             for (int i = 1; i < args.length; i++) {
               if ((args[i] == null) || Undefined.isUndefined(args[i])) {
                 continue;
               }
-              Scriptable sourceObj = ScriptRuntime.toObject(cx, thisObj, args[i]);
+              Scriptable sourceObj = ScriptRuntime.toObject(cx, scope, args[i]);
               Object[] ids = sourceObj.getIds();
               for (Object key : ids) {
                 if (targetObj instanceof ScriptableObject) {
