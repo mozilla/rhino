@@ -173,13 +173,17 @@ public class NativeArrayBuffer
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2018-07-20 08:21:54 MESZ
-        L0: { id = 0; String X = null;
-            int s_length = s.length();
-            if (s_length==5) { X="slice";id=Id_slice; }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:47:19 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "slice":
+            id = Id_slice;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

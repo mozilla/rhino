@@ -2574,22 +2574,26 @@ public class NativeRegExp extends IdScriptableObject
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2007-05-09 08:16:24 EDT
-        L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==6) {
-                c=s.charAt(0);
-                if (c=='g') { X="global";id=Id_global; }
-                else if (c=='s') { X="source";id=Id_source; }
-            }
-            else if (s_length==9) {
-                c=s.charAt(0);
-                if (c=='l') { X="lastIndex";id=Id_lastIndex; }
-                else if (c=='m') { X="multiline";id=Id_multiline; }
-            }
-            else if (s_length==10) { X="ignoreCase";id=Id_ignoreCase; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:45:14 MEZ
+        switch (s) {
+        case "lastIndex":
+            id = Id_lastIndex;
+            break;
+        case "source":
+            id = Id_source;
+            break;
+        case "global":
+            id = Id_global;
+            break;
+        case "ignoreCase":
+            id = Id_ignoreCase;
+            break;
+        case "multiline":
+            id = Id_multiline;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
 // #/string_id_map#
@@ -2762,22 +2766,29 @@ public class NativeRegExp extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2007-05-09 08:16:24 EDT
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 4: c=s.charAt(0);
-                if (c=='e') { X="exec";id=Id_exec; }
-                else if (c=='t') { X="test";id=Id_test; }
-                break L;
-            case 6: X="prefix";id=Id_prefix; break L;
-            case 7: X="compile";id=Id_compile; break L;
-            case 8: c=s.charAt(3);
-                if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-                break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:45:14 MEZ
+        switch (s) {
+        case "compile":
+            id = Id_compile;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "exec":
+            id = Id_exec;
+            break;
+        case "test":
+            id = Id_test;
+            break;
+        case "prefix":
+            id = Id_prefix;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

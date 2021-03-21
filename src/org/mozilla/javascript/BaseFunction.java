@@ -118,19 +118,26 @@ public class BaseFunction extends IdScriptableObject implements Function
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2007-05-09 08:15:15 EDT
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 4: X="name";id=Id_name; break L;
-            case 5: X="arity";id=Id_arity; break L;
-            case 6: X="length";id=Id_length; break L;
-            case 9: c=s.charAt(0);
-                if (c=='a') { X="arguments";id=Id_arguments; }
-                else if (c=='p') { X="prototype";id=Id_prototype; }
-                break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:52:05 MEZ
+        switch (s) {
+        case "length":
+            id = Id_length;
+            break;
+        case "arity":
+            id = Id_arity;
+            break;
+        case "name":
+            id = Id_name;
+            break;
+        case "prototype":
+            id = Id_prototype;
+            break;
+        case "arguments":
+            id = Id_arguments;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
 // #/string_id_map#
@@ -585,22 +592,29 @@ public class BaseFunction extends IdScriptableObject implements Function
     {
         int id;
 // #string_id_map#
-// #generated# Last update: 2009-07-24 16:00:52 EST
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 4: c=s.charAt(0);
-                if (c=='b') { X="bind";id=Id_bind; }
-                else if (c=='c') { X="call";id=Id_call; }
-                break L;
-            case 5: X="apply";id=Id_apply; break L;
-            case 8: c=s.charAt(3);
-                if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-                break L;
-            case 11: X="constructor";id=Id_constructor; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:52:05 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "apply":
+            id = Id_apply;
+            break;
+        case "call":
+            id = Id_call;
+            break;
+        case "bind":
+            id = Id_bind;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

@@ -286,17 +286,20 @@ public class ImporterTopLevel extends TopLevel {
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2007-05-09 08:15:24 EDT
-        L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==11) {
-                c=s.charAt(0);
-                if (c=='c') { X="constructor";id=Id_constructor; }
-                else if (c=='i') { X="importClass";id=Id_importClass; }
-            }
-            else if (s_length==13) { X="importPackage";id=Id_importPackage; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:51:58 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "importClass":
+            id = Id_importClass;
+            break;
+        case "importPackage":
+            id = Id_importPackage;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

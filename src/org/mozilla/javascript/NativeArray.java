@@ -2391,57 +2391,104 @@ public class NativeArray extends IdScriptableObject implements List
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2019-05-11 10:25:01 MESZ
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 3: c=s.charAt(0);
-                if (c=='m') { if (s.charAt(2)=='p' && s.charAt(1)=='a') {id=Id_map; break L0;} }
-                else if (c=='p') { if (s.charAt(2)=='p' && s.charAt(1)=='o') {id=Id_pop; break L0;} }
-                break L;
-            case 4: switch (s.charAt(2)) {
-                case 'i': X="join";id=Id_join; break L;
-                case 'l': X="fill";id=Id_fill; break L;
-                case 'm': X="some";id=Id_some; break L;
-                case 'n': X="find";id=Id_find; break L;
-                case 'r': X="sort";id=Id_sort; break L;
-                case 's': X="push";id=Id_push; break L;
-                case 'y': X="keys";id=Id_keys; break L;
-                } break L;
-            case 5: c=s.charAt(1);
-                if (c=='h') { X="shift";id=Id_shift; }
-                else if (c=='l') { X="slice";id=Id_slice; }
-                else if (c=='v') { X="every";id=Id_every; }
-                break L;
-            case 6: switch (s.charAt(0)) {
-                case 'c': X="concat";id=Id_concat; break L;
-                case 'f': X="filter";id=Id_filter; break L;
-                case 'r': X="reduce";id=Id_reduce; break L;
-                case 's': X="splice";id=Id_splice; break L;
-                case 'v': X="values";id=Id_values; break L;
-                } break L;
-            case 7: switch (s.charAt(0)) {
-                case 'e': X="entries";id=Id_entries; break L;
-                case 'f': X="forEach";id=Id_forEach; break L;
-                case 'i': X="indexOf";id=Id_indexOf; break L;
-                case 'r': X="reverse";id=Id_reverse; break L;
-                case 'u': X="unshift";id=Id_unshift; break L;
-                } break L;
-            case 8: c=s.charAt(3);
-                if (c=='l') { X="includes";id=Id_includes; }
-                else if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-                break L;
-            case 9: X="findIndex";id=Id_findIndex; break L;
-            case 10: X="copyWithin";id=Id_copyWithin; break L;
-            case 11: c=s.charAt(0);
-                if (c=='c') { X="constructor";id=Id_constructor; }
-                else if (c=='l') { X="lastIndexOf";id=Id_lastIndexOf; }
-                else if (c=='r') { X="reduceRight";id=Id_reduceRight; }
-                break L;
-            case 14: X="toLocaleString";id=Id_toLocaleString; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:43:46 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "toLocaleString":
+            id = Id_toLocaleString;
+            break;
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "join":
+            id = Id_join;
+            break;
+        case "reverse":
+            id = Id_reverse;
+            break;
+        case "sort":
+            id = Id_sort;
+            break;
+        case "push":
+            id = Id_push;
+            break;
+        case "pop":
+            id = Id_pop;
+            break;
+        case "shift":
+            id = Id_shift;
+            break;
+        case "unshift":
+            id = Id_unshift;
+            break;
+        case "splice":
+            id = Id_splice;
+            break;
+        case "concat":
+            id = Id_concat;
+            break;
+        case "slice":
+            id = Id_slice;
+            break;
+        case "indexOf":
+            id = Id_indexOf;
+            break;
+        case "lastIndexOf":
+            id = Id_lastIndexOf;
+            break;
+        case "every":
+            id = Id_every;
+            break;
+        case "filter":
+            id = Id_filter;
+            break;
+        case "forEach":
+            id = Id_forEach;
+            break;
+        case "map":
+            id = Id_map;
+            break;
+        case "some":
+            id = Id_some;
+            break;
+        case "find":
+            id = Id_find;
+            break;
+        case "findIndex":
+            id = Id_findIndex;
+            break;
+        case "reduce":
+            id = Id_reduce;
+            break;
+        case "reduceRight":
+            id = Id_reduceRight;
+            break;
+        case "fill":
+            id = Id_fill;
+            break;
+        case "keys":
+            id = Id_keys;
+            break;
+        case "values":
+            id = Id_values;
+            break;
+        case "entries":
+            id = Id_entries;
+            break;
+        case "includes":
+            id = Id_includes;
+            break;
+        case "copyWithin":
+            id = Id_copyWithin;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

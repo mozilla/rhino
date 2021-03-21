@@ -159,19 +159,26 @@ public class NativeWeakMap extends IdScriptableObject {
     @Override
     protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2018-08-24 15:27:45 PDT
-        L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==3) {
-                c=s.charAt(0);
-                if (c=='g') { if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_get; break L0;} }
-                else if (c=='h') { if (s.charAt(2)=='s' && s.charAt(1)=='a') {id=Id_has; break L0;} }
-                else if (c=='s') { if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_set; break L0;} }
-            }
-            else if (s_length==6) { X="delete";id=Id_delete; }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:49:10 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "delete":
+            id = Id_delete;
+            break;
+        case "get":
+            id = Id_get;
+            break;
+        case "has":
+            id = Id_has;
+            break;
+        case "set":
+            id = Id_set;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;
