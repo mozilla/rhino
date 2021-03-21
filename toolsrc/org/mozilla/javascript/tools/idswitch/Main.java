@@ -196,18 +196,16 @@ public class Main {
     }
 
     private void generate_java_code() {
-
         P.clear();
 
         IdValuePair[] pairs = new IdValuePair[all_pairs.size()];
         all_pairs.toArray(pairs);
 
         SwitchGenerator g = new SwitchGenerator();
-        g.char_tail_test_threshold = 2;
         g.setReporter(R);
         g.setCodePrinter(P);
 
-        g.generateSwitch(pairs, "0");
+        g.generateSwitch(pairs);
     }
 
     private int extract_line_tag_id(char[] array, int cursor, int end) {
