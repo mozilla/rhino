@@ -1532,11 +1532,13 @@ public class Parser
             if (matchToken(Token.IN, true)) {
                 isForIn = true;
                 inPos = ts.tokenBeg - forPos;
+                markDestructuring(init);
                 cond = expr();  // object over which we're iterating
             } else if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 &&
                        matchToken(Token.NAME, true) && "of".equals(ts.getString())) {
                 isForOf = true;
                 inPos = ts.tokenBeg - forPos;
+                markDestructuring(init);
                 cond = expr();  // object over which we're iterating
             } else {  // ordinary for-loop
                 mustMatchToken(Token.SEMI, "msg.no.semi.for", true);
@@ -1626,7 +1628,6 @@ public class Parser
                 init = variables(tt, ts.tokenBeg, false);
             } else {
                 init = expr();
-                markDestructuring(init);
             }
             return init;
         } finally {
