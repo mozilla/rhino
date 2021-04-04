@@ -374,22 +374,26 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2018-05-13 12:51:10 MESZ
-        L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==3) {
-                c=s.charAt(0);
-                if (c=='g') { if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_get; break L0;} }
-                else if (c=='s') { if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_set; break L0;} }
-            }
-            else if (s_length==8) {
-                c=s.charAt(0);
-                if (c=='s') { X="subarray";id=Id_subarray; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-            }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:47:04 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "get":
+            id = Id_get;
+            break;
+        case "set":
+            id = Id_set;
+            break;
+        case "subarray":
+            id = Id_subarray;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;
@@ -457,13 +461,17 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView impl
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2018-05-13 12:51:10 MESZ
-        L0: { id = 0; String X = null;
-            int s_length = s.length();
-            if (s_length==6) { X="length";id=Id_length; }
-            else if (s_length==17) { X="BYTES_PER_ELEMENT";id=Id_BYTES_PER_ELEMENT; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:47:04 MEZ
+        switch (s) {
+        case "length":
+            id = Id_length;
+            break;
+        case "BYTES_PER_ELEMENT":
+            id = Id_BYTES_PER_ELEMENT;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         if (id == 0) {

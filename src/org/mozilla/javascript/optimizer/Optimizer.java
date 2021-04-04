@@ -338,6 +338,18 @@ class Optimizer
                     n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
                     return NumberType;
                 }
+
+            case Token.BITNOT : {
+                    Node child = n.getFirstChild();
+                    int type = rewriteForNumberVariables(child, NumberType);
+                    if (type == NumberType && !convertParameter(child)) {
+                        n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
+                        markDCPNumberContext(child);
+                        return NumberType;
+                    }
+                    return NoType;
+                }
+
             case Token.SETELEM :
             case Token.SETELEM_OP : {
                     Node arrayBase = n.getFirstChild();

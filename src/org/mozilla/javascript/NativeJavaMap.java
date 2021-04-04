@@ -6,12 +6,17 @@
 package org.mozilla.javascript;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class NativeJavaMap extends NativeJavaObject {
 
     private Map<Object, Object> map;
+
+    static void init(ScriptableObject scope, boolean sealed) {
+        NativeJavaMapIterator.init(scope, sealed);
+    }
 
     @SuppressWarnings("unchecked")
     public NativeJavaMap(Scriptable scope, Object map) {
@@ -48,6 +53,14 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
+    public boolean has(Symbol key, Scriptable start) {
+        if (SymbolKey.ITERATOR.equals(key)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public Object get(String name, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
@@ -69,6 +82,14 @@ public class NativeJavaMap extends NativeJavaObject {
             }
         }
         return super.get(index, start);
+    }
+
+    @Override
+    public Object get(Symbol key, Scriptable start) {
+        if (SymbolKey.ITERATOR.equals(key)) {
+            return symbol_iterator;
+        }
+        return super.get(key, start);
     }
 
     @Override
@@ -106,5 +127,59 @@ public class NativeJavaMap extends NativeJavaObject {
             return ids.toArray();
         }
         return super.getIds();
+    }
+
+    private static Callable symbol_iterator = (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+        if (!(thisObj instanceof NativeJavaMap)) {
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
+        }
+        return new NativeJavaMapIterator(scope, ((NativeJavaMap)thisObj).map);
+    };
+
+    private static final class NativeJavaMapIterator extends ES6Iterator {
+        private static final long serialVersionUID = 1L;
+        private static final String ITERATOR_TAG = "JavaMapIterator";
+
+        static void init(ScriptableObject scope, boolean sealed) {
+            ES6Iterator.init(scope, sealed, new NativeJavaMapIterator(), ITERATOR_TAG);
+        }
+
+        /**
+         * Only for constructing the prototype object.
+         */
+        private NativeJavaMapIterator() {
+            super();
+        }
+
+        NativeJavaMapIterator(Scriptable scope, Map<Object, Object> map) {
+            super(scope, ITERATOR_TAG);
+            this.iterator = map.entrySet().iterator();
+        }
+
+        @Override
+        public String getClassName() {
+            return "Java Map Iterator";
+        }
+
+        @Override
+        protected boolean isDone(Context cx, Scriptable scope) {
+            return !iterator.hasNext();
+        }
+
+        @Override
+        protected Object nextValue(Context cx, Scriptable scope) {
+            if (!iterator.hasNext()) {
+                return cx.newArray(scope, new Object[] {Undefined.instance, Undefined.instance});
+            }
+            Map.Entry e = iterator.next();
+            return cx.newArray(scope, new Object[] {e.getKey(), e.getValue()});
+        }
+
+        @Override
+        protected String getTag() {
+            return ITERATOR_TAG;
+        }
+
+        private Iterator<Map.Entry<Object, Object>> iterator;
     }
 }

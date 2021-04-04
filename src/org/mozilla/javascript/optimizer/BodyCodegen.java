@@ -1140,12 +1140,7 @@ class BodyCodegen
             }
 
             case Token.BITNOT:
-                generateExpression(child, node);
-                addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
-                cfw.addPush(-1);         // implement ~a as (a ^ -1)
-                cfw.add(ByteCode.IXOR);
-                cfw.add(ByteCode.I2D);
-                addDoubleWrap();
+                visitBitNot(node, child);
                 break;
 
             case Token.VOID:
@@ -3455,6 +3450,23 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             addObjectToDouble();
 
             cfw.addInvoke(ByteCode.INVOKESTATIC, "java/lang/Math", "pow", "(DD)D");
+            addDoubleWrap();
+        }
+    }
+
+    private void visitBitNot(Node node, Node child)
+    {
+        int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
+        generateExpression(child, node);
+        if (childNumberFlag == -1) {
+            addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
+        } else {
+            addScriptRuntimeInvoke("toInt32", "(D)I");
+        }
+        cfw.addPush(-1);         // implement ~a as (a ^ -1)
+        cfw.add(ByteCode.IXOR);
+        cfw.add(ByteCode.I2D);
+        if (childNumberFlag == -1) {
             addDoubleWrap();
         }
     }

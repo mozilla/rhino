@@ -199,6 +199,9 @@ public class ScriptRuntime {
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
 
+        NativeJavaObject.init(scope, sealed);
+        NativeJavaMap.init(scope, sealed);
+
         boolean withXml = cx.hasFeature(Context.FEATURE_E4X) &&
                           cx.getE4xImplementationFactory() != null;
 

@@ -122,17 +122,20 @@ public abstract class NativeArrayBufferView
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2014-12-08 17:32:09 PST
-        L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==6) { X="buffer";id=Id_buffer; }
-            else if (s_length==10) {
-                c=s.charAt(4);
-                if (c=='L') { X="byteLength";id=Id_byteLength; }
-                else if (c=='O') { X="byteOffset";id=Id_byteOffset; }
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:47:23 MEZ
+        switch (s) {
+        case "buffer":
+            id = Id_buffer;
+            break;
+        case "byteOffset":
+            id = Id_byteOffset;
+            break;
+        case "byteLength":
+            id = Id_byteLength;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         if (id == 0) {

@@ -118,14 +118,20 @@ public class NativeSymbol
     @Override
     protected int findPrototypeId(String s) {
         int id = 0;
-//  #generated# Last update: 2016-01-26 16:39:41 PST
-        L0: { id = 0; String X = null;
-            int s_length = s.length();
-            if (s_length==7) { X="valueOf";id=Id_valueOf; }
-            else if (s_length==8) { X="toString";id=Id_toString; }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+//  #generated# Last update: 2021-03-21 09:49:13 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "valueOf":
+            id = Id_valueOf;
+            break;
+        default:
+            id = 0;
+            break;
         }
 //  #/generated#
         return id;

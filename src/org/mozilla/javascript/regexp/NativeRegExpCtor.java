@@ -122,36 +122,74 @@ class NativeRegExpCtor extends BaseFunction
     @Override
     protected int findInstanceIdInfo(String s) {
         int id;
-// #generated# Last update: 2001-05-24 16:09:31 GMT+02:00
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 2: switch (s.charAt(1)) {
-                case '&': if (s.charAt(0)=='$') {id=Id_AMPERSAND; break L0;} break L;
-                case '\'': if (s.charAt(0)=='$') {id=Id_QUOTE; break L0;} break L;
-                case '*': if (s.charAt(0)=='$') {id=Id_STAR; break L0;} break L;
-                case '+': if (s.charAt(0)=='$') {id=Id_PLUS; break L0;} break L;
-                case '1': if (s.charAt(0)=='$') {id=Id_DOLLAR_1; break L0;} break L;
-                case '2': if (s.charAt(0)=='$') {id=Id_DOLLAR_2; break L0;} break L;
-                case '3': if (s.charAt(0)=='$') {id=Id_DOLLAR_3; break L0;} break L;
-                case '4': if (s.charAt(0)=='$') {id=Id_DOLLAR_4; break L0;} break L;
-                case '5': if (s.charAt(0)=='$') {id=Id_DOLLAR_5; break L0;} break L;
-                case '6': if (s.charAt(0)=='$') {id=Id_DOLLAR_6; break L0;} break L;
-                case '7': if (s.charAt(0)=='$') {id=Id_DOLLAR_7; break L0;} break L;
-                case '8': if (s.charAt(0)=='$') {id=Id_DOLLAR_8; break L0;} break L;
-                case '9': if (s.charAt(0)=='$') {id=Id_DOLLAR_9; break L0;} break L;
-                case '_': if (s.charAt(0)=='$') {id=Id_UNDERSCORE; break L0;} break L;
-                case '`': if (s.charAt(0)=='$') {id=Id_BACK_QUOTE; break L0;} break L;
-                } break L;
-            case 5: X="input";id=Id_input; break L;
-            case 9: c=s.charAt(4);
-                if (c=='M') { X="lastMatch";id=Id_lastMatch; }
-                else if (c=='P') { X="lastParen";id=Id_lastParen; }
-                else if (c=='i') { X="multiline";id=Id_multiline; }
-                break L;
-            case 11: X="leftContext";id=Id_leftContext; break L;
-            case 12: X="rightContext";id=Id_rightContext; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+// #generated# Last update: 2021-03-21 09:45:17 MEZ
+        switch (s) {
+        case "multiline":
+            id = Id_multiline;
+            break;
+        case "$*":
+            id = Id_STAR;
+            break;
+        case "input":
+            id = Id_input;
+            break;
+        case "$_":
+            id = Id_UNDERSCORE;
+            break;
+        case "lastMatch":
+            id = Id_lastMatch;
+            break;
+        case "$&":
+            id = Id_AMPERSAND;
+            break;
+        case "lastParen":
+            id = Id_lastParen;
+            break;
+        case "$+":
+            id = Id_PLUS;
+            break;
+        case "leftContext":
+            id = Id_leftContext;
+            break;
+        case "$`":
+            id = Id_BACK_QUOTE;
+            break;
+        case "rightContext":
+            id = Id_rightContext;
+            break;
+        case "$'":
+            id = Id_QUOTE;
+            break;
+        case "$1":
+            id = Id_DOLLAR_1;
+            break;
+        case "$2":
+            id = Id_DOLLAR_2;
+            break;
+        case "$3":
+            id = Id_DOLLAR_3;
+            break;
+        case "$4":
+            id = Id_DOLLAR_4;
+            break;
+        case "$5":
+            id = Id_DOLLAR_5;
+            break;
+        case "$6":
+            id = Id_DOLLAR_6;
+            break;
+        case "$7":
+            id = Id_DOLLAR_7;
+            break;
+        case "$8":
+            id = Id_DOLLAR_8;
+            break;
+        case "$9":
+            id = Id_DOLLAR_9;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
 

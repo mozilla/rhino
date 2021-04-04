@@ -186,17 +186,20 @@ final class Arguments extends IdScriptableObject
     protected int findInstanceIdInfo(String s)
     {
         int id;
-// #generated# Last update: 2010-01-06 05:48:21 ARST
-        L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==6) {
-                c=s.charAt(5);
-                if (c=='e') { X="callee";id=Id_callee; }
-                else if (c=='h') { X="length";id=Id_length; }
-                else if (c=='r') { X="caller";id=Id_caller; }
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:52:20 MEZ
+        switch (s) {
+        case "callee":
+            id = Id_callee;
+            break;
+        case "length":
+            id = Id_length;
+            break;
+        case "caller":
+            id = Id_caller;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         Context cx = Context.getContext();

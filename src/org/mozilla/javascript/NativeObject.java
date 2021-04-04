@@ -555,16 +555,16 @@ public class NativeObject extends IdScriptableObject implements Map
           {
             Scriptable targetObj;
             if (args.length > 0) {
-              targetObj = ScriptRuntime.toObject(cx, thisObj, args[0]);
+              targetObj = ScriptRuntime.toObject(cx, scope, args[0]);
             }
             else {
-              targetObj = ScriptRuntime.toObject(cx, thisObj, Undefined.instance);
+              targetObj = ScriptRuntime.toObject(cx, scope, Undefined.instance);
             }
             for (int i = 1; i < args.length; i++) {
               if ((args[i] == null) || Undefined.isUndefined(args[i])) {
                 continue;
               }
-              Scriptable sourceObj = ScriptRuntime.toObject(cx, thisObj, args[i]);
+              Scriptable sourceObj = ScriptRuntime.toObject(cx, scope, args[i]);
               Object[] ids = sourceObj.getIds();
               for (Object key : ids) {
                 if (targetObj instanceof ScriptableObject) {
@@ -839,36 +839,47 @@ public class NativeObject extends IdScriptableObject implements Map
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2007-05-09 08:15:55 EDT
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 7: X="valueOf";id=Id_valueOf; break L;
-            case 8: c=s.charAt(3);
-                if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-                break L;
-            case 11: X="constructor";id=Id_constructor; break L;
-            case 13: X="isPrototypeOf";id=Id_isPrototypeOf; break L;
-            case 14: c=s.charAt(0);
-                if (c=='h') { X="hasOwnProperty";id=Id_hasOwnProperty; }
-                else if (c=='t') { X="toLocaleString";id=Id_toLocaleString; }
-                break L;
-            case 16: c=s.charAt(2);
-                if (c=='d') {
-                    c=s.charAt(8);
-                    if (c=='G') { X="__defineGetter__";id=Id___defineGetter__; }
-                    else if (c=='S') { X="__defineSetter__";id=Id___defineSetter__; }
-                }
-                else if (c=='l') {
-                    c=s.charAt(8);
-                    if (c=='G') { X="__lookupGetter__";id=Id___lookupGetter__; }
-                    else if (c=='S') { X="__lookupSetter__";id=Id___lookupSetter__; }
-                }
-                break L;
-            case 20: X="propertyIsEnumerable";id=Id_propertyIsEnumerable; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:51:05 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "toLocaleString":
+            id = Id_toLocaleString;
+            break;
+        case "valueOf":
+            id = Id_valueOf;
+            break;
+        case "hasOwnProperty":
+            id = Id_hasOwnProperty;
+            break;
+        case "propertyIsEnumerable":
+            id = Id_propertyIsEnumerable;
+            break;
+        case "isPrototypeOf":
+            id = Id_isPrototypeOf;
+            break;
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "__defineGetter__":
+            id = Id___defineGetter__;
+            break;
+        case "__defineSetter__":
+            id = Id___defineSetter__;
+            break;
+        case "__lookupGetter__":
+            id = Id___lookupGetter__;
+            break;
+        case "__lookupSetter__":
+            id = Id___lookupSetter__;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

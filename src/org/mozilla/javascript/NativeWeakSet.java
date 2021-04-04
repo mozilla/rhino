@@ -137,18 +137,23 @@ public class NativeWeakSet extends IdScriptableObject {
     @Override
     protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2018-08-27 10:45:54 PDT
-        L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==3) {
-                c=s.charAt(0);
-                if (c=='a') { if (s.charAt(2)=='d' && s.charAt(1)=='d') {id=Id_add; break L0;} }
-                else if (c=='h') { if (s.charAt(2)=='s' && s.charAt(1)=='a') {id=Id_has; break L0;} }
-            }
-            else if (s_length==6) { X="delete";id=Id_delete; }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:49:08 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "add":
+            id = Id_add;
+            break;
+        case "delete":
+            id = Id_delete;
+            break;
+        case "has":
+            id = Id_has;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

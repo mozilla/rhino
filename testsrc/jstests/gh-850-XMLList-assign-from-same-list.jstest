@@ -1,0 +1,22 @@
+function assertEquals(expected, actual) {
+   if (expected != actual) {
+     throw "Expected '" + expected + "' but was '" + actual + "'";
+   }
+ }
+ var xml =<xml>
+   <group>Group One</group>
+   <group>Group Two</group>
+   <group>Group Three</group>
+</xml>;
+
+var expected = <xml>
+   <group>Group Three</group>
+   <group>Group Two</group>
+   <group>Group Three</group>
+</xml>
+
+xml.group[0]=xml.group[2];
+
+assertEquals(xml, expected)
+
+"success";

@@ -16,6 +16,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -149,6 +150,50 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(true, runScript("Object.keys(value).includes('getClass')", map, false));
     }
 
+    public void testSymbolIterator() {
+        Map map = new LinkedHashMap();
+        String script =
+            "var a = [];\n" +
+            "for (var [key, value] of value) a.push(key, value);\n" +
+            "a";
+
+        NativeArray resEmpty = (NativeArray) runScriptES6(script, map);
+        assertEquals(0, resEmpty.size());
+
+        Object o = new Object();
+        map.put("a", "b");
+        map.put(123, 234);
+        map.put(o, o);
+
+        {
+            NativeArray res = (NativeArray) runScriptES6(script, map);
+            assertEquals(6, res.size());
+            assertEquals("a", res.get(0));
+            assertEquals("b", res.get(1));
+            assertEquals(123.0, Context.toNumber(res.get(2)));
+            assertEquals(234.0, Context.toNumber(res.get(3)));
+            assertEquals(o, res.get(4));
+            assertEquals(o, res.get(5));
+        }
+
+        {
+            NativeArray res = (NativeArray) runScriptES6("Array.from(value)", map);
+            assertEquals(3, res.size());
+
+            NativeArray e0 = (NativeArray)res.get(0);
+            assertEquals("a", e0.get(0));
+            assertEquals("b", e0.get(1));
+
+            NativeArray e1 = (NativeArray)res.get(1);
+            assertEquals(123.0, Context.toNumber(e1.get(0)));
+            assertEquals(234.0, Context.toNumber(e1.get(1)));
+
+            NativeArray e2 = (NativeArray)res.get(2);
+            assertEquals(o, e2.get(0));
+            assertEquals(o, e2.get(1));
+        }
+    }
+
     private int runScriptAsInt(String scriptSourceText, Object value, boolean enableJavaMapAccess) {
         return runScript(scriptSourceText, value, Context::toNumber, enableJavaMapAccess).intValue();
     }
@@ -166,6 +211,15 @@ public class NativeJavaMapTest extends TestCase {
             Scriptable scope = context.initStandardObjects(global);
             scope.put("value", scope, Context.javaToJS(value, scope));
             return convert.apply(context.evaluateString(scope, scriptSourceText, "", 1, null));
+        });
+    }
+
+    private Object runScriptES6(String scriptSourceText, Object value) {
+        return getContextFactory(false).call(context -> {
+            Scriptable scope = context.initStandardObjects(global);
+            context.setLanguageVersion(Context.VERSION_ES6);
+            scope.put("value", scope, Context.javaToJS(value, scope));
+            return context.evaluateString(scope, scriptSourceText, "", 1, null);
         });
     }
 
