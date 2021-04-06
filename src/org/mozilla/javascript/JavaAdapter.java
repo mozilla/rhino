@@ -501,6 +501,7 @@ public final class JavaAdapter implements IdFunctionCall
             ArrayList<Method> list, HashSet<String> skip)
     {
         Method[] methods = c.getDeclaredMethods();
+        if(c.isInterface())methods=c.getMethods();
         for (int i = 0; i < methods.length; i++) {
             String methodKey = methods[i].getName() +
                 getMethodSignature(methods[i],
