@@ -313,7 +313,7 @@ public class NativeDataView
         String s;
         int arity;
         switch (id) {
-        case Id_constructor:    arity = 3; s = "constructor"; break;
+        case Id_constructor:    arity = 1; s = "constructor"; break;
         case Id_getInt8:        arity = 1; s = "getInt8"; break;
         case Id_getUint8:       arity = 1; s = "getUint8"; break;
         case Id_getInt16:       arity = 1; s = "getInt16"; break;
