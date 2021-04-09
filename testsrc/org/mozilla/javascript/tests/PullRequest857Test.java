@@ -2,8 +2,6 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertNotNull;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,7 +10,7 @@ import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Scriptable;
 
 
-public class TestJavaAdapter{
+public class PullRequest857Test{
 	Context cx=null;
 	Scriptable topScope=null;
 	@Before
@@ -29,25 +27,27 @@ public class TestJavaAdapter{
 		int methodInC(String str);
 	}
 	interface B extends C {
-		int methodInB(String str);
 	}
 	public abstract class A implements B{
 	}
 	@Test
 	public void testOverrideMethodInMultiLayerInterface() {
 		String testCode =
-	            "JavaAdapter(Packages."+A.class.getName()+",{methodInC:function(){},methodInB:function(){}},null)";
+	            "JavaAdapter(Packages."+A.class.getName()+",{methodInC:function(){}},null)";
 		
-		NativeJavaObject aJavaObject=(NativeJavaObject)cx.evaluateString(topScope, testCode,"", 1, null);
+		NativeJavaObject adapterObject=(NativeJavaObject)cx.evaluateString(topScope, testCode,"", 1, null);
 		
-		
-		Method overrideMethod=null;
+		Method overrodedMethod=null;
 		try {
-			overrideMethod=aJavaObject.unwrap().getClass().getDeclaredMethod("methodInC", String.class);
+			//if the method 'methodInC' is overrided from 'interface C',
+			//its signature will be 'public int methodInC(java.lang.String)'  (expected result), 
+			//otherwise if the method 'methodInC' is newly created by JavaAdapter,
+			//its signature will be 'public java.lang.Object methodInC()'
+			overrodedMethod=adapterObject.unwrap().getClass().getDeclaredMethod("methodInC", String.class);
 		}catch(NoSuchMethodException e) {
-		}
+		}	
 		
-		assertNotNull("Failed to override method 'public int methodInC(String str)' from multi-layer interface C"
-				     	,overrideMethod);	
+		assertNotNull("Fail to override method 'public int methodInC(String str)' from multi-layer interface C"
+ 						,overrodedMethod);
 	}
 }
