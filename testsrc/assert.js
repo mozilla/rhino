@@ -132,6 +132,7 @@ var assertUnoptimized;
       case "undefined":
       case "function":
         return String(value);
+      case "xml":
       case "object":
         if (value === null) return "null";
         var objectClass = classOf(value);
@@ -143,6 +144,12 @@ var assertUnoptimized;
           return objectClass + "(" + PrettyPrint(value.valueOf()) + ")";
         case "RegExp":
           return value.toString();
+        case "QName":
+        case "Namespace":
+          return objectClass + "(" + PrettyPrint(value.toString()) + ")";
+        case "XML":
+        case "XMLList":
+          return objectClass + "(" + PrettyPrint(value.toXMLString()) + ")";
         case "Array":
           return "[" + value.map(PrettyPrintArrayElement).join(",") + "]";
         case "Object":
@@ -204,6 +211,7 @@ var assertUnoptimized;
     }
     if (typeof a != typeof b) return false;
     if (typeof a == "number") return isNaN(a) && isNaN(b);
+    if (typeof a == "xml") return a == b;
     if (typeof a !== "object" && typeof a !== "function") return false;
     // Neither a nor b is primitive.
     var objectClass = classOf(a);
@@ -224,6 +232,7 @@ var assertUnoptimized;
       }
       return true;
     }
+    if (objectClass == 'QName' || objectClass == 'Namespace') return a == b;
     if (objectClass == "String" || objectClass == "Number" ||
       objectClass == "Boolean" || objectClass == "Date") {
       if (a.valueOf() !== b.valueOf()) return false;
