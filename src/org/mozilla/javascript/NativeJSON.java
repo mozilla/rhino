@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import org.mozilla.javascript.json.JsonParser;
@@ -287,13 +288,33 @@ public final class NativeJSON extends IdScriptableObject
                                         new Object[] { key, value });
         }
 
-
         if (value instanceof NativeNumber) {
             value = Double.valueOf(ScriptRuntime.toNumber(value));
         } else if (value instanceof NativeString) {
             value = ScriptRuntime.toString(value);
         } else if (value instanceof NativeBoolean) {
             value = ((NativeBoolean) value).getDefaultValue(ScriptRuntime.BooleanClass);
+        } else if (value instanceof NativeJavaObject) {
+            value = ((NativeJavaObject) value).unwrap();
+            if (value instanceof Map) {
+                Map<?,?> map = (Map<?,?>) value;
+                NativeObject nObj = new NativeObject();
+                map.forEach((k, v) -> {
+                    if (k instanceof CharSequence) {
+                        nObj.put(((CharSequence) k).toString(), nObj, v);
+                    }
+                });
+                value = nObj;
+            }
+            else {
+                if (value instanceof Collection<?>) {
+                    Collection<?> col = (Collection<?>) value;
+                    value = col.toArray(new Object[col.size()]);
+                }
+                if (value instanceof Object[]) {
+                    value = new NativeArray((Object[]) value);
+                }
+            }
         }
 
         if (value == null) return "null";
@@ -314,11 +335,15 @@ public final class NativeJSON extends IdScriptableObject
             return "null";
         }
 
-        if (value instanceof Scriptable && !(value instanceof Callable)) {
-            if (value instanceof NativeArray) {
-                return ja((NativeArray) value, state);
+        if (value instanceof Scriptable) {
+            if (!(value instanceof Callable)) {
+                if (value instanceof NativeArray) {
+                    return ja((NativeArray) value, state);
+                }
+                return jo((Scriptable) value, state);
             }
-            return jo((Scriptable) value, state);
+        } else if (!Undefined.isUndefined(value)) {
+            throw ScriptRuntime.typeErrorById("msg.json.cant.serialize", value.getClass().getName());
         }
 
         return Undefined.instance;
