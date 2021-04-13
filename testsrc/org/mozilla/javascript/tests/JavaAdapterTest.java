@@ -8,7 +8,7 @@ import org.mozilla.javascript.NativeJavaObject;
 import org.mozilla.javascript.Scriptable;
 
 
-public class PullRequest857Test{
+public class JavaAdapterTest{
 	Context cx=null;
 	Scriptable topScope=null;
 	@Before
