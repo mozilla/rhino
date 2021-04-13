@@ -1,7 +1,5 @@
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.assertNotNull;
-import java.lang.reflect.Method;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,23 +29,16 @@ public class PullRequest857Test{
 	public abstract class A implements B{
 	}
 	@Test
-	public void testOverrideMethodInMultiLayerInterface() {
+	public void testOverrideMethodInMultiLayerInterface() throws NoSuchMethodException {
 		String testCode =
 	            "JavaAdapter(Packages."+A.class.getName()+",{methodInC:function(){}},null)";
 		
 		NativeJavaObject adapterObject=(NativeJavaObject)cx.evaluateString(topScope, testCode,"", 1, null);
 		
-		Method overrodedMethod=null;
-		try {
-			//if the method 'methodInC' is overrided from 'interface C',
-			//its signature will be 'public int methodInC(java.lang.String)'  (expected result), 
-			//otherwise if the method 'methodInC' is newly created by JavaAdapter,
-			//its signature will be 'public java.lang.Object methodInC()'
-			overrodedMethod=adapterObject.unwrap().getClass().getDeclaredMethod("methodInC", String.class);
-		}catch(NoSuchMethodException e) {
-		}	
-		
-		assertNotNull("Fail to override method 'public int methodInC(String str)' from multi-layer interface C"
- 						,overrodedMethod);
+		//if the method 'methodInC' is overrided from 'interface C',
+		//its signature will be 'public int methodInC(java.lang.String)'  (expected result), 
+		//otherwise if the method 'methodInC' is newly created by JavaAdapter,
+		//its signature will be 'public java.lang.Object methodInC()'
+		adapterObject.unwrap().getClass().getDeclaredMethod("methodInC", String.class);
 	}
 }
