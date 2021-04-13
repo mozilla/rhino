@@ -2465,10 +2465,10 @@ public final class IRFactory extends Parser
         int size = props.size();
         for (int i = 0; i < size; i++) {
             ObjectProperty prop = props.get(i);
-            boolean destructuringShorthand =
-                    Boolean.TRUE.equals(prop.getProp(Node.DESTRUCTURING_SHORTHAND));
+            boolean shorthandPropertyName =
+                    Boolean.TRUE.equals(prop.getProp(Node.SHORTHAND_PROPERTY_NAME));
             decompile(prop.getLeft());
-            if (!destructuringShorthand) {
+            if (!shorthandPropertyName) {
                 decompiler.addToken(Token.COLON);
                 decompile(prop.getRight());
             }

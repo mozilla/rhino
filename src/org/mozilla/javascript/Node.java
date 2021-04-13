@@ -62,7 +62,7 @@ public class Node implements Iterable<Node>
         DESTRUCTURING_PARAMS = 23,
         JSDOC_PROP           = 24,
         EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return
-        DESTRUCTURING_SHORTHAND = 26, // JS 1.8 destructuring shorthand
+        SHORTHAND_PROPERTY_NAME = 26,
         ARROW_FUNCTION_PROP  = 27,
         LAST_PROP            = 27;
 
