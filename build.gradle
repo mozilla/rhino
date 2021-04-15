@@ -7,6 +7,7 @@ plugins {
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
+    id 'com.diffplug.spotless' version "5.12.1"
     id 'com.github.spotbugs' version "4.6.2"
 }
 
@@ -379,6 +380,13 @@ spotbugs {
     effort = "less"
     reportLevel = "medium"
     excludeFilter = file("./spotbugs-exclude.xml")
+}
+
+spotless {
+    ratchetFrom 'code-formatting-required'
+    java {
+        googleJavaFormat().aosp()
+    }
 }
 
 jacocoTestReport.dependsOn test
