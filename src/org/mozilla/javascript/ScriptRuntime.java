@@ -964,6 +964,9 @@ public class ScriptRuntime {
             if (val instanceof CharSequence) {
                 return val.toString();
             }
+            if (val instanceof BigInteger) {
+                return val.toString();
+            }
             if (val instanceof Number) {
                 // XXX should we just teach NativeNumber.stringValue()
                 // about Numbers?
@@ -2825,6 +2828,13 @@ public class ScriptRuntime {
     // as "~toInt32(val)"
 
     public static Object add(Object val1, Object val2, Context cx) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).add((BigInteger) val2);
+        }
+        if ((val1 instanceof Number && val2 instanceof BigInteger)
+                || (val1 instanceof BigInteger && val2 instanceof Number)) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        }
         if (val1 instanceof Number && val2 instanceof Number) {
             return wrapNumber(((Number) val1).doubleValue() + ((Number) val2).doubleValue());
         }
@@ -2846,10 +2856,16 @@ public class ScriptRuntime {
         if (val1 instanceof Scriptable) val1 = ((Scriptable) val1).getDefaultValue(null);
         if (val2 instanceof Scriptable) val2 = ((Scriptable) val2).getDefaultValue(null);
         if (!(val1 instanceof CharSequence) && !(val2 instanceof CharSequence)) {
-            if ((val1 instanceof Number) && (val2 instanceof Number)) {
-                return wrapNumber(((Number) val1).doubleValue() + ((Number) val2).doubleValue());
+            Number num1 = val1 instanceof Number ? (Number) val1 : toNumeric(val1);
+            Number num2 = val2 instanceof Number ? (Number) val2 : toNumeric(val2);
+
+            if (num1 instanceof BigInteger && num2 instanceof BigInteger) {
+                return ((BigInteger) num1).add((BigInteger) num2);
             }
-            return wrapNumber(toNumber(val1) + toNumber(val2));
+            if (num1 instanceof BigInteger || num2 instanceof BigInteger) {
+                throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+            }
+            return num1.doubleValue() + num2.doubleValue();
         }
         return new ConsString(toCharSequence(val1), toCharSequence(val2));
     }
