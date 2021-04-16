@@ -39,6 +39,15 @@ final class NativeBigInt extends IdScriptableObject {
 
     @Override
     protected void initPrototypeId(int id) {
+        if (id == SymbolId_toStringTag) {
+            initPrototypeValue(
+                    SymbolId_toStringTag,
+                    SymbolKey.TO_STRING_TAG,
+                    getClassName(),
+                    DONTENUM | READONLY);
+            return;
+        }
+
         String s;
         int arity;
         switch (id) {
@@ -123,7 +132,13 @@ final class NativeBigInt extends IdScriptableObject {
         return ScriptRuntime.bigIntToString(bigIntValue, 10);
     }
 
-    // #string_id_map#
+    @Override
+    protected int findPrototypeId(Symbol k) {
+        if (SymbolKey.TO_STRING_TAG.equals(k)) {
+            return SymbolId_toStringTag;
+        }
+        return 0;
+    }
 
     @Override
     protected int findPrototypeId(String s) {
@@ -156,7 +171,8 @@ final class NativeBigInt extends IdScriptableObject {
             Id_toLocaleString = 3,
             Id_toSource = 4,
             Id_valueOf = 5,
-            MAX_PROTOTYPE_ID = 5;
+            SymbolId_toStringTag = 6,
+            MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
     private BigInteger bigIntValue;
 }
