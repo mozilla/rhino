@@ -114,7 +114,7 @@ final class NativeNumber extends IdScriptableObject {
         }
         int id = f.methodId();
         if (id == Id_constructor) {
-            double val = (args.length >= 1) ? ScriptRuntime.toNumber(args[0]) : 0.0;
+            double val = (args.length >= 1) ? ScriptRuntime.toNumeric(args[0]).doubleValue() : 0.0;
             if (thisObj == null) {
                 // new Number(val) creates a new Number object.
                 return new NativeNumber(val);
