@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.Arrays;
 import org.mozilla.javascript.debug.DebuggableScript;
 
@@ -16,6 +17,7 @@ final class InterpreterData implements Serializable, DebuggableScript {
     static final int INITIAL_MAX_ICODE_LENGTH = 1024;
     static final int INITIAL_STRINGTABLE_SIZE = 64;
     static final int INITIAL_NUMBERTABLE_SIZE = 64;
+    static final int INITIAL_BIGINTTABLE_SIZE = 64;
 
     InterpreterData(
             int languageVersion, String sourceFile, String encodedSource, boolean isStrict) {
@@ -38,6 +40,7 @@ final class InterpreterData implements Serializable, DebuggableScript {
     private void init() {
         itsICode = new byte[INITIAL_MAX_ICODE_LENGTH];
         itsStringTable = new String[INITIAL_STRINGTABLE_SIZE];
+        itsBigIntTable = new BigInteger[INITIAL_BIGINTTABLE_SIZE];
     }
 
     String itsName;
@@ -47,6 +50,7 @@ final class InterpreterData implements Serializable, DebuggableScript {
 
     String[] itsStringTable;
     double[] itsDoubleTable;
+    BigInteger[] itsBigIntTable;
     InterpreterData[] itsNestedFunctions;
     Object[] itsRegExpLiterals;
 

@@ -132,8 +132,17 @@ abstract class Icode {
             Icode_GENERATOR_RETURN = -65,
             Icode_YIELD_STAR = -66,
 
+            // Load BigInt register to prepare for the following BigInt operation
+            Icode_REG_BIGINT_C0 = -67,
+            Icode_REG_BIGINT_C1 = -68,
+            Icode_REG_BIGINT_C2 = -69,
+            Icode_REG_BIGINT_C3 = -70,
+            Icode_REG_BIGINT1 = -71,
+            Icode_REG_BIGINT2 = -72,
+            Icode_REG_BIGINT4 = -73,
+
             // Last icode
-            MIN_ICODE = -66;
+            MIN_ICODE = -73;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -281,6 +290,20 @@ abstract class Icode {
                 return "GENERATOR_RETURN";
             case Icode_YIELD_STAR:
                 return "YIELD_STAR";
+            case Icode_REG_BIGINT_C0:
+                return "REG_BIGINT_C0";
+            case Icode_REG_BIGINT_C1:
+                return "REG_BIGINT_C1";
+            case Icode_REG_BIGINT_C2:
+                return "REG_BIGINT_C2";
+            case Icode_REG_BIGINT_C3:
+                return "REG_BIGINT_C3";
+            case Icode_REG_BIGINT1:
+                return "LOAD_BIGINT1";
+            case Icode_REG_BIGINT2:
+                return "LOAD_BIGINT2";
+            case Icode_REG_BIGINT4:
+                return "LOAD_BIGINT4";
         }
 
         // icode without name
