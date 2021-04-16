@@ -3439,15 +3439,13 @@ class BodyCodegen {
         int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
         generateExpression(child, node);
         if (childNumberFlag == -1) {
-            addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
+            addObjectToNumeric();
+            addScriptRuntimeInvoke("bitwiseNOT", "(Ljava/lang/Number;)Ljava/lang/Number;");
         } else {
             addScriptRuntimeInvoke("toInt32", "(D)I");
-        }
-        cfw.addPush(-1); // implement ~a as (a ^ -1)
-        cfw.add(ByteCode.IXOR);
-        cfw.add(ByteCode.I2D);
-        if (childNumberFlag == -1) {
-            addDoubleWrap();
+            cfw.addPush(-1); // implement ~a as (a ^ -1)
+            cfw.add(ByteCode.IXOR);
+            cfw.add(ByteCode.I2D);
         }
     }
 
