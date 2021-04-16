@@ -168,7 +168,6 @@ public class ScriptRuntime {
         NativeString.init(scope, sealed);
         NativeBoolean.init(scope, sealed);
         NativeNumber.init(scope, sealed);
-        NativeBigInt.init(scope, sealed);
         NativeDate.init(scope, sealed);
         NativeMath.init(scope, sealed);
         NativeJSON.init(scope, sealed);
@@ -281,6 +280,7 @@ public class ScriptRuntime {
             NativeSet.init(cx, scope, sealed);
             NativeWeakMap.init(scope, sealed);
             NativeWeakSet.init(scope, sealed);
+            NativeBigInt.init(scope, sealed);
         }
 
         if (scope instanceof TopLevel) {
@@ -384,6 +384,9 @@ public class ScriptRuntime {
             if (val instanceof Boolean) return ((Boolean) val).booleanValue();
             if (val == null || val == Undefined.instance) return false;
             if (val instanceof CharSequence) return ((CharSequence) val).length() != 0;
+            if (val instanceof BigInteger) {
+                return !((BigInteger) val).equals(BigInteger.ZERO);
+            }
             if (val instanceof Number) {
                 double d = ((Number) val).doubleValue();
                 return (!Double.isNaN(d) && d != 0.0);
@@ -415,6 +418,9 @@ public class ScriptRuntime {
      */
     public static double toNumber(Object val) {
         for (; ; ) {
+            if (val instanceof BigInteger) {
+                throw typeErrorById("msg.cant.convert.to.number", "BigInt");
+            }
             if (val instanceof Number) return ((Number) val).doubleValue();
             if (val == null) return +0.0;
             if (val == Undefined.instance) return NaN;
@@ -825,6 +831,22 @@ public class ScriptRuntime {
         return toNumber(val);
     }
 
+    public static int toIndex(Object val) {
+        if (Undefined.isUndefined(val)) {
+            return 0;
+        }
+        double integerIndex = toInteger(val);
+        if (integerIndex < 0) {
+            throw rangeError("index out of range");
+        }
+        // ToLength
+        double index = Math.min(integerIndex, NativeNumber.MAX_SAFE_INTEGER);
+        if (integerIndex != index) {
+            throw rangeError("index out of range");
+        }
+        return (int) index;
+    }
+
     /**
      * Helper function for builtin objects that use the varargs form. ECMA function formal arguments
      * are undefined if not supplied; this function pads the argument array out to the expected
@@ -959,6 +981,9 @@ public class ScriptRuntime {
                 return (String) val;
             }
             if (val instanceof CharSequence) {
+                return val.toString();
+            }
+            if (val instanceof BigInteger) {
                 return val.toString();
             }
             if (val instanceof Number) {
@@ -1201,7 +1226,7 @@ public class ScriptRuntime {
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.String);
             return result;
         }
-        if (val instanceof BigInteger) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6 && val instanceof BigInteger) {
             NativeBigInt result = new NativeBigInt(((BigInteger) val));
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.BigInt);
             return result;
@@ -2822,6 +2847,13 @@ public class ScriptRuntime {
     // as "~toInt32(val)"
 
     public static Object add(Object val1, Object val2, Context cx) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).add((BigInteger) val2);
+        }
+        if ((val1 instanceof Number && val2 instanceof BigInteger)
+                || (val1 instanceof BigInteger && val2 instanceof Number)) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        }
         if (val1 instanceof Number && val2 instanceof Number) {
             return wrapNumber(((Number) val1).doubleValue() + ((Number) val2).doubleValue());
         }
@@ -2843,10 +2875,16 @@ public class ScriptRuntime {
         if (val1 instanceof Scriptable) val1 = ((Scriptable) val1).getDefaultValue(null);
         if (val2 instanceof Scriptable) val2 = ((Scriptable) val2).getDefaultValue(null);
         if (!(val1 instanceof CharSequence) && !(val2 instanceof CharSequence)) {
-            if ((val1 instanceof Number) && (val2 instanceof Number)) {
-                return wrapNumber(((Number) val1).doubleValue() + ((Number) val2).doubleValue());
+            Number num1 = val1 instanceof Number ? (Number) val1 : toNumeric(val1);
+            Number num2 = val2 instanceof Number ? (Number) val2 : toNumeric(val2);
+
+            if (num1 instanceof BigInteger && num2 instanceof BigInteger) {
+                return ((BigInteger) num1).add((BigInteger) num2);
             }
-            return wrapNumber(toNumber(val1) + toNumber(val2));
+            if (num1 instanceof BigInteger || num2 instanceof BigInteger) {
+                throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+            }
+            return num1.doubleValue() + num2.doubleValue();
         }
         return new ConsString(toCharSequence(val1), toCharSequence(val2));
     }
@@ -2877,6 +2915,132 @@ public class ScriptRuntime {
     @Deprecated
     public static CharSequence add(Object val1, CharSequence val2) {
         return new ConsString(toCharSequence(val1), val2);
+    }
+
+    public static Number subtract(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).subtract((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return val1.doubleValue() - val2.doubleValue();
+        }
+    }
+
+    public static Number multiply(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).multiply((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return val1.doubleValue() * val2.doubleValue();
+        }
+    }
+
+    public static Number divide(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            if (val2.equals(BigInteger.ZERO)) {
+                throw ScriptRuntime.rangeErrorById("msg.division.zero");
+            }
+            return ((BigInteger) val1).divide((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return val1.doubleValue() / val2.doubleValue();
+        }
+    }
+
+    public static Number remainder(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            if (val2.equals(BigInteger.ZERO)) {
+                throw ScriptRuntime.rangeErrorById("msg.division.zero");
+            }
+            return ((BigInteger) val1).remainder((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return val1.doubleValue() % val2.doubleValue();
+        }
+    }
+
+    public static Number exponentiate(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            if (((BigInteger) val2).signum() == -1) {
+                throw ScriptRuntime.rangeErrorById("msg.bigint.negative.exponent");
+            }
+            // TODO: val2 is supported only in the range of 32-bit integer.
+            return ((BigInteger) val1).pow(val2.intValue());
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return Math.pow(val1.doubleValue(), val2.doubleValue());
+        }
+    }
+
+    public static Number bitwiseAND(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).and((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) & toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number bitwiseOR(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).or((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) | toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number bitwiseXOR(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).xor((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) ^ toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number leftShift(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            // TODO: val2 is supported only in the range of 32-bit integer.
+            return ((BigInteger) val1).shiftLeft(val2.intValue());
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) << toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number signedRightShift(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            // TODO: val2 is supported only in the range of 32-bit integer.
+            return ((BigInteger) val1).shiftRight(val2.intValue());
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) >> toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number bitwiseNOT(Number val) {
+        if (val instanceof BigInteger) {
+            return ((BigInteger) val).not();
+        } else {
+            int result = ~toInt32(val.doubleValue());
+            return Double.valueOf(result);
+        }
     }
 
     /**
@@ -2955,25 +3119,32 @@ public class ScriptRuntime {
             Object value,
             int incrDecrMask) {
         final boolean post = (incrDecrMask & Node.POST_FLAG) != 0;
-        double number;
+
+        Number number;
         if (value instanceof Number) {
-            number = ((Number) value).doubleValue();
+            number = (Number) value;
         } else {
-            number = toNumber(value);
-            if (post) {
-                // convert result to number
-                value = wrapNumber(number);
+            number = toNumeric(value);
+        }
+
+        Number result;
+        if (number instanceof BigInteger) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = ((BigInteger) number).add(BigInteger.ONE);
+            } else {
+                result = ((BigInteger) number).subtract(BigInteger.ONE);
+            }
+        } else {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = number.doubleValue() + 1.0;
+            } else {
+                result = number.doubleValue() - 1.0;
             }
         }
-        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-            ++number;
-        } else {
-            --number;
-        }
-        Number result = wrapNumber(number);
+
         target.put(id, protoChainStart, result);
         if (post) {
-            return value;
+            return number;
         }
         return result;
     }
@@ -2988,25 +3159,32 @@ public class ScriptRuntime {
             Object obj, Object index, Context cx, Scriptable scope, int incrDecrMask) {
         Object value = getObjectElem(obj, index, cx, scope);
         final boolean post = (incrDecrMask & Node.POST_FLAG) != 0;
-        double number;
+
+        Number number;
         if (value instanceof Number) {
-            number = ((Number) value).doubleValue();
+            number = (Number) value;
         } else {
-            number = toNumber(value);
-            if (post) {
-                // convert result to number
-                value = wrapNumber(number);
+            number = toNumeric(value);
+        }
+
+        Number result;
+        if (number instanceof BigInteger) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = ((BigInteger) number).add(BigInteger.ONE);
+            } else {
+                result = ((BigInteger) number).subtract(BigInteger.ONE);
+            }
+        } else {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = number.doubleValue() + 1.0;
+            } else {
+                result = number.doubleValue() - 1.0;
             }
         }
-        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-            ++number;
-        } else {
-            --number;
-        }
-        Number result = wrapNumber(number);
+
         setObjectElem(obj, index, result, cx, scope);
         if (post) {
-            return value;
+            return number;
         }
         return result;
     }
@@ -3020,25 +3198,32 @@ public class ScriptRuntime {
     public static Object refIncrDecr(Ref ref, Context cx, Scriptable scope, int incrDecrMask) {
         Object value = ref.get(cx);
         boolean post = ((incrDecrMask & Node.POST_FLAG) != 0);
-        double number;
+
+        Number number;
         if (value instanceof Number) {
-            number = ((Number) value).doubleValue();
+            number = (Number) value;
         } else {
-            number = toNumber(value);
-            if (post) {
-                // convert result to number
-                value = wrapNumber(number);
+            number = toNumeric(value);
+        }
+
+        Number result;
+        if (number instanceof BigInteger) {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = ((BigInteger) number).add(BigInteger.ONE);
+            } else {
+                result = ((BigInteger) number).subtract(BigInteger.ONE);
+            }
+        } else {
+            if ((incrDecrMask & Node.DECR_FLAG) == 0) {
+                result = number.doubleValue() + 1.0;
+            } else {
+                result = number.doubleValue() - 1.0;
             }
         }
-        if ((incrDecrMask & Node.DECR_FLAG) == 0) {
-            ++number;
-        } else {
-            --number;
-        }
-        Number result = wrapNumber(number);
+
         ref.set(cx, scope, result);
         if (post) {
-            return value;
+            return number;
         }
         return result;
     }
