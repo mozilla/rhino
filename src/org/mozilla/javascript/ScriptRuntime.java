@@ -818,6 +818,13 @@ public class ScriptRuntime {
         }
     }
 
+    public static Number toNumeric(Object val) {
+        if (val instanceof BigInteger) {
+            return (BigInteger) val;
+        }
+        return toNumber(val);
+    }
+
     /**
      * Helper function for builtin objects that use the varargs form. ECMA function formal arguments
      * are undefined if not supplied; this function pads the argument array out to the expected
@@ -2771,6 +2778,7 @@ public class ScriptRuntime {
         if (value instanceof ScriptableObject) return ((ScriptableObject) value).getTypeOf();
         if (value instanceof Scriptable) return (value instanceof Callable) ? "function" : "object";
         if (value instanceof CharSequence) return "string";
+        if (value instanceof BigInteger) return "bigint";
         if (value instanceof Number) return "number";
         if (value instanceof Boolean) return "boolean";
         throw errorWithClassName("msg.invalid.type", value);
@@ -3033,6 +3041,13 @@ public class ScriptRuntime {
             return value;
         }
         return result;
+    }
+
+    public static Number negate(Number val) {
+        if (val instanceof BigInteger) {
+            return ((BigInteger) val).negate();
+        }
+        return -val.doubleValue();
     }
 
     public static Object toPrimitive(Object val) {
