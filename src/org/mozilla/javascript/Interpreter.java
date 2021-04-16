@@ -3578,28 +3578,35 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static int doArithmetic(
             CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
-        double lDbl = stack_double(frame, stackTop - 1);
-        double rDbl = stack_double(frame, stackTop);
+        Number lNum = stack_numeric(frame, stackTop - 1);
+        Number rNum = stack_numeric(frame, stackTop);
         --stackTop;
-        stack[stackTop] = DOUBLE_MARK;
+
+        Number result = null;
         switch (op) {
             case Token.SUB:
-                lDbl -= rDbl;
+                result = ScriptRuntime.subtract(lNum, rNum);
                 break;
             case Token.MUL:
-                lDbl *= rDbl;
+                result = ScriptRuntime.multiply(lNum, rNum);
                 break;
             case Token.DIV:
-                lDbl /= rDbl;
+                result = ScriptRuntime.divide(lNum, rNum);
                 break;
             case Token.MOD:
-                lDbl %= rDbl;
+                result = ScriptRuntime.remainder(lNum, rNum);
                 break;
             case Token.EXP:
-                lDbl = Math.pow(lDbl, rDbl);
+                result = ScriptRuntime.exponentiate(lNum, rNum);
                 break;
         }
-        sDbl[stackTop] = lDbl;
+
+        if (result instanceof BigInteger) {
+            stack[stackTop] = result;
+        } else {
+            stack[stackTop] = DOUBLE_MARK;
+            sDbl[stackTop] = result.doubleValue();
+        }
         return stackTop;
     }
 
