@@ -3015,6 +3015,15 @@ public class ScriptRuntime {
         }
     }
 
+    public static Number bitwiseNOT(Number val) {
+        if (val instanceof BigInteger) {
+            return ((BigInteger) val).not();
+        } else {
+            int result = ~toInt32(val.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
     /**
      * The method is only present for compatibility.
      *
