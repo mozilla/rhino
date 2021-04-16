@@ -298,10 +298,10 @@ public final class NativeJSON extends IdScriptableObject
             value = ((NativeJavaObject) value).unwrap();
             if (value instanceof Map) {
                 Map<?,?> map = (Map<?,?>) value;
-                NativeObject nObj = new NativeObject();
+                Scriptable nObj = state.cx.newObject(state.scope);
                 map.forEach((k, v) -> {
                     if (k instanceof CharSequence) {
-                        nObj.put(((CharSequence) k).toString(), nObj, v);
+                        nObj.put(((CharSequence) k).toString(), nObj, state.cx.getWrapFactory().wrap(state.cx, state.scope, v, v.getClass()));
                     }
                 });
                 value = nObj;
@@ -312,7 +312,11 @@ public final class NativeJSON extends IdScriptableObject
                     value = col.toArray(new Object[col.size()]);
                 }
                 if (value instanceof Object[]) {
-                    value = new NativeArray((Object[]) value);
+                    Object[] elements = (Object[]) value;
+                    elements = Arrays.stream(elements)
+                        .map(o -> state.cx.getWrapFactory().wrap(state.cx, state.scope, o, o.getClass()))
+                        .toArray();
+                    value = state.cx.newArray(state.scope, elements);
                 }
             }
         }

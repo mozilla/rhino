@@ -144,4 +144,27 @@ assertTrue(expected.test(actual));
 var obj = {test: javaObject};
 assertThrows(()=>JSON.stringify(obj), TypeError);
 
+// nested Maps and Lists
+var map1 = new java.util.HashMap({a:1});
+var map2 = new java.util.HashMap({b:2, map1: map1});
+
+var list1 = new java.util.ArrayList([1]);
+var list2 = new java.util.ArrayList([2, list1]);
+
+var expected = JSON.stringify({
+    b: 2,
+    map1: {a: 1}
+});
+var actual = JSON.stringify(map2);
+assertEquals(expected, actual);
+
+var expected = JSON.stringify([2, [1]]);
+var actual = JSON.stringify(list2);
+assertEquals(expected, actual);
+
+list2.add(map1);
+var expected = JSON.stringify([2, [1], {a:1}]);
+var actual = JSON.stringify(list2);
+assertEquals(expected, actual);
+
 "success"
