@@ -112,14 +112,6 @@ public abstract class ScriptableObject
 
     private volatile Map<Object, Object> associatedValues;
 
-    enum SlotAccess {
-        QUERY,
-        MODIFY,
-        MODIFY_CONST,
-        MODIFY_GETTER_SETTER,
-        CONVERT_ACCESSOR_TO_DATA
-    }
-
     private boolean isExtensible = true;
     private boolean isSealed = false;
 
@@ -133,209 +125,15 @@ public abstract class ScriptableObject
         }
     }
 
-    /**
-     * This is the object that is stored in the SlotMap. For historical reasons it remains inside
-     * this class. SlotMap references a number of members of this class directly.
-     */
-    static class Slot implements Serializable {
-        private static final long serialVersionUID = -6090581677123995491L;
-        Object name; // This can change due to cachings
-        int indexOrHash;
-        private short attributes;
-        Object value;
-        transient Slot next; // next in hash table bucket
-        transient Slot orderedNext; // next in linked list
-
-        Slot(Object name, int indexOrHash, int attributes) {
-            this.name = name;
-            this.indexOrHash = indexOrHash;
-            this.attributes = (short) attributes;
-        }
-
-        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-            in.defaultReadObject();
-            if (name != null) {
-                indexOrHash = name.hashCode();
-            }
-        }
-
-        boolean setValue(Object value, Scriptable owner, Scriptable start) {
-            if ((attributes & READONLY) != 0) {
-                if (Context.getContext().isStrictMode()) {
-                    throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
-                }
-                return true;
-            }
-            if (owner == start) {
-                this.value = value;
-                return true;
-            }
-            return false;
-        }
-
-        Object getValue(Scriptable start) {
-            return value;
-        }
-
-        int getAttributes() {
-            return attributes;
-        }
-
-        synchronized void setAttributes(int value) {
-            checkValidAttributes(value);
-            attributes = (short) value;
-        }
-
-        ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-            return buildDataDescriptor(scope, value, attributes);
-        }
-    }
-
     protected static ScriptableObject buildDataDescriptor(
             Scriptable scope, Object value, int attributes) {
         ScriptableObject desc = new NativeObject();
         ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
         desc.defineProperty("value", value, EMPTY);
-        desc.defineProperty("writable", Boolean.valueOf((attributes & READONLY) == 0), EMPTY);
-        desc.defineProperty("enumerable", Boolean.valueOf((attributes & DONTENUM) == 0), EMPTY);
-        desc.defineProperty("configurable", Boolean.valueOf((attributes & PERMANENT) == 0), EMPTY);
+        desc.defineProperty("writable", (attributes & READONLY) == 0, EMPTY);
+        desc.defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY);
+        desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
         return desc;
-    }
-
-    /**
-     * A GetterSlot is a specialication of a Slot for properties that are assigned functions via
-     * Object.defineProperty() and its friends instead of regular values.
-     */
-    static final class GetterSlot extends Slot {
-        private static final long serialVersionUID = -4900574849788797588L;
-
-        Object getter;
-        Object setter;
-
-        GetterSlot(Object name, int indexOrHash, int attributes) {
-            super(name, indexOrHash, attributes);
-        }
-
-        @Override
-        ScriptableObject getPropertyDescriptor(Context cx, Scriptable scope) {
-            int attr = getAttributes();
-            ScriptableObject desc = new NativeObject();
-            ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
-            desc.defineProperty("enumerable", Boolean.valueOf((attr & DONTENUM) == 0), EMPTY);
-            desc.defineProperty("configurable", Boolean.valueOf((attr & PERMANENT) == 0), EMPTY);
-            if (getter == null && setter == null) {
-                desc.defineProperty("writable", Boolean.valueOf((attr & READONLY) == 0), EMPTY);
-            }
-
-            String fName = name == null ? "f" : name.toString();
-            if (getter != null) {
-                if (getter instanceof MemberBox) {
-                    desc.defineProperty(
-                            "get", ((MemberBox) getter).asGetterFunction(fName, scope), EMPTY);
-                } else if (getter instanceof Member) {
-                    desc.defineProperty(
-                            "get", new FunctionObject(fName, (Member) getter, scope), EMPTY);
-                } else {
-                    desc.defineProperty("get", getter, EMPTY);
-                }
-            }
-            if (setter != null) {
-                if (setter instanceof MemberBox) {
-                    desc.defineProperty(
-                            "set", ((MemberBox) setter).asSetterFunction(fName, scope), EMPTY);
-                } else if (setter instanceof Member) {
-                    desc.defineProperty(
-                            "set", new FunctionObject(fName, (Member) setter, scope), EMPTY);
-                } else {
-                    desc.defineProperty("set", setter, EMPTY);
-                }
-            }
-            return desc;
-        }
-
-        @Override
-        boolean setValue(Object value, Scriptable owner, Scriptable start) {
-            if (setter == null) {
-                if (getter != null) {
-                    Context cx = Context.getContext();
-                    if (cx.isStrictMode()
-                            ||
-                            // Based on TC39 ES3.1 Draft of 9-Feb-2009, 8.12.4, step 2,
-                            // we should throw a TypeError in this case.
-                            cx.hasFeature(Context.FEATURE_STRICT_MODE)) {
-
-                        String prop = "";
-                        if (name != null) {
-                            prop = "[" + start.getClassName() + "]." + name;
-                        }
-                        throw ScriptRuntime.typeErrorById(
-                                "msg.set.prop.no.setter", prop, Context.toString(value));
-                    }
-                    // Assignment to a property with only a getter defined. The
-                    // assignment is ignored. See bug 478047.
-                    return true;
-                }
-            } else {
-                Context cx = Context.getContext();
-                if (setter instanceof MemberBox) {
-                    MemberBox nativeSetter = (MemberBox) setter;
-                    Class<?> pTypes[] = nativeSetter.argTypes;
-                    // XXX: cache tag since it is already calculated in
-                    // defineProperty ?
-                    Class<?> valueType = pTypes[pTypes.length - 1];
-                    int tag = FunctionObject.getTypeTag(valueType);
-                    Object actualArg = FunctionObject.convertArg(cx, start, value, tag);
-                    Object setterThis;
-                    Object[] args;
-                    if (nativeSetter.delegateTo == null) {
-                        setterThis = start;
-                        args = new Object[] {actualArg};
-                    } else {
-                        setterThis = nativeSetter.delegateTo;
-                        args = new Object[] {start, actualArg};
-                    }
-                    nativeSetter.invoke(setterThis, args);
-                } else if (setter instanceof Function) {
-                    Function f = (Function) setter;
-                    f.call(cx, f.getParentScope(), start, new Object[] {value});
-                }
-                return true;
-            }
-            return super.setValue(value, owner, start);
-        }
-
-        @Override
-        Object getValue(Scriptable start) {
-            if (getter != null) {
-                if (getter instanceof MemberBox) {
-                    MemberBox nativeGetter = (MemberBox) getter;
-                    Object getterThis;
-                    Object[] args;
-                    if (nativeGetter.delegateTo == null) {
-                        getterThis = start;
-                        args = ScriptRuntime.emptyArgs;
-                    } else {
-                        getterThis = nativeGetter.delegateTo;
-                        args = new Object[] {start};
-                    }
-                    return nativeGetter.invoke(getterThis, args);
-                } else if (getter instanceof Function) {
-                    Function f = (Function) getter;
-                    Context cx = Context.getContext();
-                    return f.call(cx, f.getParentScope(), start, ScriptRuntime.emptyArgs);
-                }
-            }
-            Object val = this.value;
-            if (val instanceof LazilyLoadedCtor) {
-                LazilyLoadedCtor initializer = (LazilyLoadedCtor) val;
-                try {
-                    initializer.init();
-                } finally {
-                    this.value = val = initializer.getValue();
-                }
-            }
-            return val;
-        }
     }
 
     static void checkValidAttributes(int attributes) {
@@ -659,7 +457,7 @@ public abstract class ScriptableObject
      * @see org.mozilla.javascript.ScriptableObject#EMPTY
      */
     public int getAttributes(String name) {
-        return findAttributeSlot(name, 0, SlotAccess.QUERY).getAttributes();
+        return getAttributeSlot(name, 0).getAttributes();
     }
 
     /**
@@ -675,11 +473,11 @@ public abstract class ScriptableObject
      * @see org.mozilla.javascript.ScriptableObject#EMPTY
      */
     public int getAttributes(int index) {
-        return findAttributeSlot(null, index, SlotAccess.QUERY).getAttributes();
+        return getAttributeSlot(null, index).getAttributes();
     }
 
     public int getAttributes(Symbol sym) {
-        return findAttributeSlot(sym, SlotAccess.QUERY).getAttributes();
+        return getAttributeSlot(sym).getAttributes();
     }
 
     /**
@@ -702,7 +500,8 @@ public abstract class ScriptableObject
      */
     public void setAttributes(String name, int attributes) {
         checkNotSealed(name, 0);
-        findAttributeSlot(name, 0, SlotAccess.MODIFY).setAttributes(attributes);
+        Slot attrSlot = slotMap.modify(name, 0, 0);
+        attrSlot.setAttributes(attributes);
     }
 
     /**
@@ -719,50 +518,52 @@ public abstract class ScriptableObject
      */
     public void setAttributes(int index, int attributes) {
         checkNotSealed(null, index);
-        findAttributeSlot(null, index, SlotAccess.MODIFY).setAttributes(attributes);
+        Slot attrSlot = slotMap.modify(null, index, 0);
+        attrSlot.setAttributes(attributes);
     }
 
     /** Set attributes of a Symbol-keyed property. */
     public void setAttributes(Symbol key, int attributes) {
         checkNotSealed(key, 0);
-        findAttributeSlot(key, SlotAccess.MODIFY).setAttributes(attributes);
+        Slot attrSlot = slotMap.modify(key, 0, 0);
+        attrSlot.setAttributes(attributes);
     }
 
-    /** XXX: write docs. */
+    /** Implement the legacy "__defineGetter__" and "__defineSetter__" methods. */
     public void setGetterOrSetter(
             String name, int index, Callable getterOrSetter, boolean isSetter) {
-        setGetterOrSetter(name, index, getterOrSetter, isSetter, false);
-    }
-
-    private void setGetterOrSetter(
-            String name, int index, Callable getterOrSetter, boolean isSetter, boolean force) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
+        checkNotSealed(name, index);
 
-        if (!force) {
-            checkNotSealed(name, index);
-        }
-
-        final GetterSlot gslot;
+        FunctionSlot fslot;
         if (isExtensible()) {
-            gslot = (GetterSlot) slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
+            Slot slot = slotMap.modify(name, index, 0);
+            if (slot instanceof FunctionSlot) {
+                fslot = (FunctionSlot) slot;
+            } else {
+                fslot = new FunctionSlot(slot);
+                slotMap.replace(slot, fslot);
+            }
         } else {
             Slot slot = slotMap.query(name, index);
-            if (!(slot instanceof GetterSlot)) return;
-            gslot = (GetterSlot) slot;
-        }
-
-        if (!force) {
-            int attributes = gslot.getAttributes();
-            if ((attributes & READONLY) != 0) {
-                throw Context.reportRuntimeErrorById("msg.modify.readonly", name);
+            if (slot instanceof FunctionSlot) {
+                fslot = (FunctionSlot) slot;
+            } else {
+                return;
             }
         }
-        if (isSetter) {
-            gslot.setter = getterOrSetter;
-        } else {
-            gslot.getter = getterOrSetter;
+
+        int attributes = fslot.getAttributes();
+        if ((attributes & READONLY) != 0) {
+            throw Context.reportRuntimeErrorById("msg.modify.readonly", name);
         }
-        gslot.value = Undefined.instance;
+
+        if (isSetter) {
+            fslot.setter = getterOrSetter;
+        } else {
+            fslot.getter = getterOrSetter;
+        }
+        fslot.value = Undefined.instance;
     }
 
     /**
@@ -776,16 +577,11 @@ public abstract class ScriptableObject
      * @return Null if the property does not exist. Otherwise returns either the getter or the
      *     setter for the property, depending on the value of isSetter (may be undefined if unset).
      */
-    public Object getGetterOrSetter(String name, int index, boolean isSetter) {
+    public Function getGetterOrSetter(String name, int index, Scriptable scope, boolean isSetter) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
         Slot slot = slotMap.query(name, index);
         if (slot == null) return null;
-        if (slot instanceof GetterSlot) {
-            GetterSlot gslot = (GetterSlot) slot;
-            Object result = isSetter ? gslot.setter : gslot.getter;
-            return result != null ? result : Undefined.instance;
-        }
-        return Undefined.instance;
+        return isSetter ? slot.getSetterFunction(name, scope) : slot.getGetterFunction(name, scope);
     }
 
     /**
@@ -798,21 +594,23 @@ public abstract class ScriptableObject
      */
     protected boolean isGetterOrSetter(String name, int index, boolean setter) {
         Slot slot = slotMap.query(name, index);
-        if (slot instanceof GetterSlot) {
-            if (setter && ((GetterSlot) slot).setter != null) return true;
-            if (!setter && ((GetterSlot) slot).getter != null) return true;
-        }
-        return false;
+        return (slot != null && slot.isSetterSlot());
     }
 
     void addLazilyInitializedValue(String name, int index, LazilyLoadedCtor init, int attributes) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
         checkNotSealed(name, index);
-        GetterSlot gslot = (GetterSlot) slotMap.get(name, index, SlotAccess.MODIFY_GETTER_SETTER);
-        gslot.setAttributes(attributes);
-        gslot.getter = null;
-        gslot.setter = null;
-        gslot.value = init;
+        Slot slot = slotMap.modify(name, index, 0);
+        LazyLoadSlot lslot;
+        if (slot instanceof LazyLoadSlot) {
+            lslot = (LazyLoadSlot) slot;
+        } else {
+            lslot = new LazyLoadSlot(slot);
+            slotMap.replace(slot, lslot);
+        }
+
+        lslot.setAttributes(attributes);
+        lslot.value = init;
     }
 
     /**
@@ -1668,11 +1466,18 @@ public abstract class ScriptableObject
             }
         }
 
-        GetterSlot gslot =
-                (GetterSlot) slotMap.get(propertyName, 0, SlotAccess.MODIFY_GETTER_SETTER);
-        gslot.setAttributes(attributes);
-        gslot.getter = getterBox;
-        gslot.setter = setterBox;
+        Slot slot = slotMap.modify(propertyName, 0, 0);
+        MemberBoxSlot memberSlot;
+        if (slot instanceof MemberBoxSlot) {
+            memberSlot = (MemberBoxSlot) slot;
+        } else {
+            memberSlot = new MemberBoxSlot(slot);
+            slotMap.replace(slot, memberSlot);
+        }
+
+        memberSlot.setAttributes(attributes);
+        memberSlot.getter = getterBox;
+        memberSlot.setter = setterBox;
     }
 
     /**
@@ -1720,7 +1525,20 @@ public abstract class ScriptableObject
     protected void defineOwnProperty(
             Context cx, Object id, ScriptableObject desc, boolean checkValid) {
 
-        Slot slot = getSlot(cx, id, SlotAccess.QUERY);
+        Object key = null;
+        int index = 0;
+        if (id instanceof Symbol) {
+            key = id;
+        } else {
+            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
+            if (s.stringId == null) {
+                index = s.index;
+            } else {
+                key = s.stringId;
+            }
+        }
+
+        Slot slot = slotMap.query(key, index);
         boolean isNew = slot == null;
 
         if (checkValid) {
@@ -1731,40 +1549,40 @@ public abstract class ScriptableObject
         boolean isAccessor = isAccessorDescriptor(desc);
         final int attributes;
 
-        if (slot == null) { // new slot
-            slot =
-                    getSlot(
-                            cx,
-                            id,
-                            isAccessor ? SlotAccess.MODIFY_GETTER_SETTER : SlotAccess.MODIFY);
+        if (slot == null) {
+            slot = slotMap.modify(key, index, 0);
             attributes = applyDescriptorToAttributeBitset(DONTENUM | READONLY | PERMANENT, desc);
         } else {
             attributes = applyDescriptorToAttributeBitset(slot.getAttributes(), desc);
         }
 
         if (isAccessor) {
-            if (!(slot instanceof GetterSlot)) {
-                slot = getSlot(cx, id, SlotAccess.MODIFY_GETTER_SETTER);
-            }
+            FunctionSlot fslot;
 
-            GetterSlot gslot = (GetterSlot) slot;
+            if (slot instanceof FunctionSlot) {
+                fslot = (FunctionSlot) slot;
+            } else {
+                fslot = new FunctionSlot(slot);
+                slotMap.replace(slot, fslot);
+            }
 
             Object getter = getProperty(desc, "get");
             if (getter != NOT_FOUND) {
-                gslot.getter = getter;
+                fslot.getter = getter;
             }
             Object setter = getProperty(desc, "set");
             if (setter != NOT_FOUND) {
-                gslot.setter = setter;
+                fslot.setter = setter;
             }
 
-            gslot.value = Undefined.instance;
-            gslot.setAttributes(attributes);
+            fslot.value = Undefined.instance;
+            fslot.setAttributes(attributes);
         } else {
-            if (slot instanceof GetterSlot && isDataDescriptor(desc)) {
-                slot = getSlot(cx, id, SlotAccess.CONVERT_ACCESSOR_TO_DATA);
+            if (!slot.isValueSlot() && isDataDescriptor(desc)) {
+                Slot newSlot = new Slot(slot);
+                slotMap.replace(slot, newSlot);
+                slot = newSlot;
             }
-
             Object value = getProperty(desc, "value");
             if (value != NOT_FOUND) {
                 slot.value = value;
@@ -2569,9 +2387,9 @@ public abstract class ScriptableObject
             slot = slotMap.query(key, index);
             if (!isExtensible
                     && (slot == null
-                            || (!(slot instanceof GetterSlot)
+                            || (!(slot instanceof FunctionSlot)
                                     && (slot.getAttributes() & READONLY) != 0))
-                    && Context.getContext().isStrictMode()) {
+                    && Context.isCurrentContextStrict()) {
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
             }
             if (slot == null) {
@@ -2580,9 +2398,9 @@ public abstract class ScriptableObject
         } else if (!isExtensible) {
             slot = slotMap.query(key, index);
             if ((slot == null
-                            || (!(slot instanceof GetterSlot)
+                            || (!(slot instanceof FunctionSlot)
                                     && (slot.getAttributes() & READONLY) != 0))
-                    && Context.getContext().isStrictMode()) {
+                    && Context.isCurrentContextStrict()) {
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
             }
             if (slot == null) {
@@ -2592,7 +2410,7 @@ public abstract class ScriptableObject
             if (isSealed) {
                 checkNotSealed(key, index);
             }
-            slot = slotMap.get(key, index, SlotAccess.MODIFY);
+            slot = slotMap.modify(key, index, 0);
         }
         return slot.setValue(value, this, start);
     }
@@ -2630,7 +2448,7 @@ public abstract class ScriptableObject
         } else {
             checkNotSealed(name, index);
             // either const hoisted declaration or initialization
-            slot = slotMap.get(name, index, SlotAccess.MODIFY_CONST);
+            slot = slotMap.modify(name, index, CONST);
             int attr = slot.getAttributes();
             if ((attr & READONLY) == 0)
                 throw Context.reportRuntimeErrorById("msg.var.redecl", name);
@@ -2645,8 +2463,8 @@ public abstract class ScriptableObject
         return slot.setValue(value, this, start);
     }
 
-    private Slot findAttributeSlot(String name, int index, SlotAccess accessType) {
-        Slot slot = slotMap.get(name, index, accessType);
+    private Slot getAttributeSlot(String name, int index) {
+        Slot slot = slotMap.query(name, index);
         if (slot == null) {
             String str = (name != null ? name : Integer.toString(index));
             throw Context.reportRuntimeErrorById("msg.prop.not.found", str);
@@ -2654,8 +2472,8 @@ public abstract class ScriptableObject
         return slot;
     }
 
-    private Slot findAttributeSlot(Symbol key, SlotAccess accessType) {
-        Slot slot = slotMap.get(key, 0, accessType);
+    private Slot getAttributeSlot(Symbol key) {
+        Slot slot = slotMap.query(key, 0);
         if (slot == null) {
             throw Context.reportRuntimeErrorById("msg.prop.not.found", key);
         }
@@ -2741,26 +2559,26 @@ public abstract class ScriptableObject
         slotMap = createSlotMap(tableSize);
         for (int i = 0; i < tableSize; i++) {
             Slot slot = (Slot) in.readObject();
-            slotMap.addSlot(slot);
+            slotMap.add(slot);
         }
     }
 
     protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-        Slot slot = getSlot(cx, id, SlotAccess.QUERY);
+        Slot slot = querySlot(cx, id);
         if (slot == null) return null;
         Scriptable scope = getParentScope();
         return slot.getPropertyDescriptor(cx, (scope == null ? this : scope));
     }
 
-    protected Slot getSlot(Context cx, Object id, SlotAccess accessType) {
+    protected Slot querySlot(Context cx, Object id) {
         if (id instanceof Symbol) {
-            return slotMap.get(id, 0, accessType);
+            return slotMap.query(id, 0);
         }
         StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
         if (s.stringId == null) {
-            return slotMap.get(null, s.index, accessType);
+            return slotMap.query(null, s.index);
         }
-        return slotMap.get(s.stringId, 0, accessType);
+        return slotMap.query(s.stringId, 0);
     }
 
     // Partial implementation of java.util.Map. See NativeObject for
@@ -2808,15 +2626,7 @@ public abstract class ScriptableObject
         public int compare(Object o1, Object o2) {
             if (o1 instanceof Integer) {
                 if (o2 instanceof Integer) {
-                    int i1 = ((Integer) o1).intValue();
-                    int i2 = ((Integer) o2).intValue();
-                    if (i1 < i2) {
-                        return -1;
-                    }
-                    if (i1 > i2) {
-                        return 1;
-                    }
-                    return 0;
+                    return ((Integer) o1).compareTo((Integer) o2);
                 }
                 return -1;
             }

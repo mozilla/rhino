@@ -15,7 +15,7 @@ package org.mozilla.javascript;
  * ScriptableObject are complex. Many attempts to make this interface more elegant have resulted in
  * substantial performance regressions so we are doing the best that we can.
  */
-public interface SlotMap extends Iterable<ScriptableObject.Slot> {
+public interface SlotMap extends Iterable<Slot> {
 
     /** Return the size of the map. */
     int size();
@@ -25,21 +25,21 @@ public interface SlotMap extends Iterable<ScriptableObject.Slot> {
 
     /**
      * Return the Slot that matches EITHER "key" or "index". (It will use "key" if it is not null,
-     * and otherwise "index". "accessType" is one of the constants defined in ScriptableObject.
+     * and otherwise "index".) If no slot exists, then create a default slot class.
      */
-    ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType);
+    Slot modify(Object key, int index, int attributes);
 
-    /**
-     * This is an optimization that is the same as get with an accessType of SLOT_QUERY. It should
-     * be used instead of SLOT_QUERY because it is more efficient.
-     */
-    ScriptableObject.Slot query(Object key, int index);
+    /** Retrieve the slot at EITHER key or index, or return null if the slot cannot be found. */
+    Slot query(Object key, int index);
+
+    /** Replace "slot" with a new slot. This is used to change slot types. */
+    void replace(Slot oldSlot, Slot newSlot);
 
     /**
      * Insert a new slot to the map. Both "name" and "indexOrHash" must be populated. Note that
-     * ScriptableObject generally adds slots via the "get" method.
+     * ScriptableObject generally adds slots via the "modify" method.
      */
-    void addSlot(ScriptableObject.Slot newSlot);
+    void add(Slot newSlot);
 
     /** Remove the slot at either "key" or "index". */
     void remove(Object key, int index);

@@ -324,25 +324,25 @@ public class NativeObject extends IdScriptableObject implements Map {
                     StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
                     int index = s.stringId != null ? 0 : s.index;
                     boolean isSetter = (id == Id___lookupSetter__);
-                    Object gs;
+                    Function gs;
                     for (; ; ) {
-                        gs = so.getGetterOrSetter(s.stringId, index, isSetter);
-                        if (gs != null) break;
+                        gs = so.getGetterOrSetter(s.stringId, index, this, isSetter);
+                        if (gs != null) {
+                            break;
+                        }
                         // If there is no getter or setter for the object itself,
                         // how about the prototype?
                         Scriptable v = so.getPrototype();
-                        if (v == null) break;
-                        if (v instanceof ScriptableObject) so = (ScriptableObject) v;
-                        else break;
+                        if (v == null) {
+                            break;
+                        }
+                        if (v instanceof ScriptableObject) {
+                            so = (ScriptableObject) v;
+                        } else {
+                            break;
+                        }
                     }
                     if (gs != null) {
-                        if (gs instanceof MemberBox) {
-                            if (isSetter) {
-                                gs = ((MemberBox) gs).asSetterFunction(s.stringId, this);
-                            } else {
-                                gs = ((MemberBox) gs).asGetterFunction(s.stringId, this);
-                            }
-                        }
                         return gs;
                     }
                 }

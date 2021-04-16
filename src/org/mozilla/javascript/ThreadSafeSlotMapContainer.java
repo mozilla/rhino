@@ -8,8 +8,6 @@ package org.mozilla.javascript;
 
 import java.util.Iterator;
 import java.util.concurrent.locks.StampedLock;
-import org.mozilla.javascript.ScriptableObject.Slot;
-import org.mozilla.javascript.ScriptableObject.SlotAccess;
 
 /**
  * This class extends the SlotMapContainer so that we have thread-safe access to all the properties
@@ -18,6 +16,8 @@ import org.mozilla.javascript.ScriptableObject.SlotAccess;
 class ThreadSafeSlotMapContainer extends SlotMapContainer {
 
     private final StampedLock lock = new StampedLock();
+
+    ThreadSafeSlotMapContainer() {}
 
     ThreadSafeSlotMapContainer(int initialSize) {
         super(initialSize);
@@ -62,13 +62,21 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
     }
 
     @Override
-    public Slot get(Object key, int index, SlotAccess accessType) {
+    public Slot modify(Object key, int index, int attributes) {
         final long stamp = lock.writeLock();
         try {
-            if (accessType != SlotAccess.QUERY) {
-                checkMapSize();
-            }
-            return map.get(key, index, accessType);
+            checkMapSize();
+            return map.modify(key, index, attributes);
+        } finally {
+            lock.unlockWrite(stamp);
+        }
+    }
+
+    @Override
+    public void replace(Slot oldSlot, Slot newSlot) {
+        final long stamp = lock.writeLock();
+        try {
+            map.replace(oldSlot, newSlot);
         } finally {
             lock.unlockWrite(stamp);
         }
@@ -91,11 +99,11 @@ class ThreadSafeSlotMapContainer extends SlotMapContainer {
     }
 
     @Override
-    public void addSlot(Slot newSlot) {
+    public void add(Slot newSlot) {
         final long stamp = lock.writeLock();
         try {
             checkMapSize();
-            map.addSlot(newSlot);
+            map.add(newSlot);
         } finally {
             lock.unlockWrite(stamp);
         }
