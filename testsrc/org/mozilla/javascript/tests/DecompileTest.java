@@ -38,6 +38,7 @@ public class DecompileTest {
         final String source = "var x = 123n;";
         Utils.runWithAllOptimizationLevels(
                 cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
                     final Script script = cx.compileString(source, "my script", 0, null);
                     Assert.assertEquals(source, cx.decompileScript(script, 4).trim());
                     return null;

@@ -305,7 +305,8 @@ public final class NativeJSON extends IdScriptableObject {
             value = ScriptRuntime.toString(value);
         } else if (value instanceof NativeBoolean) {
             value = ((NativeBoolean) value).getDefaultValue(ScriptRuntime.BooleanClass);
-        } else if (value instanceof NativeBigInt) {
+        } else if (state.cx.getLanguageVersion() >= Context.VERSION_ES6
+                && value instanceof NativeBigInt) {
             value = ((NativeBigInt) value).getDefaultValue(ScriptRuntime.BigIntegerClass);
         } else if (value instanceof NativeJavaObject) {
             unwrappedJavaValue = ((NativeJavaObject) value).unwrap();

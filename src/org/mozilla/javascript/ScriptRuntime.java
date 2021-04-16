@@ -168,7 +168,6 @@ public class ScriptRuntime {
         NativeString.init(scope, sealed);
         NativeBoolean.init(scope, sealed);
         NativeNumber.init(scope, sealed);
-        NativeBigInt.init(scope, sealed);
         NativeDate.init(scope, sealed);
         NativeMath.init(scope, sealed);
         NativeJSON.init(scope, sealed);
@@ -281,6 +280,7 @@ public class ScriptRuntime {
             NativeSet.init(cx, scope, sealed);
             NativeWeakMap.init(scope, sealed);
             NativeWeakSet.init(scope, sealed);
+            NativeBigInt.init(scope, sealed);
         }
 
         if (scope instanceof TopLevel) {
@@ -1226,7 +1226,7 @@ public class ScriptRuntime {
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.String);
             return result;
         }
-        if (val instanceof BigInteger) {
+        if (cx.getLanguageVersion() >= Context.VERSION_ES6 && val instanceof BigInteger) {
             NativeBigInt result = new NativeBigInt(((BigInteger) val));
             setBuiltinProtoAndParent(result, scope, TopLevel.Builtins.BigInt);
             return result;

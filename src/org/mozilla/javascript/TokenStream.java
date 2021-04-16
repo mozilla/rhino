@@ -840,7 +840,7 @@ class TokenStream {
                 boolean isInteger = true;
                 boolean isBigInt = false;
 
-                if (c == 'n') {
+                if (es6 && c == 'n') {
                     isBigInt = true;
                     c = getChar();
                 } else if (base == 10 && (c == '.' || c == 'e' || c == 'E')) {
