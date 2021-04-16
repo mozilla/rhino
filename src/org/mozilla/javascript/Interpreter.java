@@ -2626,32 +2626,18 @@ public final class Interpreter extends Icode implements Evaluator {
         {
             number_compare:
             {
-                double rDbl, lDbl;
+                Number rNum, lNum;
                 if (rhs == DOUBLE_MARK) {
-                    rDbl = sDbl[stackTop + 1];
-                    lDbl = stack_double(frame, stackTop);
+                    rNum = sDbl[stackTop + 1];
+                    lNum = stack_numeric(frame, stackTop);
                 } else if (lhs == DOUBLE_MARK) {
-                    rDbl = ScriptRuntime.toNumber(rhs);
-                    lDbl = sDbl[stackTop];
+                    rNum = ScriptRuntime.toNumeric(rhs);
+                    lNum = sDbl[stackTop];
                 } else {
                     break number_compare;
                 }
-                switch (op) {
-                    case Token.GE:
-                        valBln = (lDbl >= rDbl);
-                        break object_compare;
-                    case Token.LE:
-                        valBln = (lDbl <= rDbl);
-                        break object_compare;
-                    case Token.GT:
-                        valBln = (lDbl > rDbl);
-                        break object_compare;
-                    case Token.LT:
-                        valBln = (lDbl < rDbl);
-                        break object_compare;
-                    default:
-                        throw Kit.codeBug();
-                }
+                valBln = ScriptRuntime.compare(lNum, rNum, op);
+                break object_compare;
             }
             valBln = ScriptRuntime.compare(lhs, rhs, op);
         }

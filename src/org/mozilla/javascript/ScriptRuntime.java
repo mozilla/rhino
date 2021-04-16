@@ -3526,10 +3526,8 @@ public class ScriptRuntime {
     public static boolean compare(Object val1, Object val2, int op) {
         assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
 
-        double d1, d2;
         if (val1 instanceof Number && val2 instanceof Number) {
-            d1 = ((Number) val1).doubleValue();
-            d2 = ((Number) val2).doubleValue();
+            return compare((Number) val1, (Number) val2, op);
         } else {
             if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
                 throw typeErrorById("msg.compare.symbol");
@@ -3541,22 +3539,69 @@ public class ScriptRuntime {
                 val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
             }
             if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-                switch (op) {
-                    case Token.GE:
-                        return val1.toString().compareTo(val2.toString()) >= 0;
-                    case Token.LE:
-                        return val1.toString().compareTo(val2.toString()) <= 0;
-                    case Token.GT:
-                        return val1.toString().compareTo(val2.toString()) > 0;
-                    case Token.LT:
-                        return val1.toString().compareTo(val2.toString()) < 0;
-                    default:
-                        throw Kit.codeBug();
-                }
+                return compareTo(val1.toString(), val2.toString(), op);
             }
-            d1 = toNumber(val1);
-            d2 = toNumber(val2);
+            return compare(toNumeric(val1), toNumeric(val2), op);
         }
+    }
+
+    public static boolean compare(Number val1, Number val2, int op) {
+        assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
+
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return compareTo((BigInteger) val1, (BigInteger) val2, op);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            BigDecimal bd1;
+            if (val1 instanceof BigInteger) {
+                bd1 = new BigDecimal((BigInteger) val1);
+            } else {
+                double d = val1.doubleValue();
+                if (Double.isNaN(d)) {
+                    return false;
+                } else if (d == Double.POSITIVE_INFINITY) {
+                    return op == Token.GE || op == Token.GT;
+                } else if (d == Double.NEGATIVE_INFINITY) {
+                    return op == Token.LE || op == Token.LT;
+                }
+                bd1 = new BigDecimal(d, MathContext.UNLIMITED);
+            }
+
+            BigDecimal bd2;
+            if (val2 instanceof BigInteger) {
+                bd2 = new BigDecimal((BigInteger) val2);
+            } else {
+                double d = val2.doubleValue();
+                if (Double.isNaN(d)) {
+                    return false;
+                } else if (d == Double.POSITIVE_INFINITY) {
+                    return op == Token.LE || op == Token.LT;
+                } else if (d == Double.NEGATIVE_INFINITY) {
+                    return op == Token.GE || op == Token.GT;
+                }
+                bd2 = new BigDecimal(d, MathContext.UNLIMITED);
+            }
+
+            return compareTo(bd1, bd2, op);
+        }
+        return compareTo(val1.doubleValue(), val2.doubleValue(), op);
+    }
+
+    private static <T> boolean compareTo(Comparable<T> val1, T val2, int op) {
+        switch (op) {
+            case Token.GE:
+                return val1.compareTo(val2) >= 0;
+            case Token.LE:
+                return val1.compareTo(val2) <= 0;
+            case Token.GT:
+                return val1.compareTo(val2) > 0;
+            case Token.LT:
+                return val1.compareTo(val2) < 0;
+            default:
+                throw Kit.codeBug();
+        }
+    }
+
+    private static <T> boolean compareTo(double d1, double d2, int op) {
         switch (op) {
             case Token.GE:
                 return d1 >= d2;
