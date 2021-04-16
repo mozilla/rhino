@@ -119,108 +119,109 @@ public class Token {
             REF_MEMBER = 79, // Reference for x.@y, x..y etc.
             REF_NS_MEMBER = 80, // Reference for x.ns::y, x..ns::y etc.
             REF_NAME = 81, // Reference for @y, @[y] etc.
-            REF_NS_NAME = 82; // Reference for ns::y, @ns::y@[y] etc.
+            REF_NS_NAME = 82, // Reference for ns::y, @ns::y@[y] etc.
+            BIGINT = 83; // ES2020 BigInt
 
     // End of interpreter bytecodes
-    public static final int LAST_BYTECODE_TOKEN = REF_NS_NAME,
-            TRY = 83,
-            SEMI = 84, // semicolon
-            LB = 85, // left and right brackets
-            RB = 86,
-            LC = 87, // left and right curlies (braces)
-            RC = 88,
-            LP = 89, // left and right parentheses
-            RP = 90,
-            COMMA = 91, // comma operator
-            ASSIGN = 92, // simple assignment  (=)
-            ASSIGN_BITOR = 93, // |=
-            ASSIGN_BITXOR = 94, // ^=
-            ASSIGN_BITAND = 95, // |=
-            ASSIGN_LSH = 96, // <<=
-            ASSIGN_RSH = 97, // >>=
-            ASSIGN_URSH = 98, // >>>=
-            ASSIGN_ADD = 99, // +=
-            ASSIGN_SUB = 100, // -=
-            ASSIGN_MUL = 101, // *=
-            ASSIGN_DIV = 102, // /=
-            ASSIGN_MOD = 103, // %=
-            ASSIGN_EXP = 104; // **=
+    public static final int LAST_BYTECODE_TOKEN = BIGINT,
+            TRY = 84,
+            SEMI = 85, // semicolon
+            LB = 86, // left and right brackets
+            RB = 87,
+            LC = 88, // left and right curlies (braces)
+            RC = 89,
+            LP = 90, // left and right parentheses
+            RP = 91,
+            COMMA = 92, // comma operator
+            ASSIGN = 93, // simple assignment  (=)
+            ASSIGN_BITOR = 94, // |=
+            ASSIGN_BITXOR = 95, // ^=
+            ASSIGN_BITAND = 96, // |=
+            ASSIGN_LSH = 97, // <<=
+            ASSIGN_RSH = 98, // >>=
+            ASSIGN_URSH = 99, // >>>=
+            ASSIGN_ADD = 100, // +=
+            ASSIGN_SUB = 101, // -=
+            ASSIGN_MUL = 102, // *=
+            ASSIGN_DIV = 103, // /=
+            ASSIGN_MOD = 104, // %=
+            ASSIGN_EXP = 105; // **=
     public static final int FIRST_ASSIGN = ASSIGN,
             LAST_ASSIGN = ASSIGN_EXP,
-            HOOK = 105, // conditional (?:)
-            COLON = 106,
-            OR = 107, // logical or (||)
-            AND = 108, // logical and (&&)
-            INC = 109, // increment/decrement (++ --)
-            DEC = 110,
-            DOT = 111, // member operator (.)
-            FUNCTION = 112, // function keyword
-            EXPORT = 113, // export keyword
-            IMPORT = 114, // import keyword
-            IF = 115, // if keyword
-            ELSE = 116, // else keyword
-            SWITCH = 117, // switch keyword
-            CASE = 118, // case keyword
-            DEFAULT = 119, // default keyword
-            WHILE = 120, // while keyword
-            DO = 121, // do keyword
-            FOR = 122, // for keyword
-            BREAK = 123, // break keyword
-            CONTINUE = 124, // continue keyword
-            VAR = 125, // var keyword
-            WITH = 126, // with keyword
-            CATCH = 127, // catch keyword
-            FINALLY = 128, // finally keyword
-            VOID = 129, // void keyword
-            RESERVED = 130, // reserved keywords
-            EMPTY = 131,
+            HOOK = 106, // conditional (?:)
+            COLON = 107,
+            OR = 108, // logical or (||)
+            AND = 109, // logical and (&&)
+            INC = 110, // increment/decrement (++ --)
+            DEC = 111,
+            DOT = 112, // member operator (.)
+            FUNCTION = 113, // function keyword
+            EXPORT = 114, // export keyword
+            IMPORT = 115, // import keyword
+            IF = 116, // if keyword
+            ELSE = 117, // else keyword
+            SWITCH = 118, // switch keyword
+            CASE = 119, // case keyword
+            DEFAULT = 120, // default keyword
+            WHILE = 121, // while keyword
+            DO = 122, // do keyword
+            FOR = 123, // for keyword
+            BREAK = 124, // break keyword
+            CONTINUE = 125, // continue keyword
+            VAR = 126, // var keyword
+            WITH = 127, // with keyword
+            CATCH = 128, // catch keyword
+            FINALLY = 129, // finally keyword
+            VOID = 130, // void keyword
+            RESERVED = 131, // reserved keywords
+            EMPTY = 132,
 
             /* types used for the parse tree - these never get returned
              * by the scanner.
              */
 
-            BLOCK = 132, // statement block
-            LABEL = 133, // label
-            TARGET = 134,
-            LOOP = 135,
-            EXPR_VOID = 136, // expression statement in functions
-            EXPR_RESULT = 137, // expression statement in scripts
-            JSR = 138,
-            SCRIPT = 139, // top-level node for entire script
-            TYPEOFNAME = 140, // for typeof(simple-name)
-            USE_STACK = 141,
-            SETPROP_OP = 142, // x.y op= something
-            SETELEM_OP = 143, // x[y] op= something
-            LOCAL_BLOCK = 144,
-            SET_REF_OP = 145, // *reference op= something
+            BLOCK = 133, // statement block
+            LABEL = 134, // label
+            TARGET = 135,
+            LOOP = 136,
+            EXPR_VOID = 137, // expression statement in functions
+            EXPR_RESULT = 138, // expression statement in scripts
+            JSR = 139,
+            SCRIPT = 140, // top-level node for entire script
+            TYPEOFNAME = 141, // for typeof(simple-name)
+            USE_STACK = 142,
+            SETPROP_OP = 143, // x.y op= something
+            SETELEM_OP = 144, // x[y] op= something
+            LOCAL_BLOCK = 145,
+            SET_REF_OP = 146, // *reference op= something
 
             // For XML support:
-            DOTDOT = 146, // member operator (..)
-            COLONCOLON = 147, // namespace::name
-            XML = 148, // XML type
-            DOTQUERY = 149, // .() -- e.g., x.emps.emp.(name == "terry")
-            XMLATTR = 150, // @
-            XMLEND = 151,
+            DOTDOT = 147, // member operator (..)
+            COLONCOLON = 148, // namespace::name
+            XML = 149, // XML type
+            DOTQUERY = 150, // .() -- e.g., x.emps.emp.(name == "terry")
+            XMLATTR = 151, // @
+            XMLEND = 152,
 
             // Optimizer-only-tokens
-            TO_OBJECT = 152,
-            TO_DOUBLE = 153,
-            GET = 154, // JS 1.5 get pseudo keyword
-            SET = 155, // JS 1.5 set pseudo keyword
-            LET = 156, // JS 1.7 let pseudo keyword
-            CONST = 157,
-            SETCONST = 158,
-            SETCONSTVAR = 159,
-            ARRAYCOMP = 160, // array comprehension
-            LETEXPR = 161,
-            WITHEXPR = 162,
-            DEBUGGER = 163,
-            COMMENT = 164,
-            GENEXPR = 165,
-            METHOD = 166, // ES6 MethodDefinition
-            ARROW = 167, // ES6 ArrowFunction
-            YIELD_STAR = 168, // ES6 "yield *", a specialization of yield
-            LAST_TOKEN = 169;
+            TO_OBJECT = 153,
+            TO_DOUBLE = 154,
+            GET = 155, // JS 1.5 get pseudo keyword
+            SET = 156, // JS 1.5 set pseudo keyword
+            LET = 157, // JS 1.7 let pseudo keyword
+            CONST = 158,
+            SETCONST = 159,
+            SETCONSTVAR = 160,
+            ARRAYCOMP = 161, // array comprehension
+            LETEXPR = 162,
+            WITHEXPR = 163,
+            DEBUGGER = 164,
+            COMMENT = 165,
+            GENEXPR = 166,
+            METHOD = 167, // ES6 MethodDefinition
+            ARROW = 168, // ES6 ArrowFunction
+            YIELD_STAR = 169, // ES6 "yield *", a specialization of yield
+            LAST_TOKEN = 170;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -579,6 +580,8 @@ public class Token {
                 return "ARROW";
             case YIELD_STAR:
                 return "YIELD_STAR";
+            case BIGINT:
+                return "BIGINT";
         }
 
         // Token without name

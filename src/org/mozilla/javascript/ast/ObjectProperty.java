@@ -11,7 +11,7 @@ import org.mozilla.javascript.Token;
 /**
  * AST node for a single name:value entry in an Object literal. For simple entries, the node type is
  * {@link Token#COLON}, and the name (left side expression) is either a {@link Name}, a {@link
- * StringLiteral} or a {@link NumberLiteral}.
+ * StringLiteral}, a {@link NumberLiteral} or a {@link BigIntLiteral}.
  *
  * <p>This node type is also used for getter/setter properties in object literals. In this case the
  * node bounds include the "get" or "set" keyword. The left-hand expression in this case is always a
@@ -23,7 +23,8 @@ import org.mozilla.javascript.Token;
  * <i>PropertyName</i> :
  *       Identifier
  *       StringLiteral
- *       NumberLiteral</pre>
+ *       NumberLiteral
+ *       BigIntLiteral</pre>
  */
 public class ObjectProperty extends InfixExpression {
 
