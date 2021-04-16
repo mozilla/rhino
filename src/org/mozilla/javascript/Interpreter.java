@@ -1462,15 +1462,23 @@ public final class Interpreter extends Icode implements Evaluator {
                                     sDbl[stackTop] = ScriptRuntime.toUint32(lDbl) >>> rIntValue;
                                     continue Loop;
                                 }
-                            case Token.NEG:
                             case Token.POS:
                                 {
                                     double rDbl = stack_double(frame, stackTop);
                                     stack[stackTop] = DBL_MRK;
-                                    if (op == Token.NEG) {
-                                        rDbl = -rDbl;
-                                    }
                                     sDbl[stackTop] = rDbl;
+                                    continue Loop;
+                                }
+                            case Token.NEG:
+                                {
+                                    Number rNum = stack_numeric(frame, stackTop);
+                                    Number rNegNum = ScriptRuntime.negate(rNum);
+                                    if (rNegNum instanceof BigInteger) {
+                                        stack[stackTop] = rNegNum;
+                                    } else {
+                                        stack[stackTop] = DBL_MRK;
+                                        sDbl[stackTop] = rNegNum.doubleValue();
+                                    }
                                     continue Loop;
                                 }
                             case Token.ADD:
@@ -3430,6 +3438,14 @@ public final class Interpreter extends Icode implements Evaluator {
         Object x = frame.stack[i];
         if (x != UniqueTag.DOUBLE_MARK) {
             return ScriptRuntime.toNumber(x);
+        }
+        return frame.sDbl[i];
+    }
+
+    private static Number stack_numeric(CallFrame frame, int i) {
+        Object x = frame.stack[i];
+        if (x != UniqueTag.DOUBLE_MARK) {
+            return ScriptRuntime.toNumeric(x);
         }
         return frame.sDbl[i];
     }

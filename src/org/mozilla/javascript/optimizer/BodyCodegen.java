@@ -1240,13 +1240,15 @@ class BodyCodegen {
                 break;
 
             case Token.POS:
-            case Token.NEG:
                 generateExpression(child, node);
                 addObjectToDouble();
-                if (type == Token.NEG) {
-                    cfw.add(ByteCode.DNEG);
-                }
                 addDoubleWrap();
+                break;
+
+            case Token.NEG:
+                generateExpression(child, node);
+                addObjectToNumeric();
+                addScriptRuntimeInvoke("negate", "(Ljava/lang/Number;" + ")Ljava/lang/Number;");
                 break;
 
             case Token.TO_DOUBLE:
@@ -4094,6 +4096,10 @@ class BodyCodegen {
 
     private void addObjectToDouble() {
         addScriptRuntimeInvoke("toNumber", "(Ljava/lang/Object;)D");
+    }
+
+    private void addObjectToNumeric() {
+        addScriptRuntimeInvoke("toNumeric", "(Ljava/lang/Object;)Ljava/lang/Number;");
     }
 
     private void addNewObjectArray(int size) {
