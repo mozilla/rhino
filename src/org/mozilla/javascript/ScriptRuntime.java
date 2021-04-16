@@ -2898,6 +2898,66 @@ public class ScriptRuntime {
         return new ConsString(toCharSequence(val1), val2);
     }
 
+    public static Number subtract(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).subtract((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return val1.doubleValue() - val2.doubleValue();
+        }
+    }
+
+    public static Number multiply(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).multiply((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return val1.doubleValue() * val2.doubleValue();
+        }
+    }
+
+    public static Number divide(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            if (val2.equals(BigInteger.ZERO)) {
+                throw ScriptRuntime.rangeErrorById("msg.division.zero");
+            }
+            return ((BigInteger) val1).divide((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return val1.doubleValue() / val2.doubleValue();
+        }
+    }
+
+    public static Number remainder(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            if (val2.equals(BigInteger.ZERO)) {
+                throw ScriptRuntime.rangeErrorById("msg.division.zero");
+            }
+            return ((BigInteger) val1).remainder((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return val1.doubleValue() % val2.doubleValue();
+        }
+    }
+
+    public static Number exponentiate(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            if (((BigInteger) val2).signum() == -1) {
+                throw ScriptRuntime.rangeErrorById("msg.bigint.negative.exponent");
+            }
+            // TODO: val2 is supported only in the range of 32-bit integer.
+            return ((BigInteger) val1).pow(val2.intValue());
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            return Math.pow(val1.doubleValue(), val2.doubleValue());
+        }
+    }
+
     /**
      * The method is only present for compatibility.
      *
