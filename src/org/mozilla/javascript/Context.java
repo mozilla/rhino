@@ -2557,6 +2557,14 @@ public class Context implements Closeable {
                 || (currentActivationCall != null && currentActivationCall.isStrict);
     }
 
+    public static boolean isCurrentContextStrict() {
+        Context cx = getCurrentContext();
+        if (cx == null) {
+            return false;
+        }
+        return cx.isStrictMode();
+    }
+
     private final ContextFactory factory;
     private boolean sealed;
     private Object sealKey;

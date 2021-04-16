@@ -7,8 +7,6 @@
 package org.mozilla.javascript;
 
 import java.util.Iterator;
-import org.mozilla.javascript.ScriptableObject.Slot;
-import org.mozilla.javascript.ScriptableObject.SlotAccess;
 
 /**
  * This class holds the various SlotMaps of various types, and knows how to atomically switch
@@ -23,7 +21,13 @@ class SlotMapContainer implements SlotMap {
      */
     private static final int LARGE_HASH_SIZE = 2000;
 
+    private static final int DEFAULT_SIZE = 10;
+
     protected SlotMap map;
+
+    SlotMapContainer() {
+        this(DEFAULT_SIZE);
+    }
 
     SlotMapContainer(int initialSize) {
         if (initialSize > LARGE_HASH_SIZE) {
@@ -48,11 +52,14 @@ class SlotMapContainer implements SlotMap {
     }
 
     @Override
-    public Slot get(Object key, int index, SlotAccess accessType) {
-        if (accessType != SlotAccess.QUERY) {
-            checkMapSize();
-        }
-        return map.get(key, index, accessType);
+    public Slot modify(Object key, int index, int attributes) {
+        checkMapSize();
+        return map.modify(key, index, attributes);
+    }
+
+    @Override
+    public void replace(Slot oldSlot, Slot newSlot) {
+        map.replace(oldSlot, newSlot);
     }
 
     @Override
@@ -61,9 +68,9 @@ class SlotMapContainer implements SlotMap {
     }
 
     @Override
-    public void addSlot(Slot newSlot) {
+    public void add(Slot newSlot) {
         checkMapSize();
-        map.addSlot(newSlot);
+        map.add(newSlot);
     }
 
     @Override
@@ -93,7 +100,7 @@ class SlotMapContainer implements SlotMap {
         if ((map instanceof EmbeddedSlotMap) && map.size() >= LARGE_HASH_SIZE) {
             SlotMap newMap = new HashSlotMap();
             for (Slot s : map) {
-                newMap.addSlot(s);
+                newMap.add(s);
             }
             map = newMap;
         }
