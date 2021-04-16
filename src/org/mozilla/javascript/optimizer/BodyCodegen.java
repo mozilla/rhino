@@ -3472,36 +3472,64 @@ class BodyCodegen {
             return;
         }
         if (childNumberFlag == -1) {
-            addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
+            addObjectToNumeric();
             generateExpression(child.getNext(), node);
-            addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
+            addObjectToNumeric();
+
+            switch (type) {
+                case Token.BITOR:
+                    addScriptRuntimeInvoke(
+                            "bitwiseOR",
+                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    break;
+                case Token.BITXOR:
+                    addScriptRuntimeInvoke(
+                            "bitwiseXOR",
+                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    break;
+                case Token.BITAND:
+                    addScriptRuntimeInvoke(
+                            "bitwiseAND",
+                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    break;
+                case Token.RSH:
+                    addScriptRuntimeInvoke(
+                            "signedRightShift",
+                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    break;
+                case Token.LSH:
+                    addScriptRuntimeInvoke(
+                            "leftShift",
+                            "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;");
+                    break;
+                default:
+                    throw Kit.codeBug(Token.typeToName(type));
+            }
         } else {
             addScriptRuntimeInvoke("toInt32", "(D)I");
             generateExpression(child.getNext(), node);
             addScriptRuntimeInvoke("toInt32", "(D)I");
-        }
-        switch (type) {
-            case Token.BITOR:
-                cfw.add(ByteCode.IOR);
-                break;
-            case Token.BITXOR:
-                cfw.add(ByteCode.IXOR);
-                break;
-            case Token.BITAND:
-                cfw.add(ByteCode.IAND);
-                break;
-            case Token.RSH:
-                cfw.add(ByteCode.ISHR);
-                break;
-            case Token.LSH:
-                cfw.add(ByteCode.ISHL);
-                break;
-            default:
-                throw Codegen.badTree();
-        }
-        cfw.add(ByteCode.I2D);
-        if (childNumberFlag == -1) {
-            addDoubleWrap();
+
+            switch (type) {
+                case Token.BITOR:
+                    cfw.add(ByteCode.IOR);
+                    break;
+                case Token.BITXOR:
+                    cfw.add(ByteCode.IXOR);
+                    break;
+                case Token.BITAND:
+                    cfw.add(ByteCode.IAND);
+                    break;
+                case Token.RSH:
+                    cfw.add(ByteCode.ISHR);
+                    break;
+                case Token.LSH:
+                    cfw.add(ByteCode.ISHL);
+                    break;
+                default:
+                    throw Kit.codeBug(Token.typeToName(type));
+            }
+            cfw.add(ByteCode.I2D);
         }
     }
 

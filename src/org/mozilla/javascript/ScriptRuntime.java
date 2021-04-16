@@ -2958,6 +2958,63 @@ public class ScriptRuntime {
         }
     }
 
+    public static Number bitwiseAND(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).and((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) & toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number bitwiseOR(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).or((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) | toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number bitwiseXOR(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            return ((BigInteger) val1).xor((BigInteger) val2);
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) ^ toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number leftShift(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            // TODO: val2 is supported only in the range of 32-bit integer.
+            return ((BigInteger) val1).shiftLeft(val2.intValue());
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) << toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
+    public static Number signedRightShift(Number val1, Number val2) {
+        if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
+            // TODO: val2 is supported only in the range of 32-bit integer.
+            return ((BigInteger) val1).shiftRight(val2.intValue());
+        } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+        } else {
+            int result = toInt32(val1.doubleValue()) >> toInt32(val2.doubleValue());
+            return Double.valueOf(result);
+        }
+    }
+
     /**
      * The method is only present for compatibility.
      *

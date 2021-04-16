@@ -2647,27 +2647,35 @@ public final class Interpreter extends Icode implements Evaluator {
 
     private static int doBitOp(
             CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
-        int lIntValue = stack_int32(frame, stackTop - 1);
-        int rIntValue = stack_int32(frame, stackTop);
-        stack[--stackTop] = DOUBLE_MARK;
+        Number lValue = stack_numeric(frame, stackTop - 1);
+        Number rValue = stack_numeric(frame, stackTop);
+        stackTop--;
+
+        Number result = null;
         switch (op) {
             case Token.BITAND:
-                lIntValue &= rIntValue;
+                result = ScriptRuntime.bitwiseAND(lValue, rValue);
                 break;
             case Token.BITOR:
-                lIntValue |= rIntValue;
+                result = ScriptRuntime.bitwiseOR(lValue, rValue);
                 break;
             case Token.BITXOR:
-                lIntValue ^= rIntValue;
+                result = ScriptRuntime.bitwiseXOR(lValue, rValue);
                 break;
             case Token.LSH:
-                lIntValue <<= rIntValue;
+                result = ScriptRuntime.leftShift(lValue, rValue);
                 break;
             case Token.RSH:
-                lIntValue >>= rIntValue;
+                result = ScriptRuntime.signedRightShift(lValue, rValue);
                 break;
         }
-        sDbl[stackTop] = lIntValue;
+
+        if (result instanceof BigInteger) {
+            stack[stackTop] = result;
+        } else {
+            stack[stackTop] = DOUBLE_MARK;
+            sDbl[stackTop] = result.doubleValue();
+        }
         return stackTop;
     }
 
