@@ -831,6 +831,22 @@ public class ScriptRuntime {
         return toNumber(val);
     }
 
+    public static int toIndex(Object val) {
+        if (Undefined.isUndefined(val)) {
+            return 0;
+        }
+        double integerIndex = toInteger(val);
+        if (integerIndex < 0) {
+            throw rangeError("index out of range");
+        }
+        // ToLength
+        double index = Math.min(integerIndex, NativeNumber.MAX_SAFE_INTEGER);
+        if (integerIndex != index) {
+            throw rangeError("index out of range");
+        }
+        return (int) index;
+    }
+
     /**
      * Helper function for builtin objects that use the varargs form. ECMA function formal arguments
      * are undefined if not supplied; this function pads the argument array out to the expected
