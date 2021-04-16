@@ -36,10 +36,13 @@ public class LambdaFunctionTest {
         Context.exit();
     }
 
+    private void eval(String source) {
+        cx.evaluateString(root, source, "test.js", 1, null);
+    }
+
     @Test
     public void testNativeFunction() {
-        cx.evaluateString(
-                root,
+        eval(
                 "function foo() { return 'Hello'; }\n"
                         + "assertEquals(foo.name, 'foo');\n"
                         + "assertEquals(foo.length, 0);\n"
@@ -47,10 +50,7 @@ public class LambdaFunctionTest {
                         + "assertEquals(foo(), 'Hello');\n"
                         + "assertTrue(foo.toString().length > 0);\n"
                         + "assertTrue(foo.prototype !== undefined);\n"
-                        + "assertTrue(foo.prototype.toString !== undefined);",
-                "test",
-                1,
-                null);
+                        + "assertTrue(foo.prototype.toString !== undefined);");
     }
 
     @Test
@@ -64,24 +64,19 @@ public class LambdaFunctionTest {
                             return "Hello";
                         });
         ScriptableObject.putProperty(root, "foo", f);
-        cx.evaluateString(
-                root,
+        eval(
                 "assertEquals(foo.name, 'foo');\n"
                         + "assertEquals(foo.length, 0);\n"
                         + "assertEquals(typeof foo, 'function');\n"
                         + "assertEquals(foo(), 'Hello');\n"
                         + "assertTrue(foo.toString().length > 0);\n"
-                        + "assertTrue(foo.prototype.toString !== undefined);",
-                "test",
-                1,
-                null);
+                        + "assertTrue(foo.prototype.toString !== undefined);");
     }
 
     @Test
     public void testConstructLambdaClass() {
         TestClass.init(root);
-        cx.evaluateString(
-                root,
+        eval(
                 "let tc = new TestClass('foo');\n"
                         + "assertEquals(tc.value, 'foo');\n"
                         + "tc.value = 'bar';\n"
@@ -91,16 +86,12 @@ public class LambdaFunctionTest {
                         + "assertEquals(TestClass.name, 'TestClass');\n"
                         + "assertEquals(TestClass.length, 1);\n"
                         + "assertEquals(typeof TestClass, 'function');\n"
-                        + "assertTrue(tc instanceof TestClass);\n",
-                "test",
-                1,
-                null);
+                        + "assertTrue(tc instanceof TestClass);\n");
     }
 
     @Test
     public void testNativePrototypeFunctions() {
-        cx.evaluateString(
-                root,
+        eval(
                 "function TestClass(v) { this.value = v; }\n"
                         + "TestClass.prototype.appendToValue = function(x) { return this.value + x; }\n"
                         + "let tc = new TestClass('foo');\n"
@@ -109,27 +100,20 @@ public class LambdaFunctionTest {
                         + "tc.value = 'x';\n"
                         + "assertEquals(tc.appendToValue('x'), 'xx');\n"
                         + "assertEquals(TestClass.prototype.appendToValue.length, 1);\n"
-                        + "assertEquals(typeof TestClass.prototype.appendToValue, 'function');",
-                "test",
-                1,
-                null);
+                        + "assertEquals(typeof TestClass.prototype.appendToValue, 'function');");
     }
 
     @Test
     public void testLambdaPrototypeFunctions() {
         TestClass.init(root);
-        cx.evaluateString(
-                root,
+        eval(
                 "let tc = new TestClass('foo');\n"
                         + "assertEquals(typeof TestClass.prototype.appendToValue, 'function');\n"
                         + "assertEquals(tc.value, 'foo');\n"
                         + "assertEquals(tc.appendToValue('bar', 'baz'), 'foobarbaz');\n"
                         + "tc.value = 'x';\n"
                         + "assertEquals(tc.appendToValue('x'), 'xx');\n"
-                        + "assertEquals(TestClass.prototype.appendToValue.length, 1);\n",
-                "test",
-                1,
-                null);
+                        + "assertEquals(TestClass.prototype.appendToValue.length, 1);\n");
     }
 
     @Test
@@ -138,54 +122,83 @@ public class LambdaFunctionTest {
         assertThrows(
                 RhinoException.class,
                 () -> {
-                    cx.evaluateString(
-                            root,
-                            "let tc = new TestClass('foo');\n" + "tc.notFound();",
-                            "test",
-                            1,
-                            null);
+                    eval("let tc = new TestClass('foo');\n" + "tc.notFound();");
                 });
     }
 
     @Test
     public void testLambdaPrototypeFunctionInvalidThis() {
         TestClass.init(root);
-        cx.evaluateString(
-                root,
+        eval(
                 "let tc = new TestClass();\n"
                         + "assertThrows(function() { tc.appendToValue.call(null, 'invalid'); }, TypeError);\n"
                         + "assertThrows(function() { tc.appendToValue.call(undefined, 'invalid'); }, TypeError);\n"
-                        + "assertThrows(function() { tc.appendToValue.call({}, 'invalid'); }, TypeError);\n",
-                "test",
-                1,
-                null);
+                        + "assertThrows(function() { tc.appendToValue.call({}, 'invalid'); }, TypeError);\n");
     }
 
     @Test
     public void testLambdaConstructorFunctions() {
         TestClass.init(root);
-        cx.evaluateString(
-                root,
+        eval(
                 "assertEquals(TestClass.sayHello('World'), 'Hello, World!');\n"
                         + "assertEquals(TestClass.sayHello.name, 'sayHello');\n"
                         + "assertEquals(TestClass.sayHello.length, 1);\n"
-                        + "assertEquals(typeof TestClass.sayHello, 'function');",
-                "test",
-                1,
-                null);
+                        + "assertEquals(typeof TestClass.sayHello, 'function');");
     }
 
     @Test
     public void testLambdaConstructorValues() {
         TestClass.init(root);
-        cx.evaluateString(
-                root,
+        eval(
                 "let tc = new TestClass();\n"
                         + "assertEquals(tc.protoValue, 123);\n"
-                        + "assertEquals(tc[Symbol.species], 456);\n",
-                "test",
-                1,
-                null);
+                        + "assertEquals(tc[Symbol.species], 456);\n");
+    }
+
+    @Test
+    public void testLambdaConstructorNewOnly() {
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        root,
+                        "NewOnly",
+                        0,
+                        LambdaConstructor.CONSTRUCTOR_NEW,
+                        (Context cx, Scriptable scope, Object[] args) -> cx.newObject(scope));
+        ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
+        eval(
+                "let o = new NewOnly();\n"
+                        + "assertEquals('object', typeof o);\n"
+                        + "assertThrows(() => { NewOnly(); }, TypeError);");
+    }
+
+    @Test
+    public void testLambdaConstructorFunctionOnly() {
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        root,
+                        "NewOnly",
+                        0,
+                        LambdaConstructor.CONSTRUCTOR_FUNCTION,
+                        (Context cx, Scriptable scope, Object[] args) -> cx.newObject(scope));
+        ScriptableObject.defineProperty(root, "NewOnly", constructor, 0);
+        eval(
+                "let o = NewOnly();\n"
+                        + "assertEquals('object', typeof o);\n"
+                        + "assertThrows(() => { new NewOnly(); }, TypeError);");
+    }
+
+    @Test
+    public void testLambdaFunctionNoNew() {
+        LambdaFunction func =
+                new LambdaFunction(
+                        root,
+                        0,
+                        (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> true);
+        ScriptableObject.defineProperty(root, "noNewFunc", func, 0);
+        eval(
+                "let o = noNewFunc();\n"
+                        + "assertEquals(true, o);\n"
+                        + "assertThrows(() => { new noNewFunc(); }, TypeError)");
     }
 
     private static class TestClass extends ScriptableObject {
