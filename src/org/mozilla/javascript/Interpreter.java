@@ -3534,16 +3534,17 @@ public final class Interpreter extends Icode implements Evaluator {
                         new ConsString(ScriptRuntime.toCharSequence(lhs), (CharSequence) rhs);
 
             } else {
-                double lDbl =
-                        (lhs instanceof Number)
-                                ? ((Number) lhs).doubleValue()
-                                : ScriptRuntime.toNumber(lhs);
-                double rDbl =
-                        (rhs instanceof Number)
-                                ? ((Number) rhs).doubleValue()
-                                : ScriptRuntime.toNumber(rhs);
-                stack[stackTop] = DOUBLE_MARK;
-                sDbl[stackTop] = lDbl + rDbl;
+                Number lNum = (lhs instanceof Number) ? (Number) lhs : ScriptRuntime.toNumeric(lhs);
+                Number rNum = (rhs instanceof Number) ? (Number) rhs : ScriptRuntime.toNumeric(rhs);
+
+                if (lNum instanceof BigInteger && rNum instanceof BigInteger) {
+                    stack[stackTop] = ((BigInteger) lNum).add((BigInteger) rNum);
+                } else if (lNum instanceof BigInteger || rNum instanceof BigInteger) {
+                    throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+                } else {
+                    stack[stackTop] = DOUBLE_MARK;
+                    sDbl[stackTop] = lNum.doubleValue() + rNum.doubleValue();
+                }
             }
             return;
         }
@@ -3565,12 +3566,13 @@ public final class Interpreter extends Icode implements Evaluator {
                 stack[stackTop] = new ConsString(rstr, (CharSequence) lhs);
             }
         } else {
-            double lDbl =
-                    (lhs instanceof Number)
-                            ? ((Number) lhs).doubleValue()
-                            : ScriptRuntime.toNumber(lhs);
-            stack[stackTop] = DOUBLE_MARK;
-            sDbl[stackTop] = lDbl + d;
+            Number lNum = (lhs instanceof Number) ? (Number) lhs : ScriptRuntime.toNumeric(lhs);
+            if (lNum instanceof BigInteger) {
+                throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
+            } else {
+                stack[stackTop] = DOUBLE_MARK;
+                sDbl[stackTop] = lNum.doubleValue() + d;
+            }
         }
     }
 
