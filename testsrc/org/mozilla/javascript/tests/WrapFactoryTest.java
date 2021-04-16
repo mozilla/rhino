@@ -28,7 +28,7 @@ public class WrapFactoryTest {
         test(true, Boolean.FALSE, "boolean", "object", "object");
         test(true, new Integer(1), "number", "object", "object");
         test(true, new Long(2L), "number", "object", "object");
-        test(true, new BigInteger("3"), "bigint", "object", "object"); // TODO: compatibility issue
+        test(true, new BigInteger("3"), "bigint", "object", "object");
         test(true, new BigDecimal("4.0"), "number", "object", "object");
     }
 
@@ -40,17 +40,12 @@ public class WrapFactoryTest {
         test(false, new Integer(1), "number", "number", "number");
         test(false, new Long(2L), "number", "number", "number");
 
-        // I want to treat BigInteger / BigDecimal as BigInteger / BigDecimal. But fails.
-        test(
-                false,
-                new BigInteger("30"),
-                "bigint",
-                "object",
-                "object"); // TODO: compatibility issue
+        test(false, new BigInteger("30"), "bigint", "bigint", "bigint");
+
+        // I want to treat BigDecimal as BigDecimal. But fails.
         test(false, new BigDecimal("4.0"), "number", "object", "object");
 
         // This is the best. I want not to convert to number.
-        // test(false, new BigInteger("30"), "object", "object", "object");
         // test(false, new BigDecimal("4.0"), "object", "object", "object");
     }
 
