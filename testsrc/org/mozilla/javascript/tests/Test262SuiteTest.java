@@ -62,7 +62,6 @@ public class Test262SuiteTest {
             new HashSet<>(
                     Arrays.asList(
                             "Atomics",
-                            "BigInt",
                             "IsHTMLDDA",
                             "Promise.prototype.finally",
                             "Proxy",
