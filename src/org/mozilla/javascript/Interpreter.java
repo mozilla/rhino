@@ -10,6 +10,7 @@ import static org.mozilla.javascript.UniqueTag.DOUBLE_MARK;
 
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -484,6 +485,7 @@ public final class Interpreter extends Icode implements Evaluator {
         byte iCode[] = idata.itsICode;
         int iCodeLength = iCode.length;
         String[] strings = idata.itsStringTable;
+        BigInteger[] bigInts = idata.itsBigIntTable;
         PrintStream out = System.out;
         out.println("ICode dump, for " + idata.itsName + ", length = " + iCodeLength);
         out.println("MaxStack = " + idata.itsMaxStack);
@@ -674,6 +676,34 @@ public final class Interpreter extends Icode implements Evaluator {
                     out.println(tname + " " + indexReg);
                     ++pc;
                     break;
+                    // TODO: Icode_REG_STR_C0-3 is not dump. I made this the same it.
+                case Icode_REG_BIGINT_C0:
+                case Icode_REG_BIGINT_C1:
+                case Icode_REG_BIGINT_C2:
+                case Icode_REG_BIGINT_C3:
+                    Kit.codeBug();
+                    break;
+                case Icode_REG_BIGINT1:
+                    {
+                        BigInteger bigInt = bigInts[0xFF & iCode[pc]];
+                        out.println(tname + " " + bigInt.toString() + 'n');
+                        ++pc;
+                        break;
+                    }
+                case Icode_REG_BIGINT2:
+                    {
+                        BigInteger bigInt = bigInts[getIndex(iCode, pc)];
+                        out.println(tname + " " + bigInt.toString() + 'n');
+                        pc += 2;
+                        break;
+                    }
+                case Icode_REG_BIGINT4:
+                    {
+                        BigInteger bigInt = bigInts[getInt(iCode, pc)];
+                        out.println(tname + " " + bigInt.toString() + 'n');
+                        pc += 4;
+                        break;
+                    }
             }
             if (old_pc + icodeLength != pc) Kit.codeBug();
         }
@@ -1093,6 +1123,7 @@ public final class Interpreter extends Icode implements Evaluator {
         final int EXCEPTION_COST = 100;
 
         String stringReg = null;
+        BigInteger bigIntReg = null;
         int indexReg = -1;
 
         if (cx.lastInterpreterFrame != null) {
@@ -1153,6 +1184,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 int[] varAttributes = frame.varSource.stackAttributes;
                 byte[] iCode = frame.idata.itsICode;
                 String[] strings = frame.idata.itsStringTable;
+                BigInteger[] bigInts = frame.idata.itsBigIntTable;
 
                 // Use local for stackTop as well. Since execption handlers
                 // can only exist at statement level where stack is empty,
@@ -1927,6 +1959,9 @@ public final class Interpreter extends Icode implements Evaluator {
                                 stack[stackTop] = DBL_MRK;
                                 sDbl[stackTop] = frame.idata.itsDoubleTable[indexReg];
                                 continue Loop;
+                            case Token.BIGINT:
+                                stack[++stackTop] = bigIntReg;
+                                continue Loop;
                             case Token.NAME:
                                 stack[++stackTop] = ScriptRuntime.name(cx, frame.scope, stringReg);
                                 continue Loop;
@@ -2334,6 +2369,30 @@ public final class Interpreter extends Icode implements Evaluator {
                                 continue Loop;
                             case Icode_REG_STR4:
                                 stringReg = strings[getInt(iCode, frame.pc)];
+                                frame.pc += 4;
+                                continue Loop;
+                            case Icode_REG_BIGINT_C0:
+                                bigIntReg = bigInts[0];
+                                continue Loop;
+                            case Icode_REG_BIGINT_C1:
+                                bigIntReg = bigInts[1];
+                                continue Loop;
+                            case Icode_REG_BIGINT_C2:
+                                bigIntReg = bigInts[2];
+                                continue Loop;
+                            case Icode_REG_BIGINT_C3:
+                                bigIntReg = bigInts[3];
+                                continue Loop;
+                            case Icode_REG_BIGINT1:
+                                bigIntReg = bigInts[0xFF & iCode[frame.pc]];
+                                ++frame.pc;
+                                continue Loop;
+                            case Icode_REG_BIGINT2:
+                                bigIntReg = bigInts[getIndex(iCode, frame.pc)];
+                                frame.pc += 2;
+                                continue Loop;
+                            case Icode_REG_BIGINT4:
+                                bigIntReg = bigInts[getInt(iCode, frame.pc)];
                                 frame.pc += 4;
                                 continue Loop;
                             default:

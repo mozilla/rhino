@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.math.BigInteger;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -35,6 +36,7 @@ class CodeGenerator extends Icode {
     private int doubleTableTop;
 
     private ObjToIntMap strings = new ObjToIntMap(20);
+    private ObjToIntMap bigInts = new ObjToIntMap(20);
     private int localTop;
     private int[] labelTable;
     private int labelTableTop;
@@ -153,6 +155,18 @@ class CodeGenerator extends Icode {
             double[] tmp = new double[doubleTableTop];
             System.arraycopy(itsData.itsDoubleTable, 0, tmp, 0, doubleTableTop);
             itsData.itsDoubleTable = tmp;
+        }
+        if (bigInts.size() == 0) {
+            itsData.itsBigIntTable = null;
+        } else {
+            itsData.itsBigIntTable = new BigInteger[bigInts.size()];
+            ObjToIntMap.Iterator iter = bigInts.newIterator();
+            for (iter.start(); !iter.done(); iter.next()) {
+                BigInteger bigInt = (BigInteger) iter.getKey();
+                int index = iter.getValue();
+                if (itsData.itsBigIntTable[index] != null) Kit.codeBug();
+                itsData.itsBigIntTable[index] = bigInt;
+            }
         }
         if (exceptionTableTop != 0 && itsData.itsExceptionTable.length != exceptionTableTop) {
             int[] tmp = new int[exceptionTableTop];
@@ -901,6 +915,11 @@ class CodeGenerator extends Icode {
                 stackChange(1);
                 break;
 
+            case Token.BIGINT:
+                addBigInt(node.getBigInt());
+                stackChange(1);
+                break;
+
             case Token.REGEXP:
                 {
                     int index = node.getExistingIntProp(Node.REGEXP_PROP);
@@ -1395,6 +1414,27 @@ class CodeGenerator extends Icode {
             addIcode(Icode_REG_STR4);
             addInt(index);
         }
+    }
+
+    private void addBigInt(BigInteger n) {
+        int index = bigInts.get(n, -1);
+        if (index == -1) {
+            index = bigInts.size();
+            bigInts.put(n, index);
+        }
+        if (index < 4) {
+            addIcode(Icode_REG_BIGINT_C0 - index);
+        } else if (index <= 0xFF) {
+            addIcode(Icode_REG_BIGINT1);
+            addUint8(index);
+        } else if (index <= 0xFFFF) {
+            addIcode(Icode_REG_BIGINT2);
+            addUint16(index);
+        } else {
+            addIcode(Icode_REG_BIGINT4);
+            addInt(index);
+        }
+        addToken(Token.BIGINT);
     }
 
     private void addIndexPrefix(int index) {
