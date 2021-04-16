@@ -1012,6 +1012,14 @@ public class ScriptRuntime {
         return buffer.toString();
     }
 
+    public static String bigIntToString(BigInteger n, int base) {
+        if ((base < 2) || (base > 36)) {
+            throw rangeErrorById("msg.bad.radix", Integer.toString(base));
+        }
+
+        return n.toString(base);
+    }
+
     static String uneval(Context cx, Scriptable scope, Object value) {
         if (value == null) {
             return "null";
