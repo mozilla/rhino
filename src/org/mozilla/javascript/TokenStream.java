@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigInteger;
 
 /**
  * This class implements the JavaScript scanner.
@@ -67,6 +68,9 @@ class TokenStream {
 
                 case Token.NUMBER:
                     return "NUMBER " + this.number;
+
+                case Token.BIGINT:
+                    return "BIGINT " + this.bigInt.toString();
             }
 
             return name;
@@ -602,19 +606,23 @@ class TokenStream {
         return number;
     }
 
-    final boolean isNumberBinary() {
+    final BigInteger getBigInt() {
+        return bigInt;
+    }
+
+    final boolean isNumericBinary() {
         return isBinary;
     }
 
-    final boolean isNumberOldOctal() {
+    final boolean isNumericOldOctal() {
         return isOldOctal;
     }
 
-    final boolean isNumberOctal() {
+    final boolean isNumericOctal() {
         return isOctal;
     }
 
-    final boolean isNumberHex() {
+    final boolean isNumericHex() {
         return isHex;
     }
 
@@ -830,8 +838,13 @@ class TokenStream {
                 }
 
                 boolean isInteger = true;
+                boolean isBigInt = false;
 
-                if (base == 10) {
+                if (c == 'n') {
+                    isBigInt = true;
+                    c = getChar();
+                } else if (base == 10 && (c == '.' || c == 'e' || c == 'E')) {
+                    isInteger = false;
                     if (c == '.') {
                         isInteger = false;
                         addToString(c);
@@ -875,6 +888,11 @@ class TokenStream {
                         }
                     }
                     numString = new String(chars, 0, pos);
+                }
+
+                if (isBigInt) {
+                    this.bigInt = new BigInteger(numString, base);
+                    return Token.BIGINT;
                 }
 
                 double dval;
@@ -2033,6 +2051,7 @@ class TokenStream {
     // code.
     private String string = "";
     private double number;
+    private BigInteger bigInt;
     private boolean isBinary;
     private boolean isOldOctal;
     private boolean isOctal;
