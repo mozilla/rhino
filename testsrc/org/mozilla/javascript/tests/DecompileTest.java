@@ -32,4 +32,15 @@ public class DecompileTest {
                     return null;
                 });
     }
+
+    @Test
+    public void bigInt() {
+        final String source = "var x = 123n;";
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Script script = cx.compileString(source, "my script", 0, null);
+                    Assert.assertEquals(source, cx.decompileScript(script, 4).trim());
+                    return null;
+                });
+    }
 }
