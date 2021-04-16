@@ -20,6 +20,7 @@ import org.mozilla.javascript.ast.ArrayLiteral;
 import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
@@ -3040,9 +3041,10 @@ public class Parser {
                 return name(ttFlagged, tt);
 
             case Token.NUMBER:
+            case Token.BIGINT:
                 {
                     consumeToken();
-                    return createNumberLiteral(false);
+                    return createNumericLiteral(tt, false);
                 }
 
             case Token.STRING:
@@ -3530,7 +3532,8 @@ public class Parser {
                 break;
 
             case Token.NUMBER:
-                pname = createNumberLiteral(true);
+            case Token.BIGINT:
+                pname = createNumericLiteral(tt, true);
                 break;
 
             default:
@@ -3649,25 +3652,33 @@ public class Parser {
         return s;
     }
 
-    private NumberLiteral createNumberLiteral(boolean isProperty) {
+    private AstNode createNumericLiteral(int tt, boolean isProperty) {
         String s = ts.getString();
-        if (this.inUseStrictDirective && ts.isNumberOldOctal()) {
+        if (this.inUseStrictDirective && ts.isNumericOldOctal()) {
             if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 || !isProperty) {
-                reportError("msg.no.old.octal.strict");
+                if (tt == Token.BIGINT) {
+                    reportError("msg.no.old.octal.bigint");
+                } else {
+                    reportError("msg.no.old.octal.strict");
+                }
             }
         }
         if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 || !isProperty) {
-            if (ts.isNumberBinary()) {
+            if (ts.isNumericBinary()) {
                 s = "0b" + s;
-            } else if (ts.isNumberOldOctal()) {
+            } else if (ts.isNumericOldOctal()) {
                 s = "0" + s;
-            } else if (ts.isNumberOctal()) {
+            } else if (ts.isNumericOctal()) {
                 s = "0o" + s;
-            } else if (ts.isNumberHex()) {
+            } else if (ts.isNumericHex()) {
                 s = "0x" + s;
             }
         }
-        return new NumberLiteral(ts.tokenBeg, s, ts.getNumber());
+        if (tt == Token.BIGINT) {
+            return new BigIntLiteral(ts.tokenBeg, s + "n", ts.getBigInt());
+        } else {
+            return new NumberLiteral(ts.tokenBeg, s, ts.getNumber());
+        }
     }
 
     protected void checkActivationName(String name, int token) {

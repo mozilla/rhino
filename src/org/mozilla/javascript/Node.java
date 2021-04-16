@@ -6,6 +6,7 @@
 
 package org.mozilla.javascript;
 
+import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.mozilla.javascript.ast.Comment;
@@ -423,6 +424,8 @@ public class Node implements Iterable<Node> {
                     return "destructuring_names";
                 case DESTRUCTURING_PARAMS:
                     return "destructuring_params";
+                case EXPRESSION_CLOSURE_PROP:
+                    return "expression_closure_prop";
 
                 default:
                     Kit.codeBug();
@@ -527,6 +530,15 @@ public class Node implements Iterable<Node> {
 
     public final void setDouble(double number) {
         ((NumberLiteral) this).setNumber(number);
+    }
+
+    /** Can only be called when <code>getType() == Token.BIGINT</code> */
+    public BigInteger getBigInt() {
+        throw new UnsupportedOperationException("Can only be called when Token.BIGINT");
+    }
+
+    public void setBigInt(BigInteger bigInt) {
+        throw new UnsupportedOperationException("Can only be called when Token.BIGINT");
     }
 
     /** Can only be called when node has String context. */
@@ -1093,6 +1105,9 @@ public class Node implements Iterable<Node> {
             } else if (type == Token.NUMBER) {
                 sb.append(' ');
                 sb.append(getDouble());
+            } else if (type == Token.BIGINT) {
+                sb.append(' ');
+                sb.append(getBigInt().toString());
             } else if (type == Token.TARGET) {
                 sb.append(' ');
                 appendPrintId(this, printIds, sb);
