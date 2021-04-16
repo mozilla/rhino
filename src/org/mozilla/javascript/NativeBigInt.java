@@ -76,15 +76,15 @@ final class NativeBigInt extends IdScriptableObject {
         }
         int id = f.methodId();
         if (id == Id_constructor) {
+            BigInteger val = (args.length >= 1) ? ScriptRuntime.toBigInt(args[0]) : BigInteger.ZERO;
+            if (thisObj == null) {
+                // new BigInt(val) creates a new BigInt object.
+                return new NativeBigInt(val);
+            }
             // TODO
-            // BigInteger val = (args.length >= 1)
-            //     ? ScriptRuntime.toBigInt(args[0]) : BigInteger.ZERO;
-            // if (thisObj == null) {
-            //     // new BigInt(val) creates a new BigInt object.
-            //     return new NativeBigInt(val);
-            // }
             // // BigInt(val) converts val to a BigInt value.
             // return ScriptRuntime.wrapBigInt(val);
+            return new NativeBigInt(val);
 
         } else if (id < Id_constructor) {
             return execConstructorCall(id, args);
