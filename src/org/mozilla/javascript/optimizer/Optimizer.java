@@ -298,16 +298,8 @@ class Optimizer {
                         }
                         return NumberType;
                     }
-                    if (!convertParameter(lChild)) {
-                        n.removeChild(lChild);
-                        n.addChildToFront(new Node(Token.TO_DOUBLE, lChild));
-                    }
-                    if (!convertParameter(rChild)) {
-                        n.removeChild(rChild);
-                        n.addChildToBack(new Node(Token.TO_DOUBLE, rChild));
-                    }
-                    n.putIntProp(Node.ISNUMBER_PROP, Node.BOTH);
-                    return NumberType;
+                    // Numeric Type (Number or BigInt)
+                    return AnyType;
                 }
 
             case Token.BITNOT:
