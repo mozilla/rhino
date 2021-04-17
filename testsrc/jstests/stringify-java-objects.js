@@ -167,4 +167,9 @@ var expected = JSON.stringify([2, [1], {a:1}]);
 var actual = JSON.stringify(list2);
 assertEquals(expected, actual);
 
+// make circular reference
+list1.add(map2);
+map1.put('list2', list2);
+assertThrows(()=>JSON.stringify(map1), TypeError);
+
 "success"

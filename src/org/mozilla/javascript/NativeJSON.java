@@ -7,7 +7,9 @@
 package org.mozilla.javascript;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -201,7 +203,7 @@ public final class NativeJSON extends IdScriptableObject
             this.propertyList = propertyList;
         }
 
-        Stack<Scriptable> stack = new Stack<Scriptable>();
+        Stack<Object> stack = new Stack<Object>();
         String indent;
         String gap;
         Callable replacer;
@@ -269,6 +271,8 @@ public final class NativeJSON extends IdScriptableObject
                               StringifyState state)
     {
         Object value = null;
+        Object wrappedJavaValue = null;
+        
         if (key instanceof String) {
             value = getProperty(holder, (String) key);
         } else {
@@ -295,30 +299,8 @@ public final class NativeJSON extends IdScriptableObject
         } else if (value instanceof NativeBoolean) {
             value = ((NativeBoolean) value).getDefaultValue(ScriptRuntime.BooleanClass);
         } else if (value instanceof NativeJavaObject) {
-            value = ((NativeJavaObject) value).unwrap();
-            if (value instanceof Map) {
-                Map<?,?> map = (Map<?,?>) value;
-                Scriptable nObj = state.cx.newObject(state.scope);
-                map.forEach((k, v) -> {
-                    if (k instanceof CharSequence) {
-                        nObj.put(((CharSequence) k).toString(), nObj, state.cx.getWrapFactory().wrap(state.cx, state.scope, v, v.getClass()));
-                    }
-                });
-                value = nObj;
-            }
-            else {
-                if (value instanceof Collection<?>) {
-                    Collection<?> col = (Collection<?>) value;
-                    value = col.toArray(new Object[col.size()]);
-                }
-                if (value instanceof Object[]) {
-                    Object[] elements = (Object[]) value;
-                    elements = Arrays.stream(elements)
-                        .map(o -> state.cx.getWrapFactory().wrap(state.cx, state.scope, o, o.getClass()))
-                        .toArray();
-                    value = state.cx.newArray(state.scope, elements);
-                }
-            }
+            wrappedJavaValue = value;
+            value = javaToJSON((NativeJavaObject) value);
         }
 
         if (value == null) return "null";
@@ -339,17 +321,20 @@ public final class NativeJSON extends IdScriptableObject
             return "null";
         }
 
-        if (value instanceof Scriptable) {
-            if (!(value instanceof Callable)) {
-                if (value instanceof NativeArray) {
-                    return ja((NativeArray) value, state);
-                }
-                return jo((Scriptable) value, state);
-            }
-        } else if (!Undefined.isUndefined(value)) {
-            throw ScriptRuntime.typeErrorById("msg.json.cant.serialize", value.getClass().getName());
+        Object unwrappedJavaValue = null;
+        if ((wrappedJavaValue != null) && (wrappedJavaValue != value)) {
+            unwrappedJavaValue = value;
+            value = wrappedJavaValue;
         }
-
+        if ((value instanceof Scriptable) && !(value instanceof Callable)) {
+            if (isObjectArrayLike(value)) {
+                return ja((Scriptable) value, state);
+            } else if (unwrappedJavaValue == null) {
+                return jo((Scriptable) value, state);
+            } else {
+                throw ScriptRuntime.typeErrorById("msg.json.cant.serialize", unwrappedJavaValue.getClass().getName());
+            }
+        }
         return Undefined.instance;
     }
 
@@ -367,10 +352,31 @@ public final class NativeJSON extends IdScriptableObject
     }
 
     private static String jo(Scriptable value, StringifyState state) {
-        if (state.stack.search(value) != -1) {
-            throw ScriptRuntime.typeErrorById("msg.cyclic.value");
+        Object trackValue = value;
+        final boolean isTrackValueUnwrapped;
+        if (value instanceof Wrapper) {
+            trackValue = ((Wrapper) value).unwrap();
+            isTrackValueUnwrapped = true;
+        } else {
+            isTrackValueUnwrapped = false;
         }
-        state.stack.push(value);
+        
+        if (state.stack.search(trackValue) != -1) {
+            throw ScriptRuntime.typeErrorById("msg.cyclic.value", trackValue.getClass().getName());
+        }
+        state.stack.push(trackValue);
+
+        if (isTrackValueUnwrapped && (trackValue instanceof Map)) {
+            Map<?,?> map = (Map<?,?>) trackValue;
+            Scriptable nObj = state.cx.newObject(state.scope);
+            map.forEach((k, v) -> {
+                Object wrappedValue = state.cx.getWrapFactory().wrap(state.cx, state.scope, v, null);
+                if (k instanceof CharSequence) {
+                    nObj.put(k.toString(), nObj, wrappedValue);
+                }
+            });
+            value = nObj;
+        }
 
         String stepback = state.indent;
         state.indent = state.indent + state.gap;
@@ -415,17 +421,34 @@ public final class NativeJSON extends IdScriptableObject
         return finalValue;
     }
 
-    private static String ja(NativeArray value, StringifyState state) {
-        if (state.stack.search(value) != -1) {
-            throw ScriptRuntime.typeErrorById("msg.cyclic.value");
+    private static String ja(Scriptable value, StringifyState state) {
+        Object trackValue = value;
+        if (value instanceof Wrapper) {
+            trackValue = ((Wrapper) value).unwrap();
         }
-        state.stack.push(value);
+        if (state.stack.search(trackValue) != -1) {
+            throw ScriptRuntime.typeErrorById("msg.cyclic.value", trackValue.getClass().getName());
+        }
+        state.stack.push(trackValue);
 
         String stepback = state.indent;
         state.indent = state.indent + state.gap;
         List<Object> partial = new LinkedList<Object>();
 
-        long len = value.getLength();
+        if (trackValue instanceof Collection) {
+            Collection<?> col = (Collection<?>) trackValue;
+            trackValue = col.toArray(new Object[col.size()]);
+        }
+        if (trackValue instanceof Object[]) {
+            Object[] elements = (Object[]) trackValue;
+            elements = Arrays.stream(elements)
+                .map(o -> state.cx.getWrapFactory().wrap(state.cx, state.scope, o, null))
+                .toArray();
+            value = state.cx.newArray(state.scope, elements);
+        }
+
+        long len = ((NativeArray) value).getLength();
+
         for (long index = 0; index < len; index++) {
             Object strP;
             if (index > Integer.MAX_VALUE) {
@@ -501,6 +524,46 @@ public final class NativeJSON extends IdScriptableObject
         }
         product.append('"');
         return product.toString();
+    }
+
+    private static Object javaToJSON(NativeJavaObject value) {
+        Object unwrapped = value.unwrap();
+        Object converted = null;
+        if (isComplexJavaObject(unwrapped)) {
+            return value;
+        }
+
+        if (unwrapped instanceof Enum) {
+            converted = unwrapped;
+        } else if (unwrapped instanceof java.sql.Date) { // Date-Time handling.
+            converted = ((java.sql.Date) unwrapped).toLocalDate();
+        } else if (unwrapped instanceof java.sql.Time) {
+            converted = ((java.sql.Time) unwrapped).toLocalTime();
+        } else if (unwrapped instanceof java.util.Date) {
+            converted = ((Date) unwrapped).toInstant();
+        } else if (unwrapped instanceof Calendar) {
+            converted = ((Calendar) unwrapped).toInstant();
+        }
+
+        return (converted == null) ? unwrapped : converted.toString();
+    }
+
+    private static boolean isComplexJavaObject(Object o) {
+        return (o instanceof Map) ||
+            (o instanceof Collection) ||
+            (o instanceof Object[]);
+    }
+
+    private static boolean isObjectArrayLike(Object o) {
+        if (o instanceof NativeArray) {
+            return true;
+        }
+        if (o instanceof NativeJavaObject) {
+            o = ((NativeJavaObject) o).unwrap();
+            return (o instanceof Collection) ||
+                (o instanceof Object[]);
+        }
+        return false;
     }
 
 // #string_id_map#
