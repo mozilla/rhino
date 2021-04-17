@@ -18,4 +18,27 @@ assertEquals(1n, (() => 1n & one)());
 assertEquals(2n, (() => 1n << one)());
 assertEquals(0n, (() => 1n >> one)());
 
+// Out of range check for BigInt
+const MAX_INT = 2n ** 31n - 1n;
+assertEquals(1n, 1n ** MAX_INT);
+assertThrows(() => {
+  2n ** MAX_INT;
+}, RangeError);
+assertThrows(() => {
+  1n ** (MAX_INT + 1n);
+}, RangeError);
+
+assertEquals(0n, 0n << MAX_INT);
+assertThrows(() => {
+  1n << MAX_INT;
+}, RangeError);
+assertThrows(() => {
+  1n << (MAX_INT + 1n);
+}, RangeError);
+
+assertEquals(0n, 1n >> MAX_INT);
+assertThrows(() => {
+  1n >> (MAX_INT + 1n);
+}, RangeError);
+
 "success";
