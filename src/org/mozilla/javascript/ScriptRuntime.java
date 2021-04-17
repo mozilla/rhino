@@ -2968,8 +2968,14 @@ public class ScriptRuntime {
             if (((BigInteger) val2).signum() == -1) {
                 throw ScriptRuntime.rangeErrorById("msg.bigint.negative.exponent");
             }
-            // TODO: val2 is supported only in the range of 32-bit integer.
-            return ((BigInteger) val1).pow(val2.intValue());
+
+            try {
+                int intVal2 = ((BigInteger) val2).intValueExact();
+                return ((BigInteger) val1).pow(intVal2);
+            } catch (ArithmeticException e) {
+                // This is outside the scope of the ECMA262 specification.
+                throw ScriptRuntime.rangeErrorById("msg.bigint.out.of.range.arithmetic");
+            }
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
         } else {
@@ -3012,8 +3018,13 @@ public class ScriptRuntime {
 
     public static Number leftShift(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
-            // TODO: val2 is supported only in the range of 32-bit integer.
-            return ((BigInteger) val1).shiftLeft(val2.intValue());
+            try {
+                int intVal2 = ((BigInteger) val2).intValueExact();
+                return ((BigInteger) val1).shiftLeft(intVal2);
+            } catch (ArithmeticException e) {
+                // This is outside the scope of the ECMA262 specification.
+                throw ScriptRuntime.rangeErrorById("msg.bigint.out.of.range.arithmetic");
+            }
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
         } else {
@@ -3024,8 +3035,13 @@ public class ScriptRuntime {
 
     public static Number signedRightShift(Number val1, Number val2) {
         if (val1 instanceof BigInteger && val2 instanceof BigInteger) {
-            // TODO: val2 is supported only in the range of 32-bit integer.
-            return ((BigInteger) val1).shiftRight(val2.intValue());
+            try {
+                int intVal2 = ((BigInteger) val2).intValueExact();
+                return ((BigInteger) val1).shiftRight(intVal2);
+            } catch (ArithmeticException e) {
+                // This is outside the scope of the ECMA262 specification.
+                throw ScriptRuntime.rangeErrorById("msg.bigint.out.of.range.arithmetic");
+            }
         } else if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
         } else {
