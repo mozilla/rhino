@@ -370,7 +370,7 @@ public final class NativeJSON extends IdScriptableObject
             Map<?,?> map = (Map<?,?>) trackValue;
             Scriptable nObj = state.cx.newObject(state.scope);
             map.forEach((k, v) -> {
-                Object wrappedValue = state.cx.getWrapFactory().wrap(state.cx, state.scope, v, null);
+                Object wrappedValue = Context.javaToJS(v, state.scope);
                 if (k instanceof CharSequence) {
                     nObj.put(k.toString(), nObj, wrappedValue);
                 }
@@ -442,7 +442,7 @@ public final class NativeJSON extends IdScriptableObject
         if (trackValue instanceof Object[]) {
             Object[] elements = (Object[]) trackValue;
             elements = Arrays.stream(elements)
-                .map(o -> state.cx.getWrapFactory().wrap(state.cx, state.scope, o, null))
+                .map(o -> Context.javaToJS(o, state.scope))
                 .toArray();
             value = state.cx.newArray(state.scope, elements);
         }
