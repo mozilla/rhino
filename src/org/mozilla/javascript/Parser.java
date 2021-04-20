@@ -67,6 +67,7 @@ import org.mozilla.javascript.ast.Symbol;
 import org.mozilla.javascript.ast.ThrowStatement;
 import org.mozilla.javascript.ast.TryStatement;
 import org.mozilla.javascript.ast.UnaryExpression;
+import org.mozilla.javascript.ast.UpdateExpression;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 import org.mozilla.javascript.ast.WhileLoop;
@@ -1531,11 +1532,13 @@ public class Parser
             if (matchToken(Token.IN, true)) {
                 isForIn = true;
                 inPos = ts.tokenBeg - forPos;
+                markDestructuring(init);
                 cond = expr();  // object over which we're iterating
             } else if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 &&
                        matchToken(Token.NAME, true) && "of".equals(ts.getString())) {
                 isForOf = true;
                 inPos = ts.tokenBeg - forPos;
+                markDestructuring(init);
                 cond = expr();  // object over which we're iterating
             } else {  // ordinary for-loop
                 mustMatchToken(Token.SEMI, "msg.no.semi.for", true);
@@ -1625,7 +1628,6 @@ public class Parser
                 init = variables(tt, ts.tokenBeg, false);
             } else {
                 init = expr();
-                markDestructuring(init);
             }
             return init;
         } finally {
@@ -2579,7 +2581,7 @@ public class Parser
     private AstNode mulExpr()
         throws IOException
     {
-        AstNode pn = unaryExpr();
+        AstNode pn = expExpr();
         for (;;) {
             int tt = peekToken(), opPos = ts.tokenBeg;
             switch (tt) {
@@ -2587,7 +2589,28 @@ public class Parser
               case Token.DIV:
               case Token.MOD:
                 consumeToken();
-                pn = new InfixExpression(tt, pn, unaryExpr(), opPos);
+                pn = new InfixExpression(tt, pn, expExpr(), opPos);
+                continue;
+            }
+            break;
+        }
+        return pn;
+    }
+
+    private AstNode expExpr()
+        throws IOException
+    {
+        AstNode pn = unaryExpr();
+        for (;;) {
+            int tt = peekToken(), opPos = ts.tokenBeg;
+            switch (tt) {
+            case Token.EXP:
+                if (pn instanceof UnaryExpression) {
+                    reportError("msg.no.unary.expr.on.left.exp", AstNode.operatorToString(pn.getType()));
+                    return makeErrorNode();
+                }
+                consumeToken();
+                pn = new InfixExpression(tt, pn, expExpr(), opPos);
                 continue;
             }
             break;
@@ -2633,8 +2656,8 @@ public class Parser
           case Token.INC:
           case Token.DEC:
               consumeToken();
-              UnaryExpression expr = new UnaryExpression(tt, ts.tokenBeg,
-                                                         memberExpr(true));
+              UpdateExpression expr = new UpdateExpression(tt, ts.tokenBeg,
+                                                           memberExpr(true));
               expr.setLineno(line);
               checkBadIncDec(expr);
               return expr;
@@ -2665,8 +2688,8 @@ public class Parser
                   return pn;
               }
               consumeToken();
-              UnaryExpression uexpr =
-                      new UnaryExpression(tt, ts.tokenBeg, pn, true);
+              UpdateExpression uexpr =
+                      new UpdateExpression(tt, ts.tokenBeg, pn, true);
               uexpr.setLineno(line);
               checkBadIncDec(uexpr);
               return uexpr;
@@ -3161,25 +3184,7 @@ public class Parser
 
           case Token.NUMBER: {
               consumeToken();
-              String s = ts.getString();
-              if (this.inUseStrictDirective && ts.isNumberOldOctal()) {
-                  reportError("msg.no.old.octal.strict");
-              }
-              if (ts.isNumberBinary()) {
-                  s = "0b"+s;
-              }
-              if (ts.isNumberOldOctal()) {
-                  s = "0"+s;
-              }
-              if (ts.isNumberOctal()) {
-                  s = "0o"+s;
-              }
-              if (ts.isNumberHex()) {
-                  s = "0x"+s;
-              }
-              return new NumberLiteral(ts.tokenBeg,
-                                       s,
-                                       ts.getNumber());
+              return createNumberLiteral(false);
           }
 
           case Token.STRING:
@@ -3693,8 +3698,7 @@ public class Parser
               break;
 
           case Token.NUMBER:
-              pname = new NumberLiteral(
-                      ts.tokenBeg, ts.getString(), ts.getNumber());
+              pname = createNumberLiteral(true);
               break;
 
           default:
@@ -3718,12 +3722,12 @@ public class Parser
         int tt = peekToken();
         if ((tt == Token.COMMA || tt == Token.RC) && ptt == Token.NAME
                 && compilerEnv.getLanguageVersion() >= Context.VERSION_1_8) {
-            if (!inDestructuringAssignment) {
+            if (!inDestructuringAssignment && compilerEnv.getLanguageVersion() < Context.VERSION_ES6) {
                 reportError("msg.bad.object.init");
             }
             AstNode nn = new Name(property.getPosition(), property.getString());
             ObjectProperty pn = new ObjectProperty();
-            pn.putProp(Node.DESTRUCTURING_SHORTHAND, Boolean.TRUE);
+            pn.putProp(Node.SHORTHAND_PROPERTY_NAME, Boolean.TRUE);
             pn.setLeftAndRight(property, nn);
             return pn;
         }
@@ -3812,6 +3816,29 @@ public class Parser
         return s;
     }
 
+    private NumberLiteral createNumberLiteral(boolean isProperty) {
+        String s = ts.getString();
+        if (this.inUseStrictDirective && ts.isNumberOldOctal()) {
+            if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 || !isProperty) {
+                reportError("msg.no.old.octal.strict");
+            }
+        }
+        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6 || !isProperty) {
+            if (ts.isNumberBinary()) {
+                s = "0b"+s;
+            } else if (ts.isNumberOldOctal()) {
+                s = "0"+s;
+            } else if (ts.isNumberOctal()) {
+                s = "0o"+s;
+            } else if (ts.isNumberHex()) {
+                s = "0x"+s;
+            }
+        }
+        return new NumberLiteral(ts.tokenBeg,
+                                 s,
+                                 ts.getNumber());
+    }
+
     protected void checkActivationName(String name, int token) {
         if (!insideFunction()) {
             return;
@@ -3857,7 +3884,7 @@ public class Parser
         }
     }
 
-    private void checkBadIncDec(UnaryExpression expr) {
+    private void checkBadIncDec(UpdateExpression expr) {
         AstNode op = removeParens(expr.getOperand());
         int tt = op.getType();
         if (!(tt == Token.NAME

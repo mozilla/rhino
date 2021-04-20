@@ -313,7 +313,7 @@ public class NativeDataView
         String s;
         int arity;
         switch (id) {
-        case Id_constructor:    arity = 3; s = "constructor"; break;
+        case Id_constructor:    arity = 1; s = "constructor"; break;
         case Id_getInt8:        arity = 1; s = "getInt8"; break;
         case Id_getUint8:       arity = 1; s = "getUint8"; break;
         case Id_getInt16:       arity = 1; s = "getInt16"; break;
@@ -341,58 +341,62 @@ public class NativeDataView
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2014-12-08 17:26:24 PST
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 7: c=s.charAt(0);
-                if (c=='g') { X="getInt8";id=Id_getInt8; }
-                else if (c=='s') { X="setInt8";id=Id_setInt8; }
-                break L;
-            case 8: c=s.charAt(6);
-                if (c=='1') {
-                    c=s.charAt(0);
-                    if (c=='g') { X="getInt16";id=Id_getInt16; }
-                    else if (c=='s') { X="setInt16";id=Id_setInt16; }
-                }
-                else if (c=='3') {
-                    c=s.charAt(0);
-                    if (c=='g') { X="getInt32";id=Id_getInt32; }
-                    else if (c=='s') { X="setInt32";id=Id_setInt32; }
-                }
-                else if (c=='t') {
-                    c=s.charAt(0);
-                    if (c=='g') { X="getUint8";id=Id_getUint8; }
-                    else if (c=='s') { X="setUint8";id=Id_setUint8; }
-                }
-                break L;
-            case 9: c=s.charAt(0);
-                if (c=='g') {
-                    c=s.charAt(8);
-                    if (c=='2') { X="getUint32";id=Id_getUint32; }
-                    else if (c=='6') { X="getUint16";id=Id_getUint16; }
-                }
-                else if (c=='s') {
-                    c=s.charAt(8);
-                    if (c=='2') { X="setUint32";id=Id_setUint32; }
-                    else if (c=='6') { X="setUint16";id=Id_setUint16; }
-                }
-                break L;
-            case 10: c=s.charAt(0);
-                if (c=='g') {
-                    c=s.charAt(9);
-                    if (c=='2') { X="getFloat32";id=Id_getFloat32; }
-                    else if (c=='4') { X="getFloat64";id=Id_getFloat64; }
-                }
-                else if (c=='s') {
-                    c=s.charAt(9);
-                    if (c=='2') { X="setFloat32";id=Id_setFloat32; }
-                    else if (c=='4') { X="setFloat64";id=Id_setFloat64; }
-                }
-                break L;
-            case 11: X="constructor";id=Id_constructor; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:47:00 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "getInt8":
+            id = Id_getInt8;
+            break;
+        case "getUint8":
+            id = Id_getUint8;
+            break;
+        case "getInt16":
+            id = Id_getInt16;
+            break;
+        case "getUint16":
+            id = Id_getUint16;
+            break;
+        case "getInt32":
+            id = Id_getInt32;
+            break;
+        case "getUint32":
+            id = Id_getUint32;
+            break;
+        case "getFloat32":
+            id = Id_getFloat32;
+            break;
+        case "getFloat64":
+            id = Id_getFloat64;
+            break;
+        case "setInt8":
+            id = Id_setInt8;
+            break;
+        case "setUint8":
+            id = Id_setUint8;
+            break;
+        case "setInt16":
+            id = Id_setInt16;
+            break;
+        case "setUint16":
+            id = Id_setUint16;
+            break;
+        case "setInt32":
+            id = Id_setInt32;
+            break;
+        case "setUint32":
+            id = Id_setUint32;
+            break;
+        case "setFloat32":
+            id = Id_setFloat32;
+            break;
+        case "setFloat64":
+            id = Id_setFloat64;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

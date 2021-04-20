@@ -29,6 +29,9 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 [Compatibility table](http://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
 features from ES6, and ES2016+ are implemented in Rhino.
 
+[![Mozilla](https://circleci.com/gh/mozilla/rhino.svg?style=shield)](https://app.circleci.com/pipelines/github/mozilla/rhino)
+
+
 ## Documentation
 
 Information for script builders and embedders:
@@ -109,6 +112,33 @@ You can also embed it, as most people do. See below for more docs.
 Most issues are managed on GitHub:
 
 [https://github.com/mozilla/rhino/issues](https://github.com/mozilla/rhino/issues)
+
+## Contributing PRs
+
+To submit a new PR, please use the following process:
+
+* Ensure that your entire build passes "./gradlew check". This will include
+code formatting and style checks and runs the tests.
+* Please write tests for what you fixed, unless you can show us that existing
+tests cover the changes. Use existing tests, such as those in 
+"testsrc/org/mozilla/javascript/tests", as a guide.
+* If you fixed ECMAScript spec compatibility, take a look at test262.properties and see
+if you can un-disable some tests.
+* Push your change to GitHub and open a pull request.
+* Please be patient as Rhino is only maintained by volunteers and we may need
+some time to get back to you.
+* Thank you for contributing!
+
+### Code Formatting
+
+Code formatting was introduced in 2021. The "spotless" plugin will fail your
+build if you have changed any files that have not yet been reformatted. 
+Please use "spotlessApply" to reformat the necessary files.
+
+If you are the first person to touch a big file that spotless wants to make
+hundreds of lines of changes to, please try to put the reformatting changes
+alone into a single Git commit so that we can separate reformatting changes
+from more substantive changes.
 
 ## More Help
 

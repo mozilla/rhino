@@ -59,12 +59,12 @@ public class NativeJavaList extends NativeJavaObject implements ArrayScriptable 
     @Override
     public Object get(int index, Scriptable start) {
         if (isWithValidIndex(index)) {
-            Context cx = Context.getContext();
+            Context cx = Context.getCurrentContext();
             Object obj = list.get(index);
-            if (obj == null) {
-                return null;
+            if (cx != null && obj != null) {
+                return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
             }
-            return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+            return obj;
         }
         return Undefined.instance;
     }

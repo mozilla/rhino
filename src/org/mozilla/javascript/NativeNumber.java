@@ -332,26 +332,35 @@ final class NativeNumber extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2007-05-09 08:15:50 EDT
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 7: c=s.charAt(0);
-                if (c=='t') { X="toFixed";id=Id_toFixed; }
-                else if (c=='v') { X="valueOf";id=Id_valueOf; }
-                break L;
-            case 8: c=s.charAt(3);
-                if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-                break L;
-            case 11: c=s.charAt(0);
-                if (c=='c') { X="constructor";id=Id_constructor; }
-                else if (c=='t') { X="toPrecision";id=Id_toPrecision; }
-                break L;
-            case 13: X="toExponential";id=Id_toExponential; break L;
-            case 14: X="toLocaleString";id=Id_toLocaleString; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:51:08 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "toLocaleString":
+            id = Id_toLocaleString;
+            break;
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "valueOf":
+            id = Id_valueOf;
+            break;
+        case "toFixed":
+            id = Id_toFixed;
+            break;
+        case "toExponential":
+            id = Id_toExponential;
+            break;
+        case "toPrecision":
+            id = Id_toPrecision;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

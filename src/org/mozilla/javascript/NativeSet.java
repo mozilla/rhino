@@ -244,27 +244,38 @@ public class NativeSet extends IdScriptableObject {
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2018-03-22 00:54:31 MDT
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 3: c=s.charAt(0);
-                if (c=='a') { if (s.charAt(2)=='d' && s.charAt(1)=='d') {id=Id_add; break L0;} }
-                else if (c=='h') { if (s.charAt(2)=='s' && s.charAt(1)=='a') {id=Id_has; break L0;} }
-                break L;
-            case 4: X="keys";id=Id_keys; break L;
-            case 5: X="clear";id=Id_clear; break L;
-            case 6: c=s.charAt(0);
-                if (c=='d') { X="delete";id=Id_delete; }
-                else if (c=='v') { X="values";id=Id_values; }
-                break L;
-            case 7: c=s.charAt(0);
-                if (c=='e') { X="entries";id=Id_entries; }
-                else if (c=='f') { X="forEach";id=Id_forEach; }
-                break L;
-            case 11: X="constructor";id=Id_constructor; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:49:20 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "add":
+            id = Id_add;
+            break;
+        case "delete":
+            id = Id_delete;
+            break;
+        case "has":
+            id = Id_has;
+            break;
+        case "clear":
+            id = Id_clear;
+            break;
+        case "keys":
+            id = Id_keys;
+            break;
+        case "values":
+            id = Id_values;
+            break;
+        case "entries":
+            id = Id_entries;
+            break;
+        case "forEach":
+            id = Id_forEach;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import org.mozilla.javascript.json.JsonParser;
@@ -287,13 +288,33 @@ public final class NativeJSON extends IdScriptableObject
                                         new Object[] { key, value });
         }
 
-
         if (value instanceof NativeNumber) {
             value = Double.valueOf(ScriptRuntime.toNumber(value));
         } else if (value instanceof NativeString) {
             value = ScriptRuntime.toString(value);
         } else if (value instanceof NativeBoolean) {
             value = ((NativeBoolean) value).getDefaultValue(ScriptRuntime.BooleanClass);
+        } else if (value instanceof NativeJavaObject) {
+            value = ((NativeJavaObject) value).unwrap();
+            if (value instanceof Map) {
+                Map<?,?> map = (Map<?,?>) value;
+                NativeObject nObj = new NativeObject();
+                map.forEach((k, v) -> {
+                    if (k instanceof CharSequence) {
+                        nObj.put(((CharSequence) k).toString(), nObj, v);
+                    }
+                });
+                value = nObj;
+            }
+            else {
+                if (value instanceof Collection<?>) {
+                    Collection<?> col = (Collection<?>) value;
+                    value = col.toArray(new Object[col.size()]);
+                }
+                if (value instanceof Object[]) {
+                    value = new NativeArray((Object[]) value);
+                }
+            }
         }
 
         if (value == null) return "null";
@@ -318,7 +339,8 @@ public final class NativeJSON extends IdScriptableObject
             if (value instanceof ArrayScriptable) {
                 return ja((ArrayScriptable) value, state);
             }
-            return jo((Scriptable) value, state);
+        } else if (!Undefined.isUndefined(value)) {
+            throw ScriptRuntime.typeErrorById("msg.json.cant.serialize", value.getClass().getName());
         }
 
         return Undefined.instance;
@@ -488,14 +510,20 @@ public final class NativeJSON extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2009-05-25 16:01:00 EDT
-        {   id = 0; String X = null;
-            L: switch (s.length()) {
-            case 5: X="parse";id=Id_parse; break L;
-            case 8: X="toSource";id=Id_toSource; break L;
-            case 9: X="stringify";id=Id_stringify; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+// #generated# Last update: 2021-03-21 09:51:17 MEZ
+        switch (s) {
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "parse":
+            id = Id_parse;
+            break;
+        case "stringify":
+            id = Id_stringify;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

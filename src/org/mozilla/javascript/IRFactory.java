@@ -34,6 +34,7 @@ import org.mozilla.javascript.ast.GeneratorExpressionLoop;
 import org.mozilla.javascript.ast.IfStatement;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Jump;
+import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Label;
 import org.mozilla.javascript.ast.LabeledStatement;
 import org.mozilla.javascript.ast.LetNode;
@@ -56,6 +57,7 @@ import org.mozilla.javascript.ast.Symbol;
 import org.mozilla.javascript.ast.ThrowStatement;
 import org.mozilla.javascript.ast.TryStatement;
 import org.mozilla.javascript.ast.UnaryExpression;
+import org.mozilla.javascript.ast.UpdateExpression;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 import org.mozilla.javascript.ast.WhileLoop;
@@ -214,6 +216,9 @@ public final class IRFactory extends Parser
               }
               if (node instanceof UnaryExpression) {
                   return transformUnary((UnaryExpression)node);
+              }
+              if (node instanceof UpdateExpression) {
+                  return transformUpdate((UpdateExpression)node);
               }
               if (node instanceof XmlMemberGet) {
                   return transformXmlMemberGet((XmlMemberGet)node);
@@ -421,7 +426,10 @@ public final class IRFactory extends Parser
     }
 
     private Node transformAssignment(Assignment node) {
+        AstNode right = node.getRight();
         AstNode left = removeParens(node.getLeft());
+        left = transformAssignmentLeft(node, left, right);
+
         Node target = null;
         if (isDestructuring(left)) {
             decompile(left);
@@ -429,10 +437,32 @@ public final class IRFactory extends Parser
         } else {
             target = transform(left);
         }
+
         decompiler.addToken(node.getType());
-        return createAssignment(node.getType(),
-                                target,
-                                transform(node.getRight()));
+        return createAssignment(node.getType(), target, transform(right));
+    }
+
+    private AstNode transformAssignmentLeft(Assignment node, AstNode left, AstNode right) {
+        if (right.getType() == Token.NULL && node.getType() == Token.ASSIGN
+                && left instanceof Name && right instanceof KeywordLiteral) {
+
+            String identifier = ((Name) left).getIdentifier();
+            for (AstNode p = node.getParent(); p != null; p = p.getParent()) {
+                if (p instanceof FunctionNode) {
+                    Name functionName = ((FunctionNode) p).getFunctionName();
+                    if (functionName != null && functionName.getIdentifier().equals(identifier)) {
+                        PropertyGet propertyGet = new PropertyGet();
+                        KeywordLiteral thisKeyword = new KeywordLiteral();
+                        thisKeyword.setType(Token.THIS);
+                        propertyGet.setLeft(thisKeyword);
+                        propertyGet.setRight(left);
+                        node.setLeft(propertyGet);
+                        return propertyGet;
+                    }
+                }
+            }
+        }
+        return left;
     }
 
     private Node transformBlock(AstNode node) {
@@ -1185,6 +1215,14 @@ public final class IRFactory extends Parser
         if (type == Token.DEFAULTNAMESPACE) {
             return transformDefaultXmlNamepace(node);
         }
+        decompiler.addToken(type);
+
+        Node child = transform(node.getOperand());
+        return createUnary(type, child);
+    }
+
+    private Node transformUpdate(UpdateExpression node) {
+        int type = node.getType();
         if (node.isPrefix()) {
             decompiler.addToken(type);
         }
@@ -1192,10 +1230,7 @@ public final class IRFactory extends Parser
         if (node.isPostfix()) {
             decompiler.addToken(type);
         }
-        if (type == Token.INC || type == Token.DEC) {
-            return createIncDec(type, node.isPostfix(), child);
-        }
-        return createUnary(type, child);
+        return createIncDec(type, node.isPostfix(), child);
     }
 
     private Node transformVariables(VariableDeclaration node) {
@@ -2253,6 +2288,7 @@ public final class IRFactory extends Parser
           case Token.ASSIGN_MUL:    assignOp = Token.MUL;    break;
           case Token.ASSIGN_DIV:    assignOp = Token.DIV;    break;
           case Token.ASSIGN_MOD:    assignOp = Token.MOD;    break;
+          case Token.ASSIGN_EXP:    assignOp = Token.EXP;    break;
           default: throw Kit.codeBug();
         }
 
@@ -2429,10 +2465,10 @@ public final class IRFactory extends Parser
         int size = props.size();
         for (int i = 0; i < size; i++) {
             ObjectProperty prop = props.get(i);
-            boolean destructuringShorthand =
-                    Boolean.TRUE.equals(prop.getProp(Node.DESTRUCTURING_SHORTHAND));
+            boolean shorthandPropertyName =
+                    Boolean.TRUE.equals(prop.getProp(Node.SHORTHAND_PROPERTY_NAME));
             decompile(prop.getLeft());
-            if (!destructuringShorthand) {
+            if (!shorthandPropertyName) {
                 decompiler.addToken(Token.COLON);
                 decompile(prop.getRight());
             }

@@ -1575,118 +1575,155 @@ final class NativeDate extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2009-07-22 05:44:02 EST
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 6: c=s.charAt(0);
-                if (c=='g') { X="getDay";id=Id_getDay; }
-                else if (c=='t') { X="toJSON";id=Id_toJSON; }
-                break L;
-            case 7: switch (s.charAt(3)) {
-                case 'D': c=s.charAt(0);
-                    if (c=='g') { X="getDate";id=Id_getDate; }
-                    else if (c=='s') { X="setDate";id=Id_setDate; }
-                    break L;
-                case 'T': c=s.charAt(0);
-                    if (c=='g') { X="getTime";id=Id_getTime; }
-                    else if (c=='s') { X="setTime";id=Id_setTime; }
-                    break L;
-                case 'Y': c=s.charAt(0);
-                    if (c=='g') { X="getYear";id=Id_getYear; }
-                    else if (c=='s') { X="setYear";id=Id_setYear; }
-                    break L;
-                case 'u': X="valueOf";id=Id_valueOf; break L;
-                } break L;
-            case 8: switch (s.charAt(3)) {
-                case 'H': c=s.charAt(0);
-                    if (c=='g') { X="getHours";id=Id_getHours; }
-                    else if (c=='s') { X="setHours";id=Id_setHours; }
-                    break L;
-                case 'M': c=s.charAt(0);
-                    if (c=='g') { X="getMonth";id=Id_getMonth; }
-                    else if (c=='s') { X="setMonth";id=Id_setMonth; }
-                    break L;
-                case 'o': X="toSource";id=Id_toSource; break L;
-                case 't': X="toString";id=Id_toString; break L;
-                } break L;
-            case 9: X="getUTCDay";id=Id_getUTCDay; break L;
-            case 10: c=s.charAt(3);
-                if (c=='M') {
-                    c=s.charAt(0);
-                    if (c=='g') { X="getMinutes";id=Id_getMinutes; }
-                    else if (c=='s') { X="setMinutes";id=Id_setMinutes; }
-                }
-                else if (c=='S') {
-                    c=s.charAt(0);
-                    if (c=='g') { X="getSeconds";id=Id_getSeconds; }
-                    else if (c=='s') { X="setSeconds";id=Id_setSeconds; }
-                }
-                else if (c=='U') {
-                    c=s.charAt(0);
-                    if (c=='g') { X="getUTCDate";id=Id_getUTCDate; }
-                    else if (c=='s') { X="setUTCDate";id=Id_setUTCDate; }
-                }
-                break L;
-            case 11: switch (s.charAt(3)) {
-                case 'F': c=s.charAt(0);
-                    if (c=='g') { X="getFullYear";id=Id_getFullYear; }
-                    else if (c=='s') { X="setFullYear";id=Id_setFullYear; }
-                    break L;
-                case 'M': X="toGMTString";id=Id_toGMTString; break L;
-                case 'S': X="toISOString";id=Id_toISOString; break L;
-                case 'T': X="toUTCString";id=Id_toUTCString; break L;
-                case 'U': c=s.charAt(0);
-                    if (c=='g') {
-                        c=s.charAt(9);
-                        if (c=='r') { X="getUTCHours";id=Id_getUTCHours; }
-                        else if (c=='t') { X="getUTCMonth";id=Id_getUTCMonth; }
-                    }
-                    else if (c=='s') {
-                        c=s.charAt(9);
-                        if (c=='r') { X="setUTCHours";id=Id_setUTCHours; }
-                        else if (c=='t') { X="setUTCMonth";id=Id_setUTCMonth; }
-                    }
-                    break L;
-                case 's': X="constructor";id=Id_constructor; break L;
-                } break L;
-            case 12: c=s.charAt(2);
-                if (c=='D') { X="toDateString";id=Id_toDateString; }
-                else if (c=='T') { X="toTimeString";id=Id_toTimeString; }
-                break L;
-            case 13: c=s.charAt(0);
-                if (c=='g') {
-                    c=s.charAt(6);
-                    if (c=='M') { X="getUTCMinutes";id=Id_getUTCMinutes; }
-                    else if (c=='S') { X="getUTCSeconds";id=Id_getUTCSeconds; }
-                }
-                else if (c=='s') {
-                    c=s.charAt(6);
-                    if (c=='M') { X="setUTCMinutes";id=Id_setUTCMinutes; }
-                    else if (c=='S') { X="setUTCSeconds";id=Id_setUTCSeconds; }
-                }
-                break L;
-            case 14: c=s.charAt(0);
-                if (c=='g') { X="getUTCFullYear";id=Id_getUTCFullYear; }
-                else if (c=='s') { X="setUTCFullYear";id=Id_setUTCFullYear; }
-                else if (c=='t') { X="toLocaleString";id=Id_toLocaleString; }
-                break L;
-            case 15: c=s.charAt(0);
-                if (c=='g') { X="getMilliseconds";id=Id_getMilliseconds; }
-                else if (c=='s') { X="setMilliseconds";id=Id_setMilliseconds; }
-                break L;
-            case 17: X="getTimezoneOffset";id=Id_getTimezoneOffset; break L;
-            case 18: c=s.charAt(0);
-                if (c=='g') { X="getUTCMilliseconds";id=Id_getUTCMilliseconds; }
-                else if (c=='s') { X="setUTCMilliseconds";id=Id_setUTCMilliseconds; }
-                else if (c=='t') {
-                    c=s.charAt(8);
-                    if (c=='D') { X="toLocaleDateString";id=Id_toLocaleDateString; }
-                    else if (c=='T') { X="toLocaleTimeString";id=Id_toLocaleTimeString; }
-                }
-                break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:44:53 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "toTimeString":
+            id = Id_toTimeString;
+            break;
+        case "toDateString":
+            id = Id_toDateString;
+            break;
+        case "toLocaleString":
+            id = Id_toLocaleString;
+            break;
+        case "toLocaleTimeString":
+            id = Id_toLocaleTimeString;
+            break;
+        case "toLocaleDateString":
+            id = Id_toLocaleDateString;
+            break;
+        case "toUTCString":
+            id = Id_toUTCString;
+            break;
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "valueOf":
+            id = Id_valueOf;
+            break;
+        case "getTime":
+            id = Id_getTime;
+            break;
+        case "getYear":
+            id = Id_getYear;
+            break;
+        case "getFullYear":
+            id = Id_getFullYear;
+            break;
+        case "getUTCFullYear":
+            id = Id_getUTCFullYear;
+            break;
+        case "getMonth":
+            id = Id_getMonth;
+            break;
+        case "getUTCMonth":
+            id = Id_getUTCMonth;
+            break;
+        case "getDate":
+            id = Id_getDate;
+            break;
+        case "getUTCDate":
+            id = Id_getUTCDate;
+            break;
+        case "getDay":
+            id = Id_getDay;
+            break;
+        case "getUTCDay":
+            id = Id_getUTCDay;
+            break;
+        case "getHours":
+            id = Id_getHours;
+            break;
+        case "getUTCHours":
+            id = Id_getUTCHours;
+            break;
+        case "getMinutes":
+            id = Id_getMinutes;
+            break;
+        case "getUTCMinutes":
+            id = Id_getUTCMinutes;
+            break;
+        case "getSeconds":
+            id = Id_getSeconds;
+            break;
+        case "getUTCSeconds":
+            id = Id_getUTCSeconds;
+            break;
+        case "getMilliseconds":
+            id = Id_getMilliseconds;
+            break;
+        case "getUTCMilliseconds":
+            id = Id_getUTCMilliseconds;
+            break;
+        case "getTimezoneOffset":
+            id = Id_getTimezoneOffset;
+            break;
+        case "setTime":
+            id = Id_setTime;
+            break;
+        case "setMilliseconds":
+            id = Id_setMilliseconds;
+            break;
+        case "setUTCMilliseconds":
+            id = Id_setUTCMilliseconds;
+            break;
+        case "setSeconds":
+            id = Id_setSeconds;
+            break;
+        case "setUTCSeconds":
+            id = Id_setUTCSeconds;
+            break;
+        case "setMinutes":
+            id = Id_setMinutes;
+            break;
+        case "setUTCMinutes":
+            id = Id_setUTCMinutes;
+            break;
+        case "setHours":
+            id = Id_setHours;
+            break;
+        case "setUTCHours":
+            id = Id_setUTCHours;
+            break;
+        case "setDate":
+            id = Id_setDate;
+            break;
+        case "setUTCDate":
+            id = Id_setUTCDate;
+            break;
+        case "setMonth":
+            id = Id_setMonth;
+            break;
+        case "setUTCMonth":
+            id = Id_setUTCMonth;
+            break;
+        case "setFullYear":
+            id = Id_setFullYear;
+            break;
+        case "setUTCFullYear":
+            id = Id_setUTCFullYear;
+            break;
+        case "setYear":
+            id = Id_setYear;
+            break;
+        case "toISOString":
+            id = Id_toISOString;
+            break;
+        case "toJSON":
+            id = Id_toJSON;
+            break;
+        case "toGMTString":
+            id = Id_toGMTString;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

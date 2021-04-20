@@ -86,17 +86,27 @@ public class ScriptEngineTest {
     engine.put("a", "a");
     engine.put("b", "b");
     engine.put("c", "c");
+    engine.put("actuallyNull", null);
 
     // Ensure that stuff we just stuck in bindings made it to a global
     engine.eval(new FileReader("testsrc/assert.js"));
     engine.eval("assertEquals(string, 'Hello');\n"
         + "assertEquals(integer, 123);\n"
+        + "assertEquals(a, 'a');\n"
+        + "assertEquals(b, 'b');\n"
+        + "assertEquals(c, 'c');\n"
+        + "assertNull(actuallyNull);\n"
         + "string = 'Goodbye';\n"
         + "assertEquals(string, 'Goodbye');");
     assertEquals(engine.get("string"), "Goodbye");
 
+    Bindings engineBindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+    // Make sure that null works the way we expect
+    assertTrue(engineBindings.containsKey("actuallyNull"));
+    assertNull(engineBindings.get("actuallyNull"));
+
     // Make sure we can delete
-    engine.getBindings(ScriptContext.ENGINE_SCOPE).remove("string");
+    engineBindings.remove("string");
     // This will throw because string is undefined
     assertThrows(ScriptException.class, () -> {
       engine.eval("let failing = string + '123';");

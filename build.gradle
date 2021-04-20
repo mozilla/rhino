@@ -7,7 +7,8 @@ plugins {
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
-    id 'com.github.spotbugs' version "4.2.4"
+    id 'com.diffplug.spotless' version "5.12.1"
+    id 'com.github.spotbugs' version "4.6.2"
 }
 
 tasks.withType(JavaCompile) {
@@ -57,11 +58,12 @@ sourceSets {
 }
 
 dependencies {
-    testImplementation "junit:junit:4.13"
-    testImplementation "org.yaml:snakeyaml:1.26"
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.yaml:snakeyaml:1.28"
+    testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
     jmhImplementation project
-    jmhImplementation 'org.openjdk.jmh:jmh-core:1.23'
-    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.23'
+    jmhImplementation 'org.openjdk.jmh:jmh-core:1.27'
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.27'
 }
 
 test {
@@ -99,17 +101,17 @@ task sunSpiderBenchmark(type: JavaExec) {
 task v8Benchmark(type: JavaExec) {
     classpath = sourceSets.jmh.runtimeClasspath
     main = 'org.openjdk.jmh.Main'
-    args '-f', '1', '-bm', 'avgt', '-tu', 'us', 'V8'
+    args '-f', '1', '-i', '10', '-bm', 'avgt', '-tu', 'us', 'V8'
 }
 
 task testBenchmark() {}
 testBenchmark.dependsOn sunSpiderBenchmark
 testBenchmark.dependsOn v8Benchmark
 
-task microBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
+task builtinBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
     classpath = sourceSets.jmh.runtimeClasspath
     main = 'org.openjdk.jmh.Main'
-    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', 'ObjectCall'
+    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', 'Builtin'
 }
 
 task jmhHelp(type: JavaExec, description: 'JMH benchmarks') {
@@ -378,6 +380,13 @@ spotbugs {
     effort = "less"
     reportLevel = "medium"
     excludeFilter = file("./spotbugs-exclude.xml")
+}
+
+spotless {
+    ratchetFrom 'code-formatting-required'
+    java {
+        googleJavaFormat().aosp()
+    }
 }
 
 jacocoTestReport.dependsOn test

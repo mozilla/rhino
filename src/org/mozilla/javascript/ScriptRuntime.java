@@ -199,6 +199,9 @@ public class ScriptRuntime {
         NativeArrayIterator.init(scope, sealed);
         NativeStringIterator.init(scope, sealed);
 
+        NativeJavaObject.init(scope, sealed);
+        NativeJavaMap.init(scope, sealed);
+
         boolean withXml = cx.hasFeature(Context.FEATURE_E4X) &&
                           cx.getE4xImplementationFactory() != null;
 
@@ -2964,10 +2967,32 @@ public class ScriptRuntime {
         return new ConsString(toCharSequence(val1), toCharSequence(val2));
     }
 
+    /**
+     * https://262.ecma-international.org/11.0/#sec-addition-operator-plus
+     * 5. Let lprim be ? ToPrimitive(lval).
+     * 7. If Type(lprim) is String or Type(rprim) is String, then
+     *   a. Let lstr be ? ToString(lprim).
+     *
+     * Should call toPrimitive before toCharSequence
+     *
+     * @deprecated Use {@link #add(Object, Object, Context)} instead
+     */
+    @Deprecated
     public static CharSequence add(CharSequence val1, Object val2) {
         return new ConsString(val1, toCharSequence(val2));
     }
 
+    /**
+     * https://262.ecma-international.org/11.0/#sec-addition-operator-plus
+     * 6. Let rprim be ? ToPrimitive(rval).
+     * 7. If Type(lprim) is String or Type(rprim) is String, then
+     *   b. Let rstr be ? ToString(rprim).
+     *
+     * Should call toPrimitive before toCharSequence
+     *
+     * @deprecated Use {@link #add(Object, Object, Context)} instead
+     */
+    @Deprecated
     public static CharSequence add(Object val1, CharSequence val2) {
         return new ConsString(toCharSequence(val1), val2);
     }
@@ -4131,7 +4156,7 @@ public class ScriptRuntime {
     public static Object[] getArrayElements(Scriptable object)
     {
         Context cx = Context.getContext();
-        long longLen = NativeArray.getLengthProperty(cx, object, false);
+        long longLen = NativeArray.getLengthProperty(cx, object);
         if (longLen > Integer.MAX_VALUE) {
             // arrays beyond  MAX_INT is not in Java in any case
             throw new IllegalArgumentException();

@@ -723,7 +723,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
           }
         }
 
-        final long length = getLengthProperty(cx, items, false);
+        final long length = getLengthProperty(cx, items);
         final Scriptable result = callConstructorOrCreateArray(cx, scope, thisObj, length, true);
         for (long k = 0; k < length; k++) {
             Object temp = getRawElem(items, k);
@@ -846,7 +846,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
      * getLengthProperty returns 0 if obj does not have the length property
      * or its value is not convertible to a number.
      */
-    static long getLengthProperty(Context cx, Scriptable obj, boolean throwIfTooLarge) {
+    static long getLengthProperty(Context cx, Scriptable obj) {
         // These will both give numeric lengths within Uint32 range.
         if (obj instanceof NativeString) {
             return ((NativeString)obj).getLength();
@@ -862,17 +862,15 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
         }
 
         double doubleLen = ScriptRuntime.toNumber(len);
+
+        // ToLength
         if (doubleLen > NativeNumber.MAX_SAFE_INTEGER) {
-            if (throwIfTooLarge) {
-                String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
-                throw ScriptRuntime.rangeError(msg);
-            }
-            return (int) NativeNumber.MAX_SAFE_INTEGER;
+            return (long) NativeNumber.MAX_SAFE_INTEGER;
         }
         if (doubleLen < 0) {
             return 0;
         }
-        return ScriptRuntime.toUint32(len);
+        return (long)doubleLen;
     }
 
     private static Object setLengthProperty(Context cx, Scriptable target,
@@ -949,7 +947,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
         /* It's probably redundant to handle long lengths in this
          * function; StringBuilders are limited to 2^31 in java.
          */
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
 
         StringBuilder result = new StringBuilder(256);
 
@@ -1044,7 +1042,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
     {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-        long llength = getLengthProperty(cx, o, false);
+        long llength = getLengthProperty(cx, o);
         int length = (int)llength;
         if (llength != length) {
             throw Context.reportRuntimeErrorById(
@@ -1120,7 +1118,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
                 return o;
             }
         }
-        long len = getLengthProperty(cx, o, false);
+        long len = getLengthProperty(cx, o);
 
         long half = len / 2;
         for(long i=0; i < half; i++) {
@@ -1170,7 +1168,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
             comparator = DEFAULT_COMPARATOR;
         }
 
-        long llength = getLengthProperty(cx, o, false);
+        long llength = getLengthProperty(cx, o);
         final int length = (int) llength;
         if (llength != length) {
             throw Context.reportRuntimeErrorById(
@@ -1209,7 +1207,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
                 return ScriptRuntime.wrapNumber(na.length);
             }
         }
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
         for (int i = 0; i < args.length; i++) {
             setElem(cx, o, length + i, args[i]);
         }
@@ -1245,7 +1243,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
                 return result;
             }
         }
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
         if (length > 0) {
             length--;
 
@@ -1280,7 +1278,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
             }
         }
         Object result;
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
         if (length > 0) {
             long i = 0;
             length--;
@@ -1326,10 +1324,14 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
                 return ScriptRuntime.wrapNumber(na.length);
             }
         }
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
         int argc = args.length;
 
-        if (args.length > 0) {
+        if (argc > 0) {
+            if (length + argc > NativeNumber.MAX_SAFE_INTEGER) {
+                throw ScriptRuntime.typeErrorById("msg.arraylength.too.big", length + argc);
+            }
+
             /*  Slide up the array to make room for args at the bottom */
             if (length > 0) {
                 for (long last = length - 1; last >= 0; last--) {
@@ -1344,17 +1346,17 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
             }
         }
         /* Follow Perl by returning the new array length. */
-        length += args.length;
+        length += argc;
         return setLengthProperty(cx, o, length);
     }
 
     private static Object js_splice(Context cx, Scriptable scope,
                                     Scriptable thisObj, Object[] args)
     {
-      Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
+        Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-      NativeArray na = null;
-      boolean denseMode = false;
+        NativeArray na = null;
+        boolean denseMode = false;
         if (o instanceof NativeArray) {
             na = (NativeArray) o;
             denseMode = na.denseOnly;
@@ -1365,34 +1367,43 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
         int argc = args.length;
         if (argc == 0)
             return cx.newArray(scope, 0);
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
 
         /* Convert the first argument into a starting index. */
         long begin = toSliceIndex(ScriptRuntime.toInteger(args[0]), length);
         argc--;
 
         /* Convert the second argument into count */
-        long count;
+        long actualDeleteCount;
         if (args.length == 1) {
-            count = length - begin;
+            actualDeleteCount = length - begin;
         } else {
             double dcount = ScriptRuntime.toInteger(args[1]);
             if (dcount < 0) {
-                count = 0;
+                actualDeleteCount = 0;
             } else if (dcount > (length - begin)) {
-                count = length - begin;
+                actualDeleteCount = length - begin;
             } else {
-                count = (long)dcount;
+                actualDeleteCount = (long)dcount;
             }
             argc--;
         }
 
-        long end = begin + count;
+        long end = begin + actualDeleteCount;
+        long delta = argc - actualDeleteCount;
+
+        if (length + delta > NativeNumber.MAX_SAFE_INTEGER) {
+            throw ScriptRuntime.typeErrorById("msg.arraylength.too.big", length + delta);
+        }
+        if (actualDeleteCount > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
 
         /* If there are elements to remove, put them into the return value. */
         Object result;
-        if (count != 0) {
-            if (count == 1
+        if (actualDeleteCount != 0) {
+            if (actualDeleteCount == 1
                 && (cx.getLanguageVersion() == Context.VERSION_1_2))
             {
                 /*
@@ -1426,7 +1437,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
                     result = resultArray;
                 }
             }
-        } else { // (count == 0)
+        } else { // (actualDeleteCount == 0)
             if (cx.getLanguageVersion() == Context.VERSION_1_2) {
                 /* Emulate C JS1.2; if no elements are removed, return undefined. */
                 result = Undefined.instance;
@@ -1436,7 +1447,6 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
         }
 
         /* Find the direction (up or down) to copy and make way for argv. */
-        long delta = argc - count;
         if (denseMode && length + delta < Integer.MAX_VALUE &&
             na.ensureCapacity((int) (length + delta)))
         {
@@ -1512,7 +1522,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
     // dense arrays.
     private static long concatSpreadArg(Context cx,
         Scriptable result, Scriptable arg, long offset) {
-      long srclen = getLengthProperty(cx, arg, false);
+      long srclen = getLengthProperty(cx, arg);
       long newlen = srclen + offset;
 
       // First, optimize for a pair of native, dense arrays
@@ -1577,8 +1587,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
     {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-        Scriptable result = cx.newArray(scope, 0);
-        long len = getLengthProperty(cx, o, false);
+        long len = getLengthProperty(cx, o);
 
         long begin, end;
         if (args.length == 0) {
@@ -1593,6 +1602,12 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
             }
         }
 
+        if (end - begin > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+
+        Scriptable result = cx.newArray(scope, 0);
         for (long slot = begin; slot < end; slot++) {
             Object temp = getRawElem(o, slot);
             if (temp != NOT_FOUND) {
@@ -1625,7 +1640,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
         /*
          * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:indexOf
          * The index at which to begin the search. Defaults to 0, i.e. the
@@ -1681,7 +1696,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
         /*
          * From http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Objects:Array:lastIndexOf
          * The index at which to start searching backwards. Defaults to the
@@ -1788,7 +1803,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
     private static Object js_fill(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
     {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        long len = getLengthProperty(cx, o, false);
+        long len = getLengthProperty(cx, o);
 
         long relativeStart = 0;
         if (args.length >= 2) {
@@ -1825,7 +1840,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
     private static Object js_copyWithin(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
     {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        long len = getLengthProperty(cx, o, false);
+        long len = getLengthProperty(cx, o);
 
         Object targetArg = (args.length >= 1) ? args[0] : Undefined.instance;
         long relativeTarget = (long) ScriptRuntime.toInteger(targetArg);
@@ -1914,7 +1929,12 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
             requireObjectCoercible(cx, o, idFunctionObject);
         }
 
-        long length = getLengthProperty(cx, o, id == Id_map);
+        long length = getLengthProperty(cx, o);
+        if (id == Id_map && length > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         if (callbackArg == null || !(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
@@ -2009,7 +2029,7 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
     {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
-        long length = getLengthProperty(cx, o, false);
+        long length = getLengthProperty(cx, o);
         Object callbackArg = args.length > 0 ? args[0] : Undefined.instance;
         if (callbackArg == null || !(callbackArg instanceof Function)) {
             throw ScriptRuntime.notFunctionError(callbackArg);
@@ -2371,57 +2391,104 @@ public class NativeArray extends IdScriptableObject implements List, ArrayScript
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2019-05-11 10:25:01 MESZ
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 3: c=s.charAt(0);
-                if (c=='m') { if (s.charAt(2)=='p' && s.charAt(1)=='a') {id=Id_map; break L0;} }
-                else if (c=='p') { if (s.charAt(2)=='p' && s.charAt(1)=='o') {id=Id_pop; break L0;} }
-                break L;
-            case 4: switch (s.charAt(2)) {
-                case 'i': X="join";id=Id_join; break L;
-                case 'l': X="fill";id=Id_fill; break L;
-                case 'm': X="some";id=Id_some; break L;
-                case 'n': X="find";id=Id_find; break L;
-                case 'r': X="sort";id=Id_sort; break L;
-                case 's': X="push";id=Id_push; break L;
-                case 'y': X="keys";id=Id_keys; break L;
-                } break L;
-            case 5: c=s.charAt(1);
-                if (c=='h') { X="shift";id=Id_shift; }
-                else if (c=='l') { X="slice";id=Id_slice; }
-                else if (c=='v') { X="every";id=Id_every; }
-                break L;
-            case 6: switch (s.charAt(0)) {
-                case 'c': X="concat";id=Id_concat; break L;
-                case 'f': X="filter";id=Id_filter; break L;
-                case 'r': X="reduce";id=Id_reduce; break L;
-                case 's': X="splice";id=Id_splice; break L;
-                case 'v': X="values";id=Id_values; break L;
-                } break L;
-            case 7: switch (s.charAt(0)) {
-                case 'e': X="entries";id=Id_entries; break L;
-                case 'f': X="forEach";id=Id_forEach; break L;
-                case 'i': X="indexOf";id=Id_indexOf; break L;
-                case 'r': X="reverse";id=Id_reverse; break L;
-                case 'u': X="unshift";id=Id_unshift; break L;
-                } break L;
-            case 8: c=s.charAt(3);
-                if (c=='l') { X="includes";id=Id_includes; }
-                else if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-                break L;
-            case 9: X="findIndex";id=Id_findIndex; break L;
-            case 10: X="copyWithin";id=Id_copyWithin; break L;
-            case 11: c=s.charAt(0);
-                if (c=='c') { X="constructor";id=Id_constructor; }
-                else if (c=='l') { X="lastIndexOf";id=Id_lastIndexOf; }
-                else if (c=='r') { X="reduceRight";id=Id_reduceRight; }
-                break L;
-            case 14: X="toLocaleString";id=Id_toLocaleString; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:43:46 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "toLocaleString":
+            id = Id_toLocaleString;
+            break;
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "join":
+            id = Id_join;
+            break;
+        case "reverse":
+            id = Id_reverse;
+            break;
+        case "sort":
+            id = Id_sort;
+            break;
+        case "push":
+            id = Id_push;
+            break;
+        case "pop":
+            id = Id_pop;
+            break;
+        case "shift":
+            id = Id_shift;
+            break;
+        case "unshift":
+            id = Id_unshift;
+            break;
+        case "splice":
+            id = Id_splice;
+            break;
+        case "concat":
+            id = Id_concat;
+            break;
+        case "slice":
+            id = Id_slice;
+            break;
+        case "indexOf":
+            id = Id_indexOf;
+            break;
+        case "lastIndexOf":
+            id = Id_lastIndexOf;
+            break;
+        case "every":
+            id = Id_every;
+            break;
+        case "filter":
+            id = Id_filter;
+            break;
+        case "forEach":
+            id = Id_forEach;
+            break;
+        case "map":
+            id = Id_map;
+            break;
+        case "some":
+            id = Id_some;
+            break;
+        case "find":
+            id = Id_find;
+            break;
+        case "findIndex":
+            id = Id_findIndex;
+            break;
+        case "reduce":
+            id = Id_reduce;
+            break;
+        case "reduceRight":
+            id = Id_reduceRight;
+            break;
+        case "fill":
+            id = Id_fill;
+            break;
+        case "keys":
+            id = Id_keys;
+            break;
+        case "values":
+            id = Id_values;
+            break;
+        case "entries":
+            id = Id_entries;
+            break;
+        case "includes":
+            id = Id_includes;
+            break;
+        case "copyWithin":
+            id = Id_copyWithin;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

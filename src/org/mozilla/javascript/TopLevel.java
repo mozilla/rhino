@@ -32,7 +32,7 @@ import java.util.EnumMap;
  * built-in classes after initialization. For other setups involving
  * top-level scopes that inherit global properties from their proptotypes
  * (e.g. with dynamic scopes) embeddings should explicitly call
- * {@link #cacheBuiltins()} to initialize the class cache for each top-level
+ * {@link #cacheBuiltins(Scriptable, boolean)} to initialize the class cache for each top-level
  * scope.</p>
  */
 public class TopLevel extends IdScriptableObject {
@@ -222,7 +222,7 @@ public class TopLevel extends IdScriptableObject {
 
     /**
      * Get the cached built-in object constructor from this scope with the
-     * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
+     * given <code>type</code>. Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not
      * been called on this object.
      * @param type the built-in type
      * @return the built-in constructor
@@ -244,7 +244,7 @@ public class TopLevel extends IdScriptableObject {
 
     /**
      * Get the cached built-in object prototype from this scope with the
-     * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
+     * given <code>type</code>. Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not
      * been called on this object.
      * @param type the built-in type
      * @return the built-in prototype

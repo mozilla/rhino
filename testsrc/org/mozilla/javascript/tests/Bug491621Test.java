@@ -26,8 +26,13 @@ public class Bug491621Test {
      */
     private void assertSource(String source, String expectedOutput)
     {
+        assertSource(source, expectedOutput, Context.VERSION_1_7);
+    }
+
+    private void assertSource(String source, String expectedOutput, int languageVersion)
+    {
         CompilerEnvirons env = new CompilerEnvirons();
-        env.setLanguageVersion(Context.VERSION_1_7);
+        env.setLanguageVersion(languageVersion);
         Parser parser = new Parser(env);
         AstRoot root = parser.parse(source, null, 0);
         Assert.assertEquals(expectedOutput, root.toSource());
@@ -113,6 +118,13 @@ public class Bug491621Test {
     public void testHexOctDecLiteralToSource()
     {
         assertSource("0xff;\n9;\n07;\n1;", "0xff;\n9;\n07;\n1;\n");
+    }
+
+    @Test
+    public void testHexOctLiteralPropertyNameToSource()
+    {
+        assertSource("({ 0xff: 1, 010: 2 });", "({\n  ff: 1, \n  10: 2});\n");
+        assertSource("({ 0xff: 1, 010: 2 });", "({\n  0xff: 1, \n  010: 2});\n", Context.VERSION_ES6);
     }
 
     @Test

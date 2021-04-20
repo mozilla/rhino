@@ -178,35 +178,56 @@ public class NativeCallSite extends IdScriptableObject {
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2015-03-02 23:42:12 PST
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 6: X="isEval";id=Id_isEval; break L;
-            case 7: X="getThis";id=Id_getThis; break L;
-            case 8: c=s.charAt(0);
-                if (c=='i') { X="isNative";id=Id_isNative; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-                break L;
-            case 10: X="isToplevel";id=Id_isToplevel; break L;
-            case 11: switch (s.charAt(4)) {
-                case 'i': X="getFileName";id=Id_getFileName; break L;
-                case 't': X="constructor";id=Id_constructor; break L;
-                case 'u': X="getFunction";id=Id_getFunction; break L;
-                case 'y': X="getTypeName";id=Id_getTypeName; break L;
-                } break L;
-            case 13: switch (s.charAt(3)) {
-                case 'E': X="getEvalOrigin";id=Id_getEvalOrigin; break L;
-                case 'L': X="getLineNumber";id=Id_getLineNumber; break L;
-                case 'M': X="getMethodName";id=Id_getMethodName; break L;
-                case 'o': X="isConstructor";id=Id_isConstructor; break L;
-                } break L;
-            case 15: c=s.charAt(3);
-                if (c=='C') { X="getColumnNumber";id=Id_getColumnNumber; }
-                else if (c=='F') { X="getFunctionName";id=Id_getFunctionName; }
-                break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:51:55 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "getThis":
+            id = Id_getThis;
+            break;
+        case "getTypeName":
+            id = Id_getTypeName;
+            break;
+        case "getFunction":
+            id = Id_getFunction;
+            break;
+        case "getFunctionName":
+            id = Id_getFunctionName;
+            break;
+        case "getMethodName":
+            id = Id_getMethodName;
+            break;
+        case "getFileName":
+            id = Id_getFileName;
+            break;
+        case "getLineNumber":
+            id = Id_getLineNumber;
+            break;
+        case "getColumnNumber":
+            id = Id_getColumnNumber;
+            break;
+        case "getEvalOrigin":
+            id = Id_getEvalOrigin;
+            break;
+        case "isToplevel":
+            id = Id_isToplevel;
+            break;
+        case "isEval":
+            id = Id_isEval;
+            break;
+        case "isNative":
+            id = Id_isNative;
+            break;
+        case "isConstructor":
+            id = Id_isConstructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

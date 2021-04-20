@@ -112,18 +112,23 @@ final class NativeBoolean extends IdScriptableObject
     protected int findPrototypeId(String s)
     {
         int id;
-// #generated# Last update: 2007-05-09 08:15:31 EDT
-        L0: { id = 0; String X = null; int c;
-            int s_length = s.length();
-            if (s_length==7) { X="valueOf";id=Id_valueOf; }
-            else if (s_length==8) {
-                c=s.charAt(3);
-                if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
-            }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
-            break L0;
+// #generated# Last update: 2021-03-21 09:44:49 MEZ
+        switch (s) {
+        case "constructor":
+            id = Id_constructor;
+            break;
+        case "toString":
+            id = Id_toString;
+            break;
+        case "toSource":
+            id = Id_toSource;
+            break;
+        case "valueOf":
+            id = Id_valueOf;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
         return id;

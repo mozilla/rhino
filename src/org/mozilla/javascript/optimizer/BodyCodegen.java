@@ -1140,12 +1140,7 @@ class BodyCodegen
             }
 
             case Token.BITNOT:
-                generateExpression(child, node);
-                addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
-                cfw.addPush(-1);         // implement ~a as (a ^ -1)
-                cfw.add(ByteCode.IXOR);
-                cfw.add(ByteCode.I2D);
-                addDoubleWrap();
+                visitBitNot(node, child);
                 break;
 
             case Token.VOID:
@@ -1221,24 +1216,12 @@ class BodyCodegen
                             "(Ljava/lang/Object;D)Ljava/lang/Object;");
                         break;
                     default:
-                        if (child.getType() == Token.STRING) {
-                            addScriptRuntimeInvoke("add",
-                                "(Ljava/lang/CharSequence;"
-                                    +"Ljava/lang/Object;"
-                                    +")Ljava/lang/CharSequence;");
-                        } else if (child.getNext().getType() == Token.STRING) {
-                            addScriptRuntimeInvoke("add",
-                                "(Ljava/lang/Object;"
-                                    +"Ljava/lang/CharSequence;"
-                                    +")Ljava/lang/CharSequence;");
-                        } else {
-                            cfw.addALoad(contextLocal);
-                            addScriptRuntimeInvoke("add",
-                                "(Ljava/lang/Object;"
-                                    +"Ljava/lang/Object;"
-                                    +"Lorg/mozilla/javascript/Context;"
-                                    +")Ljava/lang/Object;");
-                        }
+                        cfw.addALoad(contextLocal);
+                        addScriptRuntimeInvoke("add",
+                            "(Ljava/lang/Object;"
+                                +"Ljava/lang/Object;"
+                                +"Lorg/mozilla/javascript/Context;"
+                                +")Ljava/lang/Object;");
                 }
             }
             break;
@@ -1256,6 +1239,10 @@ class BodyCodegen
                 visitArithmetic(node, type == Token.DIV
                     ? ByteCode.DDIV
                     : ByteCode.DREM, child, parent);
+                break;
+
+            case Token.EXP:
+                visitExponentiation(node, child, parent);
                 break;
 
             case Token.BITOR:
@@ -3442,6 +3429,45 @@ Else pass the JS object in the aReg and 0.0 in the dReg.
             if (!childOfArithmetic) {
                 addDoubleWrap();
             }
+        }
+    }
+
+    private void visitExponentiation(Node node, Node child, Node parent)
+    {
+        int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
+        if (childNumberFlag != -1) {
+            generateExpression(child, node);
+            generateExpression(child.getNext(), node);
+            cfw.addInvoke(ByteCode.INVOKESTATIC, "java/lang/Math", "pow", "(DD)D");
+        } else {
+            generateExpression(child, node);
+            generateExpression(child.getNext(), node);
+
+            short reg = getNewWordLocal();
+            cfw.addAStore(reg);
+            addObjectToDouble();
+            cfw.addALoad(reg);
+            addObjectToDouble();
+
+            cfw.addInvoke(ByteCode.INVOKESTATIC, "java/lang/Math", "pow", "(DD)D");
+            addDoubleWrap();
+        }
+    }
+
+    private void visitBitNot(Node node, Node child)
+    {
+        int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
+        generateExpression(child, node);
+        if (childNumberFlag == -1) {
+            addScriptRuntimeInvoke("toInt32", "(Ljava/lang/Object;)I");
+        } else {
+            addScriptRuntimeInvoke("toInt32", "(D)I");
+        }
+        cfw.addPush(-1);         // implement ~a as (a ^ -1)
+        cfw.add(ByteCode.IXOR);
+        cfw.add(ByteCode.I2D);
+        if (childNumberFlag == -1) {
+            addDoubleWrap();
         }
     }
 

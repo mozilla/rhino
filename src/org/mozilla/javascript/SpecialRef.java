@@ -87,8 +87,7 @@ class SpecialRef extends Ref
                     Scriptable search = obj;
                     do {
                         if (search == target) {
-                            throw Context.reportRuntimeErrorById(
-                                "msg.cyclic.value", name);
+                            throw Context.reportRuntimeErrorById("msg.cyclic.value", name);
                         }
                         if (type == SPECIAL_PROTO) {
                             search = search.getPrototype();
@@ -105,11 +104,20 @@ class SpecialRef extends Ref
                     }
 
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
-                        if ((value != null && !"object".equals(ScriptRuntime.typeof(value))) ||
-                            !"object".equals(ScriptRuntime.typeof(target))) {
-                            return Undefined.instance;
+                        final String typeOfTarget = ScriptRuntime.typeof(target);
+                        if ("object".equals(typeOfTarget) || "function".equals(typeOfTarget)) {
+
+                            if (value == null) {
+                                target.setPrototype(Undefined.SCRIPTABLE_UNDEFINED);
+                                return value;
+                            }
+
+                            final String typeOfValue = ScriptRuntime.typeof(value);
+                            if ("object".equals(typeOfValue) || "function".equals(typeOfValue)) {
+                                target.setPrototype(obj);
+                            }
                         }
-                        target.setPrototype(obj);
+                        return value;
                     } else {
                         target.setPrototype(obj);
                     }
@@ -141,4 +149,3 @@ class SpecialRef extends Ref
         return false;
     }
 }
-

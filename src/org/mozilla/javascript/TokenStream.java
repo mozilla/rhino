@@ -162,104 +162,194 @@ class TokenStream
 
         int id;
         String s = name;
-// #generated# Last update: 2007-04-18 13:53:30 PDT
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 2: c=s.charAt(1);
-                if (c=='f') { if (s.charAt(0)=='i') {id=Id_if; break L0;} }
-                else if (c=='n') { if (s.charAt(0)=='i') {id=Id_in; break L0;} }
-                else if (c=='o') { if (s.charAt(0)=='d') {id=Id_do; break L0;} }
-                break L;
-            case 3: switch (s.charAt(0)) {
-                case 'f': if (s.charAt(2)=='r' && s.charAt(1)=='o') {id=Id_for; break L0;} break L;
-                case 'i': if (s.charAt(2)=='t' && s.charAt(1)=='n') {id=Id_int; break L0;} break L;
-                case 'l': if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_let; break L0;} break L;
-                case 'n': if (s.charAt(2)=='w' && s.charAt(1)=='e') {id=Id_new; break L0;} break L;
-                case 't': if (s.charAt(2)=='y' && s.charAt(1)=='r') {id=Id_try; break L0;} break L;
-                case 'v': if (s.charAt(2)=='r' && s.charAt(1)=='a') {id=Id_var; break L0;} break L;
-                } break L;
-            case 4: switch (s.charAt(0)) {
-                case 'b': X="byte";id=Id_byte; break L;
-                case 'c': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='s' && s.charAt(1)=='a') {id=Id_case; break L0;} }
-                    else if (c=='r') { if (s.charAt(2)=='a' && s.charAt(1)=='h') {id=Id_char; break L0;} }
-                    break L;
-                case 'e': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='s' && s.charAt(1)=='l') {id=Id_else; break L0;} }
-                    else if (c=='m') { if (s.charAt(2)=='u' && s.charAt(1)=='n') {id=Id_enum; break L0;} }
-                    break L;
-                case 'g': X="goto";id=Id_goto; break L;
-                case 'l': X="long";id=Id_long; break L;
-                case 'n': X="null";id=Id_null; break L;
-                case 't': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='u' && s.charAt(1)=='r') {id=Id_true; break L0;} }
-                    else if (c=='s') { if (s.charAt(2)=='i' && s.charAt(1)=='h') {id=Id_this; break L0;} }
-                    break L;
-                case 'v': X="void";id=Id_void; break L;
-                case 'w': X="with";id=Id_with; break L;
-                } break L;
-            case 5: switch (s.charAt(2)) {
-                case 'a': X="class";id=Id_class; break L;
-                case 'e': c=s.charAt(0);
-                    if (c=='b') { X="break";id=Id_break; }
-                    else if (c=='y') { X="yield";id=Id_yield; }
-                    break L;
-                case 'i': X="while";id=Id_while; break L;
-                case 'l': X="false";id=Id_false; break L;
-                case 'n': c=s.charAt(0);
-                    if (c=='c') { X="const";id=Id_const; }
-                    else if (c=='f') { X="final";id=Id_final; }
-                    break L;
-                case 'o': c=s.charAt(0);
-                    if (c=='f') { X="float";id=Id_float; }
-                    else if (c=='s') { X="short";id=Id_short; }
-                    break L;
-                case 'p': X="super";id=Id_super; break L;
-                case 'r': X="throw";id=Id_throw; break L;
-                case 't': X="catch";id=Id_catch; break L;
-                } break L;
-            case 6: switch (s.charAt(1)) {
-                case 'a': X="native";id=Id_native; break L;
-                case 'e': c=s.charAt(0);
-                    if (c=='d') { X="delete";id=Id_delete; }
-                    else if (c=='r') { X="return";id=Id_return; }
-                    break L;
-                case 'h': X="throws";id=Id_throws; break L;
-                case 'm': X="import";id=Id_import; break L;
-                case 'o': X="double";id=Id_double; break L;
-                case 't': X="static";id=Id_static; break L;
-                case 'u': X="public";id=Id_public; break L;
-                case 'w': X="switch";id=Id_switch; break L;
-                case 'x': X="export";id=Id_export; break L;
-                case 'y': X="typeof";id=Id_typeof; break L;
-                } break L;
-            case 7: switch (s.charAt(1)) {
-                case 'a': X="package";id=Id_package; break L;
-                case 'e': X="default";id=Id_default; break L;
-                case 'i': X="finally";id=Id_finally; break L;
-                case 'o': X="boolean";id=Id_boolean; break L;
-                case 'r': X="private";id=Id_private; break L;
-                case 'x': X="extends";id=Id_extends; break L;
-                } break L;
-            case 8: switch (s.charAt(0)) {
-                case 'a': X="abstract";id=Id_abstract; break L;
-                case 'c': X="continue";id=Id_continue; break L;
-                case 'd': X="debugger";id=Id_debugger; break L;
-                case 'f': X="function";id=Id_function; break L;
-                case 'v': X="volatile";id=Id_volatile; break L;
-                } break L;
-            case 9: c=s.charAt(0);
-                if (c=='i') { X="interface";id=Id_interface; }
-                else if (c=='p') { X="protected";id=Id_protected; }
-                else if (c=='t') { X="transient";id=Id_transient; }
-                break L;
-            case 10: c=s.charAt(1);
-                if (c=='m') { X="implements";id=Id_implements; }
-                else if (c=='n') { X="instanceof";id=Id_instanceof; }
-                break L;
-            case 12: X="synchronized";id=Id_synchronized; break L;
-            }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+// #generated# Last update: 2021-03-21 09:59:16 MEZ
+        switch (s) {
+        case "break":
+            id = Id_break;
+            break;
+        case "case":
+            id = Id_case;
+            break;
+        case "continue":
+            id = Id_continue;
+            break;
+        case "default":
+            id = Id_default;
+            break;
+        case "delete":
+            id = Id_delete;
+            break;
+        case "do":
+            id = Id_do;
+            break;
+        case "else":
+            id = Id_else;
+            break;
+        case "export":
+            id = Id_export;
+            break;
+        case "false":
+            id = Id_false;
+            break;
+        case "for":
+            id = Id_for;
+            break;
+        case "function":
+            id = Id_function;
+            break;
+        case "if":
+            id = Id_if;
+            break;
+        case "in":
+            id = Id_in;
+            break;
+        case "let":
+            id = Id_let;
+            break;
+        case "new":
+            id = Id_new;
+            break;
+        case "null":
+            id = Id_null;
+            break;
+        case "return":
+            id = Id_return;
+            break;
+        case "switch":
+            id = Id_switch;
+            break;
+        case "this":
+            id = Id_this;
+            break;
+        case "true":
+            id = Id_true;
+            break;
+        case "typeof":
+            id = Id_typeof;
+            break;
+        case "var":
+            id = Id_var;
+            break;
+        case "void":
+            id = Id_void;
+            break;
+        case "while":
+            id = Id_while;
+            break;
+        case "with":
+            id = Id_with;
+            break;
+        case "yield":
+            id = Id_yield;
+            break;
+        case "abstract":
+            id = Id_abstract;
+            break;
+        case "boolean":
+            id = Id_boolean;
+            break;
+        case "byte":
+            id = Id_byte;
+            break;
+        case "catch":
+            id = Id_catch;
+            break;
+        case "char":
+            id = Id_char;
+            break;
+        case "class":
+            id = Id_class;
+            break;
+        case "const":
+            id = Id_const;
+            break;
+        case "debugger":
+            id = Id_debugger;
+            break;
+        case "double":
+            id = Id_double;
+            break;
+        case "enum":
+            id = Id_enum;
+            break;
+        case "extends":
+            id = Id_extends;
+            break;
+        case "final":
+            id = Id_final;
+            break;
+        case "finally":
+            id = Id_finally;
+            break;
+        case "float":
+            id = Id_float;
+            break;
+        case "goto":
+            id = Id_goto;
+            break;
+        case "implements":
+            id = Id_implements;
+            break;
+        case "import":
+            id = Id_import;
+            break;
+        case "instanceof":
+            id = Id_instanceof;
+            break;
+        case "int":
+            id = Id_int;
+            break;
+        case "interface":
+            id = Id_interface;
+            break;
+        case "long":
+            id = Id_long;
+            break;
+        case "native":
+            id = Id_native;
+            break;
+        case "package":
+            id = Id_package;
+            break;
+        case "private":
+            id = Id_private;
+            break;
+        case "protected":
+            id = Id_protected;
+            break;
+        case "public":
+            id = Id_public;
+            break;
+        case "short":
+            id = Id_short;
+            break;
+        case "static":
+            id = Id_static;
+            break;
+        case "super":
+            id = Id_super;
+            break;
+        case "synchronized":
+            id = Id_synchronized;
+            break;
+        case "throw":
+            id = Id_throw;
+            break;
+        case "throws":
+            id = Id_throws;
+            break;
+        case "transient":
+            id = Id_transient;
+            break;
+        case "try":
+            id = Id_try;
+            break;
+        case "volatile":
+            id = Id_volatile;
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
 // #/string_id_map#
@@ -332,101 +422,165 @@ class TokenStream
             Id_let           = Token.LET,   // TODO : Valid IdentifierName in non-strict mode.
             Id_static        = Token.RESERVED;
 
-        int id;
+        int id = 0;
         String s = name;
-// #generated# Last update: 2007-04-18 13:53:30 PDT
-        L0: { id = 0; String X = null; int c;
-            L: switch (s.length()) {
-            case 2: c=s.charAt(1);
-                if (c=='f') { if (s.charAt(0)=='i') {id=Id_if; break L0;} }
-                else if (c=='n') { if (s.charAt(0)=='i') {id=Id_in; break L0;} }
-                else if (c=='o') { if (s.charAt(0)=='d') {id=Id_do; break L0;} }
-                break L;
-            case 3: switch (s.charAt(0)) {
-                case 'f': if (s.charAt(2)=='r' && s.charAt(1)=='o') {id=Id_for; break L0;} break L;
-                case 'l': if (s.charAt(2)=='t' && s.charAt(1)=='e') {id=Id_let; break L0;} break L;
-                case 'n': if (s.charAt(2)=='w' && s.charAt(1)=='e') {id=Id_new; break L0;} break L;
-                case 't': if (s.charAt(2)=='y' && s.charAt(1)=='r') {id=Id_try; break L0;} break L;
-                case 'v': if (s.charAt(2)=='r' && s.charAt(1)=='a') {id=Id_var; break L0;} break L;
-                } break L;
-            case 4: switch (s.charAt(0)) {
-                case 'c': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='s' && s.charAt(1)=='a') {id=Id_case; break L0;} }
-                    break L;
-                case 'e': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='s' && s.charAt(1)=='l') {id=Id_else; break L0;} }
-                    else if (c=='m') { if (s.charAt(2)=='u' && s.charAt(1)=='n') {id=Id_enum; break L0;} }
-                    break L;
-                case 'n': X="null";id=Id_null; break L;
-                case 't': c=s.charAt(3);
-                    if (c=='e') { if (s.charAt(2)=='u' && s.charAt(1)=='r') {id=Id_true; break L0;} }
-                    else if (c=='s') { if (s.charAt(2)=='i' && s.charAt(1)=='h') {id=Id_this; break L0;} }
-                    break L;
-                case 'v': X="void";id=Id_void; break L;
-                case 'w': X="with";id=Id_with; break L;
-                } break L;
-            case 5: switch (s.charAt(2)) {
-                case 'a': c=s.charAt(0);
-                    if (c=='c') { X="class";id=Id_class; }
-                    else if (c=='a') { X="await";id=Id_await; }
-                    break L;
-                case 'e': c=s.charAt(0);
-                    if (c=='b') { X="break";id=Id_break; }
-                    else if (c=='y') { X="yield";id=Id_yield; }
-                    break L;
-                case 'i': X="while";id=Id_while; break L;
-                case 'l': X="false";id=Id_false; break L;
-                case 'n': X="const";id=Id_const; break L;
-                case 'p': X="super";id=Id_super; break L;
-                case 'r': X="throw";id=Id_throw; break L;
-                case 't': X="catch";id=Id_catch; break L;
-                } break L;
-            case 6: switch (s.charAt(1)) {
-                case 'e': c=s.charAt(0);
-                    if (c=='d') { X="delete";id=Id_delete; }
-                    else if (c=='r') { X="return";id=Id_return; }
-                    break L;
-                case 'm': X="import";id=Id_import; break L;
-                case 't': if (isStrict) {
-                    X="static";id=Id_static; break L;
-                }
-                // fall through
-                case 'u': if (isStrict) {
-                    X="public";id=Id_public; break L;
-                }
-                // fall through
-                case 'w': X="switch";id=Id_switch; break L;
-                case 'x': X="export";id=Id_export; break L;
-                case 'y': X="typeof";id=Id_typeof; break L;
-                } break L;
-            case 7: switch (s.charAt(1)) {
-                case 'a': if (isStrict) {
-                    X="package";id=Id_package; break L;
-                }
-                // fall through
-                case 'e': X="default";id=Id_default; break L;
-                case 'i': X="finally";id=Id_finally; break L;
-                case 'r': if (isStrict) {
-                    X="private";id=Id_private; break L;
-                }
-                // fall through
-                case 'x': X="extends";id=Id_extends; break L;
-                } break L;
-            case 8: switch (s.charAt(0)) {
-                case 'c': X="continue";id=Id_continue; break L;
-                case 'd': X="debugger";id=Id_debugger; break L;
-                case 'f': X="function";id=Id_function; break L;
-                } break L;
-            case 9: c=s.charAt(0);
-                if (c=='i' && isStrict) { X="interface";id=Id_interface; }
-                else if (c=='p' && isStrict) { X="protected";id=Id_protected; }
-                break L;
-            case 10: c=s.charAt(1);
-                if (c=='m' && isStrict) { X="implements";id=Id_implements; }
-                else if (c=='n') { X="instanceof";id=Id_instanceof; }
-                break L;
+// #generated# Last update: 2021-03-21 09:59:16 MEZ
+        switch (s) {
+        case "break":
+            id = Id_break;
+            break;
+        case "case":
+            id = Id_case;
+            break;
+        case "catch":
+            id = Id_catch;
+            break;
+        case "class":
+            id = Id_class;
+            break;
+        case "const":
+            id = Id_const;
+            break;
+        case "continue":
+            id = Id_continue;
+            break;
+        case "debugger":
+            id = Id_debugger;
+            break;
+        case "default":
+            id = Id_default;
+            break;
+        case "delete":
+            id = Id_delete;
+            break;
+        case "do":
+            id = Id_do;
+            break;
+        case "else":
+            id = Id_else;
+            break;
+        case "export":
+            id = Id_export;
+            break;
+        case "extends":
+            id = Id_extends;
+            break;
+        case "finally":
+            id = Id_finally;
+            break;
+        case "for":
+            id = Id_for;
+            break;
+        case "function":
+            id = Id_function;
+            break;
+        case "if":
+            id = Id_if;
+            break;
+        case "import":
+            id = Id_import;
+            break;
+        case "in":
+            id = Id_in;
+            break;
+        case "instanceof":
+            id = Id_instanceof;
+            break;
+        case "new":
+            id = Id_new;
+            break;
+        case "return":
+            id = Id_return;
+            break;
+        case "super":
+            id = Id_super;
+            break;
+        case "switch":
+            id = Id_switch;
+            break;
+        case "this":
+            id = Id_this;
+            break;
+        case "throw":
+            id = Id_throw;
+            break;
+        case "try":
+            id = Id_try;
+            break;
+        case "typeof":
+            id = Id_typeof;
+            break;
+        case "var":
+            id = Id_var;
+            break;
+        case "void":
+            id = Id_void;
+            break;
+        case "while":
+            id = Id_while;
+            break;
+        case "with":
+            id = Id_with;
+            break;
+        case "yield":
+            id = Id_yield;
+            break;
+        case "await":
+            id = Id_await;
+            break;
+        case "enum":
+            id = Id_enum;
+            break;
+        case "implements":
+            if (isStrict) {
+                id = Id_implements;
             }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            break;
+        case "interface":
+            if (isStrict) {
+                id = Id_interface;
+            }
+            break;
+        case "package":
+            if (isStrict) {
+                id = Id_package;
+            }
+            break;
+        case "private":
+            if (isStrict) {
+                id = Id_private;
+            }
+            break;
+        case "protected":
+            if (isStrict) {
+                id = Id_protected;
+            }
+            break;
+        case "public":
+            if (isStrict) {
+                id = Id_public;
+            }
+            break;
+        case "false":
+            id = Id_false;
+            break;
+        case "null":
+            id = Id_null;
+            break;
+        case "true":
+            id = Id_true;
+            break;
+        case "let":
+            id = Id_let;
+            break;
+        case "static":
+            if (isStrict) {
+                id = Id_static;
+            }
+            break;
+        default:
+            id = 0;
+            break;
         }
 // #/generated#
 // #/string_id_map#
@@ -928,6 +1082,14 @@ class TokenStream
                 return Token.GT;
 
             case '*':
+                if (parser.compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                    if (matchChar('*')) {
+                        if (matchChar('=')) {
+                            return Token.ASSIGN_EXP;
+                        }
+                        return Token.EXP;
+                    }
+                }
                 if (matchChar('=')) {
                     return Token.ASSIGN_MUL;
                 }
