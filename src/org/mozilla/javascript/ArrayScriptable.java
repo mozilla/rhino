@@ -16,5 +16,4 @@ public interface ArrayScriptable extends Scriptable {
 
     /** Returns the length of the array. */
     long getLength();
-
 }
