@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -191,6 +192,22 @@ public class JsonTest extends TestCase {
                 "JSON.javaConverter = x => x.toString();\n"
                         + "var ret = ''; try { ret = JSON.stringify(obj) } catch (e) { ret = e.message }; ret\n";
         testIt(js, new MyObj(), "\"this is my toString method\"");
+    }
+    
+    public static class MyObj2 {
+        public String toString() {
+            return "this is the toString method";
+        }
+        
+        public Object toJSON(String key) {
+            return Arrays.asList("elem1","elem2");
+        }
+    }
+    
+    @Test
+    public void testToJson() {
+        String js = "JSON.stringify(obj)\n";
+        testIt(js, new MyObj2(), "[\"elem1\",\"elem2\"]");
     }
 
     private void testIt(String script, Object obj, String expected) {
