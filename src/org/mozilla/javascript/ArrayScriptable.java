@@ -7,17 +7,14 @@
 package org.mozilla.javascript;
 
 /**
- * Common interface for {@link NativeArray}, {@link NativeJavaArray} 
- * and {@link NativeJavaList}. Required for JSON conversion.
+ * Common interface for {@link NativeArray}, {@link NativeJavaArray} and {@link NativeJavaList}.
+ * Required for JSON conversion.
  *
  * @author Roland Praml, FOCONIS AG
- *
  */
 public interface ArrayScriptable extends Scriptable {
 
-    /**
-     * Returns the length of the array.
-     */
+    /** Returns the length of the array. */
     long getLength();
 
 }

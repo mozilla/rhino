@@ -25,8 +25,7 @@ import org.mozilla.javascript.regexp.NativeRegExp;
  * @author Norris Boyd
  * @author Mike McCabe
  */
-public class NativeArray extends IdScriptableObject implements List, ArrayScriptable
-{
+public class NativeArray extends IdScriptableObject implements List, ArrayScriptable {
     private static final long serialVersionUID = 7331366857676127338L;
 
     /*
