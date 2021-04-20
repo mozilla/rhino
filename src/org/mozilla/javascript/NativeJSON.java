@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import org.mozilla.javascript.json.JsonParser;
+import org.mozilla.javascript.xml.XMLObject;
 
 /**
  * This class implements the JSON native object.
@@ -315,6 +316,8 @@ public final class NativeJSON extends IdScriptableObject
                     value = new NativeArray((Object[]) value);
                 }
             }
+        } else if (value instanceof XMLObject) {
+            value = ((XMLObject) value).toString();
         }
 
         if (value == null) return "null";
