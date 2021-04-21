@@ -13,52 +13,59 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-
 import org.mozilla.javascript.json.JsonParser;
 import org.mozilla.javascript.xml.XMLObject;
 
 /**
- * This class implements the JSON native object.
- * See ECMA 15.12.
+ * This class implements the JSON native object. See ECMA 15.12.
+ *
  * @author Matthew Crumley, Raphael Speyer
  */
-public final class NativeJSON extends IdScriptableObject
-{
+public final class NativeJSON extends IdScriptableObject {
     private static final long serialVersionUID = -4567599697595654984L;
 
     private static final Object JSON_TAG = "JSON";
 
     private static final int MAX_STRINGIFY_GAP_LENGTH = 10;
 
-    static void init(Scriptable scope, boolean sealed)
-    {
+    static void init(Scriptable scope, boolean sealed) {
         NativeJSON obj = new NativeJSON();
         obj.activatePrototypeMap(MAX_ID);
         obj.setPrototype(getObjectPrototype(scope));
         obj.setParentScope(scope);
-        if (sealed) { obj.sealObject(); }
-        ScriptableObject.defineProperty(scope, "JSON", obj,
-                                        ScriptableObject.DONTENUM);
+        if (sealed) {
+            obj.sealObject();
+        }
+        ScriptableObject.defineProperty(scope, "JSON", obj, ScriptableObject.DONTENUM);
     }
 
-    private NativeJSON()
-    {
+    private NativeJSON() {}
+
+    @Override
+    public String getClassName() {
+        return "JSON";
     }
 
     @Override
-    public String getClassName() { return "JSON"; }
-
-    @Override
-    protected void initPrototypeId(int id)
-    {
+    protected void initPrototypeId(int id) {
         if (id <= LAST_METHOD_ID) {
             String name;
             int arity;
             switch (id) {
-              case Id_toSource:  arity = 0; name = "toSource";  break;
-              case Id_parse:     arity = 2; name = "parse";     break;
-              case Id_stringify: arity = 3; name = "stringify"; break;
-              default: throw new IllegalStateException(String.valueOf(id));
+                case Id_toSource:
+                    arity = 0;
+                    name = "toSource";
+                    break;
+                case Id_parse:
+                    arity = 2;
+                    name = "parse";
+                    break;
+                case Id_stringify:
+                    arity = 3;
+                    name = "stringify";
+                    break;
+                default:
+                    throw new IllegalStateException(String.valueOf(id));
             }
             initPrototypeMethod(JSON_TAG, id, name, arity);
         } else {
@@ -67,9 +74,8 @@ public final class NativeJSON extends IdScriptableObject
     }
 
     @Override
-    public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
-    {
+    public Object execIdCall(
+            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (!f.hasTag(JSON_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -78,63 +84,63 @@ public final class NativeJSON extends IdScriptableObject
             case Id_toSource:
                 return "JSON";
 
-            case Id_parse: {
-                String jtext = ScriptRuntime.toString(args, 0);
-                Object reviver = null;
-                if (args.length > 1) {
-                    reviver = args[1];
-                }
-                if (reviver instanceof Callable) {
-                  return parse(cx, scope, jtext, (Callable) reviver);
-                }
-                return parse(cx, scope, jtext);
-            }
-
-            case Id_stringify: {
-                Object value = Undefined.instance, replacer = null, space = null;
-
-                if (args.length > 0) {
-                    value = args[0];
+            case Id_parse:
+                {
+                    String jtext = ScriptRuntime.toString(args, 0);
+                    Object reviver = null;
                     if (args.length > 1) {
-                        replacer = args[1];
-                        if (args.length > 2) {
-                            space = args[2];
+                        reviver = args[1];
+                    }
+                    if (reviver instanceof Callable) {
+                        return parse(cx, scope, jtext, (Callable) reviver);
+                    }
+                    return parse(cx, scope, jtext);
+                }
+
+            case Id_stringify:
+                {
+                    Object value = Undefined.instance, replacer = null, space = null;
+
+                    if (args.length > 0) {
+                        value = args[0];
+                        if (args.length > 1) {
+                            replacer = args[1];
+                            if (args.length > 2) {
+                                space = args[2];
+                            }
                         }
                     }
+
+                    return stringify(cx, scope, value, replacer, space);
                 }
 
-                return stringify(cx, scope, value, replacer, space);
-            }
-
-            default: throw new IllegalStateException(String.valueOf(methodId));
+            default:
+                throw new IllegalStateException(String.valueOf(methodId));
         }
     }
 
     private static Object parse(Context cx, Scriptable scope, String jtext) {
-      try {
-        return new JsonParser(cx, scope).parseValue(jtext);
-      } catch (JsonParser.ParseException ex) {
-        throw ScriptRuntime.constructError("SyntaxError", ex.getMessage());
-      }
+        try {
+            return new JsonParser(cx, scope).parseValue(jtext);
+        } catch (JsonParser.ParseException ex) {
+            throw ScriptRuntime.constructError("SyntaxError", ex.getMessage());
+        }
     }
 
-    public static Object parse(Context cx, Scriptable scope, String jtext,
-                               Callable reviver)
-    {
-      Object unfiltered = parse(cx, scope, jtext);
-      Scriptable root = cx.newObject(scope);
-      root.put("", root, unfiltered);
-      return walk(cx, scope, reviver, root, "");
+    public static Object parse(Context cx, Scriptable scope, String jtext, Callable reviver) {
+        Object unfiltered = parse(cx, scope, jtext);
+        Scriptable root = cx.newObject(scope);
+        root.put("", root, unfiltered);
+        return walk(cx, scope, reviver, root, "");
     }
 
-    private static Object walk(Context cx, Scriptable scope, Callable reviver,
-                               Scriptable holder, Object name)
-    {
+    private static Object walk(
+            Context cx, Scriptable scope, Callable reviver, Scriptable holder, Object name) {
         final Object property;
         if (name instanceof Number) {
-            property = holder.get( ((Number) name).intValue(), holder);
+            property = holder.get(((Number) name).intValue(), holder);
         } else {
-            property = holder.get( ((String) name), holder);
+            property = holder.get(((String) name), holder);
         }
 
         if (property instanceof Scriptable) {
@@ -166,33 +172,33 @@ public final class NativeJSON extends IdScriptableObject
                 for (Object p : keys) {
                     Object newElement = walk(cx, scope, reviver, val, p);
                     if (newElement == Undefined.instance) {
-                        if (p instanceof Number)
-                          val.delete(((Number) p).intValue());
-                        else
-                          val.delete((String) p);
+                        if (p instanceof Number) val.delete(((Number) p).intValue());
+                        else val.delete((String) p);
                     } else {
-                        if (p instanceof Number)
-                          val.put(((Number) p).intValue(), val, newElement);
-                        else
-                          val.put((String) p, val, newElement);
+                        if (p instanceof Number) val.put(((Number) p).intValue(), val, newElement);
+                        else val.put((String) p, val, newElement);
                     }
                 }
             }
         }
 
-        return reviver.call(cx, scope, holder, new Object[] { name, property });
+        return reviver.call(cx, scope, holder, new Object[] {name, property});
     }
 
     private static String repeat(char c, int count) {
-      char chars[] = new char[count];
-      Arrays.fill(chars, c);
-      return new String(chars);
+        char chars[] = new char[count];
+        Arrays.fill(chars, c);
+        return new String(chars);
     }
 
     private static class StringifyState {
-        StringifyState(Context cx, Scriptable scope, String indent, String gap,
-                       Callable replacer, List<Object> propertyList)
-        {
+        StringifyState(
+                Context cx,
+                Scriptable scope,
+                String indent,
+                String gap,
+                Callable replacer,
+                List<Object> propertyList) {
             this.cx = cx;
             this.scope = scope;
 
@@ -212,9 +218,8 @@ public final class NativeJSON extends IdScriptableObject
         Scriptable scope;
     }
 
-    public static Object stringify(Context cx, Scriptable scope, Object value,
-                                   Object replacer, Object space)
-    {
+    public static Object stringify(
+            Context cx, Scriptable scope, Object value, Object replacer, Object space) {
         String indent = "";
         String gap = "";
 
@@ -222,18 +227,18 @@ public final class NativeJSON extends IdScriptableObject
         Callable replacerFunction = null;
 
         if (replacer instanceof Callable) {
-          replacerFunction = (Callable) replacer;
+            replacerFunction = (Callable) replacer;
         } else if (replacer instanceof NativeArray) {
-          propertyList = new LinkedList<Object>();
-          NativeArray replacerArray = (NativeArray) replacer;
-          for (int i : replacerArray.getIndexIds()) {
-            Object v = replacerArray.get(i, replacerArray);
-            if (v instanceof String || v instanceof Number) {
-              propertyList.add(v);
-            } else if (v instanceof NativeString || v instanceof NativeNumber) {
-              propertyList.add(ScriptRuntime.toString(v));
+            propertyList = new LinkedList<Object>();
+            NativeArray replacerArray = (NativeArray) replacer;
+            for (int i : replacerArray.getIndexIds()) {
+                Object v = replacerArray.get(i, replacerArray);
+                if (v instanceof String || v instanceof Number) {
+                    propertyList.add(v);
+                } else if (v instanceof NativeString || v instanceof NativeNumber) {
+                    propertyList.add(ScriptRuntime.toString(v));
+                }
             }
-          }
         }
 
         if (space instanceof NativeNumber) {
@@ -249,15 +254,12 @@ public final class NativeJSON extends IdScriptableObject
         } else if (space instanceof String) {
             gap = (String) space;
             if (gap.length() > MAX_STRINGIFY_GAP_LENGTH) {
-              gap = gap.substring(0, MAX_STRINGIFY_GAP_LENGTH);
+                gap = gap.substring(0, MAX_STRINGIFY_GAP_LENGTH);
             }
         }
 
-        StringifyState state = new StringifyState(cx, scope,
-            indent,
-            gap,
-            replacerFunction,
-            propertyList);
+        StringifyState state =
+                new StringifyState(cx, scope, indent, gap, replacerFunction, propertyList);
 
         ScriptableObject wrapper = new NativeObject();
         wrapper.setParentScope(scope);
@@ -266,9 +268,7 @@ public final class NativeJSON extends IdScriptableObject
         return str("", wrapper, state);
     }
 
-    private static Object str(Object key, Scriptable holder,
-                              StringifyState state)
-    {
+    private static Object str(Object key, Scriptable holder, StringifyState state) {
         Object value = null;
         if (key instanceof String) {
             value = getProperty(holder, (String) key);
@@ -279,14 +279,12 @@ public final class NativeJSON extends IdScriptableObject
         if (value instanceof Scriptable && hasProperty((Scriptable) value, "toJSON")) {
             Object toJSON = getProperty((Scriptable) value, "toJSON");
             if (toJSON instanceof Callable) {
-                value = callMethod(state.cx, (Scriptable) value, "toJSON",
-                                   new Object[] { key });
+                value = callMethod(state.cx, (Scriptable) value, "toJSON", new Object[] {key});
             }
         }
 
         if (state.replacer != null) {
-            value = state.replacer.call(state.cx, state.scope, holder,
-                                        new Object[] { key, value });
+            value = state.replacer.call(state.cx, state.scope, holder, new Object[] {key, value});
         }
 
         if (value instanceof NativeNumber) {
@@ -298,16 +296,16 @@ public final class NativeJSON extends IdScriptableObject
         } else if (value instanceof NativeJavaObject) {
             value = ((NativeJavaObject) value).unwrap();
             if (value instanceof Map) {
-                Map<?,?> map = (Map<?,?>) value;
+                Map<?, ?> map = (Map<?, ?>) value;
                 NativeObject nObj = new NativeObject();
-                map.forEach((k, v) -> {
-                    if (k instanceof CharSequence) {
-                        nObj.put(((CharSequence) k).toString(), nObj, v);
-                    }
-                });
+                map.forEach(
+                        (k, v) -> {
+                            if (k instanceof CharSequence) {
+                                nObj.put(((CharSequence) k).toString(), nObj, v);
+                            }
+                        });
                 value = nObj;
-            }
-            else {
+            } else {
                 if (value instanceof Collection<?>) {
                     Collection<?> col = (Collection<?>) value;
                     value = col.toArray(new Object[col.size()]);
@@ -330,9 +328,9 @@ public final class NativeJSON extends IdScriptableObject
 
         if (value instanceof Number) {
             double d = ((Number) value).doubleValue();
-            if (!Double.isNaN(d) && d != Double.POSITIVE_INFINITY &&
-                d != Double.NEGATIVE_INFINITY)
-            {
+            if (!Double.isNaN(d)
+                    && d != Double.POSITIVE_INFINITY
+                    && d != Double.NEGATIVE_INFINITY) {
                 return ScriptRuntime.toString(value);
             }
             return "null";
@@ -346,7 +344,8 @@ public final class NativeJSON extends IdScriptableObject
                 return jo((Scriptable) value, state);
             }
         } else if (!Undefined.isUndefined(value)) {
-            throw ScriptRuntime.typeErrorById("msg.json.cant.serialize", value.getClass().getName());
+            throw ScriptRuntime.typeErrorById(
+                    "msg.json.cant.serialize", value.getClass().getName());
         }
 
         return Undefined.instance;
@@ -404,8 +403,7 @@ public final class NativeJSON extends IdScriptableObject
             } else {
                 String separator = ",\n" + state.indent;
                 String properties = join(partial, separator);
-                finalValue = "{\n" + state.indent + properties + '\n' +
-                    stepback + '}';
+                finalValue = "{\n" + state.indent + properties + '\n' + stepback + '}';
             }
         }
 
@@ -459,7 +457,8 @@ public final class NativeJSON extends IdScriptableObject
     }
 
     private static String quote(String string) {
-        StringBuilder product = new StringBuilder(string.length()+2); // two extra chars for " on either side
+        StringBuilder product =
+                new StringBuilder(string.length() + 2); // two extra chars for " on either side
         product.append('"');
         int length = string.length();
         for (int i = 0; i < length; i++) {
@@ -491,8 +490,7 @@ public final class NativeJSON extends IdScriptableObject
                         product.append("\\u");
                         String hex = String.format("%04x", Integer.valueOf((int) c));
                         product.append(hex);
-                    }
-                    else {
+                    } else {
                         product.append(c);
                     }
                     break;
@@ -502,37 +500,35 @@ public final class NativeJSON extends IdScriptableObject
         return product.toString();
     }
 
-// #string_id_map#
+    // #string_id_map#
 
     @Override
-    protected int findPrototypeId(String s)
-    {
+    protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2021-03-21 09:51:17 MEZ
+        // #generated# Last update: 2021-03-21 09:51:17 MEZ
         switch (s) {
-        case "toSource":
-            id = Id_toSource;
-            break;
-        case "parse":
-            id = Id_parse;
-            break;
-        case "stringify":
-            id = Id_stringify;
-            break;
-        default:
-            id = 0;
-            break;
+            case "toSource":
+                id = Id_toSource;
+                break;
+            case "parse":
+                id = Id_parse;
+                break;
+            case "stringify":
+                id = Id_stringify;
+                break;
+            default:
+                id = 0;
+                break;
         }
-// #/generated#
+        // #/generated#
         return id;
     }
 
-    private static final int
-        Id_toSource     = 1,
-        Id_parse        = 2,
-        Id_stringify    = 3,
-        LAST_METHOD_ID  = 3,
-        MAX_ID          = 3;
+    private static final int Id_toSource = 1,
+            Id_parse = 2,
+            Id_stringify = 3,
+            LAST_METHOD_ID = 3,
+            MAX_ID = 3;
 
-// #/string_id_map#
+    // #/string_id_map#
 }
