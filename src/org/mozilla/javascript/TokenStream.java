@@ -610,7 +610,6 @@ class TokenStream
     {
         int c;
 
-    retry:
         for (;;) {
             // Eat whitespace, possibly sensitive to newlines.
             for (;;) {
@@ -774,13 +773,13 @@ class TokenStream
 
                 boolean isEmpty = true;
                 if (base == 16) {
-                    while (0 <= Kit.xDigitToInt(c, 0)) {
+                    while (isHexDigit(c)) {
                         addToString(c);
                         c = getChar();
                         isEmpty = false;
                     }
                 } else {
-                    while ('0' <= c && c <= '9') {
+                    while (isDigit(c)) {
                         if (base == 8 && c >= '8') {
                             if (isOldOctal) {
                                 /*
@@ -812,15 +811,16 @@ class TokenStream
 
                 boolean isInteger = true;
 
-                if (base == 10 && (c == '.' || c == 'e' || c == 'E')) {
-                    isInteger = false;
+                if (base == 10) {
                     if (c == '.') {
+                        isInteger = false;
                         do {
                             addToString(c);
                             c = getChar();
                         } while (isDigit(c));
                     }
                     if (c == 'e' || c == 'E') {
+                        isInteger = false;
                         addToString(c);
                         c = getChar();
                         if (c == '+' || c == '-') {
@@ -1197,6 +1197,11 @@ class TokenStream
     static boolean isDigit(int c)
     {
         return '0' <= c && c <= '9';
+    }
+
+    static boolean isHexDigit(int c)
+    {
+        return ('0' <= c && c <= '9') ||  ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
     }
 
     /* As defined in ECMA.  jsscan.c uses C isspace() (which allows
