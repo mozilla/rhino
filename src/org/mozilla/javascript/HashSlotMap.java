@@ -8,22 +8,18 @@ package org.mozilla.javascript;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-
 import org.mozilla.javascript.ScriptableObject.SlotAccess;
 
 /**
  * This class implements the SlotMap interface using a java.util.HashMap. This class has more
  * overhead than EmbeddedSlotMap, especially because it puts each "Slot" inside an intermediate
- * object. However it is much more resistant to large number of hash collisions than
- * EmbeddedSlotMap and therefore we use this implementation when an object gains a large
- * number of properties.
+ * object. However it is much more resistant to large number of hash collisions than EmbeddedSlotMap
+ * and therefore we use this implementation when an object gains a large number of properties.
  */
-
-public class HashSlotMap
-    implements SlotMap {
+public class HashSlotMap implements SlotMap {
 
     private final LinkedHashMap<Object, ScriptableObject.Slot> map =
-        new LinkedHashMap<Object, ScriptableObject.Slot>();
+            new LinkedHashMap<Object, ScriptableObject.Slot>();
 
     @Override
     public int size() {
@@ -36,14 +32,14 @@ public class HashSlotMap
     }
 
     @Override
-    public ScriptableObject.Slot query(Object key, int index)
-    {
+    public ScriptableObject.Slot query(Object key, int index) {
         Object name = key == null ? String.valueOf(index) : key;
         return map.get(name);
     }
 
     @Override
-    public ScriptableObject.Slot get(Object key, int index, ScriptableObject.SlotAccess accessType) {
+    public ScriptableObject.Slot get(
+            Object key, int index, ScriptableObject.SlotAccess accessType) {
         Object name = key == null ? String.valueOf(index) : key;
         ScriptableObject.Slot slot = map.get(name);
         switch (accessType) {
@@ -51,31 +47,30 @@ public class HashSlotMap
                 return slot;
             case MODIFY:
             case MODIFY_CONST:
-                if (slot != null)
-                    return slot;
+                if (slot != null) return slot;
                 break;
             case MODIFY_GETTER_SETTER:
-                if (slot instanceof ScriptableObject.GetterSlot)
-                    return slot;
+                if (slot instanceof ScriptableObject.GetterSlot) return slot;
                 break;
             case CONVERT_ACCESSOR_TO_DATA:
-                if ( !(slot instanceof ScriptableObject.GetterSlot) )
-                    return slot;
+                if (!(slot instanceof ScriptableObject.GetterSlot)) return slot;
                 break;
         }
 
         return createSlot(key, index, name, accessType);
     }
 
-    private ScriptableObject.Slot createSlot(Object key, int index,
-        Object name, ScriptableObject.SlotAccess accessType) {
+    private ScriptableObject.Slot createSlot(
+            Object key, int index, Object name, ScriptableObject.SlotAccess accessType) {
         ScriptableObject.Slot slot = map.get(name);
         if (slot != null) {
             ScriptableObject.Slot newSlot;
 
             if (accessType == SlotAccess.MODIFY_GETTER_SETTER
                     && !(slot instanceof ScriptableObject.GetterSlot)) {
-                newSlot = new ScriptableObject.GetterSlot(name, slot.indexOrHash, slot.getAttributes());
+                newSlot =
+                        new ScriptableObject.GetterSlot(
+                                name, slot.indexOrHash, slot.getAttributes());
             } else if (accessType == SlotAccess.CONVERT_ACCESSOR_TO_DATA
                     && (slot instanceof ScriptableObject.GetterSlot)) {
                 newSlot = new ScriptableObject.Slot(name, slot.indexOrHash, slot.getAttributes());
@@ -89,9 +84,10 @@ public class HashSlotMap
             return newSlot;
         }
 
-        ScriptableObject.Slot newSlot = (accessType == SlotAccess.MODIFY_GETTER_SETTER
-                ? new ScriptableObject.GetterSlot(key, index, 0)
-                : new ScriptableObject.Slot(key, index, 0));
+        ScriptableObject.Slot newSlot =
+                (accessType == SlotAccess.MODIFY_GETTER_SETTER
+                        ? new ScriptableObject.GetterSlot(key, index, 0)
+                        : new ScriptableObject.Slot(key, index, 0));
         if (accessType == SlotAccess.MODIFY_CONST) {
             newSlot.setAttributes(ScriptableObject.CONST);
         }
@@ -114,7 +110,8 @@ public class HashSlotMap
             if ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0) {
                 Context cx = Context.getContext();
                 if (cx.isStrictMode()) {
-                    throw ScriptRuntime.typeErrorById("msg.delete.property.with.configurable.false", key);
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.delete.property.with.configurable.false", key);
                 }
                 return;
             }
