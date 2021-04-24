@@ -168,6 +168,7 @@ task engineJar(type: Jar) {
                 "Implementation-URL": "http://www.mozilla.org/rhino",
                 "Built-Date": new Date().format("yyyy-MM-dd"),
                 "Built-Time": new Date().format("HH:mm:ss"),
+                "Automatic-Module-Name": "org.mozilla.rhino.engine"
         )
     }
 }
@@ -186,6 +187,7 @@ jar {
             "Implementation-URL": "http://www.mozilla.org/rhino",
             "Built-Date": new Date().format("yyyy-MM-dd"),
             "Built-Time": new Date().format("HH:mm:ss"),
+            "Automatic-Module-Name": "org.mozilla.rhino",
             "Bundle-ManifestVersion": "2",
             "Bundle-SymbolicName": "org.mozilla.rhino",
             "Bundle-Version": project.version.replaceAll("-.*", ""),
