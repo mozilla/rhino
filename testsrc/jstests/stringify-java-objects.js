@@ -73,17 +73,19 @@ var actual = JSON.stringify(obj);
 assertEquals(expected, actual);
 
 // java Map
-var javaMap = new java.util.HashMap();
-    javaMap.put(new java.lang.Object(), 'property skipped if key is not string-like');
+var objectKey = new JavaAdapter(java.lang.Object, {toString:()=>"object key"});
+var javaMap = new java.util.LinkedHashMap();
+    javaMap.put(Symbol(), 'property skipped for Symbol keys');
+    javaMap.put(objectKey, 'object value');
     javaMap.put('te' + 'st', 55);
 
 var obj = {test: javaMap};
-var expected = JSON.stringify({test: 'replaced: java.util.HashMap'});
+var expected = JSON.stringify({test: 'replaced: java.util.LinkedHashMap'});
 var actual = JSON.stringify(obj, replacer);
 assertEquals(expected, actual);
 
 var obj = javaMap;
-var expected = JSON.stringify({test: 55});
+var expected = JSON.stringify({"object key": "object value", test: 55});
 var actual = JSON.stringify(obj);
 assertEquals(expected, actual);
 
@@ -103,7 +105,7 @@ var expected = JSON.stringify({
     objects: {
         plainJS: {test: 1},
         emptyMap: {},
-        otherMap: {test: 55}
+        otherMap: {"object key": "object value", test: 55}
     }
 });
 var actual = JSON.stringify(obj);
@@ -118,11 +120,14 @@ var actual = JSON.stringify(obj, replacer);
 assertEquals(expected, actual);
 
 var obj = {test: javaObject};
-assertThrows(()=>JSON.stringify(obj), TypeError);
+var expected = JSON.stringify({test: 'test://other/java/object'});
+var actual = JSON.stringify(obj);
+assertEquals(expected, actual);
 
 // JavaAdapter with toJSON
 var javaObject = new JavaAdapter(java.lang.Object, {
-    toJSON: _ => ({javaAdapter: true})
+    toJSON: _ => ({javaAdapter: true}),
+    toString: () => 'just an object'
 });
 
 var obj = javaObject;
@@ -142,6 +147,36 @@ assertEquals("string", typeof actual);
 assertTrue(expected.test(actual));
 
 var obj = {test: javaObject};
-assertThrows(()=>JSON.stringify(obj), TypeError);
+var expected = JSON.stringify({test: "just an object"});
+var actual = JSON.stringify(obj)
+assertEquals(expected, actual);
+
+// nested Maps and Lists
+var map1 = new java.util.HashMap({a:1});
+var map2 = new java.util.HashMap({b:2, map1: map1});
+
+var list1 = new java.util.ArrayList([1]);
+var list2 = new java.util.ArrayList([2, list1]);
+
+var expected = JSON.stringify({
+    b: 2,
+    map1: {a: 1}
+});
+var actual = JSON.stringify(map2);
+assertEquals(expected, actual);
+
+var expected = JSON.stringify([2, [1]]);
+var actual = JSON.stringify(list2);
+assertEquals(expected, actual);
+
+list2.add(map1);
+var expected = JSON.stringify([2, [1], {a:1}]);
+var actual = JSON.stringify(list2);
+assertEquals(expected, actual);
+
+// make circular reference
+list1.add(map2);
+map1.put('list2', list2);
+assertThrows(()=>JSON.stringify(map1), TypeError);
 
 "success"
