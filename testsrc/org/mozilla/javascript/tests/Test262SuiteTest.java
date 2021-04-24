@@ -87,8 +87,7 @@ public class Test262SuiteTest {
             "regexp-unicode-property-escapes",
             "super",
             "tail-call-optimization",
-            "u180e",
-            "numeric-separator-literal"
+            "u180e"
     ));
 
     static {

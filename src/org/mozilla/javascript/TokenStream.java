@@ -28,8 +28,13 @@ class TokenStream
      * to check.  (And checking EOF by exception is annoying.)
      * Note distinction from EOF token type!
      */
-    private final static int
-        EOF_CHAR = -1;
+    private final static int EOF_CHAR = -1;
+
+    /*
+     * Return value for readDigits() to signal the caller has
+     * to return an number format problem.
+     */
+    private final static int REPORT_NUMBER_FORMAT_ERROR = -2;
 
     private final static char BYTE_ORDER_MARK = '\uFEFF';
 
@@ -771,40 +776,39 @@ class TokenStream
                     }
                 }
 
-                boolean isEmpty = true;
-                if (base == 16) {
-                    while (isHexDigit(c)) {
-                        addToString(c);
-                        c = getChar();
-                        isEmpty = false;
+                int emptyDetector = stringBufferTop;
+                if (base == 10 || base == 16 || (base == 8 && !isOldOctal) || base == 2) {
+                    c = readDigits(base, c);
+                    if(c == REPORT_NUMBER_FORMAT_ERROR) {
+                        parser.addError("msg.caught.nfe");
+                        return Token.ERROR;
                     }
                 } else {
                     while (isDigit(c)) {
-                        if (base == 8 && c >= '8') {
-                            if (isOldOctal) {
-                                /*
-                                 * We permit 08 and 09 as decimal numbers, which
-                                 * makes our behavior a superset of the ECMA
-                                 * numeric grammar.  We might not always be so
-                                 * permissive, so we warn about it.
-                                 */
-                                parser.addWarning("msg.bad.octal.literal",
-                                                  c == '8' ? "8" : "9");
-                                base = 10;
-                            } else {
+                        // finally the oldOctal case
+                        if (c >= '8') {
+                            /*
+                             * We permit 08 and 09 as decimal numbers, which
+                             * makes our behavior a superset of the ECMA
+                             * numeric grammar.  We might not always be so
+                             * permissive, so we warn about it.
+                             */
+                            parser.addWarning("msg.bad.octal.literal",
+                                              c == '8' ? "8" : "9");
+                            base = 10;
+
+                            c = readDigits(base, c);
+                            if(c == REPORT_NUMBER_FORMAT_ERROR) {
                                 parser.addError("msg.caught.nfe");
                                 return Token.ERROR;
                             }
-                        } else if (base == 2 && c >= '2') {
-                            parser.addError("msg.caught.nfe");
-                            return Token.ERROR;
+                            break;
                         }
                         addToString(c);
                         c = getChar();
-                        isEmpty = false;
                     }
                 }
-                if (isEmpty && (isBinary || isOctal || isHex)) {
+                if (stringBufferTop == emptyDetector && (isBinary || isOctal || isHex)) {
                     parser.addError("msg.caught.nfe");
                     return Token.ERROR;
                 }
@@ -814,10 +818,13 @@ class TokenStream
                 if (base == 10) {
                     if (c == '.') {
                         isInteger = false;
-                        do {
-                            addToString(c);
-                            c = getChar();
-                        } while (isDigit(c));
+                        addToString(c);
+                        c = getChar();
+                        c = readDigits(base, c);
+                        if(c == REPORT_NUMBER_FORMAT_ERROR) {
+                            parser.addError("msg.caught.nfe");
+                            return Token.ERROR;
+                        }
                     }
                     if (c == 'e' || c == 'E') {
                         isInteger = false;
@@ -831,10 +838,11 @@ class TokenStream
                             parser.addError("msg.missing.exponent");
                             return Token.ERROR;
                         }
-                        do {
-                            addToString(c);
-                            c = getChar();
-                        } while (isDigit(c));
+                        c = readDigits(base, c);
+                        if(c == REPORT_NUMBER_FORMAT_ERROR) {
+                            parser.addError("msg.caught.nfe");
+                            return Token.ERROR;
+                        }
                     }
                 }
                 ungetChar(c);
@@ -1185,6 +1193,62 @@ class TokenStream
         }
     }
 
+    /*
+     * Helper to read the next digits according to the base
+     * and ignore the number separator if there is one.
+     */
+    private int readDigits(int base, int c) throws IOException {
+        if ((base == 10 && isDigit(c))
+                || (base == 16 && isHexDigit(c))
+                || (base == 8 && isOctalDigit(c))
+                || (base == 2 && isDualDigit(c))) {
+            addToString(c);
+
+            c = getChar();
+            if (c == EOF_CHAR) {
+                return EOF_CHAR;
+            }
+
+            while (true) {
+                if (c == '_') {
+                    // we do no peek here, we are optimistic for performance
+                    // reasons and because peekChar() only does an getChar/ungetChar.
+                    c = getChar();
+                    if (c == EOF_CHAR) {
+                        return EOF_CHAR;
+                    }
+                    // if the line ends after the separator we have
+                    // to report this as an error
+                    if (c == '\n') {
+                        return REPORT_NUMBER_FORMAT_ERROR;
+                    }
+
+                    if (!((base == 10 && isDigit(c))
+                            || (base == 16 && isHexDigit(c))
+                            || (base == 8 && isOctalDigit(c))
+                            || (base == 2 && isDualDigit(c)))) {
+                        // bad luck we have to roll back
+                        ungetChar(c);
+                        return '_';
+                    }
+                } else if ((base == 10 && isDigit(c))
+                                || (base == 16 && isHexDigit(c))
+                                || (base == 8 && isOctalDigit(c))
+                                || (base == 2 && isDualDigit(c))) {
+                    addToString(c);
+                    c = getChar();
+                    if (c == EOF_CHAR) {
+                        return EOF_CHAR;
+                    }
+
+                } else {
+                    return c;
+                }
+            }
+        }
+        return c;
+    }
+
     private static boolean isAlpha(int c)
     {
         // Use 'Z' < 'a'
@@ -1194,12 +1258,22 @@ class TokenStream
         return 'a' <= c && c <= 'z';
     }
 
-    static boolean isDigit(int c)
+    private static boolean isDualDigit(int c)
+    {
+        return '0' == c || c == '1';
+    }
+
+    private static boolean isOctalDigit(int c)
+    {
+        return '0' <= c && c <= '7';
+    }
+
+    private static boolean isDigit(int c)
     {
         return '0' <= c && c <= '9';
     }
 
-    static boolean isHexDigit(int c)
+    private static boolean isHexDigit(int c)
     {
         return ('0' <= c && c <= '9') ||  ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
     }
