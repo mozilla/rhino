@@ -37,6 +37,7 @@ class TokenStream
     private final static int REPORT_NUMBER_FORMAT_ERROR = -2;
 
     private final static char BYTE_ORDER_MARK = '\uFEFF';
+    private final static char NUMERIC_SEPARATOR = '_';
 
     TokenStream(Parser parser, Reader sourceReader, String sourceString,
                 int lineno)
@@ -849,6 +850,18 @@ class TokenStream
                 String numString = getStringFromBuffer();
                 this.string = numString;
 
+                // try to remove the separator in a fast way
+                int pos = numString.indexOf(NUMERIC_SEPARATOR);
+                if (pos != -1) {
+                    final char[] chars = numString.toCharArray();
+                    for (int i = pos + 1; i < chars.length; i++) {
+                        if (chars[i] != NUMERIC_SEPARATOR) {
+                            chars[pos++] = chars[i];
+                        }
+                    }
+                    numString = new String(chars, 0, pos);
+                }
+
                 double dval;
                 if (base == 10 && !isInteger) {
                     try {
@@ -1210,7 +1223,7 @@ class TokenStream
             }
 
             while (true) {
-                if (c == '_') {
+                if (c == NUMERIC_SEPARATOR) {
                     // we do no peek here, we are optimistic for performance
                     // reasons and because peekChar() only does an getChar/ungetChar.
                     c = getChar();
@@ -1229,8 +1242,9 @@ class TokenStream
                             || (base == 2 && isDualDigit(c)))) {
                         // bad luck we have to roll back
                         ungetChar(c);
-                        return '_';
+                        return NUMERIC_SEPARATOR;
                     }
+                    addToString(NUMERIC_SEPARATOR);
                 } else if ((base == 10 && isDigit(c))
                                 || (base == 16 && isHexDigit(c))
                                 || (base == 8 && isOctalDigit(c))
@@ -1240,7 +1254,6 @@ class TokenStream
                     if (c == EOF_CHAR) {
                         return EOF_CHAR;
                     }
-
                 } else {
                     return c;
                 }
