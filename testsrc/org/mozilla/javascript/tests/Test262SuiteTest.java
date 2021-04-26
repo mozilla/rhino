@@ -27,7 +27,6 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -59,44 +58,45 @@ public class Test262SuiteTest {
 
     static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
 
-    static final Set<String> UNSUPPORTED_FEATURES = new HashSet<>(Arrays.asList(
-            "Atomics",
-            "BigInt",
-            "IsHTMLDDA",
-            "Promise.prototype.finally",
-            "Proxy",
-            "Reflect",
-            "Reflect.construct",
-            "Reflect.set",
-            "Reflect.setPrototypeOf",
-            "SharedArrayBuffer",
-            "async-functions",
-            "async-iteration",
-            "class",
-            "class-fields-private",
-            "class-fields-public",
-            "computed-property-names",
-            "cross-realm",
-            "default-arg",
-            "default-parameters",
-            "new.target",
-            "object-rest",
-            "regexp-dotall",
-            "regexp-lookbehind",
-            "regexp-named-groups",
-            "regexp-unicode-property-escapes",
-            "super",
-            "tail-call-optimization",
-            "u180e"
-    ));
+    static final Set<String> UNSUPPORTED_FEATURES =
+            new HashSet<>(
+                    Arrays.asList(
+                            "Atomics",
+                            "BigInt",
+                            "IsHTMLDDA",
+                            "Promise.prototype.finally",
+                            "Proxy",
+                            "Reflect",
+                            "Reflect.construct",
+                            "Reflect.set",
+                            "Reflect.setPrototypeOf",
+                            "SharedArrayBuffer",
+                            "async-functions",
+                            "async-iteration",
+                            "class",
+                            "class-fields-private",
+                            "class-fields-public",
+                            "computed-property-names",
+                            "cross-realm",
+                            "default-arg",
+                            "default-parameters",
+                            "new.target",
+                            "object-rest",
+                            "regexp-dotall",
+                            "regexp-lookbehind",
+                            "regexp-named-groups",
+                            "regexp-unicode-property-escapes",
+                            "super",
+                            "tail-call-optimization",
+                            "u180e"));
 
     static {
         // Reduce the number of tests that we run by a factor of three...
         String overriddenLevel = getOverriddenLevel();
         if (overriddenLevel != null) {
-            OPT_LEVELS = new int[]{Integer.parseInt(overriddenLevel)};
+            OPT_LEVELS = new int[] {Integer.parseInt(overriddenLevel)};
         } else {
-            OPT_LEVELS = new int[]{-1, 0, 9};
+            OPT_LEVELS = new int[] {-1, 0, 9};
         }
     }
 
@@ -124,7 +124,9 @@ public class Test262SuiteTest {
 
         for (Map.Entry<File, Integer> entry : EXCLUDED_TESTS.entrySet()) {
             if (entry.getValue() == 0) {
-                System.out.println(String.format("Test is marked as failing but it does not: %s", entry.getKey()));
+                System.out.println(
+                        String.format(
+                                "Test is marked as failing but it does not: %s", entry.getKey()));
             }
         }
     }
@@ -137,7 +139,12 @@ public class Test262SuiteTest {
     private final Test262Case testCase;
     private final boolean fails;
 
-    public Test262SuiteTest(String testFilePath, int optLevel, boolean useStrict, Test262Case testCase, boolean fails) {
+    public Test262SuiteTest(
+            String testFilePath,
+            int optLevel,
+            boolean useStrict,
+            Test262Case testCase,
+            boolean fails) {
         this.testFilePath = testFilePath;
         this.optLevel = optLevel;
         this.useStrict = useStrict;
@@ -151,8 +158,9 @@ public class Test262SuiteTest {
             if (!HARNESS_SCRIPT_CACHE.get(optLevel).containsKey(harnessFile)) {
                 String harnessPath = testHarnessDir + harnessFile;
                 try (Reader reader = new FileReader(harnessPath)) {
-                    HARNESS_SCRIPT_CACHE.get(optLevel).put(harnessFile,
-                            cx.compileReader(reader, harnessPath, 1, null));
+                    HARNESS_SCRIPT_CACHE
+                            .get(optLevel)
+                            .put(harnessFile, cx.compileReader(reader, harnessPath, 1, null));
                 }
             }
             HARNESS_SCRIPT_CACHE.get(optLevel).get(harnessFile).exec(cx, scope);
@@ -200,10 +208,11 @@ public class Test262SuiteTest {
                 caseScript.exec(cx, scope);
 
                 if (testCase.isNegative()) {
-                    fail(String.format(
-                            "Failed a negative test. Expected error: %s (at phase '%s')",
-                            testCase.expectedError,
-                            testCase.hasEarlyError ? "early" : "runtime"));
+                    fail(
+                            String.format(
+                                    "Failed a negative test. Expected error: %s (at phase '%s')",
+                                    testCase.expectedError,
+                                    testCase.hasEarlyError ? "early" : "runtime"));
                 }
 
                 if (fails) {
@@ -225,10 +234,10 @@ public class Test262SuiteTest {
                 String errorName = extractJSErrorName(ex);
 
                 if (testCase.hasEarlyError && !failedEarly) {
-                    fail(String.format(
-                            "Expected an early error: %s, got: %s in the runtime",
-                            testCase.expectedError,
-                            errorName));
+                    fail(
+                            String.format(
+                                    "Expected an early error: %s, got: %s in the runtime",
+                                    testCase.expectedError, errorName));
                 }
 
                 assertEquals(ex.details(), testCase.expectedError, errorName);
@@ -248,7 +257,8 @@ public class Test262SuiteTest {
         }
     }
 
-    private static void addTestFiles(List<File> testFiles, Set<File> failingFiles) throws IOException {
+    private static void addTestFiles(List<File> testFiles, Set<File> failingFiles)
+            throws IOException {
         List<File> dirFiles = new LinkedList<File>();
 
         try (Scanner scanner = new Scanner(new File(testProperties))) {
@@ -271,10 +281,16 @@ public class Test262SuiteTest {
                 if (!target.exists()) {
                     if (line.startsWith("!")) {
                         throw new RuntimeException(
-                            "Unexpected exclusion '" + line + "' at the line #" + lineNo);
+                                "Unexpected exclusion '" + line + "' at the line #" + lineNo);
                     }
                     throw new FileNotFoundException(
-                            "File " + target.getAbsolutePath() + " declared at line #" + lineNo + "('" + line + "') doesn't exist");
+                            "File "
+                                    + target.getAbsolutePath()
+                                    + " declared at line #"
+                                    + lineNo
+                                    + "('"
+                                    + line
+                                    + "') doesn't exist");
                 }
 
                 if (target.isFile()) {
@@ -347,7 +363,8 @@ public class Test262SuiteTest {
             try {
                 testCase = Test262Case.fromSource(testFile);
             } catch (YAMLException ex) {
-                throw new RuntimeException("Error while parsing metadata of " + testFile.getPath(), ex);
+                throw new RuntimeException(
+                        "Error while parsing metadata of " + testFile.getPath(), ex);
             }
 
             // all the reasons not to execute this file
@@ -359,8 +376,7 @@ public class Test262SuiteTest {
                 }
             }
             // 2. it runs in an unsupported environment
-            if (testCase.hasFlag("module") ||
-                testCase.hasFlag("async")) {
+            if (testCase.hasFlag("module") || testCase.hasFlag("async")) {
                 continue;
             }
 
@@ -368,7 +384,10 @@ public class Test262SuiteTest {
             for (int optLevel : OPT_LEVELS) {
                 boolean markedAsFailing = failingFiles.contains(testFile);
                 if (!testCase.hasFlag("onlyStrict") || testCase.hasFlag("raw")) {
-                    result.add(new Object[]{caseShortPath, optLevel, false, testCase, markedAsFailing});
+                    result.add(
+                            new Object[] {
+                                caseShortPath, optLevel, false, testCase, markedAsFailing
+                            });
                     if (markedAsFailing) {
                         Integer count = EXCLUDED_TESTS.computeIfAbsent(testCase.file, k -> 0);
                         count += 1;
@@ -376,7 +395,10 @@ public class Test262SuiteTest {
                     }
                 }
                 if (!testCase.hasFlag("noStrict") && !testCase.hasFlag("raw")) {
-                    result.add(new Object[]{caseShortPath, optLevel, true, testCase, markedAsFailing});
+                    result.add(
+                            new Object[] {
+                                caseShortPath, optLevel, true, testCase, markedAsFailing
+                            });
                     if (markedAsFailing) {
                         Integer count = EXCLUDED_TESTS.computeIfAbsent(testCase.file, k -> 0);
                         count += 1;
@@ -429,13 +451,14 @@ public class Test262SuiteTest {
 
         @SuppressWarnings("unchecked")
         static Test262Case fromSource(File testFile) throws IOException {
-            String testSource = (String) SourceReader.readFileOrUrl(testFile.getPath(), true, "UTF-8");
+            String testSource =
+                    (String) SourceReader.readFileOrUrl(testFile.getPath(), true, "UTF-8");
 
             Set<String> harnessFiles = new HashSet<>();
 
-            String metadataStr = testSource.substring(
-                    testSource.indexOf("/*---") + 5,
-                    testSource.indexOf("---*/"));
+            String metadataStr =
+                    testSource.substring(
+                            testSource.indexOf("/*---") + 5, testSource.indexOf("---*/"));
             Map<String, Object> metadata = (Map<String, Object>) YAML.load(metadataStr);
 
             if (metadata.containsKey("includes")) {
@@ -470,7 +493,8 @@ public class Test262SuiteTest {
                         testFile.getPath());
             }
 
-            return new Test262Case(testFile, testSource, harnessFiles, expectedError, isEarly, flags, features);
+            return new Test262Case(
+                    testFile, testSource, harnessFiles, expectedError, isEarly, flags, features);
         }
     }
 }

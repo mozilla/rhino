@@ -29,29 +29,23 @@ public class NumericSeparatorTest {
         Context.exit();
     }
 
-    /**
-     * Special Tokenizer test for numeric constant at end.
-     */
+    /** Special Tokenizer test for numeric constant at end. */
     @Test
     public void numericAtEndOneDigit() {
-        Object result = cx.evaluateString(scope, "1","test", 1, null);
+        Object result = cx.evaluateString(scope, "1", "test", 1, null);
         assertEquals(1.0, result);
     }
 
-    /**
-     * Special Tokenizer test for numeric constant at end.
-     */
+    /** Special Tokenizer test for numeric constant at end. */
     @Test
     public void numericAtEndManyDigits() {
-        Object result = cx.evaluateString(scope, "1234","test", 1, null);
+        Object result = cx.evaluateString(scope, "1234", "test", 1, null);
         assertEquals(1234, result);
     }
 
-    /**
-     * Special Tokenizer test for numeric separator constant at end.
-     */
+    /** Special Tokenizer test for numeric separator constant at end. */
     @Test(expected = EvaluatorException.class)
     public void numericSeparatorAtEnd() {
-        cx.evaluateString(scope, "1_","test", 1, null);
+        cx.evaluateString(scope, "1_", "test", 1, null);
     }
 }
