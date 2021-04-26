@@ -1224,12 +1224,9 @@ class TokenStream
                     // we do no peek here, we are optimistic for performance
                     // reasons and because peekChar() only does an getChar/ungetChar.
                     c = getChar();
-                    if (c == EOF_CHAR) {
-                        return EOF_CHAR;
-                    }
                     // if the line ends after the separator we have
                     // to report this as an error
-                    if (c == '\n') {
+                    if (c == '\n' || c == EOF_CHAR) {
                         return REPORT_NUMBER_FORMAT_ERROR;
                     }
 
