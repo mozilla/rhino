@@ -152,8 +152,8 @@ var actual = JSON.stringify(obj)
 assertEquals(expected, actual);
 
 // nested Maps and Lists
-var map1 = new java.util.HashMap({a:1});
-var map2 = new java.util.HashMap({b:2, map1: map1});
+var map1 = new java.util.LinkedHashMap({a:1});
+var map2 = new java.util.LinkedHashMap({b:2, map1: map1});
 
 var list1 = new java.util.ArrayList([1]);
 var list2 = new java.util.ArrayList([2, list1]);
@@ -178,5 +178,44 @@ assertEquals(expected, actual);
 list1.add(map2);
 map1.put('list2', list2);
 assertThrows(()=>JSON.stringify(map1), TypeError);
+
+// alternative converters
+var cx = org.mozilla.javascript.Context.getCurrentContext();
+var obj = {
+    uri: new java.net.URI('test://converter.test'),
+    enum: java.time.DayOfWeek.FRIDAY,
+    string: "plain string"
+}
+const {STRING, EMPTY_OBJECT, UNDEFINED, THROW_TYPE_ERROR} =
+    org.mozilla.javascript.JavaToJSONConverters;
+cx.setJavaToJSONConverter(EMPTY_OBJECT);
+var expected = JSON.stringify({uri: {}, enum: {}, string: "plain string"});
+var actual = JSON.stringify(obj);
+assertEquals(expected, actual);
+
+cx.setJavaToJSONConverter(UNDEFINED);
+var expected = JSON.stringify({string: "plain string"});
+var actual = JSON.stringify(obj);
+assertEquals(expected, actual);
+
+cx.setJavaToJSONConverter(THROW_TYPE_ERROR);
+assertThrows(()=>JSON.stringify(obj), TypeError);
+
+// custom converter defined in javascript
+obj.calendar = new java.util.GregorianCalendar(2021,3,25);
+var converter = o => 
+    o instanceof java.lang.Enum ? {enum: {type: o.getClass().getName(), name: o.name()}} :
+    o instanceof java.util.Calendar ? o.toZonedDateTime().toLocalDate() :
+    o.toString();
+
+cx.setJavaToJSONConverter(converter);
+var expected = JSON.stringify({
+    uri: 'test://converter.test',
+    enum: {enum: {type: "java.time.DayOfWeek", name: "FRIDAY"}},
+    string: "plain string",
+    calendar: "2021-04-25"
+});
+var actual = JSON.stringify(obj);
+assertEquals(expected, actual);
 
 "success"

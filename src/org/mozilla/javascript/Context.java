@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -1674,6 +1675,36 @@ public class Context implements Closeable {
      * @return value suitable to pass to any API that takes JavaScript values.
      */
     public static Object javaToJS(Object value, Scriptable scope) {
+        return javaToJS(value, scope, null);
+    }
+
+    /**
+     * Convenient method to convert java value to its closest representation in JavaScript.
+     *
+     * <p>If value is an instance of String, Number, Boolean, Function or Scriptable, it is returned
+     * as it and will be treated as the corresponding JavaScript type of string, number, boolean,
+     * function and object.
+     *
+     * <p>Note that for Number instances during any arithmetic operation in JavaScript the engine
+     * will always use the result of <code>Number.doubleValue()</code> resulting in a precision loss
+     * if the number can not fit into double.
+     *
+     * <p>If value is an instance of Character, it will be converted to string of length 1 and its
+     * JavaScript type will be string.
+     *
+     * <p>The rest of values will be wrapped as LiveConnect objects by calling {@link
+     * WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Class staticType)} as in:
+     *
+     * <pre>
+     *    return cx.getWrapFactory().wrap(cx, scope, value, null);
+     * </pre>
+     *
+     * @param value any Java object
+     * @param scope top scope object
+     * @param cx context to use for wrapping LiveConnect objects
+     * @return value suitable to pass to any API that takes JavaScript values.
+     */
+    public static Object javaToJS(Object value, Scriptable scope, Context cx) {
         if (value instanceof String
                 || value instanceof Number
                 || value instanceof Boolean
@@ -1682,7 +1713,9 @@ public class Context implements Closeable {
         } else if (value instanceof Character) {
             return String.valueOf(((Character) value).charValue());
         } else {
-            Context cx = Context.getContext();
+            if (cx == null) {
+                cx = Context.getContext();
+            }
             return cx.getWrapFactory().wrap(cx, scope, value, null);
         }
     }
@@ -1715,6 +1748,45 @@ public class Context implements Closeable {
         } catch (EvaluatorException ex) {
             throw new IllegalArgumentException(ex.getMessage(), ex);
         }
+    }
+
+    /**
+     * Returns the javaToJSONConverter for this Context.
+     *
+     * <p>The converter is used by the JSON.stringify method for Java objects other than instances
+     * of {@link java.util.Map Map}, {@link java.util.Collection Collection}, or {@link
+     * java.lang.Object Object[]}.
+     *
+     * <p>The default converter if unset will convert Java Objects to their toString() value.
+     *
+     * @return javaToJSONConverter for this Context
+     */
+    public UnaryOperator<Object> getJavaToJSONConverter() {
+        if (javaToJSONConverter == null) {
+            return JavaToJSONConverters.STRING;
+        }
+        return javaToJSONConverter;
+    }
+
+    /**
+     * Sets the javaToJSONConverter for this Context.
+     *
+     * <p>The converter is used by the JSON.stringify method for Java objects other than instances
+     * of {@link java.util.Map Map}, {@link java.util.Collection Collection}, or {@link
+     * java.lang.Object Object[]}.
+     *
+     * <p>Objects returned by the converter will converted with {@link #javaToJS(Object,
+     * Scriptable)} and then stringified themselves.
+     *
+     * @param javaToJSONConverter
+     * @throws IllegalArgumentException if javaToJSONConverter is null
+     */
+    public void setJavaToJSONConverter(UnaryOperator<Object> javaToJSONConverter)
+            throws IllegalArgumentException {
+        if (javaToJSONConverter == null) {
+            throw new IllegalArgumentException("javaToJSONConverter == null");
+        }
+        this.javaToJSONConverter = javaToJSONConverter;
     }
 
     /**
@@ -2523,6 +2595,7 @@ public class Context implements Closeable {
     private Object propertyListeners;
     private Map<Object, Object> threadLocalMap;
     private ClassLoader applicationClassLoader;
+    private UnaryOperator<Object> javaToJSONConverter;
 
     /** This is the list of names of objects forcing the creation of function activation records. */
     Set<String> activationNames;
