@@ -270,7 +270,7 @@ public final class NativeJSON extends IdScriptableObject {
 
     private static Object str(Object key, Scriptable holder, StringifyState state) {
         Object value = null;
-        Object wrappedJavaValue = null;
+        Object unwrappedJavaValue = null;
 
         if (key instanceof String) {
             value = getProperty(holder, (String) key);
@@ -296,10 +296,11 @@ public final class NativeJSON extends IdScriptableObject {
         } else if (value instanceof NativeBoolean) {
             value = ((NativeBoolean) value).getDefaultValue(ScriptRuntime.BooleanClass);
         } else if (value instanceof NativeJavaObject) {
-            wrappedJavaValue = value;
-            final Object unwrappedJavaValue = ((NativeJavaObject) value).unwrap();
+            unwrappedJavaValue = ((NativeJavaObject) value).unwrap();
             if (!isComplexJavaObject(unwrappedJavaValue)) {
                 value = unwrappedJavaValue;
+            } else {
+                unwrappedJavaValue = null;
             }
         } else if (value instanceof XMLObject) {
             value = ((XMLObject) value).toString();
@@ -323,19 +324,15 @@ public final class NativeJSON extends IdScriptableObject {
             return "null";
         }
 
-        Object unwrappedJavaValue = null;
-        if ((wrappedJavaValue != null) && (wrappedJavaValue != value)) {
-            unwrappedJavaValue = value;
-            value = wrappedJavaValue;
+        if (unwrappedJavaValue != null) {
+            return javaToJSON(value, state);
         }
+
         if ((value instanceof Scriptable) && !(value instanceof Callable)) {
             if (isObjectArrayLike(value)) {
                 return ja((Scriptable) value, state);
-            } else if (unwrappedJavaValue == null) {
-                return jo((Scriptable) value, state);
-            } else {
-                return javaToJSON(unwrappedJavaValue, state);
             }
+            return jo((Scriptable) value, state);
         }
         return Undefined.instance;
     }
@@ -375,7 +372,8 @@ public final class NativeJSON extends IdScriptableObject {
                     .filter(e -> (!(e.getKey() instanceof Symbol)))
                     .forEach(
                             e -> {
-                                Object wrappedValue = Context.javaToJS(e.getValue(), state.scope);
+                                Object wrappedValue =
+                                        Context.javaToJS(e.getValue(), state.scope, state.cx);
                                 int attributes;
                                 String key;
                                 if (e.getKey() instanceof String) {
@@ -465,7 +463,10 @@ public final class NativeJSON extends IdScriptableObject {
         }
         if (trackValue instanceof Object[]) {
             Object[] elements = (Object[]) trackValue;
-            elements = Arrays.stream(elements).map(o -> Context.javaToJS(o, state.scope)).toArray();
+            elements =
+                    Arrays.stream(elements)
+                            .map(o -> Context.javaToJS(o, state.scope, state.cx))
+                            .toArray();
             value = state.cx.newArray(state.scope, elements);
         }
 
@@ -549,7 +550,9 @@ public final class NativeJSON extends IdScriptableObject {
     }
 
     private static Object javaToJSON(Object value, StringifyState state) {
-        return quote(value.toString());
+        value = state.cx.getJavaToJSONConverter().apply(value);
+        value = Context.javaToJS(value, state.scope, state.cx);
+        return stringify(state.cx, state.scope, value, state.replacer, state.gap);
     }
 
     private static boolean isComplexJavaObject(Object o) {
