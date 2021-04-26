@@ -1211,7 +1211,7 @@ class TokenStream
      * and ignore the number separator if there is one.
      */
     private int readDigits(int base, int c) throws IOException {
-        if (isValidDigit(base, c)) {
+        if (isDigit(base, c)) {
             addToString(c);
 
             c = getChar();
@@ -1233,13 +1233,13 @@ class TokenStream
                         return REPORT_NUMBER_FORMAT_ERROR;
                     }
 
-                    if (!isValidDigit(base, c)) {
+                    if (!isDigit(base, c)) {
                         // bad luck we have to roll back
                         ungetChar(c);
                         return NUMERIC_SEPARATOR;
                     }
                     addToString(NUMERIC_SEPARATOR);
-                } else if (isValidDigit(base, c)) {
+                } else if (isDigit(base, c)) {
                     addToString(c);
                     c = getChar();
                     if (c == EOF_CHAR) {
@@ -1253,13 +1253,6 @@ class TokenStream
         return c;
     }
 
-    private boolean isValidDigit(int base, int c) throws IOException {
-        return (base == 10 && isDigit(c))
-                || (base == 16 && isHexDigit(c))
-                || (base == 8 && isOctalDigit(c))
-                || (base == 2 && isDualDigit(c));
-    }
-
     private static boolean isAlpha(int c)
     {
         // Use 'Z' < 'a'
@@ -1267,6 +1260,13 @@ class TokenStream
             return 'A' <= c;
         }
         return 'a' <= c && c <= 'z';
+    }
+
+    private boolean isDigit(int base, int c) throws IOException {
+        return (base == 10 && isDigit(c))
+                || (base == 16 && isHexDigit(c))
+                || (base == 8 && isOctalDigit(c))
+                || (base == 2 && isDualDigit(c));
     }
 
     private static boolean isDualDigit(int c)
