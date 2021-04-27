@@ -1977,15 +1977,15 @@ public class Context
      * Specify whether or not debug information should be generated.
      * <p>
      * Setting the generation of debug information on will set the
-     * optimization level to zero.
+     * optimization level to -1.
      * @since 1.3
      */
     public final void setGeneratingDebug(boolean generatingDebug)
     {
         if (sealed) onSealedMutation();
         generatingDebugChanged = true;
-        if (generatingDebug && getOptimizationLevel() > 0)
-            setOptimizationLevel(0);
+        if (generatingDebug && getOptimizationLevel() >= 0)
+            setOptimizationLevel(-1);
         this.generatingDebug = generatingDebug;
     }
 
