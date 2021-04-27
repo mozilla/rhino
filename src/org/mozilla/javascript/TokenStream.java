@@ -1294,7 +1294,7 @@ class TokenStream {
         return 'a' <= c && c <= 'z';
     }
 
-    private static boolean isDigit(int base, int c) throws IOException {
+    private static boolean isDigit(int base, int c) {
         return (base == 10 && isDigit(c))
                 || (base == 16 && isHexDigit(c))
                 || (base == 8 && isOctalDigit(c))
