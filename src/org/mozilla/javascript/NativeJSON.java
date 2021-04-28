@@ -368,36 +368,29 @@ public final class NativeJSON extends IdScriptableObject {
         if (isTrackValueUnwrapped && (trackValue instanceof Map)) {
             Map<?, ?> map = (Map<?, ?>) trackValue;
             Scriptable nObj = state.cx.newObject(state.scope);
-            map.entrySet().stream()
-                    .filter(e -> (!(e.getKey() instanceof Symbol)))
-                    .forEach(
-                            e -> {
-                                Object wrappedValue =
-                                        Context.javaToJS(e.getValue(), state.scope, state.cx);
-                                int attributes;
-                                String key;
-                                if (e.getKey() instanceof String) {
-                                    // Keys that are actually Strings are permanent and will not be
-                                    // overridden
-                                    // by other objects having the same toString value.
-                                    key = (String) e.getKey();
-                                    attributes =
-                                            ScriptableObject.READONLY | ScriptableObject.PERMANENT;
-                                } else {
-                                    // To avoid duplicate keys in JSON, replace previous key having
-                                    // the same
-                                    // toString value as the current object.
-                                    key = e.getKey().toString();
-                                    attributes = ScriptableObject.EMPTY;
-                                }
-                                try {
-                                    ScriptableObject.defineProperty(
-                                            nObj, key, wrappedValue, attributes);
-                                } catch (EcmaError error) {
-                                    // ignore TypeErrors if we tried to rewrite the property for a
-                                    // String key.
-                                }
-                            });
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() instanceof Symbol) continue;
+                Object wrappedValue = Context.javaToJS(entry.getValue(), state.scope, state.cx);
+                int attributes;
+                String key;
+                if (entry.getKey() instanceof String) {
+                    // Keys that are actually Strings are permanent and will not be
+                    // overridden by other objects having the same toString value.
+                    key = (String) entry.getKey();
+                    attributes = ScriptableObject.READONLY | ScriptableObject.PERMANENT;
+                } else {
+                    // To avoid duplicate keys in JSON, replace previous key having the same
+                    // toString value as the current object.
+                    key = entry.getKey().toString();
+                    attributes = ScriptableObject.EMPTY;
+                }
+                try {
+                    ScriptableObject.defineProperty(nObj, key, wrappedValue, attributes);
+                } catch (EcmaError error) {
+                    // ignore TypeErrors if we tried to rewrite the property for a
+                    // String key.
+                }
+            }
             value = nObj;
         }
 
