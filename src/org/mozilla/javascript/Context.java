@@ -2312,7 +2312,7 @@ public class Context implements Closeable {
         applicationClassLoader = loader;
     }
 
-    /********** end of API **********/
+    /* ******** end of API ********* */
 
     /** Internal method that reports an error for missing calls to enter(). */
     static Context getContext() {
