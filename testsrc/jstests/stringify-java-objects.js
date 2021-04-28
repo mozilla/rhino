@@ -186,7 +186,7 @@ var obj = {
     enum: java.time.DayOfWeek.FRIDAY,
     string: "plain string"
 }
-const {STRING, EMPTY_OBJECT, UNDEFINED, THROW_TYPE_ERROR} =
+const {STRING, EMPTY_OBJECT, UNDEFINED, THROW_TYPE_ERROR, BEAN} =
     org.mozilla.javascript.JavaToJSONConverters;
 cx.setJavaToJSONConverter(EMPTY_OBJECT);
 var expected = JSON.stringify({uri: {}, enum: {}, string: "plain string"});
@@ -216,6 +216,38 @@ var expected = JSON.stringify({
     calendar: "2021-04-25"
 });
 var actual = JSON.stringify(obj);
+assertEquals(expected, actual);
+
+// JavaBean tester
+cx.setJavaToJSONConverter(BEAN);
+var obj = {a: new java.net.URI('test://bean/converter'), b: {}, c: 'test'};
+var expected = {
+    "a": {
+        "beanClass": "java.net.URI",
+        "properties": {
+            "rawFragment": null,
+            "userInfo": null,
+            "opaque": false,
+            "scheme": "test",
+            "query": null,
+            "schemeSpecificPart": "//bean/converter",
+            "rawUserInfo": null,
+            "path": "/converter",
+            "fragment": null,
+            "rawPath": "/converter",
+            "port": -1,
+            "rawSchemeSpecificPart": "//bean/converter",
+            "absolute": true,
+            "rawAuthority": "bean",
+            "authority": "bean",
+            "host": "bean",
+            "rawQuery": null
+        }
+    },
+    "b": {},
+    "c": "test"
+};
+var actual = JSON.parse(JSON.stringify(obj));
 assertEquals(expected, actual);
 
 "success"
