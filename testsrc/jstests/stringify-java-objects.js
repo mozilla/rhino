@@ -179,6 +179,12 @@ list1.add(map2);
 map1.put('list2', list2);
 assertThrows(()=>JSON.stringify(map1), TypeError);
 
+// primitive java arrays
+var obj = new java.util.HashMap({bytes: new java.lang.String('abc').getBytes('UTF-8')});
+var expected = JSON.stringify({bytes: [97, 98, 99]});
+var actual = JSON.stringify(obj);
+assertEquals(expected, actual);
+
 // alternative converters
 var cx = org.mozilla.javascript.Context.getCurrentContext();
 var obj = {
