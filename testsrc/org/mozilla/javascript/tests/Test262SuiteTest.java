@@ -86,6 +86,8 @@ public class Test262SuiteTest {
                             "regexp-named-groups",
                             "regexp-unicode-property-escapes",
                             "super",
+                            "String.prototype.matchAll",
+                            "Symbol.matchAll",
                             "tail-call-optimization",
                             "u180e"));
 
