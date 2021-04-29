@@ -89,6 +89,7 @@ public class Test262SuiteTest {
                             "String.prototype.matchAll",
                             "Symbol.matchAll",
                             "tail-call-optimization",
+                            "json-superset",
                             "u180e"));
 
     static {
