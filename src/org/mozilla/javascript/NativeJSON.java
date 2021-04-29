@@ -553,7 +553,12 @@ public final class NativeJSON extends IdScriptableObject {
     private static Object javaToJSON(Object value, StringifyState state) {
         value = state.cx.getJavaToJSONConverter().apply(value);
         value = Context.javaToJS(value, state.scope, state.cx);
-        return stringify(state.cx, state.scope, value, state.replacer, state.gap);
+
+        ScriptableObject wrapper = new NativeObject();
+        wrapper.setParentScope(state.scope);
+        wrapper.setPrototype(ScriptableObject.getObjectPrototype(state.scope));
+        wrapper.defineProperty("", value, 0);
+        return str("", wrapper, state);
     }
 
     private static boolean isObjectArrayLike(Object o) {
