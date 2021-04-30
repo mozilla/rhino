@@ -1,0 +1,28 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// This test is a stand-in for the following until they are run by the Test262SuiteTest.
+// https://github.com/tc39/test262/blob/70bc32edab22b44db9d671ce505db8842ae200b6/test/built-ins/JSON/stringify/replacer-array-duplicates.js
+// https://github.com/tc39/test262/blob/70bc32edab22b44db9d671ce505db8842ae200b6/test/built-ins/JSON/stringify/replacer-array-number.js
+
+
+function assertEqual(actual, expected) {
+    if (actual !== expected) throw 'expected: <' + expected + '> but found <' + actual + '>';
+}
+
+var obj = {"0":1, "1":2, "2":3, "name":4};
+var actual = JSON.stringify(obj, ["0", "1", "name", "name"]);
+var expected = JSON.stringify({"0":1, "1":2, "name":4});
+assertEqual(expected, actual);
+
+var obj = {"2":"b","3":"c","1":"a"};
+var expected = JSON.stringify({"1":"a","2":"b","3":"c"});
+
+var actual = JSON.stringify(obj, ["1","2","3"]);
+assertEqual(expected, actual);
+
+var actual = JSON.stringify(obj, [1,2,3]);
+assertEqual(expected, actual);
+
+"success"
