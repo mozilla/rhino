@@ -1294,7 +1294,7 @@ class TokenStream {
         return 'a' <= c && c <= 'z';
     }
 
-    private boolean isDigit(int base, int c) throws IOException {
+    private static boolean isDigit(int base, int c) {
         return (base == 10 && isDigit(c))
                 || (base == 16 && isHexDigit(c))
                 || (base == 8 && isOctalDigit(c))
@@ -1321,7 +1321,7 @@ class TokenStream {
      * \v, I think.)  note that code in getChar() implicitly accepts
      * '\r' == \u000D as well.
      */
-    static boolean isJSSpace(int c) {
+    private static boolean isJSSpace(int c) {
         if (c <= 127) {
             return c == 0x20 || c == 0x9 || c == 0xC || c == 0xB;
         }
