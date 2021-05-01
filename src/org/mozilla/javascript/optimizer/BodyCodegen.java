@@ -3582,11 +3582,8 @@ class BodyCodegen {
                 generateExpression(rChild, node);
             }
 
-            if (type == Token.GE || type == Token.GT) {
-                cfw.add(ByteCode.SWAP);
-            }
-            String routine = ((type == Token.LT) || (type == Token.GT)) ? "cmp_LT" : "cmp_LE";
-            addScriptRuntimeInvoke(routine, "(Ljava/lang/Object;" + "Ljava/lang/Object;" + ")Z");
+            cfw.addPush(type);
+            addScriptRuntimeInvoke("compare", "(Ljava/lang/Object;" + "Ljava/lang/Object;" + "I)Z");
             cfw.add(ByteCode.IFNE, trueGOTO);
             cfw.add(ByteCode.GOTO, falseGOTO);
         }

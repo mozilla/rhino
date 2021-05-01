@@ -3196,27 +3196,9 @@ public class ScriptRuntime {
         return hasObjectElem((Scriptable) b, a, cx);
     }
 
-    public static boolean cmp_LT(Object val1, Object val2) {
-        double d1, d2;
-        if (val1 instanceof Number && val2 instanceof Number) {
-            d1 = ((Number) val1).doubleValue();
-            d2 = ((Number) val2).doubleValue();
-        } else {
-            if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
-                throw typeErrorById("msg.compare.symbol");
-            }
-            if (val1 instanceof Scriptable) val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
-            if (val2 instanceof Scriptable) val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
-            if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-                return val1.toString().compareTo(val2.toString()) < 0;
-            }
-            d1 = toNumber(val1);
-            d2 = toNumber(val2);
-        }
-        return d1 < d2;
-    }
+    public static boolean compare(Object val1, Object val2, int op) {
+        assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
 
-    public static boolean cmp_LE(Object val1, Object val2) {
         double d1, d2;
         if (val1 instanceof Number && val2 instanceof Number) {
             d1 = ((Number) val1).doubleValue();
@@ -3225,15 +3207,41 @@ public class ScriptRuntime {
             if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
                 throw typeErrorById("msg.compare.symbol");
             }
-            if (val1 instanceof Scriptable) val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
-            if (val2 instanceof Scriptable) val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
+            if (val1 instanceof Scriptable) {
+                val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
+            }
+            if (val2 instanceof Scriptable) {
+                val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
+            }
             if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-                return val1.toString().compareTo(val2.toString()) <= 0;
+                switch (op) {
+                    case Token.GE:
+                        return val1.toString().compareTo(val2.toString()) >= 0;
+                    case Token.LE:
+                        return val1.toString().compareTo(val2.toString()) <= 0;
+                    case Token.GT:
+                        return val1.toString().compareTo(val2.toString()) > 0;
+                    case Token.LT:
+                        return val1.toString().compareTo(val2.toString()) < 0;
+                    default:
+                        throw Kit.codeBug();
+                }
             }
             d1 = toNumber(val1);
             d2 = toNumber(val2);
         }
-        return d1 <= d2;
+        switch (op) {
+            case Token.GE:
+                return d1 >= d2;
+            case Token.LE:
+                return d1 <= d2;
+            case Token.GT:
+                return d1 > d2;
+            case Token.LT:
+                return d1 < d2;
+            default:
+                throw Kit.codeBug();
+        }
     }
 
     // ------------------
