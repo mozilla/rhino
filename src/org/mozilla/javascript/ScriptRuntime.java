@@ -3624,39 +3624,9 @@ public class ScriptRuntime {
         return hasObjectElem((Scriptable) b, a, cx);
     }
 
-    public static boolean compare(Object val1, Object val2, int op) {
-        assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
-
-        double d1, d2;
-        if (val1 instanceof Number && val2 instanceof Number) {
-            d1 = ((Number) val1).doubleValue();
-            d2 = ((Number) val2).doubleValue();
-        } else {
-            if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
-                throw typeErrorById("msg.compare.symbol");
-            }
-            if (val1 instanceof Scriptable) {
-                val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
-            }
-            if (val2 instanceof Scriptable) {
-                val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
-            }
-            if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
-                switch (op) {
-                    case Token.GE:
-                        return val1.toString().compareTo(val2.toString()) >= 0;
-                    case Token.LE:
-                        return val1.toString().compareTo(val2.toString()) <= 0;
-                    case Token.GT:
-                        return val1.toString().compareTo(val2.toString()) > 0;
-                    case Token.LT:
-                        return val1.toString().compareTo(val2.toString()) < 0;
-                    default:
-                        throw Kit.codeBug();
-                }
-            }
-            d1 = toNumber(val1);
-            d2 = toNumber(val2);
+    private static boolean compareDoubles(double d1, double d2, int op) {
+        if (Double.isNaN(d1) || Double.isNaN(d2)) {
+            return false;
         }
         switch (op) {
             case Token.GE:
@@ -3668,8 +3638,97 @@ public class ScriptRuntime {
             case Token.LT:
                 return d1 < d2;
             default:
-                throw Kit.codeBug();
+                throw Kit.codeBug("Invalid comparison");
         }
+    }
+
+    private static boolean compareBigInts(Object o1, Object o2, int op) {
+        assert (o1 instanceof BigInteger || o2 instanceof BigInteger);
+        if (o1 instanceof BigInteger && o2 instanceof BigInteger) {
+            return compareComparable((BigInteger) o1, (BigInteger) o2, op);
+        }
+
+        if (!(o1 instanceof BigInteger)) {
+            double d1 = toNumber(o1);
+            if (Double.isNaN(d1)) {
+                return false;
+            }
+            if (d1 == Double.POSITIVE_INFINITY) {
+                return (op == Token.GT || op == Token.GE);
+            }
+            if (d1 == Double.NEGATIVE_INFINITY) {
+                return (op == Token.LT || op == Token.LE);
+            }
+            BigDecimal bd1 = new BigDecimal(d1, MathContext.UNLIMITED);
+            BigDecimal bd2 = new BigDecimal((BigInteger) o2);
+            return compareComparable(bd1, bd2, op);
+        }
+
+        BigDecimal bd1 = new BigDecimal((BigInteger) o1);
+        double d2 = toNumber(o2);
+        if (Double.isNaN(d2)) {
+            return false;
+        }
+        if (d2 == Double.POSITIVE_INFINITY) {
+            return (op == Token.LT || op == Token.LE);
+        }
+        if (d2 == Double.NEGATIVE_INFINITY) {
+            return (op == Token.GT || op == Token.GE);
+        }
+        BigDecimal bd2 = new BigDecimal(d2, MathContext.UNLIMITED);
+        return compareComparable(bd1, bd2, op);
+    }
+
+    private static <T> boolean compareComparable(Comparable<T> o1, T o2, int op) {
+        int result = o1.compareTo(o2);
+        switch (op) {
+            case Token.GE:
+                return result >= 0;
+            case Token.LE:
+                return result <= 0;
+            case Token.GT:
+                return result > 0;
+            case Token.LT:
+                return result < 0;
+            default:
+                throw Kit.codeBug("Invalid comparison");
+        }
+    }
+
+    public static boolean compare(Object val1, Object val2, int op) {
+        assert op == Token.GE || op == Token.LE || op == Token.GT || op == Token.LT;
+
+        // Short-circuit common ones
+        if (val1 instanceof Integer && val2 instanceof Integer) {
+            return compareComparable((Integer) val1, (Integer) val2, op);
+        }
+        if (val1 instanceof Double && val2 instanceof Double) {
+            return compareDoubles((Double) val1, (Double) val2, op);
+        }
+        if (val1 instanceof String && val2 instanceof String) {
+            return compareComparable((String) val1, (String) val2, op);
+        }
+
+        // BigInts have their own rules
+        if (val1 instanceof BigInteger || val2 instanceof BigInteger) {
+            return compareBigInts(val1, val2, op);
+        }
+
+        if ((val1 instanceof Symbol) || (val2 instanceof Symbol)) {
+            throw typeErrorById("msg.compare.symbol");
+        }
+        if (val1 instanceof Scriptable) {
+            val1 = ((Scriptable) val1).getDefaultValue(NumberClass);
+        }
+        if (val2 instanceof Scriptable) {
+            val2 = ((Scriptable) val2).getDefaultValue(NumberClass);
+        }
+        // This has to be after the default because many Scriptable things are CharSequence
+        if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
+            return compareComparable(val1.toString(), val2.toString(), op);
+        }
+
+        return compareDoubles(toNumber(val1), toNumber(val2), op);
     }
 
     // ------------------

@@ -2618,41 +2618,14 @@ public final class Interpreter extends Icode implements Evaluator {
             CallFrame frame, int op, Object[] stack, double[] sDbl, int stackTop) {
         --stackTop;
         Object rhs = stack[stackTop + 1];
-        Object lhs = stack[stackTop];
-        boolean valBln;
-        object_compare:
-        {
-            number_compare:
-            {
-                Number rNum, lNum;
-                if (rhs == DOUBLE_MARK) {
-                    rNum = sDbl[stackTop + 1];
-                    lNum = stack_numeric(frame, stackTop);
-                } else if (lhs == DOUBLE_MARK) {
-                    rNum = ScriptRuntime.toNumeric(rhs);
-                    lNum = sDbl[stackTop];
-                } else {
-                    break number_compare;
-                }
-                switch (op) {
-                    case Token.GE:
-                        valBln = ScriptRuntime.cmp_LE(rNum, lNum);
-                        break object_compare;
-                    case Token.LE:
-                        valBln = ScriptRuntime.cmp_LE(lNum, rNum);
-                        break object_compare;
-                    case Token.GT:
-                        valBln = ScriptRuntime.cmp_LT(rNum, lNum);
-                        break object_compare;
-                    case Token.LT:
-                        valBln = ScriptRuntime.cmp_LT(lNum, rNum);
-                        break object_compare;
-                    default:
-                        throw Kit.codeBug();
-                }
-            }
-            valBln = ScriptRuntime.compare(lhs, rhs, op);
+        if (rhs == DOUBLE_MARK) {
+            rhs = sDbl[stackTop + 1];
         }
+        Object lhs = stack[stackTop];
+        if (lhs == DOUBLE_MARK) {
+            lhs = sDbl[stackTop];
+        }
+        boolean valBln = ScriptRuntime.compare(lhs, rhs, op);
         stack[stackTop] = ScriptRuntime.wrapBoolean(valBln);
         return stackTop;
     }
