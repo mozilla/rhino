@@ -58,6 +58,29 @@ public class ParserTest extends TestCase {
       environment = new CompilerEnvirons();
     }
 
+
+    public void testUseStrictDirective() {
+        AstRoot root = parse("'use strict'; i=1;");
+
+        AstNode directive = ((ExpressionStatement)
+                root.getFirstChild()).getExpression();
+
+        assertTrue(root.isInStrictMode());
+        assertEquals("'use strict'", directive.toSource());
+    }
+
+    public void testIgnoreUseStrictDirective() {
+        environment.setIgnoreStrictDirective(true);
+        AstRoot root = parse("'use strict'; i=1;");
+
+        AstNode directive = ((ExpressionStatement)
+                root.getFirstChild()).getExpression();
+
+        assertFalse(root.isInStrictMode());
+        assertEquals("'use strict'", directive.toSource());
+    }
+
+
     public void testAutoSemiColonBetweenNames() {
         AstRoot root = parse("\nx\ny\nz\n");
         AstNode first = ((ExpressionStatement)

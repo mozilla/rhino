@@ -23,6 +23,7 @@ public class CompilerEnvirons
         optimizationLevel = 0;
         generatingSource = true;
         strictMode = false;
+        ignoreStrictDirective = false;
         warningAsError = false;
         generateObserverCount = false;
         allowSharpComments = false;
@@ -146,6 +147,16 @@ public class CompilerEnvirons
     public final boolean isStrictMode()
     {
         return strictMode;
+    }
+
+    public final boolean ignoreStrictDirective()
+    {
+        return ignoreStrictDirective;
+    }
+
+    public final void setIgnoreStrictDirective(boolean b)
+    {
+        ignoreStrictDirective = b;
     }
 
     public void setStrictMode(boolean strict)
@@ -283,6 +294,7 @@ public class CompilerEnvirons
     private int optimizationLevel;
     private boolean generatingSource;
     private boolean strictMode;
+    private boolean ignoreStrictDirective;
     private boolean warningAsError;
     private boolean generateObserverCount;
     private boolean recordingComments;
