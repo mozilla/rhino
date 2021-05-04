@@ -1195,19 +1195,23 @@ class BodyCodegen {
                             cfw.add(ByteCode.DADD);
                             break;
                         case Node.LEFT:
-                            addOptRuntimeInvoke("add", "(DLjava/lang/Object;)Ljava/lang/Object;");
+                            cfw.addALoad(contextLocal);
+                            addOptRuntimeInvoke(
+                                    "add",
+                                    "(DLjava/lang/Object;Lorg/mozilla/javascript/Context;)Ljava/lang/Object;");
                             break;
                         case Node.RIGHT:
-                            addOptRuntimeInvoke("add", "(Ljava/lang/Object;D)Ljava/lang/Object;");
+                            cfw.addALoad(contextLocal);
+                            addOptRuntimeInvoke(
+                                    "add",
+                                    "(Ljava/lang/Object;DLorg/mozilla/javascript/Context;)Ljava/lang/Object;");
                             break;
                         default:
                             cfw.addALoad(contextLocal);
-                            addScriptRuntimeInvoke(
-                                    "add",
-                                    "(Ljava/lang/Object;"
-                                            + "Ljava/lang/Object;"
-                                            + "Lorg/mozilla/javascript/Context;"
-                                            + ")Ljava/lang/Object;");
+                            cfw.addInvokeDynamic(
+                                    DynamicRuntime.ADD_OP,
+                                    DynamicRuntime.METHOD_SIGNATURE_OOC,
+                                    DynamicRuntime.BOOTSTRAP_HANDLE);
                     }
                 }
                 break;

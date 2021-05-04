@@ -2855,7 +2855,7 @@ public class ScriptRuntime {
             throw ScriptRuntime.typeErrorById("msg.cant.convert.to.number", "BigInt");
         }
         if (val1 instanceof Number && val2 instanceof Number) {
-            return wrapNumber(((Number) val1).doubleValue() + ((Number) val2).doubleValue());
+            return ((Number) val1).doubleValue() + ((Number) val2).doubleValue();
         }
         if (val1 instanceof XMLObject) {
             Object test = ((XMLObject) val1).addValues(cx, true, val2);

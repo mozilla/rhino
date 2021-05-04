@@ -6,7 +6,6 @@ package org.mozilla.javascript.optimizer;
 
 import org.mozilla.javascript.ArrowFunction;
 import org.mozilla.javascript.Callable;
-import org.mozilla.javascript.ConsString;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ES6Generator;
@@ -74,16 +73,16 @@ public final class OptRuntime extends ScriptRuntime {
         return f.call(cx, scope, thisObj, ScriptRuntime.emptyArgs);
     }
 
-    public static Object add(Object val1, double val2) {
-        if (val1 instanceof Scriptable) val1 = ((Scriptable) val1).getDefaultValue(null);
-        if (!(val1 instanceof CharSequence)) return wrapDouble(toNumber(val1) + val2);
-        return new ConsString((CharSequence) val1, toString(val2));
+    public static Object add(Object val1, double val2, Context cx) {
+        if (val1 instanceof Integer) return (Integer) val1 + val2;
+        if (val1 instanceof Double) return (Double) val1 + val2;
+        return ScriptRuntime.add(val1, val2, cx);
     }
 
-    public static Object add(double val1, Object val2) {
-        if (val2 instanceof Scriptable) val2 = ((Scriptable) val2).getDefaultValue(null);
-        if (!(val2 instanceof CharSequence)) return wrapDouble(toNumber(val2) + val1);
-        return new ConsString(toString(val1), (CharSequence) val2);
+    public static Object add(double val1, Object val2, Context cx) {
+        if (val2 instanceof Integer) return val1 + (Integer) val2;
+        if (val2 instanceof Double) return val1 + (Double) val2;
+        return ScriptRuntime.add(val1, val2, cx);
     }
 
     /** @deprecated Use {@link #elemIncrDecr(Object, double, Context, Scriptable, int)} instead */
