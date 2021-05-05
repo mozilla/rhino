@@ -825,8 +825,10 @@ public class ScriptRuntime {
     }
 
     public static Number toNumeric(Object val) {
-        if (val instanceof BigInteger) {
-            return (BigInteger) val;
+        // toNumber does not allow java.math.BigInteger.
+        // toNumeric allows java.math.BigInteger.
+        if (val instanceof Number) {
+            return (Number) val;
         }
         return toNumber(val);
     }
