@@ -59,8 +59,14 @@ final class NativeNumber extends IdScriptableObject {
         addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isNaN, "isNaN", 1);
         addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isInteger, "isInteger", 1);
         addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_isSafeInteger, "isSafeInteger", 1);
-        addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_parseFloat, "parseFloat", 1);
-        addIdFunctionProperty(ctor, NUMBER_TAG, ConstructorId_parseInt, "parseInt", 1);
+        Object parseFloat = ScriptRuntime.getTopLevelProp(ctor, "parseFloat");
+        if (parseFloat instanceof IdFunctionObject) {
+            ((IdFunctionObject) parseFloat).addAsProperty(ctor);
+        }
+        Object parseInt = ScriptRuntime.getTopLevelProp(ctor, "parseInt");
+        if (parseInt instanceof IdFunctionObject) {
+            ((IdFunctionObject) parseInt).addAsProperty(ctor);
+        }
 
         super.fillConstructorProperties(ctor);
     }
@@ -238,12 +244,6 @@ final class NativeNumber extends IdScriptableObject {
                 }
                 return Boolean.FALSE;
 
-            case ConstructorId_parseFloat:
-                return NativeGlobal.js_parseFloat(args);
-
-            case ConstructorId_parseInt:
-                return NativeGlobal.js_parseInt(args);
-
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
         }
@@ -371,8 +371,6 @@ final class NativeNumber extends IdScriptableObject {
             ConstructorId_isNaN = -2,
             ConstructorId_isInteger = -3,
             ConstructorId_isSafeInteger = -4,
-            ConstructorId_parseFloat = -5,
-            ConstructorId_parseInt = -6,
             Id_constructor = 1,
             Id_toString = 2,
             Id_toLocaleString = 3,
