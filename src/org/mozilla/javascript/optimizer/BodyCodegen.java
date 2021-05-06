@@ -1233,16 +1233,29 @@ class BodyCodegen {
                 break;
 
             case Token.POS:
-                generateExpression(child, node);
-                addObjectToDouble();
-                addDoubleWrap();
-                break;
+                {
+                    int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
+                    generateExpression(child, node);
+                    if (childNumberFlag == -1) {
+                        addObjectToDouble();
+                        addDoubleWrap();
+                    }
+                    break;
+                }
 
             case Token.NEG:
-                generateExpression(child, node);
-                addObjectToNumeric();
-                addScriptRuntimeInvoke("negate", "(Ljava/lang/Number;" + ")Ljava/lang/Number;");
-                break;
+                {
+                    int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
+                    generateExpression(child, node);
+                    if (childNumberFlag == -1) {
+                        addObjectToNumeric();
+                        addScriptRuntimeInvoke(
+                                "negate", "(Ljava/lang/Number;" + ")Ljava/lang/Number;");
+                    } else {
+                        cfw.add(ByteCode.DNEG);
+                    }
+                    break;
+                }
 
             case Token.TO_DOUBLE:
                 // cnvt to double (not Double)

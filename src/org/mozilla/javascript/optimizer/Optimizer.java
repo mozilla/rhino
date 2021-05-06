@@ -303,6 +303,8 @@ class Optimizer {
                 }
 
             case Token.BITNOT:
+            case Token.POS:
+            case Token.NEG:
                 {
                     Node child = n.getFirstChild();
                     int type = rewriteForNumberVariables(child, NumberType);
