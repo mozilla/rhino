@@ -81,6 +81,7 @@ final class NativeString extends IdScriptableObject {
     protected void fillConstructorProperties(IdFunctionObject ctor) {
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCharCode, "fromCharCode", 1);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_fromCodePoint, "fromCodePoint", 1);
+        addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_raw, "raw", 1);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_charAt, "charAt", 2);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_charCodeAt, "charCodeAt", 2);
         addIdFunctionProperty(ctor, STRING_TAG, ConstructorId_indexOf, "indexOf", 2);
@@ -392,6 +393,9 @@ final class NativeString extends IdScriptableObject {
                         }
                         return new String(chars);
                     }
+
+                case ConstructorId_raw:
+                    return js_raw(cx, scope, args);
 
                 case Id_constructor:
                     {
@@ -1106,6 +1110,47 @@ final class NativeString extends IdScriptableObject {
         return 0;
     }
 
+    /**
+     *
+     *
+     * <h1>String.raw (template, ...substitutions)</h1>
+     *
+     * <p>22.1.2.4 String.raw [Draft ECMA-262 / April 28, 2021]
+     */
+    private static CharSequence js_raw(Context cx, Scriptable scope, Object[] args) {
+        /* step 1-2 */
+        Object arg0 = args.length > 0 ? args[0] : Undefined.instance;
+        Scriptable cooked = ScriptRuntime.toObject(cx, scope, arg0);
+        /* step 3 */
+        Object rawValue = ScriptRuntime.getObjectProp(cooked, "raw", cx);
+        Scriptable raw = ScriptRuntime.toObject(cx, scope, rawValue);
+        /* step 4-5 */
+        long rawLength = NativeArray.getLengthProperty(cx, raw);
+        if (rawLength > Integer.MAX_VALUE) {
+            throw ScriptRuntime.rangeError("raw.length > " + Integer.toString(Integer.MAX_VALUE));
+        }
+        int literalSegments = (int) rawLength;
+        if (literalSegments <= 0) return "";
+        /* step 6-7 */
+        StringBuilder elements = new StringBuilder();
+        int nextIndex = 0;
+        for (; ; ) {
+            /* step 8 a-i */
+            Object next;
+            next = ScriptRuntime.getObjectIndex(raw, nextIndex, cx);
+            String nextSeg = ScriptRuntime.toString(next);
+            elements.append(nextSeg);
+            nextIndex += 1;
+            if (nextIndex == literalSegments) {
+                break;
+            }
+            next = args.length > nextIndex ? args[nextIndex] : "";
+            String nextSub = ScriptRuntime.toString(next);
+            elements.append(nextSub);
+        }
+        return elements;
+    }
+
     // #string_id_map#
 
     @Override
@@ -1270,6 +1315,7 @@ final class NativeString extends IdScriptableObject {
 
     private static final int ConstructorId_fromCharCode = -1,
             ConstructorId_fromCodePoint = -2,
+            ConstructorId_raw = -3,
             Id_constructor = 1,
             Id_toString = 2,
             Id_toSource = 3,

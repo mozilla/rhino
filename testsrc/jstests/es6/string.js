@@ -37,4 +37,16 @@ load("testsrc/assert.js");
     assertEquals(" abc", " abc ".trimRight())
 })();
 
+(function TestRawTooLarge() {
+  assertThrows(()=>String.raw({raw: {length: Math.pow(2, 31) + 1}}), RangeError);
+})();
+
+(function TestRawPrototypeGet() {
+  var _raw = ["1",,"3"];
+  var raw = Object.create(_raw);
+  raw[2] = "2*";
+  raw.length = 4;
+  assertEquals("1.undefined^2*undefined", String.raw(Object.create({raw}), ".", "^"));
+})();
+
 "success";
