@@ -190,22 +190,23 @@ public class Test262SuiteTest {
         cx.setOptimizationLevel(optLevel);
         cx.setGeneratingDebug(true);
         try {
-            Scriptable scope;
+            boolean failedEarly = false;
             try {
-                scope = buildScope(cx);
-            } catch (Exception ex) {
-                throw new RuntimeException("Failed to build a scope with the harness files.", ex);
-            }
+                Scriptable scope;
+                try {
+                    scope = buildScope(cx);
+                } catch (Exception ex) {
+                    throw new RuntimeException("Failed to build a scope with the harness files.", ex);
+                }
 
-            String str = testCase.source;
-            int line = 1;
-            if (useStrict) {
-                str = "\"use strict\";\n" + str;
-                line--;
-            }
+                String str = testCase.source;
+                int line = 1;
+                if (useStrict) {
+                    str = "\"use strict\";\n" + str;
+                    line--;
+                }
 
-            boolean failedEarly = true;
-            try {
+                failedEarly = true;
                 Script caseScript = cx.compileString(str, testFilePath, line, null);
 
                 failedEarly = false; // not after this line
