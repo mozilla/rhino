@@ -824,9 +824,14 @@ public class ScriptRuntime {
         }
     }
 
+    /**
+     * Convert the value to a Numeric (Number or BigInt).
+     *
+     * <p>toNumber does not allow java.math.BigInteger. toNumeric allows java.math.BigInteger.
+     *
+     * <p>See ECMA 7.1.3 (v11.0).
+     */
     public static Number toNumeric(Object val) {
-        // toNumber does not allow java.math.BigInteger.
-        // toNumeric allows java.math.BigInteger.
         if (val instanceof Number) {
             return (Number) val;
         }
