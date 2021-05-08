@@ -286,7 +286,21 @@ public class Bug708801Test {
                         // bit not:
                         assertNumberVars("var b = ~0", "b");
                         assertNumberVars("var b = ~o", "b");
+                        assertNumberVars("var b = ~o.a", "b");
+                        assertNumberVars("var b = ~o[0]", "b");
                         assertNumberVars("var b; var c=1; b=~c", "b", "c");
+                        // unary plus:
+                        assertNumberVars("var b = +0", "b");
+                        assertNumberVars("var b = +o", "b");
+                        assertNumberVars("var b = +o.a", "b");
+                        assertNumberVars("var b = +o[0]", "b");
+                        assertNumberVars("var b; var c=1; b=+c", "b", "c");
+                        // unary minus:
+                        assertNumberVars("var b = -0", "b");
+                        assertNumberVars("var b = -o", "b");
+                        assertNumberVars("var b = -o.a", "b");
+                        assertNumberVars("var b = -o[0]", "b");
+                        assertNumberVars("var b; var c=1; b=-c", "b", "c");
                         // increment, function call:
                         assertNumberVars("var b; var g; b = (g=0,g++)", "b", "g");
                         assertNumberVars("var b; var x = fn(b=1)", "b");
