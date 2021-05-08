@@ -196,7 +196,8 @@ public class Test262SuiteTest {
                 try {
                     scope = buildScope(cx);
                 } catch (Exception ex) {
-                    throw new RuntimeException("Failed to build a scope with the harness files.", ex);
+                    throw new RuntimeException(
+                            "Failed to build a scope with the harness files.", ex);
                 }
 
                 String str = testCase.source;
