@@ -7,16 +7,32 @@ load("testsrc/assert.js");
 // optimizer test
 const one = 1n;
 assertEquals(2n, (() => 1n + one)());
+assertEquals(2n, (() => one + 1n)());
 assertEquals(0n, (() => 1n - one)());
+assertEquals(0n, (() => one - 1n)());
 assertEquals(1n, (() => 1n * one)());
+assertEquals(1n, (() => one * 1n)());
 assertEquals(1n, (() => 1n / one)());
+assertEquals(1n, (() => one / 1n)());
 assertEquals(0n, (() => 1n % one)());
+assertEquals(0n, (() => one % 1n)());
 assertEquals(1n, (() => 1n ** one)());
+assertEquals(1n, (() => one ** 1n)());
+
 assertEquals(0n, (() => 1n ^ one)());
+assertEquals(0n, (() => one ^ 1n)());
 assertEquals(1n, (() => 1n | one)());
+assertEquals(1n, (() => one | 1n)());
 assertEquals(1n, (() => 1n & one)());
+assertEquals(1n, (() => one & 1n)());
 assertEquals(2n, (() => 1n << one)());
+assertEquals(2n, (() => one << 1n)());
 assertEquals(0n, (() => 1n >> one)());
+assertEquals(0n, (() => one >> 1n)());
+
+assertEquals(-2n, (() => { var n = 1n; return ~n; })());
+assertThrows(() => {var n = 1n; return +n; }, TypeError);
+assertEquals(-1n, (() => { var n = 1n; return -n; })());
 
 // Out of range check for BigInt
 const MAX_INT = 2n ** 31n - 1n;
