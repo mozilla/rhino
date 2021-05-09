@@ -70,6 +70,29 @@ public class StackTraceTest extends TestCase {
      * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some
      * native function has been made.
      */
+    public void testFailureStackTraceMozillaLf() {
+        final StackStyle stackStyle = RhinoException.getStackStyle();
+        try {
+            RhinoException.setStackStyle(StackStyle.MOZILLA_LF);
+
+            final String source1 = "function f2() { throw 'hello'; }; f2();";
+            final String source2 = "function f2() { 'H'.toLowerCase(); throw 'hello'; }; f2();";
+            final String source3 = "function f2() { new java.lang.String('H').toLowerCase(); throw 'hello'; }; f2();";
+            final String result = "f2()@test.js\n@test.js\n";
+
+            runWithExpectedStackTrace(source1, result);
+            runWithExpectedStackTrace(source2, result);
+            runWithExpectedStackTrace(source3, result);
+        }
+        finally {
+            RhinoException.setStackStyle(stackStyle);
+        }
+    }
+
+    /**
+     * As of CVS head on May, 11. 2009, stacktrace information is lost when a call to some
+     * native function has been made.
+     */
     public void testFailureStackTraceV8() {
         final StackStyle stackStyle = RhinoException.getStackStyle();
         try {

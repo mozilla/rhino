@@ -237,15 +237,21 @@ public abstract class RhinoException extends RuntimeException
             switch (stackStyle) {
             case MOZILLA:
                 elem.renderMozillaStyle(buffer);
+                buffer.append(lineSeparator);
+                break;
+            case MOZILLA_LF:
+                elem.renderMozillaStyle(buffer);
+                buffer.append('\n');
                 break;
             case V8:
                 elem.renderV8Style(buffer);
+                buffer.append(lineSeparator);
                 break;
             case RHINO:
                 elem.renderJavaStyle(buffer);
+                buffer.append(lineSeparator);
                 break;
             }
-            buffer.append(lineSeparator);
         }
         return buffer.toString();
     }

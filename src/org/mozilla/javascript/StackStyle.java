@@ -22,6 +22,12 @@ public enum StackStyle {
     MOZILLA,
 
     /**
+     * This is the same as MOZILLA but uses LF as speparator instead of
+     * the system dependent line separator.
+     */
+    MOZILLA_LF,
+
+    /**
      * This stack trace style matches that output from V8, either:
      * <code>    at functionName (fileName:lineNumber:columnNumber)</code>
      * or, for anonymous functions:
