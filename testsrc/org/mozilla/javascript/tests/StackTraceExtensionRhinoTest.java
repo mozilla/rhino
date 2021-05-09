@@ -4,29 +4,26 @@ import static org.junit.Assert.assertFalse;
 
 import java.io.FileReader;
 import java.io.IOException;
-
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
-public class StackTraceExtensionRhinoTest
-{
-    private void testTraces(int opt)
-    {
-        final ContextFactory factory = new ContextFactory() {
-            @Override
-            protected boolean hasFeature(Context cx, int featureIndex)
-            {
-                switch (featureIndex) {
-                case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
-                    return true;
-                default:
-                    return super.hasFeature(cx, featureIndex);
-                }
-            }
-        };
+public class StackTraceExtensionRhinoTest {
+    private void testTraces(int opt) {
+        final ContextFactory factory =
+                new ContextFactory() {
+                    @Override
+                    protected boolean hasFeature(Context cx, int featureIndex) {
+                        switch (featureIndex) {
+                            case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
+                                return true;
+                            default:
+                                return super.hasFeature(cx, featureIndex);
+                        }
+                    }
+                };
 
         Context cx = factory.enterContext();
         try {
@@ -52,20 +49,17 @@ public class StackTraceExtensionRhinoTest
     }
 
     @Test
-    public void testStackTrace0()
-    {
+    public void testStackTrace0() {
         testTraces(0);
     }
 
     @Test
-    public void testStackTrace9()
-    {
+    public void testStackTrace9() {
         testTraces(9);
     }
 
     @Test
-    public void testStackTraceInt()
-    {
+    public void testStackTraceInt() {
         testTraces(-1);
     }
 }
