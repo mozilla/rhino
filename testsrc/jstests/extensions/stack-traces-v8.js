@@ -36,9 +36,9 @@ try {
 } catch (e) {
   assertFalse(e.stack == undefined);
   assertTrue(/Test 1/.test(e.toString()));
-  assertFalse(/stack-traces.js/.test(e.toString()));
+  assertFalse(/stack-traces-v8.js/.test(e.toString()));
   assertTrue(/Test 1/.test(e.stack));
-  assertTrue(/stack-traces.js/.test(e.stack));
+  assertTrue(/stack-traces-v8.js/.test(e.stack));
 }
 
 // Assert that the function name is nested inside a nested stack trace
@@ -167,8 +167,10 @@ assertTrue(/grandParentCapture/.test(s2.stack));
 try {
   grandparentThrower('Custom 1');
 } catch (e) {
+  assertFalse(/Custom 1/.test(e.stack));
   assertTrue(/nestedThrower/.test(e.stack));
   assertTrue(/parentThrower/.test(e.stack));
+  assertTrue(/grandparentThrower/.test(e.stack));
 }
 
 // And test that it works the old way when we format it back
@@ -180,6 +182,7 @@ try {
   assertTrue(/Custom 2/.test(e.stack));
   assertTrue(/nestedThrower/.test(e.stack));
   assertTrue(/parentThrower/.test(e.stack));
+  assertTrue(/grandparentThrower/.test(e.stack));
 }
 
 // test that all the functions on a stack frame work
