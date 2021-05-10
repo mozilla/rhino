@@ -41,6 +41,15 @@ public class NativeJavaMapTest extends TestCase {
         global.init(ContextFactory.getGlobal());
     }
 
+    public void testAccessingNullValues() {
+        Map<Object, Number> map = new HashMap<>();
+        map.put("a", null);
+        map.put(1, null);
+        assertEquals(2, runScriptAsInt("value.size()", map, true));
+        assertEquals(null, runScript("value.a", map, true));
+        assertEquals(null, runScript("value[1]", map, true));
+    }
+    
     public void testAccessingJavaMapIntegerValues() {
         Map<Number, Number> map = new HashMap<>();
         map.put(0, 1);
