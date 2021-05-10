@@ -119,7 +119,7 @@ public class NativeJavaMap extends NativeJavaObject {
             List<Object> ids = new ArrayList<>(map.size());
             for (Object key : map.keySet()) {
                 if (key instanceof Integer) {
-                    ids.add((Integer)key);
+                    ids.add((Integer) key);
                 } else {
                     ids.add(ScriptRuntime.toString(key));
                 }
@@ -129,12 +129,13 @@ public class NativeJavaMap extends NativeJavaObject {
         return super.getIds();
     }
 
-    private static Callable symbol_iterator = (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
-        if (!(thisObj instanceof NativeJavaMap)) {
-            throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
-        }
-        return new NativeJavaMapIterator(scope, ((NativeJavaMap)thisObj).map);
-    };
+    private static Callable symbol_iterator =
+            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+                if (!(thisObj instanceof NativeJavaMap)) {
+                    throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
+                }
+                return new NativeJavaMapIterator(scope, ((NativeJavaMap) thisObj).map);
+            };
 
     private static final class NativeJavaMapIterator extends ES6Iterator {
         private static final long serialVersionUID = 1L;
@@ -144,9 +145,7 @@ public class NativeJavaMap extends NativeJavaObject {
             ES6Iterator.init(scope, sealed, new NativeJavaMapIterator(), ITERATOR_TAG);
         }
 
-        /**
-         * Only for constructing the prototype object.
-         */
+        /** Only for constructing the prototype object. */
         private NativeJavaMapIterator() {
             super();
         }
