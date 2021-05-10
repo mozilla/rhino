@@ -24,7 +24,6 @@ public class NativeJavaList extends NativeJavaObject {
         return "JavaList";
     }
 
-
     @Override
     public boolean has(String name, Scriptable start) {
         if (name.equals("length")) {
@@ -94,7 +93,7 @@ public class NativeJavaList extends NativeJavaObject {
                 ((ArrayList<?>) list).ensureCapacity(minCapacity);
             }
             while (minCapacity > list.size()) {
-              list.add(null);
+                list.add(null);
             }
         }
     }
@@ -111,6 +110,6 @@ public class NativeJavaList extends NativeJavaObject {
     }
 
     private boolean isWithValidIndex(int index) {
-        return index >= 0  && index < list.size();
+        return index >= 0 && index < list.size();
     }
 }
