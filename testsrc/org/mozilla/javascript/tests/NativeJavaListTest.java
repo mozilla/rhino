@@ -14,6 +14,7 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -28,6 +29,28 @@ public class NativeJavaListTest extends TestCase {
     }
 
 
+    public void testAccessingNullValues() {
+        List<Integer> list = new ArrayList<>();
+        list.add(null);
+
+        assertEquals(null, runScript("value[0]", list, Function.identity()));
+        assertEquals(1, runScriptAsInt("value.length", list));
+    }
+
+    public void testAutoGrowList() {
+        List<String> list = new ArrayList<>();
+        runScriptAsInt("value[10] = 'Foo'", list);
+        assertEquals(11, list.size());
+        assertEquals(null, list.get(9));
+        assertEquals("Foo", list.get(10));
+        
+        list = new LinkedList<>();
+        runScriptAsInt("value[10] = 'Foo'", list);
+        assertEquals(11, list.size());
+        assertEquals(null, list.get(9));
+        assertEquals("Foo", list.get(10));
+    }
+    
     public void testAccessingJavaListIntegerValues() {
         List<Integer> list = new ArrayList<>();
         list.add(1);
