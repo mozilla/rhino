@@ -66,7 +66,7 @@ public class NativeJavaMap extends NativeJavaObject {
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(name)) {
                 Object obj = map.get(name);
-                return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
         }
         return super.get(name, start);
@@ -78,7 +78,7 @@ public class NativeJavaMap extends NativeJavaObject {
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
             if (map.containsKey(Integer.valueOf(index))) {
                 Object obj = map.get(Integer.valueOf(index));
-                return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
         }
         return super.get(index, start);
