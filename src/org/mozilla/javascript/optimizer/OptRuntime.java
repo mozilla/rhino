@@ -74,21 +74,21 @@ public final class OptRuntime extends ScriptRuntime {
     }
 
     public static Object add(Object val1, double val2, Context cx) {
-        if (val1 instanceof Integer) {
-            return ((Integer) val1) + val2;
-        }
         if (val1 instanceof Double) {
             return ((Double) val1) + val2;
+        }
+        if (val1 instanceof Integer) {
+            return ((Integer) val1) + val2;
         }
         return ScriptRuntime.add(val1, val2, cx);
     }
 
     public static Object add(double val1, Object val2, Context cx) {
-        if (val2 instanceof Integer) {
-            return val1 + ((Integer) val2);
-        }
         if (val2 instanceof Double) {
             return val1 + ((Double) val2);
+        }
+        if (val2 instanceof Integer) {
+            return val1 + ((Integer) val2);
         }
         return ScriptRuntime.add(val1, val2, cx);
     }
