@@ -108,10 +108,20 @@ task testBenchmark() {}
 testBenchmark.dependsOn sunSpiderBenchmark
 testBenchmark.dependsOn v8Benchmark
 
-task builtinBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
+task microBenchmark(type: JavaExec, description: 'JMH micro benchmark') {
+    def benchmark = System.getProperty('benchmark')
+    if (benchmark == null) {
+        benchmark = "MathBenchmark"
+    }
     classpath = sourceSets.jmh.runtimeClasspath
     main = 'org.openjdk.jmh.Main'
-    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', 'Builtin'
+    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', '-r', '5', benchmark
+}
+
+task listBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
+    classpath = sourceSets.jmh.runtimeClasspath
+    main = 'org.openjdk.jmh.Main'
+    args '-lp'
 }
 
 task jmhHelp(type: JavaExec, description: 'JMH benchmarks') {
