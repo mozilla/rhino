@@ -2864,6 +2864,11 @@ public class ScriptRuntime {
         if (val1 instanceof Number && val2 instanceof Number) {
             return wrapNumber(((Number) val1).doubleValue() + ((Number) val2).doubleValue());
         }
+        if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
+            // If we let this happen later, then the "getDefaultValue" logic
+            // undoes many optimizations
+            return new ConsString(toCharSequence(val1), toCharSequence(val2));
+        }
         if (val1 instanceof XMLObject) {
             Object test = ((XMLObject) val1).addValues(cx, true, val2);
             if (test != Scriptable.NOT_FOUND) {
