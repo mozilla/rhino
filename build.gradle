@@ -8,7 +8,7 @@ plugins {
     id 'distribution'
     id 'checkstyle'
     id 'com.diffplug.spotless' version "5.12.1"
-    id 'com.github.spotbugs' version "4.6.2"
+    id 'com.github.spotbugs' version "4.7.1"
 }
 
 tasks.withType(JavaCompile) {
@@ -89,7 +89,7 @@ test {
     // Many tests do not clean up contexts properly. This makes the tests much
     // more resilient at the expense of performance.
     forkEvery = 1
-    maxParallelForks = 16
+    maxParallelForks = 64
 }
 
 task sunSpiderBenchmark(type: JavaExec) {
