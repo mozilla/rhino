@@ -90,6 +90,7 @@ public class Test262SuiteTest {
                             "Symbol.matchAll",
                             "tail-call-optimization",
                             "json-superset",
+                            "hashbang",
                             "u180e"));
 
     static {
