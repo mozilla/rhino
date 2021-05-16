@@ -1637,32 +1637,53 @@ public class Parser {
                     reportError("msg.catch.unreachable");
                 }
                 int catchPos = ts.tokenBeg, lp = -1, rp = -1, guardPos = -1;
-                if (mustMatchToken(Token.LP, "msg.no.paren.catch", true)) lp = ts.tokenBeg;
-
-                mustMatchToken(Token.NAME, "msg.bad.catchcond", true);
-
-                Name varName = createNameNode();
-                Comment jsdocNodeForName = getAndResetJsDoc();
-                if (jsdocNodeForName != null) {
-                    varName.setJsDocNode(jsdocNodeForName);
-                }
-                String varNameString = varName.getIdentifier();
-                if (inUseStrictDirective) {
-                    if ("eval".equals(varNameString) || "arguments".equals(varNameString)) {
-                        reportError("msg.bad.id.strict", varNameString);
-                    }
-                }
-
+                Name varName = null;
                 AstNode catchCond = null;
-                if (matchToken(Token.IF, true)) {
-                    guardPos = ts.tokenBeg;
-                    catchCond = expr();
-                } else {
-                    sawDefaultCatch = true;
-                }
 
-                if (mustMatchToken(Token.RP, "msg.bad.catchcond", true)) rp = ts.tokenBeg;
-                mustMatchToken(Token.LC, "msg.no.brace.catchblock", true);
+                switch (peekToken()) {
+                    case Token.LP:
+                        {
+                            matchToken(Token.LP, true);
+                            lp = ts.tokenBeg;
+                            mustMatchToken(Token.NAME, "msg.bad.catchcond", true);
+
+                            varName = createNameNode();
+                            Comment jsdocNodeForName = getAndResetJsDoc();
+                            if (jsdocNodeForName != null) {
+                                varName.setJsDocNode(jsdocNodeForName);
+                            }
+                            String varNameString = varName.getIdentifier();
+                            if (inUseStrictDirective) {
+                                if ("eval".equals(varNameString)
+                                        || "arguments".equals(varNameString)) {
+                                    reportError("msg.bad.id.strict", varNameString);
+                                }
+                            }
+
+                            if (matchToken(Token.IF, true)) {
+                                guardPos = ts.tokenBeg;
+                                catchCond = expr();
+                            } else {
+                                sawDefaultCatch = true;
+                            }
+
+                            if (mustMatchToken(Token.RP, "msg.bad.catchcond", true)) {
+                                rp = ts.tokenBeg;
+                            }
+                            mustMatchToken(Token.LC, "msg.no.brace.catchblock", true);
+                        }
+                        break;
+                    case Token.LC:
+                        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            matchToken(Token.LC, true);
+                        } else {
+                            reportError("msg.no.paren.catch");
+                        }
+                        break;
+                    default:
+                        reportError("msg.no.paren.catch");
+                        break;
+                }
 
                 Block catchBlock = (Block) statements();
                 tryEnd = getNodeEnd(catchBlock);
