@@ -53,9 +53,10 @@ public class CatchClause extends AstNode {
      * @throws IllegalArgumentException if varName is {@code null}
      */
     public void setVarName(Name varName) {
-        assertNotNull(varName);
         this.varName = varName;
-        varName.setParent(this);
+        if (varName != null) {
+            varName.setParent(this);
+        }
     }
 
     /**
@@ -74,7 +75,9 @@ public class CatchClause extends AstNode {
      */
     public void setCatchCondition(AstNode catchCondition) {
         this.catchCondition = catchCondition;
-        if (catchCondition != null) catchCondition.setParent(this);
+        if (catchCondition != null) {
+            catchCondition.setParent(this);
+        }
     }
 
     /** Returns catch body */
