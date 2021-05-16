@@ -4108,7 +4108,9 @@ public class ScriptRuntime {
 
         NativeObject catchScopeObject = new NativeObject();
         // See ECMA 12.4
-        catchScopeObject.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
+        if (exceptionName != null) {
+            catchScopeObject.defineProperty(exceptionName, obj, ScriptableObject.PERMANENT);
+        }
 
         if (isVisible(cx, t)) {
             // Add special Rhino object __exception__ defined in the catch

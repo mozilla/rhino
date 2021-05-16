@@ -1236,27 +1236,34 @@ public final class IRFactory extends Parser {
         Node catchBlocks = new Block();
         for (CatchClause cc : node.getCatchClauses()) {
             decompiler.addToken(Token.CATCH);
-            decompiler.addToken(Token.LP);
 
-            String varName = cc.getVarName().getIdentifier();
-            decompiler.addName(varName);
-
+            Name varName = cc.getVarName();
             Node catchCond = null;
-            AstNode ccc = cc.getCatchCondition();
-            if (ccc != null) {
-                decompiler.addName(" ");
-                decompiler.addToken(Token.IF);
-                catchCond = transform(ccc);
-            } else {
-                catchCond = new EmptyExpression();
+            Node varNameNode = null;
+
+            if (varName != null) {
+                decompiler.addToken(Token.LP);
+                decompiler.addName(varName.getIdentifier());
+
+                varNameNode = createName(varName.getIdentifier());
+
+                AstNode ccc = cc.getCatchCondition();
+                if (ccc != null) {
+                    decompiler.addName(" ");
+                    decompiler.addToken(Token.IF);
+                    catchCond = transform(ccc);
+                } else {
+                    catchCond = new EmptyExpression();
+                }
+
+                decompiler.addToken(Token.RP);
             }
-            decompiler.addToken(Token.RP);
             decompiler.addEOL(Token.LC);
 
             Node body = transform(cc.getBody());
             decompiler.addEOL(Token.RC);
 
-            catchBlocks.addChildToBack(createCatch(varName, catchCond, body, cc.getLineno()));
+            catchBlocks.addChildToBack(createCatch(varNameNode, catchCond, body, cc.getLineno()));
         }
         Node finallyBlock = null;
         if (node.getFinallyBlock() != null) {
@@ -1529,11 +1536,14 @@ public final class IRFactory extends Parser {
      * @param stmts the statements in the catch clause
      * @param lineno the starting line number of the catch clause
      */
-    private Node createCatch(String varName, Node catchCond, Node stmts, int lineno) {
+    private Node createCatch(Node varName, Node catchCond, Node stmts, int lineno) {
+        if (varName == null) {
+            varName = new Node(Token.EMPTY);
+        }
         if (catchCond == null) {
             catchCond = new Node(Token.EMPTY);
         }
-        return new Node(Token.CATCH, createName(varName), catchCond, stmts, lineno);
+        return new Node(Token.CATCH, varName, catchCond, stmts, lineno);
     }
 
     private static Node initFunction(
