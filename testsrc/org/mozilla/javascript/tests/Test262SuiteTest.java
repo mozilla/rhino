@@ -103,7 +103,7 @@ public class Test262SuiteTest {
         }
 
         String propFile = System.getProperty("test262properties");
-        testProperties = 
+        testProperties =
                 propFile != null && !propFile.equals("") ? propFile : "testsrc/test262.properties";
     }
 
