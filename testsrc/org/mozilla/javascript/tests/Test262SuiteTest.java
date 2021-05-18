@@ -103,7 +103,8 @@ public class Test262SuiteTest {
         }
 
         String propFile = System.getProperty("test262properties");
-        testProperties = propFile != null && !propFile.equals("") ? propFile : "testsrc/test262.properties";
+        testProperties = 
+                propFile != null && !propFile.equals("") ? propFile : "testsrc/test262.properties";
     }
 
     private static String getOverriddenLevel() {
