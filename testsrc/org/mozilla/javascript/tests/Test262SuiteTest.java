@@ -101,12 +101,12 @@ public class Test262SuiteTest {
         } else {
             OPT_LEVELS = new int[] {-1, 0, 9};
         }
-        
-		String propFile = System.getProperty("test262properties");
-		
-		if (propFile != null && !propFile.equals("")) {
-			testProperties = propFile;
-		}
+
+        String propFile = System.getProperty("test262properties");
+
+        if (propFile != null && !propFile.equals("")) {
+            testProperties = propFile;
+        }
     }
 
     private static String getOverriddenLevel() {
