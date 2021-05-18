@@ -28,22 +28,8 @@ public class MemberBoxSlot extends Slot {
         // but the spec is super pedantic about things like the order of properties here,
         // so we need special support here.
         ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
+        desc.setCommonDescriptorProperties(getAttributes(), getter == null && setter == null);
         String fName = name == null ? "f" : name.toString();
-        desc.defineProperty(
-                "enumerable",
-                (getAttributes() & ScriptableObject.DONTENUM) == 0,
-                ScriptableObject.EMPTY);
-        desc.defineProperty(
-                "configurable",
-                (getAttributes() & ScriptableObject.PERMANENT) == 0,
-                ScriptableObject.EMPTY);
-        if (getter == null && setter == null) {
-            desc.defineProperty(
-                    "writable",
-                    (getAttributes() & ScriptableObject.READONLY) == 0,
-                    ScriptableObject.EMPTY);
-        }
-
         if (getter != null) {
             desc.defineProperty(
                     "get", getter.asGetterFunction(fName, scope), ScriptableObject.EMPTY);

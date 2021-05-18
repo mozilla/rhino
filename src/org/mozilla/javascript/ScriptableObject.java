@@ -130,10 +130,16 @@ public abstract class ScriptableObject
         ScriptableObject desc = new NativeObject();
         ScriptRuntime.setBuiltinProtoAndParent(desc, scope, TopLevel.Builtins.Object);
         desc.defineProperty("value", value, EMPTY);
-        desc.defineProperty("writable", (attributes & READONLY) == 0, EMPTY);
-        desc.defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY);
-        desc.defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
+        desc.setCommonDescriptorProperties(attributes, true);
         return desc;
+    }
+
+    protected void setCommonDescriptorProperties(int attributes, boolean defineWritable) {
+        if (defineWritable) {
+            defineProperty("writable", (attributes & READONLY) == 0, EMPTY);
+        }
+        defineProperty("enumerable", (attributes & DONTENUM) == 0, EMPTY);
+        defineProperty("configurable", (attributes & PERMANENT) == 0, EMPTY);
     }
 
     static void checkValidAttributes(int attributes) {
