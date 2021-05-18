@@ -51,7 +51,7 @@ public class Test262SuiteTest {
 
     private static final File testDir = new File("test262/test");
     private static final String testHarnessDir = "test262/harness/";
-    private static final String testProperties = "testsrc/test262.properties";
+    private static String testProperties = "testsrc/test262.properties";
 
     static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<>();
     static Map<File, Integer> EXCLUDED_TESTS = new LinkedHashMap<>();
@@ -101,6 +101,12 @@ public class Test262SuiteTest {
         } else {
             OPT_LEVELS = new int[] {-1, 0, 9};
         }
+        
+		String propFile = System.getProperty("test262properties");
+		
+		if (propFile != null && !propFile.equals("")) {
+			testProperties = propFile;
+		}
     }
 
     private static String getOverriddenLevel() {
