@@ -83,7 +83,10 @@ test {
     systemProperty 'file.encoding', 'UTF-8'
     if (System.getProperty('quick') != null) {
         systemProperty 'TEST_OPTLEVEL', -1
+    } else {
+    	systemProperty 'TEST_OPTLEVEL', System.getProperty('optLevel')
     }
+    systemProperty 'test262properties', System.getProperty('test262properties')
     maxHeapSize = "1g"
     testLogging.showStandardStreams = true
     // Many tests do not clean up contexts properly. This makes the tests much
