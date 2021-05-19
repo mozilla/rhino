@@ -20,13 +20,13 @@ After doing so, the `./gradlew test` command will also execute all tests that ar
 By default all tests are run 3 times, at optimization levels -1, 0 and 9.
 
 This behavior can be changed through different means:
-1. Quick disable
+1. Quick disable (will run tests with optimization level -1)
 ```
 ./gradlew test -Dquick
 ```
 2. Setting an explicit optimization level through the command line:
 ```
-./gradlew test -DTEST_OPTLEVEL=-1
+./gradlew test -DoptLevel=9
 ```
 3. Setting an explicit optimization level through the `TEST_262_OPTLEVEL` environment variable
 
