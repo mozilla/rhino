@@ -83,7 +83,7 @@ test {
     systemProperty 'file.encoding', 'UTF-8'
     if (System.getProperty('quick') != null) {
         systemProperty 'TEST_OPTLEVEL', -1
-    } else {
+    } else if (System.getProperty('optLevel') {
     	systemProperty 'TEST_OPTLEVEL', System.getProperty('optLevel')
     }
     systemProperty 'test262properties', System.getProperty('test262properties')
