@@ -10,14 +10,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-
+import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 
-import junit.framework.TestCase;
-
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=466207
+ *
  * @author Hannes Wallnoefer
  */
 public class Bug466207Test extends TestCase {
@@ -37,9 +36,14 @@ public class Bug466207Test extends TestCase {
         // get a js object as map
         Context context = Context.enter();
         ScriptableObject scope = context.initStandardObjects();
-        list = (List<Object>) context.evaluateString(scope,
-                "(['a', true, new java.util.HashMap(), 42, 'a']);",
-                "testsrc", 1, null);
+        list =
+                (List<Object>)
+                        context.evaluateString(
+                                scope,
+                                "(['a', true, new java.util.HashMap(), 42, 'a']);",
+                                "testsrc",
+                                1,
+                                null);
         Context.exit();
     }
 
@@ -110,7 +114,7 @@ public class Bug466207Test extends TestCase {
         assertFalse(it2.hasPrevious());
         compareIterators(it1, it2);
     }
-    
+
     public void testSublist() {
         assertTrue(Arrays.equals(list.subList(0, 5).toArray(), reference.toArray()));
         assertTrue(Arrays.equals(list.subList(2, 4).toArray(), reference.subList(2, 4).toArray()));
