@@ -9,6 +9,10 @@ package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -146,4 +150,148 @@ public class NativeObjectTest {
 
         assertEquals("Object.setPrototypeOf: At least 2 arguments required, but only 1 passed", result);
     }
+    
+    @Test
+    public void testKeysMissingParameter() {
+        Object result = cx.evaluateString(
+                scope, "try { "
+                        + "  Object.keys();"
+                        + "} catch (e) { e.message }",
+                "test", 1, null
+        );
+
+        assertEquals("Cannot convert undefined to an object.", result);
+    }
+    
+    @Test
+    public void testKeysOnObjectParameter() {
+        evaluateAndAssert("Object.keys({'foo':'bar', 2: 'y', 1: 'x'})", 
+                Arrays.asList("1", "2", "foo"));
+    }
+    
+    @Test
+    public void testKeysOnArray() {
+        evaluateAndAssert("Object.keys(['x','y','z'])", 
+                Arrays.asList("0", "1", "2"));
+    }
+    
+    @Test
+    public void testKeysOnArrayWithProp() {
+        evaluateAndAssert("var arr = ['x','y','z'];\n"
+                + "arr['foo'] = 'bar'; Object.keys(arr)", 
+                Arrays.asList("0", "1", "2", "foo"));
+    }
+    
+    @Test
+    public void testValuesMissingParameter() {
+        Object result = cx.evaluateString(
+                scope, "try { "
+                        + "  Object.values();"
+                        + "} catch (e) { e.message }",
+                "test", 1, null
+        );
+
+        assertEquals("Cannot convert undefined to an object.", result);
+    }
+
+    @Test
+    public void testValuesOnObjectParameter() {
+        evaluateAndAssert("Object.values({'foo':'bar', 2: 'y', 1: 'x'})", 
+                Arrays.asList("x", "y", "bar"));
+    }
+
+    @Test
+    public void testValuesOnArray() {
+        evaluateAndAssert("Object.values(['x','y','z'])", 
+                Arrays.asList("x", "y", "z"));
+    }
+
+    @Test
+    public void testValuesOnArrayWithProp() {
+        evaluateAndAssert("var arr = [3,4,5];\n"
+                + "arr['foo'] = 'bar'; Object.values(arr)", 
+                Arrays.asList(3, 4, 5, "bar"));
+    }
+    
+    
+    @Test
+    public void testEntriesMissingParameter() {
+        Object result = cx.evaluateString(
+                scope, "try { "
+                        + "  Object.entries();"
+                        + "} catch (e) { e.message }",
+                "test", 1, null
+        );
+
+        assertEquals("Cannot convert undefined to an object.", result);
+    }
+    
+    @Test
+    public void testEntriesOnObjectParameter() {
+        evaluateAndAssert("Object.entries({'foo':'bar', 2: 'y', 1: 'x'})", 
+                Arrays.asList(
+                        Arrays.asList(1, "x"),
+                        Arrays.asList(2, "y"),
+                        Arrays.asList("foo", "bar")));
+    }
+    
+    @Test
+    public void testEntriesOnArray() {
+        evaluateAndAssert("Object.entries(['x','y','z'])", 
+                Arrays.asList(
+                        Arrays.asList(0,"x"), 
+                        Arrays.asList(1,"y"),
+                        Arrays.asList(2,"z")));
+    }
+    
+    @Test
+    public void testEntriesOnArrayWithProp() {
+        evaluateAndAssert("var arr = [3,4,5];\n"
+                + "arr['foo'] = 'bar'; Object.entries(arr)", 
+                Arrays.asList(
+                        Arrays.asList(0, 3),
+                        Arrays.asList(1, 4),
+                        Arrays.asList(2, 5),
+                        Arrays.asList("foo", "bar")));
+    }
+    
+    @Test
+    public void testFromEntriesMissingParameter() {
+        Object result = cx.evaluateString(
+                scope, "try { "
+                        + "  Object.fromEntries();"
+                        + "} catch (e) { e.message }",
+                "test", 1, null
+        );
+
+        assertEquals("Cannot convert undefined to an object.", result);
+    }
+    
+    @Test
+    public void testFromEntriesOnObjectParameter() {
+        Map<Object, Object> map = new HashMap<>();
+        map.put("foo", "bar");
+        map.put(2, "y");
+        map.put(1, "x");
+        evaluateAndAssert(
+                "Object.fromEntries(Object.entries({'foo':'bar', 2: 'y', 1: 'x'}))",
+                map);
+    }
+    
+    @Test
+    public void testFromEntriesOnArray() {
+        Map<Object, Object> map = new HashMap<>();
+        map.put(0, "x");
+        map.put(1, "y");
+        map.put(2, "z");
+        evaluateAndAssert(
+                "Object.fromEntries(Object.entries(['x','y','z']))", 
+                map);
+    }
+
+    private void evaluateAndAssert(String script, Object expected) {
+        Object result = cx.evaluateString(scope, script, "test", 1, null);
+        assertEquals(expected, result);
+    }
+
 }
