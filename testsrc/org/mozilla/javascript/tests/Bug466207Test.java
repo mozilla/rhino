@@ -110,4 +110,11 @@ public class Bug466207Test extends TestCase {
         assertFalse(it2.hasPrevious());
         compareIterators(it1, it2);
     }
+    
+    public void testSublist() {
+        assertTrue(Arrays.equals(list.subList(0, 5).toArray(), reference.toArray()));
+        assertTrue(Arrays.equals(list.subList(2, 4).toArray(), reference.subList(2, 4).toArray()));
+        assertTrue(list.subList(0, 0).isEmpty());
+        assertTrue(list.subList(5, 5).isEmpty());
+    }
 }
