@@ -26,10 +26,22 @@ public interface SlotMap extends Iterable<Slot> {
     /**
      * Return the Slot that matches EITHER "key" or "index". (It will use "key" if it is not null,
      * and otherwise "index".) If no slot exists, then create a default slot class.
+     *
+     * @param key The key for the slot, which should be a String or a Symbol.
+     * @param index if key is zero, then this will be used as the key instead.
+     * @param attributes the attributes to be set on the slot if a new slot is created. Existing
+     *     slots will not be modified.
+     * @return a Slot, which will be created anew if no such slot exists.
      */
     Slot modify(Object key, int index, int attributes);
 
-    /** Retrieve the slot at EITHER key or index, or return null if the slot cannot be found. */
+    /**
+     * Retrieve the slot at EITHER key or index, or return null if the slot cannot be found.
+     *
+     * @param key The key for the slot, which should be a String or a Symbol.
+     * @param index if key is zero, then this will be used as the key instead.
+     * @return either the Slot that matched the key and index, or null
+     */
     Slot query(Object key, int index);
 
     /** Replace "slot" with a new slot. This is used to change slot types. */
@@ -41,6 +53,11 @@ public interface SlotMap extends Iterable<Slot> {
      */
     void add(Slot newSlot);
 
-    /** Remove the slot at either "key" or "index". */
+    /**
+     * Remove the slot at either "key" or "index".
+     *
+     * @param key The key for the slot, which should be a String or a Symbol.
+     * @param index if key is zero, then this will be used as the key instead.
+     */
     void remove(Object key, int index);
 }

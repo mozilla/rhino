@@ -6,7 +6,9 @@ import java.io.Serializable;
 
 /**
  * A Slot is the base class for all properties stored in the ScriptableObject class. There are a
- * number of different types of slots. This base class represents an "ordinary" property such a s
+ * number of different types of slots. This base class represents an "ordinary" property such as a
+ * primitive type or another object. Separate classes are used to represent properties that have
+ * various types of getter and setter methods.
  */
 public class Slot implements Serializable {
     private static final long serialVersionUID = -6090581677123995491L;
