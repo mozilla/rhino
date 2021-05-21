@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /*
- * Tests for the Object.getOwnPropertyDescriptor(obj, prop) method
+ * Tests for the Object.getOwnPropertyDescriptor(obj, prop), Object.keys, Object.values and Object.entries method
  */
 package org.mozilla.javascript.tests.es6;
 
@@ -245,14 +245,17 @@ public class NativeObjectTest {
         evaluateAndAssert(
                 "Object.entries({'foo':'bar', 2: 'y', 1: 'x'})",
                 Arrays.asList(
-                        Arrays.asList("1", "x"), Arrays.asList("2", "y"), Arrays.asList("foo", "bar")));
+                        Arrays.asList("1", "x"),
+                        Arrays.asList("2", "y"),
+                        Arrays.asList("foo", "bar")));
     }
 
     @Test
     public void testEntriesOnArray() {
         evaluateAndAssert(
                 "Object.entries(['x','y','z'])",
-                Arrays.asList(Arrays.asList("0", "x"), Arrays.asList("1", "y"), Arrays.asList("2", "z")));
+                Arrays.asList(
+                        Arrays.asList("0", "x"), Arrays.asList("1", "y"), Arrays.asList("2", "z")));
     }
 
     @Test
