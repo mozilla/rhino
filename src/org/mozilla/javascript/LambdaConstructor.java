@@ -45,9 +45,13 @@ public class LambdaConstructor extends LambdaFunction {
      *     single-function interface this will typically be implemented as a lambda.
      */
     public LambdaConstructor(Scriptable scope, String name, int length, Constructable target) {
-        super(scope, name, length, null);
+        super(name, length, null);
         this.targetConstructor = target;
         this.flags = CONSTRUCTOR_DEFAULT;
+        setParentScope(scope);
+        ScriptRuntime.setFunctionProtoAndParent(this, scope);
+        setupDefaultPrototype();
+        setAttributes("prototype", READONLY | DONTENUM | PERMANENT);
     }
 
     /**
@@ -56,7 +60,7 @@ public class LambdaConstructor extends LambdaFunction {
      */
     public LambdaConstructor(
             Scriptable scope, String name, int length, int flags, Constructable target) {
-        super(scope, name, length, null);
+        super(name, length, null);
         this.targetConstructor = target;
         this.flags = flags;
     }
@@ -66,7 +70,10 @@ public class LambdaConstructor extends LambdaFunction {
         if ((flags & CONSTRUCTOR_FUNCTION) == 0) {
             throw ScriptRuntime.typeErrorById("msg.constructor.no.function", getFunctionName());
         }
-        return targetConstructor.construct(cx, scope, args);
+        Scriptable obj = targetConstructor.construct(cx, scope, args);
+        obj.setPrototype(getClassPrototype());
+        obj.setParentScope(scope);
+        return obj;
     }
 
     @Override
@@ -84,21 +91,22 @@ public class LambdaConstructor extends LambdaFunction {
      * Define a function property on the prototype of the constructor using a LambdaFunction under
      * the covers.
      */
-    public void definePrototypeMethod(Scriptable scope, String name, int length, Callable target) {
+    public void definePrototypeMethod(
+            Scriptable scope, String name, int length, int attributes, Callable target) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
         ScriptableObject proto = getPrototypeScriptable();
-        proto.defineProperty(name, f, 0);
+        proto.defineProperty(name, f, attributes);
     }
 
     /** Define a property that may be of any type on the prototype of this constructor. */
     public void definePrototypeProperty(String name, Object value, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
-        proto.defineProperty(name, value, 0);
+        proto.defineProperty(name, value, attributes);
     }
 
     public void definePrototypeProperty(Symbol key, Object value, int attributes) {
         ScriptableObject proto = getPrototypeScriptable();
-        proto.defineProperty(key, value, 0);
+        proto.defineProperty(key, value, attributes);
     }
 
     /**

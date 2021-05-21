@@ -359,17 +359,17 @@ public class BuiltinBenchmark {
                             "DumbLambdaClass",
                             0,
                             (Context cx, Scriptable s, Object[] args) -> new DumbLambdaClass());
-            cons.definePrototypeMethod(scope, "one", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "two", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "three", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "four", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "five", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "six", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "seven", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "eight", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "nine", 0, DumbLambdaClass::noop);
-            cons.definePrototypeMethod(scope, "setValue", 1, DumbLambdaClass::setValue);
-            cons.definePrototypeMethod(scope, "getValue", 1, DumbLambdaClass::getValue);
+            cons.definePrototypeMethod(scope, "one", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "two", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "three", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "four", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "five", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "six", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "seven", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "eight", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "nine", 0, 0, DumbLambdaClass::noop);
+            cons.definePrototypeMethod(scope, "setValue", 1, 0, DumbLambdaClass::setValue);
+            cons.definePrototypeMethod(scope, "getValue", 1, 0, DumbLambdaClass::getValue);
             ScriptableObject.putProperty(scope, "DumbLambdaClass", cons);
         }
 

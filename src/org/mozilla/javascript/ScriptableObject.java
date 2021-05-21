@@ -24,6 +24,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import org.mozilla.javascript.ScriptRuntime.StringIdOrIndex;
 import org.mozilla.javascript.annotations.JSConstructor;
 import org.mozilla.javascript.annotations.JSFunction;
@@ -1597,6 +1599,31 @@ public abstract class ScriptableObject
             }
             slot.setAttributes(attributes);
         }
+    }
+
+    /**
+     * Define a property on this object that is implemented using lambda functions. If a property
+     * with the same name already exists, then it will be replaced.
+     *
+     * @param name the name of the function
+     * @param getter a function that returns the value of the property
+     * @param setter a function that sets the value of the property
+     * @param attributes the attributes to set on the property
+     */
+    public void defineOwnProperty(
+            String name, Supplier<Object> getter, Consumer<Object> setter, int attributes) {
+        Slot slot = slotMap.modify(name, 0, attributes);
+
+        LambdaSlot lSlot;
+        if (slot instanceof LambdaSlot) {
+            lSlot = (LambdaSlot) slot;
+        } else {
+            lSlot = new LambdaSlot(slot);
+            slotMap.replace(slot, lSlot);
+        }
+
+        lSlot.getter = getter;
+        lSlot.setter = setter;
     }
 
     protected void checkPropertyDefinition(ScriptableObject desc) {

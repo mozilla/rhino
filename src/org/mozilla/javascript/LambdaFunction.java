@@ -36,6 +36,7 @@ public class LambdaFunction extends BaseFunction {
         this.length = length;
         ScriptRuntime.setFunctionProtoAndParent(this, scope);
         setupDefaultPrototype();
+        setProperties();
     }
 
     /** Create a new built-in function, with no name, and no default prototype. */
@@ -44,6 +45,23 @@ public class LambdaFunction extends BaseFunction {
         this.length = length;
         this.name = "";
         ScriptRuntime.setFunctionProtoAndParent(this, scope);
+        setProperties();
+    }
+
+    /** Constructor for subclass */
+    protected LambdaFunction(String name, int length, Callable target) {
+        this.target = target;
+        this.name = name;
+        this.length = length;
+    }
+
+    /**
+     * Override properties for built in functions that have different requirements than those for
+     * user-defined functions.
+     */
+    private void setProperties() {
+        setAttributes("name", READONLY | DONTENUM);
+        setAttributes("length", READONLY | DONTENUM);
     }
 
     @Override
