@@ -245,14 +245,14 @@ public class NativeObjectTest {
         evaluateAndAssert(
                 "Object.entries({'foo':'bar', 2: 'y', 1: 'x'})",
                 Arrays.asList(
-                        Arrays.asList(1, "x"), Arrays.asList(2, "y"), Arrays.asList("foo", "bar")));
+                        Arrays.asList("1", "x"), Arrays.asList("2", "y"), Arrays.asList("foo", "bar")));
     }
 
     @Test
     public void testEntriesOnArray() {
         evaluateAndAssert(
                 "Object.entries(['x','y','z'])",
-                Arrays.asList(Arrays.asList(0, "x"), Arrays.asList(1, "y"), Arrays.asList(2, "z")));
+                Arrays.asList(Arrays.asList("0", "x"), Arrays.asList("1", "y"), Arrays.asList("2", "z")));
     }
 
     @Test
@@ -260,9 +260,9 @@ public class NativeObjectTest {
         evaluateAndAssert(
                 "var arr = [3,4,5];\n" + "arr['foo'] = 'bar'; Object.entries(arr)",
                 Arrays.asList(
-                        Arrays.asList(0, 3),
-                        Arrays.asList(1, 4),
-                        Arrays.asList(2, 5),
+                        Arrays.asList("0", 3),
+                        Arrays.asList("1", 4),
+                        Arrays.asList("2", 5),
                         Arrays.asList("foo", "bar")));
     }
 
@@ -280,20 +280,11 @@ public class NativeObjectTest {
     }
 
     @Test
-    public void testFromEntriesOnObjectParameter() {
-        Map<Object, Object> map = new HashMap<>();
-        map.put("foo", "bar");
-        map.put(2, "y");
-        map.put(1, "x");
-        evaluateAndAssert("Object.fromEntries(Object.entries({'foo':'bar', 2: 'y', 1: 'x'}))", map);
-    }
-
-    @Test
     public void testFromEntriesOnArray() {
         Map<Object, Object> map = new HashMap<>();
-        map.put(0, "x");
-        map.put(1, "y");
-        map.put(2, "z");
+        map.put("0", "x");
+        map.put("1", "y");
+        map.put("2", "z");
         evaluateAndAssert("Object.fromEntries(Object.entries(['x','y','z']))", map);
     }
 

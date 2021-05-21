@@ -9,6 +9,7 @@ package org.mozilla.javascript;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -228,11 +229,7 @@ public class NativeObject extends IdScriptableObject implements Map {
 
                     if (arg instanceof Symbol) {
                         result = ((SymbolScriptable) thisObj).has((Symbol) arg, thisObj);
-                        if (result && thisObj instanceof ScriptableObject) {
-                            ScriptableObject so = (ScriptableObject) thisObj;
-                            int attrs = so.getAttributes((Symbol) arg);
-                            result = ((attrs & ScriptableObject.DONTENUM) == 0);
-                        }
+                        result = result && isEnumerable((Symbol) arg, thisObj);
                     } else {
                         StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
                         // When checking if a property is enumerable, a missing property should
@@ -241,18 +238,10 @@ public class NativeObject extends IdScriptableObject implements Map {
                         try {
                             if (s.stringId == null) {
                                 result = thisObj.has(s.index, thisObj);
-                                if (result && thisObj instanceof ScriptableObject) {
-                                    ScriptableObject so = (ScriptableObject) thisObj;
-                                    int attrs = so.getAttributes(s.index);
-                                    result = ((attrs & ScriptableObject.DONTENUM) == 0);
-                                }
+                                result = result && isEnumerable(s.index, thisObj);
                             } else {
                                 result = thisObj.has(s.stringId, thisObj);
-                                if (result && thisObj instanceof ScriptableObject) {
-                                    ScriptableObject so = (ScriptableObject) thisObj;
-                                    int attrs = so.getAttributes(s.stringId);
-                                    result = ((attrs & ScriptableObject.DONTENUM) == 0);
-                                }
+                                result = result && isEnumerable(s.stringId, thisObj);
                             }
                         } catch (EvaluatorException ee) {
                             if (ee.getMessage()
@@ -413,14 +402,25 @@ public class NativeObject extends IdScriptableObject implements Map {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
                     Scriptable obj = getCompatibleObject(cx, scope, arg);
                     Object[] ids = obj.getIds();
+                    int j = 0;
                     for (int i = 0; i < ids.length; i++) {
                         if (ids[i] instanceof Integer) {
-                            Integer key = (Integer) ids[i];
-                            ids[i] = cx.newArray(scope, new Object[] {ids[i], obj.get(key, scope)});
+                            int intId = (Integer) ids[i];
+                            if (obj.has(intId, obj) && isEnumerable(intId, obj)) {
+                                String stringId = ScriptRuntime.toString(ids[i]);
+                                Object[] entry = new Object[] {stringId, obj.get(intId, obj)};
+                                ids[j++] = cx.newArray(scope, entry);
+                            }
                         } else {
-                            String key = ScriptRuntime.toString(ids[i]);
-                            ids[i] = cx.newArray(scope, new Object[] {ids[i], obj.get(key, scope)});
+                            String stringId = ScriptRuntime.toString(ids[i]);
+                            if (obj.has(stringId, obj) && isEnumerable(stringId, obj)) {
+                                Object[] entry = new Object[] {stringId, obj.get(stringId, obj)};
+                                ids[j++] = cx.newArray(scope, entry);
+                            }
                         }
+                    }
+                    if (j != ids.length) {
+                        ids = Arrays.copyOf(ids, j);
                     }
                     return cx.newArray(scope, ids);
                 }
@@ -455,12 +455,23 @@ public class NativeObject extends IdScriptableObject implements Map {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
                     Scriptable obj = getCompatibleObject(cx, scope, arg);
                     Object[] ids = obj.getIds();
+                    int j = 0;
                     for (int i = 0; i < ids.length; i++) {
                         if (ids[i] instanceof Integer) {
-                            ids[i] = obj.get((Integer) ids[i], scope);
+                            int intId = (Integer) ids[i];
+                            if (obj.has(intId, obj) && isEnumerable(intId, obj)) {
+                                ids[j++] = obj.get(intId, obj);
+                            }
                         } else {
-                            ids[i] = obj.get(ScriptRuntime.toString(ids[i]), scope);
+                            String stringId = ScriptRuntime.toString(ids[i]);
+                            // getter may remove keys
+                            if (obj.has(stringId, obj) && isEnumerable(stringId, obj)) {
+                                ids[j++] = obj.get(stringId, obj);
+                            }
                         }
+                    }
+                    if (j != ids.length) {
+                        ids = Arrays.copyOf(ids, j);
                     }
                     return cx.newArray(scope, ids);
                 }
@@ -698,6 +709,36 @@ public class NativeObject extends IdScriptableObject implements Map {
 
             default:
                 throw new IllegalArgumentException(String.valueOf(id));
+        }
+    }
+
+    private boolean isEnumerable(int index, Object obj) {
+        if (obj instanceof ScriptableObject) {
+            ScriptableObject so = (ScriptableObject) obj;
+            int attrs = so.getAttributes(index);
+            return (attrs & ScriptableObject.DONTENUM) == 0;
+        } else {
+            return true;
+        }
+    }
+
+    private boolean isEnumerable(String key, Object obj) {
+        if (obj instanceof ScriptableObject) {
+            ScriptableObject so = (ScriptableObject) obj;
+            int attrs = so.getAttributes(key);
+            return (attrs & ScriptableObject.DONTENUM) == 0;
+        } else {
+            return true;
+        }
+    }
+
+    private boolean isEnumerable(Symbol sym, Object obj) {
+        if (obj instanceof ScriptableObject) {
+            ScriptableObject so = (ScriptableObject) obj;
+            int attrs = so.getAttributes(sym);
+            return (attrs & ScriptableObject.DONTENUM) == 0;
+        } else {
+            return true;
         }
     }
 
