@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -517,6 +518,7 @@ public class NativeArray extends IdScriptableObject implements List {
             long index = toArrayIndex(id);
             if (index >= length) {
                 length = index + 1;
+                modCount++;
                 denseOnly = false;
             }
         }
@@ -548,13 +550,17 @@ public class NativeArray extends IdScriptableObject implements List {
                 return;
             } else if (index < dense.length) {
                 dense[index] = value;
-                if (this.length <= index) this.length = (long) index + 1;
+                if (this.length <= index) {
+                    this.length = (long) index + 1;
+                    this.modCount++;
+                }
                 return;
             } else if (denseOnly
                     && index < dense.length * GROW_FACTOR
                     && ensureCapacity(index + 1)) {
                 dense[index] = value;
                 this.length = (long) index + 1;
+                this.modCount++;
                 return;
             } else {
                 denseOnly = false;
@@ -566,6 +572,7 @@ public class NativeArray extends IdScriptableObject implements List {
             if (this.length <= index) {
                 // avoid overflowing index!
                 this.length = (long) index + 1;
+                this.modCount++;
             }
         }
     }
@@ -688,6 +695,7 @@ public class NativeArray extends IdScriptableObject implements List {
         long index = toArrayIndex(id);
         if (index >= length) {
             length = index + 1;
+            modCount++;
         }
         super.defineOwnProperty(cx, id, desc, checkValid);
     }
@@ -863,11 +871,13 @@ public class NativeArray extends IdScriptableObject implements List {
                 // downcast okay because denseOnly
                 Arrays.fill(dense, (int) longVal, dense.length, NOT_FOUND);
                 length = longVal;
+                modCount++;
                 return;
             } else if (longVal < MAX_PRE_GROW_SIZE
                     && longVal < (length * GROW_FACTOR)
                     && ensureCapacity((int) longVal)) {
                 length = longVal;
+                modCount++;
                 return;
             } else {
                 denseOnly = false;
@@ -898,6 +908,7 @@ public class NativeArray extends IdScriptableObject implements List {
             }
         }
         length = longVal;
+        modCount++;
     }
 
     /* Support for generic Array-ish objects.  Most of the Array
@@ -1249,6 +1260,7 @@ public class NativeArray extends IdScriptableObject implements List {
             if (na.denseOnly && na.ensureCapacity((int) na.length + args.length)) {
                 for (int i = 0; i < args.length; i++) {
                     na.dense[(int) na.length++] = args[i];
+                    na.modCount++;
                 }
                 return ScriptRuntime.wrapNumber(na.length);
             }
@@ -1280,6 +1292,7 @@ public class NativeArray extends IdScriptableObject implements List {
             NativeArray na = (NativeArray) o;
             if (na.denseOnly && na.length > 0) {
                 na.length--;
+                na.modCount++;
                 result = na.dense[(int) na.length];
                 na.dense[(int) na.length] = NOT_FOUND;
                 return result;
@@ -1313,6 +1326,7 @@ public class NativeArray extends IdScriptableObject implements List {
             NativeArray na = (NativeArray) o;
             if (na.denseOnly && na.length > 0) {
                 na.length--;
+                na.modCount++;
                 Object result = na.dense[0];
                 System.arraycopy(na.dense, 1, na.dense, 0, (int) na.length);
                 na.dense[(int) na.length] = NOT_FOUND;
@@ -1360,6 +1374,7 @@ public class NativeArray extends IdScriptableObject implements List {
                     na.dense[i] = args[i];
                 }
                 na.length += args.length;
+                na.modCount++;
                 return ScriptRuntime.wrapNumber(na.length);
             }
         }
@@ -1494,6 +1509,7 @@ public class NativeArray extends IdScriptableObject implements List {
                 Arrays.fill(na.dense, (int) (length + delta), (int) length, NOT_FOUND);
             }
             na.length = length + delta;
+            na.modCount++;
             return result;
         }
 
@@ -2213,6 +2229,7 @@ public class NativeArray extends IdScriptableObject implements List {
         return new ListIterator() {
 
             int cursor = start;
+            int modCount = NativeArray.this.modCount;
 
             @Override
             public boolean hasNext() {
@@ -2221,6 +2238,7 @@ public class NativeArray extends IdScriptableObject implements List {
 
             @Override
             public Object next() {
+                checkModCount(modCount);
                 if (cursor == len) {
                     throw new NoSuchElementException();
                 }
@@ -2234,6 +2252,7 @@ public class NativeArray extends IdScriptableObject implements List {
 
             @Override
             public Object previous() {
+                checkModCount(modCount);
                 if (cursor == 0) {
                     throw new NoSuchElementException();
                 }
@@ -2324,18 +2343,28 @@ public class NativeArray extends IdScriptableObject implements List {
         if (fromIndex > toIndex)
             throw new IllegalArgumentException(
                     "fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+
         return new AbstractList() {
+            private int modCount = NativeArray.this.modCount;
 
             @Override
             public Object get(int index) {
+                checkModCount(modCount);
                 return NativeArray.this.get(index + fromIndex);
             }
 
             @Override
             public int size() {
+                checkModCount(modCount);
                 return toIndex - fromIndex;
             }
         };
+    }
+
+    private void checkModCount(int modCount) {
+        if (this.modCount != modCount) {
+            throw new ConcurrentModificationException();
+        }
     }
 
     @Override
@@ -2578,6 +2607,9 @@ public class NativeArray extends IdScriptableObject implements List {
 
     /** Attributes of the array's length property */
     private int lengthAttr = DONTENUM | PERMANENT;
+
+    /** modCount required for subList/iterators */
+    private transient int modCount;
 
     /**
      * Fast storage for dense arrays. Sparse arrays will use the superclass's hashtable storage

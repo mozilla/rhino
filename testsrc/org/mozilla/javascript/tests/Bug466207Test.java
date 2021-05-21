@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -121,6 +122,62 @@ public class Bug466207Test extends TestCase {
         assertTrue(Arrays.equals(list.subList(2, 4).toArray(), reference.subList(2, 4).toArray()));
         assertTrue(list.subList(0, 0).isEmpty());
         assertTrue(list.subList(5, 5).isEmpty());
+    }
+
+    public void testSublistMod() {
+
+        List<Object> sl = reference.subList(2, 4);
+        reference.remove(0);
+        try {
+            sl.get(0);
+            fail("Exception expected");
+        } catch (ConcurrentModificationException cme) {
+
+        }
+        sl = list.subList(2, 4);
+        listPop();
+        assertEquals(4, list.size());
+        try {
+            sl.get(0);
+            fail("Exception expected");
+        } catch (ConcurrentModificationException cme) {
+
+        }
+    }
+
+    public void testIteratorMod() {
+
+        ListIterator<Object> iter = reference.listIterator();
+        reference.remove(0);
+        iter.previousIndex();
+        iter.nextIndex();
+        iter.hasNext();
+        try {
+            iter.next();
+            fail("Exception expected");
+        } catch (ConcurrentModificationException cme) {
+
+        }
+        iter = list.listIterator();
+        listPop();
+        assertEquals(4, list.size());
+        iter.previousIndex();
+        iter.nextIndex();
+        iter.hasNext();
+        try {
+            iter.next();
+            fail("Exception expected");
+        } catch (ConcurrentModificationException cme) {
+
+        }
+    }
+
+    private void listPop() {
+        Context context = Context.enter();
+        ScriptableObject scope = context.initStandardObjects();
+        scope.put("list", scope, list);
+        context.evaluateString(scope, "list.pop()", "testsrc", 1, null);
+        Context.exit();
     }
 
     public void testBigList() {
