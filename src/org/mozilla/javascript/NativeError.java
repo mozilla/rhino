@@ -17,9 +17,11 @@ import java.lang.reflect.Method;
  */
 final class NativeError extends IdScriptableObject
 {
+
     private static final long serialVersionUID = -5338413581437645187L;
 
     private static final Object ERROR_TAG = "Error";
+    private static final String STACK_TAG = "stack";
 
     private static final Method ERROR_DELEGATE_GET_STACK;
     private static final Method ERROR_DELEGATE_SET_STACK;
@@ -163,7 +165,7 @@ final class NativeError extends IdScriptableObject
         // the getter and setter below.
         if (stackProvider == null) {
             stackProvider = re;
-            defineProperty("stack", this,
+            defineProperty(STACK_TAG, this,
                            ERROR_DELEGATE_GET_STACK, ERROR_DELEGATE_SET_STACK,
                            DONTENUM);
         }
@@ -204,9 +206,9 @@ final class NativeError extends IdScriptableObject
     }
 
     public void setStackDelegated(Scriptable target, Object value) {
-        target.delete("stack");
+        target.delete(STACK_TAG);
         stackProvider = null;
-        target.put("stack", target, value);
+        target.put(STACK_TAG, target, value);
     }
 
     private Object callPrepareStack(Function prepare, ScriptStackElement[] stack)
@@ -317,7 +319,7 @@ final class NativeError extends IdScriptableObject
         // at the time captureStackTrace was called. Stack traces collected through
         // Error.captureStackTrace are immediately collected, formatted,
         // and attached to the given error object.
-        obj.defineProperty("stack", err.get("stack"), ScriptableObject.DONTENUM);
+        obj.defineProperty(STACK_TAG, err.get(STACK_TAG), ScriptableObject.DONTENUM);
     }
 
     @Override
