@@ -1144,9 +1144,12 @@ final class NativeString extends IdScriptableObject {
             if (nextIndex == literalSegments) {
                 break;
             }
-            next = args.length > nextIndex ? args[nextIndex] : "";
-            String nextSub = ScriptRuntime.toString(next);
-            elements.append(nextSub);
+
+            if (args.length > nextIndex) {
+	            next = args[nextIndex];
+	            String nextSub = ScriptRuntime.toString(next);
+	            elements.append(nextSub);
+            }
         }
         return elements;
     }

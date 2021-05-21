@@ -2803,7 +2803,7 @@ public class Parser {
     }
 
     private AstNode taggedTemplateLiteral(AstNode pn) throws IOException {
-        AstNode templateLiteral = templateLiteral();
+        AstNode templateLiteral = templateLiteral(true);
         TaggedTemplateLiteral tagged = new TaggedTemplateLiteral();
         tagged.setTarget(pn);
         tagged.setTemplateLiteral(templateLiteral);
@@ -3088,7 +3088,7 @@ public class Parser {
 
             case Token.TEMPLATE_LITERAL:
                 consumeToken();
-                return templateLiteral();
+                return templateLiteral(false);
 
             case Token.RESERVED:
                 consumeToken();
@@ -3671,20 +3671,20 @@ public class Parser {
         return s;
     }
 
-    private AstNode templateLiteral() throws IOException {
+    private AstNode templateLiteral(boolean isTaggedLiteral) throws IOException {
         if (currentToken != Token.TEMPLATE_LITERAL) codeBug();
         int pos = ts.tokenBeg, end = ts.tokenEnd;
         List<AstNode> elements = new ArrayList<AstNode>();
         TemplateLiteral pn = new TemplateLiteral(pos);
 
         int posChars = ts.tokenBeg + 1;
-        int tt = ts.readTemplateLiteral();
+        int tt = ts.readTemplateLiteral(isTaggedLiteral);
         while (tt == Token.TEMPLATE_LITERAL_SUBST) {
             elements.add(createTemplateLiteralCharacters(posChars));
             elements.add(expr());
             mustMatchToken(Token.RC, "msg.syntax", true);
             posChars = ts.tokenBeg + 1;
-            tt = ts.readTemplateLiteral();
+            tt = ts.readTemplateLiteral(isTaggedLiteral);
         }
         if (tt == Token.ERROR) {
              return makeErrorNode();

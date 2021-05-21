@@ -4674,38 +4674,40 @@ public class ScriptRuntime {
 
     public static Scriptable getTemplateLiteralCallSite(Context cx, Scriptable scope,
                                               Object[] strings, int index) {
-        /* step 1 */
+    	final int INTEGRITY_FREEZE = ScriptableObject.PERMANENT | ScriptableObject.READONLY;
+
         Object callsite = strings[index];
+
         if (callsite instanceof Scriptable)
             return (Scriptable) callsite;
+
         assert callsite instanceof String[];
         String[] vals = (String[]) callsite;
         assert (vals.length & 1) == 0;
-        final int FROZEN = ScriptableObject.PERMANENT | ScriptableObject.READONLY;
-        /* step 2-7 */
+
         ScriptableObject siteObj = (ScriptableObject) cx.newArray(scope, vals.length >>> 1);
         ScriptableObject rawObj = (ScriptableObject) cx.newArray(scope, vals.length >>> 1);
+
         for (int i = 0, n = vals.length; i < n; i += 2) {
-            /* step 8 a-f */
             int idx = i >>> 1;
-            siteObj.put(idx, siteObj, vals[i]);
-            siteObj.setAttributes(idx, FROZEN);
+            siteObj.put(idx, siteObj, (vals[i] == null ? Undefined.instance : vals[i]));
+            siteObj.setAttributes(idx, INTEGRITY_FREEZE);
+
             rawObj.put(idx, rawObj, vals[i + 1]);
-            rawObj.setAttributes(idx, FROZEN);
+            rawObj.setAttributes(idx, INTEGRITY_FREEZE);
         }
-        /* step 9 */
-        // TODO: call abstract operation FreezeObject
-        rawObj.setAttributes("length", FROZEN);
+
+        rawObj.setAttributes("length", INTEGRITY_FREEZE);
         rawObj.preventExtensions();
-        /* step 10 */
+
         siteObj.put("raw", siteObj, rawObj);
-        siteObj.setAttributes("raw", FROZEN | ScriptableObject.DONTENUM);
-        /* step 11 */
-        // TODO: call abstract operation FreezeObject
-        siteObj.setAttributes("length", FROZEN);
+        siteObj.setAttributes("raw", INTEGRITY_FREEZE | ScriptableObject.DONTENUM);
+        
+        siteObj.setAttributes("length", INTEGRITY_FREEZE);
         siteObj.preventExtensions();
-        /* step 12 */
+
         strings[index] = siteObj;
+
         return siteObj;
     }
 
