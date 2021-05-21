@@ -56,16 +56,12 @@ public class MemberBoxSlot extends Slot {
             Class<?> valueType = pTypes[pTypes.length - 1];
             int tag = FunctionObject.getTypeTag(valueType);
             Object actualArg = FunctionObject.convertArg(cx, start, value, tag);
-            Object setterThis;
-            Object[] args;
+
             if (setter.delegateTo == null) {
-                setterThis = start;
-                args = new Object[] {actualArg};
+                setter.invoke(start, new Object[] {actualArg});
             } else {
-                setterThis = setter.delegateTo;
-                args = new Object[] {start, actualArg};
+                setter.invoke(setter.delegateTo, new Object[] {start, actualArg});
             }
-            setter.invoke(setterThis, args);
             return true;
         }
         return super.setValue(value, owner, start);
@@ -74,16 +70,10 @@ public class MemberBoxSlot extends Slot {
     @Override
     public Object getValue(Scriptable start) {
         if (getter != null) {
-            Object getterThis;
-            Object[] args;
             if (getter.delegateTo == null) {
-                getterThis = start;
-                args = ScriptRuntime.emptyArgs;
-            } else {
-                getterThis = getter.delegateTo;
-                args = new Object[] {start};
+                return getter.invoke(start, ScriptRuntime.emptyArgs);
             }
-            return getter.invoke(getterThis, args);
+            return getter.invoke(getter.delegateTo, new Object[] {start});
         }
         return super.getValue(start);
     }

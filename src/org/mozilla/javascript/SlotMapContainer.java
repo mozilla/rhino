@@ -89,7 +89,7 @@ class SlotMapContainer implements SlotMap {
     }
 
     public void unlockRead(long stamp) {
-        // No locking in the default implementationock.unlockRead(stamp);
+        // No locking in the default implementation
     }
 
     /**
