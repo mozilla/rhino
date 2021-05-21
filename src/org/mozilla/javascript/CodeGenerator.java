@@ -16,7 +16,6 @@ import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.VariableInitializer;
-import org.mozilla.javascript.ast.QuasiCharacters;
 import org.mozilla.javascript.ast.TemplateCharacters;
 
 /** Generates bytecode for the Interpreter. */

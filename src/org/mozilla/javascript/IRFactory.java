@@ -1052,7 +1052,7 @@ public final class IRFactory extends Parser {
         return createPropertyGet(target, null, name, 0);
     }
 
-    private Node transformTemplateLiteral(QuasiLiteral node) {
+    private Node transformTemplateLiteral(TemplateLiteral node) {
         decompiler.addToken(Token.TEMPLATE_LITERAL);
         List<AstNode> elems = node.getElements();
         // start with an empty string to ensure ToString() for each substitution
@@ -1065,7 +1065,7 @@ public final class IRFactory extends Parser {
                 decompiler.addToken(Token.RC);
             } else {
                 TemplateCharacters chars = (TemplateCharacters) elem;
-                decompiler.addQuasi(chars.getRawValue());
+                decompiler.addTemplateLiteral(chars.getRawValue());
                 // skip empty parts, e.g. `ε${expr}ε` where ε denotes the empty string
                 String value = chars.getValue();
                 if (value.length() > 0) {
