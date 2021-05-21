@@ -39,12 +39,11 @@ public class TemplateCharacters extends AstNode {
     }
 
     /**
-     * Sets the node's value.
+     * Sets the node's value. Can be null in case of illegal escape sequences, which are allowed in Template Literals
+     * but will have an undefined cooked value
      * @param value the node's value
-     * @throws IllegalArgumentException} if value is {@code null}
      */
     public void setValue(String value) {
-        assertNotNull(value);
         this.value = value;
     }
 
