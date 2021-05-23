@@ -1104,7 +1104,11 @@ public class Codegen implements Evaluator
                     // cooked value
                     cfw.add(ByteCode.DUP);
                     cfw.addPush(k++);
-                    cfw.addPush(s.getValue());
+                    if (s.getValue() != null) {
+                        cfw.addPush(s.getValue());
+                    } else {
+                        cfw.add(ByteCode.ACONST_NULL);
+                    }
                     cfw.add(ByteCode.AASTORE);
                     // raw value
                     cfw.add(ByteCode.DUP);
