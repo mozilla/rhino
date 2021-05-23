@@ -4289,25 +4289,27 @@ public class ScriptRuntime {
         Scriptable object = cx.newObject(scope);
         for (int i = 0, end = propertyIds.length; i != end; ++i) {
             Object id = propertyIds[i];
-            int getterSetter = getterSetters == null ? 0 : getterSetters[i];
+            int getterSetter = getterSetters == null ? 0 : getterSetters[i]; // -1 for GET, 1 for SET, 0 for a regular property
             Object value = propertyValues[i];
-            if (id instanceof String) {
-                if (getterSetter == 0) {
+            if (getterSetter == 0) {
+                if (id instanceof String) {
                     if (isSpecialProperty((String) id)) {
-                        Ref ref = specialRef(object, (String) id, cx, scope);
-                        ref.set(cx, scope, value);
-                    } else {
-                        object.put((String) id, object, value);
-                    }
+	                    Ref ref = specialRef(object, (String) id, cx, scope);
+	                    ref.set(cx, scope, value);
+	                } else {
+	                    object.put((String) id, object, value);
+	                }
                 } else {
-                    ScriptableObject so = (ScriptableObject) object;
-                    Callable getterOrSetter = (Callable) value;
-                    boolean isSetter = getterSetter == 1;
-                    so.setGetterOrSetter((String) id, 0, getterOrSetter, isSetter);
+                    int index = ((Integer) id).intValue();
+                    object.put(index, object, value);
                 }
             } else {
-                int index = ((Integer) id).intValue();
-                object.put(index, object, value);
+                ScriptableObject so = (ScriptableObject) object;
+                Callable getterOrSetter = (Callable) value;
+                boolean isSetter = getterSetter == 1;
+                String key = id instanceof String ? (String) id : null;
+                int index = key == null ? ((Integer) id).intValue() : 0;
+                so.setGetterOrSetter(key, index, getterOrSetter, isSetter);
             }
         }
         return object;
