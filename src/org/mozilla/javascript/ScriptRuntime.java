@@ -4294,11 +4294,11 @@ public class ScriptRuntime {
             if (getterSetter == 0) {
                 if (id instanceof String) {
                     if (isSpecialProperty((String) id)) {
-	                    Ref ref = specialRef(object, (String) id, cx, scope);
-	                    ref.set(cx, scope, value);
-	                } else {
-	                    object.put((String) id, object, value);
-	                }
+                        Ref ref = specialRef(object, (String) id, cx, scope);
+                        ref.set(cx, scope, value);
+                    } else {
+                        object.put((String) id, object, value);
+                    }
                 } else {
                     int index = ((Integer) id).intValue();
                     object.put(index, object, value);
