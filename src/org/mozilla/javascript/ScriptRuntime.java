@@ -4289,7 +4289,9 @@ public class ScriptRuntime {
         Scriptable object = cx.newObject(scope);
         for (int i = 0, end = propertyIds.length; i != end; ++i) {
             Object id = propertyIds[i];
-            int getterSetter = getterSetters == null ? 0 : getterSetters[i]; // -1 for GET, 1 for SET, 0 for a regular property
+
+            // -1 for property getter, 1 for property setter, 0 for a regular value property
+            int getterSetter = getterSetters == null ? 0 : getterSetters[i];
             Object value = propertyValues[i];
             if (getterSetter == 0) {
                 if (id instanceof String) {
