@@ -47,6 +47,18 @@ import org.yaml.snakeyaml.error.YAMLException;
 @RunWith(Parameterized.class)
 public class Test262SuiteTest {
 
+    /**
+     * The test source code must not be modified in any way, and the test must be executed just once
+     * (in non-strict mode, only).
+     */
+    private static final String FLAG_RAW = "raw";
+
+    /** The test must be executed just once--in strict mode, only. */
+    private static final String FLAG_ONLY_STRICT = "onlyStrict";
+
+    /** The test must be executed just once--in non-strict mode, only. */
+    private static final String FLAG_NO_STRICT = "noStrict";
+
     static final int[] OPT_LEVELS;
 
     private static final File testDir = new File("test262/test");
@@ -54,7 +66,7 @@ public class Test262SuiteTest {
     private static final String testProperties;
 
     static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<>();
-    static Map<File, Integer> EXCLUDED_TESTS = new LinkedHashMap<>();
+    static Map<File, FailingTestTracker> EXCLUDED_TESTS = new LinkedHashMap<>();
 
     static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
 
@@ -130,11 +142,11 @@ public class Test262SuiteTest {
     public static void tearDownClass() {
         TestUtils.setGlobalContextFactory(null);
 
-        for (Map.Entry<File, Integer> entry : EXCLUDED_TESTS.entrySet()) {
-            if (entry.getValue() == 0) {
-                System.out.println(
-                        String.format(
-                                "Test is marked as failing but it does not: %s", entry.getKey()));
+        int i = 1;
+        for (Map.Entry<File, FailingTestTracker> entry : EXCLUDED_TESTS.entrySet()) {
+            String msg = entry.getValue().getMessage(OPT_LEVELS);
+            if (msg != null) {
+                System.out.println(Integer.toString(i++) + ". " + entry.getKey() + msg);
             }
         }
     }
@@ -228,10 +240,9 @@ public class Test262SuiteTest {
                 }
 
                 if (fails) {
-                    Integer count = EXCLUDED_TESTS.get(testCase.file);
-                    if (count != null) {
-                        count -= 1;
-                        EXCLUDED_TESTS.put(testCase.file, count);
+                    FailingTestTracker tracker = EXCLUDED_TESTS.get(testCase.file);
+                    if (tracker != null) {
+                        tracker.passes(optLevel, useStrict);
                     }
                 }
             } catch (RhinoException ex) {
@@ -395,26 +406,28 @@ public class Test262SuiteTest {
             String caseShortPath = testDir.toPath().relativize(testFile.toPath()).toString();
             for (int optLevel : OPT_LEVELS) {
                 boolean markedAsFailing = failingFiles.contains(testFile);
-                if (!testCase.hasFlag("onlyStrict") || testCase.hasFlag("raw")) {
+                if (!testCase.hasFlag(FLAG_ONLY_STRICT) || testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
                                 caseShortPath, optLevel, false, testCase, markedAsFailing
                             });
                     if (markedAsFailing) {
-                        Integer count = EXCLUDED_TESTS.computeIfAbsent(testCase.file, k -> 0);
-                        count += 1;
-                        EXCLUDED_TESTS.put(testCase.file, count);
+                        FailingTestTracker tracker =
+                                EXCLUDED_TESTS.computeIfAbsent(
+                                        testCase.file, k -> new FailingTestTracker());
+                        tracker.expectFailing(optLevel, false);
                     }
                 }
-                if (!testCase.hasFlag("noStrict") && !testCase.hasFlag("raw")) {
+                if (!testCase.hasFlag(FLAG_NO_STRICT) && !testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
                                 caseShortPath, optLevel, true, testCase, markedAsFailing
                             });
                     if (markedAsFailing) {
-                        Integer count = EXCLUDED_TESTS.computeIfAbsent(testCase.file, k -> 0);
-                        count += 1;
-                        EXCLUDED_TESTS.put(testCase.file, count);
+                        FailingTestTracker tracker =
+                                EXCLUDED_TESTS.computeIfAbsent(
+                                        testCase.file, k -> new FailingTestTracker());
+                        tracker.expectFailing(optLevel, true);
                     }
                 }
             }
@@ -495,7 +508,7 @@ public class Test262SuiteTest {
                 features.addAll((Collection<String>) metadata.get("features"));
             }
 
-            if (!flags.contains("raw")) {
+            if (!flags.contains(FLAG_RAW)) {
                 // present by default harness files
                 harnessFiles.add("assert.js");
                 harnessFiles.add("sta.js");
@@ -507,6 +520,107 @@ public class Test262SuiteTest {
 
             return new Test262Case(
                     testFile, testSource, harnessFiles, expectedError, isEarly, flags, features);
+        }
+    }
+
+    private static class FailingTestTracker {
+        private Set<Integer> strictOptLevel = new HashSet<>();
+        private Set<Integer> nonStrictOptLevel = new HashSet<>();
+
+        public void expectFailing(int optLevel, boolean useStrict) {
+            if (useStrict) {
+                strictOptLevel.add(optLevel);
+            } else {
+                nonStrictOptLevel.add(optLevel);
+            }
+        }
+
+        public void passes(int optLevel, boolean useStrict) {
+            if (useStrict) {
+                strictOptLevel.remove(optLevel);
+            } else {
+                nonStrictOptLevel.remove(optLevel);
+            }
+        }
+
+        public String getMessage(int[] optLevels) {
+            if (strictOptLevel.size() == optLevels.length
+                    && nonStrictOptLevel.size() == optLevels.length) {
+                // fails in all cases
+                return null;
+            }
+
+            if (strictOptLevel.size() + nonStrictOptLevel.size() == 0) {
+                return "\n    is marked as failing but it does not\n";
+            }
+
+            String passStrict = "";
+            String failStrict = "";
+            String pass = "";
+            String fail = "";
+            for (int i = 0; i < optLevels.length; i++) {
+                if (strictOptLevel.contains(optLevels[i])) {
+                    if (failStrict.length() > 0) {
+                        failStrict += ", ";
+                    }
+                    failStrict += Integer.toString(optLevels[i]);
+                } else {
+                    if (passStrict.length() > 0) {
+                        passStrict += ", ";
+                    }
+                    passStrict += Integer.toString(optLevels[i]);
+                }
+
+                if (nonStrictOptLevel.contains(optLevels[i])) {
+                    if (fail.length() > 0) {
+                        fail += ", ";
+                    }
+                    fail += Integer.toString(optLevels[i]);
+                } else {
+                    if (pass.length() > 0) {
+                        pass += ", ";
+                    }
+                    pass += Integer.toString(optLevels[i]);
+                }
+            }
+
+            if (strictOptLevel.size() == optLevels.length && nonStrictOptLevel.size() == 0) {
+                return "\n   fails in strict mode but passes in non-strict mode for all opt level(s) "
+                        + failStrict
+                        + "\n";
+            }
+            if (nonStrictOptLevel.size() == optLevels.length && strictOptLevel.size() == 0) {
+                return "\n    is failing in non-strict mode but passes in strict mode for all opt level(s) "
+                        + fail
+                        + "\n";
+            }
+
+            StringBuilder msg = new StringBuilder();
+            if (passStrict.length() > 0) {
+                msg.append("\n    passes for opt level(s) ").append(passStrict);
+                if (failStrict.length() > 0) {
+                    msg.append(" but fails for ").append(failStrict);
+                }
+                msg.append(" in strict mode");
+            } else {
+                msg.append("\n    fails for opt level(s) ")
+                        .append(failStrict)
+                        .append(" in strict mode");
+            }
+
+            if (pass.length() > 0) {
+                msg.append("\n    passes for opt level(s) ").append(pass);
+                if (fail.length() > 0) {
+                    msg.append(" but fails for ").append(fail);
+                }
+                msg.append(" in non-strict mode");
+            } else {
+                msg.append("\n    fails for opt level(s) ")
+                        .append(fail)
+                        .append(" in non-strict mode");
+            }
+
+            return msg.append("\n").toString();
         }
     }
 }
