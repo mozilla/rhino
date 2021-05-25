@@ -415,7 +415,11 @@ public class Test262SuiteTest {
                         FailingTestTracker tracker =
                                 EXCLUDED_TESTS.computeIfAbsent(
                                         testCase.file, k -> new FailingTestTracker());
-                        tracker.expectFailing(optLevel, false, testCase.hasFlag(FLAG_ONLY_STRICT), testCase.hasFlag(FLAG_NO_STRICT));
+                        tracker.expectFailing(
+                                optLevel,
+                                false,
+                                testCase.hasFlag(FLAG_ONLY_STRICT),
+                                testCase.hasFlag(FLAG_NO_STRICT));
                     }
                 }
                 if (!testCase.hasFlag(FLAG_NO_STRICT) && !testCase.hasFlag(FLAG_RAW)) {
@@ -427,7 +431,11 @@ public class Test262SuiteTest {
                         FailingTestTracker tracker =
                                 EXCLUDED_TESTS.computeIfAbsent(
                                         testCase.file, k -> new FailingTestTracker());
-                        tracker.expectFailing(optLevel, true, testCase.hasFlag(FLAG_ONLY_STRICT), testCase.hasFlag(FLAG_NO_STRICT));
+                        tracker.expectFailing(
+                                optLevel,
+                                true,
+                                testCase.hasFlag(FLAG_ONLY_STRICT),
+                                testCase.hasFlag(FLAG_NO_STRICT));
                     }
                 }
             }
@@ -529,7 +537,8 @@ public class Test262SuiteTest {
         private boolean onlyStrict;
         private boolean noStrict;
 
-        public void expectFailing(int optLevel, boolean useStrict, boolean onlyStrict, boolean noStrict) {
+        public void expectFailing(
+                int optLevel, boolean useStrict, boolean onlyStrict, boolean noStrict) {
             if (useStrict) {
                 strictOptLevel.add(optLevel);
             } else {
