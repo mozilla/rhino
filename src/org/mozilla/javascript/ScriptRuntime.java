@@ -4008,8 +4008,14 @@ public class ScriptRuntime {
                 WrappedException we = (WrappedException) t;
                 re = we;
                 javaException = we.getWrappedException();
-                type = TopLevel.NativeErrors.JavaException;
-                errorMsg = javaException.getClass().getName() + ": " + javaException.getMessage();
+
+                if (cx.hasFeature(Context.FEATURE_HIDE_WRAPPED_EXCEPTIONS)) {
+                    type = TopLevel.NativeErrors.InternalError;
+                    errorMsg = javaException.getMessage();
+                } else {
+                    type = TopLevel.NativeErrors.JavaException;
+                    errorMsg = javaException.getClass().getName() + ": " + javaException.getMessage();
+                }
             } else if (t instanceof EvaluatorException) {
                 // Pure evaluator exception, nor WrappedException instance
                 EvaluatorException ee = (EvaluatorException) t;

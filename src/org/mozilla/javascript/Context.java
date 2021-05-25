@@ -339,6 +339,8 @@ public class Context implements Closeable {
      */
     public static final int FEATURE_ENABLE_JAVA_MAP_ACCESS = 21;
 
+    public static final int FEATURE_HIDE_WRAPPED_EXCEPTIONS = 1001;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
 
