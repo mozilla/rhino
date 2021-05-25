@@ -78,6 +78,9 @@ final class NativeError extends ScriptableObject {
             lineNum = ScriptRuntime.toInt32(args[2]);
         }
 
+        // In case this error is never thrown, assign an exception that can be used to
+        // produce the stack trace later if needed.
+        stackProvider = new EvaluatorException("");
         defineOwnProperty("stack", () -> getStack(pprops), this::setStack, DONTENUM);
         defineProperty("fileName", fileName, DONTENUM);
         defineProperty("lineNumber", lineNum, DONTENUM);
@@ -111,15 +114,14 @@ final class NativeError extends ScriptableObject {
     }
 
     public void setStackProvider(RhinoException re) {
-        // We go some extra miles to make sure the stack property is only
-        // generated on demand, is cached after the first access, and is
-        // overwritable like an ordinary property. Hence this setup with
-        // the getter and setter below.
-        if (stackProvider == null) {
-            stackProvider = re;
-        }
+        stackProvider = re;
     }
 
+    /*
+     * Lazily create the stack trace, taking into consideration the global configuration of
+     * stack trace filtering and formatting. It's important that this be lazy because
+     * creating the Java stack trace and turning it into the Rhino stack trace is expensive.
+     */
     public Object getStack(ProtoProps pprops) {
         if (stack != null) {
             // Cached response
