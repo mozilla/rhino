@@ -438,9 +438,15 @@ public class NativeObject extends IdScriptableObject implements Map {
                         if (key == Scriptable.NOT_FOUND) {
                             key = Undefined.instance;
                         }
+                        if (key instanceof ScriptableObject) {
+                            ScriptableObject so = (ScriptableObject) key;
+                            if (so.has(SymbolKey.TO_PRIMITIVE, so)) {
+                                key = so.get(SymbolKey.TO_PRIMITIVE, so);
+                            }
+                        }
                         if (key instanceof Function) {
                             Function fun = (Function)key;
-                            key = fun.call(cx, fun.getParentScope(), entry, ScriptRuntime.emptyArgs);
+                            key = fun.call(cx, fun.getParentScope(), entry, new Object[]{"string"});
                         }
                         Object value = entry.get(1, entry);
                         if (value == Scriptable.NOT_FOUND) {
