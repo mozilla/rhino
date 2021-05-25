@@ -49,9 +49,6 @@ public class RequireTest extends TestCase {
     }
 
     public static class CustomGlobal extends ScriptableObject {
-
-        private String x = "";
-
         public int jsFunction_test(int x) {
             return x + 1;
         }
