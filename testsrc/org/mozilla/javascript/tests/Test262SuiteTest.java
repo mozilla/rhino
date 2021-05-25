@@ -108,9 +108,10 @@ public class Test262SuiteTest {
     }
 
     private static String getOverriddenLevel() {
-        String optLevel = System.getenv("TEST_262_OPTLEVEL");
-        if (optLevel == null) {
-            optLevel = System.getProperty("TEST_OPTLEVEL");
+        String optLevel = System.getProperty("TEST_OPTLEVEL");
+
+        if (optLevel == null || optLevel.equals("")) {
+            optLevel = System.getenv("TEST_262_OPTLEVEL");
         }
         return optLevel;
     }
