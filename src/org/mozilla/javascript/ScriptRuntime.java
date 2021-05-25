@@ -4291,13 +4291,22 @@ public class ScriptRuntime {
             Object id = propertyIds[i];
             int getterSetter = getterSetters == null ? 0 : getterSetters[i];
             Object value = propertyValues[i];
-            if (id instanceof String) {
+            if (id instanceof Symbol) {
+                Symbol sym = (Symbol) id;
+                SymbolScriptable so = (SymbolScriptable) object;
+                so.put(sym, object, value);
+            } else if (id instanceof Integer) {
+                int index = ((Integer) id).intValue();
+                object.put(index, object, value);
+            } else {
+                // we might get a computed double.
+                String stringId = ScriptRuntime.toString(id);
                 if (getterSetter == 0) {
-                    if (isSpecialProperty((String) id)) {
-                        Ref ref = specialRef(object, (String) id, cx, scope);
+                    if (isSpecialProperty(stringId)) {
+                        Ref ref = specialRef(object, stringId, cx, scope);
                         ref.set(cx, scope, value);
                     } else {
-                        object.put((String) id, object, value);
+                        object.put(stringId, object, value);
                     }
                 } else {
                     ScriptableObject so = (ScriptableObject) object;
@@ -4305,9 +4314,6 @@ public class ScriptRuntime {
                     boolean isSetter = getterSetter == 1;
                     so.setGetterOrSetter((String) id, 0, getterOrSetter, isSetter);
                 }
-            } else {
-                int index = ((Integer) id).intValue();
-                object.put(index, object, value);
             }
         }
         return object;

@@ -445,19 +445,32 @@ public class NativeObject extends IdScriptableObject implements Map {
                             }
                         }
                         if (key instanceof Function) {
-                            Function fun = (Function)key;
-                            key = fun.call(cx, fun.getParentScope(), entry, new Object[]{"string"});
+                            Function fun = (Function) key;
+                            key =
+                                    fun.call(
+                                            cx,
+                                            fun.getParentScope(),
+                                            entry,
+                                            new Object[] {"string"});
                         }
                         Object value = entry.get(1, entry);
                         if (value == Scriptable.NOT_FOUND) {
                             value = Undefined.instance;
                         }
                         if (value instanceof Function) {
-                            Function fun = (Function)value;
-                            value = fun.call(cx, fun.getParentScope(), entry, ScriptRuntime.emptyArgs);
+                            Function fun = (Function) value;
+                            value =
+                                    fun.call(
+                                            cx,
+                                            fun.getParentScope(),
+                                            entry,
+                                            ScriptRuntime.emptyArgs);
                         }
+
                         if (key instanceof Integer) {
                             obj.put((Integer) key, obj, value);
+                        } else if (key instanceof Symbol && obj instanceof SymbolScriptable) {
+                            ((SymbolScriptable) obj).put((Symbol) key, obj, value);
                         } else {
                             obj.put(ScriptRuntime.toString(key), obj, value);
                         }
