@@ -353,15 +353,13 @@ public class FunctionObject extends BaseFunction {
                 Class<?> clazz = member.getDeclaringClass();
                 if (!clazz.isInstance(thisObj)) {
                     boolean compatible = false;
-                    if (thisObj == scope) {
-                        Scriptable parentScope = getParentScope();
-                        if (scope != parentScope) {
-                            // Call with dynamic scope for standalone function,
-                            // use parentScope as thisObj
-                            compatible = clazz.isInstance(parentScope);
-                            if (compatible) {
-                                thisObj = parentScope;
-                            }
+                    Scriptable parentScope = getParentScope();
+                    if (scope != parentScope) {
+                        // Call with dynamic scope for standalone function,
+                        // use parentScope as thisObj
+                        compatible = clazz.isInstance(parentScope);
+                        if (compatible) {
+                            thisObj = parentScope;
                         }
                     }
                     if (!compatible) {
