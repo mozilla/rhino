@@ -62,6 +62,9 @@ final class NativeError extends ScriptableObject {
                 "prepareStackTrace", pprops::getPrepareStackTrace, pprops::setPrepareStackTrace, 0);
 
         ScriptableObject.defineProperty(scope, "Error", constructor, DONTENUM);
+        if (sealed) {
+            constructor.sealObject();
+        }
         NativeCallSite.init(scope, sealed);
     }
 
