@@ -427,54 +427,22 @@ public class NativeObject extends IdScriptableObject implements Map {
             case ConstructorId_fromEntries:
                 {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
-                    Scriptable obj = getCompatibleObject(cx, scope, arg);
-                    Object enumeration =
-                            ScriptRuntime.enumInit(
-                                    obj, cx, scope, ScriptRuntime.ENUMERATE_VALUES_IN_ORDER);
-                    obj = cx.newObject(scope);
-                    while (ScriptRuntime.enumNext(enumeration)) {
-                        Scriptable entry = ensureScriptable(ScriptRuntime.enumId(enumeration, cx));
-                        Object key = entry.get(0, entry);
-                        if (key == Scriptable.NOT_FOUND) {
-                            key = Undefined.instance;
-                        }
-                        if (key instanceof ScriptableObject) {
-                            ScriptableObject so = (ScriptableObject) key;
-                            if (so.has(SymbolKey.TO_PRIMITIVE, so)) {
-                                key = so.get(SymbolKey.TO_PRIMITIVE, so);
-                            }
-                        }
-                        if (key instanceof Function) {
-                            Function fun = (Function) key;
-                            key =
-                                    fun.call(
-                                            cx,
-                                            fun.getParentScope(),
-                                            entry,
-                                            new Object[] {"string"});
-                        }
-                        Object value = entry.get(1, entry);
-                        if (value == Scriptable.NOT_FOUND) {
-                            value = Undefined.instance;
-                        }
-                        if (value instanceof Function) {
-                            Function fun = (Function) value;
-                            value =
-                                    fun.call(
-                                            cx,
-                                            fun.getParentScope(),
-                                            entry,
-                                            ScriptRuntime.emptyArgs);
-                        }
-
-                        if (key instanceof Integer) {
-                            obj.put((Integer) key, obj, value);
-                        } else if (key instanceof Symbol && obj instanceof SymbolScriptable) {
-                            ((SymbolScriptable) obj).put((Symbol) key, obj, value);
-                        } else {
-                            obj.put(ScriptRuntime.toString(key), obj, value);
-                        }
-                    }
+                    arg = getCompatibleObject(cx, scope, arg);
+                    Scriptable obj = cx.newObject(scope);
+                    ScriptRuntime.loadFromIterable(
+                            cx,
+                            scope,
+                            arg,
+                            (key, value) -> {
+                                if (key instanceof Integer) {
+                                    obj.put((Integer) key, obj, value);
+                                } else if (key instanceof Symbol
+                                        && obj instanceof SymbolScriptable) {
+                                    ((SymbolScriptable) obj).put((Symbol) key, obj, value);
+                                } else {
+                                    obj.put(ScriptRuntime.toString(key), obj, value);
+                                }
+                            });
                     return obj;
                 }
             case ConstructorId_values:

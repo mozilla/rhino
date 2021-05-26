@@ -15,6 +15,7 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.function.BiConsumer;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.v8dtoa.DoubleConversion;
 import org.mozilla.javascript.v8dtoa.FastDtoa;
@@ -2417,6 +2418,50 @@ public class ScriptRuntime {
         x.index = 0;
     }
 
+    /**
+     * This is used to handle all the special cases that are required when invoking
+     * Object.fromEntries or constructing a NativeMap or NativeWeakMap from an iterable.
+     *
+     * @param cx the current context
+     * @param scope the current scope
+     * @param arg1 the iterable object.
+     * @param setter the setter to set the value
+     * @return true, if arg1 was iterable.
+     */
+    public static boolean loadFromIterable(
+            Context cx, Scriptable scope, Object arg1, BiConsumer<Object, Object> setter) {
+        if ((arg1 == null) || Undefined.instance.equals(arg1)) {
+            return false;
+        }
+
+        // Call the "[Symbol.iterator]" property as a function.
+        final Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
+        if (Undefined.instance.equals(ito)) {
+            // Per spec, ignore if the iterator is undefined
+            return false;
+        }
+
+        // Finally, run through all the iterated values and add them!
+        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
+            for (Object val : it) {
+                Scriptable sVal = ScriptableObject.ensureScriptable(val);
+                if (sVal instanceof Symbol) {
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.arg.not.object", ScriptRuntime.typeof(sVal));
+                }
+                Object finalKey = sVal.get(0, sVal);
+                if (finalKey == Scriptable.NOT_FOUND) {
+                    finalKey = Undefined.instance;
+                }
+                Object finalVal = sVal.get(1, sVal);
+                if (finalVal == Scriptable.NOT_FOUND) {
+                    finalVal = Undefined.instance;
+                }
+                setter.accept(finalKey, finalVal);
+            }
+        }
+        return true;
+    }
     /**
      * Prepare for calling name(...): return function corresponding to name and make current top
      * scope available as ScriptRuntime.lastStoredScriptable() for consumption as thisObj. The

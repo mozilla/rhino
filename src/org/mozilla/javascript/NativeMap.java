@@ -191,29 +191,13 @@ public class NativeMap extends IdScriptableObject {
         // Find the "add" function of our own prototype, since it might have
         // been replaced. Since we're not fully constructed yet, create a dummy instance
         // so that we can get our own prototype.
-        ScriptableObject dummy = ensureScriptableObject(cx.newObject(scope, map.getClassName()));
-        final Callable set =
-                ScriptRuntime.getPropFunctionAndThis(dummy.getPrototype(), "set", cx, scope);
+        Scriptable proto = ScriptableObject.getClassPrototype(scope, map.getClassName());
+        final Callable set = ScriptRuntime.getPropFunctionAndThis(proto, "set", cx, scope);
         ScriptRuntime.lastStoredScriptable(cx);
 
-        // Finally, run through all the iterated values and add them!
-        try (IteratorLikeIterable it = new IteratorLikeIterable(cx, scope, ito)) {
-            for (Object val : it) {
-                Scriptable sVal = ScriptableObject.ensureScriptable(val);
-                if (sVal instanceof Symbol) {
-                    throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(sVal));
-                }
-                Object finalKey = sVal.get(0, sVal);
-                if (finalKey == NOT_FOUND) {
-                    finalKey = Undefined.instance;
-                }
-                Object finalVal = sVal.get(1, sVal);
-                if (finalVal == NOT_FOUND) {
-                    finalVal = Undefined.instance;
-                }
-                set.call(cx, scope, map, new Object[] { finalKey, finalVal });
-            }
-        }
+        ScriptRuntime.loadFromIterable(cx, scope, arg1, (key, value) -> {
+            set.call(cx, scope, map, new Object[] { key, value });
+        });
     }
 
     private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f)
