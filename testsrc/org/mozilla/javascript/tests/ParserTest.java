@@ -16,7 +16,6 @@ import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.Assignment;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
-import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.CatchClause;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.ConditionalExpression;
@@ -509,7 +508,7 @@ public class ParserTest extends TestCase {
         AstNode tryBlock = tryStmt.getTryBlock();
         List<CatchClause> catchBlocks = tryStmt.getCatchClauses();
         CatchClause catchClause = catchBlocks.get(0);
-        Block catchVarBlock = catchClause.getBody();
+        Scope catchVarBlock = catchClause.getBody();
         Name catchVar = catchClause.getVarName();
         AstNode finallyBlock = tryStmt.getFinallyBlock();
         AstNode finallyStmt = (AstNode) finallyBlock.getFirstChild();
