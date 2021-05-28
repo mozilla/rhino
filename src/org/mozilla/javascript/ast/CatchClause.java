@@ -18,7 +18,7 @@ public class CatchClause extends AstNode {
 
     private Name varName;
     private AstNode catchCondition;
-    private Block body;
+    private Scope body;
     private int ifPosition = -1;
     private int lp = -1;
     private int rp = -1;
@@ -81,7 +81,7 @@ public class CatchClause extends AstNode {
     }
 
     /** Returns catch body */
-    public Block getBody() {
+    public Scope getBody() {
         return body;
     }
 
@@ -90,7 +90,7 @@ public class CatchClause extends AstNode {
      *
      * @throws IllegalArgumentException if body is {@code null}
      */
-    public void setBody(Block body) {
+    public void setBody(Scope body) {
         assertNotNull(body);
         this.body = body;
         body.setParent(this);

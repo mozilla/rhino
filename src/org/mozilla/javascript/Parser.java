@@ -1685,12 +1685,20 @@ public class Parser {
                         break;
                 }
 
-                Block catchBlock = (Block) statements();
-                tryEnd = getNodeEnd(catchBlock);
+                Scope catchScope = new Scope(catchPos);
                 CatchClause catchNode = new CatchClause(catchPos);
+                catchNode.setLineno(ts.lineno);
+                pushScope(catchScope);
+                try {
+                    statements(catchScope);
+                } finally {
+                    popScope();
+                }
+
+                tryEnd = getNodeEnd(catchScope);
                 catchNode.setVarName(varName);
                 catchNode.setCatchCondition(catchCond);
-                catchNode.setBody(catchBlock);
+                catchNode.setBody(catchScope);
                 if (guardPos != -1) {
                     catchNode.setIfPosition(guardPos - catchPos);
                 }
