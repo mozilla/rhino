@@ -203,12 +203,9 @@ public class NativeCallSite extends IdScriptableObject {
         return Integer.valueOf(cs.element.lineNumber);
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:55 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -259,7 +256,6 @@ public class NativeCallSite extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -279,5 +275,4 @@ public class NativeCallSite extends IdScriptableObject {
             Id_isConstructor = 14,
             Id_toString = 15,
             MAX_PROTOTYPE_ID = 15;
-    // #/string_id_map#
 }

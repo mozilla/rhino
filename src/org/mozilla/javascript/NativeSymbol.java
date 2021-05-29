@@ -108,12 +108,9 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
         ctor.defineProperty(name, sym, DONTENUM | READONLY | PERMANENT);
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id = 0;
-        //  #generated# Last update: 2021-03-21 09:49:13 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -128,7 +125,6 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
                 id = 0;
                 break;
         }
-        //  #/generated#
         return id;
     }
 
@@ -150,8 +146,6 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
             SymbolId_toStringTag = 3,
             SymbolId_toPrimitive = 5,
             MAX_PROTOTYPE_ID = SymbolId_toPrimitive;
-
-    // #/string_id_map#
 
     @Override
     protected void initPrototypeId(int id) {

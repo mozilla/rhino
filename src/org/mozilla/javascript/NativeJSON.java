@@ -601,12 +601,9 @@ public final class NativeJSON extends IdScriptableObject {
         return false;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:17 MEZ
         switch (s) {
             case "toSource":
                 id = Id_toSource;
@@ -621,7 +618,6 @@ public final class NativeJSON extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -630,6 +626,4 @@ public final class NativeJSON extends IdScriptableObject {
             Id_stringify = 3,
             LAST_METHOD_ID = 3,
             MAX_ID = 3;
-
-    // #/string_id_map#
 }

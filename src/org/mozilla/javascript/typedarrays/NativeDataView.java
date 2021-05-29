@@ -372,12 +372,9 @@ public class NativeDataView extends NativeArrayBufferView {
         initPrototypeMethod(getClassName(), id, s, arity);
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:47:00 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -434,7 +431,6 @@ public class NativeDataView extends NativeArrayBufferView {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -456,6 +452,4 @@ public class NativeDataView extends NativeArrayBufferView {
             Id_setFloat32 = 16,
             Id_setFloat64 = 17,
             MAX_PROTOTYPE_ID = Id_setFloat64;
-
-    // #/string_id_map#
 }

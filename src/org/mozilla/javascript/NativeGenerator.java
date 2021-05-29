@@ -176,12 +176,9 @@ public final class NativeGenerator extends IdScriptableObject {
         }
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:25 MEZ
         switch (s) {
             case "close":
                 id = Id_close;
@@ -202,7 +199,6 @@ public final class NativeGenerator extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -213,7 +209,6 @@ public final class NativeGenerator extends IdScriptableObject {
             Id___iterator__ = 5,
             MAX_PROTOTYPE_ID = 5;
 
-    // #/string_id_map#
     private NativeFunction function;
     private Object savedState;
     private String lineSource;

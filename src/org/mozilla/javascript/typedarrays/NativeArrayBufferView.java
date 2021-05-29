@@ -106,12 +106,9 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
         }
     }
 
-    // #string_id_map#
-
     @Override
     protected int findInstanceIdInfo(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:47:23 MEZ
         switch (s) {
             case "buffer":
                 id = Id_buffer;
@@ -126,7 +123,6 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         if (id == 0) {
             return super.findInstanceIdInfo(s);
         }
@@ -137,6 +133,4 @@ public abstract class NativeArrayBufferView extends IdScriptableObject {
 
     // to be visible by subclasses
     protected static final int MAX_INSTANCE_ID = Id_byteLength;
-
-    // #/string_id_map#
 }

@@ -156,8 +156,6 @@ final class Arguments extends IdScriptableObject {
         super.delete(index);
     }
 
-    // #string_id_map#
-
     private static final int Id_callee = 1,
             Id_length = 2,
             Id_caller = 3,
@@ -171,7 +169,6 @@ final class Arguments extends IdScriptableObject {
     @Override
     protected int findInstanceIdInfo(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:52:20 MEZ
         switch (s) {
             case "callee":
                 id = Id_callee;
@@ -186,7 +183,6 @@ final class Arguments extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         Context cx = Context.getContext();
         if (cx.isStrictMode()) {
             if (id == Id_callee || id == Id_caller) {
@@ -212,8 +208,6 @@ final class Arguments extends IdScriptableObject {
         }
         return instanceIdInfo(attr, id);
     }
-
-    // #/string_id_map#
 
     @Override
     protected String getInstanceIdName(int id) {

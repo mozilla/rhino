@@ -1151,12 +1151,9 @@ final class NativeString extends IdScriptableObject {
         return elements;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:49:17 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -1309,7 +1306,6 @@ final class NativeString extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -1367,9 +1363,6 @@ final class NativeString extends IdScriptableObject {
             Id_trimStart = 49,
             Id_trimEnd = 50,
             MAX_PROTOTYPE_ID = Id_trimEnd;
-
-    // #/string_id_map#
-
     private static final int ConstructorId_charAt = -Id_charAt,
             ConstructorId_charCodeAt = -Id_charCodeAt,
             ConstructorId_indexOf = -Id_indexOf,

@@ -66,30 +66,28 @@ class NativeRegExpCtor extends BaseFunction {
         return (RegExpImpl) ScriptRuntime.getRegExpProxy(cx);
     }
 
-    // #string_id_map#
-
     private static final int Id_multiline = 1,
-            Id_STAR = 2, // #string=$*#
+            Id_STAR = 2,
             Id_input = 3,
-            Id_UNDERSCORE = 4, // #string=$_#
+            Id_UNDERSCORE = 4,
             Id_lastMatch = 5,
-            Id_AMPERSAND = 6, // #string=$&#
+            Id_AMPERSAND = 6,
             Id_lastParen = 7,
-            Id_PLUS = 8, // #string=$+#
+            Id_PLUS = 8,
             Id_leftContext = 9,
-            Id_BACK_QUOTE = 10, // #string=$`#
+            Id_BACK_QUOTE = 10,
             Id_rightContext = 11,
-            Id_QUOTE = 12, // #string=$'#
+            Id_QUOTE = 12,
             DOLLAR_ID_BASE = 12;
-    private static final int Id_DOLLAR_1 = DOLLAR_ID_BASE + 1, // #string=$1#
-            Id_DOLLAR_2 = DOLLAR_ID_BASE + 2, // #string=$2#
-            Id_DOLLAR_3 = DOLLAR_ID_BASE + 3, // #string=$3#
-            Id_DOLLAR_4 = DOLLAR_ID_BASE + 4, // #string=$4#
-            Id_DOLLAR_5 = DOLLAR_ID_BASE + 5, // #string=$5#
-            Id_DOLLAR_6 = DOLLAR_ID_BASE + 6, // #string=$6#
-            Id_DOLLAR_7 = DOLLAR_ID_BASE + 7, // #string=$7#
-            Id_DOLLAR_8 = DOLLAR_ID_BASE + 8, // #string=$8#
-            Id_DOLLAR_9 = DOLLAR_ID_BASE + 9, // #string=$9#
+    private static final int Id_DOLLAR_1 = DOLLAR_ID_BASE + 1,
+            Id_DOLLAR_2 = DOLLAR_ID_BASE + 2,
+            Id_DOLLAR_3 = DOLLAR_ID_BASE + 3,
+            Id_DOLLAR_4 = DOLLAR_ID_BASE + 4,
+            Id_DOLLAR_5 = DOLLAR_ID_BASE + 5,
+            Id_DOLLAR_6 = DOLLAR_ID_BASE + 6,
+            Id_DOLLAR_7 = DOLLAR_ID_BASE + 7,
+            Id_DOLLAR_8 = DOLLAR_ID_BASE + 8,
+            Id_DOLLAR_9 = DOLLAR_ID_BASE + 9,
             MAX_INSTANCE_ID = DOLLAR_ID_BASE + 9;
 
     @Override
@@ -100,7 +98,6 @@ class NativeRegExpCtor extends BaseFunction {
     @Override
     protected int findInstanceIdInfo(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:45:17 MEZ
         switch (s) {
             case "multiline":
                 id = Id_multiline;
@@ -169,7 +166,6 @@ class NativeRegExpCtor extends BaseFunction {
                 id = 0;
                 break;
         }
-        // #/generated#
 
         if (id == 0) return super.findInstanceIdInfo(s);
 
@@ -194,8 +190,6 @@ class NativeRegExpCtor extends BaseFunction {
 
         return instanceIdInfo(attr, super.getMaxInstanceId() + id);
     }
-
-    // #/string_id_map#
 
     @Override
     protected String getInstanceIdName(int id) {

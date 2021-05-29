@@ -2433,12 +2433,9 @@ public class NativeArray extends IdScriptableObject implements List {
         }
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:43:46 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -2537,7 +2534,6 @@ public class NativeArray extends IdScriptableObject implements List {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -2574,9 +2570,6 @@ public class NativeArray extends IdScriptableObject implements List {
             Id_copyWithin = 31,
             SymbolId_iterator = 32,
             MAX_PROTOTYPE_ID = SymbolId_iterator;
-
-    // #/string_id_map#
-
     private static final int ConstructorId_join = -Id_join,
             ConstructorId_reverse = -Id_reverse,
             ConstructorId_sort = -Id_sort,

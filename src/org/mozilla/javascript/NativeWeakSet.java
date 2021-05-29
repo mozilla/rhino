@@ -148,12 +148,9 @@ public class NativeWeakSet extends IdScriptableObject {
         return 0;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:49:08 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -171,7 +168,6 @@ public class NativeWeakSet extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -181,8 +177,6 @@ public class NativeWeakSet extends IdScriptableObject {
             Id_has = 4,
             SymbolId_toStringTag = 5,
             MAX_PROTOTYPE_ID = SymbolId_toStringTag;
-
-    // #/string_id_map#
 
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();

@@ -155,12 +155,9 @@ class NativeScript extends BaseFunction {
         return cx.compileString(source, null, reporter, filename, linep[0], null);
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:49:23 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -178,7 +175,6 @@ class NativeScript extends BaseFunction {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -187,8 +183,6 @@ class NativeScript extends BaseFunction {
             Id_compile = 3,
             Id_exec = 4,
             MAX_PROTOTYPE_ID = 4;
-
-    // #/string_id_map#
 
     private Script script;
 }
