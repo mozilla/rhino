@@ -372,12 +372,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         return 0;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:47:04 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -398,7 +395,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -411,8 +407,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
             SymbolId_iterator = 6;
 
     protected static final int MAX_PROTOTYPE_ID = SymbolId_iterator;
-
-    // #/string_id_map#
 
     // Constructor properties
 
@@ -457,12 +451,9 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
         }
     }
 
-    // #string_id_map#
-
     @Override
     protected int findInstanceIdInfo(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:47:04 MEZ
         switch (s) {
             case "length":
                 id = Id_length;
@@ -474,7 +465,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
                 id = 0;
                 break;
         }
-        // #/generated#
         if (id == 0) {
             return super.findInstanceIdInfo(s);
         }
@@ -490,8 +480,6 @@ public abstract class NativeTypedArrayView<T> extends NativeArrayBufferView
     private static final int Id_length = NativeArrayBufferView.MAX_INSTANCE_ID + 1,
             Id_BYTES_PER_ELEMENT = Id_length + 1,
             MAX_INSTANCE_ID = Id_BYTES_PER_ELEMENT;
-
-    // #/string_id_map#
 
     // External Array implementation
 

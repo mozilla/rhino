@@ -91,7 +91,6 @@ class TokenStream {
 
     /** JavaScript 1.8 and earlier */
     private static int stringToKeywordForJS(String name) {
-        // #string_id_map#
         // The following assumes that Token.EOF == 0
         final int Id_break = Token.BREAK,
                 Id_case = Token.CASE,
@@ -159,7 +158,6 @@ class TokenStream {
 
         int id;
         String s = name;
-        // #generated# Last update: 2021-03-21 09:59:16 MEZ
         switch (s) {
             case "break":
                 id = Id_break;
@@ -348,8 +346,6 @@ class TokenStream {
                 id = 0;
                 break;
         }
-        // #/generated#
-        // #/string_id_map#
         if (id == 0) {
             return Token.EOF;
         }
@@ -358,7 +354,6 @@ class TokenStream {
 
     /** ECMAScript 6. */
     private static int stringToKeywordForES(String name, boolean isStrict) {
-        // #string_id_map#
         // The following assumes that Token.EOF == 0
         final int
                 // 11.6.2.1 Keywords (ECMAScript2015)
@@ -420,7 +415,6 @@ class TokenStream {
 
         int id = 0;
         String s = name;
-        // #generated# Last update: 2021-03-21 09:59:16 MEZ
         switch (s) {
             case "break":
                 id = Id_break;
@@ -578,8 +572,6 @@ class TokenStream {
                 id = 0;
                 break;
         }
-        // #/generated#
-        // #/string_id_map#
         if (id == 0) {
             return Token.EOF;
         }

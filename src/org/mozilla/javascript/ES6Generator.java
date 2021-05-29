@@ -402,12 +402,9 @@ public final class ES6Generator extends IdScriptableObject {
         return 0;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2017-08-04 17:30:46 PDT
         L0:
         {
             id = 0;
@@ -426,7 +423,6 @@ public final class ES6Generator extends IdScriptableObject {
             if (X != null && X != s && !X.equals(s)) id = 0;
             break L0;
         }
-        // #/generated#
         return id;
     }
 
@@ -435,8 +431,6 @@ public final class ES6Generator extends IdScriptableObject {
             Id_throw = 3,
             SymbolId_iterator = 4,
             MAX_PROTOTYPE_ID = SymbolId_iterator;
-
-    // #/string_id_map#
 
     private NativeFunction function;
     private Object savedState;

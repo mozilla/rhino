@@ -250,12 +250,9 @@ public final class NativeIterator extends IdScriptableObject {
         private Scriptable scope;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:20 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -270,7 +267,6 @@ public final class NativeIterator extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -278,8 +274,6 @@ public final class NativeIterator extends IdScriptableObject {
             Id_next = 2,
             Id___iterator__ = 3,
             MAX_PROTOTYPE_ID = 3;
-
-    // #/string_id_map#
 
     private Object objectIterator;
 }

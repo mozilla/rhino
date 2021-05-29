@@ -91,12 +91,9 @@ public final class NativeContinuation extends IdScriptableObject implements Func
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:50 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -105,11 +102,8 @@ public final class NativeContinuation extends IdScriptableObject implements Func
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
     private static final int Id_constructor = 1, MAX_PROTOTYPE_ID = 1;
-
-    // #/string_id_map#
 }

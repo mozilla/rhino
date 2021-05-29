@@ -585,12 +585,9 @@ final class NativeMath extends IdScriptableObject {
         return x * y;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:11 MEZ
         switch (s) {
             case "toSource":
                 id = Id_toSource;
@@ -728,7 +725,6 @@ final class NativeMath extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -785,6 +781,4 @@ final class NativeMath extends IdScriptableObject {
             Id_SQRT1_2 = LAST_METHOD_ID + 7,
             Id_SQRT2 = LAST_METHOD_ID + 8,
             MAX_ID = LAST_METHOD_ID + 8;
-
-    // #/string_id_map#
 }

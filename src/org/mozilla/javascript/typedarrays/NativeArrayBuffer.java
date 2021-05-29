@@ -160,12 +160,9 @@ public class NativeArrayBuffer extends IdScriptableObject {
         initPrototypeMethod(CLASS_NAME, id, s, arity);
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:47:19 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -177,14 +174,11 @@ public class NativeArrayBuffer extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
     // Table of all functions
     private static final int Id_constructor = 1, Id_slice = 2, MAX_PROTOTYPE_ID = Id_slice;
-
-    // #/string_id_map#
 
     // Constructor (aka static) functions here
 

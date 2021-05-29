@@ -2492,8 +2492,6 @@ public class NativeRegExp extends IdScriptableObject {
         throw ScriptRuntime.constructError("SyntaxError", msg);
     }
 
-    // #string_id_map#
-
     private static final int Id_lastIndex = 1,
             Id_source = 2,
             Id_global = 3,
@@ -2509,7 +2507,6 @@ public class NativeRegExp extends IdScriptableObject {
     @Override
     protected int findInstanceIdInfo(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:45:14 MEZ
         switch (s) {
             case "lastIndex":
                 id = Id_lastIndex;
@@ -2530,8 +2527,6 @@ public class NativeRegExp extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
-        // #/string_id_map#
 
         if (id == 0) return super.findInstanceIdInfo(s);
 
@@ -2715,11 +2710,9 @@ public class NativeRegExp extends IdScriptableObject {
         return 0;
     }
 
-    // #string_id_map#
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:45:14 MEZ
         switch (s) {
             case "compile":
                 id = Id_compile;
@@ -2743,7 +2736,6 @@ public class NativeRegExp extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -2756,8 +2748,6 @@ public class NativeRegExp extends IdScriptableObject {
             SymbolId_match = 7,
             SymbolId_search = 8,
             MAX_PROTOTYPE_ID = SymbolId_search;
-
-    // #/string_id_map#
 
     private RECompiled re;
     Object lastIndex = ScriptRuntime.zeroObj; /* index after last match, for //g iterator */

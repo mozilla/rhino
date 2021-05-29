@@ -272,12 +272,9 @@ public class ImporterTopLevel extends TopLevel {
         return ensureType(thisObj, ScriptableObject.class, f);
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:58 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -292,7 +289,6 @@ public class ImporterTopLevel extends TopLevel {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -301,7 +297,6 @@ public class ImporterTopLevel extends TopLevel {
             Id_importPackage = 3,
             MAX_PROTOTYPE_ID = 3;
 
-    // #/string_id_map#
     private static final String AKEY = "importedPackages";
     private boolean topScopeFlag;
 }

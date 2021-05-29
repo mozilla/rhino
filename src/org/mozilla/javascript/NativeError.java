@@ -325,8 +325,6 @@ final class NativeError extends IdScriptableObject {
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #string_id_map#
-        // #generated# Last update: 2021-03-21 09:44:56 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -341,7 +339,6 @@ final class NativeError extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -350,8 +347,6 @@ final class NativeError extends IdScriptableObject {
             Id_toSource = 3,
             ConstructorId_captureStackTrace = -1,
             MAX_PROTOTYPE_ID = 3;
-
-    // #/string_id_map#
 
     /**
      * We will attch this object to the constructor and use it solely to store the constructor
