@@ -1,5 +1,5 @@
 # Set default behavior, in case users don't have core.autocrlf set.
-* text=auto
+* text=auto eol=lf
 
 .classpath text
 .project text
