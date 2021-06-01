@@ -4672,14 +4672,13 @@ public class ScriptRuntime {
         return cx.getRegExpProxy().wrapRegExp(cx, scope, compiled);
     }
 
-    public static Scriptable getTemplateLiteralCallSite(Context cx, Scriptable scope,
-                                              Object[] strings, int index) {
+    public static Scriptable getTemplateLiteralCallSite(
+            Context cx, Scriptable scope, Object[] strings, int index) {
         final int INTEGRITY_FREEZE = ScriptableObject.PERMANENT | ScriptableObject.READONLY;
 
         Object callsite = strings[index];
 
-        if (callsite instanceof Scriptable)
-            return (Scriptable) callsite;
+        if (callsite instanceof Scriptable) return (Scriptable) callsite;
 
         assert callsite instanceof String[];
         String[] vals = (String[]) callsite;
@@ -4702,7 +4701,7 @@ public class ScriptRuntime {
 
         siteObj.put("raw", siteObj, rawObj);
         siteObj.setAttributes("raw", INTEGRITY_FREEZE | ScriptableObject.DONTENUM);
-        
+
         siteObj.setAttributes("length", INTEGRITY_FREEZE);
         siteObj.preventExtensions();
 

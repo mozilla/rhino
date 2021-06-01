@@ -56,9 +56,6 @@ import org.mozilla.javascript.ast.ObjectLiteral;
 import org.mozilla.javascript.ast.ObjectProperty;
 import org.mozilla.javascript.ast.ParenthesizedExpression;
 import org.mozilla.javascript.ast.PropertyGet;
-import org.mozilla.javascript.ast.TaggedTemplateLiteral;
-import org.mozilla.javascript.ast.TemplateCharacters;
-import org.mozilla.javascript.ast.TemplateLiteral;
 import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
@@ -67,6 +64,9 @@ import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
 import org.mozilla.javascript.ast.Symbol;
+import org.mozilla.javascript.ast.TaggedTemplateLiteral;
+import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.ast.TemplateLiteral;
 import org.mozilla.javascript.ast.ThrowStatement;
 import org.mozilla.javascript.ast.TryStatement;
 import org.mozilla.javascript.ast.UnaryExpression;
@@ -2792,9 +2792,9 @@ public class Parser {
                                     : currentFlagTOken;
                     break;
                 case Token.TEMPLATE_LITERAL:
-                   consumeToken();
-                   pn = taggedTemplateLiteral(pn);
-                   break;
+                    consumeToken();
+                    pn = taggedTemplateLiteral(pn);
+                    break;
                 default:
                     break tailLoop;
             }
@@ -3687,7 +3687,7 @@ public class Parser {
             tt = ts.readTemplateLiteral(isTaggedLiteral);
         }
         if (tt == Token.ERROR) {
-             return makeErrorNode();
+            return makeErrorNode();
         }
         assert tt == Token.TEMPLATE_LITERAL;
         elements.add(createTemplateLiteralCharacters(posChars));
@@ -3704,7 +3704,7 @@ public class Parser {
         chars.setRawValue(ts.getRawString());
         return chars;
     }
- 
+
     private AstNode createNumericLiteral(int tt, boolean isProperty) {
         String s = ts.getString();
         if (this.inUseStrictDirective && ts.isNumericOldOctal()) {

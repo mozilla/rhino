@@ -1782,17 +1782,20 @@ class BodyCodegen {
         int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
         cfw.addALoad(contextLocal);
         cfw.addALoad(variableObjectLocal);
-        cfw.add(ByteCode.GETSTATIC, codegen.mainClassName,
+        cfw.add(
+                ByteCode.GETSTATIC,
+                codegen.mainClassName,
                 codegen.getTemplateLiteralName(scriptOrFn),
                 "[Ljava/lang/Object;");
         cfw.addPush(index);
-        cfw.addInvoke(ByteCode.INVOKESTATIC,
-                      "org/mozilla/javascript/ScriptRuntime",
-                      "getTemplateLiteralCallSite",
-                      "(Lorg/mozilla/javascript/Context;"
-                      +"Lorg/mozilla/javascript/Scriptable;"
-                      +"[Ljava/lang/Object;I"
-                      +")Lorg/mozilla/javascript/Scriptable;");
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/ScriptRuntime",
+                "getTemplateLiteralCallSite",
+                "(Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "[Ljava/lang/Object;I"
+                        + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
     private void generateIfJump(Node node, Node parent, int trueLabel, int falseLabel) {

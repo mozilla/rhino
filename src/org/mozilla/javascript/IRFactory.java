@@ -46,9 +46,6 @@ import org.mozilla.javascript.ast.ObjectLiteral;
 import org.mozilla.javascript.ast.ObjectProperty;
 import org.mozilla.javascript.ast.ParenthesizedExpression;
 import org.mozilla.javascript.ast.PropertyGet;
-import org.mozilla.javascript.ast.TaggedTemplateLiteral;
-import org.mozilla.javascript.ast.TemplateCharacters;
-import org.mozilla.javascript.ast.TemplateLiteral;
 import org.mozilla.javascript.ast.RegExpLiteral;
 import org.mozilla.javascript.ast.ReturnStatement;
 import org.mozilla.javascript.ast.Scope;
@@ -57,6 +54,9 @@ import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
 import org.mozilla.javascript.ast.Symbol;
+import org.mozilla.javascript.ast.TaggedTemplateLiteral;
+import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.ast.TemplateLiteral;
 import org.mozilla.javascript.ast.ThrowStatement;
 import org.mozilla.javascript.ast.TryStatement;
 import org.mozilla.javascript.ast.UnaryExpression;
@@ -190,9 +190,9 @@ public final class IRFactory extends Parser {
             case Token.OBJECTLIT:
                 return transformObjectLiteral((ObjectLiteral) node);
             case Token.TEMPLATE_LITERAL:
-                return transformTemplateLiteral((TemplateLiteral)node);
+                return transformTemplateLiteral((TemplateLiteral) node);
             case Token.TAGGED_TEMPLATE_LITERAL:
-                return transformTemplateLiteralCall((TaggedTemplateLiteral)node);
+                return transformTemplateLiteralCall((TaggedTemplateLiteral) node);
             case Token.REGEXP:
                 return transformRegExp((RegExpLiteral) node);
             case Token.RETURN:
