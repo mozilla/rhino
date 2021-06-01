@@ -8,7 +8,8 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for Template Literal Characters.
- * <p>Node type is {@link Token#TEMPLATE_CHARS}.</p>
+ *
+ * <p>Node type is {@link Token#TEMPLATE_CHARS}.
  */
 public class TemplateCharacters extends AstNode {
 
@@ -19,8 +20,7 @@ public class TemplateCharacters extends AstNode {
         type = Token.TEMPLATE_CHARS;
     }
 
-    public TemplateCharacters() {
-    }
+    public TemplateCharacters() {}
 
     public TemplateCharacters(int pos) {
         super(pos);
@@ -32,6 +32,7 @@ public class TemplateCharacters extends AstNode {
 
     /**
      * Returns the node's value: the parsed template-literal-value (QV)
+     *
      * @return the node's value
      */
     public String getValue() {
@@ -39,8 +40,9 @@ public class TemplateCharacters extends AstNode {
     }
 
     /**
-     * Sets the node's value. Can be null in case of illegal escape sequences, which are allowed in Template Literals
-     * but will have an undefined cooked value
+     * Sets the node's value. Can be null in case of illegal escape sequences, which are allowed in
+     * Template Literals but will have an undefined cooked value
+     *
      * @param value the node's value
      */
     public void setValue(String value) {
@@ -49,6 +51,7 @@ public class TemplateCharacters extends AstNode {
 
     /**
      * Returns the node's raw-value: the parsed template-literal-raw-value (QRV)
+     *
      * @return the node's raw-value
      */
     public String getRawValue() {
@@ -57,6 +60,7 @@ public class TemplateCharacters extends AstNode {
 
     /**
      * Sets the node's raw-value.
+     *
      * @param rawValue the node's raw-value
      * @throws IllegalArgumentException} if rawValue is {@code null}
      */
@@ -67,14 +71,10 @@ public class TemplateCharacters extends AstNode {
 
     @Override
     public String toSource(int depth) {
-        return new StringBuilder(makeIndent(depth))
-                .append(rawValue)
-                .toString();
+        return new StringBuilder(makeIndent(depth)).append(rawValue).toString();
     }
 
-    /**
-     * Visits this node.  There are no children to visit.
-     */
+    /** Visits this node. There are no children to visit. */
     @Override
     public void visit(NodeVisitor v) {
         v.visit(this);

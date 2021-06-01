@@ -216,13 +216,10 @@ public class ScriptNode extends Scope {
         return templateLiterals.get(index).getTemplateStrings();
     }
 
-    /**
-     * Called by IRFactory to add a Template Literal to the templateLiterals table.
-     */
+    /** Called by IRFactory to add a Template Literal to the templateLiterals table. */
     public void addTemplateLiteral(TemplateLiteral templateLiteral) {
         if (templateLiteral == null) codeBug();
-        if (templateLiterals == null)
-            templateLiterals = new ArrayList<TemplateLiteral>();
+        if (templateLiterals == null) templateLiterals = new ArrayList<TemplateLiteral>();
         templateLiterals.add(templateLiteral);
         templateLiteral.putIntProp(TEMPLATE_LITERAL_PROP, templateLiterals.size() - 1);
     }

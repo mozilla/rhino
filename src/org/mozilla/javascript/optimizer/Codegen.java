@@ -36,8 +36,8 @@ import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.TemplateCharacters;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.TemplateCharacters;
 
 /**
  * This class generates code for a given IR tree.
@@ -734,8 +734,11 @@ public class Codegen implements Evaluator
         }
         // emit all template literals
         if (ofn.fnode.getTemplateLiteralCount() != 0) {
-            cfw.addInvoke(ByteCode.INVOKESTATIC, mainClassName,
-                          TEMPLATE_LITERAL_INIT_METHOD_NAME, TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC,
+                    mainClassName,
+                    TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                    TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
         }
 
         cfw.add(ByteCode.RETURN);
@@ -1048,6 +1051,7 @@ public class Codegen implements Evaluator
 
     /**
      * Overview:
+     *
      * <pre>
      * for each fn in functions(script) do
      *   let field = []
@@ -1059,8 +1063,7 @@ public class Codegen implements Evaluator
      * end
      * </pre>
      */
-    private void emitTemplateLiteralInit(ClassFileWriter cfw)
-    {
+    private void emitTemplateLiteralInit(ClassFileWriter cfw) {
         // emit all template literals
 
         int totalTemplateLiteralCount = 0;
@@ -1071,10 +1074,11 @@ public class Codegen implements Evaluator
             return;
         }
 
-        cfw.startMethod(TEMPLATE_LITERAL_INIT_METHOD_NAME, TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE,
-                (short)(ACC_STATIC | ACC_PRIVATE));
-        cfw.addField("_qInitDone", "Z",
-                     (short)(ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
+        cfw.startMethod(
+                TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE,
+                (short) (ACC_STATIC | ACC_PRIVATE));
+        cfw.addField("_qInitDone", "Z", (short) (ACC_STATIC | ACC_PRIVATE | ACC_VOLATILE));
 
         cfw.add(ByteCode.GETSTATIC, mainClassName, "_qInitDone", "Z");
         int doInit = cfw.acquireLabel();
@@ -1089,8 +1093,7 @@ public class Codegen implements Evaluator
             if (qCount == 0) continue;
             String qFieldName = getTemplateLiteralName(n);
             String qFieldType = "[Ljava/lang/Object;";
-            cfw.addField(qFieldName, qFieldType,
-                         (short)(ACC_STATIC | ACC_PRIVATE));
+            cfw.addField(qFieldName, qFieldType, (short) (ACC_STATIC | ACC_PRIVATE));
             cfw.addPush(qCount);
             cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
             for (int j = 0; j < qCount; ++j) {
@@ -1118,14 +1121,13 @@ public class Codegen implements Evaluator
                 }
                 cfw.add(ByteCode.AASTORE);
             }
-            cfw.add(ByteCode.PUTSTATIC, mainClassName,
-                    qFieldName, qFieldType);
+            cfw.add(ByteCode.PUTSTATIC, mainClassName, qFieldName, qFieldType);
         }
 
         cfw.addPush(true);
         cfw.add(ByteCode.PUTSTATIC, mainClassName, "_qInitDone", "Z");
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short)0);
+        cfw.stopMethod((short) 0);
     }
 
     private void emitConstantDudeInitializers(ClassFileWriter cfw)
@@ -1310,9 +1312,8 @@ public class Codegen implements Evaluator
         return "_re"+getIndex(n)+"_"+regexpIndex;
     }
 
-    String getTemplateLiteralName(ScriptNode n)
-    {
-        return "_q"+getIndex(n);
+    String getTemplateLiteralName(ScriptNode n) {
+        return "_q" + getIndex(n);
     }
 
     static RuntimeException badTree()
@@ -1338,8 +1339,7 @@ public class Codegen implements Evaluator
         =  "(Lorg/mozilla/javascript/Context;)V";
 
     static final String TEMPLATE_LITERAL_INIT_METHOD_NAME = "_qInit";
-    static final String TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE
-        =  "()V";
+    static final String TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE = "()V";
 
     static final String FUNCTION_INIT_SIGNATURE
         =  "(Lorg/mozilla/javascript/Context;"

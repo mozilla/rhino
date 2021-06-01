@@ -8,7 +8,8 @@ import org.mozilla.javascript.Token;
 
 /**
  * AST node for a Tagged Template Literal.
- * <p>Node type is {@link Token#TAGGED_TEMPLATE_LITERAL}.</p>
+ *
+ * <p>Node type is {@link Token#TAGGED_TEMPLATE_LITERAL}.
  */
 public class TaggedTemplateLiteral extends AstNode {
 
@@ -19,8 +20,7 @@ public class TaggedTemplateLiteral extends AstNode {
         type = Token.TAGGED_TEMPLATE_LITERAL;
     }
 
-    public TaggedTemplateLiteral() {
-    }
+    public TaggedTemplateLiteral() {}
 
     public TaggedTemplateLiteral(int pos) {
         super(pos);
@@ -55,9 +55,7 @@ public class TaggedTemplateLiteral extends AstNode {
         return sb.toString();
     }
 
-    /**
-     * Visits this node.
-     */
+    /** Visits this node. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

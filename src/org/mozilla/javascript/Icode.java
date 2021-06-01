@@ -142,7 +142,7 @@ abstract class Icode {
             Icode_REG_BIGINT4 = -73,
 
             // Call to GetTemplateLiteralCallSite
-            Icode_TEMPLATE_LITERAL_CALLSITE= -74,
+            Icode_TEMPLATE_LITERAL_CALLSITE = -74,
 
             // Last icode
             MIN_ICODE = -74;
