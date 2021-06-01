@@ -1066,7 +1066,7 @@ public final class IRFactory extends Parser {
             } else {
                 TemplateCharacters chars = (TemplateCharacters) elem;
                 decompiler.addTemplateLiteral(chars.getRawValue());
-                // skip empty parts, e.g. `ε${expr}ε` where ε denotes the empty string
+                // skip empty parts, e.g. `xx${expr}xx` where xx denotes the empty string
                 String value = chars.getValue();
                 if (value.length() > 0) {
                     pn = createBinary(Token.ADD, pn, Node.newString(value));
