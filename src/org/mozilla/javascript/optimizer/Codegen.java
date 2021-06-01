@@ -733,7 +733,7 @@ public class Codegen implements Evaluator
                           REGEXP_INIT_METHOD_NAME, REGEXP_INIT_METHOD_SIGNATURE);
         }
         // emit all template literals
-        if (ofn.fnode.getTemplateLiteralCount() != 0) {;
+        if (ofn.fnode.getTemplateLiteralCount() != 0) {
             cfw.addInvoke(ByteCode.INVOKESTATIC, mainClassName,
                           TEMPLATE_LITERAL_INIT_METHOD_NAME, TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
         }

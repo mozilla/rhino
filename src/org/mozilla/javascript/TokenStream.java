@@ -1441,7 +1441,7 @@ class TokenStream {
                     if (charAt(cursor) == '\n') {
                         // consume the <LF> that followed the <CR>
                         getCharIgnoreLineEnd(false);
-                    }                    
+                    }
                     break;
                 case 0x2028: // <LS>
                 case 0x2029: // <PS>
@@ -2053,7 +2053,7 @@ class TokenStream {
 
     private int getCharIgnoreLineEnd(boolean skipFormattingChars) throws IOException
     {
-    	return getChar(skipFormattingChars, true);
+        return getChar(skipFormattingChars, true);
     }
 
     private void ungetCharIgnoreLineEnd(int c) {
