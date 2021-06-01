@@ -64,7 +64,12 @@ public class DecompileTest {
                 cx -> {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     final Script script = cx.compileString(source, "my script", 0, null);
-                    Assert.assertEquals(source, cx.decompileScript(script, 4).trim().replaceAll("\\R", "").replaceAll("\\s+", " "));
+                    Assert.assertEquals(
+                            source,
+                            cx.decompileScript(script, 4)
+                                    .trim()
+                                    .replaceAll("\\R", "")
+                                    .replaceAll("\\s+", " "));
                     return null;
                 });
     }
