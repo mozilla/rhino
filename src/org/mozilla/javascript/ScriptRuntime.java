@@ -4674,7 +4674,7 @@ public class ScriptRuntime {
 
     public static Scriptable getTemplateLiteralCallSite(Context cx, Scriptable scope,
                                               Object[] strings, int index) {
-    	final int INTEGRITY_FREEZE = ScriptableObject.PERMANENT | ScriptableObject.READONLY;
+        final int INTEGRITY_FREEZE = ScriptableObject.PERMANENT | ScriptableObject.READONLY;
 
         Object callsite = strings[index];
 
