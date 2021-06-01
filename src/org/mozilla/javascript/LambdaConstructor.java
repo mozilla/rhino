@@ -90,12 +90,39 @@ public class LambdaConstructor extends LambdaFunction {
     /**
      * Define a function property on the prototype of the constructor using a LambdaFunction under
      * the covers.
+     *
+     * @param scope the current scope
+     * @param name the name of the property to add
+     * @param attributes the attributes of the actual property
+     * @param functionAttributes the attributes of the "name" and "length" properties of the
+     *     function property, since these differ for certain built-in objects
+     * @param target the lambda function to call when this method is called
      */
     public void definePrototypeMethod(
-            Scriptable scope, String name, int length, int attributes, Callable target) {
+            Scriptable scope,
+            String name,
+            int length,
+            Callable target,
+            int attributes,
+            int functionAttributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        f.setFunctionPropertyAttributes(functionAttributes);
         ScriptableObject proto = getPrototypeScriptable();
         proto.defineProperty(name, f, attributes);
+    }
+
+    /**
+     * Define a function property on the prototype of the constructor using a LambdaFunction under
+     * the covers. The function attributes default to DONTENUM for the property itself, and DONTENUM
+     * | READONLY for the properties of the function object.
+     *
+     * @param scope the current scope
+     * @param name the name of the property to add function property, since these differ for certain
+     *     built-in objects
+     * @param target the lambda function to call when this method is called
+     */
+    public void definePrototypeMethod(Scriptable scope, String name, int length, Callable target) {
+        definePrototypeMethod(scope, name, length, target, DONTENUM, DONTENUM | READONLY);
     }
 
     /** Define a property that may be of any type on the prototype of this constructor. */

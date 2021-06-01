@@ -24,31 +24,21 @@ public class NativeCallSite extends ScriptableObject {
                         (Context cx, Scriptable s, Object[] args) -> new NativeCallSite());
 
         constructor.definePrototypeMethod(
-                scope, "getFunctionName", 0, DONTENUM, NativeCallSite::getFunctionName);
+                scope, "getFunctionName", 0, NativeCallSite::getFunctionName);
+        constructor.definePrototypeMethod(scope, "getFileName", 0, NativeCallSite::getFileName);
+        constructor.definePrototypeMethod(scope, "getLineNumber", 0, NativeCallSite::getLineNumber);
+        constructor.definePrototypeMethod(scope, "toString", 0, NativeCallSite::js_toString);
+        constructor.definePrototypeMethod(scope, "getThis", 0, NativeCallSite::getUndefined);
+        constructor.definePrototypeMethod(scope, "getTypeName", 0, NativeCallSite::getUndefined);
+        constructor.definePrototypeMethod(scope, "getFunction", 0, NativeCallSite::getUndefined);
         constructor.definePrototypeMethod(
-                scope, "getFileName", 0, DONTENUM, NativeCallSite::getFileName);
-        constructor.definePrototypeMethod(
-                scope, "getLineNumber", 0, DONTENUM, NativeCallSite::getLineNumber);
-        constructor.definePrototypeMethod(
-                scope, "toString", 0, DONTENUM, NativeCallSite::js_toString);
-        constructor.definePrototypeMethod(
-                scope, "getThis", 0, DONTENUM, NativeCallSite::getUndefined);
-        constructor.definePrototypeMethod(
-                scope, "getTypeName", 0, DONTENUM, NativeCallSite::getUndefined);
-        constructor.definePrototypeMethod(
-                scope, "getFunction", 0, DONTENUM, NativeCallSite::getUndefined);
-        constructor.definePrototypeMethod(
-                scope, "getColumnNumber", 0, DONTENUM, NativeCallSite::getUndefined);
-        constructor.definePrototypeMethod(
-                scope, "getMethodName", 0, DONTENUM, NativeCallSite::getNull);
-        constructor.definePrototypeMethod(
-                scope, "getEvalOrigin", 0, DONTENUM, NativeCallSite::getFalse);
-        constructor.definePrototypeMethod(scope, "isEval", 0, DONTENUM, NativeCallSite::getFalse);
-        constructor.definePrototypeMethod(
-                scope, "isConstructor", 0, DONTENUM, NativeCallSite::getFalse);
-        constructor.definePrototypeMethod(scope, "isNative", 0, DONTENUM, NativeCallSite::getFalse);
-        constructor.definePrototypeMethod(
-                scope, "isToplevel", 0, DONTENUM, NativeCallSite::getFalse);
+                scope, "getColumnNumber", 0, NativeCallSite::getUndefined);
+        constructor.definePrototypeMethod(scope, "getMethodName", 0, NativeCallSite::getNull);
+        constructor.definePrototypeMethod(scope, "getEvalOrigin", 0, NativeCallSite::getFalse);
+        constructor.definePrototypeMethod(scope, "isEval", 0, NativeCallSite::getFalse);
+        constructor.definePrototypeMethod(scope, "isConstructor", 0, NativeCallSite::getFalse);
+        constructor.definePrototypeMethod(scope, "isNative", 0, NativeCallSite::getFalse);
+        constructor.definePrototypeMethod(scope, "isToplevel", 0, NativeCallSite::getFalse);
 
         ScriptableObject.defineProperty(scope, "CallSite", constructor, DONTENUM);
         if (sealed) {

@@ -228,7 +228,6 @@ public class LambdaFunctionTest {
                     scope,
                     "appendToValue",
                     1,
-                    0,
                     (Context cx, Scriptable s, Scriptable thisObj, Object[] args) -> {
                         TestClass self =
                                 LambdaConstructor.convertThisObject(thisObj, TestClass.class);

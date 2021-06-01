@@ -26,16 +26,7 @@ final class NativeError extends ScriptableObject {
         // This object will hang around due to various lambdas
         final ProtoProps pprops = new ProtoProps();
 
-        LambdaConstructor constructor =
-                new LambdaConstructor(
-                        scope,
-                        "Error",
-                        1,
-                        (Context cx, Scriptable s, Object[] args) -> {
-                            NativeError err = new NativeError();
-                            err.initialize(args, pprops);
-                            return err;
-                        });
+        LambdaConstructor constructor = setUpErrorConstructor(scope, "Error", pprops);
 
         constructor.defineConstructorMethod(
                 scope,
@@ -44,17 +35,13 @@ final class NativeError extends ScriptableObject {
                 (Context cx, Scriptable s, Scriptable thisObj, Object[] args) ->
                         js_captureStackTrace(cx, thisObj, args, pprops));
 
-        constructor.definePrototypeProperty("message", "", DONTENUM);
-        constructor.definePrototypeProperty("name", "Error", DONTENUM);
-
         constructor.definePrototypeMethod(
                 scope,
                 "toString",
                 0,
-                DONTENUM,
                 (Context cx, Scriptable s, Scriptable thisObj, Object[] args) ->
                         js_toString(thisObj));
-        constructor.definePrototypeMethod(scope, "toSource", 0, DONTENUM, NativeError::js_toSource);
+        constructor.definePrototypeMethod(scope, "toSource", 0, NativeError::js_toSource);
 
         constructor.defineOwnProperty(
                 "stackTraceLimit", pprops::getStackTraceLimit, pprops::setStackTraceLimit, 0);
@@ -66,6 +53,27 @@ final class NativeError extends ScriptableObject {
             constructor.sealObject();
         }
         NativeCallSite.init(scope, sealed);
+    }
+
+    /**
+     * This common method is used to initialize all types of Errors including native errors like
+     * TypeError.
+     */
+    static LambdaConstructor setUpErrorConstructor(
+            Scriptable scope, String name, ProtoProps pprops) {
+        LambdaConstructor constructor =
+                new LambdaConstructor(
+                        scope,
+                        name,
+                        1,
+                        (Context cx, Scriptable s, Object[] args) -> {
+                            NativeError err = new NativeError();
+                            err.initialize(args, pprops);
+                            return err;
+                        });
+        constructor.definePrototypeProperty("message", "", DONTENUM);
+        constructor.definePrototypeProperty("name", name, DONTENUM);
+        return constructor;
     }
 
     void initialize(Object[] args, ProtoProps pprops) {
@@ -87,21 +95,6 @@ final class NativeError extends ScriptableObject {
         defineOwnProperty("stack", () -> getStack(pprops), this::setStack, DONTENUM);
         defineProperty("fileName", fileName, DONTENUM);
         defineProperty("lineNumber", lineNum, DONTENUM);
-    }
-
-    // Construct a new error with the specified constructor as the prototype.
-    // This is used to construct the native error objects.
-    static NativeError make(Context cx, Scriptable scope, Scriptable ctorObj, Object[] args) {
-        Scriptable proto = (Scriptable) (ctorObj.get("prototype", ctorObj));
-        NativeError obj = new NativeError();
-        obj.setPrototype(proto);
-        obj.setParentScope(scope);
-        obj.initialize(args, null);
-        Object protoName = ScriptableObject.getProperty(proto, "name");
-        if (protoName != null && !Undefined.isUndefined(protoName)) {
-            ScriptableObject.putProperty(obj, "name", protoName);
-        }
-        return obj;
     }
 
     @Override
