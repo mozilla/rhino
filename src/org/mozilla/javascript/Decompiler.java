@@ -746,18 +746,6 @@ public class Decompiler {
                     result.append(" ** ");
                     break;
 
-                case Token.TEMPLATE_LITERAL:
-                    result.append("`");
-                    break;
-
-                case Token.TEMPLATE_LITERAL_SUBST:
-                    result.append("${");
-                    break;
-
-                case Token.TEMPLATE_CHARS:
-                    i = printSourceString(source, i + 1, false, result);
-                    continue;
-
                 case Token.COLONCOLON:
                     result.append("::");
                     break;
@@ -781,6 +769,18 @@ public class Decompiler {
                 case Token.ARROW:
                     result.append(" => ");
                     break;
+
+                case Token.TEMPLATE_LITERAL:
+                    result.append("`");
+                    break;
+
+                case Token.TEMPLATE_LITERAL_SUBST:
+                    result.append("${");
+                    break;
+
+                case Token.TEMPLATE_CHARS:
+                    i = printSourceString(source, i + 1, false, result);
+                    continue;
 
                 default:
                     // If we don't know how to decompile it, raise an exception.
