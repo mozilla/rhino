@@ -368,7 +368,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall
      * The global method escape, as per ECMA-262 15.1.2.4.
 
      * Includes code for the 'mask' argument supported by the C escape
-     * method, which used to be part of the browser imbedding.  Blame
+     * method, which used to be part of the browser embedding.  Blame
      * for the strange constant names should be directed there.
      */
 
