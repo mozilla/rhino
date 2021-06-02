@@ -190,9 +190,13 @@ public class NativeMap extends IdScriptableObject {
         Scriptable proto = ScriptableObject.getClassPrototype(scope, map.getClassName());
         final Callable set = ScriptRuntime.getPropFunctionAndThis(proto, "set", cx, scope);
 
-        ScriptRuntime.loadFromIterable(cx, scope, arg1, (key, value) -> {
-            set.call(cx, scope, map, new Object[] { key, value });
-        });
+        ScriptRuntime.loadFromIterable(
+                cx,
+                scope,
+                arg1,
+                (key, value) -> {
+                    set.call(cx, scope, map, new Object[] {key, value});
+                });
     }
 
     private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f) {
