@@ -11,14 +11,14 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 public class StackTraceExtensionRhinoTest {
-    private void testTraces(int opt) {
+    private void testTraces(int opt, boolean debug) {
         final ContextFactory factory =
                 new ContextFactory() {
                     @Override
                     protected boolean hasFeature(Context cx, int featureIndex) {
                         switch (featureIndex) {
                             case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
-                                return true;
+                                return debug;
                             default:
                                 return super.hasFeature(cx, featureIndex);
                         }
@@ -29,12 +29,15 @@ public class StackTraceExtensionRhinoTest {
         try {
             cx.setLanguageVersion(Context.VERSION_1_8);
             cx.setOptimizationLevel(opt);
-            cx.setGeneratingDebug(true);
+            cx.setGeneratingDebug(debug);
 
             Global global = new Global(cx);
             Scriptable root = cx.newObject(global);
 
             FileReader rdr = new FileReader("testsrc/jstests/extensions/stack-traces-rhino.js");
+
+            // Expect file names to be present in stack only if debug is on
+            global.put("ExpectFileNames", global, debug);
 
             try {
                 cx.evaluateReader(root, rdr, "stack-traces-rhino.js", 1, null);
@@ -49,17 +52,32 @@ public class StackTraceExtensionRhinoTest {
     }
 
     @Test
+    public void testStackTrace0Debug() {
+        testTraces(0, true);
+    }
+
+    @Test
     public void testStackTrace0() {
-        testTraces(0);
+        testTraces(0, false);
     }
 
     @Test
     public void testStackTrace9() {
-        testTraces(9);
+        testTraces(9, false);
+    }
+
+    @Test
+    public void testStackTrace9Debug() {
+        testTraces(9, true);
     }
 
     @Test
     public void testStackTraceInt() {
-        testTraces(-1);
+        testTraces(-1, false);
+    }
+
+    @Test
+    public void testStackTraceIntDebug() {
+        testTraces(-1, true);
     }
 }

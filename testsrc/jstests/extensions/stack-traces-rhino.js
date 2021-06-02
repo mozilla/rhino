@@ -14,6 +14,7 @@ function ObjectThrower(msg) {
 }
 function nestedCapture(o, f) {
   Error.captureStackTrace(o, f);
+  Error.captureStackTrace(o, f);
 }
 function parentCapture(o, f) {
   nestedCapture(o, f);
@@ -29,16 +30,26 @@ function countLines(msg) {
   return msg.split('\n').length - 1;
 }
 
+// Test that a new Error contains at least one line
+// of stack trace.
+let err = new Error('Testing new error');
+assertEquals(err.message, 'Testing new error');
+assertEquals(1, countLines(err.stack));
+
 // Test that toString contains the error but not the stack
-// and test that the stack contains the file name
+// and test that the stack contains the file name. The file name
+// is only present if debug mode is on for code generation.
 try {
   throw new Error('Test 1');
 } catch (e) {
   assertFalse(e.stack == undefined);
   assertTrue(/Test 1/.test(e.toString()));
-  assertFalse(/stack-traces-rhino.js/.test(e.toString()));
   assertFalse(/Test 1/.test(e.stack));
-  assertTrue(/stack-traces-rhino.js/.test(e.stack));
+
+  if (ExpectFileNames) {
+    assertFalse(/stack-traces-rhino.js/.test(e.toString()));
+    assertTrue(/stack-traces-rhino.js/.test(e.stack));
+  }
 }
 
 // Assert that the function name is nested inside a nested stack trace
