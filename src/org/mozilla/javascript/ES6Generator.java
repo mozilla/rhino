@@ -34,14 +34,10 @@ public final class ES6Generator extends IdScriptableObject {
         return prototype;
     }
 
-    /**
-     * Only for constructing the prototype object.
-     */
-    private ES6Generator() { }
+    /** Only for constructing the prototype object. */
+    private ES6Generator() {}
 
-    public ES6Generator(Scriptable scope, NativeFunction function,
-                        Object savedState)
-    {
+    public ES6Generator(Scriptable scope, NativeFunction function, Object savedState) {
         this.function = function;
         this.savedState = savedState;
         // Set parent and prototype properties. Since we don't have a
@@ -50,7 +46,7 @@ public final class ES6Generator extends IdScriptableObject {
         Scriptable top = ScriptableObject.getTopLevelScope(scope);
         this.setParentScope(top);
         ES6Generator prototype =
-            (ES6Generator)ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);
+                (ES6Generator) ScriptableObject.getTopScopeValue(top, GENERATOR_TAG);
         this.setPrototype(prototype);
     }
 
@@ -69,18 +65,27 @@ public final class ES6Generator extends IdScriptableObject {
         String s;
         int arity;
         switch (id) {
-            case Id_next:           arity=1; s="next";           break;
-            case Id_return:         arity=1; s="return";         break;
-            case Id_throw:          arity=1; s="throw";          break;
-            default: throw new IllegalArgumentException(String.valueOf(id));
+            case Id_next:
+                arity = 1;
+                s = "next";
+                break;
+            case Id_return:
+                arity = 1;
+                s = "return";
+                break;
+            case Id_throw:
+                arity = 1;
+                s = "throw";
+                break;
+            default:
+                throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(GENERATOR_TAG, id, s, arity);
     }
 
     @Override
-    public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
-    {
+    public Object execIdCall(
+            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (!f.hasTag(GENERATOR_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
@@ -92,7 +97,8 @@ public final class ES6Generator extends IdScriptableObject {
         switch (id) {
             case Id_return:
                 if (generator.delegee == null) {
-                    return generator.resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE, value);
+                    return generator.resumeAbruptLocal(
+                            cx, scope, NativeGenerator.GENERATOR_CLOSE, value);
                 }
                 return generator.resumeDelegeeReturn(cx, scope, value);
             case Id_next:
@@ -102,7 +108,8 @@ public final class ES6Generator extends IdScriptableObject {
                 return generator.resumeDelegee(cx, scope, value);
             case Id_throw:
                 if (generator.delegee == null) {
-                    return generator.resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, value);
+                    return generator.resumeAbruptLocal(
+                            cx, scope, NativeGenerator.GENERATOR_THROW, value);
                 }
                 return generator.resumeDelegeeThrow(cx, scope, value);
             case SymbolId_iterator:
@@ -112,13 +119,17 @@ public final class ES6Generator extends IdScriptableObject {
         }
     }
 
-    private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value)
-    {
+    private Scriptable resumeDelegee(Context cx, Scriptable scope, Object value) {
         try {
             // Be super-careful and only pass an arg to next if it expects one
-            Object[] nextArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[] { value };
+            Object[] nextArgs =
+                    Undefined.instance.equals(value)
+                            ? ScriptRuntime.emptyArgs
+                            : new Object[] {value};
 
-            Callable nextFn = ScriptRuntime.getPropFunctionAndThis(delegee, ES6Iterator.NEXT_METHOD, cx, scope);
+            Callable nextFn =
+                    ScriptRuntime.getPropFunctionAndThis(
+                            delegee, ES6Iterator.NEXT_METHOD, cx, scope);
             Scriptable nextThis = ScriptRuntime.lastStoredScriptable(cx);
             Object nr = nextFn.call(cx, scope, nextThis, nextArgs);
 
@@ -127,7 +138,10 @@ public final class ES6Generator extends IdScriptableObject {
                 // Iterator is "done".
                 delegee = null;
                 // Return a result to the original generator
-                return resumeLocal(cx, scope, ScriptableObject.getProperty(nextResult, ES6Iterator.VALUE_PROPERTY));
+                return resumeLocal(
+                        cx,
+                        scope,
+                        ScriptableObject.getProperty(nextResult, ES6Iterator.VALUE_PROPERTY));
             }
             // Otherwise, we have a normal result and should continue
             return nextResult;
@@ -146,7 +160,7 @@ public final class ES6Generator extends IdScriptableObject {
             // Delegate to "throw" method. If it's not defined we'll get an error here.
             Callable throwFn = ScriptRuntime.getPropFunctionAndThis(delegee, "throw", cx, scope);
             Scriptable nextThis = ScriptRuntime.lastStoredScriptable(cx);
-            Object throwResult = throwFn.call(cx, scope, nextThis, new Object[] { value });
+            Object throwResult = throwFn.call(cx, scope, nextThis, new Object[] {value});
 
             if (ScriptRuntime.isIteratorDone(cx, throwResult)) {
                 // Iterator is "done".
@@ -157,8 +171,11 @@ public final class ES6Generator extends IdScriptableObject {
                 } finally {
                     delegee = null;
                 }
-                return resumeLocal(cx, scope,
-                        ScriptRuntime.getObjectProp(throwResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
+                return resumeLocal(
+                        cx,
+                        scope,
+                        ScriptRuntime.getObjectProp(
+                                throwResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
             }
             // Otherwise, we have a normal result and should continue
             return ensureScriptable(throwResult);
@@ -189,8 +206,12 @@ public final class ES6Generator extends IdScriptableObject {
                     // Iterator is "done".
                     delegee = null;
                     // Return a result to the original generator
-                    return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_CLOSE,
-                            ScriptRuntime.getObjectPropNoWarn(retResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
+                    return resumeAbruptLocal(
+                            cx,
+                            scope,
+                            NativeGenerator.GENERATOR_CLOSE,
+                            ScriptRuntime.getObjectPropNoWarn(
+                                    retResult, ES6Iterator.VALUE_PROPERTY, cx, scope));
                 } else {
                     // Not actually done yet!
                     return ensureScriptable(retResult);
@@ -209,8 +230,7 @@ public final class ES6Generator extends IdScriptableObject {
         }
     }
 
-    private Scriptable resumeLocal(Context cx, Scriptable scope, Object value)
-    {
+    private Scriptable resumeLocal(Context cx, Scriptable scope, Object value) {
         if (state == State.COMPLETED) {
             return ES6Iterator.makeIteratorResult(cx, scope, Boolean.TRUE);
         }
@@ -222,19 +242,19 @@ public final class ES6Generator extends IdScriptableObject {
         state = State.EXECUTING;
 
         try {
-            Object r = function.resumeGenerator(cx, scope,
-                NativeGenerator.GENERATOR_SEND, savedState, value);
+            Object r =
+                    function.resumeGenerator(
+                            cx, scope, NativeGenerator.GENERATOR_SEND, savedState, value);
 
             if (r instanceof YieldStarResult) {
                 // This special result tells us that we are executing a "yield *"
                 state = State.SUSPENDED_YIELD;
-                YieldStarResult ysResult = (YieldStarResult)r;
+                YieldStarResult ysResult = (YieldStarResult) r;
                 try {
                     delegee = ScriptRuntime.callIterator(ysResult.getResult(), cx, scope);
                 } catch (RhinoException re) {
                     // Need to handle exceptions if the iterator cannot be called.
-                    return resumeAbruptLocal(cx, scope,
-                        NativeGenerator.GENERATOR_THROW, re);
+                    return resumeAbruptLocal(cx, scope, NativeGenerator.GENERATOR_THROW, re);
                 }
 
                 Scriptable delResult;
@@ -258,13 +278,15 @@ public final class ES6Generator extends IdScriptableObject {
         } catch (JavaScriptException jse) {
             state = State.COMPLETED;
             if (jse.getValue() instanceof NativeIterator.StopIteration) {
-                ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY,
-                  ((NativeIterator.StopIteration)jse.getValue()).getValue());
+                ScriptableObject.putProperty(
+                        result,
+                        ES6Iterator.VALUE_PROPERTY,
+                        ((NativeIterator.StopIteration) jse.getValue()).getValue());
             } else {
                 lineNumber = jse.lineNumber();
                 lineSource = jse.lineSource();
                 if (jse.getValue() instanceof RhinoException) {
-                    throw (RhinoException)jse.getValue();
+                    throw (RhinoException) jse.getValue();
                 }
                 throw jse;
             }
@@ -282,8 +304,7 @@ public final class ES6Generator extends IdScriptableObject {
         return result;
     }
 
-    private Scriptable resumeAbruptLocal(Context cx, Scriptable scope, int op, Object value)
-    {
+    private Scriptable resumeAbruptLocal(Context cx, Scriptable scope, int op, Object value) {
         if (state == State.EXECUTING) {
             throw ScriptRuntime.typeErrorById("msg.generator.executing");
         }
@@ -310,9 +331,9 @@ public final class ES6Generator extends IdScriptableObject {
             }
         } else {
             if (value instanceof JavaScriptException) {
-                throwValue = ((JavaScriptException)value).getValue();
+                throwValue = ((JavaScriptException) value).getValue();
             } else if (value instanceof RhinoException) {
-                throwValue = ScriptRuntime.wrapException((Throwable)value, scope, cx);
+                throwValue = ScriptRuntime.wrapException((Throwable) value, scope, cx);
             }
         }
 
@@ -327,13 +348,15 @@ public final class ES6Generator extends IdScriptableObject {
         } catch (JavaScriptException jse) {
             state = State.COMPLETED;
             if (jse.getValue() instanceof NativeIterator.StopIteration) {
-                ScriptableObject.putProperty(result, ES6Iterator.VALUE_PROPERTY,
-                  ((NativeIterator.StopIteration)jse.getValue()).getValue());
+                ScriptableObject.putProperty(
+                        result,
+                        ES6Iterator.VALUE_PROPERTY,
+                        ((NativeIterator.StopIteration) jse.getValue()).getValue());
             } else {
                 lineNumber = jse.lineNumber();
                 lineSource = jse.lineSource();
                 if (jse.getValue() instanceof RhinoException) {
-                    throw (RhinoException)jse.getValue();
+                    throw (RhinoException) jse.getValue();
                 }
                 throw jse;
             }
@@ -354,17 +377,19 @@ public final class ES6Generator extends IdScriptableObject {
     }
 
     private Object callReturnOptionally(Context cx, Scriptable scope, Object value) {
-        Object[] retArgs = Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs
-                    : new Object[] { value };
+        Object[] retArgs =
+                Undefined.instance.equals(value) ? ScriptRuntime.emptyArgs : new Object[] {value};
         // Delegate to "return" method. If it's not defined we ignore it
-        Object retFnObj = ScriptRuntime.getObjectPropNoWarn(
-            delegee, ES6Iterator.RETURN_METHOD, cx, scope);
+        Object retFnObj =
+                ScriptRuntime.getObjectPropNoWarn(delegee, ES6Iterator.RETURN_METHOD, cx, scope);
         if (!Undefined.instance.equals(retFnObj)) {
             if (!(retFnObj instanceof Callable)) {
-                throw ScriptRuntime.typeErrorById("msg.isnt.function", ES6Iterator.RETURN_METHOD,
-                    ScriptRuntime.typeof(retFnObj));
+                throw ScriptRuntime.typeErrorById(
+                        "msg.isnt.function",
+                        ES6Iterator.RETURN_METHOD,
+                        ScriptRuntime.typeof(retFnObj));
             }
-            return ((Callable)retFnObj).call(cx, scope, ensureScriptable(delegee), retArgs);
+            return ((Callable) retFnObj).call(cx, scope, ensureScriptable(delegee), retArgs);
         }
         return null;
     }
@@ -377,32 +402,35 @@ public final class ES6Generator extends IdScriptableObject {
         return 0;
     }
 
-// #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2017-08-04 17:30:46 PDT
-        L0: { id = 0; String X = null;
+        L0:
+        {
+            id = 0;
+            String X = null;
             int s_length = s.length();
-            if (s_length==4) { X="next";id=Id_next; }
-            else if (s_length==5) { X="throw";id=Id_throw; }
-            else if (s_length==6) { X="return";id=Id_return; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            if (s_length == 4) {
+                X = "next";
+                id = Id_next;
+            } else if (s_length == 5) {
+                X = "throw";
+                id = Id_throw;
+            } else if (s_length == 6) {
+                X = "return";
+                id = Id_return;
+            }
+            if (X != null && X != s && !X.equals(s)) id = 0;
             break L0;
         }
-// #/generated#
         return id;
     }
 
-    private static final int
-            Id_next                  = 1,
-            Id_return                = 2,
-            Id_throw                 = 3,
-            SymbolId_iterator        = 4,
-            MAX_PROTOTYPE_ID         = SymbolId_iterator;
-
-    // #/string_id_map#
+    private static final int Id_next = 1,
+            Id_return = 2,
+            Id_throw = 3,
+            SymbolId_iterator = 4,
+            MAX_PROTOTYPE_ID = SymbolId_iterator;
 
     private NativeFunction function;
     private Object savedState;
@@ -411,7 +439,12 @@ public final class ES6Generator extends IdScriptableObject {
     private State state = State.SUSPENDED_START;
     private Object delegee;
 
-    enum State { SUSPENDED_START, SUSPENDED_YIELD, EXECUTING, COMPLETED }
+    enum State {
+        SUSPENDED_START,
+        SUSPENDED_YIELD,
+        EXECUTING,
+        COMPLETED
+    }
 
     public static final class YieldStarResult {
         private Object result;
@@ -420,6 +453,8 @@ public final class ES6Generator extends IdScriptableObject {
             this.result = result;
         }
 
-        Object getResult() { return result; }
+        Object getResult() {
+            return result;
+        }
     }
 }

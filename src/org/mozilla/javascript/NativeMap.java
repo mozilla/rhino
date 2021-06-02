@@ -189,15 +189,10 @@ public class NativeMap extends IdScriptableObject {
         // so that we can get our own prototype.
         Scriptable proto = ScriptableObject.getClassPrototype(scope, map.getClassName());
         final Callable set = ScriptRuntime.getPropFunctionAndThis(proto, "set", cx, scope);
-        ScriptRuntime.lastStoredScriptable(cx);
 
-        ScriptRuntime.loadFromIterable(
-                cx,
-                scope,
-                arg1,
-                (key, value) -> {
-                    set.call(cx, scope, map, new Object[] {key, value});
-                });
+        ScriptRuntime.loadFromIterable(cx, scope, arg1, (key, value) -> {
+            set.call(cx, scope, map, new Object[] { key, value });
+        });
     }
 
     private static NativeMap realThis(Scriptable thisObj, IdFunctionObject f) {
@@ -292,12 +287,9 @@ public class NativeMap extends IdScriptableObject {
         return 0;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:14 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -333,7 +325,6 @@ public class NativeMap extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -352,6 +343,4 @@ public class NativeMap extends IdScriptableObject {
             SymbolId_getSize = 11,
             SymbolId_toStringTag = 12,
             MAX_PROTOTYPE_ID = SymbolId_toStringTag;
-
-    // #/string_id_map#
 }

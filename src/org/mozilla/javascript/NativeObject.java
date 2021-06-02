@@ -965,12 +965,9 @@ public class NativeObject extends IdScriptableObject implements Map {
         }
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:05 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -1012,7 +1009,6 @@ public class NativeObject extends IdScriptableObject implements Map {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -1051,6 +1047,4 @@ public class NativeObject extends IdScriptableObject implements Map {
             Id___lookupGetter__ = 11,
             Id___lookupSetter__ = 12,
             MAX_PROTOTYPE_ID = 12;
-
-    // #/string_id_map#
 }

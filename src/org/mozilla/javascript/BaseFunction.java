@@ -91,8 +91,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
         throw ScriptRuntime.typeErrorById("msg.instanceof.bad.prototype", getFunctionName());
     }
 
-    // #string_id_map#
-
     private static final int Id_length = 1,
             Id_arity = 2,
             Id_name = 3,
@@ -108,7 +106,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
     @Override
     protected int findInstanceIdInfo(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:52:05 MEZ
         switch (s) {
             case "length":
                 id = Id_length;
@@ -129,8 +126,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
                 id = 0;
                 break;
         }
-        // #/generated#
-        // #/string_id_map#
 
         if (id == 0) return super.findInstanceIdInfo(s);
 
@@ -588,8 +583,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #string_id_map#
-        // #generated# Last update: 2021-03-21 09:52:05 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -613,7 +606,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -624,8 +616,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
             Id_call = 5,
             Id_bind = 6,
             MAX_PROTOTYPE_ID = Id_bind;
-
-    // #/string_id_map#
 
     private Object prototypeProperty;
     private Object argumentsObj = NOT_FOUND;

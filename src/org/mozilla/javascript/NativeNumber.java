@@ -328,12 +328,10 @@ final class NativeNumber extends IdScriptableObject {
     private static boolean isDoubleSafeInteger(double d) {
         return isDoubleInteger(d) && (d <= MAX_SAFE_INTEGER) && (d >= MIN_SAFE_INTEGER);
     }
-    // #string_id_map#
 
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:51:08 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -363,7 +361,6 @@ final class NativeNumber extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -380,8 +377,6 @@ final class NativeNumber extends IdScriptableObject {
             Id_toExponential = 7,
             Id_toPrecision = 8,
             MAX_PROTOTYPE_ID = 8;
-
-    // #/string_id_map#
 
     private double doubleValue;
 }
