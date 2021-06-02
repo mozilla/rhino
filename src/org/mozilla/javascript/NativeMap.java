@@ -189,6 +189,7 @@ public class NativeMap extends IdScriptableObject {
         // so that we can get our own prototype.
         Scriptable proto = ScriptableObject.getClassPrototype(scope, map.getClassName());
         final Callable set = ScriptRuntime.getPropFunctionAndThis(proto, "set", cx, scope);
+        ScriptRuntime.lastStoredScriptable(cx);
 
         ScriptRuntime.loadFromIterable(
                 cx,
