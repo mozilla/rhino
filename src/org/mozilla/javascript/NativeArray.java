@@ -699,8 +699,9 @@ public class NativeArray extends IdScriptableObject implements List {
         }
         super.defineOwnProperty(cx, id, desc, checkValid);
 
-        if (id instanceof String && ((String)id).equals("length")) {
-            lengthAttr = getAttributes("length"); // Update cached attributes value for length property
+        if (id instanceof String && ((String) id).equals("length")) {
+            lengthAttr =
+                    getAttributes("length"); // Update cached attributes value for length property
         }
     }
 

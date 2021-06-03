@@ -573,7 +573,8 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return Boolean.TRUE;
                     }
 
-                    return AbstractEcmaObjectOperations.testIntegrityLevel(arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
+                    return AbstractEcmaObjectOperations.testIntegrityLevel(
+                            arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
                 }
             case ConstructorId_isFrozen:
                 {
@@ -583,7 +584,8 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return Boolean.TRUE;
                     }
 
-                    return AbstractEcmaObjectOperations.testIntegrityLevel(arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                    return AbstractEcmaObjectOperations.testIntegrityLevel(
+                            arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
                 }
             case ConstructorId_seal:
                 {
@@ -593,7 +595,8 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return arg;
                     }
 
-                    AbstractEcmaObjectOperations.setIntegrityLevel(arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
+                    AbstractEcmaObjectOperations.setIntegrityLevel(
+                            arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
 
                     return arg;
                 }
@@ -605,7 +608,8 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return arg;
                     }
 
-                    AbstractEcmaObjectOperations.setIntegrityLevel(arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                    AbstractEcmaObjectOperations.setIntegrityLevel(
+                            arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
 
                     return arg;
                 }
