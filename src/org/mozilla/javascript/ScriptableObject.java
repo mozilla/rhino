@@ -700,13 +700,11 @@ public abstract class ScriptableObject
     }
 
     /**
-     * Returns an array of ids for the properties of the object.
+     * Returns an array of ids of all non-Symbol properties of the object.
      *
-     * <p>All properties, even those with attribute DONTENUM, are listed.
+     * <p>All non-Symbol properties, even those with attribute DONTENUM, are listed.
      *
-     * <p>
-     *
-     * @return an array of java.lang.Objects with an entry for every listed property. Properties
+     * @return an array of java.lang.Objects with an entry for every non-Symbol property. Properties
      *     accessed via an integer index will have a corresponding Integer entry in the returned
      *     array. Properties accessed by a String will have a String entry in the returned array.
      */
@@ -2077,6 +2075,7 @@ public abstract class ScriptableObject
         }
         if (isConst) throw ScriptRuntime.typeErrorById("msg.var.redecl", name);
     }
+
     /**
      * Returns whether an indexed property is defined in an object or any object in its prototype
      * chain.

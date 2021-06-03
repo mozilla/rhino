@@ -698,6 +698,10 @@ public class NativeArray extends IdScriptableObject implements List {
             modCount++;
         }
         super.defineOwnProperty(cx, id, desc, checkValid);
+
+        if (id instanceof String && ((String)id) == "length") {
+            lengthAttr = getAttributes("length"); // Update cached attributes value for length property
+        }
     }
 
     /** See ECMA 15.4.1,2 */
