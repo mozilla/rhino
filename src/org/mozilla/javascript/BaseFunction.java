@@ -223,7 +223,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
                 argumentsAttributes = attr;
                 return;
         }
-        super.setInstanceIdAttributes(id, attr);
     }
 
     @Override
