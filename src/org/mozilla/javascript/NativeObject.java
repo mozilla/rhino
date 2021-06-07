@@ -574,7 +574,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     return AbstractEcmaObjectOperations.testIntegrityLevel(
-                            arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
+                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
                 }
             case ConstructorId_isFrozen:
                 {
@@ -585,7 +585,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     return AbstractEcmaObjectOperations.testIntegrityLevel(
-                            arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
                 }
             case ConstructorId_seal:
                 {
@@ -596,7 +596,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     AbstractEcmaObjectOperations.setIntegrityLevel(
-                            arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
+                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
 
                     return arg;
                 }
@@ -609,7 +609,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     AbstractEcmaObjectOperations.setIntegrityLevel(
-                            arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
 
                     return arg;
                 }

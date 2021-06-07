@@ -682,21 +682,29 @@ public class NativeArray extends IdScriptableObject implements List {
     @Override
     protected void defineOwnProperty(
             Context cx, Object id, ScriptableObject desc, boolean checkValid) {
-        if (dense != null) {
-            Object[] values = dense;
-            dense = null;
-            denseOnly = false;
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] != NOT_FOUND) {
-                    put(i, this, values[i]);
-                }
-            }
-        }
         long index = toArrayIndex(id);
         if (index >= length) {
             length = index + 1;
             modCount++;
         }
+
+        if (index != -1 && dense != null) {
+            Object[] values = dense;
+            dense = null;
+            denseOnly = false;
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] != NOT_FOUND) {
+                    if (!isExtensible()) {
+                        // Force creating a slot, before calling .put(...) on the next line, which
+                        // would otherwise fail on a array on which preventExtensions() has been
+                        // called
+                        setAttributes(i, 0);
+                    }
+                    put(i, this, values[i]);
+                }
+            }
+        }
+
         super.defineOwnProperty(cx, id, desc, checkValid);
 
         if (id instanceof String && ((String) id).equals("length")) {
