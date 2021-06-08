@@ -283,15 +283,7 @@ class XmlProcessor implements Serializable {
     private void addTextNodesToRemoveAndTrim(List<Node> toRemove, Node node) {
         if (node instanceof Text) {
             Text text = (Text)node;
-            boolean BUG_369394_IS_VALID = false;
-            if (!BUG_369394_IS_VALID) {
-                text.setData(text.getData().trim());
-            } else {
-                if (text.getData().trim().length() == 0) {
-                    text.setData("");
-                }
-            }
-            if (text.getData().length() == 0) {
+            if (text.getData().trim().length() == 0) {
                 toRemove.add(node);
             }
         }
@@ -491,6 +483,12 @@ class XmlProcessor implements Serializable {
         ArrayList<Node> toIndent = new ArrayList<Node>();
         boolean indentChildren = false;
         for (int i=0; i<e.getChildNodes().getLength(); i++) {
+            // Remove leading and trailing spaces, 
+            // (step 2 of section 10.2.1 in ES-357).
+            if(e.getChildNodes().item(i) instanceof Text && prettyPrint) {
+                Text text = (Text)e.getChildNodes().item(i);
+                text.replaceWholeText(text.getWholeText().trim());
+            }
             if (i == 1) indentChildren = true;
             if (e.getChildNodes().item(i) instanceof Text) {
                 toIndent.add(e.getChildNodes().item(i));

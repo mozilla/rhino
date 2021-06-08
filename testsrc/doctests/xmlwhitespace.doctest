@@ -1,0 +1,6 @@
+js> XML.ignoreWhitespace
+true
+js> (new XML("<a/>")).toSource()
+<a/>
+js> (new XML(" <a/>")).toSource()
+<a/>

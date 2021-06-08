@@ -468,13 +468,7 @@ public final class XMLLibImpl extends XMLLib implements Serializable {
             return newXML(XmlNode.createElementFromNode(node));
         }
         //    Instead we just blindly cast to a String and let them convert anything.
-        String s = ScriptRuntime.toString(object);
-        //    TODO    Could this get any uglier?
-        if (s.length() > 0 && s.charAt(0) == '<') {
-            return parse(s);
-        } else {
-            return newXML(XmlNode.createText(options, s));
-        }
+        return parse(ScriptRuntime.toString(object));
     }
 
     final XML newTextElementXML(XmlNode reference, XmlNode.QName qname, String value) {

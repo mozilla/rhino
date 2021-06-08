@@ -1168,7 +1168,7 @@ public class Codegen implements Evaluator
 
     String getBodyMethodName(ScriptNode n)
     {
-        return "_c_" + cleanName(n) + "_" + getIndex(n);
+        return "line_" + n.getLineno() + "_c_" + cleanName(n) + "_" + getIndex(n);
     }
 
     /**

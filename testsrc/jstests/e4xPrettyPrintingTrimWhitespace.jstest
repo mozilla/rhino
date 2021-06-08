@@ -1,0 +1,19 @@
+function testSame(a,b) {
+    if(a !== b) throw "Error: " + a + " !== " + b;
+}
+
+XML.ignoreWhitespace = true;
+x = new XML('<a xmlns="x"> b </a>');
+XML.prettyPrinting = true;
+testSame(uneval(x),  '<a xmlns="x">b</a>');
+XML.prettyPrinting = false;
+testSame(uneval(x),  '<a xmlns="x"> b </a>');
+
+XML.ignoreWhitespace = false;
+x = new XML('<a xmlns="x"> b </a>');
+XML.prettyPrinting = true;
+testSame(uneval(x),  '<a xmlns="x">b</a>');
+XML.prettyPrinting = false;
+testSame(uneval(x),  '<a xmlns="x"> b </a>');
+
+"success";
