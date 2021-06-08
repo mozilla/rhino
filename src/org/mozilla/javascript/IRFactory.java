@@ -1083,8 +1083,6 @@ public final class IRFactory extends Parser {
         decompiler.addToken(Token.TEMPLATE_LITERAL);
         TemplateLiteral templateLiteral = (TemplateLiteral) node.getTemplateLiteral();
         List<AstNode> elems = templateLiteral.getElements();
-        // Node callSite = new Node(Token.TEMPLATE_LITERAL_CALL);
-        // call.addChildToBack(callSite);
         call.addChildToBack(templateLiteral);
         for (int i = 0; i < elems.size(); ++i) {
             AstNode elem = elems.get(i);
@@ -1095,7 +1093,6 @@ public final class IRFactory extends Parser {
             } else {
                 TemplateCharacters chars = (TemplateCharacters) elem;
                 decompiler.addTemplateLiteral(chars.getRawValue());
-                // callSite.addChildToBack(elem);
             }
         }
         currentScriptOrFn.addTemplateLiteral(templateLiteral);
