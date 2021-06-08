@@ -4687,23 +4687,18 @@ public class ScriptRuntime {
         ScriptableObject siteObj = (ScriptableObject) cx.newArray(scope, vals.length >>> 1);
         ScriptableObject rawObj = (ScriptableObject) cx.newArray(scope, vals.length >>> 1);
 
+        siteObj.put("raw", siteObj, rawObj);
+        siteObj.setAttributes("raw", ScriptableObject.DONTENUM);
+
         for (int i = 0, n = vals.length; i < n; i += 2) {
             int idx = i >>> 1;
             siteObj.put(idx, siteObj, (vals[i] == null ? Undefined.instance : vals[i]));
-            siteObj.setAttributes(idx, INTEGRITY_FREEZE);
 
             rawObj.put(idx, rawObj, vals[i + 1]);
-            rawObj.setAttributes(idx, INTEGRITY_FREEZE);
         }
 
-        rawObj.setAttributes("length", INTEGRITY_FREEZE);
-        rawObj.preventExtensions();
-
-        siteObj.put("raw", siteObj, rawObj);
-        siteObj.setAttributes("raw", INTEGRITY_FREEZE | ScriptableObject.DONTENUM);
-
-        siteObj.setAttributes("length", INTEGRITY_FREEZE);
-        siteObj.preventExtensions();
+        AbstractEcmaObjectOperations.setIntegrityLevel(cx, rawObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+        AbstractEcmaObjectOperations.setIntegrityLevel(cx, siteObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
 
         strings[index] = siteObj;
 
