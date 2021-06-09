@@ -5,7 +5,7 @@ import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
-
+import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
@@ -13,16 +13,12 @@ import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
 
-import junit.framework.TestCase;
-
 /**
  * @author Attila Szegedi
  * @version $Id: RequireTest.java,v 1.1 2011/04/07 22:24:37 hannes%helma.at Exp $
  */
-public class RequireTest extends TestCase
-{
-    public void testSandboxed() throws Exception
-    {
+public class RequireTest extends TestCase {
+    public void testSandboxed() throws Exception {
         final Context cx = createContext();
         final Require require = getSandboxedRequire(cx);
         require.requireMain(cx, "testSandboxed");
@@ -32,21 +28,18 @@ public class RequireTest extends TestCase
         try {
             require.requireMain(cx, "blah");
             fail();
-        }
-        catch(IllegalStateException e) {
+        } catch (IllegalStateException e) {
             // Expected, success
         }
     }
 
-    private Context createContext()
-    {
+    private Context createContext() {
         final Context cx = Context.enter();
         cx.setOptimizationLevel(-1);
         return cx;
     }
 
-    public void testNonSandboxed() throws Exception
-    {
+    public void testNonSandboxed() throws Exception {
         final Context cx = createContext();
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
@@ -64,8 +57,7 @@ public class RequireTest extends TestCase
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
         require.install(scope);
-        cx.evaluateReader(scope, getReader("testRelativeId.js"),
-                "testRelativeId.js", 1, null);
+        cx.evaluateReader(scope, getReader("testRelativeId.js"), "testRelativeId.js", 1, null);
     }
 
     public void testSetMainForAlreadyLoadedModule() throws Exception {
@@ -73,13 +65,16 @@ public class RequireTest extends TestCase
         final Scriptable scope = cx.initStandardObjects();
         final Require require = getSandboxedRequire(cx, scope, false);
         require.install(scope);
-        cx.evaluateReader(scope, getReader("testSetMainForAlreadyLoadedModule.js"),
-                "testSetMainForAlreadyLoadedModule.js", 1, null);
+        cx.evaluateReader(
+                scope,
+                getReader("testSetMainForAlreadyLoadedModule.js"),
+                "testSetMainForAlreadyLoadedModule.js",
+                1,
+                null);
         try {
             require.requireMain(cx, "assert");
             fail();
-        }
-        catch(IllegalStateException e) {
+        } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Attempt to set main module after it was loaded");
         }
     }
@@ -93,18 +88,20 @@ public class RequireTest extends TestCase
         getSandboxedRequire(cx).requireMain(cx, moduleId);
     }
 
-    private Require getSandboxedRequire(final Context cx)
-    throws URISyntaxException {
+    private Require getSandboxedRequire(final Context cx) throws URISyntaxException {
         return getSandboxedRequire(cx, cx.initStandardObjects(), true);
     }
 
     private Require getSandboxedRequire(Context cx, Scriptable scope, boolean sandboxed)
-            throws URISyntaxException
-    {
-        return new Require(cx, cx.initStandardObjects(),
+            throws URISyntaxException {
+        return new Require(
+                cx,
+                cx.initStandardObjects(),
                 new StrongCachingModuleScriptProvider(
-                        new UrlModuleSourceProvider(Collections.singleton(
-                                getDirectory()), null)), null, null, true);
+                        new UrlModuleSourceProvider(Collections.singleton(getDirectory()), null)),
+                null,
+                null,
+                true);
     }
 
     private URI getDirectory() throws URISyntaxException {
