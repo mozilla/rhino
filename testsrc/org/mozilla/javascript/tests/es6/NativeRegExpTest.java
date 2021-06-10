@@ -160,4 +160,25 @@ public class NativeRegExpTest {
             return null;
         });
     }
+
+    @Test
+    public void search() {
+        Context cx = Context.enter();
+        cx.setLanguageVersion(Context.VERSION_ES6);
+        ScriptableObject scope = cx.initStandardObjects();
+
+        String source = "'abc'.search(/b/);";
+        assertEquals(1, cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "/b/[Symbol.search]('abc');";
+        assertEquals(1, cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "'abc'.search(/d/);";
+        assertEquals(-1, cx.evaluateString(scope, source, "test", 0, null));
+
+        source = "/d/[Symbol.search]('abc');";
+        assertEquals(-1, cx.evaluateString(scope, source, "test", 0, null));
+
+        Context.exit();
+    }
 }
