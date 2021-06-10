@@ -3,7 +3,6 @@ package org.mozilla.javascript.tests.es6;
 import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Method;
-
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -19,9 +18,9 @@ public class PropertyTest {
 
         final String script =
                 "var desc = Object.getOwnPropertyDescriptor(MyHostObject, 'foo');"
-                + "var result = '' + desc.writable + ' - ' + desc.configurable + ' - ' + desc.enumerable;"
-                + "result = result + ' | ' + typeof desc.get + ' - ' + typeof desc.set;"
-                + "result;";
+                        + "var result = '' + desc.writable + ' - ' + desc.configurable + ' - ' + desc.enumerable;"
+                        + "result = result + ' | ' + typeof desc.get + ' - ' + typeof desc.set;"
+                        + "result;";
 
         Context cx = Context.enter();
         try {
@@ -37,8 +36,7 @@ public class PropertyTest {
             final String result = (String) cx.evaluateString(topScope, script, "myScript", 1, null);
 
             assertEquals(expected, result);
-        }
-        finally {
+        } finally {
             Context.exit();
         }
     }
@@ -49,11 +47,10 @@ public class PropertyTest {
 
         final String script =
                 "Object.defineProperty(MyHostObject, 'foo', { enumerable: !0, configurable: !0, set: function() { return !0 }});\n"
-
                         + "var desc = Object.getOwnPropertyDescriptor(MyHostObject, 'foo');"
-                + "var result = '' + desc.writable + ' - ' + desc.configurable + ' - ' + desc.enumerable;"
-                + "result = result + ' | ' + typeof desc.get + ' - ' + typeof desc.set;"
-                + "result;";
+                        + "var result = '' + desc.writable + ' - ' + desc.configurable + ' - ' + desc.enumerable;"
+                        + "result = result + ' | ' + typeof desc.get + ' - ' + typeof desc.set;"
+                        + "result;";
 
         Context cx = Context.enter();
         try {
@@ -69,12 +66,10 @@ public class PropertyTest {
             final String result = (String) cx.evaluateString(topScope, script, "myScript", 1, null);
 
             assertEquals(expected, result);
-        }
-        finally {
+        } finally {
             Context.exit();
         }
     }
-
 
     @Test
     public void redefineSetterProperty() throws Exception {
@@ -82,11 +77,10 @@ public class PropertyTest {
 
         final String script =
                 "Object.defineProperty(MyHostObject, 'foo', { enumerable: !0, configurable: !0, get: function() { return !0 }});\n"
-
                         + "var desc = Object.getOwnPropertyDescriptor(MyHostObject, 'foo');"
-                + "var result = '' + desc.writable + ' - ' + desc.configurable + ' - ' + desc.enumerable;"
-                + "result = result + ' | ' + typeof desc.get + ' - ' + typeof desc.set;"
-                + "result;";
+                        + "var result = '' + desc.writable + ' - ' + desc.configurable + ' - ' + desc.enumerable;"
+                        + "result = result + ' | ' + typeof desc.get + ' - ' + typeof desc.set;"
+                        + "result;";
 
         Context cx = Context.enter();
         try {
@@ -102,8 +96,7 @@ public class PropertyTest {
             final String result = (String) cx.evaluateString(topScope, script, "myScript", 1, null);
 
             assertEquals(expected, result);
-        }
-        finally {
+        } finally {
             Context.exit();
         }
     }
