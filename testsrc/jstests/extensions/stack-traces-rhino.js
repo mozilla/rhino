@@ -29,6 +29,12 @@ function countLines(msg) {
   return msg.split('\n').length - 1;
 }
 
+// Verify that a brand-new, not thrown Error has at
+// least one line of stack trace.
+let err = new Error('Testing new error');
+assertEquals(err.message, 'Testing new error');
+assertEquals(1, countLines(err.stack));
+
 // Test that toString contains the error but not the stack
 // and test that the stack contains the file name
 try {
@@ -36,9 +42,12 @@ try {
 } catch (e) {
   assertFalse(e.stack == undefined);
   assertTrue(/Test 1/.test(e.toString()));
-  assertFalse(/stack-traces-rhino.js/.test(e.toString()));
   assertFalse(/Test 1/.test(e.stack));
-  assertTrue(/stack-traces-rhino.js/.test(e.stack));
+
+  if (ExpectFileNames) {
+    assertFalse(/stack-traces-rhino.js/.test(e.toString()));
+    assertTrue(/stack-traces-rhino.js/.test(e.stack));
+  }
 }
 
 // Assert that the function name is nested inside a nested stack trace

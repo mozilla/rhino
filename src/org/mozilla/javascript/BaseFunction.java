@@ -105,16 +105,20 @@ public class BaseFunction extends IdScriptableObject implements Function {
 
     @Override
     protected int findInstanceIdInfo(String s) {
-        int id;
+        int id = 0;
         switch (s) {
             case "length":
-                id = Id_length;
+                if (lengthPropertyAttributes >= 0) {
+                    id = Id_length;
+                }
                 break;
             case "arity":
                 id = Id_arity;
                 break;
             case "name":
-                id = Id_name;
+                if (namePropertyAttributes >= 0) {
+                    id = Id_name;
+                }
                 break;
             case "prototype":
                 id = Id_prototype;
@@ -123,7 +127,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
                 id = Id_arguments;
                 break;
             default:
-                id = 0;
                 break;
         }
 
@@ -132,9 +135,13 @@ public class BaseFunction extends IdScriptableObject implements Function {
         int attr;
         switch (id) {
             case Id_length:
+                attr = lengthPropertyAttributes;
+                break;
             case Id_arity:
-            case Id_name:
                 attr = DONTENUM | READONLY | PERMANENT;
+                break;
+            case Id_name:
+                attr = namePropertyAttributes;
                 break;
             case Id_prototype:
                 // some functions such as built-ins don't have a prototype property
@@ -173,11 +180,13 @@ public class BaseFunction extends IdScriptableObject implements Function {
     protected Object getInstanceIdValue(int id) {
         switch (id) {
             case Id_length:
-                return ScriptRuntime.wrapInt(getLength());
+                return lengthPropertyAttributes >= 0
+                        ? ScriptRuntime.wrapInt(getLength())
+                        : NOT_FOUND;
             case Id_arity:
                 return ScriptRuntime.wrapInt(getArity());
             case Id_name:
-                return getFunctionName();
+                return namePropertyAttributes >= 0 ? getFunctionName() : NOT_FOUND;
             case Id_prototype:
                 return getPrototypeProperty();
             case Id_arguments:
@@ -206,8 +215,15 @@ public class BaseFunction extends IdScriptableObject implements Function {
                 }
                 return;
             case Id_name:
+                if (value == NOT_FOUND) {
+                    namePropertyAttributes = -1;
+                }
+                return;
             case Id_arity:
             case Id_length:
+                if (value == NOT_FOUND) {
+                    lengthPropertyAttributes = -1;
+                }
                 return;
         }
         super.setInstanceIdValue(id, value);
@@ -222,7 +238,14 @@ public class BaseFunction extends IdScriptableObject implements Function {
             case Id_arguments:
                 argumentsAttributes = attr;
                 return;
+            case Id_name:
+                namePropertyAttributes = attr;
+                return;
+            case Id_length:
+                lengthPropertyAttributes = attr;
+                return;
         }
+        super.setInstanceIdAttributes(id, attr);
     }
 
     @Override
@@ -388,7 +411,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
                 // It is program error not to return Scriptable from
                 // the call method if createObject returns null.
                 throw new IllegalStateException(
-                        "Bad implementaion of call as constructor, name="
+                        "Bad implementation of call as constructor, name="
                                 + getFunctionName()
                                 + " in "
                                 + getClass().getName());
@@ -488,8 +511,7 @@ public class BaseFunction extends IdScriptableObject implements Function {
             return prototypeProperty;
         }
         NativeObject obj = new NativeObject();
-        final int attr = ScriptableObject.DONTENUM;
-        obj.defineProperty("constructor", this, attr);
+        obj.defineProperty("constructor", this, DONTENUM);
         // put the prototype property into the object now, then in the
         // wacky case of a user defining a function Object(), we don't
         // get an infinite loop trying to find the prototype.
@@ -625,4 +647,6 @@ public class BaseFunction extends IdScriptableObject implements Function {
     // see ECMA 15.3.5.2
     private int prototypePropertyAttributes = PERMANENT | DONTENUM;
     private int argumentsAttributes = PERMANENT | DONTENUM;
+    private int namePropertyAttributes = PERMANENT | READONLY | DONTENUM;
+    private int lengthPropertyAttributes = PERMANENT | READONLY | DONTENUM;
 }

@@ -275,8 +275,7 @@ public abstract class RhinoException extends RuntimeException {
             String fileName = e.getFileName();
             if (e.getMethodName().startsWith("_c_")
                     && e.getLineNumber() > -1
-                    && fileName != null
-                    && !fileName.endsWith(".java")) {
+                    && (fileName == null || !fileName.endsWith(".java"))) {
                 String methodName = e.getMethodName();
                 Matcher match = JAVA_STACK_PATTERN.matcher(methodName);
                 // the method representing the main script is always "_c_script_0" -
@@ -287,7 +286,8 @@ public abstract class RhinoException extends RuntimeException {
                 if (!printStarted && hideFunction.equals(methodName)) {
                     printStarted = true;
                 } else if (printStarted && ((limit < 0) || (count < limit))) {
-                    list.add(new ScriptStackElement(fileName, methodName, e.getLineNumber()));
+                    String fn = fileName == null ? "(unknown)" : fileName;
+                    list.add(new ScriptStackElement(fn, methodName, e.getLineNumber()));
                     count++;
                 }
 
