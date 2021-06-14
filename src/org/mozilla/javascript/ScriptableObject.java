@@ -543,25 +543,25 @@ public abstract class ScriptableObject
         if (name != null && index != 0) throw new IllegalArgumentException(name);
         checkNotSealed(name, index);
 
-        GetterSlot fslot;
+        AccessorSlot aSlot;
         if (isExtensible()) {
             Slot slot = slotMap.modify(name, index, 0);
-            if (slot instanceof GetterSlot) {
-                fslot = (GetterSlot) slot;
+            if (slot instanceof AccessorSlot) {
+                aSlot = (AccessorSlot) slot;
             } else {
-                fslot = new GetterSlot(slot);
-                slotMap.replace(slot, fslot);
+                aSlot = new AccessorSlot(slot);
+                slotMap.replace(slot, aSlot);
             }
         } else {
             Slot slot = slotMap.query(name, index);
-            if (slot instanceof GetterSlot) {
-                fslot = (GetterSlot) slot;
+            if (slot instanceof AccessorSlot) {
+                aSlot = (AccessorSlot) slot;
             } else {
                 return;
             }
         }
 
-        int attributes = fslot.getAttributes();
+        int attributes = aSlot.getAttributes();
         if ((attributes & READONLY) != 0) {
             throw Context.reportRuntimeErrorById("msg.modify.readonly", name);
         }
@@ -569,19 +569,19 @@ public abstract class ScriptableObject
         // Emulate old behavior where nothing happened if it wasn't actually a Function
         if (isSetter) {
             if (getterOrSetter instanceof Function) {
-                fslot.setter = new GetterSlot.FunctionSetter((Function) getterOrSetter);
+                aSlot.setter = new AccessorSlot.FunctionSetter((Function) getterOrSetter);
             } else {
-                fslot.setter = null;
+                aSlot.setter = null;
             }
         } else {
             if (getterOrSetter instanceof Function) {
-                fslot.getter = new GetterSlot.FunctionGetter((Function) getterOrSetter);
+                aSlot.getter = new AccessorSlot.FunctionGetter((Function) getterOrSetter);
             } else {
-                fslot.getter = null;
+                aSlot.getter = null;
             }
         }
 
-        fslot.value = Undefined.instance;
+        aSlot.value = Undefined.instance;
     }
 
     /**
@@ -1483,20 +1483,20 @@ public abstract class ScriptableObject
         }
 
         Slot slot = slotMap.modify(propertyName, 0, 0);
-        GetterSlot getterSlot;
-        if (slot instanceof GetterSlot) {
-            getterSlot = (GetterSlot) slot;
+        AccessorSlot aSlot;
+        if (slot instanceof AccessorSlot) {
+            aSlot = (AccessorSlot) slot;
         } else {
-            getterSlot = new GetterSlot(slot);
-            slotMap.replace(slot, getterSlot);
+            aSlot = new AccessorSlot(slot);
+            slotMap.replace(slot, aSlot);
         }
 
-        getterSlot.setAttributes(attributes);
+        aSlot.setAttributes(attributes);
         if (getterBox != null) {
-            getterSlot.getter = new GetterSlot.MemberBoxGetter(getterBox);
+            aSlot.getter = new AccessorSlot.MemberBoxGetter(getterBox);
         }
         if (setterBox != null) {
-            getterSlot.setter = new GetterSlot.MemberBoxSetter(setterBox);
+            aSlot.setter = new AccessorSlot.MemberBoxSetter(setterBox);
         }
     }
 
@@ -1577,22 +1577,22 @@ public abstract class ScriptableObject
         }
 
         if (isAccessor) {
-            GetterSlot fslot;
+            AccessorSlot fslot;
 
-            if (slot instanceof GetterSlot) {
-                fslot = (GetterSlot) slot;
+            if (slot instanceof AccessorSlot) {
+                fslot = (AccessorSlot) slot;
             } else {
-                fslot = new GetterSlot(slot);
+                fslot = new AccessorSlot(slot);
                 slotMap.replace(slot, fslot);
             }
 
             Object getter = getProperty(desc, "get");
             if (getter != NOT_FOUND) {
-                fslot.getter = new GetterSlot.FunctionGetter(getter);
+                fslot.getter = new AccessorSlot.FunctionGetter(getter);
             }
             Object setter = getProperty(desc, "set");
             if (setter != NOT_FOUND) {
-                fslot.setter = new GetterSlot.FunctionSetter(setter);
+                fslot.setter = new AccessorSlot.FunctionSetter(setter);
             }
 
             fslot.value = Undefined.instance;
@@ -1627,7 +1627,7 @@ public abstract class ScriptableObject
      *     set directly and may not be retrieved by the getter.
      * @param attributes the attributes to set on the property
      */
-    public void defineOwnProperty(
+    public void defineProperty(
             String name, Supplier<Object> getter, Consumer<Object> setter, int attributes) {
         Slot slot = slotMap.modify(name, 0, attributes);
 
@@ -2439,7 +2439,7 @@ public abstract class ScriptableObject
             slot = slotMap.query(key, index);
             if (!isExtensible
                     && (slot == null
-                            || (!(slot instanceof GetterSlot)
+                            || (!(slot instanceof AccessorSlot)
                                     && (slot.getAttributes() & READONLY) != 0))
                     && Context.isCurrentContextStrict()) {
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");
@@ -2450,7 +2450,7 @@ public abstract class ScriptableObject
         } else if (!isExtensible) {
             slot = slotMap.query(key, index);
             if ((slot == null
-                            || (!(slot instanceof GetterSlot)
+                            || (!(slot instanceof AccessorSlot)
                                     && (slot.getAttributes() & READONLY) != 0))
                     && Context.isCurrentContextStrict()) {
                 throw ScriptRuntime.typeErrorById("msg.not.extensible");

@@ -38,7 +38,7 @@ public class LambdaPropertyTest {
         ScriptableObject.defineProperty(global, "o", testObj, 0);
 
         SomeState state = new SomeState();
-        testObj.defineOwnProperty(
+        testObj.defineProperty(
                 "val",
                 () -> state.val,
                 (Object newVal) -> state.val = ScriptRuntime.toInt32(newVal),
@@ -76,7 +76,7 @@ public class LambdaPropertyTest {
                 null);
 
         SomeState state = new SomeState();
-        testObj.defineOwnProperty(
+        testObj.defineProperty(
                 "val",
                 () -> state.val,
                 (Object newVal) -> state.val = ScriptRuntime.toInt32(newVal),
@@ -111,7 +111,7 @@ public class LambdaPropertyTest {
                 null);
 
         SomeState state = new SomeState();
-        testObj.defineOwnProperty(
+        testObj.defineProperty(
                 "val",
                 () -> state.val,
                 (Object newVal) -> state.val = ScriptRuntime.toInt32(newVal),
@@ -136,7 +136,7 @@ public class LambdaPropertyTest {
         ScriptableObject.defineProperty(global, "o", testObj, 0);
 
         SomeState state = new SomeState();
-        testObj.defineOwnProperty("val", () -> state.val, null, 0);
+        testObj.defineProperty("val", () -> state.val, null, 0);
 
         // Set should do nothing
         cx.evaluateString(global, "assertEquals(0, o.val)", "test.js", 1, null);
@@ -150,7 +150,7 @@ public class LambdaPropertyTest {
         ScriptableObject.defineProperty(global, "o", testObj, 0);
 
         SomeState state = new SomeState();
-        testObj.defineOwnProperty(
+        testObj.defineProperty(
                 "val", null, (Object newVal) -> state.val = ScriptRuntime.toInt32(newVal), 0);
 
         // Get should return the old value, which is unfortunately null
