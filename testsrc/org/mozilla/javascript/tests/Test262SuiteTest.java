@@ -9,11 +9,15 @@ import static org.junit.Assert.fail;
 import static org.mozilla.javascript.drivers.TestUtils.JS_FILE_FILTER;
 import static org.mozilla.javascript.drivers.TestUtils.recursiveListFilesHelper;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +31,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,14 +52,33 @@ import org.yaml.snakeyaml.error.YAMLException;
 @RunWith(Parameterized.class)
 public class Test262SuiteTest {
 
+    /**
+     * The test source code must not be modified in any way, and the test must be executed just once
+     * (in non-strict mode, only).
+     */
+    private static final String FLAG_RAW = "raw";
+
+    /** The test must be executed just once--in strict mode, only. */
+    private static final String FLAG_ONLY_STRICT = "onlyStrict";
+
+    /** The test must be executed just once--in non-strict mode, only. */
+    private static final String FLAG_NO_STRICT = "noStrict";
+
+    static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 0, 9};
+    ;
     static final int[] OPT_LEVELS;
 
     private static final File testDir = new File("test262/test");
     private static final String testHarnessDir = "test262/harness/";
     private static final String testProperties;
 
+    private static final boolean updateTest262Properties;
+    private static final boolean rollUpEnabled;
+    private static final boolean statsEnabled;
+    private static final boolean includeUnsupported;
+
     static Map<Integer, Map<String, Script>> HARNESS_SCRIPT_CACHE = new HashMap<>();
-    static Map<File, Integer> EXCLUDED_TESTS = new LinkedHashMap<>();
+    static Map<Test262Case, TestResultTracker> RESULT_TRACKERS = new LinkedHashMap<>();
 
     static ShellContextFactory CTX_FACTORY = new ShellContextFactory();
 
@@ -94,17 +118,48 @@ public class Test262SuiteTest {
                             "u180e"));
 
     static {
-        // Reduce the number of tests that we run by a factor of three...
-        String overriddenLevel = getOverriddenLevel();
-        if (overriddenLevel != null) {
-            OPT_LEVELS = new int[] {Integer.parseInt(overriddenLevel)};
-        } else {
-            OPT_LEVELS = new int[] {-1, 0, 9};
-        }
-
         String propFile = System.getProperty("test262properties");
         testProperties =
                 propFile != null && !propFile.equals("") ? propFile : "testsrc/test262.properties";
+
+        String updateProps = System.getProperty("updateTest262properties");
+
+        if (updateProps != null) {
+            updateTest262Properties = true;
+
+            switch (updateProps) {
+                case "all":
+                    rollUpEnabled = statsEnabled = includeUnsupported = true;
+                    break;
+                case "none":
+                    rollUpEnabled = statsEnabled = includeUnsupported = false;
+                    break;
+                default:
+                    rollUpEnabled = updateProps.isEmpty() || updateProps.indexOf("rollup") != -1;
+                    statsEnabled = updateProps.isEmpty() || updateProps.indexOf("stats") != -1;
+                    includeUnsupported =
+                            updateProps.isEmpty()
+                                    ? false
+                                    : updateProps.indexOf("unsupported") != -1;
+            }
+
+            if (getOverriddenLevel() != null) {
+                System.out.println(
+                        "Ignoring custom optLevels because the updateTest262Properties param is set");
+            }
+
+            OPT_LEVELS = DEFAULT_OPT_LEVELS;
+        } else {
+            updateTest262Properties = rollUpEnabled = statsEnabled = includeUnsupported = false;
+
+            // Reduce the number of tests that we run by a factor of three...
+            String overriddenLevel = getOverriddenLevel();
+            if (overriddenLevel != null) {
+                OPT_LEVELS = new int[] {Integer.parseInt(overriddenLevel)};
+            } else {
+                OPT_LEVELS = DEFAULT_OPT_LEVELS;
+            }
+        }
     }
 
     private static String getOverriddenLevel() {
@@ -130,34 +185,241 @@ public class Test262SuiteTest {
     public static void tearDownClass() {
         TestUtils.setGlobalContextFactory(null);
 
-        for (Map.Entry<File, Integer> entry : EXCLUDED_TESTS.entrySet()) {
-            if (entry.getValue() == 0) {
-                System.out.println(
-                        String.format(
-                                "Test is marked as failing but it does not: %s", entry.getKey()));
+        if (!updateTest262Properties) return;
+
+        // Regenerate .properties file
+        try {
+            Path previousReportingDir = null;
+            Path currentReportingDir;
+            List<String> failures = new ArrayList<String>();
+            int testCount = 0;
+            Path testFileParent =
+                    testDir.toPath(); // tracks the current directory for which files are processed
+            int rollUpCount = 0;
+            int rolledUpFailureCount = 0;
+
+            Test262Case[] testCases = new Test262Case[RESULT_TRACKERS.size()];
+            RESULT_TRACKERS.keySet().toArray(testCases);
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(testProperties));
+            writer.write(
+                    "# This is a configuration file for Test262SuiteTest.java. See ./README.md for more info about this file\n");
+
+            for (int j = 0;
+                    j < testCases.length;
+                    j++) { // Using a regular loop over an array as we need to peek the next entry
+                File testFile = testCases[j].file;
+                TestResultTracker tt = RESULT_TRACKERS.get(testCases[j]);
+
+                boolean ontoNextReportingDir = false;
+                String testResult = null;
+
+                Path testFilePath = testFile.toPath();
+                int reportDepth =
+                        testFilePath.getNameCount() > 3
+                                        && testFilePath.getName(2).toString().equals("language")
+                                        && (testFilePath.getName(3).toString().equals("expressions")
+                                                || testFilePath
+                                                        .getName(3)
+                                                        .toString()
+                                                        .equals("statements"))
+                                ? 5
+                                : Math.min(4, testFilePath.getNameCount());
+                currentReportingDir = testFilePath.subpath(0, reportDepth);
+
+                if (previousReportingDir == null) {
+                    previousReportingDir = currentReportingDir;
+                } else if (!currentReportingDir.startsWith(previousReportingDir)
+                        || testFile.isDirectory()) {
+                    ontoNextReportingDir = true;
+                }
+
+                // Determine if switching to another directory and if so whether all files in the
+                // previous directory failed
+                // If so, dont list all failing files, but list only the directory with the all
+                // failed marker (*)
+                if (rollUpEnabled
+                        && (!testFilePath.startsWith(testFileParent)
+                                || !testFilePath.getParent().equals(testFileParent))) {
+                    if (!previousReportingDir.equals(testFileParent) && rollUpCount > 1) {
+                        failures.add(
+                                "    *"
+                                        + currentReportingDir
+                                                .relativize(testFileParent)
+                                                .toString()
+                                                .replace("\\", "/")
+                                        + (statsEnabled
+                                                ? " "
+                                                        + rollUpCount
+                                                        + "/"
+                                                        + rollUpCount
+                                                        + " (100.0%)"
+                                                : ""));
+                        rolledUpFailureCount += rollUpCount - 1;
+
+                        for (; rollUpCount > 0; rollUpCount--) {
+                            failures.remove(failures.size() - 2);
+                        }
+                    }
+
+                    testFileParent = testFilePath.getParent();
+                    rollUpCount = 0;
+                }
+
+                if (!testFile.isDirectory()) {
+                    testResult = tt.getResult(OPT_LEVELS, testCases[j]);
+
+                    if (testResult == null) {
+                        // At least one passing test in currentParent directory, so prevent rollUp
+                        rollUpCount = -1;
+                    } else {
+                        if (rollUpCount != -1) rollUpCount++;
+
+                        testResult =
+                                "    "
+                                        + currentReportingDir
+                                                .relativize(testFilePath)
+                                                .toString()
+                                                .replace("\\", "/")
+                                        + (statsEnabled && testResult != ""
+                                                ? " " + testResult
+                                                : "");
+                        if (tt.comment != null && !tt.comment.isEmpty()) {
+                            testResult += " " + tt.comment;
+                        }
+                    }
+
+                    // Making sure the last folder gets properly logged
+                    if (j == testCases.length - 1) {
+                        if (testResult != null) {
+                            failures.add(testResult);
+                        }
+                        testCount++;
+                        ontoNextReportingDir = true;
+                    }
+                }
+
+                if (ontoNextReportingDir) {
+                    int failureCount = rolledUpFailureCount + failures.size();
+                    Double failurePercentage =
+                            testCount == 0 ? 0 : ((double) failureCount * 100 / (double) testCount);
+
+                    writer.write('\n');
+                    writer.write(
+                            (failurePercentage == 100 ? "*" : "")
+                                    + previousReportingDir
+                                            .subpath(2, previousReportingDir.getNameCount())
+                                            .toString()
+                                            .replace("\\", "/")
+                                    + (statsEnabled
+                                            ? " "
+                                                    + failureCount
+                                                    + "/"
+                                                    + testCount
+                                                    + " ("
+                                                    + new BigDecimal(failurePercentage.toString())
+                                                            .setScale(2, RoundingMode.HALF_UP)
+                                                            .doubleValue()
+                                                    + "%)"
+                                            : ""));
+                    writer.write('\n');
+
+                    if (failurePercentage != 0 && failurePercentage != 100) {
+                        writer.write(
+                                failures.stream()
+                                        .map(Object::toString)
+                                        .collect(Collectors.joining("\n")));
+                        writer.write('\n');
+                    }
+
+                    previousReportingDir = currentReportingDir;
+                    failures.clear();
+                    testCount = rolledUpFailureCount = 0;
+                }
+
+                if (testFile.isDirectory()) {
+                    String message =
+                            "~"
+                                    + currentReportingDir
+                                            .subpath(2, currentReportingDir.getNameCount())
+                                            .toString()
+                                            .replace("\\", "/");
+
+                    if (tt.comment != null && !tt.comment.isEmpty()) {
+                        message += " " + tt.comment;
+                    }
+                    writer.write('\n');
+                    writer.write(message);
+                    writer.write('\n');
+
+                    // Consume testcases belonging to a skipped directory
+                    while (testCases.length > j + 1
+                            && testCases[j + 1].file.isFile()
+                            && testCases[j + 1].file.getParentFile().equals(testFile)) {
+                        TestResultTracker tt2 = RESULT_TRACKERS.get(testCases[j + 1]);
+
+                        testResult =
+                                "    "
+                                        + currentReportingDir
+                                                .relativize(testCases[j + 1].file.toPath())
+                                                .toString()
+                                                .replace("\\", "/");
+                        if (tt2.comment != null && !tt2.comment.isEmpty()) {
+                            testResult += " " + tt2.comment;
+                        }
+                        writer.write(testResult);
+                        writer.write('\n');
+                        j++;
+                    }
+
+                    previousReportingDir = null;
+                    continue;
+                }
+
+                if (testResult != null) {
+                    failures.add(testResult);
+                }
+                testCount++;
             }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private static final Pattern EXCLUDE_PATTERN = Pattern.compile("!\\s*(.+)");
+    /*
+     * Regex breakdown:
+     * whitespace >
+     * 1: optionally followed by comment (! or #) of exclusion (~) character >
+     * whitespace >
+     * 2: optionally all failed indicator (*) >
+     * non-whitespace characters >
+     * 3: characters that make up the file/directory >
+     * non-whitespace characters >
+     * stats for directories (2/8 (25%)) OR failure info (strict OR non-strict OR non-interpreted OR {...}) for .js files >
+     * 4: optionally comment
+     */
+    private static final Pattern LINE_SPLITTER =
+            Pattern.compile(
+                    "\\s*([!#~])?\\s*(\\*)?(\\S*)(?:[^\\S\\r\\n]+(?:strict|non-strict|non-interpreted|\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
 
     private final String testFilePath;
     private final int optLevel;
     private final boolean useStrict;
     private final Test262Case testCase;
-    private final boolean fails;
+    private final boolean markedAsFailing;
 
     public Test262SuiteTest(
             String testFilePath,
             int optLevel,
             boolean useStrict,
             Test262Case testCase,
-            boolean fails) {
+            boolean markedAsFailing) {
         this.testFilePath = testFilePath;
         this.optLevel = optLevel;
         this.useStrict = useStrict;
         this.testCase = testCase;
-        this.fails = fails;
+        this.markedAsFailing = markedAsFailing;
     }
 
     private Scriptable buildScope(Context cx) throws IOException {
@@ -227,15 +489,12 @@ public class Test262SuiteTest {
                                     testCase.hasEarlyError ? "early" : "runtime"));
                 }
 
-                if (fails) {
-                    Integer count = EXCLUDED_TESTS.get(testCase.file);
-                    if (count != null) {
-                        count -= 1;
-                        EXCLUDED_TESTS.put(testCase.file, count);
-                    }
+                TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
+                if (tracker != null) {
+                    tracker.passes(optLevel, useStrict);
                 }
             } catch (RhinoException ex) {
-                if (fails) {
+                if (markedAsFailing) {
                     return;
                 }
 
@@ -253,13 +512,18 @@ public class Test262SuiteTest {
                 }
 
                 assertEquals(ex.details(), testCase.expectedError, errorName);
+
+                TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
+                if (tracker != null) {
+                    tracker.passes(optLevel, useStrict);
+                }
             } catch (Exception ex) {
-                if (fails) {
+                if (markedAsFailing) {
                     return;
                 }
                 throw ex;
             } catch (AssertionError ex) {
-                if (fails) {
+                if (markedAsFailing) {
                     return;
                 }
                 throw ex;
@@ -269,95 +533,157 @@ public class Test262SuiteTest {
         }
     }
 
-    private static void addTestFiles(List<File> testFiles, Set<File> failingFiles)
+    private static void addTestFiles(List<File> testFiles, Map<File, String> filesExpectedToFail)
             throws IOException {
         List<File> dirFiles = new LinkedList<File>();
 
         try (Scanner scanner = new Scanner(new File(testProperties))) {
             int lineNo = 0;
+            String curDirectory = null;
             String line = null;
+            String comment = null;
+            boolean dirSkip = false;
+            boolean fileSkip = false;
+            boolean allFailed = false;
+
             while (line != null || scanner.hasNextLine()) {
                 // Note, here line could be not null when it
                 // wasn't handled on the previous iteration
                 if (line == null) {
-                    line = scanner.nextLine().trim();
+                    Matcher splitLine = LINE_SPLITTER.matcher(scanner.nextLine());
                     lineNo++;
+
+                    if (!splitLine.matches()
+                            || (splitLine.group(1) != null && !splitLine.group(1).equals("~"))
+                            || splitLine.group(3).isEmpty()) continue;
+
+                    dirSkip = splitLine.group(1) != null;
+                    allFailed = splitLine.group(2) != null;
+                    curDirectory = splitLine.group(3);
+                    comment = splitLine.group(4);
+                } else {
+                    curDirectory = line;
+                    dirSkip = fileSkip;
                 }
 
-                if (line.isEmpty() || line.startsWith("#")) {
-                    line = null; // consume the line
-                    continue;
-                }
+                File target = new File(testDir, curDirectory);
 
-                File target = new File(testDir, line);
                 if (!target.exists()) {
-                    if (line.startsWith("!")) {
-                        throw new RuntimeException(
-                                "Unexpected exclusion '" + line + "' at the line #" + lineNo);
-                    }
-                    throw new FileNotFoundException(
-                            "File "
-                                    + target.getAbsolutePath()
-                                    + " declared at line #"
-                                    + lineNo
-                                    + "('"
-                                    + line
-                                    + "') doesn't exist");
+                    throw new RuntimeException(
+                            "Unexpected exclusion '" + curDirectory + "' at the line #" + lineNo);
+                } else if (!target.isDirectory()) {
+                    throw new RuntimeException(
+                            "Unexpected file '"
+                                    + curDirectory
+                                    + "' at the top level at the line #"
+                                    + lineNo);
                 }
 
-                if (target.isFile()) {
+                if (dirSkip) {
+                    // Adding the directory itself, for reporting inside the .tearDownClass() method
                     testFiles.add(target);
-                } else if (target.isDirectory()) {
-                    String curDirectory = line;
-                    recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
+                    filesExpectedToFail.put(target, comment);
+                }
 
-                    // start handling exclusions that could follow
+                recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
+
+                // Make sure files are always sorted the same way, alphabetically, with
+                // subdirectories first
+                // as to make sure that the output is stable when (re)generating the
+                // test262.properties file
+                dirFiles.sort(
+                        (f1, f2) -> { // return -1: before, 0: equal, 1: after
+                            String p1 = f1.getParent();
+                            String p2 = f2.getParent();
+
+                            // making sure files come after subdirectories
+                            if (!p1.equals(p2) && (p1.startsWith(p2) || p2.startsWith(p1))) {
+                                return p1.startsWith(p2) ? -1 : 1;
+                            }
+
+                            return f1.toString()
+                                    .compareToIgnoreCase(
+                                            f2.toString());
+                        });
+
+                // if the directory is skipped, but has files below it, add those as to not loose
+                // them when regenerating the .properties file
+                if (!dirSkip) testFiles.addAll(dirFiles);
+
+                if (allFailed) {
+                    dirFiles.stream().forEach(file -> filesExpectedToFail.put(file, null));
+                    line = null;
+                } else {
+                    // consume lines containing files up to the next directory
                     while (scanner.hasNextLine()) {
-                        line = scanner.nextLine().trim();
+                        Matcher splitLine = LINE_SPLITTER.matcher(scanner.nextLine());
                         lineNo++;
 
-                        if (line.isEmpty() || line.startsWith("#")) {
-                            line = null; // consume the line
+                        // Skip lines that don't contain a file or directory to process
+                        if (!splitLine.matches()
+                                || (splitLine.group(1) != null && splitLine.group(1).equals("#"))
+                                || splitLine.group(3).isEmpty()) {
                             continue;
                         }
 
-                        Matcher m = EXCLUDE_PATTERN.matcher(line);
-                        if (!m.matches()) {
-                            // stop an exclusion handling loop
+                        fileSkip = splitLine.group(1) != null;
+                        line = splitLine.group(3);
+                        comment = splitLine.group(4);
+
+                        // If line is not for a file, it must be a directory, so continue the outer
+                        // loop that deals with directories
+                        if (!line.endsWith(".js")) {
+                            allFailed = splitLine.group(2) != null;
                             break;
                         }
 
-                        String excludeSubstr = m.group(1);
-                        int excludeCount = 0;
-                        for (File file : dirFiles) {
+                        if (fileSkip) {
+                            line = null;
+                            continue;
+                        }
+
+                        boolean hasFiles = false;
+
+                        for (File file :
+                                dirFiles) {
                             String path =
                                     target.toPath()
                                             .relativize(file.toPath())
                                             .toString()
                                             .replaceAll("\\\\", "/");
 
-                            if (path.equals(excludeSubstr)) {
-                                failingFiles.add(file);
-                                excludeCount++;
+                            if (path.equals(line)) {
+                                filesExpectedToFail.put(file, comment);
+
+                                if (dirSkip) {
+                                    /* adding files listed in the .properties file under a directory marked to skip
+                                     * to testFiles, in order to be able to regenerate the .properties file properly
+                                     * We want to keep track of which files failed (and thus also which ones passed)
+                                     * before the directory was marked to be completely skipped
+                                     */
+                                    testFiles.add(file);
+                                }
+                                hasFiles = true;
                             }
                         }
-                        if (excludeCount == 0) {
+
+                        if (!hasFiles) {
                             System.err.format(
                                     "WARN: Exclusion '%s' at line #%d doesn't exclude anything%n",
-                                    excludeSubstr, lineNo);
+                                    line, lineNo);
                         }
+
                         // exclusion handled
                         line = null;
                     }
+                }
 
-                    testFiles.addAll(dirFiles);
-                    dirFiles.clear();
+                dirFiles.clear();
 
-                    if (line != null && !line.equals(curDirectory)) {
-                        // saw a different line and it isn't an exclusion,
-                        // so it wasn't handled, let the main loop deal with it
-                        continue;
-                    }
+                if (line != null) {
+                    // saw a different line and it isn't an exclusion,
+                    // so it wasn't handled, let the main loop deal with it
+                    continue;
                 }
 
                 // this line was handled
@@ -369,13 +695,34 @@ public class Test262SuiteTest {
     @Parameters(name = "js={0}, opt={1}, strict={2}")
     public static Collection<Object[]> test262SuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<>();
+        File skipDir = null;
 
         List<File> testFiles = new LinkedList<File>();
-        Set<File> failingFiles = new HashSet<File>();
+        Map<File, String> failingFiles = new HashMap<File, String>();
         addTestFiles(testFiles, failingFiles);
 
         fileLoop:
         for (File testFile : testFiles) {
+            String caseShortPath = testDir.toPath().relativize(testFile.toPath()).toString();
+            boolean markedAsFailing = failingFiles.containsKey(testFile);
+            String comment = markedAsFailing ? failingFiles.get(testFile) : null;
+
+            // add dummy tracker, just in case the .properties file needs to be (re)generated
+            if (testFile.isDirectory()) skipDir = testFile;
+
+            if (skipDir != null) {
+                if (!testFile.toPath().startsWith(skipDir.toPath())) {
+                    skipDir = null;
+                } else {
+                    TestResultTracker tracker =
+                            RESULT_TRACKERS.computeIfAbsent(
+                                    new Test262Case(testFile, null, null, null, false, null, null),
+                                    k -> new TestResultTracker(comment));
+                    tracker.setExpectations(-2, true, false, false, true);
+                    continue;
+                }
+            }
+
             Test262Case testCase;
             try {
                 testCase = Test262Case.fromSource(testFile);
@@ -389,38 +736,72 @@ public class Test262SuiteTest {
             // 1. it requires/tests unsupported features
             for (String feature : testCase.features) {
                 if (UNSUPPORTED_FEATURES.contains(feature)) {
+                    if (includeUnsupported) {
+                        // FIXME this only adds the first unsupported feature, instead of all
+                        TestResultTracker tracker =
+                                RESULT_TRACKERS.computeIfAbsent(
+                                        testCase, k -> new TestResultTracker(comment));
+                        tracker.setExpectations(
+                                -2,
+                                true,
+                                testCase.hasFlag(FLAG_ONLY_STRICT),
+                                testCase.hasFlag(FLAG_NO_STRICT),
+                                true);
+                    }
+
                     continue fileLoop;
                 }
             }
             // 2. it runs in an unsupported environment
             if (testCase.hasFlag("module") || testCase.hasFlag("async")) {
+                if (includeUnsupported) {
+                    TestResultTracker tracker =
+                            RESULT_TRACKERS.computeIfAbsent(
+                                    testCase, k -> new TestResultTracker(comment));
+                    tracker.setExpectations(
+                            -2,
+                            true,
+                            testCase.hasFlag(FLAG_ONLY_STRICT),
+                            testCase.hasFlag(FLAG_NO_STRICT),
+                            true);
+                }
+
                 continue;
             }
 
-            String caseShortPath = testDir.toPath().relativize(testFile.toPath()).toString();
             for (int optLevel : OPT_LEVELS) {
-                boolean markedAsFailing = failingFiles.contains(testFile);
-                if (!testCase.hasFlag("onlyStrict") || testCase.hasFlag("raw")) {
+                if (!testCase.hasFlag(FLAG_ONLY_STRICT)
+                        || testCase.hasFlag(
+                                FLAG_RAW)) {
                     result.add(
                             new Object[] {
                                 caseShortPath, optLevel, false, testCase, markedAsFailing
                             });
-                    if (markedAsFailing) {
-                        Integer count = EXCLUDED_TESTS.computeIfAbsent(testCase.file, k -> 0);
-                        count += 1;
-                        EXCLUDED_TESTS.put(testCase.file, count);
-                    }
+                    TestResultTracker tracker =
+                            RESULT_TRACKERS.computeIfAbsent(
+                                    testCase, k -> new TestResultTracker(comment));
+                    tracker.setExpectations(
+                            optLevel,
+                            false,
+                            testCase.hasFlag(FLAG_ONLY_STRICT),
+                            testCase.hasFlag(FLAG_NO_STRICT),
+                            markedAsFailing);
                 }
-                if (!testCase.hasFlag("noStrict") && !testCase.hasFlag("raw")) {
+
+                if (!testCase.hasFlag(FLAG_NO_STRICT) && !testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
                                 caseShortPath, optLevel, true, testCase, markedAsFailing
                             });
-                    if (markedAsFailing) {
-                        Integer count = EXCLUDED_TESTS.computeIfAbsent(testCase.file, k -> 0);
-                        count += 1;
-                        EXCLUDED_TESTS.put(testCase.file, count);
-                    }
+                    TestResultTracker tracker =
+                            RESULT_TRACKERS.computeIfAbsent(
+                                    testCase, k -> new TestResultTracker(comment));
+                    tracker.setExpectations(
+                            optLevel,
+                            true,
+                            testCase.hasFlag(FLAG_ONLY_STRICT),
+                            testCase.hasFlag(FLAG_NO_STRICT),
+                            markedAsFailing);
                 }
             }
         }
@@ -473,10 +854,19 @@ public class Test262SuiteTest {
 
             Set<String> harnessFiles = new HashSet<>();
 
-            String metadataStr =
-                    testSource.substring(
-                            testSource.indexOf("/*---") + 5, testSource.indexOf("---*/"));
-            Map<String, Object> metadata = (Map<String, Object>) YAML.load(metadataStr);
+            Map<String, Object> metadata;
+
+            if (testSource.indexOf("/*---") != -1) {
+                String metadataStr =
+                        testSource.substring(
+                                testSource.indexOf("/*---") + 5, testSource.indexOf("---*/"));
+                metadata = (Map<String, Object>) YAML.load(metadataStr);
+            } else {
+                System.err.format(
+                        "WARN: file '%s' doesnt contain /*--- ... ---*/ directive",
+                        testFile.getPath());
+                metadata = new HashMap<String, Object>();
+            }
 
             if (metadata.containsKey("includes")) {
                 harnessFiles.addAll((List<String>) metadata.get("includes"));
@@ -500,7 +890,7 @@ public class Test262SuiteTest {
                 features.addAll((Collection<String>) metadata.get("features"));
             }
 
-            if (!flags.contains("raw")) {
+            if (!flags.contains(FLAG_RAW)) {
                 // present by default harness files
                 harnessFiles.add("assert.js");
                 harnessFiles.add("sta.js");
@@ -512,6 +902,108 @@ public class Test262SuiteTest {
 
             return new Test262Case(
                     testFile, testSource, harnessFiles, expectedError, isEarly, flags, features);
+        }
+    }
+
+    private static class TestResultTracker {
+        private Set<Integer> strictOptLevel = new HashSet<>();
+        private Set<Integer> nonStrictOptLevel = new HashSet<>();
+        private boolean onlyStrict;
+        private boolean noStrict;
+        private boolean expectedFailure;
+        private String comment;
+
+        TestResultTracker(String comment) {
+            this.comment = comment;
+        }
+
+        public void setExpectations(
+                int optLevel,
+                boolean useStrict,
+                boolean onlyStrict,
+                boolean noStrict,
+                boolean expectedFailure) {
+            if (useStrict) {
+                strictOptLevel.add(optLevel);
+            } else {
+                nonStrictOptLevel.add(optLevel);
+            }
+            this.onlyStrict = onlyStrict;
+            this.noStrict = noStrict;
+            this.expectedFailure = expectedFailure;
+        }
+
+        public void passes(int optLevel, boolean useStrict) {
+            if (useStrict) {
+                strictOptLevel.remove(optLevel);
+            } else {
+                nonStrictOptLevel.remove(optLevel);
+            }
+        }
+
+        public String getResult(int[] optLevels, Test262Case tc) {
+            // success on all optLevels in both strict and non-strict mode
+            if (strictOptLevel.size() + nonStrictOptLevel.size() == 0) {
+                return null;
+            }
+
+            // Test skipped due to dependencies on unsupported features/environment
+            if (strictOptLevel.contains(-2)) {
+                List<String> feats = new ArrayList<String>();
+
+                for (String feature : tc.features) {
+                    if (UNSUPPORTED_FEATURES.contains(feature)) {
+                        feats.add(feature);
+                    }
+                }
+
+                if (tc.hasFlag("module")) {
+                    feats.add("module");
+                }
+
+                if (tc.hasFlag("async")) {
+                    feats.add("async");
+                }
+
+                return "{unsupported: " + Arrays.toString(feats.toArray()) + "}";
+            }
+
+            // failure on all optLevels in both strict and non-strict mode
+            if (strictOptLevel.size() == optLevels.length
+                    && nonStrictOptLevel.size() == optLevels.length) {
+                return "";
+            }
+
+            // all optLevels fail only in strict
+            if (strictOptLevel.size() == optLevels.length && nonStrictOptLevel.size() == 0) {
+                return "strict";
+            }
+
+            // all optLevels fail only in non-strict
+            if (nonStrictOptLevel.size() == optLevels.length && strictOptLevel.size() == 0) {
+                return "non-strict";
+            }
+
+            // success in interpreted optLevel, but failure in all other optLevels
+            if (strictOptLevel.size() == optLevels.length - 1
+                    && !strictOptLevel.contains(-1)
+                    && nonStrictOptLevel.size() == optLevels.length - 1
+                    && !nonStrictOptLevel.contains(-1)) {
+                return "non-interpreted";
+            }
+
+            // mix of mode and optLevel successes and failures
+            String result = "{";
+            if (!noStrict && strictOptLevel.size() > 0) {
+                result += "strict: " + Arrays.toString(strictOptLevel.toArray());
+            }
+
+            if (!onlyStrict && nonStrictOptLevel.size() > 0) {
+                result += !noStrict && strictOptLevel.size() > 0 ? ", " : "";
+                result += "non-strict: " + Arrays.toString(nonStrictOptLevel.toArray());
+            }
+
+            return result + "}";
         }
     }
 }

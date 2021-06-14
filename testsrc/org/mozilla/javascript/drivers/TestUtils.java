@@ -85,11 +85,12 @@ public class TestUtils {
         return false;
     }
 
-    public static final FileFilter JS_FILE_FILTER = new FileFilter() {
-        @Override
-        public boolean accept(File pathname) {
-            return pathname.getAbsolutePath().endsWith(".js");
-        }
-    };
-
+    public static final FileFilter JS_FILE_FILTER =
+            new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    String path = pathname.getAbsolutePath();
+                    return path.endsWith(".js") && !path.endsWith("_FIXTURE.js");
+                }
+            };
 }
