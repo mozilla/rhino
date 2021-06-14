@@ -5,10 +5,10 @@ package org.mozilla.javascript;
  * using Java and JavaScript functions. Unlike LambdaSlot, the fact that these values are accessed
  * and mutated by functions is visible via the slot's property descriptor.
  */
-public class GetterSlot extends Slot {
+public class AccessorSlot extends Slot {
     private static final long serialVersionUID = 1677840254177335827L;
 
-    GetterSlot(Slot oldSlot) {
+    AccessorSlot(Slot oldSlot) {
         super(oldSlot);
     }
 
@@ -83,34 +83,36 @@ public class GetterSlot extends Slot {
         return getter.asGetterFunction(name, scope);
     }
 
-    abstract static class Getter {
-        abstract Object getValue(Scriptable start);
+    interface Getter {
+        Object getValue(Scriptable start);
 
-        abstract Function asGetterFunction(final String name, final Scriptable scope);
+        Function asGetterFunction(final String name, final Scriptable scope);
     }
 
     /** This is a Getter that delegates to a Java function via a MemberBox. */
-    static final class MemberBoxGetter extends Getter {
+    static final class MemberBoxGetter implements Getter {
         final MemberBox member;
 
         MemberBoxGetter(MemberBox member) {
             this.member = member;
         }
 
-        Object getValue(Scriptable start) {
+        @Override
+        public Object getValue(Scriptable start) {
             if (member.delegateTo == null) {
                 return member.invoke(start, ScriptRuntime.emptyArgs);
             }
             return member.invoke(member.delegateTo, new Object[] {start});
         }
 
-        Function asGetterFunction(String name, Scriptable scope) {
+        @Override
+        public Function asGetterFunction(String name, Scriptable scope) {
             return member.asGetterFunction(name, scope);
         }
     }
 
     /** This is a getter that delegates to a JavaScript function. */
-    static final class FunctionGetter extends Getter {
+    static final class FunctionGetter implements Getter {
         // The value of the function might actually be Undefined, so we need an Object here.
         final Object target;
 
@@ -118,7 +120,8 @@ public class GetterSlot extends Slot {
             this.target = target;
         }
 
-        Object getValue(Scriptable start) {
+        @Override
+        public Object getValue(Scriptable start) {
             if (target instanceof Function) {
                 Function t = (Function) target;
                 Context cx = Context.getContext();
@@ -127,26 +130,28 @@ public class GetterSlot extends Slot {
             return Undefined.instance;
         }
 
-        Function asGetterFunction(String name, Scriptable scope) {
+        @Override
+        public Function asGetterFunction(String name, Scriptable scope) {
             return target instanceof Function ? (Function) target : null;
         }
     }
 
-    abstract static class Setter {
-        abstract boolean setValue(Object value, Scriptable owner, Scriptable start);
+    interface Setter {
+        boolean setValue(Object value, Scriptable owner, Scriptable start);
 
-        abstract Function asSetterFunction(final String name, final Scriptable scope);
+        Function asSetterFunction(final String name, final Scriptable scope);
     }
 
     /** Invoke the setter on this slot via reflection using MemberBox. */
-    static final class MemberBoxSetter extends Setter {
+    static final class MemberBoxSetter implements Setter {
         final MemberBox member;
 
         MemberBoxSetter(MemberBox member) {
             this.member = member;
         }
 
-        boolean setValue(Object value, Scriptable owner, Scriptable start) {
+        @Override
+        public boolean setValue(Object value, Scriptable owner, Scriptable start) {
             Context cx = Context.getContext();
             Class<?>[] pTypes = member.argTypes;
             // XXX: cache tag since it is already calculated in
@@ -163,7 +168,8 @@ public class GetterSlot extends Slot {
             return true;
         }
 
-        Function asSetterFunction(String name, Scriptable scope) {
+        @Override
+        public Function asSetterFunction(String name, Scriptable scope) {
             return member.asSetterFunction(name, scope);
         }
     }
@@ -171,14 +177,15 @@ public class GetterSlot extends Slot {
     /**
      * Invoke the setter as a JavaScript function, taking care that it might actually be Undefined.
      */
-    static final class FunctionSetter extends Setter {
+    static final class FunctionSetter implements Setter {
         final Object target;
 
         FunctionSetter(Object target) {
             this.target = target;
         }
 
-        boolean setValue(Object value, Scriptable owner, Scriptable start) {
+        @Override
+        public boolean setValue(Object value, Scriptable owner, Scriptable start) {
             if (target instanceof Function) {
                 Function t = (Function) target;
                 Context cx = Context.getContext();
@@ -187,7 +194,8 @@ public class GetterSlot extends Slot {
             return true;
         }
 
-        Function asSetterFunction(String name, Scriptable scope) {
+        @Override
+        public Function asSetterFunction(String name, Scriptable scope) {
             return target instanceof Function ? (Function) target : null;
         }
     }
