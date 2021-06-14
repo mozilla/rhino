@@ -330,8 +330,13 @@ public class Test262SuiteTest {
                         String excludeSubstr = m.group(1);
                         int excludeCount = 0;
                         for (File file : dirFiles) {
-                            String path = file.getPath().replaceAll("\\\\", "/");
-                            if (path.endsWith(excludeSubstr)) {
+                            String path =
+                                    target.toPath()
+                                            .relativize(file.toPath())
+                                            .toString()
+                                            .replaceAll("\\\\", "/");
+
+                            if (path.equals(excludeSubstr)) {
                                 failingFiles.add(file);
                                 excludeCount++;
                             }
