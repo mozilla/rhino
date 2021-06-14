@@ -94,6 +94,12 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
             Each error constructor gets its own Error object as a prototype,
             with the 'name' property set to the name of the error.
         */
+        Scriptable nativeError =
+                ScriptableObject.ensureScriptable(ScriptableObject.getProperty(scope, "Error"));
+        Scriptable nativeErrorProto =
+                ScriptableObject.ensureScriptable(
+                        ScriptableObject.getProperty(nativeError, "prototype"));
+
         for (TopLevel.NativeErrors error : TopLevel.NativeErrors.values()) {
             if (error == TopLevel.NativeErrors.Error) {
                 // Error is initialized elsewhere and we should not overwrite it.
@@ -104,17 +110,21 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
                     (ScriptableObject)
                             ScriptRuntime.newBuiltinObject(
                                     cx, scope, TopLevel.Builtins.Error, ScriptRuntime.emptyArgs);
-            errorProto.put("name", errorProto, name);
-            errorProto.put("message", errorProto, "");
+            errorProto.defineProperty("name", name, DONTENUM);
+            errorProto.defineProperty("message", "", DONTENUM);
             IdFunctionObject ctor =
                     new IdFunctionObject(obj, FTAG, Id_new_CommonError, name, 1, scope);
             ctor.markAsConstructor(errorProto);
+            ctor.setPrototype(nativeError);
             errorProto.put("constructor", errorProto, ctor);
             errorProto.setAttributes("constructor", ScriptableObject.DONTENUM);
+            errorProto.setPrototype(nativeErrorProto);
             if (sealed) {
                 errorProto.sealObject();
                 ctor.sealObject();
             }
+            ctor.setAttributes("name", DONTENUM | READONLY);
+            ctor.setAttributes("length", DONTENUM | READONLY);
             ctor.exportAsScopeProperty();
         }
     }
