@@ -25,7 +25,7 @@ final class NativeError extends IdScriptableObject {
     private static final String STACK_HIDE_KEY = "_stackHide";
 
     private RhinoException stackProvider;
-    private String stack;
+    private Object stack;
 
     static void init(Scriptable scope, boolean sealed) {
         NativeError obj = new NativeError();
@@ -197,13 +197,13 @@ final class NativeError extends IdScriptableObject {
         } else {
             value = callPrepareStack(prepare, stackTrace);
         }
-        stack = Context.toString(value);
+        stack = value;
         return value;
     }
 
     public void setStackDelegated(Object value) {
         stackProvider = null;
-        stack = Context.toString(value);
+        stack = value;
     }
 
     private Object callPrepareStack(Function prepare, ScriptStackElement[] stack) {
@@ -222,21 +222,23 @@ final class NativeError extends IdScriptableObject {
     }
 
     private static Object js_toString(Scriptable thisObj) {
-        Object name = ScriptableObject.getProperty(thisObj, "name");
-        if (name == NOT_FOUND || Undefined.isUndefined(name)) {
+        Object nameObj = ScriptableObject.getProperty(thisObj, "name");
+        String name;
+        if (nameObj == NOT_FOUND || Undefined.isUndefined(nameObj)) {
             name = "Error";
         } else {
-            name = ScriptRuntime.toString(name);
+            name = ScriptRuntime.toString(nameObj);
         }
-        Object msg = ScriptableObject.getProperty(thisObj, "message");
-        if (msg == NOT_FOUND || Undefined.isUndefined(msg)) {
+        Object msgObj = ScriptableObject.getProperty(thisObj, "message");
+        String msg;
+        if (msgObj == NOT_FOUND || Undefined.isUndefined(msgObj)) {
             msg = "";
         } else {
-            msg = ScriptRuntime.toString(msg);
+            msg = ScriptRuntime.toString(msgObj);
         }
-        if (name.toString().length() == 0) {
+        if (name.isEmpty()) {
             return msg;
-        } else if (msg.toString().length() == 0) {
+        } else if (msg.isEmpty()) {
             return name;
         } else {
             return name + ": " + msg;
