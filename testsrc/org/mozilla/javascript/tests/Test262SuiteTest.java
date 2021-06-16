@@ -141,7 +141,8 @@ public class Test262SuiteTest {
                 default:
                     rollUpEnabled = updateProps.isEmpty() || updateProps.indexOf("rollup") != -1;
                     statsEnabled = updateProps.isEmpty() || updateProps.indexOf("stats") != -1;
-                    includeUnsupported = updateProps.isEmpty() || updateProps.indexOf("unsupported") != -1;
+                    includeUnsupported =
+                            updateProps.isEmpty() || updateProps.indexOf("unsupported") != -1;
             }
 
             if (getOverriddenLevel() != null) {
@@ -199,7 +200,8 @@ public class Test262SuiteTest {
             int rollUpCount = 0;
             int rolledUpFailureCount = 0;
 
-            // Converting to an array, so a regular loop over an array can be used, as there's the need to peek the next entry
+            // Converting to an array, so a regular loop over an array can be used,
+            // as there's the need to peek the next entry
             Test262Case[] testCases = new Test262Case[RESULT_TRACKERS.size()];
             RESULT_TRACKERS.keySet().toArray(testCases);
 
@@ -215,7 +217,8 @@ public class Test262SuiteTest {
                 String testResult = null;
 
                 Path testFilePath = testFile.toPath();
-                // hardcoded for just language/expression and language/statements to be split out on a deeper level
+                // hardcoded for just language/expression and language/statements
+                // to be split out on a deeper level
                 int reportDepth =
                         testFilePath.getNameCount() > 3
                                         && testFilePath.getName(2).toString().equals("language")
@@ -242,7 +245,8 @@ public class Test262SuiteTest {
                 if (rollUpEnabled
                         && (!testFilePath.startsWith(previousTestFileParentPath)
                                 || !testFilePath.getParent().equals(previousTestFileParentPath))) {
-                    if (!previousReportingDir.equals(previousTestFileParentPath) && rollUpCount > 1) {
+                    if (!previousReportingDir.equals(previousTestFileParentPath)
+                            && rollUpCount > 1) {
                         failures.add(
                                 "    *"
                                         + currentReportingDir
@@ -589,22 +593,25 @@ public class Test262SuiteTest {
                 recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
 
                 if (updateTest262Properties) {
-	                // Make sure files are always sorted the same way, alphabetically, with
-	                // subdirectories first
-	                // as to make sure that the output is stable when (re)generating the
-	                // test262.properties file
-	                dirFiles.sort(
-	                        (f1, f2) -> { // return -1: before, 0: equal, 1: after
-	                            String p1 = f1.getParent();
-	                            String p2 = f2.getParent();
-	
-	                            // making sure files come after subdirectories
-	                            if (!p1.equals(p2) && (p1.startsWith(p2) || p2.startsWith(p1))) {
-	                                return p1.startsWith(p2) ? -1 : 1;
-	                            }
-	
-	                            return f1.toString().replaceFirst("\\.js$", "").compareToIgnoreCase(f2.toString().replaceFirst("\\.js$", ""));
-	                        });
+                    // Make sure files are always sorted the same way, alphabetically, with
+                    // subdirectories first
+                    // as to make sure that the output is stable when (re)generating the
+                    // test262.properties file
+                    dirFiles.sort(
+                            (f1, f2) -> { // return -1: before, 0: equal, 1: after
+                                String p1 = f1.getParent();
+                                String p2 = f2.getParent();
+
+                                // making sure files come after subdirectories
+                                if (!p1.equals(p2) && (p1.startsWith(p2) || p2.startsWith(p1))) {
+                                    return p1.startsWith(p2) ? -1 : 1;
+                                }
+
+                                return f1.toString()
+                                        .replaceFirst("\\.js$", "")
+                                        .compareToIgnoreCase(
+                                                f2.toString().replaceFirst("\\.js$", ""));
+                            });
                 }
 
                 // if the directory is skipped, but has files below it, add those as to not loose
@@ -633,23 +640,29 @@ public class Test262SuiteTest {
                         comment = splitLine.group(4);
 
                         boolean hasFiles = false;
-                        
+
                         if (!line.endsWith(".js")) {
                             File potentialSubfolderTarget = new File(target, line);
-                            
+
                             if (allFailed && potentialSubfolderTarget.exists()) {
-                            	hasFiles = dirFiles
-                            			.stream()
-                            			.filter(file -> {
-                            				if (file.toPath().startsWith(potentialSubfolderTarget.toPath())) {
-                            					 filesExpectedToFail.put(file, null);
-                            					 return true;
-                            				}
-                            				return false;
-                            			})
-                            			.count() != 0;
+                                hasFiles =
+                                        dirFiles.stream()
+                                                        .filter(
+                                                                file -> {
+                                                                    if (file.toPath()
+                                                                            .startsWith(
+                                                                                    potentialSubfolderTarget
+                                                                                            .toPath())) {
+                                                                        filesExpectedToFail.put(
+                                                                                file, null);
+                                                                        return true;
+                                                                    }
+                                                                    return false;
+                                                                })
+                                                        .count()
+                                                != 0;
                             } else {
-                            	break;
+                                break;
                             }
                         }
 
@@ -658,8 +671,7 @@ public class Test262SuiteTest {
                             continue;
                         }
 
-                        for (File file :
-                                dirFiles) {
+                        for (File file : dirFiles) {
                             String path =
                                     target.toPath()
                                             .relativize(file.toPath())
@@ -784,9 +796,7 @@ public class Test262SuiteTest {
             }
 
             for (int optLevel : OPT_LEVELS) {
-                if (!testCase.hasFlag(FLAG_ONLY_STRICT)
-                        || testCase.hasFlag(
-                                FLAG_RAW)) {
+                if (!testCase.hasFlag(FLAG_ONLY_STRICT) || testCase.hasFlag(FLAG_RAW)) {
                     result.add(
                             new Object[] {
                                 caseShortPath, optLevel, false, testCase, markedAsFailing
