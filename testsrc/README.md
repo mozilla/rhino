@@ -84,22 +84,19 @@ While the test262.properties file does support this (because it is a Java Proper
 While the [test262.properties](test262.properties) file could be manually updated, the tooling also comes with a mechanism to (re)generate the file based on the current revision of the test262 submodule and the results of running Test262SuiteTest against this revision on all standard optLevels (-1, 0 & 9)
 
 ```
-./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest -DupdateTest262properties [-Dtest262properties=testsrc/myOwn.properties]
+./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest --rerun-tasks -DupdateTest262properties [-Dtest262properties=testsrc/myOwn.properties]
 ```
 The .properties file generation can be parameterized to affect the output:
-- rollup: include only a single line for a subfolder that contains only failing tests. Default: true
-- stats: include stats on the # of failed and total tests. Default: true
-- unsupported: include files containing tests for unsupported features: Default: false
+- rollup: include only a single line for a subfolder that contains only failing tests
+- stats: include stats on the # of failed and total tests
+- unsupported: include files containing tests for unsupported features
 
 These defaults can be overridden by specifying a value for the `generateTest262properties` parameter:
-- all: rollup, stats and unsupported all true
+- all: rollup, stats and unsupported all true (default)
 - none: rollup, stats and unsupported all false
 - [rollup][stats][unsupported]: the ones included will be true
 
-Note: the tests must actually run for the .properties file to be updated. If gradle determines that nothing has changed since the last time the `test` command was run, it won't run the tests. Gradle can be forced to ignore its cache by including the `--rerun-tasks` commandline argument:
-```
-./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest --rerun-tasks -DupdateTest262properties
-```
+Note: the tests must actually run for the .properties file to be updated. If gradle determines that nothing has changed since the last time the `test` command was run, it won't run the tests. The `--rerun-tasks` argument forces gradle to run all tests 
 
 ## Running specific tests from the official ECMAScript Test Suite (test262)
 The default setup for running the test262 test suite is defined in [test262.properties](test262.properties).
