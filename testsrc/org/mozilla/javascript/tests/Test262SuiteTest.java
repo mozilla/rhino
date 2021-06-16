@@ -194,7 +194,7 @@ public class Test262SuiteTest {
             Path currentReportingDir;
             List<String> failures = new ArrayList<String>();
             int testCount = 0;
-            Path testFileParent =
+            Path previousTestFileParentPath =
                     testDir.toPath(); // tracks the current directory for which files are processed
             int rollUpCount = 0;
             int rolledUpFailureCount = 0;
@@ -240,13 +240,13 @@ public class Test262SuiteTest {
                 // If so, dont list all failing files, but list only the directory with the all
                 // failed marker (*)
                 if (rollUpEnabled
-                        && (!testFilePath.startsWith(testFileParent)
-                                || !testFilePath.getParent().equals(testFileParent))) {
-                    if (!previousReportingDir.equals(testFileParent) && rollUpCount > 1) {
+                        && (!testFilePath.startsWith(previousTestFileParentPath)
+                                || !testFilePath.getParent().equals(previousTestFileParentPath))) {
+                    if (!previousReportingDir.equals(previousTestFileParentPath) && rollUpCount > 1) {
                         failures.add(
                                 "    *"
                                         + currentReportingDir
-                                                .relativize(testFileParent)
+                                                .relativize(previousTestFileParentPath)
                                                 .toString()
                                                 .replace("\\", "/")
                                         + (statsEnabled
@@ -263,7 +263,7 @@ public class Test262SuiteTest {
                         }
                     }
 
-                    testFileParent = testFilePath.getParent();
+                    previousTestFileParentPath = testFilePath.getParent();
                     rollUpCount = 0;
                 }
 
