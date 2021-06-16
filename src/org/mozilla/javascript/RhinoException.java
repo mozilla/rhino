@@ -306,7 +306,7 @@ public abstract class RhinoException extends RuntimeException {
                 }
             }
         }
-        return list.toArray(new ScriptStackElement[list.size()]);
+        return list.toArray(new ScriptStackElement[0]);
     }
 
     @Override
