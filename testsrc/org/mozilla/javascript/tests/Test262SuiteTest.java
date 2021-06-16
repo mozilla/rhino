@@ -198,6 +198,7 @@ public class Test262SuiteTest {
             int rollUpCount = 0;
             int rolledUpFailureCount = 0;
 
+            // Converting to an array, so a regular loop over an array can be used, as there's the need to peek the next entry
             Test262Case[] testCases = new Test262Case[RESULT_TRACKERS.size()];
             RESULT_TRACKERS.keySet().toArray(testCases);
 
@@ -205,9 +206,7 @@ public class Test262SuiteTest {
             writer.write(
                     "# This is a configuration file for Test262SuiteTest.java. See ./README.md for more info about this file\n");
 
-            for (int j = 0;
-                    j < testCases.length;
-                    j++) { // Using a regular loop over an array as we need to peek the next entry
+            for (int j = 0; j < testCases.length; j++) {
                 File testFile = testCases[j].file;
                 TestResultTracker tt = RESULT_TRACKERS.get(testCases[j]);
 
@@ -215,6 +214,7 @@ public class Test262SuiteTest {
                 String testResult = null;
 
                 Path testFilePath = testFile.toPath();
+                // hardcoded for just language/expression and language/statements to be split out on a deeper level
                 int reportDepth =
                         testFilePath.getNameCount() > 3
                                         && testFilePath.getName(2).toString().equals("language")
@@ -587,24 +587,24 @@ public class Test262SuiteTest {
 
                 recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
 
-                // Make sure files are always sorted the same way, alphabetically, with
-                // subdirectories first
-                // as to make sure that the output is stable when (re)generating the
-                // test262.properties file
-                dirFiles.sort(
-                        (f1, f2) -> { // return -1: before, 0: equal, 1: after
-                            String p1 = f1.getParent();
-                            String p2 = f2.getParent();
-
-                            // making sure files come after subdirectories
-                            if (!p1.equals(p2) && (p1.startsWith(p2) || p2.startsWith(p1))) {
-                                return p1.startsWith(p2) ? -1 : 1;
-                            }
-
-                            return f1.toString()
-                                    .compareToIgnoreCase(
-                                            f2.toString());
-                        });
+                if (updateTest262Properties) {
+	                // Make sure files are always sorted the same way, alphabetically, with
+	                // subdirectories first
+	                // as to make sure that the output is stable when (re)generating the
+	                // test262.properties file
+	                dirFiles.sort(
+	                        (f1, f2) -> { // return -1: before, 0: equal, 1: after
+	                            String p1 = f1.getParent();
+	                            String p2 = f2.getParent();
+	
+	                            // making sure files come after subdirectories
+	                            if (!p1.equals(p2) && (p1.startsWith(p2) || p2.startsWith(p1))) {
+	                                return p1.startsWith(p2) ? -1 : 1;
+	                            }
+	
+	                            return f1.toString().compareToIgnoreCase(f2.toString());
+	                        });
+                }
 
                 // if the directory is skipped, but has files below it, add those as to not loose
                 // them when regenerating the .properties file
@@ -627,22 +627,35 @@ public class Test262SuiteTest {
                         }
 
                         fileSkip = splitLine.group(1) != null;
+                        allFailed = splitLine.group(2) != null;
                         line = splitLine.group(3);
                         comment = splitLine.group(4);
 
-                        // If line is not for a file, it must be a directory, so continue the outer
-                        // loop that deals with directories
+                        boolean hasFiles = false;
+                        
                         if (!line.endsWith(".js")) {
-                            allFailed = splitLine.group(2) != null;
-                            break;
+                            File potentialSubfolderTarget = new File(target, line);
+                            
+                            if (allFailed && potentialSubfolderTarget.exists()) {
+                            	hasFiles = dirFiles
+                            			.stream()
+                            			.filter(file -> {
+                            				if (file.toPath().startsWith(potentialSubfolderTarget.toPath())) {
+                            					 filesExpectedToFail.put(file, null);
+                            					 return true;
+                            				}
+                            				return false;
+                            			})
+                            			.count() != 0;
+                            } else {
+                            	break;
+                            }
                         }
 
                         if (fileSkip) {
                             line = null;
                             continue;
                         }
-
-                        boolean hasFiles = false;
 
                         for (File file :
                                 dirFiles) {
