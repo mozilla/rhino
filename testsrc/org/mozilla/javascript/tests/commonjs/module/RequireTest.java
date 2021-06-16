@@ -61,7 +61,7 @@ public class RequireTest extends TestCase {
 
     public void testCustomGlobal() throws Exception {
         final Context cx = createContext();
-        final Scriptable scope = cx.initSafeStandardObjects();
+        final Scriptable scope = cx.initStandardObjects();
         ScriptableObject.defineClass(scope, CustomGlobal.class);
 
         final Scriptable global = cx.newObject(scope, "CustomGlobal", null);
@@ -69,14 +69,26 @@ public class RequireTest extends TestCase {
         global.getPrototype().setPrototype(scope);
         global.setParentScope(null);
 
-        final Require require = new Require(cx, global,
-                new StrongCachingModuleScriptProvider(
-                        new UrlModuleSourceProvider(Collections.singleton(
-                                getDirectory()), null)), null, null, true);
+        final Require require =
+                new Require(
+                        cx,
+                        global,
+                        new StrongCachingModuleScriptProvider(
+                                new UrlModuleSourceProvider(
+                                        Collections.singleton(getDirectory()), null)),
+                        null,
+                        null,
+                        true);
 
         require.install(global);
-        cx.evaluateReader(global, getReader("testCustomGlobal.js"),
-                "testCustomGlobal.js", 1, null);
+
+        try {
+            cx.evaluateReader(
+                    global, getReader("testCustomGlobal.js"), "testCustomGlobal.js", 1, null);
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+            throw ex;
+        }
     }
 
     public void testVariousUsageErrors() throws Exception {
