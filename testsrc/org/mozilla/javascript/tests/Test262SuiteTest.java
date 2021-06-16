@@ -603,7 +603,7 @@ public class Test262SuiteTest {
 	                                return p1.startsWith(p2) ? -1 : 1;
 	                            }
 	
-	                            return f1.toString().compareToIgnoreCase(f2.toString());
+	                            return f1.toString().replaceFirst("\\.js$", "").compareToIgnoreCase(f2.toString().replaceFirst("\\.js$", ""));
 	                        });
                 }
 
