@@ -65,7 +65,6 @@ public class Test262SuiteTest {
     private static final String FLAG_NO_STRICT = "noStrict";
 
     static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 0, 9};
-    ;
     static final int[] OPT_LEVELS;
 
     private static final File testDir = new File("test262/test");
