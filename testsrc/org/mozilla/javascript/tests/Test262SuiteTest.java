@@ -85,6 +85,8 @@ public class Test262SuiteTest {
     static final Set<String> UNSUPPORTED_FEATURES =
             new HashSet<>(
                     Arrays.asList(
+                            "Array.prototype.flatMap",
+                            "Array.prototype.flat",
                             "Atomics",
                             "IsHTMLDDA",
                             "Promise.prototype.finally",
@@ -94,6 +96,7 @@ public class Test262SuiteTest {
                             "Reflect.set",
                             "Reflect.setPrototypeOf",
                             "SharedArrayBuffer",
+                            "Symbol.species",
                             "async-functions",
                             "async-iteration",
                             "class",
@@ -109,6 +112,7 @@ public class Test262SuiteTest {
                             "regexp-lookbehind",
                             "regexp-named-groups",
                             "regexp-unicode-property-escapes",
+                            "rest-parameters",
                             "super",
                             "String.prototype.matchAll",
                             "Symbol.matchAll",
@@ -137,10 +141,7 @@ public class Test262SuiteTest {
                 default:
                     rollUpEnabled = updateProps.isEmpty() || updateProps.indexOf("rollup") != -1;
                     statsEnabled = updateProps.isEmpty() || updateProps.indexOf("stats") != -1;
-                    includeUnsupported =
-                            updateProps.isEmpty()
-                                    ? false
-                                    : updateProps.indexOf("unsupported") != -1;
+                    includeUnsupported = updateProps.isEmpty() || updateProps.indexOf("unsupported") != -1;
             }
 
             if (getOverriddenLevel() != null) {
