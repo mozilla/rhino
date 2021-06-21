@@ -60,21 +60,21 @@ If `built-ins/Array/from/calling-from-valid-1-noStrict.js` indeed fails, it wont
     S15.1.3.1_A2.4_T1.js
     S15.1.3.1_A5.2.js
 ```
-Folders can be prefixed with a `~` to mark the folder to be skipped entirely, for example because it contains all tests for a feature not yet supported by Rhino or because running the tests take a long time.
+Toplevel folders can be prefixed with a `~` to mark the folder to be skipped entirely, for example because it contains all tests for a feature not yet supported by Rhino or because running the tests take a long time.
 Any files listed for a skipped folder will be skipped as well.
 
 **Expecting all files in a (sub)folder to fail**
 ```
-built-ins/Array
-    *prototype/flatMap
+built-ins/Array <-- topLevel folder
+    prototype/flatMap <-- subfolder under topLevel folder
 ```
-If all files in a (sub) folder are expected to fail, instead of listing all files explicitly, the folder can be marked as expected to contain only failing tests by prefixing the folder path with an `*`
+If all files in a subfolder below a topLevel folderare expected to fail, instead of listing all files explicitly, just the path of the folder needs to be included under the topLevel folder
 
 **Comments**
 The test262.properties file uses the Java Properties format, with the folder/.js file paths being the property key. The value of each 'property' can be used to store a comment
 ```
 ~built-ins/Array All tests on the built-in Array class
-    *prototype/flatMap haven't gotten around to implementing flatMap yet
+    prototype/flatMap haven't gotten around to implementing flatMap yet
 ```
 
 A Java Properties file can also have entire lines as comments, by prefixing the line with either `!` or `#`.
