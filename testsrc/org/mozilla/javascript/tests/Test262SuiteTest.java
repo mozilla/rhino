@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -556,7 +557,7 @@ public class Test262SuiteTest {
                 lineNo++;
 
                 if (!splitLine.matches()) {
-                    if (!line.isBlank()) {
+                    if (line.length() > 0) {
                         System.err.format(
                                 "WARN: Unexpected content '%s' at line #%d%n", line, lineNo);
                     }
@@ -623,7 +624,7 @@ public class Test262SuiteTest {
                     }
 
                     continue;
-                } else if (!splitLine.group(1).isBlank()) {
+                } else if (splitLine.group(1).trim().length() > 0) {
                     // comments
 
                     continue;
