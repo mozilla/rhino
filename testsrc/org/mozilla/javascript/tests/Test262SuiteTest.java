@@ -115,8 +115,6 @@ public class Test262SuiteTest {
                             "super",
                             "String.prototype.matchAll",
                             "Symbol.matchAll",
-                            // "Symbol.unscopable",
-                            // "Symbol.species",
                             "tail-call-optimization",
                             "json-superset",
                             "hashbang",
