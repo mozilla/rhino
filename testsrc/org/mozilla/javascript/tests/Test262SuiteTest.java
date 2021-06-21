@@ -115,6 +115,8 @@ public class Test262SuiteTest {
                             "super",
                             "String.prototype.matchAll",
                             "Symbol.matchAll",
+                            // "Symbol.unscopable",
+                            // "Symbol.species",
                             "tail-call-optimization",
                             "json-superset",
                             "hashbang",
@@ -239,15 +241,14 @@ public class Test262SuiteTest {
 
                 // Determine if switching to another directory and if so whether all files in the
                 // previous directory failed
-                // If so, dont list all failing files, but list only the directory with the all
-                // failed marker (*)
+                // If so, dont list all failing files, but list only the folder path
                 if (rollUpEnabled
                         && (!testFilePath.startsWith(previousTestFileParentPath)
                                 || !testFilePath.getParent().equals(previousTestFileParentPath))) {
                     if (!previousReportingDir.equals(previousTestFileParentPath)
                             && rollUpCount > 1) {
                         failures.add(
-                                "    *"
+                                "    "
                                         + currentReportingDir
                                                 .relativize(previousTestFileParentPath)
                                                 .toString()
@@ -310,8 +311,7 @@ public class Test262SuiteTest {
 
                     writer.write('\n');
                     writer.write(
-                            (failurePercentage == 100 ? "*" : "")
-                                    + previousReportingDir
+                            previousReportingDir
                                             .subpath(2, previousReportingDir.getNameCount())
                                             .toString()
                                             .replace("\\", "/")
@@ -393,19 +393,22 @@ public class Test262SuiteTest {
 
     /*
      * Regex breakdown:
-     * whitespace >
-     * 1: optionally followed by comment (! or #) of exclusion (~) character >
-     * whitespace >
-     * 2: optionally all failed indicator (*) >
-     * non-whitespace characters >
-     * 3: characters that make up the file/directory >
-     * non-whitespace characters >
-     * stats for directories (2/8 (25%)) OR failure info (strict OR non-strict OR non-interpreted OR {...}) for .js files >
-     * 4: optionally comment
+     * Group 1:
+     * 	topLevel folder exclusion marker - ~
+     *  OR
+     *  comment marker: optional whitespace + (! OR #) + optional whitespace - (?:\\s*)(?:!|#)(?:\\s*)
+     *  OR
+     *  preceding whitespace indicating subsolder/file: whitespace - \\s+
+     * Group 2:
+     * 	folder/filePath - (\\S+)
+     * Group 3 (non-capturing):
+     *  stats for directories (2/8 (25%)) OR failure info (strict OR non-strict OR non-interpreted OR {...}) for .js files >
+     * Group 4
+     *  optionally comment
      */
     private static final Pattern LINE_SPLITTER =
             Pattern.compile(
-                    "\\s*([!#~])?\\s*(\\*)?(\\S*)(?:[^\\S\\r\\n]+(?:strict|non-strict|non-interpreted|\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
+                    "(~|(?:\\s*)(?:!|#)(?:\\s*)|\\s+)?(\\S+)(?:[^\\S\\r\\n]+(?:strict|non-strict|non-interpreted|\\d+/\\d+ \\(\\d+(?:\\.\\d+)?%%\\)|\\{(?:non-strict|strict|unsupported): \\[.*\\],?\\}))?[^\\S\\r\\n]*(.*)");
 
     private final String testFilePath;
     private final int optLevel;
@@ -539,180 +542,149 @@ public class Test262SuiteTest {
 
     private static void addTestFiles(List<File> testFiles, Map<File, String> filesExpectedToFail)
             throws IOException {
-        List<File> dirFiles = new LinkedList<File>();
+        List<File> topLevelFolderContents = new LinkedList<File>();
+        File topLevelFolder = null;
+        boolean excludeTopLevelFolder = false;
+
+        int lineNo = 0;
+        String line;
+        String path;
+        String comment;
 
         try (Scanner scanner = new Scanner(new File(testProperties))) {
-            int lineNo = 0;
-            String curDirectory = null;
-            String line = null;
-            String comment = null;
-            boolean dirSkip = false;
-            boolean fileSkip = false;
-            boolean allFailed = false;
+            while (scanner.hasNextLine()) {
+                line = scanner.nextLine();
+                Matcher splitLine = LINE_SPLITTER.matcher(line);
+                lineNo++;
 
-            while (line != null || scanner.hasNextLine()) {
-                // Note, here line could be not null when it
-                // wasn't handled on the previous iteration
-                if (line == null) {
-                    Matcher splitLine = LINE_SPLITTER.matcher(scanner.nextLine());
-                    lineNo++;
-
-                    if (!splitLine.matches()
-                            || (splitLine.group(1) != null && !splitLine.group(1).equals("~"))
-                            || splitLine.group(3).isEmpty()) continue;
-
-                    dirSkip = splitLine.group(1) != null;
-                    allFailed = splitLine.group(2) != null;
-                    curDirectory = splitLine.group(3);
-                    comment = splitLine.group(4);
-                } else {
-                    curDirectory = line;
-                    dirSkip = fileSkip;
-                }
-
-                File target = new File(testDir, curDirectory);
-
-                if (!target.exists()) {
-                    throw new RuntimeException(
-                            "Unexpected exclusion '" + curDirectory + "' at the line #" + lineNo);
-                } else if (!target.isDirectory()) {
-                    throw new RuntimeException(
-                            "Unexpected file '"
-                                    + curDirectory
-                                    + "' at the top level at the line #"
-                                    + lineNo);
-                }
-
-                if (dirSkip) {
-                    // Adding the directory itself, for reporting inside the .tearDownClass() method
-                    testFiles.add(target);
-                    filesExpectedToFail.put(target, comment);
-                }
-
-                recursiveListFilesHelper(target, JS_FILE_FILTER, dirFiles);
-
-                if (updateTest262Properties) {
-                    // Make sure files are always sorted the same way, alphabetically, with
-                    // subdirectories first
-                    // as to make sure that the output is stable when (re)generating the
-                    // test262.properties file
-                    dirFiles.sort(
-                            (f1, f2) -> { // return -1: before, 0: equal, 1: after
-                                String p1 = f1.getParent();
-                                String p2 = f2.getParent();
-
-                                // making sure files come after subdirectories
-                                if (!p1.equals(p2) && (p1.startsWith(p2) || p2.startsWith(p1))) {
-                                    return p1.startsWith(p2) ? -1 : 1;
-                                }
-
-                                return f1.toString()
-                                        .replaceFirst("\\.js$", "")
-                                        .compareToIgnoreCase(
-                                                f2.toString().replaceFirst("\\.js$", ""));
-                            });
-                }
-
-                // if the directory is skipped, but has files below it, add those as to not loose
-                // them when regenerating the .properties file
-                if (!dirSkip) testFiles.addAll(dirFiles);
-
-                if (allFailed) {
-                    dirFiles.stream().forEach(file -> filesExpectedToFail.put(file, null));
-                    line = null;
-                } else {
-                    // consume lines containing files up to the next directory
-                    while (scanner.hasNextLine()) {
-                        Matcher splitLine = LINE_SPLITTER.matcher(scanner.nextLine());
-                        lineNo++;
-
-                        // Skip lines that don't contain a file or directory to process
-                        if (!splitLine.matches()
-                                || (splitLine.group(1) != null && splitLine.group(1).equals("#"))
-                                || splitLine.group(3).isEmpty()) {
-                            continue;
-                        }
-
-                        fileSkip = splitLine.group(1) != null;
-                        allFailed = splitLine.group(2) != null;
-                        line = splitLine.group(3);
-                        comment = splitLine.group(4);
-
-                        boolean hasFiles = false;
-
-                        if (!line.endsWith(".js")) {
-                            File potentialSubfolderTarget = new File(target, line);
-
-                            if (allFailed && potentialSubfolderTarget.exists()) {
-                                hasFiles =
-                                        dirFiles.stream()
-                                                        .filter(
-                                                                file -> {
-                                                                    if (file.toPath()
-                                                                            .startsWith(
-                                                                                    potentialSubfolderTarget
-                                                                                            .toPath())) {
-                                                                        filesExpectedToFail.put(
-                                                                                file, null);
-                                                                        return true;
-                                                                    }
-                                                                    return false;
-                                                                })
-                                                        .count()
-                                                != 0;
-                            } else {
-                                break;
-                            }
-                        }
-
-                        if (fileSkip) {
-                            line = null;
-                            continue;
-                        }
-
-                        for (File file : dirFiles) {
-                            String path =
-                                    target.toPath()
-                                            .relativize(file.toPath())
-                                            .toString()
-                                            .replaceAll("\\\\", "/");
-
-                            if (path.equals(line)) {
-                                filesExpectedToFail.put(file, comment);
-
-                                if (dirSkip) {
-                                    /* adding files listed in the .properties file under a directory marked to skip
-                                     * to testFiles, in order to be able to regenerate the .properties file properly
-                                     * We want to keep track of which files failed (and thus also which ones passed)
-                                     * before the directory was marked to be completely skipped
-                                     */
-                                    testFiles.add(file);
-                                }
-                                hasFiles = true;
-                            }
-                        }
-
-                        if (!hasFiles) {
-                            System.err.format(
-                                    "WARN: Exclusion '%s' at line #%d doesn't exclude anything%n",
-                                    line, lineNo);
-                        }
-
-                        // exclusion handled
-                        line = null;
+                if (!splitLine.matches()) {
+                    if (!line.isBlank()) {
+                        System.err.format(
+                                "WARN: Unexpected content '%s' at line #%d%n", line, lineNo);
                     }
-                }
 
-                dirFiles.clear();
-
-                if (line != null) {
-                    // saw a different line and it isn't an exclusion,
-                    // so it wasn't handled, let the main loop deal with it
                     continue;
                 }
 
-                // this line was handled
-                line = null;
+                path = splitLine.group(2);
+                comment = splitLine.group(3);
+
+                if (splitLine.group(1) == null || splitLine.group(1).equals("~")) {
+                    // apparent topLevel folder match
+
+                    topLevelFolder = new File(testDir, path);
+
+                    if (!topLevelFolder.exists()) {
+                        throw new RuntimeException(
+                                "Non-existing '" + path + "' at the line #" + lineNo);
+                    } else if (!topLevelFolder.isDirectory()) {
+                        throw new RuntimeException(
+                                "Unexpected file '"
+                                        + path
+                                        + "' at the top level at the line #"
+                                        + lineNo);
+                    }
+
+                    excludeTopLevelFolder =
+                            splitLine.group(1) != null && splitLine.group(1).equals("~");
+
+                    topLevelFolderContents.clear();
+                    recursiveListFilesHelper(
+                            topLevelFolder, JS_FILE_FILTER, topLevelFolderContents);
+
+                    if (updateTest262Properties) {
+                        // Make sure files are always sorted the same way, alphabetically, with
+                        // subdirectories first
+                        // as to make sure that the output is stable when (re)generating the
+                        // test262.properties file
+                        topLevelFolderContents.sort(
+                                (f1, f2) -> { // return -1: before, 0: equal, 1: after
+                                    String p1 = f1.getParent();
+                                    String p2 = f2.getParent();
+
+                                    // making sure files come after subdirectories
+                                    if (!p1.equals(p2)
+                                            && (p1.startsWith(p2) || p2.startsWith(p1))) {
+                                        return p1.startsWith(p2) ? -1 : 1;
+                                    }
+
+                                    return f1.toString()
+                                            .replaceFirst("\\.js$", "")
+                                            .compareToIgnoreCase(
+                                                    f2.toString().replaceFirst("\\.js$", ""));
+                                });
+                    }
+
+                    if (excludeTopLevelFolder) {
+                        // Adding just the folder itself, needed when regenerating the .properties
+                        // file
+                        testFiles.add(topLevelFolder);
+                        filesExpectedToFail.put(topLevelFolder, comment);
+                    } else {
+                        testFiles.addAll(topLevelFolderContents);
+                    }
+
+                    continue;
+                } else if (!splitLine.group(1).isBlank()) {
+                    // comments
+
+                    continue;
+                } else if (topLevelFolder == null) {
+                    throw new RuntimeException(
+                            "Gotten to file '"
+                                    + splitLine.group(2)
+                                    + "' at the line #"
+                                    + lineNo
+                                    + " without encountering a top level");
+                }
+
+                boolean fileFound = false;
+
+                // Now onto the files and folders listed under the topLevel folder
+                if (path.endsWith(".js")) {
+                    for (File file : topLevelFolderContents) {
+                        if (topLevelFolder
+                                .toPath()
+                                .relativize(file.toPath())
+                                .toString()
+                                .replaceAll("\\\\", "/")
+                                .equals(path)) {
+                            filesExpectedToFail.put(file, comment);
+
+                            if (excludeTopLevelFolder) {
+                                /* adding paths listed in the .properties file under the topLevel folder marked to skip
+                                 * to testFiles, in order to be able to not loose then when regenerate the .properties file
+                                 *
+                                 * Want to keep track of these files as they apparently failed at the time when the directory was marked to be skipped
+                                 */
+                                testFiles.add(file);
+                            }
+                            fileFound = true;
+                        }
+                    }
+
+                    if (!fileFound) {
+                        System.err.format(
+                                "WARN: Exclusion '%s' at line #%d doesn't exclude anything%n",
+                                path, lineNo);
+                    }
+                } else {
+                    File subFolder = new File(topLevelFolder, path);
+
+                    if (!subFolder.exists()) {
+                        System.err.format(
+                                "WARN: Exclusion '%s' at line #%d doesn't exclude anything%n",
+                                path, lineNo);
+                    }
+
+                    topLevelFolderContents.stream()
+                            .forEach(
+                                    file -> {
+                                        if (file.toPath().startsWith(subFolder.toPath())) {
+                                            filesExpectedToFail.put(file, null);
+                                        }
+                                    });
+                }
             }
         }
     }
