@@ -88,7 +88,6 @@ public class Test262SuiteTest {
                             "Array.prototype.flat",
                             "Atomics",
                             "IsHTMLDDA",
-                            "Promise.prototype.finally",
                             "Proxy",
                             "Reflect",
                             "Reflect.construct",

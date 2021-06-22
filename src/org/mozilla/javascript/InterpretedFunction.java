@@ -96,12 +96,17 @@ final class InterpretedFunction extends NativeFunction implements Script {
             // Can only be applied to scripts
             throw new IllegalStateException();
         }
+        Object ret;
         if (!ScriptRuntime.hasTopCall(cx)) {
             // It will go through "call" path. but they are equivalent
-            return ScriptRuntime.doTopCall(
-                    this, cx, scope, scope, ScriptRuntime.emptyArgs, idata.isStrict);
+            ret =
+                    ScriptRuntime.doTopCall(
+                            this, cx, scope, scope, ScriptRuntime.emptyArgs, idata.isStrict);
+        } else {
+            ret = Interpreter.interpret(this, cx, scope, scope, ScriptRuntime.emptyArgs);
         }
-        return Interpreter.interpret(this, cx, scope, scope, ScriptRuntime.emptyArgs);
+        cx.processMicrotasks();
+        return ret;
     }
 
     public boolean isScript() {
