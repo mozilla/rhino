@@ -408,7 +408,7 @@ spotless {
 jacocoTestReport.dependsOn test
 jacocoTestReport {
     reports {
-        html.destination file("${buildDir}/jacocoHtml")
+        csv.enabled true
     }
 }
 
