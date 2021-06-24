@@ -87,7 +87,9 @@ test {
         systemProperty 'TEST_OPTLEVEL', System.getProperty('optLevel')
     }
     systemProperty 'test262properties', System.getProperty('test262properties')
-    systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
+    if (System.getProperty('updateTest262properties') != null) {
+        systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
+    }
     maxHeapSize = "1g"
     testLogging.showStandardStreams = true
     // Many tests do not clean up contexts properly. This makes the tests much
