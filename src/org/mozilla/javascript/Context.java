@@ -339,7 +339,12 @@ public class Context implements Closeable {
      */
     public static final int FEATURE_ENABLE_JAVA_MAP_ACCESS = 21;
 
-    public static final int FEATURE_HIDE_WRAPPED_EXCEPTIONS = 1001;
+    /**
+     * If set, then any native exceptions thrown by Java code and caught by a JavaScript catch block
+     * will appear as 'InternalError' instead of 'JavaException', and will not show the class name
+     * of the Java exception.
+     */
+    public static final int FEATURE_HIDE_WRAPPED_EXCEPTIONS = 22;
 
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";

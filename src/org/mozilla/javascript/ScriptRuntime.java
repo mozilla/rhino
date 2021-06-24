@@ -4014,7 +4014,8 @@ public class ScriptRuntime {
                     errorMsg = javaException.getMessage();
                 } else {
                     type = TopLevel.NativeErrors.JavaException;
-                    errorMsg = javaException.getClass().getName() + ": " + javaException.getMessage();
+                    errorMsg =
+                            javaException.getClass().getName() + ": " + javaException.getMessage();
                 }
             } else if (t instanceof EvaluatorException) {
                 // Pure evaluator exception, nor WrappedException instance
