@@ -121,11 +121,38 @@ public class LambdaConstructor extends LambdaFunction {
     /**
      * Define a function property directly on the constructor that is implemented under the covers
      * by a LambdaFunction.
+     *
+     * @param name the key to use to look up the new function property, and also the value to return
+     *     for the "name" property of the Function object
+     * @param length the value to return for the "length" property of the Function object
+     * @param target the target to call when the method is invoked
+     * @param attributes the attributes to set on the new property
      */
     public void defineConstructorMethod(
             Scriptable scope, String name, int length, Callable target, int attributes) {
         LambdaFunction f = new LambdaFunction(scope, name, length, target);
         defineProperty(name, f, attributes);
+    }
+
+    /**
+     * Define a function property directly on the constructor that is implemented under the covers
+     * by a LambdaFunction.
+     *
+     * @param key the Symbol to use to look up the property
+     * @param name the value to return for the "name" property of the Function object
+     * @param length the value to return for the "length" property of the Function object
+     * @param target the target to call when the method is invoked
+     * @param attributes the attributes to set on the new property
+     */
+    public void defineConstructorMethod(
+            Scriptable scope,
+            Symbol key,
+            String name,
+            int length,
+            Callable target,
+            int attributes) {
+        LambdaFunction f = new LambdaFunction(scope, name, length, target);
+        defineProperty(key, f, attributes);
     }
 
     /**

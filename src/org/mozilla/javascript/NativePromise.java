@@ -46,6 +46,20 @@ public class NativePromise extends ScriptableObject {
         constructor.defineConstructorMethod(
                 scope, "race", 1, NativePromise::race, DONTENUM, DONTENUM | READONLY);
 
+        ScriptableObject speciesDescriptor = (ScriptableObject) cx.newObject(scope);
+        ScriptableObject.putProperty(speciesDescriptor, "enumerable", false);
+        ScriptableObject.putProperty(speciesDescriptor, "configurable", true);
+        ScriptableObject.putProperty(
+                speciesDescriptor,
+                "get",
+                new LambdaFunction(
+                        scope,
+                        "get [Symbol.species]",
+                        0,
+                        (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                                constructor));
+        constructor.defineOwnProperty(cx, SymbolKey.SPECIES, speciesDescriptor, false);
+
         constructor.definePrototypeMethod(
                 scope,
                 "then",
@@ -53,14 +67,20 @@ public class NativePromise extends ScriptableObject {
                 (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) -> {
                     NativePromise self =
                             LambdaConstructor.convertThisObject(thisObj, NativePromise.class);
-                    return self.then(lcx, lscope, args);
+                    return self.then(lcx, lscope, constructor, args);
                 },
                 DONTENUM,
                 DONTENUM | READONLY);
         constructor.definePrototypeMethod(
                 scope, "catch", 1, NativePromise::doCatch, DONTENUM, DONTENUM | READONLY);
         constructor.definePrototypeMethod(
-                scope, "finally", 1, NativePromise::doFinally, DONTENUM, DONTENUM | READONLY);
+                scope,
+                "finally",
+                1,
+                (Context lcx, Scriptable lscope, Scriptable thisObj, Object[] args) ->
+                        doFinally(lcx, lscope, thisObj, constructor, args),
+                DONTENUM,
+                DONTENUM | READONLY);
 
         constructor.definePrototypeProperty(
                 SymbolKey.TO_STRING_TAG, "Promise", DONTENUM | READONLY);
@@ -117,7 +137,7 @@ public class NativePromise extends ScriptableObject {
 
     // PromiseResolve abstract operation
     private static Object resolveInternal(
-            Context cx, Scriptable scope, Scriptable constructor, Object arg) {
+            Context cx, Scriptable scope, Object constructor, Object arg) {
         if (arg instanceof NativePromise) {
             Object argConstructor = ScriptRuntime.getObjectProp(arg, "constructor", cx, scope);
             if (argConstructor == constructor) {
@@ -261,9 +281,10 @@ public class NativePromise extends ScriptableObject {
     }
 
     // Promise.prototype.then
-    private Object then(Context cx, Scriptable scope, Object[] args) {
-        Object ourNativeConstructor = ScriptableObject.getProperty(this, "constructor");
-        Capability capability = new Capability(cx, scope, ourNativeConstructor);
+    private Object then(
+            Context cx, Scriptable scope, LambdaConstructor defaultConstructor, Object[] args) {
+        Constructable constructable = ScriptRuntime.getSpeciesConstructor(this, defaultConstructor);
+        Capability capability = new Capability(cx, scope, constructable);
 
         Callable onFulfilled = null;
         if (args.length >= 1 && args[0] instanceof Callable) {
@@ -304,15 +325,19 @@ public class NativePromise extends ScriptableObject {
 
     // Promise.prototype.finally
     private static Object doFinally(
-            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            LambdaConstructor defaultConstructor,
+            Object[] args) {
         if (!ScriptRuntime.isObject(thisObj)) {
             throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(thisObj));
         }
         Object onFinally = args.length > 0 ? args[0] : Undefined.SCRIPTABLE_UNDEFINED;
         Object thenFinally = onFinally;
         Object catchFinally = onFinally;
-        Scriptable constructor =
-                ensureScriptable(ScriptableObject.getProperty(thisObj, "constructor"));
+        Constructable constructor =
+                ScriptRuntime.getSpeciesConstructor(thisObj, defaultConstructor);
         if (onFinally instanceof Callable) {
             Callable callableOnFinally = (Callable) thenFinally;
             thenFinally = makeThenFinally(scope, constructor, callableOnFinally);
@@ -325,7 +350,7 @@ public class NativePromise extends ScriptableObject {
 
     // Abstract "Then Finally Function"
     private static Callable makeThenFinally(
-            Scriptable scope, Scriptable constructor, Callable onFinally) {
+            Scriptable scope, Object constructor, Callable onFinally) {
         return new LambdaFunction(
                 scope,
                 1,
@@ -356,7 +381,7 @@ public class NativePromise extends ScriptableObject {
 
     // Abstract "Catch Finally Thrower"
     private static Callable makeCatchFinally(
-            Scriptable scope, Scriptable constructor, Callable onFinally) {
+            Scriptable scope, Object constructor, Callable onFinally) {
         return new LambdaFunction(
                 scope,
                 1,
