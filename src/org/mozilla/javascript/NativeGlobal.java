@@ -89,6 +89,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
                 READONLY | DONTENUM | PERMANENT);
         ScriptableObject.defineProperty(
                 scope, "undefined", Undefined.instance, READONLY | DONTENUM | PERMANENT);
+        ScriptableObject.defineProperty(scope, "globalThis", scope, DONTENUM);
 
         /*
             Each error constructor gets its own Error object as a prototype,
