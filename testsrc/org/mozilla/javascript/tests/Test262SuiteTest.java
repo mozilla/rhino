@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -185,206 +186,231 @@ public class Test262SuiteTest {
     public static void tearDownClass() {
         TestUtils.setGlobalContextFactory(null);
 
-        if (!updateTest262Properties) return;
+        for (Entry<Test262Case, TestResultTracker> entry : RESULT_TRACKERS.entrySet()) {
+            if (entry.getKey().file.isFile()) {
+                TestResultTracker tt = entry.getValue();
 
-        // Regenerate .properties file
-        try {
-            Path previousReportingDir = null;
-            Path currentReportingDir;
-            List<String> failures = new ArrayList<String>();
-            int testCount = 0;
-            Path previousTestFileParentPath =
-                    testDir.toPath(); // tracks the current directory for which files are processed
-            int rollUpCount = 0;
-            int rolledUpFailureCount = 0;
-
-            // Converting to an array, so a regular loop over an array can be used,
-            // as there's the need to peek the next entry
-            Test262Case[] testCases = new Test262Case[RESULT_TRACKERS.size()];
-            RESULT_TRACKERS.keySet().toArray(testCases);
-
-            BufferedWriter writer = new BufferedWriter(new FileWriter(testProperties));
-            writer.write(
-                    "# This is a configuration file for Test262SuiteTest.java. See ./README.md for more info about this file\n");
-
-            for (int j = 0; j < testCases.length; j++) {
-                File testFile = testCases[j].file;
-                TestResultTracker tt = RESULT_TRACKERS.get(testCases[j]);
-
-                boolean ontoNextReportingDir = false;
-                String testResult = null;
-
-                Path testFilePath = testFile.toPath();
-                // hardcoded for just language/expression and language/statements
-                // to be split out on a deeper level
-                int reportDepth =
-                        testFilePath.getNameCount() > 3
-                                        && testFilePath.getName(2).toString().equals("language")
-                                        && (testFilePath.getName(3).toString().equals("expressions")
-                                                || testFilePath
-                                                        .getName(3)
-                                                        .toString()
-                                                        .equals("statements"))
-                                ? 5
-                                : Math.min(4, testFilePath.getNameCount());
-                currentReportingDir = testFilePath.subpath(0, reportDepth);
-
-                if (previousReportingDir == null) {
-                    previousReportingDir = currentReportingDir;
-                } else if (!currentReportingDir.startsWith(previousReportingDir)
-                        || testFile.isDirectory()) {
-                    ontoNextReportingDir = true;
+                if (tt.expectedFailure && tt.expectationsMet()) {
+                    System.out.println(
+                            String.format(
+                                    "Test is marked as failing but it does not: %s",
+                                    entry.getKey().file));
                 }
+            }
+        }
 
-                // Determine if switching to another directory and if so whether all files in the
-                // previous directory failed
-                // If so, dont list all failing files, but list only the folder path
-                if (rollUpEnabled
-                        && (!testFilePath.startsWith(previousTestFileParentPath)
-                                || !testFilePath.getParent().equals(previousTestFileParentPath))) {
-                    if (!previousReportingDir.equals(previousTestFileParentPath)
-                            && rollUpCount > 1) {
-                        failures.add(
-                                "    "
-                                        + currentReportingDir
-                                                .relativize(previousTestFileParentPath)
+        if (updateTest262Properties) {
+            // Regenerate .properties file
+            try {
+                Path previousReportingDir = null;
+                Path currentReportingDir;
+                List<String> failures = new ArrayList<String>();
+                int testCount = 0;
+                Path previousTestFileParentPath =
+                        testDir.toPath(); // tracks the current directory for which files are
+                // processed
+                int rollUpCount = 0;
+                int rolledUpFailureCount = 0;
+
+                // Converting to an array, so a regular loop over an array can be used,
+                // as there's the need to peek the next entry
+                Test262Case[] testCases = new Test262Case[RESULT_TRACKERS.size()];
+                RESULT_TRACKERS.keySet().toArray(testCases);
+
+                BufferedWriter writer = new BufferedWriter(new FileWriter(testProperties));
+                writer.write(
+                        "# This is a configuration file for Test262SuiteTest.java. See ./README.md for more info about this file\n");
+
+                for (int j = 0; j < testCases.length; j++) {
+                    File testFile = testCases[j].file;
+                    TestResultTracker tt = RESULT_TRACKERS.get(testCases[j]);
+
+                    boolean ontoNextReportingDir = false;
+                    String testResult = null;
+
+                    Path testFilePath = testFile.toPath();
+                    // hardcoded for just language/expression and language/statements
+                    // to be split out on a deeper level
+                    int reportDepth =
+                            testFilePath.getNameCount() > 3
+                                            && testFilePath.getName(2).toString().equals("language")
+                                            && (testFilePath
+                                                            .getName(3)
+                                                            .toString()
+                                                            .equals("expressions")
+                                                    || testFilePath
+                                                            .getName(3)
+                                                            .toString()
+                                                            .equals("statements"))
+                                    ? 5
+                                    : Math.min(4, testFilePath.getNameCount());
+                    currentReportingDir = testFilePath.subpath(0, reportDepth);
+
+                    if (previousReportingDir == null) {
+                        previousReportingDir = currentReportingDir;
+                    } else if (!currentReportingDir.startsWith(previousReportingDir)
+                            || testFile.isDirectory()) {
+                        ontoNextReportingDir = true;
+                    }
+
+                    // Determine if switching to another directory and if so whether all files in
+                    // the
+                    // previous directory failed
+                    // If so, dont list all failing files, but list only the folder path
+                    if (rollUpEnabled
+                            && (!testFilePath.startsWith(previousTestFileParentPath)
+                                    || !testFilePath
+                                            .getParent()
+                                            .equals(previousTestFileParentPath))) {
+                        if (!previousReportingDir.equals(previousTestFileParentPath)
+                                && rollUpCount > 1) {
+                            failures.add(
+                                    "    "
+                                            + currentReportingDir
+                                                    .relativize(previousTestFileParentPath)
+                                                    .toString()
+                                                    .replace("\\", "/")
+                                            + (statsEnabled
+                                                    ? " "
+                                                            + rollUpCount
+                                                            + "/"
+                                                            + rollUpCount
+                                                            + " (100.0%)"
+                                                    : ""));
+                            rolledUpFailureCount += rollUpCount - 1;
+
+                            for (; rollUpCount > 0; rollUpCount--) {
+                                failures.remove(failures.size() - 2);
+                            }
+                        }
+
+                        previousTestFileParentPath = testFilePath.getParent();
+                        rollUpCount = 0;
+                    }
+
+                    if (!testFile.isDirectory()) {
+                        testResult = tt.getResult(OPT_LEVELS, testCases[j]);
+
+                        if (testResult == null) {
+                            // At least one passing test in currentParent directory, so prevent
+                            // rollUp
+                            rollUpCount = -1;
+                        } else {
+                            if (rollUpCount != -1) rollUpCount++;
+
+                            testResult =
+                                    "    "
+                                            + currentReportingDir
+                                                    .relativize(testFilePath)
+                                                    .toString()
+                                                    .replace("\\", "/")
+                                            + (statsEnabled && testResult != ""
+                                                    ? " " + testResult
+                                                    : "");
+                            if (tt.comment != null && !tt.comment.isEmpty()) {
+                                testResult += " " + tt.comment;
+                            }
+                        }
+
+                        // Making sure the last folder gets properly logged
+                        if (j == testCases.length - 1) {
+                            if (testResult != null) {
+                                failures.add(testResult);
+                            }
+                            testCount++;
+                            ontoNextReportingDir = true;
+                        }
+                    }
+
+                    if (ontoNextReportingDir) {
+                        int failureCount = rolledUpFailureCount + failures.size();
+                        Double failurePercentage =
+                                testCount == 0
+                                        ? 0
+                                        : ((double) failureCount * 100 / (double) testCount);
+
+                        writer.write('\n');
+                        writer.write(
+                                previousReportingDir
+                                                .subpath(2, previousReportingDir.getNameCount())
                                                 .toString()
                                                 .replace("\\", "/")
                                         + (statsEnabled
                                                 ? " "
-                                                        + rollUpCount
+                                                        + failureCount
                                                         + "/"
-                                                        + rollUpCount
-                                                        + " (100.0%)"
+                                                        + testCount
+                                                        + " ("
+                                                        + new BigDecimal(
+                                                                        failurePercentage
+                                                                                .toString())
+                                                                .setScale(2, RoundingMode.HALF_UP)
+                                                                .doubleValue()
+                                                        + "%)"
                                                 : ""));
-                        rolledUpFailureCount += rollUpCount - 1;
-
-                        for (; rollUpCount > 0; rollUpCount--) {
-                            failures.remove(failures.size() - 2);
-                        }
-                    }
-
-                    previousTestFileParentPath = testFilePath.getParent();
-                    rollUpCount = 0;
-                }
-
-                if (!testFile.isDirectory()) {
-                    testResult = tt.getResult(OPT_LEVELS, testCases[j]);
-
-                    if (testResult == null) {
-                        // At least one passing test in currentParent directory, so prevent rollUp
-                        rollUpCount = -1;
-                    } else {
-                        if (rollUpCount != -1) rollUpCount++;
-
-                        testResult =
-                                "    "
-                                        + currentReportingDir
-                                                .relativize(testFilePath)
-                                                .toString()
-                                                .replace("\\", "/")
-                                        + (statsEnabled && testResult != ""
-                                                ? " " + testResult
-                                                : "");
-                        if (tt.comment != null && !tt.comment.isEmpty()) {
-                            testResult += " " + tt.comment;
-                        }
-                    }
-
-                    // Making sure the last folder gets properly logged
-                    if (j == testCases.length - 1) {
-                        if (testResult != null) {
-                            failures.add(testResult);
-                        }
-                        testCount++;
-                        ontoNextReportingDir = true;
-                    }
-                }
-
-                if (ontoNextReportingDir) {
-                    int failureCount = rolledUpFailureCount + failures.size();
-                    Double failurePercentage =
-                            testCount == 0 ? 0 : ((double) failureCount * 100 / (double) testCount);
-
-                    writer.write('\n');
-                    writer.write(
-                            previousReportingDir
-                                            .subpath(2, previousReportingDir.getNameCount())
-                                            .toString()
-                                            .replace("\\", "/")
-                                    + (statsEnabled
-                                            ? " "
-                                                    + failureCount
-                                                    + "/"
-                                                    + testCount
-                                                    + " ("
-                                                    + new BigDecimal(failurePercentage.toString())
-                                                            .setScale(2, RoundingMode.HALF_UP)
-                                                            .doubleValue()
-                                                    + "%)"
-                                            : ""));
-                    writer.write('\n');
-
-                    if (failurePercentage != 0 && failurePercentage != 100) {
-                        writer.write(
-                                failures.stream()
-                                        .map(Object::toString)
-                                        .collect(Collectors.joining("\n")));
                         writer.write('\n');
+
+                        if (failurePercentage != 0 && failurePercentage != 100) {
+                            writer.write(
+                                    failures.stream()
+                                            .map(Object::toString)
+                                            .collect(Collectors.joining("\n")));
+                            writer.write('\n');
+                        }
+
+                        previousReportingDir = currentReportingDir;
+                        failures.clear();
+                        testCount = rolledUpFailureCount = 0;
                     }
 
-                    previousReportingDir = currentReportingDir;
-                    failures.clear();
-                    testCount = rolledUpFailureCount = 0;
-                }
-
-                if (testFile.isDirectory()) {
-                    String message =
-                            "~"
-                                    + currentReportingDir
-                                            .subpath(2, currentReportingDir.getNameCount())
-                                            .toString()
-                                            .replace("\\", "/");
-
-                    if (tt.comment != null && !tt.comment.isEmpty()) {
-                        message += " " + tt.comment;
-                    }
-                    writer.write('\n');
-                    writer.write(message);
-                    writer.write('\n');
-
-                    // Consume testcases belonging to a skipped directory
-                    while (testCases.length > j + 1
-                            && testCases[j + 1].file.isFile()
-                            && testCases[j + 1].file.getParentFile().equals(testFile)) {
-                        TestResultTracker tt2 = RESULT_TRACKERS.get(testCases[j + 1]);
-
-                        testResult =
-                                "    "
+                    if (testFile.isDirectory()) {
+                        String message =
+                                "~"
                                         + currentReportingDir
-                                                .relativize(testCases[j + 1].file.toPath())
+                                                .subpath(2, currentReportingDir.getNameCount())
                                                 .toString()
                                                 .replace("\\", "/");
-                        if (tt2.comment != null && !tt2.comment.isEmpty()) {
-                            testResult += " " + tt2.comment;
+
+                        if (tt.comment != null && !tt.comment.isEmpty()) {
+                            message += " " + tt.comment;
                         }
-                        writer.write(testResult);
                         writer.write('\n');
-                        j++;
+                        writer.write(message);
+                        writer.write('\n');
+
+                        // Consume testcases belonging to a skipped directory
+                        while (testCases.length > j + 1
+                                && testCases[j + 1].file.isFile()
+                                && testCases[j + 1].file.getParentFile().equals(testFile)) {
+                            TestResultTracker tt2 = RESULT_TRACKERS.get(testCases[j + 1]);
+
+                            testResult =
+                                    "    "
+                                            + currentReportingDir
+                                                    .relativize(testCases[j + 1].file.toPath())
+                                                    .toString()
+                                                    .replace("\\", "/");
+                            if (tt2.comment != null && !tt2.comment.isEmpty()) {
+                                testResult += " " + tt2.comment;
+                            }
+                            writer.write(testResult);
+                            writer.write('\n');
+                            j++;
+                        }
+
+                        previousReportingDir = null;
+                        continue;
                     }
 
-                    previousReportingDir = null;
-                    continue;
+                    if (testResult != null) {
+                        failures.add(testResult);
+                    }
+                    testCount++;
                 }
-
-                if (testResult != null) {
-                    failures.add(testResult);
-                }
-                testCount++;
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -677,7 +703,7 @@ public class Test262SuiteTest {
                     topLevelFolderContents.stream()
                             .forEach(
                                     file -> {
-                                        if (file.toPath().startsWith(subFolder.toPath())) {
+                                        if (file.toPath().getParent().equals(subFolder.toPath())) {
                                             filesExpectedToFail.put(file, null);
                                         }
                                     });
@@ -731,7 +757,6 @@ public class Test262SuiteTest {
             for (String feature : testCase.features) {
                 if (UNSUPPORTED_FEATURES.contains(feature)) {
                     if (includeUnsupported) {
-                        // FIXME this only adds the first unsupported feature, instead of all
                         TestResultTracker tracker =
                                 RESULT_TRACKERS.computeIfAbsent(
                                         testCase, k -> new TestResultTracker(comment));
@@ -925,6 +950,10 @@ public class Test262SuiteTest {
             this.expectedFailure = expectedFailure;
         }
 
+        public boolean expectationsMet() {
+            return strictOptLevel.size() + nonStrictOptLevel.size() == 0;
+        }
+
         public void passes(int optLevel, boolean useStrict) {
             if (useStrict) {
                 strictOptLevel.remove(optLevel);
@@ -977,10 +1006,12 @@ public class Test262SuiteTest {
             }
 
             // success in interpreted optLevel, but failure in all other optLevels
-            if (strictOptLevel.size() == optLevels.length - 1
-                    && !strictOptLevel.contains(-1)
-                    && nonStrictOptLevel.size() == optLevels.length - 1
-                    && !nonStrictOptLevel.contains(-1)) {
+            if ((noStrict
+                            || (strictOptLevel.size() == optLevels.length - 1
+                                    && !strictOptLevel.contains(-1)))
+                    && (onlyStrict
+                            || (nonStrictOptLevel.size() == optLevels.length - 1
+                                    && !nonStrictOptLevel.contains(-1)))) {
                 return "non-interpreted";
             }
 
