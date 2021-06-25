@@ -4863,29 +4863,6 @@ public class ScriptRuntime {
         return new JavaScriptException(error, filename, linep[0]);
     }
 
-    /**
-     * Implement the ECMAScript abstract operation "SpeciesConstructor" defined in section 7.2.33 of
-     * ECMA262.
-     */
-    public static Constructable getSpeciesConstructor(
-            Scriptable s, Constructable defaultConstructor) {
-        Object constructor = ScriptableObject.getProperty(s, "constructor");
-        if (constructor == Scriptable.NOT_FOUND || Undefined.isUndefined(constructor)) {
-            return defaultConstructor;
-        }
-        if (!isObject(constructor)) {
-            throw typeErrorById("msg.arg.not.object", typeof(constructor));
-        }
-        Object species = ScriptableObject.getProperty((Scriptable) constructor, SymbolKey.SPECIES);
-        if (species == Scriptable.NOT_FOUND || species == null || Undefined.isUndefined(species)) {
-            return defaultConstructor;
-        }
-        if (!(species instanceof Constructable)) {
-            throw typeErrorById("msg.not.ctor", typeof(species));
-        }
-        return (Constructable) species;
-    }
-
     public static final Object[] emptyArgs = new Object[0];
     public static final String[] emptyStrings = new String[0];
 }

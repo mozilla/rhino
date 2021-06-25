@@ -92,16 +92,11 @@ public class NativePromise extends ScriptableObject {
     }
 
     private static Scriptable constructor(Context cx, Scriptable scope, Object[] args) {
-        if (args.length < 1) {
-            throw ScriptRuntime.typeErrorById("msg.function.expected");
-        }
-        if (!(args[0] instanceof Callable)) {
+        if (args.length < 1 || !(args[0] instanceof Callable)) {
             throw ScriptRuntime.typeErrorById("msg.function.expected");
         }
         Callable executor = (Callable) args[0];
-
         NativePromise promise = new NativePromise();
-
         ResolvingFunctions resolving = new ResolvingFunctions(scope, promise);
 
         try {
@@ -283,7 +278,8 @@ public class NativePromise extends ScriptableObject {
     // Promise.prototype.then
     private Object then(
             Context cx, Scriptable scope, LambdaConstructor defaultConstructor, Object[] args) {
-        Constructable constructable = ScriptRuntime.getSpeciesConstructor(this, defaultConstructor);
+        Constructable constructable =
+                AbstractEcmaObjectOperations.speciesConstructor(cx, this, defaultConstructor);
         Capability capability = new Capability(cx, scope, constructable);
 
         Callable onFulfilled = null;
@@ -337,7 +333,7 @@ public class NativePromise extends ScriptableObject {
         Object thenFinally = onFinally;
         Object catchFinally = onFinally;
         Constructable constructor =
-                ScriptRuntime.getSpeciesConstructor(thisObj, defaultConstructor);
+                AbstractEcmaObjectOperations.speciesConstructor(cx, thisObj, defaultConstructor);
         if (onFinally instanceof Callable) {
             Callable callableOnFinally = (Callable) thenFinally;
             thenFinally = makeThenFinally(scope, constructor, callableOnFinally);
