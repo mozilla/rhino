@@ -914,11 +914,30 @@ class TokenStream {
                 quoteChar = c;
                 stringBufferTop = 0;
 
-                c = getChar(false);
+                c = getCharIgnoreLineEnd(false);
                 strLoop:
                 while (c != quoteChar) {
-                    if (c == '\n' || c == EOF_CHAR) {
-                        ungetChar(c);
+                    boolean unterminated = false;
+                    if (c == EOF_CHAR) {
+                        unterminated = true;
+                    } else if (c == '\n') {
+                        switch (lineEndChar) {
+                            case '\n':
+                            case '\r':
+                                unterminated = true;
+                                break;
+                            case 0x2028: // <LS>
+                            case 0x2029: // <PS>
+                                // Line/Paragraph separators need to be included as is
+                                c = lineEndChar;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if (unterminated) {
+                        ungetCharIgnoreLineEnd(c);
                         tokenEnd = cursor;
                         parser.addError("msg.unterminated.string.lit");
                         return Token.ERROR;
