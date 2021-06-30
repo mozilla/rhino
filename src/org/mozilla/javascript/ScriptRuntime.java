@@ -4009,7 +4009,7 @@ public class ScriptRuntime {
                 re = we;
                 javaException = we.getWrappedException();
 
-                if (cx.hasFeature(Context.FEATURE_HIDE_WRAPPED_EXCEPTIONS)) {
+                if (!isVisible(cx, javaException)) {
                     type = TopLevel.NativeErrors.InternalError;
                     errorMsg = javaException.getMessage();
                 } else {

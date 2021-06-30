@@ -23,29 +23,31 @@ public class CatchTest extends TestCase {
     }
 
     public void testCatchWrappedException() throws Exception {
-        String res = doCatchWrappedException(new ContextFactory());
+        String res = doCatchWrappedException(null);
         assertEquals("JavaException: java.io.IOException: oops", res);
 
         String res2 =
                 doCatchWrappedException(
-                        new ContextFactory() {
+                        new ClassShutter() {
                             @Override
-                            protected boolean hasFeature(Context cx, int featureIndex) {
-                                if (featureIndex == Context.FEATURE_HIDE_WRAPPED_EXCEPTIONS) {
-                                    return true;
-                                } else {
-                                    return super.hasFeature(cx, featureIndex);
-                                }
+                            public boolean visibleToScripts(String className) {
+                                return false;
                             }
                         });
         assertEquals("InternalError: oops", res2);
     }
 
-    public String doCatchWrappedException(ContextFactory factory) throws Exception {
+    public String doCatchWrappedException(final ClassShutter shutter) throws Exception {
+
+        ContextFactory factory = new ContextFactory();
+
         return (String)
                 factory.call(
                         context -> {
                             context.setOptimizationLevel(-1);
+                            if (shutter != null) {
+                                context.setClassShutter(shutter);
+                            }
                             final Scriptable scope = context.initStandardObjects();
 
                             try {
