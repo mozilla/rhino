@@ -383,7 +383,7 @@ public class ScriptRuntime {
     public static boolean toBoolean(Object val) {
         for (; ; ) {
             if (val instanceof Boolean) return ((Boolean) val).booleanValue();
-            if (val == null || val == Undefined.instance) return false;
+            if (val == null || Undefined.isUndefined(val)) return false;
             if (val instanceof CharSequence) return ((CharSequence) val).length() != 0;
             if (val instanceof BigInteger) {
                 return !((BigInteger) val).equals(BigInteger.ZERO);
@@ -424,7 +424,7 @@ public class ScriptRuntime {
             }
             if (val instanceof Number) return ((Number) val).doubleValue();
             if (val == null) return +0.0;
-            if (val == Undefined.instance) return NaN;
+            if (Undefined.isUndefined(val)) return NaN;
             if (val instanceof String) return toNumber((String) val);
             if (val instanceof CharSequence) return toNumber(val.toString());
             if (val instanceof Boolean) return ((Boolean) val).booleanValue() ? 1 : +0.0;
@@ -730,7 +730,7 @@ public class ScriptRuntime {
                     }
                 }
             }
-            if (val == null || val == Undefined.instance) {
+            if (val == null || Undefined.isUndefined(val)) {
                 throw typeErrorById("msg.cant.convert.to.bigint", toString(val));
             }
             if (val instanceof String) {
@@ -982,7 +982,7 @@ public class ScriptRuntime {
             if (val == null) {
                 return "null";
             }
-            if (val == Undefined.instance || val == Undefined.SCRIPTABLE_UNDEFINED) {
+            if (Undefined.isUndefined(val)) {
                 return "undefined";
             }
             if (val instanceof String) {
@@ -1064,7 +1064,7 @@ public class ScriptRuntime {
         if (value == null) {
             return "null";
         }
-        if (value == Undefined.instance) {
+        if (Undefined.isUndefined(value)) {
             return "undefined";
         }
         if (value instanceof CharSequence) {
@@ -1182,7 +1182,7 @@ public class ScriptRuntime {
     public static Scriptable toObjectOrNull(Context cx, Object obj) {
         if (obj instanceof Scriptable) {
             return (Scriptable) obj;
-        } else if (obj != null && obj != Undefined.instance) {
+        } else if (obj != null && !Undefined.isUndefined(obj)) {
             return toObject(cx, getTopCallScope(cx), obj);
         }
         return null;
@@ -1192,7 +1192,7 @@ public class ScriptRuntime {
     public static Scriptable toObjectOrNull(Context cx, Object obj, Scriptable scope) {
         if (obj instanceof Scriptable) {
             return (Scriptable) obj;
-        } else if (obj != null && obj != Undefined.instance) {
+        } else if (obj != null && !Undefined.isUndefined(obj)) {
             return toObject(cx, scope, obj);
         }
         return null;
@@ -2430,13 +2430,13 @@ public class ScriptRuntime {
      */
     public static boolean loadFromIterable(
             Context cx, Scriptable scope, Object arg1, BiConsumer<Object, Object> setter) {
-        if ((arg1 == null) || Undefined.instance.equals(arg1)) {
+        if ((arg1 == null) || Undefined.isUndefined(arg1)) {
             return false;
         }
 
         // Call the "[Symbol.iterator]" property as a function.
         final Object ito = ScriptRuntime.callIterator(arg1, cx, scope);
-        if (Undefined.instance.equals(ito)) {
+        if (Undefined.isUndefined(ito)) {
             // Per spec, ignore if the iterator is undefined
             return false;
         }
@@ -2773,7 +2773,7 @@ public class ScriptRuntime {
     }
 
     static Object[] getApplyArguments(Context cx, Object arg1) {
-        if (arg1 == null || arg1 == Undefined.instance) {
+        if (arg1 == null || Undefined.isUndefined(arg1)) {
             return ScriptRuntime.emptyArgs;
         } else if (arg1 instanceof Scriptable && isArrayLike((Scriptable) arg1)) {
             return cx.getElements((Scriptable) arg1);
@@ -2873,7 +2873,7 @@ public class ScriptRuntime {
         if (value == null) {
             return false;
         }
-        if (Undefined.instance.equals(value)) {
+        if (Undefined.isUndefined(value)) {
             return false;
         }
         if (value instanceof ScriptableObject) {
@@ -3329,8 +3329,8 @@ public class ScriptRuntime {
      * <p>See ECMA 11.9
      */
     public static boolean eq(Object x, Object y) {
-        if (x == null || x == Undefined.instance) {
-            if (y == null || y == Undefined.instance) {
+        if (x == null || Undefined.isUndefined(x)) {
+            if (y == null || Undefined.isUndefined(y)) {
                 return true;
             }
             if (y instanceof ScriptableObject) {
@@ -3462,7 +3462,7 @@ public class ScriptRuntime {
 
     public static boolean isPrimitive(Object obj) {
         return obj == null
-                || obj == Undefined.instance
+                || Undefined.isUndefined(obj)
                 || (obj instanceof Number)
                 || (obj instanceof String)
                 || (obj instanceof Boolean);
@@ -3470,7 +3470,7 @@ public class ScriptRuntime {
 
     static boolean eqNumber(double x, Object y) {
         for (; ; ) {
-            if (y == null || y == Undefined.instance) {
+            if (y == null || Undefined.isUndefined(y)) {
                 return false;
             } else if (y instanceof BigInteger) {
                 return eqBigInt((BigInteger) y, x);
@@ -3500,7 +3500,7 @@ public class ScriptRuntime {
 
     static boolean eqBigInt(BigInteger x, Object y) {
         for (; ; ) {
-            if (y == null || y == Undefined.instance) {
+            if (y == null || Undefined.isUndefined(y)) {
                 return false;
             } else if (y instanceof BigInteger) {
                 return x.equals(y);
@@ -3551,7 +3551,7 @@ public class ScriptRuntime {
 
     private static boolean eqString(CharSequence x, Object y) {
         for (; ; ) {
-            if (y == null || y == Undefined.instance) {
+            if (y == null || Undefined.isUndefined(y)) {
                 return false;
             } else if (y instanceof CharSequence) {
                 CharSequence c = (CharSequence) y;
