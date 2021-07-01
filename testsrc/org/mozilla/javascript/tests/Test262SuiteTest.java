@@ -542,7 +542,7 @@ public class Test262SuiteTest {
                 }
 
                 try {
-                	assertEquals(ex.details(), testCase.expectedError, errorName);
+                    assertEquals(ex.details(), testCase.expectedError, errorName);
                 } catch (AssertionError aex) {
                     if (markedAsFailing) return;
 
