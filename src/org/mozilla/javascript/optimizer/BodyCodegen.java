@@ -692,7 +692,10 @@ class BodyCodegen {
                     int local = getLocalBlockRegister(node);
                     int scopeIndex = node.getExistingIntProp(Node.CATCH_SCOPE_PROP);
 
-                    String name = child.getString(); // name of exception
+                    String name = null;
+                    if (child.getType() == Token.NAME) {
+                        name = child.getString(); // name of exception
+                    }
                     child = child.getNext();
                     generateExpression(child, node); // load expression object
                     if (scopeIndex == 0) {
@@ -701,7 +704,11 @@ class BodyCodegen {
                         // Load previous catch scope object
                         cfw.addALoad(local);
                     }
-                    cfw.addPush(name);
+                    if (name != null) {
+                        cfw.addPush(name);
+                    } else {
+                        cfw.add(ByteCode.ACONST_NULL);
+                    }
                     cfw.addALoad(contextLocal);
                     cfw.addALoad(variableObjectLocal);
 
