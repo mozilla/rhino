@@ -846,13 +846,13 @@ public class Test262SuiteTest {
         private final boolean hasEarlyError;
 
         private final Set<String> flags;
-        private final Set<String> harnessFiles;
+        private final List<String> harnessFiles;
         private final Set<String> features;
 
         Test262Case(
                 File file,
                 String source,
-                Set<String> harnessFiles,
+                List<String> harnessFiles,
                 String expectedError,
                 boolean hasEarlyError,
                 Set<String> flags,
@@ -880,7 +880,7 @@ public class Test262SuiteTest {
             String testSource =
                     (String) SourceReader.readFileOrUrl(testFile.getPath(), true, "UTF-8");
 
-            Set<String> harnessFiles = new HashSet<>();
+            List<String> harnessFiles = new ArrayList<>();
 
             Map<String, Object> metadata;
 
@@ -894,10 +894,6 @@ public class Test262SuiteTest {
                         "WARN: file '%s' doesnt contain /*--- ... ---*/ directive",
                         testFile.getPath());
                 metadata = new HashMap<String, Object>();
-            }
-
-            if (metadata.containsKey("includes")) {
-                harnessFiles.addAll((List<String>) metadata.get("includes"));
             }
 
             String expectedError = null;
@@ -918,14 +914,18 @@ public class Test262SuiteTest {
                 features.addAll((Collection<String>) metadata.get("features"));
             }
 
-            if (!flags.contains(FLAG_RAW)) {
-                // present by default harness files
-                harnessFiles.add("assert.js");
-                harnessFiles.add("sta.js");
-            } else if (!harnessFiles.isEmpty()) {
+            if (flags.contains(FLAG_RAW) && metadata.containsKey("includes")) {
                 System.err.format(
                         "WARN: case '%s' is flagged as 'raw' but also has defined includes%n",
                         testFile.getPath());
+            } else {
+                // present by default harness files
+                harnessFiles.add("assert.js");
+                harnessFiles.add("sta.js");
+
+                if (metadata.containsKey("includes")) {
+                    harnessFiles.addAll((List<String>) metadata.get("includes"));
+                }
             }
 
             return new Test262Case(
