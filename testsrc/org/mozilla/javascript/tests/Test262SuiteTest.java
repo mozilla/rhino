@@ -524,38 +524,49 @@ public class Test262SuiteTest {
                     tracker.passes(optLevel, useStrict);
                 }
             } catch (RhinoException ex) {
-                if (markedAsFailing) {
-                    return;
-                }
-
                 if (!testCase.isNegative()) {
+                    if (markedAsFailing) return;
+
                     fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
                 }
 
                 String errorName = extractJSErrorName(ex);
 
                 if (testCase.hasEarlyError && !failedEarly) {
+                    if (markedAsFailing) return;
+
                     fail(
                             String.format(
                                     "Expected an early error: %s, got: %s in the runtime",
                                     testCase.expectedError, errorName));
                 }
 
-                assertEquals(ex.details(), testCase.expectedError, errorName);
+                try {
+                	assertEquals(ex.details(), testCase.expectedError, errorName);
+                } catch (AssertionError aex) {
+                    if (markedAsFailing) return;
+
+                    throw aex;
+                }
 
                 TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
                 if (tracker != null) {
                     tracker.passes(optLevel, useStrict);
                 }
             } catch (Exception ex) {
-                if (markedAsFailing) {
-                    return;
-                }
+                // enable line below to print out stacktraces of unexpected exceptions
+                // disabled for now because too many exceptions are throw
+                // Unexpected non-Rhino-Exception here, so print the exception so it stands out
+                // ex.printStackTrace();
+
+                // Ignore the failed assertion if the test is marked as failing
+                if (markedAsFailing) return;
+
                 throw ex;
             } catch (AssertionError ex) {
-                if (markedAsFailing) {
-                    return;
-                }
+                // Ignore the failed assertion if the test is marked as failing
+                if (markedAsFailing) return;
+
                 throw ex;
             }
         } finally {
