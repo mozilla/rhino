@@ -2430,9 +2430,7 @@ public class ScriptRuntime {
      */
     public static boolean loadFromIterable(
             Context cx, Scriptable scope, Object arg1, BiConsumer<Object, Object> setter) {
-        if ((arg1 == null) || Undefined.isUndefined(arg1)) {
-            return false;
-        }
+        if ((arg1 == null) || Undefined.isUndefined(arg1)) return false;
 
         // Call the "[Symbol.iterator]" property as a function.
         final Object ito = ScriptRuntime.callIterator(arg1, cx, scope);

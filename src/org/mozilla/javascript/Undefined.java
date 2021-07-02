@@ -27,6 +27,8 @@ public class Undefined implements Serializable {
      */
     public static final Object instance = new Undefined();
 
+    private static final int instanceHash = System.identityHashCode(instance);
+
     private Undefined() {}
 
     public Object readResolve() {
@@ -41,7 +43,7 @@ public class Undefined implements Serializable {
     @Override
     public int hashCode() {
         // All instances of Undefined are equivalent!
-        return System.identityHashCode(instance);
+        return instanceHash;
     }
 
     /**
@@ -132,7 +134,7 @@ public class Undefined implements Serializable {
 
                 @Override
                 public int hashCode() {
-                    return System.identityHashCode(instance);
+                    return instanceHash;
                 }
             };
 
