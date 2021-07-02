@@ -1149,7 +1149,7 @@ class CodeGenerator extends Icode {
             }
         } else if (type == Token.OBJECTLIT) {
             propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-            count = propertyIds.length;
+            count = propertyIds == null ? 0 : propertyIds.length;
         } else {
             throw badTree(node);
         }

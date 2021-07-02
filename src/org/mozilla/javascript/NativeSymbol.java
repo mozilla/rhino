@@ -197,18 +197,18 @@ public class NativeSymbol extends IdScriptableObject implements Symbol {
                 return construct(cx, scope, args);
 
             case Id_toString:
-                return getSelf(thisObj).toString();
+                return getSelf(cx, scope, thisObj).toString();
             case Id_valueOf:
             case SymbolId_toPrimitive:
-                return getSelf(thisObj).js_valueOf();
+                return getSelf(cx, scope, thisObj).js_valueOf();
             default:
                 return super.execIdCall(f, cx, scope, thisObj, args);
         }
     }
 
-    private static NativeSymbol getSelf(Object thisObj) {
+    private static NativeSymbol getSelf(Context cx, Scriptable scope, Object thisObj) {
         try {
-            return (NativeSymbol) thisObj;
+            return (NativeSymbol) ScriptRuntime.toObject(cx, scope, thisObj);
         } catch (ClassCastException cce) {
             throw ScriptRuntime.typeErrorById("msg.invalid.type", thisObj.getClass().getName());
         }
