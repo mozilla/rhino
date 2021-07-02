@@ -2110,7 +2110,7 @@ class BodyCodegen {
 
     private void visitObjectLiteral(Node node, Node child, boolean topLevel) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-        int count = properties.length;
+        int count = properties == null ? 0 : properties.length;
 
         // If code budget is tight swap out literals into separate method
         if (!topLevel
