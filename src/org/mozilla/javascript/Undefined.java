@@ -7,25 +7,31 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 /**
  * This class implements the Undefined value in JavaScript.
+ *
+ * <p>We represent "undefined" internally using two static objects -- "Undefined.instance" and
+ * SCRIPTABLE_UNDEFINED. Java code that needs to make something undefined should generally use the
+ * first, and use the second if a Scriptable object is absolutely required.
+ *
+ * <p>Java code that needs to test whether something is undefined <b>must</b> use the "isUndefined"
+ * method because of the multiple internal representations.
  */
-public class Undefined implements Serializable
-{
+public class Undefined implements Serializable {
     private static final long serialVersionUID = 9195680630202616767L;
 
+    /**
+     * This is the standard value for "undefined" in Rhino. Java code that needs to represent
+     * "undefined" should use this object (rather than a new instance of this class).
+     */
     public static final Object instance = new Undefined();
 
-    private Undefined()
-    {
-    }
+    private static final int instanceHash = System.identityHashCode(instance);
 
-    public Object readResolve()
-    {
+    private Undefined() {}
+
+    public Object readResolve() {
         return instance;
     }
 
@@ -37,26 +43,106 @@ public class Undefined implements Serializable
     @Override
     public int hashCode() {
         // All instances of Undefined are equivalent!
-        return 0;
+        return instanceHash;
     }
 
-    public static final Scriptable SCRIPTABLE_UNDEFINED;
-
-    static {
-        SCRIPTABLE_UNDEFINED = (Scriptable) Proxy.newProxyInstance(Undefined.class.getClassLoader(), new Class[]{Scriptable.class}, new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) {
-                if (method.getName().equals("toString")) return "undefined";
-                if (method.getName().equals("equals")) {
-                    return Boolean.valueOf(args.length > 0 && isUndefined(args[0]));
+    /**
+     * An alternate representation of undefined, to be used only when we need to pass it to a method
+     * that takes as Scriptable as a parameter. This is used when we need to pass undefined as the
+     * "this" parmeter of a Callable instance, because we cannot change that interface without
+     * breaking backward compatibility.
+     */
+    public static final Scriptable SCRIPTABLE_UNDEFINED =
+            new Scriptable() {
+                @Override
+                public String getClassName() {
+                    return "undefined";
                 }
-                throw new UnsupportedOperationException("undefined doesn't support " + method.getName());
-            }
-        });
-    }
 
-    public static boolean isUndefined(Object obj)
-    {
+                @Override
+                public Object get(String name, Scriptable start) {
+                    return NOT_FOUND;
+                }
+
+                @Override
+                public Object get(int index, Scriptable start) {
+                    return NOT_FOUND;
+                }
+
+                @Override
+                public boolean has(String name, Scriptable start) {
+                    return false;
+                }
+
+                @Override
+                public boolean has(int index, Scriptable start) {
+                    return false;
+                }
+
+                @Override
+                public void put(String name, Scriptable start, Object value) {}
+
+                @Override
+                public void put(int index, Scriptable start, Object value) {}
+
+                @Override
+                public void delete(String name) {}
+
+                @Override
+                public void delete(int index) {}
+
+                @Override
+                public Scriptable getPrototype() {
+                    return null;
+                }
+
+                @Override
+                public void setPrototype(Scriptable prototype) {}
+
+                @Override
+                public Scriptable getParentScope() {
+                    return null;
+                }
+
+                @Override
+                public void setParentScope(Scriptable parent) {}
+
+                @Override
+                public Object[] getIds() {
+                    return ScriptRuntime.emptyArgs;
+                }
+
+                @Override
+                public Object getDefaultValue(Class<?> hint) {
+                    return null;
+                }
+
+                @Override
+                public boolean hasInstance(Scriptable instance) {
+                    return false;
+                }
+
+                @Override
+                public String toString() {
+                    return "undefined";
+                }
+
+                @Override
+                public boolean equals(Object obj) {
+                    return isUndefined(obj) || super.equals(obj);
+                }
+
+                @Override
+                public int hashCode() {
+                    return instanceHash;
+                }
+            };
+
+    /**
+     * Safely test whether "obj" is undefined. Java code must use this function rather than testing
+     * the value directly since we have two representations of undefined in Rhino.
+     */
+    public static boolean isUndefined(Object obj) {
         return Undefined.instance == obj || Undefined.SCRIPTABLE_UNDEFINED == obj;
     }
 }

@@ -143,7 +143,7 @@ final class NativeNumber extends IdScriptableObject {
                 {
                     // toLocaleString is just an alias for toString for now
                     int base =
-                            (args.length == 0 || args[0] == Undefined.instance)
+                            (args.length == 0 || Undefined.isUndefined(args[0]))
                                     ? 10
                                     : ScriptRuntime.toInt32(args[0]);
                     return ScriptRuntime.numberToString(value, base);
@@ -184,7 +184,7 @@ final class NativeNumber extends IdScriptableObject {
             case Id_toPrecision:
                 {
                     // Undefined precision, fall back to ToString()
-                    if (args.length == 0 || args[0] == Undefined.instance) {
+                    if (args.length == 0 || Undefined.isUndefined(args[0])) {
                         return ScriptRuntime.numberToString(value, 10);
                     }
                     // Handle special values before range check
@@ -208,7 +208,7 @@ final class NativeNumber extends IdScriptableObject {
     private static Object execConstructorCall(int id, Object[] args) {
         switch (id) {
             case ConstructorId_isFinite:
-                if ((args.length == 0) || (Undefined.instance == args[0])) {
+                if ((args.length == 0) || Undefined.isUndefined(args[0])) {
                     return Boolean.FALSE;
                 }
                 if (args[0] instanceof Number) {
@@ -218,7 +218,7 @@ final class NativeNumber extends IdScriptableObject {
                 return Boolean.FALSE;
 
             case ConstructorId_isNaN:
-                if ((args.length == 0) || (Undefined.instance == args[0])) {
+                if ((args.length == 0) || Undefined.isUndefined(args[0])) {
                     return Boolean.FALSE;
                 }
                 if (args[0] instanceof Number) {
@@ -227,7 +227,7 @@ final class NativeNumber extends IdScriptableObject {
                 return Boolean.FALSE;
 
             case ConstructorId_isInteger:
-                if ((args.length == 0) || (Undefined.instance == args[0])) {
+                if ((args.length == 0) || Undefined.isUndefined(args[0])) {
                     return Boolean.FALSE;
                 }
                 if (args[0] instanceof Number) {
