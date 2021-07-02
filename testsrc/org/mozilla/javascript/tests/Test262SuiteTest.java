@@ -117,7 +117,6 @@ public class Test262SuiteTest {
                             "String.prototype.matchAll",
                             "Symbol.matchAll",
                             "tail-call-optimization",
-                            "json-superset",
                             "hashbang",
                             "u180e"));
 
@@ -525,38 +524,49 @@ public class Test262SuiteTest {
                     tracker.passes(optLevel, useStrict);
                 }
             } catch (RhinoException ex) {
-                if (markedAsFailing) {
-                    return;
-                }
-
                 if (!testCase.isNegative()) {
+                    if (markedAsFailing) return;
+
                     fail(String.format("%s%n%s", ex.getMessage(), ex.getScriptStackTrace()));
                 }
 
                 String errorName = extractJSErrorName(ex);
 
                 if (testCase.hasEarlyError && !failedEarly) {
+                    if (markedAsFailing) return;
+
                     fail(
                             String.format(
                                     "Expected an early error: %s, got: %s in the runtime",
                                     testCase.expectedError, errorName));
                 }
 
-                assertEquals(ex.details(), testCase.expectedError, errorName);
+                try {
+                    assertEquals(ex.details(), testCase.expectedError, errorName);
+                } catch (AssertionError aex) {
+                    if (markedAsFailing) return;
+
+                    throw aex;
+                }
 
                 TestResultTracker tracker = RESULT_TRACKERS.get(testCase);
                 if (tracker != null) {
                     tracker.passes(optLevel, useStrict);
                 }
             } catch (Exception ex) {
-                if (markedAsFailing) {
-                    return;
-                }
+                // enable line below to print out stacktraces of unexpected exceptions
+                // disabled for now because too many exceptions are throw
+                // Unexpected non-Rhino-Exception here, so print the exception so it stands out
+                // ex.printStackTrace();
+
+                // Ignore the failed assertion if the test is marked as failing
+                if (markedAsFailing) return;
+
                 throw ex;
             } catch (AssertionError ex) {
-                if (markedAsFailing) {
-                    return;
-                }
+                // Ignore the failed assertion if the test is marked as failing
+                if (markedAsFailing) return;
+
                 throw ex;
             }
         } finally {
@@ -836,13 +846,13 @@ public class Test262SuiteTest {
         private final boolean hasEarlyError;
 
         private final Set<String> flags;
-        private final Set<String> harnessFiles;
+        private final List<String> harnessFiles;
         private final Set<String> features;
 
         Test262Case(
                 File file,
                 String source,
-                Set<String> harnessFiles,
+                List<String> harnessFiles,
                 String expectedError,
                 boolean hasEarlyError,
                 Set<String> flags,
@@ -870,7 +880,7 @@ public class Test262SuiteTest {
             String testSource =
                     (String) SourceReader.readFileOrUrl(testFile.getPath(), true, "UTF-8");
 
-            Set<String> harnessFiles = new HashSet<>();
+            List<String> harnessFiles = new ArrayList<>();
 
             Map<String, Object> metadata;
 
@@ -884,10 +894,6 @@ public class Test262SuiteTest {
                         "WARN: file '%s' doesnt contain /*--- ... ---*/ directive",
                         testFile.getPath());
                 metadata = new HashMap<String, Object>();
-            }
-
-            if (metadata.containsKey("includes")) {
-                harnessFiles.addAll((List<String>) metadata.get("includes"));
             }
 
             String expectedError = null;
@@ -908,14 +914,18 @@ public class Test262SuiteTest {
                 features.addAll((Collection<String>) metadata.get("features"));
             }
 
-            if (!flags.contains(FLAG_RAW)) {
-                // present by default harness files
-                harnessFiles.add("assert.js");
-                harnessFiles.add("sta.js");
-            } else if (!harnessFiles.isEmpty()) {
+            if (flags.contains(FLAG_RAW) && metadata.containsKey("includes")) {
                 System.err.format(
                         "WARN: case '%s' is flagged as 'raw' but also has defined includes%n",
                         testFile.getPath());
+            } else {
+                // present by default harness files
+                harnessFiles.add("assert.js");
+                harnessFiles.add("sta.js");
+
+                if (metadata.containsKey("includes")) {
+                    harnessFiles.addAll((List<String>) metadata.get("includes"));
+                }
             }
 
             return new Test262Case(
