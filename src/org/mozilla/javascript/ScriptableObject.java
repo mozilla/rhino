@@ -1812,9 +1812,13 @@ public abstract class ScriptableObject
     }
 
     protected static ScriptableObject ensureScriptableObject(Object arg) {
-        if (!(arg instanceof ScriptableObject))
-            throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
-        return (ScriptableObject) arg;
+        if (arg instanceof ScriptableObject) {
+            return (ScriptableObject) arg;
+        }
+        if (arg instanceof Delegator) {
+            return (ScriptableObject) ((Delegator) arg).getDelegee();
+        }
+        throw ScriptRuntime.typeErrorById("msg.arg.not.object", ScriptRuntime.typeof(arg));
     }
 
     /**
