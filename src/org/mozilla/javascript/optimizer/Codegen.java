@@ -600,6 +600,13 @@ public class Codegen implements Evaluator {
                         + "[Ljava/lang/Object;"
                         + ")Ljava/lang/Object;");
 
+        cfw.addALoad(CONTEXT_ARG);
+        cfw.addInvoke(
+                ByteCode.INVOKEVIRTUAL,
+                "org.mozilla.javascript.Context",
+                "processMicrotasks",
+                "()V");
+
         cfw.add(ByteCode.ARETURN);
         // 3 = this + context + scope
         cfw.stopMethod((short) 3);

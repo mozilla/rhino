@@ -19,7 +19,7 @@ package org.mozilla.javascript;
  *     </ul>
  */
 class AbstractEcmaObjectOperations {
-    static enum INTEGRITY_LEVEL {
+    enum INTEGRITY_LEVEL {
         FROZEN,
         SEALED
     }
@@ -122,5 +122,51 @@ class AbstractEcmaObjectOperations {
         }
 
         return true;
+    }
+
+    /**
+     * Implement the ECMAScript abstract operation "SpeciesConstructor" defined in section 7.2.33 of
+     * ECMA262.
+     *
+     * @param cx context
+     * @param s the object for which we will find the "species constructor" as per the spec
+     * @param defaultConstructor as per the spec, the value that will be returned if there is no
+     *     constructor on "s" or if the "species" symbol is not set.
+     * @see <a href="https://tc39.es/ecma262/#sec-speciesconstructor"></a>
+     */
+    public static Constructable speciesConstructor(
+            Context cx, Scriptable s, Constructable defaultConstructor) {
+        /*
+        The abstract operation SpeciesConstructor takes arguments O (an Object) and
+        defaultConstructor (a constructor). It is used to retrieve the constructor that should
+        be used to create new objects that are derived from O. defaultConstructor is the
+        constructor to use if a constructor @@species property cannot be found starting from O.
+        It performs the following steps when called:
+
+        1. Assert: Type(O) is Object.
+        2. Let C be ? Get(O, "constructor").
+        3. If C is undefined, return defaultConstructor.
+        4. If Type(C) is not Object, throw a TypeError exception.
+        5. Let S be ? Get(C, @@species).
+        6. If S is either undefined or null, return defaultConstructor.
+        7. If IsConstructor(S) is true, return S.
+        8. Throw a TypeError exception.
+         */
+        Object constructor = ScriptableObject.getProperty(s, "constructor");
+        if (constructor == Scriptable.NOT_FOUND || Undefined.isUndefined(constructor)) {
+            return defaultConstructor;
+        }
+        if (!ScriptRuntime.isObject(constructor)) {
+            throw ScriptRuntime.typeErrorById(
+                    "msg.arg.not.object", ScriptRuntime.typeof(constructor));
+        }
+        Object species = ScriptableObject.getProperty((Scriptable) constructor, SymbolKey.SPECIES);
+        if (species == Scriptable.NOT_FOUND || species == null || Undefined.isUndefined(species)) {
+            return defaultConstructor;
+        }
+        if (!(species instanceof Constructable)) {
+            throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(species));
+        }
+        return (Constructable) species;
     }
 }

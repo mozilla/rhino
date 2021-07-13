@@ -18,6 +18,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -2312,6 +2313,32 @@ public class Context implements Closeable {
         applicationClassLoader = loader;
     }
 
+    /**
+     * Add a task that will be executed at the end of the current operation. The various "evaluate"
+     * functions will all call this before exiting to ensure that all microtasks run to completion.
+     * Otherwise, callers should call "processMicrotasks" to run them all. This feature is primarily
+     * used to implement Promises. The microtask queue is not thread-safe.
+     */
+    public void enqueueMicrotask(Runnable task) {
+        microtasks.add(task);
+    }
+
+    /**
+     * Run all the microtasks for the current context to completion. This is called by the various
+     * "evaluate" functions. Frameworks that call Function objects directly should call this
+     * function to ensure that everything completes if they want all Promises to eventually resolve.
+     * This function is idempotent, but the microtask queue is not thread-safe.
+     */
+    public void processMicrotasks() {
+        Runnable head;
+        do {
+            head = microtasks.poll();
+            if (head != null) {
+                head.run();
+            }
+        } while (head != null);
+    }
+
     /* ******** end of API ********* */
 
     /** Internal method that reports an error for missing calls to enter(). */
@@ -2604,6 +2631,7 @@ public class Context implements Closeable {
     private Map<Object, Object> threadLocalMap;
     private ClassLoader applicationClassLoader;
     private UnaryOperator<Object> javaToJSONConverter;
+    private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
 
     /** This is the list of names of objects forcing the creation of function activation records. */
     Set<String> activationNames;
