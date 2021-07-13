@@ -106,17 +106,22 @@ public class NativeJavaPackage extends ScriptableObject
         return pkg;
     }
 
-    synchronized Object getPkgProperty(String name, Scriptable start,
+    Object getPkgProperty(String name, Scriptable start,
                                        boolean createPkg)
     {
         Object cached = super.get(name, start);
         if (cached != NOT_FOUND)
             return cached;
+        return createPkgProperty(name, start, createPkg);
+    }
+
+    private synchronized Object createPkgProperty(String name, Scriptable start,
+                                       boolean createPkg)
+    {
         if (negativeCache != null && negativeCache.contains(name)) {
             // Performance optimization: see bug 421071
             return null;
         }
-
         String className = (packageName.length() == 0)
                                ? name : packageName + '.' + name;
         Context cx = Context.getContext();
