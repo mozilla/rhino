@@ -26,7 +26,7 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 [Release Notes](./RELEASE-NOTES.md) for recent releases.
 
-[Compatibility table](http://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
+[Compatibility table](https://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
 features from ES6, and ES2016+ are implemented in Rhino.
 
 [![Mozilla](https://circleci.com/gh/mozilla/rhino.svg?style=shield)](https://app.circleci.com/pipelines/github/mozilla/rhino)
@@ -40,7 +40,7 @@ Information for script builders and embedders:
 
 JavaDoc for all the APIs:
 
-[http://mozilla.github.io/rhino/javadoc/index.html](http://mozilla.github.io/rhino/javadoc/index.html)
+[https://mozilla.github.io/rhino/javadoc/index.html](https://mozilla.github.io/rhino/javadoc/index.html)
 
 More resources if you get stuck:
 
