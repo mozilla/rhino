@@ -3360,6 +3360,19 @@ public class ScriptRuntime {
             }
             return eqNumber(b ? 1.0 : 0.0, y);
         } else if (x instanceof Scriptable) {
+            if (x instanceof Delegator) {
+                x = ((Delegator) x).getDelegee();
+                if (y instanceof Delegator) {
+                    return eq(x, ((Delegator) y).getDelegee());
+                }
+                if (x == y) {
+                    return true;
+                }
+            }
+            if (y instanceof Delegator && ((Delegator) y).getDelegee() == x) {
+                return true;
+            }
+
             if (y instanceof Scriptable) {
                 if (x instanceof ScriptableObject) {
                     Object test = ((ScriptableObject) x).equivalentValues(y);

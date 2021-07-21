@@ -54,8 +54,8 @@ public class DelegatorTest {
 
     public static void init(Scriptable scope) {}
 
-    private String eval(String source) {
-        return cx.evaluateString(root, source, "test.js", 1, null).toString();
+    private Object eval(String source) {
+        return cx.evaluateString(root, source, "test.js", 1, null);
     }
 
     @Test
@@ -65,15 +65,13 @@ public class DelegatorTest {
 
     @Test
     public void equals() {
-        assertEquals("false", eval("TestDelegee == TestDelegator"));
-        assertEquals("false", eval("TestDelegator == TestDelegee"));
+        assertEquals(Boolean.TRUE, eval("TestDelegee == TestDelegator"));
+        assertEquals(Boolean.TRUE, eval("TestDelegator == TestDelegee"));
+        assertEquals(Boolean.TRUE, eval("TestDelegator == TestDelegator2"));
 
-        assertEquals("true", eval("TestDelegee === TestDelegee"));
-
-        assertEquals("true", eval("TestDelegee === TestDelegator"));
-        assertEquals("true", eval("TestDelegator === TestDelegee"));
-
-        assertEquals("true", eval("TestDelegator === TestDelegator2"));
+        assertEquals(Boolean.TRUE, eval("TestDelegee === TestDelegator"));
+        assertEquals(Boolean.TRUE, eval("TestDelegator === TestDelegee"));
+        assertEquals(Boolean.TRUE, eval("TestDelegator === TestDelegator2"));
     }
 
     @Test
@@ -88,13 +86,13 @@ public class DelegatorTest {
 
     @Test
     public void setter() {
-        assertEquals("Rhino", eval("TestDelegator3.foo = TestDelegator; TestDelegator3.foo;"));
+        assertEquals("Rhino", eval("TestDelegator3.foo = TestDelegator; TestDelegator3.foo;").toString());
     }
 
     @Test
     public void defineProperty() {
         assertEquals(
-                "42",
+                42,
                 eval(
                         "Object.defineProperty(TestDelegator3, 'testProp', {"
                                 + "value: 42,"
@@ -106,7 +104,7 @@ public class DelegatorTest {
 
     @Test
     public void setPrototypeOf() {
-        assertEquals("5", eval("a = {}; Object.setPrototypeOf(a, TestDelegator); a.length;"));
+        assertEquals(5, eval("a = {}; Object.setPrototypeOf(a, TestDelegator); a.length;"));
     }
 
     public static class AnnotatedHostObject extends ScriptableObject {
