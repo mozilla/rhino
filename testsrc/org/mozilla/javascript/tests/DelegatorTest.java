@@ -86,7 +86,9 @@ public class DelegatorTest {
 
     @Test
     public void setter() {
-        assertEquals("Rhino", eval("TestDelegator3.foo = TestDelegator; TestDelegator3.foo;").toString());
+        assertEquals(
+                "Rhino",
+                eval("TestDelegator3.foo = TestDelegator; TestDelegator3.foo;").toString());
     }
 
     @Test
