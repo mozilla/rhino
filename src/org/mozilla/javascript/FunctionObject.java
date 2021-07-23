@@ -180,6 +180,7 @@ public class FunctionObject extends BaseFunction {
             case JAVA_SCRIPTABLE_TYPE:
                 return ScriptRuntime.toObjectOrNull(cx, arg, scope);
             case JAVA_OBJECT_TYPE:
+                if (arg instanceof ConsString) return arg.toString();
                 return arg;
             default:
                 throw new IllegalArgumentException();
