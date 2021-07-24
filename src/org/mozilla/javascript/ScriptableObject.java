@@ -569,13 +569,13 @@ public abstract class ScriptableObject
         // Emulate old behavior where nothing happened if it wasn't actually a Function
         if (isSetter) {
             if (getterOrSetter instanceof Function) {
-                aSlot.setter = new AccessorSlot.FunctionSetter((Function) getterOrSetter);
+                aSlot.setter = new AccessorSlot.FunctionSetter(getterOrSetter);
             } else {
                 aSlot.setter = null;
             }
         } else {
             if (getterOrSetter instanceof Function) {
-                aSlot.getter = new AccessorSlot.FunctionGetter((Function) getterOrSetter);
+                aSlot.getter = new AccessorSlot.FunctionGetter(getterOrSetter);
             } else {
                 aSlot.getter = null;
             }

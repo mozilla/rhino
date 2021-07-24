@@ -2911,7 +2911,7 @@ public class ScriptRuntime {
         if (val1 instanceof CharSequence && val2 instanceof CharSequence) {
             // If we let this happen later, then the "getDefaultValue" logic
             // undoes many optimizations
-            return new ConsString(toCharSequence(val1), toCharSequence(val2));
+            return new ConsString((CharSequence) val1, (CharSequence) val2);
         }
         if (val1 instanceof XMLObject) {
             Object test = ((XMLObject) val1).addValues(cx, true, val2);
@@ -4705,8 +4705,6 @@ public class ScriptRuntime {
 
     public static Scriptable getTemplateLiteralCallSite(
             Context cx, Scriptable scope, Object[] strings, int index) {
-        final int INTEGRITY_FREEZE = ScriptableObject.PERMANENT | ScriptableObject.READONLY;
-
         Object callsite = strings[index];
 
         if (callsite instanceof Scriptable) return (Scriptable) callsite;
