@@ -463,6 +463,20 @@ public class BaseFunction extends IdScriptableObject implements Function {
         return "";
     }
 
+    /**
+     * Sets the attributes of the "name", "length", and "arity" properties, which differ for many
+     * native objects.
+     */
+    public void setStandardPropertyAttributes(int attributes) {
+        namePropertyAttributes = attributes;
+        lengthPropertyAttributes = attributes;
+        arityPropertyAttributes = attributes;
+    }
+
+    public void setPrototypePropertyAttributes(int attributes) {
+        prototypePropertyAttributes = attributes;
+    }
+
     protected boolean hasPrototypeProperty() {
         return prototypeProperty != null || this instanceof NativeFunction;
     }
