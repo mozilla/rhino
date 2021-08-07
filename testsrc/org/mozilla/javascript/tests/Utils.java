@@ -15,6 +15,9 @@ import org.mozilla.javascript.Scriptable;
  * @author Marc Guillemot
  */
 public class Utils {
+    /** The default set of levels to run tests at. */
+    public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 0, 9};
+
     /** Runs the action successively with all available optimization levels */
     public static void runWithAllOptimizationLevels(final ContextAction action) {
         runWithOptimizationLevel(action, -1);
@@ -62,5 +65,17 @@ public class Utils {
                     return cx.evaluateString(scope, script, "myScript.js", 1, null);
                 },
                 optimizationLevel);
+    }
+
+    /**
+     * If the TEST_OPTLEVEL system property is set, then return an array containing only that one
+     * integer. Otherwise, return an array of the typical opt levels that we expect for testing.
+     */
+    public static int[] getTestOptLevels() {
+        String overriddenLevel = System.getProperty("TEST_OPTLEVEL");
+        if (overriddenLevel != null && !overriddenLevel.isEmpty()) {
+            return new int[] {Integer.parseInt(overriddenLevel)};
+        }
+        return DEFAULT_OPT_LEVELS;
     }
 }

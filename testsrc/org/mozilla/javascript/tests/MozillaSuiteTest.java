@@ -16,6 +16,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import org.mozilla.javascript.drivers.JsTestsBase;
+import org.mozilla.javascript.drivers.ShellTest;
+import org.mozilla.javascript.drivers.TestUtils;
+import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /**
  * This JUnit suite runs the Mozilla test suite (in mozilla.org CVS at /mozilla/js/tests).
@@ -36,17 +45,7 @@ public class MozillaSuiteTest {
     private final File jsFile;
     private final int optimizationLevel;
 
-    private static final int[] OPT_LEVELS;
-
-    static {
-        // Reduce the number of tests that we run by a factor of three...
-        String overriddenLevel = System.getProperty("TEST_OPTLEVEL");
-        if (overriddenLevel != null) {
-            OPT_LEVELS = new int[] {Integer.parseInt(overriddenLevel)};
-        } else {
-            OPT_LEVELS = new int[] {-1, 0, 9};
-        }
-    }
+    private static final int[] OPT_LEVELS = Utils.getTestOptLevels();
 
     public MozillaSuiteTest(File jsFile, int optimizationLevel) {
         this.jsFile = jsFile;
