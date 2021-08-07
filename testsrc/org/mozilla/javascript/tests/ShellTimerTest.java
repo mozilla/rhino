@@ -2,7 +2,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import org.junit.After;
 import org.junit.Before;
@@ -44,7 +44,12 @@ public class ShellTimerTest {
 
     @Parameters(name = "{index}, opt={0}")
     public static Collection<Object[]> optLevels() {
-        return Arrays.asList(new Object[] {-1}, new Object[] {1}, new Object[] {9});
+        int[] optLevels = Utils.getTestOptLevels();
+        ArrayList<Object[]> params = new ArrayList<>();
+        for (int ol : optLevels) {
+            params.add(new Object[] {ol});
+        }
+        return params;
     }
 
     /** Just make sure that a timeout fires. */
