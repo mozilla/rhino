@@ -52,7 +52,7 @@ public class NativeMap extends IdScriptableObject {
                     NativeMap nm = new NativeMap();
                     nm.instanceOfMap = true;
                     if (args.length > 0) {
-                        loadFromIterable(cx, scope, nm, key(args));
+                        loadFromIterable(cx, scope, nm, args[0]);
                     }
                     return nm;
                 }
@@ -60,14 +60,15 @@ public class NativeMap extends IdScriptableObject {
             case Id_set:
                 return realThis(thisObj, f)
                         .js_set(
-                                key(args),
+                                args.length > 0 ? args[0] : Undefined.instance,
                                 args.length > 1 ? args[1] : Undefined.instance);
             case Id_delete:
-                return realThis(thisObj, f).js_delete(key(args));
+                return realThis(thisObj, f)
+                        .js_delete(args.length > 0 ? args[0] : Undefined.instance);
             case Id_get:
-                return realThis(thisObj, f).js_get(key(args));
+                return realThis(thisObj, f).js_get(args.length > 0 ? args[0] : Undefined.instance);
             case Id_has:
-                return realThis(thisObj, f).js_has(key(args));
+                return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
             case Id_clear:
                 return realThis(thisObj, f).js_clear();
             case Id_keys:
@@ -347,15 +348,4 @@ public class NativeMap extends IdScriptableObject {
             SymbolId_getSize = 11,
             SymbolId_toStringTag = 12,
             MAX_PROTOTYPE_ID = SymbolId_toStringTag;
-
-    private static Object key(Object[] args) {
-        if (args.length > 0) {
-            Object key = args[0];
-            if (key instanceof Delegator) {
-                return ((Delegator) key).getDelegee();
-            }
-            return key;
-        }
-        return Undefined.instance;
-    }
 }

@@ -43,24 +43,24 @@ public class NativeWeakSet extends IdScriptableObject {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
-
         switch (id) {
             case Id_constructor:
                 if (thisObj == null) {
                     NativeWeakSet ns = new NativeWeakSet();
                     ns.instanceOfWeakSet = true;
                     if (args.length > 0) {
-                        NativeSet.loadFromIterable(cx, scope, ns, key(args));
+                        NativeSet.loadFromIterable(cx, scope, ns, args[0]);
                     }
                     return ns;
                 }
                 throw ScriptRuntime.typeErrorById("msg.no.new", "WeakSet");
             case Id_add:
-                return realThis(thisObj, f).js_add(key(args));
+                return realThis(thisObj, f).js_add(args.length > 0 ? args[0] : Undefined.instance);
             case Id_delete:
-                return realThis(thisObj, f).js_delete(key(args));
+                return realThis(thisObj, f)
+                        .js_delete(args.length > 0 ? args[0] : Undefined.instance);
             case Id_has:
-                return realThis(thisObj, f).js_has(key(args));
+                return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
         }
         throw new IllegalArgumentException(
                 "WeakMap.prototype has no method: " + f.getFunctionName());
@@ -181,16 +181,5 @@ public class NativeWeakSet extends IdScriptableObject {
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         map = new WeakHashMap<>();
-    }
-
-    private static Object key(Object[] args) {
-        if (args.length > 0) {
-            Object key = args[0];
-            if (key instanceof Delegator) {
-                return ((Delegator) key).getDelegee();
-            }
-            return key;
-        }
-        return Undefined.instance;
     }
 }
