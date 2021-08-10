@@ -411,6 +411,7 @@ jacocoTestReport.dependsOn test
 jacocoTestReport {
     reports {
         csv.enabled true
+        html.enabled true
     }
 }
 
