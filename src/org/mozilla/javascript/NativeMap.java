@@ -59,9 +59,7 @@ public class NativeMap extends IdScriptableObject {
                 throw ScriptRuntime.typeErrorById("msg.no.new", "Map");
             case Id_set:
                 return realThis(thisObj, f)
-                        .js_set(
-                                key(args),
-                                args.length > 1 ? args[1] : Undefined.instance);
+                        .js_set(key(args), args.length > 1 ? args[1] : Undefined.instance);
             case Id_delete:
                 return realThis(thisObj, f).js_delete(key(args));
             case Id_get:

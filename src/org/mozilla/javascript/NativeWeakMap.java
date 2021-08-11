@@ -66,9 +66,7 @@ public class NativeWeakMap extends IdScriptableObject {
                 return realThis(thisObj, f).js_has(key(args));
             case Id_set:
                 return realThis(thisObj, f)
-                        .js_set(
-                                key(args),
-                                args.length > 1 ? args[1] : Undefined.instance);
+                        .js_set(key(args), args.length > 1 ? args[1] : Undefined.instance);
         }
         throw new IllegalArgumentException(
                 "WeakMap.prototype has no method: " + f.getFunctionName());

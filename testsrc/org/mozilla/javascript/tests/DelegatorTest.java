@@ -113,34 +113,28 @@ public class DelegatorTest {
     public void map() {
         String script =
                 "var result = '';\n"
-                + "var map = new Map();\n"
-                + "map.set(TestDelegator, 'test');\n"
-
-                + "result += map.has(TestDelegator);\n"
-                + "result += '#';\n"
-
-                + "result += map.get(TestDelegator);\n"
-                + "result += '#';\n"
-
-                + "result += map.delete(TestDelegator);\n"
-                + "result += '#';\n"
-                + "result;";
+                        + "var map = new Map();\n"
+                        + "map.set(TestDelegator, 'test');\n"
+                        + "result += map.has(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result += map.get(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result += map.delete(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result;";
         // assertEquals("true#test#true#", eval(script));
 
         script =
                 "var result = '';\n"
-                + "var map = new Map();\n"
-                + "map.set(TestDelegator, 'test');\n"
-
-                + "result += map.has(TestDelegee);\n"
-                + "result += '#';\n"
-
-                + "result += map.get(TestDelegee);\n"
-                + "result += '#';\n"
-
-                + "result += map.delete(TestDelegee);\n"
-                + "result += '#';\n"
-                + "result;";
+                        + "var map = new Map();\n"
+                        + "map.set(TestDelegator, 'test');\n"
+                        + "result += map.has(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result += map.get(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result += map.delete(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result;";
         assertEquals("true#test#true#", eval(script));
     }
 
@@ -148,34 +142,28 @@ public class DelegatorTest {
     public void weakMap() {
         String script =
                 "var result = '';\n"
-                + "var map = new WeakMap();\n"
-                + "map.set(TestDelegator, 'test');\n"
-
-                + "result += map.has(TestDelegator);\n"
-                + "result += '#';\n"
-
-                + "result += map.get(TestDelegator);\n"
-                + "result += '#';\n"
-
-                + "result += map.delete(TestDelegator);\n"
-                + "result += '#';\n"
-                + "result;";
+                        + "var map = new WeakMap();\n"
+                        + "map.set(TestDelegator, 'test');\n"
+                        + "result += map.has(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result += map.get(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result += map.delete(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result;";
         assertEquals("true#test#true#", eval(script));
 
         script =
                 "var result = '';\n"
-                + "var map = new WeakMap();\n"
-                + "map.set(TestDelegator, 'test');\n"
-
-                + "result += map.has(TestDelegee);\n"
-                + "result += '#';\n"
-
-                + "result += map.get(TestDelegee);\n"
-                + "result += '#';\n"
-
-                + "result += map.delete(TestDelegee);\n"
-                + "result += '#';\n"
-                + "result;";
+                        + "var map = new WeakMap();\n"
+                        + "map.set(TestDelegator, 'test');\n"
+                        + "result += map.has(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result += map.get(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result += map.delete(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result;";
         assertEquals("true#test#true#", eval(script));
     }
 
@@ -183,28 +171,24 @@ public class DelegatorTest {
     public void set() {
         String script =
                 "var result = '';\n"
-                + "var set = new Set();\n"
-                + "set.add(TestDelegator);\n"
-
-                + "result += set.has(TestDelegator);\n"
-                + "result += '#';\n"
-
-                + "result += set.delete(TestDelegator);\n"
-                + "result += '#';\n"
-                + "result;";
+                        + "var set = new Set();\n"
+                        + "set.add(TestDelegator);\n"
+                        + "result += set.has(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result += set.delete(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result;";
         assertEquals("true#true#", eval(script));
 
         script =
                 "var result = '';\n"
-                + "var set = new Set();\n"
-                + "set.add(TestDelegator);\n"
-
-                + "result += set.has(TestDelegee);\n"
-                + "result += '#';\n"
-
-                + "result += set.delete(TestDelegee);\n"
-                + "result += '#';\n"
-                + "result;";
+                        + "var set = new Set();\n"
+                        + "set.add(TestDelegator);\n"
+                        + "result += set.has(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result += set.delete(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result;";
         assertEquals("true#true#", eval(script));
     }
 
@@ -212,28 +196,24 @@ public class DelegatorTest {
     public void weakSet() {
         String script =
                 "var result = '';\n"
-                + "var set = new WeakSet();\n"
-                + "set.add(TestDelegator);\n"
-
-                + "result += set.has(TestDelegator);\n"
-                + "result += '#';\n"
-
-                + "result += set.delete(TestDelegator);\n"
-                + "result += '#';\n"
-                + "result;";
+                        + "var set = new WeakSet();\n"
+                        + "set.add(TestDelegator);\n"
+                        + "result += set.has(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result += set.delete(TestDelegator);\n"
+                        + "result += '#';\n"
+                        + "result;";
         assertEquals("true#true#", eval(script));
 
         script =
                 "var result = '';\n"
-                + "var set = new WeakSet();\n"
-                + "set.add(TestDelegator);\n"
-
-                + "result += set.has(TestDelegee);\n"
-                + "result += '#';\n"
-
-                + "result += set.delete(TestDelegee);\n"
-                + "result += '#';\n"
-                + "result;";
+                        + "var set = new WeakSet();\n"
+                        + "set.add(TestDelegator);\n"
+                        + "result += set.has(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result += set.delete(TestDelegee);\n"
+                        + "result += '#';\n"
+                        + "result;";
         assertEquals("true#true#", eval(script));
     }
 
