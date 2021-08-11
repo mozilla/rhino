@@ -43,7 +43,6 @@ public class NativeWeakSet extends IdScriptableObject {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
-
         switch (id) {
             case Id_constructor:
                 if (thisObj == null) {
