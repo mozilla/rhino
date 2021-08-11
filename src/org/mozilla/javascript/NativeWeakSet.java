@@ -50,17 +50,17 @@ public class NativeWeakSet extends IdScriptableObject {
                     NativeWeakSet ns = new NativeWeakSet();
                     ns.instanceOfWeakSet = true;
                     if (args.length > 0) {
-                        NativeSet.loadFromIterable(cx, scope, ns, key(args));
+                        NativeSet.loadFromIterable(cx, scope, ns, NativeMap.key(args));
                     }
                     return ns;
                 }
                 throw ScriptRuntime.typeErrorById("msg.no.new", "WeakSet");
             case Id_add:
-                return realThis(thisObj, f).js_add(key(args));
+                return realThis(thisObj, f).js_add(NativeMap.key(args));
             case Id_delete:
-                return realThis(thisObj, f).js_delete(key(args));
+                return realThis(thisObj, f).js_delete(NativeMap.key(args));
             case Id_has:
-                return realThis(thisObj, f).js_has(key(args));
+                return realThis(thisObj, f).js_has(NativeMap.key(args));
         }
         throw new IllegalArgumentException(
                 "WeakMap.prototype has no method: " + f.getFunctionName());
@@ -181,16 +181,5 @@ public class NativeWeakSet extends IdScriptableObject {
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         map = new WeakHashMap<>();
-    }
-
-    private static Object key(Object[] args) {
-        if (args.length > 0) {
-            Object key = args[0];
-            if (key instanceof Delegator) {
-                return ((Delegator) key).getDelegee();
-            }
-            return key;
-        }
-        return Undefined.instance;
     }
 }

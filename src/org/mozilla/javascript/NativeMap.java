@@ -346,7 +346,14 @@ public class NativeMap extends IdScriptableObject {
             SymbolId_toStringTag = 12,
             MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
-    private static Object key(Object[] args) {
+    /**
+     * Extracts the key from the first args entry if any and takes care of the Delegator. This is
+     * used by {@code NativeSet}, {@code NativeWeakMap}, and {@code NativeWekSet} also.
+     *
+     * @param args the args
+     * @return the first argument (de-delegated) or undefined if there is no element in args
+     */
+    static Object key(Object[] args) {
         if (args.length > 0) {
             Object key = args[0];
             if (key instanceof Delegator) {

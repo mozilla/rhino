@@ -53,20 +53,22 @@ public class NativeWeakMap extends IdScriptableObject {
                     NativeWeakMap nm = new NativeWeakMap();
                     nm.instanceOfWeakMap = true;
                     if (args.length > 0) {
-                        NativeMap.loadFromIterable(cx, scope, nm, key(args));
+                        NativeMap.loadFromIterable(cx, scope, nm, NativeMap.key(args));
                     }
                     return nm;
                 }
                 throw ScriptRuntime.typeErrorById("msg.no.new", "WeakMap");
             case Id_delete:
-                return realThis(thisObj, f).js_delete(key(args));
+                return realThis(thisObj, f).js_delete(NativeMap.key(args));
             case Id_get:
-                return realThis(thisObj, f).js_get(key(args));
+                return realThis(thisObj, f).js_get(NativeMap.key(args));
             case Id_has:
-                return realThis(thisObj, f).js_has(key(args));
+                return realThis(thisObj, f).js_has(NativeMap.key(args));
             case Id_set:
                 return realThis(thisObj, f)
-                        .js_set(key(args), args.length > 1 ? args[1] : Undefined.instance);
+                        .js_set(
+                                NativeMap.key(args),
+                                args.length > 1 ? args[1] : Undefined.instance);
         }
         throw new IllegalArgumentException(
                 "WeakMap.prototype has no method: " + f.getFunctionName());
@@ -209,16 +211,5 @@ public class NativeWeakMap extends IdScriptableObject {
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         map = new WeakHashMap<>();
-    }
-
-    private static Object key(Object[] args) {
-        if (args.length > 0) {
-            Object key = args[0];
-            if (key instanceof Delegator) {
-                return ((Delegator) key).getDelegee();
-            }
-            return key;
-        }
-        return Undefined.instance;
     }
 }

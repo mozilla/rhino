@@ -122,7 +122,7 @@ public class DelegatorTest {
                         + "result += map.delete(TestDelegator);\n"
                         + "result += '#';\n"
                         + "result;";
-        // assertEquals("true#test#true#", eval(script));
+        assertEquals("true#test#true#", eval(script));
 
         script =
                 "var result = '';\n"
