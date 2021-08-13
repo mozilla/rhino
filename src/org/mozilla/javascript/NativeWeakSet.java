@@ -49,18 +49,17 @@ public class NativeWeakSet extends IdScriptableObject {
                     NativeWeakSet ns = new NativeWeakSet();
                     ns.instanceOfWeakSet = true;
                     if (args.length > 0) {
-                        NativeSet.loadFromIterable(cx, scope, ns, args[0]);
+                        NativeSet.loadFromIterable(cx, scope, ns, NativeMap.key(args));
                     }
                     return ns;
                 }
                 throw ScriptRuntime.typeErrorById("msg.no.new", "WeakSet");
             case Id_add:
-                return realThis(thisObj, f).js_add(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_add(NativeMap.key(args));
             case Id_delete:
-                return realThis(thisObj, f)
-                        .js_delete(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_delete(NativeMap.key(args));
             case Id_has:
-                return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_has(NativeMap.key(args));
         }
         throw new IllegalArgumentException(
                 "WeakMap.prototype has no method: " + f.getFunctionName());

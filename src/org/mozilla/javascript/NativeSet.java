@@ -52,19 +52,18 @@ public class NativeSet extends IdScriptableObject {
                     NativeSet ns = new NativeSet();
                     ns.instanceOfSet = true;
                     if (args.length > 0) {
-                        loadFromIterable(cx, scope, ns, args[0]);
+                        loadFromIterable(cx, scope, ns, NativeMap.key(args));
                     }
                     return ns;
                 } else {
                     throw ScriptRuntime.typeErrorById("msg.no.new", "Set");
                 }
             case Id_add:
-                return realThis(thisObj, f).js_add(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_add(NativeMap.key(args));
             case Id_delete:
-                return realThis(thisObj, f)
-                        .js_delete(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_delete(NativeMap.key(args));
             case Id_has:
-                return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_has(NativeMap.key(args));
             case Id_clear:
                 return realThis(thisObj, f).js_clear();
             case Id_values:
@@ -77,7 +76,7 @@ public class NativeSet extends IdScriptableObject {
                         .js_forEach(
                                 cx,
                                 scope,
-                                args.length > 0 ? args[0] : Undefined.instance,
+                                NativeMap.key(args),
                                 args.length > 1 ? args[1] : Undefined.instance);
             case SymbolId_getSize:
                 return realThis(thisObj, f).js_getSize();
