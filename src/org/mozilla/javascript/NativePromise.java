@@ -100,7 +100,7 @@ public class NativePromise extends ScriptableObject {
         ResolvingFunctions resolving = new ResolvingFunctions(scope, promise);
 
         Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
-        if (cx.isStrictMode()) {
+        if (!cx.isStrictMode()) {
             Scriptable tcs = cx.topCallScope;
             if (tcs != null) {
                 thisObj = tcs;

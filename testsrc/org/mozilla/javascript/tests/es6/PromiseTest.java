@@ -58,13 +58,13 @@ public class PromiseTest {
                         "'use strict';"
                                 + "  var r = '';"
                                 + "  var p = new Promise(function(resolve, reject) {\n"
-                                + "      r += this;\n"
+                                + "      r += this === undefined;\n"
                                 + "    });\n"
                                 + "  r += ' done';\n"
                                 + "  r;",
                         "test",
                         1,
                         null);
-        assertEquals("undefined done", result);
+        assertEquals("true done", result);
     }
 }
