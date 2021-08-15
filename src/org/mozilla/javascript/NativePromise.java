@@ -5,7 +5,6 @@
 package org.mozilla.javascript;
 
 import java.util.ArrayList;
-
 import org.mozilla.javascript.TopLevel.NativeErrors;
 
 public class NativePromise extends ScriptableObject {
@@ -109,17 +108,9 @@ public class NativePromise extends ScriptableObject {
         }
 
         try {
-            executor.call(
-                    cx,
-                    scope,
-                    thisObj,
-                    new Object[] {resolving.resolve, resolving.reject});
+            executor.call(cx, scope, thisObj, new Object[] {resolving.resolve, resolving.reject});
         } catch (RhinoException re) {
-            resolving.reject.call(
-                    cx,
-                    scope,
-                    thisObj,
-                    new Object[] {getErrorObject(cx, scope, re)});
+            resolving.reject.call(cx, scope, thisObj, new Object[] {getErrorObject(cx, scope, re)});
         }
 
         return promise;
