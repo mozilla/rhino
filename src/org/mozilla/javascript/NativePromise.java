@@ -5,6 +5,7 @@
 package org.mozilla.javascript;
 
 import java.util.ArrayList;
+
 import org.mozilla.javascript.TopLevel.NativeErrors;
 
 public class NativePromise extends ScriptableObject {
@@ -99,17 +100,25 @@ public class NativePromise extends ScriptableObject {
         NativePromise promise = new NativePromise();
         ResolvingFunctions resolving = new ResolvingFunctions(scope, promise);
 
+        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+        if (cx.isStrictMode()) {
+            Scriptable tcs = cx.topCallScope;
+            if (tcs != null) {
+                thisObj = tcs;
+            }
+        }
+
         try {
             executor.call(
                     cx,
                     scope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
+                    thisObj,
                     new Object[] {resolving.resolve, resolving.reject});
         } catch (RhinoException re) {
             resolving.reject.call(
                     cx,
                     scope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
+                    thisObj,
                     new Object[] {getErrorObject(cx, scope, re)});
         }
 
