@@ -552,7 +552,7 @@ public class NativeJavaObject
         case JSTYPE_UNDEFINED:
             if (type == ScriptRuntime.StringClass ||
                 type == ScriptRuntime.ObjectClass) {
-                return "undefined";
+            	return null;
             }
             reportConversionError("undefined", type);
             break;
