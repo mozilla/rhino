@@ -99,18 +99,18 @@ public class NativePromise extends ScriptableObject {
         NativePromise promise = new NativePromise();
         ResolvingFunctions resolving = new ResolvingFunctions(scope, promise);
 
+        Scriptable thisObj = Undefined.SCRIPTABLE_UNDEFINED;
+        if (!cx.isStrictMode()) {
+            Scriptable tcs = cx.topCallScope;
+            if (tcs != null) {
+                thisObj = tcs;
+            }
+        }
+
         try {
-            executor.call(
-                    cx,
-                    scope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {resolving.resolve, resolving.reject});
+            executor.call(cx, scope, thisObj, new Object[] {resolving.resolve, resolving.reject});
         } catch (RhinoException re) {
-            resolving.reject.call(
-                    cx,
-                    scope,
-                    Undefined.SCRIPTABLE_UNDEFINED,
-                    new Object[] {getErrorObject(cx, scope, re)});
+            resolving.reject.call(cx, scope, thisObj, new Object[] {getErrorObject(cx, scope, re)});
         }
 
         return promise;
