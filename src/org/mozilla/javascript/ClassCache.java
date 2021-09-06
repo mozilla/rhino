@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import org.mozilla.javascript.JavaMembers.CacheKey;
 
 /**
  * Cache of generated classes and data structures to access Java runtime from JavaScript.
