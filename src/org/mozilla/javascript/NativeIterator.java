@@ -6,9 +6,7 @@
 
 package org.mozilla.javascript;
 
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * This class implements iterator objects. See
@@ -19,10 +17,6 @@ import java.util.Map;
 public final class NativeIterator extends IdScriptableObject {
     private static final long serialVersionUID = -4136968203581667681L;
     private static final Object ITERATOR_TAG = "Iterator";
-
-    // Functions are registered as '__iterator__' for Iterables and Maps 
-    public static final BaseFunction JAVA_COLLECTION_ITERATOR = new CollectionIteratorFunction();
-    public static final BaseFunction JAVA_MAP_ITERATOR = new MapIteratorFunction();
 
     static void init(Context cx, ScriptableObject scope, boolean sealed) {
         // Iterator
@@ -233,71 +227,6 @@ public final class NativeIterator extends IdScriptableObject {
         return null;
     }
 
-    static class CollectionIteratorFunction extends BaseFunction {
-        @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                Object[] args) {
-
-            Object wrapped = ((NativeJavaObject) thisObj).javaObject;
-            if (Boolean.TRUE.equals(args[0])) {
-                // key only iterator, we will return an iterator
-                // for the sequence of the collection length.
-                int length = ((Collection<?>) wrapped).size();
-                return cx.getWrapFactory().wrap(cx, scope,
-                        new SequenceIterator(length, scope),
-                        WrappedJavaIterator.class);
-            } else {
-                Iterator<?> iter = ((Iterable<?>) wrapped).iterator();
-                return cx.getWrapFactory().wrap(cx, scope,
-                        new WrappedJavaIterator(iter, scope),
-                        WrappedJavaIterator.class);
-            }
-        }
-    }
-    
-    static public class SequenceIterator
-    {
-        SequenceIterator(int size, Scriptable scope) {
-            this.size = size;
-            this.scope = scope;
-        }
-
-        public Object next() {
-            if (pos >= size) {
-                // Out of values. Throw StopIteration.
-                throw new JavaScriptException(
-                    NativeIterator.getStopIterationObject(scope), null, 0);
-            }
-            return pos++;
-        }
-
-        public Object __iterator__(boolean b) {
-            return this;
-        }
-
-        private int size;
-        private int pos;
-        private Scriptable scope;
-    }
-    
-    static class MapIteratorFunction extends BaseFunction {
-        @Override
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                Object[] args) {
-
-            Map<?, ?> map = (Map<?, ?>) ((NativeJavaObject) thisObj).javaObject;
-            Iterator<?> iter;
-            if (Boolean.TRUE.equals(args[0])) {
-                iter = map.keySet().iterator();
-            } else {
-                iter = map.values().iterator();
-            }
-            return cx.getWrapFactory().wrap(cx, scope,
-                    new WrappedJavaIterator(iter, scope),
-                    WrappedJavaIterator.class);
-        }
-    }
-    
     public static class WrappedJavaIterator {
         WrappedJavaIterator(Iterator<?> iterator, Scriptable scope) {
             this.iterator = iterator;
