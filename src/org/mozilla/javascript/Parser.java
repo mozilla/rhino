@@ -64,6 +64,9 @@ import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
 import org.mozilla.javascript.ast.Symbol;
+import org.mozilla.javascript.ast.TaggedTemplateLiteral;
+import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.ast.TemplateLiteral;
 import org.mozilla.javascript.ast.ThrowStatement;
 import org.mozilla.javascript.ast.TryStatement;
 import org.mozilla.javascript.ast.UnaryExpression;
@@ -220,7 +223,11 @@ public class Parser {
     }
 
     void addError(String messageId, String messageArg) {
-        addError(messageId, messageArg, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+        if (ts == null) {
+            addError(messageId, messageArg, 0, 0);
+        } else {
+            addError(messageId, messageArg, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+        }
     }
 
     void addError(String messageId, int c) {
@@ -2788,11 +2795,23 @@ public class Parser {
                                     ? currentFlaggedToken
                                     : currentFlagTOken;
                     break;
+                case Token.TEMPLATE_LITERAL:
+                    consumeToken();
+                    pn = taggedTemplateLiteral(pn);
+                    break;
                 default:
                     break tailLoop;
             }
         }
         return pn;
+    }
+
+    private AstNode taggedTemplateLiteral(AstNode pn) throws IOException {
+        AstNode templateLiteral = templateLiteral(true);
+        TaggedTemplateLiteral tagged = new TaggedTemplateLiteral();
+        tagged.setTarget(pn);
+        tagged.setTemplateLiteral(templateLiteral);
+        return tagged;
     }
 
     /**
@@ -3070,6 +3089,10 @@ public class Parser {
                 pos = ts.tokenBeg;
                 end = ts.tokenEnd;
                 return new KeywordLiteral(pos, end - pos, tt);
+
+            case Token.TEMPLATE_LITERAL:
+                consumeToken();
+                return templateLiteral(false);
 
             case Token.RESERVED:
                 consumeToken();
@@ -3650,6 +3673,40 @@ public class Parser {
         s.setValue(ts.getString());
         s.setQuoteCharacter(ts.getQuoteChar());
         return s;
+    }
+
+    private AstNode templateLiteral(boolean isTaggedLiteral) throws IOException {
+        if (currentToken != Token.TEMPLATE_LITERAL) codeBug();
+        int pos = ts.tokenBeg, end = ts.tokenEnd;
+        List<AstNode> elements = new ArrayList<AstNode>();
+        TemplateLiteral pn = new TemplateLiteral(pos);
+
+        int posChars = ts.tokenBeg + 1;
+        int tt = ts.readTemplateLiteral(isTaggedLiteral);
+        while (tt == Token.TEMPLATE_LITERAL_SUBST) {
+            elements.add(createTemplateLiteralCharacters(posChars));
+            elements.add(expr());
+            mustMatchToken(Token.RC, "msg.syntax", true);
+            posChars = ts.tokenBeg + 1;
+            tt = ts.readTemplateLiteral(isTaggedLiteral);
+        }
+        if (tt == Token.ERROR) {
+            return makeErrorNode();
+        }
+        assert tt == Token.TEMPLATE_LITERAL;
+        elements.add(createTemplateLiteralCharacters(posChars));
+        end = ts.tokenEnd;
+        pn.setElements(elements);
+        pn.setLength(end - pos);
+
+        return pn;
+    }
+
+    private TemplateCharacters createTemplateLiteralCharacters(int pos) {
+        TemplateCharacters chars = new TemplateCharacters(pos, ts.tokenEnd - pos - 1);
+        chars.setValue(ts.getString());
+        chars.setRawValue(ts.getRawString());
+        return chars;
     }
 
     private AstNode createNumericLiteral(int tt, boolean isProperty) {

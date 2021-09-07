@@ -44,4 +44,33 @@ public class DecompileTest {
                     return null;
                 });
     }
+
+    @Test
+    public void templateLiteral() {
+        final String source = "var x = `test${1}`;";
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Script script = cx.compileString(source, "my script", 0, null);
+                    Assert.assertEquals(source, cx.decompileScript(script, 4).trim());
+                    return null;
+                });
+    }
+
+    @Test
+    public void taggedTemplateLiteral() {
+        final String source = "var x = (() => { } )`test${2}\\unicode`;";
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Script script = cx.compileString(source, "my script", 0, null);
+                    Assert.assertEquals(
+                            source,
+                            cx.decompileScript(script, 4)
+                                    .trim()
+                                    .replaceAll("\\R", "")
+                                    .replaceAll("\\s+", " "));
+                    return null;
+                });
+    }
 }

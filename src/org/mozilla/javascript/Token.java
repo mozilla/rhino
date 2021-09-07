@@ -221,7 +221,11 @@ public class Token {
             METHOD = 167, // ES6 MethodDefinition
             ARROW = 168, // ES6 ArrowFunction
             YIELD_STAR = 169, // ES6 "yield *", a specialization of yield
-            LAST_TOKEN = 170;
+            TEMPLATE_LITERAL = 170, // template literal
+            TEMPLATE_CHARS = 171, // template literal - literal section
+            TEMPLATE_LITERAL_SUBST = 172, // template literal - substitution
+            TAGGED_TEMPLATE_LITERAL = 173, // template literal - tagged/handler
+            LAST_TOKEN = 173;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -582,6 +586,14 @@ public class Token {
                 return "YIELD_STAR";
             case BIGINT:
                 return "BIGINT";
+            case TEMPLATE_LITERAL:
+                return "TEMPLATE_LITERAL";
+            case TEMPLATE_CHARS:
+                return "TEMPLATE_CHARS";
+            case TEMPLATE_LITERAL_SUBST:
+                return "TEMPLATE_LITERAL_SUBST";
+            case TAGGED_TEMPLATE_LITERAL:
+                return "TAGGED_TEMPLATE_LITERAL";
         }
 
         // Token without name

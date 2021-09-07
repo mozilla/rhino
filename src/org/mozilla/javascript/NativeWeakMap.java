@@ -11,12 +11,12 @@ import java.io.ObjectInputStream;
 import java.util.WeakHashMap;
 
 /**
- * This is an implementation of the ES6 WeakMap class. As per the spec, keys must be
- * ordinary objects. Since there is no defined "equality" for objects, comparisions
- * are done strictly by object equality. Both ES6 and the java.util.WeakHashMap class
- * have the same basic structure -- entries are removed automatically when the sole
- * remaining reference to the key is a weak reference. Therefore, we can use
- * WeakHashMap as the basis of this implementation and preserve the same semantics.
+ * This is an implementation of the ES6 WeakMap class. As per the spec, keys must be ordinary
+ * objects. Since there is no defined "equality" for objects, comparisions are done strictly by
+ * object equality. Both ES6 and the java.util.WeakHashMap class have the same basic structure --
+ * entries are removed automatically when the sole remaining reference to the key is a weak
+ * reference. Therefore, we can use WeakHashMap as the basis of this implementation and preserve the
+ * same semantics.
  */
 public class NativeWeakMap extends IdScriptableObject {
     private static final long serialVersionUID = 8670434366883930453L;
@@ -40,8 +40,8 @@ public class NativeWeakMap extends IdScriptableObject {
     }
 
     @Override
-    public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-        Scriptable thisObj, Object[] args) {
+    public Object execIdCall(
+            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 
         if (!f.hasTag(MAP_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
@@ -53,23 +53,25 @@ public class NativeWeakMap extends IdScriptableObject {
                     NativeWeakMap nm = new NativeWeakMap();
                     nm.instanceOfWeakMap = true;
                     if (args.length > 0) {
-                        NativeMap.loadFromIterable(cx, scope, nm, args[0]);
+                        NativeMap.loadFromIterable(cx, scope, nm, NativeMap.key(args));
                     }
                     return nm;
                 }
                 throw ScriptRuntime.typeErrorById("msg.no.new", "WeakMap");
             case Id_delete:
-                return realThis(thisObj, f).js_delete(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_delete(NativeMap.key(args));
             case Id_get:
-                return realThis(thisObj, f).js_get(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_get(NativeMap.key(args));
             case Id_has:
-                return realThis(thisObj, f).js_has(args.length > 0 ? args[0] : Undefined.instance);
+                return realThis(thisObj, f).js_has(NativeMap.key(args));
             case Id_set:
-                return realThis(thisObj, f).js_set(
-                    args.length > 0 ? args[0] : Undefined.instance,
-                    args.length > 1 ? args[1] : Undefined.instance);
+                return realThis(thisObj, f)
+                        .js_set(
+                                NativeMap.key(args),
+                                args.length > 1 ? args[1] : Undefined.instance);
         }
-        throw new IllegalArgumentException("WeakMap.prototype has no method: " + f.getFunctionName());
+        throw new IllegalArgumentException(
+                "WeakMap.prototype has no method: " + f.getFunctionName());
     }
 
     private Object js_delete(Object key) {
@@ -110,7 +112,7 @@ public class NativeWeakMap extends IdScriptableObject {
         // Map.get() does not distinguish between "not found" and a null value. So,
         // replace true null here with a marker so that we can re-convert in "get".
         final Object value = (v == null ? NULL_VALUE : v);
-        map.put((Scriptable)key, value);
+        map.put((Scriptable) key, value);
         return this;
     }
 
@@ -127,77 +129,86 @@ public class NativeWeakMap extends IdScriptableObject {
     @Override
     protected void initPrototypeId(int id) {
         if (id == SymbolId_toStringTag) {
-            initPrototypeValue(SymbolId_toStringTag, SymbolKey.TO_STRING_TAG,
-                getClassName(), DONTENUM | READONLY);
+            initPrototypeValue(
+                    SymbolId_toStringTag,
+                    SymbolKey.TO_STRING_TAG,
+                    getClassName(),
+                    DONTENUM | READONLY);
             return;
         }
 
         String s, fnName = null;
         int arity;
         switch (id) {
-            case Id_constructor:  arity = 0; s = "constructor"; break;
-            case Id_delete:       arity = 1; s = "delete"; break;
-            case Id_get:          arity = 1; s = "get"; break;
-            case Id_has:          arity = 1; s = "has"; break;
-            case Id_set:          arity = 2; s = "set"; break;
-            default: throw new IllegalArgumentException(String.valueOf(id));
+            case Id_constructor:
+                arity = 0;
+                s = "constructor";
+                break;
+            case Id_delete:
+                arity = 1;
+                s = "delete";
+                break;
+            case Id_get:
+                arity = 1;
+                s = "get";
+                break;
+            case Id_has:
+                arity = 1;
+                s = "has";
+                break;
+            case Id_set:
+                arity = 2;
+                s = "set";
+                break;
+            default:
+                throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(MAP_TAG, id, s, fnName, arity);
     }
 
     @Override
-    protected int findPrototypeId(Symbol k)
-    {
+    protected int findPrototypeId(Symbol k) {
         if (SymbolKey.TO_STRING_TAG.equals(k)) {
             return SymbolId_toStringTag;
         }
         return 0;
     }
 
-// #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2021-03-21 09:49:10 MEZ
         switch (s) {
-        case "constructor":
-            id = Id_constructor;
-            break;
-        case "delete":
-            id = Id_delete;
-            break;
-        case "get":
-            id = Id_get;
-            break;
-        case "has":
-            id = Id_has;
-            break;
-        case "set":
-            id = Id_set;
-            break;
-        default:
-            id = 0;
-            break;
+            case "constructor":
+                id = Id_constructor;
+                break;
+            case "delete":
+                id = Id_delete;
+                break;
+            case "get":
+                id = Id_get;
+                break;
+            case "has":
+                id = Id_has;
+                break;
+            case "set":
+                id = Id_set;
+                break;
+            default:
+                id = 0;
+                break;
         }
-// #/generated#
         return id;
     }
 
-    private static final int
-        Id_constructor = 1,
-        Id_delete = 2,
-        Id_get = 3,
-        Id_has = 4,
-        Id_set = 5,
-        SymbolId_toStringTag = 6,
-        MAX_PROTOTYPE_ID = SymbolId_toStringTag;
+    private static final int Id_constructor = 1,
+            Id_delete = 2,
+            Id_get = 3,
+            Id_has = 4,
+            Id_set = 5,
+            SymbolId_toStringTag = 6,
+            MAX_PROTOTYPE_ID = SymbolId_toStringTag;
 
-// #/string_id_map#
-
-    private void readObject(ObjectInputStream stream)
-        throws IOException, ClassNotFoundException
-    {
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         map = new WeakHashMap<>();
     }

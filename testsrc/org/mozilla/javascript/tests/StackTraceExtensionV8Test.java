@@ -4,7 +4,6 @@ import static org.junit.Assert.assertFalse;
 
 import java.io.FileReader;
 import java.io.IOException;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -15,34 +14,30 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.StackStyle;
 import org.mozilla.javascript.tools.shell.Global;
 
-public class StackTraceExtensionTest
-{
+public class StackTraceExtensionV8Test {
     @BeforeClass
-    public static void init()
-    {
+    public static void init() {
         RhinoException.setStackStyle(StackStyle.V8);
     }
 
     @AfterClass
-    public static void terminate()
-    {
+    public static void terminate() {
         RhinoException.setStackStyle(StackStyle.RHINO);
     }
 
-    private void testTraces(int opt)
-    {
-        final ContextFactory factory = new ContextFactory() {
-            @Override
-            protected boolean hasFeature(Context cx, int featureIndex)
-            {
-                switch (featureIndex) {
-                case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
-                    return true;
-                default:
-                    return super.hasFeature(cx, featureIndex);
-                }
-            }
-        };
+    private void testTraces(int opt) {
+        final ContextFactory factory =
+                new ContextFactory() {
+                    @Override
+                    protected boolean hasFeature(Context cx, int featureIndex) {
+                        switch (featureIndex) {
+                            case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
+                                return true;
+                            default:
+                                return super.hasFeature(cx, featureIndex);
+                        }
+                    }
+                };
 
         Context cx = factory.enterContext();
         try {
@@ -53,10 +48,10 @@ public class StackTraceExtensionTest
             Global global = new Global(cx);
             Scriptable root = cx.newObject(global);
 
-            FileReader rdr = new FileReader("testsrc/jstests/extensions/stack-traces.js");
+            FileReader rdr = new FileReader("testsrc/jstests/extensions/stack-traces-v8.js");
 
             try {
-                cx.evaluateReader(root, rdr, "stack-traces.js", 1, null);
+                cx.evaluateReader(root, rdr, "stack-traces-v8.js", 1, null);
             } finally {
                 rdr.close();
             }
@@ -68,20 +63,17 @@ public class StackTraceExtensionTest
     }
 
     @Test
-    public void testStackTrace0()
-    {
+    public void testStackTrace0() {
         testTraces(0);
     }
 
     @Test
-    public void testStackTrace9()
-    {
+    public void testStackTrace9() {
         testTraces(9);
     }
 
     @Test
-    public void testStackTraceInt()
-    {
+    public void testStackTraceInt() {
         testTraces(-1);
     }
 }

@@ -1696,12 +1696,9 @@ final class NativeDate extends IdScriptableObject {
         return TimeClip(result);
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-03-21 09:44:53 MEZ
         switch (s) {
             case "constructor":
                 id = Id_constructor;
@@ -1851,7 +1848,6 @@ final class NativeDate extends IdScriptableObject {
                 id = 0;
                 break;
         }
-        // #/generated#
         return id;
     }
 
@@ -1908,7 +1904,6 @@ final class NativeDate extends IdScriptableObject {
             MAX_PROTOTYPE_ID = Id_toJSON;
 
     private static final int Id_toGMTString = Id_toUTCString; // Alias, see Ecma B.2.6
-    // #/string_id_map#
 
     /* cached values */
     private static final TimeZone thisTimeZone = TimeZone.getDefault();

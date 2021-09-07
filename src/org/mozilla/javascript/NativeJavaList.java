@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NativeJavaList extends NativeJavaObject {
@@ -22,7 +23,6 @@ public class NativeJavaList extends NativeJavaObject {
     public String getClassName() {
         return "JavaList";
     }
-
 
     @Override
     public boolean has(String name, Scriptable start) {
@@ -62,7 +62,7 @@ public class NativeJavaList extends NativeJavaObject {
             Context cx = Context.getCurrentContext();
             Object obj = list.get(index);
             if (cx != null) {
-                return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
             return obj;
         }
@@ -79,11 +79,23 @@ public class NativeJavaList extends NativeJavaObject {
 
     @Override
     public void put(int index, Scriptable start, Object value) {
-        if (isWithValidIndex(index)) {
+        if (index >= 0) {
+            ensureCapacity(index + 1);
             list.set(index, Context.jsToJava(value, Object.class));
             return;
         }
         super.put(index, start, value);
+    }
+
+    private void ensureCapacity(int minCapacity) {
+        if (minCapacity > list.size()) {
+            if (list instanceof ArrayList) {
+                ((ArrayList<?>) list).ensureCapacity(minCapacity);
+            }
+            while (minCapacity > list.size()) {
+                list.add(null);
+            }
+        }
     }
 
     @Override
@@ -98,6 +110,6 @@ public class NativeJavaList extends NativeJavaObject {
     }
 
     private boolean isWithValidIndex(int index) {
-        return index >= 0  && index < list.size();
+        return index >= 0 && index < list.size();
     }
 }

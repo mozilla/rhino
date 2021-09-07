@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.math.BigInteger;
+import java.util.List;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -14,6 +15,7 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.ast.TemplateCharacters;
 import org.mozilla.javascript.ast.VariableInitializer;
 
 /** Generates bytecode for the Interpreter. */
@@ -123,6 +125,8 @@ class CodeGenerator extends Icode {
 
         generateRegExpLiterals();
 
+        generateTemplateLiterals();
+
         visitStatement(tree, 0);
         fixLabelGotos();
         // add RETURN_RESULT only to scripts as function always ends with RETURN
@@ -230,6 +234,24 @@ class CodeGenerator extends Icode {
             array[i] = rep.compileRegExp(cx, string, flags);
         }
         itsData.itsRegExpLiterals = array;
+    }
+
+    private void generateTemplateLiterals() {
+        int N = scriptOrFn.getTemplateLiteralCount();
+        if (N == 0) return;
+
+        Object[] array = new Object[N];
+        for (int i = 0; i != N; i++) {
+            List<TemplateCharacters> strings = scriptOrFn.getTemplateLiteralStrings(i);
+            int j = 0;
+            String[] values = new String[strings.size() * 2];
+            for (TemplateCharacters s : strings) {
+                values[j++] = s.getValue();
+                values[j++] = s.getRawValue();
+            }
+            array[i] = values;
+        }
+        itsData.itsTemplateLiterals = array;
     }
 
     private void updateLineNumber(Node node) {
@@ -1008,6 +1030,10 @@ class CodeGenerator extends Icode {
                     break;
                 }
 
+            case Token.TEMPLATE_LITERAL:
+                visitTemplateLiteral(node);
+                break;
+
             default:
                 throw badTree(node);
         }
@@ -1123,7 +1149,7 @@ class CodeGenerator extends Icode {
             }
         } else if (type == Token.OBJECTLIT) {
             propertyIds = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-            count = propertyIds.length;
+            count = propertyIds == null ? 0 : propertyIds.length;
         } else {
             throw badTree(node);
         }
@@ -1162,6 +1188,12 @@ class CodeGenerator extends Icode {
             addIndexOp(Token.OBJECTLIT, index);
         }
         stackChange(-1);
+    }
+
+    private void visitTemplateLiteral(Node node) {
+        int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+        addIndexOp(Icode_TEMPLATE_LITERAL_CALLSITE, index);
+        stackChange(1);
     }
 
     private void visitArrayComprehension(Node node, Node initStmt, Node expr) {

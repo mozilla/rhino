@@ -17,15 +17,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 /**
- * Wrapper class for Method and Constructor instances to cache
- * getParameterTypes() results, recover from IllegalAccessException
- * in some cases and provide serialization support.
+ * Wrapper class for Method and Constructor instances to cache getParameterTypes() results, recover
+ * from IllegalAccessException in some cases and provide serialization support.
  *
  * @author Igor Bukanov
  */
-
-final class MemberBox implements Serializable
-{
+final class MemberBox implements Serializable {
     private static final long serialVersionUID = 6358550398665688245L;
 
     private transient Member memberObject;
@@ -36,77 +33,63 @@ final class MemberBox implements Serializable
     transient Function asSetterFunction;
     transient Object delegateTo;
 
-    MemberBox(Method method)
-    {
+    MemberBox(Method method) {
         init(method);
     }
 
-    MemberBox(Constructor<?> constructor)
-    {
+    MemberBox(Constructor<?> constructor) {
         init(constructor);
     }
 
-    private void init(Method method)
-    {
+    private void init(Method method) {
         this.memberObject = method;
         this.argTypes = method.getParameterTypes();
         this.vararg = method.isVarArgs();
     }
 
-    private void init(Constructor<?> constructor)
-    {
+    private void init(Constructor<?> constructor) {
         this.memberObject = constructor;
         this.argTypes = constructor.getParameterTypes();
         this.vararg = constructor.isVarArgs();
     }
 
-    Method method()
-    {
-        return (Method)memberObject;
+    Method method() {
+        return (Method) memberObject;
     }
 
-    Constructor<?> ctor()
-    {
-        return (Constructor<?>)memberObject;
+    Constructor<?> ctor() {
+        return (Constructor<?>) memberObject;
     }
 
-    Member member()
-    {
+    Member member() {
         return memberObject;
     }
 
-    boolean isMethod()
-    {
+    boolean isMethod() {
         return memberObject instanceof Method;
     }
 
-    boolean isCtor()
-    {
+    boolean isCtor() {
         return memberObject instanceof Constructor;
     }
 
-    boolean isStatic()
-    {
+    boolean isStatic() {
         return Modifier.isStatic(memberObject.getModifiers());
     }
 
-    boolean isPublic()
-    {
+    boolean isPublic() {
         return Modifier.isPublic(memberObject.getModifiers());
     }
 
-    String getName()
-    {
+    String getName() {
         return memberObject.getName();
     }
 
-    Class<?> getDeclaringClass()
-    {
+    Class<?> getDeclaringClass() {
         return memberObject.getDeclaringClass();
     }
 
-    String toJavaDeclaration()
-    {
+    String toJavaDeclaration() {
         StringBuilder sb = new StringBuilder();
         if (isMethod()) {
             Method method = method();
@@ -127,82 +110,97 @@ final class MemberBox implements Serializable
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return memberObject.toString();
     }
 
-    /**
-     * Function returned by calls to __lookupGetter__
-     */
+    /** Function returned by calls to __lookupGetter__ */
     Function asGetterFunction(final String name, final Scriptable scope) {
         // Note: scope is the scriptable this function is related to; therefore this function
         // is constant for this member box.
         // Because of this we can cache the function in the attribute
         if (asGetterFunction == null) {
-            asGetterFunction = new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
-                @Override
-                public Object call(Context cx, Scriptable callScope, Scriptable thisObj, Object[] originalArgs) {
-                    MemberBox nativeGetter = MemberBox.this;
-                    Object getterThis;
-                    Object[] args;
-                    if (nativeGetter.delegateTo == null) {
-                        getterThis = thisObj;
-                        args = ScriptRuntime.emptyArgs;
-                    } else {
-                        getterThis = nativeGetter.delegateTo;
-                        args = new Object[] { thisObj };
+            asGetterFunction =
+                    new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
+                        @Override
+                        public Object call(
+                                Context cx,
+                                Scriptable callScope,
+                                Scriptable thisObj,
+                                Object[] originalArgs) {
+                            MemberBox nativeGetter = MemberBox.this;
+                            Object getterThis;
+                            Object[] args;
+                            if (nativeGetter.delegateTo == null) {
+                                getterThis = thisObj;
+                                args = ScriptRuntime.emptyArgs;
+                            } else {
+                                getterThis = nativeGetter.delegateTo;
+                                args = new Object[] {thisObj};
+                            }
+                            return nativeGetter.invoke(getterThis, args);
+                        }
 
-                    }
-                    return nativeGetter.invoke(getterThis, args);
-                }
-
-                @Override
-                public String getFunctionName() {
-                    return name;
-                }
-            };
+                        @Override
+                        public String getFunctionName() {
+                            return name;
+                        }
+                    };
         }
         return asGetterFunction;
     }
 
-    /**
-     * Function returned by calls to __lookupSetter__
-     */
+    /** Function returned by calls to __lookupSetter__ */
     Function asSetterFunction(final String name, final Scriptable scope) {
         // Note: scope is the scriptable this function is related to; therefore this function
         // is constant for this member box.
         // Because of this we can cache the function in the attribute
         if (asSetterFunction == null) {
-            asSetterFunction = new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
-                @Override
-                public Object call(Context cx, Scriptable callScope, Scriptable thisObj, Object[] originalArgs) {
-                    MemberBox nativeSetter = MemberBox.this;
-                    Object setterThis;
-                    Object[] args;
-                    Object value = originalArgs.length > 0 ? originalArgs[0] : Undefined.instance;
-                    if (nativeSetter.delegateTo == null) {
-                        setterThis = thisObj;
-                        args = new Object[] { value };
-                    } else {
-                        setterThis = nativeSetter.delegateTo;
-                        args = new Object[] { thisObj, value };
-                    }
-                    return nativeSetter.invoke(setterThis, args);
-                }
+            asSetterFunction =
+                    new BaseFunction(scope, ScriptableObject.getFunctionPrototype(scope)) {
+                        @Override
+                        public Object call(
+                                Context cx,
+                                Scriptable callScope,
+                                Scriptable thisObj,
+                                Object[] originalArgs) {
+                            MemberBox nativeSetter = MemberBox.this;
+                            Object setterThis;
+                            Object[] args;
+                            Object value =
+                                    originalArgs.length > 0 ? originalArgs[0] : Undefined.instance;
+                            if (nativeSetter.delegateTo == null) {
+                                setterThis = thisObj;
+                                args = new Object[] {value};
+                            } else {
+                                setterThis = nativeSetter.delegateTo;
+                                args = new Object[] {thisObj, value};
+                            }
+                            return nativeSetter.invoke(setterThis, args);
+                        }
 
-                @Override
-                public String getFunctionName() {
-                    return name;
-                }
-            };
+                        @Override
+                        public String getFunctionName() {
+                            return name;
+                        }
+                    };
         }
         return asSetterFunction;
     }
 
-    Object invoke(Object target, Object[] args)
-    {
+    Object invoke(Object target, Object[] args) {
         Method method = method();
+
+        // handle delegators
+        if (target instanceof Delegator) {
+            target = ((Delegator) target).getDelegee();
+        }
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i] instanceof Delegator) {
+                args[i] = ((Delegator) args[i]).getDelegee();
+            }
+        }
+
         try {
             try {
                 return method.invoke(target, args);
@@ -225,16 +223,14 @@ final class MemberBox implements Serializable
             do {
                 e = ((InvocationTargetException) e).getTargetException();
             } while ((e instanceof InvocationTargetException));
-            if (e instanceof ContinuationPending)
-                throw (ContinuationPending) e;
+            if (e instanceof ContinuationPending) throw (ContinuationPending) e;
             throw Context.throwAsScriptRuntimeEx(e);
         } catch (Exception ex) {
             throw Context.throwAsScriptRuntimeEx(ex);
         }
     }
 
-    Object newInstance(Object[] args)
-    {
+    Object newInstance(Object[] args) {
         Constructor<?> ctor = ctor();
         try {
             try {
@@ -250,8 +246,7 @@ final class MemberBox implements Serializable
         }
     }
 
-    private static Method searchAccessibleMethod(Method method, Class<?>[] params)
-    {
+    private static Method searchAccessibleMethod(Method method, Class<?>[] params) {
         int modifiers = method.getModifiers();
         if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
             Class<?> c = method.getDeclaringClass();
@@ -264,23 +259,25 @@ final class MemberBox implements Serializable
                         try {
                             return intf.getMethod(name, params);
                         } catch (NoSuchMethodException ex) {
-                        } catch (SecurityException ex) {  }
+                        } catch (SecurityException ex) {
+                        }
                     }
                 }
-                for (;;) {
+                for (; ; ) {
                     c = c.getSuperclass();
-                    if (c == null) { break; }
+                    if (c == null) {
+                        break;
+                    }
                     if (Modifier.isPublic(c.getModifiers())) {
                         try {
                             Method m = c.getMethod(name, params);
                             int mModifiers = m.getModifiers();
-                            if (Modifier.isPublic(mModifiers)
-                                && !Modifier.isStatic(mModifiers))
-                            {
+                            if (Modifier.isPublic(mModifiers) && !Modifier.isStatic(mModifiers)) {
                                 return m;
                             }
                         } catch (NoSuchMethodException ex) {
-                        } catch (SecurityException ex) {  }
+                        } catch (SecurityException ex) {
+                        }
                     }
                 }
             }
@@ -288,21 +285,17 @@ final class MemberBox implements Serializable
         return null;
     }
 
-    private void readObject(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         Member member = readMember(in);
         if (member instanceof Method) {
-            init((Method)member);
+            init((Method) member);
         } else {
-            init((Constructor<?>)member);
+            init((Constructor<?>) member);
         }
     }
 
-    private void writeObject(ObjectOutputStream out)
-        throws IOException
-    {
+    private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         writeMember(out, memberObject);
     }
@@ -310,13 +303,10 @@ final class MemberBox implements Serializable
     /**
      * Writes a Constructor or Method object.
      *
-     * Methods and Constructors are not serializable, so we must serialize
-     * information about the class, the name, and the parameters and
-     * recreate upon deserialization.
+     * <p>Methods and Constructors are not serializable, so we must serialize information about the
+     * class, the name, and the parameters and recreate upon deserialization.
      */
-    private static void writeMember(ObjectOutputStream out, Member member)
-        throws IOException
-    {
+    private static void writeMember(ObjectOutputStream out, Member member) throws IOException {
         if (member == null) {
             out.writeBoolean(false);
             return;
@@ -334,14 +324,10 @@ final class MemberBox implements Serializable
         }
     }
 
-    /**
-     * Reads a Method or a Constructor from the stream.
-     */
+    /** Reads a Method or a Constructor from the stream. */
     private static Member readMember(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
-        if (!in.readBoolean())
-            return null;
+            throws IOException, ClassNotFoundException {
+        if (!in.readBoolean()) return null;
         boolean isMethod = in.readBoolean();
         String name = (String) in.readObject();
         Class<?> declaring = (Class<?>) in.readObject();
@@ -371,15 +357,14 @@ final class MemberBox implements Serializable
     /**
      * Writes an array of parameter types to the stream.
      *
-     * Requires special handling because primitive types cannot be
-     * found upon deserialization by the default Java implementation.
+     * <p>Requires special handling because primitive types cannot be found upon deserialization by
+     * the default Java implementation.
      */
     private static void writeParameters(ObjectOutputStream out, Class<?>[] parms)
-        throws IOException
-    {
+            throws IOException {
         out.writeShort(parms.length);
-    outer:
-        for (int i=0; i < parms.length; i++) {
+        outer:
+        for (int i = 0; i < parms.length; i++) {
             Class<?> parm = parms[i];
             boolean primitive = parm.isPrimitive();
             out.writeBoolean(primitive);
@@ -387,25 +372,21 @@ final class MemberBox implements Serializable
                 out.writeObject(parm);
                 continue;
             }
-            for (int j=0; j < primitives.length; j++) {
+            for (int j = 0; j < primitives.length; j++) {
                 if (parm.equals(primitives[j])) {
                     out.writeByte(j);
                     continue outer;
                 }
             }
-            throw new IllegalArgumentException("Primitive " + parm +
-                                               " not found");
+            throw new IllegalArgumentException("Primitive " + parm + " not found");
         }
     }
 
-    /**
-     * Reads an array of parameter types from the stream.
-     */
+    /** Reads an array of parameter types from the stream. */
     private static Class<?>[] readParameters(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
+            throws IOException, ClassNotFoundException {
         Class<?>[] result = new Class[in.readShort()];
-        for (int i=0; i < result.length; i++) {
+        for (int i = 0; i < result.length; i++) {
             if (!in.readBoolean()) {
                 result[i] = (Class<?>) in.readObject();
                 continue;

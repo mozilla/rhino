@@ -2198,6 +2198,12 @@ public final class Interpreter extends Icode implements Evaluator {
                                 Object re = frame.idata.itsRegExpLiterals[indexReg];
                                 stack[++stackTop] = ScriptRuntime.wrapRegExp(cx, frame.scope, re);
                                 continue Loop;
+                            case Icode_TEMPLATE_LITERAL_CALLSITE:
+                                Object[] templateLiterals = frame.idata.itsTemplateLiterals;
+                                stack[++stackTop] =
+                                        ScriptRuntime.getTemplateLiteralCallSite(
+                                                cx, frame.scope, templateLiterals, indexReg);
+                                continue Loop;
                             case Icode_LITERAL_NEW:
                                 // indexReg: number of values in the literal
                                 ++stackTop;

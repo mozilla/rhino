@@ -62,7 +62,8 @@ public class Node implements Iterable<Node> {
             EXPRESSION_CLOSURE_PROP = 25, // JS 1.8 expression closure pseudo-return
             SHORTHAND_PROPERTY_NAME = 26,
             ARROW_FUNCTION_PROP = 27,
-            LAST_PROP = 27;
+            TEMPLATE_LITERAL_PROP = 28,
+            LAST_PROP = 28;
 
     // values of ISNUMBER_PROP to specify
     // which of the children are Number types
@@ -426,6 +427,8 @@ public class Node implements Iterable<Node> {
                     return "destructuring_params";
                 case EXPRESSION_CLOSURE_PROP:
                     return "expression_closure_prop";
+                case TEMPLATE_LITERAL_PROP:
+                    return "template_literal";
 
                 default:
                     Kit.codeBug();

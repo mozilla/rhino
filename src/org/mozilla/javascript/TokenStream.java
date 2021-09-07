@@ -91,7 +91,6 @@ class TokenStream {
 
     /** JavaScript 1.8 and earlier */
     private static int stringToKeywordForJS(String name) {
-        // #string_id_map#
         // The following assumes that Token.EOF == 0
         final int Id_break = Token.BREAK,
                 Id_case = Token.CASE,
@@ -159,7 +158,6 @@ class TokenStream {
 
         int id;
         String s = name;
-        // #generated# Last update: 2021-03-21 09:59:16 MEZ
         switch (s) {
             case "break":
                 id = Id_break;
@@ -348,8 +346,6 @@ class TokenStream {
                 id = 0;
                 break;
         }
-        // #/generated#
-        // #/string_id_map#
         if (id == 0) {
             return Token.EOF;
         }
@@ -358,7 +354,6 @@ class TokenStream {
 
     /** ECMAScript 6. */
     private static int stringToKeywordForES(String name, boolean isStrict) {
-        // #string_id_map#
         // The following assumes that Token.EOF == 0
         final int
                 // 11.6.2.1 Keywords (ECMAScript2015)
@@ -420,7 +415,6 @@ class TokenStream {
 
         int id = 0;
         String s = name;
-        // #generated# Last update: 2021-03-21 09:59:16 MEZ
         switch (s) {
             case "break":
                 id = Id_break;
@@ -578,8 +572,6 @@ class TokenStream {
                 id = 0;
                 break;
         }
-        // #/generated#
-        // #/string_id_map#
         if (id == 0) {
             return Token.EOF;
         }
@@ -913,7 +905,7 @@ class TokenStream {
             }
 
             // is it a string?
-            if (c == '"' || c == '\'' || c == '`') {
+            if (c == '"' || c == '\'') {
                 // We attempt to accumulate a string the fast way, by
                 // building it directly out of the reader.  But if there
                 // are any escaped characters in the string, we revert to
@@ -922,11 +914,30 @@ class TokenStream {
                 quoteChar = c;
                 stringBufferTop = 0;
 
-                c = getChar(false);
+                c = getCharIgnoreLineEnd(false);
                 strLoop:
                 while (c != quoteChar) {
-                    if (c == '\n' || c == EOF_CHAR) {
-                        ungetChar(c);
+                    boolean unterminated = false;
+                    if (c == EOF_CHAR) {
+                        unterminated = true;
+                    } else if (c == '\n') {
+                        switch (lineEndChar) {
+                            case '\n':
+                            case '\r':
+                                unterminated = true;
+                                break;
+                            case 0x2028: // <LS>
+                            case 0x2029: // <PS>
+                                // Line/Paragraph separators need to be included as is
+                                c = lineEndChar;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if (unterminated) {
+                        ungetCharIgnoreLineEnd(c);
                         tokenEnd = cursor;
                         parser.addError("msg.unterminated.string.lit");
                         return Token.ERROR;
@@ -1253,6 +1264,9 @@ class TokenStream {
                     dirtyLine = true;
                     return c;
 
+                case '`':
+                    return Token.TEMPLATE_LITERAL;
+
                 default:
                     parser.addError("msg.illegal.character", c);
                     return Token.ERROR;
@@ -1420,6 +1434,274 @@ class TokenStream {
         String flags = this.regExpFlags;
         this.regExpFlags = null;
         return flags;
+    }
+
+    private StringBuilder rawString = new StringBuilder();
+
+    String getRawString() {
+        if (rawString.length() == 0) {
+            return "";
+        }
+        return rawString.toString();
+    }
+
+    private int getTemplateLiteralChar() throws IOException {
+        /*
+         * In Template Literals <CR><LF> and <CR> are normalized to <LF>
+         *
+         * Line and Paragraph separators (<LS> & <PS>) need to be included in the template strings as is
+         */
+        int c = getCharIgnoreLineEnd(false);
+
+        if (c == '\n') {
+            switch (lineEndChar) {
+                case '\r':
+                    // check whether dealing with a <CR><LF> sequence
+                    if (charAt(cursor) == '\n') {
+                        // consume the <LF> that followed the <CR>
+                        getCharIgnoreLineEnd(false);
+                    }
+                    break;
+                case 0x2028: // <LS>
+                case 0x2029: // <PS>
+                    // Line/Paragraph separators need to be included as is
+                    c = lineEndChar;
+                    break;
+                default:
+                    break;
+            }
+
+            // Adjust numbers: duplicates the logic in getChar thats skipped as getChar is called
+            // via getCharIgnoreLineEnd
+            lineEndChar = -1;
+            lineStart = sourceCursor - 1;
+            lineno++;
+        }
+
+        rawString.append((char) c);
+        return c;
+    }
+
+    private void ungetTemplateLiteralChar(int c) {
+        ungetCharIgnoreLineEnd(c);
+        rawString.setLength(rawString.length() - 1);
+    }
+
+    private boolean matchTemplateLiteralChar(int test) throws IOException {
+        int c = getTemplateLiteralChar();
+        if (c == test) {
+            return true;
+        }
+        ungetTemplateLiteralChar(c);
+        return false;
+    }
+
+    private int peekTemplateLiteralChar() throws IOException {
+        int c = getTemplateLiteralChar();
+        ungetTemplateLiteralChar(c);
+        return c;
+    }
+
+    int readTemplateLiteral(boolean isTaggedLiteral) throws IOException {
+        rawString.setLength(0);
+        stringBufferTop = 0;
+        boolean hasInvalidEscapeSequences = false;
+
+        while (true) {
+            int c = getTemplateLiteralChar();
+            switch (c) {
+                case EOF_CHAR:
+                    this.string = hasInvalidEscapeSequences ? null : getStringFromBuffer();
+                    tokenEnd = cursor - 1; // restore tokenEnd
+                    parser.reportError("msg.unexpected.eof");
+                    return Token.ERROR;
+                case '`':
+                    rawString.setLength(rawString.length() - 1); // don't include "`"
+                    this.string = hasInvalidEscapeSequences ? null : getStringFromBuffer();
+                    return Token.TEMPLATE_LITERAL;
+                case '$':
+                    if (matchTemplateLiteralChar('{')) {
+                        rawString.setLength(rawString.length() - 2); // don't include "${"
+                        this.string = hasInvalidEscapeSequences ? null : getStringFromBuffer();
+                        this.tokenEnd = cursor - 1; // don't include "{"
+                        return Token.TEMPLATE_LITERAL_SUBST;
+                    } else {
+                        addToString(c);
+                        break;
+                    }
+                case '\\':
+                    // LineContinuation ::
+                    //   \ LineTerminatorSequence
+                    // EscapeSequence ::
+                    //   CharacterEscapeSequence
+                    //   0 [LA not DecimalDigit]
+                    //   HexEscapeSequence
+                    //   UnicodeEscapeSequence
+                    // CharacterEscapeSequence ::
+                    //   SingleEscapeCharacter
+                    //   NonEscapeCharacter
+                    // SingleEscapeCharacter ::
+                    //   ' "  \  b f n r t v
+                    // NonEscapeCharacter ::
+                    //   SourceCharacter but not one of EscapeCharacter or LineTerminator
+                    // EscapeCharacter ::
+                    //   SingleEscapeCharacter
+                    //   DecimalDigit
+                    //   x
+                    //   u
+                    c = getTemplateLiteralChar();
+                    switch (c) {
+                        case '\n':
+                        case '\u2028':
+                        case '\u2029':
+                            continue;
+                        case '\'':
+                        case '"':
+                        case '\\':
+                            // use as-is
+                            break;
+                        case 'b':
+                            c = '\b';
+                            break;
+                        case 'f':
+                            c = '\f';
+                            break;
+                        case 'n':
+                            c = '\n';
+                            break;
+                        case 'r':
+                            c = '\r';
+                            break;
+                        case 't':
+                            c = '\t';
+                            break;
+                        case 'v':
+                            c = 0xb;
+                            break;
+                        case 'x':
+                            {
+                                int escapeVal = 0;
+                                for (int i = 0; i < 2; i++) {
+                                    if (peekTemplateLiteralChar() == '`') {
+                                        escapeVal = -1;
+                                        break;
+                                    }
+                                    escapeVal =
+                                            Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+                                }
+
+                                if (escapeVal < 0) {
+                                    if (isTaggedLiteral) {
+                                        hasInvalidEscapeSequences = true;
+                                        continue;
+                                    } else {
+                                        parser.reportError("msg.syntax");
+                                        return Token.ERROR;
+                                    }
+                                }
+                                c = escapeVal;
+                                break;
+                            }
+                        case 'u':
+                            {
+                                int escapeVal = 0;
+
+                                if (matchTemplateLiteralChar('{')) {
+                                    for (; ; ) {
+                                        if (peekTemplateLiteralChar() == '`') {
+                                            escapeVal = -1;
+                                            break;
+                                        }
+                                        c = getTemplateLiteralChar();
+
+                                        if (c == '}') {
+                                            break;
+                                        }
+                                        escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                    }
+
+                                    if (escapeVal < 0 || escapeVal > 0x10FFFF) {
+                                        if (isTaggedLiteral) {
+                                            hasInvalidEscapeSequences = true;
+                                            continue;
+                                        } else {
+                                            parser.reportError("msg.syntax");
+                                            return Token.ERROR;
+                                        }
+                                    }
+
+                                    if (escapeVal > 0xFFFF) {
+                                        addToString(Character.highSurrogate(escapeVal));
+                                        addToString(Character.lowSurrogate(escapeVal));
+                                        continue;
+                                    }
+                                    c = escapeVal;
+                                    break;
+                                }
+
+                                for (int i = 0; i < 4; i++) {
+                                    if (peekTemplateLiteralChar() == '`') {
+                                        escapeVal = -1;
+                                        break;
+                                    }
+                                    escapeVal =
+                                            Kit.xDigitToInt(getTemplateLiteralChar(), escapeVal);
+                                }
+
+                                if (escapeVal < 0) {
+                                    if (isTaggedLiteral) {
+                                        hasInvalidEscapeSequences = true;
+                                        continue;
+                                    } else {
+                                        parser.reportError("msg.syntax");
+                                        return Token.ERROR;
+                                    }
+                                }
+                                c = escapeVal;
+                                break;
+                            }
+                        case '0':
+                            {
+                                int d = peekTemplateLiteralChar();
+                                if (d >= '0' && d <= '9') {
+                                    if (isTaggedLiteral) {
+                                        hasInvalidEscapeSequences = true;
+                                        continue;
+                                    } else {
+                                        parser.reportError("msg.syntax");
+                                        return Token.ERROR;
+                                    }
+                                }
+                                c = 0x00;
+                                break;
+                            }
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                            if (isTaggedLiteral) {
+                                hasInvalidEscapeSequences = true;
+                                continue;
+                            } else {
+                                parser.reportError("msg.syntax");
+                                return Token.ERROR;
+                            }
+                        default:
+                            // use as-is
+                            break;
+                    }
+                    addToString(c);
+                    break;
+                default:
+                    addToString(c);
+                    break;
+            }
+        }
     }
 
     boolean isXMLAttribute() {
@@ -1727,10 +2009,14 @@ class TokenStream {
     }
 
     private int getChar() throws IOException {
-        return getChar(true);
+        return getChar(true, false);
     }
 
     private int getChar(boolean skipFormattingChars) throws IOException {
+        return getChar(skipFormattingChars, false);
+    }
+
+    private int getChar(boolean skipFormattingChars, boolean ignoreLineEnd) throws IOException {
         if (ungetCursor != 0) {
             cursor++;
             return ungetBuffer[--ungetCursor];
@@ -1756,7 +2042,7 @@ class TokenStream {
                 c = sourceBuffer[sourceCursor++];
             }
 
-            if (lineEndChar >= 0) {
+            if (!ignoreLineEnd && lineEndChar >= 0) {
                 if (lineEndChar == '\r' && c == '\n') {
                     lineEndChar = '\n';
                     continue;
@@ -1786,48 +2072,11 @@ class TokenStream {
     }
 
     private int getCharIgnoreLineEnd() throws IOException {
-        if (ungetCursor != 0) {
-            cursor++;
-            return ungetBuffer[--ungetCursor];
-        }
+        return getChar(true, true);
+    }
 
-        for (; ; ) {
-            int c;
-            if (sourceString != null) {
-                if (sourceCursor == sourceEnd) {
-                    hitEOF = true;
-                    return EOF_CHAR;
-                }
-                cursor++;
-                c = sourceString.charAt(sourceCursor++);
-            } else {
-                if (sourceCursor == sourceEnd) {
-                    if (!fillSourceBuffer()) {
-                        hitEOF = true;
-                        return EOF_CHAR;
-                    }
-                }
-                cursor++;
-                c = sourceBuffer[sourceCursor++];
-            }
-
-            if (c <= 127) {
-                if (c == '\n' || c == '\r') {
-                    lineEndChar = c;
-                    c = '\n';
-                }
-            } else {
-                if (c == BYTE_ORDER_MARK) return c; // BOM is considered whitespace
-                if (isJSFormatChar(c)) {
-                    continue;
-                }
-                if (ScriptRuntime.isJSLineTerminator(c)) {
-                    lineEndChar = c;
-                    c = '\n';
-                }
-            }
-            return c;
-        }
+    private int getCharIgnoreLineEnd(boolean skipFormattingChars) throws IOException {
+        return getChar(skipFormattingChars, true);
     }
 
     private void ungetCharIgnoreLineEnd(int c) {

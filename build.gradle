@@ -8,7 +8,7 @@ plugins {
     id 'distribution'
     id 'checkstyle'
     id 'com.diffplug.spotless' version "5.12.1"
-    id 'com.github.spotbugs' version "4.6.2"
+    id 'com.github.spotbugs' version "4.7.1"
 }
 
 tasks.withType(JavaCompile) {
@@ -83,13 +83,19 @@ test {
     systemProperty 'file.encoding', 'UTF-8'
     if (System.getProperty('quick') != null) {
         systemProperty 'TEST_OPTLEVEL', -1
+    } else if (System.getProperty('optLevel')) {
+        systemProperty 'TEST_OPTLEVEL', System.getProperty('optLevel')
+    }
+    systemProperty 'test262properties', System.getProperty('test262properties')
+    if (System.getProperty('updateTest262properties') != null) {
+        systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
     }
     maxHeapSize = "1g"
     testLogging.showStandardStreams = true
     // Many tests do not clean up contexts properly. This makes the tests much
     // more resilient at the expense of performance.
     forkEvery = 1
-    maxParallelForks = 16
+    maxParallelForks = 64
 }
 
 task sunSpiderBenchmark(type: JavaExec) {
@@ -108,10 +114,20 @@ task testBenchmark() {}
 testBenchmark.dependsOn sunSpiderBenchmark
 testBenchmark.dependsOn v8Benchmark
 
-task builtinBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
+task microBenchmark(type: JavaExec, description: 'JMH micro benchmark') {
+    def benchmark = System.getProperty('benchmark')
+    if (benchmark == null) {
+        benchmark = "MathBenchmark"
+    }
     classpath = sourceSets.jmh.runtimeClasspath
     main = 'org.openjdk.jmh.Main'
-    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', 'Builtin'
+    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', '-r', '5', benchmark
+}
+
+task listBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
+    classpath = sourceSets.jmh.runtimeClasspath
+    main = 'org.openjdk.jmh.Main'
+    args '-lp'
 }
 
 task jmhHelp(type: JavaExec, description: 'JMH benchmarks') {
@@ -394,7 +410,7 @@ spotless {
 jacocoTestReport.dependsOn test
 jacocoTestReport {
     reports {
-        html.destination file("${buildDir}/jacocoHtml")
+        csv.enabled true
     }
 }
 

@@ -54,6 +54,9 @@ import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
 import org.mozilla.javascript.ast.Symbol;
+import org.mozilla.javascript.ast.TaggedTemplateLiteral;
+import org.mozilla.javascript.ast.TemplateCharacters;
+import org.mozilla.javascript.ast.TemplateLiteral;
 import org.mozilla.javascript.ast.ThrowStatement;
 import org.mozilla.javascript.ast.TryStatement;
 import org.mozilla.javascript.ast.UnaryExpression;
@@ -186,6 +189,10 @@ public final class IRFactory extends Parser {
                 return transformNewExpr((NewExpression) node);
             case Token.OBJECTLIT:
                 return transformObjectLiteral((ObjectLiteral) node);
+            case Token.TEMPLATE_LITERAL:
+                return transformTemplateLiteral((TemplateLiteral) node);
+            case Token.TAGGED_TEMPLATE_LITERAL:
+                return transformTemplateLiteralCall((TaggedTemplateLiteral) node);
             case Token.REGEXP:
                 return transformRegExp((RegExpLiteral) node);
             case Token.RETURN:
@@ -1043,6 +1050,54 @@ public final class IRFactory extends Parser {
         decompiler.addToken(Token.DOT);
         decompiler.addName(name);
         return createPropertyGet(target, null, name, 0);
+    }
+
+    private Node transformTemplateLiteral(TemplateLiteral node) {
+        decompiler.addToken(Token.TEMPLATE_LITERAL);
+        List<AstNode> elems = node.getElements();
+        // start with an empty string to ensure ToString() for each substitution
+        Node pn = Node.newString("");
+        for (int i = 0; i < elems.size(); ++i) {
+            AstNode elem = elems.get(i);
+            if (elem.getType() != Token.TEMPLATE_CHARS) {
+                decompiler.addToken(Token.TEMPLATE_LITERAL_SUBST);
+                pn = createBinary(Token.ADD, pn, transform(elem));
+                decompiler.addToken(Token.RC);
+            } else {
+                TemplateCharacters chars = (TemplateCharacters) elem;
+                decompiler.addTemplateLiteral(chars.getRawValue());
+                // skip empty parts, e.g. `xx${expr}xx` where xx denotes the empty string
+                String value = chars.getValue();
+                if (value.length() > 0) {
+                    pn = createBinary(Token.ADD, pn, Node.newString(value));
+                }
+            }
+        }
+        decompiler.addToken(Token.TEMPLATE_LITERAL);
+        return pn;
+    }
+
+    private Node transformTemplateLiteralCall(TaggedTemplateLiteral node) {
+        Node call = createCallOrNew(Token.CALL, transform(node.getTarget()));
+        call.setLineno(node.getLineno());
+        decompiler.addToken(Token.TEMPLATE_LITERAL);
+        TemplateLiteral templateLiteral = (TemplateLiteral) node.getTemplateLiteral();
+        List<AstNode> elems = templateLiteral.getElements();
+        call.addChildToBack(templateLiteral);
+        for (int i = 0; i < elems.size(); ++i) {
+            AstNode elem = elems.get(i);
+            if (elem.getType() != Token.TEMPLATE_CHARS) {
+                decompiler.addToken(Token.TEMPLATE_LITERAL_SUBST);
+                call.addChildToBack(transform(elem));
+                decompiler.addToken(Token.RC);
+            } else {
+                TemplateCharacters chars = (TemplateCharacters) elem;
+                decompiler.addTemplateLiteral(chars.getRawValue());
+            }
+        }
+        currentScriptOrFn.addTemplateLiteral(templateLiteral);
+        decompiler.addToken(Token.TEMPLATE_LITERAL);
+        return call;
     }
 
     private Node transformRegExp(RegExpLiteral node) {

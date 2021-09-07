@@ -33,20 +33,12 @@ assert.AssertionError = function (options) {
     // V8 specific
     if (Error.captureStackTrace) {
         Error.captureStackTrace(this, (this.fail || assert.fail));
-        // Node specific, removes the node machinery stack frames
-        // XXX __filename will probably not always be the best way to detect Node
-        if (typeof __filename !== undefined) {
-            var stack = this.stack.split("\n");
-            for (var i = stack.length - 1; i >= 0; i--) {
-                if (stack[i].indexOf(__filename) != -1) {
-                    this.stack = stack.slice(0, i + 2).join("\n");
-                    break;
-                }
-            }
-        }
     }
 
 };
+
+// assert.AssertionError instanceof Error
+assert.AssertionError.prototype = Object.create(Error.prototype);
 
 // XXX extension
 // Ash Berlin
@@ -71,10 +63,6 @@ assert.AssertionError.prototype.toString = function (){
 assert.AssertionError.prototype.toSource = function () {
     return "new (require('assert').AssertionError)(" + Object.prototype.toSource.call(this) + ")";
 };
-
-// assert.AssertionError instanceof Error
-
-assert.AssertionError.prototype = Object.create(Error.prototype);
 
 // At present only the three keys mentioned above are used and
 // understood by the spec. Implementations or sub modules can pass
@@ -166,7 +154,7 @@ assert.deepEqual = function (actual, expected, message) {
         (this.fail || assert.fail)({
             "actual": actual,
             "expected": expected,
-            "message": message, 
+            "message": message,
             "operator": "deepEqual"
         });
     else
@@ -174,7 +162,7 @@ assert.deepEqual = function (actual, expected, message) {
 };
 
 function deepEqual(actual, expected) {
-    
+
     // 7.1. All identical values are equivalent, as determined by ===.
     if (actual === expected) {
         return true;
@@ -293,7 +281,7 @@ assert["throws"] = function (block, Error, message) {
         threw = true;
         exception = e;
     }
-    
+
     if (!threw) {
         (this.fail || assert.fail)({
             "message": message,

@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-
 import org.mozilla.javascript.ContextFactory;
 
 public class TestUtils {
@@ -31,53 +30,47 @@ public class TestUtils {
     }
 
     public static File[] recursiveListFiles(File dir, FileFilter filter) {
-        if (!dir.isDirectory())
-            throw new IllegalArgumentException(dir + " is not a directory");
+        if (!dir.isDirectory()) throw new IllegalArgumentException(dir + " is not a directory");
         List<File> fileList = new ArrayList<File>();
         recursiveListFilesHelper(dir, filter, fileList);
         return fileList.toArray(new File[fileList.size()]);
     }
 
-    public static void recursiveListFilesHelper(File dir, FileFilter filter,
-                                                List<File> fileList)
-    {
-        for (File f: dir.listFiles()) {
+    public static void recursiveListFilesHelper(File dir, FileFilter filter, List<File> fileList) {
+        for (File f : dir.listFiles()) {
             if (f.isDirectory()) {
                 recursiveListFilesHelper(f, filter, fileList);
             } else {
-                if (filter.accept(f))
-                    fileList.add(f);
+                if (filter.accept(f)) fileList.add(f);
             }
         }
     }
 
-    public static void addTestsFromFile(String filename, List<String> list)
-            throws IOException {
+    public static void addTestsFromFile(String filename, List<String> list) throws IOException {
         addTestsFromStream(new FileInputStream(new File(filename)), list);
     }
 
-    public static void addTestsFromStream(InputStream in, List<String> list)
-            throws IOException {
+    public static void addTestsFromStream(InputStream in, List<String> list) throws IOException {
         Properties props = new Properties();
         props.load(in);
-        for (Object obj: props.keySet()) {
+        for (Object obj : props.keySet()) {
             list.add(obj.toString());
         }
     }
 
     public static String[] loadTestsFromResource(String resource, String[] inherited)
             throws IOException {
-        List<String> list = inherited == null ?
-                new ArrayList<String>() :
-                new ArrayList<String>(Arrays.asList(inherited));
+        List<String> list =
+                inherited == null
+                        ? new ArrayList<String>()
+                        : new ArrayList<String>(Arrays.asList(inherited));
         InputStream in = JsTestsBase.class.getResourceAsStream(resource);
-        if (in != null)
-            addTestsFromStream(in, list);
+        if (in != null) addTestsFromStream(in, list);
         return list.toArray(new String[0]);
     }
 
     public static boolean matches(String[] patterns, String path) {
-        for (int i=0; i<patterns.length; i++) {
+        for (int i = 0; i < patterns.length; i++) {
             if (path.startsWith(patterns[i])) {
                 return true;
             }
@@ -85,11 +78,12 @@ public class TestUtils {
         return false;
     }
 
-    public static final FileFilter JS_FILE_FILTER = new FileFilter() {
-        @Override
-        public boolean accept(File pathname) {
-            return pathname.getAbsolutePath().endsWith(".js");
-        }
-    };
-
+    public static final FileFilter JS_FILE_FILTER =
+            new FileFilter() {
+                @Override
+                public boolean accept(File pathname) {
+                    String path = pathname.getAbsolutePath();
+                    return path.endsWith(".js") && !path.endsWith("_FIXTURE.js");
+                }
+            };
 }

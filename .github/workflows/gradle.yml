@@ -1,0 +1,39 @@
+name: Rhino CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      # Some tests require more CPU, and all can use multiple CPUs
+      max-parallel: 1
+      matrix:
+        java: [ '8', '11', '15' ]
+    name: Rhino Java ${{ matrix.java }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        # Need all history or spotless check will fail
+        fetch-depth: 0
+    - name: Check out test262
+      # We don't actually want all the history for this part
+      run: git submodule update --init --single-branch
+    - name: Set up Java
+      uses: actions/setup-java@v2
+      with:
+        java-version: ${{ matrix.java }}
+        distribution: 'adopt'
+    - name: Check everything with Gradle
+      run: ./gradlew check jacocoTestReport
+    - name: Upload results
+      uses: actions/upload-artifact@v2
+      with:
+        name: reports
+        path: buildGradle/reports
+

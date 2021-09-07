@@ -102,6 +102,11 @@ public class Decompiler {
         appendString(str);
     }
 
+    void addTemplateLiteral(String str) {
+        addToken(Token.TEMPLATE_CHARS);
+        appendString(str);
+    }
+
     void addRegexp(String regexp, String flags) {
         addToken(Token.REGEXP);
         appendString('/' + regexp + '/' + flags);
@@ -764,6 +769,18 @@ public class Decompiler {
                 case Token.ARROW:
                     result.append(" => ");
                     break;
+
+                case Token.TEMPLATE_LITERAL:
+                    result.append("`");
+                    break;
+
+                case Token.TEMPLATE_LITERAL_SUBST:
+                    result.append("${");
+                    break;
+
+                case Token.TEMPLATE_CHARS:
+                    i = printSourceString(source, i + 1, false, result);
+                    continue;
 
                 default:
                     // If we don't know how to decompile it, raise an exception.

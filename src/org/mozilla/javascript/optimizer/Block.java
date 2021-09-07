@@ -526,6 +526,7 @@ class Block {
             case Token.ARRAYCOMP:
             case Token.ARRAYLIT:
             case Token.OBJECTLIT:
+            case Token.TEMPLATE_LITERAL:
             case Token.BIGINT:
                 return Optimizer.AnyType; // XXX: actually, we know it's not
                 // number, but no type yet for that

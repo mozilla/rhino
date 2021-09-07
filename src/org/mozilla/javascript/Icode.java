@@ -141,8 +141,11 @@ abstract class Icode {
             Icode_REG_BIGINT2 = -72,
             Icode_REG_BIGINT4 = -73,
 
+            // Call to GetTemplateLiteralCallSite
+            Icode_TEMPLATE_LITERAL_CALLSITE = -74,
+
             // Last icode
-            MIN_ICODE = -73;
+            MIN_ICODE = -74;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -304,6 +307,8 @@ abstract class Icode {
                 return "LOAD_BIGINT2";
             case Icode_REG_BIGINT4:
                 return "LOAD_BIGINT4";
+            case Icode_TEMPLATE_LITERAL_CALLSITE:
+                return "TEMPLATE_LITERAL_CALLSITE";
         }
 
         // icode without name

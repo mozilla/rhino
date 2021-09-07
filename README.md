@@ -26,7 +26,7 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 
 [Release Notes](./RELEASE-NOTES.md) for recent releases.
 
-[Compatibility table](http://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
+[Compatibility table](https://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
 features from ES6, and ES2016+ are implemented in Rhino.
 
 [![Mozilla](https://circleci.com/gh/mozilla/rhino.svg?style=shield)](https://app.circleci.com/pipelines/github/mozilla/rhino)
@@ -40,7 +40,7 @@ Information for script builders and embedders:
 
 JavaDoc for all the APIs:
 
-[http://mozilla.github.io/rhino/javadoc/index.html](http://mozilla.github.io/rhino/javadoc/index.html)
+[https://mozilla.github.io/rhino/javadoc/index.html](https://mozilla.github.io/rhino/javadoc/index.html)
 
 More resources if you get stuck:
 
@@ -60,15 +60,8 @@ git submodule init
 git submodule update
 ./gradlew test
 ```
-Build and run all the tests.
-```
-./gradlew test -Dquick
-```
-The tests in Test262Suite and MozillaSuiteTest are run 3 times by default (at differing optimization levels).
-The `quick` parameter can be used to only run them once.
-
-It is also possible to limit the Test262Suite to 1 run by setting the environment variable 
-TEST_262_OPTLEVEL to for example -1.
+Build and run all the tests, including the official [ECMAScript Test Suite](https://github.com/tc39/test262).
+See [Running tests](testsrc/README.md) for more detailed info about running tests.
 ```
 ./gradlew testBenchmark
 ```

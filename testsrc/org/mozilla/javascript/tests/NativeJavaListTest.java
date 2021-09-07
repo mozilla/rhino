@@ -6,6 +6,10 @@
  */
 package org.mozilla.javascript.tests;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Function;
 import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
@@ -13,13 +17,7 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-
-/**
- * From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561
- */
+/** From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561 */
 public class NativeJavaListTest extends TestCase {
     protected final Global global = new Global();
 
@@ -27,6 +25,27 @@ public class NativeJavaListTest extends TestCase {
         global.init(ContextFactory.getGlobal());
     }
 
+    public void testAccessingNullValues() {
+        List<Integer> list = new ArrayList<>();
+        list.add(null);
+
+        assertEquals(null, runScript("value[0]", list, Function.identity()));
+        assertEquals(1, runScriptAsInt("value.length", list));
+    }
+
+    public void testAutoGrowList() {
+        List<String> list = new ArrayList<>();
+        runScriptAsInt("value[10] = 'Foo'", list);
+        assertEquals(11, list.size());
+        assertEquals(null, list.get(9));
+        assertEquals("Foo", list.get(10));
+
+        list = new LinkedList<>();
+        runScriptAsInt("value[10] = 'Foo'", list);
+        assertEquals(11, list.size());
+        assertEquals(null, list.get(9));
+        assertEquals("Foo", list.get(10));
+    }
 
     public void testAccessingJavaListIntegerValues() {
         List<Integer> list = new ArrayList<>();
@@ -91,7 +110,8 @@ public class NativeJavaListTest extends TestCase {
 
     public void testKeys() {
         List<String> list = new ArrayList<>();
-        NativeArray resEmpty = (NativeArray) runScript("Object.keys(value)", list, Function.identity());
+        NativeArray resEmpty =
+                (NativeArray) runScript("Object.keys(value)", list, Function.identity());
         assertEquals(0, resEmpty.size());
 
         list.add("a");
@@ -114,10 +134,13 @@ public class NativeJavaListTest extends TestCase {
     }
 
     private <T> T runScript(String scriptSourceText, Object value, Function<Object, T> convert) {
-        return ContextFactory.getGlobal().call(context -> {
-            Scriptable scope = context.initStandardObjects(global);
-            scope.put("value", scope, Context.javaToJS(value, scope));
-            return convert.apply(context.evaluateString(scope, scriptSourceText, "", 1, null));
-        });
+        return ContextFactory.getGlobal()
+                .call(
+                        context -> {
+                            Scriptable scope = context.initStandardObjects(global);
+                            scope.put("value", scope, Context.javaToJS(value, scope));
+                            return convert.apply(
+                                    context.evaluateString(scope, scriptSourceText, "", 1, null));
+                        });
     }
 }

@@ -15,149 +15,153 @@ import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.tests.Utils;
 
-/**
- * @author Ronald Brill
- */
+/** @author Ronald Brill */
 public class NativeRegExpTest {
 
     @Test
     public void regExIsCallableForBackwardCompatibility() {
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_1_8);
-        ScriptableObject scope = cx.initStandardObjects();
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_1_8);
+            ScriptableObject scope = cx.initStandardObjects();
 
-        String source = "var a = new RegExp('1'); a(1).toString();";
-        assertEquals("1", cx.evaluateString(scope, source, "test", 0, null));
+            String source = "var a = new RegExp('1'); a(1).toString();";
+            assertEquals("1", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "/^\\{(.*)\\}$/('{1234}').toString();";
-        assertEquals("{1234},1234", cx.evaluateString(scope, source, "test", 0, null));
+            source = "/^\\{(.*)\\}$/('{1234}').toString();";
+            assertEquals("{1234},1234", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "RegExp('a|b','g')()";
-        assertNull(cx.evaluateString(scope, source, "test", 0, null));
+            source = "RegExp('a|b','g')()";
+            assertNull(cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "new /z/();";
-        assertNull(cx.evaluateString(scope, source, "test", 0, null));
+            source = "new /z/();";
+            assertNull(cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "(new new RegExp).toString()";
-        assertEquals("", cx.evaluateString(scope, source, "test", 0, null));
-
-        Context.exit();
+            source = "(new new RegExp).toString()";
+            assertEquals("", cx.evaluateString(scope, source, "test", 0, null));
+        }
     }
-
 
     @Test
     public void regExMinusInRangeBorderCases() {
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_1_8);
-        ScriptableObject scope = cx.initStandardObjects();
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_1_8);
+            ScriptableObject scope = cx.initStandardObjects();
 
-        String source = "var r = 'a-b_c d efg 1 23';\n"
-                + "r.replace(/[_-]+/g, 'x');";
-        assertEquals("axbxc d efg 1 23", cx.evaluateString(scope, source, "test", 0, null));
+            String source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-]+/g, 'x');";
+            assertEquals("axbxc d efg 1 23", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "var r = 'a-b_c d efg 1 23';\n"
-                + "r.replace(/[_-\\s]+/g, 'x');";
-        assertEquals("axbxcxdxefgx1x23", cx.evaluateString(scope, source, "test", 0, null));
+            source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\s]+/g, 'x');";
+            assertEquals("axbxcxdxefgx1x23", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "var r = 'a-b_c d efg 1 23';\n"
-                + "r.replace(/[_-\\S]+/g, 'x');";
-        assertEquals("x x x x x", cx.evaluateString(scope, source, "test", 0, null));
+            source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\S]+/g, 'x');";
+            assertEquals("x x x x x", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "var r = 'a-b_c d efg 1 23';\n"
-                + "r.replace(/[_-\\w]+/g, 'x');";
-        assertEquals("x x x x x", cx.evaluateString(scope, source, "test", 0, null));
+            source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\w]+/g, 'x');";
+            assertEquals("x x x x x", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "var r = 'a-b_c d efg 1 23';\n"
-                + "r.replace(/[_-\\W]+/g, 'x');";
-        assertEquals("axbxcxdxefgx1x23", cx.evaluateString(scope, source, "test", 0, null));
+            source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\W]+/g, 'x');";
+            assertEquals("axbxcxdxefgx1x23", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "var r = 'a-b_c d efg 1 23';\n"
-                + "r.replace(/[_-\\d]+/g, 'x');";
-        assertEquals("axbxc d efg x x", cx.evaluateString(scope, source, "test", 0, null));
+            source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\d]+/g, 'x');";
+            assertEquals("axbxc d efg x x", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "var r = 'a-b_c d efg 1 23';\n"
-                + "r.replace(/[_-\\D]+/g, 'x');";
-        assertEquals("x1x23", cx.evaluateString(scope, source, "test", 0, null));
+            source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\D]+/g, 'x');";
+            assertEquals("x1x23", cx.evaluateString(scope, source, "test", 0, null));
 
-        source = "var r = 'a-b_c d efg 1 23';\n"
-                + "r.replace(/[_-\\a]+/g, 'x');";
-        assertEquals("x-bxc d efg 1 23", cx.evaluateString(scope, source, "test", 0, null));
-
-        Context.exit();
+            source = "var r = 'a-b_c d efg 1 23';\n" + "r.replace(/[_-\\a]+/g, 'x');";
+            assertEquals("x-bxc d efg 1 23", cx.evaluateString(scope, source, "test", 0, null));
+        }
     }
 
     @Test
     public void regExIsNotCallable() {
-        Context cx = Context.enter();
-        cx.setLanguageVersion(Context.VERSION_ES6);
-        ScriptableObject scope = cx.initStandardObjects();
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            ScriptableObject scope = cx.initStandardObjects();
 
-        String source = "var a = new RegExp('1'); a(1);";
-        try {
-            cx.evaluateString(scope, source, "test", 0, null);
-            fail();
-        }
-        catch (EcmaError e) {
-            // expected
-            assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-        }
+            String source = "var a = new RegExp('1'); a(1);";
+            try {
+                cx.evaluateString(scope, source, "test", 0, null);
+                fail();
+            } catch (EcmaError e) {
+                // expected
+                assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
+            }
 
-        source = "/^\\{(.*)\\}$/('{1234}');";
-        try {
-            cx.evaluateString(scope, source, "test", 0, null);
-            fail();
-        }
-        catch (EcmaError e) {
-            // expected
-            assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-        }
+            source = "/^\\{(.*)\\}$/('{1234}');";
+            try {
+                cx.evaluateString(scope, source, "test", 0, null);
+                fail();
+            } catch (EcmaError e) {
+                // expected
+                assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
+            }
 
-        source = "RegExp('a|b','g')();";
-        try {
-            cx.evaluateString(scope, source, "test", 0, null);
-            fail();
-        }
-        catch (EcmaError e) {
-            // expected
-            assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-        }
+            source = "RegExp('a|b','g')();";
+            try {
+                cx.evaluateString(scope, source, "test", 0, null);
+                fail();
+            } catch (EcmaError e) {
+                // expected
+                assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
+            }
 
-        source = "new /z/();";
-        try {
-            cx.evaluateString(scope, source, "test", 0, null);
-            fail();
-        }
-        catch (EcmaError e) {
-            // expected
-            assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-        }
+            source = "new /z/();";
+            try {
+                cx.evaluateString(scope, source, "test", 0, null);
+                fail();
+            } catch (EcmaError e) {
+                // expected
+                assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
+            }
 
-
-        source = "new new RegExp";
-        try {
-            cx.evaluateString(scope, source, "test", 0, null);
-            fail();
+            source = "new new RegExp";
+            try {
+                cx.evaluateString(scope, source, "test", 0, null);
+                fail();
+            } catch (EcmaError e) {
+                // expected
+                assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
+            }
         }
-        catch (EcmaError e) {
-            // expected
-            assertTrue(e.getMessage(), e.getMessage().startsWith("TypeError: "));
-        }
-
-        Context.exit();
     }
 
     @Test
     public void lastIndexReadonly() {
-        final String script = "try { "
-                + "  var r = /c/g;"
-                + "  Object.defineProperty(r, 'lastIndex', { writable: false });"
-                + "  r.exec('abc');"
-                + "} catch (e) { e.message }";
-        Utils.runWithAllOptimizationLevels(_cx -> {
-            final ScriptableObject scope = _cx.initStandardObjects();
-            final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
-            assertEquals("Cannot modify readonly property: lastIndex.", Context.toString(result));
-            return null;
-        });
+        final String script =
+                "try { "
+                        + "  var r = /c/g;"
+                        + "  Object.defineProperty(r, 'lastIndex', { writable: false });"
+                        + "  r.exec('abc');"
+                        + "} catch (e) { e.message }";
+        Utils.runWithAllOptimizationLevels(
+                _cx -> {
+                    final ScriptableObject scope = _cx.initStandardObjects();
+                    final Object result = _cx.evaluateString(scope, script, "test script", 0, null);
+                    assertEquals(
+                            "Cannot modify readonly property: lastIndex.",
+                            Context.toString(result));
+                    return null;
+                });
+    }
+
+    @Test
+    public void search() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            ScriptableObject scope = cx.initStandardObjects();
+
+            String source = "'abc'.search(/b/);";
+            assertEquals(1, cx.evaluateString(scope, source, "test", 0, null));
+
+            source = "/b/[Symbol.search]('abc');";
+            assertEquals(1, cx.evaluateString(scope, source, "test", 0, null));
+
+            source = "'abc'.search(/d/);";
+            assertEquals(-1, cx.evaluateString(scope, source, "test", 0, null));
+
+            source = "/d/[Symbol.search]('abc');";
+            assertEquals(-1, cx.evaluateString(scope, source, "test", 0, null));
+        }
     }
 }

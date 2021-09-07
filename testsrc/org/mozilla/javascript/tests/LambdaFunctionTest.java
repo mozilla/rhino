@@ -223,7 +223,8 @@ public class LambdaFunctionTest {
                     "sayHello",
                     1,
                     (Context cx, Scriptable s, Scriptable thisObj, Object[] args) ->
-                            TestClass.sayHello(args));
+                            TestClass.sayHello(args),
+                    0);
             constructor.definePrototypeMethod(
                     scope,
                     "appendToValue",

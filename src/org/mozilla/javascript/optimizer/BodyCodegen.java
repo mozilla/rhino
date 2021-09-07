@@ -290,15 +290,24 @@ class BodyCodegen {
             }
         }
 
-        // Compile RegExp literals if this is a script. For functions
+        // Compile RegExp and template literals if this is a script. For functions
         // this is performed during instantiation in functionInit
-        if (fnCurrent == null && scriptOrFn.getRegexpCount() != 0) {
-            cfw.addALoad(contextLocal);
-            cfw.addInvoke(
-                    ByteCode.INVOKESTATIC,
-                    codegen.mainClassName,
-                    Codegen.REGEXP_INIT_METHOD_NAME,
-                    Codegen.REGEXP_INIT_METHOD_SIGNATURE);
+        if (fnCurrent == null) {
+            if (scriptOrFn.getRegexpCount() != 0) {
+                cfw.addALoad(contextLocal);
+                cfw.addInvoke(
+                        ByteCode.INVOKESTATIC,
+                        codegen.mainClassName,
+                        Codegen.REGEXP_INIT_METHOD_NAME,
+                        Codegen.REGEXP_INIT_METHOD_SIGNATURE);
+            }
+            if (scriptOrFn.getTemplateLiteralCount() != 0) {
+                cfw.addInvoke(
+                        ByteCode.INVOKESTATIC,
+                        codegen.mainClassName,
+                        Codegen.TEMPLATE_LITERAL_INIT_METHOD_NAME,
+                        Codegen.TEMPLATE_LITERAL_INIT_METHOD_SIGNATURE);
+            }
         }
 
         if (compilerEnv.isGenerateObserverCount()) saveCurrentCodeOffset();
@@ -1195,10 +1204,16 @@ class BodyCodegen {
                             cfw.add(ByteCode.DADD);
                             break;
                         case Node.LEFT:
-                            addOptRuntimeInvoke("add", "(DLjava/lang/Object;)Ljava/lang/Object;");
+                            cfw.addALoad(contextLocal);
+                            addOptRuntimeInvoke(
+                                    "add",
+                                    "(DLjava/lang/Object;Lorg/mozilla/javascript/Context;)Ljava/lang/Object;");
                             break;
                         case Node.RIGHT:
-                            addOptRuntimeInvoke("add", "(Ljava/lang/Object;D)Ljava/lang/Object;");
+                            cfw.addALoad(contextLocal);
+                            addOptRuntimeInvoke(
+                                    "add",
+                                    "(Ljava/lang/Object;DLorg/mozilla/javascript/Context;)Ljava/lang/Object;");
                             break;
                         default:
                             cfw.addALoad(contextLocal);
@@ -1233,16 +1248,29 @@ class BodyCodegen {
                 break;
 
             case Token.POS:
-                generateExpression(child, node);
-                addObjectToDouble();
-                addDoubleWrap();
-                break;
+                {
+                    int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
+                    generateExpression(child, node);
+                    if (childNumberFlag == -1) {
+                        addObjectToDouble();
+                        addDoubleWrap();
+                    }
+                    break;
+                }
 
             case Token.NEG:
-                generateExpression(child, node);
-                addObjectToNumeric();
-                addScriptRuntimeInvoke("negate", "(Ljava/lang/Number;" + ")Ljava/lang/Number;");
-                break;
+                {
+                    int childNumberFlag = node.getIntProp(Node.ISNUMBER_PROP, -1);
+                    generateExpression(child, node);
+                    if (childNumberFlag == -1) {
+                        addObjectToNumeric();
+                        addScriptRuntimeInvoke(
+                                "negate", "(Ljava/lang/Number;" + ")Ljava/lang/Number;");
+                    } else {
+                        cfw.add(ByteCode.DNEG);
+                    }
+                    break;
+                }
 
             case Token.TO_DOUBLE:
                 // cnvt to double (not Double)
@@ -1578,6 +1606,10 @@ class BodyCodegen {
                     break;
                 }
 
+            case Token.TEMPLATE_LITERAL:
+                visitTemplateLiteral(node);
+                break;
+
             default:
                 throw new RuntimeException("Unexpected node type " + type);
         }
@@ -1742,6 +1774,28 @@ class BodyCodegen {
         cfw.addILoad(operationLocal);
         cfw.addLoadConstant(NativeGenerator.GENERATOR_THROW);
         cfw.add(ByteCode.IF_ICMPEQ, throwLabel);
+    }
+
+    private void visitTemplateLiteral(Node node) {
+        // create the template literal call-site object for tagged template literals,
+        // default template literals are already handled earlier in IRFactory
+        int index = node.getExistingIntProp(Node.TEMPLATE_LITERAL_PROP);
+        cfw.addALoad(contextLocal);
+        cfw.addALoad(variableObjectLocal);
+        cfw.add(
+                ByteCode.GETSTATIC,
+                codegen.mainClassName,
+                codegen.getTemplateLiteralName(scriptOrFn),
+                "[Ljava/lang/Object;");
+        cfw.addPush(index);
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/ScriptRuntime",
+                "getTemplateLiteralCallSite",
+                "(Lorg/mozilla/javascript/Context;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "[Ljava/lang/Object;I"
+                        + ")Lorg/mozilla/javascript/Scriptable;");
     }
 
     private void generateIfJump(Node node, Node parent, int trueLabel, int falseLabel) {
@@ -2056,7 +2110,7 @@ class BodyCodegen {
 
     private void visitObjectLiteral(Node node, Node child, boolean topLevel) {
         Object[] properties = (Object[]) node.getProp(Node.OBJECT_IDS_PROP);
-        int count = properties.length;
+        int count = properties == null ? 0 : properties.length;
 
         // If code budget is tight swap out literals into separate method
         if (!topLevel
