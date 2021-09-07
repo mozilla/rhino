@@ -10,7 +10,7 @@ import java.util.List;
 
 public class NativeJavaList extends NativeJavaObject {
     private static final long serialVersionUID = 1L;
-    
+
     private List<Object> list;
 
     @SuppressWarnings("unchecked")
@@ -41,7 +41,7 @@ public class NativeJavaList extends NativeJavaObject {
         }
         return super.has(index, start);
     }
-    
+
     public void delete(int index) {
         if (isWithValidIndex(index)) {
             // TODO: what do we with "undefined" values?
@@ -103,7 +103,7 @@ public class NativeJavaList extends NativeJavaObject {
         }
         super.put(name, start, value);
     }
-    
+
     private void ensureCapacity(int minCapacity) {
         if (minCapacity > list.size()) {
             if (list instanceof ArrayList) {
@@ -114,8 +114,7 @@ public class NativeJavaList extends NativeJavaObject {
             }
         }
     }
-    
-    
+
     private void setLength(Object val) {
         double d = ScriptRuntime.toNumber(val);
         long longVal = ScriptRuntime.toUint32(d);
@@ -129,7 +128,7 @@ public class NativeJavaList extends NativeJavaObject {
             ensureCapacity((int) longVal);
         }
     }
-    
+
     @Override
     public Object[] getIds() {
         List<?> list = (List<?>) javaObject;

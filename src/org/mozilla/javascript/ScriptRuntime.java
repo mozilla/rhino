@@ -3605,8 +3605,7 @@ public class ScriptRuntime {
         }
     }
 
-    public static boolean shallowEq(Object x, Object y)
-    {
+    public static boolean shallowEq(Object x, Object y) {
         if (x instanceof Wrapper) {
             x = ((Wrapper) x).unwrap();
         }

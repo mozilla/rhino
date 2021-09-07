@@ -108,10 +108,10 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("f", runScriptAsString("value[1]=\"f\";value[1]", list));
         assertEquals("f", list.get(1));
     }
-    
+
     public void testAutoGrow() {
         List<String> list = new ArrayList<>();
-        //Object list = runScript("[]", null, Function.identity());
+        // Object list = runScript("[]", null, Function.identity());
         assertEquals(0, runScriptAsInt("value.length", list));
         assertEquals(1, runScriptAsInt("value[0]='a'; value.length", list));
         assertEquals(3, runScriptAsInt("value[2]='c'; value.length", list));
@@ -122,7 +122,7 @@ public class NativeJavaListTest extends TestCase {
         // NativeList will return "a,,c"
         assertEquals("a,,c", runScriptAsString("value.join()", list));
     }
-    
+
     public void testLength() {
         List<String> list = new ArrayList<>();
         list.add("a");
@@ -132,21 +132,21 @@ public class NativeJavaListTest extends TestCase {
         assertEquals(0, list.size());
         runScriptAsString("value.length = 10", list);
         assertEquals(10, list.size());
-        
+
         try {
             runScriptAsString("value.length = -10", list);
             fail();
         } catch (EcmaError e) {
             assertEquals("RangeError: Inappropriate array length. (#1)", e.getMessage());
         }
-        
+
         try {
             runScriptAsString("value.length = 2.1", list);
             fail();
         } catch (EcmaError e) {
             assertEquals("RangeError: Inappropriate array length. (#1)", e.getMessage());
         }
-        
+
         try {
             runScriptAsString("value.length = 2147483648", list); // Integer.MAX_VALUE + 1
             fail();
@@ -154,13 +154,13 @@ public class NativeJavaListTest extends TestCase {
             assertEquals("RangeError: Inappropriate array length. (#1)", e.getMessage());
         }
     }
-    
+
     public void testDelete() {
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("b");
         list.add("c");
-//        Object list = runScript("['a','b','c']", null, Function.identity());
+        //        Object list = runScript("['a','b','c']", null, Function.identity());
         // TODO: should NativeJavaList distinguish between 'null' and 'undefined'?
         assertEquals("false", runScriptAsString("delete value[1]", list));
         assertEquals("a,,c", runScriptAsString("value.join()", list));
@@ -174,7 +174,7 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("x,a,b,c", runScriptAsString("['x'].concat(value).join()", list));
         assertEquals("a,b,c,x", runScriptAsString("value.concat(['x']).join()", list));
     }
-    
+
     public void testArrayCopyWithin() {
         List<String> list = new ArrayList<>();
         list.add("a");
@@ -210,7 +210,7 @@ public class NativeJavaListTest extends TestCase {
         listD.add(3.0);
         assertEquals("true", runScriptAsString("value.includes(2)", listD));
         assertEquals("false", runScriptAsString("value.includes(4)", listD));
-        
+
         List<Integer> listI = new ArrayList<>();
         listI.add(1);
         listI.add(2);
@@ -218,67 +218,67 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("true", runScriptAsString("value.includes(2)", listI));
         assertEquals("false", runScriptAsString("value.includes(4)", listD));
     }
-    
+
     public void testArrayIndexOf() {
-        
+
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("b");
         list.add("c");
         assertEquals("1", runScriptAsString("value.indexOf('b')", list));
         assertEquals("-1", runScriptAsString("value.indexOf('d')", list));
-        
+
         List<Double> listD = new ArrayList<>();
         listD.add(1.0);
         listD.add(2.0);
         listD.add(3.0);
         assertEquals("1", runScriptAsString("value.indexOf(2)", listD));
         assertEquals("-1", runScriptAsString("value.indexOf(4)", listD));
-        
+
         List<Integer> listI = new ArrayList<>();
         listI.add(1);
         listI.add(2);
         listI.add(3);
-        
+
         // FIXME: This will invoke the java.util.List.indexOf method, which
         // is not yet type aware!
         // assertEquals("1", runScriptAsString("value.indexOf(2)", listI));
         // assertEquals("-1", runScriptAsString("value.indexOf(4)", listD));
-        
+
         assertEquals("1", runScriptAsString("Array.indexOf(value, 2)", listI));
         assertEquals("-1", runScriptAsString("Array.indexOf(value, 4)", listD));
     }
-    
+
     public void testArrayLastIndexOf() {
-        
+
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("b");
         list.add("c");
         assertEquals("1", runScriptAsString("value.lastIndexOf('b')", list));
         assertEquals("-1", runScriptAsString("value.lastIndexOf('d')", list));
-        
+
         List<Double> listD = new ArrayList<>();
         listD.add(1.0);
         listD.add(2.0);
         listD.add(3.0);
         assertEquals("1", runScriptAsString("value.lastIndexOf(2)", listD));
         assertEquals("-1", runScriptAsString("value.lastIndexOf(4)", listD));
-        
+
         List<Integer> listI = new ArrayList<>();
         listI.add(1);
         listI.add(2);
         listI.add(3);
-        
+
         // FIXME: This will invoke the java.util.List.indexOf method, which
         // is not yet type aware!
         // assertEquals("1", runScriptAsString("value.lastIndexOf(2)", listI));
         // assertEquals("-1", runScriptAsString("value.lastIndexOf(4)", listD));
-        
+
         assertEquals("1", runScriptAsString("Array.lastIndexOf(value, 2)", listI));
         assertEquals("-1", runScriptAsString("Array.lastIndexOf(value, 4)", listD));
     }
-    
+
     public void testArrayIsArray() {
         List<String> list = new ArrayList<>();
         list.add("a");
@@ -287,7 +287,7 @@ public class NativeJavaListTest extends TestCase {
         // CHECKME: what would we expect here?
         assertEquals("false", runScriptAsString("Array.isArray(value)", list));
     }
-    
+
     public void testArrayJoin() {
         List<String> list = new ArrayList<>();
         list.add("a");
@@ -295,7 +295,7 @@ public class NativeJavaListTest extends TestCase {
         list.add("c");
         assertEquals("a-b-c", runScriptAsString("value.join('-')", list));
     }
-    
+
     public void testArrayPop() {
         List<String> list = new ArrayList<>();
         list.add("a");
@@ -321,7 +321,7 @@ public class NativeJavaListTest extends TestCase {
         list.add("c");
         assertEquals("c,b,a", runScriptAsString("value.reverse().join()", list));
     }
-    
+
     public void testArrayShift() {
         List<String> list = new ArrayList<>();
         list.add("a");
@@ -340,7 +340,7 @@ public class NativeJavaListTest extends TestCase {
         list.add("e");
         assertEquals("b,c", runScriptAsString("value.slice(1, 3)", list));
     }
-    
+
     public void testArraySort1() {
         List<String> list = new ArrayList<>();
         list.add("a");
@@ -351,7 +351,7 @@ public class NativeJavaListTest extends TestCase {
         runScriptAsString("Array.sort(value)", list);
         assertEquals("[a, b, c, d, e]", list.toString());
     }
-    
+
     public void testArraySort2() {
         List<String> list = new ArrayList<>();
         list.add("a");
@@ -363,7 +363,7 @@ public class NativeJavaListTest extends TestCase {
         runScriptAsString("value.sort(java.util.Comparator.naturalOrder())", list);
         assertEquals("[a, b, c, d, e]", list.toString());
     }
-    
+
     public void testArraySort3() {
         List<Integer> list = new ArrayList<>();
         list.add(4);
@@ -374,11 +374,11 @@ public class NativeJavaListTest extends TestCase {
         // NOTE: Array.sort converts the value to string and sorts them!
         runScriptAsString("Array.sort(value);", list);
         assertEquals("[0, 10, 2, 3, 4]", list.toString());
-        
+
         runScriptAsString("value.sort(java.util.Comparator.naturalOrder())", list);
         assertEquals("[0, 2, 3, 4, 10]", list.toString());
     }
-    
+
     public void testArraySplice() {
         List<String> list = new ArrayList<>();
         list.add("a");
