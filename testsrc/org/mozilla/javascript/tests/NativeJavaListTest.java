@@ -7,6 +7,7 @@
 package org.mozilla.javascript.tests;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
@@ -271,12 +272,21 @@ public class NativeJavaListTest extends TestCase {
         listI.add(3);
 
         // FIXME: This will invoke the java.util.List.indexOf method, which
-        // is not yet type aware!
-        // assertEquals("1", runScriptAsString("value.lastIndexOf(2)", listI));
-        // assertEquals("-1", runScriptAsString("value.lastIndexOf(4)", listD));
+        // is not yet type aware! This means, the argument is always converted
+        // to double, so we only may find elements in listD
+        assertEquals("-1", runScriptAsString("value.lastIndexOf(2)", listI));
+        assertEquals("-1", runScriptAsString("value.lastIndexOf(2.0)", listI));
+        assertEquals("1", runScriptAsString("value.lastIndexOf(2)", listD));
+        assertEquals("1", runScriptAsString("value.lastIndexOf(2.0)", listD));
 
+        // elements in list
+        assertEquals("1", runScriptAsString("Array.lastIndexOf(value, 2.0)", listI));
+        assertEquals("1", runScriptAsString("Array.lastIndexOf(value, 2.0)", listD));
         assertEquals("1", runScriptAsString("Array.lastIndexOf(value, 2)", listI));
-        assertEquals("-1", runScriptAsString("Array.lastIndexOf(value, 4)", listD));
+        assertEquals("1", runScriptAsString("Array.lastIndexOf(value, 2)", listD));
+        // elements not found
+        assertEquals("-1", runScriptAsString("Array.lastIndexOf(value, 4.0)", listD));
+        assertEquals("-1", runScriptAsString("Array.lastIndexOf(value, 4)", listI));
     }
 
     public void testArrayIsArray() {
@@ -341,7 +351,7 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("b,c", runScriptAsString("value.slice(1, 3)", list));
     }
 
-    public void testArraySort1() {
+    public void testArraySortString() {
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("d");
@@ -352,7 +362,7 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("[a, b, c, d, e]", list.toString());
     }
 
-    public void testArraySort2() {
+    public void testArraySortStringJavaComp() {
         List<String> list = new ArrayList<>();
         list.add("a");
         list.add("d");
@@ -364,19 +374,54 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("[a, b, c, d, e]", list.toString());
     }
 
-    public void testArraySort3() {
-        List<Integer> list = new ArrayList<>();
-        list.add(4);
-        list.add(10);
-        list.add(2);
-        list.add(3);
-        list.add(0);
-        // NOTE: Array.sort converts the value to string and sorts them!
+    private List<Number> getNumberList() {
+        return new ArrayList<>(Arrays.asList(4, 10, 2, 3, 0));
+    }
+
+    public void testArraySortNumbers() {
+        List<Number> list = getNumberList();
+        // NOTE: When Array.sort sorts on string representation!
+        assertEquals(Integer.class, list.get(0).getClass());
         runScriptAsString("Array.sort(value);", list);
         assertEquals("[0, 10, 2, 3, 4]", list.toString());
+        assertEquals(Integer.class, list.get(0).getClass());
+    }
 
+    public void testArraySortNumbersNoWrap() {
+        List<Number> list = getNumberList();
+        assertEquals(Integer.class, list.get(0).getClass());
+        // NOTE: When we do not wrap primitives, the type of values can change
+        runScriptDontWrapPrimitive("Array.sort(value);", list);
+        assertEquals("[0.0, 10.0, 2.0, 3.0, 4.0]", list.toString());
+        assertEquals(Double.class, list.get(0).getClass()); // Attention: Type has changed!
+    }
+
+    public void testArraySortNumberJavaComp() {
+        List<Number> list = getNumberList();
         runScriptAsString("value.sort(java.util.Comparator.naturalOrder())", list);
         assertEquals("[0, 2, 3, 4, 10]", list.toString());
+        assertEquals(Integer.class, list.get(0).getClass());
+    }
+
+    public void testArraySortNumberJavaCompNoWrap() {
+        List<Number> list = getNumberList();
+        runScriptDontWrapPrimitive("value.sort(java.util.Comparator.naturalOrder())", list);
+        assertEquals("[0, 2, 3, 4, 10]", list.toString());
+        assertEquals(Integer.class, list.get(0).getClass());
+    }
+
+    public void testArraySortNumberJsComp() {
+        List<Number> list = getNumberList();
+        runScriptAsString("Array.sort(value, (a,b) => a-b);", list);
+        assertEquals("[0, 2, 3, 4, 10]", list.toString());
+        assertEquals(Integer.class, list.get(0).getClass());
+    }
+
+    public void testArraySortNumberJsCompNoWrap() {
+        List<Number> list = getNumberList();
+        runScriptDontWrapPrimitive("Array.sort(value, (a,b) => a-b);", list);
+        assertEquals("[0.0, 2.0, 3.0, 4.0, 10.0]", list.toString());
+        assertEquals(Double.class, list.get(0).getClass());
     }
 
     public void testArraySplice() {
@@ -431,6 +476,17 @@ public class NativeJavaListTest extends TestCase {
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
                                     context.evaluateString(scope, scriptSourceText, "", 1, null));
+                        });
+    }
+
+    private void runScriptDontWrapPrimitive(String scriptSourceText, Object value) {
+        ContextFactory.getGlobal()
+                .call(
+                        context -> {
+                            context.getWrapFactory().setJavaPrimitiveWrap(false);
+                            Scriptable scope = context.initStandardObjects(global);
+                            scope.put("value", scope, Context.javaToJS(value, scope));
+                            return context.evaluateString(scope, scriptSourceText, "", 1, null);
                         });
     }
 }
