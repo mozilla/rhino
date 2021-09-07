@@ -31,11 +31,10 @@ public class BindingsObject
 
   @Override
   public Object get(String name, Scriptable start) {
-    Object ret = bindings.get(name);
-    if (ret == null) {
+    if (!bindings.containsKey(name)) {
       return Scriptable.NOT_FOUND;
     }
-    return Context.jsToJava(ret, Object.class);
+    return Context.jsToJava(bindings.get(name), Object.class);
   }
 
   @Override

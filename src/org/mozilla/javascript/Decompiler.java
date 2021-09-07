@@ -6,190 +6,168 @@
 
 package org.mozilla.javascript;
 
+import java.math.BigInteger;
 import org.mozilla.javascript.ast.FunctionNode;
 
 /**
- * The following class save decompilation information about the source.
- * Source information is returned from the parser as a String
- * associated with function nodes and with the toplevel script.  When
- * saved in the constant pool of a class, this string will be UTF-8
- * encoded, and token values will occupy a single byte.
-
- * Source is saved (mostly) as token numbers.  The tokens saved pretty
- * much correspond to the token stream of a 'canonical' representation
- * of the input program, as directed by the parser.  (There were a few
- * cases where tokens could have been left out where decompiler could
- * easily reconstruct them, but I left them in for clarity).  (I also
- * looked adding source collection to TokenStream instead, where I
- * could have limited the changes to a few lines in getToken... but
- * this wouldn't have saved any space in the resulting source
- * representation, and would have meant that I'd have to duplicate
- * parser logic in the decompiler to disambiguate situations where
- * newlines are important.)  The function decompile expands the
- * tokens back into their string representations, using simple
- * lookahead to correct spacing and indentation.
+ * The following class save decompilation information about the source. Source information is
+ * returned from the parser as a String associated with function nodes and with the toplevel script.
+ * When saved in the constant pool of a class, this string will be UTF-8 encoded, and token values
+ * will occupy a single byte.
  *
- * Assignments are saved as two-token pairs (Token.ASSIGN, op). Number tokens
- * are stored inline, as a NUMBER token, a character representing the type, and
- * either 1 or 4 characters representing the bit-encoding of the number.  String
- * types NAME, STRING and OBJECT are currently stored as a token type,
- * followed by a character giving the length of the string (assumed to
- * be less than 2^16), followed by the characters of the string
- * inlined into the source string.  Changing this to some reference to
- * to the string in the compiled class' constant pool would probably
- * save a lot of space... but would require some method of deriving
- * the final constant pool entry from information available at parse
- * time.
+ * <p>Source is saved (mostly) as token numbers. The tokens saved pretty much correspond to the
+ * token stream of a 'canonical' representation of the input program, as directed by the parser.
+ * (There were a few cases where tokens could have been left out where decompiler could easily
+ * reconstruct them, but I left them in for clarity). (I also looked adding source collection to
+ * TokenStream instead, where I could have limited the changes to a few lines in getToken... but
+ * this wouldn't have saved any space in the resulting source representation, and would have meant
+ * that I'd have to duplicate parser logic in the decompiler to disambiguate situations where
+ * newlines are important.) The function decompile expands the tokens back into their string
+ * representations, using simple lookahead to correct spacing and indentation.
+ *
+ * <p>Assignments are saved as two-token pairs (Token.ASSIGN, op). Number tokens are stored inline,
+ * as a NUMBER token, a character representing the type, and either 1 or 4 characters representing
+ * the bit-encoding of the number. String types NAME, STRING and OBJECT are currently stored as a
+ * token type, followed by a character giving the length of the string (assumed to be less than
+ * 2^16), followed by the characters of the string inlined into the source string. Changing this to
+ * some reference to to the string in the compiled class' constant pool would probably save a lot of
+ * space... but would require some method of deriving the final constant pool entry from information
+ * available at parse time.
  */
-public class Decompiler
-{
+public class Decompiler {
     /**
-     * Flag to indicate that the decompilation should omit the
-     * function header and trailing brace.
+     * Flag to indicate that the decompilation should omit the function header and trailing brace.
      */
     public static final int ONLY_BODY_FLAG = 1 << 0;
 
-    /**
-     * Flag to indicate that the decompilation generates toSource result.
-     */
+    /** Flag to indicate that the decompilation generates toSource result. */
     public static final int TO_SOURCE_FLAG = 1 << 1;
 
-    /**
-     * Decompilation property to specify initial ident value.
-     */
+    /** Decompilation property to specify initial ident value. */
     public static final int INITIAL_INDENT_PROP = 1;
 
-    /**
-     * Decompilation property to specify default identation offset.
-     */
+    /** Decompilation property to specify default identation offset. */
     public static final int INDENT_GAP_PROP = 2;
 
-    /**
-     * Decompilation property to specify identation offset for case labels.
-     */
+    /** Decompilation property to specify identation offset for case labels. */
     public static final int CASE_GAP_PROP = 3;
 
     // Marker to denote the last RC of function so it can be distinguished from
     // the last RC of object literals in case of function expressions
     private static final int FUNCTION_END = Token.LAST_TOKEN + 1;
 
-    String getEncodedSource()
-    {
+    String getEncodedSource() {
         return sourceToString(0);
     }
 
-    int getCurrentOffset()
-    {
+    int getCurrentOffset() {
         return sourceTop;
     }
 
-    int markFunctionStart(int functionType)
-    {
+    int markFunctionStart(int functionType) {
         int savedOffset = getCurrentOffset();
         if (functionType != FunctionNode.ARROW_FUNCTION) {
             addToken(Token.FUNCTION);
-            append((char)functionType);
+            append((char) functionType);
         }
         return savedOffset;
     }
 
-    int markFunctionEnd(int functionStart)
-    {
+    int markFunctionEnd(int functionStart) {
         int offset = getCurrentOffset();
-        append((char)FUNCTION_END);
+        append((char) FUNCTION_END);
         return offset;
     }
 
-    void addToken(int token)
-    {
-        if (!(0 <= token && token <= Token.LAST_TOKEN))
-            throw new IllegalArgumentException();
+    void addToken(int token) {
+        if (!(0 <= token && token <= Token.LAST_TOKEN)) throw new IllegalArgumentException();
 
-        append((char)token);
+        append((char) token);
     }
 
-    void addEOL(int token)
-    {
-        if (!(0 <= token && token <= Token.LAST_TOKEN))
-            throw new IllegalArgumentException();
+    void addEOL(int token) {
+        if (!(0 <= token && token <= Token.LAST_TOKEN)) throw new IllegalArgumentException();
 
-        append((char)token);
-        append((char)Token.EOL);
+        append((char) token);
+        append((char) Token.EOL);
     }
 
-    void addName(String str)
-    {
+    void addName(String str) {
         addToken(Token.NAME);
         appendString(str);
     }
 
-    void addString(String str)
-    {
+    void addString(String str) {
         addToken(Token.STRING);
         appendString(str);
     }
 
-    void addRegexp(String regexp, String flags)
-    {
+    void addTemplateLiteral(String str) {
+        addToken(Token.TEMPLATE_CHARS);
+        appendString(str);
+    }
+
+    void addRegexp(String regexp, String flags) {
         addToken(Token.REGEXP);
         appendString('/' + regexp + '/' + flags);
     }
 
-    void addNumber(double n)
-    {
+    void addNumber(double n) {
         addToken(Token.NUMBER);
 
         /* encode the number in the source stream.
-         * Save as NUMBER type (char | char char char char)
-         * where type is
-         * 'D' - double, 'S' - short, 'J' - long.
+        * Save as NUMBER type (char | char char char char)
+        * where type is
+        * 'D' - double, 'S' - short, 'J' - long.
 
-         * We need to retain float vs. integer type info to keep the
-         * behavior of liveconnect type-guessing the same after
-         * decompilation.  (Liveconnect tries to present 1.0 to Java
-         * as a float/double)
-         * OPT: This is no longer true. We could compress the format.
+        * We need to retain float vs. integer type info to keep the
+        * behavior of liveconnect type-guessing the same after
+        * decompilation.  (Liveconnect tries to present 1.0 to Java
+        * as a float/double)
+        * OPT: This is no longer true. We could compress the format.
 
-         * This may not be the most space-efficient encoding;
-         * the chars created below may take up to 3 bytes in
-         * constant pool UTF-8 encoding, so a Double could take
-         * up to 12 bytes.
-         */
+        * This may not be the most space-efficient encoding;
+        * the chars created below may take up to 3 bytes in
+        * constant pool UTF-8 encoding, so a Double could take
+        * up to 12 bytes.
+        */
 
-        long lbits = (long)n;
+        long lbits = (long) n;
         if (lbits != n) {
             // if it's floating point, save as a Double bit pattern.
             // (12/15/97 our scanner only returns Double for f.p.)
             lbits = Double.doubleToLongBits(n);
             append('D');
-            append((char)(lbits >> 48));
-            append((char)(lbits >> 32));
-            append((char)(lbits >> 16));
-            append((char)lbits);
-        }
-        else {
+            append((char) (lbits >> 48));
+            append((char) (lbits >> 32));
+            append((char) (lbits >> 16));
+            append((char) lbits);
+        } else {
             // we can ignore negative values, bc they're already prefixed
             // by NEG
-               if (lbits < 0) Kit.codeBug();
+            if (lbits < 0) Kit.codeBug();
 
             // will it fit in a char?
             // this gives a short encoding for integer values up to 2^16.
             if (lbits <= Character.MAX_VALUE) {
                 append('S');
-                append((char)lbits);
-            }
-            else { // Integral, but won't fit in a char. Store as a long.
+                append((char) lbits);
+            } else { // Integral, but won't fit in a char. Store as a long.
                 append('J');
-                append((char)(lbits >> 48));
-                append((char)(lbits >> 32));
-                append((char)(lbits >> 16));
-                append((char)lbits);
+                append((char) (lbits >> 48));
+                append((char) (lbits >> 32));
+                append((char) (lbits >> 16));
+                append((char) lbits);
             }
         }
     }
 
-    private void appendString(String str)
-    {
+    void addBigInt(BigInteger n) {
+        addToken(Token.BIGINT);
+        appendString(n.toString());
+    }
+
+    private void appendString(String str) {
         int L = str.length();
         int lengthEncodingSize = 1;
         if (L >= 0x8000) {
@@ -202,17 +180,16 @@ public class Decompiler
         if (L >= 0x8000) {
             // Use 2 chars to encode strings exceeding 32K, were the highest
             // bit in the first char indicates presence of the next byte
-            sourceBuffer[sourceTop] = (char)(0x8000 | (L >>> 16));
+            sourceBuffer[sourceTop] = (char) (0x8000 | (L >>> 16));
             ++sourceTop;
         }
-        sourceBuffer[sourceTop] = (char)L;
+        sourceBuffer[sourceTop] = (char) L;
         ++sourceTop;
         str.getChars(0, L, sourceBuffer, sourceTop);
         sourceTop = nextTop;
     }
 
-    private void append(char c)
-    {
+    private void append(char c) {
         if (sourceTop == sourceBuffer.length) {
             increaseSourceCapacity(sourceTop + 1);
         }
@@ -220,8 +197,7 @@ public class Decompiler
         ++sourceTop;
     }
 
-    private void increaseSourceCapacity(int minimalCapacity)
-    {
+    private void increaseSourceCapacity(int minimalCapacity) {
         // Call this only when capacity increase is must
         if (minimalCapacity <= sourceBuffer.length) Kit.codeBug();
         int newCapacity = sourceBuffer.length * 2;
@@ -233,33 +209,27 @@ public class Decompiler
         sourceBuffer = tmp;
     }
 
-    private String sourceToString(int offset)
-    {
+    private String sourceToString(int offset) {
         if (offset < 0 || sourceTop < offset) Kit.codeBug();
         return new String(sourceBuffer, offset, sourceTop - offset);
     }
 
     /**
-     * Decompile the source information associated with this js
-     * function/script back into a string.  For the most part, this
-     * just means translating tokens back to their string
-     * representations; there's a little bit of lookahead logic to
-     * decide the proper spacing/indentation.  Most of the work in
-     * mapping the original source to the prettyprinted decompiled
-     * version is done by the parser.
+     * Decompile the source information associated with this js function/script back into a string.
+     * For the most part, this just means translating tokens back to their string representations;
+     * there's a little bit of lookahead logic to decide the proper spacing/indentation. Most of the
+     * work in mapping the original source to the prettyprinted decompiled version is done by the
+     * parser.
      *
      * @param source encoded source tree presentation
-     *
      * @param flags flags to select output format
-     *
      * @param properties indentation properties
-     *
      */
-    public static String decompile(String source, int flags,
-                                   UintMap properties)
-    {
+    public static String decompile(String source, int flags, UintMap properties) {
         int length = source.length();
-        if (length == 0) { return ""; }
+        if (length == 0) {
+            return "";
+        }
 
         int indent = properties.getInt(INITIAL_INDENT_PROP, 0);
         if (indent < 0) throw new IllegalArgumentException();
@@ -286,15 +256,14 @@ public class Decompiler
                 if (tokenname == null) {
                     tokenname = "---";
                 }
-                String pad = tokenname.length() > 7
-                    ? "\t"
-                    : "\t\t";
-                System.err.println
-                    (tokenname
-                     + pad + (int)source.charAt(i)
-                     + "\t'" + ScriptRuntime.escapeString
-                     (source.substring(i, i+1))
-                     + "'");
+                String pad = tokenname.length() > 7 ? "\t" : "\t\t";
+                System.err.println(
+                        tokenname
+                                + pad
+                                + (int) source.charAt(i)
+                                + "\t'"
+                                + ScriptRuntime.escapeString(source.substring(i, i + 1))
+                                + "'");
             }
             System.err.println();
         }
@@ -313,8 +282,7 @@ public class Decompiler
         if (!toSource) {
             // add an initial newline to exactly match js.
             result.append('\n');
-            for (int j = 0; j < indent; j++)
-                result.append(' ');
+            for (int j = 0; j < indent; j++) result.append(' ');
         } else {
             if (topFunctionType == FunctionNode.FUNCTION_EXPRESSION) {
                 result.append('(');
@@ -322,498 +290,508 @@ public class Decompiler
         }
 
         while (i < length) {
-            switch(source.charAt(i)) {
-            case Token.GET:
-            case Token.SET:
-            case Token.METHOD:
-                if (source.charAt(i) == Token.GET) {
-                    result.append("get ");
-                } else if (source.charAt(i) == Token.SET) {
-                    result.append("set ");
-                }
-                ++i;
-                i = printSourceString(source, i + 1, false, result);
-                // Now increment one more to get past the FUNCTION token
-                ++i;
-                break;
-
-            case Token.NAME:
-            case Token.REGEXP:  // re-wrapped in '/'s in parser...
-                i = printSourceString(source, i + 1, false, result);
-                continue;
-
-            case Token.STRING:
-                i = printSourceString(source, i + 1, true, result);
-                continue;
-
-            case Token.NUMBER:
-                i = printSourceNumber(source, i + 1, result);
-                continue;
-
-            case Token.TRUE:
-                result.append("true");
-                break;
-
-            case Token.FALSE:
-                result.append("false");
-                break;
-
-            case Token.NULL:
-                result.append("null");
-                break;
-
-            case Token.THIS:
-                result.append("this");
-                break;
-
-            case Token.FUNCTION:
-                ++i; // skip function type
-                result.append("function ");
-                break;
-
-            case FUNCTION_END:
-                // Do nothing
-                break;
-
-            case Token.COMMA:
-                result.append(", ");
-                break;
-
-            case Token.LC:
-                ++braceNesting;
-                if (Token.EOL == getNext(source, length, i))
-                    indent += indentGap;
-                result.append('{');
-                break;
-
-            case Token.RC: {
-                --braceNesting;
-                /* don't print the closing RC if it closes the
-                 * toplevel function and we're called from
-                 * decompileFunctionBody.
-                 */
-                if (justFunctionBody && braceNesting == 0)
+            switch (source.charAt(i)) {
+                case Token.GET:
+                case Token.SET:
+                case Token.METHOD:
+                    if (source.charAt(i) == Token.GET) {
+                        result.append("get ");
+                    } else if (source.charAt(i) == Token.SET) {
+                        result.append("set ");
+                    }
+                    ++i;
+                    i = printSourceString(source, i + 1, false, result);
+                    // Now increment one more to get past the FUNCTION token
+                    ++i;
                     break;
 
-                result.append('}');
-                switch (getNext(source, length, i)) {
-                    case Token.EOL:
-                    case FUNCTION_END:
-                        indent -= indentGap;
-                        break;
-                    case Token.WHILE:
-                    case Token.ELSE:
-                        indent -= indentGap;
-                        result.append(' ');
-                        break;
-                }
-                break;
-            }
-            case Token.LP:
-                result.append('(');
-                break;
+                case Token.NAME:
+                case Token.REGEXP: // re-wrapped in '/'s in parser...
+                    i = printSourceString(source, i + 1, false, result);
+                    continue;
 
-            case Token.RP:
-                result.append(')');
-                if (Token.LC == getNext(source, length, i))
-                    result.append(' ');
-                break;
+                case Token.STRING:
+                    i = printSourceString(source, i + 1, true, result);
+                    continue;
 
-            case Token.LB:
-                result.append('[');
-                break;
+                case Token.NUMBER:
+                    i = printSourceNumber(source, i + 1, result);
+                    continue;
 
-            case Token.RB:
-                result.append(']');
-                break;
+                case Token.BIGINT:
+                    i = printSourceBigInt(source, i + 1, result);
+                    continue;
 
-            case Token.EOL: {
-                if (toSource) break;
-                boolean newLine = true;
-                if (!afterFirstEOL) {
-                    afterFirstEOL = true;
-                    if (justFunctionBody) {
-                        /* throw away just added 'function name(...) {'
-                         * and restore the original indent
-                         */
-                        result.setLength(0);
-                        indent -= indentGap;
-                        newLine = false;
-                    }
-                }
-                if (newLine) {
-                    result.append('\n');
-                }
+                case Token.TRUE:
+                    result.append("true");
+                    break;
 
-                /* add indent if any tokens remain,
-                 * less setback if next token is
-                 * a label, case or default.
-                 */
-                if (i + 1 < length) {
-                    int less = 0;
-                    int nextToken = source.charAt(i + 1);
-                    if (nextToken == Token.CASE
-                        || nextToken == Token.DEFAULT)
+                case Token.FALSE:
+                    result.append("false");
+                    break;
+
+                case Token.NULL:
+                    result.append("null");
+                    break;
+
+                case Token.THIS:
+                    result.append("this");
+                    break;
+
+                case Token.FUNCTION:
+                    ++i; // skip function type
+                    result.append("function ");
+                    break;
+
+                case FUNCTION_END:
+                    // Do nothing
+                    break;
+
+                case Token.COMMA:
+                    result.append(", ");
+                    break;
+
+                case Token.LC:
+                    ++braceNesting;
+                    if (Token.EOL == getNext(source, length, i)) indent += indentGap;
+                    result.append('{');
+                    break;
+
+                case Token.RC:
                     {
-                        less = indentGap - caseGap;
-                    } else if (nextToken == Token.RC) {
-                        less = indentGap;
-                    }
+                        --braceNesting;
+                        /* don't print the closing RC if it closes the
+                         * toplevel function and we're called from
+                         * decompileFunctionBody.
+                         */
+                        if (justFunctionBody && braceNesting == 0) break;
 
-                    /* elaborate check against label... skip past a
-                     * following inlined NAME and look for a COLON.
-                     */
-                    else if (nextToken == Token.NAME) {
-                        int afterName = getSourceStringEnd(source, i + 2);
-                        if (source.charAt(afterName) == Token.COLON)
-                            less = indentGap;
+                        result.append('}');
+                        switch (getNext(source, length, i)) {
+                            case Token.EOL:
+                            case FUNCTION_END:
+                                indent -= indentGap;
+                                break;
+                            case Token.WHILE:
+                            case Token.ELSE:
+                                indent -= indentGap;
+                                result.append(' ');
+                                break;
+                        }
+                        break;
                     }
+                case Token.LP:
+                    result.append('(');
+                    break;
 
-                    for (; less < indent; less++)
+                case Token.RP:
+                    result.append(')');
+                    if (Token.LC == getNext(source, length, i)) result.append(' ');
+                    break;
+
+                case Token.LB:
+                    result.append('[');
+                    break;
+
+                case Token.RB:
+                    result.append(']');
+                    break;
+
+                case Token.EOL:
+                    {
+                        if (toSource) break;
+                        boolean newLine = true;
+                        if (!afterFirstEOL) {
+                            afterFirstEOL = true;
+                            if (justFunctionBody) {
+                                /* throw away just added 'function name(...) {'
+                                 * and restore the original indent
+                                 */
+                                result.setLength(0);
+                                indent -= indentGap;
+                                newLine = false;
+                            }
+                        }
+                        if (newLine) {
+                            result.append('\n');
+                        }
+
+                        /* add indent if any tokens remain,
+                         * less setback if next token is
+                         * a label, case or default.
+                         */
+                        if (i + 1 < length) {
+                            int less = 0;
+                            int nextToken = source.charAt(i + 1);
+                            if (nextToken == Token.CASE || nextToken == Token.DEFAULT) {
+                                less = indentGap - caseGap;
+                            } else if (nextToken == Token.RC) {
+                                less = indentGap;
+                            }
+
+                            /* elaborate check against label... skip past a
+                             * following inlined NAME and look for a COLON.
+                             */
+                            else if (nextToken == Token.NAME) {
+                                int afterName = getSourceStringEnd(source, i + 2);
+                                if (source.charAt(afterName) == Token.COLON) less = indentGap;
+                            }
+
+                            for (; less < indent; less++) result.append(' ');
+                        }
+                        break;
+                    }
+                case Token.DOT:
+                    result.append('.');
+                    break;
+
+                case Token.NEW:
+                    result.append("new ");
+                    break;
+
+                case Token.DELPROP:
+                    result.append("delete ");
+                    break;
+
+                case Token.IF:
+                    result.append("if ");
+                    break;
+
+                case Token.ELSE:
+                    result.append("else ");
+                    break;
+
+                case Token.FOR:
+                    result.append("for ");
+                    break;
+
+                case Token.IN:
+                    result.append(" in ");
+                    break;
+
+                case Token.WITH:
+                    result.append("with ");
+                    break;
+
+                case Token.WHILE:
+                    result.append("while ");
+                    break;
+
+                case Token.DO:
+                    result.append("do ");
+                    break;
+
+                case Token.TRY:
+                    result.append("try ");
+                    break;
+
+                case Token.CATCH:
+                    result.append("catch ");
+                    break;
+
+                case Token.FINALLY:
+                    result.append("finally ");
+                    break;
+
+                case Token.THROW:
+                    result.append("throw ");
+                    break;
+
+                case Token.SWITCH:
+                    result.append("switch ");
+                    break;
+
+                case Token.BREAK:
+                    result.append("break");
+                    if (Token.NAME == getNext(source, length, i)) result.append(' ');
+                    break;
+
+                case Token.CONTINUE:
+                    result.append("continue");
+                    if (Token.NAME == getNext(source, length, i)) result.append(' ');
+                    break;
+
+                case Token.CASE:
+                    result.append("case ");
+                    break;
+
+                case Token.DEFAULT:
+                    result.append("default");
+                    break;
+
+                case Token.RETURN:
+                    result.append("return");
+                    if (Token.SEMI != getNext(source, length, i)) result.append(' ');
+                    break;
+
+                case Token.VAR:
+                    result.append("var ");
+                    break;
+
+                case Token.LET:
+                    result.append("let ");
+                    break;
+
+                case Token.SEMI:
+                    result.append(';');
+                    if (Token.EOL != getNext(source, length, i)) {
+                        // separators in FOR
                         result.append(' ');
-                }
-                break;
-            }
-            case Token.DOT:
-                result.append('.');
-                break;
-
-            case Token.NEW:
-                result.append("new ");
-                break;
-
-            case Token.DELPROP:
-                result.append("delete ");
-                break;
-
-            case Token.IF:
-                result.append("if ");
-                break;
-
-            case Token.ELSE:
-                result.append("else ");
-                break;
-
-            case Token.FOR:
-                result.append("for ");
-                break;
-
-            case Token.IN:
-                result.append(" in ");
-                break;
-
-            case Token.WITH:
-                result.append("with ");
-                break;
-
-            case Token.WHILE:
-                result.append("while ");
-                break;
-
-            case Token.DO:
-                result.append("do ");
-                break;
-
-            case Token.TRY:
-                result.append("try ");
-                break;
-
-            case Token.CATCH:
-                result.append("catch ");
-                break;
-
-            case Token.FINALLY:
-                result.append("finally ");
-                break;
-
-            case Token.THROW:
-                result.append("throw ");
-                break;
-
-            case Token.SWITCH:
-                result.append("switch ");
-                break;
-
-            case Token.BREAK:
-                result.append("break");
-                if (Token.NAME == getNext(source, length, i))
-                    result.append(' ');
-                break;
-
-            case Token.CONTINUE:
-                result.append("continue");
-                if (Token.NAME == getNext(source, length, i))
-                    result.append(' ');
-                break;
-
-            case Token.CASE:
-                result.append("case ");
-                break;
-
-            case Token.DEFAULT:
-                result.append("default");
-                break;
-
-            case Token.RETURN:
-                result.append("return");
-                if (Token.SEMI != getNext(source, length, i))
-                    result.append(' ');
-                break;
-
-            case Token.VAR:
-                result.append("var ");
-                break;
-
-            case Token.LET:
-              result.append("let ");
-              break;
-
-            case Token.SEMI:
-                result.append(';');
-                if (Token.EOL != getNext(source, length, i)) {
-                    // separators in FOR
-                    result.append(' ');
-                }
-                break;
-
-            case Token.ASSIGN:
-                result.append(" = ");
-                break;
-
-            case Token.ASSIGN_ADD:
-                result.append(" += ");
-                break;
-
-            case Token.ASSIGN_SUB:
-                result.append(" -= ");
-                break;
-
-            case Token.ASSIGN_MUL:
-                result.append(" *= ");
-                break;
-
-            case Token.ASSIGN_DIV:
-                result.append(" /= ");
-                break;
-
-            case Token.ASSIGN_MOD:
-                result.append(" %= ");
-                break;
-
-            case Token.ASSIGN_BITOR:
-                result.append(" |= ");
-                break;
-
-            case Token.ASSIGN_BITXOR:
-                result.append(" ^= ");
-                break;
-
-            case Token.ASSIGN_BITAND:
-                result.append(" &= ");
-                break;
-
-            case Token.ASSIGN_LSH:
-                result.append(" <<= ");
-                break;
-
-            case Token.ASSIGN_RSH:
-                result.append(" >>= ");
-                break;
-
-            case Token.ASSIGN_URSH:
-                result.append(" >>>= ");
-                break;
-
-            case Token.HOOK:
-                result.append(" ? ");
-                break;
-
-            case Token.OBJECTLIT:
-                // pun OBJECTLIT to mean colon in objlit property
-                // initialization.
-                // This needs to be distinct from COLON in the general case
-                // to distinguish from the colon in a ternary... which needs
-                // different spacing.
-                result.append(": ");
-                break;
-
-            case Token.COLON:
-                if (Token.EOL == getNext(source, length, i))
-                    // it's the end of a label
-                    result.append(':');
-                else
-                    // it's the middle part of a ternary
-                    result.append(" : ");
-                break;
-
-            case Token.OR:
-                result.append(" || ");
-                break;
-
-            case Token.AND:
-                result.append(" && ");
-                break;
-
-            case Token.BITOR:
-                result.append(" | ");
-                break;
-
-            case Token.BITXOR:
-                result.append(" ^ ");
-                break;
-
-            case Token.BITAND:
-                result.append(" & ");
-                break;
-
-            case Token.SHEQ:
-                result.append(" === ");
-                break;
-
-            case Token.SHNE:
-                result.append(" !== ");
-                break;
-
-            case Token.EQ:
-                result.append(" == ");
-                break;
-
-            case Token.NE:
-                result.append(" != ");
-                break;
-
-            case Token.LE:
-                result.append(" <= ");
-                break;
-
-            case Token.LT:
-                result.append(" < ");
-                break;
-
-            case Token.GE:
-                result.append(" >= ");
-                break;
-
-            case Token.GT:
-                result.append(" > ");
-                break;
-
-            case Token.INSTANCEOF:
-                result.append(" instanceof ");
-                break;
-
-            case Token.LSH:
-                result.append(" << ");
-                break;
-
-            case Token.RSH:
-                result.append(" >> ");
-                break;
-
-            case Token.URSH:
-                result.append(" >>> ");
-                break;
-
-            case Token.TYPEOF:
-                result.append("typeof ");
-                break;
-
-            case Token.VOID:
-                result.append("void ");
-                break;
-
-            case Token.CONST:
-                result.append("const ");
-                break;
-
-            case Token.YIELD:
-                result.append("yield ");
-                break;
-            
-            case Token.YIELD_STAR:
-                result.append("yield *");
-                break;
-
-            case Token.NOT:
-                result.append('!');
-                break;
-
-            case Token.BITNOT:
-                result.append('~');
-                break;
-
-            case Token.POS:
-                result.append('+');
-                break;
-
-            case Token.NEG:
-                result.append('-');
-                break;
-
-            case Token.INC:
-                result.append("++");
-                break;
-
-            case Token.DEC:
-                result.append("--");
-                break;
-
-            case Token.ADD:
-                result.append(" + ");
-                break;
-
-            case Token.SUB:
-                result.append(" - ");
-                break;
-
-            case Token.MUL:
-                result.append(" * ");
-                break;
-
-            case Token.DIV:
-                result.append(" / ");
-                break;
-
-            case Token.MOD:
-                result.append(" % ");
-                break;
-
-            case Token.COLONCOLON:
-                result.append("::");
-                break;
-
-            case Token.DOTDOT:
-                result.append("..");
-                break;
-
-            case Token.DOTQUERY:
-                result.append(".(");
-                break;
-
-            case Token.XMLATTR:
-                result.append('@');
-                break;
-
-            case Token.DEBUGGER:
-                result.append("debugger;\n");
-                break;
-
-            case Token.ARROW:
-                result.append(" => ");
-                break;
-
-            default:
-                // If we don't know how to decompile it, raise an exception.
-                throw new RuntimeException("Token: " +
-                                               Token.name(source.charAt(i)));
+                    }
+                    break;
+
+                case Token.ASSIGN:
+                    result.append(" = ");
+                    break;
+
+                case Token.ASSIGN_ADD:
+                    result.append(" += ");
+                    break;
+
+                case Token.ASSIGN_SUB:
+                    result.append(" -= ");
+                    break;
+
+                case Token.ASSIGN_MUL:
+                    result.append(" *= ");
+                    break;
+
+                case Token.ASSIGN_DIV:
+                    result.append(" /= ");
+                    break;
+
+                case Token.ASSIGN_MOD:
+                    result.append(" %= ");
+                    break;
+
+                case Token.ASSIGN_BITOR:
+                    result.append(" |= ");
+                    break;
+
+                case Token.ASSIGN_BITXOR:
+                    result.append(" ^= ");
+                    break;
+
+                case Token.ASSIGN_BITAND:
+                    result.append(" &= ");
+                    break;
+
+                case Token.ASSIGN_LSH:
+                    result.append(" <<= ");
+                    break;
+
+                case Token.ASSIGN_RSH:
+                    result.append(" >>= ");
+                    break;
+
+                case Token.ASSIGN_URSH:
+                    result.append(" >>>= ");
+                    break;
+
+                case Token.HOOK:
+                    result.append(" ? ");
+                    break;
+
+                case Token.OBJECTLIT:
+                    // pun OBJECTLIT to mean colon in objlit property
+                    // initialization.
+                    // This needs to be distinct from COLON in the general case
+                    // to distinguish from the colon in a ternary... which needs
+                    // different spacing.
+                    result.append(": ");
+                    break;
+
+                case Token.COLON:
+                    if (Token.EOL == getNext(source, length, i))
+                        // it's the end of a label
+                        result.append(':');
+                    else
+                        // it's the middle part of a ternary
+                        result.append(" : ");
+                    break;
+
+                case Token.OR:
+                    result.append(" || ");
+                    break;
+
+                case Token.AND:
+                    result.append(" && ");
+                    break;
+
+                case Token.BITOR:
+                    result.append(" | ");
+                    break;
+
+                case Token.BITXOR:
+                    result.append(" ^ ");
+                    break;
+
+                case Token.BITAND:
+                    result.append(" & ");
+                    break;
+
+                case Token.SHEQ:
+                    result.append(" === ");
+                    break;
+
+                case Token.SHNE:
+                    result.append(" !== ");
+                    break;
+
+                case Token.EQ:
+                    result.append(" == ");
+                    break;
+
+                case Token.NE:
+                    result.append(" != ");
+                    break;
+
+                case Token.LE:
+                    result.append(" <= ");
+                    break;
+
+                case Token.LT:
+                    result.append(" < ");
+                    break;
+
+                case Token.GE:
+                    result.append(" >= ");
+                    break;
+
+                case Token.GT:
+                    result.append(" > ");
+                    break;
+
+                case Token.INSTANCEOF:
+                    result.append(" instanceof ");
+                    break;
+
+                case Token.LSH:
+                    result.append(" << ");
+                    break;
+
+                case Token.RSH:
+                    result.append(" >> ");
+                    break;
+
+                case Token.URSH:
+                    result.append(" >>> ");
+                    break;
+
+                case Token.TYPEOF:
+                    result.append("typeof ");
+                    break;
+
+                case Token.VOID:
+                    result.append("void ");
+                    break;
+
+                case Token.CONST:
+                    result.append("const ");
+                    break;
+
+                case Token.YIELD:
+                    result.append("yield ");
+                    break;
+
+                case Token.YIELD_STAR:
+                    result.append("yield *");
+                    break;
+
+                case Token.NOT:
+                    result.append('!');
+                    break;
+
+                case Token.BITNOT:
+                    result.append('~');
+                    break;
+
+                case Token.POS:
+                    result.append('+');
+                    break;
+
+                case Token.NEG:
+                    result.append('-');
+                    break;
+
+                case Token.INC:
+                    result.append("++");
+                    break;
+
+                case Token.DEC:
+                    result.append("--");
+                    break;
+
+                case Token.ADD:
+                    result.append(" + ");
+                    break;
+
+                case Token.SUB:
+                    result.append(" - ");
+                    break;
+
+                case Token.MUL:
+                    result.append(" * ");
+                    break;
+
+                case Token.DIV:
+                    result.append(" / ");
+                    break;
+
+                case Token.MOD:
+                    result.append(" % ");
+                    break;
+
+                case Token.EXP:
+                    result.append(" ** ");
+                    break;
+
+                case Token.COLONCOLON:
+                    result.append("::");
+                    break;
+
+                case Token.DOTDOT:
+                    result.append("..");
+                    break;
+
+                case Token.DOTQUERY:
+                    result.append(".(");
+                    break;
+
+                case Token.XMLATTR:
+                    result.append('@');
+                    break;
+
+                case Token.DEBUGGER:
+                    result.append("debugger;\n");
+                    break;
+
+                case Token.ARROW:
+                    result.append(" => ");
+                    break;
+
+                case Token.TEMPLATE_LITERAL:
+                    result.append("`");
+                    break;
+
+                case Token.TEMPLATE_LITERAL_SUBST:
+                    result.append("${");
+                    break;
+
+                case Token.TEMPLATE_CHARS:
+                    i = printSourceString(source, i + 1, false, result);
+                    continue;
+
+                default:
+                    // If we don't know how to decompile it, raise an exception.
+                    throw new RuntimeException("Token: " + Token.name(source.charAt(i)));
             }
             ++i;
         }
 
         if (!toSource) {
             // add that trailing newline if it's an outermost function.
-            if (!justFunctionBody)
-                result.append('\n');
+            if (!justFunctionBody) result.append('\n');
         } else {
             if (topFunctionType == FunctionNode.FUNCTION_EXPRESSION) {
                 result.append(')');
@@ -823,20 +801,16 @@ public class Decompiler
         return result.toString();
     }
 
-    private static int getNext(String source, int length, int i)
-    {
+    private static int getNext(String source, int length, int i) {
         return (i + 1 < length) ? source.charAt(i + 1) : Token.EOF;
     }
 
-    private static int getSourceStringEnd(String source, int offset)
-    {
+    private static int getSourceStringEnd(String source, int offset) {
         return printSourceString(source, offset, false, null);
     }
 
-    private static int printSourceString(String source, int offset,
-                                         boolean asQuotedString,
-                                         StringBuilder sb)
-    {
+    private static int printSourceString(
+            String source, int offset, boolean asQuotedString, StringBuilder sb) {
         int length = source.charAt(offset);
         ++offset;
         if ((0x8000 & length) != 0) {
@@ -856,9 +830,7 @@ public class Decompiler
         return offset + length;
     }
 
-    private static int printSourceNumber(String source, int offset,
-                                         StringBuilder sb)
-    {
+    private static int printSourceNumber(String source, int offset, StringBuilder sb) {
         double number = 0.0;
         char type = source.charAt(offset);
         ++offset;
@@ -871,9 +843,9 @@ public class Decompiler
         } else if (type == 'J' || type == 'D') {
             if (sb != null) {
                 long lbits;
-                lbits = (long)source.charAt(offset) << 48;
-                lbits |= (long)source.charAt(offset + 1) << 32;
-                lbits |= (long)source.charAt(offset + 2) << 16;
+                lbits = (long) source.charAt(offset) << 48;
+                lbits |= (long) source.charAt(offset + 1) << 32;
+                lbits |= (long) source.charAt(offset + 2) << 16;
                 lbits |= source.charAt(offset + 3);
                 if (type == 'J') {
                     number = lbits;
@@ -892,13 +864,30 @@ public class Decompiler
         return offset;
     }
 
+    /**
+     * @see #printSourceString(String source, int offset, boolean asQuotedString, StringBuilder sb)
+     */
+    private static int printSourceBigInt(String source, int offset, StringBuilder sb) {
+        int length = source.charAt(offset);
+        ++offset;
+        if ((0x8000 & length) != 0) {
+            length = ((0x7FFF & length) << 16) | source.charAt(offset);
+            ++offset;
+        }
+        if (sb != null) {
+            String str = source.substring(offset, offset + length);
+            sb.append(str);
+            sb.append('n');
+        }
+        return offset + length;
+    }
+
     private char[] sourceBuffer = new char[128];
 
-// Per script/function source buffer top: parent source does not include a
-// nested functions source and uses function index as a reference instead.
+    // Per script/function source buffer top: parent source does not include a
+    // nested functions source and uses function index as a reference instead.
     private int sourceTop;
 
-// whether to do a debug print of the source information, when decompiling.
+    // whether to do a debug print of the source information, when decompiling.
     private static final boolean printSource = false;
-
 }

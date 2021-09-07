@@ -26,7 +26,6 @@ public class NativeJavaList extends NativeJavaObject {
         return "JavaList";
     }
 
-
     @Override
     public boolean has(String name, Scriptable start) {
         if (name.equals("length")) {
@@ -69,12 +68,12 @@ public class NativeJavaList extends NativeJavaObject {
     @Override
     public Object get(int index, Scriptable start) {
         if (isWithValidIndex(index)) {
-            Context cx = Context.getContext();
+            Context cx = Context.getCurrentContext();
             Object obj = list.get(index);
-            if (obj == null) {
-                return null;
+            if (cx != null) {
+                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
-            return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
+            return obj;
         }
         return Undefined.instance;
     }
@@ -91,10 +90,7 @@ public class NativeJavaList extends NativeJavaObject {
     public void put(int index, Scriptable start, Object value) {
         if (index >= 0) {
             ensureCapacity(index + 1);
-            if (value instanceof Wrapper) {
-                value = ((Wrapper) value).unwrap();
-            }
-            list.set(index, value);
+            list.set(index, Context.jsToJava(value, Object.class));
             return;
         }
         super.put(index, start, value);
@@ -146,6 +142,6 @@ public class NativeJavaList extends NativeJavaObject {
     }
 
     private boolean isWithValidIndex(int index) {
-        return index >= 0  && index < list.size();
+        return index >= 0 && index < list.size();
     }
 }

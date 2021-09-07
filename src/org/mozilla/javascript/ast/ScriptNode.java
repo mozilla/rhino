@@ -9,13 +9,12 @@ package org.mozilla.javascript.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
- * Base type for {@link AstRoot} and {@link FunctionNode} nodes, which need to
- * collect much of the same information.
+ * Base type for {@link AstRoot} and {@link FunctionNode} nodes, which need to collect much of the
+ * same information.
  */
 public class ScriptNode extends Scope {
 
@@ -27,6 +26,7 @@ public class ScriptNode extends Scope {
 
     private List<FunctionNode> functions;
     private List<RegExpLiteral> regexps;
+    private List<TemplateLiteral> templateLiterals;
     private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
     private List<Symbol> symbols = new ArrayList<Symbol>(4);
@@ -44,32 +44,29 @@ public class ScriptNode extends Scope {
         this.type = Token.SCRIPT;
     }
 
-    public ScriptNode() {
-    }
+    public ScriptNode() {}
 
     public ScriptNode(int pos) {
         super(pos);
     }
 
     /**
-     * Returns the URI, path or descriptive text indicating the origin
-     * of this script's source code.
+     * Returns the URI, path or descriptive text indicating the origin of this script's source code.
      */
     public String getSourceName() {
         return sourceName;
     }
 
     /**
-     * Sets the URI, path or descriptive text indicating the origin
-     * of this script's source code.
+     * Sets the URI, path or descriptive text indicating the origin of this script's source code.
      */
     public void setSourceName(String sourceName) {
         this.sourceName = sourceName;
     }
 
     /**
-     * Returns the start offset of the encoded source.
-     * Only valid if {@link #getEncodedSource} returns non-{@code null}.
+     * Returns the start offset of the encoded source. Only valid if {@link #getEncodedSource}
+     * returns non-{@code null}.
      */
     public int getEncodedSourceStart() {
         return encodedSourceStart;
@@ -77,6 +74,7 @@ public class ScriptNode extends Scope {
 
     /**
      * Used by code generator.
+     *
      * @see #getEncodedSource
      */
     public void setEncodedSourceStart(int start) {
@@ -84,8 +82,8 @@ public class ScriptNode extends Scope {
     }
 
     /**
-     * Returns the end offset of the encoded source.
-     * Only valid if {@link #getEncodedSource} returns non-{@code null}.
+     * Returns the end offset of the encoded source. Only valid if {@link #getEncodedSource} returns
+     * non-{@code null}.
      */
     public int getEncodedSourceEnd() {
         return encodedSourceEnd;
@@ -93,6 +91,7 @@ public class ScriptNode extends Scope {
 
     /**
      * Used by code generator.
+     *
      * @see #getEncodedSource
      */
     public void setEncodedSourceEnd(int end) {
@@ -101,6 +100,7 @@ public class ScriptNode extends Scope {
 
     /**
      * Used by code generator.
+     *
      * @see #getEncodedSource
      */
     public void setEncodedSourceBounds(int start, int end) {
@@ -110,6 +110,7 @@ public class ScriptNode extends Scope {
 
     /**
      * Used by the code generator.
+     *
      * @see #getEncodedSource
      */
     public void setEncodedSource(String encodedSource) {
@@ -117,17 +118,14 @@ public class ScriptNode extends Scope {
     }
 
     /**
-     * Returns a canonical version of the source for this script or function,
-     * for use in implementing the {@code Object.toSource} method of
-     * JavaScript objects.  This source encoding is only recorded during code
-     * generation.  It must be passed back to
-     * {@link org.mozilla.javascript.Decompiler#decompile} to construct the
-     * human-readable source string.<p>
+     * Returns a canonical version of the source for this script or function, for use in
+     * implementing the {@code Object.toSource} method of JavaScript objects. This source encoding
+     * is only recorded during code generation. It must be passed back to {@link
+     * org.mozilla.javascript.Decompiler#decompile} to construct the human-readable source string.
      *
-     * Given a parsed AST, you can always convert it to source code using the
-     * {@link AstNode#toSource} method, although it's not guaranteed to produce
-     * exactly the same results as {@code Object.toSource} with respect to
-     * formatting, parenthesization and other details.
+     * <p>Given a parsed AST, you can always convert it to source code using the {@link
+     * AstNode#toSource} method, although it's not guaranteed to produce exactly the same results as
+     * {@code Object.toSource} with respect to formatting, parenthesization and other details.
      *
      * @return the encoded source, or {@code null} if it was not recorded.
      */
@@ -140,9 +138,8 @@ public class ScriptNode extends Scope {
     }
 
     /**
-     * Sets base (starting) line number for this script or function.
-     * This is a one-time operation, and throws an exception if the
-     * line number has already been set.
+     * Sets base (starting) line number for this script or function. This is a one-time operation,
+     * and throws an exception if the line number has already been set.
      */
     public void setBaseLineno(int lineno) {
         if (lineno < 0 || this.lineno >= 0) codeBug();
@@ -172,14 +169,14 @@ public class ScriptNode extends Scope {
     }
 
     /**
-     * Adds a {@link FunctionNode} to the functions table for codegen.
-     * Does not set the parent of the node.
+     * Adds a {@link FunctionNode} to the functions table for codegen. Does not set the parent of
+     * the node.
+     *
      * @return the index of the function within its parent
      */
     public int addFunction(FunctionNode fnNode) {
         if (fnNode == null) codeBug();
-        if (functions == null)
-            functions = new ArrayList<FunctionNode>();
+        if (functions == null) functions = new ArrayList<FunctionNode>();
         functions.add(fnNode);
         return functions.size() - 1;
     }
@@ -196,15 +193,28 @@ public class ScriptNode extends Scope {
         return regexps.get(index).getFlags();
     }
 
-    /**
-     * Called by IRFactory to add a RegExp to the regexp table.
-     */
+    /** Called by IRFactory to add a RegExp to the regexp table. */
     public void addRegExp(RegExpLiteral re) {
         if (re == null) codeBug();
-        if (regexps == null)
-            regexps = new ArrayList<RegExpLiteral>();
+        if (regexps == null) regexps = new ArrayList<RegExpLiteral>();
         regexps.add(re);
         re.putIntProp(REGEXP_PROP, regexps.size() - 1);
+    }
+
+    public int getTemplateLiteralCount() {
+        return templateLiterals == null ? 0 : templateLiterals.size();
+    }
+
+    public List<TemplateCharacters> getTemplateLiteralStrings(int index) {
+        return templateLiterals.get(index).getTemplateStrings();
+    }
+
+    /** Called by IRFactory to add a Template Literal to the templateLiterals table. */
+    public void addTemplateLiteral(TemplateLiteral templateLiteral) {
+        if (templateLiteral == null) codeBug();
+        if (templateLiterals == null) templateLiterals = new ArrayList<TemplateLiteral>();
+        templateLiterals.add(templateLiteral);
+        templateLiteral.putIntProp(TEMPLATE_LITERAL_PROP, templateLiterals.size() - 1);
     }
 
     public int getIndexForNameNode(Node nameNode) {
@@ -258,12 +268,11 @@ public class ScriptNode extends Scope {
     }
 
     /**
-     * Assign every symbol a unique integer index. Generate arrays of variable
-     * names and constness that can be indexed by those indices.
+     * Assign every symbol a unique integer index. Generate arrays of variable names and constness
+     * that can be indexed by those indices.
      *
-     * @param flattenAllTables if true, flatten all symbol tables,
-     * included nested block scope symbol tables. If false, just flatten the
-     * script's or function's symbol table.
+     * @param flattenAllTables if true, flatten all symbol tables, included nested block scope
+     *     symbol tables. If false, just flatten the script's or function's symbol table.
      */
     public void flattenSymbolTable(boolean flattenAllTables) {
         if (!flattenAllTables) {
@@ -298,8 +307,7 @@ public class ScriptNode extends Scope {
     public void setCompilerData(Object data) {
         assertNotNull(data);
         // Can only call once
-        if (compilerData != null)
-            throw new IllegalStateException();
+        if (compilerData != null) throw new IllegalStateException();
         compilerData = data;
     }
 
@@ -319,7 +327,7 @@ public class ScriptNode extends Scope {
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
             for (Node kid : this) {
-                ((AstNode)kid).visit(v);
+                ((AstNode) kid).visit(v);
             }
         }
     }

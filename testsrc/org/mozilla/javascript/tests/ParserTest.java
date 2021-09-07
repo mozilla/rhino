@@ -41,7 +41,7 @@ import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.SwitchCase;
 import org.mozilla.javascript.ast.SwitchStatement;
 import org.mozilla.javascript.ast.TryStatement;
-import org.mozilla.javascript.ast.UnaryExpression;
+import org.mozilla.javascript.ast.UpdateExpression;
 import org.mozilla.javascript.ast.VariableDeclaration;
 import org.mozilla.javascript.ast.VariableInitializer;
 import org.mozilla.javascript.ast.WithStatement;
@@ -314,7 +314,7 @@ public class ParserTest extends TestCase {
         AstNode caseArg = firstCase.getExpression();
         List<AstNode> caseBody = firstCase.getStatements();
         ExpressionStatement exprStmt = (ExpressionStatement) caseBody.get(0);
-        UnaryExpression incrExpr = (UnaryExpression) exprStmt.getExpression();
+        UpdateExpression incrExpr = (UpdateExpression) exprStmt.getExpression();
         AstNode incrVar = incrExpr.getOperand();
 
         SwitchCase secondCase = cases.get(1);
@@ -479,8 +479,8 @@ public class ParserTest extends TestCase {
 
         ExpressionStatement first = (ExpressionStatement) root.getFirstChild();
         ExpressionStatement secondStmt = (ExpressionStatement) first.getNext();
-        UnaryExpression firstOp = (UnaryExpression) first.getExpression();
-        UnaryExpression secondOp = (UnaryExpression) secondStmt.getExpression();
+        UpdateExpression firstOp = (UpdateExpression) first.getExpression();
+        UpdateExpression secondOp = (UpdateExpression) secondStmt.getExpression();
         AstNode firstVarRef = firstOp.getOperand();
         AstNode secondVarRef = secondOp.getOperand();
 
