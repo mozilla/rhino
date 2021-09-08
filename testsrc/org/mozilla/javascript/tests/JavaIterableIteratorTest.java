@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 
 /*
@@ -78,85 +79,46 @@ public class JavaIterableIteratorTest extends TestCase {
     }
 
     @Test
-    public void testArrayIterator() {
+    public void testJavaIterator() {
         String js =
                 "var ret = '';\n"
                         + "var iter = list.iterator();\n"
                         + "while(iter.hasNext()) ret += iter.next()+',';\n"
                         + "ret";
-        testJavaObjectIterate(js, FOO_BAR_BAZ);
-        // there is no .iterator() function on the JS side
+        testIterate(js, FOO_BAR_BAZ);
     }
 
     @Test
-    public void testArrayForEach() {
-        String js = "var ret = '';\n" + "for each(elem in list)  ret += elem + ',';\n" + "ret";
-        testJsArrayIterate(js, FOO_BAR_BAZ);
-        testJavaObjectIterate(js, FOO_BAR_BAZ);
-        testJavaArrayIterate(js, FOO_BAR_BAZ);
+    public void testForEach() {
+        String jsForEach =
+                "var ret = '';\n" + "for each(elem in list)  ret += elem + ',';\n" + "ret";
+
+        testIterate(jsForEach, FOO_BAR_BAZ);
     }
 
     @Test
-    public void testArrayForKeys() {
-        String js = "var ret = '';\n" + "for(elem in list)  ret += elem + ',';\n" + "ret";
-        testJsArrayIterate(js, "0,1,2,");
-        if (iterable instanceof Collection) {
-            testJavaObjectIterate(js, "0,1,2,");
-        }
-        testJavaArrayIterate(js, "0,1,2,");
+    public void testForKeys() {
+        String jsForKeys = "var ret = '';\n" + "for (elem in list)  ret += elem + ',';\n" + "ret";
+        testIterate(jsForKeys, "0,1,2,");
     }
 
     @Test
-    public void testArrayForIndex() {
-        String js =
-                "var ret = '';\n"
-                        + "for(var idx = 0; idx < list.length; idx++)  ret += idx + ',';\n"
-                        + "ret";
-        testJsArrayIterate(js, "0,1,2,");
-        testJavaArrayIterate(js, "0,1,2,");
-        if (iterable instanceof Collection) {
-            testJavaObjectIterate(js, "0,1,2,");
-        }
-    }
-
-    // use NativeJavaArray
-    private void testJavaArrayIterate(String script, String expected) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final ScriptableObject scope = cx.initStandardObjects();
-                    List list = new ArrayList<>();
-                    iterable.forEach(list::add);
-                    scope.put("list", scope, list.toArray());
-                    Object o = cx.evaluateString(scope, script, "testJavaArrayIterate.js", 1, null);
-                    assertEquals(expected, o);
-
-                    return null;
-                });
+    public void testForOf() {
+        String jsForKeys =
+                "var ret = '';\n" + "for (var elem of list)  ret += elem + ',';\n" + "ret";
+        testIterate(jsForKeys, FOO_BAR_BAZ);
     }
 
     // use the java object directly
-    private void testJavaObjectIterate(String script, String expected) {
+    private void testIterate(String script, String expected) {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
+                    cx.setLanguageVersion(Context.VERSION_ES6);
                     final ScriptableObject scope = cx.initStandardObjects();
                     scope.put("list", scope, iterable);
-                    Object o = cx.evaluateString(scope, script, "testJavaListIterate.js", 1, null);
+                    Object o = cx.evaluateString(scope, script, "testIterate.js", 1, null);
                     assertEquals(expected, o);
 
-                    return null;
-                });
-    }
-
-    // use nativeArray
-    private void testJsArrayIterate(String script, String expected) {
-        Utils.runWithAllOptimizationLevels(
-                cx -> {
-                    final ScriptableObject scope = cx.initStandardObjects();
-                    List list = new ArrayList<>();
-                    iterable.forEach(list::add);
-                    scope.put("list", scope, cx.newArray(scope, list.toArray()));
-                    Object o = cx.evaluateString(scope, script, "testJsArrayIterate.js", 1, null);
-                    assertEquals(expected, o);
                     return null;
                 });
     }

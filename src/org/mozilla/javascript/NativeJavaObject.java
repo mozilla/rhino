@@ -13,7 +13,6 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
@@ -65,16 +64,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public boolean has(String name, Scriptable start) {
-        if (members.has(name, false)) {
+        if (name.equals(NativeIterator.ITERATOR_PROPERTY_NAME) && javaObject instanceof Iterable) {
             return true;
-        } else if (name.equals("length") && javaObject instanceof Collection) {
-            return true;
-        } else if (name.equals(NativeIterator.ITERATOR_PROPERTY_NAME)
-                && javaObject instanceof Iterator) {
-            return true;
-        } else {
-            return false;
         }
+        return members.has(name, false);
     }
 
     @Override
@@ -92,6 +85,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public Object get(String name, Scriptable start) {
+        if (name.equals(NativeIterator.ITERATOR_PROPERTY_NAME) && javaObject instanceof Iterable) {
+            return es5Iterator;
+        }
         if (fieldAndMethods != null) {
             Object result = fieldAndMethods.get(name);
             if (result != null) {
@@ -100,16 +96,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
         // TODO: passing 'this' as the scope is bogus since it has
         //  no parent scope
-        Object ret = members.get(this, name, javaObject, false);
-        if (ret == Scriptable.NOT_FOUND) {
-            if ("length".equals(name) && javaObject instanceof Collection) {
-                return Integer.valueOf(((Collection) javaObject).size());
-            } else if (name.equals(NativeIterator.ITERATOR_PROPERTY_NAME)
-                    && javaObject instanceof Iterator) {
-                return es5Iterator;
-            }
-        }
-        return ret;
+        return members.get(this, name, javaObject, false);
     }
 
     @Override
@@ -910,18 +897,16 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                     throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
                 }
                 Object wrapped = ((NativeJavaObject) thisObj).javaObject;
+                Iterator<?> iter = ((Iterable<?>) wrapped).iterator();
                 if (Boolean.TRUE.equals(args[0])) {
                     // key only iterator, we will return an iterator
-                    // for the sequence of the collection length.
-                    int length = ((Collection<?>) wrapped).size();
                     return cx.getWrapFactory()
                             .wrap(
                                     cx,
                                     scope,
-                                    new SequenceIterator(length, scope),
-                                    WrappedJavaIterator.class);
+                                    new KeyOnlyIterator(iter, scope),
+                                    KeyOnlyIterator.class);
                 } else {
-                    Iterator<?> iter = ((Iterable<?>) wrapped).iterator();
                     return cx.getWrapFactory()
                             .wrap(
                                     cx,
@@ -931,28 +916,22 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
                 }
             };
 
-    public static class SequenceIterator {
-        SequenceIterator(int size, Scriptable scope) {
-            this.size = size;
-            this.scope = scope;
+    public static class KeyOnlyIterator extends WrappedJavaIterator {
+
+        KeyOnlyIterator(Iterator<?> iterator, Scriptable scope) {
+            super(iterator, scope);
         }
 
         public Object next() {
-            if (pos >= size) {
-                // Out of values. Throw StopIteration.
-                throw new JavaScriptException(
-                        NativeIterator.getStopIterationObject(scope), null, 0);
-            }
-            return pos++;
+            super.next();
+            return key++;
         }
 
         public Object __iterator__(boolean b) {
             return this;
         }
 
-        private int size;
-        private int pos;
-        private Scriptable scope;
+        private int key = 0;
     }
 
     private static final class JavaIterableIterator extends ES6Iterator {
