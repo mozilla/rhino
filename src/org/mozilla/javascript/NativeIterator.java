@@ -233,6 +233,7 @@ public final class NativeIterator extends IdScriptableObject {
         return null;
     }
 
+<<<<<<< HEAD
     static class CollectionIteratorFunction extends BaseFunction {
         @Override
         public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
@@ -327,31 +328,23 @@ public final class NativeIterator extends IdScriptableObject {
         private Scriptable scope;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2007-06-11 09:43:19 EDT
-        L0:
-        {
-            id = 0;
-            String X = null;
-            int s_length = s.length();
-            if (s_length == 4) {
-                X = "next";
-                id = Id_next;
-            } else if (s_length == 11) {
-                X = "constructor";
+        switch (s) {
+            case "constructor":
                 id = Id_constructor;
-            } else if (s_length == 12) {
-                X = "__iterator__";
+                break;
+            case "next":
+                id = Id_next;
+                break;
+            case "__iterator__":
                 id = Id___iterator__;
-            }
-            if (X != null && X != s && !X.equals(s)) id = 0;
-            break L0;
+                break;
+            default:
+                id = 0;
+                break;
         }
-        // #/generated#
         return id;
     }
 
@@ -360,7 +353,6 @@ public final class NativeIterator extends IdScriptableObject {
             Id___iterator__ = 3,
             MAX_PROTOTYPE_ID = 3;
 
-    // #/string_id_map#
 
     private Object objectIterator;
 }

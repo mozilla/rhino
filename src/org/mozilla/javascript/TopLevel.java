@@ -4,44 +4,36 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
- package org.mozilla.javascript;
+package org.mozilla.javascript;
 
 import java.util.EnumMap;
 
 /**
- * A top-level scope object that provides special means to cache and preserve
- * the initial values of the built-in constructor properties for better
- * ECMAScript compliance.
+ * A top-level scope object that provides special means to cache and preserve the initial values of
+ * the built-in constructor properties for better ECMAScript compliance.
  *
- * <p>ECMA 262 requires that most constructors used internally construct
- * objects with the original prototype object as value of their [[Prototype]]
- * internal property. Since built-in global constructors are defined as
- * writable and deletable, this means they should be cached to protect against
- * redefinition at runtime.</p>
+ * <p>ECMA 262 requires that most constructors used internally construct objects with the original
+ * prototype object as value of their [[Prototype]] internal property. Since built-in global
+ * constructors are defined as writable and deletable, this means they should be cached to protect
+ * against redefinition at runtime.
  *
- * <p>In order to implement this efficiently, this class provides a mechanism
- * to access the original built-in global constructors and their prototypes
- * via numeric class-ids. To make use of this, the new
- * {@link ScriptRuntime#newBuiltinObject ScriptRuntime.newBuiltinObject} and
- * {@link ScriptRuntime#setBuiltinProtoAndParent ScriptRuntime.setBuiltinProtoAndParent}
- * methods should be used to create and initialize objects of built-in classes
- * instead of their generic counterparts.</p>
+ * <p>In order to implement this efficiently, this class provides a mechanism to access the original
+ * built-in global constructors and their prototypes via numeric class-ids. To make use of this, the
+ * new {@link ScriptRuntime#newBuiltinObject ScriptRuntime.newBuiltinObject} and {@link
+ * ScriptRuntime#setBuiltinProtoAndParent ScriptRuntime.setBuiltinProtoAndParent} methods should be
+ * used to create and initialize objects of built-in classes instead of their generic counterparts.
  *
- * <p>Calling {@link org.mozilla.javascript.Context#initStandardObjects()}
- * with an instance of this class as argument will automatically cache
- * built-in classes after initialization. For other setups involving
- * top-level scopes that inherit global properties from their proptotypes
- * (e.g. with dynamic scopes) embeddings should explicitly call
- * {@link #cacheBuiltins()} to initialize the class cache for each top-level
- * scope.</p>
+ * <p>Calling {@link org.mozilla.javascript.Context#initStandardObjects()} with an instance of this
+ * class as argument will automatically cache built-in classes after initialization. For other
+ * setups involving top-level scopes that inherit global properties from their proptotypes (e.g.
+ * with dynamic scopes) embeddings should explicitly call {@link #cacheBuiltins(Scriptable,
+ * boolean)} to initialize the class cache for each top-level scope.
  */
 public class TopLevel extends IdScriptableObject {
 
     private static final long serialVersionUID = -4648046356662472260L;
 
-    /**
-     * An enumeration of built-in ECMAScript objects.
-     */
+    /** An enumeration of built-in ECMAScript objects. */
     public enum Builtins {
         /** The built-in Object type. */
         Object,
@@ -62,12 +54,12 @@ public class TopLevel extends IdScriptableObject {
         /** The built-in Symbol type. */
         Symbol,
         /** The built-in GeneratorFunction type. */
-        GeneratorFunction
+        GeneratorFunction,
+        /** The built-in BigInt type. */
+        BigInt
     }
 
-    /**
-     * An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6]
-     */
+    /** An enumeration of built-in native errors. [ECMAScript 5 - 15.11.6] */
     enum NativeErrors {
         /** Basic Error */
         Error,
@@ -98,52 +90,50 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Cache the built-in ECMAScript objects to protect them against
-     * modifications by the script. This method is called automatically by
-     * {@link ScriptRuntime#initStandardObjects ScriptRuntime.initStandardObjects}
-     * if the scope argument is an instance of this class. It only has to be
-     * called by the embedding if a top-level scope is not initialized through
-     * <code>initStandardObjects()</code>.
+     * Cache the built-in ECMAScript objects to protect them against modifications by the script.
+     * This method is called automatically by {@link ScriptRuntime#initStandardObjects
+     * ScriptRuntime.initStandardObjects} if the scope argument is an instance of this class. It
+     * only has to be called by the embedding if a top-level scope is not initialized through <code>
+     * initStandardObjects()</code>.
      */
     public void cacheBuiltins(Scriptable scope, boolean sealed) {
         ctors = new EnumMap<Builtins, BaseFunction>(Builtins.class);
         for (Builtins builtin : Builtins.values()) {
             Object value = ScriptableObject.getProperty(this, builtin.name());
             if (value instanceof BaseFunction) {
-                ctors.put(builtin, (BaseFunction)value);
+                ctors.put(builtin, (BaseFunction) value);
             } else if (builtin == Builtins.GeneratorFunction) {
                 // Handle weird situation of "GeneratorFunction" being a real constructor
                 // which is never registered in the top-level scope
-                ctors.put(builtin, (BaseFunction)BaseFunction.initAsGeneratorFunction(scope, sealed));
+                ctors.put(
+                        builtin,
+                        (BaseFunction) BaseFunction.initAsGeneratorFunction(scope, sealed));
             }
         }
         errors = new EnumMap<NativeErrors, BaseFunction>(NativeErrors.class);
         for (NativeErrors error : NativeErrors.values()) {
             Object value = ScriptableObject.getProperty(this, error.name());
             if (value instanceof BaseFunction) {
-                errors.put(error, (BaseFunction)value);
+                errors.put(error, (BaseFunction) value);
             }
         }
     }
 
     /**
-     * Static helper method to get a built-in object constructor with the given
-     * <code>type</code> from the given <code>scope</code>. If the scope is not
-     * an instance of this class or does have a cache of built-ins,
-     * the constructor is looked up via normal property lookup.
+     * Static helper method to get a built-in object constructor with the given <code>type</code>
+     * from the given <code>scope</code>. If the scope is not an instance of this class or does have
+     * a cache of built-ins, the constructor is looked up via normal property lookup.
      *
      * @param cx the current Context
      * @param scope the top-level scope
      * @param type the built-in type
      * @return the built-in constructor
      */
-    public static Function getBuiltinCtor(Context cx,
-                                          Scriptable scope,
-                                          Builtins type) {
+    public static Function getBuiltinCtor(Context cx, Scriptable scope, Builtins type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
-            Function result = ((TopLevel)scope).getBuiltinCtor(type);
+            Function result = ((TopLevel) scope).getBuiltinCtor(type);
             if (result != null) {
                 return result;
             }
@@ -162,22 +152,20 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Static helper method to get a native error constructor with the given
-     * <code>type</code> from the given <code>scope</code>. If the scope is not
-     * an instance of this class or does have a cache of native errors,
-     * the constructor is looked up via normal property lookup.
+     * Static helper method to get a native error constructor with the given <code>type</code> from
+     * the given <code>scope</code>. If the scope is not an instance of this class or does have a
+     * cache of native errors, the constructor is looked up via normal property lookup.
      *
      * @param cx the current Context
      * @param scope the top-level scope
      * @param type the native error type
      * @return the native error constructor
      */
-    static Function getNativeErrorCtor(Context cx, Scriptable scope,
-                                       NativeErrors type) {
+    static Function getNativeErrorCtor(Context cx, Scriptable scope, NativeErrors type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
-            Function result = ((TopLevel)scope).getNativeErrorCtor(type);
+            Function result = ((TopLevel) scope).getNativeErrorCtor(type);
             if (result != null) {
                 return result;
             }
@@ -187,22 +175,19 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Static helper method to get a built-in object prototype with the given
-     * <code>type</code> from the given <code>scope</code>. If the scope is not
-     * an instance of this class or does have a cache of built-ins,
-     * the prototype is looked up via normal property lookup.
+     * Static helper method to get a built-in object prototype with the given <code>type</code> from
+     * the given <code>scope</code>. If the scope is not an instance of this class or does have a
+     * cache of built-ins, the prototype is looked up via normal property lookup.
      *
      * @param scope the top-level scope
      * @param type the built-in type
      * @return the built-in prototype
      */
-    public static Scriptable getBuiltinPrototype(Scriptable scope,
-                                                 Builtins type) {
+    public static Scriptable getBuiltinPrototype(Scriptable scope, Builtins type) {
         // must be called with top level scope
         assert scope.getParentScope() == null;
         if (scope instanceof TopLevel) {
-            Scriptable result = ((TopLevel)scope)
-                    .getBuiltinPrototype(type);
+            Scriptable result = ((TopLevel) scope).getBuiltinPrototype(type);
             if (result != null) {
                 return result;
             }
@@ -221,9 +206,10 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Get the cached built-in object constructor from this scope with the
-     * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
-     * been called on this object.
+     * Get the cached built-in object constructor from this scope with the given <code>type</code>.
+     * Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this
+     * object.
+     *
      * @param type the built-in type
      * @return the built-in constructor
      */
@@ -232,9 +218,9 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Get the cached native error constructor from this scope with the
-     * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
-     * been called on this object.
+     * Get the cached native error constructor from this scope with the given <code>type</code>.
+     * Returns null if {@link #cacheBuiltins()} has not been called on this object.
+     *
      * @param type the native error type
      * @return the native error constructor
      */
@@ -243,9 +229,10 @@ public class TopLevel extends IdScriptableObject {
     }
 
     /**
-     * Get the cached built-in object prototype from this scope with the
-     * given <code>type</code>. Returns null if {@link #cacheBuiltins()} has not
-     * been called on this object.
+     * Get the cached built-in object prototype from this scope with the given <code>type</code>.
+     * Returns null if {@link #cacheBuiltins(Scriptable, boolean)} has not been called on this
+     * object.
+     *
      * @param type the built-in type
      * @return the built-in prototype
      */
@@ -254,5 +241,4 @@ public class TopLevel extends IdScriptableObject {
         Object proto = func != null ? func.getPrototypeProperty() : null;
         return proto instanceof Scriptable ? (Scriptable) proto : null;
     }
-
 }

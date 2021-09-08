@@ -539,10 +539,7 @@ class XmlNode implements Serializable {
     }
 
     void replaceWith(XmlNode other) {
-        Node replacement = other.dom;
-        if (replacement.getOwnerDocument() != this.dom.getOwnerDocument()) {
-            replacement = this.dom.getOwnerDocument().importNode(replacement, true);
-        }
+        Node replacement = this.dom.getOwnerDocument().importNode(other.dom, true);
         this.dom.getParentNode().replaceChild(replacement, this.dom);
     }
 

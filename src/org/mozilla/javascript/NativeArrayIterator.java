@@ -43,7 +43,7 @@ public final class NativeArrayIterator extends ES6Iterator {
 
     @Override
     protected boolean isDone(Context cx, Scriptable scope) {
-        return index >= NativeArray.getLengthProperty(cx, arrayLike, false);
+        return index >= NativeArray.getLengthProperty(cx, arrayLike);
     }
 
     @Override

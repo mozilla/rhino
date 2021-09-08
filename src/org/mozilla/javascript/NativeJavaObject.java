@@ -15,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -31,7 +32,11 @@ import java.util.Map;
 public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, Serializable {
     private static final long serialVersionUID = -6948590651130498591L;
 
-    public NativeJavaObject() {}
+    static void init(ScriptableObject scope, boolean sealed) {
+        JavaIterableIterator.init(scope, sealed);
+    }
+
+    public NativeJavaObject() { }
 
     public NativeJavaObject(Scriptable scope, Object javaObject, Type staticType) {
         this(scope, javaObject, staticType, false);
@@ -69,6 +74,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public boolean has(Symbol key, Scriptable start) {
+        if (SymbolKey.ITERATOR.equals(key) && javaObject instanceof Iterable) {
+            return true;
+        }
         return false;
     }
 
@@ -87,6 +95,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     @Override
     public Object get(Symbol key, Scriptable start) {
+        if (SymbolKey.ITERATOR.equals(key) && javaObject instanceof Iterable) {
+            return symbol_iterator;
+        }
         // Native Java objects have no Symbol members
         return Scriptable.NOT_FOUND;
     }
@@ -862,7 +873,66 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         initMembers();
     }
 
-    /** The prototype of this object. */
+    private static Callable symbol_iterator = (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+        if (!(thisObj instanceof NativeJavaObject)) {
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
+        }
+        Object javaObject = ((NativeJavaObject)thisObj).javaObject;
+        if (!(javaObject instanceof Iterable)) {
+            throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
+        }
+        return new JavaIterableIterator(scope, (Iterable)javaObject);
+    };
+
+    private static final class JavaIterableIterator extends ES6Iterator {
+        private static final long serialVersionUID = 1L;
+        private static final String ITERATOR_TAG = "JavaIterableIterator";
+
+        static void init(ScriptableObject scope, boolean sealed) {
+            ES6Iterator.init(scope, sealed, new JavaIterableIterator(), ITERATOR_TAG);
+        }
+
+        /**
+         * Only for constructing the prototype object.
+         */
+        private JavaIterableIterator() {
+            super();
+        }
+
+        JavaIterableIterator(Scriptable scope, Iterable iterable) {
+            super(scope, ITERATOR_TAG);
+            this.iterator = iterable.iterator();
+        }
+
+        @Override
+        public String getClassName() {
+            return "Java Iterable Iterator";
+        }
+
+        @Override
+        protected boolean isDone(Context cx, Scriptable scope) {
+            return !iterator.hasNext();
+        }
+
+        @Override
+        protected Object nextValue(Context cx, Scriptable scope) {
+            if (!iterator.hasNext()) {
+                return Undefined.instance;
+            }
+            return iterator.next();
+        }
+
+        @Override
+        protected String getTag() {
+            return ITERATOR_TAG;
+        }
+
+        private Iterator iterator;
+    }
+
+    /**
+     * The prototype of this object.
+     */
     protected Scriptable prototype;
 
     /** The parent scope of this object. */

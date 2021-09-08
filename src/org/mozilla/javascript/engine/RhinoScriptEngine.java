@@ -113,23 +113,19 @@ public class RhinoScriptEngine
 
   @Override
   public Object eval(String script, ScriptContext context) throws ScriptException {
-    Context cx = ctxFactory.enterContext();
-    try {
+    try (Context cx = ctxFactory.enterContext()) {
       Scriptable scope = initScope(cx, context);
       Object ret = cx.evaluateString(scope, script, getFilename(), 0, null);
       return Context.jsToJava(ret, Object.class);
     } catch (RhinoException re) {
       throw new ScriptException(re.getMessage(), re.sourceName(), re.lineNumber(),
           re.columnNumber());
-    } finally {
-      Context.exit();
     }
   }
 
   @Override
   public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-    Context cx = ctxFactory.enterContext();
-    try {
+    try (Context cx = ctxFactory.enterContext()) {
       Scriptable scope = initScope(cx, context);
       Object ret = cx.evaluateReader(scope, reader, getFilename(), 0, null);
       return Context.jsToJava(ret, Object.class);
@@ -138,15 +134,12 @@ public class RhinoScriptEngine
           re.columnNumber());
     } catch (IOException ioe) {
       throw new ScriptException(ioe);
-    } finally {
-      Context.exit();
     }
   }
 
   @Override
   public CompiledScript compile(String script) throws ScriptException {
-    Context cx = ctxFactory.enterContext();
-    try {
+    try (Context cx = ctxFactory.enterContext()) {
       configureContext(cx);
       Script s =
           cx.compileString(script, getFilename(), 1, null);
@@ -154,15 +147,12 @@ public class RhinoScriptEngine
     } catch (RhinoException re) {
       throw new ScriptException(re.getMessage(), re.sourceName(), re.lineNumber(),
           re.columnNumber());
-    } finally {
-      Context.exit();
     }
   }
 
   @Override
   public CompiledScript compile(Reader script) throws ScriptException {
-    Context cx = ctxFactory.enterContext();
-    try {
+    try (Context cx = ctxFactory.enterContext()) {
       configureContext(cx);
       Script s =
           cx.compileReader(script, getFilename(), 1, null);
@@ -172,22 +162,17 @@ public class RhinoScriptEngine
           re.columnNumber());
     } catch (IOException ioe) {
       throw new ScriptException(ioe);
-    } finally {
-      Context.exit();
     }
   }
 
   Object eval(Script script, ScriptContext sc) throws ScriptException {
-    Context cx = ctxFactory.enterContext();
-    try {
+    try (Context cx = ctxFactory.enterContext()) {
       Scriptable scope = initScope(cx, sc);
       Object ret = script.exec(cx, scope);
       return Context.jsToJava(ret, Object.class);
     } catch (RhinoException re) {
       throw new ScriptException(re.getMessage(), re.sourceName(), re.lineNumber(),
           re.columnNumber());
-    } finally {
-      Context.exit();
     }
   }
 
@@ -205,8 +190,7 @@ public class RhinoScriptEngine
 
   Object invokeMethodRaw(Object thiz, String name, Class<?> returnType, Object... args)
       throws ScriptException, NoSuchMethodException {
-    Context cx = ctxFactory.enterContext();
-    try {
+    try (Context cx = ctxFactory.enterContext()) {
       Scriptable scope = initScope(cx, context);
 
       Scriptable localThis;
@@ -240,8 +224,6 @@ public class RhinoScriptEngine
     } catch (RhinoException re) {
       throw new ScriptException(re.getMessage(), re.sourceName(), re.lineNumber(),
           re.columnNumber());
-    } finally {
-      Context.exit();
     }
   }
 
@@ -251,16 +233,13 @@ public class RhinoScriptEngine
     if ((clasz == null) || !clasz.isInterface()) {
       throw new IllegalArgumentException("Not an interface");
     }
-    Context cx = ctxFactory.enterContext();
-    try {
+    try (Context cx = ctxFactory.enterContext()) {
       Scriptable scope = initScope(cx, context);
       if (methodsMissing(scope, clasz)) {
         return null;
       }
     } catch (ScriptException se) {
       return null;
-    } finally {
-      Context.exit();
     }
     return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
         new Class<?>[]{clasz}, new RhinoInvocationHandler(this, null));
@@ -272,8 +251,7 @@ public class RhinoScriptEngine
     if ((clasz == null) || !clasz.isInterface()) {
       throw new IllegalArgumentException("Not an interface");
     }
-    Context cx = ctxFactory.enterContext();
-    try {
+    try (Context cx = ctxFactory.enterContext()) {
       Scriptable scope = initScope(cx, context);
       Scriptable thisObj = Context.toObject(thiz, scope);
       if (methodsMissing(thisObj, clasz)) {
@@ -281,8 +259,6 @@ public class RhinoScriptEngine
       }
     } catch (ScriptException se) {
       return null;
-    } finally {
-      Context.exit();
     }
     return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
         new Class<?>[]{clasz}, new RhinoInvocationHandler(this, thiz));

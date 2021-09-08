@@ -9,6 +9,7 @@
 package org.mozilla.javascript;
 
 import java.lang.reflect.Type;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -60,7 +61,8 @@ public class WrapFactory {
                     || obj instanceof Short
                     || obj instanceof Long
                     || obj instanceof Float
-                    || obj instanceof Double) {
+                    || obj instanceof Double
+                    || obj instanceof BigInteger) {
                 return obj;
             } else if (obj instanceof Character) {
                 return String.valueOf(((Character) obj).charValue());

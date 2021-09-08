@@ -852,7 +852,8 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
     }
 
     @Override
-    public void defineOwnProperty(Context cx, Object key, ScriptableObject desc) {
+    protected void defineOwnProperty(
+            Context cx, Object key, ScriptableObject desc, boolean checkValid) {
         if (key instanceof String) {
             String name = (String) key;
             int info = findInstanceIdInfo(name);
@@ -908,7 +909,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 }
             }
         }
-        super.defineOwnProperty(cx, key, desc);
+        super.defineOwnProperty(cx, key, desc, checkValid);
     }
 
     @Override

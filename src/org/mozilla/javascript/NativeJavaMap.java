@@ -8,6 +8,9 @@ package org.mozilla.javascript;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class NativeJavaMap extends NativeJavaObject {
@@ -18,6 +21,10 @@ public class NativeJavaMap extends NativeJavaObject {
     private Class<?> keyType;
     private Class<?> valueType;
     private transient Map<String, Object> keyTranslationMap;
+
+    static void init(ScriptableObject scope, boolean sealed) {
+        NativeJavaMapIterator.init(scope, sealed);
+    }
 
     @SuppressWarnings("unchecked")
     public NativeJavaMap(Scriptable scope, Object map, Type staticType) {
@@ -44,44 +51,56 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public boolean has(String name, Scriptable start) {
-        if (map.containsKey(toKey(name, false))) {
-            return true;
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            if (map.containsKey(toKey(name, false))) {
+                return true;
+            }
         }
         return super.has(name, start);
     }
 
     @Override
     public boolean has(int index, Scriptable start) {
-        if (map.containsKey(toKey(index, false))) {
-            return true;
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            if (map.containsKey(toKey(index, false))) {
+                return true;
+            }
         }
         return super.has(index, start);
     }
 
     @Override
+    public boolean has(Symbol key, Scriptable start) {
+        if (SymbolKey.ITERATOR.equals(key)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public Object get(String name, Scriptable start) {
-        Object key = toKey(name, false);
-        if (map.containsKey(key)) {
-            Context cx = Context.getContext();
-            Object obj = map.get(key);
-            if (obj == null) {
-                return null;
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            Object key = toKey(name, false);
+            if (map.containsKey(key)) {
+                Object obj = map.get(key);
+                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
-            return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
         }
         return super.get(name, start);
     }
 
     @Override
     public Object get(int index, Scriptable start) {
-        Object key = toKey(Integer.valueOf(index), false);
-        if (map.containsKey(key)) {
-            Context cx = Context.getContext();
-            Object obj = map.get(key);
-            if (obj == null) {
-                return null;
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            Object key = toKey(Integer.valueOf(index), false);
+            if (map.containsKey(key)) {
+                Object obj = map.get(key);
+                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
-            return cx.getWrapFactory().wrap(cx, this, obj, obj.getClass());
         }
         return super.get(index, start);
     }
@@ -138,13 +157,31 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     @Override
+    public Object get(Symbol key, Scriptable start) {
+        if (SymbolKey.ITERATOR.equals(key)) {
+            return symbol_iterator;
+        }
+        return super.get(key, start);
+    }
+
+    @Override
     public void put(String name, Scriptable start, Object value) {
-        map.put(toKey(name, true), toValue(value));
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            map.put(toKey(name, true), toValue(value));
+        } else {
+            super.put(name, start, value);
+        }
     }
 
     @Override
     public void put(int index, Scriptable start, Object value) {
-        map.put(toKey(index, true), toValue(value));
+        Context cx = Context.getContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            map.put(toKey(index, true), toValue(value));
+        } else {
+            super.put(index, start, value);
+        }
     }
 
     @Override
@@ -156,15 +193,71 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public Object[] getIds() {
-        Object[] ids = new Object[map.size()];
-        int i = 0;
-        for (Object key : map.keySet()) {
-            if (key instanceof Number) {
-                ids[i++] = (Number) key;
-            } else {
-                ids[i++] = ScriptRuntime.toString(key);
+        Context cx = Context.getCurrentContext();
+        if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
+            List<Object> ids = new ArrayList<>(map.size());
+            for (Object key : map.keySet()) {
+                if (key instanceof Integer) {
+                    ids.add((Integer) key);
+                } else {
+                    ids.add(ScriptRuntime.toString(key));
+                }
             }
+            return ids.toArray();
         }
-        return ids;
+        return super.getIds();
+    }
+
+    private static Callable symbol_iterator =
+            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+                if (!(thisObj instanceof NativeJavaMap)) {
+                    throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
+                }
+                return new NativeJavaMapIterator(scope, ((NativeJavaMap) thisObj).map);
+            };
+
+    private static final class NativeJavaMapIterator extends ES6Iterator {
+        private static final long serialVersionUID = 1L;
+        private static final String ITERATOR_TAG = "JavaMapIterator";
+
+        static void init(ScriptableObject scope, boolean sealed) {
+            ES6Iterator.init(scope, sealed, new NativeJavaMapIterator(), ITERATOR_TAG);
+        }
+
+        /** Only for constructing the prototype object. */
+        private NativeJavaMapIterator() {
+            super();
+        }
+
+        NativeJavaMapIterator(Scriptable scope, Map<Object, Object> map) {
+            super(scope, ITERATOR_TAG);
+            this.iterator = map.entrySet().iterator();
+        }
+
+        @Override
+        public String getClassName() {
+            return "Java Map Iterator";
+        }
+
+        @Override
+        protected boolean isDone(Context cx, Scriptable scope) {
+            return !iterator.hasNext();
+        }
+
+        @Override
+        protected Object nextValue(Context cx, Scriptable scope) {
+            if (!iterator.hasNext()) {
+                return cx.newArray(scope, new Object[] {Undefined.instance, Undefined.instance});
+            }
+            Map.Entry e = iterator.next();
+            return cx.newArray(scope, new Object[] {e.getKey(), e.getValue()});
+        }
+
+        @Override
+        protected String getTag() {
+            return ITERATOR_TAG;
+        }
+
+        private Iterator<Map.Entry<Object, Object>> iterator;
     }
 }

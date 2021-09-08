@@ -7,7 +7,8 @@ plugins {
     id 'jacoco'
     id 'distribution'
     id 'checkstyle'
-    id 'com.github.spotbugs' version "4.2.4"
+    id 'com.diffplug.spotless' version "5.12.1"
+    id 'com.github.spotbugs' version "4.7.1"
 }
 
 tasks.withType(JavaCompile) {
@@ -57,11 +58,12 @@ sourceSets {
 }
 
 dependencies {
-    testImplementation "junit:junit:4.13"
-    testImplementation "org.yaml:snakeyaml:1.26"
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.yaml:snakeyaml:1.28"
+    testImplementation "javax.xml.soap:javax.xml.soap-api:1.4.0"
     jmhImplementation project
-    jmhImplementation 'org.openjdk.jmh:jmh-core:1.23'
-    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.23'
+    jmhImplementation 'org.openjdk.jmh:jmh-core:1.27'
+    jmhAnnotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.27'
 }
 
 test {
@@ -81,13 +83,19 @@ test {
     systemProperty 'file.encoding', 'UTF-8'
     if (System.getProperty('quick') != null) {
         systemProperty 'TEST_OPTLEVEL', -1
+    } else if (System.getProperty('optLevel')) {
+        systemProperty 'TEST_OPTLEVEL', System.getProperty('optLevel')
+    }
+    systemProperty 'test262properties', System.getProperty('test262properties')
+    if (System.getProperty('updateTest262properties') != null) {
+        systemProperty 'updateTest262properties', System.getProperty('updateTest262properties')
     }
     maxHeapSize = "1g"
     testLogging.showStandardStreams = true
     // Many tests do not clean up contexts properly. This makes the tests much
     // more resilient at the expense of performance.
     forkEvery = 1
-    maxParallelForks = 16
+    maxParallelForks = 64
 }
 
 task sunSpiderBenchmark(type: JavaExec) {
@@ -99,17 +107,27 @@ task sunSpiderBenchmark(type: JavaExec) {
 task v8Benchmark(type: JavaExec) {
     classpath = sourceSets.jmh.runtimeClasspath
     main = 'org.openjdk.jmh.Main'
-    args '-f', '1', '-bm', 'avgt', '-tu', 'us', 'V8'
+    args '-f', '1', '-i', '10', '-bm', 'avgt', '-tu', 'us', 'V8'
 }
 
 task testBenchmark() {}
 testBenchmark.dependsOn sunSpiderBenchmark
 testBenchmark.dependsOn v8Benchmark
 
-task microBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
+task microBenchmark(type: JavaExec, description: 'JMH micro benchmark') {
+    def benchmark = System.getProperty('benchmark')
+    if (benchmark == null) {
+        benchmark = "MathBenchmark"
+    }
     classpath = sourceSets.jmh.runtimeClasspath
     main = 'org.openjdk.jmh.Main'
-    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', 'ObjectCall'
+    args '-f', '1', '-bm', 'avgt', '-tu', 'ns', '-r', '5', benchmark
+}
+
+task listBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
+    classpath = sourceSets.jmh.runtimeClasspath
+    main = 'org.openjdk.jmh.Main'
+    args '-lp'
 }
 
 task jmhHelp(type: JavaExec, description: 'JMH benchmarks') {
@@ -166,6 +184,7 @@ task engineJar(type: Jar) {
                 "Implementation-URL": "http://www.mozilla.org/rhino",
                 "Built-Date": new Date().format("yyyy-MM-dd"),
                 "Built-Time": new Date().format("HH:mm:ss"),
+                "Automatic-Module-Name": "org.mozilla.rhino.engine"
         )
     }
 }
@@ -184,6 +203,7 @@ jar {
             "Implementation-URL": "http://www.mozilla.org/rhino",
             "Built-Date": new Date().format("yyyy-MM-dd"),
             "Built-Time": new Date().format("HH:mm:ss"),
+            "Automatic-Module-Name": "org.mozilla.rhino",
             "Bundle-ManifestVersion": "2",
             "Bundle-SymbolicName": "org.mozilla.rhino",
             "Bundle-Version": project.version.replaceAll("-.*", ""),
@@ -380,10 +400,17 @@ spotbugs {
     excludeFilter = file("./spotbugs-exclude.xml")
 }
 
+spotless {
+    ratchetFrom 'code-formatting-required'
+    java {
+        googleJavaFormat().aosp()
+    }
+}
+
 jacocoTestReport.dependsOn test
 jacocoTestReport {
     reports {
-        html.destination file("${buildDir}/jacocoHtml")
+        csv.enabled true
     }
 }
 

@@ -10,6 +10,7 @@ package org.mozilla.javascript;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -17,11 +18,13 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
@@ -47,7 +50,7 @@ import org.mozilla.javascript.xml.XMLLib;
  * @author Norris Boyd
  * @author Brendan Eich
  */
-public class Context {
+public class Context implements Closeable {
     /**
      * Language versions.
      *
@@ -312,6 +315,31 @@ public class Context {
      */
     public static final int FEATURE_ENABLE_XML_SECURE_PARSING = 20;
 
+    /**
+     * Configure whether the entries in a Java Map can be accessed by properties.
+     *
+     * <p>Not enabled:
+     *
+     * <p>var map = new java.util.HashMap(); map.put('foo', 1); map.foo; // undefined
+     *
+     * <p>Enabled:
+     *
+     * <p>var map = new java.util.HashMap(); map.put('foo', 1); map.foo; // 1
+     *
+     * <p>WARNING: This feature is similar to the one in Nashorn, but incomplete.
+     *
+     * <p>1. A entry has priority over method.
+     *
+     * <p>map.put("put", "abc"); map.put; // abc map.put("put", "efg"); // ERROR
+     *
+     * <p>2. The distinction between numeric keys and string keys is ambiguous.
+     *
+     * <p>map.put('1', 123); map['1']; // Not found. This means `map[1]`.
+     *
+     * @since 1.7 Release 14
+     */
+    public static final int FEATURE_ENABLE_JAVA_MAP_ACCESS = 21;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
 
@@ -452,6 +480,11 @@ public class Context {
             VMBridge.instance.setContext(helper, null);
             cx.factory.onContextReleased(cx);
         }
+    }
+
+    @Override
+    public void close() {
+        exit();
     }
 
     /**
@@ -1643,6 +1676,36 @@ public class Context {
      * @return value suitable to pass to any API that takes JavaScript values.
      */
     public static Object javaToJS(Object value, Scriptable scope) {
+        return javaToJS(value, scope, null);
+    }
+
+    /**
+     * Convenient method to convert java value to its closest representation in JavaScript.
+     *
+     * <p>If value is an instance of String, Number, Boolean, Function or Scriptable, it is returned
+     * as it and will be treated as the corresponding JavaScript type of string, number, boolean,
+     * function and object.
+     *
+     * <p>Note that for Number instances during any arithmetic operation in JavaScript the engine
+     * will always use the result of <code>Number.doubleValue()</code> resulting in a precision loss
+     * if the number can not fit into double.
+     *
+     * <p>If value is an instance of Character, it will be converted to string of length 1 and its
+     * JavaScript type will be string.
+     *
+     * <p>The rest of values will be wrapped as LiveConnect objects by calling {@link
+     * WrapFactory#wrap(Context cx, Scriptable scope, Object obj, Type staticType)} as in:
+     *
+     * <pre>
+     *    return cx.getWrapFactory().wrap(cx, scope, value, null);
+     * </pre>
+     *
+     * @param value any Java object
+     * @param scope top scope object
+     * @param cx context to use for wrapping LiveConnect objects
+     * @return value suitable to pass to any API that takes JavaScript values.
+     */
+    public static Object javaToJS(Object value, Scriptable scope, Context cx) {
         if (value instanceof String
                 || value instanceof Number
                 || value instanceof Boolean
@@ -1651,7 +1714,9 @@ public class Context {
         } else if (value instanceof Character) {
             return String.valueOf(((Character) value).charValue());
         } else {
-            Context cx = Context.getContext();
+            if (cx == null) {
+                cx = Context.getContext();
+            }
             return cx.getWrapFactory().wrap(cx, scope, value, null);
         }
     }
@@ -1684,6 +1749,45 @@ public class Context {
         } catch (EvaluatorException ex) {
             throw new IllegalArgumentException(ex.getMessage(), ex);
         }
+    }
+
+    /**
+     * Returns the javaToJSONConverter for this Context.
+     *
+     * <p>The converter is used by the JSON.stringify method for Java objects other than instances
+     * of {@link java.util.Map Map}, {@link java.util.Collection Collection}, or {@link
+     * java.lang.Object Object[]}.
+     *
+     * <p>The default converter if unset will convert Java Objects to their toString() value.
+     *
+     * @return javaToJSONConverter for this Context
+     */
+    public UnaryOperator<Object> getJavaToJSONConverter() {
+        if (javaToJSONConverter == null) {
+            return JavaToJSONConverters.STRING;
+        }
+        return javaToJSONConverter;
+    }
+
+    /**
+     * Sets the javaToJSONConverter for this Context.
+     *
+     * <p>The converter is used by the JSON.stringify method for Java objects other than instances
+     * of {@link java.util.Map Map}, {@link java.util.Collection Collection}, or {@link
+     * java.lang.Object Object[]}.
+     *
+     * <p>Objects returned by the converter will converted with {@link #javaToJS(Object,
+     * Scriptable)} and then stringified themselves.
+     *
+     * @param javaToJSONConverter
+     * @throws IllegalArgumentException if javaToJSONConverter is null
+     */
+    public void setJavaToJSONConverter(UnaryOperator<Object> javaToJSONConverter)
+            throws IllegalArgumentException {
+        if (javaToJSONConverter == null) {
+            throw new IllegalArgumentException("javaToJSONConverter == null");
+        }
+        this.javaToJSONConverter = javaToJSONConverter;
     }
 
     /**
@@ -2209,7 +2313,33 @@ public class Context {
         applicationClassLoader = loader;
     }
 
-    /** ******** end of API ********* */
+    /**
+     * Add a task that will be executed at the end of the current operation. The various "evaluate"
+     * functions will all call this before exiting to ensure that all microtasks run to completion.
+     * Otherwise, callers should call "processMicrotasks" to run them all. This feature is primarily
+     * used to implement Promises. The microtask queue is not thread-safe.
+     */
+    public void enqueueMicrotask(Runnable task) {
+        microtasks.add(task);
+    }
+
+    /**
+     * Run all the microtasks for the current context to completion. This is called by the various
+     * "evaluate" functions. Frameworks that call Function objects directly should call this
+     * function to ensure that everything completes if they want all Promises to eventually resolve.
+     * This function is idempotent, but the microtask queue is not thread-safe.
+     */
+    public void processMicrotasks() {
+        Runnable head;
+        do {
+            head = microtasks.poll();
+            if (head != null) {
+                head.run();
+            }
+        } while (head != null);
+    }
+
+    /* ******** end of API ********* */
 
     /** Internal method that reports an error for missing calls to enter(). */
     static Context getContext() {
@@ -2220,7 +2350,7 @@ public class Context {
         return cx;
     }
 
-    private Object compileImpl(
+    protected Object compileImpl(
             Scriptable scope,
             String sourceString,
             String sourceName,
@@ -2454,6 +2584,14 @@ public class Context {
                 || (currentActivationCall != null && currentActivationCall.isStrict);
     }
 
+    public static boolean isCurrentContextStrict() {
+        Context cx = getCurrentContext();
+        if (cx == null) {
+            return false;
+        }
+        return cx.isStrictMode();
+    }
+
     private final ContextFactory factory;
     private boolean sealed;
     private Object sealKey;
@@ -2492,6 +2630,8 @@ public class Context {
     private Object propertyListeners;
     private Map<Object, Object> threadLocalMap;
     private ClassLoader applicationClassLoader;
+    private UnaryOperator<Object> javaToJSONConverter;
+    private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
 
     /** This is the list of names of objects forcing the creation of function activation records. */
     Set<String> activationNames;
