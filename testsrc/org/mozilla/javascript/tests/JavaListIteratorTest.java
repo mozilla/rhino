@@ -5,14 +5,10 @@
 package org.mozilla.javascript.tests;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-
+import junit.framework.TestCase;
 import org.junit.Test;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.Wrapper;
-
-import junit.framework.TestCase;
 
 /*
  * This testcase tests the basic access to Java classess implementing Iterable
@@ -21,7 +17,7 @@ import junit.framework.TestCase;
 public class JavaListIteratorTest extends TestCase {
 
     private static final String FOO_BAR_BAZ = "foo,bar,42.5,";
-    
+
     private List<Object> createJavaList() {
         List<Object> list = new ArrayList<>();
         list.add("foo");
@@ -32,19 +28,18 @@ public class JavaListIteratorTest extends TestCase {
 
     @Test
     public void testArrayIterator() {
-        String js = "var ret = '';\n"
-                + "var iter = list.iterator();\n"
-                + "while(iter.hasNext()) ret += iter.next()+',';\n"
-                + "ret";
+        String js =
+                "var ret = '';\n"
+                        + "var iter = list.iterator();\n"
+                        + "while(iter.hasNext()) ret += iter.next()+',';\n"
+                        + "ret";
         testJavaListIterate(js, FOO_BAR_BAZ);
         // there is no .iterator() function on the JS side
     }
 
     @Test
     public void testArrayForEach() {
-        String js = "var ret = '';\n"
-                + "for each(elem in list)  ret += elem + ',';\n"
-                + "ret";
+        String js = "var ret = '';\n" + "for each(elem in list)  ret += elem + ',';\n" + "ret";
         testJsArrayIterate(js, FOO_BAR_BAZ);
         testJavaListIterate(js, FOO_BAR_BAZ);
         testJavaArrayIterate(js, FOO_BAR_BAZ);
@@ -52,9 +47,7 @@ public class JavaListIteratorTest extends TestCase {
 
     @Test
     public void testArrayForKeys() {
-        String js = "var ret = '';\n"
-                + "for(elem in list)  ret += elem + ',';\n"
-                + "ret";
+        String js = "var ret = '';\n" + "for(elem in list)  ret += elem + ',';\n" + "ret";
         testJsArrayIterate(js, "0,1,2,");
         testJavaListIterate(js, "0,1,2,");
         testJavaArrayIterate(js, "0,1,2,");
@@ -62,50 +55,48 @@ public class JavaListIteratorTest extends TestCase {
 
     @Test
     public void testArrayForIndex() {
-        String js = "var ret = '';\n"
-                + "for(var idx = 0; idx < list.length; idx++)  ret += idx + ',';\n"
-                + "ret";
+        String js =
+                "var ret = '';\n"
+                        + "for(var idx = 0; idx < list.length; idx++)  ret += idx + ',';\n"
+                        + "ret";
         testJsArrayIterate(js, "0,1,2,");
         testJavaArrayIterate(js, "0,1,2,");
         testJavaListIterate(js, "0,1,2,");
     }
 
     private void testJavaArrayIterate(String script, String expected) {
-        Utils.runWithAllOptimizationLevels(cx -> {
-            final ScriptableObject scope = cx.initStandardObjects();
-            scope.put("list", scope, createJavaList().toArray());
-            Object o = cx.evaluateString(scope, script,
-                    "testJavaArrayIterate.js", 1, null);
-            assertEquals(expected, o);
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final ScriptableObject scope = cx.initStandardObjects();
+                    scope.put("list", scope, createJavaList().toArray());
+                    Object o = cx.evaluateString(scope, script, "testJavaArrayIterate.js", 1, null);
+                    assertEquals(expected, o);
 
-            return null;
-        });
+                    return null;
+                });
     }
-    
+
     private void testJavaListIterate(String script, String expected) {
-        Utils.runWithAllOptimizationLevels(cx -> {
-            final ScriptableObject scope = cx.initStandardObjects();
-            scope.put("list", scope, createJavaList());
-            Object o = cx.evaluateString(scope, script,
-                    "testJavaListIterate.js", 1, null);
-            assertEquals(expected, o);
-            
-            return null;
-        });
-        
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final ScriptableObject scope = cx.initStandardObjects();
+                    scope.put("list", scope, createJavaList());
+                    Object o = cx.evaluateString(scope, script, "testJavaListIterate.js", 1, null);
+                    assertEquals(expected, o);
+
+                    return null;
+                });
     }
 
     private void testJsArrayIterate(String script, String expected) {
-        Utils.runWithAllOptimizationLevels(cx -> {
-            final ScriptableObject scope = cx.initStandardObjects();
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final ScriptableObject scope = cx.initStandardObjects();
 
-            scope.put("list", scope,
-                    cx.newArray(scope, createJavaList().toArray()));
-            Object o = cx.evaluateString(scope, script,
-                    "testJsArrayIterate.js", 1, null);
-            assertEquals(expected, o);
-            return null;
-        });
+                    scope.put("list", scope, cx.newArray(scope, createJavaList().toArray()));
+                    Object o = cx.evaluateString(scope, script, "testJsArrayIterate.js", 1, null);
+                    assertEquals(expected, o);
+                    return null;
+                });
     }
-
 }

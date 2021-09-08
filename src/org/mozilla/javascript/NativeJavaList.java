@@ -15,7 +15,7 @@ public class NativeJavaList extends NativeJavaObject {
     private static final long serialVersionUID = 6403865639690547921L;
 
     private List<Object> list;
-    
+
     private Class<?> valueType;
 
     @SuppressWarnings("unchecked")
@@ -39,7 +39,6 @@ public class NativeJavaList extends NativeJavaObject {
     public String getClassName() {
         return "JavaList";
     }
-
 
     @Override
     public boolean has(int index, Scriptable start) {
@@ -91,7 +90,7 @@ public class NativeJavaList extends NativeJavaObject {
                 ((ArrayList<?>) list).ensureCapacity(minCapacity);
             }
             while (minCapacity > list.size()) {
-              list.add(null);
+                list.add(null);
             }
         }
     }
@@ -108,6 +107,6 @@ public class NativeJavaList extends NativeJavaObject {
     }
 
     private boolean isWithValidIndex(int index) {
-        return index >= 0  && index < list.size();
+        return index >= 0 && index < list.size();
     }
 }

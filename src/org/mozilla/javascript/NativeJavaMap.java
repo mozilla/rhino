@@ -11,9 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class NativeJavaMap extends NativeJavaObject {
-    
+
     private static final long serialVersionUID = 46513864372878618L;
-    
+
     private Map<Object, Object> map;
     private Class<?> keyType;
     private Class<?> valueType;
@@ -41,7 +41,6 @@ public class NativeJavaMap extends NativeJavaObject {
     public String getClassName() {
         return "JavaMap";
     }
-
 
     @Override
     public boolean has(String name, Scriptable start) {
@@ -75,7 +74,7 @@ public class NativeJavaMap extends NativeJavaObject {
 
     @Override
     public Object get(int index, Scriptable start) {
-      Object key = toKey(Integer.valueOf(index), false);
+        Object key = toKey(Integer.valueOf(index), false);
         if (map.containsKey(key)) {
             Context cx = Context.getContext();
             Object obj = map.get(key);
@@ -86,7 +85,7 @@ public class NativeJavaMap extends NativeJavaObject {
         }
         return super.get(index, start);
     }
-    
+
     @SuppressWarnings("unchecked")
     private Object toKey(Object key, boolean translateNew) {
         if (keyType == String.class || map.containsKey(key)) {
@@ -129,7 +128,7 @@ public class NativeJavaMap extends NativeJavaObject {
         }
         return ret;
     }
-    
+
     private Object toValue(Object value) {
         if (valueType == Object.class) {
             return value;
@@ -154,19 +153,18 @@ public class NativeJavaMap extends NativeJavaObject {
         keyTranslationMap = null;
         return super.unwrap();
     }
-    
+
     @Override
     public Object[] getIds() {
         Object[] ids = new Object[map.size()];
         int i = 0;
         for (Object key : map.keySet()) {
             if (key instanceof Number) {
-                ids[i++] = (Number)key;
+                ids[i++] = (Number) key;
             } else {
                 ids[i++] = ScriptRuntime.toString(key);
             }
         }
         return ids;
     }
-
 }
