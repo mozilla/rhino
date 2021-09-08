@@ -6,14 +6,10 @@
  */
 package org.mozilla.javascript.tests;
 
-<<<<<<< HEAD
-import java.util.HashMap;
-=======
 import static org.junit.Assert.*;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
->>>>>>> tmp
 import java.util.Map;
 import java.util.function.Function;
 import junit.framework.TestCase;
@@ -43,7 +39,6 @@ public class NativeJavaMapTest extends TestCase {
         global.init(ContextFactory.getGlobal());
     }
 
-<<<<<<< HEAD
     public static enum MyEnum {
         A,
         B,
@@ -51,7 +46,8 @@ public class NativeJavaMapTest extends TestCase {
         X,
         Y,
         Z
-=======
+    }
+
     public void testAccessingNullValues() {
         Map<Object, Number> map = new HashMap<>();
         map.put("a", null);
@@ -59,7 +55,6 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(2, runScriptAsInt("value.size()", map, true));
         assertEquals(null, runScript("value.a", map, true));
         assertEquals(null, runScript("value[1]", map, true));
->>>>>>> tmp
     }
 
     public void testAccessingJavaMapIntegerValues() {
@@ -78,9 +73,9 @@ public class NativeJavaMapTest extends TestCase {
         map.put(1L, 2);
         map.put(2L, 3);
 
-        assertEquals(2, runScriptAsInt("value[1]", map));
-        assertEquals(3, runScriptAsInt("value[2]", map));
-        runScriptAsString("value[4] = 4.01", map);
+        assertEquals(2, runScriptAsInt("value[1]", map, true));
+        assertEquals(3, runScriptAsInt("value[2]", map, true));
+        runScriptAsString("value[4] = 4.01", map, true);
         assertEquals(Double.valueOf(4.01), map.get(4));
         assertEquals(null, map.get(4L));
     }
@@ -96,14 +91,14 @@ public class NativeJavaMapTest extends TestCase {
         map.put(MyEnum.B, 2);
         map.put(MyEnum.C, 3);
 
-        assertEquals(2, runScriptAsInt("value['B']", map));
-        assertEquals(3, runScriptAsInt("value['C']", map));
-        runScriptAsString("value['X'] = 4.01", map);
+        assertEquals(2, runScriptAsInt("value['B']", map, true));
+        assertEquals(3, runScriptAsInt("value['C']", map, true));
+        runScriptAsString("value['X'] = 4.01", map, true);
         // we know the type info and can convert the key to Long and the value is rounded to Integer
         assertEquals(Integer.valueOf(4), map.get(MyEnum.X));
 
         try {
-            runScriptAsString("value['D'] = 4.0", map);
+            runScriptAsString("value['D'] = 4.0", map, true);
             fail();
             ;
         } catch (IllegalArgumentException ex) {
@@ -124,9 +119,9 @@ public class NativeJavaMapTest extends TestCase {
         map.put(1L, 2);
         map.put(2L, 3);
 
-        assertEquals(2, runScriptAsInt("value[1]", map));
-        assertEquals(3, runScriptAsInt("value[2]", map));
-        runScriptAsInt("value[4] = 4.0", map);
+        assertEquals(2, runScriptAsInt("value[1]", map, true));
+        assertEquals(3, runScriptAsInt("value[2]", map, true));
+        runScriptAsInt("value[4] = 4.0", map, true);
         // we know the type info and can convert the key to Long and the value to Integer
         assertEquals(Integer.valueOf(4), map.get(4L));
         assertEquals(null, map.get(4));
@@ -199,12 +194,8 @@ public class NativeJavaMapTest extends TestCase {
 
     public void testKeys() {
         Map<String, String> map = new HashMap<>();
-<<<<<<< HEAD
         NativeArray resEmpty =
-                (NativeArray) runScript("Object.keys(value)", map, Function.identity());
-=======
-        NativeArray resEmpty = (NativeArray) runScript("Object.keys(value)", map, true);
->>>>>>> tmp
+                (NativeArray) runScript("Object.keys(value)", map, Function.identity(), true);
         assertEquals(0, resEmpty.size());
 
         map.put("a", "a");
@@ -219,12 +210,8 @@ public class NativeJavaMapTest extends TestCase {
 
         Map<Integer, String> mapInt = new HashMap<>();
         mapInt.put(42, "test");
-<<<<<<< HEAD
         NativeArray resInt =
-                (NativeArray) runScript("Object.keys(value)", mapInt, Function.identity());
-=======
-        NativeArray resInt = (NativeArray) runScript("Object.keys(value)", mapInt, true);
->>>>>>> tmp
+                (NativeArray) runScript("Object.keys(value)", mapInt, Function.identity(), true);
         assertTrue(resInt.contains("42")); // Object.keys always return Strings as key
     }
 
@@ -323,19 +310,7 @@ public class NativeJavaMapTest extends TestCase {
                         });
     }
 
-<<<<<<< HEAD
-    private <T> T runScript(String scriptSourceText, Object value, Function<Object, T> convert) {
-        return ContextFactory.getGlobal()
-                .call(
-                        context -> {
-                            Scriptable scope = context.initStandardObjects(global);
-                            scope.put("value", scope, Context.javaToJS(value, scope));
-                            return convert.apply(
-                                    context.evaluateString(scope, scriptSourceText, "", 1, null));
-                        });
-=======
     private ContextFactory getContextFactory(boolean enableJavaMapAccess) {
         return enableJavaMapAccess ? contextFactoryWithMapAccess : ContextFactory.getGlobal();
->>>>>>> tmp
     }
 }

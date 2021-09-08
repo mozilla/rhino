@@ -65,6 +65,14 @@ public class NativeJavaList extends NativeJavaObject {
     }
 
     @Override
+    public Object get(String name, Scriptable start) {
+        if ("length".equals(name)) {
+            return Integer.valueOf(list.size());
+        }
+        return super.get(name, start);
+    }
+
+    @Override
     public Object get(int index, Scriptable start) {
         if (isWithValidIndex(index)) {
             Context cx = Context.getCurrentContext();

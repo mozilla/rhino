@@ -2468,7 +2468,6 @@ public class ScriptRuntime {
         return true;
     }
     /**
->>>>>>> tmp
      * Prepare for calling name(...): return function corresponding to name and make current top
      * scope available as ScriptRuntime.lastStoredScriptable() for consumption as thisObj. The
      * caller must call ScriptRuntime.lastStoredScriptable() immediately after calling this method.
@@ -2981,7 +2980,6 @@ public class ScriptRuntime {
         if (val1 instanceof Scriptable) val1 = ((Scriptable) val1).getDefaultValue(null);
         if (val2 instanceof Scriptable) val2 = ((Scriptable) val2).getDefaultValue(null);
         if (!(val1 instanceof CharSequence) && !(val2 instanceof CharSequence)) {
-
             Number num1 = val1 instanceof Number ? (Number) val1 : toNumeric(val1);
             Number num2 = val2 instanceof Number ? (Number) val2 : toNumeric(val2);
 

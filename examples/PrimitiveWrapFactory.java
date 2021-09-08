@@ -23,6 +23,7 @@ import org.mozilla.javascript.WrapFactory;
  * <p>The PrimitiveWrapFactory is enabled on a Context by calling setWrapFactory on that context.
  */
 public class PrimitiveWrapFactory extends WrapFactory {
+
     @Override
     public Object wrap(Context cx, Scriptable scope, Object obj, Type staticType) {
         if (obj instanceof String || obj instanceof Number || obj instanceof Boolean) {

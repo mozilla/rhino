@@ -30,13 +30,14 @@ import java.util.Map;
  * @see NativeJavaClass
  */
 public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, Serializable {
+
     private static final long serialVersionUID = -6948590651130498591L;
 
     static void init(ScriptableObject scope, boolean sealed) {
         JavaIterableIterator.init(scope, sealed);
     }
 
-    public NativeJavaObject() { }
+    public NativeJavaObject() {}
 
     public NativeJavaObject(Scriptable scope, Object javaObject, Type staticType) {
         this(scope, javaObject, staticType, false);
@@ -873,16 +874,17 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         initMembers();
     }
 
-    private static Callable symbol_iterator = (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
-        if (!(thisObj instanceof NativeJavaObject)) {
-            throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
-        }
-        Object javaObject = ((NativeJavaObject)thisObj).javaObject;
-        if (!(javaObject instanceof Iterable)) {
-            throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
-        }
-        return new JavaIterableIterator(scope, (Iterable)javaObject);
-    };
+    private static Callable symbol_iterator =
+            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
+                if (!(thisObj instanceof NativeJavaObject)) {
+                    throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
+                }
+                Object javaObject = ((NativeJavaObject) thisObj).javaObject;
+                if (!(javaObject instanceof Iterable)) {
+                    throw ScriptRuntime.typeErrorById("msg.incompat.call", SymbolKey.ITERATOR);
+                }
+                return new JavaIterableIterator(scope, (Iterable) javaObject);
+            };
 
     private static final class JavaIterableIterator extends ES6Iterator {
         private static final long serialVersionUID = 1L;
@@ -892,9 +894,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             ES6Iterator.init(scope, sealed, new JavaIterableIterator(), ITERATOR_TAG);
         }
 
-        /**
-         * Only for constructing the prototype object.
-         */
+        /** Only for constructing the prototype object. */
         private JavaIterableIterator() {
             super();
         }
@@ -930,9 +930,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         private Iterator iterator;
     }
 
-    /**
-     * The prototype of this object.
-     */
+    /** The prototype of this object. */
     protected Scriptable prototype;
 
     /** The parent scope of this object. */
