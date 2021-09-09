@@ -42,7 +42,7 @@ public class CollectionHashtableTest
   @Test
   public void testEmpty() {
     assertEquals(0, ht.size());
-    assertNull(null, ht.get("one"));
+    assertNull(null, ht.getEntry("one"));
     assertFalse(ht.has("one"));
     assertNull(ht.delete("one"));
     ht.clear();
@@ -59,15 +59,15 @@ public class CollectionHashtableTest
   public void testCRUD() {
     ht.put("one", 1);
     assertEquals(1, ht.size());
-    assertEquals(1, ht.get("one"));
+    assertEquals(1, ht.getEntry("one").value());
     assertTrue(ht.has("one"));
     ht.put("two", 2);
     assertEquals(2, ht.size());
-    assertEquals(2, ht.get("two"));
+    assertEquals(2, ht.getEntry("two").value());
     assertTrue(ht.has("two"));
     ht.clear();
     assertEquals(0, ht.size());
-    assertNull(ht.get("one"));
+    assertNull(ht.getEntry("one"));
     assertFalse(ht.has("one"));
   }
 
@@ -292,13 +292,13 @@ public class CollectionHashtableTest
     ObjectInputStream oin = new ObjectInputStream(bis);
     Hashtable sht = (Hashtable)oin.readObject();
 
-    assertEquals(1, sht.get("one"));
-    assertEquals(2, sht.get("two"));
-    assertEquals(3, sht.get("three"));
-    assertEquals(Undefined.instance, sht.get("undefined"));
-    assertEquals("undefined", sht.get(Undefined.instance));
-    assertNull(sht.get("null"));
-    assertEquals("null", sht.get(null));
+    assertEquals(1, sht.getEntry("one").value());
+    assertEquals(2, sht.getEntry("two").value());
+    assertEquals(3, sht.getEntry("three").value());
+    assertEquals(Undefined.instance, sht.getEntry("undefined").value());
+    assertEquals("undefined", sht.getEntry(Undefined.instance).value());
+    assertNull(sht.getEntry("null").value());
+    assertEquals("null", sht.getEntry(null).value());
 
     Iterator<Entry> i = ht.iterator();
     Hashtable.Entry e = i.next();

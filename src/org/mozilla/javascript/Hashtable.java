@@ -138,13 +138,9 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         }
     }
 
-    public Object get(Object key) {
+    public Entry getEntry(Object key) {
         final Entry e = new Entry(key, null);
-        final Entry v = map.get(e);
-        if (v == null) {
-            return null;
-        }
-        return v.value;
+        return map.get(e);
     }
 
     public boolean has(Object key) {
