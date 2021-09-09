@@ -40,7 +40,7 @@ public class CollectionHashtableTest {
         assertEquals(0, ht.size());
         assertNull(null, ht.getEntry("one"));
         assertFalse(ht.has("one"));
-        assertNull(ht.delete("one"));
+        assertFalse(ht.delete("one"));
         ht.clear();
         assertEquals(0, ht.size());
         for (Hashtable.Entry e : ht) {

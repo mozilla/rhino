@@ -71,12 +71,10 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         }
 
         /** Zero out key and value and return old value. */
-        Object clear() {
-            final Object ret = value;
+        void clear() {
             key = Undefined.instance;
             value = Undefined.instance;
             deleted = true;
-            return ret;
         }
 
         @Override
@@ -135,11 +133,11 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         return map.containsKey(e);
     }
 
-    public Object delete(Object key) {
+    public boolean delete(Object key) {
         final Entry e = new Entry(key, null);
         final Entry v = map.remove(e);
         if (v == null) {
-            return null;
+            return false;
         }
 
         // To keep existing iterators moving forward as specified in EC262,
@@ -175,7 +173,8 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
             }
         }
         // Still clear the node in case it is in the chain of some iterator
-        return v.clear();
+        v.clear();
+        return true;
     }
 
     public void clear() {
