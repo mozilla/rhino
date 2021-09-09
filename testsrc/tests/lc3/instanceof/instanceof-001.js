@@ -33,9 +33,19 @@ new TestCase(
   new java.lang.String("hi") instanceof java.lang.Object );
 
 new TestCase(
+  "java.lang.Class instanceof java.lang.Class",
+  true,
+  java.lang.Class instanceof java.lang.Class );
+
+new TestCase(
   "java.lang.String instanceof java.lang.Class",
-  false,
+  true,
   java.lang.String instanceof java.lang.Class );
+
+new TestCase(
+  "java.lang.Class instanceof java.lang.String",
+  false,
+  java.lang.Class instanceof java.lang.String );
 
 new TestCase(
   "java.lang.Class.forName(\"java.lang.String\") instanceof java.lang.Class",
@@ -53,8 +63,8 @@ new TestCase(
   new java.lang.Double(5.0) instanceof java.lang.Number );
 
 new TestCase(
-  "new java.lang.String(\"hi\").getBytes() instanceof java.lang.Double",
+  "new java.lang.String(\"hi\").getBytes() instanceof byte[]",
   true,
-  new java.lang.Double(5.0) instanceof java.lang.Double );
+  new java.lang.String("hi").getBytes() instanceof java.lang.Class.forName("[B") );
 
 test();

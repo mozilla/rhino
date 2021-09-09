@@ -284,10 +284,13 @@ public class NativeJavaClass extends NativeJavaObject implements Function
     @Override
     public boolean hasInstance(Scriptable value) {
 
-        if (value instanceof Wrapper &&
-            !(value instanceof NativeJavaClass)) {
-            Object instance = ((Wrapper)value).unwrap();
+        // 'Class<String> instanceof Class' must be true 
+        if (value instanceof NativeJavaClass) {
+            return getClassObject() == Class.class;
+        }
 
+        if (value instanceof Wrapper) {
+            Object instance = ((Wrapper)value).unwrap();
             return getClassObject().isInstance(instance);
         }
 
