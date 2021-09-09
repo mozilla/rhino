@@ -148,6 +148,24 @@ public class JavaAcessibilityTest extends TestCase {
         assertEquals("success", result);
     }
 
+    public void testInstanceOf() {
+
+        Object result = runScript("(new java.util.HashMap()) instanceof java.util.HashMap;");
+        assertEquals(true, result);
+        result = runScript("(new java.util.HashMap()) instanceof java.util.Map;");
+        assertEquals(true, result);
+        result = runScript("(new java.util.HashMap()) instanceof java.util.List;");
+        assertEquals(false, result);
+    }
+
+    public void testExceptionInstanceOf() {
+
+        Object result =
+                runScript(
+                        "try { (new java.util.ArrayList()).set(2,2) } catch(e) {e.javaException instanceof java.lang.IndexOutOfBoundsException;}");
+        assertEquals(true, result);
+    }
+
     private Object runScript(final String scriptSourceText) {
         return contextFactory.call(
                 context -> {

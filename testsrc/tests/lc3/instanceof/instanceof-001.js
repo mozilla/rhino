@@ -53,6 +53,11 @@ new TestCase(
   java.lang.Class.forName("java.lang.String") instanceof java.lang.Class );
 
 new TestCase(
+  "java.lang.Class.forName(\"java.lang.String\") == java.lang.String",
+  true,
+  java.lang.Class.forName("java.lang.String") == java.lang.String );
+
+new TestCase(
   "new java.lang.Double(5.0) instanceof java.lang.Double",
   true,
   new java.lang.Double(5.0) instanceof java.lang.Double );
