@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Iterator;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Hashtable;
@@ -24,297 +23,271 @@ import org.mozilla.javascript.Hashtable.Entry;
 import org.mozilla.javascript.Undefined;
 
 /**
- * These are some tests for the Hashtable implementation that's used by the collection
- * classes in Rhino.
+ * These are some tests for the Hashtable implementation that's used by the collection classes in
+ * Rhino.
  */
-public class CollectionHashtableTest
-{
-  private Hashtable ht;
+public class CollectionHashtableTest {
+    private Hashtable ht;
 
-  @Before
-  public void init() {
-    ht = new Hashtable();
-  }
-
-  /**
-   * Sanity test on empty table.
-   */
-  @Test
-  public void testEmpty() {
-    assertEquals(0, ht.size());
-    assertNull(null, ht.getEntry("one"));
-    assertFalse(ht.has("one"));
-    assertNull(ht.delete("one"));
-    ht.clear();
-    assertEquals(0, ht.size());
-    for (Hashtable.Entry e : ht) {
-      fail("Should be no entries in the hash table");
+    @Before
+    public void init() {
+        ht = new Hashtable();
     }
-  }
 
-  /**
-   * Just a sanity test for the basic functionality.
-   */
-  @Test
-  public void testCRUD() {
-    ht.put("one", 1);
-    assertEquals(1, ht.size());
-    assertEquals(1, ht.getEntry("one").value());
-    assertTrue(ht.has("one"));
-    ht.put("two", 2);
-    assertEquals(2, ht.size());
-    assertEquals(2, ht.getEntry("two").value());
-    assertTrue(ht.has("two"));
-    ht.clear();
-    assertEquals(0, ht.size());
-    assertNull(ht.getEntry("one"));
-    assertFalse(ht.has("one"));
-  }
+    /** Sanity test on empty table. */
+    @Test
+    public void testEmpty() {
+        assertEquals(0, ht.size());
+        assertNull(null, ht.getEntry("one"));
+        assertFalse(ht.has("one"));
+        assertNull(ht.delete("one"));
+        ht.clear();
+        assertEquals(0, ht.size());
+        for (Hashtable.Entry e : ht) {
+            fail("Should be no entries in the hash table");
+        }
+    }
 
+    /** Just a sanity test for the basic functionality. */
+    @Test
+    public void testCRUD() {
+        ht.put("one", 1);
+        assertEquals(1, ht.size());
+        assertEquals(1, ht.getEntry("one").value());
+        assertTrue(ht.has("one"));
+        ht.put("two", 2);
+        assertEquals(2, ht.size());
+        assertEquals(2, ht.getEntry("two").value());
+        assertTrue(ht.has("two"));
+        ht.clear();
+        assertEquals(0, ht.size());
+        assertNull(ht.getEntry("one"));
+        assertFalse(ht.has("one"));
+    }
 
-  /**
-   * Basic iteration test
-   */
-  @Test
-  public void testBasicIteration() {
-    ht.put("one", 1);
-    ht.put("two", 2);
+    /** Basic iteration test */
+    @Test
+    public void testBasicIteration() {
+        ht.put("one", 1);
+        ht.put("two", 2);
 
-    Iterator<Entry> i = ht.iterator();
-    assertTrue(i.hasNext());
-    Hashtable.Entry e = i.next();
-    assertEquals("one", e.key());
-    assertEquals(1, e.value());
+        Iterator<Entry> i = ht.iterator();
+        assertTrue(i.hasNext());
+        Hashtable.Entry e = i.next();
+        assertEquals("one", e.key());
+        assertEquals(1, e.value());
 
-    assertTrue(i.hasNext());
-    e = i.next();
-    assertEquals("two", e.key());
-    assertEquals(2, e.value());
+        assertTrue(i.hasNext());
+        e = i.next();
+        assertEquals("two", e.key());
+        assertEquals(2, e.value());
 
-    assertFalse(i.hasNext());
-  }
+        assertFalse(i.hasNext());
+    }
 
-  /**
-   * Test that elements appear in insertion order.
-   */
-  @Test
-  public void testInsertionOrder() {
-    ht.put("a", 1);
-    ht.put("e", 2);
-    ht.put("b", 3);
+    /** Test that elements appear in insertion order. */
+    @Test
+    public void testInsertionOrder() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
 
-    Iterator<Entry> i = ht.iterator();
-    Hashtable.Entry e = i.next();
-    assertEquals("a", e.key());
-    e = i.next();
-    assertEquals("e", e.key());
-    e = i.next();
-    assertEquals("b", e.key());
-    assertFalse(i.hasNext());
-  }
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("a", e.key());
+        e = i.next();
+        assertEquals("e", e.key());
+        e = i.next();
+        assertEquals("b", e.key());
+        assertFalse(i.hasNext());
+    }
 
-  /**
-   * Test that they appear in insertion order even if they are modified.
-   */
-  @Test
-  public void testInsertionOrderModified() {
-    ht.put("a", 1);
-    ht.put("e", 2);
-    ht.put("b", 3);
-    ht.put("e", 4);
+    /** Test that they appear in insertion order even if they are modified. */
+    @Test
+    public void testInsertionOrderModified() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
+        ht.put("e", 4);
 
-    Iterator<Entry> i = ht.iterator();
-    Hashtable.Entry e = i.next();
-    assertEquals("a", e.key());
-    e = i.next();
-    assertEquals("e", e.key());
-    e = i.next();
-    assertEquals("b", e.key());
-    assertFalse(i.hasNext());
-  }
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("a", e.key());
+        e = i.next();
+        assertEquals("e", e.key());
+        e = i.next();
+        assertEquals("b", e.key());
+        assertFalse(i.hasNext());
+    }
 
-  /**
-   * Test that they appear in insertion order when deleted and recreated.
-   */
-  @Test
-  public void testInsertionOrderDeleted() {
-    ht.put("a", 1);
-    ht.put("e", 2);
-    ht.put("b", 3);
-    ht.delete("e");
-    ht.put("e", 5);
+    /** Test that they appear in insertion order when deleted and recreated. */
+    @Test
+    public void testInsertionOrderDeleted() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
+        ht.delete("e");
+        ht.put("e", 5);
 
-    Iterator<Entry> i = ht.iterator();
-    Hashtable.Entry e = i.next();
-    assertEquals("a", e.key());
-    e = i.next();
-    assertEquals("b", e.key());
-    e = i.next();
-    assertEquals("e", e.key());
-    assertFalse(i.hasNext());
-  }
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("a", e.key());
+        e = i.next();
+        assertEquals("b", e.key());
+        e = i.next();
+        assertEquals("e", e.key());
+        assertFalse(i.hasNext());
+    }
 
-  /**
-   * Test that we can add elements while an iterator exists and see the newer elements.
-   */
-  @Test
-  public void testInsertionOrderAfterIterating() {
-    ht.put("a", 1);
-    ht.put("e", 2);
+    /** Test that we can add elements while an iterator exists and see the newer elements. */
+    @Test
+    public void testInsertionOrderAfterIterating() {
+        ht.put("a", 1);
+        ht.put("e", 2);
 
-    Iterator<Entry> i = ht.iterator();
-    Hashtable.Entry e = i.next();
-    assertEquals("a", e.key());
-    e = i.next();
-    assertEquals("e", e.key());
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("a", e.key());
+        e = i.next();
+        assertEquals("e", e.key());
 
-    ht.put("b", 3);
-    e = i.next();
-    assertEquals("b", e.key());
-    assertFalse(i.hasNext());
-  }
+        ht.put("b", 3);
+        e = i.next();
+        assertEquals("b", e.key());
+        assertFalse(i.hasNext());
+    }
 
-  /**
-   * Test "clear" operation and iteration.
-   */
-  @Test
-  public void testInsertionOrderAfterClear() {
-    ht.put("a", 1);
-    ht.put("e", 2);
-    ht.put("b", 3);
+    /** Test "clear" operation and iteration. */
+    @Test
+    public void testInsertionOrderAfterClear() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
 
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("a", e.key());
+        e = i.next();
+        assertEquals("e", e.key());
+        e = i.next();
+        assertEquals("b", e.key());
 
-    Iterator<Entry> i = ht.iterator();
-    Hashtable.Entry e = i.next();
-    assertEquals("a", e.key());
-    e = i.next();
-    assertEquals("e", e.key());
-    e = i.next();
-    assertEquals("b", e.key());
+        ht.clear();
+        ht.put("b", 4);
 
-    ht.clear();
-    ht.put("b", 4);
+        e = i.next();
+        assertEquals("b", e.key());
+        assertFalse(i.hasNext());
+    }
 
-    e = i.next();
-    assertEquals("b", e.key());
-    assertFalse(i.hasNext());
-  }
+    /** Test that we can delete elements while iterating. */
+    @Test
+    public void testInsertionOrderWithDelete() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
 
-  /**
-   * Test that we can delete elements while iterating.
-   */
-  @Test
-  public void testInsertionOrderWithDelete() {
-    ht.put("a", 1);
-    ht.put("e", 2);
-    ht.put("b", 3);
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("a", e.key());
 
-    Iterator<Entry> i = ht.iterator();
-    Hashtable.Entry e = i.next();
-    assertEquals("a", e.key());
+        ht.delete("e");
 
-    ht.delete("e");
+        e = i.next();
+        assertEquals("b", e.key());
+        assertFalse(i.hasNext());
+    }
 
-    e = i.next();
-    assertEquals("b", e.key());
-    assertFalse(i.hasNext());
-  }
+    /**
+     * Worst-case scenario -- delete everything the "hard way" and re-create while iterator exists.
+     */
+    @Test
+    public void testDeleteAllWhileIterating() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
 
-  /**
-   * Worst-case scenario -- delete everything the "hard way" and re-create while iterator
-   * exists.
-   */
-  @Test
-  public void testDeleteAllWhileIterating() {
-    ht.put("a", 1);
-    ht.put("e", 2);
-    ht.put("b", 3);
+        Iterator<Entry> i = ht.iterator();
 
-    Iterator<Entry> i = ht.iterator();
+        ht.delete("a");
+        ht.delete("e");
+        ht.delete("b");
 
-    ht.delete("a");
-    ht.delete("e");
-    ht.delete("b");
+        ht.put("aa", 10);
+        ht.put("ee", 20);
+        ht.put("bb", 30);
 
-    ht.put("aa", 10);
-    ht.put("ee", 20);
-    ht.put("bb", 30);
+        Hashtable.Entry e = i.next();
+        assertEquals("aa", e.key());
+        e = i.next();
+        assertEquals("ee", e.key());
+        e = i.next();
+        assertEquals("bb", e.key());
+        assertFalse(i.hasNext());
+    }
 
-    Hashtable.Entry e = i.next();
-    assertEquals("aa", e.key());
-    e = i.next();
-    assertEquals("ee", e.key());
-    e = i.next();
-    assertEquals("bb", e.key());
-    assertFalse(i.hasNext());
-  }
+    /** Test serialization of an empty object. */
+    @Test
+    public void testEmptySerialization() throws IOException, ClassNotFoundException {
 
-  /**
-   * Test serialization of an empty object.
-   */
-  @Test
-  public void testEmptySerialization()
-      throws IOException, ClassNotFoundException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new ObjectOutputStream(bos);
+        oout.writeObject(ht);
+        oout.close();
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutputStream oout = new ObjectOutputStream(bos);
-    oout.writeObject(ht);
-    oout.close();
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        ObjectInputStream oin = new ObjectInputStream(bis);
+        Hashtable sht = (Hashtable) oin.readObject();
+        assertEquals(0, sht.size());
+    }
 
-    ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-    ObjectInputStream oin = new ObjectInputStream(bis);
-    Hashtable sht = (Hashtable)oin.readObject();
-    assertEquals(0, sht.size());
-  }
+    /**
+     * Test serialization of a non-empty object with a bunch of different data types, including the
+     * iteration order.
+     */
+    @Test
+    public void testSerialization() throws IOException, ClassNotFoundException {
 
-  /**
-   * Test serialization of a non-empty object with a bunch of different data types,
-   * including the iteration order.
-   */
-  @Test
-  public void testSerialization()
-      throws IOException, ClassNotFoundException {
+        ht.put("one", 1);
+        ht.put("two", 2);
+        ht.put("three", 3);
+        ht.put(Undefined.instance, "undefined");
+        ht.put("undefined", Undefined.instance);
+        ht.put(null, "null");
+        ht.put("null", null);
 
-    ht.put("one", 1);
-    ht.put("two", 2);
-    ht.put("three", 3);
-    ht.put(Undefined.instance, "undefined");
-    ht.put("undefined", Undefined.instance);
-    ht.put(null, "null");
-    ht.put("null", null);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oout = new ObjectOutputStream(bos);
+        oout.writeObject(ht);
+        oout.close();
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutputStream oout = new ObjectOutputStream(bos);
-    oout.writeObject(ht);
-    oout.close();
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        ObjectInputStream oin = new ObjectInputStream(bis);
+        Hashtable sht = (Hashtable) oin.readObject();
 
-    ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-    ObjectInputStream oin = new ObjectInputStream(bis);
-    Hashtable sht = (Hashtable)oin.readObject();
+        assertEquals(1, sht.getEntry("one").value());
+        assertEquals(2, sht.getEntry("two").value());
+        assertEquals(3, sht.getEntry("three").value());
+        assertEquals(Undefined.instance, sht.getEntry("undefined").value());
+        assertEquals("undefined", sht.getEntry(Undefined.instance).value());
+        assertNull(sht.getEntry("null").value());
+        assertEquals("null", sht.getEntry(null).value());
 
-    assertEquals(1, sht.getEntry("one").value());
-    assertEquals(2, sht.getEntry("two").value());
-    assertEquals(3, sht.getEntry("three").value());
-    assertEquals(Undefined.instance, sht.getEntry("undefined").value());
-    assertEquals("undefined", sht.getEntry(Undefined.instance).value());
-    assertNull(sht.getEntry("null").value());
-    assertEquals("null", sht.getEntry(null).value());
-
-    Iterator<Entry> i = ht.iterator();
-    Hashtable.Entry e = i.next();
-    assertEquals("one", e.key());
-    e = i.next();
-    assertEquals("two", e.key());
-    e = i.next();
-    assertEquals("three", e.key());
-    e = i.next();
-    assertEquals(Undefined.instance, e.key());
-    e = i.next();
-    assertEquals("undefined", e.key());
-    e = i.next();
-    assertNull(e.key());
-    e = i.next();
-    assertEquals("null", e.key());
-    assertFalse(i.hasNext());
-  }
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("one", e.key());
+        e = i.next();
+        assertEquals("two", e.key());
+        e = i.next();
+        assertEquals("three", e.key());
+        e = i.next();
+        assertEquals(Undefined.instance, e.key());
+        e = i.next();
+        assertEquals("undefined", e.key());
+        e = i.next();
+        assertNull(e.key());
+        e = i.next();
+        assertEquals("null", e.key());
+        assertFalse(i.hasNext());
+    }
 }

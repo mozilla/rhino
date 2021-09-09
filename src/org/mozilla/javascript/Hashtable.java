@@ -1,30 +1,21 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * This generic hash table class is used by Set and Map. It uses
- * a standard HashMap for storing keys and values so that we can handle
- * lots of hash collisions if necessary, and a doubly-linked list to support the iterator
- * capability.
- * <p>
- * This second one is important because JavaScript handling of
- * the iterator is completely different from the way that Java does it. In Java
- * an attempt to modify a collection on a HashMap or LinkedHashMap while iterating
- * through it (except by using the "remove" method on the Iterator object itself) results in a
- * ConcurrentModificationException. JavaScript Maps and Sets explicitly allow
- * the collection to be modified, or even cleared completely, while iterators
- * exist, and even lets an iterator keep on iterating on a collection that was
- * empty when it was created..
+ * This generic hash table class is used by Set and Map. It uses a standard HashMap for storing keys
+ * and values so that we can handle lots of hash collisions if necessary, and a doubly-linked list
+ * to support the iterator capability.
+ *
+ * <p>This second one is important because JavaScript handling of the iterator is completely
+ * different from the way that Java does it. In Java an attempt to modify a collection on a HashMap
+ * or LinkedHashMap while iterating through it (except by using the "remove" method on the Iterator
+ * object itself) results in a ConcurrentModificationException. JavaScript Maps and Sets explicitly
+ * allow the collection to be modified, or even cleared completely, while iterators exist, and even
+ * lets an iterator keep on iterating on a collection that was empty when it was created..
  */
 public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
@@ -34,28 +25,26 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
     private Entry last = null;
 
     /**
-     * One entry in the hash table. Override equals and hashcode because this is
-     * another area in which JavaScript and Java differ. This entry also becomes a
-     * node in the linked list.
+     * One entry in the hash table. Override equals and hashcode because this is another area in
+     * which JavaScript and Java differ. This entry also becomes a node in the linked list.
      */
-
-      public static final class Entry implements Serializable {
-      private static final long serialVersionUID = 4086572107122965503L;
-      protected Object key;
-      protected Object value;
-      protected boolean deleted;
-      protected Entry next;
-      protected Entry prev;
-      private final int hashCode;
+    public static final class Entry implements Serializable {
+        private static final long serialVersionUID = 4086572107122965503L;
+        protected Object key;
+        protected Object value;
+        protected boolean deleted;
+        protected Entry next;
+        protected Entry prev;
+        private final int hashCode;
 
         Entry() {
             hashCode = 0;
         }
 
         Entry(Object k, Object value) {
-            if ((k instanceof Number) && ( ! ( k instanceof Double))) {
+            if ((k instanceof Number) && (!(k instanceof Double))) {
                 // Hash comparison won't work if we don't do this
-                this.key = Double.valueOf(((Number)k).doubleValue());
+                this.key = Double.valueOf(((Number) k).doubleValue());
             } else if (k instanceof ConsString) {
                 this.key = k.toString();
             } else {
@@ -81,9 +70,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
             return value;
         }
 
-        /**
-         * Zero out key and value and return old value.
-         */
+        /** Zero out key and value and return old value. */
         Object clear() {
             final Object ret = value;
             key = Undefined.instance;
@@ -103,7 +90,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
                 return false;
             }
             try {
-                return ScriptRuntime.sameZero(key, ((Entry)o).key);
+                return ScriptRuntime.sameZero(key, ((Entry) o).key);
             } catch (ClassCastException cce) {
                 return false;
             }
@@ -183,7 +170,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
             if (v.next != null) {
                 v.next.prev = prev;
             } else {
-                assert(v == last);
+                assert (v == last);
                 last = prev;
             }
         }
@@ -216,9 +203,7 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
 
     // The iterator for this class works directly on the linked list so that it implements
     // the specified iteration behavior, which is very different from Java.
-    private final static class Iter
-        implements Iterator<Entry>
-    {
+    private static final class Iter implements Iterator<Entry> {
         private Entry pos;
 
         Iter(Entry start) {
