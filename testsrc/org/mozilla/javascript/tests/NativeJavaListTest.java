@@ -297,7 +297,7 @@ public class NativeJavaListTest extends TestCase {
         // CHECKME: what would we expect here?
         assertEquals("false", runScriptAsString("Array.isArray(value)", list));
     }
-    
+
     public void testInstanceOfArray() {
         List<String> list = new ArrayList<>();
         list.add("a");
