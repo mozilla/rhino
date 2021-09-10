@@ -156,7 +156,7 @@ public class JavaIterableTest extends TestCase {
     private Object runScript(String scriptSourceText, Object value) {
         return ContextFactory.getGlobal().call(context -> {
             context.setLanguageVersion(Context.VERSION_ES6);
-            Scriptable scope = context.initStandardObjects(global);
+            Scriptable scope = context.newObject(global);
             scope.put("value", scope, Context.javaToJS(value, scope));
             return context.evaluateString(scope, scriptSourceText, "", 1, null);
         });

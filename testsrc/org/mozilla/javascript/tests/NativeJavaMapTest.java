@@ -221,7 +221,7 @@ public class NativeJavaMapTest extends TestCase {
         return getContextFactory(enableJavaMapAccess)
                 .call(
                         context -> {
-                            Scriptable scope = context.initStandardObjects(global);
+                            Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
                                     context.evaluateString(scope, scriptSourceText, "", 1, null));
@@ -232,7 +232,7 @@ public class NativeJavaMapTest extends TestCase {
         return getContextFactory(false)
                 .call(
                         context -> {
-                            Scriptable scope = context.initStandardObjects(global);
+                            Scriptable scope = context.newObject(global);
                             context.setLanguageVersion(Context.VERSION_ES6);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return context.evaluateString(scope, scriptSourceText, "", 1, null);

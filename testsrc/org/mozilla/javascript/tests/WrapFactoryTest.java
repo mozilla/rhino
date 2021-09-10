@@ -65,7 +65,7 @@ public class WrapFactoryTest {
         Context cx = Context.enter();
         try {
             cx.getWrapFactory().setJavaPrimitiveWrap(javaPrimitiveWrap);
-            Scriptable scope = cx.initStandardObjects(new ImporterTopLevel(cx));
+            Scriptable scope = cx.newObject(new ImporterTopLevel(cx));
 
             // register object
             Map<String, Object> map = new LinkedHashMap<>();
