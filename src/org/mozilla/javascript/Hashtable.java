@@ -129,6 +129,19 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         }
     }
 
+    /**
+     * @deprecated use getEntry(Object key) instead because this returns null if the entry was not
+     *     found or the value of the entry is null
+     */
+    public Object get(Object key) {
+        final Entry e = new Entry(key, null);
+        final Entry v = map.get(e);
+        if (v == null) {
+            return null;
+        }
+        return v.value;
+    }
+
     public Entry getEntry(Object key) {
         final Entry e = new Entry(key, null);
         return map.get(e);
@@ -139,7 +152,56 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         return map.containsKey(e);
     }
 
-    public boolean delete(Object key) {
+    /**
+     * @deprecated use deleteEntry(Object key) instead because this returns null if the entry was
+     *     not found or the value of the entry is null
+     */
+    public Object delete(Object key) {
+        final Entry e = new Entry(key, null);
+        final Entry v = map.remove(e);
+        if (v == null) {
+            return null;
+        }
+
+        // To keep existing iterators moving forward as specified in EC262,
+        // we will remove the "prev" pointers from the list but leave the "next"
+        // pointers intact. Once we do that, then the only things pointing to
+        // the deleted nodes are existing iterators. Once those are gone, then
+        // these objects will be GCed.
+        // This way, new iterators will not "see" the deleted elements, and
+        // existing iterators will continue from wherever they left off to
+        // continue iterating in insertion order.
+        if (v == first) {
+            if (v == last) {
+                // Removing the only element. Leave it as a dummy or existing iterators
+                // will never stop.
+                v.clear();
+                v.prev = null;
+            } else {
+                first = v.next;
+                first.prev = null;
+                if (first.next != null) {
+                    first.next.prev = first;
+                }
+            }
+        } else {
+            final Entry prev = v.prev;
+            prev.next = v.next;
+            v.prev = null;
+            if (v.next != null) {
+                v.next.prev = prev;
+            } else {
+                assert (v == last);
+                last = prev;
+            }
+        }
+        // Still clear the node in case it is in the chain of some iterator
+        final Object ret = v.value;
+        v.clear();
+        return ret;
+    }
+
+    public boolean deleteEntry(Object key) {
         final Entry e = new Entry(key, null);
         final Entry v = map.remove(e);
         if (v == null) {

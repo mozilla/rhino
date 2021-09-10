@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests.es6;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -40,7 +41,8 @@ public class CollectionHashtableTest {
         assertEquals(0, ht.size());
         assertNull(null, ht.getEntry("one"));
         assertFalse(ht.has("one"));
-        assertFalse(ht.delete("one"));
+        assertNull(ht.delete("one"));
+        assertFalse(ht.deleteEntry("one"));
         ht.clear();
         assertEquals(0, ht.size());
         for (Hashtable.Entry e : ht) {
@@ -126,7 +128,29 @@ public class CollectionHashtableTest {
         ht.put("a", 1);
         ht.put("e", 2);
         ht.put("b", 3);
-        ht.delete("e");
+        assertTrue(ht.deleteEntry("e"));
+        ht.put("e", 5);
+
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("a", e.key());
+        e = i.next();
+        assertEquals("b", e.key());
+        e = i.next();
+        assertEquals("e", e.key());
+        assertFalse(i.hasNext());
+    }
+
+    /**
+     * Test that they appear in insertion order when deleted and recreated. This versions used the
+     * deprecated delete method instead of deleteEntry
+     */
+    @Test
+    public void testInsertionOrderDeletedDeprecated() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
+        assertNotNull(ht.delete("e"));
         ht.put("e", 5);
 
         Iterator<Entry> i = ht.iterator();
@@ -191,7 +215,25 @@ public class CollectionHashtableTest {
         Hashtable.Entry e = i.next();
         assertEquals("a", e.key());
 
-        ht.delete("e");
+        assertTrue(ht.deleteEntry("e"));
+
+        e = i.next();
+        assertEquals("b", e.key());
+        assertFalse(i.hasNext());
+    }
+
+    /** Test that we can delete elements while iterating. */
+    @Test
+    public void testInsertionOrderWithDeleteDeprecated() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
+
+        Iterator<Entry> i = ht.iterator();
+        Hashtable.Entry e = i.next();
+        assertEquals("a", e.key());
+
+        assertNotNull(ht.delete("e"));
 
         e = i.next();
         assertEquals("b", e.key());
@@ -209,9 +251,37 @@ public class CollectionHashtableTest {
 
         Iterator<Entry> i = ht.iterator();
 
-        ht.delete("a");
-        ht.delete("e");
-        ht.delete("b");
+        assertTrue(ht.deleteEntry("a"));
+        assertTrue(ht.deleteEntry("e"));
+        assertTrue(ht.deleteEntry("b"));
+
+        ht.put("aa", 10);
+        ht.put("ee", 20);
+        ht.put("bb", 30);
+
+        Hashtable.Entry e = i.next();
+        assertEquals("aa", e.key());
+        e = i.next();
+        assertEquals("ee", e.key());
+        e = i.next();
+        assertEquals("bb", e.key());
+        assertFalse(i.hasNext());
+    }
+
+    /**
+     * Worst-case scenario -- delete everything the "hard way" and re-create while iterator exists.
+     */
+    @Test
+    public void testDeleteAllWhileIteratingDeprecated() {
+        ht.put("a", 1);
+        ht.put("e", 2);
+        ht.put("b", 3);
+
+        Iterator<Entry> i = ht.iterator();
+
+        assertNotNull(ht.delete("a"));
+        assertNotNull(ht.delete("e"));
+        assertNotNull(ht.delete("b"));
 
         ht.put("aa", 10);
         ht.put("ee", 20);

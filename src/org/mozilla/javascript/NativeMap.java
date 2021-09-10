@@ -97,7 +97,7 @@ public class NativeMap extends IdScriptableObject {
     }
 
     private Object js_delete(Object arg) {
-        return Boolean.valueOf(entries.delete(arg));
+        return Boolean.valueOf(entries.deleteEntry(arg));
     }
 
     private Object js_get(Object arg) {
