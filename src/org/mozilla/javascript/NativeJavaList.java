@@ -13,12 +13,18 @@ public class NativeJavaList extends NativeJavaObject {
 
     private List<Object> list;
 
+    static void init(ScriptableObject scope, boolean sealed) {
+        NativeJavaList obj = new NativeJavaList();
+        obj.exportAsJSClass(scope, "JavaObject", sealed);
+    }
+
+    protected NativeJavaList() {}
+
     @SuppressWarnings("unchecked")
     public NativeJavaList(Scriptable scope, Object list) {
         super(scope, list, list.getClass());
         assert list instanceof List;
         this.list = (List<Object>) list;
-        setPrototype(ScriptableObject.getClassPrototype(scope, "Array"));
     }
 
     @Override
@@ -36,7 +42,7 @@ public class NativeJavaList extends NativeJavaObject {
 
     @Override
     public boolean has(int index, Scriptable start) {
-        if (isWithValidIndex(index)) {
+        if (list != null && isWithValidIndex(index)) {
             return true;
         }
         return super.has(index, start);
@@ -98,7 +104,7 @@ public class NativeJavaList extends NativeJavaObject {
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        if ("length".equals(name)) {
+        if (list != null && "length".equals(name)) {
             setLength(value);
         }
         super.put(name, start, value);

@@ -303,7 +303,12 @@ public class NativeJavaListTest extends TestCase {
         list.add("a");
         list.add("b");
         list.add("c");
-        assertEquals("true", runScriptAsString("(value instanceof Array)", list));
+        assertEquals("true", runScriptAsString("(value instanceof Object)", list));
+        assertEquals("true", runScriptAsString("(value instanceof JavaObject)", list));
+        assertEquals("true", runScriptAsString("(value instanceof JavaList)", list));
+        assertEquals("true", runScriptAsString("(value instanceof java.util.List)", list));
+        assertEquals("true", runScriptAsString("(value instanceof java.util.ArrayList)", list));
+        assertEquals("false", runScriptAsString("(value instanceof Array)", list));
     }
 
     public void testArrayJoin() {
@@ -477,13 +482,20 @@ public class NativeJavaListTest extends TestCase {
     }
 
     private <T> T runScript(String scriptSourceText, Object value, Function<Object, T> convert) {
+
         return ContextFactory.getGlobal()
                 .call(
                         context -> {
-                            Scriptable scope = context.initStandardObjects(global);
+                            Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
-                                    context.evaluateString(scope, scriptSourceText, "", 1, null));
+                                    context.evaluateString(
+                                            scope,
+                                            "Object.getOwnPropertyNames(Array.prototype).forEach(function(x) { JavaList.prototype[x] = Array.prototype[x]});"
+                                                    + scriptSourceText,
+                                            "",
+                                            1,
+                                            null));
                         });
     }
 
@@ -492,7 +504,7 @@ public class NativeJavaListTest extends TestCase {
                 .call(
                         context -> {
                             context.getWrapFactory().setJavaPrimitiveWrap(false);
-                            Scriptable scope = context.initStandardObjects(global);
+                            Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return context.evaluateString(scope, scriptSourceText, "", 1, null);
                         });
