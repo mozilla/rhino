@@ -22,7 +22,8 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
 /**
- * This testcase performs various <code>instanceof</code> tests or prototype modifications in different modes.
+ * This testcase performs various <code>instanceof</code> tests or prototype modifications in
+ * different modes.
  *
  * <ul>
  *   <li>{@link Mode#GLOBAL}<br>
@@ -42,8 +43,8 @@ import org.mozilla.javascript.tools.shell.Global;
  *       script execution an empty scope that has the global scope as prototype is create. This will
  *       lower the memory footprint, as the global objects have to be created only one. (See
  *       https://github.com/mozilla/rhino/pull/826 for details) The drawback of this mode is, that
- *       no prototype modification can be done, because the global scope is sealed.
- *       So different script executions will not see any modifications
+ *       no prototype modification can be done, because the global scope is sealed. So different
+ *       script executions will not see any modifications
  *   <li>{@link Mode#SEALED_OWN_OBJECTS} in this case, no empty scope is created but every scope has
  *       its own standard-objects, which may increase the memory footprint, but some global objects
  *       can be shared.
