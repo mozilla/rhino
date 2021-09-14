@@ -183,7 +183,6 @@ public class ScriptRuntime {
         NativeStringIterator.init(scope, sealed);
 
         NativeJavaObject.init(scope, sealed);
-        NativeJavaList.init(scope, sealed);
         NativeJavaMap.init(scope, sealed);
 
         boolean withXml =
@@ -3613,6 +3612,7 @@ public class ScriptRuntime {
         if (y instanceof Wrapper) {
             y = ((Wrapper) y).unwrap();
         }
+
         if (x == y) {
             if (!(x instanceof Number)) {
                 return true;

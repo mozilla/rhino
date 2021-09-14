@@ -9,16 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NativeJavaList extends NativeJavaObject {
-    private static final long serialVersionUID = 1L;
 
     private List<Object> list;
-
-    static void init(ScriptableObject scope, boolean sealed) {
-        NativeJavaList obj = new NativeJavaList();
-        obj.exportAsJSClass(scope, "JavaObject", sealed);
-    }
-
-    protected NativeJavaList() {}
 
     @SuppressWarnings("unchecked")
     public NativeJavaList(Scriptable scope, Object list) {
@@ -42,7 +34,7 @@ public class NativeJavaList extends NativeJavaObject {
 
     @Override
     public boolean has(int index, Scriptable start) {
-        if (list != null && isWithValidIndex(index)) {
+        if (isWithValidIndex(index)) {
             return true;
         }
         return super.has(index, start);
@@ -106,6 +98,7 @@ public class NativeJavaList extends NativeJavaObject {
     public void put(String name, Scriptable start, Object value) {
         if (list != null && "length".equals(name)) {
             setLength(value);
+            return;
         }
         super.put(name, start, value);
     }

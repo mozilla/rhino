@@ -34,8 +34,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     static void init(ScriptableObject scope, boolean sealed) {
         JavaIterableIterator.init(scope, sealed);
-        NativeJavaObject obj = new NativeJavaObject();
-        obj.exportAsJSClass(scope, "Object", sealed);
     }
 
     public NativeJavaObject() {}
@@ -46,8 +44,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     public NativeJavaObject(
             Scriptable scope, Object javaObject, Class<?> staticType, boolean isAdapter) {
-        setParentScope(scope);
-        setPrototype(ScriptableObject.getClassPrototype(scope, getClassName()));
+        this.parent = scope;
         this.javaObject = javaObject;
         this.staticType = staticType;
         this.isAdapter = isAdapter;
@@ -65,33 +62,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
     }
 
-    public final void exportAsJSClass(Scriptable scope, String parent, boolean sealed) {
-        setParentScope(scope);
-        setPrototype(ScriptableObject.getClassPrototype(scope, parent));
-
-        BaseFunction ctor =
-                new BaseFunction() {
-                    private static final long serialVersionUID = 1L;
-
-                    public Object call(
-                            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-                        throw new UnsupportedOperationException(
-                                getClassName() + " not constructable");
-                    };
-                };
-
-        ScriptRuntime.setFunctionProtoAndParent(ctor, scope);
-        ctor.setImmunePrototypeProperty(this);
-        prototype.setParentScope(this);
-        if (sealed) {
-            ctor.sealObject();
-        }
-        ScriptableObject.defineProperty(scope, getClassName(), ctor, ScriptableObject.DONTENUM);
-    }
-
     @Override
     public boolean has(String name, Scriptable start) {
-        return members != null && members.has(name, false);
+        return members.has(name, false);
     }
 
     @Override
@@ -117,7 +90,6 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         }
         // TODO: passing 'this' as the scope is bogus since it has
         //  no parent scope
-        if (members == null) return Scriptable.NOT_FOUND;
         return members.get(this, name, javaObject, false);
     }
 
@@ -140,7 +112,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // We could be asked to modify the value of a property in the
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
-        if (members != null && members.has(name, false))
+        if (prototype == null || members.has(name, false))
             members.put(this, name, javaObject, value, false);
         else prototype.put(name, prototype, value);
     }
@@ -151,7 +123,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
         String name = symbol.toString();
-        if (members != null && members.has(name, false)) {
+        if (prototype == null || members.has(name, false)) {
             members.put(this, name, javaObject, value, false);
         } else if (prototype instanceof SymbolScriptable) {
             ((SymbolScriptable) prototype).put(symbol, prototype, value);
