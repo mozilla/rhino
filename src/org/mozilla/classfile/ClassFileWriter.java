@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+
+import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.UintMap;
 
@@ -1443,13 +1445,22 @@ public class ClassFileWriter {
         }
 
         private SuperBlock getSuperBlockFromOffset(int offset) {
-            for (int i = 0; i < superBlocks.length; i++) {
-                SuperBlock sb = superBlocks[i];
-                if (sb == null) {
-                    break;
-                } else if (offset >= sb.getStart() && offset < sb.getEnd()) {
-                    return sb;
-                }
+            int startIdx = Arrays.binarySearch(itsSuperBlockStarts, 0,
+                    itsSuperBlockStartsTop, offset);
+
+            if (startIdx < 0) {
+                // if offset was not found, insertion point is returned (See
+                // Arrays.binarySearch)
+                // we convert it back to the matching superblock.
+                startIdx = -startIdx - 2;
+            }
+            if (startIdx < itsSuperBlockStartsTop) {
+                SuperBlock sb = superBlocks[startIdx];
+                // check, if it is really the matching one
+                if (offset < sb.getStart() || offset >= sb.getEnd())
+                    Kit.codeBug();
+                return sb;
+
             }
             throw new IllegalArgumentException("bad offset: " + offset);
         }
