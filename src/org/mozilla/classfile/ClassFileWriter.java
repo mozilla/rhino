@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+
+import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.UintMap;
 
@@ -1443,13 +1445,22 @@ public class ClassFileWriter {
         }
 
         private SuperBlock getSuperBlockFromOffset(int offset) {
-            for (int i = 0; i < superBlocks.length; i++) {
-                SuperBlock sb = superBlocks[i];
-                if (sb == null) {
-                    break;
-                } else if (offset >= sb.getStart() && offset < sb.getEnd()) {
-                    return sb;
-                }
+            int startIdx = Arrays.binarySearch(itsSuperBlockStarts, 0,
+                    itsSuperBlockStartsTop, offset);
+
+            if (startIdx < 0) {
+                // if offset was not found, insertion point is returned (See
+                // Arrays.binarySearch)
+                // we convert it back to the matching superblock.
+                startIdx = -startIdx - 2;
+            }
+            if (startIdx < itsSuperBlockStartsTop) {
+                SuperBlock sb = superBlocks[startIdx];
+                // check, if it is really the matching one
+                if (offset < sb.getStart() || offset >= sb.getEnd())
+                    Kit.codeBug();
+                return sb;
+
             }
             throw new IllegalArgumentException("bad offset: " + offset);
         }
@@ -1474,35 +1485,6 @@ public class ClassFileWriter {
                 default:
                     return false;
             }
-        }
-
-        /**
-         * Calculate partial dependencies for super blocks.
-         *
-         * <p>This is used as a workaround for dead code that is generated. Only one dependency per
-         * super block is given.
-         */
-        private SuperBlock[] getSuperBlockDependencies() {
-            SuperBlock[] deps = new SuperBlock[superBlocks.length];
-
-            for (int i = 0; i < itsExceptionTableTop; i++) {
-                ExceptionTableEntry ete = itsExceptionTable[i];
-                int startPC = getLabelPC(ete.itsStartLabel);
-                int handlerPC = getLabelPC(ete.itsHandlerLabel);
-                SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
-                SuperBlock dep = getSuperBlockFromOffset(startPC);
-                deps[handlerSB.getIndex()] = dep;
-            }
-            int[] targetPCs = itsJumpFroms.getKeys();
-            for (int i = 0; i < targetPCs.length; i++) {
-                int targetPC = targetPCs[i];
-                int branchPC = itsJumpFroms.getInt(targetPC, -1);
-                SuperBlock branchSB = getSuperBlockFromOffset(branchPC);
-                SuperBlock targetSB = getSuperBlockFromOffset(targetPC);
-                deps[targetSB.getIndex()] = branchSB;
-            }
-
-            return deps;
         }
 
         /**
@@ -1616,17 +1598,25 @@ public class ClassFileWriter {
             // locals as the killed block's locals. Ignore uninitialized
             // handlers, because they will also be killed and removed from the
             // exception table.
+            int sbStart = sb.getStart();
             for (int i = 0; i < itsExceptionTableTop; i++) {
                 ExceptionTableEntry ete = itsExceptionTable[i];
                 int eteStart = getLabelPC(ete.itsStartLabel);
-                int eteEnd = getLabelPC(ete.itsEndLabel);
-                int handlerPC = getLabelPC(ete.itsHandlerLabel);
-                SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
-                if ((sb.getStart() > eteStart && sb.getStart() < eteEnd)
-                        || (eteStart > sb.getStart() && eteStart < sb.getEnd())
-                                && handlerSB.isInitialized()) {
+                // this is "hot" code and it has been optimized so that 
+                // there are not too many function calls
+                if (sbStart > eteStart && sbStart < getLabelPC(ete.itsEndLabel)) {
+                    int handlerPC = getLabelPC(ete.itsHandlerLabel);
+                    SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
                     locals = handlerSB.getLocals();
                     break;
+                }
+                if (eteStart > sbStart && eteStart < sb.getEnd()) {
+                    int handlerPC = getLabelPC(ete.itsHandlerLabel);
+                    SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
+                    if (handlerSB.isInitialized()) {
+                        locals = handlerSB.getLocals();
+                        break;
+                    }
                 }
             }
 
@@ -1676,6 +1666,37 @@ public class ClassFileWriter {
                 System.out.println("initial type state:");
                 TypeInfo.print(locals, localsTop, stack, stackTop, itsConstantPool);
             }
+
+            int etStart = 0;
+            int etEnd = itsExceptionTableTop;
+            if (itsExceptionTableTop > 1) {
+                // determine the relevant search range in the exception table.
+                // this will reduce the search time if we have many exception
+                // blocks. There may be false positives in the range, but in
+                // most cases, this code does a good job, which leads in to
+                // fewer checks in the double-for-loop.
+                etStart = Integer.MAX_VALUE;
+                etEnd = 0;
+                for (int i = 0; i < itsExceptionTableTop; i++) {
+                    ExceptionTableEntry ete = itsExceptionTable[i];
+                    // we have found an entry, that overlaps with our work block
+                    if (work.getEnd() >= getLabelPC(ete.itsStartLabel)
+                            && work.getStart() < getLabelPC(ete.itsEndLabel)) {
+                        etStart = Math.min(etStart, i);
+                        etEnd = Math.max(etEnd, i + 1);
+                    }
+                }
+                if (DEBUGSTACK) {
+                    if (etStart == 0 && etEnd == itsExceptionTableTop) {
+                        System.out.println("lookup size " + itsExceptionTableTop + ": could not be reduced");
+                    } else if (etStart < 0) {
+                        System.out.println("lookup size " + itsExceptionTableTop + ": reduced completely");
+                    } else {
+                        System.out.println("lookup size " + itsExceptionTableTop + ": reduced to " + (etEnd-etStart));
+                    }
+                }
+            }
+            
 
             for (int bci = work.getStart(); bci < work.getEnd(); bci += next) {
                 bc = itsCodeBuffer[bci] & 0xFF;
@@ -1737,7 +1758,7 @@ public class ClassFileWriter {
                     }
                 }
 
-                for (int i = 0; i < itsExceptionTableTop; i++) {
+                for (int i = etStart; i < etEnd; i++) {
                     ExceptionTableEntry ete = itsExceptionTable[i];
                     int startPC = getLabelPC(ete.itsStartLabel);
                     int endPC = getLabelPC(ete.itsEndLabel);
@@ -4450,10 +4471,11 @@ public class ClassFileWriter {
 
     private String generatedClassName;
 
-    private ExceptionTableEntry itsExceptionTable[];
+    private ExceptionTableEntry[] itsExceptionTable;
+
     private int itsExceptionTableTop;
 
-    private int itsLineNumberTable[]; // pack start_pc & line_number together
+    private int[] itsLineNumberTable; // pack start_pc & line_number together
     private int itsLineNumberTableTop;
 
     private byte[] itsCodeBuffer = new byte[256];
