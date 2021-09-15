@@ -1488,35 +1488,6 @@ public class ClassFileWriter {
         }
 
         /**
-         * Calculate partial dependencies for super blocks.
-         *
-         * <p>This is used as a workaround for dead code that is generated. Only one dependency per
-         * super block is given.
-         */
-        private SuperBlock[] getSuperBlockDependencies() {
-            SuperBlock[] deps = new SuperBlock[superBlocks.length];
-
-            for (int i = 0; i < itsExceptionTableTop; i++) {
-                ExceptionTableEntry ete = itsExceptionTable[i];
-                int startPC = getLabelPC(ete.itsStartLabel);
-                int handlerPC = getLabelPC(ete.itsHandlerLabel);
-                SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
-                SuperBlock dep = getSuperBlockFromOffset(startPC);
-                deps[handlerSB.getIndex()] = dep;
-            }
-            int[] targetPCs = itsJumpFroms.getKeys();
-            for (int i = 0; i < targetPCs.length; i++) {
-                int targetPC = targetPCs[i];
-                int branchPC = itsJumpFroms.getInt(targetPC, -1);
-                SuperBlock branchSB = getSuperBlockFromOffset(branchPC);
-                SuperBlock targetSB = getSuperBlockFromOffset(targetPC);
-                deps[targetSB.getIndex()] = branchSB;
-            }
-
-            return deps;
-        }
-
-        /**
          * Get the target super block of a branch instruction.
          *
          * @param bci the index of the branch instruction in the code buffer
@@ -4461,10 +4432,11 @@ public class ClassFileWriter {
 
     private String generatedClassName;
 
-    private ExceptionTableEntry itsExceptionTable[];
+    private ExceptionTableEntry[] itsExceptionTable;
+
     private int itsExceptionTableTop;
 
-    private int itsLineNumberTable[]; // pack start_pc & line_number together
+    private int[] itsLineNumberTable; // pack start_pc & line_number together
     private int itsLineNumberTableTop;
 
     private byte[] itsCodeBuffer = new byte[256];
