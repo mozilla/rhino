@@ -34,6 +34,60 @@ function logElement(value, key, m) {
   assertEquals("c) map[key1] = '' map[key2] = 'undefined' map[key3] = 'undefined' map[key4] = 'null' ", res);
 })();
 
+(function TestForOfNoKey() {
+  res = "d) ";
+  var myMap = new Map([['', 'value1'], [, 17], [undefined, 18], [null, 19]]);
+  for (var entry of myMap) {
+    res += "map[" + entry[0] + "] = '" + entry[1] + "' "; 
+  }
+
+  assertEquals("d) map[] = 'value1' map[undefined] = '18' map[null] = '19' ", res);
+})();
+
+(function TestForOfNoValue() {
+  res = "e) ";
+  var myMap = new Map([['key1', ''], ['key2',], ['key3', undefined], ['key4', null]]);
+  for (var entry of myMap) {
+    res += "map[" + entry[0] + "] = '" + entry[1] + "' "; 
+  }
+
+  assertEquals("e) map[key1] = '' map[key2] = 'undefined' map[key3] = 'undefined' map[key4] = 'null' ", res);
+})();
+
+(function TestEntriesNoKey() {
+  res = "f) ";
+  var myMap = new Map([['', 'value1'], [, 17], [undefined, 18], [null, 19]]);
+  
+  var myIter = myMap.entries();
+  var entry = myIter.next();
+  res += "map[0] = '" + entry.value + "' "; 
+  entry = myIter.next();
+  res += "map[1] = '" + entry.value + "' "; 
+  var entry = myIter.next();
+  res += "map[2] = '" + entry.value + "' "; 
+  var entry = myIter.next();
+  res += "map[3] = '" + entry.value + "' "; 
+
+  assertEquals("f) map[0] = ',value1' map[1] = ',18' map[2] = ',19' map[3] = 'undefined' ", res);
+})();
+
+(function TestEntriesNoValue() {
+  res = "g) ";
+  var myMap = new Map([['key1', ''], ['key2',], ['key3', undefined], ['key4', null]]);
+
+  var myIter = myMap.entries();
+  var entry = myIter.next();
+  res += "map[0] = '" + entry.value + "' "; 
+  entry = myIter.next();
+  res += "map[1] = '" + entry.value + "' "; 
+  var entry = myIter.next();
+  res += "map[2] = '" + entry.value + "' "; 
+  var entry = myIter.next();
+  res += "map[3] = '" + entry.value + "' "; 
+
+  assertEquals("g) map[0] = 'key1,' map[1] = 'key2,' map[2] = 'key3,' map[3] = 'key4,' ", res);
+})();
+
 (function TestGetConcatenatedStrings() {
   var myMap = new Map([['key1', 'value1'], ['key2', 17]]);
   for(let i = 1; i <= 1; i++) {
