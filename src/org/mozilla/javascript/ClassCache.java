@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since Rhino 1.5 Release 5
  */
 public class ClassCache implements Serializable {
+
     private static final long serialVersionUID = -8866246036237312215L;
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
@@ -56,6 +57,7 @@ public class ClassCache implements Serializable {
                     && Objects.equals(this.sec, ((CacheKey) obj).sec);
         }
     }
+    
     /**
      * Search for ClassCache object in the given scope. The method first calls {@link
      * ScriptableObject#getTopLevelScope(Scriptable scope)} to get the top most scope and then tries
