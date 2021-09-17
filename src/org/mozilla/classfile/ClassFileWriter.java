@@ -1601,13 +1601,23 @@ public class ClassFileWriter {
             for (int i = 0; i < itsExceptionTableTop; i++) {
                 ExceptionTableEntry ete = itsExceptionTable[i];
                 int eteStart = getLabelPC(ete.itsStartLabel);
-                int eteEnd = getLabelPC(ete.itsEndLabel);
-                int handlerPC = getLabelPC(ete.itsHandlerLabel);
-                SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
-                if ((sb.getStart() > eteStart && sb.getStart() < eteEnd)
-                        || (eteStart > sb.getStart() && eteStart < sb.getEnd())
-                                && handlerSB.isInitialized()) {
+                // we can sort out exception table entries immediately,
+                // that are before or behind current sb
+                if (sb.getEnd() <= eteStart || sb.getStart() >= getLabelPC(ete.itsEndLabel)) {
+                    continue;
+                }
+                if (sb.getStart() > eteStart) {
+                    int handlerPC = getLabelPC(ete.itsHandlerLabel);
+                    SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
                     locals = handlerSB.getLocals();
+                    break;
+                }
+                if (eteStart < sb.getEnd()) {
+                    int handlerPC = getLabelPC(ete.itsHandlerLabel);
+                    SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
+                    if (handlerSB.isInitialized()) {
+                        locals = handlerSB.getLocals();
+                    }
                     break;
                 }
             }
