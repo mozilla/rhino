@@ -107,12 +107,15 @@ final class TypeInfo {
    * class reflectively.
    */
   static int merge(int current, int incoming, ConstantPool pool) {
+    if (current == incoming) {
+      return current;
+    }
     int currentTag = getTag(current);
     int incomingTag = getTag(incoming);
     boolean currentIsObject = currentTag == TypeInfo.OBJECT_TAG;
     boolean incomingIsObject = incomingTag == TypeInfo.OBJECT_TAG;
 
-    if (current == incoming || (currentIsObject && incoming == NULL)) {
+    if (currentIsObject && incoming == NULL) {
       return current;
     } else if (currentTag == TypeInfo.TOP ||
         incomingTag == TypeInfo.TOP) {
