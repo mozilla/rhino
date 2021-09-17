@@ -40,6 +40,12 @@ public class NativeJavaList extends NativeJavaObject {
         return super.has(index, start);
     }
 
+    public void delete(int index) {
+        if (isWithValidIndex(index)) {
+            list.set(index, null);
+        }
+    }
+
     @Override
     public boolean has(Symbol key, Scriptable start) {
         if (SymbolKey.IS_CONCAT_SPREADABLE.equals(key)) {
@@ -87,6 +93,15 @@ public class NativeJavaList extends NativeJavaObject {
         super.put(index, start, value);
     }
 
+    @Override
+    public void put(String name, Scriptable start, Object value) {
+        if (list != null && "length".equals(name)) {
+            setLength(value);
+            return;
+        }
+        super.put(name, start, value);
+    }
+
     private void ensureCapacity(int minCapacity) {
         if (minCapacity > list.size()) {
             if (list instanceof ArrayList) {
@@ -95,6 +110,20 @@ public class NativeJavaList extends NativeJavaObject {
             while (minCapacity > list.size()) {
                 list.add(null);
             }
+        }
+    }
+
+    private void setLength(Object val) {
+        double d = ScriptRuntime.toNumber(val);
+        long longVal = ScriptRuntime.toUint32(d);
+        if (longVal != d || longVal > Integer.MAX_VALUE) {
+            String msg = ScriptRuntime.getMessageById("msg.arraylength.bad");
+            throw ScriptRuntime.rangeError(msg);
+        }
+        if (longVal < list.size()) {
+            list.subList((int) longVal, list.size()).clear();
+        } else {
+            ensureCapacity((int) longVal);
         }
     }
 
