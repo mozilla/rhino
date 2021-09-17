@@ -1659,6 +1659,37 @@ public class ClassFileWriter {
                 TypeInfo.print(locals, localsTop, stack, stackTop, itsConstantPool);
             }
 
+            int etStart = 0;
+            int etEnd = itsExceptionTableTop;
+            if (itsExceptionTableTop > 1) {
+                // determine the relevant search range in the exception table.
+                // this will reduce the search time if we have many exception
+                // blocks. There may be false positives in the range, but in
+                // most cases, this code does a good job, which leads in to
+                // fewer checks in the double-for-loop.
+                etStart = Integer.MAX_VALUE;
+                etEnd = 0;
+                for (int i = 0; i < itsExceptionTableTop; i++) {
+                    ExceptionTableEntry ete = itsExceptionTable[i];
+                    // we have found an entry, that overlaps with our work block
+                    if (work.getEnd() >= getLabelPC(ete.itsStartLabel)
+                            && work.getStart() < getLabelPC(ete.itsEndLabel)) {
+                        etStart = Math.min(etStart, i);
+                        etEnd = Math.max(etEnd, i + 1);
+                    }
+                }
+                if (DEBUGSTACK) {
+                    if (etStart == 0 && etEnd == itsExceptionTableTop) {
+                        System.out.println("lookup size " + itsExceptionTableTop + ": could not be reduced");
+                    } else if (etStart < 0) {
+                        System.out.println("lookup size " + itsExceptionTableTop + ": reduced completely");
+                    } else {
+                        System.out.println("lookup size " + itsExceptionTableTop + ": reduced to " + (etEnd-etStart));
+                    }
+                }
+            }
+            
+
             for (int bci = work.getStart(); bci < work.getEnd(); bci += next) {
                 bc = itsCodeBuffer[bci] & 0xFF;
                 next = execute(bci);
@@ -1719,7 +1750,7 @@ public class ClassFileWriter {
                     }
                 }
 
-                for (int i = 0; i < itsExceptionTableTop; i++) {
+                for (int i = etStart; i < etEnd; i++) {
                     ExceptionTableEntry ete = itsExceptionTable[i];
                     int startPC = getLabelPC(ete.itsStartLabel);
                     int endPC = getLabelPC(ete.itsEndLabel);
