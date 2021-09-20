@@ -57,7 +57,7 @@ public class ClassCache implements Serializable {
                     && Objects.equals(this.sec, ((CacheKey) obj).sec);
         }
     }
-    
+
     /**
      * Search for ClassCache object in the given scope. The method first calls {@link
      * ScriptableObject#getTopLevelScope(Scriptable scope)} to get the top most scope and then tries
