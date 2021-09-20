@@ -350,9 +350,20 @@ public class Kit
             if (n < 0) { break; }
             cursor += n;
             if (cursor == buffer.length) {
+                int readahead = -1;
+                if (cursor == initialBufferCapacity) {
+                    readahead = is.read();
+                    if (readahead < 0) { // Check for EOS
+                        return buffer;
+                    }
+                }
                 byte[] tmp = new byte[buffer.length * 2];
                 System.arraycopy(buffer, 0, tmp, 0, cursor);
                 buffer = tmp;
+                if (readahead != -1) {
+                    buffer[cursor++] = (byte)readahead;
+                    readahead = -1;
+                }
             }
         }
         if (cursor != buffer.length) {
