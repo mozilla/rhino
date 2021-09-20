@@ -13,8 +13,6 @@ public class NativeMap extends IdScriptableObject {
     private static final Object MAP_TAG = "Map";
     static final String ITERATOR_TAG = "Map Iterator";
 
-    private static final Object NULL_VALUE = new Object();
-
     private final Hashtable entries = new Hashtable();
 
     private boolean instanceOfMap = false;
@@ -89,32 +87,25 @@ public class NativeMap extends IdScriptableObject {
     }
 
     private Object js_set(Object k, Object v) {
-        // Map.get() does not distinguish between "not found" and a null value. So,
-        // replace true null here with a marker so that we can re-convert in "get".
-        final Object value = (v == null ? NULL_VALUE : v);
         // Special handling of "negative zero" from the spec.
         Object key = k;
         if ((key instanceof Number) && ((Number) key).doubleValue() == ScriptRuntime.negativeZero) {
             key = ScriptRuntime.zeroObj;
         }
-        entries.put(key, value);
+        entries.put(key, v);
         return this;
     }
 
     private Object js_delete(Object arg) {
-        final Object e = entries.delete(arg);
-        return Boolean.valueOf(e != null);
+        return Boolean.valueOf(entries.deleteEntry(arg));
     }
 
     private Object js_get(Object arg) {
-        final Object val = entries.get(arg);
-        if (val == null) {
+        final Hashtable.Entry entry = entries.getEntry(arg);
+        if (entry == null) {
             return Undefined.instance;
         }
-        if (val == NULL_VALUE) {
-            return null;
-        }
-        return val;
+        return entry.value;
     }
 
     private Object js_has(Object arg) {
@@ -155,12 +146,7 @@ public class NativeMap extends IdScriptableObject {
             }
 
             final Hashtable.Entry e = i.next();
-            Object val = e.value;
-            if (val == NULL_VALUE) {
-                val = null;
-            }
-
-            f.call(cx, scope, thisObj, new Object[] {val, e.key, this});
+            f.call(cx, scope, thisObj, new Object[] {e.value, e.key, this});
         }
         return Undefined.instance;
     }

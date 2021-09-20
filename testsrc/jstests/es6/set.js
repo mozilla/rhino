@@ -7,7 +7,7 @@ load("testsrc/assert.js");
 res = "";
 
 function logElement(value, key) {
-    res += "set[" + key + "] "; 
+    res += "set[" + key + "] (" + this + ") "; 
 }
 
 (function TestForEach() {
@@ -15,7 +15,16 @@ function logElement(value, key) {
   var mySet = new Set(['key1', 17]);
   mySet.forEach(logElement);
 
-  assertEquals("a) set[key1] set[17] ", res);
+  assertEquals("a) set[key1] ([object Object]) set[17] ([object Object]) ", res);
+})();
+
+(function TestForEachStrict() {
+  'use strict'
+  res = "a) ";
+  var mySet = new Set(['key1', 17]);
+  mySet.forEach(logElement);
+
+  assertEquals("a) set[key1] (undefined) set[17] (undefined) ", res);
 })();
 
 (function TestForEachNoKey() {
@@ -23,7 +32,16 @@ function logElement(value, key) {
   var mySet = new Set(['', undefined, null, 19]);
   mySet.forEach(logElement);
 
-  assertEquals("b) set[] set[undefined] set[null] set[19] ", res);
+  assertEquals("b) set[] ([object Object]) set[undefined] ([object Object]) set[null] ([object Object]) set[19] ([object Object]) ", res);
+})();
+
+(function TestForEachNoKeyStrict() {
+  'use strict'
+  res = "b) ";
+  var mySet = new Set(['', undefined, null, 19]);
+  mySet.forEach(logElement);
+
+  assertEquals("b) set[] (undefined) set[undefined] (undefined) set[null] (undefined) set[19] (undefined) ", res);
 })();
 
 (function TestAddConcatenatedStrings() {
