@@ -211,9 +211,10 @@ class XmlProcessor implements Serializable {
     }
 
     private String toXmlNewlines(String rv) {
-        StringBuilder nl = new StringBuilder();
+        StringBuilder nl = new StringBuilder(rv.length());
         for (int i=0; i<rv.length(); i++) {
-            if (rv.charAt(i) == '\r') {
+            char ch = rv.charAt(i);
+            if (ch == '\r') {
                 if (rv.charAt(i+1) == '\n') {
                     //    DOS, do nothing and skip the \r
                 } else {
@@ -221,7 +222,7 @@ class XmlProcessor implements Serializable {
                     nl.append('\n');
                 }
             } else {
-                nl.append(rv.charAt(i));
+                nl.append(ch);
             }
         }
         return nl.toString();
