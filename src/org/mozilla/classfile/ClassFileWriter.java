@@ -2506,9 +2506,9 @@ public class ClassFileWriter {
             rawStackMap[rawStackMapTop++] = (byte) 255;
             rawStackMapTop = putInt16(offsetDelta, rawStackMap, rawStackMapTop);
             rawStackMapTop = putInt16(locals.length, rawStackMap, rawStackMapTop);
-            rawStackMapTop = writeTypes(locals);
+            writeTypes(locals);
             rawStackMapTop = putInt16(stack.length, rawStackMap, rawStackMapTop);
-            rawStackMapTop = writeTypes(stack);
+            writeTypes(stack);
         }
 
         private void writeAppendFrame(int[] locals, int localsDelta, int offsetDelta) {
