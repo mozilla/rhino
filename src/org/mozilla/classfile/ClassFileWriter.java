@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.ObjArray;
 import org.mozilla.javascript.UintMap;
@@ -1445,8 +1444,8 @@ public class ClassFileWriter {
         }
 
         private SuperBlock getSuperBlockFromOffset(int offset) {
-            int startIdx = Arrays.binarySearch(itsSuperBlockStarts, 0,
-                    itsSuperBlockStartsTop, offset);
+            int startIdx =
+                    Arrays.binarySearch(itsSuperBlockStarts, 0, itsSuperBlockStartsTop, offset);
 
             if (startIdx < 0) {
                 // if offset was not found, insertion point is returned (See
@@ -1457,10 +1456,8 @@ public class ClassFileWriter {
             if (startIdx < itsSuperBlockStartsTop) {
                 SuperBlock sb = superBlocks[startIdx];
                 // check, if it is really the matching one
-                if (offset < sb.getStart() || offset >= sb.getEnd())
-                    Kit.codeBug();
+                if (offset < sb.getStart() || offset >= sb.getEnd()) Kit.codeBug();
                 return sb;
-
             }
             throw new IllegalArgumentException("bad offset: " + offset);
         }
@@ -1602,7 +1599,7 @@ public class ClassFileWriter {
             for (int i = 0; i < itsExceptionTableTop; i++) {
                 ExceptionTableEntry ete = itsExceptionTable[i];
                 int eteStart = getLabelPC(ete.itsStartLabel);
-                // this is "hot" code and it has been optimized so that 
+                // this is "hot" code and it has been optimized so that
                 // there are not too many function calls
                 if (sbStart > eteStart && sbStart < getLabelPC(ete.itsEndLabel)) {
                     int handlerPC = getLabelPC(ete.itsHandlerLabel);
@@ -1688,15 +1685,20 @@ public class ClassFileWriter {
                 }
                 if (DEBUGSTACK) {
                     if (etStart == 0 && etEnd == itsExceptionTableTop) {
-                        System.out.println("lookup size " + itsExceptionTableTop + ": could not be reduced");
+                        System.out.println(
+                                "lookup size " + itsExceptionTableTop + ": could not be reduced");
                     } else if (etStart < 0) {
-                        System.out.println("lookup size " + itsExceptionTableTop + ": reduced completely");
+                        System.out.println(
+                                "lookup size " + itsExceptionTableTop + ": reduced completely");
                     } else {
-                        System.out.println("lookup size " + itsExceptionTableTop + ": reduced to " + (etEnd-etStart));
+                        System.out.println(
+                                "lookup size "
+                                        + itsExceptionTableTop
+                                        + ": reduced to "
+                                        + (etEnd - etStart));
                     }
                 }
             }
-            
 
             for (int bci = work.getStart(); bci < work.getEnd(); bci += next) {
                 bc = itsCodeBuffer[bci] & 0xFF;
