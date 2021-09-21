@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.CodeSource;
@@ -52,7 +53,10 @@ public class SecurityControllerTest {
     /** Creates a new protectionDomain with the given Code-Source Suffix. */
     private static ProtectionDomain createProtectionDomain(Policy policy, String csSuffix)
             throws MalformedURLException {
-        URL url = new URL(SecurityController.class.getResource("/"), csSuffix);
+        File file = new File(System.getProperty("user.dir"));
+        file = new File(file, "javascript");
+        file = new File(file, csSuffix);
+        URL url = file.toURI().toURL();
         CodeSource cs = new CodeSource(url, (java.security.cert.Certificate[]) null);
         Permissions perms = new Permissions();
         Enumeration<Permission> elems = policy.getPermissions(cs).elements();
