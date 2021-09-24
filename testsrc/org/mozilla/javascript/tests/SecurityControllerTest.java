@@ -37,7 +37,6 @@ public class SecurityControllerTest {
     public static void setup() throws Exception {
         URL url = SecurityControllerTest.class.getResource("grant-all-java.policy");
         if (url != null) {
-            System.out.println("Initializing security manager with grant-all-java.policy");
             System.setProperty("java.security.policy", url.toString());
             Policy.getPolicy().refresh();
             System.setSecurityManager(new SecurityManager());
