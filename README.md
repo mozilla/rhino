@@ -133,6 +133,20 @@ hundreds of lines of changes to, please try to put the reformatting changes
 alone into a single Git commit so that we can separate reformatting changes
 from more substantive changes.
 
+> **Warning:** If you build with Java 16 or later, you need to apply a
+> workaround for a "spotless" issue. Otherwise, the task will be disabled
+> and your PR may fail.
+> 
+> The following must be added to your `gradle.properties`.
+> ```
+> org.gradle.jvmargs=--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+> ```
+> For more details, see https://github.com/diffplug/spotless/issues/834#issuecomment-819118761
+
 ## More Help
 
 The Google group is the best place to go with questions:
