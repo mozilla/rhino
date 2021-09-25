@@ -133,6 +133,9 @@ hundreds of lines of changes to, please try to put the reformatting changes
 alone into a single Git commit so that we can separate reformatting changes
 from more substantive changes.
 
+If you build with Java 16 or later, you need to apply a workaround for a
+"spotless" issue, see https://github.com/diffplug/spotless/issues/834#issuecomment-819118761
+
 ## More Help
 
 The Google group is the best place to go with questions:
