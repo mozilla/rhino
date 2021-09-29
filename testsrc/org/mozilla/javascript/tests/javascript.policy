@@ -1,0 +1,20 @@
+// Sample script, how to define different security codebases for javaScript.
+
+grant codebase "file:${user.dir}/javascript/ALLOW_IMPL_ACCESS" {
+    permission java.lang.RuntimePermission "rhino.visible.com";
+    permission java.lang.RuntimePermission "rhino.visible.com.example";
+    permission java.lang.RuntimePermission "rhino.visible.com.example.securitytest";
+    permission java.lang.RuntimePermission "rhino.visible.com.example.securitytest.*";
+};
+
+grant codebase "file:${user.dir}/javascript/RESTRICT_IMPL_ACCESS" {
+    permission java.lang.RuntimePermission "rhino.visible.com";
+    permission java.lang.RuntimePermission "rhino.visible.com.example";
+    permission java.lang.RuntimePermission "rhino.visible.com.example.securitytest";
+};
+
+grant {
+    // grant every script access to java.lang and java.util (but not to java.util.*)
+    permission java.lang.RuntimePermission "rhino.visible.java";
+    permission java.lang.RuntimePermission "rhino.visible.java.*";
+};
