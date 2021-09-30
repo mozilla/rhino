@@ -100,6 +100,16 @@ There is also a "rhino" package for many Linux distributions as well as Homebrew
 
 You can also embed it, as most people do. See below for more docs.
 
+### Java 16 and later
+
+If you are using a modular JDK that disallows the reflective access to
+non-public fields (16 and later), you may need to configure the JVM with the
+[`--add-opens`](https://docs.oracle.com/en/java/javase/17/migrate/migrating-jdk-8-later-jdk-releases.html#GUID-12F945EB-71D6-46AF-8C3D-D354FD0B1781)
+option to authorize the packages that your scripts shall use, for example:
+```
+--add-opens java.desktop/javax.swing.table=ALL-UNNAMED
+```
+
 ## Issues
 
 Most issues are managed on GitHub:
