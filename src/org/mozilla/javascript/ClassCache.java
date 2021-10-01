@@ -8,6 +8,7 @@ package org.mozilla.javascript;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -21,11 +22,41 @@ public class ClassCache implements Serializable {
     private static final long serialVersionUID = -8866246036237312215L;
     private static final Object AKEY = "ClassCache";
     private volatile boolean cachingIsEnabled = true;
-    private transient Map<Class<?>, JavaMembers> classTable;
+    private transient Map<CacheKey, JavaMembers> classTable;
     private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient Map<Class<?>, Object> interfaceAdapterCache;
     private int generatedClassSerial;
     private Scriptable associatedScope;
+
+    /**
+     * CacheKey is a combination of class and securityContext. This is required when classes are
+     * loaded from different security contexts
+     */
+    static class CacheKey {
+        final Class<?> cls;
+        final Object sec;
+        /** Constructor. */
+        public CacheKey(Class<?> cls, Object securityContext) {
+            this.cls = cls;
+            this.sec = securityContext;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = cls.hashCode();
+            if (sec != null) {
+                result = sec.hashCode() * 31;
+            }
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof CacheKey)
+                    && Objects.equals(this.cls, ((CacheKey) obj).cls)
+                    && Objects.equals(this.sec, ((CacheKey) obj).sec);
+        }
+    }
 
     /**
      * Search for ClassCache object in the given scope. The method first calls {@link
@@ -101,11 +132,11 @@ public class ClassCache implements Serializable {
     }
 
     /** @return a map from classes to associated JavaMembers objects */
-    Map<Class<?>, JavaMembers> getClassCacheMap() {
+    Map<CacheKey, JavaMembers> getClassCacheMap() {
         if (classTable == null) {
             // Use 1 as concurrency level here and for other concurrent hash maps
             // as we don't expect high levels of sustained concurrent writes.
-            classTable = new ConcurrentHashMap<Class<?>, JavaMembers>(16, 0.75f, 1);
+            classTable = new ConcurrentHashMap<CacheKey, JavaMembers>(16, 0.75f, 1);
         }
         return classTable;
     }

@@ -145,7 +145,10 @@ public class ScriptRuntime {
             Context cx, ScriptableObject scope, boolean sealed) {
         if (scope == null) {
             scope = new NativeObject();
+        } else if (scope instanceof TopLevel) {
+            ((TopLevel) scope).clearCache();
         }
+
         scope.associateValue(LIBRARY_SCOPE_KEY, scope);
         (new ClassCache()).associate(scope);
 

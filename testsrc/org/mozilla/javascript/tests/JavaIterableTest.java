@@ -6,6 +6,14 @@
  */
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
@@ -14,15 +22,6 @@ import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.junit.Assert.*;
 
 public class JavaIterableTest extends TestCase {
     protected final Global global = new Global();
@@ -35,9 +34,9 @@ public class JavaIterableTest extends TestCase {
     public void testMap() {
         Map map = new LinkedHashMap();
         String script =
-            "var a = [];\n" +
-            "for (var { key, value } of value.entrySet()) a.push(key, value);\n" +
-            "a";
+                "var a = [];\n"
+                        + "for (var { key, value } of value.entrySet()) a.push(key, value);\n"
+                        + "a";
 
         NativeArray resEmpty = (NativeArray) runScript(script, map);
         assertEquals(0, resEmpty.size());
@@ -62,15 +61,15 @@ public class JavaIterableTest extends TestCase {
             NativeArray res = (NativeArray) runScript("Array.from(value.entrySet())", map);
             assertEquals(3, res.size());
 
-            Map.Entry e0 = (Map.Entry)res.get(0);
+            Map.Entry e0 = (Map.Entry) res.get(0);
             assertEquals("a", e0.getKey());
             assertEquals("b", e0.getValue());
 
-            Map.Entry e1 = (Map.Entry)res.get(1);
+            Map.Entry e1 = (Map.Entry) res.get(1);
             assertEquals(123.0, Context.toNumber(e1.getKey()));
             assertEquals(234.0, Context.toNumber(e1.getValue()));
 
-            Map.Entry e2 = (Map.Entry)res.get(2);
+            Map.Entry e2 = (Map.Entry) res.get(2);
             assertEquals(o, e2.getKey());
             assertEquals(o, e2.getValue());
         }
@@ -79,10 +78,7 @@ public class JavaIterableTest extends TestCase {
     @Test
     public void testList() {
         List list = new ArrayList();
-        String script =
-            "var a = [];\n" +
-            "for (var e of value) a.push(e);\n" +
-            "a";
+        String script = "var a = [];\n" + "for (var e of value) a.push(e);\n" + "a";
 
         NativeArray resEmpty = (NativeArray) runScript(script, list);
         assertEquals(0, resEmpty.size());
@@ -112,10 +108,7 @@ public class JavaIterableTest extends TestCase {
     @Test
     public void testSet() {
         Set set = new LinkedHashSet();
-        String script =
-            "var a = [];\n" +
-            "for (var e of value) a.push(e);\n" +
-            "a";
+        String script = "var a = [];\n" + "for (var e of value) a.push(e);\n" + "a";
 
         NativeArray resEmpty = (NativeArray) runScript(script, set);
         assertEquals(0, resEmpty.size());
@@ -146,19 +139,23 @@ public class JavaIterableTest extends TestCase {
     @Test
     public void testNoIterable() {
         Object o = new Object();
-        String script ="for (var e of value) ;";
+        String script = "for (var e of value) ;";
 
-        assertThrows(EcmaError.class, () -> {
-                runScript(script, o);
-            });
+        assertThrows(
+                EcmaError.class,
+                () -> {
+                    runScript(script, o);
+                });
     }
 
     private Object runScript(String scriptSourceText, Object value) {
-        return ContextFactory.getGlobal().call(context -> {
-            context.setLanguageVersion(Context.VERSION_ES6);
-            Scriptable scope = context.initStandardObjects(global);
-            scope.put("value", scope, Context.javaToJS(value, scope));
-            return context.evaluateString(scope, scriptSourceText, "", 1, null);
-        });
+        return ContextFactory.getGlobal()
+                .call(
+                        context -> {
+                            context.setLanguageVersion(Context.VERSION_ES6);
+                            Scriptable scope = context.newObject(global);
+                            scope.put("value", scope, Context.javaToJS(value, scope));
+                            return context.evaluateString(scope, scriptSourceText, "", 1, null);
+                        });
     }
 }
