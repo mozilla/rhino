@@ -113,6 +113,7 @@ public class WrapFactory {
      */
     public Scriptable wrapAsJavaObject(
             Context cx, Scriptable scope, Object javaObject, Type staticType) {
+
         if (javaObject instanceof List) {
             return new NativeJavaList(scope, javaObject, staticType);
         } else if (javaObject instanceof Map) {

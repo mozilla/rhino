@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.javascript;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,25 +13,19 @@ public class NativeJavaList extends NativeJavaObject {
 
     private static final long serialVersionUID = 6403865639690547921L;
 
-    private List<Object> list;
+    protected final List<Object> list;
 
-    private Class<?> valueType;
+    protected final Class<?> valueType;
 
     @SuppressWarnings("unchecked")
     public NativeJavaList(Scriptable scope, Object list, Type staticType) {
         super(scope, list, staticType);
         assert list instanceof List;
         this.list = (List<Object>) list;
-        if (staticType == null) {
-            staticType = list.getClass().getGenericSuperclass();
-        }
-        if (staticType instanceof ParameterizedType) {
-            Type[] types = ((ParameterizedType) staticType).getActualTypeArguments();
-            // types[0] contains the T of 'List<T>'
-            this.valueType = ScriptRuntime.getRawType(types[0]);
-        } else {
-            this.valueType = Object.class;
-        }
+
+        Type[] types = JavaTypes.lookupType(scope, list.getClass(), staticType, List.class);
+
+        this.valueType = types == null ? Object.class : JavaTypes.getRawType(types[0]);
     }
 
     @Override

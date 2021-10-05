@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +26,7 @@ public class ClassCache implements Serializable {
     private transient Map<CacheKey, JavaMembers> classTable;
     private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient Map<Class<?>, Object> interfaceAdapterCache;
+    private transient Map<Type, Type[]> typeCache;
     private int generatedClassSerial;
     private Scriptable associatedScope;
 
@@ -136,19 +138,24 @@ public class ClassCache implements Serializable {
         if (classTable == null) {
             // Use 1 as concurrency level here and for other concurrent hash maps
             // as we don't expect high levels of sustained concurrent writes.
-            classTable = new ConcurrentHashMap<CacheKey, JavaMembers>(16, 0.75f, 1);
+            classTable = new ConcurrentHashMap<>(16, 0.75f, 1);
         }
         return classTable;
     }
 
     Map<JavaAdapter.JavaAdapterSignature, Class<?>> getInterfaceAdapterCacheMap() {
         if (classAdapterCache == null) {
-            classAdapterCache =
-                    new ConcurrentHashMap<JavaAdapter.JavaAdapterSignature, Class<?>>(16, 0.75f, 1);
+            classAdapterCache = new ConcurrentHashMap<>(16, 0.75f, 1);
         }
         return classAdapterCache;
     }
 
+    Map<Type, Type[]> getTypeCacheMap() {
+        if (typeCache == null) {
+            typeCache = new ConcurrentHashMap<>(16, 0.75f, 1);
+        }
+        return typeCache;
+    }
     /**
      * @deprecated The method always returns false.
      * @see #setInvokerOptimizationEnabled(boolean enabled)

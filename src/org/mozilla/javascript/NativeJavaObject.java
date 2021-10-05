@@ -47,7 +47,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             Scriptable scope, Object javaObject, Type staticType, boolean isAdapter) {
         this.parent = scope;
         this.javaObject = javaObject;
-        this.staticType = ScriptRuntime.getRawType(staticType);
+        this.staticRawType = JavaTypes.getRawType(staticType);
         this.isAdapter = isAdapter;
         initMembers();
     }
@@ -57,9 +57,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         if (javaObject != null) {
             dynamicType = javaObject.getClass();
         } else {
-            dynamicType = staticType;
+            dynamicType = staticRawType;
         }
-        members = JavaMembers.lookupClass(parent, dynamicType, staticType, isAdapter);
+        members = JavaMembers.lookupClass(parent, dynamicType, staticRawType, isAdapter);
         fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
     }
 
@@ -841,8 +841,8 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             out.writeObject(javaObject);
         }
 
-        if (staticType != null) {
-            out.writeObject(staticType.getName());
+        if (staticRawType != null) {
+            out.writeObject(staticRawType.getName());
         } else {
             out.writeObject(null);
         }
@@ -866,9 +866,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
         String className = (String) in.readObject();
         if (className != null) {
-            staticType = Class.forName(className);
+            staticRawType = Class.forName(className);
         } else {
-            staticType = null;
+            staticRawType = null;
         }
 
         initMembers();
@@ -938,7 +938,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     protected transient Object javaObject;
 
-    protected transient Class<?> staticType;
+    protected transient Class<?> staticRawType;
     protected transient JavaMembers members;
     private transient Map<String, FieldAndMethods> fieldAndMethods;
     protected transient boolean isAdapter;
