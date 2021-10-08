@@ -137,7 +137,7 @@ public class NativeJavaListTest extends TestCase {
         return ContextFactory.getGlobal()
                 .call(
                         context -> {
-                            Scriptable scope = context.initStandardObjects(global);
+                            Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
                                     context.evaluateString(scope, scriptSourceText, "", 1, null));

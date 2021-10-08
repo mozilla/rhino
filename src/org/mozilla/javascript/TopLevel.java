@@ -119,6 +119,12 @@ public class TopLevel extends IdScriptableObject {
         }
     }
 
+    /** Clears the cache, this is necessary, when standard objects are reinitialized. */
+    void clearCache() {
+        ctors = null;
+        errors = null;
+    }
+
     /**
      * Static helper method to get a built-in object constructor with the given <code>type</code>
      * from the given <code>scope</code>. If the scope is not an instance of this class or does have

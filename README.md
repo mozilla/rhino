@@ -36,7 +36,7 @@ features from ES6, and ES2016+ are implemented in Rhino.
 
 Information for script builders and embedders:
 
-[https://developer.mozilla.org/en-US/docs/Rhino_documentation](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Documentation)
+[Archived](http://web.archive.org/web/20210304081342/https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Documentation)
 
 JavaDoc for all the APIs:
 
@@ -85,7 +85,7 @@ mavenReleaseRepo=
 ```
 5. Increase version and add `-SNAPSHOT` to it in `gradle.properties` in project root folder.
 6. Push `gradle.properties` to `GitHub`
-   
+
 ## Running
 
 Rhino can run as a stand-alone interpreter from the command line:
@@ -113,7 +113,7 @@ To submit a new PR, please use the following process:
 * Ensure that your entire build passes "./gradlew check". This will include
 code formatting and style checks and runs the tests.
 * Please write tests for what you fixed, unless you can show us that existing
-tests cover the changes. Use existing tests, such as those in 
+tests cover the changes. Use existing tests, such as those in
 "testsrc/org/mozilla/javascript/tests", as a guide.
 * If you fixed ECMAScript spec compatibility, take a look at test262.properties and see
 if you can un-disable some tests.
@@ -125,7 +125,7 @@ some time to get back to you.
 ### Code Formatting
 
 Code formatting was introduced in 2021. The "spotless" plugin will fail your
-build if you have changed any files that have not yet been reformatted. 
+build if you have changed any files that have not yet been reformatted.
 Please use "spotlessApply" to reformat the necessary files.
 
 If you are the first person to touch a big file that spotless wants to make
@@ -152,5 +152,3 @@ from more substantive changes.
 The Google group is the best place to go with questions:
 
 [https://groups.google.com/forum/#!forum/mozilla-rhino](https://groups.google.com/forum/#!forum/mozilla-rhino)
-
-

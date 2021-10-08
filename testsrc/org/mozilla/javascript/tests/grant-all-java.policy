@@ -1,0 +1,5 @@
+// Grant everyone the following permission: (required for SecurityControllerTest)
+grant { 
+    // permission all;
+    permission java.security.AllPermission "", "";
+};
