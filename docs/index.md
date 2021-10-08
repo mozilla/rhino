@@ -1,37 +1,15 @@
-## Welcome to GitHub Pages
+# Rhino: JavaScript in Java
 
-You can use the [editor on GitHub](https://github.com/mozilla/rhino/edit/master/docs/index.md) to maintain and preview the content for your website in Markdown files.
+<a title="Rodrigo J De Marco, CC0, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Rhino_(234581759).jpeg"><img width="384" alt="Rhino (234581759)" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Rhino_%28234581759%29.jpeg/512px-Rhino_%28234581759%29.jpeg"></a>
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Rhino is an implementation of JavaScript in Java.
 
-### Markdown
+## Links
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+[Readme](https://github.com/mozilla/rhino)
 
-```markdown
-Syntax highlighted code block
+[Release Notes](https://github.com/mozilla/rhino/blob/master/RELEASE-NOTES.md)
 
-# Header 1
-## Header 2
-### Header 3
+[Compatibility Table](./compat/engines.html)
 
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/mozilla/rhino/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+[Javadoc](./javadoc/index.html)
