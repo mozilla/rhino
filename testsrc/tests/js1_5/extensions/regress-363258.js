@@ -22,13 +22,31 @@ function test()
   printBugNumber(BUGNUMBER);
   printStatus (summary);
 
-  var start = 0;
-  var stop  = 0;
-  var i;
   var limit = 0;
   var incr  = 10;
   var resolution = 5;
-  
+
+  var diff1 = timerDiff(limit, incr);
+  var diff2 = timerDiff(limit, incr);
+
+  var lowerDiff = Math.min(diff1, diff2);
+
+  print('limit=' + limit + ', resolution=' + resolution + ', time=' + lowerDiff);
+
+  expect = true;
+  actual = (lowerDiff <= resolution);
+
+  reportCompare(expect, actual, summary);
+
+  exitFunc ('test');
+}
+
+function timerDiff(limit, incr)
+{
+  var start = 0;
+  var stop  = 0;
+  var i;
+
   while (stop - start == 0)
   {
     limit += incr;
@@ -37,12 +55,5 @@ function test()
     stop = Date.now();
   }
 
-  print('limit=' + limit + ', resolution=' + resolution + ', time=' + (stop - start));
-
-  expect = true;
-  actual = (stop - start <= resolution);
-
-  reportCompare(expect, actual, summary);
-
-  exitFunc ('test');
+  return stop - start;
 }
