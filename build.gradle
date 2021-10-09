@@ -100,13 +100,13 @@ test {
 
 task sunSpiderBenchmark(type: JavaExec) {
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-f', '1', '-bm', 'avgt', '-tu', 'us', 'SunSpider'
 }
 
 task v8Benchmark(type: JavaExec) {
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-f', '1', '-i', '10', '-bm', 'avgt', '-tu', 'us', 'V8'
 }
 
@@ -120,19 +120,19 @@ task microBenchmark(type: JavaExec, description: 'JMH micro benchmark') {
         benchmark = "MathBenchmark"
     }
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-f', '1', '-bm', 'avgt', '-tu', 'ns', '-r', '5', benchmark
 }
 
 task listBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-lp'
 }
 
 task jmhHelp(type: JavaExec, description: 'JMH benchmarks') {
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-help'
 }
 
@@ -419,8 +419,8 @@ if (JavaVersion.current() > JavaVersion.VERSION_15 && (!project.hasProperty('org
 jacocoTestReport.dependsOn test
 jacocoTestReport {
     reports {
-        csv.enabled true
-        html.enabled true
+        csv.required = true
+        html.required = true
     }
 }
 
