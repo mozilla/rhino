@@ -97,7 +97,7 @@ public class ContinuationsApiTest extends TestCase {
       } catch (ContinuationPending pending) {
 
           Object applicationState = pending.getApplicationState();
-          assertEquals(new Integer(3), applicationState);
+          assertEquals(Integer.valueOf(3), applicationState);
           int saved = (Integer) applicationState;
           Object result = cx.resumeContinuation(pending.getContinuation(), globalScope, saved + 1);
           assertEquals(5, ((Number)result).intValue());
@@ -119,13 +119,13 @@ public class ContinuationsApiTest extends TestCase {
       } catch (ContinuationPending pending) {
           try {
               Object applicationState = pending.getApplicationState();
-              assertEquals(new Integer(3), applicationState);
+              assertEquals(Integer.valueOf(3), applicationState);
               int saved = (Integer) applicationState;
               cx.resumeContinuation(pending.getContinuation(), globalScope, saved + 1);
               fail("Should throw another ContinuationPending");
           } catch (ContinuationPending pending2) {
               Object applicationState2 = pending2.getApplicationState();
-              assertEquals(new Integer(6), applicationState2);
+              assertEquals(Integer.valueOf(6), applicationState2);
               int saved2 = (Integer) applicationState2;
               Object result2 = cx.resumeContinuation(pending2.getContinuation(), globalScope, saved2 + 1);
               assertEquals(13, ((Number)result2).intValue());
@@ -146,13 +146,13 @@ public class ContinuationsApiTest extends TestCase {
       } catch (ContinuationPending pending) {
           try {
               Object applicationState = pending.getApplicationState();
-              assertEquals(new Integer(1), applicationState);
+              assertEquals(Integer.valueOf(1), applicationState);
               int saved = (Integer) applicationState;
               cx.resumeContinuation(pending.getContinuation(), globalScope, saved + 1);
               fail("Should throw another ContinuationPending");
           } catch (ContinuationPending pending2) {
               Object applicationState2 = pending2.getApplicationState();
-              assertEquals(new Integer(4), applicationState2);
+              assertEquals(Integer.valueOf(4), applicationState2);
               int saved2 = (Integer) applicationState2;
               Object result2 = cx.resumeContinuation(pending2.getContinuation(), globalScope, saved2 + 2);
               assertEquals(8, ((Number)result2).intValue());

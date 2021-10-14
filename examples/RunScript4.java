@@ -30,7 +30,7 @@ public class RunScript4 {
             // the top-level variable "myCounter". This is
             // equivalent to the JavaScript code
             //    myCounter = new Counter(7);
-            Object[] arg = { new Integer(7) };
+            Object[] arg = { Integer.valueOf(7) };
             Scriptable myCounter = cx.newObject(scope, "Counter", arg);
             scope.put("myCounter", scope, myCounter);
 

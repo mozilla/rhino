@@ -47,7 +47,7 @@ public class Bug409702Test extends TestCase {
       try {
           Scriptable scope = cx.initStandardObjects();
           Object result = cx.evaluateString(scope, source, "source", 1, null);
-          assertEquals(new Integer(value), result);
+          assertEquals(Integer.valueOf(value), result);
       } finally {
           Context.exit();
       }

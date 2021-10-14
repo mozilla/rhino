@@ -787,7 +787,7 @@ public class SwingGui extends JFrame implements GuiCallback {
         try {
             Method m = JSplitPane.class.getMethod("setResizeWeight",
                                                   new Class[]{double.class});
-            m.invoke(pane, new Object[]{new Double(weight)});
+            m.invoke(pane, new Object[]{Double.valueOf(weight)});
         } catch (NoSuchMethodException exc) {
         } catch (IllegalAccessException exc) {
         } catch (java.lang.reflect.InvocationTargetException exc) {

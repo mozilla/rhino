@@ -31,7 +31,7 @@ public class Bug448816Test extends TestCase {
         reference.put("a", "a");
         reference.put("b", Boolean.TRUE);
         reference.put("c", new HashMap<Object, Object>());
-        reference.put(new Integer(1), new Integer(42));
+        reference.put(Integer.valueOf(1), Integer.valueOf(42));
         // get a js object as map
         Context context = Context.enter();
         ScriptableObject scope = context.initStandardObjects();
@@ -53,7 +53,7 @@ public class Bug448816Test extends TestCase {
         assertEquals(map.get("a"), reference.get("a"));
         assertEquals(map.get("b"), reference.get("b"));
         assertEquals(map.get("c"), reference.get("c"));
-        assertEquals(map.get(new Integer(1)), reference.get(new Integer(1)));
+        assertEquals(map.get(Integer.valueOf(1)), reference.get(Integer.valueOf(1)));
         assertEquals(map.get("notfound"), reference.get("notfound"));
         assertTrue(map.containsKey("b"));
         assertTrue(map.containsValue(Boolean.TRUE));

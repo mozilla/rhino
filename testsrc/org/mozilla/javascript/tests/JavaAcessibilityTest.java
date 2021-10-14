@@ -50,13 +50,13 @@ public class JavaAcessibilityTest extends TestCase {
 
   public void testAccessingFields() {
     Object result = runScript(importClass + "PrivateAccessClass.staticPackagePrivateInt");
-    assertEquals(new Integer(0), result);
+    assertEquals(Integer.valueOf(0), result);
 
     result = runScript(importClass + "PrivateAccessClass.staticPrivateInt");
-    assertEquals(new Integer(1), result);
+    assertEquals(Integer.valueOf(1), result);
 
     result = runScript(importClass + "PrivateAccessClass.staticProtectedInt");
-    assertEquals(new Integer(2), result);
+    assertEquals(Integer.valueOf(2), result);
 
     result = runScript(importClass + "new PrivateAccessClass().packagePrivateString");
     assertEquals("package private", ((NativeJavaObject) result).unwrap());
@@ -68,33 +68,33 @@ public class JavaAcessibilityTest extends TestCase {
     assertEquals("protected", ((NativeJavaObject) result).unwrap());
 
     result = runScript(importClass + "new PrivateAccessClass.PrivateNestedClass().packagePrivateInt");
-    assertEquals(new Integer(0), result);
+    assertEquals(Integer.valueOf(0), result);
 
     result = runScript(importClass + "new PrivateAccessClass.PrivateNestedClass().privateInt");
-    assertEquals(new Integer(1), result);
+    assertEquals(Integer.valueOf(1), result);
 
     result = runScript(importClass + "new PrivateAccessClass.PrivateNestedClass().protectedInt");
-    assertEquals(new Integer(2), result);
+    assertEquals(Integer.valueOf(2), result);
   }
 
   public void testAccessingMethods() {
     Object result = runScript(importClass + "PrivateAccessClass.staticPackagePrivateMethod()");
-    assertEquals(new Integer(0), result);
+    assertEquals(Integer.valueOf(0), result);
 
     result = runScript(importClass + "PrivateAccessClass.staticPrivateMethod()");
-    assertEquals(new Integer(1), result);
+    assertEquals(Integer.valueOf(1), result);
 
     result = runScript(importClass + "PrivateAccessClass.staticProtectedMethod()");
-    assertEquals(new Integer(2), result);
+    assertEquals(Integer.valueOf(2), result);
 
     result = runScript(importClass + "new PrivateAccessClass().packagePrivateMethod()");
-    assertEquals(new Integer(3), result);
+    assertEquals(Integer.valueOf(3), result);
 
     result = runScript(importClass + "new PrivateAccessClass().privateMethod()");
-    assertEquals(new Integer(4), result);
+    assertEquals(Integer.valueOf(4), result);
 
     result = runScript(importClass + "new PrivateAccessClass().protectedMethod()");
-    assertEquals(new Integer(5), result);
+    assertEquals(Integer.valueOf(5), result);
   }
 
   public void testAccessingConstructors() {
