@@ -114,7 +114,7 @@ public class Matrix implements Scriptable {
     @Override
     public Object get(String name, Scriptable start) {
         if (name.equals("dim"))
-            return new Integer(dim);
+            return Integer.valueOf(dim);
 
         return NOT_FOUND;
     }
