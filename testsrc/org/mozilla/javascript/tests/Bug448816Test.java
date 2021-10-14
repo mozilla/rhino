@@ -8,15 +8,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 
-import junit.framework.TestCase;
-
-
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=448816
+ *
  * @author Hannes Wallnoefer
  */
 public class Bug448816Test extends TestCase {
@@ -35,9 +33,14 @@ public class Bug448816Test extends TestCase {
         // get a js object as map
         Context context = Context.enter();
         ScriptableObject scope = context.initStandardObjects();
-        map = (Map<Object, Object>) context.evaluateString(scope,
-                "({ a: 'a', b: true, c: new java.util.HashMap(), 1: 42});",
-                "testsrc", 1, null);
+        map =
+                (Map<Object, Object>)
+                        context.evaluateString(
+                                scope,
+                                "({ a: 'a', b: true, c: new java.util.HashMap(), 1: 42});",
+                                "testsrc",
+                                1,
+                                null);
         Context.exit();
     }
 
