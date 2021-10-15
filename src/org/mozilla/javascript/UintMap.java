@@ -461,7 +461,7 @@ public class UintMap implements Serializable
 
         System.out.print("."); System.out.flush();
         for (int i = 0; i != N; ++i) {
-            map.put(i, new Integer(i));
+            map.put(i, Integer.valueOf(i));
             check(-1 == map.getInt(i, -1));
             Integer obj = (Integer)map.getObject(i);
             check(obj != null && i == obj.intValue());
@@ -500,7 +500,7 @@ public class UintMap implements Serializable
 
         System.out.print("."); System.out.flush();
         for (int i = 0; i != N; ++i) {
-            map.put(i * i, new Integer(i));
+            map.put(i * i, Integer.valueOf(i));
             check(-1 == map.getInt(i * i, -1));
             map.remove(i * i);
             check(!map.has(i * i));
@@ -523,7 +523,7 @@ public class UintMap implements Serializable
         check(map.size() == 0);
         for (int i = 0; i != N; ++i) {
             map.put(i * i, i);
-            map.put(i * i + 1, new Double(i+0.5));
+            map.put(i * i + 1, Double.valueOf(i+0.5));
         }
         checkSameMaps(map, (UintMap)writeAndRead(map));
 
@@ -555,7 +555,7 @@ public class UintMap implements Serializable
         System.out.print("."); System.out.flush();
         map = new UintMap();
         for (int i = 0; i != N; ++i) {
-            map.put(2*i+1, new Double(i + 10));
+            map.put(2*i+1, Double.valueOf(i + 10));
         }
         for (int i = 0; i != N / 2; ++i) {
             map.remove(2*i+1);
