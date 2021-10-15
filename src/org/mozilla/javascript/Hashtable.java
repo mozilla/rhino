@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -48,13 +49,20 @@ public class Hashtable implements Serializable, Iterable<Hashtable.Entry> {
         }
 
         Entry(Object k, Object value) {
-            if ((k instanceof Number) && (!(k instanceof Double))) {
-                // Hash comparison won't work if we don't do this
-                this.key = Double.valueOf(((Number) k).doubleValue());
+            if (k instanceof Number) {
+                if (k instanceof Double || k instanceof BigInteger) {
+                    // BigInteger needs to retain its own type, due to
+                    // "If Type(x) is different from Type(y), return false." in
+                    // ecma262/multipage/abstract-operations.html#sec-samevaluezero
+                    key = k;
+                } else {
+                    // Hash comparison won't work if we don't do this
+                    key = Double.valueOf(((Number) k).doubleValue());
+                }
             } else if (k instanceof ConsString) {
-                this.key = k.toString();
+                key = k.toString();
             } else {
-                this.key = k;
+                key = k;
             }
 
             if (key == null) {
