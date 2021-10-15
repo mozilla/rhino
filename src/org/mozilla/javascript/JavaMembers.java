@@ -12,11 +12,9 @@ import static java.lang.reflect.Modifier.isPublic;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.security.AccessControlContext;
 import java.security.AllPermission;
 import java.security.Permission;
@@ -35,7 +33,8 @@ import javax.lang.model.SourceVersion;
  */
 class JavaMembers {
 
-    static final boolean STRICT_REFLECTIVE_ACCESS = SourceVersion.latestSupported().ordinal() > 8;
+    private static final boolean STRICT_REFLECTIVE_ACCESS =
+            SourceVersion.latestSupported().ordinal() > 8;
 
     private static final Permission allPermission = new AllPermission();
 
@@ -296,14 +295,14 @@ class JavaMembers {
      * and interfaces (if they exist). Basically upcasts every method to the nearest accessible
      * method.
      */
-    private static Method[] discoverAccessibleMethods(
+    private Method[] discoverAccessibleMethods(
             Class<?> clazz, boolean includeProtected, boolean includePrivate) {
         Map<MethodSignature, Method> map = new HashMap<MethodSignature, Method>();
         discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
         return map.values().toArray(new Method[map.size()]);
     }
 
-    private static void discoverAccessibleMethods(
+    private void discoverAccessibleMethods(
             Class<?> clazz,
             Map<MethodSignature, Method> map,
             boolean includeProtected,
@@ -345,21 +344,8 @@ class JavaMembers {
                             // need to loop any more
                         }
                     }
-                } else if (STRICT_REFLECTIVE_ACCESS && !isExportedClass(clazz)) {
-                    Method[] methods = clazz.getMethods();
-                    for (Method method : methods) {
-                        method = findAccessibleMethod(method);
-                        MethodSignature sig = new MethodSignature(method);
-                        // Array may contain methods with same signature but different return value!
-                        map.putIfAbsent(sig, method);
-                    }
                 } else {
-                    Method[] methods = clazz.getMethods();
-                    for (Method method : methods) {
-                        MethodSignature sig = new MethodSignature(method);
-                        // Array may contain methods with same signature but different return value!
-                        if (!map.containsKey(sig)) map.put(sig, method);
-                    }
+                    discoverPublicMethods(clazz, map);
                 }
                 return;
             } catch (SecurityException e) {
@@ -383,7 +369,20 @@ class JavaMembers {
         }
     }
 
-    private static final class MethodSignature {
+    void discoverPublicMethods(Class<?> clazz, Map<MethodSignature, Method> map) {
+        Method[] methods = clazz.getMethods();
+        for (Method method : methods) {
+            registerMethod(map, method);
+        }
+    }
+
+    static void registerMethod(Map<MethodSignature, Method> map, Method method) {
+        MethodSignature sig = new MethodSignature(method);
+        // Array may contain methods with same signature but different return value!
+        map.putIfAbsent(sig, method);
+    }
+
+    static final class MethodSignature {
         private final String name;
         private final Class<?>[] args;
 
@@ -409,91 +408,6 @@ class JavaMembers {
         public int hashCode() {
             return name.hashCode() ^ args.length;
         }
-    }
-
-    private static boolean isExportedClass(Class<?> clazz) {
-        /*
-         * We are going to invoke, using reflection, the approximate equivalent
-         * to the following Java 9 code:
-         *
-         * return clazz.getModule().isExported(clazz.getPackageName());
-         */
-
-        // First, determine the package name
-        String pname;
-        Package pkg = clazz.getPackage();
-        if (pkg == null) {
-            // Primitive types, arrays, proxy classes
-            if (!Proxy.isProxyClass(clazz)) {
-                // Should be a primitive type or array
-                return true;
-            }
-            String clName = clazz.getName();
-            pname = clName.substring(0, clName.lastIndexOf('.'));
-        } else {
-            pname = pkg.getName();
-        }
-
-        // Obtain the module
-        Method getmodule;
-        Class<?> cl = clazz.getClass();
-        try {
-            getmodule = cl.getMethod("getModule");
-        } catch (NoSuchMethodException e) {
-            // We are on non-modular Java
-            return true;
-        }
-
-        Object module;
-        try {
-            module = getmodule.invoke(clazz);
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            return false;
-        }
-
-        Class<?> moduleClass = module.getClass();
-
-        // Execute isExported()
-        boolean exported;
-        try {
-            Method isexported = moduleClass.getMethod("isExported", String.class);
-            exported = (boolean) isexported.invoke(module, pname);
-        } catch (NoSuchMethodException
-                | IllegalAccessException
-                | IllegalArgumentException
-                | InvocationTargetException e) {
-            // If we reached this part of the code, this cannot happen
-            exported = false;
-        }
-        return exported;
-    }
-
-    private static Method findAccessibleMethod(Method method) {
-        Class<?> cl = method.getDeclaringClass();
-        final String methodName = method.getName();
-        final Class<?>[] methodTypes = method.getParameterTypes();
-        topLoop:
-        do {
-            for (Class<?> intface : cl.getInterfaces()) {
-                try {
-                    method = intface.getMethod(methodName, methodTypes);
-                    break topLoop;
-                } catch (NoSuchMethodException e) {
-                }
-            }
-            cl = cl.getSuperclass();
-            if (cl == null) {
-                break;
-            }
-            if (isExportedClass(cl)) {
-                try {
-                    method = cl.getMethod(methodName, methodTypes);
-                    break;
-                } catch (NoSuchMethodException e) {
-                }
-            }
-        } while (true);
-        return method;
     }
 
     private void reflect(Scriptable scope, boolean includeProtected, boolean includePrivate) {
@@ -868,7 +782,7 @@ class JavaMembers {
                 return members;
             }
             try {
-                members = new JavaMembers(cache.getAssociatedScope(), cl, includeProtected);
+                members = createJavaMembers(cache.getAssociatedScope(), cl, includeProtected);
                 break;
             } catch (SecurityException e) {
                 // Reflection may fail for objects that are in a restricted
@@ -902,6 +816,15 @@ class JavaMembers {
             }
         }
         return members;
+    }
+
+    private static JavaMembers createJavaMembers(
+            Scriptable associatedScope, Class<?> cl, boolean includeProtected) {
+        if (STRICT_REFLECTIVE_ACCESS) {
+            return new JavaMembers_jdk11(associatedScope, cl, includeProtected);
+        } else {
+            return new JavaMembers(associatedScope, cl, includeProtected);
+        }
     }
 
     private static Object getSecurityContext() {
