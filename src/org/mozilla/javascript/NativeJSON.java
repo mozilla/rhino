@@ -567,7 +567,7 @@ public final class NativeJSON extends IdScriptableObject {
                 default:
                     if (c < ' ') {
                         product.append("\\u");
-                        String hex = String.format("%04x", Integer.valueOf((int) c));
+                        String hex = String.format("%04x", Integer.valueOf(c));
                         product.append(hex);
                     } else {
                         product.append(c);

@@ -326,7 +326,7 @@ public class Test262SuiteTest {
                         Double failurePercentage =
                                 testCount == 0
                                         ? 0
-                                        : ((double) failureCount * 100 / (double) testCount);
+                                        : ((double) failureCount * 100 / testCount);
 
                         writer.write('\n');
                         writer.write(

@@ -6,7 +6,6 @@ package org.mozilla.javascript.tests;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 import org.junit.Test;
@@ -102,7 +101,7 @@ public class InterfaceAdapterTest extends TestCase {
     public void testNativeFunctionAsComparator() {
         String js = "list";
         testIt(js, Arrays.asList("foo", "bar"));
-        
+
         js = "list.sort(function(a,b) { return a > b ? 1:-1 })\n"
                 + "list";
         testIt(js, Arrays.asList("bar", "foo"));

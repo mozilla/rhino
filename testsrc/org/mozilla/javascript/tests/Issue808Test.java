@@ -6,7 +6,6 @@ package org.mozilla.javascript.tests;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.NodeVisitor;
