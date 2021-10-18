@@ -41,8 +41,7 @@ public class CatchTest extends TestCase {
 
         ContextFactory factory = new ContextFactory();
 
-        return (String)
-                factory.call(
+        return factory.call(
                         context -> {
                             context.setOptimizationLevel(-1);
                             if (shutter != null) {

@@ -32,7 +32,7 @@ public class ContextFactoryTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         CTX.setLanguageVersion(LV);
-        CTX.exit();
+        Context.exit();
     }
 
     @Test

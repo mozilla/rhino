@@ -1,4 +1,4 @@
-package org.mozilla.javascript.classfile.tests;
+package org.mozilla.classfile.tests;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -20,7 +20,7 @@ public class ClassFileWriterTest {
 
         ClassFileWriter cfw = new ClassFileWriter(CLASS_NAME,
                                                   "java/lang/Object",
-                                                  "ClassFileWriterTest.java");;
+                                                  "ClassFileWriterTest.java");
 
         // public static Object returnObject()
         cfw.startMethod(METHOD_NAME, "()Ljava/lang/Object;", (short)(ACC_PUBLIC | ACC_STATIC));

@@ -18,9 +18,9 @@ public class JavaAdapterTest{
 	}
 	@After
 	public void exitContext() {
-		cx.exit();
+	    Context.exit();
 	}
-	
+
 	interface C {
 		int methodInC(String str);
 	}
@@ -32,11 +32,11 @@ public class JavaAdapterTest{
 	public void testOverrideMethodInMultiLayerInterface() throws NoSuchMethodException {
 		String testCode =
 	            "JavaAdapter(Packages."+A.class.getName()+",{methodInC:function(){}},null)";
-		
+
 		NativeJavaObject adapterObject=(NativeJavaObject)cx.evaluateString(topScope, testCode,"", 1, null);
-		
+
 		//if the method 'methodInC' is overrided from 'interface C',
-		//its signature will be 'public int methodInC(java.lang.String)'  (expected result), 
+		//its signature will be 'public int methodInC(java.lang.String)'  (expected result),
 		//otherwise if the method 'methodInC' is newly created by JavaAdapter,
 		//its signature will be 'public java.lang.Object methodInC()'
 		adapterObject.unwrap().getClass().getDeclaredMethod("methodInC", String.class);

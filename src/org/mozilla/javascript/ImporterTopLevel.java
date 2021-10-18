@@ -149,9 +149,9 @@ public class ImporterTopLevel extends TopLevel {
         for (int i = 0; i != args.length; ++i) {
             Object arg = args[i];
             if (arg instanceof NativeJavaClass) {
-                result.importClass(result, (NativeJavaClass) arg);
+                ImporterTopLevel.importClass(result, (NativeJavaClass) arg);
             } else if (arg instanceof NativeJavaPackage) {
-                result.importPackage(result, (NativeJavaPackage) arg);
+                ImporterTopLevel.importPackage(result, (NativeJavaPackage) arg);
             } else {
                 throw Context.reportRuntimeErrorById(
                         "msg.not.class.not.pkg", Context.toString(arg));
