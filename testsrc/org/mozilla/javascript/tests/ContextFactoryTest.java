@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/**
- *
- */
+/** */
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertFalse;
@@ -52,5 +50,4 @@ public class ContextFactoryTest {
         CTX.setLanguageVersion(Context.VERSION_ES6);
         assertFalse(CTX.hasFeature(Context.FEATURE_OLD_UNDEF_NULL_THIS));
     }
-
 }
