@@ -24,7 +24,7 @@ import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.Scriptable;
-
+@Deprecated
 public class JavaPolicySecurity extends SecurityProxy
 {
 

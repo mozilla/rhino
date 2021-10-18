@@ -15,9 +15,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.AccessControlContext;
-import java.security.AllPermission;
-import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,8 +32,6 @@ class JavaMembers {
 
     private static final boolean STRICT_REFLECTIVE_ACCESS =
             SourceVersion.latestSupported().ordinal() > 8;
-
-    private static final Permission allPermission = new AllPermission();
 
     JavaMembers(Scriptable scope, Class<?> cl) {
         this(scope, cl, false);
@@ -770,7 +765,7 @@ class JavaMembers {
         Map<ClassCache.CacheKey, JavaMembers> ct = cache.getClassCacheMap();
 
         Class<?> cl = dynamicType;
-        Object secCtx = getSecurityContext();
+        Object secCtx = SecurityUtilities.getSecurityContext();
         for (; ; ) {
             members = ct.get(new ClassCache.CacheKey(cl, secCtx));
             if (members != null) {
@@ -825,24 +820,6 @@ class JavaMembers {
         } else {
             return new JavaMembers(associatedScope, cl, includeProtected);
         }
-    }
-
-    private static Object getSecurityContext() {
-        Object sec = null;
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sec = sm.getSecurityContext();
-            if (sec instanceof AccessControlContext) {
-                try {
-                    ((AccessControlContext) sec).checkPermission(allPermission);
-                    // if we have allPermission, we do not need to store the
-                    // security object in the cache key
-                    return null;
-                } catch (SecurityException e) {
-                }
-            }
-        }
-        return sec;
     }
 
     RuntimeException reportMemberNotFound(String memberName) {

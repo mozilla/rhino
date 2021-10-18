@@ -28,8 +28,13 @@ import org.mozilla.classfile.ClassFileWriter;
  * within your {@link CodeSource} objects, it is your responsibility to verify
  * (or not) that the script source files are signed in whatever
  * implementation-specific way you're using.
+ * 
  * @author Attila Szegedi
+ * @deprecated This class is only useful in conjunction with
+ *             {@link SecurityManager}, which is deprecated since JDK17 and
+ *             subject to removal in a future release
  */
+@Deprecated
 public class PolicySecurityController extends SecurityController
 {
     private static final byte[] secureCallerImplBytecode = loadBytecode();
