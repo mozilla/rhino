@@ -8,7 +8,19 @@ package org.mozilla.javascript;
 
 import java.security.ProtectionDomain;
 
-/** @author Attila Szegedi */
+/**
+ * SecurityUtilities will delegate method calls to {@link SecurityBridge}.
+ *
+ * <p>This class will check first for a class <code>org.mozilla.javascript.SecurityBridge_custom
+ * </code> and then it will use <code>org.mozilla.javascript.SecurityBridge_SecurityManager</code>
+ * or <code>org.mozilla.javascript.SecurityBridge_NoOp</code>, depending if <code>
+ * java.lang.SecurityManager</code> is present or not.
+ *
+ * <ul>
+ *
+ * @author Attila Szegedi
+ * @author Roland Praml, FOCONIS AG
+ */
 public abstract class SecurityUtilities {
     static final SecurityBridge bridge = makeBridge();
 

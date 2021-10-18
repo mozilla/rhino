@@ -9,8 +9,10 @@ package org.mozilla.javascript;
 import java.security.ProtectionDomain;
 
 /**
- * Bridge to As with JDK 17 SecurityManager is deprecated, we will need a way to switch to a
- * different implementation.
+ * Bridge to security relevant operations, that have to be handled with SecurityManager up to JDK
+ * 17.
+ *
+ * <p>Notice: With JEP411, the SecurityManager is deprecated.
  *
  * @author Roland Praml
  */
