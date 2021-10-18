@@ -19,11 +19,10 @@ import java.security.AccessControlContext;
 import java.security.AllPermission;
 import java.security.Permission;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.lang.model.SourceVersion;
+import org.mozilla.javascript.VMBridge.MethodSignature;
 
 /**
  * @author Mike Shaver
@@ -32,9 +31,6 @@ import javax.lang.model.SourceVersion;
  * @see NativeJavaClass
  */
 class JavaMembers {
-
-    private static final boolean STRICT_REFLECTIVE_ACCESS =
-            SourceVersion.latestSupported().ordinal() > 8;
 
     private static final Permission allPermission = new AllPermission();
 
@@ -345,7 +341,7 @@ class JavaMembers {
                         }
                     }
                 } else {
-                    discoverPublicMethods(clazz, map);
+                    VMBridge.instance.discoverPublicMethods(clazz, map);
                 }
                 return;
             } catch (SecurityException e) {
@@ -366,47 +362,6 @@ class JavaMembers {
         Class<?> superclass = clazz.getSuperclass();
         if (superclass != null) {
             discoverAccessibleMethods(superclass, map, includeProtected, includePrivate);
-        }
-    }
-
-    void discoverPublicMethods(Class<?> clazz, Map<MethodSignature, Method> map) {
-        Method[] methods = clazz.getMethods();
-        for (Method method : methods) {
-            registerMethod(map, method);
-        }
-    }
-
-    static void registerMethod(Map<MethodSignature, Method> map, Method method) {
-        MethodSignature sig = new MethodSignature(method);
-        // Array may contain methods with same signature but different return value!
-        map.putIfAbsent(sig, method);
-    }
-
-    static final class MethodSignature {
-        private final String name;
-        private final Class<?>[] args;
-
-        private MethodSignature(String name, Class<?>[] args) {
-            this.name = name;
-            this.args = args;
-        }
-
-        MethodSignature(Method method) {
-            this(method.getName(), method.getParameterTypes());
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o instanceof MethodSignature) {
-                MethodSignature ms = (MethodSignature) o;
-                return ms.name.equals(name) && Arrays.equals(args, ms.args);
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return name.hashCode() ^ args.length;
         }
     }
 
@@ -782,7 +737,7 @@ class JavaMembers {
                 return members;
             }
             try {
-                members = createJavaMembers(cache.getAssociatedScope(), cl, includeProtected);
+                members = new JavaMembers(cache.getAssociatedScope(), cl, includeProtected);
                 break;
             } catch (SecurityException e) {
                 // Reflection may fail for objects that are in a restricted
@@ -816,15 +771,6 @@ class JavaMembers {
             }
         }
         return members;
-    }
-
-    private static JavaMembers createJavaMembers(
-            Scriptable associatedScope, Class<?> cl, boolean includeProtected) {
-        if (STRICT_REFLECTIVE_ACCESS) {
-            return new JavaMembers_jdk11(associatedScope, cl, includeProtected);
-        } else {
-            return new JavaMembers(associatedScope, cl, includeProtected);
-        }
     }
 
     private static Object getSecurityContext() {
