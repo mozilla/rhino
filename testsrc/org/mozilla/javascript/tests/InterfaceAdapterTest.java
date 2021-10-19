@@ -4,19 +4,16 @@
 
 package org.mozilla.javascript.tests;
 
+import static org.junit.Assert.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-
+import junit.framework.TestCase;
 import org.junit.Test;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Wrapper;
-
-import junit.framework.TestCase;
-
-import static org.junit.Assert.*;
 
 /*
  * This testcase tests the support of converting javascript functions to
@@ -30,18 +27,18 @@ public class InterfaceAdapterTest extends TestCase {
     }
 
     private void testIt(String js, Object expected) {
-        Utils.runWithAllOptimizationLevels(cx -> {
-            final ScriptableObject scope = cx.initStandardObjects();
-            scope.put("list", scope, createList());
-            Object o = cx.evaluateString(scope, js,
-                    "testNativeFunction.js", 1, null);
-            if (o instanceof Wrapper) {
-                o = ((Wrapper) o).unwrap();
-            }
-            assertEquals(expected, o);
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final ScriptableObject scope = cx.initStandardObjects();
+                    scope.put("list", scope, createList());
+                    Object o = cx.evaluateString(scope, js, "testNativeFunction.js", 1, null);
+                    if (o instanceof Wrapper) {
+                        o = ((Wrapper) o).unwrap();
+                    }
+                    assertEquals(expected, o);
 
-            return null;
-        });
+                    return null;
+                });
     }
 
     private List<String> createList() {
@@ -53,37 +50,35 @@ public class InterfaceAdapterTest extends TestCase {
 
     @Test
     public void testNativeFunctionAsConsumer() {
-        String js = "var ret = '';\n"
-                + "list.forEach(function(elem) {  ret += elem });\n"
-                + "ret";
+        String js = "var ret = '';\n" + "list.forEach(function(elem) {  ret += elem });\n" + "ret";
 
         testIt(js, "foobar");
     }
 
     @Test
     public void testArrowFunctionAsConsumer() {
-        String js = "var ret = '';\n"
-                + "list.forEach(elem => ret += elem);\n"
-                + "ret";
+        String js = "var ret = '';\n" + "list.forEach(elem => ret += elem);\n" + "ret";
 
         testIt(js, "foobar");
     }
 
     @Test
     public void testBoundFunctionAsConsumer() {
-        String js = "var ret = '';\n"
-                + "list.forEach(((c, elem) => ret += elem + c).bind(null, ','));\n"
-                + "ret";
+        String js =
+                "var ret = '';\n"
+                        + "list.forEach(((c, elem) => ret += elem + c).bind(null, ','));\n"
+                        + "ret";
 
         testIt(js, "foo,bar,");
     }
 
     @Test
     public void testJavaMethodAsConsumer() {
-        String js = "var ret = '';\n"
-                + "list.stream().map(org.mozilla.javascript.tests.InterfaceAdapterTest.joinString)\n"
-                +     ".forEach(elem => ret += elem);\n"
-                + "ret";
+        String js =
+                "var ret = '';\n"
+                        + "list.stream().map(org.mozilla.javascript.tests.InterfaceAdapterTest.joinString)\n"
+                        + ".forEach(elem => ret += elem);\n"
+                        + "ret";
 
         testIt(js, "foo|bar|");
     }
@@ -93,8 +88,7 @@ public class InterfaceAdapterTest extends TestCase {
         String js = "list";
         testIt(js, Arrays.asList("foo", "bar"));
 
-        js = "list.sort((a,b) => a > b ? 1:-1)\n"
-                + "list";
+        js = "list.sort((a,b) => a > b ? 1:-1)\n" + "list";
         testIt(js, Arrays.asList("bar", "foo"));
     }
 
@@ -102,22 +96,20 @@ public class InterfaceAdapterTest extends TestCase {
     public void testNativeFunctionAsComparator() {
         String js = "list";
         testIt(js, Arrays.asList("foo", "bar"));
-        
-        js = "list.sort(function(a,b) { return a > b ? 1:-1 })\n"
-                + "list";
+
+        js = "list.sort(function(a,b) { return a > b ? 1:-1 })\n" + "list";
         testIt(js, Arrays.asList("bar", "foo"));
     }
 
-    public interface EmptyInterface {
-    }
+    public interface EmptyInterface {}
 
-    public static void receiveEmptyInterface(EmptyInterface i) {
-    }
+    public static void receiveEmptyInterface(EmptyInterface i) {}
 
     @Test
     public void testFunctionAsEmptyInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveEmptyInterface(a => a);\n"
-                + "list";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveEmptyInterface(a => a);\n"
+                        + "list";
         assertThrows(EvaluatorException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
     }
 
@@ -131,22 +123,24 @@ public class InterfaceAdapterTest extends TestCase {
 
     @Test
     public void testFunctionAsOneMethodInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveOneMethodInterface(() => 'ok');";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveOneMethodInterface(() => 'ok');";
         testIt(js, "ok");
     }
 
     public interface TwoMethodsInterface {
         void a();
+
         void b();
     }
 
-    public static void receiveTwoMethodsInterface(TwoMethodsInterface i) {
-    }
+    public static void receiveTwoMethodsInterface(TwoMethodsInterface i) {}
 
     @Test
     public void testFunctionAsTwoMethodsInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoMethodsInterface(a => a);\n"
-                + "list";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoMethodsInterface(a => a);\n"
+                        + "list";
         assertThrows(EvaluatorException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
     }
 
@@ -154,13 +148,13 @@ public class InterfaceAdapterTest extends TestCase {
         void b();
     }
 
-    public static void receiveTwoMethodsWithExtendsInterface(TwoMethodsWithExtendsInterface i) {
-    }
+    public static void receiveTwoMethodsWithExtendsInterface(TwoMethodsWithExtendsInterface i) {}
 
     @Test
     public void testFunctionAsTwoMethodsWithExtendsInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoMethodsWithExtendsInterface(a => a);\n"
-                + "list";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoMethodsWithExtendsInterface(a => a);\n"
+                        + "list";
         assertThrows(EvaluatorException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
     }
 
@@ -176,22 +170,24 @@ public class InterfaceAdapterTest extends TestCase {
 
     @Test
     public void testFunctionAsOneDefaultMethodInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveOneDefaultMethodInterface(() => 'ok');";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveOneDefaultMethodInterface(() => 'ok');";
         testIt(js, "ok");
     }
 
     public interface TwoDefaultMethodsInterface {
         default void a() {}
+
         default void b() {}
     }
 
-    public static void receiveTwoDefaultMethodsInterface(TwoDefaultMethodsInterface i) {
-    }
+    public static void receiveTwoDefaultMethodsInterface(TwoDefaultMethodsInterface i) {}
 
     @Test
     public void testFunctionAsTwoDefaultMethodsInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoDefaultMethodsInterface(a => a);\n"
-                + "list";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoDefaultMethodsInterface(a => a);\n"
+                        + "list";
         assertThrows(EvaluatorException.class, () -> testIt(js, Arrays.asList("foo", "bar")));
     }
 
@@ -199,35 +195,41 @@ public class InterfaceAdapterTest extends TestCase {
         default String a(int i) {
             return "ng";
         }
+
         default String a(String s) {
             return "ng";
         }
     }
 
-    public static String receiveTwoSameNameDefaultMethodsInterface(TwoSameNameDefaultMethodsInterface i) {
+    public static String receiveTwoSameNameDefaultMethodsInterface(
+            TwoSameNameDefaultMethodsInterface i) {
         return i.a(1);
     }
 
     @Test
     public void testFunctionAsTwoSameNameDefaultMethodsInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoSameNameDefaultMethodsInterface(i => 'ok,' + i);";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveTwoSameNameDefaultMethodsInterface(i => 'ok,' + i);";
         testIt(js, "ok,1");
     }
 
     public interface OneAbstructOneDefaultSameNameMethodInterface {
         String a(int i);
+
         default String a(String s) {
             return "ng";
         }
     }
 
-    public static String receiveOneAbstructOneDefaultSameNameMethodInterface(OneAbstructOneDefaultSameNameMethodInterface i) {
+    public static String receiveOneAbstructOneDefaultSameNameMethodInterface(
+            OneAbstructOneDefaultSameNameMethodInterface i) {
         return i.a(2);
     }
 
     @Test
     public void testFunctionAsOneAbstructOneDefaultSameNameMethodInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveOneAbstructOneDefaultSameNameMethodInterface(i => 'ok,' + i);";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveOneAbstructOneDefaultSameNameMethodInterface(i => 'ok,' + i);";
         testIt(js, "ok,2");
     }
 
@@ -235,13 +237,15 @@ public class InterfaceAdapterTest extends TestCase {
         default void b() {}
     }
 
-    public static String receiveAddDefaultMethodWithExtendsInterface(AddDefaultMethodWithExtendsInterface i) {
+    public static String receiveAddDefaultMethodWithExtendsInterface(
+            AddDefaultMethodWithExtendsInterface i) {
         return i.a();
     }
 
     @Test
     public void testFunctionAsAddDefaultMethodWithExtendsInterface() {
-        String js = "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveAddDefaultMethodWithExtendsInterface(() => 'ok');";
+        String js =
+                "org.mozilla.javascript.tests.InterfaceAdapterTest.receiveAddDefaultMethodWithExtendsInterface(() => 'ok');";
         testIt(js, "ok");
     }
 }

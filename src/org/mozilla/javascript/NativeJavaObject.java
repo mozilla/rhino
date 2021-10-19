@@ -20,7 +20,8 @@ import java.util.Map;
 
 /**
  * This class reflects non-Array Java objects into the JavaScript environment. It reflect fields
- * directly, and uses NativeJavaMethod objects to reflect (possibly overloaded) methods.
+ * directly, and uses NativeJavaMethod objects to reflect (possibly overloaded) methods. It also
+ * provides iterator support for all iterable objects.
  *
  * <p>
  *

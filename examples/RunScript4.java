@@ -9,15 +9,12 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * RunScript4: Execute scripts in an environment that includes the
- *             example Counter class.
+ * RunScript4: Execute scripts in an environment that includes the example Counter class.
  *
  * @author Norris Boyd
  */
 public class RunScript4 {
-    public static void main(String args[])
-        throws Exception
-    {
+    public static void main(String args[]) throws Exception {
         Context cx = Context.enter();
         try {
             Scriptable scope = cx.initStandardObjects();
@@ -30,12 +27,12 @@ public class RunScript4 {
             // the top-level variable "myCounter". This is
             // equivalent to the JavaScript code
             //    myCounter = new Counter(7);
-            Object[] arg = { new Integer(7) };
+            Object[] arg = {Integer.valueOf(7)};
             Scriptable myCounter = cx.newObject(scope, "Counter", arg);
             scope.put("myCounter", scope, myCounter);
 
             String s = "";
-            for (int i=0; i < args.length; i++) {
+            for (int i = 0; i < args.length; i++) {
                 s += args[i];
             }
             Object result = cx.evaluateString(scope, s, "<cmd>", 1, null);
@@ -44,6 +41,4 @@ public class RunScript4 {
             Context.exit();
         }
     }
-
 }
-

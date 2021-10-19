@@ -2339,6 +2339,26 @@ public class Context implements Closeable {
         } while (head != null);
     }
 
+    /**
+     * Control whether to track unhandled promise rejections. If "track" is set to true, then the
+     * tracker returned by "getUnhandledPromiseTracker" must be periodically used to process the
+     * queue of unhandled promise rejections, or a memory leak may result.
+     *
+     * @param track if true, then track unhandled promise rejections
+     */
+    public void setTrackUnhandledPromiseRejections(boolean track) {
+        unhandledPromises.enable(track);
+    }
+
+    /**
+     * Return the object used to track unhandled promise rejections.
+     *
+     * @return the tracker object
+     */
+    public UnhandledRejectionTracker getUnhandledPromiseTracker() {
+        return unhandledPromises;
+    }
+
     /* ******** end of API ********* */
 
     /** Internal method that reports an error for missing calls to enter(). */
@@ -2632,6 +2652,7 @@ public class Context implements Closeable {
     private ClassLoader applicationClassLoader;
     private UnaryOperator<Object> javaToJSONConverter;
     private final ArrayDeque<Runnable> microtasks = new ArrayDeque<>();
+    private final UnhandledRejectionTracker unhandledPromises = new UnhandledRejectionTracker();
 
     /** This is the list of names of objects forcing the creation of function activation records. */
     Set<String> activationNames;

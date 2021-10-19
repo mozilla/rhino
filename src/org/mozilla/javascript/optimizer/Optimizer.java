@@ -72,7 +72,7 @@ class Optimizer {
 
             and if the parameter is being referenced in an Object context, the code is
             if ("parameter_objectValue" == java/lang/Void.TYPE)
-                new Double(parameter_doubleValue)
+                Double.valueOf(parameter_doubleValue)
             else
                 ...fine..., use the parameter_objectValue
 

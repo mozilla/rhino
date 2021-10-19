@@ -4,40 +4,40 @@
 
 package org.mozilla.javascript.tests;
 
+import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Scriptable;
 
-import junit.framework.TestCase;
-
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=419940
+ *
  * @author Norris Boyd
  */
 public class Bug419940Test extends TestCase {
-    final static int value = 12;
+    static final int value = 12;
 
-    public static abstract class BaseFoo {
+    public abstract static class BaseFoo {
         public abstract int doSomething();
     }
+
     public static class Foo extends BaseFoo {
         @Override
         public int doSomething() {
-           return value;
+            return value;
         }
     }
 
-  public void testAdapter() {
-      String source =
-          "(new JavaAdapter(" + Foo.class.getName() + ", {})).doSomething();";
+    public void testAdapter() {
+        String source = "(new JavaAdapter(" + Foo.class.getName() + ", {})).doSomething();";
 
-      Context cx = ContextFactory.getGlobal().enterContext();
-      try {
-          Scriptable scope = cx.initStandardObjects();
-          Object result = cx.evaluateString(scope, source, "source", 1, null);
-          assertEquals(new Integer(value), result);
-      } finally {
-          Context.exit();
-      }
-  }
+        Context cx = ContextFactory.getGlobal().enterContext();
+        try {
+            Scriptable scope = cx.initStandardObjects();
+            Object result = cx.evaluateString(scope, source, "source", 1, null);
+            assertEquals(Integer.valueOf(value), result);
+        } finally {
+            Context.exit();
+        }
+    }
 }

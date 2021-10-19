@@ -324,9 +324,7 @@ public class Test262SuiteTest {
                     if (ontoNextReportingDir) {
                         int failureCount = rolledUpFailureCount + failures.size();
                         Double failurePercentage =
-                                testCount == 0
-                                        ? 0
-                                        : ((double) failureCount * 100 / (double) testCount);
+                                testCount == 0 ? 0 : ((double) failureCount * 100 / testCount);
 
                         writer.write('\n');
                         writer.write(

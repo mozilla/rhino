@@ -1,6 +1,6 @@
 # Rhino: JavaScript in Java
 
-![Rhino](https://developer.mozilla.org/@api/deki/files/832/=Rhino.jpg)
+<a title="Rodrigo J De Marco, CC0, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Rhino_(234581759).jpeg"><img width="384" alt="Rhino (234581759)" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Rhino_%28234581759%29.jpeg/512px-Rhino_%28234581759%29.jpeg"></a>
 
 Rhino is an implementation of JavaScript in Java.
 
@@ -100,6 +100,16 @@ There is also a "rhino" package for many Linux distributions as well as Homebrew
 
 You can also embed it, as most people do. See below for more docs.
 
+### Java 16 and later
+
+If you are using a modular JDK that disallows the reflective access to
+non-public fields (16 and later), you may need to configure the JVM with the
+[`--add-opens`](https://docs.oracle.com/en/java/javase/17/migrate/migrating-jdk-8-later-jdk-releases.html#GUID-12F945EB-71D6-46AF-8C3D-D354FD0B1781)
+option to authorize the packages that your scripts shall use, for example:
+```
+--add-opens java.desktop/javax.swing.table=ALL-UNNAMED
+```
+
 ## Issues
 
 Most issues are managed on GitHub:
@@ -132,6 +142,20 @@ If you are the first person to touch a big file that spotless wants to make
 hundreds of lines of changes to, please try to put the reformatting changes
 alone into a single Git commit so that we can separate reformatting changes
 from more substantive changes.
+
+> **Warning:** If you build with Java 16 or later, you need to apply a
+> workaround for a "spotless" issue. Otherwise, the task will be disabled
+> and your PR may fail.
+> 
+> The following must be added to your `gradle.properties`.
+> ```
+> org.gradle.jvmargs=--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+> ```
+> For more details, see https://github.com/diffplug/spotless/issues/834#issuecomment-819118761
 
 ## More Help
 

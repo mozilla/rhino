@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Function;
@@ -44,21 +43,19 @@ import org.mozilla.javascript.tools.ToolErrorReporter;
 /**
  * The shell program.
  *
- * Can execute scripts interactively or in batch mode at the command line.
- * An example of controlling the JavaScript engine.
+ * <p>Can execute scripts interactively or in batch mode at the command line. An example of
+ * controlling the JavaScript engine.
  *
  * @author Norris Boyd
  */
-public class Main
-{
-    public static ShellContextFactory
-        shellContextFactory = new ShellContextFactory();
+public class Main {
+    public static ShellContextFactory shellContextFactory = new ShellContextFactory();
 
     public static Global global = new Global();
-    static protected ToolErrorReporter errorReporter;
-    static protected int exitCode = 0;
-    static private final int EXITCODE_RUNTIME_ERROR = 3;
-    static private final int EXITCODE_FILE_NOT_FOUND = 4;
+    protected static ToolErrorReporter errorReporter;
+    protected static int exitCode = 0;
+    private static final int EXITCODE_RUNTIME_ERROR = 3;
+    private static final int EXITCODE_FILE_NOT_FOUND = 4;
     static boolean processStdin = true;
     static List<String> fileList = new ArrayList<String>();
     static List<String> modulePath;
@@ -67,17 +64,14 @@ public class Main
     static boolean useRequire = false;
     static Require require;
     private static SecurityProxy securityImpl;
-    private final static ScriptCache scriptCache = new ScriptCache(32);
+    private static final ScriptCache scriptCache = new ScriptCache(32);
 
     static {
         global.initQuitAction(new IProxy(IProxy.SYSTEM_EXIT));
     }
 
-    /**
-     * Proxy class to avoid proliferation of anonymous classes.
-     */
-    private static class IProxy implements ContextAction<Object>, QuitAction
-    {
+    /** Proxy class to avoid proliferation of anonymous classes. */
+    private static class IProxy implements ContextAction<Object>, QuitAction {
         private static final int PROCESS_FILES = 1;
         private static final int EVAL_INLINE_SCRIPT = 2;
         private static final int SYSTEM_EXIT = 3;
@@ -86,19 +80,19 @@ public class Main
         String[] args;
         String scriptText;
 
-        IProxy(int type)
-        {
+        IProxy(int type) {
             this.type = type;
         }
 
         @Override
-        public Object run(Context cx)
-        {
+        public Object run(Context cx) {
+            cx.setTrackUnhandledPromiseRejections(true);
             if (useRequire) {
                 require = global.installRequire(cx, modulePath, sandboxed);
             }
             if (type == PROCESS_FILES) {
                 processFiles(cx, args);
+                printPromiseWarnings(cx);
             } else if (type == EVAL_INLINE_SCRIPT) {
                 evalInlineScript(cx, scriptText);
             } else {
@@ -108,8 +102,7 @@ public class Main
         }
 
         @Override
-        public void quit(Context cx, int exitCode)
-        {
+        public void quit(Context cx, int exitCode) {
             if (type == SYSTEM_EXIT) {
                 System.exit(exitCode);
                 return;
@@ -121,10 +114,9 @@ public class Main
     /**
      * Main entry point.
      *
-     * Process arguments as would a normal Java program. Also
-     * create a new Context and associate it with the current thread.
-     * Then set up the execution environment and begin to
-     * execute scripts.
+     * <p>Process arguments as would a normal Java program. Also create a new Context and associate
+     * it with the current thread. Then set up the execution environment and begin to execute
+     * scripts.
      */
     public static void main(String args[]) {
         try {
@@ -141,11 +133,8 @@ public class Main
         }
     }
 
-    /**
-     *  Execute the given arguments, but don't System.exit at the end.
-     */
-    public static int exec(String origArgs[])
-    {
+    /** Execute the given arguments, but don't System.exit at the end. */
+    public static int exec(String origArgs[]) {
         errorReporter = new ToolErrorReporter(false, global.getErr());
         shellContextFactory.setErrorReporter(errorReporter);
         String[] args = processOptions(origArgs);
@@ -165,33 +154,30 @@ public class Main
         return exitCode;
     }
 
-    static void processFiles(Context cx, String[] args)
-    {
+    static void processFiles(Context cx, String[] args) {
         // define "arguments" array in the top-level object:
         // need to allocate new array since newArray requires instances
         // of exactly Object[], not ObjectSubclass[]
         Object[] array = new Object[args.length];
         System.arraycopy(args, 0, array, 0, args.length);
         Scriptable argsObj = cx.newArray(global, array);
-        global.defineProperty("arguments", argsObj,
-                              ScriptableObject.DONTENUM);
+        global.defineProperty("arguments", argsObj, ScriptableObject.DONTENUM);
 
-        for (String file: fileList) {
+        for (String file : fileList) {
             try {
                 processSource(cx, file);
             } catch (IOException ioex) {
-                Context.reportError(ToolErrorReporter.getMessage(
-                        "msg.couldnt.read.source", file, ioex.getMessage()));
+                Context.reportError(
+                        ToolErrorReporter.getMessage(
+                                "msg.couldnt.read.source", file, ioex.getMessage()));
                 exitCode = EXITCODE_FILE_NOT_FOUND;
             } catch (RhinoException rex) {
-                ToolErrorReporter.reportException(
-                    cx.getErrorReporter(), rex);
+                ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
                 exitCode = EXITCODE_RUNTIME_ERROR;
             } catch (VirtualMachineError ex) {
                 // Treat StackOverflow and OutOfMemory as runtime errors
                 ex.printStackTrace();
-                String msg = ToolErrorReporter.getMessage(
-                    "msg.uncaughtJSException", ex.toString());
+                String msg = ToolErrorReporter.getMessage("msg.uncaughtJSException", ex.toString());
                 Context.reportError(msg);
                 exitCode = EXITCODE_RUNTIME_ERROR;
             }
@@ -205,21 +191,18 @@ public class Main
                 script.exec(cx, getShellScope());
             }
         } catch (RhinoException rex) {
-            ToolErrorReporter.reportException(
-                    cx.getErrorReporter(), rex);
+            ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
             exitCode = EXITCODE_RUNTIME_ERROR;
         } catch (VirtualMachineError ex) {
             // Treat StackOverflow and OutOfMemory as runtime errors
             ex.printStackTrace();
-            String msg = ToolErrorReporter.getMessage(
-                    "msg.uncaughtJSException", ex.toString());
+            String msg = ToolErrorReporter.getMessage("msg.uncaughtJSException", ex.toString());
             Context.reportError(msg);
             exitCode = EXITCODE_RUNTIME_ERROR;
         }
     }
 
-    public static Global getGlobal()
-    {
+    public static Global getGlobal() {
         return global;
     }
 
@@ -253,13 +236,11 @@ public class Main
         return global;
     }
 
-    /**
-     * Parse arguments.
-     */
-    public static String[] processOptions(String args[])
-    {
+    /** Parse arguments. */
+    public static String[] processOptions(String args[]) {
         String usageError;
-        goodUsage: for (int i = 0; ; ++i) {
+        goodUsage:
+        for (int i = 0; ; ++i) {
             if (i == args.length) {
                 return new String[0];
             }
@@ -269,7 +250,7 @@ public class Main
                 fileList.add(arg);
                 mainModule = arg;
                 String[] result = new String[args.length - i - 1];
-                System.arraycopy(args, i+1, result, 0, args.length - i - 1);
+                System.arraycopy(args, i + 1, result, 0, args.length - i - 1);
                 return result;
             }
             if (arg.equals("-version")) {
@@ -393,11 +374,12 @@ public class Main
                 shellContextFactory.setGeneratingDebug(true);
                 continue;
             }
-            if (arg.equals("-?") ||
-                arg.equals("-help")) {
+            if (arg.equals("-?") || arg.equals("-help")) {
                 // print usage message
-                global.getOut().println(
-                    ToolErrorReporter.getMessage("msg.shell.usage", Main.class.getName()));
+                global.getOut()
+                        .println(
+                                ToolErrorReporter.getMessage(
+                                        "msg.shell.usage", Main.class.getName()));
                 exitCode = 1;
                 return null;
             }
@@ -405,20 +387,18 @@ public class Main
             break goodUsage;
         }
         // print error and usage message
-        global.getOut().println(
-            ToolErrorReporter.getMessage("msg.shell.invalid", usageError));
-        global.getOut().println(
-            ToolErrorReporter.getMessage("msg.shell.usage", Main.class.getName()));
+        global.getOut().println(ToolErrorReporter.getMessage("msg.shell.invalid", usageError));
+        global.getOut()
+                .println(ToolErrorReporter.getMessage("msg.shell.usage", Main.class.getName()));
         exitCode = 1;
         return null;
     }
 
-    private static void initJavaPolicySecuritySupport()
-    {
+    private static void initJavaPolicySecuritySupport() {
         Throwable exObj;
         try {
             Class<?> cl = Class.forName("org.mozilla.javascript.tools.shell.JavaPolicySecurity");
-            securityImpl = (SecurityProxy)cl.newInstance();
+            securityImpl = (SecurityProxy) cl.newInstance();
             SecurityController.initGlobal(securityImpl);
             return;
         } catch (ClassNotFoundException ex) {
@@ -437,14 +417,11 @@ public class Main
      * Evaluate JavaScript source.
      *
      * @param cx the current context
-     * @param filename the name of the file to compile, or null
-     *                 for interactive mode.
+     * @param filename the name of the file to compile, or null for interactive mode.
      * @throws IOException if the source could not be read
      * @throws RhinoException thrown during evaluation of source
      */
-    public static void processSource(Context cx, String filename)
-            throws IOException
-    {
+    public static void processSource(Context cx, String filename) throws IOException {
         if (filename == null || filename.equals("-")) {
             Scriptable scope = getShellScope();
             Charset cs;
@@ -465,8 +442,7 @@ public class Main
             while (!hitEOF) {
                 String[] prompts = global.getPrompts(cx);
                 String prompt = null;
-                if (filename == null)
-                    prompt = prompts[0];
+                if (filename == null) prompt = prompts[0];
                 console.flush();
                 StringBuilder source = new StringBuilder();
 
@@ -475,8 +451,7 @@ public class Main
                     String newline;
                     try {
                         newline = console.readLine(prompt);
-                    }
-                    catch (IOException ioe) {
+                    } catch (IOException ioe) {
                         console.println(ioe.toString());
                         break;
                     }
@@ -486,8 +461,7 @@ public class Main
                     }
                     source.append(newline).append('\n');
                     lineno++;
-                    if (cx.stringIsCompilableUnit(source.toString()))
-                        break;
+                    if (cx.stringIsCompilableUnit(source.toString())) break;
                     prompt = prompts[1];
                 }
                 try {
@@ -496,29 +470,27 @@ public class Main
                     if (script != null) {
                         Object result = script.exec(cx, scope);
                         // Avoid printing out undefined or function definitions.
-                        if (result != Context.getUndefinedValue() &&
-                                !(result instanceof Function &&
-                                        finalSource.trim().startsWith("function")))
-                        {
+                        if (result != Context.getUndefinedValue()
+                                && !(result instanceof Function
+                                        && finalSource.trim().startsWith("function"))) {
                             try {
                                 console.println(Context.toString(result));
                             } catch (RhinoException rex) {
-                                ToolErrorReporter.reportException(
-                                        cx.getErrorReporter(), rex);
+                                ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
                             }
                         }
                         NativeArray h = global.history;
-                        h.put((int)h.getLength(), h, source);
+                        h.put((int) h.getLength(), h, source);
                     }
+                    printPromiseWarnings(cx);
                 } catch (RhinoException rex) {
-                    ToolErrorReporter.reportException(
-                        cx.getErrorReporter(), rex);
+                    ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
                     exitCode = EXITCODE_RUNTIME_ERROR;
                 } catch (VirtualMachineError ex) {
                     // Treat StackOverflow and OutOfMemory as runtime errors
                     ex.printStackTrace();
-                    String msg = ToolErrorReporter.getMessage(
-                        "msg.uncaughtJSException", ex.toString());
+                    String msg =
+                            ToolErrorReporter.getMessage("msg.uncaughtJSException", ex.toString());
                     Context.reportError(msg);
                     exitCode = EXITCODE_RUNTIME_ERROR;
                 }
@@ -536,26 +508,24 @@ public class Main
         try {
             processFile(cx, scope, filename);
         } catch (IOException ioex) {
-            Context.reportError(ToolErrorReporter.getMessage(
-                    "msg.couldnt.read.source", filename, ioex.getMessage()));
+            Context.reportError(
+                    ToolErrorReporter.getMessage(
+                            "msg.couldnt.read.source", filename, ioex.getMessage()));
             exitCode = EXITCODE_FILE_NOT_FOUND;
         } catch (RhinoException rex) {
-            ToolErrorReporter.reportException(
-                    cx.getErrorReporter(), rex);
+            ToolErrorReporter.reportException(cx.getErrorReporter(), rex);
             exitCode = EXITCODE_RUNTIME_ERROR;
         } catch (VirtualMachineError ex) {
             // Treat StackOverflow and OutOfMemory as runtime errors
             ex.printStackTrace();
-            String msg = ToolErrorReporter.getMessage(
-                    "msg.uncaughtJSException", ex.toString());
+            String msg = ToolErrorReporter.getMessage("msg.uncaughtJSException", ex.toString());
             Context.reportError(msg);
             exitCode = EXITCODE_RUNTIME_ERROR;
         }
     }
 
     public static void processFile(Context cx, Scriptable scope, String filename)
-            throws IOException
-    {
+            throws IOException {
         if (securityImpl == null) {
             processFileSecure(cx, scope, filename, null);
         } else {
@@ -563,8 +533,7 @@ public class Main
         }
     }
 
-    static void processFileSecure(Context cx, Scriptable scope,
-                                  String path, Object securityDomain)
+    static void processFileSecure(Context cx, Scriptable scope, String path, Object securityDomain)
             throws IOException {
 
         boolean isClass = path.endsWith(".class");
@@ -577,7 +546,7 @@ public class Main
 
         if (script == null) {
             if (isClass) {
-                script = loadCompiledScript(cx, path, (byte[])source, securityDomain);
+                script = loadCompiledScript(cx, path, (byte[]) source, securityDomain);
             } else {
                 String strSrc = (String) source;
                 // Support the executable script #! syntax:  If
@@ -607,9 +576,9 @@ public class Main
 
         if (source != null) {
             if (source instanceof String) {
-                bytes = ((String)source).getBytes(StandardCharsets.UTF_8);
+                bytes = ((String) source).getBytes(StandardCharsets.UTF_8);
             } else {
-                bytes = (byte[])source;
+                bytes = (byte[]) source;
             }
             try {
                 MessageDigest md = MessageDigest.getInstance("MD5");
@@ -623,10 +592,9 @@ public class Main
         return digest;
     }
 
-    private static Script loadCompiledScript(Context cx, String path,
-                                             byte[] data, Object securityDomain)
-            throws FileNotFoundException
-    {
+    private static Script loadCompiledScript(
+            Context cx, String path, byte[] data, Object securityDomain)
+            throws FileNotFoundException {
         if (data == null) {
             throw new FileNotFoundException(path);
         }
@@ -646,7 +614,8 @@ public class Main
         }
         String name = path.substring(nameStart, nameEnd);
         try {
-            GeneratedClassLoader loader = SecurityController.createLoader(cx.getApplicationClassLoader(), securityDomain);
+            GeneratedClassLoader loader =
+                    SecurityController.createLoader(cx.getApplicationClassLoader(), securityDomain);
             Class<?> clazz = loader.defineClass(name, data);
             loader.linkClass(clazz);
             if (!Script.class.isAssignableFrom(clazz)) {
@@ -659,6 +628,25 @@ public class Main
         } catch (InstantiationException inex) {
             Context.reportError(inex.toString());
             throw new RuntimeException(inex);
+        }
+    }
+
+    private static void printPromiseWarnings(Context cx) {
+        List<Object> unhandled = cx.getUnhandledPromiseTracker().enumerate();
+        if (!unhandled.isEmpty()) {
+            Object result = unhandled.get(0);
+            String msg = "Unhandled rejected promise: " + Context.toString(result);
+            if (result instanceof Scriptable) {
+                Object stack = ScriptableObject.getProperty((Scriptable) result, "stack");
+                if (stack != null && stack != Scriptable.NOT_FOUND) {
+                    msg += '\n' + Context.toString(stack);
+                }
+            }
+            System.out.println(msg);
+            if (unhandled.size() > 1) {
+                System.out.println(
+                        "  and " + (unhandled.size() - 1) + " other unhandled rejected promises");
+            }
         }
     }
 
@@ -688,22 +676,20 @@ public class Main
 
     /**
      * Read file or url specified by <code>path</code>.
-     * @return file or url content as <code>byte[]</code> or as <code>String</code> if
-     * <code>convertToString</code> is true.
+     *
+     * @return file or url content as <code>byte[]</code> or as <code>String</code> if <code>
+     *     convertToString</code> is true.
      */
-    private static Object readFileOrUrl(String path, boolean convertToString)
-            throws IOException
-    {
-        return SourceReader.readFileOrUrl(path, convertToString,
-                shellContextFactory.getCharacterEncoding());
+    private static Object readFileOrUrl(String path, boolean convertToString) throws IOException {
+        return SourceReader.readFileOrUrl(
+                path, convertToString, shellContextFactory.getCharacterEncoding());
     }
 
     static class ScriptReference extends SoftReference<Script> {
         String path;
         byte[] digest;
 
-        ScriptReference(String path, byte[] digest,
-                        Script script, ReferenceQueue<Script> queue) {
+        ScriptReference(String path, byte[] digest, Script script, ReferenceQueue<Script> queue) {
             super(script, queue);
             this.path = path;
             this.digest = digest;
@@ -728,7 +714,7 @@ public class Main
 
         ScriptReference get(String path, byte[] digest) {
             ScriptReference ref;
-            while((ref = (ScriptReference) queue.poll()) != null) {
+            while ((ref = (ScriptReference) queue.poll()) != null) {
                 remove(ref.path);
             }
             ref = get(path);
@@ -742,6 +728,5 @@ public class Main
         void put(String path, byte[] digest, Script script) {
             put(path, new ScriptReference(path, digest, script, queue));
         }
-
     }
 }
