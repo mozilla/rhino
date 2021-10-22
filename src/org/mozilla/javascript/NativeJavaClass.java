@@ -176,7 +176,7 @@ public class NativeJavaClass extends NativeJavaObject implements Function
         try {
             // When running on Android create an InterfaceAdapter since our
             // bytecode generation won't work on Dalvik VM.
-            if ("Dalvik".equals(System.getProperty("java.vm.name"))
+            if ("Dalvik".equals(SecurityUtilities.getSystemProperty("java.vm.name"))
                     && classObject.isInterface()) {
                 Object obj = createInterfaceAdapter(classObject,
                         ScriptableObject.ensureScriptableObject(args[0]));

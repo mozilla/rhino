@@ -317,7 +317,7 @@ public class ScriptRuntime {
 
     static String[] getTopPackageNames() {
         // Include "android" top package if running on Android
-        return "Dalvik".equals(System.getProperty("java.vm.name"))
+        return "Dalvik".equals(SecurityUtilities.getSystemProperty("java.vm.name"))
                 ? new String[] {"java", "javax", "org", "com", "edu", "net", "android"}
                 : new String[] {"java", "javax", "org", "com", "edu", "net"};
     }

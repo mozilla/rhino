@@ -386,7 +386,7 @@ public abstract class RhinoException extends RuntimeException {
 
     // Allow us to override default stack style for debugging.
     static {
-        String style = System.getProperty("rhino.stack.style");
+        String style = SecurityUtilities.getSystemProperty("rhino.stack.style");
         if (style != null) {
             if ("Rhino".equalsIgnoreCase(style)) {
                 stackStyle = StackStyle.RHINO;
