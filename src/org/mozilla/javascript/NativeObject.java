@@ -160,6 +160,9 @@ public class NativeObject extends IdScriptableObject implements Map {
 
             case Id_toLocaleString:
                 {
+                    if (thisObj == null) {
+                        throw ScriptRuntime.notFunctionError(null);
+                    }
                     Object toString = ScriptableObject.getProperty(thisObj, "toString");
                     if (!(toString instanceof Callable)) {
                         throw ScriptRuntime.notFunctionError(toString);
