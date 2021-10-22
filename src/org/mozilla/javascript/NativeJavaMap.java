@@ -166,9 +166,9 @@ public class NativeJavaMap extends NativeJavaObject {
         return super.getIds();
     }
 
-    private static final Map<Class<?>, Function<String, ? extends Object>> STRING_CONVERTERS =
+    public static final Map<Class<?>, Function<String, ? extends Object>> STRING_CONVERTERS =
             new LinkedHashMap<>();
-    private static final Map<Class<?>, IntFunction<? extends Object>> INT_CONVERTERS =
+    public static final Map<Class<?>, IntFunction<? extends Object>> INT_CONVERTERS =
             new LinkedHashMap<>();
 
     {
@@ -183,7 +183,23 @@ public class NativeJavaMap extends NativeJavaObject {
         INT_CONVERTERS.put(Double.class, Double::valueOf);
     }
     /**
-     * Converts the key, which is either as String or an Integer to the `keyType`
+     * Converts the key, which is either as String or an Integer to the `keyType`.
+     *
+     * <p>When accessing java lists with javascript notation like <code>var x = map[42]</code> or
+     * <code>var x = map['key']</code>, the key could be either a string or an integer. There are
+     * cases where you do not have a <code>Map&lt;String,  ?&gt;></code> or <code>
+     * Map&lt;Integer,  ?&gt;></code> but a <code>Map&lt;Long,  ?&gt;></code>. In this case, it is
+     * impossible to access the map value with index based access.
+     *
+     * <p>The default implementation can handle maps, when key is either an Enum (EnumMap), String,
+     * Integer, Long or Double. You may add additional converters, e.g. with <code>
+     * STRING_CONVERTERS.put(UUID.class, UUID::fromString)</code>, then you can also use maps, that
+     * has UUIDs as key.
+     *
+     * <p>Note 1: Adding new converters is not synchronized
+     *
+     * <p>Note 2: This conversion takes only place, when <code>FEATURE_ENABLE_JAVA_MAP_ACCESS</code>
+     * is set in context.
      *
      * @return
      */
