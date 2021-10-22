@@ -411,17 +411,22 @@ spotless {
     }
 }
 
-if (JavaVersion.current() > JavaVersion.VERSION_15 && (!project.hasProperty('org.gradle.jvmargs')
-            || !project.property('org.gradle.jvmargs').contains('com.sun.tools.javac.api'))) {
-    logger.warn('spotless plugin disabled due to bug, ' + \
-        'see README for a workaround when building with Java 16+.')
-    tasks.withType(com.diffplug.gradle.spotless.SpotlessTask) {
-        enabled = false
+if (JavaVersion.current() > JavaVersion.VERSION_15
+        && (!System.properties.containsKey('org.gradle.jvmargs')
+        || !System.properties.get('org.gradle.jvmargs').contains('com.sun.tools.javac.api'))
+        && (!project.hasProperty('org.gradle.jvmargs')
+        || !project.property('org.gradle.jvmargs').contains('com.sun.tools.javac.api'))) {
+    tasks.named('check') {
+        doFirst {
+            logger.warn('WARNING: spotless plugin removed from check due to bug, ' + \
+                'see README for a workaround when building with Java 16+.')
+        }
     }
+    spotless.enforceCheck false
 }
 
-jacocoTestReport.dependsOn test
 jacocoTestReport {
+    dependsOn test
     reports {
         csv.required = true
         html.required = true
@@ -464,4 +469,5 @@ distributions {
     }
 }
 
+distTar.dependsOn javadoc, jar
 distZip.dependsOn javadoc, jar, sourceJar, runtimeSourceJar
