@@ -72,10 +72,6 @@ test {
 
     jvmArgs += '-Xss1280k'
 
-    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
-        jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
-    }
-
     jacoco.excludes = ['**/testsrc_tests_ecma_3_RegExp_perlstress*']
 
     systemProperty 'java.awt.headless', 'true'

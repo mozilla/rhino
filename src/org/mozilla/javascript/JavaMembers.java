@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.lang.model.SourceVersion;
 
 /**
  * @author Mike Shaver
@@ -32,9 +31,6 @@ import javax.lang.model.SourceVersion;
  * @see NativeJavaClass
  */
 class JavaMembers {
-
-    private static final boolean STRICT_REFLECTIVE_ACCESS =
-            SourceVersion.latestSupported().ordinal() > 8;
 
     private static final Permission allPermission = new AllPermission();
 
@@ -302,6 +298,7 @@ class JavaMembers {
         return map.values().toArray(new Method[map.size()]);
     }
 
+    @SuppressWarnings("deprecation")
     private void discoverAccessibleMethods(
             Class<?> clazz,
             Map<MethodSignature, Method> map,
@@ -319,8 +316,14 @@ class JavaMembers {
                                 if (isPublic(mods) || isProtected(mods) || includePrivate) {
                                     MethodSignature sig = new MethodSignature(method);
                                     if (!map.containsKey(sig)) {
-                                        if (includePrivate && !method.isAccessible())
-                                            method.setAccessible(true);
+                                        if (includePrivate && !method.isAccessible()) {
+                                            try {
+                                                method.setAccessible(true);
+                                            } catch (RuntimeException e) {
+                                                // SecurityException and also
+                                                // Java 16+ without add-opens
+                                            }
+                                        }
                                         map.put(sig, method);
                                     }
                                 }
@@ -642,6 +645,7 @@ class JavaMembers {
         return cl.getConstructors();
     }
 
+    @SuppressWarnings("deprecation")
     private Field[] getAccessibleFields(boolean includeProtected, boolean includePrivate) {
         if (includePrivate || includeProtected) {
             try {
@@ -655,7 +659,14 @@ class JavaMembers {
                     for (Field field : declared) {
                         int mod = field.getModifiers();
                         if (includePrivate || isPublic(mod) || isProtected(mod)) {
-                            if (!field.isAccessible()) field.setAccessible(true);
+                            if (!field.isAccessible()) {
+                                try {
+                                    field.setAccessible(true);
+                                } catch (RuntimeException e) {
+                                    // SecurityException and also
+                                    // Java 16+ without add-opens
+                                }
+                            }
                             fieldsList.add(field);
                         }
                     }
@@ -820,7 +831,7 @@ class JavaMembers {
 
     private static JavaMembers createJavaMembers(
             Scriptable associatedScope, Class<?> cl, boolean includeProtected) {
-        if (STRICT_REFLECTIVE_ACCESS) {
+        if (VMBridge.STRICT_REFLECTIVE_ACCESS) {
             return new JavaMembers_jdk11(associatedScope, cl, includeProtected);
         } else {
             return new JavaMembers(associatedScope, cl, includeProtected);

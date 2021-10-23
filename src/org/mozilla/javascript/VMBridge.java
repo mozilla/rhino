@@ -10,28 +10,43 @@ package org.mozilla.javascript;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
+import javax.lang.model.SourceVersion;
 
 public abstract class VMBridge
 {
+    static final boolean STRICT_REFLECTIVE_ACCESS = SourceVersion.latestSupported().ordinal() > 8;
 
     static final VMBridge instance = makeInstance();
 
-    private static VMBridge makeInstance()
-    {
-        String[] classNames = {
-            "org.mozilla.javascript.VMBridge_custom",
-            "org.mozilla.javascript.jdk18.VMBridge_jdk18",
-        };
-        for (int i = 0; i != classNames.length; ++i) {
-            String className = classNames[i];
-            Class<?> cl = Kit.classOrNull(className);
-            if (cl != null) {
-                VMBridge bridge = (VMBridge)Kit.newInstanceOrNull(cl);
-                if (bridge != null) {
-                    return bridge;
-                }
+    private static VMBridge makeInstance() {
+        /*
+         * A custom Bridge needs to be in a different package, due to
+         * modularization rules.
+         */
+        String className = "org.mozilla.javascript.bridge.VMBridge";
+        Class<?> cl = Kit.classOrNull(className);
+        if (cl != null) {
+            VMBridge bridge = (VMBridge) Kit.newInstanceOrNull(cl);
+            if (bridge != null) {
+                return bridge;
             }
         }
+
+        // No custom bridge, instantiate version-specific Bridge
+        if (STRICT_REFLECTIVE_ACCESS) {
+            className = "org.mozilla.javascript.VMBridge_jdk11";
+        } else {
+            className = "org.mozilla.javascript.VMBridge_jdk8";
+        }
+
+        cl = Kit.classOrNull(className);
+        if (cl != null) {
+            VMBridge bridge = (VMBridge) Kit.newInstanceOrNull(cl);
+            if (bridge != null) {
+                return bridge;
+            }
+        }
+
         throw new IllegalStateException("Failed to create VMBridge instance");
     }
 
@@ -65,13 +80,14 @@ public abstract class VMBridge
     protected abstract void setContext(Object contextHelper, Context cx);
 
     /**
-     * In many JVMSs, public methods in private
+     * In many JVMSs, public constructors or methods in private
      * classes are not accessible by default (Sun Bug #4071593).
      * VMBridge instance should try to workaround that via, for example,
      * calling method.setAccessible(true) when it is available.
      * The implementation is responsible to catch all possible exceptions
      * like SecurityException if the workaround is not available.
      *
+     * @param accessible the constructor.
      * @return true if it was possible to make method accessible
      *         or false otherwise.
      */
