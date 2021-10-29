@@ -23,10 +23,12 @@ public class MessageProviderLanguageTest {
     // Scottish Gaelic Language- assumption is this language does not have a translation
     private final Locale NOT_TRANSLATED = new Locale("gd");
 
-    private final String messageId = "msg.invalid.date";
-    private final String englishMessage = "Date is invalid.";
-    private final String frenchMessage = "Date incorrecte.";
-    private final String defaultMessage = englishMessage;
+    private final String MESSAGE_ID = "msg.invalid.date";
+    private final String BASE_MESSAGE = "Date is invalid.";
+    private final String FRENCH_MESSAGE = "Date incorrecte.";
+    private final String ENGLISH_MESSAGE = BASE_MESSAGE;
+
+    private final Locale DEFAULT_LOCALE = Locale.getDefault();
 
     private Context cx;
 
@@ -38,76 +40,77 @@ public class MessageProviderLanguageTest {
     @After
     public void cleanup() {
         Context.exit();
+        Locale.setDefault(DEFAULT_LOCALE);
     }
 
     @Test
-    public void defaultLocaleUsesDefaultLanguageAndContextLocaleIsNotSpecified() {
-        assertEquals(englishMessage, getMessageUsingDefaultLocale(US));
+    public void defaultLocaleUsesEnglishLanguageAndContextLocaleIsNotSpecified() {
+        assertEquals(ENGLISH_MESSAGE, getMessageUsingDefaultLocale(US));
     }
 
     @Test
-    public void defaultLocaleUsesOtherTranslatedLanguageAndContextLocaleIsNotSpecified() {
-        assertEquals(frenchMessage, getMessageUsingDefaultLocale(FRANCE));
+    public void defaultLocaleUsesFrenchLanguageAndContextLocaleIsNotSpecified() {
+        assertEquals(FRENCH_MESSAGE, getMessageUsingDefaultLocale(FRANCE));
     }
 
     @Test
     public void defaultLocaleUsesUntranslatedLanguageAndContextLocaleIsNotSpecified() {
-        assertEquals(defaultMessage, getMessageUsingDefaultLocale(NOT_TRANSLATED));
+        assertEquals(BASE_MESSAGE, getMessageUsingDefaultLocale(NOT_TRANSLATED));
     }
 
     @Test
-    public void defaultLocaleUsesDefaultLanguageAndContextLocaleIsTheSame() {
-        assertEquals(englishMessage, getMessageUsingContextLocale(US, US));
+    public void defaultLocaleUsesEnglishLanguageAndContextLocaleIsTheSame() {
+        assertEquals(ENGLISH_MESSAGE, getMessageUsingContextLocale(US, US));
     }
 
     @Test
-    public void defaultLocaleUsesDefaultLanguageAndContextLocaleUsesOtherTranslatedLanguage() {
-        assertEquals(frenchMessage, getMessageUsingContextLocale(FRANCE, US));
+    public void defaultLocaleUsesEnglishLanguageAndContextLocaleUsesFrenchLanguage() {
+        assertEquals(FRENCH_MESSAGE, getMessageUsingContextLocale(FRANCE, US));
     }
 
     @Test
-    public void defaultLocaleUsesDefaultLanguageAndContextLocaleIsNotTranslated() {
-        assertEquals(englishMessage, getMessageUsingContextLocale(NOT_TRANSLATED, US));
+    public void defaultLocaleUsesEnglishLanguageAndContextLocaleIsNotTranslated() {
+        assertEquals(ENGLISH_MESSAGE, getMessageUsingContextLocale(NOT_TRANSLATED, US));
     }
 
     @Test
-    public void defaultLocaleUsesOtherTranslatedLanguageAndContextLocaleIsTheSame() {
-        assertEquals(frenchMessage, getMessageUsingContextLocale(FRANCE, FRANCE));
+    public void defaultLocaleUsesFrenchLanguageAndContextLocaleIsTheSame() {
+        assertEquals(FRENCH_MESSAGE, getMessageUsingContextLocale(FRANCE, FRANCE));
     }
 
     @Test
-    public void defaultLocaleUsesOtherTranslatedLanguageAndContextLocaleUsesDefaultLanguage() {
-        assertEquals(englishMessage, getMessageUsingContextLocale(US, FRANCE));
+    public void defaultLocaleUsesFrenchLanguageAndContextLocaleUsesEnglishLanguage() {
+        assertEquals(ENGLISH_MESSAGE, getMessageUsingContextLocale(US, FRANCE));
     }
 
     @Test
-    public void defaultLocaleUsesOtherTranslatedLanguageAndContextLocaleIsNotTranslated() {
-        assertEquals(frenchMessage, getMessageUsingContextLocale(NOT_TRANSLATED, FRANCE));
+    public void defaultLocaleUsesFrenchLanguageAndContextLocaleIsNotTranslated() {
+        assertEquals(FRENCH_MESSAGE, getMessageUsingContextLocale(NOT_TRANSLATED, FRANCE));
     }
 
     @Test
     public void defaultLocaleIsNotTranslatedAndContextLocaleIsTheSame() {
-        assertEquals(defaultMessage, getMessageUsingContextLocale(NOT_TRANSLATED, NOT_TRANSLATED));
+        assertEquals(BASE_MESSAGE, getMessageUsingContextLocale(NOT_TRANSLATED, NOT_TRANSLATED));
     }
 
     @Test
-    public void defaultLocaleIsNotTranslatedAndContextLocaleUsesDefaultLanguage() {
-        assertEquals(englishMessage, getMessageUsingContextLocale(US, NOT_TRANSLATED));
+    public void defaultLocaleIsNotTranslatedAndContextLocaleUsesEnglishLanguage() {
+        assertEquals(ENGLISH_MESSAGE, getMessageUsingContextLocale(US, NOT_TRANSLATED));
     }
 
     @Test
-    public void defaultLocaleIsNotTranslatedAndContextLocaleUsesOtherTranslatedLanguage() {
-        assertEquals(frenchMessage, getMessageUsingContextLocale(FRANCE, NOT_TRANSLATED));
+    public void defaultLocaleIsNotTranslatedAndContextLocaleUsesFrenchLanguage() {
+        assertEquals(FRENCH_MESSAGE, getMessageUsingContextLocale(FRANCE, NOT_TRANSLATED));
     }
 
     private String getMessageUsingDefaultLocale(Locale defaultLocale) {
         Locale.setDefault(defaultLocale);
-        return ScriptRuntime.getMessageById(messageId);
+        return ScriptRuntime.getMessageById(MESSAGE_ID);
     }
 
     private String getMessageUsingContextLocale(Locale contextLocale, Locale defaultLocale) {
         Locale.setDefault(defaultLocale);
         cx.setLocale(contextLocale);
-        return ScriptRuntime.getMessageById(messageId);
+        return ScriptRuntime.getMessageById(MESSAGE_ID);
     }
 }
