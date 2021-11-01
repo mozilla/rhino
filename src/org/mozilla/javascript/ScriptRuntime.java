@@ -4369,8 +4369,8 @@ public class ScriptRuntime {
             Context cx,
             Scriptable scope) {
         Scriptable object = cx.newObject(scope);
-        int idCount = propertyIds == null ? 0 : propertyIds.length;
-        for (int i = 0, end = idCount; i != end; ++i) {
+        int end = propertyIds == null ? 0 : propertyIds.length;
+        for (int i = 0; i != end; ++i) {
             Object id = propertyIds[i];
 
             // -1 for property getter, 1 for property setter, 0 for a regular value property
