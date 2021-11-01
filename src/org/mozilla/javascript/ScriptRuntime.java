@@ -2790,6 +2790,8 @@ public class ScriptRuntime {
         Callable function;
         if (thisObj instanceof Callable) {
             function = (Callable) thisObj;
+        } else if (thisObj == null) {
+            throw ScriptRuntime.notFunctionError(null, null);
         } else {
             Object value = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
             if (!(value instanceof Callable)) {
@@ -4367,7 +4369,8 @@ public class ScriptRuntime {
             Context cx,
             Scriptable scope) {
         Scriptable object = cx.newObject(scope);
-        for (int i = 0, end = propertyIds.length; i != end; ++i) {
+        int end = propertyIds == null ? 0 : propertyIds.length;
+        for (int i = 0; i != end; ++i) {
             Object id = propertyIds[i];
 
             // -1 for property getter, 1 for property setter, 0 for a regular value property
