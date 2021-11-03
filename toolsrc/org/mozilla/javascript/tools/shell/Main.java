@@ -79,6 +79,7 @@ public class Main {
         private int type;
         String[] args;
         String scriptText;
+        private final Timers timers = new Timers();
 
         IProxy(int type) {
             this.type = type;
@@ -87,6 +88,7 @@ public class Main {
         @Override
         public Object run(Context cx) {
             cx.setTrackUnhandledPromiseRejections(true);
+            timers.install(global);
             if (useRequire) {
                 require = global.installRequire(cx, modulePath, sandboxed);
             }
@@ -97,6 +99,11 @@ public class Main {
                 evalInlineScript(cx, scriptText);
             } else {
                 throw Kit.codeBug();
+            }
+            try {
+                timers.runAllTimers(cx, global);
+            } catch (InterruptedException ie) {
+                // Shell has no facility to handle interrupts so stop now
             }
             return null;
         }

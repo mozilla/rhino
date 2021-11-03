@@ -348,6 +348,9 @@ public class BaseFunction extends IdScriptableObject implements Function {
     }
 
     private static BaseFunction realFunction(Scriptable thisObj, IdFunctionObject f) {
+        if (thisObj == null) {
+            throw ScriptRuntime.notFunctionError(null);
+        }
         Object x = thisObj.getDefaultValue(ScriptRuntime.FunctionClass);
         if (x instanceof Delegator) {
             x = ((Delegator) x).getDelegee();
