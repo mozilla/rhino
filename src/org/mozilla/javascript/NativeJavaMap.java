@@ -227,9 +227,9 @@ public class NativeJavaMap extends NativeJavaObject {
     }
 
     public static class NativeJavaMapKeyConverter implements MapKeyConverter {
-        protected static final Map<Class<?>, Function<String, ? extends Object>> STRING_CONVERTERS =
+        private static final Map<Class<?>, Function<String, ? extends Object>> STRING_CONVERTERS =
                 new LinkedHashMap<>();
-        protected static final Map<Class<?>, IntFunction<? extends Object>> INT_CONVERTERS =
+        private static final Map<Class<?>, IntFunction<? extends Object>> INT_CONVERTERS =
                 new LinkedHashMap<>();
 
         {
