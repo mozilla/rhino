@@ -21,7 +21,6 @@ import java.util.Map;
  *
  * @author Roland Praml, FOCONIS AG
  */
-@FunctionalInterface
 public interface MapKeyConverter {
 
     /**
@@ -32,5 +31,7 @@ public interface MapKeyConverter {
      * @param keyType the desired type
      * @param map the map.
      */
-    Object toKey(Object key, Class<?> keyType, Map<?, ?> map);
+    Object toKey(String key, Class<?> keyType, Map<?, ?> map);
+
+    Object toKey(int index, Class<?> keyType, Map<?, ?> map);
 }

@@ -110,7 +110,7 @@ public class NativeJavaMap extends NativeJavaObject {
     public Object get(int index, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            Object key = converter.toKey(Integer.valueOf(index), keyType, map);
+            Object key = converter.toKey(index, keyType, map);
             if (key != null && map.containsKey(key)) {
                 Object obj = map.get(key);
                 return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
@@ -246,27 +246,29 @@ public class NativeJavaMap extends NativeJavaObject {
 
         @SuppressWarnings("unchecked")
         @Override
-        public Object toKey(Object key, Class<?> keyType, Map<?, ?> map) {
+        public Object toKey(String key, Class<?> keyType, Map<?, ?> map) {
             try {
-                if (key instanceof String) {
-                    // 1. if we have an enum, try to convert the value
-                    if (keyType.isEnum()) return Enum.valueOf((Class) keyType, (String) key);
+                if (keyType.isEnum()) return Enum.valueOf((Class) keyType, (String) key);
 
-                    Function<String, ? extends Object> converter = STRING_CONVERTERS.get(keyType);
-                    if (converter != null) {
-                        return converter.apply((String) key);
-                    } else {
-                        return findStringKey(map, key);
-                    }
+                Function<String, ? extends Object> converter = STRING_CONVERTERS.get(keyType);
+                if (converter != null) {
+                    return converter.apply((String) key);
+                } else {
+                    return findStringKey(map, key);
+                }
+            } catch (IllegalArgumentException ex) {
+                return null; // cannot convert key
+            }
+        }
 
-                } else { // could be either String or Integer
-                    int index = ((Integer) key).intValue();
-                    IntFunction<? extends Object> converter = INT_CONVERTERS.get(keyType);
-                    if (converter != null) {
-                        return converter.apply(index);
-                    } else {
-                        return findIndexKey(map, index);
-                    }
+        @Override
+        public Object toKey(int index, Class<?> keyType, Map<?, ?> map) {
+            try {
+                IntFunction<? extends Object> converter = INT_CONVERTERS.get(keyType);
+                if (converter != null) {
+                    return converter.apply(index);
+                } else {
+                    return findIndexKey(map, index);
                 }
             } catch (IllegalArgumentException ex) {
                 return null; // cannot convert key
