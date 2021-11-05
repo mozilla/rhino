@@ -8,11 +8,8 @@ package org.mozilla.javascript;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.function.IntFunction;
 
 /**
  * <code>NativeJavaMap</code> is a wrapper for java objects implementing <code>java.util.Map
@@ -23,22 +20,17 @@ import java.util.function.IntFunction;
  * for .. of</code>.
  *
  * <p><b>Limitations:</b> The wrapped map should have <code>String</code> or <code>Integer</code> as
- * key. Otherwise, property based access may not work properly.
+ * key. Otherwise, property based access may not work.
  */
 public class NativeJavaMap extends NativeJavaObject {
 
     private static final long serialVersionUID = 46513864372878618L;
-
-    private static final MapKeyConverter DEFAULT_MAP_KEY_CONVERTER =
-            new NativeJavaMapKeyConverter();
 
     private final Map<Object, Object> map;
 
     private final Class<?> keyType;
 
     private final Class<?> valueType;
-
-    private final MapKeyConverter converter;
 
     static void init(ScriptableObject scope, boolean sealed) {
         NativeJavaMapIterator.init(scope, sealed);
@@ -52,8 +44,6 @@ public class NativeJavaMap extends NativeJavaObject {
         Type[] types = JavaTypes.lookupType(scope, map.getClass(), staticType, Map.class);
         this.keyType = types == null ? Object.class : JavaTypes.getRawType(types[0]);
         this.valueType = types == null ? Object.class : JavaTypes.getRawType(types[1]);
-        // TODO: This should be configurable. (cx.getMapKeyConverter)
-        this.converter = DEFAULT_MAP_KEY_CONVERTER;
     }
 
     @Override
@@ -65,8 +55,7 @@ public class NativeJavaMap extends NativeJavaObject {
     public boolean has(String name, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            Object key = converter.toKey(name, keyType, map);
-            if (key != null && map.containsKey(key)) {
+            if (map.containsKey(name)) {
                 return true;
             }
         }
@@ -77,8 +66,7 @@ public class NativeJavaMap extends NativeJavaObject {
     public boolean has(int index, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            Object key = converter.toKey(Integer.valueOf(index), keyType, map);
-            if (key != null && map.containsKey(key)) {
+            if (map.containsKey(Integer.valueOf(index)) || map.containsKey(String.valueOf(index))) {
                 return true;
             }
         }
@@ -97,9 +85,8 @@ public class NativeJavaMap extends NativeJavaObject {
     public Object get(String name, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            Object key = converter.toKey(name, keyType, map);
-            if (key != null && map.containsKey(key)) {
-                Object obj = map.get(key);
+            if (map.containsKey(name)) {
+                Object obj = map.get(name);
                 return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
         }
@@ -110,8 +97,13 @@ public class NativeJavaMap extends NativeJavaObject {
     public Object get(int index, Scriptable start) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            Object key = converter.toKey(index, keyType, map);
-            if (key != null && map.containsKey(key)) {
+            Object key = Integer.valueOf(index);
+            if (map.containsKey(key)) {
+                Object obj = map.get(key);
+                return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
+            }
+            key = String.valueOf(index); // try again with String
+            if (map.containsKey(key)) {
                 Object obj = map.get(key);
                 return cx.getWrapFactory().wrap(cx, this, obj, obj == null ? null : obj.getClass());
             }
@@ -132,11 +124,11 @@ public class NativeJavaMap extends NativeJavaObject {
     public void put(String name, Scriptable start, Object value) {
         Context cx = Context.getCurrentContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            Object key = converter.toKey(name, keyType, map);
-            if (key == null) {
+            if (keyType.isAssignableFrom(String.class)) {
+                map.put(name, Context.jsToJava(value, valueType));
+            } else {
                 reportConversionError(name, keyType);
             }
-            map.put(key, Context.jsToJava(value, valueType));
         } else {
             super.put(name, start, value);
         }
@@ -146,11 +138,13 @@ public class NativeJavaMap extends NativeJavaObject {
     public void put(int index, Scriptable start, Object value) {
         Context cx = Context.getContext();
         if (cx != null && cx.hasFeature(Context.FEATURE_ENABLE_JAVA_MAP_ACCESS)) {
-            Object key = converter.toKey(Integer.valueOf(index), keyType, map);
-            if (key == null) {
-                reportConversionError(Integer.valueOf(index), keyType);
+            if (keyType.isAssignableFrom(Integer.class)) {
+                map.put(Integer.valueOf(index), Context.jsToJava(value, valueType));
+            } else if (keyType.isAssignableFrom(String.class)) {
+                map.put(String.valueOf(index), Context.jsToJava(value, valueType));
+            } else {
+                reportConversionError(index, keyType);
             }
-            map.put(key, Context.jsToJava(value, valueType));
         } else {
             super.put(index, start, value);
         }
@@ -164,9 +158,9 @@ public class NativeJavaMap extends NativeJavaObject {
             for (Object key : map.keySet()) {
                 if (key instanceof Integer) {
                     ids.add(key);
-                } else {
-                    ids.add(ScriptRuntime.toString(key));
-                }
+                } else if (key instanceof String) {
+                    ids.add(key);
+                } // else skip all other types, as you may not able to access them
             }
             return ids.toArray();
         }
@@ -224,77 +218,5 @@ public class NativeJavaMap extends NativeJavaObject {
         }
 
         private Iterator<Map.Entry<Object, Object>> iterator;
-    }
-
-    public static class NativeJavaMapKeyConverter implements MapKeyConverter {
-        private static final Map<Class<?>, Function<String, ? extends Object>> STRING_CONVERTERS =
-                new LinkedHashMap<>();
-        private static final Map<Class<?>, IntFunction<? extends Object>> INT_CONVERTERS =
-                new LinkedHashMap<>();
-
-        {
-            STRING_CONVERTERS.put(String.class, Function.identity());
-            STRING_CONVERTERS.put(Integer.class, Integer::valueOf);
-            STRING_CONVERTERS.put(Long.class, Long::valueOf);
-            STRING_CONVERTERS.put(Double.class, Double::valueOf);
-
-            INT_CONVERTERS.put(String.class, Integer::toString);
-            INT_CONVERTERS.put(Integer.class, Integer::valueOf);
-            INT_CONVERTERS.put(Long.class, Long::valueOf);
-            INT_CONVERTERS.put(Double.class, Double::valueOf);
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public Object toKey(String key, Class<?> keyType, Map<?, ?> map) {
-            try {
-                if (keyType.isEnum()) return Enum.valueOf((Class) keyType, (String) key);
-
-                Function<String, ? extends Object> converter = STRING_CONVERTERS.get(keyType);
-                if (converter != null) {
-                    return converter.apply((String) key);
-                } else {
-                    return findStringKey(map, key);
-                }
-            } catch (IllegalArgumentException ex) {
-                return null; // cannot convert key
-            }
-        }
-
-        @Override
-        public Object toKey(int index, Class<?> keyType, Map<?, ?> map) {
-            try {
-                IntFunction<? extends Object> converter = INT_CONVERTERS.get(keyType);
-                if (converter != null) {
-                    return converter.apply(index);
-                } else {
-                    return findIndexKey(map, index);
-                }
-            } catch (IllegalArgumentException ex) {
-                return null; // cannot convert key
-            }
-        }
-
-        protected Object findStringKey(Map<?, ?> map, Object key) {
-            for (Function<String, ? extends Object> converter : STRING_CONVERTERS.values()) {
-                try {
-                    Object testKey = converter.apply((String) key);
-                    if (map.containsKey(testKey)) return testKey;
-                } catch (IllegalArgumentException ex) {
-                }
-            }
-            return key;
-        }
-
-        protected Object findIndexKey(Map<?, ?> map, int index) {
-            for (IntFunction<? extends Object> converter : INT_CONVERTERS.values()) {
-                try {
-                    Object testKey = converter.apply(index);
-                    if (map.containsKey(testKey)) return testKey;
-                } catch (IllegalArgumentException ex) {
-                }
-            }
-            return Integer.valueOf(index);
-        }
     }
 }

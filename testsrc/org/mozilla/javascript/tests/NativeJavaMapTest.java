@@ -8,6 +8,8 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.*;
 
+import java.nio.file.AccessMode;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,7 +21,6 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.NativeJavaMethod;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.tools.shell.Global;
 
 /** From @makusuko (Markus Sunela), imported from PR https://github.com/mozilla/rhino/pull/561 */
@@ -40,15 +41,6 @@ public class NativeJavaMapTest extends TestCase {
         global.init(ContextFactory.getGlobal());
     }
 
-    public static enum MyEnum {
-        A,
-        B,
-        C,
-        X,
-        Y,
-        Z
-    }
-
     public void testAccessingNullValues() {
         Map<Object, Number> map = new HashMap<>();
         map.put("a", null);
@@ -66,74 +58,6 @@ public class NativeJavaMapTest extends TestCase {
 
         assertEquals(2, runScriptAsInt("value[1]", map, true));
         assertEquals(3, runScriptAsInt("value[2]", map, true));
-    }
-
-    public void testAccessingJavaMapLongValues() {
-        Map<Number, Number> map = new HashMap<>();
-
-        map.put(0L, 1);
-        map.put(1L, 2);
-        map.put(2L, 3);
-
-        assertEquals(2, runScriptAsInt("value[1]", map, true));
-        assertEquals(3, runScriptAsInt("value[2]", map, true));
-        assertEquals(Undefined.instance, runScript("value.foo", map, true));
-        runScriptAsString("value[4] = 4.01", map, true);
-        runScriptAsString("value[2] = 2.01", map, true);
-        assertEquals(4.01, map.get(4));
-        assertEquals(null, map.get(4L));
-        assertEquals(null, map.get(4.0D));
-        // overwrite existing key.
-        assertEquals(null, map.get(2));
-        assertEquals(2.01, map.get(2L));
-        assertEquals(null, map.get(2.0D));
-    }
-
-    public void testAccessingJavaMapEnumValuesWithGeneric() {
-        // genrate inner class, that contains type information.
-        Map<MyEnum, Integer> map =
-                new HashMap<MyEnum, Integer>() {
-                    private static final long serialVersionUID = 1L;
-                };
-
-        map.put(MyEnum.A, 1);
-        map.put(MyEnum.B, 2);
-        map.put(MyEnum.C, 3);
-
-        assertEquals(2, runScriptAsInt("value['B']", map, true));
-        assertEquals(3, runScriptAsInt("value['C']", map, true));
-        runScriptAsString("value['X'] = 4.01", map, true);
-        // we know the type info and can convert the key to Long and the value is rounded to Integer
-        assertEquals(Integer.valueOf(4), map.get(MyEnum.X));
-
-        try {
-            runScriptAsString("value['D'] = 4.0", map, true);
-            fail();
-            ;
-        } catch (EvaluatorException ex) {
-            assertEquals(
-                    "Cannot convert D to org.mozilla.javascript.tests.NativeJavaMapTest$MyEnum (#1)",
-                    ex.getMessage());
-        }
-    }
-
-    public void testAccessingJavaMapLongValuesWithGeneric() {
-        // genrate inner class, that contains type information.
-        Map<Long, Integer> map =
-                new HashMap<Long, Integer>() {
-                    private static final long serialVersionUID = 1L;
-                };
-
-        map.put(0L, 1);
-        map.put(1L, 2);
-        map.put(2L, 3);
-
-        assertEquals(2, runScriptAsInt("value[1]", map, true));
-        assertEquals(3, runScriptAsInt("value[2]", map, true));
-        runScriptAsInt("value[4] = 4.0", map, true);
-        // we know the type info and can convert the key to Long and the value to Integer
-        assertEquals(Integer.valueOf(4), map.get(4L));
-        assertEquals(null, map.get(4));
     }
 
     public void testJavaMethodCalls() {
@@ -237,8 +161,43 @@ public class NativeJavaMapTest extends TestCase {
         assertEquals(true, runScript("Object.keys(value).includes('getClass')", map, false));
     }
 
+    public void testStringIntMap() {
+        Map<String, Object> stringMap = new HashMap<String, Object>() {};
+        stringMap.put("42", "foo");
+
+        Map<Integer, Object> intMap = new HashMap<Integer, Object>() {};
+        intMap.put(42, "foo");
+
+        assertEquals("foo", runScriptAsString("value['42']", stringMap, true));
+        assertEquals("foo", runScriptAsString("value[42]", stringMap, true));
+        assertEquals("42", runScriptAsString("Object.keys(value)", stringMap, true));
+        assertEquals("foo", runScriptAsString("value['42']", intMap, true));
+        assertEquals("foo", runScriptAsString("value[42]", intMap, true));
+        assertEquals("42", runScriptAsString("Object.keys(value)", intMap, true));
+
+        runScriptAsString("value[43]='bar'", intMap, true);
+        runScriptAsString("value[43]='bar'", stringMap, true);
+        assertEquals("bar", intMap.get(43));
+        assertEquals("bar", stringMap.get("43"));
+    }
+
+    public void testEnumMap() {
+        Map<AccessMode, Object> enumMap = new EnumMap<AccessMode, Object>(AccessMode.class) {};
+        enumMap.put(AccessMode.READ, "foo");
+
+        assertEquals(
+                "foo",
+                runScriptAsString("value.get(java.nio.file.AccessMode.READ)", enumMap, true));
+        assertEquals(
+                "undefined",
+                runScriptAsString("value[java.nio.file.AccessMode.READ]", enumMap, true));
+        assertThrows(
+                EvaluatorException.class,
+                () -> runScript("value[java.nio.file.AccessMode.READ] = 'bar'", enumMap, true));
+    }
+
     public void testSymbolIterator() {
-        Map map = new LinkedHashMap();
+        Map<Object, Object> map = new LinkedHashMap<>();
         String script =
                 "var a = [];\n" + "for (var [key, value] of value) a.push(key, value);\n" + "a";
 
