@@ -9,7 +9,10 @@ package org.mozilla.javascript;
 import java.lang.reflect.Type;
 
 /**
- * Carries the reflection info per JavaObject.
+ * Carries the reflection info for a {@link NativeJavaObject}.
+ *
+ * <p>This class holds as well the staticTypeInfo (left side) and the dynamicTypeInfo (right side)
+ * for each java type.
  *
  * @author Roland Praml, FOCONIS AG
  */
@@ -17,12 +20,8 @@ public class JavaTypeResolver {
 
     private final JavaTypeInfo staticTypeInfo;
     private final JavaTypeInfo dynamicTypeInfo;
-    private Type st;
-    private Type dt;
 
     public JavaTypeResolver(Scriptable scope, Type staticType, Type dynamicType) {
-        st = staticType;
-        dt = dynamicType;
         staticTypeInfo = JavaTypeInfo.get(scope, staticType);
         dynamicTypeInfo = JavaTypeInfo.get(scope, dynamicType);
     }
@@ -44,7 +43,21 @@ public class JavaTypeResolver {
 
         return narrowType(staticType, dynamicType);
     }
+    /** resolves multiple types (e.g. method arguments) */
+    public Class<?>[] resolve(Type[] types) {
+        Class<?>[] ret = new Class<?>[types.length];
+        for (int i = 0; i < types.length; i++) {
+            ret[i] = resolve(types[i]);
+        }
+        return ret;
+    }
 
+    /**
+     * Resolves given <code>type</code> and returns a concrete class.
+     *
+     * @param type type is normally a generic type
+     * @return the 'best' <code>type</code>.
+     */
     public Class<?> resolve(Type type) {
         if (type instanceof Class) {
             return (Class<?>) type;
@@ -62,7 +75,7 @@ public class JavaTypeResolver {
         if (resolved == null) {
             return JavaTypeInfo.getRawType(type);
         } else {
-            return resolved;
+            return narrowType(resolved, JavaTypeInfo.getRawType(type));
         }
     }
 
@@ -76,13 +89,5 @@ public class JavaTypeResolver {
         } else {
             return staticType;
         }
-    }
-
-    public Class<?>[] resolve(Type[] types) {
-        Class<?>[] ret = new Class<?>[types.length];
-        for (int i = 0; i < types.length; i++) {
-            ret[i] = resolve(types[i]);
-        }
-        return ret;
     }
 }

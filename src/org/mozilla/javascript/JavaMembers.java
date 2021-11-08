@@ -108,6 +108,10 @@ class JavaMembers {
         return cx.getWrapFactory().wrap(cx, scope, rval, type);
     }
 
+    void put(Scriptable scope, String name, Object javaObject, Object value, boolean isStatic) {
+        put(scope, name, javaObject, value, isStatic, null);
+    }
+
     void put(
             Scriptable scope,
             String name,

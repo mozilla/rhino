@@ -12,45 +12,59 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Carries the reflection info per JavaObject.
  *
+ * <p>For example, if we take <code>ArrayList</code>, we have the following inheritance
+ *
+ * <ul>
+ *   <li><code>ArrayList&lt;E&gt;</code> extends <code>AbstractList&lt;E&gt;</code> implements
+ *       <code>List&lt;E&gt;</code>
+ *   <li><code>AbstractList&lt;E&gt;</code> extends <code>AbstractCollection&lt;E&gt;</code>
+ *       implements <code>List&lt;E&gt;</code>
+ *   <li><code>AbstractCollection&lt;E&gt;</code> implements <code>Collection&lt;E&gt;</code>
+ *   <li><code>Collection&lt;E&gt;</code> extends <code>Iterable&lt;E&gt;</code>
+ *   <li><code>Iterable&lt;T&gt;</code>
+ * </ul>
+ *
+ * we have to walk trough the inheritance tree and build a graph, how the genericTypes (here <code>E
+ * </code> and <code>T</code>) are linked together.
+ *
+ * <p>For the generic type declaration <code>ArrayList&gt;String&lt;</code> we can query which
+ * resolved type arguments each superClass or superInterface has. In this example <code>
+ * resolve(Iterator.class, 0)</code> will return <code>String.class</code>.
+ *
+ * <p>When determining method parameters (for example the generic parameter of <code>List.add(M)
+ * </code> is <code>M</code>) {@link #resolve(Type)} and {@link #reverseResolve(Type)} are used to
+ * determine the correct type. (in this case String.class)
+ *
+ * <p>Some ideas are taken from
+ * https://www.javacodegeeks.com/2013/12/advanced-java-generics-retreiving-generic-type-arguments.html
+ *
  * @author Roland Praml, FOCONIS AG
  */
 public class JavaTypeInfo {
 
-    public static final JavaTypeInfo xEMPTY = new JavaTypeInfo();
-
     private final Map<Class<?>, Type[]> typeCache;
     private final Map<Type, Type> resolved;
     private final Map<Type, Type> reverseResolved;
-
-    JavaTypeInfo() {
-        typeCache = Collections.emptyMap();
-        resolved = Collections.emptyMap();
-        reverseResolved = Collections.emptyMap();
-    }
 
     JavaTypeInfo(Type type) {
         typeCache = new HashMap<>();
         resolved = new HashMap<>();
         reverseResolved = new HashMap<>();
         reflect(type, null);
-        // remove unnecessary info.
-        Iterator<Type> it = resolved.values().iterator();
-        while (it.hasNext()) {
-            if (it.next() == Object.class) {
-                // it.remove();
-            }
-        }
     }
 
-    /** Returns the resolved type argument for <code>classOfInterest</code>. */
+    /**
+     * Returns the resolved type argument for <code>classOfInterest</code>.
+     *
+     * @param classOfInterest a superClass or interface of the representing <code>type</code>.
+     * @param index the generic index of <code>classOfIntererest</code>
+     */
     public Class<?> resolve(Class<?> classOfInterest, int index) {
         Type[] entry = typeCache.get(classOfInterest);
         if (entry == null) {
@@ -69,7 +83,7 @@ public class JavaTypeInfo {
         if (ret instanceof Class) {
             return (Class<?>) ret;
         } else {
-            return Object.class;
+            return null;
         }
     }
 
@@ -85,6 +99,8 @@ public class JavaTypeInfo {
                     if (typeArgs == null) {
                         resolvedParams[i] = params[i];
                     } else {
+                        // build a map how generic type parameters are linked over various
+                        // subclasses.
                         resolvedParams[i] = resolved.getOrDefault(typeArgs[i], typeArgs[i]);
                         resolved.put(params[i], resolvedParams[i]);
                         if (resolvedParams[i] instanceof TypeVariable) {
@@ -92,9 +108,7 @@ public class JavaTypeInfo {
                         }
                     }
                 }
-                // if (isResolved(resolvedParams)) {
                 typeCache.put(cls, resolvedParams);
-                // }
             }
             for (Type iface : cls.getGenericInterfaces()) {
                 reflect(iface, null);

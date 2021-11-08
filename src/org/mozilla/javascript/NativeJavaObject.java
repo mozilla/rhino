@@ -50,7 +50,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         this.javaObject = javaObject;
         this.staticRawType = JavaTypeInfo.getRawType(staticType);
         this.isAdapter = isAdapter;
-        this.typeResolver = new JavaTypeResolver(scope, staticType, javaObject.getClass());
+        this.typeResolver =
+                new JavaTypeResolver(
+                        scope, staticType, javaObject == null ? null : javaObject.getClass());
 
         initMembers();
     }
