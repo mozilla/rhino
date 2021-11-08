@@ -26,7 +26,7 @@ public class ClassCache implements Serializable {
     private transient Map<CacheKey, JavaMembers> classTable;
     private transient Map<JavaAdapter.JavaAdapterSignature, Class<?>> classAdapterCache;
     private transient Map<Class<?>, Object> interfaceAdapterCache;
-    private transient Map<Type, Type[]> typeCache;
+    private transient Map<Type, JavaTypeInfo> typeCache;
     private int generatedClassSerial;
     private Scriptable associatedScope;
 
@@ -150,7 +150,7 @@ public class ClassCache implements Serializable {
         return classAdapterCache;
     }
 
-    Map<Type, Type[]> getTypeCacheMap() {
+    Map<Type, JavaTypeInfo> getTypeCacheMap() {
         if (typeCache == null) {
             typeCache = new ConcurrentHashMap<>(16, 0.75f, 1);
         }

@@ -136,6 +136,35 @@ public class NativeJavaMethod extends BaseFunction {
 
         MemberBox meth = methods[index];
         Class<?>[] argTypes = meth.argTypes;
+        Object javaObject;
+        if (meth.isStatic()) {
+            javaObject = null; // don't need an object
+        } else {
+            Scriptable o = thisObj;
+            Class<?> c = meth.getDeclaringClass();
+            for (; ; ) {
+                if (o == null) {
+                    throw Context.reportRuntimeErrorById(
+                            "msg.nonjava.method",
+                            getFunctionName(),
+                            ScriptRuntime.toString(thisObj),
+                            c.getName());
+                }
+                if (o instanceof Wrapper) {
+                    javaObject = ((Wrapper) o).unwrap();
+                    if (c.isInstance(javaObject)) {
+                        if (o instanceof NativeJavaObject) {
+                            JavaTypeResolver tr = ((NativeJavaObject) o).getTypeResolver();
+                            if (tr != null && meth.genericArgTypes != null) {
+                                argTypes = tr.resolve(meth.genericArgTypes);
+                            }
+                        }
+                        break;
+                    }
+                }
+                o = o.getPrototype();
+            }
+        }
 
         if (meth.vararg) {
             // marshall the explicit parameters
@@ -182,29 +211,7 @@ public class NativeJavaMethod extends BaseFunction {
                 }
             }
         }
-        Object javaObject;
-        if (meth.isStatic()) {
-            javaObject = null; // don't need an object
-        } else {
-            Scriptable o = thisObj;
-            Class<?> c = meth.getDeclaringClass();
-            for (; ; ) {
-                if (o == null) {
-                    throw Context.reportRuntimeErrorById(
-                            "msg.nonjava.method",
-                            getFunctionName(),
-                            ScriptRuntime.toString(thisObj),
-                            c.getName());
-                }
-                if (o instanceof Wrapper) {
-                    javaObject = ((Wrapper) o).unwrap();
-                    if (c.isInstance(javaObject)) {
-                        break;
-                    }
-                }
-                o = o.getPrototype();
-            }
-        }
+
         if (debug) {
             printDebug("Calling ", meth, args);
         }

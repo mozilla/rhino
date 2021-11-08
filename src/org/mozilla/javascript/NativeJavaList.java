@@ -58,9 +58,7 @@ public class NativeJavaList extends NativeJavaObject {
         assert list instanceof List;
         this.list = (List<Object>) list;
 
-        Type[] types = JavaTypes.lookupType(scope, list.getClass(), staticType, List.class);
-
-        this.valueType = types == null ? Object.class : JavaTypes.getRawType(types[0]);
+        this.valueType = typeResolver.resolve(List.class, 0);
     }
 
     @Override

@@ -48,8 +48,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             Scriptable scope, Object javaObject, Type staticType, boolean isAdapter) {
         this.parent = scope;
         this.javaObject = javaObject;
-        this.staticRawType = JavaTypes.getRawType(staticType);
+        this.staticRawType = JavaTypeInfo.getRawType(staticType);
         this.isAdapter = isAdapter;
+        this.typeResolver = new JavaTypeResolver(scope, staticType, javaObject.getClass());
+
         initMembers();
     }
 
@@ -115,7 +117,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // prototype. Since we can't add a property to a Java object,
         // we modify it in the prototype rather than copy it down.
         if (prototype == null || members.has(name, false))
-            members.put(this, name, javaObject, value, false);
+            members.put(this, name, javaObject, value, false, typeResolver);
         else prototype.put(name, prototype, value);
     }
 
@@ -126,7 +128,7 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         // we modify it in the prototype rather than copy it down.
         String name = symbol.toString();
         if (prototype == null || members.has(name, false)) {
-            members.put(this, name, javaObject, value, false);
+            members.put(this, name, javaObject, value, false, typeResolver);
         } else if (prototype instanceof SymbolScriptable) {
             ((SymbolScriptable) prototype).put(symbol, prototype, value);
         }
@@ -182,6 +184,11 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     @Override
     public Object[] getIds() {
         return members.getIds(false);
+    }
+
+    /** returns the current type resolver for generic method access */
+    public JavaTypeResolver getTypeResolver() {
+        return typeResolver;
     }
 
     /**
@@ -943,6 +950,9 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
     protected transient JavaMembers members;
     private transient Map<String, FieldAndMethods> fieldAndMethods;
     protected transient boolean isAdapter;
+    // TODO: There is currently no serialization/deserialization support
+    // as this may break existing serialized content
+    protected transient JavaTypeResolver typeResolver;
 
     private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
     private static Method adapter_writeAdapterObject;

@@ -41,9 +41,8 @@ public class NativeJavaMap extends NativeJavaObject {
         super(scope, map, staticType);
         assert map instanceof Map;
         this.map = (Map<Object, Object>) map;
-        Type[] types = JavaTypes.lookupType(scope, map.getClass(), staticType, Map.class);
-        this.keyType = types == null ? Object.class : JavaTypes.getRawType(types[0]);
-        this.valueType = types == null ? Object.class : JavaTypes.getRawType(types[1]);
+        this.keyType = typeResolver.resolve(Map.class, 0);
+        this.valueType = typeResolver.resolve(Map.class, 1);
     }
 
     @Override
