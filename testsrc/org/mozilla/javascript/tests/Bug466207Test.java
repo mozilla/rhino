@@ -33,7 +33,7 @@ public class Bug466207Test extends TestCase {
         reference.add("a");
         reference.add(Boolean.TRUE);
         reference.add(new HashMap<Object, Object>());
-        reference.add(new Integer(42));
+        reference.add(Integer.valueOf(42));
         reference.add("a");
         // get a js object as map
         Context context = Context.enter();

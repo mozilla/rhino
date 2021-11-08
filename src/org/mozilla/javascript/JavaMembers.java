@@ -15,11 +15,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.AccessControlContext;
+import java.security.AllPermission;
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.lang.model.SourceVersion;
 
 /**
  * @author Mike Shaver
@@ -28,6 +32,12 @@ import java.util.Map;
  * @see NativeJavaClass
  */
 class JavaMembers {
+
+    private static final boolean STRICT_REFLECTIVE_ACCESS =
+            SourceVersion.latestSupported().ordinal() > 8;
+
+    private static final Permission allPermission = new AllPermission();
+
     JavaMembers(Scriptable scope, Class<?> cl) {
         this(scope, cl, false);
     }
@@ -285,14 +295,14 @@ class JavaMembers {
      * and interfaces (if they exist). Basically upcasts every method to the nearest accessible
      * method.
      */
-    private static Method[] discoverAccessibleMethods(
+    private Method[] discoverAccessibleMethods(
             Class<?> clazz, boolean includeProtected, boolean includePrivate) {
         Map<MethodSignature, Method> map = new HashMap<MethodSignature, Method>();
         discoverAccessibleMethods(clazz, map, includeProtected, includePrivate);
         return map.values().toArray(new Method[map.size()]);
     }
 
-    private static void discoverAccessibleMethods(
+    private void discoverAccessibleMethods(
             Class<?> clazz,
             Map<MethodSignature, Method> map,
             boolean includeProtected,
@@ -335,12 +345,7 @@ class JavaMembers {
                         }
                     }
                 } else {
-                    Method[] methods = clazz.getMethods();
-                    for (Method method : methods) {
-                        MethodSignature sig = new MethodSignature(method);
-                        // Array may contain methods with same signature but different return value!
-                        if (!map.containsKey(sig)) map.put(sig, method);
-                    }
+                    discoverPublicMethods(clazz, map);
                 }
                 return;
             } catch (SecurityException e) {
@@ -364,7 +369,20 @@ class JavaMembers {
         }
     }
 
-    private static final class MethodSignature {
+    void discoverPublicMethods(Class<?> clazz, Map<MethodSignature, Method> map) {
+        Method[] methods = clazz.getMethods();
+        for (Method method : methods) {
+            registerMethod(map, method);
+        }
+    }
+
+    static void registerMethod(Map<MethodSignature, Method> map, Method method) {
+        MethodSignature sig = new MethodSignature(method);
+        // Array may contain methods with same signature but different return value!
+        map.putIfAbsent(sig, method);
+    }
+
+    static final class MethodSignature {
         private final String name;
         private final Class<?>[] args;
 
@@ -749,21 +767,22 @@ class JavaMembers {
             Scriptable scope, Class<?> dynamicType, Class<?> staticType, boolean includeProtected) {
         JavaMembers members;
         ClassCache cache = ClassCache.get(scope);
-        Map<Class<?>, JavaMembers> ct = cache.getClassCacheMap();
+        Map<ClassCache.CacheKey, JavaMembers> ct = cache.getClassCacheMap();
 
         Class<?> cl = dynamicType;
+        Object secCtx = getSecurityContext();
         for (; ; ) {
-            members = ct.get(cl);
+            members = ct.get(new ClassCache.CacheKey(cl, secCtx));
             if (members != null) {
                 if (cl != dynamicType) {
                     // member lookup for the original class failed because of
                     // missing privileges, cache the result so we don't try again
-                    ct.put(dynamicType, members);
+                    ct.put(new ClassCache.CacheKey(dynamicType, secCtx), members);
                 }
                 return members;
             }
             try {
-                members = new JavaMembers(cache.getAssociatedScope(), cl, includeProtected);
+                members = createJavaMembers(cache.getAssociatedScope(), cl, includeProtected);
                 break;
             } catch (SecurityException e) {
                 // Reflection may fail for objects that are in a restricted
@@ -789,14 +808,41 @@ class JavaMembers {
         }
 
         if (cache.isCachingEnabled()) {
-            ct.put(cl, members);
+            ct.put(new ClassCache.CacheKey(cl, secCtx), members);
             if (cl != dynamicType) {
                 // member lookup for the original class failed because of
                 // missing privileges, cache the result so we don't try again
-                ct.put(dynamicType, members);
+                ct.put(new ClassCache.CacheKey(dynamicType, secCtx), members);
             }
         }
         return members;
+    }
+
+    private static JavaMembers createJavaMembers(
+            Scriptable associatedScope, Class<?> cl, boolean includeProtected) {
+        if (STRICT_REFLECTIVE_ACCESS) {
+            return new JavaMembers_jdk11(associatedScope, cl, includeProtected);
+        } else {
+            return new JavaMembers(associatedScope, cl, includeProtected);
+        }
+    }
+
+    private static Object getSecurityContext() {
+        Object sec = null;
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sec = sm.getSecurityContext();
+            if (sec instanceof AccessControlContext) {
+                try {
+                    ((AccessControlContext) sec).checkPermission(allPermission);
+                    // if we have allPermission, we do not need to store the
+                    // security object in the cache key
+                    return null;
+                } catch (SecurityException e) {
+                }
+            }
+        }
+        return sec;
     }
 
     RuntimeException reportMemberNotFound(String memberName) {

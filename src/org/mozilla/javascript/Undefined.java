@@ -114,6 +114,9 @@ public class Undefined implements Serializable {
 
                 @Override
                 public Object getDefaultValue(Class<?> hint) {
+                    if (hint == null || hint == ScriptRuntime.StringClass) {
+                        return toString();
+                    }
                     return null;
                 }
 

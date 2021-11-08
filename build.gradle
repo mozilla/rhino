@@ -69,8 +69,12 @@ dependencies {
 test {
     useJUnit()
     exclude "**/benchmarks/**"
-    
+
     jvmArgs += '-Xss1280k'
+
+    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
+        jvmArgs += ['--add-opens', 'java.desktop/javax.swing.table=ALL-UNNAMED']
+    }
 
     jacoco.excludes = ['**/testsrc_tests_ecma_3_RegExp_perlstress*']
 
@@ -100,13 +104,13 @@ test {
 
 task sunSpiderBenchmark(type: JavaExec) {
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-f', '1', '-bm', 'avgt', '-tu', 'us', 'SunSpider'
 }
 
 task v8Benchmark(type: JavaExec) {
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-f', '1', '-i', '10', '-bm', 'avgt', '-tu', 'us', 'V8'
 }
 
@@ -120,19 +124,19 @@ task microBenchmark(type: JavaExec, description: 'JMH micro benchmark') {
         benchmark = "MathBenchmark"
     }
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-f', '1', '-bm', 'avgt', '-tu', 'ns', '-r', '5', benchmark
 }
 
 task listBenchmarks(type: JavaExec, description: 'JMH benchmarks') {
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-lp'
 }
 
 task jmhHelp(type: JavaExec, description: 'JMH benchmarks') {
     classpath = sourceSets.jmh.runtimeClasspath
-    main = 'org.openjdk.jmh.Main'
+    mainClass = 'org.openjdk.jmh.Main'
     args '-help'
 }
 
@@ -407,10 +411,25 @@ spotless {
     }
 }
 
-jacocoTestReport.dependsOn test
+if (JavaVersion.current() > JavaVersion.VERSION_15
+        && (!System.properties.containsKey('org.gradle.jvmargs')
+        || !System.properties.get('org.gradle.jvmargs').contains('com.sun.tools.javac.api'))
+        && (!project.hasProperty('org.gradle.jvmargs')
+        || !project.property('org.gradle.jvmargs').contains('com.sun.tools.javac.api'))) {
+    tasks.named('check') {
+        doFirst {
+            logger.warn('WARNING: spotless plugin removed from check due to bug, ' + \
+                'see README for a workaround when building with Java 16+.')
+        }
+    }
+    spotless.enforceCheck false
+}
+
 jacocoTestReport {
+    dependsOn test
     reports {
-        csv.enabled true
+        csv.required = true
+        html.required = true
     }
 }
 
@@ -450,4 +469,5 @@ distributions {
     }
 }
 
+distTar.dependsOn javadoc, jar
 distZip.dependsOn javadoc, jar, sourceJar, runtimeSourceJar

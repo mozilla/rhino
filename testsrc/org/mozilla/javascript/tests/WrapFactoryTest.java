@@ -26,8 +26,8 @@ public class WrapFactoryTest {
     public void primitiveWrapTrue() {
         test(true, "text", "string", "object", "object");
         test(true, Boolean.FALSE, "boolean", "object", "object");
-        test(true, new Integer(1), "number", "object", "object");
-        test(true, new Long(2L), "number", "object", "object");
+        test(true, Integer.valueOf(1), "number", "object", "object");
+        test(true, Long.valueOf(2L), "number", "object", "object");
         test(true, new BigInteger("3"), "bigint", "object", "object");
         test(true, new BigDecimal("4.0"), "number", "object", "object");
     }
@@ -37,8 +37,8 @@ public class WrapFactoryTest {
     public void primitiveWrapFalse() {
         test(false, "text", "string", "string", "string"); // Great! I want to do this.
         test(false, Boolean.FALSE, "boolean", "boolean", "boolean");
-        test(false, new Integer(1), "number", "number", "number");
-        test(false, new Long(2L), "number", "number", "number");
+        test(false, Integer.valueOf(1), "number", "number", "number");
+        test(false, Long.valueOf(2L), "number", "number", "number");
 
         test(false, new BigInteger("30"), "bigint", "bigint", "bigint");
 
@@ -65,7 +65,7 @@ public class WrapFactoryTest {
         Context cx = Context.enter();
         try {
             cx.getWrapFactory().setJavaPrimitiveWrap(javaPrimitiveWrap);
-            Scriptable scope = cx.initStandardObjects(new ImporterTopLevel(cx));
+            Scriptable scope = cx.newObject(new ImporterTopLevel(cx));
 
             // register object
             Map<String, Object> map = new LinkedHashMap<>();

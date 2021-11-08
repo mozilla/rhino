@@ -171,6 +171,19 @@ public class NativeJavaListTest extends TestCase {
         assertEquals("a,,c", runScriptAsString("Array.prototype.join.call(value)", list));
     }
 
+    public void testAdd() {
+        List<String> list = new ArrayList<>();
+        runScriptAsString("value[0] = 'a'", list);
+        runScriptAsString("value[1] = 'b'", list);
+        runScriptAsString("value[2] = 'c'", list);
+        assertEquals("[a, b, c]", list.toString());
+        runScriptAsString("value[5] = 'f'", list);
+        assertEquals("[a, b, c, null, null, f]", list.toString());
+        runScriptAsString("value[4] = 'e'", list);
+        runScriptAsString("value[3] = 'd'", list);
+        assertEquals("[a, b, c, d, e, f]", list.toString());
+    }
+
     public void testKeys() {
         List<String> list = new ArrayList<>();
         NativeArray resEmpty =
@@ -200,7 +213,7 @@ public class NativeJavaListTest extends TestCase {
         return ContextFactory.getGlobal()
                 .call(
                         context -> {
-                            Scriptable scope = context.initStandardObjects(global);
+                            Scriptable scope = context.newObject(global);
                             scope.put("value", scope, Context.javaToJS(value, scope));
                             return convert.apply(
                                     context.evaluateString(scope, scriptSourceText, "", 1, null));

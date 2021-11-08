@@ -8,15 +8,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 
-import junit.framework.TestCase;
-
-
 /**
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=448816
+ *
  * @author Hannes Wallnoefer
  */
 public class Bug448816Test extends TestCase {
@@ -31,13 +29,18 @@ public class Bug448816Test extends TestCase {
         reference.put("a", "a");
         reference.put("b", Boolean.TRUE);
         reference.put("c", new HashMap<Object, Object>());
-        reference.put(new Integer(1), new Integer(42));
+        reference.put(Integer.valueOf(1), Integer.valueOf(42));
         // get a js object as map
         Context context = Context.enter();
         ScriptableObject scope = context.initStandardObjects();
-        map = (Map<Object, Object>) context.evaluateString(scope,
-                "({ a: 'a', b: true, c: new java.util.HashMap(), 1: 42});",
-                "testsrc", 1, null);
+        map =
+                (Map<Object, Object>)
+                        context.evaluateString(
+                                scope,
+                                "({ a: 'a', b: true, c: new java.util.HashMap(), 1: 42});",
+                                "testsrc",
+                                1,
+                                null);
         Context.exit();
     }
 
@@ -53,7 +56,7 @@ public class Bug448816Test extends TestCase {
         assertEquals(map.get("a"), reference.get("a"));
         assertEquals(map.get("b"), reference.get("b"));
         assertEquals(map.get("c"), reference.get("c"));
-        assertEquals(map.get(new Integer(1)), reference.get(new Integer(1)));
+        assertEquals(map.get(Integer.valueOf(1)), reference.get(Integer.valueOf(1)));
         assertEquals(map.get("notfound"), reference.get("notfound"));
         assertTrue(map.containsKey("b"));
         assertTrue(map.containsValue(Boolean.TRUE));

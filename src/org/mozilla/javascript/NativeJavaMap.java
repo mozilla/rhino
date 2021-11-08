@@ -10,7 +10,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * <code>NativeJavaMap</code> is a wrapper for java objects implementing <code>java.util.Map
+ * </code> interface. When {@link Context#FEATURE_ENABLE_JAVA_MAP_ACCESS} is enabled, property based
+ * access like <code>map[key]</code> is delegated to {@link Map#get(Object)} or {@link
+ * Map#put(Object, Object)} operations so that a <code>JavaMap</code> acts very similar to a
+ * javascript <code>Object</code> There is also an iterator to iterate over entries with <code>
+ * for .. of</code>.
+ *
+ * <p><b>Limitations:</b> The wrapped map should have <code>String</code> or <code>Integer</code> as
+ * key. Otherwise, property based access may not work properly.
+ */
 public class NativeJavaMap extends NativeJavaObject {
+
+    private static final long serialVersionUID = -3786257752907047381L;
 
     private Map<Object, Object> map;
 
@@ -119,7 +132,7 @@ public class NativeJavaMap extends NativeJavaObject {
             List<Object> ids = new ArrayList<>(map.size());
             for (Object key : map.keySet()) {
                 if (key instanceof Integer) {
-                    ids.add((Integer) key);
+                    ids.add(key);
                 } else {
                     ids.add(ScriptRuntime.toString(key));
                 }

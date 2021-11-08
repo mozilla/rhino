@@ -1,6 +1,6 @@
 # Rhino: JavaScript in Java
 
-![Rhino](https://developer.mozilla.org/@api/deki/files/832/=Rhino.jpg)
+<a title="Rodrigo J De Marco, CC0, via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Rhino_(234581759).jpeg"><img width="384" alt="Rhino (234581759)" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Rhino_%28234581759%29.jpeg/512px-Rhino_%28234581759%29.jpeg"></a>
 
 Rhino is an implementation of JavaScript in Java.
 
@@ -36,7 +36,7 @@ features from ES6, and ES2016+ are implemented in Rhino.
 
 Information for script builders and embedders:
 
-[https://developer.mozilla.org/en-US/docs/Rhino_documentation](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Documentation)
+[Archived](http://web.archive.org/web/20210304081342/https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Documentation)
 
 JavaDoc for all the APIs:
 
@@ -85,7 +85,7 @@ mavenReleaseRepo=
 ```
 5. Increase version and add `-SNAPSHOT` to it in `gradle.properties` in project root folder.
 6. Push `gradle.properties` to `GitHub`
-   
+
 ## Running
 
 Rhino can run as a stand-alone interpreter from the command line:
@@ -100,6 +100,16 @@ There is also a "rhino" package for many Linux distributions as well as Homebrew
 
 You can also embed it, as most people do. See below for more docs.
 
+### Java 16 and later
+
+If you are using a modular JDK that disallows the reflective access to
+non-public fields (16 and later), you may need to configure the JVM with the
+[`--add-opens`](https://docs.oracle.com/en/java/javase/17/migrate/migrating-jdk-8-later-jdk-releases.html#GUID-12F945EB-71D6-46AF-8C3D-D354FD0B1781)
+option to authorize the packages that your scripts shall use, for example:
+```
+--add-opens java.desktop/javax.swing.table=ALL-UNNAMED
+```
+
 ## Issues
 
 Most issues are managed on GitHub:
@@ -113,7 +123,7 @@ To submit a new PR, please use the following process:
 * Ensure that your entire build passes "./gradlew check". This will include
 code formatting and style checks and runs the tests.
 * Please write tests for what you fixed, unless you can show us that existing
-tests cover the changes. Use existing tests, such as those in 
+tests cover the changes. Use existing tests, such as those in
 "testsrc/org/mozilla/javascript/tests", as a guide.
 * If you fixed ECMAScript spec compatibility, take a look at test262.properties and see
 if you can un-disable some tests.
@@ -125,7 +135,7 @@ some time to get back to you.
 ### Code Formatting
 
 Code formatting was introduced in 2021. The "spotless" plugin will fail your
-build if you have changed any files that have not yet been reformatted. 
+build if you have changed any files that have not yet been reformatted.
 Please use "spotlessApply" to reformat the necessary files.
 
 If you are the first person to touch a big file that spotless wants to make
@@ -133,10 +143,22 @@ hundreds of lines of changes to, please try to put the reformatting changes
 alone into a single Git commit so that we can separate reformatting changes
 from more substantive changes.
 
+> **Warning:** If you build with Java 16 or later, you need to apply a
+> workaround for a "spotless" issue. Otherwise, the task will be disabled
+> and your PR may fail.
+> 
+> The following must be added to your `gradle.properties`.
+> ```
+> org.gradle.jvmargs=--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED \
+>  --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+> ```
+> For more details, see https://github.com/diffplug/spotless/issues/834#issuecomment-819118761
+
 ## More Help
 
 The Google group is the best place to go with questions:
 
 [https://groups.google.com/forum/#!forum/mozilla-rhino](https://groups.google.com/forum/#!forum/mozilla-rhino)
-
-
