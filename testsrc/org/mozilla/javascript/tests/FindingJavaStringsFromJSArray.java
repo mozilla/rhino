@@ -16,8 +16,8 @@ public class FindingJavaStringsFromJSArray extends TestCase {
 
         assertEquals(-1, runScriptAsInt("value.indexOf(\"foobar\")", list));
         assertEquals(1, runScriptAsInt("value.indexOf(\"bar\")", list));
-        assertEquals(0, runScriptAsInt("value.includes(\"foobar\")", list));
-        assertEquals(1, runScriptAsInt("value.includes(\"bar\")", list));
+        assertEquals(0, runScriptAsInt("Array.prototype.includes.call(value, \"foobar\")", list));
+        assertEquals(1, runScriptAsInt("Array.prototype.includes.call(value, \"bar\")", list));
     }
 
     public void testFindingJSStringFromJavaArray() {
@@ -40,8 +40,10 @@ public class FindingJavaStringsFromJSArray extends TestCase {
 
         assertEquals(-1, runScriptAsInt("value.indexOf(value2)", list, "foobar"));
         assertEquals(1, runScriptAsInt("value.indexOf(value2)", list, "bar"));
-        assertEquals(0, runScriptAsInt("value.includes(value2)", list, "foobar"));
-        assertEquals(1, runScriptAsInt("value.includes(value2)", list, "bar"));
+        assertEquals(
+                0, runScriptAsInt("Array.prototype.includes.call(value, value2)", list, "foobar"));
+        assertEquals(
+                1, runScriptAsInt("Array.prototype.includes.call(value, value2)", list, "bar"));
     }
 
     public void testFindingJavaStringFromJavaArray() {
