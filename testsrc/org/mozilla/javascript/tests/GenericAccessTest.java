@@ -4,6 +4,12 @@
 
 package org.mozilla.javascript.tests;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +18,11 @@ import junit.framework.TestCase;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.NativeJavaObject;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.serialize.ScriptableInputStream;
+import org.mozilla.javascript.serialize.ScriptableOutputStream;
 
 /*
  * This testcase tests the basic access to java List and Map with []
@@ -184,7 +194,9 @@ public class GenericAccessTest extends TestCase {
         testIt(js, "Integer 4 Long 2 2");
     }
 
-    public static class Bean {
+    public static class Bean implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         public List<Integer> integers = new ArrayList<>();
         private List<Double> doubles = new ArrayList<>();
 
@@ -198,13 +210,17 @@ public class GenericAccessTest extends TestCase {
         public Map<Integer, String> intStringMap = new HashMap<>();
         public Map<Integer, Integer> intIntMap = new HashMap<>();
         public Map<Integer, Long> intLongMap = new HashMap<>();
+        // beans with typeInfo in the static type
         public GenericBean<Integer> intBean1 = new GenericBean<>();
         public GenericBean<Double> dblBean1 = new GenericBean<>();
-        public GenericBean<? extends Number> intBean2 = new GenericBean<Integer>() {};
-        public GenericBean<? extends Number> dblBean2 = new GenericBean<Double>() {};
+        // beans with typeInfo in the dynamic type
+        public GenericBean<? extends Number> intBean2 = new IntegerGenericBean();
+        public GenericBean<? extends Number> dblBean2 = new DoubleGenericBean();
     }
 
-    public static class GenericBean<M extends Number> {
+    public static class GenericBean<M extends Number> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private M value;
 
         public M publicValue;
@@ -232,8 +248,28 @@ public class GenericAccessTest extends TestCase {
         }
     }
 
+    static class IntegerArrayList extends ArrayList<Integer> {
+        private static final long serialVersionUID = 1L;
+    }
+
+    static class DoubleArrayList extends ArrayList<Double> {
+        private static final long serialVersionUID = 1L;
+    }
+
+    static class NumberArrayList extends ArrayList<Number> {
+        private static final long serialVersionUID = 1L;
+    }
+
+    static class IntegerGenericBean extends GenericBean<Integer> {
+        private static final long serialVersionUID = 1L;
+    }
+
+    static class DoubleGenericBean extends GenericBean<Double> {
+        private static final long serialVersionUID = 1L;
+    }
+
     private List<Integer> createIntegerList() {
-        List<Integer> list = new ArrayList<Integer>() {};
+        List<Integer> list = new IntegerArrayList();
 
         list.add(42);
         list.add(7);
@@ -241,7 +277,7 @@ public class GenericAccessTest extends TestCase {
     }
 
     private List<Double> createDoubleList() {
-        List<Double> list = new ArrayList<Double>() {};
+        List<Double> list = new DoubleArrayList();
 
         list.add(42.5);
         list.add(7.5);
@@ -249,25 +285,29 @@ public class GenericAccessTest extends TestCase {
     }
 
     private List<Number> createNumberList() {
-        List<Number> list = new ArrayList<Number>() {};
+        List<Number> list = new NumberArrayList();
 
         list.add(42);
         list.add(7.5);
         return list;
     }
 
+    private ContextFactory getContextFactory() {
+        return new ContextFactory() {
+            @Override
+            protected boolean hasFeature(Context cx, int featureIndex) {
+                switch (featureIndex) {
+                    case Context.FEATURE_ENABLE_JAVA_MAP_ACCESS:
+                        return true;
+                }
+                return super.hasFeature(cx, featureIndex);
+            }
+        };
+    }
+
     private void testIt(String script, String expected) {
         Utils.runWithAllOptimizationLevels(
-                new ContextFactory() {
-                    @Override
-                    protected boolean hasFeature(Context cx, int featureIndex) {
-                        switch (featureIndex) {
-                            case Context.FEATURE_ENABLE_JAVA_MAP_ACCESS:
-                                return true;
-                        }
-                        return super.hasFeature(cx, featureIndex);
-                    }
-                },
+                getContextFactory(),
                 cx -> {
                     final ScriptableObject scope = cx.initStandardObjects();
                     scope.put("intList", scope, createIntegerList());
@@ -279,5 +319,88 @@ public class GenericAccessTest extends TestCase {
 
                     return null;
                 });
+    }
+
+    @Test
+    public void testSerDeser() {
+        Utils.runWithAllOptimizationLevels(
+                getContextFactory(),
+                cx -> {
+
+                    // do some tests when we do a deserialization -> serialization roundtrip
+                    // while dynamic type info is stored in the wrapped object itself,
+                    // we have to do some extra effort to store also static type information
+                    ScriptableObject scope = cx.initStandardObjects();
+                    scope.put("bean", scope, new Bean());
+
+                    // store 3 into value. We expect that 3 is converted to the generic type.
+                    String testCode = "value = 3; value.getClass().getSimpleName()";
+                    doTest(cx, scope, testCode, "bean.intBean1", Integer.class);
+                    doTest(cx, scope, testCode, "bean.intBean2", Integer.class);
+                    doTest(cx, scope, testCode, "bean.dblBean1", Double.class);
+                    doTest(cx, scope, testCode, "bean.dblBean2", Double.class);
+
+                    // perform test also for index based list access
+                    testCode = "this[0] = 3; this[0].getClass().getSimpleName()";
+                    doTest(cx, scope, testCode, "bean.integers", Integer.class);
+                    doTest(cx, scope, testCode, "bean.doubles", Double.class);
+                    doTest(cx, scope, testCode, "bean.numbers", Double.class);
+
+                    // and for method access
+                    testCode = "this.add(0, 3); this[0].getClass().getSimpleName()";
+                    doTest(cx, scope, testCode, "bean.integers", Integer.class);
+                    doTest(cx, scope, testCode, "bean.doubles", Double.class);
+                    doTest(cx, scope, testCode, "bean.numbers", Double.class);
+
+                    // and for maps
+                    testCode = "this[0] = 3; this[0].getClass().getSimpleName()";
+                    doTest(cx, scope, testCode, "bean.intStringMap", String.class);
+                    doTest(cx, scope, testCode, "bean.intIntMap", Integer.class);
+                    doTest(cx, scope, testCode, "bean.intLongMap", Long.class);
+                    return null;
+                });
+    }
+
+    private void doTest(
+            Context cx,
+            ScriptableObject scope,
+            String testCode,
+            String beanPath,
+            Class<?> expectedType) {
+
+        // first step, extract a NativeJavaObject (with type information)
+        Object o = cx.evaluateString(scope, beanPath, "testSerDeser", 1, null);
+        NativeJavaObject wrappedBean = (NativeJavaObject) o;
+
+        o = cx.evaluateString(wrappedBean, testCode, "testSerDeser", 1, null);
+        o = Context.jsToJava(o, String.class);
+        assertEquals(expectedType.getSimpleName(), o);
+
+        wrappedBean = serDeser(wrappedBean, scope);
+
+        // try again after deserialization
+        o = cx.evaluateString(wrappedBean, testCode, "testSerDeser", 1, null);
+        o = Context.jsToJava(o, String.class);
+
+        assertEquals(expectedType.getSimpleName(), o);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T serDeser(T element, Scriptable scope) {
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ObjectOutputStream oos = new ScriptableOutputStream(baos, scope)) {
+            oos.writeObject(element);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // deserialize
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+                ObjectInputStream ois = new ScriptableInputStream(bais, scope); ) {
+            return (T) ois.readObject();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

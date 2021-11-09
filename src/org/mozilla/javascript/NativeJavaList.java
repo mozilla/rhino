@@ -46,18 +46,22 @@ import java.util.List;
  */
 public class NativeJavaList extends NativeJavaObject {
 
-    private static final long serialVersionUID = 6403865639690547921L;
+    private static final long serialVersionUID = 660285467829047519L;
 
     protected final List<Object> list;
 
-    protected final Class<?> valueType;
+    protected transient Class<?> valueType;
 
     @SuppressWarnings("unchecked")
     public NativeJavaList(Scriptable scope, Object list, Type staticType) {
         super(scope, list, staticType);
         assert list instanceof List;
         this.list = (List<Object>) list;
+    }
 
+    @Override
+    protected void initMembers() {
+        super.initMembers();
         this.valueType = typeResolver.resolve(List.class, 0);
     }
 

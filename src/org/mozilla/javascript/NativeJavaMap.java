@@ -20,17 +20,17 @@ import java.util.Map;
  * for .. of</code>.
  *
  * <p><b>Limitations:</b> The wrapped map should have <code>String</code> or <code>Integer</code> as
- * key. Otherwise, property based access may not work.
+ * key. Otherwise, property based access may not work properly.
  */
 public class NativeJavaMap extends NativeJavaObject {
 
-    private static final long serialVersionUID = 46513864372878618L;
+    private static final long serialVersionUID = -3786257752907047381L;
 
     private final Map<Object, Object> map;
 
-    private final Class<?> keyType;
+    private transient Class<?> keyType;
 
-    private final Class<?> valueType;
+    private transient Class<?> valueType;
 
     static void init(ScriptableObject scope, boolean sealed) {
         NativeJavaMapIterator.init(scope, sealed);
@@ -41,6 +41,11 @@ public class NativeJavaMap extends NativeJavaObject {
         super(scope, map, staticType);
         assert map instanceof Map;
         this.map = (Map<Object, Object>) map;
+    }
+
+    @Override
+    protected void initMembers() {
+        super.initMembers();
         this.keyType = typeResolver.resolve(Map.class, 0);
         this.valueType = typeResolver.resolve(Map.class, 1);
     }

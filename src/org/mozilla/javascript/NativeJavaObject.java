@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.Iterator;
@@ -48,23 +49,23 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             Scriptable scope, Object javaObject, Type staticType, boolean isAdapter) {
         this.parent = scope;
         this.javaObject = javaObject;
-        this.staticRawType = JavaTypeInfo.getRawType(staticType);
+        this.staticType = staticType;
         this.isAdapter = isAdapter;
-        this.typeResolver =
-                new JavaTypeResolver(
-                        scope, staticType, javaObject == null ? null : javaObject.getClass());
 
         initMembers();
     }
 
     protected void initMembers() {
-        Class<?> dynamicType;
+        Type dynamicType;
         if (javaObject != null) {
             dynamicType = javaObject.getClass();
         } else {
-            dynamicType = staticRawType;
+            dynamicType = staticType;
         }
-        members = JavaMembers.lookupClass(parent, dynamicType, staticRawType, isAdapter);
+        this.typeResolver = new JavaTypeResolver(parent, staticType, dynamicType);
+        Class<?> dynamicRawType = JavaTypeInfo.getRawType(dynamicType);
+        Class<?> staticRawType = JavaTypeInfo.getRawType(staticType);
+        members = JavaMembers.lookupClass(parent, dynamicRawType, staticRawType, isAdapter);
         fieldAndMethods = members.getFieldAndMethodsObjects(this, javaObject, false);
     }
 
@@ -851,8 +852,24 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
             out.writeObject(javaObject);
         }
 
-        if (staticRawType != null) {
-            out.writeObject(staticRawType.getName());
+        if (staticType != null) {
+            StringBuilder sb = new StringBuilder(JavaTypeInfo.getRawType(staticType).getName());
+            if (staticType instanceof ParameterizedType) {
+                // unfortunately, ParameterizedTypes are not serializable. in this case we serialize
+                // the first level of arguments and append it to the class name.
+                // This is sufficient for most use cases. See SimpleParameterizedTypeImpl for
+                // details
+                sb.append('<');
+                Type[] args = ((ParameterizedType) staticType).getActualTypeArguments();
+                for (int i = 0; i < args.length; i++) {
+                    if (i > 0) {
+                        sb.append(',');
+                    }
+                    sb.append(JavaTypeInfo.getRawType(args[i]).getName());
+                }
+                sb.append('>');
+            }
+            out.writeObject(sb.toString());
         } else {
             out.writeObject(null);
         }
@@ -873,15 +890,62 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
         } else {
             javaObject = in.readObject();
         }
-
         String className = (String) in.readObject();
         if (className != null) {
-            staticRawType = Class.forName(className);
+            int pos = className.indexOf('<');
+            if (pos == -1) {
+                staticType = Class.forName(className);
+            } else {
+                staticType = new SimpleParameterizedTypeImpl(className);
+            }
         } else {
-            staticRawType = null;
+            staticType = null;
         }
 
         initMembers();
+    }
+
+    /**
+     * This is a very simple representation that enables deserialization of simple generic types.
+     *
+     * <p>it supports only the first level, so <code>java.util.List&lt;java.util.Map&gt;</code> is
+     * supported, but <code>
+     * java.util.List&lt;java.util.Map&lt;java.lang.String, java.lang.String&gt;&gt;</code> not.
+     *
+     * @author Roland Praml, FOCONIS AG
+     */
+    private static class SimpleParameterizedTypeImpl implements ParameterizedType {
+
+        private final Class<?> rawType;
+        private final Type[] actualTypeArguments;
+
+        private SimpleParameterizedTypeImpl(String typeDef) throws ClassNotFoundException {
+            // This is a very simple parser. It expects a typeDef in the format
+            // "ClassName<ClassName,ClassName>"
+            int open = typeDef.indexOf('<');
+            int close = typeDef.lastIndexOf('>');
+            rawType = Class.forName(typeDef.substring(0, open));
+            String[] args = typeDef.substring(open + 1, close).split(",");
+            actualTypeArguments = new Type[args.length];
+            for (int i = 0; i < args.length; i++) {
+                actualTypeArguments[i] = Class.forName(args[i]);
+            }
+        }
+
+        @Override
+        public Type[] getActualTypeArguments() {
+            return actualTypeArguments.clone();
+        }
+
+        @Override
+        public Type getRawType() {
+            return rawType;
+        }
+
+        @Override
+        public Type getOwnerType() {
+            return null; // not supported
+        }
     }
 
     private static Callable symbol_iterator =
@@ -948,12 +1012,10 @@ public class NativeJavaObject implements Scriptable, SymbolScriptable, Wrapper, 
 
     protected transient Object javaObject;
 
-    protected transient Class<?> staticRawType;
+    protected transient Type staticType;
     protected transient JavaMembers members;
     private transient Map<String, FieldAndMethods> fieldAndMethods;
     protected transient boolean isAdapter;
-    // TODO: There is currently no serialization/deserialization support
-    // as this may break existing serialized content
     protected transient JavaTypeResolver typeResolver;
 
     private static final Object COERCED_INTERFACE_KEY = "Coerced Interface";
