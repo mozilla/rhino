@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Locale;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +20,7 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.IdFunctionObject;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Wrapper;
 
 @RunWith(BlockJUnit4ClassRunner.class)
@@ -35,6 +35,20 @@ public class SealedSharedScopeTest {
     public void setUp() throws Exception {
         Context tmpCtx = Context.enter();
         sharedScope = new ImporterTopLevel(tmpCtx, true);
+
+        tmpCtx.evaluateString(
+                sharedScope,
+                "jsObj = {'bar': 42};\n"
+                // Some tests...
+                // + "Object.defineProperties(jsObj, { baz : { writable: true, value: 'aaa' }});\n"
+                // + "Object.seal(jsObj);"
+                ,
+                "init",
+                1,
+                null);
+        // Note: Object.seal != ScriptableObject.sealObject
+        ((ScriptableObject) sharedScope.get("jsObj", sharedScope)).sealObject();
+
         sharedScope.sealObject();
         Context.exit();
 
@@ -61,17 +75,14 @@ public class SealedSharedScopeTest {
     }
 
     /**
-     * Test should verify if JavaImporter can import
-     * java.util.Date/java.sql.Date without colliding with internal Date
-     * function.
+     * Test should verify if JavaImporter can import java.util.Date/java.sql.Date without colliding
+     * with internal Date function.
      */
     @Test
     public void importClassWithImporter() throws Exception {
         Object o;
-        evaluateString(scope1, "var imp1 = new JavaImporter();\n"
-                + "imp1.importClass(java.util.Date);");
-        evaluateString(scope1, "var imp2 = new JavaImporter();\n"
-                + "imp2.importClass(java.sql.Date);");
+        evaluateString(scope1, "var imp1 = new JavaImporter();\nimp1.importClass(java.util.Date);");
+        evaluateString(scope1, "var imp2 = new JavaImporter();\nimp2.importClass(java.sql.Date);");
         o = evaluateString(scope1, "imp1.Date");
         assertEquals(java.util.Date.class, o);
 
@@ -82,22 +93,19 @@ public class SealedSharedScopeTest {
         assertEquals(IdFunctionObject.class, o.getClass());
 
         o = evaluateString(scope2, "typeof imp1"); // scope 2 has
-                                                                  // no imp1
+        // no imp1
         assertEquals("undefined", o);
     }
 
     /**
-     * Test should verify if JavaImporter can import
-     * java.util.Date/java.sql.Date without colliding with internal Date
-     * function.
+     * Test should verify if JavaImporter can import java.util.Date/java.sql.Date without colliding
+     * with internal Date function.
      */
     @Test
     public void importPackageWithImporter() throws Exception {
         Object o;
-        evaluateString(scope1, "var imp1 = new JavaImporter();\n"
-                + "imp1.importPackage(java.util);");
-        evaluateString(scope1, "var imp2 = new JavaImporter();\n"
-                + "imp2.importPackage(java.sql);");
+        evaluateString(scope1, "var imp1 = new JavaImporter();\nimp1.importPackage(java.util);");
+        evaluateString(scope1, "var imp2 = new JavaImporter();\nimp2.importPackage(java.sql);");
         o = evaluateString(scope1, "imp1.Date");
         assertEquals(java.util.Date.class, o);
 
@@ -108,7 +116,7 @@ public class SealedSharedScopeTest {
         assertEquals(IdFunctionObject.class, o.getClass());
 
         o = evaluateString(scope2, "typeof imp1 == 'undefined'"); // scope 2 has
-                                                                  // no imp1
+        // no imp1
         assertTrue((Boolean) o);
     }
 
@@ -123,8 +131,7 @@ public class SealedSharedScopeTest {
         o = evaluateString(scope2, "Name");
         assertEquals(javax.xml.soap.Name.class, o);
 
-        o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement"
-                                                 // function
+        o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement" function
         assertEquals("undefined", o);
     }
 
@@ -139,8 +146,7 @@ public class SealedSharedScopeTest {
         o = evaluateString(scope2, "Name");
         assertEquals(javax.xml.soap.Name.class, o);
 
-        o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement"
-                                                 // function
+        o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement" function
         assertEquals("undefined", o);
     }
 
@@ -158,9 +164,59 @@ public class SealedSharedScopeTest {
             evaluateString(scope2, "Locale.getDefault()");
             fail("EcmaError expected");
         } catch (EcmaError e) {
-            assertEquals("ReferenceError: \"Locale\" is not defined. (test#1)",
+            assertEquals("ReferenceError: \"Locale\" is not defined. (test#1)", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSealedJsModifyProp() {
+        String s = evaluateString(scope1, "jsObj").toString();
+        assertEquals("[object Object]", s);
+
+        try {
+            evaluateString(scope1, "'use strict';jsObj.bar = 3");
+            fail("EvaluatorException expected");
+        } catch (EvaluatorException e) {
+            assertEquals(
+                    "Cannot modify a property of a sealed object: bar. (test#1)", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSealedJsAddProp() {
+        String s = evaluateString(scope1, "jsObj").toString();
+        assertEquals("[object Object]", s);
+
+        try {
+            evaluateString(scope1, "'use strict';jsObj.foo = 3");
+            fail("EvaluatorException expected");
+        } catch (EvaluatorException e) {
+            assertEquals(
+                    "Cannot modify a property of a sealed object: foo. (test#1)", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSealedJsModifyProto() {
+        try {
+            evaluateString(scope1, "jsObj.__proto__ = {}");
+            fail("EvaluatorException expected");
+        } catch (EvaluatorException e) {
+            assertEquals(
+                    "Cannot modify a property of a sealed object: __proto__. (test#1)",
                     e.getMessage());
         }
     }
 
+    @Test
+    public void testSealedJsModifyParent() {
+        try {
+            evaluateString(scope1, "jsObj.__parent__ = {}");
+            fail("EvaluatorException expected");
+        } catch (EvaluatorException e) {
+            assertEquals(
+                    "Cannot modify a property of a sealed object: __parent__. (test#1)",
+                    e.getMessage());
+        }
+    }
 }
