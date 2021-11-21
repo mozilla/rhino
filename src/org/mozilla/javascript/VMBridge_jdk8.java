@@ -11,7 +11,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import org.mozilla.classfile.ClassFileWriter;
 
 /** VMBridge for Java 8. */
 public class VMBridge_jdk8 extends VMBridge {
@@ -62,6 +64,65 @@ public class VMBridge_jdk8 extends VMBridge {
         }
 
         return accessible.isAccessible();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected Method getAccessibleMethod(Object target, Method method) {
+        if (method.isAccessible()) {
+            return method;
+        }
+
+        try {
+            method.setAccessible(true);
+        } catch (RuntimeException ex) {
+            method = null;
+        }
+
+        return method;
+    }
+
+    @Override
+    protected void generateOverride(
+            ClassFileWriter cfw,
+            String adapterName,
+            String superName,
+            Method method,
+            ObjToIntMap generatedOverrides,
+            ObjToIntMap generatedMethods,
+            ObjToIntMap functionNames) {
+        int mods = method.getModifiers();
+        // if a method is marked abstract, must implement it or the
+        // resulting class won't be instantiable. otherwise, if the object
+        // has a property of the same name, then an override is intended.
+        boolean isAbstractMethod = Modifier.isAbstract(mods);
+        String methodName = method.getName();
+        if (isAbstractMethod || functionNames.has(methodName)) {
+            // make sure to generate only one instance of a particular
+            // method/signature.
+            Class<?>[] argTypes = method.getParameterTypes();
+            String methodSignature = JavaAdapter.getMethodSignature(method, argTypes);
+            String methodKey = methodName + methodSignature;
+            if (!generatedOverrides.has(methodKey)) {
+                JavaAdapter.generateMethod(
+                        cfw, adapterName, methodName, argTypes, method.getReturnType(), true);
+                generatedOverrides.put(methodKey, 0);
+                generatedMethods.put(methodName, 0);
+
+                // if a method was overridden, generate a "super$method"
+                // which lets the delegate call the superclass' version.
+                if (!isAbstractMethod) {
+                    JavaAdapter.generateSuper(
+                            cfw,
+                            adapterName,
+                            superName,
+                            methodName,
+                            methodSignature,
+                            argTypes,
+                            method.getReturnType());
+                }
+            }
+        }
     }
 
     @Override

@@ -10,7 +10,9 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import org.mozilla.classfile.ClassFileWriter;
 
 /**
  * VMBridge for Java 11 and later.
@@ -19,6 +21,8 @@ import java.lang.reflect.Proxy;
  * Java 11 is the lowest supported modular Java.
  */
 public class VMBridge_jdk11 extends VMBridge_jdk8 {
+
+    private static final String SUPER_PREFIX = "super$";
 
     @Override
     protected boolean tryToMakeAccessible(AccessibleObject accessible) {
@@ -42,6 +46,84 @@ public class VMBridge_jdk11 extends VMBridge_jdk8 {
         }
 
         return can;
+    }
+
+    @Override
+    protected Method getAccessibleMethod(Object target, Method method) {
+        try {
+            method.setAccessible(true);
+            return method;
+        } catch (RuntimeException ex) {
+        }
+
+        Class<?> cl = target.getClass();
+        String superName = SUPER_PREFIX + method.getName();
+        Class<?>[] paramTypes = method.getParameterTypes();
+        try {
+            method = cl.getDeclaredMethod(superName, paramTypes);
+        } catch (Exception e) {
+            method = null;
+        }
+
+        return method;
+    }
+
+    @Override
+    protected void generateOverride(
+            ClassFileWriter cfw,
+            String adapterName,
+            String superName,
+            Method method,
+            ObjToIntMap generatedOverrides,
+            ObjToIntMap generatedMethods,
+            ObjToIntMap functionNames) {
+        int mods = method.getModifiers();
+        // if a method is marked abstract, must implement it or the
+        // resulting class won't be instantiable. otherwise, if the object
+        // has a property of the same name, then an override is intended.
+        boolean isAbstractMethod = Modifier.isAbstract(mods);
+        String methodName = method.getName();
+        if (isAbstractMethod || functionNames.has(methodName)) {
+            // make sure to generate only one instance of a particular
+            // method/signature.
+            Class<?>[] argTypes = method.getParameterTypes();
+            String methodSignature = JavaAdapter.getMethodSignature(method, argTypes);
+            String methodKey = methodName + methodSignature;
+            if (!generatedOverrides.has(methodKey)) {
+                JavaAdapter.generateMethod(
+                        cfw, adapterName, methodName, argTypes, method.getReturnType(), true);
+                generatedOverrides.put(methodKey, 0);
+                generatedMethods.put(methodName, 0);
+
+                // if a method was overridden, generate a "super$method"
+                // which lets the delegate call the superclass' version.
+                if (!isAbstractMethod) {
+                    JavaAdapter.generateSuper(
+                            cfw,
+                            adapterName,
+                            superName,
+                            methodName,
+                            methodSignature,
+                            argTypes,
+                            method.getReturnType());
+                }
+            }
+
+        } else if (Modifier.isProtected(mods)
+                && !Modifier.isStatic(mods)
+                && !Modifier.isFinal(mods)) {
+            Class<?>[] argTypes = method.getParameterTypes();
+            String methodSignature = JavaAdapter.getMethodSignature(method, argTypes);
+
+            JavaAdapter.generateSuper(
+                    cfw,
+                    adapterName,
+                    superName,
+                    methodName,
+                    methodSignature,
+                    argTypes,
+                    method.getReturnType());
+        }
     }
 
     @Override

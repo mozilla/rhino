@@ -210,7 +210,8 @@ final class MemberBox implements Serializable {
                     memberObject = accessible;
                     method = accessible;
                 } else {
-                    if (!VMBridge.instance.tryToMakeAccessible(method)) {
+                    method = VMBridge.instance.getAccessibleMethod(target, method);
+                    if (method == null) {
                         throw Context.throwAsScriptRuntimeEx(ex);
                     }
                 }

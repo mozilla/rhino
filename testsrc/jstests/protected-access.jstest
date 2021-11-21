@@ -1,0 +1,17 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// Rhino must access a protected method of AbstractAction
+
+var obj = new javax.swing.AbstractAction() {
+
+  fireNameChange: function(oldValue, newValue) {
+    this.firePropertyChange('name', oldValue, newValue);
+  }
+
+};
+
+obj.fireNameChange(null, 'foo');
+
+"success";
