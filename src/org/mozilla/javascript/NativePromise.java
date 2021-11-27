@@ -162,7 +162,8 @@ public class NativePromise extends ScriptableObject {
         return cap.promise;
     }
 
-    private static Object doAll(Context cx, Scriptable scope, Scriptable thisObj, Object[] args, boolean failFast) {
+    private static Object doAll(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, boolean failFast) {
         Capability cap = new Capability(cx, scope, thisObj);
         Object arg = (args.length > 0 ? args[0] : Undefined.instance);
 
@@ -205,7 +206,8 @@ public class NativePromise extends ScriptableObject {
     }
 
     // Promise.allSettled
-    private static Object allSettled(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object allSettled(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         return doAll(cx, scope, thisObj, args, false);
     }
 
@@ -704,7 +706,11 @@ public class NativePromise extends ScriptableObject {
         Capability capability;
         boolean failFast;
 
-        PromiseAllResolver(IteratorLikeIterable.Itr iter, Scriptable thisObj, Capability cap, boolean failFast) {
+        PromiseAllResolver(
+                IteratorLikeIterable.Itr iter,
+                Scriptable thisObj,
+                Capability cap,
+                boolean failFast) {
             this.iterator = iter;
             this.thisObj = thisObj;
             this.capability = cap;
@@ -758,37 +764,39 @@ public class NativePromise extends ScriptableObject {
                         new LambdaFunction(
                                 topScope,
                                 1,
-                                (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
-                                        Object value = (args.length > 0 ? args[0] : Undefined.instance);
-                                        if (!failFast) {
-                                            Scriptable elementResult = cx.newObject(scope);
-                                            elementResult.put("status", elementResult, "fulfilled");
-                                            elementResult.put("value", elementResult, value);
-                                            value = elementResult;
-                                        }
-                                        return eltResolver.resolve(
-                                                cx,
-                                                scope,
-                                                value,
-                                                this);
+                                (Context cx,
+                                        Scriptable scope,
+                                        Scriptable thisObj,
+                                        Object[] args) -> {
+                                    Object value = (args.length > 0 ? args[0] : Undefined.instance);
+                                    if (!failFast) {
+                                        Scriptable elementResult = cx.newObject(scope);
+                                        elementResult.put("status", elementResult, "fulfilled");
+                                        elementResult.put("value", elementResult, value);
+                                        value = elementResult;
+                                    }
+                                    return eltResolver.resolve(cx, scope, value, this);
                                 });
                 resolveFunc.setStandardPropertyAttributes(DONTENUM | READONLY);
 
                 Callable rejectFunc = capability.reject;
                 if (!failFast) {
-                    LambdaFunction resolveSettledRejection = new LambdaFunction(
-                            topScope,
-                            1,
-                            (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) -> {
-                                    Scriptable result = cx.newObject(scope);
-                                    result.put("status", result, " rejected");
-                                    result.put("reason", result, (args.length > 0 ? args[0] : Undefined.instance));
-                                    return eltResolver.resolve(
-                                            cx,
-                                            scope,
-                                            result,
-                                            this);
-                            });
+                    LambdaFunction resolveSettledRejection =
+                            new LambdaFunction(
+                                    topScope,
+                                    1,
+                                    (Context cx,
+                                            Scriptable scope,
+                                            Scriptable thisObj,
+                                            Object[] args) -> {
+                                        Scriptable result = cx.newObject(scope);
+                                        result.put("status", result, " rejected");
+                                        result.put(
+                                                "reason",
+                                                result,
+                                                (args.length > 0 ? args[0] : Undefined.instance));
+                                        return eltResolver.resolve(cx, scope, result, this);
+                                    });
                     resolveSettledRejection.setStandardPropertyAttributes(DONTENUM | READONLY);
                     rejectFunc = resolveSettledRejection;
                 }
