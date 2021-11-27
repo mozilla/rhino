@@ -209,13 +209,19 @@ public class Parser {
             addError(messageId, messageArg, position, length);
         } else if (errorCollector != null) {
             errorCollector.warning(message, sourceURI, position, length);
-        } else {
+        } else if (ts != null) {
             errorReporter.warning(message, sourceURI, ts.getLineno(), ts.getLine(), ts.getOffset());
+        } else {
+            errorReporter.warning(message, sourceURI, 1, "", 1);
         }
     }
 
     void addError(String messageId) {
-        addError(messageId, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+        if (ts == null) {
+            addError(messageId, 0, 0);
+        } else {
+            addError(messageId, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+        }
     }
 
     void addError(String messageId, int position, int length) {
@@ -232,7 +238,7 @@ public class Parser {
 
     void addError(String messageId, int c) {
         String messageArg = Character.toString((char) c);
-        addError(messageId, messageArg, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+        addError(messageId, messageArg);
     }
 
     void addError(String messageId, String messageArg, int position, int length) {
