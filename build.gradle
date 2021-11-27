@@ -100,6 +100,16 @@ test {
     // more resilient at the expense of performance.
     forkEvery = 1
     maxParallelForks = 64
+
+    testLogging {
+        afterSuite {
+            desc, result -> {
+                if (!desc.parent) {
+                    println "Test Result: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} success, ${result.failedTestCount} failure, ${result.skippedTestCount} skipped)"
+                }
+            }
+        }
+    }
 }
 
 task sunSpiderBenchmark(type: JavaExec) {
