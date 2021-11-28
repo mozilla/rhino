@@ -105,6 +105,7 @@ public class Global extends ImporterTopLevel {
         // Define some global functions particular to the shell. Note
         // that these functions are not part of ECMA.
         initStandardObjects(cx, sealedStdLib);
+        NativeConsole.init(this, sealedStdLib);
         String[] names = {
             "defineClass",
             "deserialize",
