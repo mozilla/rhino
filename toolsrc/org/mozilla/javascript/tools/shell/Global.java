@@ -38,6 +38,7 @@ import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.NativeArray;
+import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptRuntime;
@@ -105,7 +106,7 @@ public class Global extends ImporterTopLevel {
         // Define some global functions particular to the shell. Note
         // that these functions are not part of ECMA.
         initStandardObjects(cx, sealedStdLib);
-        NativeConsole.init(this, sealedStdLib);
+        NativeConsole.init(this, sealedStdLib, new ShellConsolePrinter());
         String[] names = {
             "defineClass",
             "deserialize",

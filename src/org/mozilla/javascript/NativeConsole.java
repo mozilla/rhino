@@ -4,24 +4,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.javascript.tools.shell;
+package org.mozilla.javascript;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.IdFunctionObject;
-import org.mozilla.javascript.IdScriptableObject;
-import org.mozilla.javascript.NativeJSON;
-import org.mozilla.javascript.ScriptRuntime;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.Undefined;
 
 public class NativeConsole extends IdScriptableObject {
     private static final long serialVersionUID = 5694613212458273057L;
@@ -30,13 +21,15 @@ public class NativeConsole extends IdScriptableObject {
 
     private static final String DEFAULT_LABEL = "default";
 
-    private static final Pattern FMT_REG = Pattern.compile("%[sfdio%]");
+    private static final Pattern FMT_REG = Pattern.compile("%[sfdioO%]");
 
     private final Map<String, Long> timers = new ConcurrentHashMap<>();
 
     private final Map<String, AtomicInteger> counters = new ConcurrentHashMap<>();
 
-    private enum Level {
+    private final ConsolePrinter printer;
+
+    public enum Level {
         TRACE,
         DEBUG,
         INFO,
@@ -44,8 +37,12 @@ public class NativeConsole extends IdScriptableObject {
         ERROR
     }
 
-    static void init(Scriptable scope, boolean sealed) {
-        NativeConsole obj = new NativeConsole();
+    public interface ConsolePrinter extends Serializable {
+        void print(Level level, String msg);
+    }
+
+    public static void init(Scriptable scope, boolean sealed, ConsolePrinter printer) {
+        NativeConsole obj = new NativeConsole(printer);
         obj.activatePrototypeMap(MAX_ID);
         obj.setPrototype(getObjectPrototype(scope));
         obj.setParentScope(scope);
@@ -55,7 +52,9 @@ public class NativeConsole extends IdScriptableObject {
         ScriptableObject.defineProperty(scope, "console", obj, ScriptableObject.DONTENUM);
     }
 
-    private NativeConsole() {}
+    private NativeConsole(ConsolePrinter printer) {
+        this.printer = printer;
+    }
 
     @Override
     public String getClassName() {
@@ -73,7 +72,7 @@ public class NativeConsole extends IdScriptableObject {
         switch (id) {
             case Id_toSource:
                 arity = 0;
-                name = "toSrouce";
+                name = "toSource";
                 break;
             case Id_trace:
                 arity = 1;
@@ -203,16 +202,7 @@ public class NativeConsole extends IdScriptableObject {
             Object[] fmtArgs = Arrays.copyOfRange(args, 1, args.length);
             msg = format(cx, scope, msg, fmtArgs);
         }
-        print(level, msg);
-    }
-
-    private void print(Level level, String msg) {
-        try {
-            ShellConsole shellConsole = Main.getGlobal().getConsole(Charset.defaultCharset());
-            shellConsole.println(level + " " + msg);
-        } catch (IOException e) {
-            throw Context.reportRuntimeError(e.getMessage());
-        }
+        printer.print(level, msg);
     }
 
     private String format(Context cx, Scriptable scope, String msg, Object[] args) {
@@ -250,6 +240,7 @@ public class NativeConsole extends IdScriptableObject {
                     break;
 
                 case "%o":
+                case "%O":
                     replaceArg = formatObj(cx, scope, args, argIndex);
                     break;
 
@@ -296,20 +287,20 @@ public class NativeConsole extends IdScriptableObject {
             msg.append(" console.assert");
         }
 
-        print(Level.ERROR, msg.toString());
+        printer.print(Level.ERROR, msg.toString());
     }
 
     private void count(Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         int count = counters.computeIfAbsent(label, l -> new AtomicInteger(0)).incrementAndGet();
-        print(Level.INFO, label + ": " + count);
+        printer.print(Level.INFO, label + ": " + count);
     }
 
     private void countReset(Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         AtomicInteger counter = counters.remove(label);
         if (counter == null) {
-            print(Level.WARN, "Count for '" + label + "' does not exist.");
+            printer.print(Level.WARN, "Count for '" + label + "' does not exist.");
         }
     }
 
@@ -317,7 +308,7 @@ public class NativeConsole extends IdScriptableObject {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start != null) {
-            print(Level.WARN, "Timer '" + label + "' already exists.");
+            printer.print(Level.WARN, "Timer '" + label + "' already exists.");
             return;
         }
         timers.put(label, System.nanoTime());
@@ -327,17 +318,17 @@ public class NativeConsole extends IdScriptableObject {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.remove(label);
         if (start == null) {
-            print(Level.WARN, "Timer '" + label + "' does not exist.");
+            printer.print(Level.WARN, "Timer '" + label + "' does not exist.");
             return;
         }
-        print(Level.INFO, label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
+        printer.print(Level.INFO, label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
     }
 
     private void timeLog(Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start == null) {
-            print(Level.WARN, "Timer '" + label + "' does not exist.");
+            printer.print(Level.WARN, "Timer '" + label + "' does not exist.");
             return;
         }
         StringBuilder msg =
@@ -348,7 +339,7 @@ public class NativeConsole extends IdScriptableObject {
                 msg.append(" ").append(ScriptRuntime.toString(args[i]));
             }
         }
-        print(Level.INFO, msg.toString());
+        printer.print(Level.INFO, msg.toString());
     }
 
     private double nano2Milli(Long nano) {
