@@ -589,6 +589,7 @@ public abstract class ScriptableObject
      *
      * @param name Name of the object. If nonnull, index must be 0.
      * @param index Index of the object. If nonzero, name must be null.
+     * @param scope the current scope.
      * @param isSetter If true, return the setter, otherwise return the getter.
      * @exception IllegalArgumentException if both name and index are nonnull and nonzero
      *     respectively.
@@ -600,6 +601,24 @@ public abstract class ScriptableObject
         Slot slot = slotMap.query(name, index);
         if (slot == null) return null;
         return isSetter ? slot.getSetterFunction(name, scope) : slot.getGetterFunction(name, scope);
+    }
+
+    /**
+     * Get the getter or setter for a given property. Used by __lookupGetter__ and __lookupSetter__.
+     *
+     * @deprecated since 1.7.14. Use the form with the scope to ensure consistent function prototype
+     *     handling in all cases.
+     * @param name Name of the object. If nonnull, index must be 0.
+     * @param index Index of the object. If nonzero, name must be null.
+     * @param isSetter If true, return the setter, otherwise return the getter.
+     * @exception IllegalArgumentException if both name and index are nonnull and nonzero
+     *     respectively.
+     * @return Null if the property does not exist. Otherwise returns either the getter or the
+     *     setter for the property, depending on the value of isSetter (may be undefined if unset).
+     */
+    @Deprecated
+    public Function getGetterOrSetter(String name, int index, boolean isSetter) {
+        return getGetterOrSetter(name, index, this, isSetter);
     }
 
     /**
