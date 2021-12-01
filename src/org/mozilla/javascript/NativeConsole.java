@@ -7,7 +7,6 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,7 +37,7 @@ public class NativeConsole extends IdScriptableObject {
     }
 
     public interface ConsolePrinter extends Serializable {
-        void print(Level level, String msg);
+        void print(Context cx, Scriptable scope, Level level, Object[] args);
     }
 
     public static void init(Scriptable scope, boolean sealed, ConsolePrinter printer) {
@@ -141,48 +140,48 @@ public class NativeConsole extends IdScriptableObject {
                 return "Console";
 
             case Id_trace:
-                print(cx, scope, Level.TRACE, args);
+                printer.print(cx, scope, Level.TRACE, args);
                 break;
 
             case Id_debug:
-                print(cx, scope, Level.DEBUG, args);
+                printer.print(cx, scope, Level.DEBUG, args);
                 break;
 
             case Id_log:
             case Id_info:
-                print(cx, scope, Level.INFO, args);
+                printer.print(cx, scope, Level.INFO, args);
                 break;
 
             case Id_warn:
-                print(cx, scope, Level.WARN, args);
+                printer.print(cx, scope, Level.WARN, args);
                 break;
 
             case Id_error:
-                print(cx, scope, Level.ERROR, args);
+                printer.print(cx, scope, Level.ERROR, args);
                 break;
 
             case Id_assert:
-                jsAssert(args);
+                jsAssert(cx, scope, args);
                 break;
 
             case Id_count:
-                count(args);
+                count(cx, scope, args);
                 break;
 
             case Id_countReset:
-                countReset(args);
+                countReset(cx, scope, args);
                 break;
 
             case Id_time:
-                time(args);
+                time(cx, scope, args);
                 break;
 
             case Id_timeEnd:
-                timeEnd(args);
+                timeEnd(cx, scope, args);
                 break;
 
             case Id_timeLog:
-                timeLog(args);
+                timeLog(cx, scope, args);
                 break;
 
             default:
@@ -192,25 +191,17 @@ public class NativeConsole extends IdScriptableObject {
         return Undefined.instance;
     }
 
-    private void print(Context cx, Scriptable scope, Level level, Object[] args) {
-        if (args.length == 0) {
-            return;
-        }
-
-        String msg = ScriptRuntime.toString(args[0]);
-        if (args.length > 1) {
-            Object[] fmtArgs = Arrays.copyOfRange(args, 1, args.length);
-            msg = format(cx, scope, msg, fmtArgs);
-        }
-        printer.print(level, msg);
+    private void print(Context cx, Scriptable scope, Level level, String msg) {
+        printer.print(cx, scope, level, new String[] {msg});
     }
 
-    private String format(Context cx, Scriptable scope, String msg, Object[] args) {
+    public static String format(Context cx, Scriptable scope, Object[] args) {
+        String msg = ScriptRuntime.toString(args[0]);
         if (msg == null || msg.length() == 0) {
             return "";
         }
 
-        int argIndex = 0;
+        int argIndex = 1;
         Matcher matcher = FMT_REG.matcher(msg);
         StringBuffer buffer = new StringBuffer(msg.length() * 2);
         while (matcher.find()) {
@@ -257,7 +248,7 @@ public class NativeConsole extends IdScriptableObject {
         return buffer.toString();
     }
 
-    private String formatObj(Context cx, Scriptable scope, Object[] args, int argIndex) {
+    private static String formatObj(Context cx, Scriptable scope, Object[] args, int argIndex) {
         if (argIndex >= args.length) {
             return "";
         }
@@ -273,7 +264,7 @@ public class NativeConsole extends IdScriptableObject {
         return ScriptRuntime.toString(NativeJSON.stringify(cx, scope, arg, null, null));
     }
 
-    private void jsAssert(Object[] args) {
+    private void jsAssert(Context cx, Scriptable scope, Object[] args) {
         if (args != null && args.length > 0 && ScriptRuntime.toBoolean(args[0])) {
             return;
         }
@@ -287,48 +278,48 @@ public class NativeConsole extends IdScriptableObject {
             msg.append(" console.assert");
         }
 
-        printer.print(Level.ERROR, msg.toString());
+        print(cx, scope, Level.ERROR, msg.toString());
     }
 
-    private void count(Object[] args) {
+    private void count(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         int count = counters.computeIfAbsent(label, l -> new AtomicInteger(0)).incrementAndGet();
-        printer.print(Level.INFO, label + ": " + count);
+        print(cx, scope, Level.INFO, label + ": " + count);
     }
 
-    private void countReset(Object[] args) {
+    private void countReset(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         AtomicInteger counter = counters.remove(label);
         if (counter == null) {
-            printer.print(Level.WARN, "Count for '" + label + "' does not exist.");
+            print(cx, scope, Level.WARN, "Count for '" + label + "' does not exist.");
         }
     }
 
-    private void time(Object[] args) {
+    private void time(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start != null) {
-            printer.print(Level.WARN, "Timer '" + label + "' already exists.");
+            print(cx, scope, Level.WARN, "Timer '" + label + "' already exists.");
             return;
         }
         timers.put(label, System.nanoTime());
     }
 
-    private void timeEnd(Object[] args) {
+    private void timeEnd(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.remove(label);
         if (start == null) {
-            printer.print(Level.WARN, "Timer '" + label + "' does not exist.");
+            print(cx, scope, Level.WARN, "Timer '" + label + "' does not exist.");
             return;
         }
-        printer.print(Level.INFO, label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
+        print(cx, scope, Level.INFO, label + ": " + nano2Milli(System.nanoTime() - start) + "ms");
     }
 
-    private void timeLog(Object[] args) {
+    private void timeLog(Context cx, Scriptable scope, Object[] args) {
         String label = args.length > 0 ? ScriptRuntime.toString(args[0]) : DEFAULT_LABEL;
         Long start = timers.get(label);
         if (start == null) {
-            printer.print(Level.WARN, "Timer '" + label + "' does not exist.");
+            print(cx, scope, Level.WARN, "Timer '" + label + "' does not exist.");
             return;
         }
         StringBuilder msg =
@@ -339,7 +330,7 @@ public class NativeConsole extends IdScriptableObject {
                 msg.append(" ").append(ScriptRuntime.toString(args[i]));
             }
         }
-        printer.print(Level.INFO, msg.toString());
+        print(cx, scope, Level.INFO, msg.toString());
     }
 
     private double nano2Milli(Long nano) {

@@ -8,15 +8,21 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeConsole;
+import org.mozilla.javascript.Scriptable;
 
 /** Provide a printer use in console API */
 class ShellConsolePrinter implements NativeConsole.ConsolePrinter {
     private static final long serialVersionUID = 5869832740127501857L;
 
     @Override
-    public void print(NativeConsole.Level level, String msg) {
+    public void print(Context cx, Scriptable scope, NativeConsole.Level level, Object[] args) {
+        if (args.length == 0) {
+            return;
+        }
+
+        String msg = NativeConsole.format(cx, scope, args);
+        ShellConsole console = Main.getGlobal().getConsole(Charset.defaultCharset());
         try {
-            ShellConsole console = Main.getGlobal().getConsole(Charset.defaultCharset());
             console.println(level + " " + msg);
         } catch (IOException e) {
             throw Context.reportRuntimeError(e.getMessage());
