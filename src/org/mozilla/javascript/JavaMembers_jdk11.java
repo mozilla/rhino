@@ -49,6 +49,10 @@ class JavaMembers_jdk11 extends JavaMembers {
                 return true;
             }
             String clName = clazz.getName();
+            if (clName.contains("$Proxy")) {
+                // System.out.println("clazz getName \"" + clName + "\" contains $Proxy");
+                return false;
+            }
             pname = clName.substring(0, clName.lastIndexOf('.'));
         } else {
             pname = pkg.getName();

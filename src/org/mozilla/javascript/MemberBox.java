@@ -195,15 +195,20 @@ final class MemberBox implements Serializable {
         if (target instanceof Delegator) {
             target = ((Delegator) target).getDelegee();
         }
-        for (int i = 0; i < args.length; ++i) {
-            if (args[i] instanceof Delegator) {
-                args[i] = ((Delegator) args[i]).getDelegee();
+        if (args != null) {
+            for (int i = 0; i < args.length; ++i) {
+                if (args[i] instanceof Delegator) {
+                    args[i] = ((Delegator) args[i]).getDelegee();
+                }
             }
         }
 
         try {
             try {
-                return method.invoke(target, args);
+                if (args != null) {
+                    return method.invoke(target, args);
+                }
+                return method.invoke(target);
             } catch (IllegalAccessException ex) {
                 Method accessible = searchAccessibleMethod(method, argTypes);
                 if (accessible != null) {
