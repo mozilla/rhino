@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+
 import org.mozilla.javascript.regexp.NativeRegExp;
 import org.mozilla.javascript.xml.XMLObject;
 
@@ -328,45 +329,41 @@ public class NativeArray extends IdScriptableObject implements List {
                 case ConstructorId_find:
                 case ConstructorId_findIndex:
                 case ConstructorId_reduce:
-                case ConstructorId_reduceRight:
-                    {
-                        // this is a small trick; we will handle all the ConstructorId_xxx calls
-                        // the same way the object calls are processed
-                        // so we adjust the args, inverting the id and
-                        // restarting the method selection
-                        // Attention: the implementations have to be aware of this
-                        if (args.length > 0) {
-                            thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
-                            Object[] newArgs = new Object[args.length - 1];
-                            for (int i = 0; i < newArgs.length; i++) newArgs[i] = args[i + 1];
-                            args = newArgs;
-                        }
-                        id = -id;
-                        continue again;
+                case ConstructorId_reduceRight: {
+                    // this is a small trick; we will handle all the ConstructorId_xxx calls
+                    // the same way the object calls are processed
+                    // so we adjust the args, inverting the id and
+                    // restarting the method selection
+                    // Attention: the implementations have to be aware of this
+                    if (args.length > 0) {
+                        thisObj = ScriptRuntime.toObject(cx, scope, args[0]);
+                        Object[] newArgs = new Object[args.length - 1];
+                        for (int i = 0; i < newArgs.length; i++) newArgs[i] = args[i + 1];
+                        args = newArgs;
                     }
+                    id = -id;
+                    continue again;
+                }
 
                 case ConstructorId_isArray:
                     return Boolean.valueOf(args.length > 0 && js_isArray(args[0]));
 
-                case ConstructorId_of:
-                    {
-                        return js_of(cx, scope, thisObj, args);
-                    }
+                case ConstructorId_of: {
+                    return js_of(cx, scope, thisObj, args);
+                }
 
-                case ConstructorId_from:
-                    {
-                        return js_from(cx, scope, thisObj, args);
-                    }
+                case ConstructorId_from: {
+                    return js_from(cx, scope, thisObj, args);
+                }
 
-                case Id_constructor:
-                    {
-                        boolean inNewExpr = (thisObj == null);
-                        if (!inNewExpr) {
-                            // IdFunctionObject.construct will set up parent, proto
-                            return f.construct(cx, scope, args);
-                        }
-                        return jsConstructor(cx, scope, args);
+                case Id_constructor: {
+                    boolean inNewExpr = (thisObj == null);
+                    if (!inNewExpr) {
+                        // IdFunctionObject.construct will set up parent, proto
+                        return f.construct(cx, scope, args);
                     }
+                    return jsConstructor(cx, scope, args);
+                }
 
                 case Id_toString:
                     return toStringHelper(
@@ -713,7 +710,9 @@ public class NativeArray extends IdScriptableObject implements List {
         }
     }
 
-    /** See ECMA 15.4.1,2 */
+    /**
+     * See ECMA 15.4.1,2
+     */
     private static Object jsConstructor(Context cx, Scriptable scope, Object[] args) {
         if (args.length == 0) return new NativeArray(0);
 
@@ -743,7 +742,7 @@ public class NativeArray extends IdScriptableObject implements List {
             try {
                 final Object[] args =
                         (lengthAlways || (length > 0))
-                                ? new Object[] {Long.valueOf(length)}
+                                ? new Object[]{Long.valueOf(length)}
                                 : ScriptRuntime.emptyArgs;
                 result = ((Function) arg).construct(cx, scope, args);
             } catch (EcmaError ee) {
@@ -798,7 +797,7 @@ public class NativeArray extends IdScriptableObject implements List {
                                             cx,
                                             scope,
                                             thisArg,
-                                            new Object[] {temp, Long.valueOf(k)});
+                                            new Object[]{temp, Long.valueOf(k)});
                         }
                         defineElem(cx, result, k, temp);
                         k++;
@@ -812,13 +811,11 @@ public class NativeArray extends IdScriptableObject implements List {
         final long length = getLengthProperty(cx, items);
         final Scriptable result = callConstructorOrCreateArray(cx, scope, thisObj, length, true);
         for (long k = 0; k < length; k++) {
-            Object temp = getRawElem(items, k);
-            if (temp != Scriptable.NOT_FOUND) {
-                if (mapping) {
-                    temp = mapFn.call(cx, scope, thisArg, new Object[] {temp, Long.valueOf(k)});
-                }
-                defineElem(cx, result, k, temp);
+            Object temp = getElem(cx, items, k);
+            if (mapping) {
+                temp = mapFn.call(cx, scope, thisArg, new Object[]{temp, Long.valueOf(k)});
             }
+            defineElem(cx, result, k, temp);
         }
 
         setLengthProperty(cx, result, length);
@@ -841,7 +838,9 @@ public class NativeArray extends IdScriptableObject implements List {
         return length;
     }
 
-    /** @deprecated Use {@link #getLength()} instead. */
+    /**
+     * @deprecated Use {@link #getLength()} instead.
+     */
     @Deprecated
     public long jsGet_length() {
         return getLength();
@@ -853,8 +852,8 @@ public class NativeArray extends IdScriptableObject implements List {
      *
      * @param denseOnly new value for denseOnly flag
      * @throws IllegalArgumentException if an attempt is made to enable denseOnly after it was
-     *     disabled; NativeArray code is not written to handle switching back to a dense
-     *     representation
+     *                                  disabled; NativeArray code is not written to handle switching back to a dense
+     *                                  representation
      */
     void setDenseOnly(boolean denseOnly) {
         if (denseOnly && !this.denseOnly) throw new IllegalArgumentException();
@@ -1070,7 +1069,7 @@ public class NativeArray extends IdScriptableObject implements List {
                     Object elem = getRawElem(o, i);
                     if (elem == NOT_FOUND
                             || (skipUndefinedAndNull
-                                    && (elem == null || elem == Undefined.instance))) {
+                            && (elem == null || elem == Undefined.instance))) {
                         haslast = false;
                         continue;
                     }
@@ -1114,7 +1113,9 @@ public class NativeArray extends IdScriptableObject implements List {
         return result.toString();
     }
 
-    /** See ECMA 15.4.4.3 */
+    /**
+     * See ECMA 15.4.4.3
+     */
     private static String js_join(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
 
@@ -1177,7 +1178,9 @@ public class NativeArray extends IdScriptableObject implements List {
         return sb.toString();
     }
 
-    /** See ECMA 15.4.4.4 */
+    /**
+     * See ECMA 15.4.4.4
+     */
     private static Scriptable js_reverse(
             Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
@@ -1206,7 +1209,9 @@ public class NativeArray extends IdScriptableObject implements List {
         return o;
     }
 
-    /** See ECMA 15.4.4.5 */
+    /**
+     * See ECMA 15.4.4.5
+     */
     private static Scriptable js_sort(
             final Context cx,
             final Scriptable scope,
@@ -1813,7 +1818,7 @@ public class NativeArray extends IdScriptableObject implements List {
         Object compareTo = args.length > 0 ? args[0] : Undefined.instance;
 
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
-        long len = ScriptRuntime.toLength(new Object[] {getProperty(thisObj, "length")}, 0);
+        long len = ScriptRuntime.toLength(new Object[]{getProperty(thisObj, "length")}, 0);
         if (len == 0) return Boolean.FALSE;
 
         long k;
@@ -1964,7 +1969,9 @@ public class NativeArray extends IdScriptableObject implements List {
         return thisObj;
     }
 
-    /** Implements the methods "every", "filter", "forEach", "map", and "some". */
+    /**
+     * Implements the methods "every", "filter", "forEach", "map", and "some".
+     */
     private static Object iterativeMethod(
             Context cx,
             IdFunctionObject idFunctionObject,
@@ -2073,7 +2080,9 @@ public class NativeArray extends IdScriptableObject implements List {
         }
     }
 
-    /** Implements the methods "reduce" and "reduceRight". */
+    /**
+     * Implements the methods "reduce" and "reduceRight".
+     */
     private static Object reduceMethod(
             Context cx, int id, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable o = ScriptRuntime.toObject(cx, scope, thisObj);
@@ -2135,8 +2144,8 @@ public class NativeArray extends IdScriptableObject implements List {
                 a.length >= len
                         ? a
                         : (Object[])
-                                java.lang.reflect.Array.newInstance(
-                                        a.getClass().getComponentType(), len);
+                        java.lang.reflect.Array.newInstance(
+                                a.getClass().getComponentType(), len);
         for (int i = 0; i < len; i++) {
             array[i] = get(i);
         }
@@ -2608,13 +2617,19 @@ public class NativeArray extends IdScriptableObject implements List {
             ConstructorId_of = -27,
             ConstructorId_from = -28;
 
-    /** Internal representation of the JavaScript array's length property. */
+    /**
+     * Internal representation of the JavaScript array's length property.
+     */
     private long length;
 
-    /** Attributes of the array's length property */
+    /**
+     * Attributes of the array's length property
+     */
     private int lengthAttr = DONTENUM | PERMANENT;
 
-    /** modCount required for subList/iterators */
+    /**
+     * modCount required for subList/iterators
+     */
     private transient int modCount;
 
     /**
@@ -2623,16 +2638,24 @@ public class NativeArray extends IdScriptableObject implements List {
      */
     private Object[] dense;
 
-    /** True if all numeric properties are stored in <code>dense</code>. */
+    /**
+     * True if all numeric properties are stored in <code>dense</code>.
+     */
     private boolean denseOnly;
 
-    /** The maximum size of <code>dense</code> that will be allocated initially. */
+    /**
+     * The maximum size of <code>dense</code> that will be allocated initially.
+     */
     private static int maximumInitialCapacity = 10000;
 
-    /** The default capacity for <code>dense</code>. */
+    /**
+     * The default capacity for <code>dense</code>.
+     */
     private static final int DEFAULT_INITIAL_CAPACITY = 10;
 
-    /** The factor to grow <code>dense</code> by. */
+    /**
+     * The factor to grow <code>dense</code> by.
+     */
     private static final double GROW_FACTOR = 1.5;
 
     private static final int MAX_PRE_GROW_SIZE = (int) (Integer.MAX_VALUE / GROW_FACTOR);
