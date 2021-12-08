@@ -33,9 +33,13 @@ assertFalse(obj.__proto__ === Object.prototype);
 // However, __proto__ setting on a non-object does nothing
 function f() {}
 assertTrue(f.__proto__ === Function.prototype);
-assertEquals(undefined, f.__proto__ = prot);
-assertTrue(f.__proto__ === Function.prototype);
-assertEquals(undefined, f.__proto__ = null);
-assertTrue(f.__proto__ === Function.prototype);
+assertEquals(prot, f.__proto__ = prot);
+assertTrue(f.__proto__ === prot);
+assertEquals(null, f.__proto__ = null);
+assertTrue(f.__proto__ === undefined);
+
+// regression tests from Kanga compat-table
+assertTrue({ __proto__ : [] } instanceof Array);
+assertFalse({ __proto__(){} } instanceof Function)
 
 "success";
