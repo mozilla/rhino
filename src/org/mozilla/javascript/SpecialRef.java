@@ -105,19 +105,27 @@ class SpecialRef extends Ref
 
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6) {
                         final String typeOfTarget = ScriptRuntime.typeof(target);
-                        if ("object".equals(typeOfTarget) || "function".equals(typeOfTarget)) {
-
+                        if ("function".equals(typeOfTarget)) {
                             if (value == null) {
                                 target.setPrototype(Undefined.SCRIPTABLE_UNDEFINED);
                                 return value;
                             }
 
                             final String typeOfValue = ScriptRuntime.typeof(value);
-                            if ("object".equals(typeOfValue) || "function".equals(typeOfValue)) {
+                            if ("object".equals(typeOfValue)
+                                    || "function".equals(typeOfValue)) {
                                 target.setPrototype(obj);
                             }
+                            return value;
                         }
-                        return value;
+
+
+                        final String typeOfValue = ScriptRuntime.typeof(value);
+                        if ((value != null && !"object".equals(typeOfValue))
+                                || !"object".equals(typeOfTarget)) {
+                            return Undefined.instance;
+                        }
+                        target.setPrototype(obj);
                     } else {
                         target.setPrototype(obj);
                     }
