@@ -95,6 +95,17 @@ public class LookupSetterTest {
         test("true", "new Foo().__lookupSetter__('s') == new Foo().__lookupSetter__('s')");
     }
 
+    @Test
+    public void shadowGetterTest() throws Exception {
+        test(
+                "true",
+                "function f() { var a = { }; var b = Object.create(a);"
+                        + "b.foo = 1;"
+                        + "a.__defineSetter__('foo', function () {});"
+                        + "return b.__lookupSetter__('foo') === undefined;}"
+                        + "f();");
+    }
+
     private void test(final String expected, final String src) throws Exception {
         final ContextAction<String> action =
                 new ContextAction<String>() {

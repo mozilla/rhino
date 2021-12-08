@@ -319,7 +319,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
                     int index = s.stringId != null ? 0 : s.index;
                     boolean isSetter = (id == Id___lookupSetter__);
-                    Function gs;
+                    Object gs;
                     for (; ; ) {
                         gs = so.getGetterOrSetter(s.stringId, index, this, isSetter);
                         if (gs != null) {

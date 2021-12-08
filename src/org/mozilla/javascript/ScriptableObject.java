@@ -592,14 +592,19 @@ public abstract class ScriptableObject
      * @param isSetter If true, return the setter, otherwise return the getter.
      * @exception IllegalArgumentException if both name and index are nonnull and nonzero
      *     respectively.
-     * @return Null if the property does not exist. Otherwise returns either the getter or the
-     *     setter for the property, depending on the value of isSetter (may be undefined if unset).
+     * @return Undefined.instance if the property does not exist. Otherwise returns either the
+     *     getter or the setter for the property, depending on the value of isSetter (may be
+     *     undefined if unset).
      */
-    public Function getGetterOrSetter(String name, int index, Scriptable scope, boolean isSetter) {
+    public Object getGetterOrSetter(String name, int index, Scriptable scope, boolean isSetter) {
         if (name != null && index != 0) throw new IllegalArgumentException(name);
         Slot slot = slotMap.query(name, index);
         if (slot == null) return null;
-        return isSetter ? slot.getSetterFunction(name, scope) : slot.getGetterFunction(name, scope);
+        Function getterOrSetter =
+                isSetter
+                        ? slot.getSetterFunction(name, scope)
+                        : slot.getGetterFunction(name, scope);
+        return (getterOrSetter == null) ? Undefined.instance : getterOrSetter;
     }
 
     /**
