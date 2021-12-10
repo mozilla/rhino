@@ -31,7 +31,6 @@ features from ES6, and ES2016+ are implemented in Rhino.
 
 [![Mozilla](https://circleci.com/gh/mozilla/rhino.svg?style=shield)](https://app.circleci.com/pipelines/github/mozilla/rhino)
 
-
 ## Documentation
 
 Information for script builders and embedders:
@@ -40,7 +39,7 @@ Information for script builders and embedders:
 
 JavaDoc for all the APIs:
 
-[https://mozilla.github.io/rhino/javadoc/index.html](https://mozilla.github.io/rhino/javadoc/index.html)
+[https://javadoc.io/doc/org.mozilla/rhino](https://javadoc.io/doc/org.mozilla/rhino)
 
 More resources if you get stuck:
 
