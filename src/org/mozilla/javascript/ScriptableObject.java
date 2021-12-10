@@ -622,7 +622,7 @@ public abstract class ScriptableObject
      *     setter for the property, depending on the value of isSetter (may be undefined if unset).
      */
     @Deprecated
-    public Function getGetterOrSetter(String name, int index, boolean isSetter) {
+    public Object getGetterOrSetter(String name, int index, boolean isSetter) {
         return getGetterOrSetter(name, index, this, isSetter);
     }
 
