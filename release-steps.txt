@@ -7,7 +7,6 @@ Paste release notes into RELEASE_NOTES.md:
 
 Paste release info into README.md
 	Copy README into gh-pages
-	Extract build/*/javadoc.zip to gh-pages/javadoc
 
 Re-run compat-table "rhinoall.sh"
 	Copy HTML to gh-pages/compat
