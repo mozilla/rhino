@@ -27,3 +27,5 @@ bin/
 
 # local
 local.properties
+docs
+examples

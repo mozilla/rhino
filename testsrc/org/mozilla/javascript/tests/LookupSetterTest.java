@@ -54,6 +54,7 @@ public class LookupSetterTest {
         test("true", "new Foo().__lookupGetter__('s') == new Foo().__lookupGetter__('s')");
     }
 
+
     @Test
     public void getOwnPropertyDescriptor_equals() throws Exception {
         test(
