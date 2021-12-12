@@ -37,14 +37,21 @@ public class ImplementationVersion {
                 Manifest mf = new Manifest(is);
                 Attributes attrs = mf.getMainAttributes();
                 if ("Mozilla Rhino".equals(attrs.getValue("Implementation-Title"))) {
-                    versionString =
-                        "Rhino " + attrs.getValue("Implementation-Version") + " " +
-                            attrs.getValue("Built-Date").replaceAll("-", " ");
+                    StringBuilder buf = new StringBuilder(23);
+                    buf.append("Rhino ").append(attrs.getValue("Implementation-Version"));
+                    String builtDate = attrs.getValue("Built-Date");
+                    if (builtDate != null) {
+                        builtDate = builtDate.replaceAll("-", " ");
+                        buf.append(' ').append(builtDate);
+                    }
+                    versionString = buf.toString();
                     return;
                 }
             } catch (IOException e) {
                 // Ignore this unlikely event
             }
         }
+        // We are probably in a IDE
+        versionString = "Rhino Snapshot";
     }
 }
