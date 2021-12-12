@@ -19,9 +19,8 @@
 *.mk text
 *.tests text
 *.doctest text
-gradlew text
-manifest text
-LIST text
+/man/*.1 text
+/gradlew text
 
 *.bmp binary
 *.gif binary
