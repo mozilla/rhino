@@ -628,13 +628,23 @@ final class NativeString extends IdScriptableObject {
                     {
                         String thisStr =
                                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                        return thisStr.toLowerCase(cx.getLocale());
+                        Locale locale = cx.getLocale();
+                        if (args.length > 0) {
+                            String lang = ScriptRuntime.toString(args[0]);
+                            locale = new Locale(lang);
+                        }
+                        return thisStr.toLowerCase(locale);
                     }
                 case Id_toLocaleUpperCase:
                     {
                         String thisStr =
                                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                        return thisStr.toUpperCase(cx.getLocale());
+                        Locale locale = cx.getLocale();
+                        if (args.length > 0) {
+                            String lang = ScriptRuntime.toString(args[0]);
+                            locale = new Locale(lang);
+                        }
+                        return thisStr.toUpperCase(locale);
                     }
                 case Id_trim:
                     {
