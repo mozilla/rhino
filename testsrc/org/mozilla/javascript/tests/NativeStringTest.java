@@ -9,6 +9,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Locale;
 import org.junit.Test;
+import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
 /**
@@ -47,6 +48,7 @@ public class NativeStringTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setLocale(new Locale("en"));
 
                     final Object rep = cx.evaluateString(scope, js, "test.js", 0, null);
@@ -57,6 +59,7 @@ public class NativeStringTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setLocale(new Locale("tr"));
 
                     final Object rep = cx.evaluateString(scope, js, "test.js", 0, null);
@@ -67,10 +70,10 @@ public class NativeStringTest {
 
     @Test
     public void toLocaleLowerCaseParam() {
-        assertEvaluates("\u0069\u0307", "'\\u0130'.toLocaleLowerCase('en')");
-        assertEvaluates("\u0069", "'\\u0130'.toLocaleLowerCase('tr')");
+        assertEvaluatesES6("\u0069\u0307", "'\\u0130'.toLocaleLowerCase('en')");
+        assertEvaluatesES6("\u0069", "'\\u0130'.toLocaleLowerCase('tr')");
 
-        assertEvaluates("\u0069\u0307", "'\\u0130'.toLocaleLowerCase('Absurdistan')");
+        assertEvaluatesES6("\u0069\u0307", "'\\u0130'.toLocaleLowerCase('Absurdistan')");
     }
 
     @Test
@@ -80,6 +83,7 @@ public class NativeStringTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setLocale(new Locale("en"));
 
                     final Object rep = cx.evaluateString(scope, js, "test.js", 0, null);
@@ -90,6 +94,7 @@ public class NativeStringTest {
         Utils.runWithAllOptimizationLevels(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setLocale(new Locale("tr"));
 
                     final Object rep = cx.evaluateString(scope, js, "test.js", 0, null);
@@ -100,9 +105,20 @@ public class NativeStringTest {
 
     @Test
     public void toLocaleUpperCaseParam() {
-        assertEvaluates("\u0049", "'\\u0069'.toLocaleUpperCase('en')");
-        assertEvaluates("\u0130", "'\\u0069'.toLocaleUpperCase('tr')");
+        assertEvaluatesES6("\u0049", "'\\u0069'.toLocaleUpperCase('en')");
+        assertEvaluatesES6("\u0130", "'\\u0069'.toLocaleUpperCase('tr')");
 
-        assertEvaluates("\u0049", "'\\u0069'.toLocaleUpperCase('Absurdistan')");
+        assertEvaluatesES6("\u0049", "'\\u0069'.toLocaleUpperCase('Absurdistan')");
+    }
+
+    private static void assertEvaluatesES6(final Object expected, final String source) {
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                    assertEquals(expected, rep);
+                    return null;
+                });
     }
 }

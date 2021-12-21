@@ -629,7 +629,7 @@ final class NativeString extends IdScriptableObject {
                         String thisStr =
                                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                         Locale locale = cx.getLocale();
-                        if (args.length > 0) {
+                        if (args.length > 0 && cx.getLanguageVersion() >= Context.VERSION_ES6) {
                             String lang = ScriptRuntime.toString(args[0]);
                             locale = new Locale(lang);
                         }
@@ -640,7 +640,7 @@ final class NativeString extends IdScriptableObject {
                         String thisStr =
                                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
                         Locale locale = cx.getLocale();
-                        if (args.length > 0) {
+                        if (args.length > 0 && cx.getLanguageVersion() >= Context.VERSION_ES6) {
                             String lang = ScriptRuntime.toString(args[0]);
                             locale = new Locale(lang);
                         }
