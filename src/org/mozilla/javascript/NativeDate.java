@@ -1325,7 +1325,11 @@ final class NativeDate extends IdScriptableObject {
 
             // offset from GMT in minutes.  The offset includes daylight
             // savings, if it applies.
-            int minutes = (int) Math.floor((cx.getTimeZone().getRawOffset() + DaylightSavingTA(cx, t)) / msPerMinute);
+            int minutes =
+                    (int)
+                            Math.floor(
+                                    (cx.getTimeZone().getRawOffset() + DaylightSavingTA(cx, t))
+                                            / msPerMinute);
             // map 510 minutes to 0830 hours
             int offset = (minutes / 60) * 100 + minutes % 60;
             if (offset > 0) {
