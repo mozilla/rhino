@@ -51,6 +51,22 @@ public class NativeDateTest {
     }
 
     @Test
+    public void ctorDateTimeBerlin() {
+        String js = "new Date('2021-12-18T22:23').toISOString()";
+
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    cx.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+
+                    final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
+                    assertEquals("2021-12-18T15:23:00.000Z", res);
+                    return null;
+                });
+    }
+
+    @Test
     public void ctorDate() {
         String js = "new Date('2021-12-18').toISOString()";
 
@@ -83,6 +99,22 @@ public class NativeDateTest {
     }
 
     @Test
+    public void ctorDateBerlin() {
+        String js = "new Date('2021-12-18').toISOString()";
+
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    cx.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+
+                    final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
+                    assertEquals("2021-12-18T00:00:00.000Z", res);
+                    return null;
+                });
+    }
+
+    @Test
     public void timezoneOffset() {
         String js = "new Date(0).getTimezoneOffset()";
 
@@ -92,8 +124,8 @@ public class NativeDateTest {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-                    final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
-                    assertEquals("0", res);
+                    final Double res = (Double) cx.evaluateString(scope, js, "test.js", 0, null);
+                    assertEquals(0, res.doubleValue(), 0.0001);
                     return null;
                 });
     }
@@ -108,8 +140,24 @@ public class NativeDateTest {
                     cx.setLanguageVersion(Context.VERSION_ES6);
                     cx.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
 
-                    final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
-                    assertEquals("-60", res);
+                    final Double res = (Double) cx.evaluateString(scope, js, "test.js", 0, null);
+                    assertEquals(-60, res.doubleValue(), 0.0001);
+                    return null;
+                });
+    }
+
+    @Test
+    public void timezoneOffsetNewYork() {
+        String js = "new Date(0).getTimezoneOffset()";
+
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    cx.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+
+                    final Double res = (Double) cx.evaluateString(scope, js, "test.js", 0, null);
+                    assertEquals(300, res.doubleValue(), 0.0001);
                     return null;
                 });
     }
