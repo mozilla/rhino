@@ -270,7 +270,7 @@ final class NativeDate extends IdScriptableObject {
             case ConstructorId_parse:
                 {
                     String dataStr = ScriptRuntime.toString(args, 0);
-                    return ScriptRuntime.wrapNumber(date_parseString(dataStr));
+                    return ScriptRuntime.wrapNumber(date_parseString(cx, dataStr));
                 }
 
             case ConstructorId_UTC:
@@ -281,7 +281,7 @@ final class NativeDate extends IdScriptableObject {
                     // if called as a function, just return a string
                     // representing the current time.
                     if (thisObj != null) return date_format(now(), Id_toString);
-                    return jsConstructor(args);
+                    return jsConstructor(cx, args);
                 }
 
             case Id_toJSON:
@@ -929,7 +929,7 @@ final class NativeDate extends IdScriptableObject {
      *   <li>or <code>YYYY-MM-DD'T'HH:mm:ss.sss[+-]hh:mm</code>
      * </ul>
      */
-    private static double parseISOString(String s) {
+    private static double parseISOString(Context cx, String s) {
         // we use a simple state machine to parse the input string
         final int ERROR = -1;
         final int YEAR = 0, MONTH = 1, DAY = 2;
@@ -938,6 +938,7 @@ final class NativeDate extends IdScriptableObject {
         int state = YEAR;
         // default values per [15.9.1.15 Date Time String Format]
         int[] values = {1970, 1, 1, 0, 0, 0, 0, -1, -1};
+        boolean timeSpecified = false;
         int yearlen = 4, yearmod = 1, tzmod = 1;
         int i = 0, len = s.length();
         if (len != 0) {
@@ -1009,6 +1010,7 @@ final class NativeDate extends IdScriptableObject {
                     break;
                 case HOUR:
                     state = (c == ':' ? MIN : ERROR);
+                    timeSpecified = true;
                     break;
                 case TZHOUR:
                     // state = (c == ':' ? state + 1 : ERROR);
@@ -1065,6 +1067,11 @@ final class NativeDate extends IdScriptableObject {
                 // that local timezone was meant to be used. Stick with spec for now.
                 // https://bugs.ecmascript.org/show_bug.cgi?id=112
                 // date = internalUTC(date);
+
+                // browsers doing this now
+                if (timeSpecified) {
+                    date -= cx.getTimeZone().getOffset((long) date);
+                }
             } else {
                 date -= (tzhour * 60 + tzmin) * msPerMinute * tzmod;
             }
@@ -1077,8 +1084,8 @@ final class NativeDate extends IdScriptableObject {
         return ScriptRuntime.NaN;
     }
 
-    private static double date_parseString(String s) {
-        double d = parseISOString(s);
+    private static double date_parseString(Context cx, String s) {
+        double d = parseISOString(cx, s);
         if (!Double.isNaN(d)) {
             return d;
         }
@@ -1347,7 +1354,7 @@ final class NativeDate extends IdScriptableObject {
     }
 
     /* the javascript constructor */
-    private static Object jsConstructor(Object[] args) {
+    private static Object jsConstructor(Context cx, Object[] args) {
         NativeDate obj = new NativeDate();
 
         // if called as a constructor with no args,
@@ -1370,7 +1377,7 @@ final class NativeDate extends IdScriptableObject {
             double date;
             if (arg0 instanceof CharSequence) {
                 // it's a string; parse it.
-                date = date_parseString(arg0.toString());
+                date = date_parseString(cx, arg0.toString());
             } else {
                 // if it's not a string, use it as a millisecond date
                 date = ScriptRuntime.toNumber(arg0);
