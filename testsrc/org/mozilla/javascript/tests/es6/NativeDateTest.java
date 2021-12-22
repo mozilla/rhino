@@ -51,7 +51,7 @@ public class NativeDateTest {
     }
 
     @Test
-    public void ctorDateTimeBerlin() {
+    public void ctorDateTimeNewYork() {
         String js = "new Date('2021-12-18T22:23').toISOString()";
 
         Utils.runWithAllOptimizationLevels(
@@ -61,7 +61,7 @@ public class NativeDateTest {
                     cx.setTimeZone(TimeZone.getTimeZone("America/New_York"));
 
                     final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
-                    assertEquals("2021-12-18T15:23:00.000Z", res);
+                    assertEquals("2021-12-19T03:23:00.000Z", res);
                     return null;
                 });
     }
@@ -99,7 +99,7 @@ public class NativeDateTest {
     }
 
     @Test
-    public void ctorDateBerlin() {
+    public void ctorDateNewYork() {
         String js = "new Date('2021-12-18').toISOString()";
 
         Utils.runWithAllOptimizationLevels(
