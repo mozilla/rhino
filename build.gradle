@@ -420,6 +420,8 @@ publishing {
 }
 
 signing {
+    required = project.hasProperty('mavenReleaseRepo')
+        && !project.property('mavenReleaseRepo').contains('github')
     useGpgCmd()
     sign publishing.publications.rhino
     sign publishing.publications.rhinoengine
