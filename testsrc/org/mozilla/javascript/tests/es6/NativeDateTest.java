@@ -51,6 +51,22 @@ public class NativeDateTest {
     }
 
     @Test
+    public void ctorDateTimeBerlinDaylightSavingTime() {
+        String js = "new Date('2021-07-18T22:23').toISOString()";
+
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    cx.setLanguageVersion(Context.VERSION_ES6);
+                    cx.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+
+                    final Object res = cx.evaluateString(scope, js, "test.js", 0, null);
+                    assertEquals("2021-07-18T20:23:00.000Z", res);
+                    return null;
+                });
+    }
+
+    @Test
     public void ctorDateTimeNewYork() {
         String js = "new Date('2021-12-18T22:23').toISOString()";
 

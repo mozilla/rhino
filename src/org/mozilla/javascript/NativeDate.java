@@ -798,8 +798,8 @@ final class NativeDate extends IdScriptableObject {
     }
 
     private static double internalUTC(Context cx, double t) {
-        double LocalTZA = cx.getTimeZone().getRawOffset();
-        return t - LocalTZA - DaylightSavingTA(cx, t - LocalTZA);
+        double local = t - cx.getTimeZone().getRawOffset();
+        return local - DaylightSavingTA(cx, local);
     }
 
     private static int HourFromTime(double t) {
@@ -1070,7 +1070,7 @@ final class NativeDate extends IdScriptableObject {
 
                 // browsers doing this now
                 if (timeSpecified) {
-                    date -= cx.getTimeZone().getOffset((long) date);
+                    date -= cx.getTimeZone().getRawOffset() + DaylightSavingTA(cx, date);
                 }
             } else {
                 date -= (tzhour * 60 + tzmin) * msPerMinute * tzmod;
