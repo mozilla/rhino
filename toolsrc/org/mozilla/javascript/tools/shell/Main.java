@@ -28,6 +28,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.JavaScriptException;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.RhinoException;
@@ -102,6 +103,9 @@ public class Main {
             }
             try {
                 timers.runAllTimers(cx, global);
+            } catch (JavaScriptException e) {
+                ToolErrorReporter.reportException(cx.getErrorReporter(), e);
+                exitCode = EXITCODE_RUNTIME_ERROR;
             } catch (InterruptedException ie) {
                 // Shell has no facility to handle interrupts so stop now
             }
