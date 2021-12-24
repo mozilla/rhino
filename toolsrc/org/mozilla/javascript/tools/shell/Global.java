@@ -802,6 +802,12 @@ public class Global extends ImporterTopLevel {
         return console;
     }
 
+    void flushConsole() throws IOException {
+        if (console != null) {
+            console.flush();
+        }
+    }
+
     public InputStream getIn() {
         if (inStream == null && !attemptedJLineLoad) {
             if (loadJLine(Charset.defaultCharset())) {
