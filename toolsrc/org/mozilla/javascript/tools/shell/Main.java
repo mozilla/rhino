@@ -144,6 +144,15 @@ public class Main {
     public static int exec(String origArgs[]) {
         errorReporter = new ToolErrorReporter(false, global.getErr());
         shellContextFactory.setErrorReporter(errorReporter);
+
+        // Set some fields to initial values
+        processStdin = true;
+        useRequire = false;
+        sandboxed = false;
+        modulePath = null;
+        require = null;
+        fileList.clear();
+
         String[] args = processOptions(origArgs);
         if (exitCode > 0) {
             return exitCode;
@@ -245,6 +254,8 @@ public class Main {
 
     /** Parse arguments. */
     public static String[] processOptions(String args[]) {
+        exitCode = 0;
+
         String usageError;
         goodUsage:
         for (int i = 0; ; ++i) {
