@@ -212,6 +212,9 @@ jar {
     from ('NOTICE.txt') {
         into 'META-INF'
     }
+    from ('NOTICE-tools.txt') {
+        into 'META-INF'
+    }
     excludes = ["org/mozilla/javascript/engine/**", "META-INF/services/**"]
     // Class ImplementationVersion uses 'Implementation-Title'
     manifest {
@@ -259,6 +262,9 @@ task sourceJar(type: Jar) {
         into 'META-INF'
     }
     from ('NOTICE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE-tools.txt') {
         into 'META-INF'
     }
 }
