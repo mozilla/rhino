@@ -420,7 +420,14 @@ publishing {
 }
 
 signing {
-    useGpgCmd()
+    if (project.hasProperty('SIGNINGKEY')) {
+      // Check for ORG_GRADLE_PROJECT_SIGNINGKEY environment variable for use in CI system
+      def signingKey = getProperty('SIGNINGKEY')
+      def signingPassword = getProperty('SIGNINGPASSWORD')
+      useInMemoryPgpKeys(signingKey, signingPassword)
+    } else {
+        useGpgCmd()
+    }
     sign publishing.publications.rhino
     sign publishing.publications.rhinoengine
     sign publishing.publications.rhinoruntime
