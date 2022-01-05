@@ -90,6 +90,10 @@ Read given file and convert its bytes to a string using the specified character 
 Open an input connection to the given string url, read all its bytes and convert them to a string using the specified character coding or default character coding if explicit coding argument is not given.
 .IP runCommand(\fIcommandName,[arg,\&.\&.\&.][options]\fP)
 Execute the specified command with the given argument and options as a separate process and return the exit status of the process. For details, see JavaDoc for org.mozilla.javascript.tools.shell.Global#runCommand.
+.IP setTimeout(\fIfunction[,delay,arg,\&.\&.\&.]\fP)
+Execute "function" after "delay" milliseconds. (If "delay" is not set, then it is set to 0.) Pass any trailing parameters as arguments. Timeouts run after the current function is done executing, and in the interactive shell, only after the shell is exited. Return an ID that may be passed to "clearTimeout".
+.IP clearTimeout(\fIid\fP)
+Cancel a timeout set using "setTimeout".
 .IP serialize(\fIobject,filename\fP)
 Serialize the given object to the specified file.
 .IP spawn(\fIfunctionOrScript\fP)
