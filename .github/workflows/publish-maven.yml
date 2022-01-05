@@ -21,4 +21,4 @@ jobs:
         settings-path: ${{ github.workspace }}
     - name: Publish
       run: >-
-        ./gradlew publish
+        ./gradlew publish -PmavenUser=${MAVEN_CENTRAL_USER} -PmavenPassword=${MAVEN_CENTRAL_PASSWORD}
