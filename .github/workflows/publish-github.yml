@@ -25,11 +25,11 @@ jobs:
         settings-path: ${{ github.workspace }}
     - name: Publish
       env:
+        ORG_GRADLE_PROJECT_mavenUser: ${{ github.actor }}
+        ORG_GRADLE_PROJECT_mavenPassword: ${{ secrets.GITHUB_TOKEN }}
         ORG_GRADLE_PROJECT_SIGNINGKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
         ORG_GRADLE_PROJECT_SIGNINGPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
       run: >-
         ./gradlew publish
         -PmavenReleaseRepo="https://maven.pkg.github.com/mozilla/rhino"
         -PmavenSnapshotRepo="https://maven.pkg.github.com/mozilla/rhino"
-        -PmavenUser=${{ github.actor }}
-        -PmavenPassword=${{ secrets.GITHUB_TOKEN }}

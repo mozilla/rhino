@@ -205,13 +205,17 @@ task engineJar(type: Jar) {
 }
 
 jar {
-    dependsOn runtimeJar, engineJar
+    dependsOn compileJava
     from ('LICENSE.txt') {
         into 'META-INF'
     }
     from ('NOTICE.txt') {
         into 'META-INF'
     }
+    from ('NOTICE-tools.txt') {
+        into 'META-INF'
+    }
+    from sourceSets.main.output
     excludes = ["org/mozilla/javascript/engine/**", "META-INF/services/**"]
     // Class ImplementationVersion uses 'Implementation-Title'
     manifest {
@@ -255,10 +259,14 @@ task engineJavadocJar(type: Jar) {
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
+    archiveClassifier = 'sources'
     from ('LICENSE.txt') {
         into 'META-INF'
     }
     from ('NOTICE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE-tools.txt') {
         into 'META-INF'
     }
 }
@@ -289,6 +297,7 @@ publishing {
         rhino(MavenPublication) {
             groupId 'org.mozilla'
             artifactId 'rhino'
+            artifacts = [jar, sourceJar, javadocJar]
 
             pom.withXml {
                 def root = asNode()
@@ -318,13 +327,6 @@ publishing {
                 o.appendNode("name", "The Mozilla Foundation")
                 o.appendNode("url", "http://www.mozilla.org")
 
-            }
-            from components.java
-            artifact sourceJar {
-                classifier "sources"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
             }
         }
 
@@ -358,7 +360,6 @@ publishing {
                 def o = root.appendNode("organization")
                 o.appendNode("name", "The Mozilla Foundation")
                 o.appendNode("url", "http://www.mozilla.org")
-
             }
         }
 
@@ -421,16 +422,15 @@ publishing {
 
 signing {
     if (project.hasProperty('SIGNINGKEY')) {
-      // Check for ORG_GRADLE_PROJECT_SIGNINGKEY environment variable for use in CI system
-      def signingKey = getProperty('SIGNINGKEY')
-      def signingPassword = getProperty('SIGNINGPASSWORD')
-      useInMemoryPgpKeys(signingKey, signingPassword)
-    } else {
-        useGpgCmd()
+        // Check for ORG_GRADLE_PROJECT_SIGNINGKEY environment variable for use in CI system.
+        // Otherwise, do not sign.
+        def signingKey = getProperty('SIGNINGKEY')
+        def signingPassword = getProperty('SIGNINGPASSWORD')
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign publishing.publications.rhino
+        sign publishing.publications.rhinoengine
+        sign publishing.publications.rhinoruntime
     }
-    sign publishing.publications.rhino
-    sign publishing.publications.rhinoengine
-    sign publishing.publications.rhinoruntime
 }
 
 spotbugs {
