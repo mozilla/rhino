@@ -21,9 +21,9 @@ jobs:
         settings-path: ${{ github.workspace }}
     - name: Publish
       env:
-        ORG_GRADLE_PROJECT_mavenUser: {{ secrets.MAVEN_CENTRAL_USER }}
-        ORG_GRADLE_PROJECT_mavenPassword: {{ secrets.MAVEN_CENTRAL_PASSWORD }}
-        ORG_GRADLE_PROJECT_SIGNINGKEY: {{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
-        ORG_GRADLE_PROJECT_SIGNINGPASSWORD: {{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
+        ORG_GRADLE_PROJECT_mavenUser: ${{ secrets.MAVEN_CENTRAL_USER }}
+        ORG_GRADLE_PROJECT_mavenPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        ORG_GRADLE_PROJECT_SIGNINGKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+        ORG_GRADLE_PROJECT_SIGNINGPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
       run: >-
         ./gradlew publish
