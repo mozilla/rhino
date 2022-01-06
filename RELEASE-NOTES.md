@@ -1,5 +1,5 @@
-# Rhino 1.7.14 RC 1
-## November 1, 2021
+# Rhino 1.7.14
+## January 6, 2022
 
 # Highlights
 ## Features
@@ -73,7 +73,7 @@
   
 ## Thanks!
 
-This release contains more than 300 commits from 21 contributors. Thanks to everyone who helped!
+This release contains more than 350 commits from 23 contributors. Thanks to everyone who helped!
 
 # Rhino 1.7.13
 ## September 2, 2020
