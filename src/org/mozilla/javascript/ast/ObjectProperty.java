@@ -89,6 +89,14 @@ public class ObjectProperty extends InfixExpression {
         return isGetterMethod() || isSetterMethod() || isNormalMethod();
     }
 
+    public void setIsShorthand(boolean shorthand) {
+        this.shorthand = shorthand;
+    }
+
+    public boolean isShorthand() {
+        return shorthand;
+    }
+
     @Override
     public String toSource(int depth) {
         StringBuilder sb = new StringBuilder();
@@ -106,4 +114,6 @@ public class ObjectProperty extends InfixExpression {
         sb.append(right.toSource(getType() == Token.COLON ? 0 : depth + 1));
         return sb.toString();
     }
+
+    private boolean shorthand;
 }
