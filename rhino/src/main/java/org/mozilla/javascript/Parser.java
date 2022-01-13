@@ -3690,7 +3690,7 @@ public class Parser {
             }
             AstNode nn = new Name(property.getPosition(), property.getString());
             ObjectProperty pn = new ObjectProperty();
-            pn.putProp(Node.SHORTHAND_PROPERTY_NAME, Boolean.TRUE);
+            pn.setIsShorthand(true);
             pn.setLeftAndRight(property, nn);
             return pn;
         }

@@ -2554,10 +2554,8 @@ public final class IRFactory {
         int size = props.size();
         for (int i = 0; i < size; i++) {
             ObjectProperty prop = props.get(i);
-            boolean shorthandPropertyName =
-                    Boolean.TRUE.equals(prop.getProp(Node.SHORTHAND_PROPERTY_NAME));
             decompile(prop.getLeft());
-            if (!shorthandPropertyName) {
+            if (!prop.isShorthand()) {
                 decompiler.addToken(Token.COLON);
                 decompile(prop.getRight());
             }
