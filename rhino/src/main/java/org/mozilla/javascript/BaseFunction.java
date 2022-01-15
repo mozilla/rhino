@@ -6,6 +6,8 @@
 
 package org.mozilla.javascript;
 
+import java.util.EnumSet;
+
 /**
  * The base class for Function objects. That is one of two purposes. It is also the prototype for
  * every "function" defined except those that are used as GeneratorFunctions via the ES6 "function
@@ -319,18 +321,18 @@ public class BaseFunction extends IdScriptableObject implements Function {
                 {
                     BaseFunction realf = realFunction(thisObj, f);
                     int indent = ScriptRuntime.toInt32(args, 0);
-                    return realf.decompile(indent, 0);
+                    return realf.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
                 }
 
             case Id_toSource:
                 {
                     BaseFunction realf = realFunction(thisObj, f);
                     int indent = 0;
-                    int flags = Decompiler.TO_SOURCE_FLAG;
+                    EnumSet<DecompilerFlag> flags = EnumSet.of(DecompilerFlag.TO_SOURCE);
                     if (args.length != 0) {
                         indent = ScriptRuntime.toInt32(args[0]);
                         if (indent >= 0) {
-                            flags = 0;
+                            flags = EnumSet.noneOf(DecompilerFlag.class);
                         } else {
                             indent = 0;
                         }
@@ -453,9 +455,9 @@ public class BaseFunction extends IdScriptableObject implements Function {
      * @param indent How much to indent the decompiled result.
      * @param flags Flags specifying format of decompilation output.
      */
-    String decompile(int indent, int flags) {
+    String decompile(int indent, EnumSet<DecompilerFlag> flags) {
         StringBuilder sb = new StringBuilder();
-        boolean justbody = (0 != (flags & Decompiler.ONLY_BODY_FLAG));
+        boolean justbody = flags.contains(DecompilerFlag.ONLY_BODY);
         if (!justbody) {
             sb.append("function ");
             sb.append(getFunctionName());
