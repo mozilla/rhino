@@ -19,6 +19,7 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -1474,7 +1475,7 @@ public class Context implements Closeable {
      */
     public final String decompileScript(Script script, int indent) {
         NativeFunction scriptImpl = (NativeFunction) script;
-        return scriptImpl.decompile(indent, 0);
+        return scriptImpl.decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
     }
 
     /**
@@ -1489,7 +1490,8 @@ public class Context implements Closeable {
      * @return a string representing the function source
      */
     public final String decompileFunction(Function fun, int indent) {
-        if (fun instanceof BaseFunction) return ((BaseFunction) fun).decompile(indent, 0);
+        if (fun instanceof BaseFunction)
+            return ((BaseFunction) fun).decompile(indent, EnumSet.noneOf(DecompilerFlag.class));
 
         return "function " + fun.getClassName() + "() {\n\t[native code]\n}\n";
     }
@@ -1509,7 +1511,7 @@ public class Context implements Closeable {
     public final String decompileFunctionBody(Function fun, int indent) {
         if (fun instanceof BaseFunction) {
             BaseFunction bf = (BaseFunction) fun;
-            return bf.decompile(indent, Decompiler.ONLY_BODY_FLAG);
+            return bf.decompile(indent, EnumSet.of(DecompilerFlag.ONLY_BODY));
         }
         // ALERT: not sure what the right response here is.
         return "[native code]\n";
