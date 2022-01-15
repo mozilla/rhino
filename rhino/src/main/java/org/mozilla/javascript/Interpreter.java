@@ -345,7 +345,7 @@ public final class Interpreter extends Icode implements Evaluator {
     }
 
     private static boolean compareIdata(InterpreterData i1, InterpreterData i2) {
-        return i1 == i2 || Objects.equals(getEncodedSource(i1), getEncodedSource(i2));
+        return i1 == i2 || Objects.equals(getRawSource(i1), getRawSource(i2));
     }
 
     private static final class ContinuationJump implements Serializable {
@@ -430,10 +430,10 @@ public final class Interpreter extends Icode implements Evaluator {
     public Object compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
-            String encodedSource,
+            String rawSource,
             boolean returnFunction) {
         CodeGenerator cgen = new CodeGenerator();
-        itsData = cgen.compile(compilerEnv, tree, encodedSource, returnFunction);
+        itsData = cgen.compile(compilerEnv, tree, rawSource, returnFunction);
         return itsData;
     }
 
@@ -1060,11 +1060,11 @@ public final class Interpreter extends Icode implements Evaluator {
         return list.toArray(new ScriptStackElement[list.size()][]);
     }
 
-    static String getEncodedSource(InterpreterData idata) {
-        if (idata.encodedSource == null) {
+    static String getRawSource(InterpreterData idata) {
+        if (idata.rawSource == null) {
             return null;
         }
-        return idata.encodedSource.substring(idata.encodedSourceStart, idata.encodedSourceEnd);
+        return idata.rawSource.substring(idata.rawSourceStart, idata.rawSourceEnd);
     }
 
     private static void initFunction(

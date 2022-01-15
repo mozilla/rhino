@@ -32,13 +32,11 @@ public abstract class NativeFunction extends BaseFunction {
      */
     @Override
     final String decompile(int indent, int flags) {
-        String encodedSource = getEncodedSource();
-        if (encodedSource == null) {
-            return super.decompile(indent, flags);
+        String rawSource = getRawSource();
+        if (rawSource != null) {
+            return rawSource;
         }
-        UintMap properties = new UintMap(1);
-        properties.put(Decompiler.INITIAL_INDENT_PROP, indent);
-        return Decompiler.decompile(encodedSource, flags, properties);
+        return super.decompile(indent, flags);
     }
 
     @Override
@@ -71,6 +69,11 @@ public abstract class NativeFunction extends BaseFunction {
 
     /** Get encoded source string. */
     public String getEncodedSource() {
+        return null;
+    }
+
+    /** Get raw source string. */
+    public String getRawSource() {
         return null;
     }
 

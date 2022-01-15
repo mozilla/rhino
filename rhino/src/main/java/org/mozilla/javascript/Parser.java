@@ -689,6 +689,7 @@ public class Parser {
                     n.putProp(Node.ARROW_FUNCTION_PROP, Boolean.TRUE);
                 }
                 pn.addStatement(n);
+                pn.setLength(n.getLength());
             } else {
                 bodyLoop:
                 for (; ; ) {
@@ -725,6 +726,9 @@ public class Parser {
                     }
                     pn.addStatement(n);
                 }
+                int end = ts.tokenEnd;
+                if (mustMatchToken(Token.RC, "msg.no.brace.after.body", true)) end = ts.tokenEnd;
+                pn.setLength(end - pos);
             }
         } catch (ParserException e) {
             // Ignore it
@@ -733,11 +737,7 @@ public class Parser {
             inUseStrictDirective = savedStrictMode;
         }
 
-        int end = ts.tokenEnd;
         getAndResetJsDoc();
-        if (!isExpressionClosure && mustMatchToken(Token.RC, "msg.no.brace.after.body", true))
-            end = ts.tokenEnd;
-        pn.setLength(end - pos);
         return pn;
     }
 
@@ -915,9 +915,11 @@ public class Parser {
         PerFunctionVariables savedVars = new PerFunctionVariables(fnNode);
         try {
             parseFunctionParams(fnNode);
-            fnNode.setBody(parseFunctionBody(type, fnNode));
-            fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
-            fnNode.setLength(ts.tokenEnd - functionSourceStart);
+            AstNode body = parseFunctionBody(type, fnNode);
+            fnNode.setBody(body);
+            int end = functionSourceStart + body.getPosition() + body.getLength();
+            fnNode.setRawSourceBounds(functionSourceStart, end);
+            fnNode.setLength(end - functionSourceStart);
 
             if (compilerEnv.isStrictMode() && !fnNode.getBody().hasConsistentReturnUsage()) {
                 String msg =
@@ -1000,9 +1002,11 @@ public class Parser {
                 fnNode.putProp(Node.DESTRUCTURING_PARAMS, destructuringNode);
             }
 
-            fnNode.setBody(parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode));
-            fnNode.setEncodedSourceBounds(functionSourceStart, ts.tokenEnd);
-            fnNode.setLength(ts.tokenEnd - functionSourceStart);
+            AstNode body = parseFunctionBody(FunctionNode.ARROW_FUNCTION, fnNode);
+            fnNode.setBody(body);
+            int end = functionSourceStart + body.getPosition() + body.getLength();
+            fnNode.setRawSourceBounds(functionSourceStart, end);
+            fnNode.setLength(end - functionSourceStart);
         } finally {
             savedVars.restore();
         }
