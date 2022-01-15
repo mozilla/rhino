@@ -111,8 +111,8 @@ final class InterpretedFunction extends NativeFunction implements Script {
     }
 
     @Override
-    public String getEncodedSource() {
-        return Interpreter.getEncodedSource(idata);
+    public String getRawSource() {
+        return Interpreter.getRawSource(idata);
     }
 
     @Override
