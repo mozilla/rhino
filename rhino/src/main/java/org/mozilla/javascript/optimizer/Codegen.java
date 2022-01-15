@@ -74,7 +74,7 @@ public class Codegen implements Evaluator {
     public Object compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
-            String encodedSource,
+            String rawSource,
             boolean returnFunction) {
         int serial;
         synchronized (globalLock) {
@@ -92,7 +92,7 @@ public class Codegen implements Evaluator {
         String mainClassName = "org.mozilla.javascript.gen." + baseName + "_" + serial;
 
         byte[] mainClassBytes =
-                compileToClassFile(compilerEnv, mainClassName, tree, encodedSource, returnFunction);
+                compileToClassFile(compilerEnv, mainClassName, tree, rawSource, returnFunction);
 
         return new Object[] {mainClassName, mainClassBytes};
     }
@@ -153,7 +153,7 @@ public class Codegen implements Evaluator {
             CompilerEnvirons compilerEnv,
             String mainClassName,
             ScriptNode scriptOrFn,
-            String encodedSource,
+            String rawSource,
             boolean returnFunction) {
         this.compilerEnv = compilerEnv;
 
@@ -172,7 +172,7 @@ public class Codegen implements Evaluator {
         this.mainClassName = mainClassName;
         this.mainClassSignature = ClassFileWriter.classNameToSignature(mainClassName);
 
-        return generateCode(encodedSource);
+        return generateCode(rawSource);
     }
 
     private void transform(ScriptNode tree) {
@@ -246,7 +246,7 @@ public class Codegen implements Evaluator {
         }
     }
 
-    private byte[] generateCode(String encodedSource) {
+    private byte[] generateCode(String rawSource) {
         boolean hasScript = (scriptOrFnNodes[0].getType() == Token.SCRIPT);
         boolean hasFunctions = (scriptOrFnNodes.length > 1 || !hasScript);
         boolean isStrictMode = scriptOrFnNodes[0].isInStrictMode();
@@ -273,7 +273,7 @@ public class Codegen implements Evaluator {
         generateCallMethod(cfw, isStrictMode);
         generateResumeGenerator(cfw);
 
-        generateNativeFunctionOverrides(cfw, encodedSource);
+        generateNativeFunctionOverrides(cfw, rawSource);
 
         int count = scriptOrFnNodes.length;
         for (int i = 0; i != count; ++i) {
@@ -721,7 +721,7 @@ public class Codegen implements Evaluator {
         cfw.stopMethod((short) 3);
     }
 
-    private void generateNativeFunctionOverrides(ClassFileWriter cfw, String encodedSource) {
+    private void generateNativeFunctionOverrides(ClassFileWriter cfw, String rawSource) {
         // Override NativeFunction.getLanguageVersion() with
         // public int getLanguageVersion() { return <version-constant>; }
 
@@ -740,14 +740,14 @@ public class Codegen implements Evaluator {
         final int Do_getParamCount = 1;
         final int Do_getParamAndVarCount = 2;
         final int Do_getParamOrVarName = 3;
-        final int Do_getEncodedSource = 4;
+        final int Do_getRawSource = 4;
         final int Do_getParamOrVarConst = 5;
         final int Do_isGeneratorFunction = 6;
         final int Do_hasRestParameter = 7;
         final int SWITCH_COUNT = 8;
 
         for (int methodIndex = 0; methodIndex != SWITCH_COUNT; ++methodIndex) {
-            if (methodIndex == Do_getEncodedSource && encodedSource == null) {
+            if (methodIndex == Do_getRawSource && rawSource == null) {
                 continue;
             }
 
@@ -778,10 +778,10 @@ public class Codegen implements Evaluator {
                     methodLocals = 1 + 1 + 1; // this + paramOrVarName
                     cfw.startMethod("getParamOrVarConst", "(I)Z", ACC_PUBLIC);
                     break;
-                case Do_getEncodedSource:
+                case Do_getRawSource:
                     methodLocals = 1; // Only this
-                    cfw.startMethod("getEncodedSource", "()Ljava/lang/String;", ACC_PUBLIC);
-                    cfw.addPush(encodedSource);
+                    cfw.startMethod("getRawSource", "()Ljava/lang/String;", ACC_PUBLIC);
+                    cfw.addPush(rawSource);
                     break;
                 case Do_isGeneratorFunction:
                     methodLocals = 1; // Only this
@@ -935,11 +935,11 @@ public class Codegen implements Evaluator {
                         cfw.add(ByteCode.IRETURN);
                         break;
 
-                    case Do_getEncodedSource:
-                        // Push number encoded source start and end
-                        // to prepare for encodedSource.substring(start, end)
-                        cfw.addPush(n.getEncodedSourceStart());
-                        cfw.addPush(n.getEncodedSourceEnd());
+                    case Do_getRawSource:
+                        // Push number raw source start and end
+                        // to prepare for rawSource.substring(start, end)
+                        cfw.addPush(n.getRawSourceStart());
+                        cfw.addPush(n.getRawSourceEnd());
                         cfw.addInvoke(
                                 ByteCode.INVOKEVIRTUAL,
                                 "java/lang/String",
