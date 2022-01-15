@@ -67,11 +67,6 @@ public abstract class NativeFunction extends BaseFunction {
         return getFunctionName();
     }
 
-    /** Get encoded source string. */
-    public String getEncodedSource() {
-        return null;
-    }
-
     /** Get raw source string. */
     public String getRawSource() {
         return null;
