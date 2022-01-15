@@ -2452,7 +2452,7 @@ public class Context implements Closeable {
                 compiler = createCompiler();
             }
 
-            bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
+            bytecode = compiler.compile(compilerEnv, tree, sourceString, returnFunction);
         } catch (ClassFileFormatException e) {
             // we hit some class file limit, fall back to interpreter or report
 
@@ -2468,7 +2468,7 @@ public class Context implements Closeable {
                             returnFunction);
 
             compiler = createInterpreter();
-            bytecode = compiler.compile(compilerEnv, tree, tree.getEncodedSource(), returnFunction);
+            bytecode = compiler.compile(compilerEnv, tree, sourceString, returnFunction);
         }
 
         if (debugger != null) {
@@ -2522,6 +2522,12 @@ public class Context implements Closeable {
 
         IRFactory irf = new IRFactory(compilerEnv, compilationErrorReporter);
         ScriptNode tree = irf.transformTree(ast);
+
+        if (compilerEnv.isGeneratingSource()) {
+            tree.setRawSource(sourceString);
+            tree.setRawSourceBounds(0, sourceString.length());
+        }
+
         return tree;
     }
 

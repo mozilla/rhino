@@ -20,8 +20,13 @@ public class ScriptNode extends Scope {
 
     private int encodedSourceStart = -1;
     private int encodedSourceEnd = -1;
-    private String sourceName;
     private String encodedSource;
+
+    private int rawSourceStart = -1;
+    private int rawSourceEnd = -1;
+    private String rawSource;
+
+    private String sourceName;
     private int endLineno = -1;
 
     private List<FunctionNode> functions;
@@ -131,6 +136,75 @@ public class ScriptNode extends Scope {
      */
     public String getEncodedSource() {
         return encodedSource;
+    }
+
+    /**
+     * Returns the start offset of the raw source. Only valid if {@link #getRawSource} returns
+     * non-{@code null}.
+     */
+    public int getRawSourceStart() {
+        return rawSourceStart;
+    }
+
+    /**
+     * Used by code generator.
+     *
+     * @see #getRawSource
+     */
+    public void setRawSourceStart(int start) {
+        this.rawSourceStart = start;
+    }
+
+    /**
+     * Returns the end offset of the raw source. Only valid if {@link #getRawSource} returns
+     * non-{@code null}.
+     */
+    public int getRawSourceEnd() {
+        return rawSourceEnd;
+    }
+
+    /**
+     * Used by code generator.
+     *
+     * @see #getRawSource
+     */
+    public void setRawSourceEnd(int end) {
+        this.rawSourceEnd = end;
+    }
+
+    /**
+     * Used by code generator.
+     *
+     * @see #getRawSource
+     */
+    public void setRawSourceBounds(int start, int end) {
+        this.rawSourceStart = start;
+        this.rawSourceEnd = end;
+    }
+
+    /**
+     * Used by the code generator.
+     *
+     * @see #getRawSource
+     */
+    public void setRawSource(String rawSource) {
+        this.rawSource = rawSource;
+    }
+
+    /**
+     * Returns a canonical version of the source for this script or function, for use in
+     * implementing the {@code Object.toSource} method of JavaScript objects. This source encoding
+     * is only recorded during code generation. It must be passed back to {@link
+     * org.mozilla.javascript.Decompiler#decompile} to construct the human-readable source string.
+     *
+     * <p>Given a parsed AST, you can always convert it to source code using the {@link
+     * AstNode#toSource} method, although it's not guaranteed to produce exactly the same results as
+     * {@code Object.toSource} with respect to formatting, parenthesization and other details.
+     *
+     * @return the raw source, or {@code null} if it was not recorded.
+     */
+    public String getRawSource() {
+        return rawSource;
     }
 
     public int getBaseLineno() {

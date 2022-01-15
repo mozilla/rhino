@@ -19,11 +19,10 @@ final class InterpreterData implements Serializable, DebuggableScript {
     static final int INITIAL_NUMBERTABLE_SIZE = 64;
     static final int INITIAL_BIGINTTABLE_SIZE = 64;
 
-    InterpreterData(
-            int languageVersion, String sourceFile, String encodedSource, boolean isStrict) {
+    InterpreterData(int languageVersion, String sourceFile, String rawSource, boolean isStrict) {
         this.languageVersion = languageVersion;
         this.itsSourceFile = sourceFile;
-        this.encodedSource = encodedSource;
+        this.rawSource = rawSource;
         this.isStrict = isStrict;
         init();
     }
@@ -32,7 +31,7 @@ final class InterpreterData implements Serializable, DebuggableScript {
         this.parentData = parent;
         this.languageVersion = parent.languageVersion;
         this.itsSourceFile = parent.itsSourceFile;
-        this.encodedSource = parent.encodedSource;
+        this.rawSource = parent.rawSource;
         this.isStrict = parent.isStrict;
         init();
     }
@@ -72,9 +71,9 @@ final class InterpreterData implements Serializable, DebuggableScript {
 
     int itsMaxCalleeArgs;
 
-    String encodedSource;
-    int encodedSourceStart;
-    int encodedSourceEnd;
+    String rawSource;
+    int rawSourceStart;
+    int rawSourceEnd;
 
     int languageVersion;
 
