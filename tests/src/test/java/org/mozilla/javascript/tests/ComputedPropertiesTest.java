@@ -94,7 +94,14 @@ public class ComputedPropertiesTest {
         Object value = cx.evaluateString(scope, script, "test", 1, null);
         assertTrue(value instanceof String);
         assertEquals(
-                "\nfunction f(x) {\n    var o = {1: true, [2]: false, [g(x)]: 3};\n}\n", value);
+                "function f(x) {\n"
+                        + "  var o = {\n"
+                        + "    1: true,\n"
+                        + "    [2]: false,\n"
+                        + "    [g(x)]: 3\n"
+                        + "  };\n"
+                        + "}",
+                value);
     }
 
     @Test

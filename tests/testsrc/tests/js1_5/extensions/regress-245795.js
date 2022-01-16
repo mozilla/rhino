@@ -20,7 +20,7 @@ if (typeof uneval != 'undefined')
     b=function() {};
   }
 
-  var r = /function a\(\) \{ b = \(?function \(\) \{\s*\}\)?; \}/;
+  var r = /function a\(\) \{ b=\(?function\(\) \{\s*\}\)?; \}/;
   eval(uneval(a));
 
   var v = a.toString().replace(/[ \n]+/g, ' ');
