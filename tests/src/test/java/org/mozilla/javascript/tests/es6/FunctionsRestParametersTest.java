@@ -229,7 +229,7 @@ public class FunctionsRestParametersTest {
                         + "rest.toString();\n";
 
         Utils.assertWithAllOptimizationLevelsES6(
-                "\nfunction rest(...restArgs) {\n    return restArgs.length;\n}\n", code);
+                "function rest(...restArgs) {\n  return restArgs.length;\n}", code);
     }
 
     @Test
@@ -241,7 +241,7 @@ public class FunctionsRestParametersTest {
                         + "rest.toString();\n";
 
         Utils.assertWithAllOptimizationLevelsES6(
-                "\nfunction rest(arg, ...restArgs) {\n    return restArgs.length;\n}\n", code);
+                "function rest( arg ,  ...restArgs ) {\n  return restArgs.length;\n}", code);
     }
 
     @Test

@@ -25,12 +25,12 @@ function test()
 
   f = function() { (yield).a }
   actual = f + '';
-  expect = 'function () {\n    (yield).a;\n}';
+  expect = 'function () {\n    (yield).a\n}';
   compareSource(expect, actual, summary);
 
   f = function() { 3 + (yield 4) }
   actual = f + '';
-  expect = 'function () {\n    3 + (yield 4);\n}';
+  expect = 'function () {\n    3 + (yield 4)\n}';
   compareSource(expect, actual, summary);
 
   exitFunc ('test');

@@ -23,7 +23,7 @@ function test()
  
   var f, g;
   f = function() { { while(0) function t() {  } } }
-  expect = 'function() { while(0) { function t() {  } }}';
+  expect = 'function() { { while(0) function t() {  } } }';
   actual = f + '';
   compareSource(expect, actual, summary);
 

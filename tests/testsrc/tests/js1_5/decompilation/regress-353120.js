@@ -23,7 +23,7 @@ function test()
 
   var f;
   f = function() { return (new x)[y]++ }
-  expect = 'function() { return (new x)[y]++; }';
+  expect = 'function() { return (new x)[y]++ }';
   actual = f + '';
   compareSource(expect, actual, summary);
 

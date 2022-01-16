@@ -104,9 +104,9 @@ public class Bug491621Test {
 
     @Test
     public void hexOctLiteralPropertyNameToSource() {
-        assertSource("({ 0xff: 1, 010: 2 });", "({\n  ff: 1, \n  10: 2});\n");
+        assertSource("({ 0xff: 1, 010: 2 });", "({\n  ff: 1,\n  10: 2\n});\n");
         assertSource(
-                "({ 0xff: 1, 010: 2 });", "({\n  0xff: 1, \n  010: 2});\n", Context.VERSION_ES6);
+                "({ 0xff: 1, 010: 2 });", "({\n  0xff: 1,\n  010: 2\n});\n", Context.VERSION_ES6);
     }
 
     @Test

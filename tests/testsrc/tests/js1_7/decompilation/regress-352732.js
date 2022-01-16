@@ -29,7 +29,7 @@ function test()
   {
     c = '(function() { if (x) L: let x; })';
     f = eval(c);
-    expect = 'function() { if (x) { L: let x; } }';
+    expect = 'function() { if (x) L: let x; }';
     actual = f + '';
     compareSource(expect, actual, summary);
   }
@@ -45,7 +45,7 @@ function test()
   {
     c = '(function() { if (x) L: let x; else y; })';
     f = eval(c);
-    expect = 'function() { if (x) { L: let x; } else { y;} }';
+    expect = 'function() { if (x) L: let x; else y; }';
     actual = f + '';
     compareSource(expect, actual, summary);
   }

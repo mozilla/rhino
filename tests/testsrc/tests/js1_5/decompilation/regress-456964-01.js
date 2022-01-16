@@ -33,7 +33,7 @@ function test()
 
   print(Test);
 
-  expect = 'function Test ( ) { var object = { abc : 1 , def : 2 } ; var o = ""; for ( var i in object ) { o += i + " = " + object [ i ] + "\\ n "; } return o ; }';
+  expect = 'function Test ( ) { var object = { abc : 1 , def : 2 } ; var o = \'\'; for ( var i in object ) o += i + \' = \' + object [ i ] + \'\\ n \'; return o ; }';
   actual = Test + '';
 
   compareSource(expect, actual, summary);
