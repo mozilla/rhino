@@ -23,7 +23,7 @@ function test()
  
   var f;
   f = function() { yield (1,2) }
-  expect = 'function() { yield (1,2); }';
+  expect = 'function() { yield (1,2) }';
   actual = f + '';
   compareSource(expect, actual, summary);
 

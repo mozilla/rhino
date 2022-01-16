@@ -230,7 +230,7 @@ public class NativeObjectTest {
                         + "+ ' ' + desc.get"
                         + "+ ' ' + desc.set"
                         + "+ ' [' + Object.getOwnPropertyNames(desc) + ']'",
-                "undefined \nfunction () {\n}\n undefined [get,set,enumerable,configurable]");
+                "undefined function() {} undefined [get,set,enumerable,configurable]");
     }
 
     @Test

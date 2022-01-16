@@ -24,7 +24,7 @@ function test()
   var f;
 
   f = function () { let (x = 3) { x-- } }
-  expect = 'function () {\n    let (x = 3) {\n        x--;\n    }\n}';
+  expect = 'function () {\n    let (x = 3) {\n        x--\n    }\n}';
   actual = f + '';
   compareSource(expect, actual, summary);
 

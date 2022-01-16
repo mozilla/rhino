@@ -25,7 +25,7 @@ function test()
 
   function p(){p}
 
-  expect = 'function p(){p;}';
+  expect = 'function p(){p}';
   actual = p + '';
 
   compareSource(expect, actual, summary);

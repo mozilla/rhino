@@ -23,7 +23,7 @@ function test()
 
   var f = (function() { a += b = 3 });
 
-  expect = 'function() { a += b = 3; }';
+  expect = 'function() { a += b = 3 }';
   actual = f + '';
 
   compareSource(expect, actual, summary);

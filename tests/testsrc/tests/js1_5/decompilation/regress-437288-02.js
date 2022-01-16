@@ -23,7 +23,7 @@ function test()
  
   function f() { const x = 1; for (x in null); }
 
-  expect = 'function f() { const x = 1; for (x in null) {} }';
+  expect = 'function f() { const x = 1; for (x in null) ; }';
   actual = f + '';
 
   compareSource(expect, actual, summary);
