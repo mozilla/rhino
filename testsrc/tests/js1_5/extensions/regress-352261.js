@@ -24,7 +24,7 @@ function test()
   var g, h;
 
   g = function(a,b,c) { return a - (b + c) }
-  expect = 'function(a,b,c) { return a - (b + c); }';
+  expect = 'function(a,b,c) { return a - (b + c) }';
   actual = g + '';
   compareSource(expect, actual, summary);
 
@@ -36,7 +36,7 @@ function test()
   var p, q;
 
   p = function (a,b,c) { return a + (b - c) }
-  expect = 'function (a,b,c) { return a + (b - c);}';
+  expect = 'function (a,b,c) { return a + (b - c)}';
   actual = p + '';
   compareSource(expect, actual, summary);
 

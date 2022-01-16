@@ -9,12 +9,10 @@ js> function f(a,b,c) {
   >   return sum / 3;
   > }
 js> f.toString()
-
-function f(a, b, c) {
-    let sum = a + b + c;
-    return sum / 3;
-}
-
+function f(a,b,c) {
+   let sum = a + b + c;
+   return sum / 3;
+ }
 js> try {
   >   eval("function f() { for (;;)  let a=3; return 3; }");
   > } catch (e) {

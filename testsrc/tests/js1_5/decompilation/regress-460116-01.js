@@ -24,7 +24,7 @@ function test()
   var f;
 
   f = (function (){if(typeof(false||undef))throw "fail"});
-  expect = 'function (){if(typeof(false||undef)) {throw "fail";}}';
+  expect = 'function (){if(typeof(false||undef)) throw "fail"}';
   actual = f + '';
 
   compareSource(expect, actual, summary);

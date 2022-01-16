@@ -74,8 +74,8 @@ public class CodegenTest {
                                         .getName()
                                         .startsWith("org.mozilla.javascript.InterpretedFunction"));
                         Assert.assertTrue(
-                                "" + ((NativeFunction) script).getEncodedSource().length(),
-                                ((NativeFunction) script).getEncodedSource().length() > 1000);
+                                "" + ((NativeFunction) script).getRawSource().length(),
+                                ((NativeFunction) script).getRawSource().length() > 1000);
                         return null;
                     } catch (IOException e) {
                         Assert.fail(e.getMessage());
@@ -144,8 +144,8 @@ public class CodegenTest {
                                     .getName()
                                     .startsWith("org.mozilla.javascript.InterpretedFunction"));
                     Assert.assertTrue(
-                            "" + ((NativeFunction) script).getEncodedSource().length(),
-                            ((NativeFunction) script).getEncodedSource().length() > 1000);
+                            "" + ((NativeFunction) script).getRawSource().length(),
+                            ((NativeFunction) script).getRawSource().length() > 1000);
                     return null;
                 });
 
@@ -164,8 +164,8 @@ public class CodegenTest {
                                         .getName()
                                         .startsWith("org.mozilla.javascript.InterpretedFunction"));
                         Assert.assertTrue(
-                                "" + ((NativeFunction) script).getEncodedSource().length(),
-                                ((NativeFunction) script).getEncodedSource().length() > 1000);
+                                "" + ((NativeFunction) script).getRawSource().length(),
+                                ((NativeFunction) script).getRawSource().length() > 1000);
                         return null;
                     } catch (IOException e) {
                         Assert.fail(e.getMessage());
@@ -216,8 +216,8 @@ public class CodegenTest {
                                     .getName()
                                     .startsWith("org.mozilla.javascript.InterpretedFunction"));
                     Assert.assertTrue(
-                            "" + ((NativeFunction) script).getEncodedSource().length(),
-                            ((NativeFunction) script).getEncodedSource().length() > 1000);
+                            "" + ((NativeFunction) script).getRawSource().length(),
+                            ((NativeFunction) script).getRawSource().length() > 1000);
                     return null;
                 });
 
@@ -236,8 +236,8 @@ public class CodegenTest {
                                         .getName()
                                         .startsWith("org.mozilla.javascript.InterpretedFunction"));
                         Assert.assertTrue(
-                                "" + ((NativeFunction) script).getEncodedSource().length(),
-                                ((NativeFunction) script).getEncodedSource().length() > 1000);
+                                "" + ((NativeFunction) script).getRawSource().length(),
+                                ((NativeFunction) script).getRawSource().length() > 1000);
                         return null;
                     } catch (IOException e) {
                         Assert.fail(e.getMessage());
@@ -284,8 +284,8 @@ public class CodegenTest {
                                     .getName()
                                     .startsWith("org.mozilla.javascript.InterpretedFunction"));
                     Assert.assertTrue(
-                            "" + ((NativeFunction) script).getEncodedSource().length(),
-                            ((NativeFunction) script).getEncodedSource().length() > 1000);
+                            "" + ((NativeFunction) script).getRawSource().length(),
+                            ((NativeFunction) script).getRawSource().length() > 1000);
                     return null;
                 });
 
@@ -304,8 +304,8 @@ public class CodegenTest {
                                         .getName()
                                         .startsWith("org.mozilla.javascript.InterpretedFunction"));
                         Assert.assertTrue(
-                                "" + ((NativeFunction) script).getEncodedSource().length(),
-                                ((NativeFunction) script).getEncodedSource().length() > 1000);
+                                "" + ((NativeFunction) script).getRawSource().length(),
+                                ((NativeFunction) script).getRawSource().length() > 1000);
                         return null;
                     } catch (IOException e) {
                         Assert.fail(e.getMessage());

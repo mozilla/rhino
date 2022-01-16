@@ -23,7 +23,7 @@ function test()
 
   var f = function (){a[b] = (c, d)}
   actual = f + '';
-  expect = 'function () {\n    a[b] = (c, d);\n}';
+  expect = 'function () {\n    a[b] = (c, d)\n}';
 
   compareSource(expect, actual, summary);
 

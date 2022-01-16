@@ -39,12 +39,7 @@ obj = {
 assertEquals(123, obj.set());
 // assertEquals("set", obj.set.name);
 
-assertEquals("\n" +
-"function () {\n" +
-"    +{f() {\n" +
-"        print(1);\n" +
-"    }};\n" +
-"}\n", (function() { +{ f() { print(1); }}; }).toString());
+assertEquals("function() { +{ f() { print(1); }}; }", (function() { +{ f() { print(1); }}; }).toString());
 
 // Allow reserved word
 assertEquals(123, {

@@ -71,7 +71,7 @@ public class Bug708801Test {
             Codegen codegen = new Codegen();
             codegen.setMainMethodClass(mainMethodClassName);
             codegen.compileToClassFile(
-                    compilerEnv, scriptClassName, tree, tree.getEncodedSource(), false);
+                    compilerEnv, scriptClassName, tree, tree.getRawSource(), false);
 
             return tree;
         }

@@ -24,7 +24,7 @@ function test()
   var f;
 
   f = (function (){if((false&&foo)===(true||bar));});
-  expect = 'function (){if((false&&foo)===(true||bar)) {}}';
+  expect = 'function (){if((false&&foo)===(true||bar));}';
   actual = f + '';
 
   compareSource(expect, actual, summary);

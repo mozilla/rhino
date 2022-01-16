@@ -57,12 +57,13 @@ public class MiscCommentsTest {
         String outputStr =
                 "function f1() {\n"
                         + "  var timeRegistrationLines = {\n"
-                        + "  \"orderId\": a.orderId, \n"
-                        + "  \"registeredQuantity\": a.datavalue, \n"
-                        + "  \"unit\": a.unit, \n"
-                        + "  \"wageCompType\": a.wageCompType, \n"
-                        + "  \"week\": a[a.timeLineFrom].weekNumber, \n"
-                        + "  \"comments\": (a.datavalue || null)};\n"
+                        + "  \"orderId\": a.orderId,\n"
+                        + "  \"registeredQuantity\": a.datavalue,\n"
+                        + "  \"unit\": a.unit,\n"
+                        + "  \"wageCompType\": a.wageCompType,\n"
+                        + "  \"week\": a[a.timeLineFrom].weekNumber,\n"
+                        + "  \"comments\": (a.datavalue || null)\n"
+                        + "};\n"
                         + "}\n";
         AstNode scriptRoot =
                 CommentsTestUtils.getRhinoASTRootNode(inputStr, "tryCatch1", null, null);
