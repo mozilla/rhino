@@ -65,7 +65,7 @@ public class Bug708801Test {
             ErrorReporter compilationErrorReporter = compilerEnv.getErrorReporter();
             Parser p = new Parser(compilerEnv, compilationErrorReporter);
             AstRoot ast = p.parse(source.toString(), "<eval>", 1);
-            IRFactory irf = new IRFactory(compilerEnv);
+            IRFactory irf = new IRFactory(compilerEnv, source.toString());
             ScriptNode tree = irf.transformTree(ast);
 
             Codegen codegen = new Codegen();
