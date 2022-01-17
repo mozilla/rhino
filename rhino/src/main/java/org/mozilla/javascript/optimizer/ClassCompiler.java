@@ -111,7 +111,7 @@ public class ClassCompiler {
             String source, String sourceLocation, int lineno, String mainClassName) {
         Parser p = new Parser(compilerEnv);
         AstRoot ast = p.parse(source, sourceLocation, lineno);
-        IRFactory irf = new IRFactory(compilerEnv);
+        IRFactory irf = new IRFactory(compilerEnv, source);
         ScriptNode tree = irf.transformTree(ast);
 
         // release reference to original parse tree & parser
