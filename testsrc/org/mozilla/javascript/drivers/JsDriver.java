@@ -14,24 +14,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-/**
- * @version $Id: JsDriver.java,v 1.10 2009/05/15 12:30:45 nboyd%atg.com Exp $
- */
+/** @version $Id: JsDriver.java,v 1.10 2009/05/15 12:30:45 nboyd%atg.com Exp $ */
 public class JsDriver {
-    private JsDriver() {
-    }
+    private JsDriver() {}
 
     private static String join(String[] list) {
         String rv = "";
-        for (int i=0; i<list.length; i++) {
+        for (int i = 0; i < list.length; i++) {
             rv += list[i];
-            if (i+1 != list.length) {
+            if (i + 1 != list.length) {
                 rv += ",";
             }
         }
@@ -50,14 +46,13 @@ public class JsDriver {
         }
 
         private String[] getTestList(String[] tests) throws IOException {
-          ArrayList<String> list = new ArrayList<String>();
-          for (int i=0; i < tests.length; i++) {
-            if (tests[i].startsWith("@"))
-              TestUtils.addTestsFromFile(tests[i].substring(1), list);
-            else
-              list.add(tests[i]);
-          }
-          return list.toArray(new String[0]);
+            ArrayList<String> list = new ArrayList<String>();
+            for (int i = 0; i < tests.length; i++) {
+                if (tests[i].startsWith("@"))
+                    TestUtils.addTestsFromFile(tests[i].substring(1), list);
+                else list.add(tests[i]);
+            }
+            return list.toArray(new String[0]);
         }
 
         private boolean matches(String path) {
@@ -73,13 +68,16 @@ public class JsDriver {
         private void addFiles(List<Script> rv, String prefix, File directory) {
             File[] files = directory.listFiles();
             if (files == null) throw new RuntimeException("files null for " + directory);
-            for (int i=0; i<files.length; i++) {
+            for (int i = 0; i < files.length; i++) {
                 String path = prefix + files[i].getName();
                 if (ShellTest.DIRECTORY_FILTER.accept(files[i])) {
                     addFiles(rv, path + "/", files[i]);
                 } else {
                     boolean isTopLevel = prefix.length() == 0;
-                    if (ShellTest.TEST_FILTER.accept(files[i]) && matches(path) && !excluded(path) && !isTopLevel) {
+                    if (ShellTest.TEST_FILTER.accept(files[i])
+                            && matches(path)
+                            && !excluded(path)
+                            && !isTopLevel) {
                         rv.add(new Script(path, files[i]));
                     }
                 }
@@ -156,7 +154,8 @@ public class JsDriver {
         @Override
         public void exitCodesWere(int expected, int actual) {
             if (expected != actual) {
-                console.println("Failed: " + jsFile + " expected " + expected + " actual " + actual);
+                console.println(
+                        "Failed: " + jsFile + " expected " + expected + " actual " + actual);
                 failed = true;
             }
         }
@@ -179,10 +178,10 @@ public class JsDriver {
             return true;
         } else {
             NodeList children = node.getChildNodes();
-            for (int i=0; i<children.getLength(); i++) {
+            for (int i = 0; i < children.getLength(); i++) {
                 if (children.item(i) instanceof Element) {
-                    Element e = (Element)children.item(i);
-                    boolean rv = setContent( e, id, content );
+                    Element e = (Element) children.item(i);
+                    boolean rv = setContent(e, id, content);
                     if (rv) {
                         return true;
                     }
@@ -197,9 +196,9 @@ public class JsDriver {
             return node;
         } else {
             NodeList children = node.getChildNodes();
-            for (int i=0; i<children.getLength(); i++) {
+            for (int i = 0; i < children.getLength(); i++) {
                 if (children.item(i) instanceof Element) {
-                    Element rv = getElementById( (Element)children.item(i), id );
+                    Element rv = getElementById((Element) children.item(i), id);
                     if (rv != null) {
                         return rv;
                     }
@@ -211,9 +210,9 @@ public class JsDriver {
 
     private static String newlineLineEndings(String s) {
         StringBuilder rv = new StringBuilder();
-        for (int i=0; i<s.length(); i++) {
+        for (int i = 0; i < s.length(); i++) {
             if (s.charAt(i) == '\r') {
-                if (i+1<s.length() && s.charAt(i+1) == '\n') {
+                if (i + 1 < s.length() && s.charAt(i + 1) == '\n') {
                     //    just skip \r
                 } else {
                     //    Macintosh, substitute \n
@@ -236,7 +235,8 @@ public class JsDriver {
 
         private String output;
 
-        HtmlStatus(String lxrUrl, String bugUrl, String testPath, Document html, Element failureHtml) {
+        HtmlStatus(
+                String lxrUrl, String bugUrl, String testPath, Document html, Element failureHtml) {
             this.testPath = testPath;
             this.bugUrl = bugUrl;
             this.lxrUrl = lxrUrl;
@@ -245,8 +245,7 @@ public class JsDriver {
         }
 
         @Override
-        public void running(File file) {
-        }
+        public void running(File file) {}
 
         @Override
         public void failed(String s) {
@@ -258,21 +257,29 @@ public class JsDriver {
         public void exitCodesWere(int expected, int actual) {
             if (expected != actual) {
                 failed = true;
-                setContent(failureHtml, "failureDetails.reason", "expected exit code " + expected + " but got " + actual);
+                setContent(
+                        failureHtml,
+                        "failureDetails.reason",
+                        "expected exit code " + expected + " but got " + actual);
             }
         }
 
         @Override
         public void threw(Throwable e) {
             failed = true;
-            setContent(failureHtml, "failureDetails.reason", "Threw Java exception:\n" + newlineLineEndings(ShellTest.getStackTrace(e)));
+            setContent(
+                    failureHtml,
+                    "failureDetails.reason",
+                    "Threw Java exception:\n" + newlineLineEndings(ShellTest.getStackTrace(e)));
         }
 
         @Override
         public void timedOut(long timeoutMillis) {
             failed = true;
-            setContent(failureHtml, "failureDetails.reason",
-                "Timed out (timeout = " + timeoutMillis + ")");
+            setContent(
+                    failureHtml,
+                    "failureDetails.reason",
+                    "Timed out (timeout = " + timeoutMillis + ")");
         }
 
         @Override
@@ -285,7 +292,7 @@ public class JsDriver {
             String line = null;
             String rv = "";
             try {
-                while( (line = r.readLine()) != null ) {
+                while ((line = r.readLine()) != null) {
                     if (line.startsWith(prefix)) {
                         if (rv.length() > 0) {
                             rv += "\n";
@@ -305,7 +312,8 @@ public class JsDriver {
 
         void finish() {
             if (failed) {
-                getElementById(failureHtml, "failureDetails.status").setTextContent(getLinesStartingWith("STATUS:"));
+                getElementById(failureHtml, "failureDetails.status")
+                        .setTextContent(getLinesStartingWith("STATUS:"));
 
                 String bn = getLinesStartingWith("BUGNUMBER:");
                 Element bnlink = getElementById(failureHtml, "failureDetails.bug.href");
@@ -321,16 +329,19 @@ public class JsDriver {
                     bnlink.getParentNode().removeChild(bnlink);
                 }
 
-                getElementById(failureHtml, "failureDetails.lxr").setAttribute("href", lxrUrl + testPath);
+                getElementById(failureHtml, "failureDetails.lxr")
+                        .setAttribute("href", lxrUrl + testPath);
                 getElementById(failureHtml, "failureDetails.lxr.text").setTextContent(testPath);
 
-                getElementById(html.getDocumentElement(), "retestList.text").setTextContent(
-                    getElementById(html.getDocumentElement(), "retestList.text").getTextContent()
-                    + testPath
-                    + "\n"
-                );
+                getElementById(html.getDocumentElement(), "retestList.text")
+                        .setTextContent(
+                                getElementById(html.getDocumentElement(), "retestList.text")
+                                                .getTextContent()
+                                        + testPath
+                                        + "\n");
 
-                getElementById(html.getDocumentElement(), "failureDetails").appendChild(failureHtml);
+                getElementById(html.getDocumentElement(), "failureDetails")
+                        .appendChild(failureHtml);
             }
         }
     }
@@ -363,7 +374,7 @@ public class JsDriver {
         }
 
         private void setTextContent(Element e, String content) {
-            e.setTextContent( newlineLineEndings(content) );
+            e.setTextContent(newlineLineEndings(content));
         }
 
         @Override
@@ -423,7 +434,12 @@ public class JsDriver {
 
             File output = arguments.getOutputFile();
             if (output == null) {
-                output = new File("rhino-test-results." + new java.text.SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()) + ".html");
+                output =
+                        new File(
+                                "rhino-test-results."
+                                        + new java.text.SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
+                                                .format(new Date())
+                                        + ".html");
             }
             this.output = output;
 
@@ -432,7 +448,8 @@ public class JsDriver {
 
         private Document parse(InputStream in) {
             try {
-                javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+                javax.xml.parsers.DocumentBuilderFactory factory =
+                        javax.xml.parsers.DocumentBuilderFactory.newInstance();
                 factory.setValidating(false);
                 javax.xml.parsers.DocumentBuilder dom = factory.newDocumentBuilder();
                 return dom.parse(in);
@@ -448,17 +465,18 @@ public class JsDriver {
         private void write(Document template, boolean xml) {
             try {
                 File output = this.output;
-                javax.xml.transform.TransformerFactory factory = javax.xml.transform.TransformerFactory.newInstance();
+                javax.xml.transform.TransformerFactory factory =
+                        javax.xml.transform.TransformerFactory.newInstance();
                 javax.xml.transform.Transformer xform = factory.newTransformer();
                 if (xml) {
                     xform.setOutputProperty(javax.xml.transform.OutputKeys.METHOD, "xml");
-                    xform.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+                    xform.setOutputProperty(
+                            javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
                     output = new File(output.getCanonicalPath() + ".xml");
                 }
                 xform.transform(
-                    new javax.xml.transform.dom.DOMSource(template),
-                    new javax.xml.transform.stream.StreamResult( new FileOutputStream(output) )
-                );
+                        new javax.xml.transform.dom.DOMSource(template),
+                        new javax.xml.transform.stream.StreamResult(new FileOutputStream(output)));
             } catch (IOException e) {
                 arguments.getConsole().println("Could not write results file to " + output + ": ");
                 e.printStackTrace(System.err);
@@ -471,13 +489,15 @@ public class JsDriver {
 
         void start() {
             this.html = getTemplate();
-            this.failureHtml = getElementById(html.getDocumentElement(), "failureDetails.prototype");
+            this.failureHtml =
+                    getElementById(html.getDocumentElement(), "failureDetails.prototype");
             if (this.failureHtml == null) {
                 try {
-                    javax.xml.transform.TransformerFactory.newInstance().newTransformer().transform(
-                        new javax.xml.transform.dom.DOMSource(html),
-                        new javax.xml.transform.stream.StreamResult(System.err)
-                    );
+                    javax.xml.transform.TransformerFactory.newInstance()
+                            .newTransformer()
+                            .transform(
+                                    new javax.xml.transform.dom.DOMSource(html),
+                                    new javax.xml.transform.stream.StreamResult(System.err));
                 } catch (Throwable t) {
                     throw new RuntimeException(t);
                 }
@@ -486,13 +506,20 @@ public class JsDriver {
             this.failureHtml.getParentNode().removeChild(this.failureHtml);
 
             try {
-                this.xml = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
-                    .getDOMImplementation().createDocument(null, "results", null)
-                ;
-                xml.getDocumentElement().setAttribute("timestamp", String.valueOf(new Date().getTime()));
-                xml.getDocumentElement().setAttribute("optimization", String.valueOf(arguments.getOptimizationLevel()));
-                xml.getDocumentElement().setAttribute("strict", String.valueOf(arguments.isStrict()));
-                xml.getDocumentElement().setAttribute("timeout", String.valueOf(arguments.getTimeout()));
+                this.xml =
+                        javax.xml.parsers.DocumentBuilderFactory.newInstance()
+                                .newDocumentBuilder()
+                                .getDOMImplementation()
+                                .createDocument(null, "results", null);
+                xml.getDocumentElement()
+                        .setAttribute("timestamp", String.valueOf(new Date().getTime()));
+                xml.getDocumentElement()
+                        .setAttribute(
+                                "optimization", String.valueOf(arguments.getOptimizationLevel()));
+                xml.getDocumentElement()
+                        .setAttribute("strict", String.valueOf(arguments.isStrict()));
+                xml.getDocumentElement()
+                        .setAttribute("timeout", String.valueOf(arguments.getTimeout()));
             } catch (javax.xml.parsers.ParserConfigurationException e) {
                 throw new RuntimeException(e);
             }
@@ -504,9 +531,16 @@ public class JsDriver {
             String path = script.getPath();
             File test = script.getFile();
             ConsoleStatus cStatus = new ConsoleStatus(arguments.getConsole(), trace);
-            HtmlStatus hStatus = new HtmlStatus(arguments.getLxrUrl(), arguments.getBugUrl(), path, html, (Element)failureHtml.cloneNode(true));
+            HtmlStatus hStatus =
+                    new HtmlStatus(
+                            arguments.getLxrUrl(),
+                            arguments.getBugUrl(),
+                            path,
+                            html,
+                            (Element) failureHtml.cloneNode(true));
             XmlStatus xStatus = new XmlStatus(path, this.xml.getDocumentElement());
-            ShellTest.Status status = ShellTest.Status.compose(new ShellTest.Status[] { cStatus, hStatus, xStatus });
+            ShellTest.Status status =
+                    ShellTest.Status.compose(new ShellTest.Status[] {cStatus, hStatus, xStatus});
             try {
                 ShellTest.run(factory, test, parameters, status);
             } catch (Exception e) {
@@ -528,19 +562,38 @@ public class JsDriver {
             long elapsedMs = end.getTime() - start.getTime();
             set(html, "results.testlist", join(arguments.getTestList()));
             set(html, "results.skiplist", join(arguments.getSkipList()));
-            String pct = new java.text.DecimalFormat("##0.00").format( (double)failures / (double)tests * 100.0 );
-            set(html, "results.results", "Tests attempted: " + tests + " Failures: " + failures + " (" + pct + "%)");
-            set(html, "results.platform", "java.home=" + System.getProperty("java.home")
-                + "\n" + "java.version=" + System.getProperty("java.version")
-                + "\n" + "os.name=" + System.getProperty("os.name")
-            );
-            set(html, "results.classpath", System.getProperty("java.class.path").replace(File.pathSeparatorChar, ' '));
-            int elapsedSeconds = (int)(elapsedMs / 1000);
+            String pct =
+                    new java.text.DecimalFormat("##0.00")
+                            .format((double) failures / (double) tests * 100.0);
+            set(
+                    html,
+                    "results.results",
+                    "Tests attempted: " + tests + " Failures: " + failures + " (" + pct + "%)");
+            set(
+                    html,
+                    "results.platform",
+                    "java.home="
+                            + System.getProperty("java.home")
+                            + "\n"
+                            + "java.version="
+                            + System.getProperty("java.version")
+                            + "\n"
+                            + "os.name="
+                            + System.getProperty("os.name"));
+            set(
+                    html,
+                    "results.classpath",
+                    System.getProperty("java.class.path").replace(File.pathSeparatorChar, ' '));
+            int elapsedSeconds = (int) (elapsedMs / 1000);
             int elapsedMinutes = elapsedSeconds / 60;
             elapsedSeconds = elapsedSeconds % 60;
             String elapsed = "" + elapsedMinutes + " minutes, " + elapsedSeconds + " seconds";
             set(html, "results.elapsed", elapsed);
-            set(html, "results.time", new java.text.SimpleDateFormat("MMMM d yyyy h:mm:ss aa").format(new java.util.Date()));
+            set(
+                    html,
+                    "results.time",
+                    new java.text.SimpleDateFormat("MMMM d yyyy h:mm:ss aa")
+                            .format(new java.util.Date()));
             write(html, false);
             write(xml, true);
         }
@@ -561,8 +614,10 @@ public class JsDriver {
 
     void run(Arguments arguments) throws Throwable {
         if (arguments.help()) {
-            System.out.println("See mozilla/js/tests/README-jsDriver.html; note that some options are not supported.");
-            System.out.println("Consult the Java source code at testsrc/org/mozilla/javascript/JsDriver.java for details.");
+            System.out.println(
+                    "See mozilla/js/tests/README-jsDriver.html; note that some options are not supported.");
+            System.out.println(
+                    "Consult the Java source code at testsrc/org/mozilla/javascript/JsDriver.java for details.");
             System.exit(0);
         }
 
@@ -584,7 +639,7 @@ public class JsDriver {
         Results results = new Results(factory, arguments, arguments.trace());
 
         results.start();
-        for (int i=0; i<all.length; i++) {
+        for (int i = 0; i < all.length; i++) {
             results.run(all[i], new ShellTestParameters(arguments.getTimeout()));
         }
         results.finish();
@@ -598,7 +653,13 @@ public class JsDriver {
     private static class Arguments {
         private ArrayList<Option> options = new ArrayList<Option>();
 
-        private Option bugUrl = new Option("b", "bugurl", false, false, "http://bugzilla.mozilla.org/show_bug.cgi?id=");
+        private Option bugUrl =
+                new Option(
+                        "b",
+                        "bugurl",
+                        false,
+                        false,
+                        "http://bugzilla.mozilla.org/show_bug.cgi?id=");
         private Option optimizationLevel = new Option("o", "optimization", false, false, "-1");
         private Option strict = new Option(null, "strict", false, true, null);
         private Option outputFile = new Option("f", "file", false, false, null);
@@ -608,17 +669,25 @@ public class JsDriver {
         private Option skipList = new Option("L", "neglist", true, false, null);
         private Option testsPath = new Option("p", "testpath", false, false, null);
         private Option trace = new Option("t", "trace", false, true, null);
-        private Option lxrUrl = new Option("u", "lxrurl", false, false, "http://lxr.mozilla.org/mozilla/source/js/tests/");
+        private Option lxrUrl =
+                new Option(
+                        "u",
+                        "lxrurl",
+                        false,
+                        false,
+                        "http://lxr.mozilla.org/mozilla/source/js/tests/");
         private Option timeout = new Option(null, "timeout", false, false, "60000");
 
         public static class Console {
-          public void print(String message) {
-            System.out.print(message);
-          }
-          public void println(String message) {
-            System.out.println(message);
-          }
+            public void print(String message) {
+                System.out.print(message);
+            }
+
+            public void println(String message) {
+                System.out.println(message);
+            }
         }
+
         private Console console = new Console();
 
         private class Option {
@@ -632,9 +701,12 @@ public class JsDriver {
 
             //    array: can this option have multiple values?
             //    flag: is this option a simple true/false switch?
-            Option(String letterOption, String wordOption, boolean array,
-                   boolean flag, String unspecified)
-            {
+            Option(
+                    String letterOption,
+                    String wordOption,
+                    boolean array,
+                    boolean flag,
+                    String unspecified) {
                 this.letterOption = letterOption;
                 this.wordOption = wordOption;
                 this.flag = flag;
@@ -651,7 +723,7 @@ public class JsDriver {
             }
 
             int getInt() {
-                return Integer.parseInt( getValue() );
+                return Integer.parseInt(getValue());
             }
 
             String getValue() {
@@ -673,22 +745,23 @@ public class JsDriver {
 
             void process(List<String> arguments) {
                 String option = arguments.get(0);
-                String dashLetter = (letterOption == null) ? (String)null : "-" + letterOption;
+                String dashLetter = (letterOption == null) ? (String) null : "-" + letterOption;
                 if (option.equals(dashLetter) || option.equals("--" + wordOption)) {
                     arguments.remove(0);
                     if (flag) {
-                        values.add(0, (String)null );
+                        values.add(0, (String) null);
                     } else if (array) {
-                        while (arguments.size() > 0 &&
-                               !arguments.get(0).startsWith("-"))
-                        {
+                        while (arguments.size() > 0 && !arguments.get(0).startsWith("-")) {
                             values.add(arguments.remove(0));
                         }
                     } else {
                         values.set(0, arguments.remove(0));
                     }
                     if (ignored) {
-                        System.err.println("WARNING: " + option + " is ignored in the Java version of the test driver.");
+                        System.err.println(
+                                "WARNING: "
+                                        + option
+                                        + " is ignored in the Java version of the test driver.");
                     }
                 }
             }
@@ -712,7 +785,7 @@ public class JsDriver {
 
         //    --strict
         public boolean isStrict() {
-          return strict.getSwitch();
+            return strict.getSwitch();
         }
 
         //    -f FILE, --file=FILE
@@ -729,7 +802,8 @@ public class JsDriver {
         //    Does not apply; we will use this JVM
 
         //    -k, --confail
-        //    TODO    Currently this is ignored; not clear precisely what it means (perhaps we should not be logging ordinary
+        //    TODO    Currently this is ignored; not clear precisely what it means (perhaps we
+        // should not be logging ordinary
         //            pass/fail to the console currently?)
         public boolean logFailuresToConsole() {
             return logFailuresToConsole.getSwitch();
@@ -778,7 +852,7 @@ public class JsDriver {
         }
 
         void process(List<String> arguments) {
-            while(arguments.size() > 0) {
+            while (arguments.size() > 0) {
                 String option = arguments.get(0);
                 if (option.startsWith("--")) {
                     //    preprocess --name=value options into --name value
@@ -787,23 +861,25 @@ public class JsDriver {
                         arguments.add(1, option.substring(option.indexOf("=") + 1));
                     }
                 } else if (option.startsWith("-")) {
-                    //    could be multiple single-letter options, e.g. -kht, so preprocess them into -k -h -t
+                    //    could be multiple single-letter options, e.g. -kht, so preprocess them
+                    // into -k -h -t
                     if (option.length() > 2) {
-                        for (int i=2; i<option.length(); i++) {
-                            arguments.add(1, "-" + option.substring(i,i+1));
+                        for (int i = 2; i < option.length(); i++) {
+                            arguments.add(1, "-" + option.substring(i, i + 1));
                         }
-                        arguments.set(0, option.substring(0,2));
+                        arguments.set(0, option.substring(0, 2));
                     }
                 }
                 int lengthBefore = arguments.size();
-                for (int i=0; i<options.size(); i++) {
+                for (int i = 0; i < options.size(); i++) {
                     if (arguments.size() > 0) {
                         options.get(i).process(arguments);
                     }
                 }
 
                 if (arguments.size() == lengthBefore) {
-                    System.err.println("WARNING: ignoring unrecognized option " + arguments.remove(0));
+                    System.err.println(
+                            "WARNING: ignoring unrecognized option " + arguments.remove(0));
                 }
             }
         }

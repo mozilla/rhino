@@ -10,7 +10,8 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.NativeObject;
 
 /**
- * @see <a href="https://github.com/mozilla/rhino/issues/651">https://github.com/mozilla/rhino/issues/651</a>
+ * @see <a
+ *     href="https://github.com/mozilla/rhino/issues/651">https://github.com/mozilla/rhino/issues/651</a>
  */
 public class StringSearchTest {
     private Context cx;
@@ -27,11 +28,11 @@ public class StringSearchTest {
         Context.exit();
     }
 
-  @Test
-  public void testSearch() {
-    NativeObject object = new NativeObject();
+    @Test
+    public void testSearch() {
+        NativeObject object = new NativeObject();
 
-    Object result = eval("String.prototype.search(1, 1)", "obj", object);
-    assertEquals(-1, result);
-  }
+        Object result = eval("String.prototype.search(1, 1)", "obj", object);
+        assertEquals(-1, result);
+    }
 }

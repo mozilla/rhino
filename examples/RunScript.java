@@ -10,14 +10,12 @@ import org.mozilla.javascript.Scriptable;
 /**
  * RunScript: simplest example of controlling execution of Rhino.
  *
- * Collects its arguments from the command line, executes the
- * script, and prints the result.
+ * <p>Collects its arguments from the command line, executes the script, and prints the result.
  *
  * @author Norris Boyd
  */
 public class RunScript {
-    public static void main(String args[])
-    {
+    public static void main(String args[]) {
         // Creates and enters a Context. The Context stores information
         // about the execution environment of a script.
         Context cx = Context.enter();
@@ -29,7 +27,7 @@ public class RunScript {
 
             // Collect the arguments into a single string.
             String s = "";
-            for (int i=0; i < args.length; i++) {
+            for (int i = 0; i < args.length; i++) {
                 s += args[i];
             }
 
@@ -45,4 +43,3 @@ public class RunScript {
         }
     }
 }
-

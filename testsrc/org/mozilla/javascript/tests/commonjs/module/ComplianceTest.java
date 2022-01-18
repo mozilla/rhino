@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
+import junit.framework.AssertionFailedError;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mozilla.javascript.Context;
@@ -17,8 +17,6 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.commonjs.module.Require;
 import org.mozilla.javascript.commonjs.module.provider.StrongCachingModuleScriptProvider;
 import org.mozilla.javascript.commonjs.module.provider.UrlModuleSourceProvider;
-
-import junit.framework.AssertionFailedError;
 
 @RunWith(Parameterized.class)
 public class ComplianceTest {
@@ -32,10 +30,11 @@ public class ComplianceTest {
     @Parameterized.Parameters(name = "/{0}")
     public static Collection<Object[]> data() {
         List<Object[]> retval = new ArrayList<Object[]>(16);
-        final File[] files = new File("testsrc/org/mozilla/javascript/tests/commonjs/module/1.0").listFiles();
+        final File[] files =
+                new File("testsrc/org/mozilla/javascript/tests/commonjs/module/1.0").listFiles();
         for (File file : files) {
             if (file.isDirectory()) {
-                retval.add(new Object[]{file.getName(), file});
+                retval.add(new Object[] {file.getName(), file});
             }
         }
         return retval;
@@ -43,11 +42,21 @@ public class ComplianceTest {
 
     private static Require createRequire(File dir, Context cx, Scriptable scope)
             throws URISyntaxException {
-        return new Require(cx, scope, new StrongCachingModuleScriptProvider(
-                new UrlModuleSourceProvider(
-                        Collections.singleton(dir.getAbsoluteFile().toURI()),
-                        Collections.singleton(new URI(ComplianceTest.class.getResource(".").toExternalForm() + "/")))),
-                null, null, false);
+        return new Require(
+                cx,
+                scope,
+                new StrongCachingModuleScriptProvider(
+                        new UrlModuleSourceProvider(
+                                Collections.singleton(dir.getAbsoluteFile().toURI()),
+                                Collections.singleton(
+                                        new URI(
+                                                ComplianceTest.class
+                                                                .getResource(".")
+                                                                .toExternalForm()
+                                                        + "/")))),
+                null,
+                null,
+                false);
     }
 
     @org.junit.Test
@@ -68,8 +77,7 @@ public class ComplianceTest {
             setPrototype(ScriptableObject.getFunctionPrototype(scope));
         }
 
-        public Object call(Context cx, Scriptable scope, Scriptable thisObj,
-                           Object[] args) {
+        public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
             if (args.length > 1 && "fail".equals(args[1])) {
                 throw new AssertionFailedError(String.valueOf(args[0]));
             }
@@ -84,6 +92,5 @@ public class ComplianceTest {
         public String getClassName() {
             return "Function";
         }
-
     }
 }

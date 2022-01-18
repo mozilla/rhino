@@ -9,10 +9,11 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * An example illustrating how to create a JavaScript object and retrieve
- * properties and call methods.
- * <p>
- * Output should be:
+ * An example illustrating how to create a JavaScript object and retrieve properties and call
+ * methods.
+ *
+ * <p>Output should be:
+ *
  * <pre>
  * count = 0
  * count = 1
@@ -22,8 +23,7 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class CounterTest {
 
-    public static void main(String[] args) throws Exception
-    {
+    public static void main(String[] args) throws Exception {
         Context cx = Context.enter();
         try {
             Scriptable scope = cx.initStandardObjects();
@@ -37,9 +37,7 @@ public class CounterTest {
             count = ScriptableObject.getProperty(testCounter, "count");
             System.out.println("count = " + count);
 
-            ScriptableObject.callMethod(testCounter,
-                                        "resetCount",
-                                        new Object[0]);
+            ScriptableObject.callMethod(testCounter, "resetCount", new Object[0]);
             System.out.println("resetCount");
 
             count = ScriptableObject.getProperty(testCounter, "count");
@@ -48,5 +46,4 @@ public class CounterTest {
             Context.exit();
         }
     }
-
 }

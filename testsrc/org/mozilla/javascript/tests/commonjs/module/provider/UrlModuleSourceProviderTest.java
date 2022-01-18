@@ -9,7 +9,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.commonjs.module.provider.ModuleSource;
@@ -72,5 +71,4 @@ public class UrlModuleSourceProviderTest {
         final String uriString = filePath.toUri().toASCIIString();
         return new URI(uriString.substring(0, uriString.lastIndexOf('.')));
     }
-
 }

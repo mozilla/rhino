@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/string-startsWith.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class StringStartsWithTest extends ScriptTestsBase
-{
-}
+public class StringStartsWithTest extends ScriptTestsBase {}

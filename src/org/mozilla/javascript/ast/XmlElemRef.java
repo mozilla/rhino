@@ -9,26 +9,24 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for an E4X XML {@code [expr]} member-ref expression.
- * The node type is {@link Token#REF_MEMBER}.<p>
+ * AST node for an E4X XML {@code [expr]} member-ref expression. The node type is {@link
+ * Token#REF_MEMBER}.
  *
- * Syntax:
+ * <p>Syntax:
+ *
  * <pre> @<i><sub>opt</sub></i> ns:: <i><sub>opt</sub></i> [ expr ]</pre>
  *
- * Examples include {@code ns::[expr]}, {@code @ns::[expr]}, {@code @[expr]},
- * {@code *::[expr]} and {@code @*::[expr]}.<p>
+ * Examples include {@code ns::[expr]}, {@code @ns::[expr]}, {@code @[expr]}, {@code *::[expr]} and
+ * {@code @*::[expr]}.
  *
- * Note that the form {@code [expr]} (i.e. no namespace or
- * attribute-qualifier) is not a legal {@code XmlElemRef} expression,
- * since it's already used for standard JavaScript {@link ElementGet}
- * array-indexing.  Hence, an {@code XmlElemRef} node always has
- * either the attribute-qualifier, a non-{@code null} namespace node,
- * or both.<p>
+ * <p>Note that the form {@code [expr]} (i.e. no namespace or attribute-qualifier) is not a legal
+ * {@code XmlElemRef} expression, since it's already used for standard JavaScript {@link ElementGet}
+ * array-indexing. Hence, an {@code XmlElemRef} node always has either the attribute-qualifier, a
+ * non-{@code null} namespace node, or both.
  *
- * The node starts at the {@code @} token, if present.  Otherwise it starts
- * at the namespace name.  The node bounds extend through the closing
- * right-bracket, or if it is missing due to a syntax error, through the
- * end of the index expression.
+ * <p>The node starts at the {@code @} token, if present. Otherwise it starts at the namespace name.
+ * The node bounds extend through the closing right-bracket, or if it is missing due to a syntax
+ * error, through the end of the index expression.
  */
 public class XmlElemRef extends XmlRef {
 
@@ -40,8 +38,7 @@ public class XmlElemRef extends XmlRef {
         type = Token.REF_MEMBER;
     }
 
-    public XmlElemRef() {
-    }
+    public XmlElemRef() {}
 
     public XmlElemRef(int pos) {
         super(pos);
@@ -51,16 +48,14 @@ public class XmlElemRef extends XmlRef {
         super(pos, len);
     }
 
-    /**
-     * Returns index expression: the 'expr' in {@code @[expr]}
-     * or {@code @*::[expr]}.
-     */
+    /** Returns index expression: the 'expr' in {@code @[expr]} or {@code @*::[expr]}. */
     public AstNode getExpression() {
         return indexExpr;
     }
 
     /**
      * Sets index expression, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if {@code expr} is {@code null}
      */
     public void setExpression(AstNode expr) {
@@ -69,37 +64,27 @@ public class XmlElemRef extends XmlRef {
         expr.setParent(this);
     }
 
-    /**
-     * Returns left bracket position, or -1 if missing.
-     */
+    /** Returns left bracket position, or -1 if missing. */
     public int getLb() {
         return lb;
     }
 
-    /**
-     * Sets left bracket position, or -1 if missing.
-     */
+    /** Sets left bracket position, or -1 if missing. */
     public void setLb(int lb) {
         this.lb = lb;
     }
 
-    /**
-     * Returns left bracket position, or -1 if missing.
-     */
+    /** Returns left bracket position, or -1 if missing. */
     public int getRb() {
         return rb;
     }
 
-    /**
-     * Sets right bracket position, -1 if missing.
-     */
+    /** Sets right bracket position, -1 if missing. */
     public void setRb(int rb) {
         this.rb = rb;
     }
 
-    /**
-     * Sets both bracket positions.
-     */
+    /** Sets both bracket positions. */
     public void setBrackets(int lb, int rb) {
         this.lb = lb;
         this.rb = rb;
@@ -122,10 +107,7 @@ public class XmlElemRef extends XmlRef {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, then the namespace if provided, then the
-     * index expression.
-     */
+    /** Visits this node, then the namespace if provided, then the index expression. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

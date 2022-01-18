@@ -12,46 +12,34 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * This class reflects Java packages into the JavaScript environment.  We
- * lazily reflect classes and subpackages, and use a caching/sharing
- * system to ensure that members reflected into one JavaPackage appear
- * in all other references to the same package (as with Packages.java.lang
- * and java.lang).
+ * This class reflects Java packages into the JavaScript environment. We lazily reflect classes and
+ * subpackages, and use a caching/sharing system to ensure that members reflected into one
+ * JavaPackage appear in all other references to the same package (as with Packages.java.lang and
+ * java.lang).
  *
  * @author Mike Shaver
  * @see NativeJavaArray
  * @see NativeJavaObject
  * @see NativeJavaClass
  */
-
-public class NativeJavaPackage extends ScriptableObject
-{
+public class NativeJavaPackage extends ScriptableObject {
     private static final long serialVersionUID = 7445054382212031523L;
 
-    NativeJavaPackage(boolean internalUsage, String packageName,
-                      ClassLoader classLoader)
-    {
+    NativeJavaPackage(boolean internalUsage, String packageName, ClassLoader classLoader) {
         this.packageName = packageName;
         this.classLoader = classLoader;
     }
 
-    /**
-     * @deprecated NativeJavaPackage is an internal class, do not use
-     * it directly.
-     */
+    /** @deprecated NativeJavaPackage is an internal class, do not use it directly. */
     @Deprecated
     public NativeJavaPackage(String packageName, ClassLoader classLoader) {
         this(false, packageName, classLoader);
     }
 
-    /**
-     * @deprecated NativeJavaPackage is an internal class, do not use
-     * it directly.
-     */
+    /** @deprecated NativeJavaPackage is an internal class, do not use it directly. */
     @Deprecated
     public NativeJavaPackage(String packageName) {
-        this(false, packageName,
-             Context.getCurrentContext().getApplicationClassLoader());
+        this(false, packageName, Context.getCurrentContext().getApplicationClassLoader());
     }
 
     @Override
@@ -91,34 +79,27 @@ public class NativeJavaPackage extends ScriptableObject
 
     // set up a name which is known to be a package so we don't
     // need to look for a class by that name
-    NativeJavaPackage forcePackage(String name, Scriptable scope)
-    {
+    NativeJavaPackage forcePackage(String name, Scriptable scope) {
         Object cached = super.get(name, this);
         if (cached != null && cached instanceof NativeJavaPackage) {
             return (NativeJavaPackage) cached;
         }
-        String newPackage = packageName.length() == 0
-                            ? name
-                            : packageName + "." + name;
+        String newPackage = packageName.length() == 0 ? name : packageName + "." + name;
         NativeJavaPackage pkg = new NativeJavaPackage(true, newPackage, classLoader);
         ScriptRuntime.setObjectProtoAndParent(pkg, scope);
         super.put(name, this, pkg);
         return pkg;
     }
 
-    synchronized Object getPkgProperty(String name, Scriptable start,
-                                       boolean createPkg)
-    {
+    synchronized Object getPkgProperty(String name, Scriptable start, boolean createPkg) {
         Object cached = super.get(name, start);
-        if (cached != NOT_FOUND)
-            return cached;
+        if (cached != NOT_FOUND) return cached;
         if (negativeCache != null && negativeCache.contains(name)) {
             // Performance optimization: see bug 421071
             return null;
         }
 
-        String className = (packageName.length() == 0)
-                               ? name : packageName + '.' + name;
+        String className = (packageName.length() == 0) ? name : packageName + '.' + name;
         Context cx = Context.getContext();
         ClassShutter shutter = cx.getClassShutter();
         Scriptable newValue = null;
@@ -143,8 +124,7 @@ public class NativeJavaPackage extends ScriptableObject
                 newValue = pkg;
             } else {
                 // add to negative cache
-                if (negativeCache == null)
-                    negativeCache = new HashSet<String>();
+                if (negativeCache == null) negativeCache = new HashSet<String>();
                 negativeCache.add(name);
             }
         }
@@ -173,18 +153,16 @@ public class NativeJavaPackage extends ScriptableObject
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof NativeJavaPackage) {
-            NativeJavaPackage njp = (NativeJavaPackage)obj;
-            return packageName.equals(njp.packageName) &&
-                   classLoader == njp.classLoader;
+        if (obj instanceof NativeJavaPackage) {
+            NativeJavaPackage njp = (NativeJavaPackage) obj;
+            return packageName.equals(njp.packageName) && classLoader == njp.classLoader;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return packageName.hashCode() ^
-               (classLoader == null ? 0 : classLoader.hashCode());
+        return packageName.hashCode() ^ (classLoader == null ? 0 : classLoader.hashCode());
     }
 
     private String packageName;

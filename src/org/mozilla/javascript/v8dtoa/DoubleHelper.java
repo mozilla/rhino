@@ -39,7 +39,7 @@ public class DoubleHelper {
     static final long kHiddenBit = 0x0010000000000000L;
 
     static DiyFp asDiyFp(long d64) {
-        assert(!isSpecial(d64));
+        assert (!isSpecial(d64));
         return new DiyFp(significand(d64), exponent(d64));
     }
 
@@ -48,7 +48,7 @@ public class DoubleHelper {
         long f = significand(d64);
         int e = exponent(d64);
 
-        assert(f != 0);
+        assert (f != 0);
 
         // The current double could be a denormal.
         while ((f & kHiddenBit) == 0) {
@@ -64,7 +64,7 @@ public class DoubleHelper {
     static int exponent(long d64) {
         if (isDenormal(d64)) return kDenormalExponent;
 
-        int biased_e = (int)(((d64 & kExponentMask) >>> kSignificandSize) & 0xffffffffL);
+        int biased_e = (int) (((d64 & kExponentMask) >>> kSignificandSize) & 0xffffffffL);
         return biased_e - kExponentBias;
     }
 
@@ -88,21 +88,16 @@ public class DoubleHelper {
     }
 
     static boolean isNan(long d64) {
-        return ((d64 & kExponentMask) == kExponentMask) &&
-                ((d64 & kSignificandMask) != 0L);
+        return ((d64 & kExponentMask) == kExponentMask) && ((d64 & kSignificandMask) != 0L);
     }
-
 
     static boolean isInfinite(long d64) {
-        return ((d64 & kExponentMask) == kExponentMask) &&
-                ((d64 & kSignificandMask) == 0L);
+        return ((d64 & kExponentMask) == kExponentMask) && ((d64 & kSignificandMask) == 0L);
     }
-
 
     static int sign(long d64) {
-        return (d64 & kSignMask) == 0L? 1: -1;
+        return (d64 & kSignMask) == 0L ? 1 : -1;
     }
-
 
     // Returns the two boundaries of first argument.
     // The bigger boundary (m_plus) is normalized. The lower boundary has the same
@@ -130,8 +125,7 @@ public class DoubleHelper {
         m_minus.setE(m_plus.e());
     }
 
-    private static final int kSignificandSize = 52;  // Excludes the hidden bit.
+    private static final int kSignificandSize = 52; // Excludes the hidden bit.
     private static final int kExponentBias = 0x3FF + kSignificandSize;
     private static final int kDenormalExponent = -kExponentBias + 1;
-
 }

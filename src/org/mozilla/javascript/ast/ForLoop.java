@@ -9,11 +9,13 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * C-style for-loop statement.
- * Node type is {@link Token#FOR}.
+ * C-style for-loop statement. Node type is {@link Token#FOR}.
  *
  * <pre><b>for</b> ( ExpressionNoInopt; Expressionopt ; Expressionopt ) Statement</pre>
- * <pre><b>for</b> ( <b>var</b> VariableDeclarationListNoIn; Expressionopt ; Expressionopt ) Statement</pre>
+ *
+ * <pre>
+ * <b>for</b> ( <b>var</b> VariableDeclarationListNoIn; Expressionopt ; Expressionopt ) Statement
+ * </pre>
  */
 public class ForLoop extends Loop {
 
@@ -25,8 +27,7 @@ public class ForLoop extends Loop {
         type = Token.FOR;
     }
 
-    public ForLoop() {
-    }
+    public ForLoop() {}
 
     public ForLoop(int pos) {
         super(pos);
@@ -37,21 +38,20 @@ public class ForLoop extends Loop {
     }
 
     /**
-     * Returns loop initializer variable declaration list.
-     * This is either a {@link VariableDeclaration}, an
-     * {@link Assignment}, or an {@link InfixExpression} of
-     * type COMMA that chains multiple variable assignments.
+     * Returns loop initializer variable declaration list. This is either a {@link
+     * VariableDeclaration}, an {@link Assignment}, or an {@link InfixExpression} of type COMMA that
+     * chains multiple variable assignments.
      */
     public AstNode getInitializer() {
         return initializer;
     }
 
     /**
-     * Sets loop initializer expression, and sets its parent
-     * to this node.  Virtually any expression can be in the initializer,
-     * so no error-checking is done other than a {@code null}-check.
-     * @param initializer loop initializer.  Pass an
-     * {@link EmptyExpression} if the initializer is not specified.
+     * Sets loop initializer expression, and sets its parent to this node. Virtually any expression
+     * can be in the initializer, so no error-checking is done other than a {@code null}-check.
+     *
+     * @param initializer loop initializer. Pass an {@link EmptyExpression} if the initializer is
+     *     not specified.
      * @throws IllegalArgumentException if condition is {@code null}
      */
     public void setInitializer(AstNode initializer) {
@@ -60,17 +60,15 @@ public class ForLoop extends Loop {
         initializer.setParent(this);
     }
 
-    /**
-     * Returns loop condition
-     */
+    /** Returns loop condition */
     public AstNode getCondition() {
         return condition;
     }
 
     /**
      * Sets loop condition, and sets its parent to this node.
-     * @param condition loop condition.  Pass an {@link EmptyExpression}
-     * if the condition is missing.
+     *
+     * @param condition loop condition. Pass an {@link EmptyExpression} if the condition is missing.
      * @throws IllegalArgumentException} if condition is {@code null}
      */
     public void setCondition(AstNode condition) {
@@ -79,18 +77,16 @@ public class ForLoop extends Loop {
         condition.setParent(this);
     }
 
-    /**
-     * Returns loop increment expression
-     */
+    /** Returns loop increment expression */
     public AstNode getIncrement() {
         return increment;
     }
 
     /**
-     * Sets loop increment expression, and sets its parent to
-     * this node.
-     * @param increment loop increment expression.  Pass an
-     * {@link EmptyExpression} if increment is {@code null}.
+     * Sets loop increment expression, and sets its parent to this node.
+     *
+     * @param increment loop increment expression. Pass an {@link EmptyExpression} if increment is
+     *     {@code null}.
      * @throws IllegalArgumentException} if increment is {@code null}
      */
     public void setIncrement(AstNode increment) {
@@ -110,27 +106,27 @@ public class ForLoop extends Loop {
         sb.append("; ");
         sb.append(increment.toSource(0));
         sb.append(") ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource()).append("\n");
         }
         if (body.getType() == Token.BLOCK) {
             String bodySource = body.toSource(depth);
-            if(this.getInlineComment() == null) {
+            if (this.getInlineComment() == null) {
                 bodySource = bodySource.trim();
             }
             sb.append(bodySource).append("\n");
         } else {
-            if(this.getInlineComment() == null) {
+            if (this.getInlineComment() == null) {
                 sb.append("\n");
             }
-            sb.append(body.toSource(depth+1));
+            sb.append(body.toSource(depth + 1));
         }
         return sb.toString();
     }
 
     /**
-     * Visits this node, the initializer expression, the loop condition
-     * expression, the increment expression, and then the loop body.
+     * Visits this node, the initializer expression, the loop condition expression, the increment
+     * expression, and then the loop body.
      */
     @Override
     public void visit(NodeVisitor v) {

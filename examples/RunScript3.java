@@ -11,21 +11,19 @@ import org.mozilla.javascript.Scriptable;
 /**
  * RunScript3: Example of using JavaScript objects
  *
- * Collects its arguments from the command line, executes the
- * script, and then ...
+ * <p>Collects its arguments from the command line, executes the script, and then ...
  *
  * @author Norris Boyd
  */
 public class RunScript3 {
-    public static void main(String args[])
-    {
+    public static void main(String args[]) {
         Context cx = Context.enter();
         try {
             Scriptable scope = cx.initStandardObjects();
 
             // Collect the arguments into a single string.
             String s = "";
-            for (int i=0; i < args.length; i++) {
+            for (int i = 0; i < args.length; i++) {
                 s += args[i];
             }
 
@@ -45,8 +43,8 @@ public class RunScript3 {
             if (!(fObj instanceof Function)) {
                 System.out.println("f is undefined or not a function.");
             } else {
-                Object functionArgs[] = { "my arg" };
-                Function f = (Function)fObj;
+                Object functionArgs[] = {"my arg"};
+                Function f = (Function) fObj;
                 Object result = f.call(cx, scope, scope, functionArgs);
                 String report = "f('my args') = " + Context.toString(result);
                 System.out.println(report);
@@ -56,4 +54,3 @@ public class RunScript3 {
         }
     }
 }
-

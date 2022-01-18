@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/for-of.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class ForOfTest extends ScriptTestsBase
-{
-}
+public class ForOfTest extends ScriptTestsBase {}

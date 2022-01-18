@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/collection-iterator.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class CollectionsIteratorTest extends ScriptTestsBase
-{
-}
+public class CollectionsIteratorTest extends ScriptTestsBase {}

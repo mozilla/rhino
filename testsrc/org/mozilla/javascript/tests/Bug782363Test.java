@@ -15,7 +15,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,10 +30,7 @@ import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.optimizer.Codegen;
 import org.mozilla.javascript.optimizer.OptFunctionNode;
 
-/**
- * @author André Bargull
- *
- */
+/** @author André Bargull */
 public class Bug782363Test {
     private Context cx;
 
@@ -50,10 +46,7 @@ public class Bug782363Test {
         Context.exit();
     }
 
-    /**
-     * Compiles {@code source} and returns the transformed and optimized
-     * {@link ScriptNode}
-     */
+    /** Compiles {@code source} and returns the transformed and optimized {@link ScriptNode} */
     protected ScriptNode compile(CharSequence source) {
         final String mainMethodClassName = "Main";
         final String scriptClassName = "Main";
@@ -67,15 +60,15 @@ public class Bug782363Test {
 
         Codegen codegen = new Codegen();
         codegen.setMainMethodClass(mainMethodClassName);
-        codegen.compileToClassFile(compilerEnv, scriptClassName, tree, tree.getEncodedSource(),
-                false);
+        codegen.compileToClassFile(
+                compilerEnv, scriptClassName, tree, tree.getEncodedSource(), false);
 
         return tree;
     }
 
     /**
-     * Checks every variable {@code v} in {@code source} is marked as a
-     * number-variable iff {@code numbers} contains {@code v}
+     * Checks every variable {@code v} in {@code source} is marked as a number-variable iff {@code
+     * numbers} contains {@code v}
      */
     protected void assertNumberVars(CharSequence source, String... numbers) {
         // wrap source in function

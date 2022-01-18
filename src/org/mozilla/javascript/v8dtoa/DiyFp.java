@@ -43,7 +43,6 @@ class DiyFp {
     static final int kSignificandSize = 64;
     static final long kUint64MSB = 0x8000000000000000L;
 
-
     DiyFp() {
         this.f = 0;
         this.e = 0;
@@ -78,7 +77,6 @@ class DiyFp {
         return result;
     }
 
-
     // this = this * other.
     void multiply(DiyFp other) {
         // Simply "emulates" a 128 bit multiplication.
@@ -111,7 +109,7 @@ class DiyFp {
     }
 
     void normalize() {
-        assert(f != 0);
+        assert (f != 0);
         long f = this.f;
         int e = this.e;
 
@@ -136,15 +134,24 @@ class DiyFp {
         return result;
     }
 
-    long f() { return f; }
-    int e() { return e; }
+    long f() {
+        return f;
+    }
 
-    void setF(long new_value) { f = new_value; }
-    void setE(int new_value) { e = new_value; }
+    int e() {
+        return e;
+    }
+
+    void setF(long new_value) {
+        f = new_value;
+    }
+
+    void setE(int new_value) {
+        e = new_value;
+    }
 
     @Override
     public String toString() {
         return "[DiyFp f:" + f + ", e:" + e + "]";
     }
-
 }

@@ -6,61 +6,50 @@
 
 package org.mozilla.classfile;
 
-final class ClassFileMethod
-{
-  ClassFileMethod(String name, short nameIndex, String type, short typeIndex,
-      short flags)
-  {
-    itsName = name;
-    itsNameIndex = nameIndex;
-    itsType = type;
-    itsTypeIndex = typeIndex;
-    itsFlags = flags;
-  }
+final class ClassFileMethod {
+    ClassFileMethod(String name, short nameIndex, String type, short typeIndex, short flags) {
+        itsName = name;
+        itsNameIndex = nameIndex;
+        itsType = type;
+        itsTypeIndex = typeIndex;
+        itsFlags = flags;
+    }
 
-  void setCodeAttribute(byte codeAttribute[])
-  {
-    itsCodeAttribute = codeAttribute;
-  }
+    void setCodeAttribute(byte codeAttribute[]) {
+        itsCodeAttribute = codeAttribute;
+    }
 
-  int write(byte[] data, int offset)
-  {
-    offset = ClassFileWriter.putInt16(itsFlags, data, offset);
-    offset = ClassFileWriter.putInt16(itsNameIndex, data, offset);
-    offset = ClassFileWriter.putInt16(itsTypeIndex, data, offset);
-    // Code attribute only
-    offset = ClassFileWriter.putInt16(1, data, offset);
-    System.arraycopy(itsCodeAttribute, 0, data, offset,
-        itsCodeAttribute.length);
-    offset += itsCodeAttribute.length;
-    return offset;
-  }
+    int write(byte[] data, int offset) {
+        offset = ClassFileWriter.putInt16(itsFlags, data, offset);
+        offset = ClassFileWriter.putInt16(itsNameIndex, data, offset);
+        offset = ClassFileWriter.putInt16(itsTypeIndex, data, offset);
+        // Code attribute only
+        offset = ClassFileWriter.putInt16(1, data, offset);
+        System.arraycopy(itsCodeAttribute, 0, data, offset, itsCodeAttribute.length);
+        offset += itsCodeAttribute.length;
+        return offset;
+    }
 
-  int getWriteSize()
-  {
-    return 2 * 4 + itsCodeAttribute.length;
-  }
+    int getWriteSize() {
+        return 2 * 4 + itsCodeAttribute.length;
+    }
 
-  String getName()
-  {
-    return itsName;
-  }
+    String getName() {
+        return itsName;
+    }
 
-  String getType()
-  {
-    return itsType;
-  }
+    String getType() {
+        return itsType;
+    }
 
-  short getFlags()
-  {
-    return itsFlags;
-  }
+    short getFlags() {
+        return itsFlags;
+    }
 
-  private String itsName;
-  private String itsType;
-  private short itsNameIndex;
-  private short itsTypeIndex;
-  private short itsFlags;
-  private byte[] itsCodeAttribute;
-
+    private String itsName;
+    private String itsType;
+    private short itsNameIndex;
+    private short itsTypeIndex;
+    private short itsFlags;
+    private byte[] itsCodeAttribute;
 }

@@ -14,9 +14,7 @@ public final class NativeStringIterator extends ES6Iterator {
         ES6Iterator.init(scope, sealed, new NativeStringIterator(), ITERATOR_TAG);
     }
 
-    /**
-     * Only for constructing the prototype object.
-     */
+    /** Only for constructing the prototype object. */
     private NativeStringIterator() {
         super();
     }
@@ -24,7 +22,7 @@ public final class NativeStringIterator extends ES6Iterator {
     NativeStringIterator(Scriptable scope, Object stringLike) {
         super(scope, ITERATOR_TAG);
         this.index = 0;
-        this.string  = ScriptRuntime.toString(stringLike);
+        this.string = ScriptRuntime.toString(stringLike);
     }
 
     @Override

@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/array-findIndex.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class ArrayFindIndexTest extends ScriptTestsBase
-{
-}
+public class ArrayFindIndexTest extends ScriptTestsBase {}

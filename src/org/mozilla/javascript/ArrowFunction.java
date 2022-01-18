@@ -6,10 +6,7 @@
 
 package org.mozilla.javascript;
 
-/**
- * The class for  Arrow Function Definitions
- * EcmaScript 6 Rev 14, March 8, 2013 Draft spec , 13.2
- */
+/** The class for Arrow Function Definitions EcmaScript 6 Rev 14, March 8, 2013 Draft spec , 13.2 */
 public class ArrowFunction extends BaseFunction {
 
     private static final long serialVersionUID = -7377989503697220633L;
@@ -17,8 +14,8 @@ public class ArrowFunction extends BaseFunction {
     private final Callable targetFunction;
     private final Scriptable boundThis;
 
-    public ArrowFunction(Context cx, Scriptable scope, Callable targetFunction, Scriptable boundThis)
-    {
+    public ArrowFunction(
+            Context cx, Scriptable scope, Callable targetFunction, Scriptable boundThis) {
         this.targetFunction = targetFunction;
         this.boundThis = boundThis;
 
@@ -37,8 +34,7 @@ public class ArrowFunction extends BaseFunction {
     }
 
     @Override
-    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args)
-    {
+    public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         Scriptable callThis = boundThis != null ? boundThis : ScriptRuntime.getTopCallScope(cx);
         return targetFunction.call(cx, scope, callThis, args);
     }
@@ -70,15 +66,15 @@ public class ArrowFunction extends BaseFunction {
     }
 
     @Override
-    String decompile(int indent, int flags)
-    {
+    String decompile(int indent, int flags) {
         if (targetFunction instanceof BaseFunction) {
-            return ((BaseFunction)targetFunction).decompile(indent, flags);
+            return ((BaseFunction) targetFunction).decompile(indent, flags);
         }
         return super.decompile(indent, flags);
     }
 
     static boolean equalObjectGraphs(ArrowFunction f1, ArrowFunction f2, EqualObjectGraphs eq) {
-        return  eq.equalGraphs(f1.boundThis, f2.boundThis) && eq.equalGraphs(f1.targetFunction, f2.targetFunction);
+        return eq.equalGraphs(f1.boundThis, f2.boundThis)
+                && eq.equalGraphs(f1.targetFunction, f2.targetFunction);
     }
 }

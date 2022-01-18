@@ -4,16 +4,15 @@
 
 package org.mozilla.javascript.testing;
 
+import junit.framework.Assert;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
 
-import junit.framework.Assert;
-
 /**
- * <p>An error reporter for testing that verifies that messages reported to the
- * reporter are expected.</p>
+ * An error reporter for testing that verifies that messages reported to the reporter are expected.
  *
- * <p>Sample use</p>
+ * <p>Sample use
+ *
  * <pre>
  * TestErrorReporter e =
  *   new TestErrorReporter(null, new String[] { "first warning" });
@@ -34,8 +33,8 @@ public class TestErrorReporter extends Assert implements ErrorReporter {
         this.warnings = warnings;
     }
 
-    public void error(String message, String sourceName, int line,
-                      String lineSource, int lineOffset) {
+    public void error(
+            String message, String sourceName, int line, String lineSource, int lineOffset) {
         if (errors != null && errorsIndex < errors.length) {
             assertEquals(errors[errorsIndex++], message);
         } else {
@@ -43,8 +42,8 @@ public class TestErrorReporter extends Assert implements ErrorReporter {
         }
     }
 
-    public void warning(String message, String sourceName, int line,
-                        String lineSource, int lineOffset) {
+    public void warning(
+            String message, String sourceName, int line, String lineSource, int lineOffset) {
         if (warnings != null && warningsIndex < warnings.length) {
             assertEquals(warnings[warningsIndex++], message);
         } else {
@@ -53,26 +52,17 @@ public class TestErrorReporter extends Assert implements ErrorReporter {
     }
 
     public EvaluatorException runtimeError(
-        String message, String sourceName, int line, String lineSource,
-        int lineOffset) {
+            String message, String sourceName, int line, String lineSource, int lineOffset) {
         throw new UnsupportedOperationException();
     }
 
-   /**
-    * Returns whether all warnings were reported to this reporter.
-    */
+    /** Returns whether all warnings were reported to this reporter. */
     public boolean hasEncounteredAllWarnings() {
-        return (warnings == null) ?
-            warningsIndex == 0 :
-            warnings.length == warningsIndex;
+        return (warnings == null) ? warningsIndex == 0 : warnings.length == warningsIndex;
     }
 
-   /**
-    * Returns whether all errors were reported to this reporter.
-    */
+    /** Returns whether all errors were reported to this reporter. */
     public boolean hasEncounteredAllErrors() {
-        return (errors == null) ?
-            errorsIndex == 0 :
-            errors.length == errorsIndex;
+        return (errors == null) ? errorsIndex == 0 : errors.length == errorsIndex;
     }
 }

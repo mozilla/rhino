@@ -5,29 +5,27 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /*
-        Environment.java
+       Environment.java
 
-        Wraps java.lang.System properties.
+       Wraps java.lang.System properties.
 
-        by Patrick C. Beard <beard@netscape.com>
- */
+       by Patrick C. Beard <beard@netscape.com>
+*/
 
 package org.mozilla.javascript.tools.shell;
 
 import java.util.Map;
-
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * Environment, intended to be instantiated at global scope, provides
- * a natural way to access System properties from JavaScript.
+ * Environment, intended to be instantiated at global scope, provides a natural way to access System
+ * properties from JavaScript.
  *
  * @author Patrick C. Beard
  */
-public class Environment extends ScriptableObject
-{
+public class Environment extends ScriptableObject {
     static final long serialVersionUID = -430727378460177065L;
 
     private Environment thePrototypeInstance = null;
@@ -46,8 +44,7 @@ public class Environment extends ScriptableObject
     }
 
     public Environment() {
-        if (thePrototypeInstance == null)
-            thePrototypeInstance = this;
+        if (thePrototypeInstance == null) thePrototypeInstance = this;
     }
 
     public Environment(ScriptableObject scope) {
@@ -61,48 +58,40 @@ public class Environment extends ScriptableObject
 
     @Override
     public boolean has(String name, Scriptable start) {
-        if (this == thePrototypeInstance)
-            return super.has(name, start);
+        if (this == thePrototypeInstance) return super.has(name, start);
 
         return (System.getProperty(name) != null);
     }
 
     @Override
     public Object get(String name, Scriptable start) {
-        if (this == thePrototypeInstance)
-            return super.get(name, start);
+        if (this == thePrototypeInstance) return super.get(name, start);
 
         String result = System.getProperty(name);
-        if (result != null)
-            return ScriptRuntime.toObject(getParentScope(), result);
-        else
-            return Scriptable.NOT_FOUND;
+        if (result != null) return ScriptRuntime.toObject(getParentScope(), result);
+        else return Scriptable.NOT_FOUND;
     }
 
     @Override
     public void put(String name, Scriptable start, Object value) {
-        if (this == thePrototypeInstance)
-            super.put(name, start, value);
-        else
-            System.getProperties().put(name, ScriptRuntime.toString(value));
+        if (this == thePrototypeInstance) super.put(name, start, value);
+        else System.getProperties().put(name, ScriptRuntime.toString(value));
     }
 
     private Object[] collectIds() {
-        Map<Object,Object> props = System.getProperties();
+        Map<Object, Object> props = System.getProperties();
         return props.keySet().toArray();
     }
 
     @Override
     public Object[] getIds() {
-        if (this == thePrototypeInstance)
-            return super.getIds();
+        if (this == thePrototypeInstance) return super.getIds();
         return collectIds();
     }
 
     @Override
     public Object[] getAllIds() {
-        if (this == thePrototypeInstance)
-            return super.getAllIds();
+        if (this == thePrototypeInstance) return super.getAllIds();
         return collectIds();
     }
 }

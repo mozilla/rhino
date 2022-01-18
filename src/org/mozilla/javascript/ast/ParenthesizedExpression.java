@@ -8,10 +8,7 @@ package org.mozilla.javascript.ast;
 
 import org.mozilla.javascript.Token;
 
-/**
- * AST node for a parenthesized expression.
- * Node type is {@link Token#LP}.
- */
+/** AST node for a parenthesized expression. Node type is {@link Token#LP}. */
 public class ParenthesizedExpression extends AstNode {
 
     private AstNode expression;
@@ -20,8 +17,7 @@ public class ParenthesizedExpression extends AstNode {
         type = Token.LP;
     }
 
-    public ParenthesizedExpression() {
-    }
+    public ParenthesizedExpression() {}
 
     public ParenthesizedExpression(int pos) {
         super(pos);
@@ -32,9 +28,7 @@ public class ParenthesizedExpression extends AstNode {
     }
 
     public ParenthesizedExpression(AstNode expr) {
-        this(expr != null ? expr.getPosition() : 0,
-             expr != null ? expr.getLength() : 1,
-             expr);
+        this(expr != null ? expr.getPosition() : 0, expr != null ? expr.getLength() : 1, expr);
     }
 
     public ParenthesizedExpression(int pos, int len, AstNode expr) {
@@ -42,16 +36,14 @@ public class ParenthesizedExpression extends AstNode {
         setExpression(expr);
     }
 
-    /**
-     * Returns the expression between the parens
-     */
+    /** Returns the expression between the parens */
     public AstNode getExpression() {
         return expression;
     }
 
     /**
-     * Sets the expression between the parens, and sets the parent
-     * to this node.
+     * Sets the expression between the parens, and sets the parent to this node.
+     *
      * @param expression the expression between the parens
      * @throws IllegalArgumentException} if expression is {@code null}
      */
@@ -66,9 +58,7 @@ public class ParenthesizedExpression extends AstNode {
         return makeIndent(depth) + "(" + expression.toSource(0) + ")";
     }
 
-    /**
-     * Visits this node, then the child expression.
-     */
+    /** Visits this node, then the child expression. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

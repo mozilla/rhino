@@ -14,7 +14,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -48,16 +47,16 @@ class ConsoleWriter extends java.io.OutputStream {
 
     @Override
     public synchronized void write(int ch) {
-        buffer.append((char)ch);
-        if(ch == '\n') {
+        buffer.append((char) ch);
+        if (ch == '\n') {
             flushBuffer();
         }
     }
 
-    public synchronized void write (char[] data, int off, int len) {
-        for(int i = off; i < len; i++) {
+    public synchronized void write(char[] data, int off, int len) {
+        for (int i = off; i < len; i++) {
             buffer.append(data[i]);
-            if(data[i] == '\n') {
+            if (data[i] == '\n') {
                 flushBuffer();
             }
         }
@@ -71,7 +70,7 @@ class ConsoleWriter extends java.io.OutputStream {
     }
 
     @Override
-    public void close () {
+    public void close() {
         flush();
     }
 
@@ -82,9 +81,7 @@ class ConsoleWriter extends java.io.OutputStream {
     }
 }
 
-public class ConsoleTextArea
-    extends JTextArea implements KeyListener, DocumentListener
-{
+public class ConsoleTextArea extends JTextArea implements KeyListener, DocumentListener {
     static final long serialVersionUID = 8557083244830872961L;
 
     private ConsoleWriter console1;
@@ -115,7 +112,7 @@ public class ConsoleTextArea
         in = new PipedInputStream();
         try {
             outPipe.connect(in);
-        } catch(IOException exc) {
+        } catch (IOException exc) {
             exc.printStackTrace();
         }
         getDocument().addDocumentListener(this);
@@ -124,17 +121,16 @@ public class ConsoleTextArea
         setFont(new Font("Monospaced", 0, 12));
     }
 
-
     synchronized void returnPressed() {
         Document doc = getDocument();
         int len = doc.getLength();
         Segment segment = new Segment();
         try {
             doc.getText(outputMark, len - outputMark, segment);
-        } catch(javax.swing.text.BadLocationException ignored) {
+        } catch (javax.swing.text.BadLocationException ignored) {
             ignored.printStackTrace();
         }
-        if(segment.count > 0) {
+        if (segment.count > 0) {
             history.add(segment.toString());
         }
         historyIndex = history.size();
@@ -155,34 +151,34 @@ public class ConsoleTextArea
 
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
-        if(code == KeyEvent.VK_BACK_SPACE || code == KeyEvent.VK_LEFT) {
-            if(outputMark == getCaretPosition()) {
+        if (code == KeyEvent.VK_BACK_SPACE || code == KeyEvent.VK_LEFT) {
+            if (outputMark == getCaretPosition()) {
                 e.consume();
             }
-        } else if(code == KeyEvent.VK_HOME) {
-           int caretPos = getCaretPosition();
-           if(caretPos == outputMark) {
-               e.consume();
-           } else if(caretPos > outputMark) {
-               if(!e.isControlDown()) {
-                   if(e.isShiftDown()) {
-                       moveCaretPosition(outputMark);
-                   } else {
-                       setCaretPosition(outputMark);
-                   }
-                   e.consume();
-               }
-           }
-        } else if(code == KeyEvent.VK_ENTER) {
+        } else if (code == KeyEvent.VK_HOME) {
+            int caretPos = getCaretPosition();
+            if (caretPos == outputMark) {
+                e.consume();
+            } else if (caretPos > outputMark) {
+                if (!e.isControlDown()) {
+                    if (e.isShiftDown()) {
+                        moveCaretPosition(outputMark);
+                    } else {
+                        setCaretPosition(outputMark);
+                    }
+                    e.consume();
+                }
+            }
+        } else if (code == KeyEvent.VK_ENTER) {
             returnPressed();
             e.consume();
-        } else if(code == KeyEvent.VK_UP) {
+        } else if (code == KeyEvent.VK_UP) {
             historyIndex--;
-            if(historyIndex >= 0) {
-                if(historyIndex >= history.size()) {
-                    historyIndex = history.size() -1;
+            if (historyIndex >= 0) {
+                if (historyIndex >= history.size()) {
+                    historyIndex = history.size() - 1;
                 }
-                if(historyIndex >= 0) {
+                if (historyIndex >= 0) {
                     String str = history.get(historyIndex);
                     int len = getDocument().getLength();
                     replaceRange(str, outputMark, len);
@@ -195,11 +191,13 @@ public class ConsoleTextArea
                 historyIndex++;
             }
             e.consume();
-        } else if(code == KeyEvent.VK_DOWN) {
+        } else if (code == KeyEvent.VK_DOWN) {
             int caretPos = outputMark;
-            if(history.size() > 0) {
+            if (history.size() > 0) {
                 historyIndex++;
-                if(historyIndex < 0) {historyIndex = 0;}
+                if (historyIndex < 0) {
+                    historyIndex = 0;
+                }
                 int len = getDocument().getLength();
                 if (historyIndex < history.size()) {
                     String str = history.get(historyIndex);
@@ -217,17 +215,16 @@ public class ConsoleTextArea
 
     public void keyTyped(KeyEvent e) {
         int keyChar = e.getKeyChar();
-        if(keyChar == 0x8 /* KeyEvent.VK_BACK_SPACE */) {
-            if(outputMark == getCaretPosition()) {
+        if (keyChar == 0x8 /* KeyEvent.VK_BACK_SPACE */) {
+            if (outputMark == getCaretPosition()) {
                 e.consume();
             }
-        } else if(getCaretPosition() < outputMark) {
+        } else if (getCaretPosition() < outputMark) {
             setCaretPosition(outputMark);
         }
     }
 
-    public synchronized void keyReleased(KeyEvent e) {
-    }
+    public synchronized void keyReleased(KeyEvent e) {}
 
     public synchronized void write(String str) {
         insert(str, outputMark);
@@ -239,7 +236,7 @@ public class ConsoleTextArea
     public synchronized void insertUpdate(DocumentEvent e) {
         int len = e.getLength();
         int off = e.getOffset();
-        if(outputMark > off) {
+        if (outputMark > off) {
             outputMark += len;
         }
     }
@@ -247,8 +244,8 @@ public class ConsoleTextArea
     public synchronized void removeUpdate(DocumentEvent e) {
         int len = e.getLength();
         int off = e.getOffset();
-        if(outputMark > off) {
-            if(outputMark >= off + len) {
+        if (outputMark > off) {
+            if (outputMark >= off + len) {
                 outputMark -= len;
             } else {
                 outputMark = off;
@@ -263,9 +260,7 @@ public class ConsoleTextArea
         select(outputMark, outputMark);
     }
 
-    public synchronized void changedUpdate(DocumentEvent e) {
-    }
-
+    public synchronized void changedUpdate(DocumentEvent e) {}
 
     public InputStream getIn() {
         return in;
@@ -278,5 +273,4 @@ public class ConsoleTextArea
     public PrintStream getErr() {
         return err;
     }
-
 }

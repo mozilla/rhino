@@ -16,65 +16,43 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
 import java.util.List;
-
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Kit;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-/**
- *
- * @author André Bargull
- */
+/** @author André Bargull */
 public abstract class ShellConsole {
 
-    private final static Class[] NO_ARG = {};
-    private final static Class[] BOOLEAN_ARG = {Boolean.TYPE};
-    private final static Class[] STRING_ARG = {String.class};
-    private final static Class[] CHARSEQ_ARG = {CharSequence.class};
+    private static final Class[] NO_ARG = {};
+    private static final Class[] BOOLEAN_ARG = {Boolean.TYPE};
+    private static final Class[] STRING_ARG = {String.class};
+    private static final Class[] CHARSEQ_ARG = {CharSequence.class};
 
-    protected ShellConsole() {
-    }
+    protected ShellConsole() {}
 
-    /**
-     * Returns the underlying {@link InputStream}
-     */
+    /** Returns the underlying {@link InputStream} */
     public abstract InputStream getIn();
 
-    /**
-     * Reads a single line from the console
-     */
+    /** Reads a single line from the console */
     public abstract String readLine() throws IOException;
 
-    /**
-     * Reads a single line from the console and sets the console's prompt to
-     * {@code prompt}
-     */
+    /** Reads a single line from the console and sets the console's prompt to {@code prompt} */
     public abstract String readLine(String prompt) throws IOException;
 
-    /**
-     * Flushes the console's output
-     */
+    /** Flushes the console's output */
     public abstract void flush() throws IOException;
 
-    /**
-     * Prints a single string to the console
-     */
+    /** Prints a single string to the console */
     public abstract void print(String s) throws IOException;
 
-    /**
-     * Prints the newline character-sequence to the console
-     */
+    /** Prints the newline character-sequence to the console */
     public abstract void println() throws IOException;
 
-    /**
-     * Prints a string and the newline character-sequence to the console
-     */
+    /** Prints a string and the newline character-sequence to the console */
     public abstract void println(String s) throws IOException;
 
-
-    private static Object tryInvoke(Object obj, String method,
-                                    Class[] paramTypes, Object... args) {
+    private static Object tryInvoke(Object obj, String method, Class[] paramTypes, Object... args) {
         try {
             Method m = obj.getClass().getDeclaredMethod(method, paramTypes);
             if (m != null) {
@@ -88,9 +66,7 @@ public abstract class ShellConsole {
         return null;
     }
 
-    /**
-     * {@link ShellConsole} implementation for JLine v1
-     */
+    /** {@link ShellConsole} implementation for JLine v1 */
     private static class JLineShellConsoleV1 extends ShellConsole {
         private final Object reader;
         private final InputStream in;
@@ -137,9 +113,7 @@ public abstract class ShellConsole {
         }
     }
 
-    /**
-     * {@link ShellConsole} implementation for JLine v2
-     */
+    /** {@link ShellConsole} implementation for JLine v2 */
     private static class JLineShellConsoleV2 extends ShellConsole {
         private final Object reader;
         private final InputStream in;
@@ -186,8 +160,8 @@ public abstract class ShellConsole {
     }
 
     /**
-     * JLine's ConsoleReaderInputStream is no longer public, therefore we need
-     * to use our own implementation
+     * JLine's ConsoleReaderInputStream is no longer public, therefore we need to use our own
+     * implementation
      */
     private static class ConsoleInputStream extends InputStream {
         private static final byte[] EMPTY = new byte[] {};
@@ -203,8 +177,7 @@ public abstract class ShellConsole {
         }
 
         @Override
-        public synchronized int read(byte[] b, int off, int len)
-                throws IOException {
+        public synchronized int read(byte[] b, int off, int len) throws IOException {
             if (b == null) {
                 throw new NullPointerException();
             } else if (off < 0 || len < 0 || len > b.length - off) {
@@ -315,18 +288,17 @@ public abstract class ShellConsole {
     }
 
     /**
-     * Returns a new {@link ShellConsole} which uses the supplied
-     * {@link InputStream} and {@link PrintStream} for its input/output
+     * Returns a new {@link ShellConsole} which uses the supplied {@link InputStream} and {@link
+     * PrintStream} for its input/output
      */
-    public static ShellConsole getConsole(InputStream in, PrintStream ps,
-            Charset cs) {
+    public static ShellConsole getConsole(InputStream in, PrintStream ps, Charset cs) {
         return new SimpleShellConsole(in, ps, cs);
     }
 
     /**
-     * Provides a specialized {@link ShellConsole} to handle line editing,
-     * history and completion. Relies on the JLine library
-     * (see <a href="http://jline.sourceforge.net">http://jline.sourceforge.net</a>).
+     * Provides a specialized {@link ShellConsole} to handle line editing, history and completion.
+     * Relies on the JLine library (see <a
+     * href="http://jline.sourceforge.net">http://jline.sourceforge.net</a>).
      */
     public static ShellConsole getConsole(Scriptable scope, Charset cs) {
         // We don't want a compile-time dependency on the JLine jar, so use
@@ -344,8 +316,7 @@ public abstract class ShellConsole {
         }
         try {
             // first try to load JLine v2...
-            Class<?> readerClass = Kit.classOrNull(classLoader,
-                    "jline.console.ConsoleReader");
+            Class<?> readerClass = Kit.classOrNull(classLoader, "jline.console.ConsoleReader");
             if (readerClass != null) {
                 return getJLineShellConsoleV2(classLoader, readerClass, scope, cs);
             }
@@ -363,9 +334,9 @@ public abstract class ShellConsole {
     }
 
     private static JLineShellConsoleV1 getJLineShellConsoleV1(
-            ClassLoader classLoader, Class<?> readerClass, Scriptable scope,
-            Charset cs) throws NoSuchMethodException, InstantiationException,
-            IllegalAccessException, InvocationTargetException {
+            ClassLoader classLoader, Class<?> readerClass, Scriptable scope, Charset cs)
+            throws NoSuchMethodException, InstantiationException, IllegalAccessException,
+                    InvocationTargetException {
         // ConsoleReader reader = new ConsoleReader();
         Constructor<?> c = readerClass.getConstructor();
         Object reader = c.newInstance();
@@ -374,20 +345,21 @@ public abstract class ShellConsole {
         tryInvoke(reader, "setBellEnabled", BOOLEAN_ARG, Boolean.FALSE);
 
         // reader.addCompletor(new FlexibleCompletor(prefixes));
-        Class<?> completorClass = Kit.classOrNull(classLoader,
-                "jline.Completor");
-        Object completor = Proxy.newProxyInstance(classLoader,
-                new Class[] { completorClass },
-                new FlexibleCompletor(completorClass, scope));
+        Class<?> completorClass = Kit.classOrNull(classLoader, "jline.Completor");
+        Object completor =
+                Proxy.newProxyInstance(
+                        classLoader,
+                        new Class[] {completorClass},
+                        new FlexibleCompletor(completorClass, scope));
         tryInvoke(reader, "addCompletor", new Class[] {completorClass}, completor);
 
         return new JLineShellConsoleV1(reader, cs);
     }
 
     private static JLineShellConsoleV2 getJLineShellConsoleV2(
-            ClassLoader classLoader, Class<?> readerClass, Scriptable scope,
-            Charset cs) throws NoSuchMethodException, InstantiationException,
-            IllegalAccessException, InvocationTargetException {
+            ClassLoader classLoader, Class<?> readerClass, Scriptable scope, Charset cs)
+            throws NoSuchMethodException, InstantiationException, IllegalAccessException,
+                    InvocationTargetException {
         // ConsoleReader reader = new ConsoleReader();
         Constructor<?> c = readerClass.getConstructor();
         Object reader = c.newInstance();
@@ -396,11 +368,12 @@ public abstract class ShellConsole {
         tryInvoke(reader, "setBellEnabled", BOOLEAN_ARG, Boolean.FALSE);
 
         // reader.addCompleter(new FlexibleCompletor(prefixes));
-        Class<?> completorClass = Kit.classOrNull(classLoader,
-                "jline.console.completer.Completer");
-        Object completor = Proxy.newProxyInstance(classLoader,
-                new Class[] { completorClass },
-                new FlexibleCompletor(completorClass, scope));
+        Class<?> completorClass = Kit.classOrNull(classLoader, "jline.console.completer.Completer");
+        Object completor =
+                Proxy.newProxyInstance(
+                        classLoader,
+                        new Class[] {completorClass},
+                        new FlexibleCompletor(completorClass, scope));
         tryInvoke(reader, "addCompleter", new Class[] {completorClass}, completor);
 
         return new JLineShellConsoleV2(reader, cs);
@@ -408,28 +381,28 @@ public abstract class ShellConsole {
 }
 
 /**
-* The completors provided with JLine are pretty uptight, they only
-* complete on a line that it can fully recognize (only composed of
-* completed strings). This one completes whatever came before.
-*/
+ * The completors provided with JLine are pretty uptight, they only complete on a line that it can
+ * fully recognize (only composed of completed strings). This one completes whatever came before.
+ */
 class FlexibleCompletor implements java.lang.reflect.InvocationHandler {
     private Method completeMethod;
     private Scriptable global;
 
-    FlexibleCompletor(Class<?> completorClass, Scriptable global)
-        throws NoSuchMethodException
-    {
+    FlexibleCompletor(Class<?> completorClass, Scriptable global) throws NoSuchMethodException {
         this.global = global;
-        this.completeMethod = completorClass.getMethod("complete", String.class,
-                Integer.TYPE, List.class);
+        this.completeMethod =
+                completorClass.getMethod("complete", String.class, Integer.TYPE, List.class);
     }
 
     @SuppressWarnings({"unchecked"})
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) {
         if (method.equals(this.completeMethod)) {
-            int result = complete((String)args[0], ((Integer) args[1]).intValue(),
-                    (List<String>) args[2]);
+            int result =
+                    complete(
+                            (String) args[0],
+                            ((Integer) args[1]).intValue(),
+                            (List<String>) args[2]);
             return Integer.valueOf(result);
         }
         throw new NoSuchMethodError(method.toString());
@@ -445,32 +418,29 @@ class FlexibleCompletor implements java.lang.reflect.InvocationHandler {
         int m = cursor - 1;
         while (m >= 0) {
             char c = buffer.charAt(m);
-            if (!Character.isJavaIdentifierPart(c) && c != '.')
-                break;
+            if (!Character.isJavaIdentifierPart(c) && c != '.') break;
             m--;
         }
-        String namesAndDots = buffer.substring(m+1, cursor);
+        String namesAndDots = buffer.substring(m + 1, cursor);
         String[] names = namesAndDots.split("\\.", -1);
         Scriptable obj = this.global;
-        for (int i=0; i < names.length - 1; i++) {
+        for (int i = 0; i < names.length - 1; i++) {
             Object val = obj.get(names[i], global);
-            if (val instanceof Scriptable)
-                obj = (Scriptable) val;
+            if (val instanceof Scriptable) obj = (Scriptable) val;
             else {
                 return buffer.length(); // no matches
             }
         }
-        Object[] ids = (obj instanceof ScriptableObject)
-                       ? ((ScriptableObject)obj).getAllIds()
-                       : obj.getIds();
-        String lastPart = names[names.length-1];
-        for (int i=0; i < ids.length; i++) {
-            if (!(ids[i] instanceof String))
-                continue;
-            String id = (String)ids[i];
+        Object[] ids =
+                (obj instanceof ScriptableObject)
+                        ? ((ScriptableObject) obj).getAllIds()
+                        : obj.getIds();
+        String lastPart = names[names.length - 1];
+        for (int i = 0; i < ids.length; i++) {
+            if (!(ids[i] instanceof String)) continue;
+            String id = (String) ids[i];
             if (id.startsWith(lastPart)) {
-                if (obj.get(id, obj) instanceof Function)
-                    id += "(";
+                if (obj.get(id, obj) instanceof Function) id += "(";
                 candidates.add(id);
             }
         }

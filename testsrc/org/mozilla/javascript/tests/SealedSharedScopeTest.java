@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Locale;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,17 +60,16 @@ public class SealedSharedScopeTest {
     }
 
     /**
-     * Test should verify if JavaImporter can import
-     * java.util.Date/java.sql.Date without colliding with internal Date
-     * function.
+     * Test should verify if JavaImporter can import java.util.Date/java.sql.Date without colliding
+     * with internal Date function.
      */
     @Test
     public void importClassWithImporter() throws Exception {
         Object o;
-        evaluateString(scope1, "var imp1 = new JavaImporter();\n"
-                + "imp1.importClass(java.util.Date);");
-        evaluateString(scope1, "var imp2 = new JavaImporter();\n"
-                + "imp2.importClass(java.sql.Date);");
+        evaluateString(
+                scope1, "var imp1 = new JavaImporter();\n" + "imp1.importClass(java.util.Date);");
+        evaluateString(
+                scope1, "var imp2 = new JavaImporter();\n" + "imp2.importClass(java.sql.Date);");
         o = evaluateString(scope1, "imp1.Date");
         assertEquals(java.util.Date.class, o);
 
@@ -82,22 +80,21 @@ public class SealedSharedScopeTest {
         assertEquals(IdFunctionObject.class, o.getClass());
 
         o = evaluateString(scope2, "typeof imp1"); // scope 2 has
-                                                                  // no imp1
+        // no imp1
         assertEquals("undefined", o);
     }
 
     /**
-     * Test should verify if JavaImporter can import
-     * java.util.Date/java.sql.Date without colliding with internal Date
-     * function.
+     * Test should verify if JavaImporter can import java.util.Date/java.sql.Date without colliding
+     * with internal Date function.
      */
     @Test
     public void importPackageWithImporter() throws Exception {
         Object o;
-        evaluateString(scope1, "var imp1 = new JavaImporter();\n"
-                + "imp1.importPackage(java.util);");
-        evaluateString(scope1, "var imp2 = new JavaImporter();\n"
-                + "imp2.importPackage(java.sql);");
+        evaluateString(
+                scope1, "var imp1 = new JavaImporter();\n" + "imp1.importPackage(java.util);");
+        evaluateString(
+                scope1, "var imp2 = new JavaImporter();\n" + "imp2.importPackage(java.sql);");
         o = evaluateString(scope1, "imp1.Date");
         assertEquals(java.util.Date.class, o);
 
@@ -108,7 +105,7 @@ public class SealedSharedScopeTest {
         assertEquals(IdFunctionObject.class, o.getClass());
 
         o = evaluateString(scope2, "typeof imp1 == 'undefined'"); // scope 2 has
-                                                                  // no imp1
+        // no imp1
         assertTrue((Boolean) o);
     }
 
@@ -124,7 +121,7 @@ public class SealedSharedScopeTest {
         assertEquals(javax.xml.soap.Name.class, o);
 
         o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement"
-                                                 // function
+        // function
         assertEquals("undefined", o);
     }
 
@@ -140,7 +137,7 @@ public class SealedSharedScopeTest {
         assertEquals(javax.xml.soap.Name.class, o);
 
         o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement"
-                                                 // function
+        // function
         assertEquals("undefined", o);
     }
 
@@ -158,9 +155,7 @@ public class SealedSharedScopeTest {
             evaluateString(scope2, "Locale.getDefault()");
             fail("EcmaError expected");
         } catch (EcmaError e) {
-            assertEquals("ReferenceError: \"Locale\" is not defined. (test#1)",
-                    e.getMessage());
+            assertEquals("ReferenceError: \"Locale\" is not defined. (test#1)", e.getMessage());
         }
     }
-
 }

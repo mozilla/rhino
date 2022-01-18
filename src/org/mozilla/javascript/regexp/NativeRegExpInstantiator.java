@@ -15,7 +15,8 @@ public class NativeRegExpInstantiator {
         }
     }
 
-    static NativeRegExp withLanguageVersionScopeCompiled(int languageVersion, Scriptable scope, RECompiled compiled) {
+    static NativeRegExp withLanguageVersionScopeCompiled(
+            int languageVersion, Scriptable scope, RECompiled compiled) {
         if (languageVersion < Context.VERSION_ES6) {
             return new NativeRegExpCallable(scope, compiled);
         } else {

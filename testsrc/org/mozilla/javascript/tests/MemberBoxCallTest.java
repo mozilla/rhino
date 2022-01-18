@@ -25,16 +25,18 @@ public class MemberBoxCallTest {
     public void testPrototypeProperty() {
         Context cx = Context.enter();
         try {
-            assertEquals("SUPERVAL",
-                evaluate(cx, 
-                    "var hostObj = new AnnotatedHostObject(); " +
-                    "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");" +
-                    "var result = 'failed';" +
-                    "if( valueProperty.get && valueProperty.set ) {" +
-                        "valueProperty.set.call(hostObj, 'superVal');" +
-                        "result = valueProperty.get.call(hostObj);" +
-                    "}" +
-                    "result;"));
+            assertEquals(
+                    "SUPERVAL",
+                    evaluate(
+                            cx,
+                            "var hostObj = new AnnotatedHostObject(); "
+                                    + "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");"
+                                    + "var result = 'failed';"
+                                    + "if( valueProperty.get && valueProperty.set ) {"
+                                    + "valueProperty.set.call(hostObj, 'superVal');"
+                                    + "result = valueProperty.get.call(hostObj);"
+                                    + "}"
+                                    + "result;"));
         } finally {
             Context.exit();
         }
@@ -44,15 +46,17 @@ public class MemberBoxCallTest {
     public void testPropertyGetterName() {
         Context cx = Context.enter();
         try {
-            assertEquals("foo",
-                evaluate(cx, 
-                    "var hostObj = new AnnotatedHostObject(); " +
-                    "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");" +
-                    "var result = 'failed';" +
-                    "if( valueProperty.get && valueProperty.set ) {" +
-                        "result = '' + valueProperty.get.name;" +
-                    "}" +
-                    "result;"));
+            assertEquals(
+                    "foo",
+                    evaluate(
+                            cx,
+                            "var hostObj = new AnnotatedHostObject(); "
+                                    + "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");"
+                                    + "var result = 'failed';"
+                                    + "if( valueProperty.get && valueProperty.set ) {"
+                                    + "result = '' + valueProperty.get.name;"
+                                    + "}"
+                                    + "result;"));
         } finally {
             Context.exit();
         }
@@ -62,15 +66,17 @@ public class MemberBoxCallTest {
     public void testPropertySetterName() {
         Context cx = Context.enter();
         try {
-            assertEquals("foo",
-                evaluate(cx, 
-                    "var hostObj = new AnnotatedHostObject(); " +
-                    "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");" +
-                    "var result = 'failed';" +
-                    "if( valueProperty.get && valueProperty.set ) {" +
-                        "result = '' + valueProperty.set.name;" +
-                    "}" +
-                    "result;"));
+            assertEquals(
+                    "foo",
+                    evaluate(
+                            cx,
+                            "var hostObj = new AnnotatedHostObject(); "
+                                    + "var valueProperty = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(hostObj), \"foo\");"
+                                    + "var result = 'failed';"
+                                    + "if( valueProperty.get && valueProperty.set ) {"
+                                    + "result = '' + valueProperty.set.name;"
+                                    + "}"
+                                    + "result;"));
         } finally {
             Context.exit();
         }
@@ -79,7 +85,6 @@ public class MemberBoxCallTest {
     private Object evaluate(Context cx, String str) {
         return cx.evaluateString(scope, str, "<testsrc>", 0, null);
     }
-
 
     @Before
     public void init() throws Exception {
