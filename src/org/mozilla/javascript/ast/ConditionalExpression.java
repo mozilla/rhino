@@ -9,8 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node representing the ternary operator.  Node type is
- * {@link Token#HOOK}.
+ * AST node representing the ternary operator. Node type is {@link Token#HOOK}.
  *
  * <pre><i>ConditionalExpression</i> :
  *        LogicalORExpression
@@ -34,8 +33,7 @@ public class ConditionalExpression extends AstNode {
         type = Token.HOOK;
     }
 
-    public ConditionalExpression() {
-    }
+    public ConditionalExpression() {}
 
     public ConditionalExpression(int pos) {
         super(pos);
@@ -45,15 +43,14 @@ public class ConditionalExpression extends AstNode {
         super(pos, len);
     }
 
-    /**
-     * Returns test expression
-     */
+    /** Returns test expression */
     public AstNode getTestExpression() {
         return testExpression;
     }
 
     /**
      * Sets test expression, and sets its parent.
+     *
      * @param testExpression test expression
      * @throws IllegalArgumentException if testExpression is {@code null}
      */
@@ -63,16 +60,14 @@ public class ConditionalExpression extends AstNode {
         testExpression.setParent(this);
     }
 
-    /**
-     * Returns expression to evaluate if test is true
-     */
+    /** Returns expression to evaluate if test is true */
     public AstNode getTrueExpression() {
         return trueExpression;
     }
 
     /**
-     * Sets expression to evaluate if test is true, and
-     * sets its parent to this node.
+     * Sets expression to evaluate if test is true, and sets its parent to this node.
+     *
      * @param trueExpression expression to evaluate if test is true
      * @throws IllegalArgumentException if expression is {@code null}
      */
@@ -82,19 +77,16 @@ public class ConditionalExpression extends AstNode {
         trueExpression.setParent(this);
     }
 
-    /**
-     * Returns expression to evaluate if test is false
-     */
+    /** Returns expression to evaluate if test is false */
     public AstNode getFalseExpression() {
         return falseExpression;
     }
 
     /**
-     * Sets expression to evaluate if test is false, and sets its
-     * parent to this node.
+     * Sets expression to evaluate if test is false, and sets its parent to this node.
+     *
      * @param falseExpression expression to evaluate if test is false
-     * @throws IllegalArgumentException if {@code falseExpression}
-     * is {@code null}
+     * @throws IllegalArgumentException if {@code falseExpression} is {@code null}
      */
     public void setFalseExpression(AstNode falseExpression) {
         assertNotNull(falseExpression);
@@ -102,30 +94,28 @@ public class ConditionalExpression extends AstNode {
         falseExpression.setParent(this);
     }
 
-    /**
-     * Returns position of ? token
-     */
+    /** Returns position of ? token */
     public int getQuestionMarkPosition() {
         return questionMarkPosition;
     }
 
     /**
      * Sets position of ? token
+     *
      * @param questionMarkPosition position of ? token
      */
     public void setQuestionMarkPosition(int questionMarkPosition) {
         this.questionMarkPosition = questionMarkPosition;
     }
 
-    /**
-     * Returns position of : token
-     */
+    /** Returns position of : token */
     public int getColonPosition() {
         return colonPosition;
     }
 
     /**
      * Sets position of : token
+     *
      * @param colonPosition position of : token
      */
     public void setColonPosition(int colonPosition) {
@@ -134,11 +124,8 @@ public class ConditionalExpression extends AstNode {
 
     @Override
     public boolean hasSideEffects() {
-        if (testExpression == null
-            || trueExpression == null
-            || falseExpression == null) codeBug();
-        return trueExpression.hasSideEffects()
-               && falseExpression.hasSideEffects();
+        if (testExpression == null || trueExpression == null || falseExpression == null) codeBug();
+        return trueExpression.hasSideEffects() && falseExpression.hasSideEffects();
     }
 
     @Override
@@ -154,8 +141,7 @@ public class ConditionalExpression extends AstNode {
     }
 
     /**
-     * Visits this node, then the test-expression, the true-expression,
-     * and the false-expression.
+     * Visits this node, then the test-expression, the true-expression, and the false-expression.
      */
     @Override
     public void visit(NodeVisitor v) {

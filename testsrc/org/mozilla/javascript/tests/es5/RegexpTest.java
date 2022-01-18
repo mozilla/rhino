@@ -6,6 +6,7 @@
  * Tests for the Object.getOwnPropertyDescriptor(obj, prop) method
  */
 package org.mozilla.javascript.tests.es5;
+
 import static org.junit.Assert.assertEquals;
 
 import org.junit.After;
@@ -31,19 +32,20 @@ public class RegexpTest {
         Context.exit();
     }
 
-    /**
-     * see https://github.com/mozilla/rhino/issues/684.
-     */
+    /** see https://github.com/mozilla/rhino/issues/684. */
     @Test
     public void testSideEffect() {
-        Object result2 = cx.evaluateString(
-                scope, "var a = 'hello world';"
-                        + "a.replace(/(.)/g, '#');"
-                        + "var res = '';"
-                        + "a.replace([], function (b, c) { res += c; });"
-                        + "res;",
-                "test", 1, null
-        );
+        Object result2 =
+                cx.evaluateString(
+                        scope,
+                        "var a = 'hello world';"
+                                + "a.replace(/(.)/g, '#');"
+                                + "var res = '';"
+                                + "a.replace([], function (b, c) { res += c; });"
+                                + "res;",
+                        "test",
+                        1,
+                        null);
         assertEquals("0", result2);
     }
 }

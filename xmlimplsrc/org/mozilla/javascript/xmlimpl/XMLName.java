@@ -29,18 +29,18 @@ class XMLName extends Ref {
             }
         } else if ((c & ~0x1FFF) == 0) {
             return (0xC0 <= c && c <= 0xD6)
-            || (0xD8 <= c && c <= 0xF6)
-            || (0xF8 <= c && c <= 0x2FF)
-            || (0x370 <= c && c <= 0x37D)
-            || 0x37F <= c;
+                    || (0xD8 <= c && c <= 0xF6)
+                    || (0xF8 <= c && c <= 0x2FF)
+                    || (0x370 <= c && c <= 0x37D)
+                    || 0x37F <= c;
         }
         return (0x200C <= c && c <= 0x200D)
-        || (0x2070 <= c && c <= 0x218F)
-        || (0x2C00 <= c && c <= 0x2FEF)
-        || (0x3001 <= c && c <= 0xD7FF)
-        || (0xF900 <= c && c <= 0xFDCF)
-        || (0xFDF0 <= c && c <= 0xFFFD)
-        || (0x10000 <= c && c <= 0xEFFFF);
+                || (0x2070 <= c && c <= 0x218F)
+                || (0x2C00 <= c && c <= 0x2FEF)
+                || (0x3001 <= c && c <= 0xD7FF)
+                || (0xF900 <= c && c <= 0xFDCF)
+                || (0xFDF0 <= c && c <= 0xFFFD)
+                || (0x10000 <= c && c <= 0xEFFFF);
     }
 
     private static boolean isNCNameChar(int c) {
@@ -59,8 +59,7 @@ class XMLName extends Ref {
                 return c == '-' || c == '.';
             }
         } else if ((c & ~0x1FFF) == 0) {
-            return isNCNameStartChar(c) || c == 0xB7
-                || (0x300 <= c && c <= 0x36F);
+            return isNCNameStartChar(c) || c == 0xB7 || (0x300 <= c && c <= 0x36F);
         }
         return isNCNameStartChar(c) || (0x203F <= c && c <= 0x2040);
     }
@@ -99,8 +98,7 @@ class XMLName extends Ref {
     private boolean isDescendants;
     private XMLObjectImpl xmlObject;
 
-    private XMLName() {
-    }
+    private XMLName() {}
 
     static XMLName formStar() {
         XMLName rv = new XMLName();
@@ -124,8 +122,7 @@ class XMLName extends Ref {
 
     /** TODO: marked deprecated by original implementor */
     static XMLName create(String defaultNamespaceUri, String name) {
-        if (name == null)
-            throw new IllegalArgumentException();
+        if (name == null) throw new IllegalArgumentException();
 
         int l = name.length();
         if (l != 0) {
@@ -178,9 +175,9 @@ class XMLName extends Ref {
         XMLName xmlName = this;
         if (target.isElement()) {
             XML[] children = target.getChildren();
-            for (int i=0; i<children.length; i++) {
-                if (xmlName.matches( children[i] )) {
-                    list.addToList( children[i] );
+            for (int i = 0; i < children.length; i++) {
+                if (xmlName.matches(children[i])) {
+                    list.addToList(children[i]);
                 }
                 addDescendantChildren(list, children[i]);
             }
@@ -191,9 +188,9 @@ class XMLName extends Ref {
         XMLName name = this;
         if (target.isElement()) {
             XML[] attributes = target.getAttributes();
-            for (int i=0; i<attributes.length; i++) {
-                if (name.matches( attributes[i]) ) {
-                    list.addToList( attributes[i] );
+            for (int i = 0; i < attributes.length; i++) {
+                if (name.matches(attributes[i])) {
+                    list.addToList(attributes[i]);
                 }
             }
         }
@@ -203,7 +200,7 @@ class XMLName extends Ref {
         if (target.isElement()) {
             addMatchingAttributes(list, target);
             XML[] children = target.getChildren();
-            for (int i=0; i<children.length; i++) {
+            for (int i = 0; i < children.length; i++) {
                 addDescendantAttributes(list, children[i]);
             }
         }
@@ -242,9 +239,9 @@ class XMLName extends Ref {
         } else {
             XML[] children = target.getChildren();
             if (children != null) {
-                for (int i=0; i<children.length; i++) {
+                for (int i = 0; i < children.length; i++) {
                     if (this.matches(children[i])) {
-                        rv.addToList( children[i] );
+                        rv.addToList(children[i]);
                     }
                 }
             }
@@ -277,13 +274,12 @@ class XMLName extends Ref {
             XMLObjectImpl xmlValue = null;
 
             if (value instanceof XMLObjectImpl) {
-                xmlValue = (XMLObjectImpl)value;
+                xmlValue = (XMLObjectImpl) value;
 
                 // Check for attribute type and convert to textNode
                 if (xmlValue instanceof XML) {
-                    if (((XML)xmlValue).isAttribute()) {
-                        xmlValue = target.makeXmlFromString(xmlName,
-                                xmlValue.toString());
+                    if (((XML) xmlValue).isAttribute()) {
+                        xmlValue = target.makeXmlFromString(xmlName, xmlValue.toString());
                     }
                 }
 
@@ -292,7 +288,8 @@ class XMLName extends Ref {
                         XML xml = ((XMLList) xmlValue).item(i);
 
                         if (xml.isAttribute()) {
-                            ((XMLList)xmlValue).replace(i, target.makeXmlFromString(xmlName, xml.toString()));
+                            ((XMLList) xmlValue)
+                                    .replace(i, target.makeXmlFromString(xmlName, xml.toString()));
                         }
                     }
                 }
@@ -328,8 +325,7 @@ class XMLName extends Ref {
     @Override
     public Object get(Context cx) {
         if (xmlObject == null) {
-            throw ScriptRuntime.undefReadError(Undefined.instance,
-                toString());
+            throw ScriptRuntime.undefReadError(Undefined.instance, toString());
         }
         return xmlObject.getXMLProperty(this);
     }
@@ -338,9 +334,7 @@ class XMLName extends Ref {
     @Override
     public Object set(Context cx, Object value) {
         if (xmlObject == null) {
-            throw ScriptRuntime.undefWriteError(Undefined.instance,
-                toString(),
-                value);
+            throw ScriptRuntime.undefWriteError(Undefined.instance, toString(), value);
         }
         // Assignment to descendants causes parse error on bad reference
         // and this should not be called
@@ -360,13 +354,13 @@ class XMLName extends Ref {
 
     @Override
     public String toString() {
-        //return qname.localName();
+        // return qname.localName();
         StringBuilder buff = new StringBuilder();
         if (isDescendants) buff.append("..");
         if (isAttributeName) buff.append('@');
         if (uri() == null) {
             buff.append('*');
-            if(localName().equals("*")) {
+            if (localName().equals("*")) {
                 return buff.toString();
             }
         } else {
@@ -402,18 +396,20 @@ class XMLName extends Ref {
         if (isAttributeName) {
             if (node.isAttribute()) {
                 if (this.uri() == null || this.uri().equals(nodeUri)) {
-                    if (this.localName().equals("*") || this.localName().equals(qname.getLocalName())) {
+                    if (this.localName().equals("*")
+                            || this.localName().equals(qname.getLocalName())) {
                         return true;
                     }
                 }
                 return false;
             } else {
-                //    TODO    Could throw exception maybe, should not call this method on attribute name with arbitrary node type
+                //    TODO    Could throw exception maybe, should not call this method on attribute
+                // name with arbitrary node type
                 //            unless we traverse all attributes and children habitually
                 return false;
             }
         } else {
-            if ( this.uri() == null || ((node.isElement()) && this.uri().equals(nodeUri)) ) {
+            if (this.uri() == null || ((node.isElement()) && this.uri().equals(nodeUri))) {
                 if (localName().equals("*")) return true;
                 if (node.isElement()) {
                     if (localName().equals(qname.getLocalName())) return true;
@@ -431,7 +427,7 @@ class XMLName extends Ref {
     // TODO Fix whether this is an attribute XMLName at construction?
     // Marked deprecated by original author
     void setAttributeName() {
-//        if (isAttributeName) throw new IllegalStateException();
+        //        if (isAttributeName) throw new IllegalStateException();
         isAttributeName = true;
     }
 
@@ -444,7 +440,7 @@ class XMLName extends Ref {
     /** @deprecated */
     @Deprecated
     void setIsDescendants() {
-//        if (isDescendants) throw new IllegalStateException();
+        //        if (isDescendants) throw new IllegalStateException();
         isDescendants = true;
     }
 }

@@ -7,13 +7,12 @@
 package org.mozilla.javascript.ast;
 
 /**
- * AST node representing the set of assignment operators such as {@code =},
- * {@code *=} and {@code +=}.
+ * AST node representing the set of assignment operators such as {@code =}, {@code *=} and {@code
+ * +=}.
  */
 public class Assignment extends InfixExpression {
 
-    public Assignment() {
-    }
+    public Assignment() {}
 
     public Assignment(int pos) {
         super(pos);
@@ -31,8 +30,7 @@ public class Assignment extends InfixExpression {
         super(left, right);
     }
 
-    public Assignment(int operator, AstNode left,
-                      AstNode right, int operatorPos) {
+    public Assignment(int operator, AstNode left, AstNode right, int operatorPos) {
         super(operator, left, right, operatorPos);
     }
 }

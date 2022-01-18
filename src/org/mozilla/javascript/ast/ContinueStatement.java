@@ -9,8 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * A continue statement.
- * Node type is {@link Token#CONTINUE}.
+ * A continue statement. Node type is {@link Token#CONTINUE}.
  *
  * <pre><i>ContinueStatement</i> :
  *   <b>continue</b> [<i>no LineTerminator here</i>] [Identifier] ;</pre>
@@ -24,8 +23,7 @@ public class ContinueStatement extends Jump {
         type = Token.CONTINUE;
     }
 
-    public ContinueStatement() {
-    }
+    public ContinueStatement() {}
 
     public ContinueStatement(int pos) {
         this(pos, -1);
@@ -51,16 +49,15 @@ public class ContinueStatement extends Jump {
         setLabel(label);
     }
 
-    /**
-     * Returns continue target
-     */
+    /** Returns continue target */
     public Loop getTarget() {
         return target;
     }
 
     /**
-     * Sets continue target.  Does NOT set the parent of the target node:
-     * the target node is an ancestor of this node.
+     * Sets continue target. Does NOT set the parent of the target node: the target node is an
+     * ancestor of this node.
+     *
      * @param target continue target
      * @throws IllegalArgumentException if target is {@code null}
      */
@@ -72,22 +69,23 @@ public class ContinueStatement extends Jump {
 
     /**
      * Returns the intended label of this continue statement
-     * @return the continue label.  Will be {@code null} if the statement
-     * consisted only of the keyword "continue".
+     *
+     * @return the continue label. Will be {@code null} if the statement consisted only of the
+     *     keyword "continue".
      */
     public Name getLabel() {
         return label;
     }
 
     /**
-     * Sets the intended label of this continue statement.
-     * Only applies if the statement was of the form "continue &lt;label&gt;".
+     * Sets the intended label of this continue statement. Only applies if the statement was of the
+     * form "continue &lt;label&gt;".
+     *
      * @param label the continue label, or {@code null} if not present.
      */
     public void setLabel(Name label) {
         this.label = label;
-        if (label != null)
-            label.setParent(this);
+        if (label != null) label.setParent(this);
     }
 
     @Override
@@ -103,9 +101,7 @@ public class ContinueStatement extends Jump {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, then visits the label if non-{@code null}.
-     */
+    /** Visits this node, then visits the label if non-{@code null}. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this) && label != null) {

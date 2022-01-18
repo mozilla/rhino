@@ -20,69 +20,55 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 
-public final class JavaAdapter implements IdFunctionCall
-{
+public final class JavaAdapter implements IdFunctionCall {
     /**
-     * Provides a key with which to distinguish previously generated
-     * adapter classes stored in a hash table.
+     * Provides a key with which to distinguish previously generated adapter classes stored in a
+     * hash table.
      */
-    static class JavaAdapterSignature
-    {
+    static class JavaAdapterSignature {
         Class<?> superClass;
         Class<?>[] interfaces;
         ObjToIntMap names;
 
-        JavaAdapterSignature(Class<?> superClass, Class<?>[] interfaces,
-                             ObjToIntMap names)
-        {
+        JavaAdapterSignature(Class<?> superClass, Class<?>[] interfaces, ObjToIntMap names) {
             this.superClass = superClass;
             this.interfaces = interfaces;
             this.names = names;
         }
 
         @Override
-        public boolean equals(Object obj)
-        {
-            if (!(obj instanceof JavaAdapterSignature))
-                return false;
+        public boolean equals(Object obj) {
+            if (!(obj instanceof JavaAdapterSignature)) return false;
             JavaAdapterSignature sig = (JavaAdapterSignature) obj;
-            if (superClass != sig.superClass)
-                return false;
+            if (superClass != sig.superClass) return false;
             if (interfaces != sig.interfaces) {
-                if (interfaces.length != sig.interfaces.length)
-                    return false;
-                for (int i=0; i < interfaces.length; i++)
-                    if (interfaces[i] != sig.interfaces[i])
-                        return false;
+                if (interfaces.length != sig.interfaces.length) return false;
+                for (int i = 0; i < interfaces.length; i++)
+                    if (interfaces[i] != sig.interfaces[i]) return false;
             }
-            if (names.size() != sig.names.size())
-                return false;
+            if (names.size() != sig.names.size()) return false;
             ObjToIntMap.Iterator iter = new ObjToIntMap.Iterator(names);
             for (iter.start(); !iter.done(); iter.next()) {
-                String name = (String)iter.getKey();
+                String name = (String) iter.getKey();
                 int arity = iter.getValue();
-                if (arity != sig.names.get(name, arity + 1))
-                    return false;
+                if (arity != sig.names.get(name, arity + 1)) return false;
             }
             return true;
         }
 
         @Override
-        public int hashCode()
-        {
+        public int hashCode() {
             return (superClass.hashCode() + Arrays.hashCode(interfaces)) ^ names.size();
         }
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed)
-    {
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
         JavaAdapter obj = new JavaAdapter();
-        IdFunctionObject ctor = new IdFunctionObject(obj, FTAG, Id_JavaAdapter,
-                                                     "JavaAdapter", 1, scope);
+        IdFunctionObject ctor =
+                new IdFunctionObject(obj, FTAG, Id_JavaAdapter, "JavaAdapter", 1, scope);
         ctor.markAsConstructor(null);
         if (sealed) {
             ctor.sealObject();
@@ -91,9 +77,8 @@ public final class JavaAdapter implements IdFunctionCall
     }
 
     @Override
-    public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
-                             Scriptable thisObj, Object[] args)
-    {
+    public Object execIdCall(
+            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (f.hasTag(FTAG)) {
             if (f.methodId() == Id_JavaAdapter) {
                 return js_createAdapter(cx, scope, args);
@@ -102,20 +87,16 @@ public final class JavaAdapter implements IdFunctionCall
         throw f.unknown();
     }
 
-    public static Object convertResult(Object result, Class<?> c)
-    {
-        if (result == Undefined.instance &&
-            (c != ScriptRuntime.ObjectClass &&
-             c != ScriptRuntime.StringClass))
-        {
+    public static Object convertResult(Object result, Class<?> c) {
+        if (result == Undefined.instance
+                && (c != ScriptRuntime.ObjectClass && c != ScriptRuntime.StringClass)) {
             // Avoid an error for an undefined value; return null instead.
             return null;
         }
         return Context.jsToJava(result, c);
     }
 
-    public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter)
-    {
+    public static Scriptable createAdapterWrapper(Scriptable obj, Object adapter) {
         Scriptable scope = ScriptableObject.getTopLevelScope(obj);
         NativeJavaObject res = new NativeJavaObject(scope, adapter, null, true);
         res.setPrototype(obj);
@@ -123,14 +104,12 @@ public final class JavaAdapter implements IdFunctionCall
     }
 
     public static Object getAdapterSelf(Class<?> adapterClass, Object adapter)
-        throws NoSuchFieldException, IllegalAccessException
-    {
+            throws NoSuchFieldException, IllegalAccessException {
         Field self = adapterClass.getDeclaredField("self");
         return self.get(adapter);
     }
 
-    static Object js_createAdapter(Context cx, Scriptable scope, Object[] args)
-    {
+    static Object js_createAdapter(Context cx, Scriptable scope, Object[] args) {
         int N = args.length;
         if (N == 0) {
             throw ScriptRuntime.typeErrorById("msg.adapter.zero.args");
@@ -153,9 +132,10 @@ public final class JavaAdapter implements IdFunctionCall
                 break;
             }
             if (!(arg instanceof NativeJavaClass)) {
-                throw ScriptRuntime.typeErrorById("msg.not.java.class.arg",
-                                               String.valueOf(classCount),
-                                               ScriptRuntime.toString(arg));
+                throw ScriptRuntime.typeErrorById(
+                        "msg.not.java.class.arg",
+                        String.valueOf(classCount),
+                        ScriptRuntime.toString(arg));
             }
         }
         Class<?> superClass = null;
@@ -165,8 +145,8 @@ public final class JavaAdapter implements IdFunctionCall
             Class<?> c = ((NativeJavaClass) args[i]).getClassObject();
             if (!c.isInterface()) {
                 if (superClass != null) {
-                    throw ScriptRuntime.typeErrorById("msg.only.one.super",
-                              superClass.getName(), c.getName());
+                    throw ScriptRuntime.typeErrorById(
+                            "msg.only.one.super", superClass.getName(), c.getName());
                 }
                 superClass = c;
             } else {
@@ -177,7 +157,7 @@ public final class JavaAdapter implements IdFunctionCall
         if (superClass == null) {
             superClass = ScriptRuntime.ObjectClass;
         }
-        
+
         Class<?>[] interfaces = new Class[interfaceCount];
         System.arraycopy(intfs, 0, interfaces, 0, interfaceCount);
         // next argument is implementation, must be scriptable
@@ -185,7 +165,7 @@ public final class JavaAdapter implements IdFunctionCall
 
         Class<?> adapterClass = getAdapterClass(scope, superClass, interfaces, obj);
         Object adapter;
-        
+
         int argsCount = N - classCount - 1;
         try {
             if (argsCount > 0) {
@@ -197,8 +177,7 @@ public final class JavaAdapter implements IdFunctionCall
                 ctorArgs[1] = cx.getFactory();
                 System.arraycopy(args, classCount + 1, ctorArgs, 2, argsCount);
                 // TODO: cache class wrapper?
-                NativeJavaClass classWrapper = new NativeJavaClass(scope,
-                        adapterClass, true);
+                NativeJavaClass classWrapper = new NativeJavaClass(scope, adapterClass, true);
                 NativeJavaMethod ctors = classWrapper.members.ctors;
                 int index = ctors.findCachedFunction(cx, ctorArgs);
                 if (index < 0) {
@@ -211,10 +190,9 @@ public final class JavaAdapter implements IdFunctionCall
                 adapter = NativeJavaClass.constructInternal(ctorArgs, ctors.methods[index]);
             } else {
                 Class<?>[] ctorParms = {
-                        ScriptRuntime.ScriptableClass,
-                        ScriptRuntime.ContextFactoryClass
+                    ScriptRuntime.ScriptableClass, ScriptRuntime.ContextFactoryClass
                 };
-                Object[] ctorArgs = { obj, cx.getFactory() };
+                Object[] ctorArgs = {obj, cx.getFactory()};
                 adapter = adapterClass.getConstructor(ctorParms).newInstance(ctorArgs);
             }
 
@@ -224,8 +202,7 @@ public final class JavaAdapter implements IdFunctionCall
                 Object unwrapped = ((Wrapper) self).unwrap();
                 if (unwrapped instanceof Scriptable) {
                     if (unwrapped instanceof ScriptableObject) {
-                        ScriptRuntime.setObjectProtoAndParent(
-                                (ScriptableObject)unwrapped, scope);
+                        ScriptRuntime.setObjectProtoAndParent((ScriptableObject) unwrapped, scope);
                     }
                     return unwrapped;
                 }
@@ -237,18 +214,15 @@ public final class JavaAdapter implements IdFunctionCall
     }
 
     // Needed by NativeJavaObject serializer
-    public static void writeAdapterObject(Object javaObject,
-                                          ObjectOutputStream out)
-        throws IOException
-    {
+    public static void writeAdapterObject(Object javaObject, ObjectOutputStream out)
+            throws IOException {
         Class<?> cl = javaObject.getClass();
         out.writeObject(cl.getSuperclass().getName());
 
         Class<?>[] interfaces = cl.getInterfaces();
         String[] interfaceNames = new String[interfaces.length];
 
-        for (int i=0; i < interfaces.length; i++)
-            interfaceNames[i] = interfaces[i].getName();
+        for (int i = 0; i < interfaces.length; i++) interfaceNames[i] = interfaces[i].getName();
 
         out.writeObject(interfaceNames);
 
@@ -263,10 +237,8 @@ public final class JavaAdapter implements IdFunctionCall
     }
 
     // Needed by NativeJavaObject de-serializer
-    public static Object readAdapterObject(Scriptable self,
-                                           ObjectInputStream in)
-        throws IOException, ClassNotFoundException
-    {
+    public static Object readAdapterObject(Scriptable self, ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
         ContextFactory factory;
         Context cx = Context.getCurrentContext();
         if (cx != null) {
@@ -275,49 +247,45 @@ public final class JavaAdapter implements IdFunctionCall
             factory = null;
         }
 
-        Class<?> superClass = Class.forName((String)in.readObject());
+        Class<?> superClass = Class.forName((String) in.readObject());
 
-        String[] interfaceNames = (String[])in.readObject();
+        String[] interfaceNames = (String[]) in.readObject();
         Class<?>[] interfaces = new Class[interfaceNames.length];
 
-        for (int i=0; i < interfaceNames.length; i++)
+        for (int i = 0; i < interfaceNames.length; i++)
             interfaces[i] = Class.forName(interfaceNames[i]);
 
-        Scriptable delegee = (Scriptable)in.readObject();
+        Scriptable delegee = (Scriptable) in.readObject();
 
-        Class<?> adapterClass = getAdapterClass(self, superClass, interfaces,
-                                             delegee);
+        Class<?> adapterClass = getAdapterClass(self, superClass, interfaces, delegee);
 
         Class<?>[] ctorParms = {
             ScriptRuntime.ContextFactoryClass,
             ScriptRuntime.ScriptableClass,
             ScriptRuntime.ScriptableClass
         };
-        Object[] ctorArgs = { factory, delegee, self };
+        Object[] ctorArgs = {factory, delegee, self};
         try {
             return adapterClass.getConstructor(ctorParms).newInstance(ctorArgs);
-        } catch(InstantiationException e) {
-        } catch(IllegalAccessException e) {
-        } catch(InvocationTargetException e) {
-        } catch(NoSuchMethodException e) {
+        } catch (InstantiationException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+        } catch (NoSuchMethodException e) {
         }
 
         throw new ClassNotFoundException("adapter");
     }
 
-    private static ObjToIntMap getObjectFunctionNames(Scriptable obj)
-    {
+    private static ObjToIntMap getObjectFunctionNames(Scriptable obj) {
         Object[] ids = ScriptableObject.getPropertyIds(obj);
         ObjToIntMap map = new ObjToIntMap(ids.length);
         for (int i = 0; i != ids.length; ++i) {
-            if (!(ids[i] instanceof String))
-                continue;
+            if (!(ids[i] instanceof String)) continue;
             String id = (String) ids[i];
             Object value = ScriptableObject.getProperty(obj, id);
             if (value instanceof Function) {
-                Function f = (Function)value;
-                int length = ScriptRuntime.toInt32(
-                                 ScriptableObject.getProperty(f, "length"));
+                Function f = (Function) value;
+                int length = ScriptRuntime.toInt32(ScriptableObject.getProperty(f, "length"));
                 if (length < 0) {
                     length = 0;
                 }
@@ -327,12 +295,10 @@ public final class JavaAdapter implements IdFunctionCall
         return map;
     }
 
-    private static Class<?> getAdapterClass(Scriptable scope, Class<?> superClass,
-                                            Class<?>[] interfaces, Scriptable obj)
-    {
+    private static Class<?> getAdapterClass(
+            Scriptable scope, Class<?> superClass, Class<?>[] interfaces, Scriptable obj) {
         ClassCache cache = ClassCache.get(scope);
-        Map<JavaAdapterSignature,Class<?>> generated
-            = cache.getInterfaceAdapterCacheMap();
+        Map<JavaAdapterSignature, Class<?>> generated = cache.getInterfaceAdapterCacheMap();
 
         ObjToIntMap names = getObjectFunctionNames(obj);
         JavaAdapterSignature sig;
@@ -340,8 +306,7 @@ public final class JavaAdapter implements IdFunctionCall
         Class<?> adapterClass = generated.get(sig);
         if (adapterClass == null) {
             String adapterName = "adapter" + cache.newClassSerialNumber();
-            byte[] code = createAdapterCode(names, adapterName,
-                                            superClass, interfaces, null);
+            byte[] code = createAdapterCode(names, adapterName, superClass, interfaces, null);
 
             adapterClass = loadAdapterClass(adapterName, code);
             if (cache.isCachingEnabled()) {
@@ -351,28 +316,28 @@ public final class JavaAdapter implements IdFunctionCall
         return adapterClass;
     }
 
-    public static byte[] createAdapterCode(ObjToIntMap functionNames,
-                                           String adapterName,
-                                           Class<?> superClass,
-                                           Class<?>[] interfaces,
-                                           String scriptClassName)
-    {
-        ClassFileWriter cfw = new ClassFileWriter(adapterName,
-                                                  superClass.getName(),
-                                                  "<adapter>");
-        cfw.addField("factory", "Lorg/mozilla/javascript/ContextFactory;",
-                     (short) (ClassFileWriter.ACC_PUBLIC |
-                              ClassFileWriter.ACC_FINAL));
-        cfw.addField("delegee", "Lorg/mozilla/javascript/Scriptable;",
-                     (short) (ClassFileWriter.ACC_PUBLIC |
-                              ClassFileWriter.ACC_FINAL));
-        cfw.addField("self", "Lorg/mozilla/javascript/Scriptable;",
-                     (short) (ClassFileWriter.ACC_PUBLIC |
-                              ClassFileWriter.ACC_FINAL));
+    public static byte[] createAdapterCode(
+            ObjToIntMap functionNames,
+            String adapterName,
+            Class<?> superClass,
+            Class<?>[] interfaces,
+            String scriptClassName) {
+        ClassFileWriter cfw = new ClassFileWriter(adapterName, superClass.getName(), "<adapter>");
+        cfw.addField(
+                "factory",
+                "Lorg/mozilla/javascript/ContextFactory;",
+                (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
+        cfw.addField(
+                "delegee",
+                "Lorg/mozilla/javascript/Scriptable;",
+                (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
+        cfw.addField(
+                "self",
+                "Lorg/mozilla/javascript/Scriptable;",
+                (short) (ClassFileWriter.ACC_PUBLIC | ClassFileWriter.ACC_FINAL));
         int interfacesCount = interfaces == null ? 0 : interfaces.length;
-        for (int i=0; i < interfacesCount; i++) {
-            if (interfaces[i] != null)
-                cfw.addInterface(interfaces[i].getName());
+        for (int i = 0; i < interfacesCount; i++) {
+            if (interfaces[i] != null) cfw.addInterface(interfaces[i].getName());
         }
 
         String superName = superClass.getName().replace('.', '/');
@@ -417,9 +382,9 @@ public final class JavaAdapter implements IdFunctionCall
                 // method/signature.
                 String methodSignature = getMethodSignature(method, argTypes);
                 String methodKey = methodName + methodSignature;
-                if (! generatedOverrides.has(methodKey)) {
-                    generateMethod(cfw, adapterName, methodName, argTypes,
-                                   method.getReturnType(), true);
+                if (!generatedOverrides.has(methodKey)) {
+                    generateMethod(
+                            cfw, adapterName, methodName, argTypes, method.getReturnType(), true);
                     generatedOverrides.put(methodKey, 0);
                     generatedMethods.put(methodName, 0);
                 }
@@ -445,18 +410,23 @@ public final class JavaAdapter implements IdFunctionCall
                 Class<?>[] argTypes = method.getParameterTypes();
                 String methodSignature = getMethodSignature(method, argTypes);
                 String methodKey = methodName + methodSignature;
-                if (! generatedOverrides.has(methodKey)) {
-                    generateMethod(cfw, adapterName, methodName, argTypes,
-                                   method.getReturnType(), true);
+                if (!generatedOverrides.has(methodKey)) {
+                    generateMethod(
+                            cfw, adapterName, methodName, argTypes, method.getReturnType(), true);
                     generatedOverrides.put(methodKey, 0);
                     generatedMethods.put(methodName, 0);
 
                     // if a method was overridden, generate a "super$method"
                     // which lets the delegate call the superclass' version.
                     if (!isAbstractMethod) {
-                        generateSuper(cfw, adapterName, superName,
-                                      methodName, methodSignature,
-                                      argTypes, method.getReturnType());
+                        generateSuper(
+                                cfw,
+                                adapterName,
+                                superName,
+                                methodName,
+                                methodSignature,
+                                argTypes,
+                                method.getReturnType());
                     }
                 }
             }
@@ -466,21 +436,17 @@ public final class JavaAdapter implements IdFunctionCall
         // overrides.
         ObjToIntMap.Iterator iter = new ObjToIntMap.Iterator(functionNames);
         for (iter.start(); !iter.done(); iter.next()) {
-            String functionName = (String)iter.getKey();
-            if (generatedMethods.has(functionName))
-                continue;
+            String functionName = (String) iter.getKey();
+            if (generatedMethods.has(functionName)) continue;
             int length = iter.getValue();
             Class<?>[] parms = new Class[length];
-            for (int k=0; k < length; k++)
-                parms[k] = ScriptRuntime.ObjectClass;
-            generateMethod(cfw, adapterName, functionName, parms,
-                           ScriptRuntime.ObjectClass, false);
+            for (int k = 0; k < length; k++) parms[k] = ScriptRuntime.ObjectClass;
+            generateMethod(cfw, adapterName, functionName, parms, ScriptRuntime.ObjectClass, false);
         }
         return cfw.toByteArray();
     }
 
-    static Method[] getOverridableMethods(Class<?> clazz)
-    {
+    static Method[] getOverridableMethods(Class<?> clazz) {
         ArrayList<Method> list = new ArrayList<Method>();
         HashSet<String> skip = new HashSet<String>();
         // Check superclasses before interfaces so we always choose
@@ -491,26 +457,22 @@ public final class JavaAdapter implements IdFunctionCall
             appendOverridableMethods(c, list, skip);
         }
         for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
-            for (Class<?> intf: c.getInterfaces())
-                appendOverridableMethods(intf, list, skip);
+            for (Class<?> intf : c.getInterfaces()) appendOverridableMethods(intf, list, skip);
         }
         return list.toArray(new Method[list.size()]);
     }
 
-    private static void appendOverridableMethods(Class<?> c,
-            ArrayList<Method> list, HashSet<String> skip)
-    {
-        Method[] methods=c.isInterface() ? c.getMethods() : c.getDeclaredMethods();
-        
+    private static void appendOverridableMethods(
+            Class<?> c, ArrayList<Method> list, HashSet<String> skip) {
+        Method[] methods = c.isInterface() ? c.getMethods() : c.getDeclaredMethods();
+
         for (int i = 0; i < methods.length; i++) {
-            String methodKey = methods[i].getName() +
-                getMethodSignature(methods[i],
-                        methods[i].getParameterTypes());
-            if (skip.contains(methodKey))
-                continue; // skip this method
+            String methodKey =
+                    methods[i].getName()
+                            + getMethodSignature(methods[i], methods[i].getParameterTypes());
+            if (skip.contains(methodKey)) continue; // skip this method
             int mods = methods[i].getModifiers();
-            if (Modifier.isStatic(mods))
-                continue;
+            if (Modifier.isStatic(mods)) continue;
             if (Modifier.isFinal(mods)) {
                 // Make sure we don't add a final method to the list
                 // of overridable methods.
@@ -524,35 +486,30 @@ public final class JavaAdapter implements IdFunctionCall
         }
     }
 
-    static Class<?> loadAdapterClass(String className, byte[] classBytes)
-    {
+    static Class<?> loadAdapterClass(String className, byte[] classBytes) {
         Object staticDomain;
         Class<?> domainClass = SecurityController.getStaticSecurityDomainClass();
-        if(domainClass == CodeSource.class || domainClass == ProtectionDomain.class) {
+        if (domainClass == CodeSource.class || domainClass == ProtectionDomain.class) {
             // use the calling script's security domain if available
             ProtectionDomain protectionDomain = SecurityUtilities.getScriptProtectionDomain();
             if (protectionDomain == null) {
                 protectionDomain = JavaAdapter.class.getProtectionDomain();
             }
-            if(domainClass == CodeSource.class) {
+            if (domainClass == CodeSource.class) {
                 staticDomain = protectionDomain == null ? null : protectionDomain.getCodeSource();
-            }
-            else {
+            } else {
                 staticDomain = protectionDomain;
             }
-        }
-        else {
+        } else {
             staticDomain = null;
         }
-        GeneratedClassLoader loader = SecurityController.createLoader(null,
-                staticDomain);
+        GeneratedClassLoader loader = SecurityController.createLoader(null, staticDomain);
         Class<?> result = loader.defineClass(className, classBytes);
         loader.linkClass(result);
         return result;
     }
 
-    public static Function getFunction(Scriptable obj, String functionName)
-    {
+    public static Function getFunction(Scriptable obj, String functionName) {
         Object x = ScriptableObject.getProperty(obj, functionName);
         if (x == Scriptable.NOT_FOUND) {
             // This method used to swallow the exception from calling
@@ -562,21 +519,21 @@ public final class JavaAdapter implements IdFunctionCall
             // for instance.
             return null;
         }
-        if (!(x instanceof Function))
-            throw ScriptRuntime.notFunctionError(x, functionName);
+        if (!(x instanceof Function)) throw ScriptRuntime.notFunctionError(x, functionName);
 
-        return (Function)x;
+        return (Function) x;
     }
 
     /**
-     * Utility method which dynamically binds a Context to the current thread,
-     * if none already exists.
+     * Utility method which dynamically binds a Context to the current thread, if none already
+     * exists.
      */
-    public static Object callMethod(ContextFactory factory,
-                                    final Scriptable thisObj,
-                                    final Function f, final Object[] args,
-                                    final long argsToWrap)
-    {
+    public static Object callMethod(
+            ContextFactory factory,
+            final Scriptable thisObj,
+            final Function f,
+            final Object[] args,
+            final long argsToWrap) {
         if (f == null) {
             // See comments in getFunction
             return null;
@@ -597,53 +554,57 @@ public final class JavaAdapter implements IdFunctionCall
         return factory.call(cx2 -> doCall(cx2, scope, thisObj, f, args, argsToWrap));
     }
 
-    private static Object doCall(Context cx, Scriptable scope,
-                                 Scriptable thisObj, Function f,
-                                 Object[] args, long argsToWrap)
-    {
+    private static Object doCall(
+            Context cx,
+            Scriptable scope,
+            Scriptable thisObj,
+            Function f,
+            Object[] args,
+            long argsToWrap) {
         // Wrap the rest of objects
         for (int i = 0; i != args.length; ++i) {
             if (0 != (argsToWrap & (1 << i))) {
                 Object arg = args[i];
                 if (!(arg instanceof Scriptable)) {
-                    args[i] = cx.getWrapFactory().wrap(cx, scope, arg,
-                                                       null);
+                    args[i] = cx.getWrapFactory().wrap(cx, scope, arg, null);
                 }
             }
         }
         return f.call(cx, scope, thisObj, args);
     }
 
-    public static Scriptable runScript(final Script script)
-    {
-        return ContextFactory.getGlobal().call(cx -> {
-            ScriptableObject global = ScriptRuntime.getGlobal(cx);
-            script.exec(cx, global);
-            return global;
-        });
+    public static Scriptable runScript(final Script script) {
+        return ContextFactory.getGlobal()
+                .call(
+                        cx -> {
+                            ScriptableObject global = ScriptRuntime.getGlobal(cx);
+                            script.exec(cx, global);
+                            return global;
+                        });
     }
 
-    private static void generateCtor(ClassFileWriter cfw, String adapterName,
-                                     String superName, Constructor<?> superCtor)
-    {
+    private static void generateCtor(
+            ClassFileWriter cfw, String adapterName, String superName, Constructor<?> superCtor) {
         short locals = 3; // this + factory + delegee
         Class<?>[] parameters = superCtor.getParameterTypes();
 
         // Note that we swapped arguments in app-facing constructors to avoid
         // conflicting signatures with serial constructor defined below.
         if (parameters.length == 0) {
-            cfw.startMethod("<init>",
-                        "(Lorg/mozilla/javascript/Scriptable;"
-                        +"Lorg/mozilla/javascript/ContextFactory;)V",
-                        ClassFileWriter.ACC_PUBLIC);
+            cfw.startMethod(
+                    "<init>",
+                    "(Lorg/mozilla/javascript/Scriptable;"
+                            + "Lorg/mozilla/javascript/ContextFactory;)V",
+                    ClassFileWriter.ACC_PUBLIC);
 
             // Invoke base class constructor
-            cfw.add(ByteCode.ALOAD_0);  // this
+            cfw.add(ByteCode.ALOAD_0); // this
             cfw.addInvoke(ByteCode.INVOKESPECIAL, superName, "<init>", "()V");
         } else {
-            StringBuilder sig = new StringBuilder(
-                    "(Lorg/mozilla/javascript/Scriptable;"
-                    +"Lorg/mozilla/javascript/ContextFactory;");
+            StringBuilder sig =
+                    new StringBuilder(
+                            "(Lorg/mozilla/javascript/Scriptable;"
+                                    + "Lorg/mozilla/javascript/ContextFactory;");
             int marker = sig.length(); // lets us reuse buffer for super signature
             for (Class<?> c : parameters) {
                 appendTypeString(sig, c);
@@ -652,7 +613,7 @@ public final class JavaAdapter implements IdFunctionCall
             cfw.startMethod("<init>", sig.toString(), ClassFileWriter.ACC_PUBLIC);
 
             // Invoke base class constructor
-            cfw.add(ByteCode.ALOAD_0);  // this
+            cfw.add(ByteCode.ALOAD_0); // this
             short paramOffset = 3;
             for (Class<?> parameter : parameters) {
                 paramOffset += generatePushParam(cfw, paramOffset, parameter);
@@ -663,85 +624,87 @@ public final class JavaAdapter implements IdFunctionCall
         }
 
         // Save parameter in instance variable "delegee"
-        cfw.add(ByteCode.ALOAD_0);  // this
-        cfw.add(ByteCode.ALOAD_1);  // first arg: Scriptable delegee
-        cfw.add(ByteCode.PUTFIELD, adapterName, "delegee",
-                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.ALOAD_0); // this
+        cfw.add(ByteCode.ALOAD_1); // first arg: Scriptable delegee
+        cfw.add(ByteCode.PUTFIELD, adapterName, "delegee", "Lorg/mozilla/javascript/Scriptable;");
 
         // Save parameter in instance variable "factory"
-        cfw.add(ByteCode.ALOAD_0);  // this
-        cfw.add(ByteCode.ALOAD_2);  // second arg: ContextFactory instance
-        cfw.add(ByteCode.PUTFIELD, adapterName, "factory",
+        cfw.add(ByteCode.ALOAD_0); // this
+        cfw.add(ByteCode.ALOAD_2); // second arg: ContextFactory instance
+        cfw.add(
+                ByteCode.PUTFIELD,
+                adapterName,
+                "factory",
                 "Lorg/mozilla/javascript/ContextFactory;");
 
-        cfw.add(ByteCode.ALOAD_0);  // this for the following PUTFIELD for self
+        cfw.add(ByteCode.ALOAD_0); // this for the following PUTFIELD for self
         // create a wrapper object to be used as "this" in method calls
-        cfw.add(ByteCode.ALOAD_1);  // the Scriptable delegee
-        cfw.add(ByteCode.ALOAD_0);  // this
-        cfw.addInvoke(ByteCode.INVOKESTATIC,
-                      "org/mozilla/javascript/JavaAdapter",
-                      "createAdapterWrapper",
-                      "(Lorg/mozilla/javascript/Scriptable;"
-                      +"Ljava/lang/Object;"
-                      +")Lorg/mozilla/javascript/Scriptable;");
-        cfw.add(ByteCode.PUTFIELD, adapterName, "self",
-                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.ALOAD_1); // the Scriptable delegee
+        cfw.add(ByteCode.ALOAD_0); // this
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/JavaAdapter",
+                "createAdapterWrapper",
+                "(Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
+                        + ")Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.PUTFIELD, adapterName, "self", "Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.RETURN);
         cfw.stopMethod(locals);
     }
 
-    private static void generateSerialCtor(ClassFileWriter cfw,
-                                           String adapterName,
-                                           String superName)
-    {
-        cfw.startMethod("<init>",
-                        "(Lorg/mozilla/javascript/ContextFactory;"
-                        +"Lorg/mozilla/javascript/Scriptable;"
-                        +"Lorg/mozilla/javascript/Scriptable;"
-                        +")V",
-                        ClassFileWriter.ACC_PUBLIC);
+    private static void generateSerialCtor(
+            ClassFileWriter cfw, String adapterName, String superName) {
+        cfw.startMethod(
+                "<init>",
+                "(Lorg/mozilla/javascript/ContextFactory;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + ")V",
+                ClassFileWriter.ACC_PUBLIC);
 
         // Invoke base class constructor
-        cfw.add(ByteCode.ALOAD_0);  // this
+        cfw.add(ByteCode.ALOAD_0); // this
         cfw.addInvoke(ByteCode.INVOKESPECIAL, superName, "<init>", "()V");
 
         // Save parameter in instance variable "factory"
-        cfw.add(ByteCode.ALOAD_0);  // this
-        cfw.add(ByteCode.ALOAD_1);  // first arg: ContextFactory instance
-        cfw.add(ByteCode.PUTFIELD, adapterName, "factory",
+        cfw.add(ByteCode.ALOAD_0); // this
+        cfw.add(ByteCode.ALOAD_1); // first arg: ContextFactory instance
+        cfw.add(
+                ByteCode.PUTFIELD,
+                adapterName,
+                "factory",
                 "Lorg/mozilla/javascript/ContextFactory;");
 
         // Save parameter in instance variable "delegee"
-        cfw.add(ByteCode.ALOAD_0);  // this
-        cfw.add(ByteCode.ALOAD_2);  // second arg: Scriptable delegee
-        cfw.add(ByteCode.PUTFIELD, adapterName, "delegee",
-                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.ALOAD_0); // this
+        cfw.add(ByteCode.ALOAD_2); // second arg: Scriptable delegee
+        cfw.add(ByteCode.PUTFIELD, adapterName, "delegee", "Lorg/mozilla/javascript/Scriptable;");
         // save self
-        cfw.add(ByteCode.ALOAD_0);  // this
-        cfw.add(ByteCode.ALOAD_3);  // third arg: Scriptable self
-        cfw.add(ByteCode.PUTFIELD, adapterName, "self",
-                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.ALOAD_0); // this
+        cfw.add(ByteCode.ALOAD_3); // third arg: Scriptable self
+        cfw.add(ByteCode.PUTFIELD, adapterName, "self", "Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short)4); // 4: this + factory + delegee + self
+        cfw.stopMethod((short) 4); // 4: this + factory + delegee + self
     }
 
-    private static void generateEmptyCtor(ClassFileWriter cfw,
-                                          String adapterName,
-                                          String superName,
-                                          String scriptClassName)
-    {
+    private static void generateEmptyCtor(
+            ClassFileWriter cfw, String adapterName, String superName, String scriptClassName) {
         cfw.startMethod("<init>", "()V", ClassFileWriter.ACC_PUBLIC);
 
         // Invoke base class constructor
-        cfw.add(ByteCode.ALOAD_0);  // this
+        cfw.add(ByteCode.ALOAD_0); // this
         cfw.addInvoke(ByteCode.INVOKESPECIAL, superName, "<init>", "()V");
 
         // Set factory to null to use current global when necessary
         cfw.add(ByteCode.ALOAD_0);
         cfw.add(ByteCode.ACONST_NULL);
-        cfw.add(ByteCode.PUTFIELD, adapterName, "factory",
+        cfw.add(
+                ByteCode.PUTFIELD,
+                adapterName,
+                "factory",
                 "Lorg/mozilla/javascript/ContextFactory;");
 
         // Load script class
@@ -750,45 +713,40 @@ public final class JavaAdapter implements IdFunctionCall
         cfw.addInvoke(ByteCode.INVOKESPECIAL, scriptClassName, "<init>", "()V");
 
         // Run script and save resulting scope
-        cfw.addInvoke(ByteCode.INVOKESTATIC,
-                      "org/mozilla/javascript/JavaAdapter",
-                      "runScript",
-                      "(Lorg/mozilla/javascript/Script;"
-                      +")Lorg/mozilla/javascript/Scriptable;");
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/JavaAdapter",
+                "runScript",
+                "(Lorg/mozilla/javascript/Script;" + ")Lorg/mozilla/javascript/Scriptable;");
         cfw.add(ByteCode.ASTORE_1);
 
         // Save the Scriptable in instance variable "delegee"
-        cfw.add(ByteCode.ALOAD_0);  // this
-        cfw.add(ByteCode.ALOAD_1);  // the Scriptable
-        cfw.add(ByteCode.PUTFIELD, adapterName, "delegee",
-                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.ALOAD_0); // this
+        cfw.add(ByteCode.ALOAD_1); // the Scriptable
+        cfw.add(ByteCode.PUTFIELD, adapterName, "delegee", "Lorg/mozilla/javascript/Scriptable;");
 
-        cfw.add(ByteCode.ALOAD_0);  // this for the following PUTFIELD for self
+        cfw.add(ByteCode.ALOAD_0); // this for the following PUTFIELD for self
         // create a wrapper object to be used as "this" in method calls
-        cfw.add(ByteCode.ALOAD_1);  // the Scriptable
-        cfw.add(ByteCode.ALOAD_0);  // this
-        cfw.addInvoke(ByteCode.INVOKESTATIC,
-                      "org/mozilla/javascript/JavaAdapter",
-                      "createAdapterWrapper",
-                      "(Lorg/mozilla/javascript/Scriptable;"
-                      +"Ljava/lang/Object;"
-                      +")Lorg/mozilla/javascript/Scriptable;");
-        cfw.add(ByteCode.PUTFIELD, adapterName, "self",
-                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.ALOAD_1); // the Scriptable
+        cfw.add(ByteCode.ALOAD_0); // this
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/JavaAdapter",
+                "createAdapterWrapper",
+                "(Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/Object;"
+                        + ")Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.PUTFIELD, adapterName, "self", "Lorg/mozilla/javascript/Scriptable;");
 
         cfw.add(ByteCode.RETURN);
-        cfw.stopMethod((short)2); // this + delegee
+        cfw.stopMethod((short) 2); // this + delegee
     }
 
     /**
-     * Generates code to wrap Java arguments into Object[].
-     * Non-primitive Java types are left as-is pending conversion
-     * in the helper method. Leaves the array object on the top of the stack.
+     * Generates code to wrap Java arguments into Object[]. Non-primitive Java types are left as-is
+     * pending conversion in the helper method. Leaves the array object on the top of the stack.
      */
-    static void generatePushWrappedArgs(ClassFileWriter cfw,
-                                        Class<?>[] argTypes,
-                                        int arrayLength)
-    {
+    static void generatePushWrappedArgs(ClassFileWriter cfw, Class<?>[] argTypes, int arrayLength) {
         // push arguments
         cfw.addPush(arrayLength);
         cfw.add(ByteCode.ANEWARRAY, "java/lang/Object");
@@ -802,13 +760,11 @@ public final class JavaAdapter implements IdFunctionCall
     }
 
     /**
-     * Generates code to wrap Java argument into Object.
-     * Non-primitive Java types are left unconverted pending conversion
-     * in the helper method. Leaves the wrapper object on the top of the stack.
+     * Generates code to wrap Java argument into Object. Non-primitive Java types are left
+     * unconverted pending conversion in the helper method. Leaves the wrapper object on the top of
+     * the stack.
      */
-    private static int generateWrapArg(ClassFileWriter cfw, int paramOffset,
-                                       Class<?> argType)
-    {
+    private static int generateWrapArg(ClassFileWriter cfw, int paramOffset, Class<?> argType) {
         int size = 1;
         if (!argType.isPrimitive()) {
             cfw.add(ByteCode.ALOAD, paramOffset);
@@ -818,14 +774,13 @@ public final class JavaAdapter implements IdFunctionCall
             cfw.add(ByteCode.NEW, "java/lang/Boolean");
             cfw.add(ByteCode.DUP);
             cfw.add(ByteCode.ILOAD, paramOffset);
-            cfw.addInvoke(ByteCode.INVOKESPECIAL, "java/lang/Boolean",
-                          "<init>", "(Z)V");
+            cfw.addInvoke(ByteCode.INVOKESPECIAL, "java/lang/Boolean", "<init>", "(Z)V");
 
         } else if (argType == Character.TYPE) {
             // Create a string of length 1 using the character parameter.
             cfw.add(ByteCode.ILOAD, paramOffset);
-            cfw.addInvoke(ByteCode.INVOKESTATIC, "java/lang/String",
-                          "valueOf", "(C)Ljava/lang/String;");
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC, "java/lang/String", "valueOf", "(C)Ljava/lang/String;");
 
         } else {
             // convert all numeric values to java.lang.Double.
@@ -833,43 +788,40 @@ public final class JavaAdapter implements IdFunctionCall
             cfw.add(ByteCode.DUP);
             String typeName = argType.getName();
             switch (typeName.charAt(0)) {
-            case 'b':
-            case 's':
-            case 'i':
-                // load an int value, convert to double.
-                cfw.add(ByteCode.ILOAD, paramOffset);
-                cfw.add(ByteCode.I2D);
-                break;
-            case 'l':
-                // load a long, convert to double.
-                cfw.add(ByteCode.LLOAD, paramOffset);
-                cfw.add(ByteCode.L2D);
-                size = 2;
-                break;
-            case 'f':
-                // load a float, convert to double.
-                cfw.add(ByteCode.FLOAD, paramOffset);
-                cfw.add(ByteCode.F2D);
-                break;
-            case 'd':
-                cfw.add(ByteCode.DLOAD, paramOffset);
-                size = 2;
-                break;
+                case 'b':
+                case 's':
+                case 'i':
+                    // load an int value, convert to double.
+                    cfw.add(ByteCode.ILOAD, paramOffset);
+                    cfw.add(ByteCode.I2D);
+                    break;
+                case 'l':
+                    // load a long, convert to double.
+                    cfw.add(ByteCode.LLOAD, paramOffset);
+                    cfw.add(ByteCode.L2D);
+                    size = 2;
+                    break;
+                case 'f':
+                    // load a float, convert to double.
+                    cfw.add(ByteCode.FLOAD, paramOffset);
+                    cfw.add(ByteCode.F2D);
+                    break;
+                case 'd':
+                    cfw.add(ByteCode.DLOAD, paramOffset);
+                    size = 2;
+                    break;
             }
-            cfw.addInvoke(ByteCode.INVOKESPECIAL, "java/lang/Double",
-                          "<init>", "(D)V");
+            cfw.addInvoke(ByteCode.INVOKESPECIAL, "java/lang/Double", "<init>", "(D)V");
         }
         return size;
     }
 
     /**
-     * Generates code to convert a wrapped value type to a primitive type.
-     * Handles unwrapping java.lang.Boolean, and java.lang.Number types.
-     * Generates the appropriate RETURN bytecode.
+     * Generates code to convert a wrapped value type to a primitive type. Handles unwrapping
+     * java.lang.Boolean, and java.lang.Number types. Generates the appropriate RETURN bytecode.
      */
-    static void generateReturnResult(ClassFileWriter cfw, Class<?> retType,
-                                     boolean callConvertResult)
-    {
+    static void generateReturnResult(
+            ClassFileWriter cfw, Class<?> retType, boolean callConvertResult) {
         // wrap boolean values with java.lang.Boolean, convert all other
         // primitive values to java.lang.Double.
         if (retType == Void.TYPE) {
@@ -877,66 +829,70 @@ public final class JavaAdapter implements IdFunctionCall
             cfw.add(ByteCode.RETURN);
 
         } else if (retType == Boolean.TYPE) {
-            cfw.addInvoke(ByteCode.INVOKESTATIC,
-                          "org/mozilla/javascript/Context",
-                          "toBoolean", "(Ljava/lang/Object;)Z");
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC,
+                    "org/mozilla/javascript/Context",
+                    "toBoolean",
+                    "(Ljava/lang/Object;)Z");
             cfw.add(ByteCode.IRETURN);
 
         } else if (retType == Character.TYPE) {
             // characters are represented as strings in JavaScript.
             // return the first character.
             // first convert the value to a string if possible.
-            cfw.addInvoke(ByteCode.INVOKESTATIC,
-                          "org/mozilla/javascript/Context",
-                          "toString",
-                          "(Ljava/lang/Object;)Ljava/lang/String;");
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC,
+                    "org/mozilla/javascript/Context",
+                    "toString",
+                    "(Ljava/lang/Object;)Ljava/lang/String;");
             cfw.add(ByteCode.ICONST_0);
-            cfw.addInvoke(ByteCode.INVOKEVIRTUAL, "java/lang/String",
-                          "charAt", "(I)C");
+            cfw.addInvoke(ByteCode.INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C");
             cfw.add(ByteCode.IRETURN);
 
         } else if (retType.isPrimitive()) {
-            cfw.addInvoke(ByteCode.INVOKESTATIC,
-                          "org/mozilla/javascript/Context",
-                          "toNumber", "(Ljava/lang/Object;)D");
+            cfw.addInvoke(
+                    ByteCode.INVOKESTATIC,
+                    "org/mozilla/javascript/Context",
+                    "toNumber",
+                    "(Ljava/lang/Object;)D");
             String typeName = retType.getName();
             switch (typeName.charAt(0)) {
-            case 'b':
-            case 's':
-            case 'i':
-                cfw.add(ByteCode.D2I);
-                cfw.add(ByteCode.IRETURN);
-                break;
-            case 'l':
-                cfw.add(ByteCode.D2L);
-                cfw.add(ByteCode.LRETURN);
-                break;
-            case 'f':
-                cfw.add(ByteCode.D2F);
-                cfw.add(ByteCode.FRETURN);
-                break;
-            case 'd':
-                cfw.add(ByteCode.DRETURN);
-                break;
-            default:
-                throw new RuntimeException("Unexpected return type " + retType);
+                case 'b':
+                case 's':
+                case 'i':
+                    cfw.add(ByteCode.D2I);
+                    cfw.add(ByteCode.IRETURN);
+                    break;
+                case 'l':
+                    cfw.add(ByteCode.D2L);
+                    cfw.add(ByteCode.LRETURN);
+                    break;
+                case 'f':
+                    cfw.add(ByteCode.D2F);
+                    cfw.add(ByteCode.FRETURN);
+                    break;
+                case 'd':
+                    cfw.add(ByteCode.DRETURN);
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected return type " + retType);
             }
 
         } else {
             String retTypeStr = retType.getName();
             if (callConvertResult) {
                 cfw.addLoadConstant(retTypeStr);
-                cfw.addInvoke(ByteCode.INVOKESTATIC,
-                              "java/lang/Class",
-                              "forName",
-                              "(Ljava/lang/String;)Ljava/lang/Class;");
+                cfw.addInvoke(
+                        ByteCode.INVOKESTATIC,
+                        "java/lang/Class",
+                        "forName",
+                        "(Ljava/lang/String;)Ljava/lang/Class;");
 
-                cfw.addInvoke(ByteCode.INVOKESTATIC,
-                              "org/mozilla/javascript/JavaAdapter",
-                              "convertResult",
-                              "(Ljava/lang/Object;"
-                              +"Ljava/lang/Class;"
-                              +")Ljava/lang/Object;");
+                cfw.addInvoke(
+                        ByteCode.INVOKESTATIC,
+                        "org/mozilla/javascript/JavaAdapter",
+                        "convertResult",
+                        "(Ljava/lang/Object;" + "Ljava/lang/Class;" + ")Ljava/lang/Object;");
             }
             // Now cast to return type
             cfw.add(ByteCode.CHECKCAST, retTypeStr);
@@ -944,39 +900,39 @@ public final class JavaAdapter implements IdFunctionCall
         }
     }
 
-    private static void generateMethod(ClassFileWriter cfw, String genName,
-                                       String methodName, Class<?>[] parms,
-                                       Class<?> returnType, boolean convertResult)
-    {
+    private static void generateMethod(
+            ClassFileWriter cfw,
+            String genName,
+            String methodName,
+            Class<?>[] parms,
+            Class<?> returnType,
+            boolean convertResult) {
         StringBuilder sb = new StringBuilder();
         int paramsEnd = appendMethodSignature(parms, returnType, sb);
         String methodSignature = sb.toString();
-        cfw.startMethod(methodName, methodSignature,
-                        ClassFileWriter.ACC_PUBLIC);
+        cfw.startMethod(methodName, methodSignature, ClassFileWriter.ACC_PUBLIC);
 
         // Prepare stack to call method
 
         // push factory
         cfw.add(ByteCode.ALOAD_0);
-        cfw.add(ByteCode.GETFIELD, genName, "factory",
-                "Lorg/mozilla/javascript/ContextFactory;");
+        cfw.add(ByteCode.GETFIELD, genName, "factory", "Lorg/mozilla/javascript/ContextFactory;");
 
         // push self
         cfw.add(ByteCode.ALOAD_0);
-        cfw.add(ByteCode.GETFIELD, genName, "self",
-                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.GETFIELD, genName, "self", "Lorg/mozilla/javascript/Scriptable;");
 
         // push function
         cfw.add(ByteCode.ALOAD_0);
-        cfw.add(ByteCode.GETFIELD, genName, "delegee",
-                "Lorg/mozilla/javascript/Scriptable;");
+        cfw.add(ByteCode.GETFIELD, genName, "delegee", "Lorg/mozilla/javascript/Scriptable;");
         cfw.addPush(methodName);
-        cfw.addInvoke(ByteCode.INVOKESTATIC,
-                      "org/mozilla/javascript/JavaAdapter",
-                      "getFunction",
-                      "(Lorg/mozilla/javascript/Scriptable;"
-                      +"Ljava/lang/String;"
-                      +")Lorg/mozilla/javascript/Function;");
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/JavaAdapter",
+                "getFunction",
+                "(Lorg/mozilla/javascript/Scriptable;"
+                        + "Ljava/lang/String;"
+                        + ")Lorg/mozilla/javascript/Function;");
 
         // push arguments
         generatePushWrappedArgs(cfw, parms, parms.length);
@@ -986,8 +942,7 @@ public final class JavaAdapter implements IdFunctionCall
             // If it will be an issue, then passing a static boolean array
             // can be an option, but for now using simple bitmask
             throw Context.reportRuntimeErrorById(
-                "JavaAdapter can not subclass methods with more then"
-                +" 64 arguments.");
+                    "JavaAdapter can not subclass methods with more then" + " 64 arguments.");
         }
         long convertionMask = 0;
         for (int i = 0; i != parms.length; ++i) {
@@ -999,84 +954,80 @@ public final class JavaAdapter implements IdFunctionCall
 
         // go through utility method, which creates a Context to run the
         // method in.
-        cfw.addInvoke(ByteCode.INVOKESTATIC,
-                      "org/mozilla/javascript/JavaAdapter",
-                      "callMethod",
-                      "(Lorg/mozilla/javascript/ContextFactory;"
-                      +"Lorg/mozilla/javascript/Scriptable;"
-                      +"Lorg/mozilla/javascript/Function;"
-                      +"[Ljava/lang/Object;"
-                      +"J"
-                      +")Ljava/lang/Object;");
+        cfw.addInvoke(
+                ByteCode.INVOKESTATIC,
+                "org/mozilla/javascript/JavaAdapter",
+                "callMethod",
+                "(Lorg/mozilla/javascript/ContextFactory;"
+                        + "Lorg/mozilla/javascript/Scriptable;"
+                        + "Lorg/mozilla/javascript/Function;"
+                        + "[Ljava/lang/Object;"
+                        + "J"
+                        + ")Ljava/lang/Object;");
 
         generateReturnResult(cfw, returnType, convertResult);
 
-        cfw.stopMethod((short)paramsEnd);
+        cfw.stopMethod((short) paramsEnd);
     }
 
     /**
-     * Generates code to push typed parameters onto the operand stack
-     * prior to a direct Java method call.
+     * Generates code to push typed parameters onto the operand stack prior to a direct Java method
+     * call.
      */
-    private static int generatePushParam(ClassFileWriter cfw, int paramOffset,
-                                         Class<?> paramType)
-    {
+    private static int generatePushParam(ClassFileWriter cfw, int paramOffset, Class<?> paramType) {
         if (!paramType.isPrimitive()) {
             cfw.addALoad(paramOffset);
             return 1;
         }
         String typeName = paramType.getName();
         switch (typeName.charAt(0)) {
-        case 'z':
-        case 'b':
-        case 'c':
-        case 's':
-        case 'i':
-            // load an int value, convert to double.
-            cfw.addILoad(paramOffset);
-            return 1;
-        case 'l':
-            // load a long, convert to double.
-            cfw.addLLoad(paramOffset);
-            return 2;
-        case 'f':
-            // load a float, convert to double.
-            cfw.addFLoad(paramOffset);
-            return 1;
-        case 'd':
-            cfw.addDLoad(paramOffset);
-            return 2;
+            case 'z':
+            case 'b':
+            case 'c':
+            case 's':
+            case 'i':
+                // load an int value, convert to double.
+                cfw.addILoad(paramOffset);
+                return 1;
+            case 'l':
+                // load a long, convert to double.
+                cfw.addLLoad(paramOffset);
+                return 2;
+            case 'f':
+                // load a float, convert to double.
+                cfw.addFLoad(paramOffset);
+                return 1;
+            case 'd':
+                cfw.addDLoad(paramOffset);
+                return 2;
         }
         throw Kit.codeBug();
     }
 
     /**
-     * Generates code to return a Java type, after calling a Java method
-     * that returns the same type.
+     * Generates code to return a Java type, after calling a Java method that returns the same type.
      * Generates the appropriate RETURN bytecode.
      */
-    private static void generatePopResult(ClassFileWriter cfw,
-                                          Class<?> retType)
-    {
+    private static void generatePopResult(ClassFileWriter cfw, Class<?> retType) {
         if (retType.isPrimitive()) {
             String typeName = retType.getName();
             switch (typeName.charAt(0)) {
-            case 'b':
-            case 'c':
-            case 's':
-            case 'i':
-            case 'z':
-                cfw.add(ByteCode.IRETURN);
-                break;
-            case 'l':
-                cfw.add(ByteCode.LRETURN);
-                break;
-            case 'f':
-                cfw.add(ByteCode.FRETURN);
-                break;
-            case 'd':
-                cfw.add(ByteCode.DRETURN);
-                break;
+                case 'b':
+                case 'c':
+                case 's':
+                case 'i':
+                case 'z':
+                    cfw.add(ByteCode.IRETURN);
+                    break;
+                case 'l':
+                    cfw.add(ByteCode.LRETURN);
+                    break;
+                case 'f':
+                    cfw.add(ByteCode.FRETURN);
+                    break;
+                case 'd':
+                    cfw.add(ByteCode.DRETURN);
+                    break;
             }
         } else {
             cfw.add(ByteCode.ARETURN);
@@ -1084,17 +1035,19 @@ public final class JavaAdapter implements IdFunctionCall
     }
 
     /**
-     * Generates a method called "super$methodName()" which can be called
-     * from JavaScript that is equivalent to calling "super.methodName()"
-     * from Java. Eventually, this may be supported directly in JavaScript.
+     * Generates a method called "super$methodName()" which can be called from JavaScript that is
+     * equivalent to calling "super.methodName()" from Java. Eventually, this may be supported
+     * directly in JavaScript.
      */
-    private static void generateSuper(ClassFileWriter cfw,
-                                      String genName, String superName,
-                                      String methodName, String methodSignature,
-                                      Class<?>[] parms, Class<?> returnType)
-    {
-        cfw.startMethod("super$" + methodName, methodSignature,
-                        ClassFileWriter.ACC_PUBLIC);
+    private static void generateSuper(
+            ClassFileWriter cfw,
+            String genName,
+            String superName,
+            String methodName,
+            String methodSignature,
+            Class<?>[] parms,
+            Class<?> returnType) {
+        cfw.startMethod("super$" + methodName, methodSignature, ClassFileWriter.ACC_PUBLIC);
 
         // push "this"
         cfw.add(ByteCode.ALOAD, 0);
@@ -1106,10 +1059,7 @@ public final class JavaAdapter implements IdFunctionCall
         }
 
         // call the superclass implementation of the method.
-        cfw.addInvoke(ByteCode.INVOKESPECIAL,
-                      superName,
-                      methodName,
-                      methodSignature);
+        cfw.addInvoke(ByteCode.INVOKESPECIAL, superName, methodName, methodSignature);
 
         // now, handle the return type appropriately.
         Class<?> retType = returnType;
@@ -1118,23 +1068,17 @@ public final class JavaAdapter implements IdFunctionCall
         } else {
             cfw.add(ByteCode.RETURN);
         }
-        cfw.stopMethod((short)(paramOffset + 1));
+        cfw.stopMethod((short) (paramOffset + 1));
     }
 
-    /**
-     * Returns a fully qualified method name concatenated with its signature.
-     */
-    private static String getMethodSignature(Method method, Class<?>[] argTypes)
-    {
+    /** Returns a fully qualified method name concatenated with its signature. */
+    private static String getMethodSignature(Method method, Class<?>[] argTypes) {
         StringBuilder sb = new StringBuilder();
         appendMethodSignature(argTypes, method.getReturnType(), sb);
         return sb.toString();
     }
 
-    static int appendMethodSignature(Class<?>[] argTypes,
-                                     Class<?> returnType,
-                                     StringBuilder sb)
-    {
+    static int appendMethodSignature(Class<?>[] argTypes, Class<?> returnType, StringBuilder sb) {
         sb.append('(');
         int firstLocal = 1 + argTypes.length; // includes this.
         for (Class<?> type : argTypes) {
@@ -1149,8 +1093,7 @@ public final class JavaAdapter implements IdFunctionCall
         return firstLocal;
     }
 
-    private static StringBuilder appendTypeString(StringBuilder sb, Class<?> type)
-    {
+    private static StringBuilder appendTypeString(StringBuilder sb, Class<?> type) {
         while (type.isArray()) {
             sb.append('[');
             type = type.getComponentType();
@@ -1174,20 +1117,16 @@ public final class JavaAdapter implements IdFunctionCall
         return sb;
     }
 
-    static int[] getArgsToConvert(Class<?>[] argTypes)
-    {
+    static int[] getArgsToConvert(Class<?>[] argTypes) {
         int count = 0;
         for (int i = 0; i != argTypes.length; ++i) {
-            if (!argTypes[i].isPrimitive())
-                ++count;
+            if (!argTypes[i].isPrimitive()) ++count;
         }
-        if (count == 0)
-            return null;
+        if (count == 0) return null;
         int[] array = new int[count];
         count = 0;
         for (int i = 0; i != argTypes.length; ++i) {
-            if (!argTypes[i].isPrimitive())
-                array[count++] = i;
+            if (!argTypes[i].isPrimitive()) array[count++] = i;
         }
         return array;
     }

@@ -40,12 +40,10 @@ public final class DoubleConversion {
     private static final int kExponentBias = 0x3FF + kPhysicalSignificandSize;
     private static final int kDenormalExponent = -kExponentBias + 1;
 
-    private DoubleConversion() {
-    }
+    private DoubleConversion() {}
 
     private static int exponent(long d64) {
-        if (isDenormal(d64))
-            return kDenormalExponent;
+        if (isDenormal(d64)) return kDenormalExponent;
 
         int biased_e = (int) ((d64 & kExponentMask) >> kPhysicalSignificandSize);
         return biased_e - kExponentBias;

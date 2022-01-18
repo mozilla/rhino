@@ -9,48 +9,41 @@ package org.mozilla.javascript.typedarrays;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-public class NativeTypedArrayIterator<T>
-    implements ListIterator<T>
-{
+public class NativeTypedArrayIterator<T> implements ListIterator<T> {
     private final NativeTypedArrayView<T> view;
 
     /** Position represents the position of the NEXT element */
     private int position;
+
     private int lastPosition = -1;
 
-    NativeTypedArrayIterator(NativeTypedArrayView<T> view, int start)
-    {
+    NativeTypedArrayIterator(NativeTypedArrayView<T> view, int start) {
         this.view = view;
         this.position = start;
     }
 
     @Override
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         return (position < view.length);
     }
 
     @Override
-    public boolean hasPrevious()
-    {
+    public boolean hasPrevious() {
         return (position > 0);
     }
 
     @Override
-    public int nextIndex()
-    {
+    public int nextIndex() {
         return position;
     }
 
     @Override
-    public int previousIndex()
-    {
+    public int previousIndex() {
         return position - 1;
     }
 
     @Override
-    public T next()
-    {
+    public T next() {
         if (hasNext()) {
             T ret = view.get(position);
             lastPosition = position;
@@ -61,8 +54,7 @@ public class NativeTypedArrayIterator<T>
     }
 
     @Override
-    public T previous()
-    {
+    public T previous() {
         if (hasPrevious()) {
             position--;
             lastPosition = position;
@@ -72,8 +64,7 @@ public class NativeTypedArrayIterator<T>
     }
 
     @Override
-    public void set(T t)
-    {
+    public void set(T t) {
         if (lastPosition < 0) {
             throw new IllegalStateException();
         }
@@ -81,14 +72,12 @@ public class NativeTypedArrayIterator<T>
     }
 
     @Override
-    public void remove()
-    {
+    public void remove() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void add(T t)
-    {
+    public void add(T t) {
         throw new UnsupportedOperationException();
     }
 }

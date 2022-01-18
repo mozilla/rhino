@@ -9,11 +9,10 @@ package org.mozilla.javascript.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.mozilla.javascript.Token;
 
 /**
- * Try/catch/finally statement.  Node type is {@link Token#TRY}.
+ * Try/catch/finally statement. Node type is {@link Token#TRY}.
  *
  * <pre><i>TryStatement</i> :
  *        <b>try</b> Block Catch
@@ -27,7 +26,7 @@ import org.mozilla.javascript.Token;
 public class TryStatement extends AstNode {
 
     private static final List<CatchClause> NO_CATCHES =
-        Collections.unmodifiableList(new ArrayList<CatchClause>());
+            Collections.unmodifiableList(new ArrayList<CatchClause>());
 
     private AstNode tryBlock;
     private List<CatchClause> catchClauses;
@@ -38,8 +37,7 @@ public class TryStatement extends AstNode {
         type = Token.TRY;
     }
 
-    public TryStatement() {
-    }
+    public TryStatement() {}
 
     public TryStatement(int pos) {
         super(pos);
@@ -54,7 +52,8 @@ public class TryStatement extends AstNode {
     }
 
     /**
-     * Sets try block.  Also sets its parent to this node.
+     * Sets try block. Also sets its parent to this node.
+     *
      * @throws IllegalArgumentException} if {@code tryBlock} is {@code null}
      */
     public void setTryBlock(AstNode tryBlock) {
@@ -64,24 +63,22 @@ public class TryStatement extends AstNode {
     }
 
     /**
-     * Returns list of {@link CatchClause} nodes.  If there are no catch
-     * clauses, returns an immutable empty list.
+     * Returns list of {@link CatchClause} nodes. If there are no catch clauses, returns an
+     * immutable empty list.
      */
     public List<CatchClause> getCatchClauses() {
         return catchClauses != null ? catchClauses : NO_CATCHES;
     }
 
     /**
-     * Sets list of {@link CatchClause} nodes.  Also sets their parents
-     * to this node.  May be {@code null}.  Replaces any existing catch
-     * clauses for this node.
+     * Sets list of {@link CatchClause} nodes. Also sets their parents to this node. May be {@code
+     * null}. Replaces any existing catch clauses for this node.
      */
     public void setCatchClauses(List<CatchClause> catchClauses) {
         if (catchClauses == null) {
             this.catchClauses = null;
         } else {
-            if (this.catchClauses != null)
-                this.catchClauses.clear();
+            if (this.catchClauses != null) this.catchClauses.clear();
             for (CatchClause cc : catchClauses) {
                 addCatchClause(cc);
             }
@@ -89,8 +86,8 @@ public class TryStatement extends AstNode {
     }
 
     /**
-     * Add a catch-clause to the end of the list, and sets its parent to
-     * this node.
+     * Add a catch-clause to the end of the list, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException} if {@code clause} is {@code null}
      */
     public void addCatchClause(CatchClause clause) {
@@ -102,33 +99,23 @@ public class TryStatement extends AstNode {
         clause.setParent(this);
     }
 
-    /**
-     * Returns finally block, or {@code null} if not present
-     */
+    /** Returns finally block, or {@code null} if not present */
     public AstNode getFinallyBlock() {
         return finallyBlock;
     }
 
-    /**
-     * Sets finally block, and sets its parent to this node.
-     * May be {@code null}.
-     */
+    /** Sets finally block, and sets its parent to this node. May be {@code null}. */
     public void setFinallyBlock(AstNode finallyBlock) {
         this.finallyBlock = finallyBlock;
-        if (finallyBlock != null)
-            finallyBlock.setParent(this);
+        if (finallyBlock != null) finallyBlock.setParent(this);
     }
 
-    /**
-     * Returns position of {@code finally} keyword, if present, or -1
-     */
+    /** Returns position of {@code finally} keyword, if present, or -1 */
     public int getFinallyPosition() {
         return finallyPosition;
     }
 
-    /**
-     * Sets position of {@code finally} keyword, if present, or -1
-     */
+    /** Sets position of {@code finally} keyword, if present, or -1 */
     public void setFinallyPosition(int finallyPosition) {
         this.finallyPosition = finallyPosition;
     }
@@ -138,7 +125,7 @@ public class TryStatement extends AstNode {
         StringBuilder sb = new StringBuilder(250);
         sb.append(makeIndent(depth));
         sb.append("try ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
         }
         sb.append(tryBlock.toSource(depth).trim());
@@ -152,10 +139,7 @@ public class TryStatement extends AstNode {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, then the try-block, then any catch clauses,
-     * and then any finally block.
-     */
+    /** Visits this node, then the try-block, then any catch clauses, and then any finally block. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

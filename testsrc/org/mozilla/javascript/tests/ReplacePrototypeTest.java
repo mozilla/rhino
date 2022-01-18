@@ -11,7 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/replace-prototype.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class ReplacePrototypeTest
-    extends ScriptTestsBase
-{
-}
+public class ReplacePrototypeTest extends ScriptTestsBase {}

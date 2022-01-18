@@ -8,9 +8,9 @@ package org.mozilla.javascript;
 
 public final class NativeArrayIterator extends ES6Iterator {
     public enum ARRAY_ITERATOR_TYPE {
-            ENTRIES,
-            KEYS,
-            VALUES
+        ENTRIES,
+        KEYS,
+        VALUES
     }
 
     private static final long serialVersionUID = 1L;
@@ -22,9 +22,7 @@ public final class NativeArrayIterator extends ES6Iterator {
         ES6Iterator.init(scope, sealed, new NativeArrayIterator(), ITERATOR_TAG);
     }
 
-    /**
-     * Only for constructing the prototype object.
-     */
+    /** Only for constructing the prototype object. */
     private NativeArrayIterator() {
         super();
     }
@@ -73,4 +71,3 @@ public final class NativeArrayIterator extends ES6Iterator {
     private Scriptable arrayLike;
     private int index;
 }
-

@@ -4,17 +4,13 @@
 
 package org.mozilla.javascript.tests;
 
+import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ScriptableObject;
 
-import junit.framework.TestCase;
-
-/**
- * There is some special handling for document.all
- */
-public class AvoidObjectDetectionTest extends TestCase
-{
+/** There is some special handling for document.all */
+public class AvoidObjectDetectionTest extends TestCase {
     public static class Foo extends ScriptableObject {
         private static final long serialVersionUID = -6284330659327161113L;
 
@@ -28,8 +24,7 @@ public class AvoidObjectDetectionTest extends TestCase
         private static final long serialVersionUID = -1975590541658828651L;
 
         @Override
-        public boolean avoidObjectDetection()
-        {
+        public boolean avoidObjectDetection() {
             return true;
         }
 
@@ -40,10 +35,9 @@ public class AvoidObjectDetectionTest extends TestCase
     }
 
     /**
-     * make sure ScriptRuntime.toBoolean(document.all)
-     * and new Boolean(document.all) are returning the same
-     * see Note on page
-     *   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+     * make sure ScriptRuntime.toBoolean(document.all) and new Boolean(document.all) are returning
+     * the same see Note on page
+     * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean
      *
      * @throws Exception in case of errors
      */
@@ -56,21 +50,38 @@ public class AvoidObjectDetectionTest extends TestCase
             ScriptableObject.defineClass(topScope, Foo.class);
             ScriptableObject.defineClass(topScope, Avoid.class);
 
-            Boolean toBoolean = (Boolean) cx.evaluateString(topScope, "if (new Foo()) true; else false;", "myScript", 1, null);
+            Boolean toBoolean =
+                    (Boolean)
+                            cx.evaluateString(
+                                    topScope,
+                                    "if (new Foo()) true; else false;",
+                                    "myScript",
+                                    1,
+                                    null);
             assertTrue(toBoolean);
 
-            toBoolean = (Boolean) cx.evaluateString(topScope, "if (new Avoid()) true; else false;", "myScript", 1, null);
+            toBoolean =
+                    (Boolean)
+                            cx.evaluateString(
+                                    topScope,
+                                    "if (new Avoid()) true; else false;",
+                                    "myScript",
+                                    1,
+                                    null);
             assertFalse(toBoolean);
 
-            Boolean ctor = (Boolean) cx.evaluateString(topScope, "Boolean(new Foo())", "myScript", 1, null);
+            Boolean ctor =
+                    (Boolean)
+                            cx.evaluateString(topScope, "Boolean(new Foo())", "myScript", 1, null);
             assertTrue(ctor);
 
-            ctor = (Boolean) cx.evaluateString(topScope, "Boolean(new Avoid())", "myScript", 1, null);
+            ctor =
+                    (Boolean)
+                            cx.evaluateString(
+                                    topScope, "Boolean(new Avoid())", "myScript", 1, null);
             assertFalse(ctor);
-        }
-        finally {
+        } finally {
             Context.exit();
         }
     }
-
 }

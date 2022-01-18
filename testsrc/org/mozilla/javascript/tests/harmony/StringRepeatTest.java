@@ -11,5 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/string-repeat.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class StringRepeatTest extends ScriptTestsBase {
-}
+public class StringRepeatTest extends ScriptTestsBase {}

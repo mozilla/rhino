@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/math-max-min-every-element-to-number.js")
 @LanguageVersion(Context.VERSION_DEFAULT)
-public class MathMaxMinEveryElementToNumber extends ScriptTestsBase
-{
-}
+public class MathMaxMinEveryElementToNumber extends ScriptTestsBase {}

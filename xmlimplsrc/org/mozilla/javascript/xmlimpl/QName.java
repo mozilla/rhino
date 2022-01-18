@@ -13,12 +13,8 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
-/**
- * Class QName
- *
- */
-final class QName extends IdScriptableObject
-{
+/** Class QName */
+final class QName extends IdScriptableObject {
     static final long serialVersionUID = 416745167693026750L;
 
     private static final Object QNAME_TAG = "QName";
@@ -29,8 +25,7 @@ final class QName extends IdScriptableObject
 
     private XmlNode.QName delegate;
 
-    private QName() {
-    }
+    private QName() {}
 
     static QName create(XMLLibImpl lib, Scriptable scope, QName prototype, XmlNode.QName delegate) {
         QName rv = new QName();
@@ -42,10 +37,10 @@ final class QName extends IdScriptableObject
         return rv;
     }
 
-//    /** @deprecated */
-//    static QName create(XMLLibImpl lib, XmlNode.QName nodeQname) {
-//        return create(lib, lib.globalScope(), lib.qnamePrototype(), nodeQname);
-//    }
+    //    /** @deprecated */
+    //    static QName create(XMLLibImpl lib, XmlNode.QName nodeQname) {
+    //        return create(lib, lib.globalScope(), lib.qnamePrototype(), nodeQname);
+    //    }
 
     void exportAsJSClass(boolean sealed) {
         exportAsJSClass(MAX_PROTOTYPE_ID, getParentScope(), sealed);
@@ -95,8 +90,8 @@ final class QName extends IdScriptableObject
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof QName)) return false;
-        return equals((QName)obj);
+        if (!(obj instanceof QName)) return false;
+        return equals((QName) obj);
     }
 
     @Override
@@ -105,10 +100,9 @@ final class QName extends IdScriptableObject
     }
 
     @Override
-    protected Object equivalentValues(Object value)
-    {
-        if(!(value instanceof QName)) return Scriptable.NOT_FOUND;
-        boolean result = equals((QName)value);
+    protected Object equivalentValues(Object value) {
+        if (!(value instanceof QName)) return Scriptable.NOT_FOUND;
+        boolean result = equals((QName) value);
         return result ? Boolean.TRUE : Boolean.FALSE;
     }
 
@@ -126,132 +120,151 @@ final class QName extends IdScriptableObject
         return toString();
     }
 
-// #string_id_map#
-    private static final int
-        Id_localName            = 1,
-        Id_uri                  = 2,
-        MAX_INSTANCE_ID         = 2;
+    // #string_id_map#
+    private static final int Id_localName = 1, Id_uri = 2, MAX_INSTANCE_ID = 2;
 
     @Override
-    protected int getMaxInstanceId()
-    {
+    protected int getMaxInstanceId() {
         return super.getMaxInstanceId() + MAX_INSTANCE_ID;
     }
 
     @Override
-    protected int findInstanceIdInfo(String s)
-    {
+    protected int findInstanceIdInfo(String s) {
         int id;
-// #generated# Last update: 2007-08-20 08:21:41 EDT
-        L0: { id = 0; String X = null;
+        // #generated# Last update: 2007-08-20 08:21:41 EDT
+        L0:
+        {
+            id = 0;
+            String X = null;
             int s_length = s.length();
-            if (s_length==3) { X="uri";id=Id_uri; }
-            else if (s_length==9) { X="localName";id=Id_localName; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            if (s_length == 3) {
+                X = "uri";
+                id = Id_uri;
+            } else if (s_length == 9) {
+                X = "localName";
+                id = Id_localName;
+            }
+            if (X != null && X != s && !X.equals(s)) id = 0;
             break L0;
         }
-// #/generated#
+        // #/generated#
 
         if (id == 0) return super.findInstanceIdInfo(s);
 
         int attr;
         switch (id) {
-          case Id_localName:
-          case Id_uri:
-            attr = PERMANENT | READONLY;
-            break;
-          default: throw new IllegalStateException();
+            case Id_localName:
+            case Id_uri:
+                attr = PERMANENT | READONLY;
+                break;
+            default:
+                throw new IllegalStateException();
         }
         return instanceIdInfo(attr, super.getMaxInstanceId() + id);
     }
-// #/string_id_map#
+    // #/string_id_map#
 
     @Override
-    protected String getInstanceIdName(int id)
-    {
+    protected String getInstanceIdName(int id) {
         switch (id - super.getMaxInstanceId()) {
-          case Id_localName: return "localName";
-          case Id_uri: return "uri";
+            case Id_localName:
+                return "localName";
+            case Id_uri:
+                return "uri";
         }
         return super.getInstanceIdName(id);
     }
 
     @Override
-    protected Object getInstanceIdValue(int id)
-    {
+    protected Object getInstanceIdValue(int id) {
         switch (id - super.getMaxInstanceId()) {
-          case Id_localName: return localName();
-          case Id_uri: return uri();
+            case Id_localName:
+                return localName();
+            case Id_uri:
+                return uri();
         }
         return super.getInstanceIdValue(id);
     }
 
-// #string_id_map#
-    private static final int
-        Id_constructor          = 1,
-        Id_toString             = 2,
-        Id_toSource             = 3,
-        MAX_PROTOTYPE_ID        = 3;
+    // #string_id_map#
+    private static final int Id_constructor = 1,
+            Id_toString = 2,
+            Id_toSource = 3,
+            MAX_PROTOTYPE_ID = 3;
 
     @Override
-    protected int findPrototypeId(String s)
-    {
+    protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2007-08-20 08:21:41 EDT
-        L0: { id = 0; String X = null; int c;
+        // #generated# Last update: 2007-08-20 08:21:41 EDT
+        L0:
+        {
+            id = 0;
+            String X = null;
+            int c;
             int s_length = s.length();
-            if (s_length==8) {
-                c=s.charAt(3);
-                if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
+            if (s_length == 8) {
+                c = s.charAt(3);
+                if (c == 'o') {
+                    X = "toSource";
+                    id = Id_toSource;
+                } else if (c == 't') {
+                    X = "toString";
+                    id = Id_toString;
+                }
+            } else if (s_length == 11) {
+                X = "constructor";
+                id = Id_constructor;
             }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            if (X != null && X != s && !X.equals(s)) id = 0;
             break L0;
         }
-// #/generated#
+        // #/generated#
         return id;
     }
-// #/string_id_map#
+    // #/string_id_map#
 
     @Override
-    protected void initPrototypeId(int id)
-    {
+    protected void initPrototypeId(int id) {
         String s;
         int arity;
         switch (id) {
-          case Id_constructor: arity=2; s="constructor"; break;
-          case Id_toString:    arity=0; s="toString";    break;
-          case Id_toSource:    arity=0; s="toSource";    break;
-          default: throw new IllegalArgumentException(String.valueOf(id));
+            case Id_constructor:
+                arity = 2;
+                s = "constructor";
+                break;
+            case Id_toString:
+                arity = 0;
+                s = "toString";
+                break;
+            case Id_toSource:
+                arity = 0;
+                s = "toSource";
+                break;
+            default:
+                throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(QNAME_TAG, id, s, arity);
     }
 
     @Override
-    public Object execIdCall(IdFunctionObject f,
-                             Context cx,
-                             Scriptable scope,
-                             Scriptable thisObj,
-                             Object[] args)
-    {
+    public Object execIdCall(
+            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (!f.hasTag(QNAME_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
         switch (id) {
-          case Id_constructor:
-            return jsConstructor(cx, (thisObj == null), args);
-          case Id_toString:
-            return realThis(thisObj, f).toString();
-          case Id_toSource:
-            return realThis(thisObj, f).js_toSource();
+            case Id_constructor:
+                return jsConstructor(cx, (thisObj == null), args);
+            case Id_toString:
+                return realThis(thisObj, f).toString();
+            case Id_toSource:
+                return realThis(thisObj, f).js_toSource();
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
 
-    private QName realThis(Scriptable thisObj, IdFunctionObject f)
-    {
+    private QName realThis(Scriptable thisObj, IdFunctionObject f) {
         return ensureType(thisObj, QName.class, f);
     }
 
@@ -275,9 +288,9 @@ final class QName extends IdScriptableObject
         String nameString = null;
         if (name instanceof QName) {
             if (namespace == Undefined.instance) {
-                return (QName)name;
+                return (QName) name;
             } else {
-                nameString = ((QName)name).localName();
+                nameString = ((QName) name).localName();
             }
         }
         if (name == Undefined.instance) {
@@ -297,7 +310,7 @@ final class QName extends IdScriptableObject
         if (namespace == null) {
             //    leave as null
         } else if (namespace instanceof Namespace) {
-            namespaceNamespace = (Namespace)namespace;
+            namespaceNamespace = (Namespace) namespace;
         } else {
             namespaceNamespace = lib.newNamespace(ScriptRuntime.toString(namespace));
         }
@@ -306,7 +319,7 @@ final class QName extends IdScriptableObject
         String q_prefix;
         if (namespace == null) {
             q_uri = null;
-            q_prefix = null;    //    corresponds to undefined; see QName class
+            q_prefix = null; //    corresponds to undefined; see QName class
         } else {
             q_uri = namespaceNamespace.uri();
             q_prefix = namespaceNamespace.prefix();
@@ -320,7 +333,7 @@ final class QName extends IdScriptableObject
 
     QName castToQName(XMLLibImpl lib, Context cx, Object qnameValue) {
         if (qnameValue instanceof QName) {
-            return (QName)qnameValue;
+            return (QName) qnameValue;
         }
         return constructQName(lib, cx, qnameValue);
     }
@@ -347,7 +360,8 @@ final class QName extends IdScriptableObject
         return sb.toString();
     }
 
-    private static void toSourceImpl(String uri, String localName, String prefix, StringBuilder sb) {
+    private static void toSourceImpl(
+            String uri, String localName, String prefix, StringBuilder sb) {
         sb.append("new QName(");
         if (uri == null && prefix == null) {
             if (!"*".equals(localName)) {

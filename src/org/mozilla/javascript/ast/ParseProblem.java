@@ -6,12 +6,13 @@
 
 package org.mozilla.javascript.ast;
 
-/**
- * Encapsulates information for a JavaScript parse error or warning.
- */
+/** Encapsulates information for a JavaScript parse error or warning. */
 public class ParseProblem {
 
-    public static enum Type {Error, Warning}
+    public static enum Type {
+        Error,
+        Warning
+    }
 
     private Type type;
     private String message;
@@ -19,11 +20,9 @@ public class ParseProblem {
     private int offset;
     private int length;
 
-    /**
-     * Constructs a new ParseProblem.
-     */
-    public ParseProblem(ParseProblem.Type type, String message,
-                        String sourceName, int offset, int length) {
+    /** Constructs a new ParseProblem. */
+    public ParseProblem(
+            ParseProblem.Type type, String message, String sourceName, int offset, int length) {
         setType(type);
         setMessage(message);
         setSourceName(sourceName);

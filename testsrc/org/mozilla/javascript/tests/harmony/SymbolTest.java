@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/symbols.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class SymbolTest extends ScriptTestsBase
-{
-}
+public class SymbolTest extends ScriptTestsBase {}

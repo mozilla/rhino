@@ -5,75 +5,98 @@
 package org.mozilla.javascript.tests;
 
 /**
- * A class with private/protected/package private members, to test the Rhino
- * feature Context.FEATURE_ENHANCED_JAVA_ACCESS, that allows bypassing Java
- * member access restrictions.
+ * A class with private/protected/package private members, to test the Rhino feature
+ * Context.FEATURE_ENHANCED_JAVA_ACCESS, that allows bypassing Java member access restrictions.
+ *
  * @author Donna Malayeri
  */
+public class PrivateAccessClass {
+    private PrivateAccessClass() {}
 
-public class PrivateAccessClass
-{
-  private PrivateAccessClass() { }
-  PrivateAccessClass(String s) { }
-  private PrivateAccessClass(int x) { }
-  protected PrivateAccessClass(int x, String s) { }
+    PrivateAccessClass(String s) {}
 
-  private static class PrivateNestedClass
-  {
-    private PrivateNestedClass() { }
+    private PrivateAccessClass(int x) {}
 
-    int packagePrivateInt = 0;
-    private int privateInt = 1;
-    protected int protectedInt = 2;
-  }
+    protected PrivateAccessClass(int x, String s) {}
 
-  static int staticPackagePrivateInt = 0;
-  private static int staticPrivateInt = 1;
-  protected static int staticProtectedInt = 2;
+    private static class PrivateNestedClass {
+        private PrivateNestedClass() {}
 
-  String packagePrivateString = "package private";
-  private String privateString = "private";
-  protected String protectedString = "protected";
+        int packagePrivateInt = 0;
+        private int privateInt = 1;
+        protected int protectedInt = 2;
+    }
 
-  static int staticPackagePrivateMethod() { return 0; }
-  static private int staticPrivateMethod() { return 1; }
-  static protected int staticProtectedMethod() { return 2; }
+    static int staticPackagePrivateInt = 0;
+    private static int staticPrivateInt = 1;
+    protected static int staticProtectedInt = 2;
 
-  int packagePrivateMethod() { return 3; }
-  private int privateMethod() { return 4; }
-  protected int protectedMethod() { return 5; }
+    String packagePrivateString = "package private";
+    private String privateString = "private";
+    protected String protectedString = "protected";
 
-  private int javaBeanProperty = 6;
-  private Object javaObjectProperty;
-  public boolean getterCalled = false;
-  public boolean setterCalled = false;
-  public int getJavaBeanProperty() {
-      getterCalled = true;
-      return javaBeanProperty;
-  }
-  public void setJavaBeanProperty(int i) {
-      setterCalled = true;
-      javaBeanProperty = i;
-  }
-  public Object getJavaObjectProperty() {
-      getterCalled = true;
-      return javaObjectProperty;
-  }
-  public void setJavaObjectProperty(Object o) {
-    setterCalled = true;
-    this.javaObjectProperty = o;
-  }
+    static int staticPackagePrivateMethod() {
+        return 0;
+    }
 
-  /*
-   * Suppress warnings about unused private members.
-   */
-  public int referenceToPrivateMembers() {
-    PrivateAccessClass pac = new PrivateAccessClass();
-    PrivateAccessClass pac2 = new PrivateAccessClass(2);
-    PrivateNestedClass pnc = new PrivateNestedClass();
-    System.out.println(privateString);
-    pac2.privateMethod(); // to silence warning
-    return pnc.privateInt + staticPrivateInt + staticPrivateMethod() +
-           pac.privateMethod() + javaBeanProperty;
-  }
+    private static int staticPrivateMethod() {
+        return 1;
+    }
+
+    protected static int staticProtectedMethod() {
+        return 2;
+    }
+
+    int packagePrivateMethod() {
+        return 3;
+    }
+
+    private int privateMethod() {
+        return 4;
+    }
+
+    protected int protectedMethod() {
+        return 5;
+    }
+
+    private int javaBeanProperty = 6;
+    private Object javaObjectProperty;
+    public boolean getterCalled = false;
+    public boolean setterCalled = false;
+
+    public int getJavaBeanProperty() {
+        getterCalled = true;
+        return javaBeanProperty;
+    }
+
+    public void setJavaBeanProperty(int i) {
+        setterCalled = true;
+        javaBeanProperty = i;
+    }
+
+    public Object getJavaObjectProperty() {
+        getterCalled = true;
+        return javaObjectProperty;
+    }
+
+    public void setJavaObjectProperty(Object o) {
+        setterCalled = true;
+        this.javaObjectProperty = o;
+    }
+
+    /*
+     * Suppress warnings about unused private members.
+     */
+    public int referenceToPrivateMembers() {
+        PrivateAccessClass pac = new PrivateAccessClass();
+        PrivateAccessClass pac2 = new PrivateAccessClass(2);
+        PrivateNestedClass pnc = new PrivateNestedClass();
+        System.out.println(privateString);
+        pac2.privateMethod(); // to silence warning
+        return pnc.privateInt
+                + staticPrivateInt
+                + staticPrivateMethod()
+                + pac.privateMethod()
+                + javaBeanProperty;
+    }
 }

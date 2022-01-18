@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/map.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class NativeMapTest extends ScriptTestsBase
-{
-}
+public class NativeMapTest extends ScriptTestsBase {}
