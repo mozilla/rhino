@@ -25,6 +25,32 @@ class AbstractEcmaObjectOperations {
     }
 
     /**
+     * Implementation of Abstract Object operation HasOwnProperty as defined by EcmaScript
+     *
+     * @param cx
+     * @param o
+     * @param pn
+     * @return boolean
+     * @see <a href="https://tc39.es/proposal-accessible-object-hasownproperty/"></a>
+     */
+    static boolean hasPropertyInObject(Context cx, Object o, Object pn) {
+        ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
+        boolean result;
+        if (pn instanceof Symbol) {
+            result = obj.has((Symbol) pn, obj);
+        } else {
+            ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, pn);
+            if (s.stringId == null) {
+                result = obj.has(s.index, obj);
+            } else {
+                result = obj.has(s.stringId, obj);
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * Implementation of Abstract Object operation testIntegrityLevel as defined by EcmaScript
      *
      * @param cx

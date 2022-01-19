@@ -204,19 +204,10 @@ public class NativeObject extends IdScriptableObject implements Map {
                         throw ScriptRuntime.typeErrorById(
                                 "msg." + (thisObj == null ? "null" : "undef") + ".to.object");
                     }
-                    boolean result;
+
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
-                    if (arg instanceof Symbol) {
-                        result = ensureSymbolScriptable(thisObj).has((Symbol) arg, thisObj);
-                    } else {
-                        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-                        if (s.stringId == null) {
-                            result = thisObj.has(s.index, thisObj);
-                        } else {
-                            result = thisObj.has(s.stringId, thisObj);
-                        }
-                    }
-                    return ScriptRuntime.wrapBoolean(result);
+
+                    return AbstractEcmaObjectOperations.hasPropertyInObject(cx, thisObj, arg);
                 }
 
             case Id_propertyIsEnumerable:
@@ -476,20 +467,8 @@ public class NativeObject extends IdScriptableObject implements Map {
             case ConstructorId_hasOwn:
                 {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
-                    ScriptableObject obj = ensureScriptableObject(arg);
-                    Object str = args.length < 2 ? Undefined.instance : args[1];
-                    boolean result;
-                    if (str instanceof Symbol) {
-                        result = obj.has((Symbol) str, obj);
-                    } else {
-                        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, str);
-                        if (s.stringId == null) {
-                            result = obj.has(s.index, obj);
-                        } else {
-                            result = obj.has(s.stringId, obj);
-                        }
-                    }
-                    return result;
+                    Object propertyName = args.length < 2 ? Undefined.instance : args[1];
+                    return AbstractEcmaObjectOperations.hasPropertyInObject(cx, arg, propertyName);
                 }
             case ConstructorId_getOwnPropertyNames:
                 {
