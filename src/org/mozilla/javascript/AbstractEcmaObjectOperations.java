@@ -29,17 +29,17 @@ class AbstractEcmaObjectOperations {
      *
      * @param cx
      * @param o
-     * @param pn
+     * @param property
      * @return boolean
-     * @see <a href="https://tc39.es/proposal-accessible-object-hasownproperty/"></a>
+     * @see <a href="https://262.ecma-international.org/12.0/#sec-hasownproperty"></a>
      */
-    static boolean hasPropertyInObject(Context cx, Object o, Object pn) {
+    static boolean hasOwnProperty(Context cx, Object o, Object property) {
         ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
         boolean result;
-        if (pn instanceof Symbol) {
-            result = obj.has((Symbol) pn, obj);
+        if (property instanceof Symbol) {
+            result = ScriptableObject.ensureSymbolScriptable(o).has((Symbol) property, obj);
         } else {
-            ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, pn);
+            ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, property);
             if (s.stringId == null) {
                 result = obj.has(s.index, obj);
             } else {

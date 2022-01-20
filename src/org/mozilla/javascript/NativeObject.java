@@ -207,7 +207,7 @@ public class NativeObject extends IdScriptableObject implements Map {
 
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
 
-                    return AbstractEcmaObjectOperations.hasPropertyInObject(cx, thisObj, arg);
+                    return AbstractEcmaObjectOperations.hasOwnProperty(cx, thisObj, arg);
                 }
 
             case Id_propertyIsEnumerable:
@@ -468,7 +468,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                 {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
                     Object propertyName = args.length < 2 ? Undefined.instance : args[1];
-                    return AbstractEcmaObjectOperations.hasPropertyInObject(cx, arg, propertyName);
+                    return AbstractEcmaObjectOperations.hasOwnProperty(cx, arg, propertyName);
                 }
             case ConstructorId_getOwnPropertyNames:
                 {
