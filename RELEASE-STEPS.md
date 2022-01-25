@@ -86,8 +86,9 @@ version to `environments.json` like so:
 },
 ```
 
-Next, run `rhino.js`. This will produce a number of messages indicating that
-failing tests now pass, or that new tests now have recorded results:
+Copy the most recent rhino JAR into the directory as `rhino.jar`. Next, run
+`rhino.js`. This will produce a number of messages indicating that failing
+tests now pass, or that new tests now have recorded results:
 
     **** data-es2016plus ****
 
@@ -107,6 +108,9 @@ would have a `res` section with the following diff:
    }
 ```
 
+Rerun `rhino.js` and verify it produces no output. Then `npm run build` and
+submit your pull request.
+
 ## Update Babel
 
 Once the `compat-table` changes are merged, check out `babel/babel` and prepare
@@ -117,6 +121,34 @@ to correspond to the merge commit in `compat-table`.
 * Run `npm run build`.
 
 Then submit the resulting patch as a pull request to Babel.
+
+## Update core-js-compat
+
+Compatibility data for `core-js`, the `babel` polyfill engine, also needs to
+be updated.
+
+* Check out `zloirock/core-js` and `npm install`.
+* Copy the most recent rhino JAR into the directory as `rhino.jar`.
+* Edit `tests/compat/tests.js` by replacing all instances of `GLOBAL` with
+`global`.
+* Edit `packages/core-js-compat/src/data.js` to be a CommonJS module rather
+than a JSM. (Or find a better way to do this and edit this file.)
+* Edit `tests/compat/node-runner.js` by replacing `console.log` with `print`
+and by adding the following snippet to the bottom:
+
+```javascript
+print("NOW SUPPORTED:");
+var data = require("../../packages/core-js-compat/src/data").data;
+for (var key2 in data) {
+  if (data[key2].rhino === undefined && result[key2] === true) {
+    print(key2);
+  }
+}
+```
+
+* Run `java -jar rhino.jar -version 200 -require tests/compat/node-runner.js`.
+* Much like in `compat-table`, edit `data.mjs` to add a line `rhino: 1.7.[XX]`
+for any newly-passing test labeled as "NOW SUPPORTED."
 
 ## Prepare for Next Release
 
