@@ -131,7 +131,7 @@ be updated.
 * Copy the most recent rhino JAR into the directory as `rhino.jar`.
 * Edit `tests/compat/tests.js` by replacing all instances of `GLOBAL` with
 `global`.
-* Edit `packages/core-js-compat/src/data.js` to be a CommonJS module rather
+* Edit `packages/core-js-compat/src/data.mjs` to be a CommonJS module rather
 than a JSM. (Or find a better way to do this and edit this file.)
 * Edit `tests/compat/node-runner.js` by replacing `console.log` with `print`
 and by adding the following snippet to the bottom:
@@ -149,6 +149,8 @@ for (var key2 in data) {
 * Run `java -jar rhino.jar -version 200 -require tests/compat/node-runner.js`.
 * Much like in `compat-table`, edit `data.mjs` to add a line `rhino: 1.7.[XX]`
 for any newly-passing test labeled as "NOW SUPPORTED."
+* Undo your module changes to `data.mjs` and submit a pull request with the
+`data.mjs` changes.
 
 ## Prepare for Next Release
 
