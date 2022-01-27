@@ -118,7 +118,7 @@ a pull request to enable support for `babel-preset-env` in the new release.
 
 * Update `COMPAT_TABLE_COMMIT` in `packages/babel-compat-data/scripts/download-compat-table.sh`
 to correspond to the merge commit in `compat-table`.
-* Run `npm run build`.
+* Run `make build-compat-data && make bootstrap && OVERWRITE=true yarn jest`.
 
 Then submit the resulting patch as a pull request to Babel.
 
@@ -127,18 +127,16 @@ Then submit the resulting patch as a pull request to Babel.
 Compatibility data for `core-js`, the `babel` polyfill engine, also needs to
 be updated.
 
-* Check out `zloirock/core-js` and `npm install`.
+* Check out `zloirock/core-js` and `npm install && npm run build-compat`.
 * Copy the most recent rhino JAR into the directory as `rhino.jar`.
 * Edit `tests/compat/tests.js` by replacing all instances of `GLOBAL` with
 `global`.
-* Edit `packages/core-js-compat/src/data.mjs` to be a CommonJS module rather
-than a JSM. (Or find a better way to do this and edit this file.)
 * Edit `tests/compat/node-runner.js` by replacing `console.log` with `print`
 and by adding the following snippet to the bottom:
 
 ```javascript
 print("NOW SUPPORTED:");
-var data = require("../../packages/core-js-compat/src/data").data;
+var data = require("../../packages/core-js-compat/data.json");
 for (var key2 in data) {
   if (data[key2].rhino === undefined && result[key2] === true) {
     print(key2);
@@ -149,8 +147,12 @@ for (var key2 in data) {
 * Run `java -jar rhino.jar -version 200 -require tests/compat/node-runner.js`.
 * Much like in `compat-table`, edit `data.mjs` to add a line `rhino: 1.7.[XX]`
 for any newly-passing test labeled as "NOW SUPPORTED."
-* Undo your module changes to `data.mjs` and submit a pull request with the
-`data.mjs` changes.
+* Submit a pull request with the `data.mjs` changes.
+
+## Prepare for Next Release
+
+Now it's time to move to the next "SNAPSHOT" release. Update gradle.properties,
+create a PR, and push the new PR. Now development can proceeed anew!
 
 ## Prepare for Next Release
 
