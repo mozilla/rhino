@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.function.UnaryOperator;
 import org.mozilla.classfile.ClassFileWriter.ClassFileFormatException;
 import org.mozilla.javascript.ast.AstRoot;
@@ -751,12 +752,36 @@ public class Context implements Closeable {
     /**
      * Set the current locale.
      *
+     * @return the old value of the locale
      * @see java.util.Locale
      */
     public final Locale setLocale(Locale loc) {
         if (sealed) onSealedMutation();
         Locale result = locale;
         locale = loc;
+        return result;
+    }
+
+    /**
+     * Get the current timezone. Returns the default timezone if none has been set.
+     *
+     * @return the old value of the timezone
+     * @see java.util.TimeZone
+     */
+    public final TimeZone getTimeZone() {
+        if (timezone == null) timezone = TimeZone.getDefault();
+        return timezone;
+    }
+
+    /**
+     * Set the current timezone.
+     *
+     * @see java.util.TimeZone
+     */
+    public final TimeZone setTimeZone(TimeZone tz) {
+        if (sealed) onSealedMutation();
+        TimeZone result = timezone;
+        timezone = tz;
         return result;
     }
 
@@ -2637,6 +2662,7 @@ public class Context implements Closeable {
     private ErrorReporter errorReporter;
     RegExpProxy regExpProxy;
     private Locale locale;
+    private TimeZone timezone;
     private boolean generatingDebug;
     private boolean generatingDebugChanged;
     private boolean generatingSource = true;

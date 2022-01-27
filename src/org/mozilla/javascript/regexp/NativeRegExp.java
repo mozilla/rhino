@@ -2116,8 +2116,9 @@ public class NativeRegExp extends IdScriptableObject {
                                     pc += getOffset(program, pc);
                                     break switchStatement;
                                 }
-                                if (state.min == 0 && gData.cp == state.index) {
-                                    // matched an empty string, that'll get us nowhere
+                                if (state.min == 0 && (gData.cp == state.index || state.max == 0)) {
+                                    // matched an empty string or an {0} quantifier, that'll get us
+                                    // nowhere
                                     result = false;
                                     continuationPc = state.continuationPc;
                                     continuationOp = state.continuationOp;
