@@ -51,6 +51,7 @@ public class NativeObject extends IdScriptableObject implements Map {
             addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_entries, "entries", 1);
             addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_fromEntries, "fromEntries", 1);
             addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_values, "values", 1);
+            addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_hasOwn, "hasOwn", 1);
         }
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys, "keys", 1);
         addIdFunctionProperty(
@@ -203,19 +204,10 @@ public class NativeObject extends IdScriptableObject implements Map {
                         throw ScriptRuntime.typeErrorById(
                                 "msg." + (thisObj == null ? "null" : "undef") + ".to.object");
                     }
-                    boolean result;
+
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
-                    if (arg instanceof Symbol) {
-                        result = ensureSymbolScriptable(thisObj).has((Symbol) arg, thisObj);
-                    } else {
-                        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-                        if (s.stringId == null) {
-                            result = thisObj.has(s.index, thisObj);
-                        } else {
-                            result = thisObj.has(s.stringId, thisObj);
-                        }
-                    }
-                    return ScriptRuntime.wrapBoolean(result);
+
+                    return AbstractEcmaObjectOperations.hasOwnProperty(cx, thisObj, arg);
                 }
 
             case Id_propertyIsEnumerable:
@@ -471,6 +463,12 @@ public class NativeObject extends IdScriptableObject implements Map {
                         ids = Arrays.copyOf(ids, j);
                     }
                     return cx.newArray(scope, ids);
+                }
+            case ConstructorId_hasOwn:
+                {
+                    Object arg = args.length < 1 ? Undefined.instance : args[0];
+                    Object propertyName = args.length < 2 ? Undefined.instance : args[1];
+                    return AbstractEcmaObjectOperations.hasOwnProperty(cx, arg, propertyName);
                 }
             case ConstructorId_getOwnPropertyNames:
                 {
@@ -998,6 +996,7 @@ public class NativeObject extends IdScriptableObject implements Map {
             ConstructorId_entries = -18,
             ConstructorId_fromEntries = -19,
             ConstructorId_values = -20,
+            ConstructorId_hasOwn = -21,
             Id_constructor = 1,
             Id_toString = 2,
             Id_toLocaleString = 3,
