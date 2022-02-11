@@ -6,8 +6,6 @@
  */
 package org.mozilla.javascript.tests;
 
-import static org.junit.Assert.*;
-
 import java.math.BigInteger;
 import junit.framework.TestCase;
 import org.junit.Test;
