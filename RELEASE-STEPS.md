@@ -130,9 +130,11 @@ be updated.
 * Check out `zloirock/core-js` and `npm install && npm run build-compat`.
 * Copy the most recent rhino JAR into the directory as `rhino.jar`.
 * Edit `tests/compat/tests.js` by replacing all instances of `GLOBAL` with
-`global`.
+`global` (changes to make this step unnecessary could be contributed back to
+`core-js`).
 * Edit `tests/compat/node-runner.js` by replacing `console.log` with `print`
-and by adding the following snippet to the bottom:
+and by adding the following snippet to the bottom (these changes could also be
+contributed back to `core-js` as a new `rhino-runner.js` file):
 
 ```javascript
 print("NOW SUPPORTED:");
