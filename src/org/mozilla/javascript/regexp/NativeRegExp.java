@@ -109,6 +109,12 @@ public class NativeRegExp extends IdScriptableObject {
 
     private static final int ANCHOR_BOL = -2;
 
+    private static final SymbolKey GET_FLAGS = new SymbolKey("[Symbol.getFlags]");
+    private static final SymbolKey GET_GLOBAL = new SymbolKey("[Symbol.getGlobal]");
+    private static final SymbolKey GET_IGNORE_CASE = new SymbolKey("[Symbol.getIgnoreCase]");
+    private static final SymbolKey GET_MULTILINE = new SymbolKey("[Symbol.getMultiline]");
+    private static final SymbolKey GET_STICKY = new SymbolKey("[Symbol.getSticky]");
+
     public static void init(Context cx, Scriptable scope, boolean sealed) {
 
         NativeRegExp proto = NativeRegExpInstantiator.withLanguageVersion(cx.getLanguageVersion());
@@ -125,6 +131,36 @@ public class NativeRegExp extends IdScriptableObject {
         ScriptRuntime.setFunctionProtoAndParent(ctor, scope);
 
         ctor.setImmunePrototypeProperty(proto);
+
+        ScriptableObject desc = (ScriptableObject) cx.newObject(scope);
+        desc.put("enumerable", desc, Boolean.FALSE);
+        desc.put("configurable", desc, Boolean.TRUE);
+        desc.put("get", desc, proto.get(GET_FLAGS, proto));
+        proto.defineOwnProperty(cx, "flags", desc);
+
+        desc = (ScriptableObject) cx.newObject(scope);
+        desc.put("enumerable", desc, Boolean.FALSE);
+        desc.put("configurable", desc, Boolean.TRUE);
+        desc.put("get", desc, proto.get(GET_GLOBAL, proto));
+        proto.defineOwnProperty(cx, "global", desc);
+
+        desc = (ScriptableObject) cx.newObject(scope);
+        desc.put("enumerable", desc, Boolean.FALSE);
+        desc.put("configurable", desc, Boolean.TRUE);
+        desc.put("get", desc, proto.get(GET_IGNORE_CASE, proto));
+        proto.defineOwnProperty(cx, "ignoreCase", desc);
+
+        desc = (ScriptableObject) cx.newObject(scope);
+        desc.put("enumerable", desc, Boolean.FALSE);
+        desc.put("configurable", desc, Boolean.TRUE);
+        desc.put("get", desc, proto.get(GET_MULTILINE, proto));
+        proto.defineOwnProperty(cx, "multiline", desc);
+
+        desc = (ScriptableObject) cx.newObject(scope);
+        desc.put("enumerable", desc, Boolean.FALSE);
+        desc.put("configurable", desc, Boolean.TRUE);
+        desc.put("get", desc, proto.get(GET_STICKY, proto));
+        proto.defineOwnProperty(cx, "sticky", desc);
 
         if (sealed) {
             proto.sealObject();
@@ -2512,14 +2548,7 @@ public class NativeRegExp extends IdScriptableObject {
         throw ScriptRuntime.constructError("SyntaxError", msg);
     }
 
-    private static final int Id_lastIndex = 1,
-            Id_source = 2,
-            Id_flags = 3,
-            Id_global = 4,
-            Id_ignoreCase = 5,
-            Id_multiline = 6,
-            Id_sticky = 7,
-            MAX_INSTANCE_ID = 7;
+    private static final int Id_lastIndex = 1, Id_source = 2, MAX_INSTANCE_ID = Id_source;
 
     @Override
     protected int getMaxInstanceId() {
@@ -2536,21 +2565,6 @@ public class NativeRegExp extends IdScriptableObject {
             case "source":
                 id = Id_source;
                 break;
-            case "flags":
-                id = Id_flags;
-                break;
-            case "global":
-                id = Id_global;
-                break;
-            case "ignoreCase":
-                id = Id_ignoreCase;
-                break;
-            case "multiline":
-                id = Id_multiline;
-                break;
-            case "sticky":
-                id = Id_sticky;
-                break;
             default:
                 id = 0;
                 break;
@@ -2564,11 +2578,6 @@ public class NativeRegExp extends IdScriptableObject {
                 attr = lastIndexAttr;
                 break;
             case Id_source:
-            case Id_flags:
-            case Id_global:
-            case Id_ignoreCase:
-            case Id_multiline:
-            case Id_sticky:
                 attr = PERMANENT | READONLY | DONTENUM;
                 break;
             default:
@@ -2584,16 +2593,6 @@ public class NativeRegExp extends IdScriptableObject {
                 return "lastIndex";
             case Id_source:
                 return "source";
-            case Id_flags:
-                return "flags";
-            case Id_global:
-                return "global";
-            case Id_ignoreCase:
-                return "ignoreCase";
-            case Id_multiline:
-                return "multiline";
-            case Id_sticky:
-                return "sticky";
         }
         return super.getInstanceIdName(id);
     }
@@ -2605,20 +2604,6 @@ public class NativeRegExp extends IdScriptableObject {
                 return lastIndex;
             case Id_source:
                 return new String(re.source);
-            case Id_flags:
-                {
-                    StringBuilder buf = new StringBuilder();
-                    appendFlags(buf);
-                    return buf.toString();
-                }
-            case Id_global:
-                return ScriptRuntime.wrapBoolean((re.flags & JSREG_GLOB) != 0);
-            case Id_ignoreCase:
-                return ScriptRuntime.wrapBoolean((re.flags & JSREG_FOLD) != 0);
-            case Id_multiline:
-                return ScriptRuntime.wrapBoolean((re.flags & JSREG_MULTILINE) != 0);
-            case Id_sticky:
-                return ScriptRuntime.wrapBoolean((re.flags & JSREG_STICKY) != 0);
         }
         return super.getInstanceIdValue(id);
     }
@@ -2637,11 +2622,6 @@ public class NativeRegExp extends IdScriptableObject {
                 setLastIndex(value);
                 return;
             case Id_source:
-            case Id_flags:
-            case Id_global:
-            case Id_ignoreCase:
-            case Id_multiline:
-            case Id_sticky:
                 return;
         }
         super.setInstanceIdValue(id, value);
@@ -2665,6 +2645,26 @@ public class NativeRegExp extends IdScriptableObject {
         }
         if (id == SymbolId_search) {
             initPrototypeMethod(REGEXP_TAG, id, SymbolKey.SEARCH, "[Symbol.search]", 1);
+            return;
+        }
+        if (id == SymbolId_getFlags) {
+            initPrototypeMethod(REGEXP_TAG, id, GET_FLAGS, "get flags", 0);
+            return;
+        }
+        if (id == SymbolId_getGlobal) {
+            initPrototypeMethod(REGEXP_TAG, id, GET_GLOBAL, "get global", 0);
+            return;
+        }
+        if (id == SymbolId_getIgnoreCase) {
+            initPrototypeMethod(REGEXP_TAG, id, GET_IGNORE_CASE, "get ignoreCase", 0);
+            return;
+        }
+        if (id == SymbolId_getMultiline) {
+            initPrototypeMethod(REGEXP_TAG, id, GET_MULTILINE, "get multiline", 0);
+            return;
+        }
+        if (id == SymbolId_getSticky) {
+            initPrototypeMethod(REGEXP_TAG, id, GET_STICKY, "get sticky", 0);
             return;
         }
 
@@ -2728,6 +2728,21 @@ public class NativeRegExp extends IdScriptableObject {
             case Id_prefix:
                 return realThis(thisObj, f).execSub(cx, scope, args, PREFIX);
 
+            case SymbolId_getFlags:
+                return realThis(thisObj, f).js_getFlags();
+
+            case SymbolId_getGlobal:
+                return realThis(thisObj, f).js_getGlobal();
+
+            case SymbolId_getIgnoreCase:
+                return realThis(thisObj, f).js_getIgnoreCase();
+
+            case SymbolId_getMultiline:
+                return realThis(thisObj, f).js_getMultiline();
+
+            case SymbolId_getSticky:
+                return realThis(thisObj, f).js_getSticky();
+
             case SymbolId_match:
                 return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
 
@@ -2750,6 +2765,22 @@ public class NativeRegExp extends IdScriptableObject {
         }
         if (SymbolKey.SEARCH.equals(k)) {
             return SymbolId_search;
+        }
+
+        if (GET_FLAGS.equals(k)) {
+            return SymbolId_getFlags;
+        }
+        if (GET_GLOBAL.equals(k)) {
+            return SymbolId_getGlobal;
+        }
+        if (GET_IGNORE_CASE.equals(k)) {
+            return SymbolId_getIgnoreCase;
+        }
+        if (GET_MULTILINE.equals(k)) {
+            return SymbolId_getMultiline;
+        }
+        if (GET_STICKY.equals(k)) {
+            return SymbolId_getSticky;
         }
         return 0;
     }
@@ -2783,6 +2814,28 @@ public class NativeRegExp extends IdScriptableObject {
         return id;
     }
 
+    private Object js_getFlags() {
+        StringBuilder buf = new StringBuilder();
+        appendFlags(buf);
+        return buf.toString();
+    }
+
+    private Object js_getGlobal() {
+        return ScriptRuntime.wrapBoolean((re.flags & JSREG_GLOB) != 0);
+    }
+
+    private Object js_getIgnoreCase() {
+        return ScriptRuntime.wrapBoolean((re.flags & JSREG_FOLD) != 0);
+    }
+
+    private Object js_getMultiline() {
+        return ScriptRuntime.wrapBoolean((re.flags & JSREG_MULTILINE) != 0);
+    }
+
+    private Object js_getSticky() {
+        return ScriptRuntime.wrapBoolean((re.flags & JSREG_STICKY) != 0);
+    }
+
     private static final int Id_compile = 1,
             Id_toString = 2,
             Id_toSource = 3,
@@ -2791,7 +2844,12 @@ public class NativeRegExp extends IdScriptableObject {
             Id_prefix = 6,
             SymbolId_match = 7,
             SymbolId_search = 8,
-            MAX_PROTOTYPE_ID = SymbolId_search;
+            SymbolId_getFlags = 9,
+            SymbolId_getGlobal = 10,
+            SymbolId_getIgnoreCase = 11,
+            SymbolId_getMultiline = 12,
+            SymbolId_getSticky = 13,
+            MAX_PROTOTYPE_ID = SymbolId_getSticky;
 
     private RECompiled re;
     Object lastIndex = ScriptRuntime.zeroObj; /* index after last match, for //g iterator */
