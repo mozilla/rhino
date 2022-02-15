@@ -346,6 +346,12 @@ public class NativeRegExpTest {
         testPropery("0-function-undefined-true-false-undefined", "sticky");
     }
 
+    /** @throws Exception if an error occurs */
+    @Test
+    public void sourcePropery() throws Exception {
+        testPropery("0-function-undefined-true-false-undefined", "source");
+    }
+
     private static void testPropery(String expected, String property) throws Exception {
         final String script =
                 "var get = Object.getOwnPropertyDescriptor(RegExp.prototype, '"

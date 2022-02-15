@@ -114,6 +114,7 @@ public class NativeRegExp extends IdScriptableObject {
     private static final SymbolKey GET_IGNORE_CASE = new SymbolKey("[Symbol.getIgnoreCase]");
     private static final SymbolKey GET_MULTILINE = new SymbolKey("[Symbol.getMultiline]");
     private static final SymbolKey GET_STICKY = new SymbolKey("[Symbol.getSticky]");
+    private static final SymbolKey GET_SOURCE = new SymbolKey("[Symbol.getSource]");
 
     public static void init(Context cx, Scriptable scope, boolean sealed) {
 
@@ -161,6 +162,12 @@ public class NativeRegExp extends IdScriptableObject {
         desc.put("configurable", desc, Boolean.TRUE);
         desc.put("get", desc, proto.get(GET_STICKY, proto));
         proto.defineOwnProperty(cx, "sticky", desc);
+
+        desc = (ScriptableObject) cx.newObject(scope);
+        desc.put("enumerable", desc, Boolean.FALSE);
+        desc.put("configurable", desc, Boolean.TRUE);
+        desc.put("get", desc, proto.get(GET_SOURCE, proto));
+        proto.defineOwnProperty(cx, "source", desc);
 
         if (sealed) {
             proto.sealObject();
@@ -2667,6 +2674,10 @@ public class NativeRegExp extends IdScriptableObject {
             initPrototypeMethod(REGEXP_TAG, id, GET_STICKY, "get sticky", 0);
             return;
         }
+        if (id == SymbolId_getSource) {
+            initPrototypeMethod(REGEXP_TAG, id, GET_SOURCE, "get source", 0);
+            return;
+        }
 
         String s;
         int arity;
@@ -2743,6 +2754,9 @@ public class NativeRegExp extends IdScriptableObject {
             case SymbolId_getSticky:
                 return realThis(thisObj, f).js_getSticky();
 
+            case SymbolId_getSource:
+                return realThis(thisObj, f).toString();
+
             case SymbolId_match:
                 return realThis(thisObj, f).execSub(cx, scope, args, MATCH);
 
@@ -2781,6 +2795,9 @@ public class NativeRegExp extends IdScriptableObject {
         }
         if (GET_STICKY.equals(k)) {
             return SymbolId_getSticky;
+        }
+        if (GET_SOURCE.equals(k)) {
+            return SymbolId_getSource;
         }
         return 0;
     }
@@ -2849,7 +2866,8 @@ public class NativeRegExp extends IdScriptableObject {
             SymbolId_getIgnoreCase = 11,
             SymbolId_getMultiline = 12,
             SymbolId_getSticky = 13,
-            MAX_PROTOTYPE_ID = SymbolId_getSticky;
+            SymbolId_getSource = 14,
+            MAX_PROTOTYPE_ID = SymbolId_getSource;
 
     private RECompiled re;
     Object lastIndex = ScriptRuntime.zeroObj; /* index after last match, for //g iterator */
