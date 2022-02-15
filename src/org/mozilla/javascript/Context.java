@@ -340,6 +340,24 @@ public class Context implements Closeable {
      */
     public static final int FEATURE_ENABLE_JAVA_MAP_ACCESS = 21;
 
+    /**
+     * Configure whether JavaMembers lazy init off.
+     *
+     * <p>default is lazy init.
+     *
+     * @since 1.7 Release 15
+     */
+    public static final int FEATURE_JAVAMEMBERS_LAZY_INIT_OFF = 22;
+
+    /**
+     * Configure whether JavaMembers reflect cache off.
+     *
+     * <p>default is cache on.
+     *
+     * @since 1.7 Release 15
+     */
+    public static final int FEATURE_JAVAMEMBERS_REFLECT_CACHE_OFF = 23;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
 
