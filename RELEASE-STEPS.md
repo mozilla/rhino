@@ -156,8 +156,3 @@ for any newly-passing test labeled as "NOW SUPPORTED."
 Now it's time to move to the next "SNAPSHOT" release. Update gradle.properties,
 create a PR, and push the new PR. Now development can proceeed anew!
 
-## Prepare for Next Release
-
-Now it's time to move to the next "SNAPSHOT" release. Update gradle.properties,
-create a PR, and push the new PR. Now development can proceeed anew!
-
