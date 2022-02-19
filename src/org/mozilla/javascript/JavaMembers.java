@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.lang.model.SourceVersion;
 
 /**
  * @author Mike Shaver
@@ -34,7 +33,7 @@ import javax.lang.model.SourceVersion;
 class JavaMembers {
 
     private static final boolean STRICT_REFLECTIVE_ACCESS =
-            SourceVersion.latestSupported().ordinal() > 8;
+            JVMVersionUtils.getJavaVersion().ordinal() >= 1;
 
     private static final Permission allPermission = new AllPermission();
 
