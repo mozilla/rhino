@@ -15,7 +15,7 @@ that's there).
 Now might be a good time to run "./gradlew publishToMavenLocal" and use the
 published JARs as a sanity check.
 
-## Update Compatibility Table
+## Update Native Compatibility Table
 
 The offial Kangax "compat table" now supports Rhino, but it's convenient
 to have our own that shows progress across all releases. Here's how to
@@ -33,8 +33,8 @@ Then, update the table:
 The resulting "index.html" can be copied into "docs/compat/engines.html" in 
 this repo.
 
-## Push the Release to GitHub
 
+## Push the Release to GitHub
 At this point, the current contents of your directory correspond to the 
 new release. Prepare a pull request containing the changes, submit it,
 and merge it -- the result will be that the head of the "master" branch
@@ -68,6 +68,88 @@ on Maven Central a few hours later.
 The Homebrew team for Mac does not necessarily pick up Rhino releases 
 automatically. It may be necessary to submit a PR to the "homebrew/homebrew"
 repo in GitHub for a change to the file "Library/Formula/rhino.rb".
+
+## Update Kangax Compatibility Table
+
+Check out `kangax/compat-table` and prepare a pull request to describe
+support in the new version of Rhino. First, add a new environment for the
+version to `environments.json` like so:
+
+```json
+"rhino1_7_14": {
+  "full": "Rhino 1.7.14",
+  "short": "Rhino 1.7.14",
+  "family": "Rhino",
+  "platformtype": "engine",
+  "release": "2022-01-06",
+  "obsolete": true
+},
+```
+
+Copy the most recent rhino JAR into the directory as `rhino.jar`. Next, run
+`rhino.js`. This will produce a number of messages indicating that failing
+tests now pass, or that new tests now have recorded results:
+
+    **** data-es2016plus ****
+
+    data-es2016plus -> Error.cause property -> AggregateError.prototype lacks cause: test result out of date, res: true, actual: false
+
+Manually update each indicated `data-*.js` file with updated test data as
+indicated. For example, a test that failed in 1.7.13 and passed in 1.7.14
+would have a `res` section with the following diff:
+
+```javascript
+   res: {
+     babel6corejs2: false,
+     babel7corejs3: babel.corejs,
+     /* ... */
+     rhino1_7_13: false,
++    rhino1_7_14: true,
+   }
+```
+
+Rerun `rhino.js` and verify it produces no output. Then `npm run build` and
+submit your pull request.
+
+## Update Babel
+
+Once the `compat-table` changes are merged, check out `babel/babel` and prepare
+a pull request to enable support for `babel-preset-env` in the new release.
+
+* Update `COMPAT_TABLE_COMMIT` in `packages/babel-compat-data/scripts/download-compat-table.sh`
+to correspond to the merge commit in `compat-table`.
+* Run `make build-compat-data && make bootstrap && OVERWRITE=true yarn jest`.
+
+Then submit the resulting patch as a pull request to Babel.
+
+## Update core-js-compat
+
+Compatibility data for `core-js`, the `babel` polyfill engine, also needs to
+be updated.
+
+* Check out `zloirock/core-js` and `npm install && npm run build-compat`.
+* Copy the most recent rhino JAR into the directory as `rhino.jar`.
+* Edit `tests/compat/tests.js` by replacing all instances of `GLOBAL` with
+`global` (changes to make this step unnecessary could be contributed back to
+`core-js`).
+* Edit `tests/compat/node-runner.js` by replacing `console.log` with `print`
+and by adding the following snippet to the bottom (these changes could also be
+contributed back to `core-js` as a new `rhino-runner.js` file):
+
+```javascript
+print("NOW SUPPORTED:");
+var data = require("../../packages/core-js-compat/data.json");
+for (var key2 in data) {
+  if (data[key2].rhino === undefined && result[key2] === true) {
+    print(key2);
+  }
+}
+```
+
+* Run `java -jar rhino.jar -version 200 -require tests/compat/node-runner.js`.
+* Much like in `compat-table`, edit `data.mjs` to add a line `rhino: 1.7.[XX]`
+for any newly-passing test labeled as "NOW SUPPORTED."
+* Submit a pull request with the `data.mjs` changes.
 
 ## Prepare for Next Release
 
