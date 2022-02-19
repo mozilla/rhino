@@ -67,6 +67,86 @@ public class NativeObjectTest {
     }
 
     @Test
+    public void testAssignUndefined() {
+        evaluateAndAssert("Object.keys(Object.assign({a:undefined}, {b:undefined})).join()", "a,b");
+    }
+
+    @Test
+    public void testAssignInextensible() {
+        evaluateAndAssert(
+                "var obj = Object.freeze({});\n"
+                        + "try {\n"
+                        + "  Object.assign(obj, { a: 1 });\n"
+                        + "  'success';\n"
+                        + "} catch(e) {\n"
+                        + "  'error';\n"
+                        + "}",
+                "error");
+        evaluateAndAssert(
+                "var obj = Object.freeze({});\n"
+                        + "try {\n"
+                        + "  Object.assign(obj, {});\n"
+                        + "  'success';\n"
+                        + "} catch(e) {\n"
+                        + "  'error';\n"
+                        + "}",
+                "success");
+    }
+
+    @Test
+    public void testAssignUnwritable() {
+        evaluateAndAssert(
+                "var src = Object.defineProperty({}, 1, {\n"
+                        + "  enumerable: true,\n"
+                        + "  value: 'v'\n"
+                        + "});\n"
+                        + "var dest = Object.defineProperty({}, 1, {\n"
+                        + "  writable: false,\n"
+                        + "  value: 'v'\n"
+                        + "});\n"
+                        + "try {\n"
+                        + "  Object.assign(dest, src);\n"
+                        + "  'success';\n"
+                        + "} catch(e) {\n"
+                        + "  'error';\n"
+                        + "}",
+                "error");
+        evaluateAndAssert(
+                "var src = Object.defineProperty({}, 1, {\n"
+                        + "  enumerable: false,\n"
+                        + "  value: 'v'\n"
+                        + "});\n"
+                        + "var dest = Object.defineProperty({}, 1, {\n"
+                        + "  writable: false,\n"
+                        + "  value: 'v'\n"
+                        + "});\n"
+                        + "try {\n"
+                        + "  Object.assign(dest, src);\n"
+                        + "  'success';\n"
+                        + "} catch(e) {\n"
+                        + "  'error';\n"
+                        + "}",
+                "success");
+        evaluateAndAssert(
+                "var src = Object.defineProperty({}, 1, {\n"
+                        + "  enumerable: true,\n"
+                        + "  value: 'v'\n"
+                        + "});\n"
+                        + "var destProto = Object.defineProperty({}, 1, {\n"
+                        + "  writable: false,\n"
+                        + "  value: 'v'\n"
+                        + "});\n"
+                        + "var dest = Object.create(destProto);\n"
+                        + "try {\n"
+                        + "  Object.assign(dest, src);\n"
+                        + "  'success';\n"
+                        + "} catch(e) {\n"
+                        + "  'error';\n"
+                        + "}",
+                "error");
+    }
+
+    @Test
     public void testSetPrototypeOfNull() {
         evaluateAndAssert(
                 "try { "
