@@ -337,83 +337,53 @@ public class NativeConsole extends IdScriptableObject {
         return nano / 1000000D;
     }
 
-    // #string_id_map#
-
     @Override
     protected int findPrototypeId(String s) {
         int id;
-        // #generated# Last update: 2021-11-10 14:43:23 CST
-        L0:
-        {
-            id = 0;
-            String X = null;
-            int c;
-            L:
-            switch (s.length()) {
-                case 3:
-                    X = "log";
-                    id = Id_log;
-                    break L;
-                case 4:
-                    c = s.charAt(0);
-                    if (c == 'i') {
-                        X = "info";
-                        id = Id_info;
-                    } else if (c == 't') {
-                        X = "time";
-                        id = Id_time;
-                    } else if (c == 'w') {
-                        X = "warn";
-                        id = Id_warn;
-                    }
-                    break L;
-                case 5:
-                    switch (s.charAt(0)) {
-                        case 'c':
-                            X = "count";
-                            id = Id_count;
-                            break L;
-                        case 'd':
-                            X = "debug";
-                            id = Id_debug;
-                            break L;
-                        case 'e':
-                            X = "error";
-                            id = Id_error;
-                            break L;
-                        case 't':
-                            X = "trace";
-                            id = Id_trace;
-                            break L;
-                    }
-                    break L;
-                case 6:
-                    X = "assert";
-                    id = Id_assert;
-                    break L;
-                case 7:
-                    c = s.charAt(4);
-                    if (c == 'E') {
-                        X = "timeEnd";
-                        id = Id_timeEnd;
-                    } else if (c == 'L') {
-                        X = "timeLog";
-                        id = Id_timeLog;
-                    }
-                    break L;
-                case 8:
-                    X = "toSource";
-                    id = Id_toSource;
-                    break L;
-                case 10:
-                    X = "countReset";
-                    id = Id_countReset;
-                    break L;
-            }
-            if (X != null && X != s && !X.equals(s)) id = 0;
-            break L0;
+        switch (s) {
+            case "log":
+                id = Id_log;
+                break;
+            case "info":
+                id = Id_info;
+                break;
+            case "time":
+                id = Id_time;
+                break;
+            case "warn":
+                id = Id_warn;
+                break;
+            case "count":
+                id = Id_count;
+                break;
+            case "debug":
+                id = Id_debug;
+                break;
+            case "error":
+                id = Id_error;
+                break;
+            case "trace":
+                id = Id_trace;
+                break;
+            case "assert":
+                id = Id_assert;
+                break;
+            case "timeEnd":
+                id = Id_timeEnd;
+                break;
+            case "timeLog":
+                id = Id_timeLog;
+                break;
+            case "toSource":
+                id = Id_toSource;
+                break;
+            case "countReset":
+                id = Id_countReset;
+                break;
+            default:
+                id = 0;
+                break;
         }
-        // #/generated#
         return id;
     }
 
@@ -432,6 +402,4 @@ public class NativeConsole extends IdScriptableObject {
             Id_timeLog = 13,
             LAST_METHOD_ID = 13,
             MAX_ID = 13;
-
-    // #/string_id_map#
 }
