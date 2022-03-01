@@ -80,6 +80,34 @@ creates a synchronized function (in the sense of a Java synchronized method) fro
 Quit shell. The shell will also quit in interactive mode if an end-of-file character is typed at the prompt.
 .IP version(\fI[number]\fP)
 Get or set JavaScript version number. If no argument is supplied, the current version number is returned. If an argument is supplied, it is expected to be one of 100, 110, 120, 130, or 140 to indicate JavaScript version 1.0, 1.1, 1.2, 1.3, or 1.4 respectively.
+.IP console
+The console object provides a simple debugging console similar to the console object provided by web browsers.
+.RS
+.IP console.log(\fIformat[arg,\&.\&.\&.]\fP)
+For general output of logging information. String substitution and additional arguments are supported. Prints formatted text according to the format and args supplied with "INFO" prefix. This function is identical to console.info(\fIformat\fP[arg,\&.\&.\&.]).
+.IP console.trace(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]) except it prints "TRACE" prefix instead of "INFO".
+.IP console.debug(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]) except it prints "DEBUG" prefix instead of "INFO".
+.IP console.info(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]).
+.IP console.warn(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]) except it prints "WARN" prefix instead of "INFO".
+.IP console.error(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]) except it prints "ERROR" prefix instead of "INFO".
+.IP console.assert(\fIexpression[arg,\&.\&.\&.]\fP)
+Prints error if expression is false. If args are supplied, they will be printed also.
+.IP console.count(\fI[label]\fP)
+Increases the counter of label by one which starts from zero and prints the label and value after increment. If label is not supplied, "default" is the label.
+.IP console.countReset(\fI[label]\fP)
+Resets the counter of label to zero. If label is not supplied, "default" is the label.
+.IP console.time(\fI[label]\fP)
+Starts a timer of label. Use console.timeEnd(\fI[label]\fP) to stop the timer and print the elapsed time. Use console.timeLog(\fI[label]\fP) to print the elapsed time without stopping the timer.
+.IP console.timeLog(\fI[label]\fP)
+See console.time(\fI[label]\fP).
+.IP console.timeEnd(\fI[label]\fP)
+See console.time(\fI[label]\fP).
+.RE
 
 .SH SEE ALSO
 The online documentation under
