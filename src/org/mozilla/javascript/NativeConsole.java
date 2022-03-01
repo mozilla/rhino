@@ -37,7 +37,12 @@ public class NativeConsole extends IdScriptableObject {
     }
 
     public interface ConsolePrinter extends Serializable {
-        void print(Context cx, Scriptable scope, Level level, Object[] args);
+        void print(
+                Context cx,
+                Scriptable scope,
+                Level level,
+                ScriptStackElement[] stack,
+                Object[] args);
     }
 
     public static void init(Scriptable scope, boolean sealed, ConsolePrinter printer) {
@@ -140,24 +145,28 @@ public class NativeConsole extends IdScriptableObject {
                 return "Console";
 
             case Id_trace:
-                printer.print(cx, scope, Level.TRACE, args);
-                break;
+                {
+                    ScriptStackElement[] stack =
+                            new EvaluatorException("[object Object]").getScriptStack();
+                    printer.print(cx, scope, Level.TRACE, stack, args);
+                    break;
+                }
 
             case Id_debug:
-                printer.print(cx, scope, Level.DEBUG, args);
+                printer.print(cx, scope, Level.DEBUG, null, args);
                 break;
 
             case Id_log:
             case Id_info:
-                printer.print(cx, scope, Level.INFO, args);
+                printer.print(cx, scope, Level.INFO, null, args);
                 break;
 
             case Id_warn:
-                printer.print(cx, scope, Level.WARN, args);
+                printer.print(cx, scope, Level.WARN, null, args);
                 break;
 
             case Id_error:
-                printer.print(cx, scope, Level.ERROR, args);
+                printer.print(cx, scope, Level.ERROR, null, args);
                 break;
 
             case Id_assert:
@@ -192,7 +201,7 @@ public class NativeConsole extends IdScriptableObject {
     }
 
     private void print(Context cx, Scriptable scope, Level level, String msg) {
-        printer.print(cx, scope, level, new String[] {msg});
+        printer.print(cx, scope, level, null, new String[] {msg});
     }
 
     public static String format(Context cx, Scriptable scope, Object[] args) {
