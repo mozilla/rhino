@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -216,40 +217,40 @@ public class NativeConsole extends IdScriptableObject {
         while (matcher.find()) {
             String placeHolder = matcher.group();
             String replaceArg;
-            switch (placeHolder) {
-                case "%%":
-                    replaceArg = "%";
-                    break;
 
-                case "%s":
-                    replaceArg = ScriptRuntime.toString(args, argIndex);
-                    break;
+            if (placeHolder.equals("%%")) {
+                replaceArg = "%";
+            } else if (argIndex >= args.length) {
+                replaceArg = placeHolder;
+                argIndex++;
+            } else {
+                Object val = args[argIndex];
+                switch (placeHolder) {
+                    case "%s":
+                        replaceArg = ScriptRuntime.toString(val);
+                        break;
 
-                case "%d":
-                case "%i":
-                    double number = ScriptRuntime.toNumber(args, argIndex);
-                    if (Double.isInfinite(number) || Double.isNaN(number)) {
-                        replaceArg = "0";
-                    } else {
-                        replaceArg = String.valueOf(((Double) number).intValue());
-                    }
-                    break;
+                    case "%d":
+                    case "%i":
+                        replaceArg = formatInt(val);
+                        break;
 
-                case "%f":
-                    replaceArg = String.valueOf(ScriptRuntime.toNumber(args, argIndex));
-                    break;
+                    case "%f":
+                        replaceArg = formatFloat(val);
+                        break;
 
-                case "%o":
-                case "%O":
-                    replaceArg = formatObj(cx, scope, args, argIndex);
-                    break;
+                    case "%o":
+                    case "%O":
+                        replaceArg = formatObj(cx, scope, args, argIndex);
+                        break;
 
-                default:
-                    replaceArg = "";
-                    break;
+                    default:
+                        replaceArg = "";
+                        break;
+                }
+                argIndex++;
             }
 
-            argIndex++;
             matcher.appendReplacement(buffer, Matcher.quoteReplacement(replaceArg));
         }
         matcher.appendTail(buffer);
@@ -257,20 +258,53 @@ public class NativeConsole extends IdScriptableObject {
         return buffer.toString();
     }
 
-    private static String formatObj(Context cx, Scriptable scope, Object[] args, int argIndex) {
-        if (argIndex >= args.length) {
-            return "";
+    private static String formatFloat(Object val) {
+        if (val instanceof BigInteger || val instanceof Symbol) {
+            return ScriptRuntime.NaNobj.toString();
         }
 
+        return String.valueOf(ScriptRuntime.toNumber(val));
+    }
+
+    private static String formatInt(Object val) {
+        if (val instanceof BigInteger) {
+            return ScriptRuntime.bigIntToString((BigInteger) val, 10) + "n";
+        }
+
+        if (val instanceof Symbol) {
+            return ScriptRuntime.NaNobj.toString();
+        }
+
+        double number = ScriptRuntime.toNumber(val);
+
+        if (Double.isInfinite(number) || Double.isNaN(number)) {
+            return ScriptRuntime.toString(number);
+        }
+
+        return String.valueOf((int) number);
+    }
+
+    private static String formatObj(Context cx, Scriptable scope, Object[] args, int argIndex) {
         Object arg = args[argIndex];
         if (arg == null) {
             return "null";
         }
-        if (arg == Undefined.instance || arg == Undefined.SCRIPTABLE_UNDEFINED) {
-            return "undefined";
+
+        if (Undefined.isUndefined(arg)) {
+            return Undefined.SCRIPTABLE_UNDEFINED.toString();
         }
 
-        return ScriptRuntime.toString(NativeJSON.stringify(cx, scope, arg, null, null));
+        try {
+            Object stringify = NativeJSON.stringify(cx, scope, arg, null, null);
+            return ScriptRuntime.toString(stringify);
+        } catch (EcmaError e) {
+            if ("TypeError".equals(e.getName())) {
+                // Fall back to use ScriptRuntime.toString() in some case such as
+                // NativeJSON.stringify not support BigInt yet.
+                return ScriptRuntime.toString(arg);
+            }
+            throw e;
+        }
     }
 
     private void jsAssert(Context cx, Scriptable scope, Object[] args) {
