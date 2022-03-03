@@ -281,7 +281,7 @@ public class NativeConsole extends IdScriptableObject {
             return ScriptRuntime.toString(number);
         }
 
-        return String.valueOf((int) number);
+        return String.valueOf((long) number);
     }
 
     private static String formatObj(Context cx, Scriptable scope, Object[] args, int argIndex) {
