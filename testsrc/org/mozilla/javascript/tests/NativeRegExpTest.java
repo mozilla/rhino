@@ -6,6 +6,7 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -303,7 +304,8 @@ public class NativeRegExpTest {
     }
 
     /** @throws Exception if an error occurs */
-    // TODO @Test
+    @Ignore
+    @Test
     public void matchStickyAndGlobalSymbol() throws Exception {
         final String script =
                 "var result = /a/yg[Symbol.match]('aaba');\n"
@@ -315,17 +317,54 @@ public class NativeRegExpTest {
     }
 
     /** @throws Exception if an error occurs */
-    // TODO @Test
+    @Test
     public void flagsPropery() throws Exception {
+        testPropery("0-function-undefined-true-false-undefined", "flags");
+    }
+
+    /** @throws Exception if an error occurs */
+    @Test
+    public void globalPropery() throws Exception {
+        testPropery("0-function-undefined-true-false-undefined", "global");
+    }
+
+    /** @throws Exception if an error occurs */
+    @Test
+    public void ignoreCasePropery() throws Exception {
+        testPropery("0-function-undefined-true-false-undefined", "ignoreCase");
+    }
+
+    /** @throws Exception if an error occurs */
+    @Test
+    public void multilinePropery() throws Exception {
+        testPropery("0-function-undefined-true-false-undefined", "multiline");
+    }
+
+    /** @throws Exception if an error occurs */
+    @Test
+    public void stickyPropery() throws Exception {
+        testPropery("0-function-undefined-true-false-undefined", "sticky");
+    }
+
+    /** @throws Exception if an error occurs */
+    @Test
+    public void sourcePropery() throws Exception {
+        testPropery("0-function-undefined-true-false-undefined", "source");
+    }
+
+    private static void testPropery(String expected, String property) throws Exception {
         final String script =
-                "var get = Object.getOwnPropertyDescriptor(RegExp.prototype, 'flags');\n"
-                        + "var res = '';" // + get.get.length;\n"
+                "var get = Object.getOwnPropertyDescriptor(RegExp.prototype, '"
+                        + property
+                        + "');\n"
+                        + "var res = '' + get.get.length;\n"
+                        + "var res = res + '-' + typeof get.get;\n"
                         + "res = res + '-' + get.value;\n"
                         + "res = res + '-' + get.configurable;\n"
                         + "res = res + '-' + get.enumerable;\n"
                         + "res = res + '-' + get.writable;\n"
                         + "res;";
-        test("0-undefined-true-false-undefined", script);
+        test(expected, script);
     }
 
     private static void test(final String expected, final String script) {
