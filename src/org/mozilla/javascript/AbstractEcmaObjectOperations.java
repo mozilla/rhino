@@ -160,7 +160,7 @@ class AbstractEcmaObjectOperations {
      *     constructor on "s" or if the "species" symbol is not set.
      * @see <a href="https://tc39.es/ecma262/#sec-speciesconstructor"></a>
      */
-    public static Constructable speciesConstructor(
+    static Constructable speciesConstructor(
             Context cx, Scriptable s, Constructable defaultConstructor) {
         /*
         The abstract operation SpeciesConstructor takes arguments O (an Object) and
@@ -194,5 +194,37 @@ class AbstractEcmaObjectOperations {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(species));
         }
         return (Constructable) species;
+    }
+
+    /**
+     * Set ( O, P, V, Throw)
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw
+     */
+    static void put(Context cx, Scriptable o, String p, Object v, boolean isThrow) {
+        Scriptable base = ScriptableObject.getBase(o, p);
+        if (base == null) base = o;
+
+        if (base instanceof ScriptableObject) {
+            ((ScriptableObject) base).putImpl(p, 0, o, v, isThrow);
+        } else {
+            base.put(p, o, v);
+        }
+    }
+
+    /**
+     * Set ( O, P, V, Throw)
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw
+     */
+    static void put(Context cx, Scriptable o, int p, Object v, boolean isThrow) {
+        Scriptable base = ScriptableObject.getBase(o, p);
+        if (base == null) base = o;
+
+        if (base instanceof ScriptableObject) {
+            ((ScriptableObject) base).putImpl(null, p, o, v, isThrow);
+        } else {
+            base.put(p, o, v);
+        }
     }
 }
