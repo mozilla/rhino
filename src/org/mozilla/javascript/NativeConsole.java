@@ -42,8 +42,8 @@ public class NativeConsole extends IdScriptableObject {
                 Context cx,
                 Scriptable scope,
                 Level level,
-                ScriptStackElement[] stack,
-                Object[] args);
+                Object[] args,
+                ScriptStackElement[] stack);
     }
 
     public static void init(Scriptable scope, boolean sealed, ConsolePrinter printer) {
@@ -149,25 +149,25 @@ public class NativeConsole extends IdScriptableObject {
                 {
                     ScriptStackElement[] stack =
                             new EvaluatorException("[object Object]").getScriptStack();
-                    printer.print(cx, scope, Level.TRACE, stack, args);
+                    printer.print(cx, scope, Level.TRACE, args, stack);
                     break;
                 }
 
             case Id_debug:
-                printer.print(cx, scope, Level.DEBUG, null, args);
+                printer.print(cx, scope, Level.DEBUG, args, null);
                 break;
 
             case Id_log:
             case Id_info:
-                printer.print(cx, scope, Level.INFO, null, args);
+                printer.print(cx, scope, Level.INFO, args, null);
                 break;
 
             case Id_warn:
-                printer.print(cx, scope, Level.WARN, null, args);
+                printer.print(cx, scope, Level.WARN, args, null);
                 break;
 
             case Id_error:
-                printer.print(cx, scope, Level.ERROR, null, args);
+                printer.print(cx, scope, Level.ERROR, args, null);
                 break;
 
             case Id_assert:
@@ -202,7 +202,7 @@ public class NativeConsole extends IdScriptableObject {
     }
 
     private void print(Context cx, Scriptable scope, Level level, String msg) {
-        printer.print(cx, scope, level, null, new String[] {msg});
+        printer.print(cx, scope, level, new String[] {msg}, null);
     }
 
     public static String format(Context cx, Scriptable scope, Object[] args) {
@@ -227,7 +227,7 @@ public class NativeConsole extends IdScriptableObject {
                 Object val = args[argIndex];
                 switch (placeHolder) {
                     case "%s":
-                        replaceArg = ScriptRuntime.toString(val);
+                        replaceArg = formatString(val);
                         break;
 
                     case "%d":
@@ -241,7 +241,7 @@ public class NativeConsole extends IdScriptableObject {
 
                     case "%o":
                     case "%O":
-                        replaceArg = formatObj(cx, scope, args, argIndex);
+                        replaceArg = formatObj(cx, scope, val);
                         break;
 
                     default:
@@ -258,12 +258,16 @@ public class NativeConsole extends IdScriptableObject {
         return buffer.toString();
     }
 
-    private static String formatFloat(Object val) {
-        if (val instanceof BigInteger || val instanceof Symbol) {
-            return ScriptRuntime.NaNobj.toString();
+    private static String formatString(Object val) {
+        if (val instanceof BigInteger) {
+            return ScriptRuntime.toString(val) + "n";
         }
 
-        return String.valueOf(ScriptRuntime.toNumber(val));
+        if (ScriptRuntime.isSymbol(val)) {
+            return val.toString();
+        }
+
+        return ScriptRuntime.toString(val);
     }
 
     private static String formatInt(Object val) {
@@ -271,7 +275,7 @@ public class NativeConsole extends IdScriptableObject {
             return ScriptRuntime.bigIntToString((BigInteger) val, 10) + "n";
         }
 
-        if (val instanceof Symbol) {
+        if (ScriptRuntime.isSymbol(val)) {
             return ScriptRuntime.NaNobj.toString();
         }
 
@@ -284,8 +288,15 @@ public class NativeConsole extends IdScriptableObject {
         return String.valueOf((long) number);
     }
 
-    private static String formatObj(Context cx, Scriptable scope, Object[] args, int argIndex) {
-        Object arg = args[argIndex];
+    private static String formatFloat(Object val) {
+        if (val instanceof BigInteger || ScriptRuntime.isSymbol(val)) {
+            return ScriptRuntime.NaNobj.toString();
+        }
+
+        return ScriptRuntime.numberToString(ScriptRuntime.toNumber(val), 10);
+    }
+
+    private static String formatObj(Context cx, Scriptable scope, Object arg) {
         if (arg == null) {
             return "null";
         }

@@ -20,8 +20,8 @@ class ShellConsolePrinter implements NativeConsole.ConsolePrinter {
             Context cx,
             Scriptable scope,
             NativeConsole.Level level,
-            ScriptStackElement[] stack,
-            Object[] args) {
+            Object[] args,
+            ScriptStackElement[] stack) {
         if (args.length == 0) {
             return;
         }
