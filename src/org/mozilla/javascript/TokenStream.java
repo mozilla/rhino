@@ -980,6 +980,10 @@ class TokenStream {
                                     c = getChar();
                                     escapeVal = Kit.xDigitToInt(c, escapeVal);
                                     if (escapeVal < 0) {
+                                        if (parser.compilerEnv.getLanguageVersion()
+                                                >= Context.VERSION_ES6) {
+                                            parser.reportError("msg.invalid.escape");
+                                        }
                                         continue strLoop;
                                     }
                                     addToString(c);
