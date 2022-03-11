@@ -684,12 +684,32 @@ class TokenStream {
                         // escape sequence in an identifier, we can report
                         // an error here.
                         int escapeVal = 0;
-                        for (int i = 0; i != 4; ++i) {
-                            c = getChar();
-                            escapeVal = Kit.xDigitToInt(c, escapeVal);
-                            // Next check takes care about c < 0 and bad escape
-                            if (escapeVal < 0) {
+                        if (matchTemplateLiteralChar('{')) {
+                            for (; ; ) {
+                                c = getTemplateLiteralChar();
+
+                                if (c == '}') {
+                                    break;
+                                }
+                                escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                if (escapeVal < 0) {
+                                    break;
+                                }
+                            }
+
+                            if (escapeVal < 0 || escapeVal > 0x10FFFF) {
+                                parser.reportError("msg.invalid.escape");
                                 break;
+                            }
+                        } else {
+                            for (int i = 0; i != 4; ++i) {
+                                c = getChar();
+                                escapeVal = Kit.xDigitToInt(c, escapeVal);
+                                // Next check takes care about c < 0 and bad escape
+                                if (escapeVal < 0) {
+                                    parser.reportError("msg.invalid.escape");
+                                    break;
+                                }
                             }
                         }
                         if (escapeVal < 0) {
