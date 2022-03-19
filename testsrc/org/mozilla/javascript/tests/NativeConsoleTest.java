@@ -7,11 +7,90 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.regex.Pattern;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.NativeConsole.Level;
 
 /** Test NativeConsole */
 public class NativeConsoleTest {
+
+    private static class PrinterCall {
+        public Level level;
+        public Object[] args;
+        public ScriptStackElement[] stack;
+
+        public PrinterCall(Level level, Object[] args, ScriptStackElement[] stack) {
+            this.level = level;
+            this.args = args;
+            this.stack = stack;
+        }
+
+        public PrinterCall(Level level, Object[] args) {
+            this(level, args, null);
+        }
+
+        public void assertEquals(PrinterCall expectedCall) {
+            Assert.assertEquals(expectedCall.level, this.level);
+            if (expectedCall.args != null) {
+                Assert.assertEquals(expectedCall.args.length, this.args.length);
+                for (int i = 0; i < expectedCall.args.length; ++i) {
+                    if (expectedCall.args[i] instanceof Pattern && this.args[i] instanceof String) {
+                        Assert.assertTrue(
+                                "\""
+                                        + this.args[i]
+                                        + "\" does not matches \""
+                                        + expectedCall.args[i]
+                                        + "\"",
+                                ((Pattern) expectedCall.args[i])
+                                        .matcher((String) this.args[i])
+                                        .matches());
+                    } else {
+                        Assert.assertEquals(expectedCall.args[i], this.args[i]);
+                    }
+                }
+            }
+            if (expectedCall.stack != null) {
+                Assert.assertEquals(expectedCall.stack.length, this.stack.length);
+                for (int i = 0; i < expectedCall.stack.length; ++i) {
+                    Assert.assertEquals(expectedCall.stack[i].fileName, this.stack[i].fileName);
+                    Assert.assertEquals(
+                            expectedCall.stack[i].functionName, this.stack[i].functionName);
+                    Assert.assertEquals(expectedCall.stack[i].lineNumber, this.stack[i].lineNumber);
+                }
+            }
+        }
+    }
+
+    private static class DummyConsolePrinter implements NativeConsole.ConsolePrinter {
+        public List<PrinterCall> calls = new ArrayList<>();
+
+        @Override
+        public void print(
+                Context cx,
+                Scriptable scope,
+                Level level,
+                Object[] args,
+                ScriptStackElement[] stack) {
+            calls.add(new PrinterCall(level, args, stack));
+        }
+
+        public void clear() {
+            calls.clear();
+        }
+
+        public void assertCalls(List<PrinterCall> expectedCalls) {
+            assertEquals(expectedCalls.size(), calls.size());
+            for (int i = 0; i < calls.size(); ++i) {
+                calls.get(i).assertEquals(expectedCalls.get(i));
+            }
+        }
+    }
 
     @Test
     public void testFormatPercentSign() {
@@ -161,10 +240,120 @@ public class NativeConsoleTest {
         }
     }
 
+    @Test
+    public void testPrint() {
+        assertPrintCalls(
+                "console.log('abc', 123)",
+                Collections.singletonList(new PrinterCall(Level.INFO, new Object[] {"abc", 123})));
+
+        assertPrintCalls(
+                "console.trace('abc', 123)",
+                Collections.singletonList(
+                        new PrinterCall(
+                                Level.TRACE,
+                                new Object[] {"abc", 123},
+                                new ScriptStackElement[] {
+                                    new ScriptStackElement("source", null, 1)
+                                })));
+
+        assertPrintCalls(
+                "console.debug('abc', 123)",
+                Collections.singletonList(new PrinterCall(Level.DEBUG, new Object[] {"abc", 123})));
+
+        assertPrintCalls(
+                "console.info('abc', 123)",
+                Collections.singletonList(new PrinterCall(Level.INFO, new Object[] {"abc", 123})));
+
+        assertPrintCalls(
+                "console.warn('abc', 123)",
+                Collections.singletonList(new PrinterCall(Level.WARN, new Object[] {"abc", 123})));
+
+        assertPrintCalls(
+                "console.error('abc', 123)",
+                Collections.singletonList(new PrinterCall(Level.ERROR, new Object[] {"abc", 123})));
+    }
+
+    @Test
+    public void testAssert() {
+        assertPrintCalls("console.assert(true)", Collections.emptyList());
+
+        assertPrintCalls(
+                "console.assert(false)",
+                Collections.singletonList(
+                        new PrinterCall(
+                                Level.ERROR, new String[] {"Assertion failed: console.assert"})));
+
+        assertPrintCalls(
+                "console.assert(false, 'Fail', 1)",
+                Collections.singletonList(
+                        new PrinterCall(Level.ERROR, new String[] {"Assertion failed: Fail 1"})));
+    }
+
+    @Test
+    public void testCount() {
+        assertPrintCalls(
+                "console.count();\n"
+                        + "console.count('a');\n"
+                        + "console.count();\n"
+                        + "console.count('b');\n"
+                        + "console.count('b');\n"
+                        + "console.countReset('b');\n"
+                        + "console.countReset('c');\n"
+                        + "console.count('b');\n"
+                        + "console.count();\n",
+                Arrays.asList(
+                        new PrinterCall(Level.INFO, new String[] {"default: 1"}),
+                        new PrinterCall(Level.INFO, new String[] {"a: 1"}),
+                        new PrinterCall(Level.INFO, new String[] {"default: 2"}),
+                        new PrinterCall(Level.INFO, new String[] {"b: 1"}),
+                        new PrinterCall(Level.INFO, new String[] {"b: 2"}),
+                        new PrinterCall(Level.WARN, new String[] {"Count for 'c' does not exist."}),
+                        new PrinterCall(Level.INFO, new String[] {"b: 1"}),
+                        new PrinterCall(Level.INFO, new String[] {"default: 3"})));
+    }
+
+    @Test
+    public void testTime() {
+        assertPrintCalls(
+                "console.time();\n"
+                        + "console.time('a');\n"
+                        + "console.time();\n"
+                        + "console.time('b');\n"
+                        + "console.timeLog('b');\n"
+                        + "console.timeEnd('b');\n"
+                        + "console.timeLog('b');\n"
+                        + "console.time('b');\n"
+                        + "console.timeLog('b', 'abc', 123);\n"
+                        + "console.timeLog();\n"
+                        + "console.timeEnd('c');\n",
+                Arrays.asList(
+                        new PrinterCall(
+                                Level.WARN, new Object[] {"Timer 'default' already exists."}),
+                        new PrinterCall(Level.INFO, new Object[] {Pattern.compile("b: [\\d.]+ms")}),
+                        new PrinterCall(Level.INFO, new Object[] {Pattern.compile("b: [\\d.]+ms")}),
+                        new PrinterCall(Level.WARN, new Object[] {"Timer 'b' does not exist."}),
+                        new PrinterCall(
+                                Level.INFO, new Object[] {Pattern.compile("b: [\\d.]+ms abc 123")}),
+                        new PrinterCall(
+                                Level.INFO, new Object[] {Pattern.compile("default: [\\d.]+ms")}),
+                        new PrinterCall(Level.WARN, new Object[] {"Timer 'c' does not exist."})));
+    }
+
     private void assertFormat(Object[] args, String expected) {
         try (Context cx = Context.enter()) {
             Scriptable scope = cx.initStandardObjects();
             assertEquals(expected, NativeConsole.format(cx, scope, args));
+        }
+    }
+
+    private void assertPrintCalls(String source, List<PrinterCall> expectedCalls) {
+        DummyConsolePrinter printer = new DummyConsolePrinter();
+
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects();
+            NativeConsole.init(scope, false, printer);
+            cx.evaluateString(scope, source, "source", 1, null);
+            printer.assertCalls(expectedCalls);
         }
     }
 
