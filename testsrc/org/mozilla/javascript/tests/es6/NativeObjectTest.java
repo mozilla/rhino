@@ -147,6 +147,21 @@ public class NativeObjectTest {
     }
 
     @Test
+    public void testAssignWithPrototype() {
+        final String script = "var targetProto = { a: 1, b: 2 };\n"
+                + "var target = Object.create(targetProto);\n"
+                + "var source = { b: 4, c: 5 };\n"
+                + "var assigned = Object.assign(target, source);\n"
+
+                + "var res = 'targetProto: ' + JSON.stringify(targetProto) + "
+                + "'  target: ' + JSON.stringify(target) + "
+                + "'  assigned: ' + JSON.stringify(assigned);\n"
+                + "res";
+
+        evaluateAndAssert(script, "targetProto: {\"a\":1,\"b\":2}  target: {\"b\":4,\"c\":5}  assigned: {\"b\":4,\"c\":5}");
+    }
+
+    @Test
     public void testSetPrototypeOfNull() {
         evaluateAndAssert(
                 "try { "
