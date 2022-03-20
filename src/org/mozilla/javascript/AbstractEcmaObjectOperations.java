@@ -70,7 +70,7 @@ class AbstractEcmaObjectOperations {
             if (Boolean.TRUE.equals(desc.get("configurable"))) return false;
 
             if (level == INTEGRITY_LEVEL.FROZEN
-                    && desc.isDataDescriptor(desc)
+                    && ScriptableObject.isDataDescriptor(desc)
                     && Boolean.TRUE.equals(desc.get("writable"))) return false;
         }
 
@@ -132,16 +132,17 @@ class AbstractEcmaObjectOperations {
 
             if (level == INTEGRITY_LEVEL.SEALED) {
                 if (Boolean.TRUE.equals(desc.get("configurable"))) {
-                    desc.put("configurable", desc, false);
+                    desc.put("configurable", desc, Boolean.FALSE);
 
                     obj.defineOwnProperty(cx, key, desc, false);
                 }
             } else {
-                if (obj.isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable"))) {
-                    desc.put("writable", desc, false);
+                if (ScriptableObject.isDataDescriptor(desc)
+                        && Boolean.TRUE.equals(desc.get("writable"))) {
+                    desc.put("writable", desc, Boolean.FALSE);
                 }
                 if (Boolean.TRUE.equals(desc.get("configurable"))) {
-                    desc.put("configurable", desc, false);
+                    desc.put("configurable", desc, Boolean.FALSE);
                 }
                 obj.defineOwnProperty(cx, key, desc, false);
             }
