@@ -241,19 +241,72 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void formatEscaping() {
-        assertFormat(new Object[] {"%%i; %i; %%i; %", 1, 2, 3, 4}, "%i; 1; %i; % 2 3 4");
+    public void formatValueOnly() {
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects();
+
+            assertFormat(new Object[] {"param1", "param2"}, "param1 param2");
+            assertFormat(new Object[] {1, 2, 7}, "1 2 7");
+
+            Scriptable emptyObject = cx.newObject(scope);
+            assertFormat(new Object[] {emptyObject}, "{}");
+
+            Scriptable emptyArray = cx.newArray(scope, 0);
+            assertFormat(new Object[] {emptyArray}, "[]");
+
+            Scriptable object1 = cx.newObject(scope);
+            object1.put("int1", object1, 100);
+            object1.put("float1", object1, 100.1);
+            object1.put("string1", object1, "abc");
+            assertFormat(
+                    new Object[] {object1},
+                    "{" + "\"int1\":100," + "\"float1\":100.1," + "\"string1\":\"abc\"" + "}");
+
+            Scriptable array1 = cx.newArray(scope, 0);
+            array1.put(0, array1, 100);
+            array1.put(1, array1, 100.1);
+            array1.put(2, array1, "abc");
+            assertFormat(new Object[] {array1}, "[" + "100," + "100.1," + "\"abc\"" + "]");
+
+            Scriptable object2 = cx.newObject(scope);
+            object2.put("bigint1", object2, BigInteger.valueOf(100));
+            assertFormat(new Object[] {object2}, "[object Object]");
+        }
     }
 
     @Test
     public void formatMissingPlaceholder() {
-        assertFormat(new Object[] {"string: %s;", "param1", "param2"}, "string: param1; param2");
-        assertFormat(new Object[] {"int: %i;", 1, 2, 7}, "int: 1; 2 7");
-    }
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects();
 
-    @Test
-    public void formatContinous() {
-        assertFormat(new Object[] {"%i%i%%i%i;", 1, 2, 3, 4}, "12%i3; 4");
+            assertFormat(
+                    new Object[] {"string: %s;", "param1", "param2"}, "string: param1; param2");
+            assertFormat(new Object[] {"int: %i;", 1, 2, 7}, "int: 1; 2 7");
+
+            Scriptable emptyObject = cx.newObject(scope);
+            assertFormat(new Object[] {"", emptyObject}, "{}");
+
+            Scriptable emptyArray = cx.newArray(scope, 0);
+            assertFormat(new Object[] {"", emptyArray}, "[]");
+
+            Scriptable object1 = cx.newObject(scope);
+            object1.put("int1", object1, 100);
+            object1.put("float1", object1, 100.1);
+            object1.put("string1", object1, "abc");
+            assertFormat(
+                    new Object[] {"", object1},
+                    "{" + "\"int1\":100," + "\"float1\":100.1," + "\"string1\":\"abc\"" + "}");
+
+            Scriptable array1 = cx.newArray(scope, 0);
+            array1.put(0, array1, 100);
+            array1.put(1, array1, 100.1);
+            array1.put(2, array1, "abc");
+            assertFormat(new Object[] {"", array1}, "[" + "100," + "100.1," + "\"abc\"" + "]");
+
+            Scriptable object2 = cx.newObject(scope);
+            object2.put("bigint1", object2, BigInteger.valueOf(100));
+            assertFormat(new Object[] {"", object2}, "[object Object]");
+        }
     }
 
     @Test
