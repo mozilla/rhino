@@ -93,7 +93,7 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void testFormatPercentSign() {
+    public void formatPercentSign() {
         assertFormat(new Object[] {"%%"}, "%");
         assertFormat(new Object[] {"a%%"}, "a%");
         assertFormat(new Object[] {"%%b"}, "%b");
@@ -103,7 +103,7 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void testFormatString() {
+    public void formatString() {
         assertFormat(new Object[] {"%s", "abc"}, "abc");
         assertFormat(new Object[] {"%s", 100}, "100");
         assertFormat(new Object[] {"%s", 100.1D}, "100.1");
@@ -133,7 +133,7 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void testFormatInt() {
+    public void formatInt() {
         assertFormat(new Object[] {"%d", 100}, "100");
         assertFormat(new Object[] {"%d", -100}, "-100");
         assertFormat(new Object[] {"%d", Integer.MAX_VALUE}, String.valueOf(Integer.MAX_VALUE));
@@ -170,7 +170,7 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void testFormatFloat() {
+    public void formatFloat() {
         assertFormat(new Object[] {"%f", 100}, "100");
         assertFormat(new Object[] {"%f", -100}, "-100");
         assertFormat(new Object[] {"%f", Integer.MAX_VALUE}, String.valueOf(Integer.MAX_VALUE));
@@ -210,7 +210,7 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void testFormatObject() {
+    public void formatObject() {
         try (Context cx = Context.enter()) {
             Scriptable scope = cx.initStandardObjects();
 
@@ -241,7 +241,23 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void testPrint() {
+    public void formatEscaping() {
+        assertFormat(new Object[] {"%%i; %i; %%i; %", 1, 2, 3, 4}, "%i; 1; %i; % 2 3 4");
+    }
+
+    @Test
+    public void formatMissingPlaceholder() {
+        assertFormat(new Object[] {"string: %s;", "param1", "param2"}, "string: param1; param2");
+        assertFormat(new Object[] {"int: %i;", 1, 2, 7}, "int: 1; 2 7");
+    }
+
+    @Test
+    public void formatContinous() {
+        assertFormat(new Object[] {"%i%i%%i%i;", 1, 2, 3, 4}, "12%i3; 4");
+    }
+
+    @Test
+    public void print() {
         assertPrintCalls(
                 "console.log('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.INFO, new Object[] {"abc", 123})));
@@ -314,7 +330,7 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void testCount() {
+    public void count() {
         assertPrintCalls(
                 "console.count();\n"
                         + "console.count('a');\n"
@@ -337,7 +353,7 @@ public class NativeConsoleTest {
     }
 
     @Test
-    public void testTime() {
+    public void time() {
         assertPrintCalls(
                 "console.time();\n"
                         + "console.time('a');\n"

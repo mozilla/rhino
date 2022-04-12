@@ -255,6 +255,19 @@ public class NativeConsole extends IdScriptableObject {
         }
         matcher.appendTail(buffer);
 
+        for (int i = argIndex; i < args.length; i++) {
+            if (buffer.length() > 0) {
+                buffer.append(' ');
+            }
+
+            final Object val = args[i];
+            if (val instanceof String) {
+                buffer.append(formatString(val));
+            } else {
+                buffer.append(formatObj(cx, scope, val));
+            }
+        }
+
         return buffer.toString();
     }
 
