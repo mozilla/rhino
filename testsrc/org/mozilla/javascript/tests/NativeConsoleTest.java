@@ -4,7 +4,6 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -14,8 +13,13 @@ import java.util.List;
 import java.util.regex.Pattern;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mozilla.javascript.*;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.NativeConsole;
 import org.mozilla.javascript.NativeConsole.Level;
+import org.mozilla.javascript.ScriptStackElement;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.SymbolKey;
+import org.mozilla.javascript.Undefined;
 
 /** Test NativeConsole */
 public class NativeConsoleTest {
@@ -78,10 +82,6 @@ public class NativeConsoleTest {
                 Object[] args,
                 ScriptStackElement[] stack) {
             calls.add(new PrinterCall(level, args, stack));
-        }
-
-        public void clear() {
-            calls.clear();
         }
 
         public void assertCalls(List<PrinterCall> expectedCalls) {
@@ -180,10 +180,10 @@ public class NativeConsoleTest {
         assertFormat(new Object[] {"%f", 100.1D}, "100.1");
         assertFormat(new Object[] {"%f", -100.7D}, "-100.7");
         assertFormat(
-                new Object[] {"%f", (double) Integer.MAX_VALUE + 0.1D},
+                new Object[] {"%f", Integer.MAX_VALUE + 0.1D},
                 String.valueOf(Integer.MAX_VALUE) + ".1");
         assertFormat(
-                new Object[] {"%f", (double) Integer.MIN_VALUE - 0.1D},
+                new Object[] {"%f", Integer.MIN_VALUE - 0.1D},
                 String.valueOf(Integer.MIN_VALUE) + ".1");
 
         assertFormat(new Object[] {"%f", Double.NaN}, "NaN");
@@ -284,9 +284,33 @@ public class NativeConsoleTest {
                                 Level.ERROR, new String[] {"Assertion failed: console.assert"})));
 
         assertPrintCalls(
+                "console.assert()",
+                Collections.singletonList(
+                        new PrinterCall(
+                                Level.ERROR, new String[] {"Assertion failed: console.assert"})));
+
+        assertPrintCalls(
+                "console.assert(false, 'Fail')",
+                Collections.singletonList(
+                        new PrinterCall(Level.ERROR, new String[] {"Assertion failed: Fail"})));
+
+        assertPrintCalls(
                 "console.assert(false, 'Fail', 1)",
                 Collections.singletonList(
-                        new PrinterCall(Level.ERROR, new String[] {"Assertion failed: Fail 1"})));
+                        new PrinterCall(
+                                Level.ERROR, new Object[] {"Assertion failed: Fail", 1.0})));
+
+        assertPrintCalls(
+                "console.assert(false, 'the word is %s', 'foo')",
+                Collections.singletonList(
+                        new PrinterCall(
+                                Level.ERROR,
+                                new String[] {"Assertion failed: the word is %s", "foo"})));
+
+        assertPrintCalls(
+                "console.assert(false, 42)",
+                Collections.singletonList(
+                        new PrinterCall(Level.ERROR, new Object[] {"Assertion failed: ", 42})));
     }
 
     @Test
@@ -339,14 +363,14 @@ public class NativeConsoleTest {
                         new PrinterCall(Level.WARN, new Object[] {"Timer 'c' does not exist."})));
     }
 
-    private void assertFormat(Object[] args, String expected) {
+    private static void assertFormat(Object[] args, String expected) {
         try (Context cx = Context.enter()) {
             Scriptable scope = cx.initStandardObjects();
             assertEquals(expected, NativeConsole.format(cx, scope, args));
         }
     }
 
-    private void assertPrintCalls(String source, List<PrinterCall> expectedCalls) {
+    private static void assertPrintCalls(String source, List<PrinterCall> expectedCalls) {
         DummyConsolePrinter printer = new DummyConsolePrinter();
 
         try (Context cx = Context.enter()) {
@@ -354,18 +378,6 @@ public class NativeConsoleTest {
             NativeConsole.init(scope, false, printer);
             cx.evaluateString(scope, source, "source", 1, null);
             printer.assertCalls(expectedCalls);
-        }
-    }
-
-    private void assertException(Object[] args, Class<? extends Exception> ex) {
-        try (Context cx = Context.enter()) {
-            Scriptable scope = cx.initStandardObjects();
-            NativeConsole.format(cx, scope, args);
-            fail();
-        } catch (Exception e) {
-            if (!ex.isInstance(e)) {
-                fail();
-            }
         }
     }
 }

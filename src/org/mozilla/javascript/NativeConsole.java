@@ -323,16 +323,27 @@ public class NativeConsole extends IdScriptableObject {
             return;
         }
 
-        StringBuilder msg = new StringBuilder("Assertion failed:");
-        if (args != null && args.length > 1) {
-            for (int i = 1; i < args.length; ++i) {
-                msg.append(" ").append(ScriptRuntime.toString(args[i]));
-            }
-        } else {
-            msg.append(" console.assert");
+        if (args == null || args.length < 2) {
+            printer.print(
+                    cx,
+                    scope,
+                    Level.ERROR,
+                    new String[] {"Assertion failed: console.assert"},
+                    null);
+            return;
         }
 
-        print(cx, scope, Level.ERROR, msg.toString());
+        Object first = args[1];
+        if (first instanceof String) {
+            args[1] = "Assertion failed: " + first;
+            Object[] newArgs = new Object[args.length - 1];
+            System.arraycopy(args, 1, newArgs, 0, newArgs.length);
+            args = newArgs;
+        } else {
+            args[0] = "Assertion failed: ";
+        }
+
+        printer.print(cx, scope, Level.ERROR, args, null);
     }
 
     private void count(Context cx, Scriptable scope, Object[] args) {
