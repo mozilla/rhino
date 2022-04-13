@@ -72,7 +72,8 @@ public class NativeConsoleTest {
     }
 
     private static class DummyConsolePrinter implements NativeConsole.ConsolePrinter {
-        public List<PrinterCall> calls = new ArrayList<>();
+        private List<PrinterCall> calls = new ArrayList<>();
+        private String msg;
 
         @Override
         public void print(
@@ -82,6 +83,7 @@ public class NativeConsoleTest {
                 Object[] args,
                 ScriptStackElement[] stack) {
             calls.add(new PrinterCall(level, args, stack));
+            msg = NativeConsole.format(cx, scope, args);
         }
 
         public void assertCalls(List<PrinterCall> expectedCalls) {
@@ -89,6 +91,10 @@ public class NativeConsoleTest {
             for (int i = 0; i < calls.size(); ++i) {
                 calls.get(i).assertEquals(expectedCalls.get(i));
             }
+        }
+
+        public void assertMsf(String expectedMsg) {
+            assertEquals(expectedMsg, msg);
         }
     }
 
@@ -351,23 +357,27 @@ public class NativeConsoleTest {
                 Collections.singletonList(
                         new PrinterCall(
                                 Level.ERROR, new String[] {"Assertion failed: console.assert"})));
+        assertPrintMsg("console.assert(false)", "Assertion failed: console.assert");
 
         assertPrintCalls(
                 "console.assert()",
                 Collections.singletonList(
                         new PrinterCall(
                                 Level.ERROR, new String[] {"Assertion failed: console.assert"})));
+        assertPrintMsg("console.assert()", "Assertion failed: console.assert");
 
         assertPrintCalls(
                 "console.assert(false, 'Fail')",
                 Collections.singletonList(
                         new PrinterCall(Level.ERROR, new String[] {"Assertion failed: Fail"})));
+        assertPrintMsg("console.assert(false, 'Fail')", "Assertion failed: Fail");
 
         assertPrintCalls(
                 "console.assert(false, 'Fail', 1)",
                 Collections.singletonList(
                         new PrinterCall(
                                 Level.ERROR, new Object[] {"Assertion failed: Fail", 1.0})));
+        assertPrintMsg("console.assert(false, 'Fail', 1)", "Assertion failed: Fail 1");
 
         assertPrintCalls(
                 "console.assert(false, 'the word is %s', 'foo')",
@@ -375,11 +385,17 @@ public class NativeConsoleTest {
                         new PrinterCall(
                                 Level.ERROR,
                                 new String[] {"Assertion failed: the word is %s", "foo"})));
+        assertPrintMsg(
+                "console.assert(false, 'the word is %s', 'foo')",
+                "Assertion failed: the word is foo");
 
         assertPrintCalls(
                 "console.assert(false, 42)",
                 Collections.singletonList(
-                        new PrinterCall(Level.ERROR, new Object[] {"Assertion failed: ", 42})));
+                        new PrinterCall(Level.ERROR, new Object[] {"Assertion failed:", 42})));
+        assertPrintMsg("console.assert(false, 42)", "Assertion failed: 42");
+
+        assertPrintMsg("console.assert(false, {a: 7})", "Assertion failed: {\"a\":7}");
     }
 
     @Test
@@ -447,6 +463,17 @@ public class NativeConsoleTest {
             NativeConsole.init(scope, false, printer);
             cx.evaluateString(scope, source, "source", 1, null);
             printer.assertCalls(expectedCalls);
+        }
+    }
+
+    private static void assertPrintMsg(String source, String expectedMsg) {
+        DummyConsolePrinter printer = new DummyConsolePrinter();
+
+        try (Context cx = Context.enter()) {
+            Scriptable scope = cx.initStandardObjects();
+            NativeConsole.init(scope, false, printer);
+            cx.evaluateString(scope, source, "source", 1, null);
+            printer.assertMsf(expectedMsg);
         }
     }
 }
