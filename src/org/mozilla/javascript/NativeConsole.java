@@ -359,7 +359,7 @@ public class NativeConsole extends IdScriptableObject {
             System.arraycopy(args, 1, newArgs, 0, newArgs.length);
             args = newArgs;
         } else {
-            args[0] = "Assertion failed: ";
+            args[0] = "Assertion failed:";
         }
 
         printer.print(cx, scope, Level.ERROR, args, null);
