@@ -83,7 +83,14 @@ public class NativeConsoleTest {
                 Object[] args,
                 ScriptStackElement[] stack) {
             calls.add(new PrinterCall(level, args, stack));
+
             msg = NativeConsole.format(cx, scope, args);
+            if (stack != null) {
+                for (ScriptStackElement scriptStackElement : stack) {
+                    msg += "\n";
+                    msg += scriptStackElement;
+                }
+            }
         }
 
         public void assertCalls(List<PrinterCall> expectedCalls) {
@@ -320,6 +327,7 @@ public class NativeConsoleTest {
         assertPrintCalls(
                 "console.log('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.INFO, new Object[] {"abc", 123})));
+        assertPrintMsg("console.log('abc', 123)", "abc 123");
 
         assertPrintCalls(
                 "console.trace('abc', 123)",
@@ -330,22 +338,50 @@ public class NativeConsoleTest {
                                 new ScriptStackElement[] {
                                     new ScriptStackElement("source", null, 1)
                                 })));
+        assertPrintMsg("console.trace('abc', 123)", "abc 123\n@source:1");
 
         assertPrintCalls(
                 "console.debug('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.DEBUG, new Object[] {"abc", 123})));
+        assertPrintMsg("console.debug('abc', 123)", "abc 123");
 
         assertPrintCalls(
                 "console.info('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.INFO, new Object[] {"abc", 123})));
+        assertPrintMsg("console.info('abc', 123)", "abc 123");
 
         assertPrintCalls(
                 "console.warn('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.WARN, new Object[] {"abc", 123})));
+        assertPrintMsg("console.warn('abc', 123)", "abc 123");
 
         assertPrintCalls(
                 "console.error('abc', 123)",
                 Collections.singletonList(new PrinterCall(Level.ERROR, new Object[] {"abc", 123})));
+        assertPrintMsg("console.error('abc', 123)", "abc 123");
+    }
+
+    @Test
+    public void trace() {
+        assertPrintMsg(
+                "  function foo() {\n"
+                        + "    function bar() {\n"
+                        + "      console.trace();\n"
+                        + "    }\n"
+                        + "    bar();\n"
+                        + "  }\n"
+                        + "  foo();\n",
+                "\n" + "bar()@source:3\n" + "foo()@source:5\n" + "@source:7");
+
+        assertPrintMsg(
+                "  function foo() {\n"
+                        + "    function bar() {\n"
+                        + "      console.trace('the word is %s', 'foo');\n"
+                        + "    }\n"
+                        + "    bar();\n"
+                        + "  }\n"
+                        + "  foo();\n",
+                "the word is foo\n" + "bar()@source:3\n" + "foo()@source:5\n" + "@source:7");
     }
 
     @Test
