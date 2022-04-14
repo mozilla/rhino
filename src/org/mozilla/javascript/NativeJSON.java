@@ -294,6 +294,8 @@ public final class NativeJSON extends IdScriptableObject {
             value = getProperty(holder, ((Number) key).intValue());
         }
 
+        if (ScriptRuntime.isSymbol(value)) return Undefined.instance;
+
         if (value instanceof Scriptable && hasProperty((Scriptable) value, "toJSON")) {
             Object toJSON = getProperty((Scriptable) value, "toJSON");
             if (toJSON instanceof Callable) {
