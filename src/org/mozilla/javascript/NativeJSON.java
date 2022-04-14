@@ -299,7 +299,12 @@ public final class NativeJSON extends IdScriptableObject {
         if (value instanceof Scriptable && hasProperty((Scriptable) value, "toJSON")) {
             Object toJSON = getProperty((Scriptable) value, "toJSON");
             if (toJSON instanceof Callable) {
-                value = callMethod(state.cx, (Scriptable) value, "toJSON", new Object[] {key});
+                value =
+                        callMethod(
+                                state.cx,
+                                (Scriptable) value,
+                                "toJSON",
+                                new Object[] {ScriptRuntime.toString(key)});
             }
         } else if (value instanceof BigInteger) {
             Scriptable bigInt = ScriptRuntime.toObject(state.cx, state.scope, value);
