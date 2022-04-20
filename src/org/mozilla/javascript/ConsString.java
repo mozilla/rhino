@@ -69,7 +69,7 @@ public class ConsString implements CharSequence, Serializable {
                     }
                 }
 
-                final String str = (String) next;
+                final String str = next.toString();
                 charPos -= str.length();
                 str.getChars(0, str.length(), chars, charPos);
                 next = stack.isEmpty() ? null : stack.removeFirst();
