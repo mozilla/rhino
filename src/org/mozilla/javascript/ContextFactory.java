@@ -287,6 +287,9 @@ public class ContextFactory {
 
             case Context.FEATURE_ENABLE_JAVA_MAP_ACCESS:
                 return false;
+
+            case Context.FEATURE_INTL_402:
+                return false;
         }
         // It is a bug to call the method with unknown featureIndex
         throw new IllegalArgumentException(String.valueOf(featureIndex));
