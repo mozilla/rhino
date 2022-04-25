@@ -8,7 +8,9 @@ import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
 
-/** Tests the ConsString class to ensure it properly supports String, StringBuffer and StringBuilder. */
+/**
+ * Tests the ConsString class to ensure it properly supports String, StringBuffer and StringBuilder.
+ */
 public class Issue1206Test {
     @Test
     public void testConsStringUsingString() {
