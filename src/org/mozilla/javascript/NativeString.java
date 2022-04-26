@@ -831,7 +831,7 @@ final class NativeString extends IdScriptableObject {
         if (!(id instanceof Symbol)
                 && (cx != null)
                 && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
-            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
+            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(id);
             if (s.stringId == null && 0 <= s.index && s.index < string.length()) {
                 String value = String.valueOf(string.charAt(s.index));
                 return defaultIndexPropertyDescriptor(value);

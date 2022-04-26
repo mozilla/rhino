@@ -39,7 +39,7 @@ class AbstractEcmaObjectOperations {
         if (property instanceof Symbol) {
             result = ScriptableObject.ensureSymbolScriptable(o).has((Symbol) property, obj);
         } else {
-            ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, property);
+            ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(property);
             if (s.stringId == null) {
                 result = obj.has(s.index, obj);
             } else {

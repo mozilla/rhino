@@ -1574,11 +1574,10 @@ public class ScriptRuntime {
     }
 
     /**
-     * If toString(id) is a decimal presentation of int32 value, then id is index. In this case
-     * return null and make the index available as ScriptRuntime.lastIndexResult(cx). Otherwise
-     * return toString(id).
+     * If id is a number or a string presentation of an int32 value, then id the returning
+     * StringIdOrIndex has the index set, otherwise the stringId is set.
      */
-    static StringIdOrIndex toStringIdOrIndex(Context cx, Object id) {
+    static StringIdOrIndex toStringIdOrIndex(Object id) {
         if (id instanceof Number) {
             double d = ((Number) id).doubleValue();
             int index = (int) d;
@@ -1628,7 +1627,7 @@ public class ScriptRuntime {
         } else if (isSymbol(elem)) {
             result = ScriptableObject.getProperty(obj, (Symbol) elem);
         } else {
-            StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+            StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId == null) {
                 int index = s.index;
                 result = ScriptableObject.getProperty(obj, index);
@@ -1760,7 +1759,7 @@ public class ScriptRuntime {
         } else if (isSymbol(elem)) {
             ScriptableObject.putProperty(obj, (Symbol) elem, value);
         } else {
-            StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+            StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId == null) {
                 ScriptableObject.putProperty(obj, s.index, value);
             } else {
@@ -1841,7 +1840,7 @@ public class ScriptRuntime {
             so.delete(s);
             return !so.has(s, target);
         }
-        StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+        StringIdOrIndex s = toStringIdOrIndex(elem);
         if (s.stringId == null) {
             target.delete(s.index);
             return !target.has(s.index, target);
@@ -1856,7 +1855,7 @@ public class ScriptRuntime {
         if (isSymbol(elem)) {
             result = ScriptableObject.hasProperty(target, (Symbol) elem);
         } else {
-            StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+            StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId == null) {
                 result = ScriptableObject.hasProperty(target, s.index);
             } else {
@@ -2388,7 +2387,7 @@ public class ScriptRuntime {
             SymbolScriptable so = ScriptableObject.ensureSymbolScriptable(x.obj);
             result = so.get((Symbol) x.currentId, x.obj);
         } else {
-            StringIdOrIndex s = toStringIdOrIndex(cx, x.currentId);
+            StringIdOrIndex s = toStringIdOrIndex(x.currentId);
             if (s.stringId == null) {
                 result = x.obj.get(s.index, x.obj);
             } else {
@@ -2521,7 +2520,7 @@ public class ScriptRuntime {
             value = ScriptableObject.getProperty(thisObj, (Symbol) elem);
 
         } else {
-            StringIdOrIndex s = toStringIdOrIndex(cx, elem);
+            StringIdOrIndex s = toStringIdOrIndex(elem);
             if (s.stringId != null) {
                 return getPropFunctionAndThis(obj, s.stringId, cx, scope);
             }
