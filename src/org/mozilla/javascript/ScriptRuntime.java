@@ -2289,16 +2289,15 @@ public class ScriptRuntime {
         ((IdEnumeration) enumObj).enumNumbers = enumNumbers;
     }
 
-    public static Boolean enumNext(Object enumObj) {
+    public static Boolean enumNext(Object enumObj, Context cx) {
         IdEnumeration x = (IdEnumeration) enumObj;
         if (x.iterator != null) {
             if (x.enumType == ENUMERATE_VALUES_IN_ORDER) {
-                return enumNextInOrder(x);
+                return enumNextInOrder(x, cx);
             }
             Object v = ScriptableObject.getProperty(x.iterator, "next");
             if (!(v instanceof Callable)) return Boolean.FALSE;
             Callable f = (Callable) v;
-            Context cx = Context.getContext();
             try {
                 x.currentId = f.call(cx, x.iterator.getParentScope(), x.iterator, emptyArgs);
                 return Boolean.TRUE;
@@ -2338,13 +2337,12 @@ public class ScriptRuntime {
         }
     }
 
-    private static Boolean enumNextInOrder(IdEnumeration enumObj) {
+    private static Boolean enumNextInOrder(IdEnumeration enumObj, Context cx) {
         Object v = ScriptableObject.getProperty(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         if (!(v instanceof Callable)) {
             throw notFunctionError(enumObj.iterator, ES6Iterator.NEXT_METHOD);
         }
         Callable f = (Callable) v;
-        Context cx = Context.getContext();
         Scriptable scope = enumObj.iterator.getParentScope();
         Object r = f.call(cx, scope, enumObj.iterator, emptyArgs);
         Scriptable iteratorResult = toObject(cx, scope, r);
