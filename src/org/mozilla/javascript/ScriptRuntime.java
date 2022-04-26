@@ -2869,6 +2869,9 @@ public class ScriptRuntime {
     /** The typeof operator that correctly handles the undefined case */
     public static String typeofName(Scriptable scope, String id) {
         Context cx = Context.getContext();
+        if (scope.getPrototype() instanceof ImporterTopLevel) {
+            scope.getPrototype().get(id, scope);
+        }
         Scriptable val = bind(cx, scope, id);
         if (val == null) return "undefined";
         return typeof(getObjectProp(val, id, cx));
