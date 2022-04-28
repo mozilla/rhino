@@ -2365,9 +2365,10 @@ public abstract class ScriptableObject
         return Context.call(null, fun, scope, obj, args);
     }
 
-    static Scriptable getBase(Scriptable obj, String name) {
+    static Scriptable getBase(Scriptable start, String name) {
+        Scriptable obj = start;
         do {
-            if (obj.has(name, obj)) break;
+            if (obj.has(name, start)) break;
             obj = obj.getPrototype();
         } while (obj != null);
         return obj;
