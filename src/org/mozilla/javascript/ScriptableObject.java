@@ -2374,17 +2374,19 @@ public abstract class ScriptableObject
         return obj;
     }
 
-    static Scriptable getBase(Scriptable obj, int index) {
+    static Scriptable getBase(Scriptable start, int index) {
+        Scriptable obj = start;
         do {
-            if (obj.has(index, obj)) break;
+            if (obj.has(index, start)) break;
             obj = obj.getPrototype();
         } while (obj != null);
         return obj;
     }
 
-    private static Scriptable getBase(Scriptable obj, Symbol key) {
+    private static Scriptable getBase(Scriptable start, Symbol key) {
+        Scriptable obj = start;
         do {
-            if (ensureSymbolScriptable(obj).has(key, obj)) break;
+            if (ensureSymbolScriptable(obj).has(key, start)) break;
             obj = obj.getPrototype();
         } while (obj != null);
         return obj;
