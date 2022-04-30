@@ -2289,6 +2289,12 @@ public class ScriptRuntime {
         ((IdEnumeration) enumObj).enumNumbers = enumNumbers;
     }
 
+    /** @deprecated since 1.7.15. Use {@link #enumNext(Context, Object)} instead */
+    @Deprecated
+    public static Boolean enumNext(Object enumObj) {
+        return enumNext(enumObj, Context.getContext());
+    }
+
     public static Boolean enumNext(Object enumObj, Context cx) {
         IdEnumeration x = (IdEnumeration) enumObj;
         if (x.iterator != null) {
