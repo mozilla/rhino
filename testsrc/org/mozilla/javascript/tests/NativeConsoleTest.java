@@ -362,6 +362,18 @@ public class NativeConsoleTest {
     }
 
     @Test
+    public void printCallable() {
+        String js = "function foo() {}\n" + "console.log(foo)";
+        assertPrintMsg(js, "\"\\nfunction foo() {\\n}\\n\"");
+
+        js = "console.log(/abc/i)";
+        assertPrintMsg(js, "\"/abc/i\"");
+
+        js = "function foo() {}\n" + "console.log([foo, /abc/])";
+        assertPrintMsg(js, "[\"\\nfunction foo() {\\n}\\n\",\"/abc/\"]");
+    }
+
+    @Test
     public void trace() {
         assertPrintMsg(
                 "  function foo() {\n"
