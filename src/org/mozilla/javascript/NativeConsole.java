@@ -335,7 +335,17 @@ public class NativeConsole extends IdScriptableObject {
                                 Scriptable callScope,
                                 Scriptable callThisObj,
                                 Object[] callArgs) {
-                            final Object value = callArgs[1];
+                            Object value = callArgs[1];
+                            while (value instanceof Delegator) {
+                                value = ((Delegator) value).getDelegee();
+                            }
+                            if (value instanceof BaseFunction) {
+                                StringBuilder sb = new StringBuilder();
+                                sb.append("function ")
+                                        .append(((BaseFunction) value).getFunctionName())
+                                        .append("() {...}");
+                                return sb.toString();
+                            }
                             if (value instanceof Callable) {
                                 return ScriptRuntime.toString(value);
                             }
