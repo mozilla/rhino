@@ -127,29 +127,12 @@ Then submit the resulting patch as a pull request to Babel.
 Compatibility data for `core-js`, the `babel` polyfill engine, also needs to
 be updated.
 
-* Check out `zloirock/core-js` and `npm install && npm run build-compat`.
-* Copy the most recent rhino JAR into the directory as `rhino.jar`.
-* Edit `tests/compat/tests.js` by replacing all instances of `GLOBAL` with
-`global` (changes to make this step unnecessary could be contributed back to
-`core-js`).
-* Edit `tests/compat/node-runner.js` by replacing `console.log` with `print`
-and by adding the following snippet to the bottom (these changes could also be
-contributed back to `core-js` as a new `rhino-runner.js` file):
-
-```javascript
-print("NOW SUPPORTED:");
-var data = require("../../packages/core-js-compat/data.json");
-for (var key2 in data) {
-  if (data[key2].rhino === undefined && result[key2] === true) {
-    print(key2);
-  }
-}
-```
-
-* Run `java -jar rhino.jar -version 200 -require tests/compat/node-runner.js`.
-* Much like in `compat-table`, edit `data.mjs` to add a line `rhino: 1.7.[XX]`
-for any newly-passing test labeled as "NOW SUPPORTED."
-* Submit a pull request with the `data.mjs` changes.
+* Check out `zloirock/core-js` and run `npm install && npm run build-compat`.
+* Define the actual Rhino version in the `compat-rhino-prepare` task in `package.json`.
+* Run `npm run compat-rhino` and you will see the results of tests in the console.
+* Much like in `compat-table`, edit `packages/core-js-compat/src/data.mjs` to add a line
+`rhino: 1.7.[XX]` for any newly-passing test labeled as "not required".
+* Submit a pull request with changes.
 
 ## Prepare for Next Release
 
