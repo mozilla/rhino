@@ -8,6 +8,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Locale;
 import org.junit.After;
 import org.junit.Before;
@@ -107,6 +109,23 @@ public class SealedSharedScopeTest {
         o = evaluateString(scope2, "typeof imp1 == 'undefined'"); // scope 2 has
         // no imp1
         assertTrue((Boolean) o);
+    }
+
+    @Test
+    public void testGlobalScope() throws FileNotFoundException, IOException {
+        evaluateString(scope1, "importPackage(Packages.java.io);");
+
+        // Loading object via direct class type evaluate and then checking with typeof
+        // works
+        Object o = evaluateString(scope1, "File");
+        assertEquals(java.io.File.class, o);
+        o = evaluateString(scope1, "typeof File");
+        assertEquals("function", o);
+
+        // Direct checking with typeof fails
+        evaluateString(scope2, "importPackage(Packages.java.io);");
+        o = evaluateString(scope2, "typeof File");
+        assertEquals("function", o);
     }
 
     @Test
