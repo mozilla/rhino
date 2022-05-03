@@ -325,7 +325,34 @@ public class NativeConsole extends IdScriptableObject {
         }
 
         try {
-            Object stringify = NativeJSON.stringify(cx, scope, arg, null, null);
+            // NativeJSON.stringify outputs Callable's as null, convert to string
+            // to make the output less confusing
+            final Callable replacer =
+                    new Callable() {
+                        @Override
+                        public Object call(
+                                Context callCx,
+                                Scriptable callScope,
+                                Scriptable callThisObj,
+                                Object[] callArgs) {
+                            Object value = callArgs[1];
+                            while (value instanceof Delegator) {
+                                value = ((Delegator) value).getDelegee();
+                            }
+                            if (value instanceof BaseFunction) {
+                                StringBuilder sb = new StringBuilder();
+                                sb.append("function ")
+                                        .append(((BaseFunction) value).getFunctionName())
+                                        .append("() {...}");
+                                return sb.toString();
+                            }
+                            if (value instanceof Callable) {
+                                return ScriptRuntime.toString(value);
+                            }
+                            return value;
+                        }
+                    };
+            Object stringify = NativeJSON.stringify(cx, scope, arg, replacer, null);
             return ScriptRuntime.toString(stringify);
         } catch (EcmaError e) {
             if ("TypeError".equals(e.getName())) {

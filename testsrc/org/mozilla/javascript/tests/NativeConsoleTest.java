@@ -362,6 +362,22 @@ public class NativeConsoleTest {
     }
 
     @Test
+    public void printCallable() {
+        String js = "function foo() {}\n console.log(foo)";
+        assertPrintMsg(js, "\"function foo() {...}\"");
+
+        // suppress body
+        js = "function fooo() { var i = 0; }\n console.log(fooo)";
+        assertPrintMsg(js, "\"function fooo() {...}\"");
+
+        js = "console.log(/abc/i)";
+        assertPrintMsg(js, "\"/abc/i\"");
+
+        js = "function foo() {}\n" + "console.log([foo, /abc/])";
+        assertPrintMsg(js, "[\"function foo() {...}\",\"/abc/\"]");
+    }
+
+    @Test
     public void trace() {
         assertPrintMsg(
                 "  function foo() {\n"
