@@ -250,7 +250,7 @@ public final class NativeJSON extends IdScriptableObject {
             propertyList = new Object[propertySet.size()];
             int i = 0;
             for (Object prop : propertySet) {
-                ScriptRuntime.StringIdOrIndex idOrIndex = ScriptRuntime.toStringIdOrIndex(cx, prop);
+                ScriptRuntime.StringIdOrIndex idOrIndex = ScriptRuntime.toStringIdOrIndex(prop);
                 // This will always be a String or Integer
                 propertyList[i++] =
                         (idOrIndex.stringId == null) ? idOrIndex.index : idOrIndex.stringId;

@@ -1102,11 +1102,14 @@ class BodyCodegen {
                 {
                     int local = getLocalBlockRegister(node);
                     cfw.addALoad(local);
+                    cfw.addALoad(contextLocal);
                     if (type == Token.ENUM_NEXT) {
                         addScriptRuntimeInvoke(
-                                "enumNext", "(Ljava/lang/Object;)Ljava/lang/Boolean;");
+                                "enumNext",
+                                "(Ljava/lang/Object;"
+                                        + "Lorg/mozilla/javascript/Context;"
+                                        + ")Ljava/lang/Boolean;");
                     } else {
-                        cfw.addALoad(contextLocal);
                         addScriptRuntimeInvoke(
                                 "enumId",
                                 "(Ljava/lang/Object;"

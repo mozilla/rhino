@@ -1574,7 +1574,7 @@ public abstract class ScriptableObject
         if (id instanceof Symbol) {
             key = id;
         } else {
-            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
+            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(id);
             if (s.stringId == null) {
                 index = s.index;
             } else {
@@ -2659,7 +2659,7 @@ public abstract class ScriptableObject
         if (id instanceof Symbol) {
             return slotMap.query(id, 0);
         }
-        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
+        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(id);
         if (s.stringId == null) {
             return slotMap.query(null, s.index);
         }

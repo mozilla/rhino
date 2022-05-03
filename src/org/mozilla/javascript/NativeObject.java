@@ -231,7 +231,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                         result = ((SymbolScriptable) thisObj).has((Symbol) arg, thisObj);
                         result = result && isEnumerable((Symbol) arg, thisObj);
                     } else {
-                        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
+                        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(arg);
                         // When checking if a property is enumerable, a missing property should
                         // return "false" instead of
                         // throwing an exception.  See: https://github.com/mozilla/rhino/issues/415
@@ -298,7 +298,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                                 String.valueOf(args[0]));
                     }
                     ScriptableObject so = (ScriptableObject) thisObj;
-                    StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
+                    StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(args[0]);
                     int index = s.stringId != null ? 0 : s.index;
                     Callable getterOrSetter = (Callable) args[1];
                     boolean isSetter = (id == Id___defineSetter__);
@@ -314,7 +314,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return Undefined.instance;
 
                     ScriptableObject so = (ScriptableObject) thisObj;
-                    StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
+                    StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(args[0]);
                     int index = s.stringId != null ? 0 : s.index;
                     boolean isSetter = (id == Id___lookupSetter__);
                     Object gs;
