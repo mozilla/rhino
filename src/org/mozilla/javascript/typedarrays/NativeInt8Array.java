@@ -15,61 +15,48 @@ import org.mozilla.javascript.Undefined;
  * An array view that stores 8-bit quantities and implements the JavaScript "Int8Array" interface.
  * It also implements List&lt;Byte&gt; for direct manipulation in Java.
  */
-
-public class NativeInt8Array
-    extends NativeTypedArrayView<Byte>
-{
+public class NativeInt8Array extends NativeTypedArrayView<Byte> {
     private static final long serialVersionUID = -3349419704390398895L;
 
     private static final String CLASS_NAME = "Int8Array";
 
-    public NativeInt8Array()
-    {
-    }
+    public NativeInt8Array() {}
 
-    public NativeInt8Array(NativeArrayBuffer ab, int off, int len)
-    {
+    public NativeInt8Array(NativeArrayBuffer ab, int off, int len) {
         super(ab, off, len, len);
     }
 
-    public NativeInt8Array(int len)
-    {
+    public NativeInt8Array(int len) {
         this(new NativeArrayBuffer(len), 0, len);
     }
 
     @Override
-    public String getClassName()
-    {
+    public String getClassName() {
         return CLASS_NAME;
     }
 
-    public static void init(Context cx, Scriptable scope, boolean sealed)
-    {
+    public static void init(Context cx, Scriptable scope, boolean sealed) {
         NativeInt8Array a = new NativeInt8Array();
         a.exportAsJSClass(MAX_PROTOTYPE_ID, scope, sealed);
     }
 
     @Override
-    protected NativeInt8Array construct(NativeArrayBuffer ab, int off, int len)
-    {
+    protected NativeInt8Array construct(NativeArrayBuffer ab, int off, int len) {
         return new NativeInt8Array(ab, off, len);
     }
 
     @Override
-    public int getBytesPerElement()
-    {
+    public int getBytesPerElement() {
         return 1;
     }
 
     @Override
-    protected NativeInt8Array realThis(Scriptable thisObj, IdFunctionObject f)
-    {
+    protected NativeInt8Array realThis(Scriptable thisObj, IdFunctionObject f) {
         return ensureType(thisObj, NativeInt8Array.class, f);
     }
 
     @Override
-    protected Object js_get(int index)
-    {
+    protected Object js_get(int index) {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
@@ -77,8 +64,7 @@ public class NativeInt8Array
     }
 
     @Override
-    protected Object js_set(int index, Object c)
-    {
+    protected Object js_set(int index, Object c) {
         if (checkIndex(index)) {
             return Undefined.instance;
         }
@@ -90,20 +76,18 @@ public class NativeInt8Array
     // List implementation (much of it handled by the superclass)
 
     @Override
-    public Byte get(int i)
-    {
+    public Byte get(int i) {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Byte)js_get(i);
+        return (Byte) js_get(i);
     }
 
     @Override
-    public Byte set(int i, Byte aByte)
-    {
+    public Byte set(int i, Byte aByte) {
         if (checkIndex(i)) {
             throw new IndexOutOfBoundsException();
         }
-        return (Byte)js_set(i, aByte);
+        return (Byte) js_set(i, aByte);
     }
 }

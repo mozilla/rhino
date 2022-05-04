@@ -188,7 +188,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
                     return js_parseFloat(args);
 
                 case Id_parseInt:
-                    return js_parseInt(args);
+                    return js_parseInt(cx, args);
 
                 case Id_unescape:
                     return js_unescape(args);
@@ -209,7 +209,7 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
     }
 
     /** The global method parseInt, as per ECMA-262 15.1.2.2. */
-    static Object js_parseInt(Object[] args) {
+    static Object js_parseInt(Context cx, Object[] args) {
         String s = ScriptRuntime.toString(args, 0);
         int radix = ScriptRuntime.toInt32(args, 1);
 
@@ -245,7 +245,6 @@ public class NativeGlobal implements Serializable, IdFunctionCall {
                     radix = 16;
                     start += 2;
                 } else if ('0' <= c && c <= '9') {
-                    Context cx = Context.getCurrentContext();
                     if (cx == null || cx.getLanguageVersion() < Context.VERSION_1_5) {
                         radix = 8;
                         start++;

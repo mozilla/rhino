@@ -13,11 +13,12 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.XmlMemberGet;
 
 /**
- * Test resembles issue #483 with {@link XmlMemberGet#toSource()} implementation.
- * {@code toSource()} implementation calls {@link org.mozilla.javascript.ast.AstNode#operatorToString(int)}
- * passing in node's type, which is {@link org.mozilla.javascript.Token#DOT} or
- * {@link org.mozilla.javascript.Token#DOTDOT} by documentation. This causes {@link IllegalArgumentException}, as
- * {@code DOT} and {@code DOTDOT} are not treated as operators in {@code AstNode}.
+ * Test resembles issue #483 with {@link XmlMemberGet#toSource()} implementation. {@code toSource()}
+ * implementation calls {@link org.mozilla.javascript.ast.AstNode#operatorToString(int)} passing in
+ * node's type, which is {@link org.mozilla.javascript.Token#DOT} or {@link
+ * org.mozilla.javascript.Token#DOTDOT} by documentation. This causes {@link
+ * IllegalArgumentException}, as {@code DOT} and {@code DOTDOT} are not treated as operators in
+ * {@code AstNode}.
  */
 public class BugXmlMemberGetToSource {
     private CompilerEnvirons environment;

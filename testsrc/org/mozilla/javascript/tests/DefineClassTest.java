@@ -31,7 +31,9 @@ public class DefineClassTest {
             assertEquals(evaluate(cx, "a.instanceFunction();"), "instanceFunction");
             assertEquals(evaluate(cx, "a.namedFunction();"), "namedFunction");
             assertEquals(evaluate(cx, "AnnotatedHostObject.staticFunction();"), "staticFunction");
-            assertEquals(evaluate(cx, "AnnotatedHostObject.namedStaticFunction();"), "namedStaticFunction");
+            assertEquals(
+                    evaluate(cx, "AnnotatedHostObject.namedStaticFunction();"),
+                    "namedStaticFunction");
             assertNull(evaluate(cx, "a.foo;"));
             assertEquals(evaluate(cx, "a.foo = 'foo'; a.foo;"), "FOO");
             assertEquals(evaluate(cx, "a.bar;"), "bar");
@@ -69,7 +71,6 @@ public class DefineClassTest {
     private Object evaluate(Context cx, String str) {
         return cx.evaluateString(scope, str, "<testsrc>", 0, null);
     }
-
 
     @Before
     public void init() throws Exception {
@@ -178,7 +179,5 @@ public class DefineClassTest {
         public void setBar(String bar) {
             this.bar = bar.toUpperCase();
         }
-
     }
-
 }

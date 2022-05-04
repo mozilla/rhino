@@ -341,6 +341,14 @@ public class Context implements Closeable {
      */
     public static final int FEATURE_ENABLE_JAVA_MAP_ACCESS = 21;
 
+    /**
+     * Internationalization API implementation (see https://tc39.github.io/ecma402) can be activated
+     * using this feature.
+     *
+     * @since 1.7 Release 15
+     */
+    public static final int FEATURE_INTL_402 = 22;
+
     public static final String languageVersionProperty = "language version";
     public static final String errorReporterProperty = "error reporter";
 

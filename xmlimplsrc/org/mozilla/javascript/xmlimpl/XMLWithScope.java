@@ -10,24 +10,21 @@ import org.mozilla.javascript.NativeWith;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.xml.XMLObject;
 
-final class XMLWithScope extends NativeWith
-{
+final class XMLWithScope extends NativeWith {
     private static final long serialVersionUID = -696429282095170887L;
 
     private XMLLibImpl lib;
-    private int         _currIndex;
-    private XMLList     _xmlList;
-    private XMLObject   _dqPrototype;
+    private int _currIndex;
+    private XMLList _xmlList;
+    private XMLObject _dqPrototype;
 
-    XMLWithScope(XMLLibImpl lib, Scriptable parent, XMLObject prototype)
-    {
+    XMLWithScope(XMLLibImpl lib, Scriptable parent, XMLObject prototype) {
         super(parent, prototype);
         this.lib = lib;
     }
 
-    void initAsDotQuery()
-    {
-        XMLObject prototype = (XMLObject)getPrototype();
+    void initAsDotQuery() {
+        XMLObject prototype = (XMLObject) getPrototype();
         // XMLWithScope also handles the .(xxx) DotQuery for XML
         // basically DotQuery is a for/in/with statement and in
         // the following 3 statements we setup to signal it's
@@ -38,9 +35,9 @@ final class XMLWithScope extends NativeWith
         _currIndex = 0;
         _dqPrototype = prototype;
         if (prototype instanceof XMLList) {
-            XMLList xl = (XMLList)prototype;
+            XMLList xl = (XMLList) prototype;
             if (xl.length() > 0) {
-                setPrototype((Scriptable)(xl.get(0, null)));
+                setPrototype((Scriptable) (xl.get(0, null)));
             }
         }
         // Always return the outer-most type of XML lValue of
@@ -49,8 +46,7 @@ final class XMLWithScope extends NativeWith
     }
 
     @Override
-    protected Object updateDotQuery(boolean value)
-    {
+    protected Object updateDotQuery(boolean value) {
         // Return null to continue looping
 
         XMLObject seed = _dqPrototype;
@@ -60,7 +56,7 @@ final class XMLWithScope extends NativeWith
             // We're a list so keep testing each element of the list if the
             // result on the top of stack is true then that element is added
             // to our result list.  If false, we try the next element.
-            XMLList orgXmlL = (XMLList)seed;
+            XMLList orgXmlL = (XMLList) seed;
 
             int idx = _currIndex;
 
@@ -74,7 +70,7 @@ final class XMLWithScope extends NativeWith
                 // reset the expression to run with this object as
                 // the WITH selector.
                 _currIndex = idx;
-                setPrototype((Scriptable)(orgXmlL.get(idx, null)));
+                setPrototype((Scriptable) (orgXmlL.get(idx, null)));
 
                 // continue looping
                 return null;
@@ -83,7 +79,7 @@ final class XMLWithScope extends NativeWith
             // If we're not a XMLList then there's no looping
             // just return DQPrototype if the result is true.
             if (value) {
-              xmlL.addToList(seed);
+                xmlL.addToList(seed);
             }
         }
 

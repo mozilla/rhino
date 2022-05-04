@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/number.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class NativeNumberTest extends ScriptTestsBase
-{
-}
+public class NativeNumberTest extends ScriptTestsBase {}

@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/function-arity.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class FunctionArityTest extends ScriptTestsBase
-{
-}
+public class FunctionArityTest extends ScriptTestsBase {}

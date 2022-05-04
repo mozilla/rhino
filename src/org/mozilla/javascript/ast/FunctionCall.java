@@ -9,16 +9,13 @@ package org.mozilla.javascript.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.mozilla.javascript.Token;
 
-/**
- * AST node for a function call.  Node type is {@link Token#CALL}.
- */
+/** AST node for a function call. Node type is {@link Token#CALL}. */
 public class FunctionCall extends AstNode {
 
     protected static final List<AstNode> NO_ARGS =
-        Collections.unmodifiableList(new ArrayList<AstNode>());
+            Collections.unmodifiableList(new ArrayList<AstNode>());
 
     protected AstNode target;
     protected List<AstNode> arguments;
@@ -29,8 +26,7 @@ public class FunctionCall extends AstNode {
         type = Token.CALL;
     }
 
-    public FunctionCall() {
-    }
+    public FunctionCall() {}
 
     public FunctionCall(int pos) {
         super(pos);
@@ -40,16 +36,14 @@ public class FunctionCall extends AstNode {
         super(pos, len);
     }
 
-    /**
-     * Returns node evaluating to the function to call
-     */
+    /** Returns node evaluating to the function to call */
     public AstNode getTarget() {
         return target;
     }
 
     /**
-     * Sets node evaluating to the function to call, and sets
-     * its parent to this node.
+     * Sets node evaluating to the function to call, and sets its parent to this node.
+     *
      * @param target node evaluating to the function to call.
      * @throws IllegalArgumentException} if target is {@code null}
      */
@@ -61,8 +55,8 @@ public class FunctionCall extends AstNode {
 
     /**
      * Returns function argument list
-     * @return function argument list, or an empty immutable list if
-     *         there are no arguments.
+     *
+     * @return function argument list, or an empty immutable list if there are no arguments.
      */
     public List<AstNode> getArguments() {
         return arguments != null ? arguments : NO_ARGS;
@@ -70,15 +64,15 @@ public class FunctionCall extends AstNode {
 
     /**
      * Sets function argument list
-     * @param arguments function argument list.  Can be {@code null},
-     *        in which case any existing args are removed.
+     *
+     * @param arguments function argument list. Can be {@code null}, in which case any existing args
+     *     are removed.
      */
     public void setArguments(List<AstNode> arguments) {
         if (arguments == null) {
             this.arguments = null;
         } else {
-            if (this.arguments != null)
-                this.arguments.clear();
+            if (this.arguments != null) this.arguments.clear();
             for (AstNode arg : arguments) {
                 addArgument(arg);
             }
@@ -87,6 +81,7 @@ public class FunctionCall extends AstNode {
 
     /**
      * Adds an argument to the list, and sets its parent to this node.
+     *
      * @param arg the argument node to add to the list
      * @throws IllegalArgumentException} if arg is {@code null}
      */
@@ -99,38 +94,31 @@ public class FunctionCall extends AstNode {
         arg.setParent(this);
     }
 
-    /**
-     * Returns left paren position, -1 if missing
-     */
+    /** Returns left paren position, -1 if missing */
     public int getLp() {
         return lp;
     }
 
     /**
      * Sets left paren position
+     *
      * @param lp left paren position
      */
     public void setLp(int lp) {
         this.lp = lp;
     }
 
-    /**
-     * Returns right paren position, -1 if missing
-     */
+    /** Returns right paren position, -1 if missing */
     public int getRp() {
         return rp;
     }
 
-    /**
-     * Sets right paren position
-     */
+    /** Sets right paren position */
     public void setRp(int rp) {
         this.rp = rp;
     }
 
-    /**
-     * Sets both paren positions
-     */
+    /** Sets both paren positions */
     public void setParens(int lp, int rp) {
         this.lp = lp;
         this.rp = rp;
@@ -146,15 +134,13 @@ public class FunctionCall extends AstNode {
             printList(arguments, sb);
         }
         sb.append(")");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth)).append("\n");
         }
         return sb.toString();
     }
 
-    /**
-     * Visits this node, the target object, and the arguments.
-     */
+    /** Visits this node, the target object, and the arguments. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

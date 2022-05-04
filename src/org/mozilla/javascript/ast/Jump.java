@@ -10,11 +10,10 @@ import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
- * Used for code generation.  During codegen, the AST is transformed
- * into an Intermediate Representation (IR) in which loops, ifs, switches
- * and other control-flow statements are rewritten as labeled jumps.
- * If the parser is set to IDE-mode, the resulting AST will not contain
- * any instances of this class.
+ * Used for code generation. During codegen, the AST is transformed into an Intermediate
+ * Representation (IR) in which loops, ifs, switches and other control-flow statements are rewritten
+ * as labeled jumps. If the parser is set to IDE-mode, the resulting AST will not contain any
+ * instances of this class.
  */
 public class Jump extends AstNode {
 
@@ -45,79 +44,69 @@ public class Jump extends AstNode {
         setLineno(lineno);
     }
 
-    public Jump getJumpStatement()
-    {
+    public Jump getJumpStatement() {
         if (type != Token.BREAK && type != Token.CONTINUE) codeBug();
         return jumpNode;
     }
 
-    public void setJumpStatement(Jump jumpStatement)
-    {
+    public void setJumpStatement(Jump jumpStatement) {
         if (type != Token.BREAK && type != Token.CONTINUE) codeBug();
         if (jumpStatement == null) codeBug();
-        if (this.jumpNode != null) codeBug(); //only once
+        if (this.jumpNode != null) codeBug(); // only once
         this.jumpNode = jumpStatement;
     }
 
-    public Node getDefault()
-    {
+    public Node getDefault() {
         if (type != Token.SWITCH) codeBug();
         return target2;
     }
 
-    public void setDefault(Node defaultTarget)
-    {
+    public void setDefault(Node defaultTarget) {
         if (type != Token.SWITCH) codeBug();
         if (defaultTarget.getType() != Token.TARGET) codeBug();
-        if (target2 != null) codeBug(); //only once
+        if (target2 != null) codeBug(); // only once
         target2 = defaultTarget;
     }
 
-    public Node getFinally()
-    {
+    public Node getFinally() {
         if (type != Token.TRY) codeBug();
         return target2;
     }
 
-    public void setFinally(Node finallyTarget)
-    {
+    public void setFinally(Node finallyTarget) {
         if (type != Token.TRY) codeBug();
         if (finallyTarget.getType() != Token.TARGET) codeBug();
-        if (target2 != null) codeBug(); //only once
+        if (target2 != null) codeBug(); // only once
         target2 = finallyTarget;
     }
 
-    public Jump getLoop()
-    {
+    public Jump getLoop() {
         if (type != Token.LABEL) codeBug();
         return jumpNode;
     }
 
-    public void setLoop(Jump loop)
-    {
+    public void setLoop(Jump loop) {
         if (type != Token.LABEL) codeBug();
         if (loop == null) codeBug();
-        if (jumpNode != null) codeBug(); //only once
+        if (jumpNode != null) codeBug(); // only once
         jumpNode = loop;
     }
 
-    public Node getContinue()
-    {
+    public Node getContinue() {
         if (type != Token.LOOP) codeBug();
         return target2;
     }
 
-    public void setContinue(Node continueTarget)
-    {
+    public void setContinue(Node continueTarget) {
         if (type != Token.LOOP) codeBug();
         if (continueTarget.getType() != Token.TARGET) codeBug();
-        if (target2 != null) codeBug(); //only once
+        if (target2 != null) codeBug(); // only once
         target2 = continueTarget;
     }
 
     /**
-     * Jumps are only used directly during code generation, and do
-     * not support this interface.
+     * Jumps are only used directly during code generation, and do not support this interface.
+     *
      * @throws UnsupportedOperationException
      */
     @Override

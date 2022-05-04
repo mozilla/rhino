@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/**
- * 
- */
+/** */
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
@@ -18,10 +16,7 @@ import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 
-/**
- * @author André Bargull
- * 
- */
+/** @author André Bargull */
 public class Bug688021Test {
     private Context cx;
 
@@ -54,5 +49,4 @@ public class Bug688021Test {
         assertEquals("debugger;\n", toSource("debugger;"));
         assertEquals("debugger;\n", toSource("debugger;\n"));
     }
-
 }

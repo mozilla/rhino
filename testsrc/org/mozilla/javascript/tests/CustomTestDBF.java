@@ -10,7 +10,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class CustomTestDBF extends DocumentBuilderFactory {
     public static final String INTENTIONAL_CONFIG_EXCEPTION = "Intentionally thrown";
-    
+
     @Override
     public Object getAttribute(String arg0) throws IllegalArgumentException {
         // TODO Auto-generated method stub
@@ -36,9 +36,8 @@ public class CustomTestDBF extends DocumentBuilderFactory {
 
     @Override
     public void setFeature(String name, boolean value) throws ParserConfigurationException {
-        if("http://apache.org/xml/features/disallow-doctype-decl".equals(name)){
+        if ("http://apache.org/xml/features/disallow-doctype-decl".equals(name)) {
             org.mozilla.javascript.tests.XMLSecureParserTest.CALLED_BY_XML_PARSER = true;
         }
     }
-    
 }

@@ -9,34 +9,31 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * Node representing comments.
- * Node type is {@link Token#COMMENT}.
+ * Node representing comments. Node type is {@link Token#COMMENT}.
  *
  * <p>JavaScript effectively has five comment types:
- *   <ol>
- *     <li>// line comments</li>
- *     <li>/* block comments *\/</li>
- *     <li>/** jsdoc comments *\/</li>
- *     <li>&lt;!-- html-open line comments</li>
- *     <li>^\\s*--&gt; html-close line comments</li>
- *   </ol>
  *
- * <p>The first three should be familiar to Java programmers.  JsDoc comments
- * are really just block comments with some conventions about the formatting
- * within the comment delimiters.  Line and block comments are described in the
- * Ecma-262 specification.
+ * <ol>
+ *   <li>// line comments
+ *   <li>/* block comments *\/
+ *   <li>/** jsdoc comments *\/
+ *   <li>&lt;!-- html-open line comments
+ *   <li>^\\s*--&gt; html-close line comments
+ * </ol>
  *
- * <p>SpiderMonkey and Rhino also support HTML comment syntax, but somewhat
- * counterintuitively, the syntax does not produce a block comment.  Instead,
- * everything from the string &lt;!-- through the end of the line is considered
- * a comment, and if the token --&gt; is the first non-whitespace on the line,
- * then the line is considered a line comment.  This is to support parsing
- * JavaScript in &lt;script&gt; HTML tags that has been "hidden" from very old
- * browsers by surrounding it with HTML comment delimiters.
+ * <p>The first three should be familiar to Java programmers. JsDoc comments are really just block
+ * comments with some conventions about the formatting within the comment delimiters. Line and block
+ * comments are described in the Ecma-262 specification.
  *
- * <p>Note the node start position for Comment nodes is still relative to the
- * parent, but Comments are always stored directly in the AstRoot node, so
- * they are also effectively absolute offsets.
+ * <p>SpiderMonkey and Rhino also support HTML comment syntax, but somewhat counterintuitively, the
+ * syntax does not produce a block comment. Instead, everything from the string &lt;!-- through the
+ * end of the line is considered a comment, and if the token --&gt; is the first non-whitespace on
+ * the line, then the line is considered a line comment. This is to support parsing JavaScript in
+ * &lt;script&gt; HTML tags that has been "hidden" from very old browsers by surrounding it with
+ * HTML comment delimiters.
+ *
+ * <p>Note the node start position for Comment nodes is still relative to the parent, but Comments
+ * are always stored directly in the AstRoot node, so they are also effectively absolute offsets.
  */
 public class Comment extends AstNode {
 
@@ -49,6 +46,7 @@ public class Comment extends AstNode {
 
     /**
      * Constructs a new Comment
+     *
      * @param pos the start position
      * @param len the length including delimiter(s)
      * @param type the comment type
@@ -60,31 +58,28 @@ public class Comment extends AstNode {
         this.value = value;
     }
 
-    /**
-     * Returns the comment style
-     */
+    /** Returns the comment style */
     public Token.CommentType getCommentType() {
         return commentType;
     }
 
     /**
      * Sets the comment style
-     * @param type the comment style, a
-     * {@link org.mozilla.javascript.Token.CommentType}
+     *
+     * @param type the comment style, a {@link org.mozilla.javascript.Token.CommentType}
      */
     public void setCommentType(Token.CommentType type) {
         this.commentType = type;
     }
 
-    /**
-     * Returns a string of the comment value.
-     */
+    /** Returns a string of the comment value. */
     public String getValue() {
         return value;
     }
 
     /**
      * Set the comment Value with the new commentString. and updates the length with new Length.
+     *
      * @param commentString
      */
     public void setValue(String commentString) {
@@ -97,15 +92,15 @@ public class Comment extends AstNode {
         StringBuilder sb = new StringBuilder(getLength() + 10);
         sb.append(makeIndent(depth));
         sb.append(value);
-        if(Token.CommentType.BLOCK_COMMENT == this.getCommentType()) {
+        if (Token.CommentType.BLOCK_COMMENT == this.getCommentType()) {
             sb.append("\n");
         }
         return sb.toString();
     }
 
     /**
-     * Comment nodes are not visited during normal visitor traversals,
-     * but comply with the {@link AstNode#visit} interface.
+     * Comment nodes are not visited during normal visitor traversals, but comply with the {@link
+     * AstNode#visit} interface.
      */
     @Override
     public void visit(NodeVisitor v) {

@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/stringify-with-no-params-or-more-than-3-params.js")
 @LanguageVersion(Context.VERSION_DEFAULT)
-public class StringifyWithNoParamsOrMoreThanThreeParams extends ScriptTestsBase
-{
-}
+public class StringifyWithNoParamsOrMoreThanThreeParams extends ScriptTestsBase {}

@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -26,9 +25,8 @@ import org.mozilla.javascript.tools.shell.Global;
 /**
  * Run doctests in folder testsrc/doctests.
  *
- * A doctest is a test in the form of an interactive shell session; Rhino
- * collects and runs the inputs to the shell prompt and compares them to the
- * expected outputs.
+ * <p>A doctest is a test in the form of an interactive shell session; Rhino collects and runs the
+ * inputs to the shell prompt and compares them to the expected outputs.
  *
  * @author Norris Boyd
  */
@@ -47,13 +45,15 @@ public class DoctestsTest {
     }
 
     public static File[] getDoctestFiles() {
-        return TestUtils.recursiveListFiles(new File(baseDirectory),
+        return TestUtils.recursiveListFiles(
+                new File(baseDirectory),
                 new FileFilter() {
                     public boolean accept(File f) {
                         String name = f.getName();
-                        return !name.contains("feature18enabled") && name.endsWith(doctestsExtension);
+                        return !name.contains("feature18enabled")
+                                && name.endsWith(doctestsExtension);
                     }
-            });
+                });
     }
 
     public static String loadFile(File f) throws IOException {
@@ -69,9 +69,9 @@ public class DoctestsTest {
         List<Object[]> result = new ArrayList<Object[]>();
         for (File f : doctests) {
             String contents = loadFile(f);
-            result.add(new Object[] { f.getName(), contents, -1 });
-            result.add(new Object[] { f.getName(), contents, 0 });
-            result.add(new Object[] { f.getName(), contents, 9 });
+            result.add(new Object[] {f.getName(), contents, -1});
+            result.add(new Object[] {f.getName(), contents, 0});
+            result.add(new Object[] {f.getName(), contents, 9});
         }
         return result;
     }
@@ -81,7 +81,7 @@ public class DoctestsTest {
         List<Object[]> result = new ArrayList<Object[]>();
         File f = new File(baseDirectory, "Counter.doctest");
         String contents = loadFile(f);
-        result.add(new Object[] { f.getName(), contents, -1 });
+        result.add(new Object[] {f.getName(), contents, -1});
         return result;
     }
 
@@ -96,8 +96,8 @@ public class DoctestsTest {
             int testsPassed = global.runDoctest(cx, global, source, name, 1);
             assertTrue(testsPassed > 0);
         } catch (Exception ex) {
-          System.out.println(name + "(" + optimizationLevel + "): FAILED due to " + ex);
-          throw ex;
+            System.out.println(name + "(" + optimizationLevel + "): FAILED due to " + ex);
+            throw ex;
         } finally {
             Context.exit();
         }

@@ -5,14 +5,14 @@
 package org.mozilla.javascript.tests;
 
 import org.mozilla.javascript.Context;
-
 import org.mozilla.javascript.drivers.LanguageVersion;
 import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 /**
- * Test for overloaded array concat with non-dense arg.
- * See https://bugzilla.mozilla.org/show_bug.cgi?id=477604
+ * Test for overloaded array concat with non-dense arg. See
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=477604
+ *
  * @author Marc Guillemot
  */
 @RhinoTest("testsrc/jstests/array-concat-pre-es6.js")

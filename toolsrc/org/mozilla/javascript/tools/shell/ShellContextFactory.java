@@ -10,8 +10,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ErrorReporter;
 
-public class ShellContextFactory extends ContextFactory
-{
+public class ShellContextFactory extends ContextFactory {
     private boolean strictMode;
     private boolean warningAsError;
     private int languageVersion = Context.VERSION_1_8;
@@ -22,29 +21,27 @@ public class ShellContextFactory extends ContextFactory
     private String characterEncoding;
 
     @Override
-    protected boolean hasFeature(Context cx, int featureIndex)
-    {
+    protected boolean hasFeature(Context cx, int featureIndex) {
         switch (featureIndex) {
-          case Context.FEATURE_STRICT_VARS:
-          case Context.FEATURE_STRICT_EVAL:
-          case Context.FEATURE_STRICT_MODE:
-            return strictMode;
+            case Context.FEATURE_STRICT_VARS:
+            case Context.FEATURE_STRICT_EVAL:
+            case Context.FEATURE_STRICT_MODE:
+                return strictMode;
 
-          case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
-            return allowReservedKeywords;
+            case Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER:
+                return allowReservedKeywords;
 
-          case Context.FEATURE_WARNING_AS_ERROR:
-            return warningAsError;
+            case Context.FEATURE_WARNING_AS_ERROR:
+                return warningAsError;
 
-          case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
-            return generatingDebug;
+            case Context.FEATURE_LOCATION_INFORMATION_IN_ERROR:
+                return generatingDebug;
         }
         return super.hasFeature(cx, featureIndex);
     }
 
     @Override
-    protected void onContextCreated(Context cx)
-    {
+    protected void onContextCreated(Context cx) {
         cx.setLanguageVersion(languageVersion);
         cx.setOptimizationLevel(optimizationLevel);
         if (errorReporter != null) {
@@ -54,50 +51,42 @@ public class ShellContextFactory extends ContextFactory
         super.onContextCreated(cx);
     }
 
-    public void setStrictMode(boolean flag)
-    {
+    public void setStrictMode(boolean flag) {
         checkNotSealed();
         this.strictMode = flag;
     }
 
-    public void setWarningAsError(boolean flag)
-    {
+    public void setWarningAsError(boolean flag) {
         checkNotSealed();
         this.warningAsError = flag;
     }
 
-    public void setLanguageVersion(int version)
-    {
+    public void setLanguageVersion(int version) {
         Context.checkLanguageVersion(version);
         checkNotSealed();
         this.languageVersion = version;
     }
 
-    public void setOptimizationLevel(int optimizationLevel)
-    {
+    public void setOptimizationLevel(int optimizationLevel) {
         Context.checkOptimizationLevel(optimizationLevel);
         checkNotSealed();
         this.optimizationLevel = optimizationLevel;
     }
 
-    public void setErrorReporter(ErrorReporter errorReporter)
-    {
+    public void setErrorReporter(ErrorReporter errorReporter) {
         if (errorReporter == null) throw new IllegalArgumentException();
         this.errorReporter = errorReporter;
     }
 
-    public void setGeneratingDebug(boolean generatingDebug)
-    {
+    public void setGeneratingDebug(boolean generatingDebug) {
         this.generatingDebug = generatingDebug;
     }
 
-    public String getCharacterEncoding()
-    {
+    public String getCharacterEncoding() {
         return characterEncoding;
     }
 
-    public void setCharacterEncoding(String characterEncoding)
-    {
+    public void setCharacterEncoding(String characterEncoding) {
         this.characterEncoding = characterEncoding;
     }
 

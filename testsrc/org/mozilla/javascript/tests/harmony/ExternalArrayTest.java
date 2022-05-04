@@ -8,6 +8,4 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/external-array.js")
-public class ExternalArrayTest extends ScriptTestsBase
-{
-}
+public class ExternalArrayTest extends ScriptTestsBase {}
