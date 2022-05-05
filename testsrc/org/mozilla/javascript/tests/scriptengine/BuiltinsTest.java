@@ -1,5 +1,7 @@
 package org.mozilla.javascript.tests.scriptengine;
 
+import static org.junit.Assert.*;
+
 import java.io.StringWriter;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -11,44 +13,42 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 
-import static org.junit.Assert.*;
-
 public class BuiltinsTest {
 
-  private static ScriptEngineManager manager;
+    private static ScriptEngineManager manager;
 
-  private ScriptEngine engine;
+    private ScriptEngine engine;
 
-  @BeforeClass
-  public static void init() {
-    manager = new ScriptEngineManager();
-    manager.registerEngineName("rhino", new RhinoScriptEngineFactory());
-  }
+    @BeforeClass
+    public static void init() {
+        manager = new ScriptEngineManager();
+        manager.registerEngineName("rhino", new RhinoScriptEngineFactory());
+    }
 
-  @Before
-  public void setup() {
-    engine = manager.getEngineByName("rhino");
-  }
+    @Before
+    public void setup() {
+        engine = manager.getEngineByName("rhino");
+    }
 
-  @Test
-  public void testPrintStdout() throws ScriptException {
-    engine.eval("print('Hello, World!');");
-  }
+    @Test
+    public void testPrintStdout() throws ScriptException {
+        engine.eval("print('Hello, World!');");
+    }
 
-  @Test
-  public void testPrintWriter() throws ScriptException {
-    StringWriter sw = new StringWriter();
-    ScriptContext sc = new SimpleScriptContext();
-    sc.setWriter(sw);
-    engine.eval("print('one', 2, true);", sc);
-    assertEquals(sw.toString(), "one2true\n");
-  }
+    @Test
+    public void testPrintWriter() throws ScriptException {
+        StringWriter sw = new StringWriter();
+        ScriptContext sc = new SimpleScriptContext();
+        sc.setWriter(sw);
+        engine.eval("print('one', 2, true);", sc);
+        assertEquals(sw.toString(), "one2true\n");
+    }
 
-  @Test
-  public void testPrintWriterGeneric() throws ScriptException {
-    StringWriter sw = new StringWriter();
-    engine.getContext().setWriter(sw);
-    engine.eval(engine.getFactory().getOutputStatement("Display This!"));
-    assertEquals(sw.toString(), "Display This!\n");
-  }
+    @Test
+    public void testPrintWriterGeneric() throws ScriptException {
+        StringWriter sw = new StringWriter();
+        engine.getContext().setWriter(sw);
+        engine.eval(engine.getFactory().getOutputStatement("Display This!"));
+        assertEquals(sw.toString(), "Display This!\n");
+    }
 }

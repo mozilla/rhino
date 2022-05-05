@@ -1,4 +1,4 @@
-/* -*- Mode: java; tab-width: 8 -*-
+/* -*- Mode: javascript; tab-width: 8 -*-
  * Copyright (C) 1997, 1998 Netscape Communications Corporation,
  * All Rights Reserved.
  */

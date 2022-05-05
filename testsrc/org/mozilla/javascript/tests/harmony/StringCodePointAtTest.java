@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/string-codePointAt.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class StringCodePointAtTest extends ScriptTestsBase
-{
-}
+public class StringCodePointAtTest extends ScriptTestsBase {}

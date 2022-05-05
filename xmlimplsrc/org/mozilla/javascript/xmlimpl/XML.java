@@ -18,8 +18,8 @@ class XML extends XMLObjectImpl {
     private XmlNode node;
 
     XML(XMLLibImpl lib, Scriptable scope, XMLObject prototype, XmlNode node) {
-      super(lib, scope, prototype);
-      initialize(node);
+        super(lib, scope, prototype);
+        initialize(node);
     }
 
     void initialize(XmlNode node) {
@@ -47,7 +47,7 @@ class XML extends XMLObjectImpl {
     XML makeXmlFromString(XMLName name, String value) {
         try {
             return newTextElementXML(this.node, name.toQname(), value);
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw ScriptRuntime.typeError(e.getMessage());
         }
     }
@@ -61,7 +61,8 @@ class XML extends XMLObjectImpl {
     //  Methods from ScriptableObject
     //
 
-    //    TODO Either cross-reference this next comment with the specification or delete it and change the behavior
+    //    TODO Either cross-reference this next comment with the specification or delete it and
+    // change the behavior
     //    The comment: XML[0] should return this, all other indexes are Undefined
     @Override
     public Object get(int index, Scriptable start) {
@@ -89,7 +90,7 @@ class XML extends XMLObjectImpl {
         if (isPrototype()) {
             return new Object[0];
         } else {
-            return new Object[] { Integer.valueOf(0) };
+            return new Object[] {Integer.valueOf(0)};
         }
     }
 
@@ -129,7 +130,7 @@ class XML extends XMLObjectImpl {
         if (!isElement()) return null;
         XmlNode[] children = this.node.getMatchingChildren(XmlNode.Filter.TRUE);
         XML[] rv = new XML[children.length];
-        for (int i=0; i<rv.length; i++) {
+        for (int i = 0; i < rv.length; i++) {
             rv[i] = toXML(children[i]);
         }
         return rv;
@@ -138,7 +139,7 @@ class XML extends XMLObjectImpl {
     XML[] getAttributes() {
         XmlNode[] attributes = this.node.getAttributes();
         XML[] rv = new XML[attributes.length];
-        for (int i=0; i<rv.length; i++) {
+        for (int i = 0; i < rv.length; i++) {
             rv[i] = toXML(attributes[i]);
         }
         return rv;
@@ -152,7 +153,7 @@ class XML extends XMLObjectImpl {
     @Override
     void deleteXMLProperty(XMLName name) {
         XMLList list = getPropertyList(name);
-        for (int i=0; i<list.length(); i++) {
+        for (int i = 0; i < list.length(); i++) {
             list.item(i).node.deleteMe();
         }
     }
@@ -183,7 +184,7 @@ class XML extends XMLObjectImpl {
     @Override
     protected Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
         if (args.length == 0 || args[0] == null || args[0] == Undefined.instance) {
-            args = new Object[] { "" };
+            args = new Object[] {""};
         }
         //    ECMA 13.4.2 does not appear to specify what to do if multiple arguments are sent.
         XML toXml = ecmaToXml(args[0]);
@@ -249,9 +250,9 @@ class XML extends XMLObjectImpl {
         rv.setTargets(this, name.toQname());
         //    TODO    Should have an XMLNode.Filter implementation based on XMLName
         XmlNode[] elements = this.node.getMatchingChildren(XmlNode.Filter.ELEMENT);
-        for (int i=0; i<elements.length; i++) {
-            if (name.matches( toXML(elements[i]) )) {
-                rv.addToList( toXML(elements[i]) );
+        for (int i = 0; i < elements.length; i++) {
+            if (name.matches(toXML(elements[i]))) {
+                rv.addToList(toXML(elements[i]));
             }
         }
         return rv;
@@ -259,17 +260,19 @@ class XML extends XMLObjectImpl {
 
     @Override
     XMLList child(XMLName xmlName) {
-        //    TODO    Right now I think this method would allow child( "@xxx" ) to return the xxx attribute, which is wrong
+        //    TODO    Right now I think this method would allow child( "@xxx" ) to return the xxx
+        // attribute, which is wrong
 
         XMLList rv = newXMLList();
 
-        //    TODO    Should this also match processing instructions?  If so, we have to change the filter and also the XMLName
+        //    TODO    Should this also match processing instructions?  If so, we have to change the
+        // filter and also the XMLName
         //            class to add an acceptsProcessingInstruction() method
 
         XmlNode[] elements = this.node.getMatchingChildren(XmlNode.Filter.ELEMENT);
-        for (int i=0; i<elements.length; i++) {
+        for (int i = 0; i < elements.length; i++) {
             if (xmlName.matchesElement(elements[i].getQname())) {
-                rv.addToList( toXML(elements[i]) );
+                rv.addToList(toXML(elements[i]));
             }
         }
         rv.setTargets(this, xmlName.toQname());
@@ -287,8 +290,8 @@ class XML extends XMLObjectImpl {
         XMLName all = XMLName.formStar();
         rv.setTargets(this, all.toQname());
         XmlNode[] children = this.node.getMatchingChildren(XmlNode.Filter.TRUE);
-        for (int i=0; i<children.length; i++) {
-            rv.addToList( toXML(children[i]) );
+        for (int i = 0; i < children.length; i++) {
+            rv.addToList(toXML(children[i]));
         }
         return rv;
     }
@@ -338,8 +341,11 @@ class XML extends XMLObjectImpl {
         boolean result = false;
 
         if (target instanceof XML) {
-            //    TODO    This is a horrifyingly inefficient way to do this so we should make it better.  It may also not work.
-            return this.node.toXmlString(getProcessor()).equals( ((XML)target).node.toXmlString(getProcessor()) );
+            //    TODO    This is a horrifyingly inefficient way to do this so we should make it
+            // better.  It may also not work.
+            return this.node
+                    .toXmlString(getProcessor())
+                    .equals(((XML) target).node.toXmlString(getProcessor()));
         } else if (target instanceof XMLList) {
             //    TODO    Is this right?  Check the spec ...
             XMLList otherList = (XMLList) target;
@@ -358,7 +364,7 @@ class XML extends XMLObjectImpl {
 
     @Override
     XMLObjectImpl copy() {
-        return newXML( this.node.copy() );
+        return newXML(this.node.copy());
     }
 
     @Override
@@ -397,13 +403,12 @@ class XML extends XMLObjectImpl {
     }
 
     @Override
-    boolean propertyIsEnumerable(Object name)
-    {
+    boolean propertyIsEnumerable(Object name) {
         boolean result;
         if (name instanceof Integer) {
-            result = (((Integer)name).intValue() == 0);
+            result = (((Integer) name).intValue() == 0);
         } else if (name instanceof Number) {
-            double x = ((Number)name).doubleValue();
+            double x = ((Number) name).doubleValue();
             // Check that number is positive 0
             result = (x == 0.0 && 1.0 / x > 0);
         } else {
@@ -454,11 +459,11 @@ class XML extends XMLObjectImpl {
     //    long discussion.  See bug #354145.
     private XmlNode[] getNodesForInsert(Object value) {
         if (value instanceof XML) {
-            return new XmlNode[] { ((XML)value).node };
+            return new XmlNode[] {((XML) value).node};
         } else if (value instanceof XMLList) {
-            XMLList list = (XMLList)value;
+            XMLList list = (XMLList) value;
             XmlNode[] rv = new XmlNode[list.length()];
-            for (int i=0; i<list.length(); i++) {
+            for (int i = 0; i < list.length(); i++) {
                 rv[i] = list.item(i).node;
             }
             return rv;
@@ -496,7 +501,7 @@ class XML extends XMLObjectImpl {
     }
 
     private int getChildIndexOf(XML child) {
-        for (int i=0; i<this.node.getChildCount(); i++) {
+        for (int i = 0; i < this.node.getChildCount(); i++) {
             if (this.node.getChild(i).isSameNode(child.node)) {
                 return i;
             }
@@ -527,7 +532,7 @@ class XML extends XMLObjectImpl {
             XmlNode[] toInsert = getNodesForInsert(xml);
             int index = getChildIndexOf(child);
             if (index != -1) {
-                this.node.insertChildrenAt(index+1, toInsert);
+                this.node.insertChildrenAt(index + 1, toInsert);
             }
         }
 
@@ -538,7 +543,7 @@ class XML extends XMLObjectImpl {
         //    TODO    Have not carefully considered the spec but it seems to call for this
         if (!isElement()) return this;
 
-        while(this.node.getChildCount() > 0) {
+        while (this.node.getChildCount() > 0) {
             this.node.removeChild(0);
         }
         XmlNode[] toInsert = getNodesForInsert(xml);
@@ -597,7 +602,8 @@ class XML extends XMLObjectImpl {
 
     QName name() {
         if (isText() || isComment()) return null;
-        if (isProcessingInstruction()) return newQName("", this.node.getQname().getLocalName(), null);
+        if (isProcessingInstruction())
+            return newQName("", this.node.getQname().getLocalName(), null);
         return newQName(node.getQname());
     }
 
@@ -608,9 +614,9 @@ class XML extends XMLObjectImpl {
 
     Namespace namespace(String prefix) {
         if (prefix == null) {
-            return createNamespace( this.node.getNamespaceDeclaration() );
+            return createNamespace(this.node.getNamespaceDeclaration());
         } else {
-            return createNamespace( this.node.getNamespaceDeclaration(prefix) );
+            return createNamespace(this.node.getNamespaceDeclaration(prefix));
         }
     }
 
@@ -629,8 +635,10 @@ class XML extends XMLObjectImpl {
         //    See ECMA357 13.4.4.35
         if (isText() || isComment()) return;
         if (isProcessingInstruction()) {
-            //    Spec says set the name URI to empty string and then set the [[Name]] property, but I understand this to do the same
-            //    thing, unless we allow colons in processing instruction targets, which I think we do not.
+            //    Spec says set the name URI to empty string and then set the [[Name]] property, but
+            // I understand this to do the same
+            //    thing, unless we allow colons in processing instruction targets, which I think we
+            // do not.
             this.node.setLocalName(name.localName());
             return;
         }
@@ -665,7 +673,8 @@ class XML extends XMLObjectImpl {
 
     @Override
     public String getClassName() {
-        //    TODO:    This appears to confuse the interpreter if we use the "real" class property from ECMA.  Otherwise this code
+        //    TODO:    This appears to confuse the interpreter if we use the "real" class property
+        // from ECMA.  Otherwise this code
         //    would be:
         //    return ecmaClass();
         return "XML";
@@ -682,15 +691,12 @@ class XML extends XMLObjectImpl {
         }
         if (this.hasSimpleContent()) {
             StringBuilder rv = new StringBuilder();
-            for (int i=0; i < this.node.getChildCount(); i++) {
+            for (int i = 0; i < this.node.getChildCount(); i++) {
                 XmlNode child = this.node.getChild(i);
-                if (!child.isProcessingInstructionType() &&
-                    !child.isCommentType())
-                {
+                if (!child.isProcessingInstructionType() && !child.isCommentType()) {
                     // TODO: Probably inefficient; taking clean non-optimized
                     // solution for now
-                    XML x = new XML(getLib(), getParentScope(),
-                                    (XMLObject)getPrototype(), child);
+                    XML x = new XML(getLib(), getParentScope(), (XMLObject) getPrototype(), child);
                     rv.append(x.toString());
                 }
             }

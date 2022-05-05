@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/v8-symbols.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class V8SymbolTest extends ScriptTestsBase
-{
-}
+public class V8SymbolTest extends ScriptTestsBase {}

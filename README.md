@@ -22,6 +22,7 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_11_Release">Rhino 1.7.11</a></td><td>May 30, 2019</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_12_Release">Rhino 1.7.12</a></td><td>January 13, 2020</td></tr>
 <tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_13_Release">Rhino 1.7.13</a></td><td>September 2, 2020</td></tr>
+<tr><td><a href="https://github.com/mozilla/rhino/releases/tag/Rhino1_7_14_Release">Rhino 1.7.14</a></td><td>January 6, 2022</td></tr>
 </table>
 
 [Release Notes](./RELEASE-NOTES.md) for recent releases.
@@ -29,8 +30,9 @@ Rhino is licensed under the [MPL 2.0](./LICENSE.txt).
 [Compatibility table](https://mozilla.github.io/rhino/compat/engines.html) which shows which advanced JavaScript
 features from ES6, and ES2016+ are implemented in Rhino.
 
-[![Mozilla](https://circleci.com/gh/mozilla/rhino.svg?style=shield)](https://app.circleci.com/pipelines/github/mozilla/rhino)
+[![GitHub Action Status](https://github.com/mozilla/rhino/actions/workflows/gradle.yml/badge.svg)](https://github.com/mozilla/rhino/actions/workflows/gradle.yml)
 
+[![Mozilla](https://circleci.com/gh/mozilla/rhino.svg?style=shield)](https://app.circleci.com/pipelines/github/mozilla/rhino)
 
 ## Documentation
 
@@ -40,7 +42,7 @@ Information for script builders and embedders:
 
 JavaDoc for all the APIs:
 
-[https://mozilla.github.io/rhino/javadoc/index.html](https://mozilla.github.io/rhino/javadoc/index.html)
+[https://javadoc.io/doc/org.mozilla/rhino](https://javadoc.io/doc/org.mozilla/rhino)
 
 More resources if you get stuck:
 

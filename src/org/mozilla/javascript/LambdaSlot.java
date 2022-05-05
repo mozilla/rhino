@@ -44,7 +44,7 @@ public class LambdaSlot extends Slot {
     }
 
     @Override
-    public boolean setValue(Object value, Scriptable owner, Scriptable start) {
+    public boolean setValue(Object value, Scriptable owner, Scriptable start, boolean isThrow) {
         if (setter != null) {
             if (owner == start) {
                 setter.accept(value);
@@ -52,7 +52,7 @@ public class LambdaSlot extends Slot {
             }
             return false;
         }
-        return super.setValue(value, owner, start);
+        return super.setValue(value, owner, start, isThrow);
     }
 
     @Override

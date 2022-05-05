@@ -33,16 +33,14 @@ public class ObjectToStringNullUndefinedTest {
 
     @Test
     public void testToStringNullUndefined() {
-        Object result0 = cx.evaluateString(
-                scope, "Object.prototype.toString.call(null)",
-                "15.2.4.2", 1, null
-        );
+        Object result0 =
+                cx.evaluateString(
+                        scope, "Object.prototype.toString.call(null)", "15.2.4.2", 1, null);
         assertEquals("[object Null]", result0);
 
-        Object result1 = cx.evaluateString(
-                scope, "Object.prototype.toString.call(undefined)",
-                "15.2.4.2", 1, null
-        );
+        Object result1 =
+                cx.evaluateString(
+                        scope, "Object.prototype.toString.call(undefined)", "15.2.4.2", 1, null);
         assertEquals("[object Undefined]", result1);
     }
 }

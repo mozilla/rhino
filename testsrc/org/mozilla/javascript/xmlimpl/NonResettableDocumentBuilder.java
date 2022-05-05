@@ -1,8 +1,7 @@
 package org.mozilla.javascript.xmlimpl;
 
-import javax.xml.parsers.DocumentBuilder;
 import java.io.IOException;
-
+import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
@@ -14,7 +13,8 @@ public class NonResettableDocumentBuilder extends DocumentBuilder {
     private DocumentBuilder delegateBuilder;
     private final DocumentBuilder delegateBuilderAfterReset;
 
-    public NonResettableDocumentBuilder(DocumentBuilder delegateBuilderBeforeReset, DocumentBuilder delegateBuilderAfterReset) {
+    public NonResettableDocumentBuilder(
+            DocumentBuilder delegateBuilderBeforeReset, DocumentBuilder delegateBuilderAfterReset) {
         this.delegateBuilder = delegateBuilderBeforeReset;
         this.delegateBuilderAfterReset = delegateBuilderAfterReset;
     }

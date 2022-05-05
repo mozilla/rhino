@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,19 +27,16 @@ import org.mozilla.javascript.drivers.TestUtils;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
 /**
- * This JUnit suite runs the Mozilla test suite (in mozilla.org CVS
- * at /mozilla/js/tests).
+ * This JUnit suite runs the Mozilla test suite (in mozilla.org CVS at /mozilla/js/tests).
  *
- * Not all tests in the suite are run. Since the mozilla.org tests are
- * designed and maintained for the SpiderMonkey engine, tests in the
- * suite may not pass due to feature set differences and known bugs.
- * To make sure that this unit test is stable in the midst of changes
- * to the mozilla.org suite, we maintain a list of passing tests in
- * files opt-1.tests, opt0.tests, and opt9.tests. This class also
- * implements the ability to run skipped tests, see if any pass, and
- * print out a script to modify the *.tests files.
- * (This approach doesn't handle breaking changes to existing passing
+ * <p>Not all tests in the suite are run. Since the mozilla.org tests are designed and maintained
+ * for the SpiderMonkey engine, tests in the suite may not pass due to feature set differences and
+ * known bugs. To make sure that this unit test is stable in the midst of changes to the mozilla.org
+ * suite, we maintain a list of passing tests in files opt-1.tests, opt0.tests, and opt9.tests. This
+ * class also implements the ability to run skipped tests, see if any pass, and print out a script
+ * to modify the *.tests files. (This approach doesn't handle breaking changes to existing passing
  * tests, but in practice that has been very rare.)
+ *
  * @author Norris Boyd
  * @author Attila Szegedi
  */
@@ -49,17 +45,7 @@ public class MozillaSuiteTest {
     private final File jsFile;
     private final int optimizationLevel;
 
-    private static final int[] OPT_LEVELS;
-
-    static {
-        // Reduce the number of tests that we run by a factor of three...
-        String overriddenLevel = System.getProperty("TEST_OPTLEVEL");
-        if (overriddenLevel != null) {
-            OPT_LEVELS = new int[]{Integer.parseInt(overriddenLevel)};
-        } else {
-            OPT_LEVELS = new int[]{-1, 0, 9};
-        }
-    }
+    private static final int[] OPT_LEVELS = Utils.getTestOptLevels();
 
     public MozillaSuiteTest(File jsFile, int optimizationLevel) {
         this.jsFile = jsFile;
@@ -81,8 +67,9 @@ public class MozillaSuiteTest {
             } else {
                 int jsIndex = path.lastIndexOf("/js");
                 if (jsIndex == -1) {
-                    throw new IllegalStateException("You aren't running the tests "+
-                        "from within the standard mozilla/js directory structure");
+                    throw new IllegalStateException(
+                            "You aren't running the tests "
+                                    + "from within the standard mozilla/js directory structure");
                 }
                 path = path.substring(0, jsIndex + 3).replace('/', File.separatorChar);
                 path = path.replace("%20", " ");
@@ -101,11 +88,11 @@ public class MozillaSuiteTest {
 
     public static File[] getTestFiles(int optimizationLevel) throws IOException {
         File testDir = getTestDir();
-        String[] tests = TestUtils.loadTestsFromResource(
-            "/" + getTestFilename(optimizationLevel), null);
+        String[] tests =
+                TestUtils.loadTestsFromResource("/" + getTestFilename(optimizationLevel), null);
         Arrays.sort(tests);
         File[] files = new File[tests.length];
-        for (int i=0; i < files.length; i++) {
+        for (int i = 0; i < files.length; i++) {
             files[i] = new File(testDir, tests[i]);
         }
         return files;
@@ -122,17 +109,17 @@ public class MozillaSuiteTest {
     public static Collection<Object[]> mozillaSuiteValues() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
         int[] optLevels = OPT_LEVELS;
-        for (int i=0; i < optLevels.length; i++) {
+        for (int i = 0; i < optLevels.length; i++) {
             File[] tests = getTestFiles(optLevels[i]);
             for (File f : tests) {
-                result.add(new Object[] { f, optLevels[i] });
+                result.add(new Object[] {f, optLevels[i]});
             }
         }
         return result;
     }
 
     // move "@Parameters" to this method to test a single Mozilla test
-//    @Parameters(name = "{index}, js={0}, opt={1}")
+    //    @Parameters(name = "{index}, js={0}, opt={1}")
     public static Collection<Object[]> singleDoctest() throws IOException {
         final String SINGLE_TEST_FILE = "...";
         final int[] SINGLE_TEST_OPTIMIZATION_LEVEL = OPT_LEVELS;
@@ -140,7 +127,7 @@ public class MozillaSuiteTest {
         List<Object[]> result = new ArrayList<Object[]>();
         for (int optLevel : SINGLE_TEST_OPTIMIZATION_LEVEL) {
             File f = new File(getTestDir(), SINGLE_TEST_FILE);
-            result.add(new Object[] { f, optLevel });
+            result.add(new Object[] {f, optLevel});
         }
         return result;
     }
@@ -149,8 +136,7 @@ public class MozillaSuiteTest {
         @Override
         public int getTimeoutMilliseconds() {
             if (System.getProperty("mozilla.js.tests.timeout") != null) {
-                return Integer.parseInt(System.getProperty(
-                    "mozilla.js.tests.timeout"));
+                return Integer.parseInt(System.getProperty("mozilla.js.tests.timeout"));
             }
             return 10000;
         }
@@ -169,8 +155,7 @@ public class MozillaSuiteTest {
         public final void failed(String s) {
             // Include test source in message, this is the only way
             // to locate the test in a Parameterized JUnit test
-            String msg = "In \"" + file + "\":" +
-                         System.getProperty("line.separator") + s;
+            String msg = "In \"" + file + "\":" + System.getProperty("line.separator") + s;
             System.out.println(msg);
             Assert.fail(msg);
         }
@@ -199,45 +184,45 @@ public class MozillaSuiteTest {
 
     @Test
     public void runMozillaTest() throws Exception {
-        //System.out.println("Test \"" + jsFile + "\" running under optimization level " + optimizationLevel);
-        final ShellContextFactory shellContextFactory =
-            new ShellContextFactory();
+        // System.out.println("Test \"" + jsFile + "\" running under optimization level " +
+        // optimizationLevel);
+        final ShellContextFactory shellContextFactory = new ShellContextFactory();
         shellContextFactory.setOptimizationLevel(optimizationLevel);
         ShellTestParameters params = new ShellTestParameters();
         JunitStatus status = new JunitStatus();
         ShellTest.runNoFork(shellContextFactory, jsFile, params, status);
     }
 
-
     /**
-     * The main class will run all the test files that are *not* covered in
-     * the *.tests files, and print out a list of all the tests that pass.
+     * The main class will run all the test files that are *not* covered in the *.tests files, and
+     * print out a list of all the tests that pass.
      */
     public static void main(String[] args) throws IOException {
         PrintStream out = new PrintStream("fix-tests-files.sh");
         try {
-            for (int i=0; i < OPT_LEVELS.length; i++) {
+            for (int i = 0; i < OPT_LEVELS.length; i++) {
                 int optLevel = OPT_LEVELS[i];
                 File testDir = getTestDir();
                 File[] allTests =
-                    TestUtils.recursiveListFiles(testDir,
-                        new FileFilter() {
-                            public boolean accept(File pathname)
-                            {
-                                return ShellTest.DIRECTORY_FILTER.accept(pathname) ||
-                                       ShellTest.TEST_FILTER.accept(pathname);
-                            }
-                    });
+                        TestUtils.recursiveListFiles(
+                                testDir,
+                                new FileFilter() {
+                                    public boolean accept(File pathname) {
+                                        return ShellTest.DIRECTORY_FILTER.accept(pathname)
+                                                || ShellTest.TEST_FILTER.accept(pathname);
+                                    }
+                                });
                 HashSet<File> diff = new HashSet<File>(Arrays.asList(allTests));
                 File testFiles[] = getTestFiles(optLevel);
                 diff.removeAll(Arrays.asList(testFiles));
                 ArrayList<String> skippedPassed = new ArrayList<String>();
                 int absolutePathLength = testDir.getAbsolutePath().length() + 1;
-                for (File testFile: diff) {
+                for (File testFile : diff) {
                     try {
                         (new MozillaSuiteTest(testFile, optLevel)).runMozillaTest();
                         // strip off testDir
-                        String canonicalized = testFile.getAbsolutePath().substring(absolutePathLength);
+                        String canonicalized =
+                                testFile.getAbsolutePath().substring(absolutePathLength);
                         canonicalized = canonicalized.replace('\\', '/');
                         skippedPassed.add(canonicalized);
                     } catch (Throwable t) {
@@ -251,7 +236,7 @@ public class MozillaSuiteTest {
                     out.println("cat >> " + getTestFilename(optLevel) + " <<EOF");
                     String[] sorted = skippedPassed.toArray(new String[0]);
                     Arrays.sort(sorted);
-                    for (int j=0; j < sorted.length; j++) {
+                    for (int j = 0; j < sorted.length; j++) {
                         out.println(sorted[j]);
                     }
                     out.println("EOF");

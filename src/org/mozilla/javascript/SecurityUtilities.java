@@ -46,6 +46,7 @@ public abstract class SecurityUtilities {
         }
         throw new IllegalStateException("Failed to create SecurityBridge instance");
     }
+
     /**
      * Retrieves a system property within a privileged block. Use it only when the property is used
      * from within Rhino code and is not passed out of it.

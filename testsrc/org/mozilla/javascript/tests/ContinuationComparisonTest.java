@@ -9,14 +9,12 @@ package org.mozilla.javascript.tests;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.concurrent.atomic.AtomicReference;
-
+import junit.framework.TestCase;
 import org.mozilla.javascript.Callable;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Interpreter;
 import org.mozilla.javascript.NativeContinuation;
 import org.mozilla.javascript.ScriptableObject;
-
-import junit.framework.TestCase;
 
 public class ContinuationComparisonTest extends TestCase {
 
@@ -27,24 +25,31 @@ public class ContinuationComparisonTest extends TestCase {
 
         assertTrue(NativeContinuation.equalImplementations(c1, c2));
     }
-    
+
     private NativeContinuation createContinuation() throws Exception {
         Context cx = Context.enter();
         cx.setOptimizationLevel(-1); // interpreter for continuations
         ScriptableObject global = cx.initStandardObjects();
         final AtomicReference<NativeContinuation> captured = new AtomicReference<>();
-        ScriptableObject.putProperty(global, "capture", (Callable)(c, scope, thisObj, args) -> {
-            captured.set(Interpreter.captureContinuation(c));
-            return null;
-        });
+        ScriptableObject.putProperty(
+                global,
+                "capture",
+                (Callable)
+                        (c, scope, thisObj, args) -> {
+                            captured.set(Interpreter.captureContinuation(c));
+                            return null;
+                        });
 
         // Evaluate program
-        try(Reader r = new InputStreamReader(getClass().getResourceAsStream("ContinuationComparisonTest.js"))) {
-            cx.executeScriptWithContinuations(cx.compileReader(r, "ContinuationComparisonTest.js", 1, null), global);
+        try (Reader r =
+                new InputStreamReader(
+                        getClass().getResourceAsStream("ContinuationComparisonTest.js"))) {
+            cx.executeScriptWithContinuations(
+                    cx.compileReader(r, "ContinuationComparisonTest.js", 1, null), global);
         }
         // Make the global standard again
         ScriptableObject.deleteProperty(global, "capture");
         Context.exit();
-        return captured.get(); 
+        return captured.get();
     }
 }

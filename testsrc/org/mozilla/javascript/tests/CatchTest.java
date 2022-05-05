@@ -41,29 +41,28 @@ public class CatchTest extends TestCase {
 
         ContextFactory factory = new ContextFactory();
 
-        return (String)
-                factory.call(
-                        context -> {
-                            context.setOptimizationLevel(-1);
-                            if (shutter != null) {
-                                context.setClassShutter(shutter);
-                            }
-                            final Scriptable scope = context.initStandardObjects();
+        return factory.call(
+                context -> {
+                    context.setOptimizationLevel(-1);
+                    if (shutter != null) {
+                        context.setClassShutter(shutter);
+                    }
+                    final Scriptable scope = context.initStandardObjects();
 
-                            try {
-                                ScriptableObject.defineClass(scope, Foo.class);
-                                final Scriptable foo = context.newObject(scope, "Foo", null);
-                                scope.put("foo", scope, foo);
-                                return Context.toString(
-                                        context.evaluateString(
-                                                scope,
-                                                "var res; try { res = foo.bar(); } catch(e) { res = e; }",
-                                                "test script",
-                                                1,
-                                                null));
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        });
+                    try {
+                        ScriptableObject.defineClass(scope, Foo.class);
+                        final Scriptable foo = context.newObject(scope, "Foo", null);
+                        scope.put("foo", scope, foo);
+                        return Context.toString(
+                                context.evaluateString(
+                                        scope,
+                                        "var res; try { res = foo.bar(); } catch(e) { res = e; }",
+                                        "test script",
+                                        1,
+                                        null));
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                });
     }
 }

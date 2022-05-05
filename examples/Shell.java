@@ -9,7 +9,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Function;
@@ -21,28 +20,25 @@ import org.mozilla.javascript.WrappedException;
 /**
  * The shell program.
  *
- * Can execute scripts interactively or in batch mode at the command line.
- * An example of controlling the JavaScript engine.
+ * <p>Can execute scripts interactively or in batch mode at the command line. An example of
+ * controlling the JavaScript engine.
  *
  * @author Norris Boyd
  */
-public class Shell extends ScriptableObject
-{
+public class Shell extends ScriptableObject {
     private static final long serialVersionUID = -5638074146250193112L;
 
     @Override
-    public String getClassName()
-    {
+    public String getClassName() {
         return "global";
     }
 
     /**
      * Main entry point.
      *
-     * Process arguments as would a normal Java program. Also
-     * create a new Context and associate it with the current thread.
-     * Then set up the execution environment and begin to
-     * execute scripts.
+     * <p>Process arguments as would a normal Java program. Also create a new Context and associate
+     * it with the current thread. Then set up the execution environment and begin to execute
+     * scripts.
      */
     public static void main(String args[]) {
         // Associate a new Context with this thread
@@ -55,9 +51,8 @@ public class Shell extends ScriptableObject
 
             // Define some global functions particular to the shell. Note
             // that these functions are not part of ECMA.
-            String[] names = { "print", "quit", "version", "load", "help" };
-            shell.defineFunctionProperties(names, Shell.class,
-                                           ScriptableObject.DONTENUM);
+            String[] names = {"print", "quit", "version", "load", "help"};
+            shell.defineFunctionProperties(names, Shell.class, ScriptableObject.DONTENUM);
 
             args = processOptions(cx, args);
 
@@ -72,8 +67,7 @@ public class Shell extends ScriptableObject
                 System.arraycopy(args, 1, array, 0, length);
             }
             Scriptable argsObj = cx.newArray(shell, array);
-            shell.defineProperty("arguments", argsObj,
-                                 ScriptableObject.DONTENUM);
+            shell.defineProperty("arguments", argsObj, ScriptableObject.DONTENUM);
 
             shell.processSource(cx, args.length == 0 ? null : args[0]);
         } finally {
@@ -81,24 +75,19 @@ public class Shell extends ScriptableObject
         }
     }
 
-    /**
-     * Parse arguments.
-     */
+    /** Parse arguments. */
     public static String[] processOptions(Context cx, String args[]) {
-        for (int i=0; i < args.length; i++) {
+        for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if (!arg.startsWith("-")) {
                 String[] result = new String[args.length - i];
-                for (int j=i; j < args.length; j++)
-                    result[j-i] = args[j];
+                for (int j = i; j < args.length; j++) result[j - i] = args[j];
                 return result;
             }
             if (arg.equals("-version")) {
-                if (++i == args.length)
-                    usage(arg);
+                if (++i == args.length) usage(arg);
                 double d = Context.toNumber(args[i]);
-                if (d != d)
-                    usage(arg);
+                if (d != d) usage(arg);
                 cx.setLanguageVersion((int) d);
                 continue;
             }
@@ -107,9 +96,7 @@ public class Shell extends ScriptableObject
         return new String[0];
     }
 
-    /**
-     * Print a usage message.
-     */
+    /** Print a usage message. */
     private static void usage(String s) {
         p("Didn't understand \"" + s + "\".");
         p("Valid arguments are:");
@@ -120,7 +107,7 @@ public class Shell extends ScriptableObject
     /**
      * Print a help message.
      *
-     * This method is defined as a JavaScript function.
+     * <p>This method is defined as a JavaScript function.
      */
     public void help() {
         p("");
@@ -144,18 +131,13 @@ public class Shell extends ScriptableObject
     /**
      * Print the string values of its arguments.
      *
-     * This method is defined as a JavaScript function.
-     * Note that its arguments are of the "varargs" form, which
-     * allows it to handle an arbitrary number of arguments
-     * supplied to the JavaScript function.
-     *
+     * <p>This method is defined as a JavaScript function. Note that its arguments are of the
+     * "varargs" form, which allows it to handle an arbitrary number of arguments supplied to the
+     * JavaScript function.
      */
-    public static void print(Context cx, Scriptable thisObj,
-                             Object[] args, Function funObj)
-    {
-        for (int i=0; i < args.length; i++) {
-            if (i > 0)
-                System.out.print(" ");
+    public static void print(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0) System.out.print(" ");
 
             // Convert the arbitrary JavaScript value into a string form.
             String s = Context.toString(args[i]);
@@ -168,23 +150,20 @@ public class Shell extends ScriptableObject
     /**
      * Quit the shell.
      *
-     * This only affects the interactive mode.
+     * <p>This only affects the interactive mode.
      *
-     * This method is defined as a JavaScript function.
+     * <p>This method is defined as a JavaScript function.
      */
-    public void quit()
-    {
+    public void quit() {
         quitting = true;
     }
 
     /**
      * Get and set the language version.
      *
-     * This method is defined as a JavaScript function.
+     * <p>This method is defined as a JavaScript function.
      */
-    public static double version(Context cx, Scriptable thisObj,
-                                 Object[] args, Function funObj)
-    {
+    public static double version(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         double result = cx.getLanguageVersion();
         if (args.length > 0) {
             double d = Context.toNumber(args[0]);
@@ -196,31 +175,24 @@ public class Shell extends ScriptableObject
     /**
      * Load and execute a set of JavaScript source files.
      *
-     * This method is defined as a JavaScript function.
-     *
+     * <p>This method is defined as a JavaScript function.
      */
-    public static void load(Context cx, Scriptable thisObj,
-                            Object[] args, Function funObj)
-    {
-        Shell shell = (Shell)getTopLevelScope(thisObj);
+    public static void load(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
+        Shell shell = (Shell) getTopLevelScope(thisObj);
         for (int i = 0; i < args.length; i++) {
             shell.processSource(cx, Context.toString(args[i]));
         }
     }
 
-
     /**
      * Evaluate JavaScript source.
      *
      * @param cx the current context
-     * @param filename the name of the file to compile, or null
-     *                 for interactive mode.
+     * @param filename the name of the file to compile, or null for interactive mode.
      */
-    private void processSource(Context cx, String filename)
-    {
+    private void processSource(Context cx, String filename) {
         if (filename == null) {
-            BufferedReader in = new BufferedReader
-                (new InputStreamReader(System.in));
+            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
             String sourceName = "<stdin>";
             int lineno = 1;
             boolean hitEOF = false;
@@ -231,7 +203,7 @@ public class Shell extends ScriptableObject
                 try {
                     String source = "";
                     // Collect lines of source to compile.
-                    while(true) {
+                    while (true) {
                         String newline;
                         newline = in.readLine();
                         if (newline == null) {
@@ -246,31 +218,24 @@ public class Shell extends ScriptableObject
                         // true if the source statement will result in
                         // any error other than one that might be
                         // resolved by appending more source.
-                        if (cx.stringIsCompilableUnit(source))
-                            break;
+                        if (cx.stringIsCompilableUnit(source)) break;
                     }
-                    Object result = cx.evaluateString(this, source,
-                                                      sourceName, startline,
-                                                      null);
+                    Object result = cx.evaluateString(this, source, sourceName, startline, null);
                     if (result != Context.getUndefinedValue()) {
                         System.err.println(Context.toString(result));
                     }
-                }
-                catch (WrappedException we) {
+                } catch (WrappedException we) {
                     // Some form of exception was caught by JavaScript and
                     // propagated up.
                     System.err.println(we.getWrappedException().toString());
                     we.printStackTrace();
-                }
-                catch (EvaluatorException ee) {
+                } catch (EvaluatorException ee) {
                     // Some form of JavaScript error.
                     System.err.println("js: " + ee.getMessage());
-                }
-                catch (JavaScriptException jse) {
+                } catch (JavaScriptException jse) {
                     // Some form of JavaScript error.
                     System.err.println("js: " + jse.getMessage());
-                }
-                catch (IOException ioe) {
+                } catch (IOException ioe) {
                     System.err.println(ioe.toString());
                 }
                 if (quitting) {
@@ -283,8 +248,7 @@ public class Shell extends ScriptableObject
             FileReader in = null;
             try {
                 in = new FileReader(filename);
-            }
-            catch (FileNotFoundException ex) {
+            } catch (FileNotFoundException ex) {
                 Context.reportError("Couldn't open file \"" + filename + "\".");
                 return;
             }
@@ -294,25 +258,19 @@ public class Shell extends ScriptableObject
                 // a script. Text is printed only if the print() function
                 // is called.
                 cx.evaluateReader(this, in, filename, 1, null);
-            }
-            catch (WrappedException we) {
+            } catch (WrappedException we) {
                 System.err.println(we.getWrappedException().toString());
                 we.printStackTrace();
-            }
-            catch (EvaluatorException ee) {
+            } catch (EvaluatorException ee) {
                 System.err.println("js: " + ee.getMessage());
-            }
-            catch (JavaScriptException jse) {
+            } catch (JavaScriptException jse) {
                 System.err.println("js: " + jse.getMessage());
-            }
-            catch (IOException ioe) {
+            } catch (IOException ioe) {
                 System.err.println(ioe.toString());
-            }
-            finally {
+            } finally {
                 try {
                     in.close();
-                }
-                catch (IOException ioe) {
+                } catch (IOException ioe) {
                     System.err.println(ioe.toString());
                 }
             }
@@ -325,4 +283,3 @@ public class Shell extends ScriptableObject
 
     private boolean quitting;
 }
-

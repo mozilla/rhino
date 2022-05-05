@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.EvaluatorException;
@@ -22,14 +21,11 @@ import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.tools.ToolErrorReporter;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Main;
 import org.mozilla.javascript.tools.shell.ShellContextFactory;
 
-/**
- * @version $Id: ShellTest.java,v 1.14 2011/03/29 15:17:49 hannes%helma.at Exp $
- */
+/** @version $Id: ShellTest.java,v 1.14 2011/03/29 15:17:49 hannes%helma.at Exp $ */
 public class ShellTest {
     private static File frameworkFile;
     private static Script frameworkScript;
@@ -49,22 +45,22 @@ public class ShellTest {
         }
     }
 
-    public static final FileFilter DIRECTORY_FILTER = new FileFilter() {
-        public boolean accept(File pathname)
-        {
-            return pathname.isDirectory() && !pathname.getName().equals("CVS");
-        }
-    };
+    public static final FileFilter DIRECTORY_FILTER =
+            new FileFilter() {
+                public boolean accept(File pathname) {
+                    return pathname.isDirectory() && !pathname.getName().equals("CVS");
+                }
+            };
 
-    public static final FileFilter TEST_FILTER = new FileFilter() {
-        public boolean accept(File pathname)
-        {
-            return pathname.getName().endsWith(".js")
-                    && !pathname.getName().equals("shell.js")
-                    && !pathname.getName().equals("browser.js")
-                    && !pathname.getName().equals("template.js");
-        }
-    };
+    public static final FileFilter TEST_FILTER =
+            new FileFilter() {
+                public boolean accept(File pathname) {
+                    return pathname.getName().endsWith(".js")
+                            && !pathname.getName().equals("shell.js")
+                            && !pathname.getName().equals("browser.js")
+                            && !pathname.getName().equals("template.js");
+                }
+            };
 
     public static String getStackTrace(Throwable t) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -93,7 +89,7 @@ public class ShellTest {
         int exitCode = 0;
     }
 
-    public static abstract class Status {
+    public abstract static class Status {
         private boolean negative;
 
         public final void setNegative() {
@@ -123,46 +119,55 @@ public class ShellTest {
         public abstract void running(File jsFile);
 
         public abstract void failed(String s);
+
         public abstract void threw(Throwable t);
+
         public abstract void timedOut(long timeoutMillis);
+
         public abstract void exitCodesWere(int expected, int actual);
+
         public abstract void outputWas(String s);
 
         static Status compose(final Status[] array) {
             return new Status() {
                 @Override
                 public void running(File file) {
-                    for (int i=0; i<array.length; i++) {
+                    for (int i = 0; i < array.length; i++) {
                         array[i].running(file);
                     }
                 }
+
                 @Override
                 public void threw(Throwable t) {
-                    for (int i=0; i<array.length; i++) {
+                    for (int i = 0; i < array.length; i++) {
                         array[i].threw(t);
                     }
                 }
+
                 @Override
                 public void failed(String s) {
-                    for (int i=0; i<array.length; i++) {
+                    for (int i = 0; i < array.length; i++) {
                         array[i].failed(s);
                     }
                 }
+
                 @Override
                 public void exitCodesWere(int expected, int actual) {
-                    for (int i=0; i<array.length; i++) {
+                    for (int i = 0; i < array.length; i++) {
                         array[i].exitCodesWere(expected, actual);
                     }
                 }
+
                 @Override
                 public void outputWas(String s) {
-                    for (int i=0; i<array.length; i++) {
+                    for (int i = 0; i < array.length; i++) {
                         array[i].outputWas(s);
                     }
                 }
+
                 @Override
                 public void timedOut(long timeoutMillis) {
-                    for (int i=0; i<array.length; i++) {
+                    for (int i = 0; i < array.length; i++) {
                         array[i].timedOut(timeoutMillis);
                     }
                 }
@@ -172,9 +177,9 @@ public class ShellTest {
         static class JsError {
             static String toString(JsError[] e) {
                 String rv = "";
-                for (int i=0; i<e.length; i++) {
+                for (int i = 0; i < e.length; i++) {
                     rv += e[i].toString();
-                    if (i+1 != e.length) {
+                    if (i + 1 != e.length) {
                         rv += "\n";
                     }
                 }
@@ -187,7 +192,12 @@ public class ShellTest {
             private String lineSource;
             private int lineOffset;
 
-            JsError(String message, String sourceName, int line, String lineSource, int lineOffset) {
+            JsError(
+                    String message,
+                    String sourceName,
+                    int line,
+                    String lineSource,
+                    int lineOffset) {
                 this.message = message;
                 this.sourceName = sourceName;
                 this.line = line;
@@ -198,24 +208,22 @@ public class ShellTest {
             @Override
             public String toString() {
                 String locationLine = "";
-                if (sourceName != null)
-                    locationLine += sourceName + ":";
-                if (line != 0)
-                    locationLine += line + ": ";
+                if (sourceName != null) locationLine += sourceName + ":";
+                if (line != 0) locationLine += line + ": ";
                 locationLine += message;
                 String sourceLine = this.lineSource;
                 String errCaret = null;
                 if (lineSource != null) {
                     errCaret = "";
-                    for (int i=0; i<lineSource.length(); i++) {
+                    for (int i = 0; i < lineSource.length(); i++) {
                         char c = lineSource.charAt(i);
-                        if (i < lineOffset-1) {
+                        if (i < lineOffset - 1) {
                             if (c == '\t') {
                                 errCaret += "\t";
                             } else {
                                 errCaret += " ";
                             }
-                        } else if (i == lineOffset-1) {
+                        } else if (i == lineOffset - 1) {
                             errCaret += "^";
                         }
                     }
@@ -261,14 +269,15 @@ public class ShellTest {
         }
 
         private void addError(String string, String string0, int i, String string1, int i0) {
-            errors.add( new Status.JsError(string, string0, i, string1, i0) );
+            errors.add(new Status.JsError(string, string0, i, string1, i0));
         }
 
         public void warning(String string, String string0, int i, String string1, int i0) {
             original.warning(string, string0, i, string1, i0);
         }
 
-        public EvaluatorException runtimeError(String string, String string0, int i, String string1, int i0) {
+        public EvaluatorException runtimeError(
+                String string, String string0, int i, String string1, int i0) {
             return original.runtimeError(string, string0, i, string1, i0);
         }
 
@@ -277,27 +286,30 @@ public class ShellTest {
         }
     }
 
-    public static abstract class Parameters {
+    public abstract static class Parameters {
         public abstract int getTimeoutMilliseconds();
     }
 
-    @SuppressWarnings(value={"deprecation"})
+    @SuppressWarnings(value = {"deprecation"})
     private static void callStop(Thread t) {
         t.stop();
     }
 
-    public static void run(final ShellContextFactory shellContextFactory,
-            final File jsFile, final Parameters parameters,
-            final Status status) throws Exception {
+    public static void run(
+            final ShellContextFactory shellContextFactory,
+            final File jsFile,
+            final Parameters parameters,
+            final Status status)
+            throws Exception {
         final Global global = new Global();
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final PrintStream p = new PrintStream(out);
         global.setOut(p);
         global.setErr(p);
         global.defineFunctionProperties(
-                new String[] { "options" }, ShellTest.class,
-                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT |
-                  ScriptableObject.READONLY);
+                new String[] {"options"},
+                ShellTest.class,
+                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
         // test suite expects keywords to be disallowed as identifiers
         shellContextFactory.setAllowReservedKeywords(false);
         final TestState testState = new TestState();
@@ -306,54 +318,69 @@ public class ShellTest {
         }
         final Throwable thrown[] = {null};
 
-        Thread t = new Thread(new Runnable()
-        {
-            public void run()
-            {
-                try
-                {
-                    shellContextFactory.call(cx ->
-                    {
-                        status.running(jsFile);
-                        testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
-                        cx.setErrorReporter( testState.errors );
-                        global.init(cx);
-                        try {
-                            runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile().getParentFile(), "shell.js"));
-                            runFileIfExists(cx, global, new File(jsFile.getParentFile().getParentFile(), "shell.js"));
-                            runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
-                            runFileIfExists(cx, global, jsFile);
-                            status.hadErrors(jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
-                        } catch (ThreadDeath e) {
-                        } catch (Throwable t) {
-                            status.threw(t);
-                        }
-                        return null;
-                    });
-                }
-                catch (Error t)
-                {
-                    thrown[0] = t;
-                }
-                catch (RuntimeException t)
-                {
-                    thrown[0] = t;
-                }
-                finally {
-                    synchronized(testState)
-                    {
-                        testState.finished = true;
-                    }
-                }
-            }
-        }, jsFile.getPath());
+        Thread t =
+                new Thread(
+                        new Runnable() {
+                            public void run() {
+                                try {
+                                    shellContextFactory.call(
+                                            cx -> {
+                                                status.running(jsFile);
+                                                testState.errors =
+                                                        new ErrorReporterWrapper(
+                                                                cx.getErrorReporter());
+                                                cx.setErrorReporter(testState.errors);
+                                                global.init(cx);
+                                                try {
+                                                    runFileIfExists(
+                                                            cx,
+                                                            global,
+                                                            new File(
+                                                                    jsFile.getParentFile()
+                                                                            .getParentFile()
+                                                                            .getParentFile(),
+                                                                    "shell.js"));
+                                                    runFileIfExists(
+                                                            cx,
+                                                            global,
+                                                            new File(
+                                                                    jsFile.getParentFile()
+                                                                            .getParentFile(),
+                                                                    "shell.js"));
+                                                    runFileIfExists(
+                                                            cx,
+                                                            global,
+                                                            new File(
+                                                                    jsFile.getParentFile(),
+                                                                    "shell.js"));
+                                                    runFileIfExists(cx, global, jsFile);
+                                                    status.hadErrors(
+                                                            jsFile,
+                                                            testState.errors.errors.toArray(
+                                                                    new Status.JsError[0]));
+                                                } catch (ThreadDeath e) {
+                                                } catch (Throwable t) {
+                                                    status.threw(t);
+                                                }
+                                                return null;
+                                            });
+                                } catch (Error t) {
+                                    thrown[0] = t;
+                                } catch (RuntimeException t) {
+                                    thrown[0] = t;
+                                } finally {
+                                    synchronized (testState) {
+                                        testState.finished = true;
+                                    }
+                                }
+                            }
+                        },
+                        jsFile.getPath());
         t.setDaemon(true);
         t.start();
         t.join(parameters.getTimeoutMilliseconds());
-        synchronized(testState)
-        {
-            if(!testState.finished)
-            {
+        synchronized (testState) {
+            if (!testState.finished) {
                 callStop(t);
                 status.timedOut(parameters.getTimeoutMilliseconds());
             }
@@ -361,49 +388,47 @@ public class ShellTest {
         int expectedExitCode = 0;
         p.flush();
         status.outputWas(new String(out.toByteArray()));
-        BufferedReader r = new BufferedReader(new InputStreamReader(
-                new ByteArrayInputStream(out.toByteArray())));
+        BufferedReader r =
+                new BufferedReader(
+                        new InputStreamReader(new ByteArrayInputStream(out.toByteArray())));
         String failures = "";
-        for(;;)
-        {
+        for (; ; ) {
             String s = r.readLine();
-            if(s == null)
-            {
+            if (s == null) {
                 break;
             }
-            if(s.indexOf("FAILED!") != -1)
-            {
+            if (s.indexOf("FAILED!") != -1) {
                 failures += s + '\n';
             }
             int expex = s.indexOf("EXPECT EXIT CODE ");
-            if(expex != -1)
-            {
+            if (expex != -1) {
                 expectedExitCode = s.charAt(expex + "EXPECT EXIT CODE ".length()) - '0';
             }
         }
-        if (thrown[0] != null)
-        {
+        if (thrown[0] != null) {
             status.threw(thrown[0]);
         }
         status.exitCodesWere(expectedExitCode, testState.exitCode);
-        if(failures != "")
-        {
+        if (failures != "") {
             status.failed(failures);
         }
     }
 
-    public static void runNoFork(final ShellContextFactory shellContextFactory,
-        final File jsFile, final Parameters parameters,
-        final Status status) throws Exception {
+    public static void runNoFork(
+            final ShellContextFactory shellContextFactory,
+            final File jsFile,
+            final Parameters parameters,
+            final Status status)
+            throws Exception {
         final Global global = new Global();
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final PrintStream p = new PrintStream(out);
         global.setOut(p);
         global.setErr(p);
         global.defineFunctionProperties(
-            new String[] { "options" }, ShellTest.class,
-            ScriptableObject.DONTENUM | ScriptableObject.PERMANENT |
-                ScriptableObject.READONLY);
+                new String[] {"options"},
+                ShellTest.class,
+                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT | ScriptableObject.READONLY);
         // test suite expects keywords to be disallowed as identifiers
         shellContextFactory.setAllowReservedKeywords(false);
         final TestState testState = new TestState();
@@ -413,27 +438,33 @@ public class ShellTest {
         final Throwable thrown[] = {null};
 
         try {
-            shellContextFactory.call(cx ->
-            {
-                status.running(jsFile);
-                testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
-                cx.setErrorReporter(testState.errors);
-                global.init(cx);
-                try {
-                    runFileIfExists(cx, global,
-                        new File(jsFile.getParentFile().getParentFile().getParentFile(),
-                            "shell.js"));
-                    runFileIfExists(cx, global,
-                        new File(jsFile.getParentFile().getParentFile(), "shell.js"));
-                    runFileIfExists(cx, global, new File(jsFile.getParentFile(), "shell.js"));
-                    runFileIfExists(cx, global, jsFile);
-                    status
-                        .hadErrors(jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
-                } catch (Throwable t) {
-                    status.threw(t);
-                }
-                return null;
-            });
+            shellContextFactory.call(
+                    cx -> {
+                        status.running(jsFile);
+                        testState.errors = new ErrorReporterWrapper(cx.getErrorReporter());
+                        cx.setErrorReporter(testState.errors);
+                        global.init(cx);
+                        try {
+                            runFileIfExists(
+                                    cx,
+                                    global,
+                                    new File(
+                                            jsFile.getParentFile().getParentFile().getParentFile(),
+                                            "shell.js"));
+                            runFileIfExists(
+                                    cx,
+                                    global,
+                                    new File(jsFile.getParentFile().getParentFile(), "shell.js"));
+                            runFileIfExists(
+                                    cx, global, new File(jsFile.getParentFile(), "shell.js"));
+                            runFileIfExists(cx, global, jsFile);
+                            status.hadErrors(
+                                    jsFile, testState.errors.errors.toArray(new Status.JsError[0]));
+                        } catch (Throwable t) {
+                            status.threw(t);
+                        }
+                        return null;
+                    });
         } catch (Error t) {
             thrown[0] = t;
         } catch (RuntimeException t) {
@@ -445,33 +476,28 @@ public class ShellTest {
         int expectedExitCode = 0;
         p.flush();
         status.outputWas(new String(out.toByteArray()));
-        BufferedReader r = new BufferedReader(new InputStreamReader(
-            new ByteArrayInputStream(out.toByteArray())));
+        BufferedReader r =
+                new BufferedReader(
+                        new InputStreamReader(new ByteArrayInputStream(out.toByteArray())));
         String failures = "";
-        for(;;)
-        {
+        for (; ; ) {
             String s = r.readLine();
-            if(s == null)
-            {
+            if (s == null) {
                 break;
             }
-            if(s.indexOf("FAILED!") != -1)
-            {
+            if (s.indexOf("FAILED!") != -1) {
                 failures += s + '\n';
             }
             int expex = s.indexOf("EXPECT EXIT CODE ");
-            if(expex != -1)
-            {
+            if (expex != -1) {
                 expectedExitCode = s.charAt(expex + "EXPECT EXIT CODE ".length()) - '0';
             }
         }
-        if (thrown[0] != null)
-        {
+        if (thrown[0] != null) {
             status.threw(thrown[0]);
         }
         status.exitCodesWere(expectedExitCode, testState.exitCode);
-        if(failures != "")
-        {
+        if (failures != "") {
             status.failed(failures);
         }
     }

@@ -12,4 +12,4 @@ Rhino is an implementation of JavaScript in Java.
 
 [Compatibility Table](./compat/engines.html)
 
-[Javadoc](./javadoc/index.html)
+[JavaDoc](https://javadoc.io/doc/org.mozilla/rhino)

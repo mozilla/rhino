@@ -8,6 +8,4 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/sorting-comparators.js")
-public class SortingComparatorTest extends ScriptTestsBase
-{
-}
+public class SortingComparatorTest extends ScriptTestsBase {}

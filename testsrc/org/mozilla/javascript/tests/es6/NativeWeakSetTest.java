@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/weakset.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class NativeWeakSetTest extends ScriptTestsBase
-{
-}
+public class NativeWeakSetTest extends ScriptTestsBase {}

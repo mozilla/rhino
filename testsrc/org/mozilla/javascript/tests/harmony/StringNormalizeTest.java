@@ -11,5 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/string-normalize.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class StringNormalizeTest extends ScriptTestsBase {
-}
+public class StringNormalizeTest extends ScriptTestsBase {}

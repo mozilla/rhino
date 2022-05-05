@@ -14,7 +14,7 @@ import java.security.PrivilegedAction;
 /**
  * Avoid loading classes unless they are used.
  *
- * <p> This improves startup time and average memory usage.
+ * <p>This improves startup time and average memory usage.
  */
 public final class LazilyLoadedCtor implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -30,15 +30,17 @@ public final class LazilyLoadedCtor implements Serializable {
     private Object initializedValue;
     private int state;
 
-    public LazilyLoadedCtor(ScriptableObject scope, String propertyName,
-            String className, boolean sealed)
-    {
+    public LazilyLoadedCtor(
+            ScriptableObject scope, String propertyName, String className, boolean sealed) {
         this(scope, propertyName, className, sealed, false);
     }
 
-    LazilyLoadedCtor(ScriptableObject scope, String propertyName,
-            String className, boolean sealed, boolean privileged)
-    {
+    LazilyLoadedCtor(
+            ScriptableObject scope,
+            String propertyName,
+            String className,
+            boolean sealed,
+            boolean privileged) {
 
         this.scope = scope;
         this.propertyName = propertyName;
@@ -47,16 +49,13 @@ public final class LazilyLoadedCtor implements Serializable {
         this.privileged = privileged;
         this.state = STATE_BEFORE_INIT;
 
-        scope.addLazilyInitializedValue(propertyName, 0, this,
-                ScriptableObject.DONTENUM);
+        scope.addLazilyInitializedValue(propertyName, 0, this, ScriptableObject.DONTENUM);
     }
 
-    void init()
-    {
+    void init() {
         synchronized (this) {
             if (state == STATE_INITIALIZING)
-                throw new IllegalStateException(
-                    "Recursive initialization for "+propertyName);
+                throw new IllegalStateException("Recursive initialization for " + propertyName);
             if (state == STATE_BEFORE_INIT) {
                 state = STATE_INITIALIZING;
                 // Set value now to have something to set in finally block if
@@ -72,48 +71,40 @@ public final class LazilyLoadedCtor implements Serializable {
         }
     }
 
-    Object getValue()
-    {
-        if (state != STATE_WITH_VALUE)
-            throw new IllegalStateException(propertyName);
+    Object getValue() {
+        if (state != STATE_WITH_VALUE) throw new IllegalStateException(propertyName);
         return initializedValue;
     }
 
-    private Object buildValue()
-    {
-        if(privileged)
-        {
-            return AccessController.doPrivileged(new PrivilegedAction<Object>()
-            {
-                @Override
-                public Object run()
-                {
-                    return buildValue0();
-                }
-            });
+    private Object buildValue() {
+        if (privileged) {
+            return AccessController.doPrivileged(
+                    new PrivilegedAction<Object>() {
+                        @Override
+                        public Object run() {
+                            return buildValue0();
+                        }
+                    });
         }
         return buildValue0();
     }
 
-    private Object buildValue0()
-    {
+    private Object buildValue0() {
         Class<? extends Scriptable> cl = cast(Kit.classOrNull(className));
         if (cl != null) {
             try {
-                Object value = ScriptableObject.buildClassCtor(scope, cl,
-                                                               sealed, false);
+                Object value = ScriptableObject.buildClassCtor(scope, cl, sealed, false);
                 if (value != null) {
                     return value;
                 }
                 // cl has own static initializer which is expected
                 // to set the property on its own.
                 value = scope.get(propertyName, scope);
-                if (value != Scriptable.NOT_FOUND)
-                    return value;
+                if (value != Scriptable.NOT_FOUND) return value;
             } catch (InvocationTargetException ex) {
                 Throwable target = ex.getTargetException();
                 if (target instanceof RuntimeException) {
-                    throw (RuntimeException)target;
+                    throw (RuntimeException) target;
                 }
             } catch (RhinoException ex) {
             } catch (InstantiationException ex) {
@@ -126,7 +117,6 @@ public final class LazilyLoadedCtor implements Serializable {
 
     @SuppressWarnings({"unchecked"})
     private static Class<? extends Scriptable> cast(Class<?> cl) {
-        return (Class<? extends Scriptable>)cl;
+        return (Class<? extends Scriptable>) cl;
     }
-
 }

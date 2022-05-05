@@ -17,6 +17,7 @@ final class NativeError extends IdScriptableObject {
     private static final long serialVersionUID = -5338413581437645187L;
 
     private static final Object ERROR_TAG = "Error";
+    private static final String STACK_TAG = "stack";
 
     /** Default stack limit is set to "Infinity", here represented as a negative int */
     public static final int DEFAULT_STACK_LIMIT = -1;
@@ -162,7 +163,7 @@ final class NativeError extends IdScriptableObject {
         // overwritable like an ordinary property. Hence this setup with
         // the getter and setter below.
         if (stackProvider == null) {
-            defineProperty("stack", this::getStackDelegated, this::setStackDelegated, DONTENUM);
+            defineProperty(STACK_TAG, this::getStackDelegated, this::setStackDelegated, DONTENUM);
         }
         stackProvider = re;
     }
@@ -310,7 +311,7 @@ final class NativeError extends IdScriptableObject {
         // at the time captureStackTrace was called. Stack traces collected through
         // Error.captureStackTrace are immediately collected, formatted,
         // and attached to the given error object.
-        obj.defineProperty("stack", err.get("stack"), ScriptableObject.DONTENUM);
+        obj.defineProperty(STACK_TAG, err.get(STACK_TAG), ScriptableObject.DONTENUM);
     }
 
     @Override

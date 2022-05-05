@@ -45,6 +45,8 @@ public class NativePromise extends ScriptableObject {
         constructor.defineConstructorMethod(
                 scope, "all", 1, NativePromise::all, DONTENUM, DONTENUM | READONLY);
         constructor.defineConstructorMethod(
+                scope, "allSettled", 1, NativePromise::allSettled, DONTENUM, DONTENUM | READONLY);
+        constructor.defineConstructorMethod(
                 scope, "race", 1, NativePromise::race, DONTENUM, DONTENUM | READONLY);
 
         ScriptableObject speciesDescriptor = (ScriptableObject) cx.newObject(scope);
@@ -160,8 +162,8 @@ public class NativePromise extends ScriptableObject {
         return cap.promise;
     }
 
-    // Promise.all
-    private static Object all(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+    private static Object doAll(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args, boolean failFast) {
         Capability cap = new Capability(cx, scope, thisObj);
         Object arg = (args.length > 0 ? args[0] : Undefined.instance);
 
@@ -180,7 +182,7 @@ public class NativePromise extends ScriptableObject {
 
         IteratorLikeIterable.Itr iterator = iterable.iterator();
         try {
-            PromiseAllResolver resolver = new PromiseAllResolver(iterator, thisObj, cap);
+            PromiseAllResolver resolver = new PromiseAllResolver(iterator, thisObj, cap, failFast);
             try {
                 return resolver.resolve(cx, scope);
             } finally {
@@ -196,6 +198,17 @@ public class NativePromise extends ScriptableObject {
                     new Object[] {getErrorObject(cx, scope, re)});
             return cap.promise;
         }
+    }
+
+    // Promise.all
+    private static Object all(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return doAll(cx, scope, thisObj, args, true);
+    }
+
+    // Promise.allSettled
+    private static Object allSettled(
+            Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+        return doAll(cx, scope, thisObj, args, false);
     }
 
     // Promise.race
@@ -691,11 +704,17 @@ public class NativePromise extends ScriptableObject {
         IteratorLikeIterable.Itr iterator;
         Scriptable thisObj;
         Capability capability;
+        boolean failFast;
 
-        PromiseAllResolver(IteratorLikeIterable.Itr iter, Scriptable thisObj, Capability cap) {
+        PromiseAllResolver(
+                IteratorLikeIterable.Itr iter,
+                Scriptable thisObj,
+                Capability cap,
+                boolean failFast) {
             this.iterator = iter;
             this.thisObj = thisObj;
             this.capability = cap;
+            this.failFast = failFast;
         }
 
         Object resolve(Context topCx, Scriptable topScope) {
@@ -745,13 +764,42 @@ public class NativePromise extends ScriptableObject {
                         new LambdaFunction(
                                 topScope,
                                 1,
-                                (Context cx, Scriptable scope, Scriptable thisObj, Object[] args) ->
-                                        eltResolver.resolve(
-                                                cx,
-                                                scope,
-                                                (args.length > 0 ? args[0] : Undefined.instance),
-                                                this));
+                                (Context cx,
+                                        Scriptable scope,
+                                        Scriptable thisObj,
+                                        Object[] args) -> {
+                                    Object value = (args.length > 0 ? args[0] : Undefined.instance);
+                                    if (!failFast) {
+                                        Scriptable elementResult = cx.newObject(scope);
+                                        elementResult.put("status", elementResult, "fulfilled");
+                                        elementResult.put("value", elementResult, value);
+                                        value = elementResult;
+                                    }
+                                    return eltResolver.resolve(cx, scope, value, this);
+                                });
                 resolveFunc.setStandardPropertyAttributes(DONTENUM | READONLY);
+
+                Callable rejectFunc = capability.reject;
+                if (!failFast) {
+                    LambdaFunction resolveSettledRejection =
+                            new LambdaFunction(
+                                    topScope,
+                                    1,
+                                    (Context cx,
+                                            Scriptable scope,
+                                            Scriptable thisObj,
+                                            Object[] args) -> {
+                                        Scriptable result = cx.newObject(scope);
+                                        result.put("status", result, " rejected");
+                                        result.put(
+                                                "reason",
+                                                result,
+                                                (args.length > 0 ? args[0] : Undefined.instance));
+                                        return eltResolver.resolve(cx, scope, result, this);
+                                    });
+                    resolveSettledRejection.setStandardPropertyAttributes(DONTENUM | READONLY);
+                    rejectFunc = resolveSettledRejection;
+                }
                 remainingElements++;
 
                 // Call "then" on the promise with the resolution func
@@ -761,7 +809,7 @@ public class NativePromise extends ScriptableObject {
                         topCx,
                         topScope,
                         ScriptRuntime.lastStoredScriptable(topCx),
-                        new Object[] {resolveFunc, capability.reject});
+                        new Object[] {resolveFunc, rejectFunc});
                 index++;
             }
         }

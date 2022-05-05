@@ -9,12 +9,10 @@ package org.mozilla.javascript.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.mozilla.javascript.Token;
 
 /**
- * Switch statement AST node type.
- * Node type is {@link Token#SWITCH}.
+ * Switch statement AST node type. Node type is {@link Token#SWITCH}.
  *
  * <pre><i>SwitchStatement</i> :
  *        <b>switch</b> ( Expression ) CaseBlock
@@ -32,7 +30,7 @@ import org.mozilla.javascript.Token;
 public class SwitchStatement extends Jump {
 
     private static final List<SwitchCase> NO_CASES =
-        Collections.unmodifiableList(new ArrayList<SwitchCase>());
+            Collections.unmodifiableList(new ArrayList<SwitchCase>());
 
     private AstNode expression;
     private List<SwitchCase> cases;
@@ -43,8 +41,7 @@ public class SwitchStatement extends Jump {
         type = Token.SWITCH;
     }
 
-    public SwitchStatement() {
-    }
+    public SwitchStatement() {}
 
     public SwitchStatement(int pos) {
         // can't call super (Jump) for historical reasons
@@ -56,16 +53,14 @@ public class SwitchStatement extends Jump {
         length = len;
     }
 
-    /**
-     * Returns the switch discriminant expression
-     */
+    /** Returns the switch discriminant expression */
     public AstNode getExpression() {
         return expression;
     }
 
     /**
-     * Sets the switch discriminant expression, and sets its parent
-     * to this node.
+     * Sets the switch discriminant expression, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException} if expression is {@code null}
      */
     public void setExpression(AstNode expression) {
@@ -74,32 +69,28 @@ public class SwitchStatement extends Jump {
         expression.setParent(this);
     }
 
-    /**
-     * Returns case statement list.  If there are no cases,
-     * returns an immutable empty list.
-     */
+    /** Returns case statement list. If there are no cases, returns an immutable empty list. */
     public List<SwitchCase> getCases() {
         return cases != null ? cases : NO_CASES;
     }
 
     /**
-     * Sets case statement list, and sets the parent of each child
-     * case to this node.
+     * Sets case statement list, and sets the parent of each child case to this node.
+     *
      * @param cases list, which may be {@code null} to remove all the cases
      */
     public void setCases(List<SwitchCase> cases) {
         if (cases == null) {
             this.cases = null;
         } else {
-            if (this.cases != null)
-                this.cases.clear();
-            for (SwitchCase sc : cases)
-                addCase(sc);
+            if (this.cases != null) this.cases.clear();
+            for (SwitchCase sc : cases) addCase(sc);
         }
     }
 
     /**
      * Adds a switch case statement to the end of the list.
+     *
      * @throws IllegalArgumentException} if switchCase is {@code null}
      */
     public void addCase(SwitchCase switchCase) {
@@ -111,37 +102,27 @@ public class SwitchStatement extends Jump {
         switchCase.setParent(this);
     }
 
-    /**
-     * Returns left paren position, -1 if missing
-     */
+    /** Returns left paren position, -1 if missing */
     public int getLp() {
         return lp;
     }
 
-    /**
-     * Sets left paren position
-     */
+    /** Sets left paren position */
     public void setLp(int lp) {
         this.lp = lp;
     }
 
-    /**
-     * Returns right paren position, -1 if missing
-     */
+    /** Returns right paren position, -1 if missing */
     public int getRp() {
         return rp;
     }
 
-    /**
-     * Sets right paren position
-     */
+    /** Sets right paren position */
     public void setRp(int rp) {
         this.rp = rp;
     }
 
-    /**
-     * Sets both paren positions
-     */
+    /** Sets both paren positions */
     public void setParens(int lp, int rp) {
         this.lp = lp;
         this.rp = rp;
@@ -165,15 +146,12 @@ public class SwitchStatement extends Jump {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, then the switch-expression, then the cases
-     * in lexical order.
-     */
+    /** Visits this node, then the switch-expression, then the cases in lexical order. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
             expression.visit(v);
-            for (SwitchCase sc: getCases()) {
+            for (SwitchCase sc : getCases()) {
                 sc.visit(v);
             }
         }

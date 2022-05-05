@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/prototype-symbols.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class PrototypeSymbolTest extends ScriptTestsBase
-{
-}
+public class PrototypeSymbolTest extends ScriptTestsBase {}

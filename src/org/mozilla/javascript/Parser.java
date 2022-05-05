@@ -209,13 +209,19 @@ public class Parser {
             addError(messageId, messageArg, position, length);
         } else if (errorCollector != null) {
             errorCollector.warning(message, sourceURI, position, length);
-        } else {
+        } else if (ts != null) {
             errorReporter.warning(message, sourceURI, ts.getLineno(), ts.getLine(), ts.getOffset());
+        } else {
+            errorReporter.warning(message, sourceURI, 1, "", 1);
         }
     }
 
     void addError(String messageId) {
-        addError(messageId, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+        if (ts == null) {
+            addError(messageId, 0, 0);
+        } else {
+            addError(messageId, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+        }
     }
 
     void addError(String messageId, int position, int length) {
@@ -232,7 +238,7 @@ public class Parser {
 
     void addError(String messageId, int c) {
         String messageArg = Character.toString((char) c);
-        addError(messageId, messageArg, ts.tokenBeg, ts.tokenEnd - ts.tokenBeg);
+        addError(messageId, messageArg);
     }
 
     void addError(String messageId, String messageArg, int position, int length) {
@@ -1637,39 +1643,68 @@ public class Parser {
                     reportError("msg.catch.unreachable");
                 }
                 int catchPos = ts.tokenBeg, lp = -1, rp = -1, guardPos = -1;
-                if (mustMatchToken(Token.LP, "msg.no.paren.catch", true)) lp = ts.tokenBeg;
-
-                mustMatchToken(Token.NAME, "msg.bad.catchcond", true);
-
-                Name varName = createNameNode();
-                Comment jsdocNodeForName = getAndResetJsDoc();
-                if (jsdocNodeForName != null) {
-                    varName.setJsDocNode(jsdocNodeForName);
-                }
-                String varNameString = varName.getIdentifier();
-                if (inUseStrictDirective) {
-                    if ("eval".equals(varNameString) || "arguments".equals(varNameString)) {
-                        reportError("msg.bad.id.strict", varNameString);
-                    }
-                }
-
+                Name varName = null;
                 AstNode catchCond = null;
-                if (matchToken(Token.IF, true)) {
-                    guardPos = ts.tokenBeg;
-                    catchCond = expr();
-                } else {
-                    sawDefaultCatch = true;
+
+                switch (peekToken()) {
+                    case Token.LP:
+                        {
+                            matchToken(Token.LP, true);
+                            lp = ts.tokenBeg;
+                            mustMatchToken(Token.NAME, "msg.bad.catchcond", true);
+
+                            varName = createNameNode();
+                            Comment jsdocNodeForName = getAndResetJsDoc();
+                            if (jsdocNodeForName != null) {
+                                varName.setJsDocNode(jsdocNodeForName);
+                            }
+                            String varNameString = varName.getIdentifier();
+                            if (inUseStrictDirective) {
+                                if ("eval".equals(varNameString)
+                                        || "arguments".equals(varNameString)) {
+                                    reportError("msg.bad.id.strict", varNameString);
+                                }
+                            }
+
+                            if (matchToken(Token.IF, true)) {
+                                guardPos = ts.tokenBeg;
+                                catchCond = expr();
+                            } else {
+                                sawDefaultCatch = true;
+                            }
+
+                            if (mustMatchToken(Token.RP, "msg.bad.catchcond", true)) {
+                                rp = ts.tokenBeg;
+                            }
+                            mustMatchToken(Token.LC, "msg.no.brace.catchblock", true);
+                        }
+                        break;
+                    case Token.LC:
+                        if (compilerEnv.getLanguageVersion() >= Context.VERSION_ES6) {
+                            matchToken(Token.LC, true);
+                        } else {
+                            reportError("msg.no.paren.catch");
+                        }
+                        break;
+                    default:
+                        reportError("msg.no.paren.catch");
+                        break;
                 }
 
-                if (mustMatchToken(Token.RP, "msg.bad.catchcond", true)) rp = ts.tokenBeg;
-                mustMatchToken(Token.LC, "msg.no.brace.catchblock", true);
-
-                Block catchBlock = (Block) statements();
-                tryEnd = getNodeEnd(catchBlock);
+                Scope catchScope = new Scope(catchPos);
                 CatchClause catchNode = new CatchClause(catchPos);
+                catchNode.setLineno(ts.lineno);
+                pushScope(catchScope);
+                try {
+                    statements(catchScope);
+                } finally {
+                    popScope();
+                }
+
+                tryEnd = getNodeEnd(catchScope);
                 catchNode.setVarName(varName);
                 catchNode.setCatchCondition(catchCond);
-                catchNode.setBody(catchBlock);
+                catchNode.setBody(catchScope);
                 if (guardPos != -1) {
                     catchNode.setIfPosition(guardPos - catchPos);
                 }

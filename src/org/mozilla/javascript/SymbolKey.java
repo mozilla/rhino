@@ -3,15 +3,11 @@ package org.mozilla.javascript;
 import java.io.Serializable;
 
 /**
- * A SymbolKey is one of the implementations of Symbol. It is really there
- * so that we can easily use pre-defined symbols as keys in native code.
- * A SymbolKey has the special property that two NativeSymbol objects
- * with the same key are equal.
+ * A SymbolKey is one of the implementations of Symbol. It is really there so that we can easily use
+ * pre-defined symbols as keys in native code. A SymbolKey has the special property that two
+ * NativeSymbol objects with the same key are equal.
  */
-
-public class SymbolKey
-    implements Symbol, Serializable
-{
+public class SymbolKey implements Symbol, Serializable {
     private static final long serialVersionUID = -6019782713330994754L;
 
     // These are common SymbolKeys that are equivalent to well-known symbols
@@ -31,8 +27,7 @@ public class SymbolKey
 
     private String name;
 
-    public SymbolKey(String name)
-    {
+    public SymbolKey(String name) {
         this.name = name;
     }
 
@@ -41,14 +36,12 @@ public class SymbolKey
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return System.identityHashCode(this);
     }
 
     @Override
-    public boolean equals(Object o)
-    {
+    public boolean equals(Object o) {
         if (o instanceof SymbolKey) {
             return o == this;
         }
@@ -59,8 +52,7 @@ public class SymbolKey
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         if (name == null) {
             return "Symbol()";
         }

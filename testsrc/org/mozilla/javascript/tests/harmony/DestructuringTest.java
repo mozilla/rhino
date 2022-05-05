@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/destructuring.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class DestructuringTest extends ScriptTestsBase
-{
-}
+public class DestructuringTest extends ScriptTestsBase {}

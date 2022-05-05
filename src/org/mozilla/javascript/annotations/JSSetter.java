@@ -11,9 +11,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation that marks a Java method as JavaScript setter. This can
- * be used as an alternative to the <code>jsSet_</code> prefix desribed in
- * {@link org.mozilla.javascript.ScriptableObject#defineClass(org.mozilla.javascript.Scriptable, java.lang.Class)}.
+ * An annotation that marks a Java method as JavaScript setter. This can be used as an alternative
+ * to the <code>jsSet_</code> prefix desribed in {@link
+ * org.mozilla.javascript.ScriptableObject#defineClass(org.mozilla.javascript.Scriptable,
+ * java.lang.Class)}.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

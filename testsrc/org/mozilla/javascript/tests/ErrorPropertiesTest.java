@@ -9,15 +9,15 @@ import org.junit.Test;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 
-
 /**
- * Unit tests for <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=549604">bug 549604</a>.
- * This tests verify the properties of a JS exception and ensures that they don't change with different optimization levels.
+ * Unit tests for <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=549604">bug 549604</a>. This
+ * tests verify the properties of a JS exception and ensures that they don't change with different
+ * optimization levels.
  *
  * @author Marc Guillemot
  */
 public class ErrorPropertiesTest {
-    final static String LS = System.getProperty("line.separator");
+    static final String LS = System.getProperty("line.separator");
 
     private void testScriptStackTrace(final String script, final String expectedStackTrace) {
         testScriptStackTrace(script, expectedStackTrace, -1);
@@ -25,12 +25,11 @@ public class ErrorPropertiesTest {
         testScriptStackTrace(script, expectedStackTrace, 1);
     }
 
-    private void testScriptStackTrace(final String script, final String expectedStackTrace,
-                                      final int optimizationLevel) {
+    private void testScriptStackTrace(
+            final String script, final String expectedStackTrace, final int optimizationLevel) {
         try {
             Utils.executeScript(script, optimizationLevel);
-        }
-        catch (final RhinoException e) {
+        } catch (final RhinoException e) {
             Assert.assertEquals(expectedStackTrace, e.getScriptStackTrace());
         }
     }
@@ -58,7 +57,9 @@ public class ErrorPropertiesTest {
         testScriptStackTrace(script, "\tat myScript.js:3 (f)" + LS + "\tat myScript.js:5" + LS);
         testIt("try { null.method() } catch (e) { e.stack }", "\tat myScript.js:1" + LS);
         final String expectedStack = "\tat myScript.js:2 (f)" + LS + "\tat myScript.js:4" + LS;
-        testIt("function f() {\n null.method(); \n}\n try { f() } catch (e) { e.stack }", expectedStack);
+        testIt(
+                "function f() {\n null.method(); \n}\n try { f() } catch (e) { e.stack }",
+                expectedStack);
     }
 
     @Test
@@ -69,24 +70,24 @@ public class ErrorPropertiesTest {
         testScriptStackTrace(script, "f()@myScript.js:3" + LS + "@myScript.js:5" + LS);
         testIt("try { null.method() } catch (e) { e.stack }", "@myScript.js:1" + LS);
         final String expectedStack = "f()@myScript.js:2" + LS + "@myScript.js:4" + LS;
-        testIt("function f() {\n null.method(); \n}\n try { f() } catch (e) { e.stack }", expectedStack);
+        testIt(
+                "function f() {\n null.method(); \n}\n try { f() } catch (e) { e.stack }",
+                expectedStack);
     }
 
     private void testIt(final String script, final Object expected) {
-        Utils.runWithAllOptimizationLevels(cx -> {
-            try {
-                final ScriptableObject scope = cx.initStandardObjects();
-                final Object o = cx.evaluateString(scope, script,
-                        "myScript.js", 1, null);
-                Assert.assertEquals(expected, o);
-                return o;
-            }
-            catch (final RuntimeException e) {
-                throw e;
-            }
-            catch (final Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    try {
+                        final ScriptableObject scope = cx.initStandardObjects();
+                        final Object o = cx.evaluateString(scope, script, "myScript.js", 1, null);
+                        Assert.assertEquals(expected, o);
+                        return o;
+                    } catch (final RuntimeException e) {
+                        throw e;
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 }

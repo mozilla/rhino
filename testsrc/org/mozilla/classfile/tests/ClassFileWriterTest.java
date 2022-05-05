@@ -1,16 +1,15 @@
-package org.mozilla.javascript.classfile.tests;
+package org.mozilla.classfile.tests;
+
+import static org.junit.Assert.*;
+import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
+import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-
 import org.junit.Test;
 import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.DefiningClassLoader;
-import static org.mozilla.classfile.ClassFileWriter.ACC_PUBLIC;
-import static org.mozilla.classfile.ClassFileWriter.ACC_STATIC;
-
-import static org.junit.Assert.*;
 
 public class ClassFileWriterTest {
     @Test
@@ -18,12 +17,11 @@ public class ClassFileWriterTest {
         final String CLASS_NAME = "TestStackMapTable";
         final String METHOD_NAME = "returnObject";
 
-        ClassFileWriter cfw = new ClassFileWriter(CLASS_NAME,
-                                                  "java/lang/Object",
-                                                  "ClassFileWriterTest.java");;
+        ClassFileWriter cfw =
+                new ClassFileWriter(CLASS_NAME, "java/lang/Object", "ClassFileWriterTest.java");
 
         // public static Object returnObject()
-        cfw.startMethod(METHOD_NAME, "()Ljava/lang/Object;", (short)(ACC_PUBLIC | ACC_STATIC));
+        cfw.startMethod(METHOD_NAME, "()Ljava/lang/Object;", (short) (ACC_PUBLIC | ACC_STATIC));
 
         cfw.add(ByteCode.NEW, "java/math/BigInteger");
         cfw.add(ByteCode.DUP);
@@ -46,7 +44,7 @@ public class ClassFileWriterTest {
         cfw.markLabel(target);
 
         cfw.add(ByteCode.ARETURN);
-        cfw.stopMethod((short)0);
+        cfw.stopMethod((short) 0);
 
         byte[] bytecode = cfw.toByteArray();
         DefiningClassLoader loader = new DefiningClassLoader();
@@ -55,6 +53,6 @@ public class ClassFileWriterTest {
         Method method = cl.getMethod(METHOD_NAME);
         Object ret = method.invoke(cl);
 
-        assertEquals(ret, new BigInteger(new byte[]{ 123 }));
+        assertEquals(ret, new BigInteger(new byte[] {123}));
     }
 }

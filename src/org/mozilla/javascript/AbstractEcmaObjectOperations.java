@@ -25,6 +25,32 @@ class AbstractEcmaObjectOperations {
     }
 
     /**
+     * Implementation of Abstract Object operation HasOwnProperty as defined by EcmaScript
+     *
+     * @param cx
+     * @param o
+     * @param property
+     * @return boolean
+     * @see <a href="https://262.ecma-international.org/12.0/#sec-hasownproperty"></a>
+     */
+    static boolean hasOwnProperty(Context cx, Object o, Object property) {
+        ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
+        boolean result;
+        if (property instanceof Symbol) {
+            result = ScriptableObject.ensureSymbolScriptable(o).has((Symbol) property, obj);
+        } else {
+            ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(property);
+            if (s.stringId == null) {
+                result = obj.has(s.index, obj);
+            } else {
+                result = obj.has(s.stringId, obj);
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * Implementation of Abstract Object operation testIntegrityLevel as defined by EcmaScript
      *
      * @param cx
@@ -44,7 +70,7 @@ class AbstractEcmaObjectOperations {
             if (Boolean.TRUE.equals(desc.get("configurable"))) return false;
 
             if (level == INTEGRITY_LEVEL.FROZEN
-                    && desc.isDataDescriptor(desc)
+                    && ScriptableObject.isDataDescriptor(desc)
                     && Boolean.TRUE.equals(desc.get("writable"))) return false;
         }
 
@@ -106,16 +132,17 @@ class AbstractEcmaObjectOperations {
 
             if (level == INTEGRITY_LEVEL.SEALED) {
                 if (Boolean.TRUE.equals(desc.get("configurable"))) {
-                    desc.put("configurable", desc, false);
+                    desc.put("configurable", desc, Boolean.FALSE);
 
                     obj.defineOwnProperty(cx, key, desc, false);
                 }
             } else {
-                if (obj.isDataDescriptor(desc) && Boolean.TRUE.equals(desc.get("writable"))) {
-                    desc.put("writable", desc, false);
+                if (ScriptableObject.isDataDescriptor(desc)
+                        && Boolean.TRUE.equals(desc.get("writable"))) {
+                    desc.put("writable", desc, Boolean.FALSE);
                 }
                 if (Boolean.TRUE.equals(desc.get("configurable"))) {
-                    desc.put("configurable", desc, false);
+                    desc.put("configurable", desc, Boolean.FALSE);
                 }
                 obj.defineOwnProperty(cx, key, desc, false);
             }
@@ -134,7 +161,7 @@ class AbstractEcmaObjectOperations {
      *     constructor on "s" or if the "species" symbol is not set.
      * @see <a href="https://tc39.es/ecma262/#sec-speciesconstructor"></a>
      */
-    public static Constructable speciesConstructor(
+    static Constructable speciesConstructor(
             Context cx, Scriptable s, Constructable defaultConstructor) {
         /*
         The abstract operation SpeciesConstructor takes arguments O (an Object) and
@@ -168,5 +195,37 @@ class AbstractEcmaObjectOperations {
             throw ScriptRuntime.typeErrorById("msg.not.ctor", ScriptRuntime.typeof(species));
         }
         return (Constructable) species;
+    }
+
+    /**
+     * Set ( O, P, V, Throw)
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw
+     */
+    static void put(Context cx, Scriptable o, String p, Object v, boolean isThrow) {
+        Scriptable base = ScriptableObject.getBase(o, p);
+        if (base == null) base = o;
+
+        if (base instanceof ScriptableObject) {
+            ((ScriptableObject) base).putImpl(p, 0, o, v, isThrow);
+        } else {
+            base.put(p, o, v);
+        }
+    }
+
+    /**
+     * Set ( O, P, V, Throw)
+     *
+     * <p>https://262.ecma-international.org/12.0/#sec-set-o-p-v-throw
+     */
+    static void put(Context cx, Scriptable o, int p, Object v, boolean isThrow) {
+        Scriptable base = ScriptableObject.getBase(o, p);
+        if (base == null) base = o;
+
+        if (base instanceof ScriptableObject) {
+            ((ScriptableObject) base).putImpl(null, p, o, v, isThrow);
+        } else {
+            base.put(p, o, v);
+        }
     }
 }

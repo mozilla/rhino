@@ -31,10 +31,14 @@ public class XmlNonResettableDocumentBuilderTest {
         Context cx = new ContextFactory().enterContext();
         try {
             Scriptable scope = cx.initStandardObjects();
-            Object result = cx.evaluateString(scope,
-                    "var employees = new XML('<employees><employee><name>John</name></employee></employees>');" +
-                    "employees.employee.name;",
-                    "source", 1, null);
+            Object result =
+                    cx.evaluateString(
+                            scope,
+                            "var employees = new XML('<employees><employee><name>John</name></employee></employees>');"
+                                    + "employees.employee.name;",
+                            "source",
+                            1,
+                            null);
             Assert.assertEquals("John", String.valueOf(result));
         } finally {
             Context.exit();

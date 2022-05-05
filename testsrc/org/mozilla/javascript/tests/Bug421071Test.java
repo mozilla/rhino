@@ -9,13 +9,12 @@
 
 package org.mozilla.javascript.tests;
 
+import junit.framework.TestCase;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
-
-import junit.framework.TestCase;
 
 public class Bug421071Test extends TestCase {
     private ContextFactory factory;
@@ -28,23 +27,24 @@ public class Bug421071Test extends TestCase {
         // and observe names passed in there
         testScript = compileScript();
         runTestScript(); // this one does not get to the
-                            // NativeJavaPackage.getPkgProperty() on my
-                            // variables
+        // NativeJavaPackage.getPkgProperty() on my
+        // variables
         runTestScript(); // however this one does
     }
 
     private Script compileScript() {
-        String scriptSource = "importPackage(java.util);\n"
-                + "var searchmon = 3;\n"
-                + "var searchday = 10;\n"
-                + "var searchyear = 2008;\n"
-                + "var searchwkday = 0;\n"
-                + "\n"
-                + "var myDate = Calendar.getInstance();\n // this is a java.util.Calendar"
-                + "myDate.set(Calendar.MONTH, searchmon);\n"
-                + "myDate.set(Calendar.DATE, searchday);\n"
-                + "myDate.set(Calendar.YEAR, searchyear);\n"
-                + "searchwkday.value = myDate.get(Calendar.DAY_OF_WEEK);";
+        String scriptSource =
+                "importPackage(java.util);\n"
+                        + "var searchmon = 3;\n"
+                        + "var searchday = 10;\n"
+                        + "var searchyear = 2008;\n"
+                        + "var searchwkday = 0;\n"
+                        + "\n"
+                        + "var myDate = Calendar.getInstance();\n // this is a java.util.Calendar"
+                        + "myDate.set(Calendar.MONTH, searchmon);\n"
+                        + "myDate.set(Calendar.DATE, searchday);\n"
+                        + "myDate.set(Calendar.YEAR, searchyear);\n"
+                        + "searchwkday.value = myDate.get(Calendar.DAY_OF_WEEK);";
         Script script;
         Context context = factory.enterContext();
         try {
@@ -67,8 +67,7 @@ public class Bug421071Test extends TestCase {
     static class DynamicScopeContextFactory extends ContextFactory {
         @Override
         public boolean hasFeature(Context cx, int featureIndex) {
-            if (featureIndex == Context.FEATURE_DYNAMIC_SCOPE)
-                return true;
+            if (featureIndex == Context.FEATURE_DYNAMIC_SCOPE) return true;
             return super.hasFeature(cx, featureIndex);
         }
     }

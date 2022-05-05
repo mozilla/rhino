@@ -9,11 +9,16 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * For-in or for-each-in or for-of statement.  Node type is {@link Token#FOR}.
+ * For-in or for-each-in or for-of statement. Node type is {@link Token#FOR}.
  *
  * <pre><b>for</b> [<b>each</b>] ( LeftHandSideExpression <b>in</b> Expression ) Statement</pre>
- * <pre><b>for</b> [<b>each</b>] ( <b>var</b> VariableDeclarationNoIn <b>in</b> Expression ) Statement</pre>
+ *
+ * <pre>
+ * <b>for</b> [<b>each</b>] ( <b>var</b> VariableDeclarationNoIn <b>in</b> Expression ) Statement
+ * </pre>
+ *
  * <pre><b>for</b> ( LeftHandSideExpression <b>of</b> Expression ) Statement</pre>
+ *
  * <pre><b>for</b> ( ForDeclaration <b>of</b> Expression ) Statement</pre>
  */
 public class ForInLoop extends Loop {
@@ -29,8 +34,7 @@ public class ForInLoop extends Loop {
         type = Token.FOR;
     }
 
-    public ForInLoop() {
-    }
+    public ForInLoop() {}
 
     public ForInLoop(int pos) {
         super(pos);
@@ -40,16 +44,15 @@ public class ForInLoop extends Loop {
         super(pos, len);
     }
 
-    /**
-     * Returns loop iterator expression
-     */
+    /** Returns loop iterator expression */
     public AstNode getIterator() {
         return iterator;
     }
 
     /**
-     * Sets loop iterator expression:  the part before the "in" or "of" keyword.
-     * Also sets its parent to this node.
+     * Sets loop iterator expression: the part before the "in" or "of" keyword. Also sets its parent
+     * to this node.
+     *
      * @throws IllegalArgumentException if {@code iterator} is {@code null}
      */
     public void setIterator(AstNode iterator) {
@@ -58,15 +61,14 @@ public class ForInLoop extends Loop {
         iterator.setParent(this);
     }
 
-    /**
-     * Returns object being iterated over
-     */
+    /** Returns object being iterated over */
     public AstNode getIteratedObject() {
         return iteratedObject;
     }
 
     /**
      * Sets object being iterated over, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if {@code object} is {@code null}
      */
     public void setIteratedObject(AstNode object) {
@@ -75,61 +77,50 @@ public class ForInLoop extends Loop {
         object.setParent(this);
     }
 
-    /**
-     * Returns whether the loop is a for-each loop
-     */
+    /** Returns whether the loop is a for-each loop */
     public boolean isForEach() {
         return isForEach;
     }
 
-    /**
-     * Sets whether the loop is a for-each loop
-     */
+    /** Sets whether the loop is a for-each loop */
     public void setIsForEach(boolean isForEach) {
         this.isForEach = isForEach;
     }
 
-    /**
-     * Returns whether the loop is a for-of loop
-     */
+    /** Returns whether the loop is a for-of loop */
     public boolean isForOf() {
         return isForOf;
     }
 
-    /**
-     * Sets whether the loop is a for-each loop
-     */
+    /** Sets whether the loop is a for-each loop */
     public void setIsForOf(boolean isForOf) {
         this.isForOf = isForOf;
     }
 
-    /**
-     * Returns position of "in" or "of" keyword
-     */
+    /** Returns position of "in" or "of" keyword */
     public int getInPosition() {
         return inPosition;
     }
 
     /**
      * Sets position of "in" or "of" keyword
-     * @param inPosition position of "in" or "of" keyword,
-     * or -1 if not present (e.g. in presence of a syntax error)
+     *
+     * @param inPosition position of "in" or "of" keyword, or -1 if not present (e.g. in presence of
+     *     a syntax error)
      */
     public void setInPosition(int inPosition) {
         this.inPosition = inPosition;
     }
 
-    /**
-     * Returns position of "each" keyword
-     */
+    /** Returns position of "each" keyword */
     public int getEachPosition() {
         return eachPosition;
     }
 
     /**
      * Sets position of "each" keyword
-     * @param eachPosition position of "each" keyword,
-     * or -1 if not present.
+     *
+     * @param eachPosition position of "each" keyword, or -1 if not present.
      */
     public void setEachPosition(int eachPosition) {
         this.eachPosition = eachPosition;
@@ -155,14 +146,12 @@ public class ForInLoop extends Loop {
         if (body.getType() == Token.BLOCK) {
             sb.append(body.toSource(depth).trim()).append("\n");
         } else {
-            sb.append("\n").append(body.toSource(depth+1));
+            sb.append("\n").append(body.toSource(depth + 1));
         }
         return sb.toString();
     }
 
-    /**
-     * Visits this node, the iterator, the iterated object, and the body.
-     */
+    /** Visits this node, the iterator, the iterated object, and the body. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

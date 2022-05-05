@@ -8,6 +8,4 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/dataview-accessors.js")
-public class DataViewAccessorsTest extends ScriptTestsBase
-{
-}
+public class DataViewAccessorsTest extends ScriptTestsBase {}
