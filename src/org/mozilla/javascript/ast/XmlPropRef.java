@@ -9,21 +9,18 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for an E4X XML {@code [expr]} property-ref expression.
- * The node type is {@link Token#REF_NAME}.<br>
- *
+ * AST node for an E4X XML {@code [expr]} property-ref expression. The node type is {@link
+ * Token#REF_NAME}.<br>
  * Syntax:
  *
  * <pre> @<i><sub>opt</sub></i> ns:: <i><sub>opt</sub></i> name</pre>
  *
- * Examples include {@code name}, {@code ns::name}, {@code ns::*},
- * {@code *::name}, {@code *::*}, {@code @attr}, {@code @ns::attr},
- * {@code @ns::*}, {@code @*::attr}, {@code @*::*} and {@code @*}.<p>
+ * Examples include {@code name}, {@code ns::name}, {@code ns::*}, {@code *::name}, {@code *::*},
+ * {@code @attr}, {@code @ns::attr}, {@code @ns::*}, {@code @*::attr}, {@code @*::*} and {@code @*}.
  *
- * The node starts at the {@code @} token, if present.  Otherwise it starts
- * at the namespace name.  The node bounds extend through the closing
- * right-bracket, or if it is missing due to a syntax error, through the
- * end of the index expression.
+ * <p>The node starts at the {@code @} token, if present. Otherwise it starts at the namespace name.
+ * The node bounds extend through the closing right-bracket, or if it is missing due to a syntax
+ * error, through the end of the index expression.
  */
 public class XmlPropRef extends XmlRef {
 
@@ -33,8 +30,7 @@ public class XmlPropRef extends XmlRef {
         type = Token.REF_NAME;
     }
 
-    public XmlPropRef() {
-    }
+    public XmlPropRef() {}
 
     public XmlPropRef(int pos) {
         super(pos);
@@ -44,15 +40,14 @@ public class XmlPropRef extends XmlRef {
         super(pos, len);
     }
 
-    /**
-     * Returns property name.
-     */
+    /** Returns property name. */
     public Name getPropName() {
         return propName;
     }
 
     /**
      * Sets property name, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if {@code propName} is {@code null}
      */
     public void setPropName(Name propName) {
@@ -76,9 +71,7 @@ public class XmlPropRef extends XmlRef {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, then the namespace if present, then the property name.
-     */
+    /** Visits this node, then the namespace if present, then the property name. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

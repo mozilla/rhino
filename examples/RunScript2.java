@@ -14,8 +14,7 @@ import org.mozilla.javascript.ScriptableObject;
  * @author Norris Boyd
  */
 public class RunScript2 {
-    public static void main(String args[])
-    {
+    public static void main(String args[]) {
         Context cx = Context.enter();
         try {
             Scriptable scope = cx.initStandardObjects();
@@ -26,7 +25,7 @@ public class RunScript2 {
             ScriptableObject.putProperty(scope, "out", jsOut);
 
             String s = "";
-            for (int i=0; i < args.length; i++) {
+            for (int i = 0; i < args.length; i++) {
                 s += args[i];
             }
             Object result = cx.evaluateString(scope, s, "<cmd>", 1, null);
@@ -35,6 +34,4 @@ public class RunScript2 {
             Context.exit();
         }
     }
-
 }
-

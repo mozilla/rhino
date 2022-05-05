@@ -11,13 +11,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
 /**
  * A JavaScript function declaration or expression.
- * <p>Node type is {@link Token#FUNCTION}.</p>
+ *
+ * <p>Node type is {@link Token#FUNCTION}.
  *
  * <pre><i>FunctionDeclaration</i> :
  *        <b>function</b> Identifier ( FormalParameterListopt ) { FunctionBody }
@@ -38,37 +38,41 @@ import org.mozilla.javascript.Token;
  *        FunctionDeclaration</pre>
  *
  * JavaScript 1.8 introduces "function closures" of the form
- *  <pre>function ([params] ) Expression</pre>
  *
- * In this case the FunctionNode node will have no body but will have an
- * expression.
+ * <pre>function ([params] ) Expression</pre>
+ *
+ * In this case the FunctionNode node will have no body but will have an expression.
  */
 public class FunctionNode extends ScriptNode {
 
     /**
-     * There are three types of functions that can be defined. The first
-     * is a function statement. This is a function appearing as a top-level
-     * statement (i.e., not nested inside some other statement) in either a
-     * script or a function.<p>
+     * There are three types of functions that can be defined. The first is a function statement.
+     * This is a function appearing as a top-level statement (i.e., not nested inside some other
+     * statement) in either a script or a function.
      *
-     * The second is a function expression, which is a function appearing in
-     * an expression except for the third type, which is...<p>
+     * <p>The second is a function expression, which is a function appearing in an expression except
+     * for the third type, which is...
      *
-     * The third type is a function expression where the expression is the
-     * top-level expression in an expression statement.<p>
+     * <p>The third type is a function expression where the expression is the top-level expression
+     * in an expression statement.
      *
-     * The three types of functions have different treatment and must be
-     * distinguished.
+     * <p>The three types of functions have different treatment and must be distinguished.
      */
-    public static final int FUNCTION_STATEMENT            = 1;
-    public static final int FUNCTION_EXPRESSION           = 2;
-    public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
-    public static final int ARROW_FUNCTION                = 4;
+    public static final int FUNCTION_STATEMENT = 1;
 
-    public static enum Form { FUNCTION, GETTER, SETTER, METHOD }
+    public static final int FUNCTION_EXPRESSION = 2;
+    public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
+    public static final int ARROW_FUNCTION = 4;
+
+    public static enum Form {
+        FUNCTION,
+        GETTER,
+        SETTER,
+        METHOD
+    }
 
     private static final List<AstNode> NO_PARAMS =
-        Collections.unmodifiableList(new ArrayList<AstNode>());
+            Collections.unmodifiableList(new ArrayList<AstNode>());
 
     private Name functionName;
     private List<AstNode> params;
@@ -84,15 +88,14 @@ public class FunctionNode extends ScriptNode {
     private boolean isGenerator;
     private boolean isES6Generator;
     private List<Node> generatorResumePoints;
-    private Map<Node,int[]> liveLocals;
+    private Map<Node, int[]> liveLocals;
     private AstNode memberExprNode;
 
     {
         type = Token.FUNCTION;
     }
 
-    public FunctionNode() {
-    }
+    public FunctionNode() {}
 
     public FunctionNode(int pos) {
         super(pos);
@@ -105,6 +108,7 @@ public class FunctionNode extends ScriptNode {
 
     /**
      * Returns function name
+     *
      * @return function name, {@code null} for anonymous functions
      */
     public Name getFunctionName() {
@@ -113,16 +117,17 @@ public class FunctionNode extends ScriptNode {
 
     /**
      * Sets function name, and sets its parent to this node.
+     *
      * @param name function name, {@code null} for anonymous functions
      */
     public void setFunctionName(Name name) {
         functionName = name;
-        if (name != null)
-            name.setParent(this);
+        if (name != null) name.setParent(this);
     }
 
     /**
      * Returns the function name as a string
+     *
      * @return the function name, {@code ""} if anonymous
      */
     public String getName() {
@@ -131,32 +136,32 @@ public class FunctionNode extends ScriptNode {
 
     /**
      * Returns the function parameter list
-     * @return the function parameter list.  Returns an immutable empty
-     *         list if there are no parameters.
+     *
+     * @return the function parameter list. Returns an immutable empty list if there are no
+     *     parameters.
      */
     public List<AstNode> getParams() {
         return params != null ? params : NO_PARAMS;
     }
 
     /**
-     * Sets the function parameter list, and sets the parent for
-     * each element of the list.
+     * Sets the function parameter list, and sets the parent for each element of the list.
+     *
      * @param params the function parameter list, or {@code null} if no params
      */
     public void setParams(List<AstNode> params) {
         if (params == null) {
             this.params = null;
         } else {
-            if (this.params != null)
-                this.params.clear();
-            for (AstNode param : params)
-                addParam(param);
+            if (this.params != null) this.params.clear();
+            for (AstNode param : params) addParam(param);
         }
     }
 
     /**
-     * Adds a parameter to the function parameter list.
-     * Sets the parent of the param node to this node.
+     * Adds a parameter to the function parameter list. Sets the parent of the param node to this
+     * node.
+     *
      * @param param the parameter
      * @throws IllegalArgumentException if param is {@code null}
      */
@@ -170,33 +175,33 @@ public class FunctionNode extends ScriptNode {
     }
 
     /**
-     * Returns true if the specified {@link AstNode} node is a parameter
-     * of this Function node.  This provides a way during AST traversal
-     * to disambiguate the function name node from the parameter nodes.
+     * Returns true if the specified {@link AstNode} node is a parameter of this Function node. This
+     * provides a way during AST traversal to disambiguate the function name node from the parameter
+     * nodes.
      */
     public boolean isParam(AstNode node) {
         return params == null ? false : params.contains(node);
     }
 
     /**
-     * Returns function body.  Normally a {@link Block}, but can be a plain
-     * {@link AstNode} if it's a function closure.
+     * Returns function body. Normally a {@link Block}, but can be a plain {@link AstNode} if it's a
+     * function closure.
      *
-     * @return the body.  Can be {@code null} only if the AST is malformed.
+     * @return the body. Can be {@code null} only if the AST is malformed.
      */
     public AstNode getBody() {
         return body;
     }
 
     /**
-     * Sets function body, and sets its parent to this node.
-     * Also sets the encoded source bounds based on the body bounds.
-     * Assumes the function node absolute position has already been set,
-     * and the body node's absolute position and length are set.<p>
+     * Sets function body, and sets its parent to this node. Also sets the encoded source bounds
+     * based on the body bounds. Assumes the function node absolute position has already been set,
+     * and the body node's absolute position and length are set.
      *
-     * @param body function body.  Its parent is set to this node, and its
-     * position is updated to be relative to this node.
+     * <p>
      *
+     * @param body function body. Its parent is set to this node, and its position is updated to be
+     *     relative to this node.
      * @throws IllegalArgumentException if body is {@code null}
      */
     public void setBody(AstNode body) {
@@ -211,65 +216,49 @@ public class FunctionNode extends ScriptNode {
         setEncodedSourceBounds(this.position, absEnd);
     }
 
-    /**
-     * Returns left paren position, -1 if missing
-     */
+    /** Returns left paren position, -1 if missing */
     public int getLp() {
         return lp;
     }
 
-    /**
-     * Sets left paren position
-     */
+    /** Sets left paren position */
     public void setLp(int lp) {
         this.lp = lp;
     }
 
-    /**
-     * Returns right paren position, -1 if missing
-     */
+    /** Returns right paren position, -1 if missing */
     public int getRp() {
         return rp;
     }
 
-    /**
-     * Sets right paren position
-     */
+    /** Sets right paren position */
     public void setRp(int rp) {
         this.rp = rp;
     }
 
-    /**
-     * Sets both paren positions
-     */
+    /** Sets both paren positions */
     public void setParens(int lp, int rp) {
         this.lp = lp;
         this.rp = rp;
     }
 
-    /**
-     * Returns whether this is a 1.8 function closure
-     */
+    /** Returns whether this is a 1.8 function closure */
     public boolean isExpressionClosure() {
         return isExpressionClosure;
     }
 
-    /**
-     * Sets whether this is a 1.8 function closure
-     */
+    /** Sets whether this is a 1.8 function closure */
     public void setIsExpressionClosure(boolean isExpressionClosure) {
         this.isExpressionClosure = isExpressionClosure;
     }
 
     /**
-     * Return true if this function requires an Ecma-262 Activation object.
-     * The Activation object is implemented by
-     * {@link org.mozilla.javascript.NativeCall}, and is fairly expensive
-     * to create, so when possible, the interpreter attempts to use a plain
-     * call frame instead.
+     * Return true if this function requires an Ecma-262 Activation object. The Activation object is
+     * implemented by {@link org.mozilla.javascript.NativeCall}, and is fairly expensive to create,
+     * so when possible, the interpreter attempts to use a plain call frame instead.
      *
-     * @return true if this function needs activation.  It could be needed
-     * if there is a lexical closure, or in a number of other situations.
+     * @return true if this function needs activation. It could be needed if there is a lexical
+     *     closure, or in a number of other situations.
      */
     public boolean requiresActivation() {
         return needsActivation;
@@ -280,7 +269,7 @@ public class FunctionNode extends ScriptNode {
     }
 
     public boolean isGenerator() {
-      return isGenerator;
+        return isGenerator;
     }
 
     public void setIsGenerator() {
@@ -297,8 +286,7 @@ public class FunctionNode extends ScriptNode {
     }
 
     public void addResumptionPoint(Node target) {
-        if (generatorResumePoints == null)
-            generatorResumePoints = new ArrayList<Node>();
+        if (generatorResumePoints == null) generatorResumePoints = new ArrayList<Node>();
         generatorResumePoints.add(target);
     }
 
@@ -306,13 +294,12 @@ public class FunctionNode extends ScriptNode {
         return generatorResumePoints;
     }
 
-    public Map<Node,int[]> getLiveLocals() {
+    public Map<Node, int[]> getLiveLocals() {
         return liveLocals;
     }
 
     public void addLiveLocals(Node node, int[] locals) {
-        if (liveLocals == null)
-            liveLocals = new HashMap<Node,int[]>();
+        if (liveLocals == null) liveLocals = new HashMap<Node, int[]>();
         liveLocals.put(node, locals);
     }
 
@@ -325,9 +312,7 @@ public class FunctionNode extends ScriptNode {
         return result;
     }
 
-    /**
-     * Returns the function type (statement, expr, statement expr)
-     */
+    /** Returns the function type (statement, expr, statement expr) */
     public int getFunctionType() {
         return functionType;
     }
@@ -337,7 +322,9 @@ public class FunctionNode extends ScriptNode {
     }
 
     public boolean isMethod() {
-        return functionForm == Form.GETTER || functionForm == Form.SETTER || functionForm == Form.METHOD;
+        return functionForm == Form.GETTER
+                || functionForm == Form.SETTER
+                || functionForm == Form.METHOD;
     }
 
     public boolean isGetterMethod() {
@@ -365,19 +352,17 @@ public class FunctionNode extends ScriptNode {
     }
 
     /**
-     * Rhino supports a nonstandard Ecma extension that allows you to
-     * say, for instance, function a.b.c(arg1, arg) {...}, and it will
-     * be rewritten at codegen time to:  a.b.c = function(arg1, arg2) {...}
-     * If we detect an expression other than a simple Name in the position
-     * where a function name was expected, we record that expression here.
-     * <p>
-     * This extension is only available by setting the CompilerEnv option
+     * Rhino supports a nonstandard Ecma extension that allows you to say, for instance, function
+     * a.b.c(arg1, arg) {...}, and it will be rewritten at codegen time to: a.b.c = function(arg1,
+     * arg2) {...} If we detect an expression other than a simple Name in the position where a
+     * function name was expected, we record that expression here.
+     *
+     * <p>This extension is only available by setting the CompilerEnv option
      * "isAllowMemberExprAsFunctionName" in the Parser.
      */
     public void setMemberExprNode(AstNode node) {
         memberExprNode = node;
-        if (node != null)
-            node.setParent(this);
+        if (node != null) node.setParent(this);
     }
 
     public AstNode getMemberExprNode() {
@@ -436,9 +421,8 @@ public class FunctionNode extends ScriptNode {
     }
 
     /**
-     * Visits this node, the function name node if supplied,
-     * the parameters, and the body.  If there is a member-expr node,
-     * it is visited last.
+     * Visits this node, the function name node if supplied, the parameters, and the body. If there
+     * is a member-expr node, it is visited last.
      */
     @Override
     public void visit(NodeVisitor v) {

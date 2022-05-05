@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es7-array-includes.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class ES7ArrayIncludesTest extends ScriptTestsBase {
-}
-
+public class ES7ArrayIncludesTest extends ScriptTestsBase {}

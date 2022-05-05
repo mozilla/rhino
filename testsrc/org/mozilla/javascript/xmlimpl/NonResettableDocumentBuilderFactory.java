@@ -1,9 +1,9 @@
 package org.mozilla.javascript.xmlimpl;
 
+import java.util.Properties;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.util.Properties;
 
 public class NonResettableDocumentBuilderFactory extends DocumentBuilderFactory {
     private static final String XML_PROPERTY = "javax.xml.parsers.DocumentBuilderFactory";
@@ -22,12 +22,12 @@ public class NonResettableDocumentBuilderFactory extends DocumentBuilderFactory 
 
     @Override
     public DocumentBuilder newDocumentBuilder() throws ParserConfigurationException {
-        return new NonResettableDocumentBuilder(delegateFactory.newDocumentBuilder(), delegateBuilderAfterReset);
+        return new NonResettableDocumentBuilder(
+                delegateFactory.newDocumentBuilder(), delegateBuilderAfterReset);
     }
 
     @Override
-    public void setAttribute(String name, Object value) throws IllegalArgumentException {
-    }
+    public void setAttribute(String name, Object value) throws IllegalArgumentException {}
 
     @Override
     public Object getAttribute(String name) throws IllegalArgumentException {
@@ -35,8 +35,7 @@ public class NonResettableDocumentBuilderFactory extends DocumentBuilderFactory 
     }
 
     @Override
-    public void setFeature(String name, boolean value) {
-    }
+    public void setFeature(String name, boolean value) {}
 
     @Override
     public boolean getFeature(String name) {

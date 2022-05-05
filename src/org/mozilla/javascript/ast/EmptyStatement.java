@@ -8,18 +8,14 @@ package org.mozilla.javascript.ast;
 
 import org.mozilla.javascript.Token;
 
-/**
- * AST node for an empty statement.  Node type is {@link Token#EMPTY}.
- *
- */
+/** AST node for an empty statement. Node type is {@link Token#EMPTY}. */
 public class EmptyStatement extends AstNode {
 
     {
         type = Token.EMPTY;
     }
 
-    public EmptyStatement() {
-    }
+    public EmptyStatement() {}
 
     public EmptyStatement(int pos) {
         super(pos);
@@ -36,9 +32,7 @@ public class EmptyStatement extends AstNode {
         return sb.toString();
     }
 
-    /**
-     * Visits this node.  There are no children.
-     */
+    /** Visits this node. There are no children. */
     @Override
     public void visit(NodeVisitor v) {
         v.visit(this);

@@ -9,37 +9,33 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node representing unary operators such as {@code typeof} and {@code delete}.
- * The type field is set to the appropriate Token type for the operator.
- * The node length spans from the operator to the end of the operand.<p>
+ * AST node representing unary operators such as {@code typeof} and {@code delete}. The type field
+ * is set to the appropriate Token type for the operator. The node length spans from the operator to
+ * the end of the operand.
  *
- * The {@code default xml namespace = &lt;expr&gt;} statement in E4X
- * (JavaScript 1.6) is represented as a {@code UnaryExpression} of node
- * type {@link Token#DEFAULTNAMESPACE}, wrapped with an
- * {@link ExpressionStatement}.
+ * <p>The {@code default xml namespace = &lt;expr&gt;} statement in E4X (JavaScript 1.6) is
+ * represented as a {@code UnaryExpression} of node type {@link Token#DEFAULTNAMESPACE}, wrapped
+ * with an {@link ExpressionStatement}.
  */
 public class UnaryExpression extends AstNode {
 
     private AstNode operand;
 
-    public UnaryExpression() {
-    }
+    public UnaryExpression() {}
 
     public UnaryExpression(int pos) {
         super(pos);
     }
 
-    /**
-     * Constructs a new UnaryExpression
-     */
+    /** Constructs a new UnaryExpression */
     public UnaryExpression(int pos, int len) {
         super(pos, len);
     }
 
     /**
-     * Constructs a new UnaryExpression with the specified operator
-     * and operand.  It sets the parent of the operand, and sets its own bounds
-     * to encompass the operator and operand.
+     * Constructs a new UnaryExpression with the specified operator and operand. It sets the parent
+     * of the operand, and sets its own bounds to encompass the operator and operand.
+     *
      * @param operator the node type
      * @param operatorPosition the absolute position of the operator.
      * @param operand the operand expression
@@ -55,18 +51,16 @@ public class UnaryExpression extends AstNode {
         setOperand(operand);
     }
 
-    /**
-     * Returns operator token &ndash; alias for {@link #getType}
-     */
+    /** Returns operator token &ndash; alias for {@link #getType} */
     public int getOperator() {
         return type;
     }
 
     /**
-     * Sets operator &ndash; same as {@link #setType}, but throws an
-     * exception if the operator is invalid
-     * @throws IllegalArgumentException if operator is not a valid
-     * Token code
+     * Sets operator &ndash; same as {@link #setType}, but throws an exception if the operator is
+     * invalid
+     *
+     * @throws IllegalArgumentException if operator is not a valid Token code
      */
     public void setOperator(int operator) {
         if (!Token.isValidToken(operator))
@@ -80,6 +74,7 @@ public class UnaryExpression extends AstNode {
 
     /**
      * Sets the operand, and sets its parent to be this node.
+     *
      * @throws IllegalArgumentException} if {@code operand} is {@code null}
      */
     public void setOperand(AstNode operand) {
@@ -102,9 +97,7 @@ public class UnaryExpression extends AstNode {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, then the operand.
-     */
+    /** Visits this node, then the operand. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

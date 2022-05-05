@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/string-endsWith.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class StringEndsWithTest extends ScriptTestsBase
-{
-}
+public class StringEndsWithTest extends ScriptTestsBase {}

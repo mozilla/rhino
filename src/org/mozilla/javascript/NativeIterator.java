@@ -203,7 +203,7 @@ public final class NativeIterator extends IdScriptableObject {
     }
 
     private Object next(Context cx, Scriptable scope) {
-        Boolean b = ScriptRuntime.enumNext(this.objectIterator);
+        Boolean b = ScriptRuntime.enumNext(this.objectIterator, cx);
         if (!b.booleanValue()) {
             // Out of values. Throw StopIteration.
             throw new JavaScriptException(NativeIterator.getStopIterationObject(scope), null, 0);

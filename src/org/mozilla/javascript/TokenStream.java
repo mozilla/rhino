@@ -1423,7 +1423,8 @@ class TokenStream {
         tokenEnd = start + stringBufferTop + 2; // include slashes
 
         if (isAlpha(peekChar())) {
-            parser.reportError("msg.invalid.re.flag");
+            parser.reportError(
+                    "msg.invalid.re.flag", String.valueOf(Character.toChars(peekChar())));
         }
 
         this.string = new String(stringBuffer, 0, reEnd);

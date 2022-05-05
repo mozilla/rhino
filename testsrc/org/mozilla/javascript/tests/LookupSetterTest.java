@@ -14,8 +14,8 @@ import org.mozilla.javascript.ScriptableObject;
 
 public class LookupSetterTest {
     private final String defineSetterAndGetterX =
-        "Foo.__defineSetter__('x', function(val) { Foo.value = val; }); \n"
-        + "Foo.__defineGetter__('x', function() {return 'hello' + value; });\n";
+            "Foo.__defineSetter__('x', function(val) { Foo.value = val; }); \n"
+                    + "Foo.__defineGetter__('x', function() {return 'hello' + value; });\n";
 
     @Test
     public void typeof() throws Exception {
@@ -25,8 +25,12 @@ public class LookupSetterTest {
         test("function", "typeof (new Foo()).__lookupGetter__('s')");
         test("function", "typeof (new Foo()).__lookupSetter__('s')");
 
-        test("true", "Object.getPrototypeOf((new Foo()).__lookupGetter__('s')) === Function.prototype");
-        test("true", "Object.getPrototypeOf((new Foo()).__lookupSetter__('s')) === Function.prototype");
+        test(
+                "true",
+                "Object.getPrototypeOf((new Foo()).__lookupGetter__('s')) === Function.prototype");
+        test(
+                "true",
+                "Object.getPrototypeOf((new Foo()).__lookupSetter__('s')) === Function.prototype");
 
         test("true", "Object.getPrototypeOf(Foo.__lookupGetter__('x')) === Function.prototype");
         test("true", "Object.getPrototypeOf(Foo.__lookupSetter__('x')) === Function.prototype");
@@ -40,7 +44,9 @@ public class LookupSetterTest {
 
     @Test
     public void lookedUpGetter_toString() throws Exception {
-        test("function s() {\n\t[native code, arity=0]\n}\n", "new Foo().__lookupGetter__('s').toString()");
+        test(
+                "function s() {\n\t[native code, arity=0]\n}\n",
+                "new Foo().__lookupGetter__('s').toString()");
     }
 
     @Test
@@ -48,14 +54,27 @@ public class LookupSetterTest {
         test("true", "new Foo().__lookupGetter__('s') == new Foo().__lookupGetter__('s')");
     }
 
-
     @Test
     public void getOwnPropertyDescriptor_equals() throws Exception {
-        test("true", "Object.getOwnPropertyDescriptor(Foo, 'x').get === Object.getOwnPropertyDescriptor(Foo, 'x').get");
-        test("true", "Object.getOwnPropertyDescriptor(Foo, 'x').set === Object.getOwnPropertyDescriptor(Foo, 'x').set");
+        test(
+                "true",
+                "Object.getOwnPropertyDescriptor(Foo, 'x').get ==="
+                        + " Object.getOwnPropertyDescriptor(Foo, 'x').get");
+        test(
+                "true",
+                "Object.getOwnPropertyDescriptor(Foo, 'x').set ==="
+                        + " Object.getOwnPropertyDescriptor(Foo, 'x').set");
 
-        test("true", "Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').get === Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').get");
-        test("true", "Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').set === Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').set");
+        test(
+                "true",
+                "Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').get ==="
+                        + " Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()),"
+                        + " 's').get");
+        test(
+                "true",
+                "Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()), 's').set ==="
+                        + " Object.getOwnPropertyDescriptor(Object.getPrototypeOf(new Foo()),"
+                        + " 's').set");
     }
 
     @Test
@@ -66,7 +85,9 @@ public class LookupSetterTest {
 
     @Test
     public void lookedUpSetter_toString() throws Exception {
-        test("function s() {\n\t[native code, arity=0]\n}\n", "new Foo().__lookupSetter__('s').toString()");
+        test(
+                "function s() {\n\t[native code, arity=0]\n}\n",
+                "new Foo().__lookupSetter__('s').toString()");
     }
 
     @Test
@@ -74,25 +95,38 @@ public class LookupSetterTest {
         test("true", "new Foo().__lookupSetter__('s') == new Foo().__lookupSetter__('s')");
     }
 
+    @Test
+    public void shadowGetterTest() throws Exception {
+        test(
+                "true",
+                "function f() { var a = { }; var b = Object.create(a);"
+                        + "b.foo = 1;"
+                        + "a.__defineSetter__('foo', function () {});"
+                        + "return b.__lookupSetter__('foo') === undefined;}"
+                        + "f();");
+    }
+
     private void test(final String expected, final String src) throws Exception {
-        final ContextAction<String> action = new ContextAction<String>() {
-            @Override
-            public String run(final Context cx) {
-                try {
-                    final Scriptable scope = cx.initStandardObjects(new TopScope());
-                    ScriptableObject.defineClass(scope, Foo.class);
-                    cx.evaluateString(scope, defineSetterAndGetterX, "initX", 1, null);
-                    Object result = String.valueOf(cx.evaluateString(scope, src, "test", 1, null));
-                    assertEquals(expected, result);
-                    return null;
-                } catch (final Exception e) {
-                    if (e instanceof RuntimeException) {
-                        throw (RuntimeException) e;
+        final ContextAction<String> action =
+                new ContextAction<String>() {
+                    @Override
+                    public String run(final Context cx) {
+                        try {
+                            final Scriptable scope = cx.initStandardObjects(new TopScope());
+                            ScriptableObject.defineClass(scope, Foo.class);
+                            cx.evaluateString(scope, defineSetterAndGetterX, "initX", 1, null);
+                            Object result =
+                                    String.valueOf(cx.evaluateString(scope, src, "test", 1, null));
+                            assertEquals(expected, result);
+                            return null;
+                        } catch (final Exception e) {
+                            if (e instanceof RuntimeException) {
+                                throw (RuntimeException) e;
+                            }
+                            throw new RuntimeException(e);
+                        }
                     }
-                    throw new RuntimeException(e);
-                }
-            }
-        };
+                };
 
         Utils.runWithAllOptimizationLevels(action);
     }
@@ -100,7 +134,8 @@ public class LookupSetterTest {
     public static class Foo extends ScriptableObject {
         private String s = "hello";
 
-        public Foo() { /* Empty. */
+        public Foo() {
+            /* Empty. */
         }
 
         public String jsGet_s() {

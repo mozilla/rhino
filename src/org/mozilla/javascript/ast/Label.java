@@ -9,9 +9,8 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node representing a label.  It is a distinct node type so it can
- * record its length and position for code-processing tools.
- * Node type is {@link Token#LABEL}.
+ * AST node representing a label. It is a distinct node type so it can record its length and
+ * position for code-processing tools. Node type is {@link Token#LABEL}.
  */
 public class Label extends Jump {
 
@@ -21,8 +20,7 @@ public class Label extends Jump {
         type = Token.LABEL;
     }
 
-    public Label() {
-    }
+    public Label() {}
 
     public Label(int pos) {
         this(pos, -1);
@@ -39,17 +37,15 @@ public class Label extends Jump {
         setName(name);
     }
 
-    /**
-     * Returns the label text
-     */
+    /** Returns the label text */
     public String getName() {
         return name;
     }
 
     /**
      * Sets the label text
-     * @throws IllegalArgumentException if name is {@code null} or the
-     * empty string.
+     *
+     * @throws IllegalArgumentException if name is {@code null} or the empty string.
      */
     public void setName(String name) {
         name = name == null ? null : name.trim();
@@ -67,9 +63,7 @@ public class Label extends Jump {
         return sb.toString();
     }
 
-    /**
-     * Visits this label.  There are no children to visit.
-     */
+    /** Visits this label. There are no children to visit. */
     @Override
     public void visit(NodeVisitor v) {
         v.visit(this);

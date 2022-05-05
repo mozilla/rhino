@@ -7,20 +7,20 @@ import org.junit.Test;
 import org.mozilla.javascript.NativeObject;
 
 /**
- * When calling <b>propertyIsEnumerable</b> on a <b>String</b>, missing properties should return <b>false</b> instead of
- * throwing a <b>Property {0} not found.</b> exception.
+ * When calling <b>propertyIsEnumerable</b> on a <b>String</b>, missing properties should return
+ * <b>false</b> instead of throwing a <b>Property {0} not found.</b> exception.
  *
- * @see <a href="https://github.com/mozilla/rhino/issues/415">https://github.com/mozilla/rhino/issues/415</a>
+ * @see <a
+ *     href="https://github.com/mozilla/rhino/issues/415">https://github.com/mozilla/rhino/issues/415</a>
  */
 public class StringMissingPropertyIsNotEnumerableTest {
 
-  @Test
-  public void testStringMissingPropertyIsNotEnumerable() {
-    NativeObject object = new NativeObject();
+    @Test
+    public void testStringMissingPropertyIsNotEnumerable() {
+        NativeObject object = new NativeObject();
 
-    Object result = eval("'s'.propertyIsEnumerable(0)", "obj", object);
+        Object result = eval("'s'.propertyIsEnumerable(0)", "obj", object);
 
-    assertFalse((Boolean)result);
-  }
-
+        assertFalse((Boolean) result);
+    }
 }

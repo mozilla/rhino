@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import junit.framework.TestCase;
 
 public class EqualObjectGraphsTest extends TestCase {
@@ -17,11 +16,11 @@ public class EqualObjectGraphsTest extends TestCase {
         // countertest; make unequal ones and make sure they test unequal
         assertFalse(equal(makeCyclic("foo"), makeCyclic("bar")));
     }
-    
+
     private static boolean equal(Object o1, Object o2) {
         return new EqualObjectGraphs().equalGraphs(o1, o2);
     }
-    
+
     private static Object makeCyclic(String key) {
         Object[] o1 = new Object[1];
         List<Object> o2 = new ArrayList<>();
@@ -43,7 +42,7 @@ public class EqualObjectGraphsTest extends TestCase {
         String s4 = new String("foo");
         o2[0] = s3;
         o2[1] = s4;
-        
+
         // Same values, same topology
         assertTrue(equal(o1, o2));
 
@@ -51,21 +50,34 @@ public class EqualObjectGraphsTest extends TestCase {
         o2[1] = s3;
         assertFalse(equal(o1, o2));
     }
-    
+
     public void testHeterogenousScriptables() {
         Context cx = Context.enter();
         ScriptableObject top = cx.initStandardObjects();
-        ScriptRuntime.doTopCall((Callable)(c, scope, thisObj, args) -> {
-            assertTrue(equal(makeHeterogenousScriptable(cx, "v1"), makeHeterogenousScriptable(cx, "v1")));
-            assertFalse(equal(makeHeterogenousScriptable(cx, "v1"), makeHeterogenousScriptable(cx, "v2")));
-            return null;
-        }, cx, top, top, null, false);
+        ScriptRuntime.doTopCall(
+                (Callable)
+                        (c, scope, thisObj, args) -> {
+                            assertTrue(
+                                    equal(
+                                            makeHeterogenousScriptable(cx, "v1"),
+                                            makeHeterogenousScriptable(cx, "v1")));
+                            assertFalse(
+                                    equal(
+                                            makeHeterogenousScriptable(cx, "v1"),
+                                            makeHeterogenousScriptable(cx, "v2")));
+                            return null;
+                        },
+                cx,
+                top,
+                top,
+                null,
+                false);
         Context.exit();
     }
 
     private static Object makeHeterogenousScriptable(Context cx, String discriminator) {
         ScriptableObject global = cx.initStandardObjects();
-        ScriptableObject s = (ScriptableObject)cx.newObject(global);
+        ScriptableObject s = (ScriptableObject) cx.newObject(global);
         s.put(0, s, "i0");
         s.put(1, s, "i1");
         s.put(2, s, "i2");

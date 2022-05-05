@@ -7,13 +7,10 @@
 package org.mozilla.javascript;
 
 import java.util.Set;
-
 import org.mozilla.javascript.ast.ErrorCollector;
 
-public class CompilerEnvirons
-{
-    public CompilerEnvirons()
-    {
+public class CompilerEnvirons {
+    public CompilerEnvirons() {
         errorReporter = DefaultErrorReporter.instance;
         languageVersion = Context.VERSION_DEFAULT;
         generateDebugInfo = true;
@@ -28,21 +25,15 @@ public class CompilerEnvirons
         allowSharpComments = false;
     }
 
-    public void initFromContext(Context cx)
-    {
+    public void initFromContext(Context cx) {
         setErrorReporter(cx.getErrorReporter());
         languageVersion = cx.getLanguageVersion();
-        generateDebugInfo = (!cx.isGeneratingDebugChanged()
-                             || cx.isGeneratingDebug());
-        reservedKeywordAsIdentifier
-            = cx.hasFeature(Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER);
-        allowMemberExprAsFunctionName
-            = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
-        strictMode
-            = cx.hasFeature(Context.FEATURE_STRICT_MODE);
+        generateDebugInfo = (!cx.isGeneratingDebugChanged() || cx.isGeneratingDebug());
+        reservedKeywordAsIdentifier = cx.hasFeature(Context.FEATURE_RESERVED_KEYWORD_AS_IDENTIFIER);
+        allowMemberExprAsFunctionName = cx.hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME);
+        strictMode = cx.hasFeature(Context.FEATURE_STRICT_MODE);
         warningAsError = cx.hasFeature(Context.FEATURE_WARNING_AS_ERROR);
-        xmlAvailable
-            = cx.hasFeature(Context.FEATURE_E4X);
+        xmlAvailable = cx.hasFeature(Context.FEATURE_E4X);
 
         optimizationLevel = cx.getOptimizationLevel();
 
@@ -53,85 +44,70 @@ public class CompilerEnvirons
         generateObserverCount = cx.generateObserverCount;
     }
 
-    public final ErrorReporter getErrorReporter()
-    {
+    public final ErrorReporter getErrorReporter() {
         return errorReporter;
     }
 
-    public void setErrorReporter(ErrorReporter errorReporter)
-    {
+    public void setErrorReporter(ErrorReporter errorReporter) {
         if (errorReporter == null) throw new IllegalArgumentException();
         this.errorReporter = errorReporter;
     }
 
-    public final int getLanguageVersion()
-    {
+    public final int getLanguageVersion() {
         return languageVersion;
     }
 
-    public void setLanguageVersion(int languageVersion)
-    {
+    public void setLanguageVersion(int languageVersion) {
         Context.checkLanguageVersion(languageVersion);
         this.languageVersion = languageVersion;
     }
 
-    public final boolean isGenerateDebugInfo()
-    {
+    public final boolean isGenerateDebugInfo() {
         return generateDebugInfo;
     }
 
-    public void setGenerateDebugInfo(boolean flag)
-    {
+    public void setGenerateDebugInfo(boolean flag) {
         this.generateDebugInfo = flag;
     }
 
-    public final boolean isReservedKeywordAsIdentifier()
-    {
+    public final boolean isReservedKeywordAsIdentifier() {
         return reservedKeywordAsIdentifier;
     }
 
-    public void setReservedKeywordAsIdentifier(boolean flag)
-    {
+    public void setReservedKeywordAsIdentifier(boolean flag) {
         reservedKeywordAsIdentifier = flag;
     }
 
     /**
-     * Extension to ECMA: if 'function &lt;name&gt;' is not followed
-     * by '(', assume &lt;name&gt; starts a {@code memberExpr}
+     * Extension to ECMA: if 'function &lt;name&gt;' is not followed by '(', assume &lt;name&gt;
+     * starts a {@code memberExpr}
      */
-    public final boolean isAllowMemberExprAsFunctionName()
-    {
+    public final boolean isAllowMemberExprAsFunctionName() {
         return allowMemberExprAsFunctionName;
     }
 
-    public void setAllowMemberExprAsFunctionName(boolean flag)
-    {
+    public void setAllowMemberExprAsFunctionName(boolean flag) {
         allowMemberExprAsFunctionName = flag;
     }
 
-    public final boolean isXmlAvailable()
-    {
+    public final boolean isXmlAvailable() {
         return xmlAvailable;
     }
 
-    public void setXmlAvailable(boolean flag)
-    {
+    public void setXmlAvailable(boolean flag) {
         xmlAvailable = flag;
     }
 
-    public final int getOptimizationLevel()
-    {
+    public final int getOptimizationLevel() {
         return optimizationLevel;
     }
 
-    public void setOptimizationLevel(int level)
-    {
+    public void setOptimizationLevel(int level) {
         Context.checkOptimizationLevel(level);
         this.optimizationLevel = level;
     }
 
-    public final boolean isGeneratingSource()
-    {
+    public final boolean isGeneratingSource() {
         return generatingSource;
     }
 
@@ -143,53 +119,43 @@ public class CompilerEnvirons
         warnTrailingComma = warn;
     }
 
-    public final boolean isStrictMode()
-    {
+    public final boolean isStrictMode() {
         return strictMode;
     }
 
-    public void setStrictMode(boolean strict)
-    {
+    public void setStrictMode(boolean strict) {
         strictMode = strict;
     }
 
-    public final boolean reportWarningAsError()
-    {
+    public final boolean reportWarningAsError() {
         return warningAsError;
     }
 
     /**
      * Specify whether or not source information should be generated.
-     * <p>
-     * Without source information, evaluating the "toString" method
-     * on JavaScript functions produces only "[native code]" for
-     * the body of the function.
-     * Note that code generated without source is not fully ECMA
-     * conformant.
+     *
+     * <p>Without source information, evaluating the "toString" method on JavaScript functions
+     * produces only "[native code]" for the body of the function. Note that code generated without
+     * source is not fully ECMA conformant.
      */
-    public void setGeneratingSource(boolean generatingSource)
-    {
+    public void setGeneratingSource(boolean generatingSource) {
         this.generatingSource = generatingSource;
     }
 
-    /**
-     * @return true iff code will be generated with callbacks to enable
-     * instruction thresholds
-     */
+    /** @return true iff code will be generated with callbacks to enable instruction thresholds */
     public boolean isGenerateObserverCount() {
         return generateObserverCount;
     }
 
     /**
-     * Turn on or off generation of code with callbacks to
-     * track the count of executed instructions.
-     * Currently only affects JVM byte code generation: this slows down the
-     * generated code, but code generated without the callbacks will not
-     * be counted toward instruction thresholds. Rhino's interpretive
-     * mode does instruction counting without inserting callbacks, so
-     * there is no requirement to compile code differently.
-     * @param generateObserverCount if true, generated code will contain
-     * calls to accumulate an estimate of the instructions executed.
+     * Turn on or off generation of code with callbacks to track the count of executed instructions.
+     * Currently only affects JVM byte code generation: this slows down the generated code, but code
+     * generated without the callbacks will not be counted toward instruction thresholds. Rhino's
+     * interpretive mode does instruction counting without inserting callbacks, so there is no
+     * requirement to compile code differently.
+     *
+     * @param generateObserverCount if true, generated code will contain calls to accumulate an
+     *     estimate of the instructions executed.
      */
     public void setGenerateObserverCount(boolean generateObserverCount) {
         this.generateObserverCount = generateObserverCount;
@@ -212,9 +178,9 @@ public class CompilerEnvirons
     }
 
     /**
-     * Turn on or off full error recovery.  In this mode, parse errors do not
-     * throw an exception, and the parser attempts to build a full syntax tree
-     * from the input.  Useful for IDEs and other frontends.
+     * Turn on or off full error recovery. In this mode, parse errors do not throw an exception, and
+     * the parser attempts to build a full syntax tree from the input. Useful for IDEs and other
+     * frontends.
      */
     public void setRecoverFromErrors(boolean recover) {
         recoverFromErrors = recover;
@@ -225,8 +191,8 @@ public class CompilerEnvirons
     }
 
     /**
-     * Puts the parser in "IDE" mode.  This enables some slightly more expensive
-     * computations, such as figuring out helpful error bounds.
+     * Puts the parser in "IDE" mode. This enables some slightly more expensive computations, such
+     * as figuring out helpful error bounds.
      */
     public void setIdeMode(boolean ide) {
         ideMode = ide;
@@ -244,9 +210,7 @@ public class CompilerEnvirons
         this.activationNames = activationNames;
     }
 
-    /**
-     * Mozilla sources use the C preprocessor.
-     */
+    /** Mozilla sources use the C preprocessor. */
     public void setAllowSharpComments(boolean allow) {
         allowSharpComments = allow;
     }
@@ -256,9 +220,9 @@ public class CompilerEnvirons
     }
 
     /**
-     * Returns a {@code CompilerEnvirons} suitable for using Rhino
-     * in an IDE environment.  Most features are enabled by default.
-     * The {@link ErrorReporter} is set to an {@link ErrorCollector}.
+     * Returns a {@code CompilerEnvirons} suitable for using Rhino in an IDE environment. Most
+     * features are enabled by default. The {@link ErrorReporter} is set to an {@link
+     * ErrorCollector}.
      */
     public static CompilerEnvirons ideEnvirons() {
         CompilerEnvirons env = new CompilerEnvirons();

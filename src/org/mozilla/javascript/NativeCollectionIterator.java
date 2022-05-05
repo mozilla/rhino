@@ -11,23 +11,25 @@ public class NativeCollectionIterator extends ES6Iterator {
     private String className;
     private Type type;
     private transient Iterator<Hashtable.Entry> iterator = Collections.emptyIterator();
-    enum Type { KEYS, VALUES, BOTH }
+
+    enum Type {
+        KEYS,
+        VALUES,
+        BOTH
+    }
 
     static void init(ScriptableObject scope, String tag, boolean sealed) {
         ES6Iterator.init(scope, sealed, new NativeCollectionIterator(tag), tag);
     }
 
-    public NativeCollectionIterator(String tag)
-    {
+    public NativeCollectionIterator(String tag) {
         this.className = tag;
         this.iterator = Collections.emptyIterator();
         this.type = Type.BOTH;
     }
 
     public NativeCollectionIterator(
-        Scriptable scope, String className,
-        Type type, Iterator<Hashtable.Entry> iterator)
-    {
+            Scriptable scope, String className, Type type, Iterator<Hashtable.Entry> iterator) {
         super(scope, className);
         this.className = className;
         this.iterator = iterator;
@@ -53,24 +55,20 @@ public class NativeCollectionIterator extends ES6Iterator {
             case VALUES:
                 return e.value;
             case BOTH:
-                return cx.newArray(scope, new Object[] { e.key, e.value });
+                return cx.newArray(scope, new Object[] {e.key, e.value});
             default:
                 throw new AssertionError();
         }
     }
 
-    private void readObject(ObjectInputStream stream)
-        throws IOException, ClassNotFoundException
-    {
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         className = (String) stream.readObject();
         type = (Type) stream.readObject();
         iterator = Collections.emptyIterator();
     }
 
-    private void writeObject(ObjectOutputStream stream)
-        throws IOException
-    {
+    private void writeObject(ObjectOutputStream stream) throws IOException {
         stream.defaultWriteObject();
         stream.writeObject(className);
         stream.writeObject(type);

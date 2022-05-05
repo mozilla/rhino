@@ -2,27 +2,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/**
- *
- */
+/** */
 package org.mozilla.javascript.tests;
 
-import org.mozilla.javascript.Scriptable;
-
 import junit.framework.TestCase;
+import org.mozilla.javascript.Scriptable;
 
 /**
  * Tests for global functions parseFloat and parseInt.
+ *
  * @author Marc Guillemot
  */
 public class GlobalParseXTest extends TestCase {
 
     /**
-     * Test for bug #501972
-     * https://bugzilla.mozilla.org/show_bug.cgi?id=501972
-     * Leading whitespaces should be ignored with following white space chars
-     * (see ECMA spec 15.1.2.3)
-     * <TAB>, <SP>, <NBSP>, <FF>, <VT>, <CR>, <LF>, <LS>, <PS>, <USP>
+     * Test for bug #501972 https://bugzilla.mozilla.org/show_bug.cgi?id=501972 Leading whitespaces
+     * should be ignored with following white space chars (see ECMA spec 15.1.2.3) <TAB>, <SP>,
+     * <NBSP>, <FF>, <VT>, <CR>, <LF>, <LS>, <PS>, <USP>
      */
     public void testParseFloatAndIntWhiteSpaces() {
         testParseFloatWhiteSpaces("\\u00A0 "); // <NBSP>
@@ -43,10 +39,8 @@ public class GlobalParseXTest extends TestCase {
     }
 
     /**
-     * Test for bug #531436
-     * https://bugzilla.mozilla.org/show_bug.cgi?id=531436
-     * Trailing noise should be ignored
-     * (see ECMA spec 15.1.2.3)
+     * Test for bug #531436 https://bugzilla.mozilla.org/show_bug.cgi?id=531436 Trailing noise
+     * should be ignored (see ECMA spec 15.1.2.3)
      */
     public void testParseFloatTrailingNoise() {
         testParseFloat("7890", "789e1");
@@ -76,12 +70,12 @@ public class GlobalParseXTest extends TestCase {
     }
 
     private void assertEvaluates(final Object expected, final String source) {
-        Utils.runWithAllOptimizationLevels(cx -> {
-            final Scriptable scope = cx.initStandardObjects();
-            final Object rep = cx.evaluateString(scope, source, "test.js",
-                    0, null);
-            assertEquals(expected, rep);
-            return null;
-        });
+        Utils.runWithAllOptimizationLevels(
+                cx -> {
+                    final Scriptable scope = cx.initStandardObjects();
+                    final Object rep = cx.evaluateString(scope, source, "test.js", 0, null);
+                    assertEquals(expected, rep);
+                    return null;
+                });
     }
- }
+}

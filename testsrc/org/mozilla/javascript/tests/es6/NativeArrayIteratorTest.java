@@ -11,7 +11,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,14 +20,12 @@ import org.mozilla.javascript.NativeArrayIterator.ARRAY_ITERATOR_TYPE;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 
-public class NativeArrayIteratorTest
-{
+public class NativeArrayIteratorTest {
     private Context cx;
     private Scriptable root;
 
     @Before
-    public void init()
-    {
+    public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_ES6);
         cx.setGeneratingDebug(true);
@@ -38,17 +35,13 @@ public class NativeArrayIteratorTest
     }
 
     @After
-    public void terminate()
-    {
+    public void terminate() {
         Context.exit();
     }
 
-    /**
-     * Test serialization of an empty object.
-     */
+    /** Test serialization of an empty object. */
     @Test
-    public void testSerialization()
-        throws IOException, ClassNotFoundException {
+    public void testSerialization() throws IOException, ClassNotFoundException {
 
         NativeArrayIterator iter = new NativeArrayIterator(root, null, ARRAY_ITERATOR_TYPE.VALUES);
 
@@ -58,7 +51,7 @@ public class NativeArrayIteratorTest
 
             try (ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
                     ObjectInputStream oin = new ObjectInputStream(bis)) {
-                NativeArrayIterator result = (NativeArrayIterator)oin.readObject();
+                NativeArrayIterator result = (NativeArrayIterator) oin.readObject();
                 assertEquals(0, result.getIds().length);
             }
         }

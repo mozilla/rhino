@@ -12,21 +12,18 @@ import org.mozilla.javascript.ScriptableObject;
 /**
  * Example of controlling the JavaScript execution engine.
  *
- * We evaluate a script and then manipulate the result.
- *
+ * <p>We evaluate a script and then manipulate the result.
  */
 public class Control {
 
     /**
      * Main entry point.
      *
-     * Process arguments as would a normal Java program. Also
-     * create a new Context and associate it with the current thread.
-     * Then set up the execution environment and begin to
-     * execute scripts.
+     * <p>Process arguments as would a normal Java program. Also create a new Context and associate
+     * it with the current thread. Then set up the execution environment and begin to execute
+     * scripts.
      */
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         Context cx = Context.enter();
         try {
             // Set version to JavaScript1.2 so that we get object-literal style
@@ -39,15 +36,14 @@ public class Control {
 
             // Now we can evaluate a script. Let's create a new object
             // using the object literal notation.
-            Object result = cx.evaluateString(scope, "obj = {a:1, b:['x','y']}",
-                                              "MySource", 1, null);
+            Object result =
+                    cx.evaluateString(scope, "obj = {a:1, b:['x','y']}", "MySource", 1, null);
 
             Scriptable obj = (Scriptable) scope.get("obj", scope);
 
             // Should print "obj == result" (Since the result of an assignment
             // expression is the value that was assigned)
-            System.out.println("obj " + (obj == result ? "==" : "!=") +
-                               " result");
+            System.out.println("obj " + (obj == result ? "==" : "!=") + " result");
 
             // Should print "obj.a == 1"
             System.out.println("obj.a == " + obj.get("a", obj));
@@ -67,6 +63,4 @@ public class Control {
             Context.exit();
         }
     }
-
 }
-

@@ -30,15 +30,18 @@ public class ES6IteratorTest {
 
     @Test
     public void valueDone() {
-        Object result = cx.evaluateString(
-                scope, "  var res = '';\n" +
-                       "  var arr = ['x'];\n" +
-                       "  var arrIter = arr[Symbol.iterator]();\n" +
-                       "  for (var p in arrIter.next()) {\n" +
-                       "    res = res + p + ' ';\n" +
-                       "  }\n",
-                "test", 1, null
-        );
+        Object result =
+                cx.evaluateString(
+                        scope,
+                        "  var res = '';\n"
+                                + "  var arr = ['x'];\n"
+                                + "  var arrIter = arr[Symbol.iterator]();\n"
+                                + "  for (var p in arrIter.next()) {\n"
+                                + "    res = res + p + ' ';\n"
+                                + "  }\n",
+                        "test",
+                        1,
+                        null);
         // this is the order used by all current browsers
         assertEquals("value done ", result);
     }

@@ -7,11 +7,10 @@
 package org.mozilla.javascript;
 
 /**
- * Generic notion of callable object that can execute some script-related code
- * upon request with specified values for script scope and this objects.
+ * Generic notion of callable object that can execute some script-related code upon request with
+ * specified values for script scope and this objects.
  */
-public interface Callable
-{
+public interface Callable {
     /**
      * Perform the call.
      *
@@ -23,4 +22,3 @@ public interface Callable
      */
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args);
 }
-

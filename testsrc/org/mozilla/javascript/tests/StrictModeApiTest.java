@@ -20,42 +20,43 @@ import org.mozilla.javascript.ScriptableObject;
  */
 public class StrictModeApiTest {
 
-  private ScriptableObject global;
-  private ContextFactory contextFactory;
+    private ScriptableObject global;
+    private ContextFactory contextFactory;
 
-  static class MyContextFactory extends ContextFactory {
-    @Override
-    protected boolean hasFeature(Context cx, int featureIndex) {
-        switch (featureIndex) {
-            case Context.FEATURE_STRICT_MODE:
-            case Context.FEATURE_STRICT_VARS:
-            case Context.FEATURE_STRICT_EVAL:
-            case Context.FEATURE_WARNING_AS_ERROR:
-                return true;
+    static class MyContextFactory extends ContextFactory {
+        @Override
+        protected boolean hasFeature(Context cx, int featureIndex) {
+            switch (featureIndex) {
+                case Context.FEATURE_STRICT_MODE:
+                case Context.FEATURE_STRICT_VARS:
+                case Context.FEATURE_STRICT_EVAL:
+                case Context.FEATURE_WARNING_AS_ERROR:
+                    return true;
+            }
+            return super.hasFeature(cx, featureIndex);
         }
-        return super.hasFeature(cx, featureIndex);
     }
-  }
 
-  @Test
-  public void testStrictModeError() {
-    contextFactory = new MyContextFactory();
-    Context cx = contextFactory.enterContext();
-    try {
-        global = cx.initStandardObjects();
+    @Test
+    public void testStrictModeError() {
+        contextFactory = new MyContextFactory();
+        Context cx = contextFactory.enterContext();
         try {
-            runScript("({}.nonexistent);");
-            fail();
-        } catch (EvaluatorException e) {
-            assertTrue(e.getMessage().startsWith("Reference to undefined property"));
+            global = cx.initStandardObjects();
+            try {
+                runScript("({}.nonexistent);");
+                fail();
+            } catch (EvaluatorException e) {
+                assertTrue(e.getMessage().startsWith("Reference to undefined property"));
+            }
+        } finally {
+            Context.exit();
         }
-    } finally {
-        Context.exit();
     }
-  }
 
-  private Object runScript(final String scriptSourceText) {
-    return this.contextFactory.call(context -> 
-        context.evaluateString(global, scriptSourceText, "test source", 1, null));
-  }
+    private Object runScript(final String scriptSourceText) {
+        return this.contextFactory.call(
+                context ->
+                        context.evaluateString(global, scriptSourceText, "test source", 1, null));
+    }
 }

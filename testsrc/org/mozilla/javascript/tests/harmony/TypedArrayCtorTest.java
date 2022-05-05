@@ -8,6 +8,4 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/typed-array-ctor.js")
-public class TypedArrayCtorTest extends ScriptTestsBase
-{
-}
+public class TypedArrayCtorTest extends ScriptTestsBase {}

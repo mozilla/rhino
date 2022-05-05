@@ -8,6 +8,4 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/typed-array-to-string.js")
-public class TypedArrayToStringTest extends ScriptTestsBase
-{
-}
+public class TypedArrayToStringTest extends ScriptTestsBase {}

@@ -8,9 +8,7 @@ package org.mozilla.javascript.ast;
 
 import org.mozilla.javascript.Token;
 
-/**
- * AST node for a Number literal. Node type is {@link Token#NUMBER}.
- */
+/** AST node for a Number literal. Node type is {@link Token#NUMBER}. */
 public class NumberLiteral extends AstNode {
 
     private String value;
@@ -20,8 +18,7 @@ public class NumberLiteral extends AstNode {
         type = Token.NUMBER;
     }
 
-    public NumberLiteral() {
-    }
+    public NumberLiteral() {}
 
     public NumberLiteral(int pos) {
         super(pos);
@@ -31,18 +28,14 @@ public class NumberLiteral extends AstNode {
         super(pos, len);
     }
 
-    /**
-     * Constructor.  Sets the length to the length of the {@code value} string.
-     */
+    /** Constructor. Sets the length to the length of the {@code value} string. */
     public NumberLiteral(int pos, String value) {
         super(pos);
         setValue(value);
         setLength(value.length());
     }
 
-    /**
-     * Constructor.  Sets the length to the length of the {@code value} string.
-     */
+    /** Constructor. Sets the length to the length of the {@code value} string. */
     public NumberLiteral(int pos, String value, double number) {
         this(pos, value);
         setDouble(number);
@@ -53,15 +46,14 @@ public class NumberLiteral extends AstNode {
         setValue(Double.toString(number));
     }
 
-    /**
-     * Returns the node's string value (the original source token)
-     */
+    /** Returns the node's string value (the original source token) */
     public String getValue() {
         return value;
     }
 
     /**
      * Sets the node's value
+     *
      * @throws IllegalArgumentException} if value is {@code null}
      */
     public void setValue(String value) {
@@ -69,16 +61,12 @@ public class NumberLiteral extends AstNode {
         this.value = value;
     }
 
-    /**
-     * Gets the {@code double} value.
-     */
+    /** Gets the {@code double} value. */
     public double getNumber() {
         return number;
     }
 
-    /**
-     * Sets the node's {@code double} value.
-     */
+    /** Sets the node's {@code double} value. */
     public void setNumber(double value) {
         number = value;
     }
@@ -88,9 +76,7 @@ public class NumberLiteral extends AstNode {
         return makeIndent(depth) + (value == null ? "<null>" : value);
     }
 
-    /**
-     * Visits this node.  There are no children to visit.
-     */
+    /** Visits this node. There are no children to visit. */
     @Override
     public void visit(NodeVisitor v) {
         v.visit(this);

@@ -10,5 +10,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RhinoTest {
     String value() default "";
+
     String inline() default "";
 }

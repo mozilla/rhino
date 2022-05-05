@@ -11,24 +11,19 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 
-
 public class ToSourceTest {
 
-  private void assertSource(String source, String expectedOutput) {
-    CompilerEnvirons env = new CompilerEnvirons();
-    env.setLanguageVersion(Context.VERSION_ES6);
-    Parser parser = new Parser(env);
-    AstRoot root = parser.parse(source, null, 0);
-    Assert.assertEquals(expectedOutput, root.toSource());
-  }
+    private void assertSource(String source, String expectedOutput) {
+        CompilerEnvirons env = new CompilerEnvirons();
+        env.setLanguageVersion(Context.VERSION_ES6);
+        Parser parser = new Parser(env);
+        AstRoot root = parser.parse(source, null, 0);
+        Assert.assertEquals(expectedOutput, root.toSource());
+    }
 
-
-  /**
-   * Tests that var declaration AST nodes is properly decompiled.
-   */
-  @Test
-  public void testArrowFunctionToSource() {
-    assertSource("var a3 = a.map(s => s.length);", "var a3 = a.map(s => s.length);\n");
-  }
-
+    /** Tests that var declaration AST nodes is properly decompiled. */
+    @Test
+    public void testArrowFunctionToSource() {
+        assertSource("var a3 = a.map(s => s.length);", "var a3 = a.map(s => s.length);\n");
+    }
 }
