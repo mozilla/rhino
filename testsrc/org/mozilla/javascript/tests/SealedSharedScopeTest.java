@@ -8,6 +8,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Locale;
 import org.junit.After;
 import org.junit.Before;
@@ -81,8 +83,10 @@ public class SealedSharedScopeTest {
     @Test
     public void importClassWithImporter() throws Exception {
         Object o;
-        evaluateString(scope1, "var imp1 = new JavaImporter();\nimp1.importClass(java.util.Date);");
-        evaluateString(scope1, "var imp2 = new JavaImporter();\nimp2.importClass(java.sql.Date);");
+        evaluateString(
+                scope1, "var imp1 = new JavaImporter();\n" + "imp1.importClass(java.util.Date);");
+        evaluateString(
+                scope1, "var imp2 = new JavaImporter();\n" + "imp2.importClass(java.sql.Date);");
         o = evaluateString(scope1, "imp1.Date");
         assertEquals(java.util.Date.class, o);
 
@@ -104,8 +108,10 @@ public class SealedSharedScopeTest {
     @Test
     public void importPackageWithImporter() throws Exception {
         Object o;
-        evaluateString(scope1, "var imp1 = new JavaImporter();\nimp1.importPackage(java.util);");
-        evaluateString(scope1, "var imp2 = new JavaImporter();\nimp2.importPackage(java.sql);");
+        evaluateString(
+                scope1, "var imp1 = new JavaImporter();\n" + "imp1.importPackage(java.util);");
+        evaluateString(
+                scope1, "var imp2 = new JavaImporter();\n" + "imp2.importPackage(java.sql);");
         o = evaluateString(scope1, "imp1.Date");
         assertEquals(java.util.Date.class, o);
 
@@ -121,6 +127,23 @@ public class SealedSharedScopeTest {
     }
 
     @Test
+    public void testGlobalScope() throws FileNotFoundException, IOException {
+        evaluateString(scope1, "importPackage(Packages.java.io);");
+
+        // Loading object via direct class type evaluate and then checking with typeof
+        // works
+        Object o = evaluateString(scope1, "File");
+        assertEquals(java.io.File.class, o);
+        o = evaluateString(scope1, "typeof File");
+        assertEquals("function", o);
+
+        // Direct checking with typeof fails
+        evaluateString(scope2, "importPackage(Packages.java.io);");
+        o = evaluateString(scope2, "typeof File");
+        assertEquals("function", o);
+    }
+
+    @Test
     public void importClassWithScope() throws Exception {
         Object o;
         evaluateString(scope1, "importClass(javax.naming.Name);");
@@ -131,7 +154,8 @@ public class SealedSharedScopeTest {
         o = evaluateString(scope2, "Name");
         assertEquals(javax.xml.soap.Name.class, o);
 
-        o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement" function
+        o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement"
+        // function
         assertEquals("undefined", o);
     }
 
@@ -146,7 +170,8 @@ public class SealedSharedScopeTest {
         o = evaluateString(scope2, "Name");
         assertEquals(javax.xml.soap.Name.class, o);
 
-        o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement" function
+        o = evaluateString(sharedScope, "typeof Name"); // JavaScript "Statement"
+        // function
         assertEquals("undefined", o);
     }
 

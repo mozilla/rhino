@@ -45,16 +45,13 @@ final class InterpretedFunction extends NativeFunction implements Script {
 
     /** Create script from compiled bytecode. */
     static InterpretedFunction createScript(InterpreterData idata, Object staticSecurityDomain) {
-        InterpretedFunction f;
-        f = new InterpretedFunction(idata, staticSecurityDomain);
-        return f;
+        return new InterpretedFunction(idata, staticSecurityDomain);
     }
 
     /** Create function compiled from Function(...) constructor. */
     static InterpretedFunction createFunction(
             Context cx, Scriptable scope, InterpreterData idata, Object staticSecurityDomain) {
-        InterpretedFunction f;
-        f = new InterpretedFunction(idata, staticSecurityDomain);
+        InterpretedFunction f = new InterpretedFunction(idata, staticSecurityDomain);
         f.initScriptFunction(cx, scope, f.idata.isES6Generator);
         return f;
     }

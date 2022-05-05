@@ -7,16 +7,14 @@
 package org.mozilla.javascript.ast;
 
 /**
- * AST node for an XML-text-only component of an XML literal expression.  This
- * node differs from a {@link StringLiteral} in that it does not have quotes for
- * delimiters.
+ * AST node for an XML-text-only component of an XML literal expression. This node differs from a
+ * {@link StringLiteral} in that it does not have quotes for delimiters.
  */
 public class XmlString extends XmlFragment {
 
     private String xml;
 
-    public XmlString() {
-    }
+    public XmlString() {}
 
     public XmlString(int pos) {
         super(pos);
@@ -28,8 +26,9 @@ public class XmlString extends XmlFragment {
     }
 
     /**
-     * Sets the string for this XML component.  Sets the length of the
-     * component to the length of the passed string.
+     * Sets the string for this XML component. Sets the length of the component to the length of the
+     * passed string.
+     *
      * @param s a string of xml text
      * @throws IllegalArgumentException} if {@code s} is {@code null}
      */
@@ -40,8 +39,8 @@ public class XmlString extends XmlFragment {
     }
 
     /**
-     * Returns the xml string for this component.
-     * Note that it may not be well-formed XML; it is a fragment.
+     * Returns the xml string for this component. Note that it may not be well-formed XML; it is a
+     * fragment.
      */
     public String getXml() {
         return xml;
@@ -52,9 +51,7 @@ public class XmlString extends XmlFragment {
         return makeIndent(depth) + xml;
     }
 
-    /**
-     * Visits this node.  There are no children to visit.
-     */
+    /** Visits this node. There are no children to visit. */
     @Override
     public void visit(NodeVisitor v) {
         v.visit(this);

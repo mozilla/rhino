@@ -15,9 +15,9 @@ import org.mozilla.javascript.Token;
  *      MemberExpression
  *      <b>new</b> NewExpression</pre>
  *
- * This node is a subtype of {@link FunctionCall}, mostly for internal code
- * sharing.  Structurally a {@code NewExpression} node is very similar to a
- * {@code FunctionCall}, so it made a certain amount of sense.
+ * This node is a subtype of {@link FunctionCall}, mostly for internal code sharing. Structurally a
+ * {@code NewExpression} node is very similar to a {@code FunctionCall}, so it made a certain amount
+ * of sense.
  */
 public class NewExpression extends FunctionCall {
 
@@ -27,8 +27,7 @@ public class NewExpression extends FunctionCall {
         type = Token.NEW;
     }
 
-    public NewExpression() {
-    }
+    public NewExpression() {}
 
     public NewExpression(int pos) {
         super(pos);
@@ -40,26 +39,23 @@ public class NewExpression extends FunctionCall {
 
     /**
      * Returns initializer object, if any.
-     * @return extra initializer object-literal expression, or {@code null} if
-     * not specified.
+     *
+     * @return extra initializer object-literal expression, or {@code null} if not specified.
      */
     public ObjectLiteral getInitializer() {
-      return initializer;
+        return initializer;
     }
 
     /**
-     * Sets initializer object.  Rhino supports an experimental syntax
-     * of the form {@code new expr [ ( arglist ) ] [initializer]},
-     * in which initializer is an object literal that is used to set
+     * Sets initializer object. Rhino supports an experimental syntax of the form {@code new expr [
+     * ( arglist ) ] [initializer]}, in which initializer is an object literal that is used to set
      * additional properties on the newly-created {@code expr} object.
      *
-     * @param initializer extra initializer object.
-     * Can be {@code null}.
+     * @param initializer extra initializer object. Can be {@code null}.
      */
     public void setInitializer(ObjectLiteral initializer) {
-      this.initializer = initializer;
-      if (initializer != null)
-          initializer.setParent(this);
+        this.initializer = initializer;
+        if (initializer != null) initializer.setParent(this);
     }
 
     @Override
@@ -81,8 +77,8 @@ public class NewExpression extends FunctionCall {
     }
 
     /**
-     * Visits this node, the target, and each argument.  If there is
-     * a trailing initializer node, visits that last.
+     * Visits this node, the target, and each argument. If there is a trailing initializer node,
+     * visits that last.
      */
     @Override
     public void visit(NodeVisitor v) {

@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/string-includes.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class StringIncludesTest extends ScriptTestsBase
-{
-}
+public class StringIncludesTest extends ScriptTestsBase {}

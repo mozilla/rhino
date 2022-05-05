@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH RHINO 1 "February  12, 2005"
+.TH RHINO 1 "December  11, 2021"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -37,14 +37,34 @@ to run scripts in batch mode or an interactive environment for exploratory progr
 
 .SH OPTIONS
 
+.IP -debug\fP
+Generate debug information. This will set the optimization level to zero.
 .IP -e\ \fIscript_source\fP
 Executes script_source as a JavaScript script.
+.IP -encoding\ \fIcharacterEncoding\fP
+Set the character encoding to apply in case it could not be detected.
 .IP -f\ \fIscript_filename_or_url\fP
 Reads script_filename_or_url content and execute it as a JavaScript script.
+.IP -fatal-warnings\fP
+Set warnings as errors.
+.IP -help,\ -?\fP
+Display help.
+.IP -modules\ \fImodule\fP
+Add a module to the path.
 .IP -opt,\ -O\ \fIoptLevel\fP
-Optimizes at level optLevel, which must be an integer between 0 and 9. 
+Optimizes at level optLevel, which must be an integer between 0 and 9.
+.IP -require\fP
+Use require().
+.IP -sandbox\fP
+The created require() instances will be sandboxed.
+.IP -sealedlib\fP
+Use a sealed standard library.
+.IP -strict\fP
+Set strict mode.
 .IP -version\ \fIversionNumber\fP
-Specifies the language version to compile with. The string versionNumber must be one of 100, 110, 120, 130, or 140. See JavaScript Language Versions for more information on language versions. 
+Specifies the language version to compile with. It must be one of 100, 110, 120, 130, 140, 150, 160, 170, 180 or 200.
+.IP -w\fP
+Report warnings.
 
 .SH PREDEFINED PROPERTIES
 
@@ -70,6 +90,10 @@ Read given file and convert its bytes to a string using the specified character 
 Open an input connection to the given string url, read all its bytes and convert them to a string using the specified character coding or default character coding if explicit coding argument is not given.
 .IP runCommand(\fIcommandName,[arg,\&.\&.\&.][options]\fP)
 Execute the specified command with the given argument and options as a separate process and return the exit status of the process. For details, see JavaDoc for org.mozilla.javascript.tools.shell.Global#runCommand.
+.IP setTimeout(\fIfunction[,delay,arg,\&.\&.\&.]\fP)
+Execute "function" after "delay" milliseconds. (If "delay" is not set, then it is set to 0.) Pass any trailing parameters as arguments. Timeouts run after the current function is done executing, and in the interactive shell, only after the shell is exited. Return an ID that may be passed to "clearTimeout".
+.IP clearTimeout(\fIid\fP)
+Cancel a timeout set using "setTimeout".
 .IP serialize(\fIobject,filename\fP)
 Serialize the given object to the specified file.
 .IP spawn(\fIfunctionOrScript\fP)
@@ -79,13 +103,43 @@ creates a synchronized function (in the sense of a Java synchronized method) fro
 .IP quit()
 Quit shell. The shell will also quit in interactive mode if an end-of-file character is typed at the prompt.
 .IP version(\fI[number]\fP)
-Get or set JavaScript version number. If no argument is supplied, the current version number is returned. If an argument is supplied, it is expected to be one of 100, 110, 120, 130, or 140 to indicate JavaScript version 1.0, 1.1, 1.2, 1.3, or 1.4 respectively.
+Get or set JavaScript version number. If no argument is supplied, the current version number is returned. If an argument is supplied, it is expected to be one of 100, 110, 120, 130, 150, 160, 170, 180 or 200 to indicate JavaScript version 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 or ECMAScript 6 respectively.
+.IP write(\fI[expr\&.\&.\&.]\fP)
+Evaluate and print expressions like in "print", but without the trailing newline.
+.IP console
+The console object provides a simple debugging console similar to the console object provided by web browsers.
+.RS
+.IP console.log(\fIformat[arg,\&.\&.\&.]\fP)
+For general output of logging information. String substitution and additional arguments are supported. Prints formatted text according to the format and args supplied with "INFO" prefix. This function is identical to console.info(\fIformat\fP[arg,\&.\&.\&.]).
+.IP console.trace(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]) except it prints "TRACE" prefix instead of "INFO".
+.IP console.debug(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]) except it prints "DEBUG" prefix instead of "INFO".
+.IP console.info(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]).
+.IP console.warn(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]) except it prints "WARN" prefix instead of "INFO".
+.IP console.error(\fIformat[arg,\&.\&.\&.]\fP)
+This function is identical to console.log(\fIformat\fP[arg,\&.\&.\&.]) except it prints "ERROR" prefix instead of "INFO".
+.IP console.assert(\fIexpression[arg,\&.\&.\&.]\fP)
+Prints error if expression is false. If args are supplied, they will be printed also.
+.IP console.count(\fI[label]\fP)
+Increases the counter of label by one which starts from zero and prints the label and value after increment. If label is not supplied, "default" is the label.
+.IP console.countReset(\fI[label]\fP)
+Resets the counter of label to zero. If label is not supplied, "default" is the label.
+.IP console.time(\fI[label]\fP)
+Starts a timer of label. Use console.timeEnd(\fI[label]\fP) to stop the timer and print the elapsed time. Use console.timeLog(\fI[label]\fP) to print the elapsed time without stopping the timer.
+.IP console.timeLog(\fI[label]\fP)
+See console.time(\fI[label]\fP).
+.IP console.timeEnd(\fI[label]\fP)
+See console.time(\fI[label]\fP).
+.RE
 
 .SH SEE ALSO
-The online documentation under
-.UR http://www.mozilla.org/rhino/shell.html
-.I http://www.mozilla.org/rhino/shell.html
+The archived online documentation under
+.UR https://web.archive.org/web/20210507045220/https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Shell
+.I https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino/Shell
 .UE
 
 .SH AUTHOR
-This manual page was written by Wolfgang Baer <WBaer@gmx.de>.
+This manual page was created by Wolfgang Baer <WBaer@gmx.de>, see Git history for later modifications.

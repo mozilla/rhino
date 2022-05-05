@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/weakmap.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class NativeWeakMapTest extends ScriptTestsBase
-{
-}
+public class NativeWeakMapTest extends ScriptTestsBase {}

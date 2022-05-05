@@ -150,10 +150,22 @@ idea {
     }
 }
 
+tasks.withType(AbstractArchiveTask).configureEach {
+    // Reproducible jar files
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
 task runtimeJar(type: Jar) {
     dependsOn compileJava
     archiveBaseName = 'rhino-runtime'
     from sourceSets.main.output
+    from ('LICENSE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE.txt') {
+        into 'META-INF'
+    }
     excludes = ["org/mozilla/javascript/tools", "org/mozilla/javascript/engine/**", "META-INF/services/**"]
     manifest {
         attributes(
@@ -162,12 +174,11 @@ task runtimeJar(type: Jar) {
             "Implementation-Title":  "Mozilla Rhino",
             "Implementation-Vendor": "Mozilla Foundation",
             "Implementation-URL": "http://www.mozilla.org/rhino",
-            "Built-Date": new Date().format("yyyy-MM-dd"),
-            "Built-Time": new Date().format("HH:mm:ss"),
             "Bundle-ManifestVersion": "2",
             "Bundle-SymbolicName": "org.mozilla.rhino-runtime",
             "Bundle-Version": project.version.replaceAll("-.*", ""),
-            "Export-Package": "org.mozilla.javascript,org.mozilla.javascript.ast,org.mozilla.javascript.annotations"
+            "Export-Package": "org.mozilla.javascript,org.mozilla.javascript.ast,org.mozilla.javascript.annotations",
+            "Import-Package": "javax.lang.model,javax.script"
         )
     }
 }
@@ -179,6 +190,9 @@ task engineJar(type: Jar) {
         include 'org/mozilla/javascript/engine/**'
         include 'META-INF/services/**'
     }
+    from ('LICENSE.txt') {
+        into 'META-INF'
+    }
     manifest {
         attributes(
                 "Manifest-Version": "1.0",
@@ -186,17 +200,25 @@ task engineJar(type: Jar) {
                 "Implementation-Title":  "Mozilla Rhino ScriptEngine",
                 "Implementation-Vendor": "Mozilla Foundation",
                 "Implementation-URL": "http://www.mozilla.org/rhino",
-                "Built-Date": new Date().format("yyyy-MM-dd"),
-                "Built-Time": new Date().format("HH:mm:ss"),
                 "Automatic-Module-Name": "org.mozilla.rhino.engine"
         )
     }
 }
 
 jar {
-    dependsOn runtimeJar, engineJar
-    from "LICENSE.txt"
+    dependsOn compileJava
+    from ('LICENSE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE-tools.txt') {
+        into 'META-INF'
+    }
+    from sourceSets.main.output
     excludes = ["org/mozilla/javascript/engine/**", "META-INF/services/**"]
+    // Class ImplementationVersion uses 'Implementation-Title'
     manifest {
         attributes(
             "Manifest-Version": "1.0",
@@ -205,13 +227,12 @@ jar {
             "Implementation-Title":  "Mozilla Rhino",
             "Implementation-Vendor": "Mozilla Foundation",
             "Implementation-URL": "http://www.mozilla.org/rhino",
-            "Built-Date": new Date().format("yyyy-MM-dd"),
-            "Built-Time": new Date().format("HH:mm:ss"),
             "Automatic-Module-Name": "org.mozilla.rhino",
             "Bundle-ManifestVersion": "2",
             "Bundle-SymbolicName": "org.mozilla.rhino",
             "Bundle-Version": project.version.replaceAll("-.*", ""),
-            "Export-Package": "org.mozilla.javascript,org.mozilla.javascript.ast,org.mozilla.javascript.annotations"
+            "Export-Package": "org.mozilla.javascript,org.mozilla.javascript.ast,org.mozilla.javascript.annotations",
+            "Import-Package": "javax.lang.model,javax.script"
         )
     }
 }
@@ -219,40 +240,58 @@ jar {
 javadoc {
     options.addBooleanOption("-allow-script-in-comments", true)
     options.addStringOption('Xdoclint:html', '-quiet')
-
 }
 
 task javadocJar(type: Jar) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc
 }
 
 task runtimeJavadocJar(type: Jar) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc
     exclude 'org/mozilla/javascript/tools', 'org/mozilla/javascript/engine'
 }
 
 task engineJavadocJar(type: Jar) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc
     include 'org/mozilla/javascript/engine/**'
 }
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
+    archiveClassifier = 'sources'
+    from ('LICENSE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE-tools.txt') {
+        into 'META-INF'
+    }
 }
 
 task runtimeSourceJar(type: Jar) {
-    classifier 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allJava
     exclude 'org/mozilla/javascript/tools', 'org/mozilla/javascript/engine'
+    from ('LICENSE.txt') {
+        into 'META-INF'
+    }
+    from ('NOTICE.txt') {
+        into 'META-INF'
+    }
 }
 
 task engineSourceJar(type: Jar) {
-    classifier 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allJava
     include 'org/mozilla/javascript/engine/**'
+    from ('LICENSE.txt') {
+        into 'META-INF'
+    }
 }
 
 publishing {
@@ -260,6 +299,7 @@ publishing {
         rhino(MavenPublication) {
             groupId 'org.mozilla'
             artifactId 'rhino'
+            artifacts = [jar, sourceJar, javadocJar]
 
             pom.withXml {
                 def root = asNode()
@@ -267,8 +307,9 @@ publishing {
                 root.appendNode('description', """
     Rhino is an open-source implementation of JavaScript written entirely in Java.
     It is typically embedded into Java applications to provide scripting to end users.
+    Full jar including tools, excluding the JSR-223 Script Engine wrapper.
 """)
-                root.appendNode("url", "https://developer.mozilla.org/en/Rhino")
+                root.appendNode("url", "https://mozilla.github.io/rhino/")
 
                 def p = root.appendNode("parent")
                 p.appendNode("groupId", "org.sonatype.oss")
@@ -288,13 +329,6 @@ publishing {
                 o.appendNode("name", "The Mozilla Foundation")
                 o.appendNode("url", "http://www.mozilla.org")
 
-            }
-            from components.java
-            artifact sourceJar {
-                classifier "sources"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
             }
         }
 
@@ -307,10 +341,9 @@ publishing {
                 def root = asNode()
 
                 root.appendNode('description', """
-    Rhino is an open-source implementation of JavaScript written entirely in Java.
-    It is typically embedded into Java applications to provide scripting to end users.
+    Rhino JavaScript runtime jar, excludes tools & JSR-223 Script Engine wrapper.
 """)
-                root.appendNode("url", "https://developer.mozilla.org/en/Rhino")
+                root.appendNode("url", "https://mozilla.github.io/rhino/")
 
                 def p = root.appendNode("parent")
                 p.appendNode("groupId", "org.sonatype.oss")
@@ -329,7 +362,6 @@ publishing {
                 def o = root.appendNode("organization")
                 o.appendNode("name", "The Mozilla Foundation")
                 o.appendNode("url", "http://www.mozilla.org")
-
             }
         }
 
@@ -342,10 +374,9 @@ publishing {
                 def root = asNode()
 
                 root.appendNode('description', """
-    Rhino is an open-source implementation of JavaScript written entirely in Java.
-    It is typically embedded into Java applications to provide scripting to end users.
+    Rhino Javascript JSR-223 Script Engine wrapper.
 """)
-                root.appendNode("url", "https://developer.mozilla.org/en/Rhino")
+                root.appendNode("url", "https://mozilla.github.io/rhino/")
 
                 def p = root.appendNode("parent")
                 p.appendNode("groupId", "org.sonatype.oss")
@@ -392,10 +423,16 @@ publishing {
 }
 
 signing {
-    useGpgCmd()
-    sign publishing.publications.rhino
-    sign publishing.publications.rhinoengine
-    sign publishing.publications.rhinoruntime
+    if (project.hasProperty('SIGNINGKEY')) {
+        // Check for ORG_GRADLE_PROJECT_SIGNINGKEY environment variable for use in CI system.
+        // Otherwise, do not sign.
+        def signingKey = getProperty('SIGNINGKEY')
+        def signingPassword = getProperty('SIGNINGPASSWORD')
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign publishing.publications.rhino
+        sign publishing.publications.rhinoengine
+        sign publishing.publications.rhinoruntime
+    }
 }
 
 spotbugs {
@@ -405,7 +442,6 @@ spotbugs {
 }
 
 spotless {
-    ratchetFrom 'code-formatting-required'
     java {
         googleJavaFormat().aosp()
     }
@@ -442,7 +478,6 @@ distributions {
     main {
         contents {
             from(sourceSets.main.java) {
-                exclude 'man'
                 into 'rhino' + project.version + '/src'
             }
             from(sourceSets.main.resources) {
@@ -455,13 +490,15 @@ distributions {
             from(jar.outputs.files) {
                 into 'rhino' + project.version + '/lib'
             }
-            from(sourceSets.main.allSource) {
-                include 'man/*.1'
-                into 'rhino' + project.version
+            from(runtimeJar.outputs.files) {
+                into 'rhino' + project.version + '/lib'
+            }
+            from(engineJar.outputs.files) {
+                into 'rhino' + project.version + '/lib'
             }
             from(file(".")) {
-                include '*.txt', '*.md', 'build.gradle', 'build.properties', 'gradle.properties',
-                        'gradle/**', 'gradlew'
+                include '*.txt', '*.md', 'build.gradle', 'gradle.properties',
+                        'gradle/**', 'gradlew', 'man/*.1'
                 into 'rhino' + project.version 
             }
             into "/"
@@ -469,5 +506,10 @@ distributions {
     }
 }
 
-distTar.dependsOn javadoc, jar
+distTar {
+    dependsOn javadoc, jar
+    compression = Compression.GZIP
+    archiveExtension = 'tar.gz'
+}
+
 distZip.dependsOn javadoc, jar, sourceJar, runtimeSourceJar

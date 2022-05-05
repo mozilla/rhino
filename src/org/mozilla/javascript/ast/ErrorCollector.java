@@ -8,14 +8,12 @@ package org.mozilla.javascript.ast;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.mozilla.javascript.EvaluatorException;
 
 /**
- * An error reporter that gathers the errors and warnings for later display.
- * This a useful {@link org.mozilla.javascript.ErrorReporter} when the
- * {@link org.mozilla.javascript.CompilerEnvirons} is set to
- * ide-mode (for IDEs).
+ * An error reporter that gathers the errors and warnings for later display. This a useful {@link
+ * org.mozilla.javascript.ErrorReporter} when the {@link org.mozilla.javascript.CompilerEnvirons} is
+ * set to ide-mode (for IDEs).
  *
  * @author Steve Yegge
  */
@@ -24,65 +22,51 @@ public class ErrorCollector implements IdeErrorReporter {
     private List<ParseProblem> errors = new ArrayList<ParseProblem>();
 
     /**
-     * This is not called during AST generation.
-     * {@link #warning(String,String,int,int)} is used instead.
+     * This is not called during AST generation. {@link #warning(String,String,int,int)} is used
+     * instead.
+     *
      * @throws UnsupportedOperationException
      */
     @Override
-    public void warning(String message, String sourceName, int line,
-                        String lineSource, int lineOffset) {
+    public void warning(
+            String message, String sourceName, int line, String lineSource, int lineOffset) {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public void warning(String message, String sourceName, int offset, int length)
-    {
-        errors.add(new ParseProblem(ParseProblem.Type.Warning,
-                                    message, sourceName,
-                                    offset, length));
+    public void warning(String message, String sourceName, int offset, int length) {
+        errors.add(
+                new ParseProblem(ParseProblem.Type.Warning, message, sourceName, offset, length));
     }
 
     /**
-     * This is not called during AST generation.
-     * {@link #warning(String,String,int,int)} is used instead.
+     * This is not called during AST generation. {@link #warning(String,String,int,int)} is used
+     * instead.
+     *
      * @throws UnsupportedOperationException
      */
     @Override
-    public void error(String message, String sourceName, int line,
-                      String lineSource, int lineOffset)
-    {
+    public void error(
+            String message, String sourceName, int line, String lineSource, int lineOffset) {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public void error(String message, String sourceName,
-                      int fileOffset, int length)
-    {
-        errors.add(new ParseProblem(ParseProblem.Type.Error,
-                                    message, sourceName,
-                                    fileOffset, length));
+    public void error(String message, String sourceName, int fileOffset, int length) {
+        errors.add(
+                new ParseProblem(ParseProblem.Type.Error, message, sourceName, fileOffset, length));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public EvaluatorException runtimeError(String message, String sourceName,
-                                           int line, String lineSource,
-                                           int lineOffset)
-    {
+    public EvaluatorException runtimeError(
+            String message, String sourceName, int line, String lineSource, int lineOffset) {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * Returns the list of errors and warnings produced during parsing.
-     */
+    /** Returns the list of errors and warnings produced during parsing. */
     public List<ParseProblem> getErrors() {
         return errors;
     }

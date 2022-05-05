@@ -1,0 +1,29 @@
+name: Publish to Maven Central
+
+on:
+  # Allows to run this workflow manually from the Actions tab
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v2
+      with:
+        java-version: '8'
+        distribution: 'adopt'
+        server-id: github
+        settings-path: ${{ github.workspace }}
+    - name: Publish
+      env:
+        ORG_GRADLE_PROJECT_mavenUser: ${{ secrets.MAVEN_CENTRAL_USER }}
+        ORG_GRADLE_PROJECT_mavenPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        ORG_GRADLE_PROJECT_SIGNINGKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+        ORG_GRADLE_PROJECT_SIGNINGPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
+      run: >-
+        ./gradlew publish

@@ -51,6 +51,7 @@ public class NativeObject extends IdScriptableObject implements Map {
             addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_entries, "entries", 1);
             addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_fromEntries, "fromEntries", 1);
             addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_values, "values", 1);
+            addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_hasOwn, "hasOwn", 1);
         }
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_keys, "keys", 1);
         addIdFunctionProperty(
@@ -63,6 +64,12 @@ public class NativeObject extends IdScriptableObject implements Map {
                 ConstructorId_getOwnPropertyDescriptor,
                 "getOwnPropertyDescriptor",
                 2);
+        addIdFunctionProperty(
+                ctor,
+                OBJECT_TAG,
+                ConstructorId_getOwnPropertyDescriptors,
+                "getOwnPropertyDescriptors",
+                1);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_defineProperty, "defineProperty", 3);
         addIdFunctionProperty(ctor, OBJECT_TAG, ConstructorId_isExtensible, "isExtensible", 1);
         addIdFunctionProperty(
@@ -203,19 +210,10 @@ public class NativeObject extends IdScriptableObject implements Map {
                         throw ScriptRuntime.typeErrorById(
                                 "msg." + (thisObj == null ? "null" : "undef") + ".to.object");
                     }
-                    boolean result;
+
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
-                    if (arg instanceof Symbol) {
-                        result = ensureSymbolScriptable(thisObj).has((Symbol) arg, thisObj);
-                    } else {
-                        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
-                        if (s.stringId == null) {
-                            result = thisObj.has(s.index, thisObj);
-                        } else {
-                            result = thisObj.has(s.stringId, thisObj);
-                        }
-                    }
-                    return ScriptRuntime.wrapBoolean(result);
+
+                    return AbstractEcmaObjectOperations.hasOwnProperty(cx, thisObj, arg);
                 }
 
             case Id_propertyIsEnumerable:
@@ -233,7 +231,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                         result = ((SymbolScriptable) thisObj).has((Symbol) arg, thisObj);
                         result = result && isEnumerable((Symbol) arg, thisObj);
                     } else {
-                        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, arg);
+                        StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(arg);
                         // When checking if a property is enumerable, a missing property should
                         // return "false" instead of
                         // throwing an exception.  See: https://github.com/mozilla/rhino/issues/415
@@ -300,7 +298,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                                 String.valueOf(args[0]));
                     }
                     ScriptableObject so = (ScriptableObject) thisObj;
-                    StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
+                    StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(args[0]);
                     int index = s.stringId != null ? 0 : s.index;
                     Callable getterOrSetter = (Callable) args[1];
                     boolean isSetter = (id == Id___defineSetter__);
@@ -316,10 +314,10 @@ public class NativeObject extends IdScriptableObject implements Map {
                         return Undefined.instance;
 
                     ScriptableObject so = (ScriptableObject) thisObj;
-                    StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, args[0]);
+                    StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(args[0]);
                     int index = s.stringId != null ? 0 : s.index;
                     boolean isSetter = (id == Id___lookupSetter__);
-                    Function gs;
+                    Object gs;
                     for (; ; ) {
                         gs = so.getGetterOrSetter(s.stringId, index, this, isSetter);
                         if (gs != null) {
@@ -472,6 +470,12 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
                     return cx.newArray(scope, ids);
                 }
+            case ConstructorId_hasOwn:
+                {
+                    Object arg = args.length < 1 ? Undefined.instance : args[0];
+                    Object propertyName = args.length < 2 ? Undefined.instance : args[1];
+                    return AbstractEcmaObjectOperations.hasOwnProperty(cx, arg, propertyName);
+                }
             case ConstructorId_getOwnPropertyNames:
                 {
                     Object arg = args.length < 1 ? Undefined.instance : args[0];
@@ -508,6 +512,27 @@ public class NativeObject extends IdScriptableObject implements Map {
                     Object nameArg = args.length < 2 ? Undefined.instance : args[1];
                     Scriptable desc = obj.getOwnPropertyDescriptor(cx, nameArg);
                     return desc == null ? Undefined.instance : desc;
+                }
+            case ConstructorId_getOwnPropertyDescriptors:
+                {
+                    Object arg = args.length < 1 ? Undefined.instance : args[0];
+                    Scriptable s = getCompatibleObject(cx, scope, arg);
+                    ScriptableObject obj = ensureScriptableObject(s);
+
+                    ScriptableObject descs = (ScriptableObject) cx.newObject(scope);
+                    for (Object key : obj.getIds(true, true)) {
+                        Scriptable desc = obj.getOwnPropertyDescriptor(cx, key);
+                        if (desc == null) {
+                            continue;
+                        } else if (key instanceof Symbol) {
+                            descs.put((Symbol) key, descs, desc);
+                        } else if (key instanceof Integer) {
+                            descs.put((Integer) key, descs, desc);
+                        } else {
+                            descs.put(ScriptRuntime.toString(key), descs, desc);
+                        }
+                    }
+                    return descs;
                 }
             case ConstructorId_defineProperty:
                 {
@@ -631,27 +656,21 @@ public class NativeObject extends IdScriptableObject implements Map {
                         Scriptable sourceObj = ScriptRuntime.toObject(cx, scope, args[i]);
                         Object[] ids = sourceObj.getIds();
                         for (Object key : ids) {
-                            if (targetObj instanceof ScriptableObject) {
-                                ScriptableObject desc =
-                                        ((ScriptableObject) targetObj)
-                                                .getOwnPropertyDescriptor(cx, key);
-                                if (desc != null
-                                        && isDataDescriptor(desc)
-                                        && isFalse(desc.get("writable"))) {
-                                    throw ScriptRuntime.typeErrorById(
-                                            "msg.change.value.with.writable.false", key);
+                            if (key instanceof Integer) {
+                                int intId = (Integer) key;
+                                if (sourceObj.has(intId, sourceObj)
+                                        && isEnumerable(intId, sourceObj)) {
+                                    Object val = sourceObj.get(intId, sourceObj);
+                                    AbstractEcmaObjectOperations.put(
+                                            cx, targetObj, intId, val, true);
                                 }
-                            }
-                            if (key instanceof String) {
-                                Object val = sourceObj.get((String) key, sourceObj);
-                                if ((val != Scriptable.NOT_FOUND) && !Undefined.isUndefined(val)) {
-                                    targetObj.put((String) key, targetObj, val);
-                                }
-                            } else if (key instanceof Number) {
-                                int ii = ScriptRuntime.toInt32(key);
-                                Object val = sourceObj.get(ii, sourceObj);
-                                if ((val != Scriptable.NOT_FOUND) && !Undefined.isUndefined(val)) {
-                                    targetObj.put(ii, targetObj, val);
+                            } else {
+                                String stringId = ScriptRuntime.toString(key);
+                                if (sourceObj.has(stringId, sourceObj)
+                                        && isEnumerable(stringId, sourceObj)) {
+                                    Object val = sourceObj.get(stringId, sourceObj);
+                                    AbstractEcmaObjectOperations.put(
+                                            cx, targetObj, stringId, val, true);
                                 }
                             }
                         }
@@ -980,24 +999,26 @@ public class NativeObject extends IdScriptableObject implements Map {
             ConstructorId_keys = -2,
             ConstructorId_getOwnPropertyNames = -3,
             ConstructorId_getOwnPropertyDescriptor = -4,
-            ConstructorId_defineProperty = -5,
-            ConstructorId_isExtensible = -6,
-            ConstructorId_preventExtensions = -7,
-            ConstructorId_defineProperties = -8,
-            ConstructorId_create = -9,
-            ConstructorId_isSealed = -10,
-            ConstructorId_isFrozen = -11,
-            ConstructorId_seal = -12,
-            ConstructorId_freeze = -13,
-            ConstructorId_getOwnPropertySymbols = -14,
-            ConstructorId_assign = -15,
-            ConstructorId_is = -16,
+            ConstructorId_getOwnPropertyDescriptors = -5,
+            ConstructorId_defineProperty = -6,
+            ConstructorId_isExtensible = -7,
+            ConstructorId_preventExtensions = -8,
+            ConstructorId_defineProperties = -9,
+            ConstructorId_create = -10,
+            ConstructorId_isSealed = -11,
+            ConstructorId_isFrozen = -12,
+            ConstructorId_seal = -13,
+            ConstructorId_freeze = -14,
+            ConstructorId_getOwnPropertySymbols = -15,
+            ConstructorId_assign = -16,
+            ConstructorId_is = -17,
 
             // ES6
-            ConstructorId_setPrototypeOf = -17,
-            ConstructorId_entries = -18,
-            ConstructorId_fromEntries = -19,
-            ConstructorId_values = -20,
+            ConstructorId_setPrototypeOf = -18,
+            ConstructorId_entries = -19,
+            ConstructorId_fromEntries = -20,
+            ConstructorId_values = -21,
+            ConstructorId_hasOwn = -22,
             Id_constructor = 1,
             Id_toString = 2,
             Id_toLocaleString = 3,

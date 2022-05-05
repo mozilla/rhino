@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/set.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class NativeSetTest extends ScriptTestsBase
-{
-}
+public class NativeSetTest extends ScriptTestsBase {}

@@ -43,13 +43,11 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.tree.TreePath;
 
 /**
- * This is a wrapper class takes a TreeTableModel and implements
- * the table model interface. The implementation is trivial, with
- * all of the event dispatching support provided by the superclass:
+ * This is a wrapper class takes a TreeTableModel and implements the table model interface. The
+ * implementation is trivial, with all of the event dispatching support provided by the superclass:
  * the AbstractTableModel.
  *
  * @version 1.2 10/27/98
- *
  * @author Philip Milne
  * @author Scott Violet
  */
@@ -62,38 +60,41 @@ public class TreeTableModelAdapter extends AbstractTableModel {
         this.tree = tree;
         this.treeTableModel = treeTableModel;
 
-        tree.addTreeExpansionListener(new TreeExpansionListener() {
-            // Don't use fireTableRowsInserted() here; the selection model
-            // would get updated twice.
-            public void treeExpanded(TreeExpansionEvent event) {
-              fireTableDataChanged();
-            }
-            public void treeCollapsed(TreeExpansionEvent event) {
-              fireTableDataChanged();
-            }
-        });
+        tree.addTreeExpansionListener(
+                new TreeExpansionListener() {
+                    // Don't use fireTableRowsInserted() here; the selection model
+                    // would get updated twice.
+                    public void treeExpanded(TreeExpansionEvent event) {
+                        fireTableDataChanged();
+                    }
+
+                    public void treeCollapsed(TreeExpansionEvent event) {
+                        fireTableDataChanged();
+                    }
+                });
 
         // Install a TreeModelListener that can update the table when
         // tree changes. We use delayedFireTableDataChanged as we can
         // not be guaranteed the tree will have finished processing
         // the event before us.
-        treeTableModel.addTreeModelListener(new TreeModelListener() {
-            public void treeNodesChanged(TreeModelEvent e) {
-                delayedFireTableDataChanged();
-            }
+        treeTableModel.addTreeModelListener(
+                new TreeModelListener() {
+                    public void treeNodesChanged(TreeModelEvent e) {
+                        delayedFireTableDataChanged();
+                    }
 
-            public void treeNodesInserted(TreeModelEvent e) {
-                delayedFireTableDataChanged();
-            }
+                    public void treeNodesInserted(TreeModelEvent e) {
+                        delayedFireTableDataChanged();
+                    }
 
-            public void treeNodesRemoved(TreeModelEvent e) {
-                delayedFireTableDataChanged();
-            }
+                    public void treeNodesRemoved(TreeModelEvent e) {
+                        delayedFireTableDataChanged();
+                    }
 
-            public void treeStructureChanged(TreeModelEvent e) {
-                delayedFireTableDataChanged();
-            }
-        });
+                    public void treeStructureChanged(TreeModelEvent e) {
+                        delayedFireTableDataChanged();
+                    }
+                });
     }
 
     // Wrappers, implementing TableModel interface.
@@ -127,7 +128,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int row, int column) {
-         return treeTableModel.isCellEditable(nodeForRow(row), column);
+        return treeTableModel.isCellEditable(nodeForRow(row), column);
     }
 
     @Override
@@ -136,14 +137,15 @@ public class TreeTableModelAdapter extends AbstractTableModel {
     }
 
     /**
-     * Invokes fireTableDataChanged after all the pending events have been
-     * processed. SwingUtilities.invokeLater is used to handle this.
+     * Invokes fireTableDataChanged after all the pending events have been processed.
+     * SwingUtilities.invokeLater is used to handle this.
      */
     protected void delayedFireTableDataChanged() {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                fireTableDataChanged();
-            }
-        });
+        SwingUtilities.invokeLater(
+                new Runnable() {
+                    public void run() {
+                        fireTableDataChanged();
+                    }
+                });
     }
 }

@@ -2128,7 +2128,7 @@ public final class Interpreter extends Icode implements Evaluator {
                                     ++stackTop;
                                     stack[stackTop] =
                                             (op == Token.ENUM_NEXT)
-                                                    ? (Object) ScriptRuntime.enumNext(val)
+                                                    ? (Object) ScriptRuntime.enumNext(val, cx)
                                                     : (Object) ScriptRuntime.enumId(val, cx);
                                     continue Loop;
                                 }

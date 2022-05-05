@@ -6,7 +6,13 @@
     <Source name="~.*\/testsrc\/.*"/>
   </Match>
   <Match>
+    <Source name="~.*\\testsrc\\.*"/>
+  </Match>
+  <Match>
     <Source name="~.*\/examples\/.*"/>
+  </Match>
+  <Match>
+    <Source name="~.*\\examples\\.*"/>
   </Match>
   <Match>
     <Class name="~org\.mozilla\.javascript\.benchmarks\.jmh_generated.*"/>

@@ -13,6 +13,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/gh842-Object-assign-null-this.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class Gh842ObjectAssignTest extends ScriptTestsBase
-{
-}
+public class Gh842ObjectAssignTest extends ScriptTestsBase {}

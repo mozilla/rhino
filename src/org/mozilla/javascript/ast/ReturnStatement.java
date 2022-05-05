@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * Return statement.  Node type is {@link Token#RETURN}.
+ * Return statement. Node type is {@link Token#RETURN}.
  *
  * <pre><i>ReturnStatement</i> :
  *      <b>return</b> [<i>no LineTerminator here</i>] [Expression] ;</pre>
@@ -22,8 +22,7 @@ public class ReturnStatement extends AstNode {
         type = Token.RETURN;
     }
 
-    public ReturnStatement() {
-    }
+    public ReturnStatement() {}
 
     public ReturnStatement(int pos) {
         super(pos);
@@ -38,21 +37,15 @@ public class ReturnStatement extends AstNode {
         setReturnValue(returnValue);
     }
 
-    /**
-     * Returns return value, {@code null} if return value is void
-     */
+    /** Returns return value, {@code null} if return value is void */
     public AstNode getReturnValue() {
         return returnValue;
     }
 
-    /**
-     * Sets return value expression, and sets its parent to this node.
-     * Can be {@code null}.
-     */
+    /** Sets return value expression, and sets its parent to this node. Can be {@code null}. */
     public void setReturnValue(AstNode returnValue) {
         this.returnValue = returnValue;
-        if (returnValue != null)
-            returnValue.setParent(this);
+        if (returnValue != null) returnValue.setParent(this);
     }
 
     @Override
@@ -68,9 +61,7 @@ public class ReturnStatement extends AstNode {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, then the return value if specified.
-     */
+    /** Visits this node, then the return value if specified. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this) && returnValue != null) {

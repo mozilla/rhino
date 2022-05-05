@@ -8,20 +8,18 @@ package org.mozilla.javascript.tools.shell;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
-
 import org.mozilla.javascript.Scriptable;
 
 /**
- * Provides a specialized input stream for consoles to handle line
- * editing, history and completion. Relies on the JLine library
- * (see <a href="http://jline.sourceforge.net">http://jline.sourceforge.net</a>).
+ * Provides a specialized input stream for consoles to handle line editing, history and completion.
+ * Relies on the JLine library (see <a
+ * href="http://jline.sourceforge.net">http://jline.sourceforge.net</a>).
  */
 @Deprecated
 public class ShellLine {
     @Deprecated
     public static InputStream getStream(Scriptable scope) {
-        ShellConsole console = ShellConsole.getConsole(scope,
-                Charset.defaultCharset());
+        ShellConsole console = ShellConsole.getConsole(scope, Charset.defaultCharset());
         return (console != null ? console.getIn() : null);
     }
 }

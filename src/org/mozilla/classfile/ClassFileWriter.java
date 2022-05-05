@@ -1605,7 +1605,11 @@ public class ClassFileWriter {
                     int handlerPC = getLabelPC(ete.itsHandlerLabel);
                     SuperBlock handlerSB = getSuperBlockFromOffset(handlerPC);
                     locals = handlerSB.getLocals();
-                    break;
+                    if (handlerSB.isInitialized()) {
+                        break;
+                    } else {
+                        continue;
+                    }
                 }
                 if (eteStart > sbStart && eteStart < sb.getEnd()) {
                     int handlerPC = getLabelPC(ete.itsHandlerLabel);
@@ -1623,7 +1627,7 @@ public class ClassFileWriter {
             for (int i = 0; i < itsExceptionTableTop; i++) {
                 ExceptionTableEntry ete = itsExceptionTable[i];
                 int eteStart = getLabelPC(ete.itsStartLabel);
-                if (eteStart == sb.getStart()) {
+                if (eteStart == sb.getStart() || getLabelPC(ete.itsHandlerLabel) == sb.getStart()) {
                     for (int j = i + 1; j < itsExceptionTableTop; j++) {
                         itsExceptionTable[j - 1] = itsExceptionTable[j];
                     }

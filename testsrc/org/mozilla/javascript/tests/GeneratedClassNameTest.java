@@ -4,19 +4,17 @@
 
 package org.mozilla.javascript.tests;
 
+import junit.framework.TestCase;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Script;
 
-import junit.framework.TestCase;
-
 /**
- * Takes care that the class name of the generated class "looks like"
- * the provided script name.
- * See https://bugzilla.mozilla.org/show_bug.cgi?id=460283
+ * Takes care that the class name of the generated class "looks like" the provided script name. See
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=460283
+ *
  * @author Marc Guillemot
  */
-public class GeneratedClassNameTest extends TestCase
-{
+public class GeneratedClassNameTest extends TestCase {
     public void testGeneratedClassName() throws Exception {
         doTest("myScript_js", "myScript.js");
         doTest("foo", "foo");
@@ -29,10 +27,10 @@ public class GeneratedClassNameTest extends TestCase
         doTest("_12_foo_34_js", "12 foo 34.js");
     }
 
-    private void doTest(final String expectedName, final String scriptName)
-        throws Exception
-    {
-        final Script script = ContextFactory.getGlobal().call(cx -> cx.compileString("var f = 1", scriptName, 1, null));
+    private void doTest(final String expectedName, final String scriptName) throws Exception {
+        final Script script =
+                ContextFactory.getGlobal()
+                        .call(cx -> cx.compileString("var f = 1", scriptName, 1, null));
 
         // remove serial number
         String name = script.getClass().getSimpleName();

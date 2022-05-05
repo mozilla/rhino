@@ -2,28 +2,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/**
- *
- */
+/** */
 package org.mozilla.javascript.tests;
 
+import junit.framework.TestCase;
 import org.mozilla.javascript.ClassShutter;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Scriptable;
 
-import junit.framework.TestCase;
-
-/**
- * @author Norris Boyd
- */
+/** @author Norris Boyd */
 public class ClassShutterExceptionTest extends TestCase {
     private static Context.ClassShutterSetter classShutterSetter;
 
-    /**
-     * Define a ClassShutter that prevents access to all Java classes.
-     */
+    /** Define a ClassShutter that prevents access to all Java classes. */
     static class OpaqueShutter implements ClassShutter {
         public boolean visibleToScripts(String name) {
             return false;
@@ -76,8 +69,8 @@ public class ClassShutterExceptionTest extends TestCase {
     }
 
     public void testThrowingEvaluatorException() {
-            // JavaScript exceptions with no reference to Java
-            // should not be affected by the ClassShutter
-            helper("try { eval('for;if;else'); } catch (e) { }");
+        // JavaScript exceptions with no reference to Java
+        // should not be affected by the ClassShutter
+        helper("try { eval('for;if;else'); } catch (e) { }");
     }
- }
+}

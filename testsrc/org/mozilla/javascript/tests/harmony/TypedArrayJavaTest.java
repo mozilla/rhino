@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -27,40 +26,31 @@ import org.mozilla.javascript.typedarrays.NativeUint32Array;
 import org.mozilla.javascript.typedarrays.NativeUint8Array;
 import org.mozilla.javascript.typedarrays.NativeUint8ClampedArray;
 
-/**
- * Ensure that the "List" contract is valid for a typed array.
- */
-public class TypedArrayJavaTest
-{
+/** Ensure that the "List" contract is valid for a typed array. */
+public class TypedArrayJavaTest {
     @Test
-    public void testInt8()
-    {
-        NativeInt8Array a =
-            new NativeInt8Array(2);
-        testTwoList(a, (byte)1, (byte)2, (byte)3);
+    public void testInt8() {
+        NativeInt8Array a = new NativeInt8Array(2);
+        testTwoList(a, (byte) 1, (byte) 2, (byte) 3);
     }
 
     @Test
-    public void testInt8Equals()
-    {
+    public void testInt8Equals() {
         byte a = 3;
         byte b = 4;
 
-        NativeInt8Array list =
-            new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
+        NativeInt8Array list = new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
         list.set(0, a);
         list.set(1, b);
 
-        List<Byte> gl =
-            new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
+        List<Byte> gl = new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
         gl.set(0, a);
         gl.set(1, b);
         assertTrue(gl.equals(list));
         assertEquals(gl.hashCode(), list.hashCode());
         assertFalse(gl.equals(a));
 
-        List<Byte> bl =
-            new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
+        List<Byte> bl = new NativeInt8Array(new NativeArrayBuffer(2), 0, 2);
         bl.set(0, b);
         bl.set(1, a);
         assertFalse(bl.equals(list));
@@ -79,8 +69,8 @@ public class TypedArrayJavaTest
         Byte[] na3 = list.toArray(ta3);
         assertFalse(na3.equals(list));
         assertTrue(na3 == ta3);
-        assertEquals((Byte)a, na3[0]);
-        assertEquals((Byte)b, na3[1]);
+        assertEquals((Byte) a, na3[0]);
+        assertEquals((Byte) b, na3[1]);
 
         try {
             list.toArray(new String[2]);
@@ -90,71 +80,54 @@ public class TypedArrayJavaTest
     }
 
     @Test
-    public void testUInt8()
-    {
-        NativeUint8Array a =
-            new NativeUint8Array(2);
+    public void testUInt8() {
+        NativeUint8Array a = new NativeUint8Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
-    public void testUInt8Clamped()
-    {
-        NativeUint8ClampedArray a =
-            new NativeUint8ClampedArray(2);
+    public void testUInt8Clamped() {
+        NativeUint8ClampedArray a = new NativeUint8ClampedArray(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
-    public void testInt16()
-    {
-        NativeInt16Array a =
-            new NativeInt16Array(2);
-        testTwoList(a, (short)1, (short)2, (short)3);
+    public void testInt16() {
+        NativeInt16Array a = new NativeInt16Array(2);
+        testTwoList(a, (short) 1, (short) 2, (short) 3);
     }
 
     @Test
-    public void testUint16()
-    {
-        NativeUint16Array a =
-            new NativeUint16Array(2);
+    public void testUint16() {
+        NativeUint16Array a = new NativeUint16Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
-    public void testInt32()
-    {
-        NativeInt32Array a =
-            new NativeInt32Array(2);
+    public void testInt32() {
+        NativeInt32Array a = new NativeInt32Array(2);
         testTwoList(a, 1, 2, 3);
     }
 
     @Test
-    public void testUint32()
-    {
-        NativeUint32Array a =
-            new NativeUint32Array(2);
+    public void testUint32() {
+        NativeUint32Array a = new NativeUint32Array(2);
         testTwoList(a, 1L, 2L, 3L);
     }
 
     @Test
-    public void testFloat32()
-    {
-        NativeFloat32Array a =
-            new NativeFloat32Array(2);
+    public void testFloat32() {
+        NativeFloat32Array a = new NativeFloat32Array(2);
         testTwoList(a, 1.0f, 2.0f, 3.0F);
     }
 
     @Test
-    public void testFloat64()
-    {
-        NativeFloat64Array a =
-            new NativeFloat64Array(2);
+    public void testFloat64() {
+        NativeFloat64Array a = new NativeFloat64Array(2);
         testTwoList(a, 1.0, 2.0, 3.0);
     }
 
-    private <T> void testTwoList(List<T> list, T a, T b, T bogus)
-    {
+    private <T> void testTwoList(List<T> list, T a, T b, T bogus) {
         assertEquals(2, list.size());
         assertFalse(list.isEmpty());
         list.set(0, a);
@@ -307,15 +280,15 @@ public class TypedArrayJavaTest
     @Test
     public void getAllIds() throws Exception {
         String[] allNativeTypes = {
-                "Float32Array",
-                "Float64Array",
-                "Int8Array",
-                "Int16Array",
-                "Int32Array",
-                "Uint8Array",
-                "Uint16Array",
-                "Uint32Array",
-                "Uint8ClampedArray"
+            "Float32Array",
+            "Float64Array",
+            "Int8Array",
+            "Int16Array",
+            "Int32Array",
+            "Uint8Array",
+            "Uint16Array",
+            "Uint32Array",
+            "Uint8ClampedArray"
         };
 
         Context cx = Context.enter();
@@ -323,7 +296,9 @@ public class TypedArrayJavaTest
         Scriptable global = cx.initStandardObjects();
 
         for (String type : allNativeTypes) {
-            ScriptableObject obj = (ScriptableObject)cx.evaluateString(global, "new " + type + "(5)", "", 1, null);
+            ScriptableObject obj =
+                    (ScriptableObject)
+                            cx.evaluateString(global, "new " + type + "(5)", "", 1, null);
             obj.getAllIds();
         }
 

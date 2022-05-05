@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/**
- * 
- */
+/** */
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
@@ -17,10 +15,7 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptableObject;
 
-/**
- * @author André Bargull
- * 
- */
+/** @author André Bargull */
 public class Bug714204Test {
     private Context cx;
     private ScriptableObject scope;

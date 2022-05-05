@@ -7,13 +7,13 @@
 package org.mozilla.javascript;
 
 /**
- * Exception thrown by
- * {@link org.mozilla.javascript.Context#executeScriptWithContinuations(Script, Scriptable)}
- * and {@link org.mozilla.javascript.Context#callFunctionWithContinuations(Callable, Scriptable, Object[])}
- * when execution encounters a continuation captured by
- * {@link org.mozilla.javascript.Context#captureContinuation()}.
- * Exception will contain the captured state needed to restart the continuation
- * with {@link org.mozilla.javascript.Context#resumeContinuation(Object, Scriptable, Object)}.
+ * Exception thrown by {@link org.mozilla.javascript.Context#executeScriptWithContinuations(Script,
+ * Scriptable)} and {@link org.mozilla.javascript.Context#callFunctionWithContinuations(Callable,
+ * Scriptable, Object[])} when execution encounters a continuation captured by {@link
+ * org.mozilla.javascript.Context#captureContinuation()}. Exception will contain the captured state
+ * needed to restart the continuation with {@link
+ * org.mozilla.javascript.Context#resumeContinuation(Object, Scriptable, Object)}.
+ *
  * @author Norris Boyd
  */
 public class ContinuationPending extends RuntimeException {
@@ -22,11 +22,12 @@ public class ContinuationPending extends RuntimeException {
     private Object applicationState;
 
     /**
-     * Construct a ContinuationPending exception. Internal call only;
-     * users of the API should get continuations created on their behalf by
-     * calling {@link org.mozilla.javascript.Context#executeScriptWithContinuations(Script, Scriptable)}
-     * and {@link org.mozilla.javascript.Context#callFunctionWithContinuations(Callable, Scriptable, Object[])}
+     * Construct a ContinuationPending exception. Internal call only; users of the API should get
+     * continuations created on their behalf by calling {@link
+     * org.mozilla.javascript.Context#executeScriptWithContinuations(Script, Scriptable)} and {@link
+     * org.mozilla.javascript.Context#callFunctionWithContinuations(Callable, Scriptable, Object[])}
      * Creating subclasses allowed.
+     *
      * @param continuationState Internal Continuation object
      */
     protected ContinuationPending(NativeContinuation continuationState) {
@@ -34,9 +35,9 @@ public class ContinuationPending extends RuntimeException {
     }
 
     /**
-     * Get continuation object. The only
-     * use for this object is to be passed to
-     * {@link org.mozilla.javascript.Context#resumeContinuation(Object, Scriptable, Object)}.
+     * Get continuation object. The only use for this object is to be passed to {@link
+     * org.mozilla.javascript.Context#resumeContinuation(Object, Scriptable, Object)}.
+     *
      * @return continuation object
      */
     public Object getContinuation() {
@@ -45,31 +46,29 @@ public class ContinuationPending extends RuntimeException {
 
     /**
      * Set continuation object. Allows subclasses to modify the internal state.
+     *
      * @param continuation object
      */
     public void setContinuation(NativeContinuation continuation) {
         this.continuationState = continuation;
     }
-    
-    /**
-     * @return internal continuation state
-     */
+
+    /** @return internal continuation state */
     NativeContinuation getContinuationState() {
         return continuationState;
     }
 
     /**
-     * Store an arbitrary object that applications can use to associate
-     * their state with the continuation.
+     * Store an arbitrary object that applications can use to associate their state with the
+     * continuation.
+     *
      * @param applicationState arbitrary application state
      */
     public void setApplicationState(Object applicationState) {
         this.applicationState = applicationState;
     }
 
-    /**
-     * @return arbitrary application state
-     */
+    /** @return arbitrary application state */
     public Object getApplicationState() {
         return applicationState;
     }

@@ -8,6 +8,4 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/harmony/method-definition.js")
-public class MethodDefinitionTest extends ScriptTestsBase
-{
-}
+public class MethodDefinitionTest extends ScriptTestsBase {}

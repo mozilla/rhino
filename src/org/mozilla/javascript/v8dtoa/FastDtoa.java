@@ -35,7 +35,6 @@ public class FastDtoa {
     // FastDtoa will produce at most kFastDtoaMaximalLength digits.
     static final int kFastDtoaMaximalLength = 17;
 
-
     // The minimal and maximal target exponent define the range of w's binary
     // exponent, where 'w' is the result of multiplying the input by a cached power
     // of ten.
@@ -44,7 +43,6 @@ public class FastDtoa {
     // generation, but a smaller range requires more powers of ten to be cached.
     static final int minimal_target_exponent = -60;
     static final int maximal_target_exponent = -32;
-
 
     // Adjusts the last digit of the generated number, and screens out generated
     // solutions that may be inaccurate. A solution may be inaccurate if it is
@@ -60,12 +58,13 @@ public class FastDtoa {
     // Output: returns true if the buffer is guaranteed to contain the closest
     //    representable number to the input.
     //  Modifies the generated digits in the buffer to approach (round towards) w.
-    static boolean roundWeed(FastDtoaBuilder buffer,
-                             long distance_too_high_w,
-                             long unsafe_interval,
-                             long rest,
-                             long ten_kappa,
-                             long unit) {
+    static boolean roundWeed(
+            FastDtoaBuilder buffer,
+            long distance_too_high_w,
+            long unsafe_interval,
+            long rest,
+            long ten_kappa,
+            long unit) {
         long small_distance = distance_too_high_w - unit;
         long big_distance = distance_too_high_w + unit;
         // Let w_low  = too_high - big_distance, and
@@ -137,9 +136,12 @@ public class FastDtoa {
         //              (buffer{-1} < w_high) && w_high - buffer{-1} > buffer - w_high
         // Instead of using the buffer directly we use its distance to too_high.
         // Conceptually rest ~= too_high - buffer
-        while (rest < small_distance &&  // Negated condition 1
-                unsafe_interval - rest >= ten_kappa &&  // Negated condition 2
-                (rest + ten_kappa < small_distance ||  // buffer{-1} > w_high
+        while (rest < small_distance
+                && // Negated condition 1
+                unsafe_interval - rest >= ten_kappa
+                && // Negated condition 2
+                (rest + ten_kappa < small_distance
+                        || // buffer{-1} > w_high
                         small_distance - rest >= rest + ten_kappa - small_distance)) {
             buffer.decreaseLast();
             rest += ten_kappa;
@@ -148,10 +150,10 @@ public class FastDtoa {
         // We have approached w+ as much as possible. We now test if approaching w-
         // would require changing the buffer. If yes, then we have two possible
         // representations close to w, but we cannot decide which one is closer.
-        if (rest < big_distance &&
-                unsafe_interval - rest >= ten_kappa &&
-                (rest + ten_kappa < big_distance ||
-                        big_distance - rest > rest + ten_kappa - big_distance)) {
+        if (rest < big_distance
+                && unsafe_interval - rest >= ten_kappa
+                && (rest + ten_kappa < big_distance
+                        || big_distance - rest > rest + ten_kappa - big_distance)) {
             return false;
         }
 
@@ -162,8 +164,6 @@ public class FastDtoa {
         //   Conceptually we have: rest ~= too_high - buffer
         return (2 * unit <= rest) && (rest <= unsafe_interval - 4 * unit);
     }
-
-
 
     static final int kTen4 = 10000;
     static final int kTen5 = 100000;
@@ -177,8 +177,7 @@ public class FastDtoa {
     // If number_bits == 0 then 0^-1 is returned
     // The number of bits must be <= 32.
     // Precondition: (1 << number_bits) <= number < (1 << (number_bits + 1)).
-    static long biggestPowerTen(int number,
-                                int number_bits) {
+    static long biggestPowerTen(int number, int number_bits) {
         int power, exponent;
         switch (number_bits) {
             case 32:
@@ -188,7 +187,7 @@ public class FastDtoa {
                     power = kTen9;
                     exponent = 9;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 29:
             case 28:
             case 27:
@@ -196,7 +195,7 @@ public class FastDtoa {
                     power = kTen8;
                     exponent = 8;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 26:
             case 25:
             case 24:
@@ -204,7 +203,7 @@ public class FastDtoa {
                     power = kTen7;
                     exponent = 7;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 23:
             case 22:
             case 21:
@@ -213,7 +212,7 @@ public class FastDtoa {
                     power = kTen6;
                     exponent = 6;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 19:
             case 18:
             case 17:
@@ -221,7 +220,7 @@ public class FastDtoa {
                     power = kTen5;
                     exponent = 5;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 16:
             case 15:
             case 14:
@@ -229,7 +228,7 @@ public class FastDtoa {
                     power = kTen4;
                     exponent = 4;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 13:
             case 12:
             case 11:
@@ -238,7 +237,7 @@ public class FastDtoa {
                     power = 1000;
                     exponent = 3;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 9:
             case 8:
             case 7:
@@ -246,7 +245,7 @@ public class FastDtoa {
                     power = 100;
                     exponent = 2;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 6:
             case 5:
             case 4:
@@ -254,7 +253,7 @@ public class FastDtoa {
                     power = 10;
                     exponent = 1;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 3:
             case 2:
             case 1:
@@ -262,7 +261,7 @@ public class FastDtoa {
                     power = 1;
                     exponent = 0;
                     break;
-                }  // else fallthrough
+                } // else fallthrough
             case 0:
                 power = 0;
                 exponent = -1;
@@ -273,7 +272,7 @@ public class FastDtoa {
                 exponent = 0;
                 // UNREACHABLE();
         }
-        return ((long)power << 32) | (0xffffffffL & exponent);
+        return ((long) power << 32) | (0xffffffffL & exponent);
     }
 
     private static boolean uint64_lte(long a, long b) {
@@ -323,14 +322,10 @@ public class FastDtoa {
     // represent 'w' we can stop. Everything inside the interval low - high
     // represents w. However we have to pay attention to low, high and w's
     // imprecision.
-    static boolean digitGen(DiyFp low,
-                     DiyFp w,
-                     DiyFp high,
-                     FastDtoaBuilder buffer,
-                     int mk) {
-        assert(low.e() == w.e() && w.e() == high.e());
+    static boolean digitGen(DiyFp low, DiyFp w, DiyFp high, FastDtoaBuilder buffer, int mk) {
+        assert (low.e() == w.e() && w.e() == high.e());
         assert uint64_lte(low.f() + 1, high.f() - 1);
-        assert(minimal_target_exponent <= w.e() && w.e() <= maximal_target_exponent);
+        assert (minimal_target_exponent <= w.e() && w.e() <= maximal_target_exponent);
         // low, w and high are imprecise, but by less than one ulp (unit in the last
         // place).
         // If we remove (resp. add) 1 ulp from low (resp. high) we are certain that
@@ -357,7 +352,7 @@ public class FastDtoa {
         // If we stop early we effectively round down.
         DiyFp one = new DiyFp(1L << -w.e(), w.e());
         // Division by one is a shift.
-        int integrals = (int)((too_high.f() >>> -one.e()) & 0xffffffffL);
+        int integrals = (int) ((too_high.f() >>> -one.e()) & 0xffffffffL);
         // Modulo by one is an and.
         long fractionals = too_high.f() & (one.f() - 1);
         long result = biggestPowerTen(integrals, DiyFp.kSignificandSize - (-one.e()));
@@ -375,17 +370,20 @@ public class FastDtoa {
             kappa--;
             // Note that kappa now equals the exponent of the divider and that the
             // invariant thus holds again.
-            long rest =
-                    ((long)integrals << -one.e()) + fractionals;
+            long rest = ((long) integrals << -one.e()) + fractionals;
             // Invariant: too_high = buffer * 10^kappa + DiyFp(rest, one.e())
             // Reminder: unsafe_interval.e() == one.e()
             if (rest < unsafe_interval.f()) {
                 // Rounding down (by not emitting the remaining digits) yields a number
                 // that lies within the unsafe interval.
                 buffer.point = buffer.end - mk + kappa;
-                return roundWeed(buffer, DiyFp.minus(too_high, w).f(),
-                        unsafe_interval.f(), rest,
-                        (long)divider << -one.e(), unit);
+                return roundWeed(
+                        buffer,
+                        DiyFp.minus(too_high, w).f(),
+                        unsafe_interval.f(),
+                        rest,
+                        (long) divider << -one.e(),
+                        unit);
             }
             divider /= 10;
         }
@@ -408,22 +406,26 @@ public class FastDtoa {
             fractionals *= 5;
             unit *= 5;
             unsafe_interval.setF(unsafe_interval.f() * 5);
-            unsafe_interval.setE(unsafe_interval.e() + 1);  // Will be optimized out.
+            unsafe_interval.setE(unsafe_interval.e() + 1); // Will be optimized out.
             one.setF(one.f() >>> 1);
             one.setE(one.e() + 1);
             // Integer division by one.
-            int digit = (int)((fractionals >>> -one.e()) & 0xffffffffL);
+            int digit = (int) ((fractionals >>> -one.e()) & 0xffffffffL);
             buffer.append((char) ('0' + digit));
-            fractionals &= one.f() - 1;  // Modulo by one.
+            fractionals &= one.f() - 1; // Modulo by one.
             kappa--;
             if (fractionals < unsafe_interval.f()) {
                 buffer.point = buffer.end - mk + kappa;
-                return roundWeed(buffer, DiyFp.minus(too_high, w).f() * unit,
-                        unsafe_interval.f(), fractionals, one.f(), unit);
+                return roundWeed(
+                        buffer,
+                        DiyFp.minus(too_high, w).f() * unit,
+                        unsafe_interval.f(),
+                        fractionals,
+                        one.f(),
+                        unit);
             }
         }
     }
-
 
     // Provides a decimal representation of v.
     // Returns true if it succeeds, otherwise the result cannot be trusted.
@@ -445,14 +447,16 @@ public class FastDtoa {
         // Grisu3 will never output representations that lie exactly on a boundary.
         DiyFp boundary_minus = new DiyFp(), boundary_plus = new DiyFp();
         DoubleHelper.normalizedBoundaries(bits, boundary_minus, boundary_plus);
-        assert(boundary_plus.e() == w.e());
-        DiyFp ten_mk = new DiyFp();  // Cached power of ten: 10^-k
-        int mk =  CachedPowers.getCachedPower(w.e() + DiyFp.kSignificandSize,
-                minimal_target_exponent, maximal_target_exponent, ten_mk);
-        assert(minimal_target_exponent <= w.e() + ten_mk.e() +
-                DiyFp.kSignificandSize &&
-                maximal_target_exponent >= w.e() + ten_mk.e() +
-                        DiyFp.kSignificandSize);
+        assert (boundary_plus.e() == w.e());
+        DiyFp ten_mk = new DiyFp(); // Cached power of ten: 10^-k
+        int mk =
+                CachedPowers.getCachedPower(
+                        w.e() + DiyFp.kSignificandSize,
+                        minimal_target_exponent,
+                        maximal_target_exponent,
+                        ten_mk);
+        assert (minimal_target_exponent <= w.e() + ten_mk.e() + DiyFp.kSignificandSize
+                && maximal_target_exponent >= w.e() + ten_mk.e() + DiyFp.kSignificandSize);
         // Note that ten_mk is only an approximation of 10^-k. A DiyFp only contains a
         // 64 bit significand and ten_mk is thus only precise up to 64 bits.
 
@@ -463,15 +467,14 @@ public class FastDtoa {
         // In other words: let f = scaled_w.f() and e = scaled_w.e(), then
         //           (f-1) * 2^e < w*10^k < (f+1) * 2^e
         DiyFp scaled_w = DiyFp.times(w, ten_mk);
-        assert(scaled_w.e() ==
-                boundary_plus.e() + ten_mk.e() + DiyFp.kSignificandSize);
+        assert (scaled_w.e() == boundary_plus.e() + ten_mk.e() + DiyFp.kSignificandSize);
         // In theory it would be possible to avoid some recomputations by computing
         // the difference between w and boundary_minus/plus (a power of 2) and to
         // compute scaled_boundary_minus/plus by subtracting/adding from
         // scaled_w. However the code becomes much less readable and the speed
         // enhancements are not terriffic.
         DiyFp scaled_boundary_minus = DiyFp.times(boundary_minus, ten_mk);
-        DiyFp scaled_boundary_plus  = DiyFp.times(boundary_plus,  ten_mk);
+        DiyFp scaled_boundary_plus = DiyFp.times(boundary_plus, ten_mk);
 
         // DigitGen will generate the digits of scaled_w. Therefore we have
         // v == (double) (scaled_w * 10^-mk).
@@ -479,15 +482,13 @@ public class FastDtoa {
         // integer than it will be updated. For instance if scaled_w == 1.23 then
         // the buffer will be filled with "123" und the decimal_exponent will be
         // decreased by 2.
-        return digitGen(scaled_boundary_minus, scaled_w, scaled_boundary_plus,
-                buffer, mk);
+        return digitGen(scaled_boundary_minus, scaled_w, scaled_boundary_plus, buffer, mk);
     }
 
-
     public static boolean dtoa(double v, FastDtoaBuilder buffer) {
-        assert(v > 0);
-        assert(!Double.isNaN(v));
-        assert(!Double.isInfinite(v));
+        assert (v > 0);
+        assert (!Double.isNaN(v));
+        assert (!Double.isInfinite(v));
 
         return grisu3(v, buffer);
     }
@@ -505,5 +506,4 @@ public class FastDtoa {
         }
         return dtoa(v, buffer);
     }
-
 }

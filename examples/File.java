@@ -14,7 +14,6 @@ import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.Scriptable;
@@ -26,11 +25,11 @@ import org.mozilla.javascript.annotations.JSGetter;
 /**
  * Define a simple JavaScript File object.
  *
- * This isn't intended to be any sort of definitive attempt at a
- * standard File object for JavaScript, but instead is an example
- * of a more involved definition of a host object.
+ * <p>This isn't intended to be any sort of definitive attempt at a standard File object for
+ * JavaScript, but instead is an example of a more involved definition of a host object.
  *
- * Example of use of the File object:
+ * <p>Example of use of the File object:
+ *
  * <pre>
  * js> defineClass("File")
  * js> file = new File("myfile.txt");
@@ -45,43 +44,34 @@ import org.mozilla.javascript.annotations.JSGetter;
  * js>
  * </pre>
  *
- *
- * File errors or end-of-file signaled by thrown Java exceptions will
- * be wrapped as JavaScript exceptions when called from JavaScript,
- * and may be caught within JavaScript.
+ * File errors or end-of-file signaled by thrown Java exceptions will be wrapped as JavaScript
+ * exceptions when called from JavaScript, and may be caught within JavaScript.
  *
  * @author Norris Boyd
  */
 public class File extends ScriptableObject {
 
-    /**
-     *
-     */
+    /** */
     private static final long serialVersionUID = 2549960399774237828L;
     /**
      * The zero-parameter constructor.
      *
-     * When Context.defineClass is called with this class, it will
-     * construct File.prototype using this constructor.
+     * <p>When Context.defineClass is called with this class, it will construct File.prototype using
+     * this constructor.
      */
-    public File() {
-    }
+    public File() {}
 
     /**
      * The Java method defining the JavaScript File constructor.
      *
-     * If the constructor has one or more arguments, and the
-     * first argument is not undefined, the argument is converted
-     * to a string as used as the filename.<p>
+     * <p>If the constructor has one or more arguments, and the first argument is not undefined, the
+     * argument is converted to a string as used as the filename.
      *
-     * Otherwise System.in or System.out is assumed as appropriate
-     * to the use.
+     * <p>Otherwise System.in or System.out is assumed as appropriate to the use.
      */
     @JSConstructor
-    public static Scriptable jsConstructor(Context cx, Object[] args,
-                                           Function ctorObj,
-                                           boolean inNewExpr)
-    {
+    public static Scriptable jsConstructor(
+            Context cx, Object[] args, Function ctorObj, boolean inNewExpr) {
         File result = new File();
         if (args.length == 0 || args[0] == Context.getUndefinedValue()) {
             result.name = "";
@@ -93,9 +83,7 @@ public class File extends ScriptableObject {
         return result;
     }
 
-    /**
-     * Returns the name of this JavaScript class, "File".
-     */
+    /** Returns the name of this JavaScript class, "File". */
     @Override
     public String getClassName() {
         return "File";
@@ -104,7 +92,7 @@ public class File extends ScriptableObject {
     /**
      * Get the name of the file.
      *
-     * Used to define the "name" property.
+     * <p>Used to define the "name" property.
      */
     @JSGetter
     public String getName() {
@@ -114,18 +102,15 @@ public class File extends ScriptableObject {
     /**
      * Read the remaining lines in the file and return them in an array.
      *
-     * Implements a JavaScript function.<p>
+     * <p>Implements a JavaScript function.
      *
-     * This is a good example of creating a new array and setting
-     * elements in that array.
+     * <p>This is a good example of creating a new array and setting elements in that array.
      *
-     * @exception IOException if an error occurred while accessing the file
-     *            associated with this object
+     * @exception IOException if an error occurred while accessing the file associated with this
+     *     object
      */
     @JSFunction
-    public Object readLines()
-        throws IOException
-    {
+    public Object readLines() throws IOException {
         List<String> list = new ArrayList<String>();
         String s;
         while ((s = readLine()) != null) {
@@ -140,10 +125,10 @@ public class File extends ScriptableObject {
     /**
      * Read a line.
      *
-     * Implements a JavaScript function.
-     * @exception IOException if an error occurred while accessing the file
-     *            associated with this object, or EOFException if the object
-     *            reached the end of the file
+     * <p>Implements a JavaScript function.
+     *
+     * @exception IOException if an error occurred while accessing the file associated with this
+     *     object, or EOFException if the object reached the end of the file
      */
     @JSFunction
     public String readLine() throws IOException {
@@ -153,66 +138,60 @@ public class File extends ScriptableObject {
     /**
      * Read a character.
      *
-     * @exception IOException if an error occurred while accessing the file
-     *            associated with this object, or EOFException if the object
-     *            reached the end of the file
+     * @exception IOException if an error occurred while accessing the file associated with this
+     *     object, or EOFException if the object reached the end of the file
      */
     @JSFunction
     public String readChar() throws IOException {
         int i = getReader().read();
-        if (i == -1)
-            return null;
-        char[] charArray = { (char) i };
+        if (i == -1) return null;
+        char[] charArray = {(char) i};
         return new String(charArray);
     }
 
     /**
      * Write strings.
      *
-     * Implements a JavaScript function. <p>
+     * <p>Implements a JavaScript function.
      *
-     * This function takes a variable number of arguments, converts
-     * each argument to a string, and writes that string to the file.
-     * @exception IOException if an error occurred while accessing the file
-     *            associated with this object
+     * <p>This function takes a variable number of arguments, converts each argument to a string,
+     * and writes that string to the file.
+     *
+     * @exception IOException if an error occurred while accessing the file associated with this
+     *     object
      */
     @JSFunction
-    public static void write(Context cx, Scriptable thisObj,
-                                        Object[] args, Function funObj)
-        throws IOException
-    {
+    public static void write(Context cx, Scriptable thisObj, Object[] args, Function funObj)
+            throws IOException {
         write0(thisObj, args, false);
     }
 
     /**
      * Write strings and a newline.
      *
-     * Implements a JavaScript function.
-     * @exception IOException if an error occurred while accessing the file
-     *            associated with this object
+     * <p>Implements a JavaScript function.
      *
+     * @exception IOException if an error occurred while accessing the file associated with this
+     *     object
      */
     @JSFunction
-    public static void writeLine(Context cx, Scriptable thisObj,
-                                            Object[] args, Function funObj)
-        throws IOException
-    {
+    public static void writeLine(Context cx, Scriptable thisObj, Object[] args, Function funObj)
+            throws IOException {
         write0(thisObj, args, true);
     }
 
     @JSGetter
-    public int getLineNumber()
-        throws FileNotFoundException
-    {
+    public int getLineNumber() throws FileNotFoundException {
         return getReader().getLineNumber();
     }
 
     /**
      * Close the file. It may be reopened.
      *
-     * Implements a JavaScript function.
-     * @exception IOException if an error occurred while accessing the file
-     *            associated with this object
+     * <p>Implements a JavaScript function.
+     *
+     * @exception IOException if an error occurred while accessing the file associated with this
+     *     object
      */
     @JSFunction
     public void close() throws IOException {
@@ -228,24 +207,20 @@ public class File extends ScriptableObject {
     /**
      * Finalizer.
      *
-     * Close the file when this object is collected.
+     * <p>Close the file when this object is collected.
      */
     @Override
     protected void finalize() {
         try {
             close();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
         }
     }
 
-    /**
-     * Get the Java reader.
-     */
+    /** Get the Java reader. */
     @JSFunction("getReader")
     public Object getJSReader() {
-        if (reader == null)
-            return null;
+        if (reader == null) return null;
         // Here we use toObject() to "wrap" the BufferedReader object
         // in a Scriptable object so that it can be manipulated by
         // JavaScript.
@@ -257,65 +232,56 @@ public class File extends ScriptableObject {
      * Get the Java writer.
      *
      * @see File#getReader
-     *
      */
     @JSFunction
     public Object getWriter() {
-        if (writer == null)
-            return null;
+        if (writer == null) return null;
         Scriptable parent = ScriptableObject.getTopLevelScope(this);
         return Context.javaToJS(writer, parent);
     }
 
-    /**
-     * Get the reader, checking that we're not already writing this file.
-     */
+    /** Get the reader, checking that we're not already writing this file. */
     private LineNumberReader getReader() throws FileNotFoundException {
         if (writer != null) {
-            throw Context.reportRuntimeError("already writing file \""
-                                             + name
-                                             + "\"");
+            throw Context.reportRuntimeError("already writing file \"" + name + "\"");
         }
         if (reader == null)
-            reader = new LineNumberReader(file == null
-                                        ? new InputStreamReader(System.in)
-                                        : new FileReader(file));
+            reader =
+                    new LineNumberReader(
+                            file == null ? new InputStreamReader(System.in) : new FileReader(file));
         return reader;
     }
 
     /**
      * Perform the guts of write and writeLine.
      *
-     * Since the two functions differ only in whether they write a
-     * newline character, move the code into a common subroutine.
-     *
+     * <p>Since the two functions differ only in whether they write a newline character, move the
+     * code into a common subroutine.
      */
-    private static void write0(Scriptable thisObj, Object[] args, boolean eol)
-        throws IOException
-    {
+    private static void write0(Scriptable thisObj, Object[] args, boolean eol) throws IOException {
         File thisFile = checkInstance(thisObj);
         if (thisFile.reader != null) {
-            throw Context.reportRuntimeError("already writing file \""
-                                             + thisFile.name
-                                             + "\"");
+            throw Context.reportRuntimeError("already writing file \"" + thisFile.name + "\"");
         }
         if (thisFile.writer == null)
-            thisFile.writer = new BufferedWriter(
-                thisFile.file == null ? new OutputStreamWriter(System.out)
-                                      : new FileWriter(thisFile.file));
-        for (int i=0; i < args.length; i++) {
+            thisFile.writer =
+                    new BufferedWriter(
+                            thisFile.file == null
+                                    ? new OutputStreamWriter(System.out)
+                                    : new FileWriter(thisFile.file));
+        for (int i = 0; i < args.length; i++) {
             String s = Context.toString(args[i]);
             thisFile.writer.write(s, 0, s.length());
         }
-        if (eol)
-            thisFile.writer.newLine();
+        if (eol) thisFile.writer.newLine();
     }
 
     /**
      * Perform the instanceof check and return the downcasted File object.
      *
-     * This is necessary since methods may reside in the File.prototype
-     * object and scripts can dynamically alter prototype chains. For example:
+     * <p>This is necessary since methods may reside in the File.prototype object and scripts can
+     * dynamically alter prototype chains. For example:
+     *
      * <pre>
      * js> defineClass("File");
      * js> o = {};
@@ -325,8 +291,9 @@ public class File extends ScriptableObject {
      * js> o.write("hi");
      * js: called on incompatible object
      * </pre>
-     * The runtime will take care of such checks when non-static Java methods
-     * are defined as JavaScript functions.
+     *
+     * The runtime will take care of such checks when non-static Java methods are defined as
+     * JavaScript functions.
      */
     private static File checkInstance(Scriptable obj) {
         if (obj == null || !(obj instanceof File)) {
@@ -335,12 +302,10 @@ public class File extends ScriptableObject {
         return (File) obj;
     }
 
-    /**
-     * Some private data for this class.
-     */
+    /** Some private data for this class. */
     private String name;
-    private java.io.File file;  // may be null, meaning to use System.out or .in
+
+    private java.io.File file; // may be null, meaning to use System.out or .in
     private LineNumberReader reader;
     private BufferedWriter writer;
 }
-

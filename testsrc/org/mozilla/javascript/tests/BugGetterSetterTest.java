@@ -7,7 +7,6 @@ package org.mozilla.javascript.tests;
 import static junit.framework.Assert.assertEquals;
 
 import java.io.IOException;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.CompilerEnvirons;
@@ -25,16 +24,17 @@ public class BugGetterSetterTest {
 
     @Test
     public void testNodeReplacementInWhileLoopWithBrackets() throws IOException {
-        String script = "var o = {\n" +
-                "  _x: 123, \n" +
-                "  get x() {\n" +
-                "    return this._x;\n" +
-                "  }\n" +
-                ", \n" +
-                "  set x(value) {\n" +
-                "    this._x = value;\n" +
-                "  }\n" +
-                "};\n";
+        String script =
+                "var o = {\n"
+                        + "  _x: 123, \n"
+                        + "  get x() {\n"
+                        + "    return this._x;\n"
+                        + "  }\n"
+                        + ", \n"
+                        + "  set x(value) {\n"
+                        + "    this._x = value;\n"
+                        + "  }\n"
+                        + "};\n";
 
         Parser parser = new Parser(environment);
         AstRoot astRoot = parser.parse(script, null, 1);

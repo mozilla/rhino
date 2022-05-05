@@ -7,9 +7,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Intended to be used as an optional annotation for subclasses
- * of {@link org.mozilla.javascript.drivers.ScriptTestsBase}.
- * Sets the language version of test's script execution context.
+ * Intended to be used as an optional annotation for subclasses of {@link
+ * org.mozilla.javascript.drivers.ScriptTestsBase}. Sets the language version of test's script
+ * execution context.
  */
 @Target(TYPE)
 @Retention(RetentionPolicy.RUNTIME)

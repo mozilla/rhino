@@ -7,7 +7,6 @@ package org.mozilla.javascript.tests;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-
 import org.junit.Test;
 import org.mozilla.javascript.drivers.JsTestsBase;
 import org.mozilla.javascript.drivers.TestUtils;
@@ -18,12 +17,14 @@ public class JsTestsTest extends JsTestsBase {
     static final String jstestsExtension = ".jstest";
 
     public void runJsTests() throws IOException {
-        File[] tests = TestUtils.recursiveListFiles(new File(baseDirectory),
-                new FileFilter() {
-                  public boolean accept(File f) {
-                      return f.getName().endsWith(jstestsExtension);
-                  }
-                });
+        File[] tests =
+                TestUtils.recursiveListFiles(
+                        new File(baseDirectory),
+                        new FileFilter() {
+                            public boolean accept(File f) {
+                                return f.getName().endsWith(jstestsExtension);
+                            }
+                        });
         runJsTests(tests);
     }
 

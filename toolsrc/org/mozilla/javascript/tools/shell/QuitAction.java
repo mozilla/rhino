@@ -8,11 +8,7 @@ package org.mozilla.javascript.tools.shell;
 
 import org.mozilla.javascript.Context;
 
-/**
- * Defines action to perform in response to quit command.
- */
-public interface QuitAction
-{
+/** Defines action to perform in response to quit command. */
+public interface QuitAction {
     public void quit(Context cx, int exitCode);
 }
-

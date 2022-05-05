@@ -12,8 +12,7 @@ import org.mozilla.javascript.Scriptable;
 public class NativeObjectTest {
 
     /**
-     * Freeze has to take care of MemberBox based properties
-     * with a delegateTo defined.
+     * Freeze has to take care of MemberBox based properties with a delegateTo defined.
      *
      * @throws Exception in case of failure
      */
@@ -21,19 +20,23 @@ public class NativeObjectTest {
     public void freeze_captureStackTrace() throws Exception {
         Context cx = Context.enter();
         Scriptable global = cx.initStandardObjects();
-        Object result = cx.evaluateString(global,
-                "var myError = {};\n"
-                + "Error.captureStackTrace(myError);\n"
-                + "Object.freeze(myError);"
-                + "myError.stack;",
-                "", 1, null);
+        Object result =
+                cx.evaluateString(
+                        global,
+                        "var myError = {};\n"
+                                + "Error.captureStackTrace(myError);\n"
+                                + "Object.freeze(myError);"
+                                + "myError.stack;",
+                        "",
+                        1,
+                        null);
         Assert.assertTrue(result instanceof String);
         Context.exit();
     }
 
     /**
-     * getOwnPropertyDescriptor has to take care of MemberBox based properties
-     * with a delegateTo defined.
+     * getOwnPropertyDescriptor has to take care of MemberBox based properties with a delegateTo
+     * defined.
      *
      * @throws Exception in case of failure
      */
@@ -41,20 +44,25 @@ public class NativeObjectTest {
     public void getOwnPropertyDescriptor_captureStackTrace() throws Exception {
         Context cx = Context.enter();
         Scriptable global = cx.initStandardObjects();
-        Object result = cx.evaluateString(global,
-                "var myError = {};\n"
-                + "Error.captureStackTrace(myError);\n"
-                + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
-                + "'' + desc.get + '-' + desc.set + '-' + desc.value;",
-                "", 1, null);
+        Object result =
+                cx.evaluateString(
+                        global,
+                        "var myError = {};\n"
+                                + "Error.captureStackTrace(myError);\n"
+                                + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
+                                + "'' + desc.get + '-' + desc.set + '-' + desc.value;",
+                        "",
+                        1,
+                        null);
         Assert.assertTrue(result instanceof String);
-        Assert.assertEquals("undefined-undefined-\tat :2", ((String) result).replaceAll("\\r|\\n", ""));
+        Assert.assertEquals(
+                "undefined-undefined-\tat :2", ((String) result).replaceAll("\\r|\\n", ""));
         Context.exit();
     }
 
     /**
-     * getOwnPropertyDescriptor has to take care of MemberBox based properties
-     * with a delegateTo defined.
+     * getOwnPropertyDescriptor has to take care of MemberBox based properties with a delegateTo
+     * defined.
      *
      * @throws Exception in case of failure
      */
@@ -62,12 +70,16 @@ public class NativeObjectTest {
     public void getOwnPropertyDescriptorAttributes_captureStackTrace() throws Exception {
         Context cx = Context.enter();
         Scriptable global = cx.initStandardObjects();
-        Object result = cx.evaluateString(global,
-                "var myError = {};\n"
-                + "Error.captureStackTrace(myError);\n"
-                + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
-                + "desc.writable + ' ' + desc.configurable + ' ' + desc.enumerable",
-                "", 1, null);
+        Object result =
+                cx.evaluateString(
+                        global,
+                        "var myError = {};\n"
+                                + "Error.captureStackTrace(myError);\n"
+                                + "var desc = Object.getOwnPropertyDescriptor(myError, 'stack');"
+                                + "desc.writable + ' ' + desc.configurable + ' ' + desc.enumerable",
+                        "",
+                        1,
+                        null);
         Assert.assertEquals("true true false", result);
         Context.exit();
     }
