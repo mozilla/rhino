@@ -16,8 +16,6 @@ import java.security.ProtectionDomain;
  * or <code>org.mozilla.javascript.SecurityBridge_NoOp</code>, depending if <code>
  * java.lang.SecurityManager</code> is present or not.
  *
- * <ul>
- *
  * @author Attila Szegedi
  * @author Roland Praml, FOCONIS AG
  */
