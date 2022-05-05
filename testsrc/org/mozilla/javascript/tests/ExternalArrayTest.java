@@ -4,7 +4,6 @@ import static org.junit.Assert.assertFalse;
 
 import java.io.FileReader;
 import java.io.IOException;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,14 +16,12 @@ import org.mozilla.javascript.typedarrays.NativeFloat64Array;
 import org.mozilla.javascript.typedarrays.NativeInt16Array;
 import org.mozilla.javascript.typedarrays.NativeInt32Array;
 
-public class ExternalArrayTest
-{
+public class ExternalArrayTest {
     private Context cx;
     private Scriptable root;
 
     @Before
-    public void init()
-    {
+    public void init() {
         cx = Context.enter();
         cx.setLanguageVersion(Context.VERSION_1_8);
         cx.setGeneratingDebug(true);
@@ -34,14 +31,12 @@ public class ExternalArrayTest
     }
 
     @After
-    public void terminate()
-    {
+    public void terminate() {
         Context.exit();
     }
 
     @Test
-    public void testRegularArray()
-    {
+    public void testRegularArray() {
         Scriptable a = cx.newArray(root, 10);
         root.put("testArray", root, a);
         root.put("testArrayLength", root, 10);
@@ -50,9 +45,8 @@ public class ExternalArrayTest
     }
 
     @Test
-    public void testIntArray()
-    {
-        ScriptableObject a = (ScriptableObject)cx.newObject(root);
+    public void testIntArray() {
+        ScriptableObject a = (ScriptableObject) cx.newObject(root);
         TestIntArray l = new TestIntArray(10);
         a.setExternalArrayData(l);
         for (int i = 0; i < 10; i++) {
@@ -65,9 +59,8 @@ public class ExternalArrayTest
     }
 
     @Test
-    public void testIntArrayThenRemove()
-    {
-        ScriptableObject a = (ScriptableObject)cx.newObject(root);
+    public void testIntArrayThenRemove() {
+        ScriptableObject a = (ScriptableObject) cx.newObject(root);
         // Set the external array data
         TestIntArray l = new TestIntArray(10);
         a.setExternalArrayData(l);
@@ -93,9 +86,8 @@ public class ExternalArrayTest
     }
 
     @Test
-    public void testNativeIntArray()
-    {
-        ScriptableObject a = (ScriptableObject)cx.newObject(root);
+    public void testNativeIntArray() {
+        ScriptableObject a = (ScriptableObject) cx.newObject(root);
         NativeInt32Array l = new NativeInt32Array(10);
         a.setExternalArrayData(l);
 
@@ -106,9 +98,8 @@ public class ExternalArrayTest
     }
 
     @Test
-    public void testNativeShortArray()
-    {
-        ScriptableObject a = (ScriptableObject)cx.newObject(root);
+    public void testNativeShortArray() {
+        ScriptableObject a = (ScriptableObject) cx.newObject(root);
         NativeInt16Array l = new NativeInt16Array(10);
         a.setExternalArrayData(l);
 
@@ -119,9 +110,8 @@ public class ExternalArrayTest
     }
 
     @Test
-    public void testNativeDoubleArray()
-    {
-        ScriptableObject a = (ScriptableObject)cx.newObject(root);
+    public void testNativeDoubleArray() {
+        ScriptableObject a = (ScriptableObject) cx.newObject(root);
         NativeFloat64Array l = new NativeFloat64Array(10);
         a.setExternalArrayData(l);
 
@@ -131,8 +121,7 @@ public class ExternalArrayTest
         runScript("testsrc/jstests/extensions/external-array-test.js", 1);
     }
 
-    private void runScript(String script, int opt)
-    {
+    private void runScript(String script, int opt) {
         try {
             cx.setOptimizationLevel(opt);
             FileReader rdr = new FileReader(script);
@@ -147,31 +136,25 @@ public class ExternalArrayTest
         }
     }
 
-    private static class TestIntArray
-        implements ExternalArrayData
-    {
+    private static class TestIntArray implements ExternalArrayData {
         private int[] elements;
 
-        public TestIntArray(int length)
-        {
+        public TestIntArray(int length) {
             elements = new int[length];
         }
 
         @Override
-        public Object getArrayElement(int index)
-        {
+        public Object getArrayElement(int index) {
             return elements[index];
         }
 
         @Override
-        public void setArrayElement(int index, Object value)
-        {
-            elements[index] = (int)Context.toNumber(value);
+        public void setArrayElement(int index, Object value) {
+            elements[index] = (int) Context.toNumber(value);
         }
 
         @Override
-        public int getArrayLength()
-        {
+        public int getArrayLength() {
             return elements.length;
         }
     }

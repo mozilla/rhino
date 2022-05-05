@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -26,10 +25,7 @@ import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.IdeErrorReporter;
 
-/**
- *
- * @author André Bargull
- */
+/** @author André Bargull */
 @SuppressWarnings("serial")
 @RunWith(Parameterized.class)
 public class Bug789277Test {
@@ -60,15 +56,12 @@ public class Bug789277Test {
     private static List<Object[]> toArray(List<?> list) {
         List<Object[]> result = new ArrayList<Object[]>();
         for (Object o : list) {
-            result.add(new Object[] { o });
+            result.add(new Object[] {o});
         }
         return result;
     }
 
-    /**
-     * Simple tests with two variable declarations separated with different line
-     * separators
-     */
+    /** Simple tests with two variable declarations separated with different line separators */
     private static void addSimpleTests(List<TestData> data) {
         final String line1 = "var a = 3";
         final String line2 = "var b = 4;";
@@ -104,8 +97,8 @@ public class Bug789277Test {
     }
 
     /**
-     * Whitespace characters before and after two variable declarations, testing
-     * the exact column offset
+     * Whitespace characters before and after two variable declarations, testing the exact column
+     * offset
      */
     private static void addWhitespaceTests(List<TestData> data) {
         final String pad = "  ";
@@ -143,10 +136,7 @@ public class Bug789277Test {
         data.addAll(list);
     }
 
-    /**
-     * Two variable declarations, but the first one consists of a multi-line
-     * expression
-     */
+    /** Two variable declarations, but the first one consists of a multi-line expression */
     private static void addMultilineTests(List<TestData> data) {
         final String line1 = "var a = 3";
         final String line2 = "+ 3";
@@ -201,10 +191,7 @@ public class Bug789277Test {
         data.addAll(list);
     }
 
-    /**
-     * Two variable declarations, but the first one consists of a multi-line
-     * expression
-     */
+    /** Two variable declarations, but the first one consists of a multi-line expression */
     private static void addMultilineWithWhitespaceTests(List<TestData> data) {
         final String pad = "  ";
         final String line0 = "var a = 3";
@@ -216,8 +203,8 @@ public class Bug789277Test {
             void add(String source1, String sep, String source2) {
                 String source = source1 + sep + source2;
                 Message message = newMessage(1 + linebreaks(sep), line2, line2.length());
-                Message messageIde = newMessage(pad.length(),
-                        line0.length() + sep.length() + line2.length());
+                Message messageIde =
+                        newMessage(pad.length(), line0.length() + sep.length() + line2.length());
                 // warnings are reported relative to the last line in ide-mode
                 Message messageIdeIde = newMessage(line1.length() + sep.length(), line2.length());
                 TestData data = new TestData(source, message, messageIde, messageIdeIde);
@@ -262,9 +249,7 @@ public class Bug789277Test {
         data.addAll(list);
     }
 
-    /**
-     * Testing the maximum source buffer length.
-     */
+    /** Testing the maximum source buffer length. */
     private static void addSourceBufferExceedTests(List<TestData> data) {
         final String space = times(' ', SOURCE_BUFFER_LENGTH);
         final String line1 = "var a = 3";
@@ -277,8 +262,11 @@ public class Bug789277Test {
                 Message messageIde = newMessage(0, line1.length());
                 TestData data = new TestData(source, message, messageIde);
                 // TODO: adjust reader case
-                Message messageR = newMessage(1 + linebreaks(sep), space + line2, space.length()
-                        + "var ".length());
+                Message messageR =
+                        newMessage(
+                                1 + linebreaks(sep),
+                                space + line2,
+                                space.length() + "var ".length());
                 data.map.put(Type.ErrorReporter_Reader, messageR);
                 add(data);
             }
@@ -296,9 +284,7 @@ public class Bug789277Test {
         data.addAll(list);
     }
 
-    /**
-     * Testing the maximum source buffer length.
-     */
+    /** Testing the maximum source buffer length. */
     private static void addSourceBufferAlmostExceedTests(List<TestData> data) {
         final String line1 = "var a = 3";
         final String line2 = "var b = 4;";
@@ -327,9 +313,7 @@ public class Bug789277Test {
         data.addAll(list);
     }
 
-    /**
-     * Whitespace prefix does not exceed source buffer maximum length.
-     */
+    /** Whitespace prefix does not exceed source buffer maximum length. */
     private static void addSourceBufferExceedPrefixTests(List<TestData> data) {
         final String space = times(' ', SOURCE_BUFFER_LENGTH);
         final String line1 = "var a = 3";
@@ -356,9 +340,7 @@ public class Bug789277Test {
         data.addAll(list);
     }
 
-    /**
-     * Testing the maximum source buffer length.
-     */
+    /** Testing the maximum source buffer length. */
     private static void addSourceBufferExceedTests2(List<TestData> data) {
         final String lineT = "typeof 0;\n";
         final String line1 = "var a = 3";
@@ -399,7 +381,8 @@ public class Bug789277Test {
         assertEquals(1, reporter.warnings.size());
         assertEquals(0, reporter.errors.size());
         assertEquals(0, reporter.runtimeErrors.size());
-        assertMessageEquals(data, data.map.get(Type.ErrorReporter_String), reporter.warnings.get(0));
+        assertMessageEquals(
+                data, data.map.get(Type.ErrorReporter_String), reporter.warnings.get(0));
     }
 
     @Test
@@ -410,7 +393,8 @@ public class Bug789277Test {
         assertEquals(1, reporter.warnings.size());
         assertEquals(0, reporter.errors.size());
         assertEquals(0, reporter.runtimeErrors.size());
-        assertMessageEquals(data, data.map.get(Type.ErrorReporter_Reader), reporter.warnings.get(0));
+        assertMessageEquals(
+                data, data.map.get(Type.ErrorReporter_Reader), reporter.warnings.get(0));
     }
 
     @Test
@@ -421,8 +405,8 @@ public class Bug789277Test {
         assertEquals(1, reporter.warnings.size());
         assertEquals(0, reporter.errors.size());
         assertEquals(0, reporter.runtimeErrors.size());
-        assertMessageEquals(data, data.map.get(Type.IdeErrorReporter_String),
-                reporter.warnings.get(0));
+        assertMessageEquals(
+                data, data.map.get(Type.IdeErrorReporter_String), reporter.warnings.get(0));
     }
 
     @Test
@@ -433,8 +417,8 @@ public class Bug789277Test {
         assertEquals(1, reporter.warnings.size());
         assertEquals(0, reporter.errors.size());
         assertEquals(0, reporter.runtimeErrors.size());
-        assertMessageEquals(data, data.map.get(Type.IdeErrorReporter_Reader),
-                reporter.warnings.get(0));
+        assertMessageEquals(
+                data, data.map.get(Type.IdeErrorReporter_Reader), reporter.warnings.get(0));
     }
 
     @Test
@@ -445,8 +429,8 @@ public class Bug789277Test {
         assertEquals(1, reporter.warnings.size());
         assertEquals(0, reporter.errors.size());
         assertEquals(0, reporter.runtimeErrors.size());
-        assertMessageEquals(data, data.map.get(Type.IdeErrorReporter_String_IdeMode),
-                reporter.warnings.get(0));
+        assertMessageEquals(
+                data, data.map.get(Type.IdeErrorReporter_String_IdeMode), reporter.warnings.get(0));
     }
 
     @Test
@@ -457,8 +441,8 @@ public class Bug789277Test {
         assertEquals(1, reporter.warnings.size());
         assertEquals(0, reporter.errors.size());
         assertEquals(0, reporter.runtimeErrors.size());
-        assertMessageEquals(data, data.map.get(Type.IdeErrorReporter_Reader_IdeMode),
-                reporter.warnings.get(0));
+        assertMessageEquals(
+                data, data.map.get(Type.IdeErrorReporter_Reader_IdeMode), reporter.warnings.get(0));
     }
 
     private static void assertMessageEquals(TestData t, Message expected, Message actual) {
@@ -540,8 +524,12 @@ public class Bug789277Test {
     }
 
     private static enum Type {
-        ErrorReporter_String, ErrorReporter_Reader, IdeErrorReporter_String,
-        IdeErrorReporter_Reader, IdeErrorReporter_String_IdeMode, IdeErrorReporter_Reader_IdeMode
+        ErrorReporter_String,
+        ErrorReporter_Reader,
+        IdeErrorReporter_String,
+        IdeErrorReporter_Reader,
+        IdeErrorReporter_String_IdeMode,
+        IdeErrorReporter_Reader_IdeMode
     }
 
     private static class TestData {
@@ -563,20 +551,32 @@ public class Bug789277Test {
 
         TestData(String source, Message message, Message messageIde) {
             this.source = source;
-            this.map = new DataMap<Type, Message>(Type.class)
-                    .putAll(message, Type.ErrorReporter_String, Type.ErrorReporter_Reader)
-                    .putAll(messageIde, Type.IdeErrorReporter_String, Type.IdeErrorReporter_Reader)
-                    .putAll(messageIde, Type.IdeErrorReporter_String_IdeMode,
-                            Type.IdeErrorReporter_Reader_IdeMode);
+            this.map =
+                    new DataMap<Type, Message>(Type.class)
+                            .putAll(message, Type.ErrorReporter_String, Type.ErrorReporter_Reader)
+                            .putAll(
+                                    messageIde,
+                                    Type.IdeErrorReporter_String,
+                                    Type.IdeErrorReporter_Reader)
+                            .putAll(
+                                    messageIde,
+                                    Type.IdeErrorReporter_String_IdeMode,
+                                    Type.IdeErrorReporter_Reader_IdeMode);
         }
 
         TestData(String source, Message message, Message messageIde, Message messageIdeIde) {
             this.source = source;
-            this.map = new DataMap<Type, Message>(Type.class)
-                    .putAll(message, Type.ErrorReporter_String, Type.ErrorReporter_Reader)
-                    .putAll(messageIde, Type.IdeErrorReporter_String, Type.IdeErrorReporter_Reader)
-                    .putAll(messageIdeIde, Type.IdeErrorReporter_String_IdeMode,
-                            Type.IdeErrorReporter_Reader_IdeMode);
+            this.map =
+                    new DataMap<Type, Message>(Type.class)
+                            .putAll(message, Type.ErrorReporter_String, Type.ErrorReporter_Reader)
+                            .putAll(
+                                    messageIde,
+                                    Type.IdeErrorReporter_String,
+                                    Type.IdeErrorReporter_Reader)
+                            .putAll(
+                                    messageIdeIde,
+                                    Type.IdeErrorReporter_String_IdeMode,
+                                    Type.IdeErrorReporter_Reader_IdeMode);
         }
     }
 
@@ -597,8 +597,8 @@ public class Bug789277Test {
         private final int offset;
         private final int length;
 
-        private Message(String message, String sourceName, int line, String lineSource,
-                int lineOffset) {
+        private Message(
+                String message, String sourceName, int line, String lineSource, int lineOffset) {
             this.message = message;
             this.sourceName = sourceName;
             this.line = line;
@@ -624,24 +624,25 @@ public class Bug789277Test {
         protected List<Message> errors = new ArrayList<Message>();
         protected List<Message> runtimeErrors = new ArrayList<Message>();
 
-        public void warning(String message, String sourceName, int line, String lineSource,
-                int lineOffset) {
+        public void warning(
+                String message, String sourceName, int line, String lineSource, int lineOffset) {
             warnings.add(new Message(message, sourceName, line, lineSource, lineOffset));
         }
 
-        public void error(String message, String sourceName, int line, String lineSource,
-                int lineOffset) {
+        public void error(
+                String message, String sourceName, int line, String lineSource, int lineOffset) {
             errors.add(new Message(message, sourceName, line, lineSource, lineOffset));
         }
 
-        public EvaluatorException runtimeError(String message, String sourceName, int line,
-                String lineSource, int lineOffset) {
+        public EvaluatorException runtimeError(
+                String message, String sourceName, int line, String lineSource, int lineOffset) {
             runtimeErrors.add(new Message(message, sourceName, line, lineSource, lineOffset));
             return null;
         }
     }
 
-    private static class TestIdeErrorReporter extends TestErrorReporter implements IdeErrorReporter {
+    private static class TestIdeErrorReporter extends TestErrorReporter
+            implements IdeErrorReporter {
         public void warning(String message, String sourceName, int offset, int length) {
             warnings.add(new Message(message, sourceName, offset, length));
         }

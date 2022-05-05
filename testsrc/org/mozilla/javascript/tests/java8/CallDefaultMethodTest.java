@@ -8,6 +8,4 @@ import org.mozilla.javascript.drivers.RhinoTest;
 import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/java8/call-default-method.js")
-public class CallDefaultMethodTest extends ScriptTestsBase
-{
-}
+public class CallDefaultMethodTest extends ScriptTestsBase {}

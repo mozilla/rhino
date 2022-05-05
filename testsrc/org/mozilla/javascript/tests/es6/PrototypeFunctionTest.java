@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/prototype-functions.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class PrototypeFunctionTest extends ScriptTestsBase
-{
-}
+public class PrototypeFunctionTest extends ScriptTestsBase {}

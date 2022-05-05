@@ -15,10 +15,7 @@ import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 
-/**
- * @author André Bargull
- *
- */
+/** @author André Bargull */
 public class Bug688023Test {
     private Context cx;
 
@@ -54,168 +51,96 @@ public class Bug688023Test {
 
     @Test
     public void toSourceForInLoop() {
-        assertEquals(lines(
-          "for (x in y) ",
-          "  b = 1;"
-        ), toSource("for(x in y) b=1;"));
-        assertEquals(lines(
-          "for (x in y) {",
-          "  b = 1;",
-          "}"
-        ), toSource("for(x in y) {b=1;}"));
+        assertEquals(lines("for (x in y) ", "  b = 1;"), toSource("for(x in y) b=1;"));
+        assertEquals(lines("for (x in y) {", "  b = 1;", "}"), toSource("for(x in y) {b=1;}"));
     }
 
     @Test
     public void toSourceForLoop() {
-        assertEquals(lines(
-          "for (; ; ) ",
-          "  b = 1;"
-        ), toSource("for(;;) b=1;"));
-        assertEquals(lines(
-          "for (; ; ) {",
-          "  b = 1;",
-          "}"
-        ), toSource("for(;;) {b=1;}"));
+        assertEquals(lines("for (; ; ) ", "  b = 1;"), toSource("for(;;) b=1;"));
+        assertEquals(lines("for (; ; ) {", "  b = 1;", "}"), toSource("for(;;) {b=1;}"));
     }
 
     @Test
     public void toSourceWhileLoop() {
-        assertEquals(lines(
-          "while (a) ",
-          "  b = 1;"
-        ), toSource("while(a) b=1;"));
-        assertEquals(lines(
-          "while (a) {",
-          "  b = 1;",
-          "}"
-        ), toSource("while(a) {b=1;}"));
+        assertEquals(lines("while (a) ", "  b = 1;"), toSource("while(a) b=1;"));
+        assertEquals(lines("while (a) {", "  b = 1;", "}"), toSource("while(a) {b=1;}"));
     }
 
     @Test
     public void toSourceWithStatement() {
-        assertEquals(lines(
-          "with (a) ",
-          "  b = 1;"
-        ), toSource("with(a) b=1;"));
-        assertEquals(lines(
-          "with (a) {",
-          "  b = 1;",
-          "}"
-        ), toSource("with(a) {b=1;}"));
+        assertEquals(lines("with (a) ", "  b = 1;"), toSource("with(a) b=1;"));
+        assertEquals(lines("with (a) {", "  b = 1;", "}"), toSource("with(a) {b=1;}"));
     }
 
     @Test
     public void toSourceIfStatement() {
-        assertEquals(lines(
-          "if (a) ",
-          "  b = 1;"
-        ), toSource("if(a) b=1;"));
-        assertEquals(lines(
-          "if (a) {",
-          "  b = 1;",
-          "}"
-        ), toSource("if(a) {b=1;}"));
+        assertEquals(lines("if (a) ", "  b = 1;"), toSource("if(a) b=1;"));
+        assertEquals(lines("if (a) {", "  b = 1;", "}"), toSource("if(a) {b=1;}"));
     }
 
     @Test
     public void toSourceIfElseStatement() {
-        assertEquals(lines(
-          "if (a) ",
-          "  b = 1;",
-          "else ",
-          "  b = 2;"
-        ), toSource("if(a) b=1; else b=2;"));
-        assertEquals(lines(
-          "if (a) {",
-          "  b = 1;",
-          "} else ",
-          "  b = 2;"
-        ), toSource("if(a) { b=1; } else b=2;"));
-        assertEquals(lines(
-          "if (a) ",
-          "  b = 1;",
-          "else {",
-          "  b = 2;",
-          "}"
-        ), toSource("if(a) b=1; else { b=2; }"));
-        assertEquals(lines(
-          "if (a) {",
-          "  b = 1;",
-          "} else {",
-          "  b = 2;",
-          "}"
-        ), toSource("if(a) { b=1; } else { b=2; }"));
+        assertEquals(
+                lines("if (a) ", "  b = 1;", "else ", "  b = 2;"),
+                toSource("if(a) b=1; else b=2;"));
+        assertEquals(
+                lines("if (a) {", "  b = 1;", "} else ", "  b = 2;"),
+                toSource("if(a) { b=1; } else b=2;"));
+        assertEquals(
+                lines("if (a) ", "  b = 1;", "else {", "  b = 2;", "}"),
+                toSource("if(a) b=1; else { b=2; }"));
+        assertEquals(
+                lines("if (a) {", "  b = 1;", "} else {", "  b = 2;", "}"),
+                toSource("if(a) { b=1; } else { b=2; }"));
     }
 
     @Test
     public void toSourceIfElseIfElseStatement() {
-        assertEquals(lines(
-          "if (a) ",
-          "  b = 1;",
-          "else if (a) ",
-          "  b = 2;",
-          "else ",
-          "  b = 3;"
-        ), toSource("if(a) b=1; else if (a) b=2; else b=3;"));
-        assertEquals(lines(
-          "if (a) {",
-          "  b = 1;",
-          "} else if (a) ",
-          "  b = 2;",
-          "else ",
-          "  b = 3;"
-        ), toSource("if(a) { b=1; } else if (a) b=2; else b=3;"));
-        assertEquals(lines(
-          "if (a) ",
-          "  b = 1;",
-          "else if (a) {",
-          "  b = 2;",
-          "} else ",
-          "  b = 3;"
-        ), toSource("if(a) b=1; else if (a) { b=2; } else b=3;"));
-        assertEquals(lines(
-          "if (a) {",
-          "  b = 1;",
-          "} else if (a) {",
-          "  b = 2;",
-          "} else ",
-          "  b = 3;"
-        ), toSource("if(a) { b=1; } else if (a) { b=2; } else b=3;"));
-        assertEquals(lines(
-          "if (a) ",
-          "  b = 1;",
-          "else if (a) ",
-          "  b = 2;",
-          "else {",
-          "  b = 3;",
-          "}"
-        ), toSource("if(a) b=1; else if (a) b=2; else {b=3;}"));
-        assertEquals(lines(
-          "if (a) {",
-          "  b = 1;",
-          "} else if (a) ",
-          "  b = 2;",
-          "else {",
-          "  b = 3;",
-          "}"
-        ), toSource("if(a) { b=1; } else if (a) b=2; else {b=3;}"));
-        assertEquals(lines(
-          "if (a) ",
-          "  b = 1;",
-          "else if (a) {",
-          "  b = 2;",
-          "} else {",
-          "  b = 3;",
-          "}"
-        ), toSource("if(a) b=1; else if (a) { b=2; } else {b=3;}"));
-        assertEquals(lines(
-          "if (a) {",
-          "  b = 1;",
-          "} else if (a) {",
-          "  b = 2;",
-          "} else {",
-          "  b = 3;",
-          "}"
-        ), toSource("if(a) { b=1; } else if (a) { b=2; } else {b=3;}"));
+        assertEquals(
+                lines("if (a) ", "  b = 1;", "else if (a) ", "  b = 2;", "else ", "  b = 3;"),
+                toSource("if(a) b=1; else if (a) b=2; else b=3;"));
+        assertEquals(
+                lines("if (a) {", "  b = 1;", "} else if (a) ", "  b = 2;", "else ", "  b = 3;"),
+                toSource("if(a) { b=1; } else if (a) b=2; else b=3;"));
+        assertEquals(
+                lines("if (a) ", "  b = 1;", "else if (a) {", "  b = 2;", "} else ", "  b = 3;"),
+                toSource("if(a) b=1; else if (a) { b=2; } else b=3;"));
+        assertEquals(
+                lines("if (a) {", "  b = 1;", "} else if (a) {", "  b = 2;", "} else ", "  b = 3;"),
+                toSource("if(a) { b=1; } else if (a) { b=2; } else b=3;"));
+        assertEquals(
+                lines("if (a) ", "  b = 1;", "else if (a) ", "  b = 2;", "else {", "  b = 3;", "}"),
+                toSource("if(a) b=1; else if (a) b=2; else {b=3;}"));
+        assertEquals(
+                lines(
+                        "if (a) {",
+                        "  b = 1;",
+                        "} else if (a) ",
+                        "  b = 2;",
+                        "else {",
+                        "  b = 3;",
+                        "}"),
+                toSource("if(a) { b=1; } else if (a) b=2; else {b=3;}"));
+        assertEquals(
+                lines(
+                        "if (a) ",
+                        "  b = 1;",
+                        "else if (a) {",
+                        "  b = 2;",
+                        "} else {",
+                        "  b = 3;",
+                        "}"),
+                toSource("if(a) b=1; else if (a) { b=2; } else {b=3;}"));
+        assertEquals(
+                lines(
+                        "if (a) {",
+                        "  b = 1;",
+                        "} else if (a) {",
+                        "  b = 2;",
+                        "} else {",
+                        "  b = 3;",
+                        "}"),
+                toSource("if(a) { b=1; } else if (a) { b=2; } else {b=3;}"));
     }
 }

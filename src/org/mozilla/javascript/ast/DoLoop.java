@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * Do statement.  Node type is {@link Token#DO}.
+ * Do statement. Node type is {@link Token#DO}.
  *
  * <pre><i>DoLoop</i>:
  * <b>do</b> Statement <b>while</b> <b>(</b> Expression <b>)</b> <b>;</b></pre>
@@ -23,8 +23,7 @@ public class DoLoop extends Loop {
         type = Token.DO;
     }
 
-    public DoLoop() {
-    }
+    public DoLoop() {}
 
     public DoLoop(int pos) {
         super(pos);
@@ -34,15 +33,14 @@ public class DoLoop extends Loop {
         super(pos, len);
     }
 
-    /**
-     * Returns loop condition
-     */
+    /** Returns loop condition */
     public AstNode getCondition() {
         return condition;
     }
 
     /**
      * Sets loop condition, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if condition is null
      */
     public void setCondition(AstNode condition) {
@@ -51,16 +49,12 @@ public class DoLoop extends Loop {
         condition.setParent(this);
     }
 
-    /**
-     * Returns source position of "while" keyword
-     */
+    /** Returns source position of "while" keyword */
     public int getWhilePosition() {
         return whilePosition;
     }
 
-    /**
-     * Sets source position of "while" keyword
-     */
+    /** Sets source position of "while" keyword */
     public void setWhilePosition(int whilePosition) {
         this.whilePosition = whilePosition;
     }
@@ -70,7 +64,7 @@ public class DoLoop extends Loop {
         StringBuilder sb = new StringBuilder();
         sb.append(makeIndent(depth));
         sb.append("do ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
         }
         sb.append(body.toSource(depth).trim());
@@ -80,9 +74,7 @@ public class DoLoop extends Loop {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, the body, and then the while-expression.
-     */
+    /** Visits this node, the body, and then the while-expression. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

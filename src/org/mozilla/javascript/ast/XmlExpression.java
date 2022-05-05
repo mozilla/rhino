@@ -9,17 +9,15 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for an embedded JavaScript expression within an E4X XML literal.
- * Node type, like {@link XmlLiteral}, is {@link Token#XML}.  The node length
- * includes the curly braces.
+ * AST node for an embedded JavaScript expression within an E4X XML literal. Node type, like {@link
+ * XmlLiteral}, is {@link Token#XML}. The node length includes the curly braces.
  */
 public class XmlExpression extends XmlFragment {
 
     private AstNode expression;
     private boolean isXmlAttribute;
 
-    public XmlExpression() {
-    }
+    public XmlExpression() {}
 
     public XmlExpression(int pos) {
         super(pos);
@@ -34,15 +32,14 @@ public class XmlExpression extends XmlFragment {
         setExpression(expr);
     }
 
-    /**
-     * Returns the expression embedded in {}
-     */
+    /** Returns the expression embedded in {} */
     public AstNode getExpression() {
         return expression;
     }
 
     /**
      * Sets the expression embedded in {}, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if {@code expression} is {@code null}
      */
     public void setExpression(AstNode expression) {
@@ -51,18 +48,14 @@ public class XmlExpression extends XmlFragment {
         expression.setParent(this);
     }
 
-    /**
-     * Returns whether this is part of an xml attribute value
-     */
+    /** Returns whether this is part of an xml attribute value */
     public boolean isXmlAttribute() {
-      return isXmlAttribute;
+        return isXmlAttribute;
     }
 
-    /**
-     * Sets whether this is part of an xml attribute value
-     */
+    /** Sets whether this is part of an xml attribute value */
     public void setIsXmlAttribute(boolean isXmlAttribute) {
-      this.isXmlAttribute = isXmlAttribute;
+        this.isXmlAttribute = isXmlAttribute;
     }
 
     @Override
@@ -70,9 +63,7 @@ public class XmlExpression extends XmlFragment {
         return makeIndent(depth) + "{" + expression.toSource(depth) + "}";
     }
 
-    /**
-     * Visits this node, then the child expression.
-     */
+    /** Visits this node, then the child expression. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

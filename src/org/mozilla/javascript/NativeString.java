@@ -628,13 +628,23 @@ final class NativeString extends IdScriptableObject {
                     {
                         String thisStr =
                                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                        return thisStr.toLowerCase(cx.getLocale());
+                        Locale locale = cx.getLocale();
+                        if (args.length > 0 && cx.hasFeature(Context.FEATURE_INTL_402)) {
+                            String lang = ScriptRuntime.toString(args[0]);
+                            locale = new Locale(lang);
+                        }
+                        return thisStr.toLowerCase(locale);
                     }
                 case Id_toLocaleUpperCase:
                     {
                         String thisStr =
                                 ScriptRuntime.toString(requireObjectCoercible(cx, thisObj, f));
-                        return thisStr.toUpperCase(cx.getLocale());
+                        Locale locale = cx.getLocale();
+                        if (args.length > 0 && cx.hasFeature(Context.FEATURE_INTL_402)) {
+                            String lang = ScriptRuntime.toString(args[0]);
+                            locale = new Locale(lang);
+                        }
+                        return thisStr.toUpperCase(locale);
                     }
                 case Id_trim:
                     {
@@ -831,7 +841,7 @@ final class NativeString extends IdScriptableObject {
         if (!(id instanceof Symbol)
                 && (cx != null)
                 && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
-            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(cx, id);
+            StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(id);
             if (s.stringId == null && 0 <= s.index && s.index < string.length()) {
                 String value = String.valueOf(string.charAt(s.index));
                 return defaultIndexPropertyDescriptor(value);

@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * While statement.  Node type is {@link Token#WHILE}.
+ * While statement. Node type is {@link Token#WHILE}.
  *
  * <pre><i>WhileStatement</i>:
  *     <b>while</b> <b>(</b> Expression <b>)</b> Statement</pre>
@@ -22,8 +22,7 @@ public class WhileLoop extends Loop {
         type = Token.WHILE;
     }
 
-    public WhileLoop() {
-    }
+    public WhileLoop() {}
 
     public WhileLoop(int pos) {
         super(pos);
@@ -33,15 +32,14 @@ public class WhileLoop extends Loop {
         super(pos, len);
     }
 
-    /**
-     * Returns loop condition
-     */
+    /** Returns loop condition */
     public AstNode getCondition() {
         return condition;
     }
 
     /**
      * Sets loop condition
+     *
      * @throws IllegalArgumentException} if condition is {@code null}
      */
     public void setCondition(AstNode condition) {
@@ -57,24 +55,22 @@ public class WhileLoop extends Loop {
         sb.append("while (");
         sb.append(condition.toSource(0));
         sb.append(") ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append(this.getInlineComment().toSource(depth + 1)).append("\n");
         }
         if (body.getType() == Token.BLOCK) {
             sb.append(body.toSource(depth).trim());
             sb.append("\n");
         } else {
-            if(this.getInlineComment() == null) {
+            if (this.getInlineComment() == null) {
                 sb.append("\n");
             }
-            sb.append(body.toSource(depth+1));
+            sb.append(body.toSource(depth + 1));
         }
         return sb.toString();
     }
 
-    /**
-     * Visits this node, the condition, then the body.
-     */
+    /** Visits this node, the condition, then the body. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

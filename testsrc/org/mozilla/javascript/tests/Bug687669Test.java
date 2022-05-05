@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/**
- * 
- */
+/** */
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
@@ -20,10 +18,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 import org.mozilla.javascript.ast.AstRoot;
 
-/**
- * @author André Bargull
- * 
- */
+/** @author André Bargull */
 public class Bug687669Test {
     private Context cx;
     private ScriptableObject scope;
@@ -78,5 +73,4 @@ public class Bug687669Test {
 
         assertEquals("if (1) \n  ;\n;\n;\n;\n", toSource("if(1);;;;"));
     }
-
 }

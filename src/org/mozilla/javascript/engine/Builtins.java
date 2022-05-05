@@ -15,45 +15,45 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 /**
- * <p>
  * This class defines the following built-in functions for the RhinoScriptEngine.
- * </p>
+ *
  * <ul>
- * <li>print(arg, arg, ...): Write each argument, concatenated to the ScriptEngine's
- * "standard output" as a string.</li>
+ *   <li>print(arg, arg, ...): Write each argument, concatenated to the ScriptEngine's "standard
+ *       output" as a string.
  * </ul>
  */
 public class Builtins {
 
-  static final Object BUILTIN_KEY = new Object();
+    static final Object BUILTIN_KEY = new Object();
 
-  private Writer stdout;
+    private Writer stdout;
 
-  void register(Context cx, ScriptableObject scope, ScriptContext sc) {
-    if (sc.getWriter() == null) {
-      stdout = new OutputStreamWriter(System.out);
-    } else {
-      stdout = sc.getWriter();
+    void register(Context cx, ScriptableObject scope, ScriptContext sc) {
+        if (sc.getWriter() == null) {
+            stdout = new OutputStreamWriter(System.out);
+        } else {
+            stdout = sc.getWriter();
+        }
+
+        scope.defineFunctionProperties(
+                new String[] {"print"},
+                Builtins.class,
+                ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
     }
 
-    scope.defineFunctionProperties(new String[]{"print"},
-        Builtins.class,
-        ScriptableObject.PERMANENT | ScriptableObject.DONTENUM);
-  }
-
-  public static void print(Context cx, Scriptable thisObj, Object[] args, Function f)
-      throws IOException {
-    Builtins self = getSelf(thisObj);
-    for (Object arg : args) {
-      self.stdout.write(ScriptRuntime.toString(arg));
+    public static void print(Context cx, Scriptable thisObj, Object[] args, Function f)
+            throws IOException {
+        Builtins self = getSelf(thisObj);
+        for (Object arg : args) {
+            self.stdout.write(ScriptRuntime.toString(arg));
+        }
+        self.stdout.write('\n');
     }
-    self.stdout.write('\n');
-  }
 
-  private static Builtins getSelf(Scriptable scope) {
-    // Since this class is invoked as a set of anonymous functions, "this"
-    // in JavaScript does not point to "this" in Java. We set a key on the
-    // top-level scope to address this.
-    return (Builtins) ScriptableObject.getTopScopeValue(scope, BUILTIN_KEY);
-  }
+    private static Builtins getSelf(Scriptable scope) {
+        // Since this class is invoked as a set of anonymous functions, "this"
+        // in JavaScript does not point to "this" in Java. We set a key on the
+        // top-level scope to address this.
+        return (Builtins) ScriptableObject.getTopScopeValue(scope, BUILTIN_KEY);
+    }
 }

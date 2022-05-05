@@ -11,19 +11,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import org.junit.Test;
 import org.mozilla.javascript.NativeWeakMap;
 
-public class NativeWeakMap2Test
-{
+public class NativeWeakMap2Test {
 
-    /**
-     * Test serialization of an empty object.
-     */
+    /** Test serialization of an empty object. */
     @Test
-    public void testSerialization()
-        throws IOException, ClassNotFoundException {
+    public void testSerialization() throws IOException, ClassNotFoundException {
 
         NativeWeakMap weakMap = new NativeWeakMap();
 
@@ -33,7 +28,7 @@ public class NativeWeakMap2Test
 
             try (ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
                     ObjectInputStream oin = new ObjectInputStream(bis)) {
-                NativeWeakMap result = (NativeWeakMap)oin.readObject();
+                NativeWeakMap result = (NativeWeakMap) oin.readObject();
                 assertEquals(0, result.getIds().length);
             }
         }

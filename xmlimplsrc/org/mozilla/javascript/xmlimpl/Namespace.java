@@ -13,12 +13,8 @@ import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
-/**
- * Class Namespace
- *
- */
-class Namespace extends IdScriptableObject
-{
+/** Class Namespace */
+class Namespace extends IdScriptableObject {
     static final long serialVersionUID = -5765755238131301744L;
 
     private static final Object NAMESPACE_TAG = "Namespace";
@@ -26,8 +22,7 @@ class Namespace extends IdScriptableObject
     private Namespace prototype;
     private XmlNode.Namespace ns;
 
-    private Namespace() {
-    }
+    private Namespace() {}
 
     static Namespace create(Scriptable scope, Namespace prototype, XmlNode.Namespace namespace) {
         Namespace rv = new Namespace();
@@ -70,7 +65,7 @@ class Namespace extends IdScriptableObject
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Namespace)) return false;
-        return equals((Namespace)obj);
+        return equals((Namespace) obj);
     }
 
     @Override
@@ -81,7 +76,7 @@ class Namespace extends IdScriptableObject
     @Override
     protected Object equivalentValues(Object value) {
         if (!(value instanceof Namespace)) return Scriptable.NOT_FOUND;
-        boolean result = equals((Namespace)value);
+        boolean result = equals((Namespace) value);
         return result ? Boolean.TRUE : Boolean.FALSE;
     }
 
@@ -95,130 +90,147 @@ class Namespace extends IdScriptableObject
         return uri();
     }
 
-// #string_id_map#
-    private static final int
-        Id_prefix               = 1,
-        Id_uri                  = 2,
-        MAX_INSTANCE_ID         = 2;
+    // #string_id_map#
+    private static final int Id_prefix = 1, Id_uri = 2, MAX_INSTANCE_ID = 2;
 
     @Override
-    protected int getMaxInstanceId()
-    {
+    protected int getMaxInstanceId() {
         return super.getMaxInstanceId() + MAX_INSTANCE_ID;
     }
 
     @Override
-    protected int findInstanceIdInfo(String s)
-    {
+    protected int findInstanceIdInfo(String s) {
         int id;
-// #generated# Last update: 2007-08-20 08:23:22 EDT
-        L0: { id = 0; String X = null;
+        // #generated# Last update: 2007-08-20 08:23:22 EDT
+        L0:
+        {
+            id = 0;
+            String X = null;
             int s_length = s.length();
-            if (s_length==3) { X="uri";id=Id_uri; }
-            else if (s_length==6) { X="prefix";id=Id_prefix; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            if (s_length == 3) {
+                X = "uri";
+                id = Id_uri;
+            } else if (s_length == 6) {
+                X = "prefix";
+                id = Id_prefix;
+            }
+            if (X != null && X != s && !X.equals(s)) id = 0;
             break L0;
         }
-// #/generated#
+        // #/generated#
 
         if (id == 0) return super.findInstanceIdInfo(s);
 
         int attr;
         switch (id) {
-          case Id_prefix:
-          case Id_uri:
-            attr = PERMANENT | READONLY;
-            break;
-          default: throw new IllegalStateException();
+            case Id_prefix:
+            case Id_uri:
+                attr = PERMANENT | READONLY;
+                break;
+            default:
+                throw new IllegalStateException();
         }
         return instanceIdInfo(attr, super.getMaxInstanceId() + id);
     }
-// #/string_id_map#
+    // #/string_id_map#
 
     @Override
-    protected String getInstanceIdName(int id)
-    {
+    protected String getInstanceIdName(int id) {
         switch (id - super.getMaxInstanceId()) {
-          case Id_prefix: return "prefix";
-          case Id_uri: return "uri";
+            case Id_prefix:
+                return "prefix";
+            case Id_uri:
+                return "uri";
         }
         return super.getInstanceIdName(id);
     }
 
     @Override
-    protected Object getInstanceIdValue(int id)
-    {
+    protected Object getInstanceIdValue(int id) {
         switch (id - super.getMaxInstanceId()) {
-          case Id_prefix:
-            if (ns.getPrefix() == null) return Undefined.instance;
-            return ns.getPrefix();
-          case Id_uri:
-            return ns.getUri();
+            case Id_prefix:
+                if (ns.getPrefix() == null) return Undefined.instance;
+                return ns.getPrefix();
+            case Id_uri:
+                return ns.getUri();
         }
         return super.getInstanceIdValue(id);
     }
 
-
-// #string_id_map#
-    private static final int
-        Id_constructor          = 1,
-        Id_toString             = 2,
-        Id_toSource             = 3,
-        MAX_PROTOTYPE_ID        = 3;
+    // #string_id_map#
+    private static final int Id_constructor = 1,
+            Id_toString = 2,
+            Id_toSource = 3,
+            MAX_PROTOTYPE_ID = 3;
 
     @Override
-    protected int findPrototypeId(String s)
-    {
+    protected int findPrototypeId(String s) {
         int id;
-// #generated# Last update: 2007-08-20 08:23:22 EDT
-        L0: { id = 0; String X = null; int c;
+        // #generated# Last update: 2007-08-20 08:23:22 EDT
+        L0:
+        {
+            id = 0;
+            String X = null;
+            int c;
             int s_length = s.length();
-            if (s_length==8) {
-                c=s.charAt(3);
-                if (c=='o') { X="toSource";id=Id_toSource; }
-                else if (c=='t') { X="toString";id=Id_toString; }
+            if (s_length == 8) {
+                c = s.charAt(3);
+                if (c == 'o') {
+                    X = "toSource";
+                    id = Id_toSource;
+                } else if (c == 't') {
+                    X = "toString";
+                    id = Id_toString;
+                }
+            } else if (s_length == 11) {
+                X = "constructor";
+                id = Id_constructor;
             }
-            else if (s_length==11) { X="constructor";id=Id_constructor; }
-            if (X!=null && X!=s && !X.equals(s)) id = 0;
+            if (X != null && X != s && !X.equals(s)) id = 0;
             break L0;
         }
-// #/generated#
+        // #/generated#
         return id;
     }
-// #/string_id_map#
+    // #/string_id_map#
 
     @Override
-    protected void initPrototypeId(int id)
-    {
+    protected void initPrototypeId(int id) {
         String s;
         int arity;
         switch (id) {
-          case Id_constructor: arity=2; s="constructor"; break;
-          case Id_toString:    arity=0; s="toString";    break;
-          case Id_toSource:    arity=0; s="toSource";    break;
-          default: throw new IllegalArgumentException(String.valueOf(id));
+            case Id_constructor:
+                arity = 2;
+                s = "constructor";
+                break;
+            case Id_toString:
+                arity = 0;
+                s = "toString";
+                break;
+            case Id_toSource:
+                arity = 0;
+                s = "toSource";
+                break;
+            default:
+                throw new IllegalArgumentException(String.valueOf(id));
         }
         initPrototypeMethod(NAMESPACE_TAG, id, s, arity);
     }
 
     @Override
-    public Object execIdCall(IdFunctionObject f,
-                             Context cx,
-                             Scriptable scope,
-                             Scriptable thisObj,
-                             Object[] args)
-    {
+    public Object execIdCall(
+            IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
         if (!f.hasTag(NAMESPACE_TAG)) {
             return super.execIdCall(f, cx, scope, thisObj, args);
         }
         int id = f.methodId();
         switch (id) {
-          case Id_constructor:
-            return jsConstructor(cx, (thisObj == null), args);
-          case Id_toString:
-            return realThis(thisObj, f).toString();
-          case Id_toSource:
-            return realThis(thisObj, f).js_toSource();
+            case Id_constructor:
+                return jsConstructor(cx, (thisObj == null), args);
+            case Id_toString:
+                return realThis(thisObj, f).toString();
+            case Id_toSource:
+                return realThis(thisObj, f).js_toSource();
         }
         throw new IllegalArgumentException(String.valueOf(id));
     }
@@ -229,13 +241,13 @@ class Namespace extends IdScriptableObject
 
     Namespace newNamespace(String uri) {
         Namespace prototype = (this.prototype == null) ? this : this.prototype;
-        return create( this.getParentScope(), prototype, XmlNode.Namespace.create(uri) );
+        return create(this.getParentScope(), prototype, XmlNode.Namespace.create(uri));
     }
 
     Namespace newNamespace(String prefix, String uri) {
         if (prefix == null) return newNamespace(uri);
         Namespace prototype = (this.prototype == null) ? this : this.prototype;
-        return create( this.getParentScope(), prototype, XmlNode.Namespace.create(prefix, uri) );
+        return create(this.getParentScope(), prototype, XmlNode.Namespace.create(prefix, uri));
     }
 
     Namespace constructNamespace(Object uriValue) {
@@ -243,14 +255,15 @@ class Namespace extends IdScriptableObject
         String uri;
 
         if (uriValue instanceof Namespace) {
-            Namespace ns = (Namespace)uriValue;
+            Namespace ns = (Namespace) uriValue;
             prefix = ns.prefix();
             uri = ns.uri();
         } else if (uriValue instanceof QName) {
-            QName qname = (QName)uriValue;
+            QName qname = (QName) uriValue;
             uri = qname.uri();
             if (uri != null) {
-                //    TODO    Is there a way to push this back into QName so that we can make prefix() private?
+                //    TODO    Is there a way to push this back into QName so that we can make
+                // prefix() private?
                 prefix = qname.prefix();
             } else {
                 uri = qname.toString();
@@ -266,7 +279,7 @@ class Namespace extends IdScriptableObject
 
     Namespace castToNamespace(Object namespaceObj) {
         if (namespaceObj instanceof Namespace) {
-            return (Namespace)namespaceObj;
+            return (Namespace) namespaceObj;
         }
         return constructNamespace(namespaceObj);
     }
@@ -276,7 +289,7 @@ class Namespace extends IdScriptableObject
         String uri;
 
         if (uriValue instanceof QName) {
-            QName qname = (QName)uriValue;
+            QName qname = (QName) uriValue;
             uri = qname.uri();
             if (uri == null) {
                 uri = qname.toString();
@@ -292,7 +305,7 @@ class Namespace extends IdScriptableObject
                 prefix = ScriptRuntime.toString(prefixValue);
                 if (prefix.length() != 0) {
                     throw ScriptRuntime.typeError(
-                        "Illegal prefix '"+prefix+"' for 'no namespace'.");
+                            "Illegal prefix '" + prefix + "' for 'no namespace'.");
                 }
             }
         } else if (prefixValue == Undefined.instance) {
@@ -310,8 +323,7 @@ class Namespace extends IdScriptableObject
         return newNamespace("", "");
     }
 
-    private Object jsConstructor(Context cx, boolean inNewExpr, Object[] args)
-    {
+    private Object jsConstructor(Context cx, boolean inNewExpr, Object[] args) {
         if (!inNewExpr && args.length == 1) {
             return castToNamespace(args[0]);
         }
@@ -325,8 +337,7 @@ class Namespace extends IdScriptableObject
         }
     }
 
-    private String js_toSource()
-    {
+    private String js_toSource() {
         StringBuilder sb = new StringBuilder();
         sb.append('(');
         toSourceImpl(ns.getPrefix(), ns.getUri(), sb);
@@ -334,8 +345,7 @@ class Namespace extends IdScriptableObject
         return sb.toString();
     }
 
-    static void toSourceImpl(String prefix, String uri, StringBuilder sb)
-    {
+    static void toSourceImpl(String prefix, String uri, StringBuilder sb) {
         sb.append("new Namespace(");
         if (uri.length() == 0) {
             if (!"".equals(prefix)) throw new IllegalArgumentException(prefix);

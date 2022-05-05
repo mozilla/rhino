@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mozilla.javascript.Sorting;
@@ -21,14 +20,12 @@ public class SortingTest {
     private static Sorting sorter;
 
     @BeforeClass
-    public static void init()
-    {
+    public static void init() {
         bigRandom = randomArray(BIG_ARRAY);
         sorter = Sorting.get();
     }
 
-    private void insertionSort(Object[] expected)
-    {
+    private void insertionSort(Object[] expected) {
         Object[] after = Arrays.copyOf(expected, expected.length);
         sorter.insertionSort(after, new IntComparator());
         Arrays.sort(expected, new IntComparator());
@@ -36,8 +33,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testInsertionSort()
-    {
+    public void testInsertionSort() {
         insertionSort(forwardArray(100));
         insertionSort(reverseArray(100));
         insertionSort(randomArray(100));
@@ -46,8 +42,7 @@ public class SortingTest {
         insertionSort(randomArray(10000));
     }
 
-    private void hybridSort(Object[] expected)
-    {
+    private void hybridSort(Object[] expected) {
         Object[] after = Arrays.copyOf(expected, expected.length);
         sorter.hybridSort(after, new IntComparator());
         Arrays.sort(expected, new IntComparator());
@@ -55,8 +50,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testHybridSort()
-    {
+    public void testHybridSort() {
         hybridSort(randomArray(10));
         hybridSort(forwardArray(100));
         hybridSort(reverseArray(100));
@@ -67,15 +61,14 @@ public class SortingTest {
     }
 
     @Test
-    public void testMedian()
-    {
-        Object[] a = new Object[] { 1, 2, 3, 4, 5 };
+    public void testMedian() {
+        Object[] a = new Object[] {1, 2, 3, 4, 5};
         assertEquals(2, sorter.median(a, 0, 4, new IntComparator()));
-        a = new Object[] { 5, 4, 3, 2, 1 };
+        a = new Object[] {5, 4, 3, 2, 1};
         assertEquals(2, sorter.median(a, 0, 4, new IntComparator()));
-        a = new Object[] { 3, 4, 5, 2, 1 };
+        a = new Object[] {3, 4, 5, 2, 1};
         assertEquals(0, sorter.median(a, 0, 4, new IntComparator()));
-        a = new Object[] { 4, 5, 1, 2, 3 };
+        a = new Object[] {4, 5, 1, 2, 3};
         assertEquals(4, sorter.median(a, 0, 4, new IntComparator()));
     }
 
@@ -89,8 +82,7 @@ public class SortingTest {
     */
 
     @Test
-    public void testBenchRandomHybrid()
-    {
+    public void testBenchRandomHybrid() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = Arrays.copyOf(bigRandom, bigRandom.length);
             sorter.hybridSort(a, new IntComparator());
@@ -98,8 +90,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchRandomJavaUtil()
-    {
+    public void testBenchRandomJavaUtil() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = Arrays.copyOf(bigRandom, bigRandom.length);
             Arrays.sort(a, new IntComparator());
@@ -118,8 +109,7 @@ public class SortingTest {
     */
 
     @Test
-    public void testBenchReverseHybrid()
-    {
+    public void testBenchReverseHybrid() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = reverseArray(BIG_ARRAY);
             sorter.hybridSort(a, new IntComparator());
@@ -127,8 +117,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchReverseJavaUtil()
-    {
+    public void testBenchReverseJavaUtil() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = reverseArray(BIG_ARRAY);
             Arrays.sort(a, new IntComparator());
@@ -136,8 +125,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchSequentialInsertion()
-    {
+    public void testBenchSequentialInsertion() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = forwardArray(BIG_ARRAY);
             sorter.insertionSort(a, new IntComparator());
@@ -145,8 +133,7 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchSequentialHybrid()
-    {
+    public void testBenchSequentialHybrid() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = forwardArray(BIG_ARRAY);
             sorter.hybridSort(a, new IntComparator());
@@ -154,16 +141,14 @@ public class SortingTest {
     }
 
     @Test
-    public void testBenchSequentialJavaUtil()
-    {
+    public void testBenchSequentialJavaUtil() {
         for (int i = 0; i < ITERATIONS; i++) {
             Object[] a = forwardArray(BIG_ARRAY);
             Arrays.sort(a, new IntComparator());
         }
     }
 
-    private static Integer[] forwardArray(int length)
-    {
+    private static Integer[] forwardArray(int length) {
         Integer[] a = new Integer[length];
         for (int i = 0; i < length; i++) {
             a[i] = i;
@@ -171,8 +156,7 @@ public class SortingTest {
         return a;
     }
 
-    private static Integer[] reverseArray(int length)
-    {
+    private static Integer[] reverseArray(int length) {
         Integer[] a = new Integer[length];
         for (int i = 0; i < length; i++) {
             a[i] = length - i - 1;
@@ -180,8 +164,7 @@ public class SortingTest {
         return a;
     }
 
-    private static Integer[] randomArray(int length)
-    {
+    private static Integer[] randomArray(int length) {
         Integer[] a = new Integer[length];
         for (int i = 0; i < length; i++) {
             a[i] = rand.nextInt();
@@ -189,20 +172,17 @@ public class SortingTest {
         return a;
     }
 
-    private static Integer[] sameArray(int length)
-    {
+    private static Integer[] sameArray(int length) {
         Integer[] a = new Integer[length];
         Arrays.fill(a, 1);
         return a;
     }
 
-    private final class IntComparator
-        implements Comparator<Object>
-    {
+    private final class IntComparator implements Comparator<Object> {
         @Override
         public int compare(Object a, Object b) {
-            Integer ia = (Integer)a;
-            Integer ib = (Integer)b;
+            Integer ia = (Integer) a;
+            Integer ib = (Integer) b;
             if (ia < ib) {
                 return -1;
             }

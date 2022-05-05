@@ -32,7 +32,6 @@
 package org.mozilla.javascript.tools.debugger.treetable;
 
 import java.util.EventObject;
-
 import javax.swing.CellEditor;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
@@ -42,10 +41,22 @@ public class AbstractCellEditor implements CellEditor {
 
     protected EventListenerList listenerList = new EventListenerList();
 
-    public Object getCellEditorValue() { return null; }
-    public boolean isCellEditable(EventObject e) { return true; }
-    public boolean shouldSelectCell(EventObject anEvent) { return false; }
-    public boolean stopCellEditing() { return true; }
+    public Object getCellEditorValue() {
+        return null;
+    }
+
+    public boolean isCellEditable(EventObject e) {
+        return true;
+    }
+
+    public boolean shouldSelectCell(EventObject anEvent) {
+        return false;
+    }
+
+    public boolean stopCellEditing() {
+        return true;
+    }
+
     public void cancelCellEditing() {}
 
     public void addCellEditorListener(CellEditorListener l) {
@@ -66,9 +77,9 @@ public class AbstractCellEditor implements CellEditor {
         Object[] listeners = listenerList.getListenerList();
         // Process the listeners last to first, notifying
         // those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==CellEditorListener.class) {
-                ((CellEditorListener)listeners[i+1]).editingStopped(new ChangeEvent(this));
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+            if (listeners[i] == CellEditorListener.class) {
+                ((CellEditorListener) listeners[i + 1]).editingStopped(new ChangeEvent(this));
             }
         }
     }
@@ -83,9 +94,9 @@ public class AbstractCellEditor implements CellEditor {
         Object[] listeners = listenerList.getListenerList();
         // Process the listeners last to first, notifying
         // those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==CellEditorListener.class) {
-                ((CellEditorListener)listeners[i+1]).editingCanceled(new ChangeEvent(this));
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+            if (listeners[i] == CellEditorListener.class) {
+                ((CellEditorListener) listeners[i + 1]).editingCanceled(new ChangeEvent(this));
             }
         }
     }

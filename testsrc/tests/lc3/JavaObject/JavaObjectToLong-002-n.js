@@ -1,11 +1,11 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 gTestfile = 'JavaObjectToLong-002-n.js';
 
-/* -*- Mode: java; tab-width: 8 -*-
+/* -*- Mode: javascript; tab-width: 8 -*-
  * Copyright (C) 1997, 1998 Netscape Communications Corporation,
  * All Rights Reserved.
  */

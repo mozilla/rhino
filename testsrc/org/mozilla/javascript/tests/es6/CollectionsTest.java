@@ -11,6 +11,4 @@ import org.mozilla.javascript.drivers.ScriptTestsBase;
 
 @RhinoTest("testsrc/jstests/es6/collections.js")
 @LanguageVersion(Context.VERSION_ES6)
-public class CollectionsTest extends ScriptTestsBase
-{
-}
+public class CollectionsTest extends ScriptTestsBase {}

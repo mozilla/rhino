@@ -17,10 +17,7 @@ import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
-/**
- * @author André Bargull
- *
- */
+/** @author André Bargull */
 public class Bug685403Test {
     private Context cx;
     private ScriptableObject scope;
@@ -37,8 +34,8 @@ public class Bug685403Test {
         Context.exit();
     }
 
-    public static Object continuation(Context cx, Scriptable thisObj,
-            Object[] args, Function funObj) {
+    public static Object continuation(
+            Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         ContinuationPending pending = cx.captureContinuation();
         throw pending;
     }
@@ -52,9 +49,8 @@ public class Bug685403Test {
         source += "try { A(); continuation(); B() } finally { C() }";
         source += "state";
 
-        String[] functions = new String[] { "continuation" };
-        scope.defineFunctionProperties(functions, Bug685403Test.class,
-                ScriptableObject.DONTENUM);
+        String[] functions = new String[] {"continuation"};
+        scope.defineFunctionProperties(functions, Bug685403Test.class, ScriptableObject.DONTENUM);
 
         Object state = null;
         Script script = cx.compileString(source, "", 1, null);
@@ -66,5 +62,4 @@ public class Bug685403Test {
         }
         assertEquals("ABC", state);
     }
-
 }

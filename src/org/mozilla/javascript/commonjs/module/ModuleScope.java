@@ -5,14 +5,12 @@
 package org.mozilla.javascript.commonjs.module;
 
 import java.net.URI;
-
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.TopLevel;
 
 /**
- * A top-level module scope. This class provides methods to retrieve the
- * module's source and base URIs in order to resolve relative module IDs
- * and check sandbox constraints.
+ * A top-level module scope. This class provides methods to retrieve the module's source and base
+ * URIs in order to resolve relative module IDs and check sandbox constraints.
  */
 public class ModuleScope extends TopLevel {
     private static final long serialVersionUID = 1L;

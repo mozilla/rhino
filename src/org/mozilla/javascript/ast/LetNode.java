@@ -9,18 +9,17 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for let statements and expressions.
- * Node type is {@link Token#LET} or {@link Token#LETEXPR}.
+ * AST node for let statements and expressions. Node type is {@link Token#LET} or {@link
+ * Token#LETEXPR}.
  *
  * <pre> <i>LetStatement</i>:
  *     <b>let</b> ( VariableDeclarationList ) Block
  * <i>LetExpression</i>:
  *     <b>let</b> ( VariableDeclarationList ) Expression</pre>
  *
- * Note that standalone let-statements with no parens or body block,
- * such as {@code let x=6, y=7;}, are represented as a
- * {@link VariableDeclaration} node of type {@code Token.LET},
- * wrapped with an {@link ExpressionStatement}.
+ * Note that standalone let-statements with no parens or body block, such as {@code let x=6, y=7;},
+ * are represented as a {@link VariableDeclaration} node of type {@code Token.LET}, wrapped with an
+ * {@link ExpressionStatement}.
  */
 public class LetNode extends Scope {
 
@@ -33,8 +32,7 @@ public class LetNode extends Scope {
         type = Token.LETEXPR;
     }
 
-    public LetNode() {
-    }
+    public LetNode() {}
 
     public LetNode(int pos) {
         super(pos);
@@ -44,15 +42,14 @@ public class LetNode extends Scope {
         super(pos, len);
     }
 
-    /**
-     * Returns variable list
-     */
+    /** Returns variable list */
     public VariableDeclaration getVariables() {
         return variables;
     }
 
     /**
-     * Sets variable list.  Sets list parent to this node.
+     * Sets variable list. Sets list parent to this node.
+     *
      * @throws IllegalArgumentException if variables is {@code null}
      */
     public void setVariables(VariableDeclaration variables) {
@@ -62,10 +59,11 @@ public class LetNode extends Scope {
     }
 
     /**
-     * Returns body statement or expression.  Body is {@code null} if the
-     * form of the let statement is similar to a VariableDeclaration, with no
-     * curly-brace.  (This form is used to define let-bound variables in the
-     * scope of the current block.)<p>
+     * Returns body statement or expression. Body is {@code null} if the form of the let statement
+     * is similar to a VariableDeclaration, with no curly-brace. (This form is used to define
+     * let-bound variables in the scope of the current block.)
+     *
+     * <p>
      *
      * @return the body form
      */
@@ -74,48 +72,36 @@ public class LetNode extends Scope {
     }
 
     /**
-     * Sets body statement or expression.  Also sets the body parent to this
-     * node.
-     * @param body the body statement or expression.  May be
-     * {@code null}.
+     * Sets body statement or expression. Also sets the body parent to this node.
+     *
+     * @param body the body statement or expression. May be {@code null}.
      */
     public void setBody(AstNode body) {
         this.body = body;
-        if (body != null)
-            body.setParent(this);
+        if (body != null) body.setParent(this);
     }
 
-    /**
-     * Returns left paren position, -1 if missing
-     */
+    /** Returns left paren position, -1 if missing */
     public int getLp() {
         return lp;
     }
 
-    /**
-     * Sets left paren position
-     */
+    /** Sets left paren position */
     public void setLp(int lp) {
         this.lp = lp;
     }
 
-    /**
-     * Returns right paren position, -1 if missing
-     */
+    /** Returns right paren position, -1 if missing */
     public int getRp() {
         return rp;
     }
 
-    /**
-     * Sets right paren position
-     */
+    /** Sets right paren position */
     public void setRp(int rp) {
         this.rp = rp;
     }
 
-    /**
-     * Sets both paren positions
-     */
+    /** Sets both paren positions */
     public void setParens(int lp, int rp) {
         this.lp = lp;
         this.rp = rp;
@@ -135,10 +121,7 @@ public class LetNode extends Scope {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, the variable list, and if present, the body
-     * expression or statement.
-     */
+    /** Visits this node, the variable list, and if present, the body expression or statement. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

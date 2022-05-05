@@ -9,7 +9,7 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * If-else statement.  Node type is {@link Token#IF}.
+ * If-else statement. Node type is {@link Token#IF}.
  *
  * <pre><i>IfStatement</i> :
  *       <b>if</b> ( Expression ) Statement <b>else</b> Statement
@@ -29,8 +29,7 @@ public class IfStatement extends AstNode {
         type = Token.IF;
     }
 
-    public IfStatement() {
-    }
+    public IfStatement() {}
 
     public IfStatement(int pos) {
         super(pos);
@@ -40,15 +39,14 @@ public class IfStatement extends AstNode {
         super(pos, len);
     }
 
-    /**
-     * Returns if condition
-     */
+    /** Returns if condition */
     public AstNode getCondition() {
         return condition;
     }
 
     /**
      * Sets if condition.
+     *
      * @throws IllegalArgumentException if {@code condition} is {@code null}.
      */
     public void setCondition(AstNode condition) {
@@ -57,15 +55,14 @@ public class IfStatement extends AstNode {
         condition.setParent(this);
     }
 
-    /**
-     * Returns statement to execute if condition is true
-     */
+    /** Returns statement to execute if condition is true */
     public AstNode getThenPart() {
         return thenPart;
     }
 
     /**
      * Sets statement to execute if condition is true
+     *
      * @throws IllegalArgumentException if thenPart is {@code null}
      */
     public void setThenPart(AstNode thenPart) {
@@ -74,69 +71,52 @@ public class IfStatement extends AstNode {
         thenPart.setParent(this);
     }
 
-    /**
-     * Returns statement to execute if condition is false
-     */
+    /** Returns statement to execute if condition is false */
     public AstNode getElsePart() {
         return elsePart;
     }
 
     /**
      * Sets statement to execute if condition is false
-     * @param elsePart statement to execute if condition is false.
-     * Can be {@code null}.
+     *
+     * @param elsePart statement to execute if condition is false. Can be {@code null}.
      */
     public void setElsePart(AstNode elsePart) {
         this.elsePart = elsePart;
-        if (elsePart != null)
-            elsePart.setParent(this);
+        if (elsePart != null) elsePart.setParent(this);
     }
 
-    /**
-     * Returns position of "else" keyword, or -1
-     */
+    /** Returns position of "else" keyword, or -1 */
     public int getElsePosition() {
         return elsePosition;
     }
 
-    /**
-     * Sets position of "else" keyword, -1 if not present
-     */
+    /** Sets position of "else" keyword, -1 if not present */
     public void setElsePosition(int elsePosition) {
         this.elsePosition = elsePosition;
     }
 
-    /**
-     * Returns left paren offset
-     */
+    /** Returns left paren offset */
     public int getLp() {
         return lp;
     }
 
-    /**
-     * Sets left paren offset
-     */
+    /** Sets left paren offset */
     public void setLp(int lp) {
         this.lp = lp;
     }
 
-    /**
-     * Returns right paren position, -1 if missing
-     */
+    /** Returns right paren position, -1 if missing */
     public int getRp() {
         return rp;
     }
 
-    /**
-     * Sets right paren position, -1 if missing
-     */
+    /** Sets right paren position, -1 if missing */
     public void setRp(int rp) {
         this.rp = rp;
     }
 
-    /**
-     * Sets both paren positions
-     */
+    /** Sets both paren positions */
     public void setParens(int lp, int rp) {
         this.lp = lp;
         this.rp = rp;
@@ -150,15 +130,15 @@ public class IfStatement extends AstNode {
         sb.append("if (");
         sb.append(condition.toSource(0));
         sb.append(") ");
-        if(this.getInlineComment() != null) {
+        if (this.getInlineComment() != null) {
             sb.append("    ").append(this.getInlineComment().toSource()).append("\n");
         }
         if (thenPart.getType() != Token.BLOCK) {
-            if(this.getInlineComment() == null) {
+            if (this.getInlineComment() == null) {
                 sb.append("\n");
             }
             sb.append(makeIndent(depth + 1));
-        } 
+        }
         sb.append(thenPart.toSource(depth).trim());
         if (elsePart != null) {
             if (thenPart.getType() != Token.BLOCK) {
@@ -166,12 +146,13 @@ public class IfStatement extends AstNode {
             } else {
                 sb.append(" else ");
             }
-            if(this.getElseKeyWordInlineComment() != null) {
-                sb.append("    ").append(this.getElseKeyWordInlineComment().toSource()).append("\n");
+            if (this.getElseKeyWordInlineComment() != null) {
+                sb.append("    ")
+                        .append(this.getElseKeyWordInlineComment().toSource())
+                        .append("\n");
             }
-            if (elsePart.getType() != Token.BLOCK
-                    && elsePart.getType() != Token.IF) {
-                if(this.getElseKeyWordInlineComment() == null) {
+            if (elsePart.getType() != Token.BLOCK && elsePart.getType() != Token.IF) {
+                if (this.getElseKeyWordInlineComment() == null) {
                     sb.append("\n");
                 }
                 sb.append(makeIndent(depth + 1));
@@ -182,10 +163,7 @@ public class IfStatement extends AstNode {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, the condition, the then-part, and
-     * if supplied, the else-part.
-     */
+    /** Visits this node, the condition, the then-part, and if supplied, the else-part. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {
@@ -204,5 +182,4 @@ public class IfStatement extends AstNode {
     public void setElseKeyWordInlineComment(AstNode elseKeyWordInlineComment) {
         this.elseKeyWordInlineComment = elseKeyWordInlineComment;
     }
-    
 }

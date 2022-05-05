@@ -9,15 +9,14 @@ package org.mozilla.javascript.ast;
 import org.mozilla.javascript.Token;
 
 /**
- * AST node for an indexed property reference, such as {@code foo['bar']} or
- * {@code foo[2]}.  This is sometimes called an "element-get" operation, hence
- * the name of the node.<p>
+ * AST node for an indexed property reference, such as {@code foo['bar']} or {@code foo[2]}. This is
+ * sometimes called an "element-get" operation, hence the name of the node.
  *
- * Node type is {@link Token#GETELEM}.<p>
+ * <p>Node type is {@link Token#GETELEM}.
  *
- * The node bounds extend from the beginning position of the target through the
- * closing right-bracket.  In the presence of a syntax error, the right bracket
- * position is -1, and the node ends at the end of the element expression.
+ * <p>The node bounds extend from the beginning position of the target through the closing
+ * right-bracket. In the presence of a syntax error, the right bracket position is -1, and the node
+ * ends at the end of the element expression.
  */
 public class ElementGet extends AstNode {
 
@@ -30,8 +29,7 @@ public class ElementGet extends AstNode {
         type = Token.GETELEM;
     }
 
-    public ElementGet() {
-    }
+    public ElementGet() {}
 
     public ElementGet(int pos) {
         super(pos);
@@ -46,17 +44,15 @@ public class ElementGet extends AstNode {
         setElement(element);
     }
 
-    /**
-     * Returns the object on which the element is being fetched.
-     */
+    /** Returns the object on which the element is being fetched. */
     public AstNode getTarget() {
         return target;
     }
 
     /**
      * Sets target object, and sets its parent to this node.
-     * @param target expression evaluating to the object upon which
-     * to do the element lookup
+     *
+     * @param target expression evaluating to the object upon which to do the element lookup
      * @throws IllegalArgumentException if target is {@code null}
      */
     public void setTarget(AstNode target) {
@@ -65,15 +61,14 @@ public class ElementGet extends AstNode {
         target.setParent(this);
     }
 
-    /**
-     * Returns the element being accessed
-     */
+    /** Returns the element being accessed */
     public AstNode getElement() {
         return element;
     }
 
     /**
      * Sets the element being accessed, and sets its parent to this node.
+     *
      * @throws IllegalArgumentException if element is {@code null}
      */
     public void setElement(AstNode element) {
@@ -82,30 +77,22 @@ public class ElementGet extends AstNode {
         element.setParent(this);
     }
 
-    /**
-     * Returns left bracket position
-     */
+    /** Returns left bracket position */
     public int getLb() {
         return lb;
     }
 
-    /**
-     * Sets left bracket position
-     */
+    /** Sets left bracket position */
     public void setLb(int lb) {
         this.lb = lb;
     }
 
-    /**
-     * Returns right bracket position, -1 if missing
-     */
+    /** Returns right bracket position, -1 if missing */
     public int getRb() {
         return rb;
     }
 
-    /**
-     * Sets right bracket position, -1 if not present
-     */
+    /** Sets right bracket position, -1 if not present */
     public void setRb(int rb) {
         this.rb = rb;
     }
@@ -126,9 +113,7 @@ public class ElementGet extends AstNode {
         return sb.toString();
     }
 
-    /**
-     * Visits this node, the target, and the index expression.
-     */
+    /** Visits this node, the target, and the index expression. */
     @Override
     public void visit(NodeVisitor v) {
         if (v.visit(this)) {

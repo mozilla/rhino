@@ -12,11 +12,10 @@ import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 
 /**
- * Expect parsing errors when encountering default values
- * inside destructuring assignments, instead of failing on some
- * later stage (e.g. in the IRFactory).
+ * Expect parsing errors when encountering default values inside destructuring assignments, instead
+ * of failing on some later stage (e.g. in the IRFactory).
  *
- * Should be removed when support for default values is added
+ * <p>Should be removed when support for default values is added
  */
 public class Issue385Test {
     private Context cx;

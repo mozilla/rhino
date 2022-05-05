@@ -14,7 +14,8 @@ import org.mozilla.javascript.annotations.JSGetter;
 /**
  * An example host object class.
  *
- * Here's a shell session showing the Foo object in action:
+ * <p>Here's a shell session showing the Foo object in action:
+ *
  * <pre>
  * js> defineClass("Foo")
  * js> foo = new Foo();         <i>A constructor call, see <a href="#Foo">Foo</a> below.</i>
@@ -48,39 +49,32 @@ import org.mozilla.javascript.annotations.JSGetter;
  * @see org.mozilla.javascript.Context
  * @see org.mozilla.javascript.Scriptable
  * @see org.mozilla.javascript.ScriptableObject
- *
  * @author Norris Boyd
  */
-
 public class Foo extends ScriptableObject {
     private static final long serialVersionUID = -3833489808933339159L;
 
     /**
      * The zero-parameter constructor.
      *
-     * When Context.defineClass is called with this class, it will
-     * construct Foo.prototype using this constructor.
+     * <p>When Context.defineClass is called with this class, it will construct Foo.prototype using
+     * this constructor.
      */
-    public Foo() {
-    }
+    public Foo() {}
 
     /**
      * The Java method defining the JavaScript Foo constructor.
      *
-     * Takes an initial value for the counter property.
-     * Note that in the example Shell session above, we didn't
-     * supply a argument to the Foo constructor. This means that
-     * the Undefined value is used as the value of the argument,
-     * and when the argument is converted to an integer, Undefined
-     * becomes 0.
+     * <p>Takes an initial value for the counter property. Note that in the example Shell session
+     * above, we didn't supply a argument to the Foo constructor. This means that the Undefined
+     * value is used as the value of the argument, and when the argument is converted to an integer,
+     * Undefined becomes 0.
      */
     public Foo(int counterStart) {
         counter = counterStart;
     }
 
-    /**
-     * Returns the name of this JavaScript class, "Foo".
-     */
+    /** Returns the name of this JavaScript class, "Foo". */
     @Override
     public String getClassName() {
         return "Foo";
@@ -89,7 +83,7 @@ public class Foo extends ScriptableObject {
     /**
      * The Java method defining the JavaScript resetCounter function.
      *
-     * Resets the counter to 0.
+     * <p>Resets the counter to 0.
      */
     @JSFunction
     public void resetCounter() {
@@ -98,9 +92,9 @@ public class Foo extends ScriptableObject {
 
     /**
      * The Java method implementing the getter for the counter property.
-     * <p>
-     * If "setCounter" had been defined in this class, the runtime would
-     * call the setter when the property is assigned to.
+     *
+     * <p>If "setCounter" had been defined in this class, the runtime would call the setter when the
+     * property is assigned to.
      */
     @JSGetter
     public int getCounter() {
@@ -110,39 +104,34 @@ public class Foo extends ScriptableObject {
     /**
      * An example of a variable-arguments method.
      *
-     * All variable arguments methods must have the same number and
-     * types of parameters, and must be static. <p>
+     * <p>All variable arguments methods must have the same number and types of parameters, and must
+     * be static.
+     *
+     * <p>
+     *
      * @param cx the Context of the current thread
      * @param thisObj the JavaScript 'this' value.
      * @param args the array of arguments for this call
-     * @param funObj the function object of the invoked JavaScript function
-     *               This value is useful to compute a scope using
-     *               Context.getTopLevelScope().
-     * @return computes the string values and types of 'this' and
-     * of each of the supplied arguments and returns them in a string.
-     *
+     * @param funObj the function object of the invoked JavaScript function This value is useful to
+     *     compute a scope using Context.getTopLevelScope().
+     * @return computes the string values and types of 'this' and of each of the supplied arguments
+     *     and returns them in a string.
      * @see org.mozilla.javascript.ScriptableObject#getTopLevelScope
      */
     @JSFunction
-    public static Object varargs(Context cx, Scriptable thisObj,
-                                            Object[] args, Function funObj)
-    {
+    public static Object varargs(Context cx, Scriptable thisObj, Object[] args, Function funObj) {
         StringBuilder buf = new StringBuilder();
         buf.append("this = ");
         buf.append(Context.toString(thisObj));
         buf.append("; args = [");
-        for (int i=0; i < args.length; i++) {
+        for (int i = 0; i < args.length; i++) {
             buf.append(Context.toString(args[i]));
-            if (i+1 != args.length)
-                buf.append(", ");
+            if (i + 1 != args.length) buf.append(", ");
         }
         buf.append("]");
         return buf.toString();
     }
 
-    /**
-     * A piece of private data for this class.
-     */
+    /** A piece of private data for this class. */
     private int counter;
 }
-

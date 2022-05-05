@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -27,21 +26,22 @@ public class DoctestFeature18EnabledTest extends DoctestsTest {
         List<Object[]> result = new ArrayList<Object[]>();
         File f = new File(DoctestsTest.baseDirectory, "feature18enabled.doctest");
         String contents = DoctestsTest.loadFile(f);
-        result.add(new Object[]{f.getName(), contents, -1});
+        result.add(new Object[] {f.getName(), contents, -1});
         return result;
     }
 
     @Test
     public void runDoctest() {
-        ContextFactory contextFactory = new ContextFactory() {
-            @Override
-            protected boolean hasFeature(Context cx, int featureIndex) {
-                if (featureIndex == Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE) {
-                    return true;
-                }
-                return super.hasFeature(cx, featureIndex);
-            }
-        };
+        ContextFactory contextFactory =
+                new ContextFactory() {
+                    @Override
+                    protected boolean hasFeature(Context cx, int featureIndex) {
+                        if (featureIndex == Context.FEATURE_INTEGER_WITHOUT_DECIMAL_PLACE) {
+                            return true;
+                        }
+                        return super.hasFeature(cx, featureIndex);
+                    }
+                };
         Context context = contextFactory.enterContext();
         try {
             context.setOptimizationLevel(optimizationLevel);
