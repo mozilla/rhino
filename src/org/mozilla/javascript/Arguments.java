@@ -322,37 +322,35 @@ final class Arguments extends IdScriptableObject {
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Scriptable scope, Object id) {
         if (ScriptRuntime.isSymbol(id) || id instanceof Scriptable) {
-            return super.getOwnPropertyDescriptor(cx, id);
+            return super.getOwnPropertyDescriptor(cx, scope, id);
         }
 
         double d = ScriptRuntime.toNumber(id);
         int index = (int) d;
         if (d != index) {
-            return super.getOwnPropertyDescriptor(cx, id);
+            return super.getOwnPropertyDescriptor(cx, scope, id);
         }
         Object value = arg(index);
         if (value == NOT_FOUND) {
-            return super.getOwnPropertyDescriptor(cx, id);
+            return super.getOwnPropertyDescriptor(cx, scope, id);
         }
         if (sharedWithActivation(index)) {
             value = getFromActivation(index);
         }
         if (super.has(index, this)) { // the descriptor has been redefined
-            ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
+            ScriptableObject desc = super.getOwnPropertyDescriptor(cx, scope, id);
             desc.put("value", desc, value);
             return desc;
         }
-        Scriptable scope = getParentScope();
-        if (scope == null) scope = this;
         return buildDataDescriptor(scope, value, EMPTY);
     }
 
     @Override
     protected void defineOwnProperty(
-            Context cx, Object id, ScriptableObject desc, boolean checkValid) {
-        super.defineOwnProperty(cx, id, desc, checkValid);
+            Context cx, Scriptable scope, Object id, ScriptableObject desc, boolean checkValid) {
+        super.defineOwnProperty(cx, scope, id, desc, checkValid);
         if (ScriptRuntime.isSymbol(id)) {
             return;
         }

@@ -1528,9 +1528,10 @@ public abstract class ScriptableObject
      * Defines one or more properties on this object.
      *
      * @param cx the current Context
+     * @param scope the current scope.
      * @param props a map of property ids to property descriptors
      */
-    public void defineOwnProperties(Context cx, ScriptableObject props) {
+    public void defineOwnProperties(Context cx, Scriptable scope, ScriptableObject props) {
         Object[] ids = props.getIds(false, true);
         ScriptableObject[] descs = new ScriptableObject[ids.length];
         for (int i = 0, len = ids.length; i < len; ++i) {
@@ -1540,20 +1541,40 @@ public abstract class ScriptableObject
             descs[i] = desc;
         }
         for (int i = 0, len = ids.length; i < len; ++i) {
-            defineOwnProperty(cx, ids[i], descs[i]);
+            defineOwnProperty(cx, scope, ids[i], descs[i]);
         }
+    }
+
+    /**
+     * @deprecated Use {@link #defineOwnProperties(Context, Scriptable, ScriptableObject)} instead
+     */
+    @Deprecated
+    public void defineOwnProperties(Context cx, ScriptableObject props) {
+        Scriptable scope = getParentScope();
+        defineOwnProperties(cx, (scope == null ? this : scope), props);
     }
 
     /**
      * Defines a property on an object.
      *
      * @param cx the current Context
+     * @param scope the current scope.
      * @param id the name/index of the property
      * @param desc the new property descriptor, as described in 8.6.1
      */
-    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+    public void defineOwnProperty(Context cx, Scriptable scope, Object id, ScriptableObject desc) {
         checkPropertyDefinition(desc);
-        defineOwnProperty(cx, id, desc, true);
+        defineOwnProperty(cx, scope, id, desc, true);
+    }
+
+    /**
+     * @deprecated Use {@link #defineOwnProperty(Context, Scriptable, Object, ScriptableObject)}
+     *     instead
+     */
+    @Deprecated
+    public void defineOwnProperty(Context cx, Object id, ScriptableObject desc) {
+        Scriptable scope = getParentScope();
+        defineOwnProperty(cx, (scope == null ? this : scope), id, desc);
     }
 
     /**
@@ -1562,12 +1583,13 @@ public abstract class ScriptableObject
      * <p>Based on [[DefineOwnProperty]] from 8.12.10 of the spec.
      *
      * @param cx the current Context
+     * @param scope the current scope.
      * @param id the name/index of the property
      * @param desc the new property descriptor, as described in 8.6.1
      * @param checkValid whether to perform validity checks
      */
     protected void defineOwnProperty(
-            Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+            Context cx, Scriptable scope, Object id, ScriptableObject desc, boolean checkValid) {
 
         Object key = null;
         int index = 0;
@@ -1635,6 +1657,17 @@ public abstract class ScriptableObject
             }
             slot.setAttributes(attributes);
         }
+    }
+
+    /**
+     * @deprecated Use {@link #defineOwnProperty(Context, Scriptable, Object, ScriptableObject,
+     *     boolean)} instead
+     */
+    @Deprecated
+    protected void defineOwnProperty(
+            Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+        Scriptable scope = getParentScope();
+        defineOwnProperty(cx, (scope == null ? this : scope), id, desc, checkValid);
     }
 
     /**
@@ -2648,11 +2681,10 @@ public abstract class ScriptableObject
         }
     }
 
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Scriptable scope, Object id) {
         Slot slot = querySlot(cx, id);
         if (slot == null) return null;
-        Scriptable scope = getParentScope();
-        return slot.getPropertyDescriptor(cx, (scope == null ? this : scope));
+        return slot.getPropertyDescriptor(cx, scope);
     }
 
     protected Slot querySlot(Context cx, Object id) {

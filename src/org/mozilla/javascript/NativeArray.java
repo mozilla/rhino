@@ -668,7 +668,7 @@ public class NativeArray extends IdScriptableObject implements List {
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Scriptable scope, Object id) {
         if (dense != null) {
             int index = toDenseIndex(id);
             if (0 <= index && index < dense.length && dense[index] != NOT_FOUND) {
@@ -676,12 +676,12 @@ public class NativeArray extends IdScriptableObject implements List {
                 return defaultIndexPropertyDescriptor(value);
             }
         }
-        return super.getOwnPropertyDescriptor(cx, id);
+        return super.getOwnPropertyDescriptor(cx, scope, id);
     }
 
     @Override
     protected void defineOwnProperty(
-            Context cx, Object id, ScriptableObject desc, boolean checkValid) {
+            Context cx, Scriptable scope, Object id, ScriptableObject desc, boolean checkValid) {
         long index = toArrayIndex(id);
         if (index >= length) {
             length = index + 1;
@@ -705,7 +705,7 @@ public class NativeArray extends IdScriptableObject implements List {
             }
         }
 
-        super.defineOwnProperty(cx, id, desc, checkValid);
+        super.defineOwnProperty(cx, scope, id, desc, checkValid);
 
         if (id instanceof String && ((String) id).equals("length")) {
             lengthAttr =

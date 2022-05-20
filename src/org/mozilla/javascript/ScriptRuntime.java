@@ -4739,9 +4739,9 @@ public class ScriptRuntime {
         }
 
         AbstractEcmaObjectOperations.setIntegrityLevel(
-                cx, rawObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                cx, scope, rawObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
         AbstractEcmaObjectOperations.setIntegrityLevel(
-                cx, siteObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                cx, scope, siteObj, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
 
         strings[index] = siteObj;
 

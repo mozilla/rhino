@@ -18,6 +18,7 @@ import org.mozilla.javascript.tests.Utils;
 
 /** Test for NativeObject. */
 public class NativeObjectTest {
+
     @Test
     public void testAssignPropertyGetter() {
         evaluateAndAssert(
@@ -276,5 +277,20 @@ public class NativeObjectTest {
                         return null;
                     });
         }
+    }
+
+    @Test
+    public void issue943() {
+        evaluateAndAssert(
+                "var foo = function e() {}\n"
+                        + "var fooProto = foo.prototype;\n"
+
+                        //                + "var fooProtoDesc =
+                        // Object.getOwnPropertyDescriptor(fooProto);\n"
+                        //                + "var descProp = fooProtoDesc['constructor'];\n"
+
+                        + "var descProp = Object.getOwnPropertyDescriptor(fooProto, 'constructor');"
+                        + "descProp.hasOwnProperty('value');\n",
+                true);
     }
 }

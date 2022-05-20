@@ -54,19 +54,21 @@ class AbstractEcmaObjectOperations {
      * Implementation of Abstract Object operation testIntegrityLevel as defined by EcmaScript
      *
      * @param cx
+     * @param scope the current scope.
      * @param o
      * @param level
      * @return boolean
      * @see <a
      *     href="https://262.ecma-international.org/11.0/#sec-testintegritylevel">TestIntegrityLevel</a>
      */
-    static boolean testIntegrityLevel(Context cx, Object o, INTEGRITY_LEVEL level) {
+    static boolean testIntegrityLevel(
+            Context cx, Scriptable scope, Object o, INTEGRITY_LEVEL level) {
         ScriptableObject obj = ScriptableObject.ensureScriptableObject(o);
 
         if (obj.isExtensible()) return false;
 
         for (Object name : obj.getIds(true, true)) {
-            ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, name);
+            ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, scope, name);
             if (Boolean.TRUE.equals(desc.get("configurable"))) return false;
 
             if (level == INTEGRITY_LEVEL.FROZEN
@@ -81,13 +83,15 @@ class AbstractEcmaObjectOperations {
      * Implementation of Abstract Object operation setIntegrityLevel as defined by EcmaScript
      *
      * @param cx
+     * @param scope the current scope.
      * @param o
      * @param level
      * @return boolean
      * @see <a
      *     href="https://262.ecma-international.org/11.0/#sec-setintegritylevel">SetIntegrityLevel</a>
      */
-    static boolean setIntegrityLevel(Context cx, Object o, INTEGRITY_LEVEL level) {
+    static boolean setIntegrityLevel(
+            Context cx, Scriptable scope, Object o, INTEGRITY_LEVEL level) {
         /*
            1. Assert: Type(O) is Object.
            2. Assert: level is either sealed or frozen.
@@ -128,13 +132,13 @@ class AbstractEcmaObjectOperations {
         obj.preventExtensions();
 
         for (Object key : obj.getIds(true, true)) {
-            ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, key);
+            ScriptableObject desc = obj.getOwnPropertyDescriptor(cx, scope, key);
 
             if (level == INTEGRITY_LEVEL.SEALED) {
                 if (Boolean.TRUE.equals(desc.get("configurable"))) {
                     desc.put("configurable", desc, Boolean.FALSE);
 
-                    obj.defineOwnProperty(cx, key, desc, false);
+                    obj.defineOwnProperty(cx, scope, key, desc, false);
                 }
             } else {
                 if (ScriptableObject.isDataDescriptor(desc)
@@ -144,7 +148,7 @@ class AbstractEcmaObjectOperations {
                 if (Boolean.TRUE.equals(desc.get("configurable"))) {
                     desc.put("configurable", desc, Boolean.FALSE);
                 }
-                obj.defineOwnProperty(cx, key, desc, false);
+                obj.defineOwnProperty(cx, scope, key, desc, false);
             }
         }
 

@@ -837,7 +837,7 @@ final class NativeString extends IdScriptableObject {
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Scriptable scope, Object id) {
         if (!(id instanceof Symbol)
                 && (cx != null)
                 && (cx.getLanguageVersion() >= Context.VERSION_ES6)) {
@@ -847,7 +847,7 @@ final class NativeString extends IdScriptableObject {
                 return defaultIndexPropertyDescriptor(value);
             }
         }
-        return super.getOwnPropertyDescriptor(cx, id);
+        return super.getOwnPropertyDescriptor(cx, scope, id);
     }
 
     private ScriptableObject defaultIndexPropertyDescriptor(Object value) {

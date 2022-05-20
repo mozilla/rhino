@@ -510,7 +510,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     Scriptable s = getCompatibleObject(cx, scope, arg);
                     ScriptableObject obj = ensureScriptableObject(s);
                     Object nameArg = args.length < 2 ? Undefined.instance : args[1];
-                    Scriptable desc = obj.getOwnPropertyDescriptor(cx, nameArg);
+                    Scriptable desc = obj.getOwnPropertyDescriptor(cx, scope, nameArg);
                     return desc == null ? Undefined.instance : desc;
                 }
             case ConstructorId_getOwnPropertyDescriptors:
@@ -521,7 +521,7 @@ public class NativeObject extends IdScriptableObject implements Map {
 
                     ScriptableObject descs = (ScriptableObject) cx.newObject(scope);
                     for (Object key : obj.getIds(true, true)) {
-                        Scriptable desc = obj.getOwnPropertyDescriptor(cx, key);
+                        Scriptable desc = obj.getOwnPropertyDescriptor(cx, scope, key);
                         if (desc == null) {
                             continue;
                         } else if (key instanceof Symbol) {
@@ -541,7 +541,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     Object name = args.length < 2 ? Undefined.instance : args[1];
                     Object descArg = args.length < 3 ? Undefined.instance : args[2];
                     ScriptableObject desc = ensureScriptableObject(descArg);
-                    obj.defineOwnProperty(cx, name, desc);
+                    obj.defineOwnProperty(cx, scope, name, desc);
                     return obj;
                 }
             case ConstructorId_isExtensible:
@@ -573,7 +573,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     ScriptableObject obj = ensureScriptableObject(arg);
                     Object propsObj = args.length < 2 ? Undefined.instance : args[1];
                     Scriptable props = Context.toObject(propsObj, scope);
-                    obj.defineOwnProperties(cx, ensureScriptableObject(props));
+                    obj.defineOwnProperties(cx, scope, ensureScriptableObject(props));
                     return obj;
                 }
             case ConstructorId_create:
@@ -587,7 +587,7 @@ public class NativeObject extends IdScriptableObject implements Map {
 
                     if (args.length > 1 && !Undefined.isUndefined(args[1])) {
                         Scriptable props = Context.toObject(args[1], scope);
-                        newObject.defineOwnProperties(cx, ensureScriptableObject(props));
+                        newObject.defineOwnProperties(cx, scope, ensureScriptableObject(props));
                     }
 
                     return newObject;
@@ -601,7 +601,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     return AbstractEcmaObjectOperations.testIntegrityLevel(
-                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
+                            cx, scope, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
                 }
             case ConstructorId_isFrozen:
                 {
@@ -612,7 +612,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     return AbstractEcmaObjectOperations.testIntegrityLevel(
-                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                            cx, scope, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
                 }
             case ConstructorId_seal:
                 {
@@ -623,7 +623,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     AbstractEcmaObjectOperations.setIntegrityLevel(
-                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
+                            cx, scope, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.SEALED);
 
                     return arg;
                 }
@@ -636,7 +636,7 @@ public class NativeObject extends IdScriptableObject implements Map {
                     }
 
                     AbstractEcmaObjectOperations.setIntegrityLevel(
-                            cx, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
+                            cx, scope, arg, AbstractEcmaObjectOperations.INTEGRITY_LEVEL.FROZEN);
 
                     return arg;
                 }

@@ -29,8 +29,8 @@ public class ArrowFunction extends BaseFunction {
         throwing.put("configurable", throwing, Boolean.FALSE);
         throwing.preventExtensions();
 
-        this.defineOwnProperty(cx, "caller", throwing, false);
-        this.defineOwnProperty(cx, "arguments", throwing, false);
+        this.defineOwnProperty(cx, scope, "caller", throwing, false);
+        this.defineOwnProperty(cx, scope, "arguments", throwing, false);
     }
 
     @Override

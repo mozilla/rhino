@@ -853,7 +853,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
 
     @Override
     protected void defineOwnProperty(
-            Context cx, Object key, ScriptableObject desc, boolean checkValid) {
+            Context cx, Scriptable scope, Object key, ScriptableObject desc, boolean checkValid) {
         if (key instanceof String) {
             String name = (String) key;
             int info = findInstanceIdInfo(name);
@@ -863,7 +863,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                     delete(id); // it will be replaced with a slot
                 } else {
                     checkPropertyDefinition(desc);
-                    ScriptableObject current = getOwnPropertyDescriptor(cx, key);
+                    ScriptableObject current = getOwnPropertyDescriptor(cx, scope, key);
                     checkPropertyChange(name, current, desc);
                     int attr = (info >>> 16);
                     Object value = getProperty(desc, "value");
@@ -884,7 +884,7 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                         prototypeValues.delete(id); // it will be replaced with a slot
                     } else {
                         checkPropertyDefinition(desc);
-                        ScriptableObject current = getOwnPropertyDescriptor(cx, key);
+                        ScriptableObject current = getOwnPropertyDescriptor(cx, scope, key);
                         checkPropertyChange(name, current, desc);
                         int attr = prototypeValues.getAttributes(id);
                         Object value = getProperty(desc, "value");
@@ -909,12 +909,12 @@ public abstract class IdScriptableObject extends ScriptableObject implements IdF
                 }
             }
         }
-        super.defineOwnProperty(cx, key, desc, checkValid);
+        super.defineOwnProperty(cx, scope, key, desc, checkValid);
     }
 
     @Override
-    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Object id) {
-        ScriptableObject desc = super.getOwnPropertyDescriptor(cx, id);
+    protected ScriptableObject getOwnPropertyDescriptor(Context cx, Scriptable scope, Object id) {
+        ScriptableObject desc = super.getOwnPropertyDescriptor(cx, scope, id);
         if (desc == null) {
             if (id instanceof String) {
                 desc = getBuiltInDescriptor((String) id);

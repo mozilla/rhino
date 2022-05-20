@@ -27,7 +27,7 @@ public class NativeSet extends IdScriptableObject {
         desc.put("enumerable", desc, Boolean.FALSE);
         desc.put("configurable", desc, Boolean.TRUE);
         desc.put("get", desc, obj.get(GETSIZE, obj));
-        obj.defineOwnProperty(cx, "size", desc);
+        obj.defineOwnProperty(cx, scope, "size", desc);
 
         if (sealed) {
             obj.sealObject();
