@@ -4,6 +4,8 @@
 
 package org.mozilla.javascript.tests;
 
+import junit.framework.TestCase;
+
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Scriptable;
@@ -11,13 +13,14 @@ import org.mozilla.javascript.Scriptable;
 /**
  * Tests the ConsString class to ensure it properly supports String, StringBuffer and StringBuilder.
  */
-public class Issue1206Test {
+public class Issue1206Test extends TestCase {
     @Test
     public void testConsStringUsingString() {
         Context cx = Context.enter();
         Scriptable scope = cx.initStandardObjects(null);
         scope.put("var1", scope, "hello");
-        cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+        Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+        assertEquals("hello world", result);
     }
 
     @Test
@@ -25,7 +28,8 @@ public class Issue1206Test {
         Context cx = Context.enter();
         Scriptable scope = cx.initStandardObjects(null);
         scope.put("var1", scope, new StringBuffer("hello"));
-        cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+        Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+        assertEquals("hello world", result);
     }
 
     @Test
@@ -33,6 +37,7 @@ public class Issue1206Test {
         Context cx = Context.enter();
         Scriptable scope = cx.initStandardObjects(null);
         scope.put("var1", scope, new StringBuilder("hello"));
-        cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+        Object result = cx.evaluateString(scope, "var1 = var1 + ' world'", "test", 1, null);
+        assertEquals("hello world", result);
     }
 }
